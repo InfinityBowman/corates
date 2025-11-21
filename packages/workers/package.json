@@ -1,0 +1,22 @@
+{
+  "name": "@corates/workers",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Cloudflare Workers with Durable Objects",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "test": "vitest",
+    "db:migrate": "wrangler d1 migrations apply corates-db --local",
+    "db:migrate:prod": "wrangler d1 migrations apply corates-db"
+  },
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20251121.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.13",
+    "wrangler": "^4.50.0"
+  }
+}

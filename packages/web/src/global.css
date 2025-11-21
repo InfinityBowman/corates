@@ -1,0 +1,48 @@
+@import 'tailwindcss';
+
+@theme {
+  --text-2xs: 0.625rem; /* 10px */
+  --text-3xs: 0.5rem; /* 8px */
+  --text-4xs: 0.375rem; /* 6px */
+
+  --breakpoint-xs: 30rem; /* 480px */
+}
+
+/* scrollbar for sidebar */
+.sidebar-scrollbar {
+  scrollbar-width: thin;
+  /* thumb color, track color */
+  scrollbar-color: #d1d5db #f9fafb;
+}
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-track {
+  background: #f9fafb;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fade-in 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.big-placeholder::placeholder {
+  font-size: 1.45em;
+  font-weight: 800;
+  transform: translateY(0.1em);
+  letter-spacing: -0.04em;
+  color: #a3a3a3;
+}
