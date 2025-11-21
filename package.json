@@ -1,0 +1,29 @@
+{
+  "name": "corates",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Cloudflare Workers/Durable Objects web app",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "dev:workers": "pnpm --filter workers dev",
+    "build": "pnpm --recursive build",
+    "deploy": "pnpm --recursive deploy",
+    "format": "prettier --write .",
+    "test": "pnpm --recursive test"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "durable-objects",
+    "solidjs"
+  ],
+  "author": "Jacob Maynard",
+  "license": "GNU GPLv3",
+  "devDependencies": {
+    "prettier": "^3.6.2"
+  },
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=10.0.0"
+  }
+}

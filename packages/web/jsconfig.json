@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@routes/*": ["src/routes/*"],
+      "@primitives/*": ["src/primitives/*"],
+      "@auth/*": ["src/auth/*"],
+      "@offline/*": ["src/offline/*"],
+      "@api/*": ["src/api/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,0 +1,12 @@
+name = "corates-web"
+compatibility_date = "2024-11-21"
+
+[env.production]
+name = "corates-web-prod"
+
+# Environment variables for the frontend
+[vars]
+API_BASE_URL = "https://corates-workers.your-subdomain.workers.dev"
+
+[env.production.vars]
+API_BASE_URL = "https://corates-workers-prod.your-subdomain.workers.dev"

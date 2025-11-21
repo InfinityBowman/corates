@@ -1,0 +1,51 @@
+name = "corates-workers"
+main = "src/index.js"
+compatibility_date = "2024-11-21"
+compatibility_flags = ["nodejs_compat"]
+
+# Durable Objects
+[[durable_objects.bindings]]
+name = "CHAT_ROOM"
+class_name = "ChatRoom"
+script_name = "corates-workers"
+
+[[durable_objects.bindings]]
+name = "USER_SESSION"
+class_name = "UserSession"
+script_name = "corates-workers"
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "corates-db"
+database_id = "7ac6d425-2a7c-4087-9f42-0cd1a2ab367b"
+
+# R2 Bucket for media storage
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "corates-media"
+
+# KV for caching (optional)
+[[kv_namespaces]]
+binding = "CACHE"
+id = "your-kv-namespace-id-here"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+
+# For production deployment
+[env.production]
+name = "corates-workers-prod"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "corates-db-prod"
+database_id = "your-prod-database-id-here"
+
+[[env.production.r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "corates-media-prod"
