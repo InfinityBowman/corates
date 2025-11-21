@@ -1,0 +1,32 @@
+{
+  "name": "corates",
+  "version": "0.0.1",
+  "private": true,
+  "description": "A collaborative rate-based application with SolidJS, Cloudflare Workers, and Yjs",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
+    "test": "pnpm -r test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "keywords": [
+    "solidjs",
+    "cloudflare",
+    "workers",
+    "durable-objects",
+    "yjs",
+    "crdt",
+    "collaborative"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

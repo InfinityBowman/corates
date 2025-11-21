@@ -1,0 +1,15 @@
+name = "corates-durable-objects"
+main = "src/index.ts"
+compatibility_date = "2024-12-18"
+
+[[durable_objects.bindings]]
+name = "COUNTER"
+class_name = "Counter"
+script_name = "corates-durable-objects"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["Counter"]
+
+[observability]
+enabled = true
