@@ -8,8 +8,7 @@
     "dev": "pnpm -r --parallel dev",
     "test": "pnpm -r test",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "typecheck": "pnpm -r typecheck"
+    "format:check": "prettier --check ."
   },
   "keywords": [
     "solidjs",

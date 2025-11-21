@@ -4,4 +4,3 @@ build
 .wrangler
 *.log
 coverage
-.turbo
