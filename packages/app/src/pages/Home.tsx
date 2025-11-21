@@ -1,6 +1,5 @@
 import { A } from '@solidjs/router';
 import { createSignal, onMount } from 'solid-js';
-import * as d3 from 'd3';
 import * as Y from 'yjs';
 import Chart from '../components/Chart';
 
