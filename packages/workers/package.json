@@ -13,7 +13,9 @@
     "db:migrate:prod": "wrangler d1 migrations apply corates-db"
   },
   "dependencies": {
-    "@cloudflare/workers-types": "^4.20251121.0"
+    "@cloudflare/workers-types": "^4.20251121.0",
+    "better-auth": "^1.4.1",
+    "yjs": "^13.6.27"
   },
   "devDependencies": {
     "vitest": "^4.0.13",

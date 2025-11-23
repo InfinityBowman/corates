@@ -14,6 +14,11 @@ name = "USER_SESSION"
 class_name = "UserSession"
 script_name = "corates-workers"
 
+[[durable_objects.bindings]]
+name = "COLLABORATIVE_DOC"
+class_name = "CollaborativeDoc"
+script_name = "corates-workers"
+
 # D1 Database
 [[d1_databases]]
 binding = "DB"

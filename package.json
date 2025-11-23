@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "pnpm --filter web dev",
     "dev:workers": "pnpm --filter workers dev",
+    "clear-worker": "rm -rf packages/workers/.wrangler/state",
     "build": "pnpm --recursive build",
     "deploy": "pnpm --recursive deploy",
     "format": "prettier --write .",
