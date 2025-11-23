@@ -1,7 +1,8 @@
 import { ChatRoom } from './durable-objects/ChatRoom.js';
 import { UserSession } from './durable-objects/UserSession.js';
+import { CollaborativeDoc } from './durable-objects/CollaborativeDoc.js';
 
-export { ChatRoom, UserSession };
+export { ChatRoom, UserSession, CollaborativeDoc };
 
 export default {
   async fetch(request, env, ctx) {
@@ -84,6 +85,22 @@ async function handleAPI(request, env, path) {
     const session = env.USER_SESSION.get(id);
 
     return await session.fetch(request);
+  }
+
+  // Collaborative document endpoints
+  if (path.startsWith('/api/docs/')) {
+    const docId = path.split('/')[3];
+    if (!docId) {
+      return new Response(JSON.stringify({ error: 'Document ID required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const id = env.COLLABORATIVE_DOC.idFromName(docId);
+    const doc = env.COLLABORATIVE_DOC.get(id);
+
+    return await doc.fetch(request);
   }
 
   // Media upload endpoint

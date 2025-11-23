@@ -1,43 +1,45 @@
-import { createSignal, onMount } from 'solid-js';
-import ChatRoom from './components/ChatRoom.jsx';
-import FileUpload from './components/FileUpload.jsx';
-import DatabaseTest from './components/DatabaseTest.jsx';
-import SessionManager from './components/SessionManager.jsx';
+import { createSignal, onMount } from 'solid-js'
+import ChatRoom from './components/ChatRoom.jsx'
+import FileUpload from './components/FileUpload.jsx'
+import DatabaseTest from './components/DatabaseTest.jsx'
+import SessionManager from './components/SessionManager.jsx'
+import CollaborativeEditor from './components/CollaborativeEditor.jsx'
 
 export default function App() {
-  const [activeTab, setActiveTab] = createSignal('chat');
-  const [workerStatus, setWorkerStatus] = createSignal('checking...');
+  const [activeTab, setActiveTab] = createSignal('chat')
+  const [workerStatus, setWorkerStatus] = createSignal('checking...')
 
-  const API_BASE = 'http://localhost:8787';
+  const API_BASE = 'http://localhost:8787'
 
   onMount(async () => {
     try {
-      const response = await fetch(`${API_BASE}/health`);
+      const response = await fetch(`${API_BASE}/health`)
       if (response.ok) {
-        setWorkerStatus('connected ✅');
+        setWorkerStatus('connected ✅')
       } else {
-        setWorkerStatus('error ❌');
+        setWorkerStatus('error ❌')
       }
     } catch (error) {
-      setWorkerStatus('offline ❌');
-      console.error('Worker health check failed:', error);
+      setWorkerStatus('offline ❌')
+      console.error('Worker health check failed:', error)
     }
-  });
+  })
 
   const tabs = [
     { id: 'chat', label: 'Chat Room', icon: '💬' },
+    { id: 'editor', label: 'Collaborative Doc', icon: '📝' },
     { id: 'upload', label: 'File Upload', icon: '📁' },
     { id: 'database', label: 'Database', icon: '🗄️' },
     { id: 'session', label: 'Session', icon: '👤' },
-  ];
+  ]
 
   return (
-    <div class="min-h-screen bg-gray-900 text-white">
+    <div class='min-h-screen bg-gray-900 text-white'>
       {/* Header */}
-      <header class="bg-gray-800 border-b border-gray-700 px-6 py-4">
-        <div class="flex items-center justify-between">
-          <h1 class="text-2xl font-bold text-blue-400">CoRATES</h1>
-          <div class="text-sm">
+      <header class='bg-gray-800 border-b border-gray-700 px-6 py-4'>
+        <div class='flex items-center justify-between'>
+          <h1 class='text-2xl font-bold text-blue-400'>CoRATES</h1>
+          <div class='text-sm'>
             Worker Status:{' '}
             <span class={workerStatus().includes('✅') ? 'text-green-400' : 'text-red-400'}>
               {workerStatus()}
@@ -47,9 +49,9 @@ export default function App() {
       </header>
 
       {/* Navigation */}
-      <nav class="bg-gray-800 px-6 py-2">
-        <div class="flex space-x-1">
-          {tabs.map((tab) => (
+      <nav class='bg-gray-800 px-6 py-2'>
+        <div class='flex space-x-1'>
+          {tabs.map(tab => (
             <button
               class={`px-4 py-2 rounded-lg transition-colors ${
                 activeTab() === tab.id ?
@@ -65,14 +67,15 @@ export default function App() {
       </nav>
 
       {/* Main Content */}
-      <main class="p-6">
-        <div class="max-w-4xl mx-auto">
+      <main class='p-6'>
+        <div class='max-w-4xl mx-auto'>
           {activeTab() === 'chat' && <ChatRoom apiBase={API_BASE} />}
+          {activeTab() === 'editor' && <CollaborativeEditor apiBase={API_BASE} />}
           {activeTab() === 'upload' && <FileUpload apiBase={API_BASE} />}
           {activeTab() === 'database' && <DatabaseTest apiBase={API_BASE} />}
           {activeTab() === 'session' && <SessionManager apiBase={API_BASE} />}
         </div>
       </main>
     </div>
-  );
+  )
 }

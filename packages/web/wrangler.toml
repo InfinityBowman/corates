@@ -1,5 +1,5 @@
 name = "corates-web"
-compatibility_date = "2024-11-21"
+compatibility_date = "2025-11-21"
 
 [env.production]
 name = "corates-web-prod"
