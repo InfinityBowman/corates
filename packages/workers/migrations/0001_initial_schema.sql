@@ -1,15 +1,66 @@
 -- Migration to create initial tables
 -- Run: wrangler d1 migrations apply corates-db --local
 
--- Users table
+-- Users table (updated for BetterAuth compatibility)
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   username TEXT UNIQUE NOT NULL,
-  email TEXT UNIQUE,
+  email TEXT UNIQUE NOT NULL,
   display_name TEXT,
   avatar_url TEXT,
+  email_verified BOOLEAN DEFAULT FALSE,
+  password_hash TEXT, -- For email/password auth
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Auth sessions table (for BetterAuth)
+CREATE TABLE IF NOT EXISTS auth_sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  expires_at DATETIME NOT NULL,
+  token TEXT UNIQUE NOT NULL,
+  ip_address TEXT,
+  user_agent TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Auth accounts table (for OAuth providers)
+CREATE TABLE IF NOT EXISTS auth_accounts (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  provider TEXT NOT NULL, -- 'email', 'google', 'github', etc.
+  provider_account_id TEXT NOT NULL,
+  access_token TEXT,
+  refresh_token TEXT,
+  expires_at DATETIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(provider, provider_account_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Email verification tokens
+CREATE TABLE IF NOT EXISTS email_verification_tokens (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  token TEXT UNIQUE NOT NULL,
+  email TEXT NOT NULL,
+  expires_at DATETIME NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Password reset tokens
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  token TEXT UNIQUE NOT NULL,
+  expires_at DATETIME NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Rooms table
@@ -66,11 +117,16 @@ CREATE INDEX IF NOT EXISTS idx_messages_room_id ON messages(room_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
 CREATE INDEX IF NOT EXISTS idx_media_files_uploaded_by ON media_files(uploaded_by);
 CREATE INDEX IF NOT EXISTS idx_room_members_user_id ON room_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_user_id ON auth_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_token ON auth_sessions(token);
+CREATE INDEX IF NOT EXISTS idx_auth_accounts_user_id ON auth_accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_email_verification_token ON email_verification_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_password_reset_token ON password_reset_tokens(token);
 
 -- Insert some default data
-INSERT OR IGNORE INTO users (id, username, display_name) VALUES
-  ('system', 'system', 'System'),
-  ('demo-user', 'demo', 'Demo User');
+INSERT OR IGNORE INTO users (id, username, email, display_name, email_verified) VALUES
+  ('system', 'system', 'system@corates.com', 'System', TRUE),
+  ('demo-user', 'demo', 'demo@corates.com', 'Demo User', TRUE);
 
 INSERT OR IGNORE INTO rooms (id, name, description, created_by) VALUES
   ('general', 'General', 'General discussion room', 'system'),

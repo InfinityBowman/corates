@@ -1,0 +1,30 @@
+# Development secrets template - Copy this to .dev.vars and fill in your values
+# This file is automatically ignored by git and used by wrangler dev
+
+# Auth configuration (REQUIRED)
+AUTH_SECRET=generate-a-very-long-random-secret-key-at-least-64-characters-long
+
+# Email configuration for SMTP (REQUIRED for email features)
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-gmail-app-password-here
+EMAIL_FROM=your-email@gmail.com
+
+# Email testing (uncomment to send real emails in development)
+# SEND_EMAILS_IN_DEV=true
+
+# Alternative: Use Resend instead of SMTP (OPTIONAL - recommended)
+# Get your API key from https://resend.com/
+# RESEND_API_KEY=re_your_resend_api_key_here
+
+# Alternative: Use SendGrid instead of SMTP (OPTIONAL)
+# Get your API key from https://sendgrid.com/
+# SENDGRID_API_KEY=SG.your_sendgrid_api_key_here
+
+# Database configuration (OPTIONAL - if using different dev database)
+# D1_DATABASE_ID=your-dev-database-id-here
+
+# Instructions:
+# 1. Copy this file: cp .dev.vars.example .dev.vars
+# 2. Replace the placeholder values with your actual secrets
+# 3. For Gmail: Enable 2FA and create an App Password
+# 4. Never commit the .dev.vars file to git!

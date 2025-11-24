@@ -1,3 +1,5 @@
+import { verifyAuth } from '../auth/config.js';
+
 export class ChatRoom {
   constructor(state, env) {
     this.state = state;
@@ -9,10 +11,18 @@ export class ChatRoom {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    // Dynamic CORS headers for credentialed requests
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:8787',
+      // Add production origins here
+    ];
+    const requestOrigin = request.headers.get('Origin');
     const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
     };
 
     if (request.method === 'OPTIONS') {
@@ -20,6 +30,18 @@ export class ChatRoom {
     }
 
     try {
+      // Verify authentication for all non-WebSocket requests
+      if (request.headers.get('Upgrade') !== 'websocket') {
+        const { user } = await verifyAuth(request, this.env);
+        if (!user) {
+          return new Response(JSON.stringify({ error: 'Authentication required' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        request.user = user; // Attach user to request
+      }
+
       // WebSocket upgrade for real-time chat
       if (request.headers.get('Upgrade') === 'websocket') {
         return await this.handleWebSocket(request);
@@ -54,24 +76,96 @@ export class ChatRoom {
   }
 
   async handleWebSocket(request) {
+    const url = new URL(request.url);
+    const token = url.searchParams.get('token');
+    let authenticatedUser = null;
+
+    // Try to verify auth via session cookies first
+    try {
+      const { user } = await verifyAuth(request, this.env);
+      if (user) {
+        authenticatedUser = user;
+      }
+    } catch (error) {
+      console.log('Cookie auth failed, trying token auth:', error.message);
+    }
+
+    // If cookie auth failed, try token-based auth
+    if (!authenticatedUser && token) {
+      try {
+        // Create a mock request with the token in Authorization header
+        const authRequest = new Request(request.url, {
+          headers: {
+            ...request.headers,
+            Authorization: `Bearer ${token}`,
+            Cookie: `better-auth.session_token=${token}`, // Try as session token
+          },
+        });
+
+        const { user } = await verifyAuth(authRequest, this.env);
+        if (user) {
+          authenticatedUser = user;
+        }
+      } catch (error) {
+        console.log('Token auth failed:', error.message);
+      }
+    }
+
+    // For development, allow unauthenticated connections with warning
+    if (!authenticatedUser) {
+      console.warn('WebSocket connection without authentication - allowing for development');
+    }
+
     const webSocketPair = new WebSocketPair();
     const [client, server] = Object.values(webSocketPair);
 
     server.accept();
     this.sessions.add(server);
 
+    // Store authenticated user on the WebSocket
+    if (authenticatedUser) {
+      server.user = authenticatedUser;
+    }
+
     server.addEventListener('message', async (event) => {
       try {
         const data = JSON.parse(event.data);
 
-        // Broadcast message to all connected clients
+        // Handle authentication via WebSocket message
+        if (data.type === 'auth' && data.token) {
+          try {
+            const authRequest = new Request(request.url, {
+              headers: {
+                ...request.headers,
+                Cookie: `better-auth.session_token=${data.token}`,
+              },
+            });
+
+            const { user } = await verifyAuth(authRequest, this.env);
+            if (user) {
+              server.user = user;
+              server.send(JSON.stringify({ type: 'auth', success: true, user }));
+            } else {
+              server.send(JSON.stringify({ type: 'auth', success: false, message: 'Invalid token' }));
+            }
+          } catch (error) {
+            console.error('WebSocket auth error:', error);
+            server.send(JSON.stringify({ type: 'auth', success: false, message: 'Authentication failed' }));
+          }
+          return;
+        }
+
+        // Handle chat messages
         if (data.type === 'message') {
+          // Use authenticated user info if available, otherwise fall back to provided data
+          const user = server.user;
           const message = {
             id: crypto.randomUUID(),
             type: 'message',
             content: data.content,
-            userId: data.userId,
-            username: data.username,
+            userId: user?.id || data.userId || 'anonymous',
+            username: user?.username || data.username || 'Anonymous',
+            displayName: user?.displayName || data.displayName || user?.username || data.username || 'Anonymous',
             timestamp: new Date().toISOString(),
           };
 
@@ -83,10 +177,16 @@ export class ChatRoom {
         }
       } catch (error) {
         console.error('WebSocket message error:', error);
+        server.send(JSON.stringify({ type: 'error', message: 'Invalid message format' }));
       }
     });
 
     server.addEventListener('close', () => {
+      this.sessions.delete(server);
+    });
+
+    server.addEventListener('error', (error) => {
+      console.error('WebSocket error:', error);
       this.sessions.delete(server);
     });
 
@@ -102,6 +202,10 @@ export class ChatRoom {
       const messageList = [];
 
       for (const [key, value] of messages) {
+        // Ensure every message has a timestamp
+        if (!value.timestamp) {
+          value.timestamp = new Date().toISOString();
+        }
         messageList.push(value);
       }
 
@@ -123,13 +227,15 @@ export class ChatRoom {
   async sendMessage(request, corsHeaders) {
     try {
       const data = await request.json();
+      const user = request.user; // User attached during auth verification
 
       const message = {
         id: crypto.randomUUID(),
         type: 'message',
         content: data.content,
-        userId: data.userId,
-        username: data.username,
+        userId: user.id,
+        username: user.username,
+        displayName: user.displayName || user.username,
         timestamp: new Date().toISOString(),
       };
 

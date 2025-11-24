@@ -1,6 +1,9 @@
 import { ChatRoom } from './durable-objects/ChatRoom.js';
 import { UserSession } from './durable-objects/UserSession.js';
 import { CollaborativeDoc } from './durable-objects/CollaborativeDoc.js';
+import { handleAuthRoutes } from './auth/routes.js';
+import { verifyAuth, requireAuth } from './auth/config.js';
+import { createEmailService } from './auth/email.js';
 
 export { ChatRoom, UserSession, CollaborativeDoc };
 
@@ -9,11 +12,18 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // CORS headers for all responses
+    // Dynamic CORS headers for credentialed requests
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:8787',
+      // Add production origins here
+    ];
+    const requestOrigin = request.headers.get('Origin');
     const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
     };
 
     // Handle CORS preflight
@@ -22,7 +32,17 @@ export default {
     }
 
     try {
-      // API Routes
+      // Auth routes
+      if (path.startsWith('/api/auth/')) {
+        return await handleAuthRoutes(request, env, path);
+      }
+
+      // Test email endpoint (development only)
+      if (path === '/api/test-email' && request.method === 'POST' && env.ENVIRONMENT !== 'production') {
+        return await handleTestEmail(request, env, corsHeaders);
+      }
+
+      // API Routes (protected)
       if (path.startsWith('/api/')) {
         return await handleAPI(request, env, path);
       }
@@ -49,13 +69,21 @@ export default {
 };
 
 async function handleAPI(request, env, path) {
+  // Dynamic CORS headers for credentialed requests
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:8787',
+    // Add production origins here
+  ];
+  const requestOrigin = request.headers.get('Origin');
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
   };
 
-  // Chat room endpoints
+  // Chat room endpoints (require auth)
   if (path.startsWith('/api/rooms/')) {
     const roomId = path.split('/')[3];
     if (!roomId) {
@@ -71,7 +99,7 @@ async function handleAPI(request, env, path) {
     return await room.fetch(request);
   }
 
-  // User session endpoints
+  // User session endpoints (require auth)
   if (path.startsWith('/api/sessions/')) {
     const sessionId = path.split('/')[3];
     if (!sessionId) {
@@ -87,7 +115,7 @@ async function handleAPI(request, env, path) {
     return await session.fetch(request);
   }
 
-  // Collaborative document endpoints
+  // Collaborative document endpoints (require auth)
   if (path.startsWith('/api/docs/')) {
     const docId = path.split('/')[3];
     if (!docId) {
@@ -103,14 +131,28 @@ async function handleAPI(request, env, path) {
     return await doc.fetch(request);
   }
 
-  // Media upload endpoint
+  // Media upload endpoint (require auth)
   if (path === '/api/media/upload' && request.method === 'POST') {
-    return await handleMediaUpload(request, env);
+    const authResult = await requireAuth(request, env);
+    if (authResult instanceof Response) {
+      return authResult; // Auth failed
+    }
+    return await handleMediaUpload(request, env, authResult.user);
   }
 
-  // Database operations
+  // Database operations (require auth for most operations)
   if (path.startsWith('/api/db/')) {
-    return await handleDatabase(request, env, path);
+    // Public migration endpoint (for development)
+    if (path === '/api/db/migrate' && request.method === 'POST') {
+      return await handleDatabase(request, env, path);
+    }
+
+    // Other DB operations require auth
+    const authResult = await requireAuth(request, env);
+    if (authResult instanceof Response) {
+      return authResult; // Auth failed
+    }
+    return await handleDatabase(request, env, path, authResult.user);
   }
 
   return new Response(JSON.stringify({ error: 'Not Found' }), {
@@ -119,11 +161,19 @@ async function handleAPI(request, env, path) {
   });
 }
 
-async function handleMediaUpload(request, env) {
+async function handleMediaUpload(request, env, user) {
+  // Dynamic CORS headers for credentialed requests
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:8787',
+    // Add production origins here
+  ];
+  const requestOrigin = request.headers.get('Origin');
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
   };
 
   try {
@@ -147,10 +197,40 @@ async function handleMediaUpload(request, env) {
       },
     });
 
+    // Store file metadata in database
+    const fileRecord = {
+      id: crypto.randomUUID(),
+      filename: fileName,
+      originalName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      uploadedBy: user.id,
+      bucketKey: fileName,
+      createdAt: new Date().toISOString(),
+    };
+
+    await env.DB.prepare(
+      `
+      INSERT INTO media_files (id, filename, original_name, file_type, file_size, uploaded_by, bucket_key, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    )
+      .bind(
+        fileRecord.id,
+        fileRecord.filename,
+        fileRecord.originalName,
+        fileRecord.fileType,
+        fileRecord.fileSize,
+        fileRecord.uploadedBy,
+        fileRecord.bucketKey,
+        fileRecord.createdAt,
+      )
+      .run();
+
     return new Response(
       JSON.stringify({
         success: true,
-        fileName,
+        file: fileRecord,
         url: `/api/media/${fileName}`,
       }),
       {
@@ -166,85 +246,92 @@ async function handleMediaUpload(request, env) {
   }
 }
 
-async function handleDatabase(request, env, path) {
+async function handleDatabase(request, env, path, user = null) {
+  // Dynamic CORS headers for credentialed requests
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:8787',
+    // Add production origins here
+  ];
+  const requestOrigin = request.headers.get('Origin');
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
   };
 
   try {
-    // Get users
+    // Get users (requires auth)
     if (path === '/api/db/users' && request.method === 'GET') {
-      const { results } = await env.DB.prepare('SELECT * FROM users ORDER BY created_at DESC LIMIT 20').all();
+      if (!user) {
+        return new Response(JSON.stringify({ error: 'Authentication required' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { results } = await env.DB.prepare(
+        'SELECT id, username, email, display_name, email_verified, created_at FROM users ORDER BY created_at DESC LIMIT 20',
+      ).all();
       return new Response(JSON.stringify({ users: results }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Create user
+    // Create user (public registration - handled by auth routes)
     if (path === '/api/db/users' && request.method === 'POST') {
-      const body = await request.json();
-      const { username, email, displayName } = body;
-
-      if (!username || !username.trim()) {
-        return new Response(JSON.stringify({ error: 'Username is required' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      const userId = crypto.randomUUID();
-
-      try {
-        await env.DB.prepare(
-          `
-          INSERT INTO users (id, username, email, display_name)
-          VALUES (?, ?, ?, ?)
-        `,
-        )
-          .bind(userId, username.trim(), email?.trim() || null, displayName?.trim() || null)
-          .run();
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            user: { id: userId, username: username.trim(), email: email?.trim(), display_name: displayName?.trim() },
-          }),
-          {
-            status: 201,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          },
-        );
-      } catch (dbError) {
-        console.error('Database insert error:', dbError);
-        if (dbError.message.includes('UNIQUE constraint failed')) {
-          return new Response(JSON.stringify({ error: 'Username already exists' }), {
-            status: 409,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-        throw dbError;
-      }
+      return new Response(JSON.stringify({ error: 'Use /api/auth/register for user registration' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Run migration
+    // Run migration (public for development - should be secured in production)
     if (path === '/api/db/migrate' && request.method === 'POST') {
       try {
         // Check if tables exist
         const tableCheck = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='users'").first();
 
         if (!tableCheck) {
-          // Run basic table creation if they don't exist
+          // Run the migration file content (simplified version)
           await env.DB.exec(`
             CREATE TABLE users (
               id TEXT PRIMARY KEY,
               username TEXT UNIQUE NOT NULL,
-              email TEXT UNIQUE,
+              email TEXT UNIQUE NOT NULL,
               display_name TEXT,
               avatar_url TEXT,
+              email_verified BOOLEAN DEFAULT FALSE,
+              password_hash TEXT,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE auth_sessions (
+              id TEXT PRIMARY KEY,
+              user_id TEXT NOT NULL,
+              expires_at DATETIME NOT NULL,
+              token TEXT UNIQUE NOT NULL,
+              ip_address TEXT,
+              user_agent TEXT,
+              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE auth_accounts (
+              id TEXT PRIMARY KEY,
+              user_id TEXT NOT NULL,
+              provider TEXT NOT NULL,
+              provider_account_id TEXT NOT NULL,
+              access_token TEXT,
+              refresh_token TEXT,
+              expires_at DATETIME,
+              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              UNIQUE(provider, provider_account_id),
+              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             );
 
             CREATE TABLE rooms (
@@ -258,11 +345,11 @@ async function handleDatabase(request, env, path) {
               FOREIGN KEY (created_by) REFERENCES users(id)
             );
 
-            INSERT INTO users (id, username, display_name) VALUES
-              ('system', 'system', 'System'),
-              ('demo-user', 'demo', 'Demo User');
+            INSERT OR IGNORE INTO users (id, username, email, display_name, email_verified) VALUES
+              ('system', 'system', 'system@corates.com', 'System', TRUE),
+              ('demo-user', 'demo', 'demo@corates.com', 'Demo User', TRUE);
 
-            INSERT INTO rooms (id, name, description, created_by) VALUES
+            INSERT OR IGNORE INTO rooms (id, name, description, created_by) VALUES
               ('general', 'General', 'General discussion room', 'system'),
               ('random', 'Random', 'Random conversations', 'system');
           `);
@@ -290,5 +377,71 @@ async function handleDatabase(request, env, path) {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+  }
+}
+
+// Test email handler (development only)
+async function handleTestEmail(request, env, corsHeaders) {
+  try {
+    const { email, type } = await request.json();
+
+    if (!email) {
+      return new Response(JSON.stringify({ error: 'Email address required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const emailService = createEmailService(env);
+    let result;
+
+    switch (type) {
+      case 'verification':
+        result = await emailService.sendEmailVerification(
+          email,
+          'http://localhost:5173/auth/verify-email?token=test-token-12345',
+          'Test User',
+        );
+        break;
+      case 'password-reset':
+        result = await emailService.sendPasswordReset(
+          email,
+          'http://localhost:5173/auth/reset-password?token=test-token-12345',
+          'Test User',
+        );
+        break;
+      default:
+        result = await emailService.sendEmail({
+          to: email,
+          subject: 'Test Email from CoRATES',
+          html: '<h1>🎉 Test Email Success!</h1><p>This is a test email from your CoRATES application. If you received this, your email configuration is working correctly!</p>',
+          text: 'Test Email Success!\n\nThis is a test email from your CoRATES application. If you received this, your email configuration is working correctly!',
+        });
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        result,
+        message: `Test email sent to ${email}`,
+        environment: env.ENVIRONMENT,
+        realEmailSending: env.SEND_EMAILS_IN_DEV === 'true' || env.ENVIRONMENT === 'production',
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
+    );
+  } catch (error) {
+    console.error('Test email error:', error);
+    return new Response(
+      JSON.stringify({
+        error: 'Failed to send test email',
+        details: error.message,
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
+    );
   }
 }
