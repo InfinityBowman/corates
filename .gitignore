@@ -28,3 +28,13 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+
+# Cloudflare Workers secrets
+packages/workers/.dev.vars
+.dev.vars
+*.vars
+
+# Sensitive configuration files
+config/secrets.json
+.secrets/
+secrets.txt

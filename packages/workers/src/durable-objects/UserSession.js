@@ -1,3 +1,5 @@
+import { verifyAuth } from '../auth/config.js';
+
 export class UserSession {
   constructor(state, env) {
     this.state = state;
@@ -8,10 +10,18 @@ export class UserSession {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    // Dynamic CORS headers for credentialed requests
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:8787',
+      // Add production origins here
+    ];
+    const requestOrigin = request.headers.get('Origin');
     const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
     };
 
     if (request.method === 'OPTIONS') {
@@ -19,6 +29,26 @@ export class UserSession {
     }
 
     try {
+      // Verify authentication for all requests
+      const { user } = await verifyAuth(request, this.env);
+      if (!user) {
+        return new Response(JSON.stringify({ error: 'Authentication required' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Ensure user can only access their own session
+      const sessionId = await this.state.id.toString();
+      if (sessionId !== user.id) {
+        return new Response(JSON.stringify({ error: 'Access denied' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      request.user = user;
+
       // Get session data
       if (request.method === 'GET') {
         return await this.getSession(corsHeaders);

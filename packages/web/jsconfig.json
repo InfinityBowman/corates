@@ -6,7 +6,7 @@
       "@components/*": ["src/components/*"],
       "@routes/*": ["src/routes/*"],
       "@primitives/*": ["src/primitives/*"],
-      "@auth/*": ["src/auth/*"],
+      "@auth/*": ["src/auth-ui/*"],
       "@offline/*": ["src/offline/*"],
       "@api/*": ["src/api/*"]
     }
