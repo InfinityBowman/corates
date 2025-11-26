@@ -4,7 +4,7 @@
 
 import { createSignal, createEffect, onCleanup } from 'solid-js';
 import * as Y from 'yjs';
-import { createChecklist as createAMSTAR2Answers } from '../checklist/AMSTAR2Checklist.js';
+import { createChecklist as createAMSTAR2Answers } from '../AMSTAR2/checklist.js';
 
 const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
 

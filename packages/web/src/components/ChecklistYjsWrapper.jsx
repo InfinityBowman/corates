@@ -1,7 +1,7 @@
 import { createSignal, createEffect, createMemo, Show } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import AMSTAR2Checklist from './AMSTAR2Checklist.jsx';
-import useProject from '../hooks/useProject.js';
+import useProject from '../primitives/useProject.js';
 
 export default function ChecklistYjsWrapper() {
   const params = useParams();
