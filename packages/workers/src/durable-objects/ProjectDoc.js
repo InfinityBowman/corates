@@ -1,6 +1,22 @@
 import * as Y from 'yjs';
 import { verifyAuth } from '../auth/config.js';
 
+/**
+ * ProjectDoc Durable Object
+ *
+ * Holds the authoritative Y.Doc for a project with hierarchical structure:
+ *
+ * Project (this DO)
+ *   - meta: Y.Map (project metadata: name, description, createdAt, etc.)
+ *   - members: Y.Map (userId => { role, joinedAt })
+ *   - reviews: Y.Map (reviewId => {
+ *       id, name, description, createdAt, updatedAt,
+ *       checklists: Y.Map (checklistId => {
+ *         id, title, assignedTo (userId), status, createdAt, updatedAt,
+ *         answers: Y.Map (questionKey => { value, notes, updatedAt, updatedBy })
+ *       })
+ *     })
+ */
 export class ProjectDoc {
   constructor(state, env) {
     this.state = state;
@@ -12,19 +28,8 @@ export class ProjectDoc {
   async fetch(request) {
     const url = new URL(request.url);
 
-    // Dynamic CORS headers for credentialed requests
-    const allowedOrigins = ['http://localhost:5173', 'http://localhost:8787'];
-    const requestOrigin = request.headers.get('Origin');
-    const corsHeaders = {
-      'Access-Control-Allow-Origin': allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Allow-Credentials': 'true',
-    };
-
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
-    }
+    // Note: CORS headers are added by the main worker (index.js) when wrapping responses
+    // Do NOT add them here to avoid duplicate headers
 
     try {
       // For HTTP requests verify auth (unless it's an upgrade to websocket)
@@ -33,7 +38,7 @@ export class ProjectDoc {
         if (!user) {
           return new Response(JSON.stringify({ error: 'Authentication required' }), {
             status: 401,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json' },
           });
         }
         request.user = user;
@@ -46,18 +51,18 @@ export class ProjectDoc {
 
       // GET returns project-level info (list of checklist ids & metadata)
       if (request.method === 'GET') {
-        return await this.getProjectInfo(corsHeaders);
+        return await this.getProjectInfo();
       }
 
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
       });
     } catch (error) {
       console.error('ProjectDoc error:', error);
       return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
   }
@@ -184,19 +189,74 @@ export class ProjectDoc {
     return new Response(null, { status: 101, webSocket: client });
   }
 
-  async getProjectInfo(corsHeaders) {
+  /**
+   * Helper to convert Y.Map to plain object recursively
+   */
+  yMapToPlain(yMap) {
+    if (!yMap || typeof yMap.toJSON !== 'function') {
+      return yMap;
+    }
+    return yMap.toJSON();
+  }
+
+  /**
+   * Get comprehensive project info with hierarchical structure:
+   * Project -> Reviews -> Checklists -> Answers
+   */
+  async getProjectInfo() {
     await this.initializeDoc();
 
-    const checklistsMap = this.doc.getMap('checklists');
-    const ids = [];
-    for (const key of checklistsMap.keys()) {
-      const meta = checklistsMap.get(key);
-      // assume each checklist stored as a Y.Map with at least a 'title'
-      ids.push({ id: key, title: meta?.get ? meta.get('title') : null });
+    const result = {
+      id: this.state.id.toString(),
+      meta: this.yMapToPlain(this.doc.getMap('meta')),
+      members: [],
+      reviews: [],
+    };
+
+    // Get members
+    const membersMap = this.doc.getMap('members');
+    for (const [userId, value] of membersMap.entries()) {
+      result.members.push({
+        userId,
+        ...this.yMapToPlain(value),
+      });
     }
 
-    return new Response(JSON.stringify({ id: await this.state.id.toString(), checklists: ids }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Get reviews with nested checklists
+    const reviewsMap = this.doc.getMap('reviews');
+    for (const [reviewId, reviewValue] of reviewsMap.entries()) {
+      const reviewData = this.yMapToPlain(reviewValue);
+      const review = {
+        id: reviewId,
+        name: reviewData.name,
+        description: reviewData.description,
+        createdAt: reviewData.createdAt,
+        updatedAt: reviewData.updatedAt,
+        checklists: [],
+      };
+
+      // Get checklists within this review
+      const checklistsMap = reviewValue.get('checklists');
+      if (checklistsMap && checklistsMap.entries) {
+        for (const [checklistId, checklistValue] of checklistsMap.entries()) {
+          const checklistData = this.yMapToPlain(checklistValue);
+          review.checklists.push({
+            id: checklistId,
+            title: checklistData.title,
+            assignedTo: checklistData.assignedTo,
+            status: checklistData.status || 'pending',
+            createdAt: checklistData.createdAt,
+            updatedAt: checklistData.updatedAt,
+            answers: checklistData.answers || {},
+          });
+        }
+      }
+
+      result.reviews.push(review);
+    }
+
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
