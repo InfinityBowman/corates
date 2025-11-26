@@ -11,11 +11,7 @@ export class UserSession {
     const path = url.pathname;
 
     // Dynamic CORS headers for credentialed requests
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:8787',
-      // Add production origins here
-    ];
+    const allowedOrigins = ['http://localhost:5173', 'http://localhost:8787', 'https://corates.org', 'https://www.corates.org'];
     const requestOrigin = request.headers.get('Origin');
     const corsHeaders = {
       'Access-Control-Allow-Origin': allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],

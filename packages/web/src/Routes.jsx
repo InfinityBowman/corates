@@ -11,6 +11,7 @@ import MainLayout from './components/MainLayout.jsx';
 import AMSTAR2Checklist from './components/AMSTAR2Checklist.jsx';
 import ChecklistYjsWrapper from './components/ChecklistYjsWrapper.jsx';
 import UserYjsProvider from './components/UserYjsProvider.jsx';
+import ProjectView from './components/ProjectView.jsx';
 import { useBetterAuth } from './api/better-auth-store.js';
 
 const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
@@ -91,10 +92,7 @@ export default function AppRoutes() {
             <AuthenticatedRoute>
               {userId => (
                 <UserYjsProvider userId={userId} apiBase={API_BASE}>
-                  <div class='p-6'>
-                    <h1 class='text-2xl font-bold text-white mb-4'>Project View</h1>
-                    <p class='text-gray-400'>Individual project view - coming soon!</p>
-                  </div>
+                  <ProjectView userId={userId} />
                 </UserYjsProvider>
               )}
             </AuthenticatedRoute>

@@ -61,28 +61,30 @@ export const verification = sqliteTable('verification', {
 });
 
 // Your app-specific tables
-export const rooms = sqliteTable('rooms', {
+
+// Projects table (for user's research projects)
+export const projects = sqliteTable('projects', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
-  isPublic: integer('isPublic', { mode: 'boolean' }).default(true),
-  createdBy: text('createdBy').references(() => user.id),
+  createdBy: text('createdBy')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 
-export const messages = sqliteTable('messages', {
+// Project membership table (which users have access to which projects)
+export const projectMembers = sqliteTable('project_members', {
   id: text('id').primaryKey(),
-  roomId: text('roomId')
+  projectId: text('projectId')
     .notNull()
-    .references(() => rooms.id),
+    .references(() => projects.id, { onDelete: 'cascade' }),
   userId: text('userId')
     .notNull()
-    .references(() => user.id),
-  content: text('content').notNull(),
-  messageType: text('messageType').default('text'),
-  metadata: text('metadata'), // JSON string
-  createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+    .references(() => user.id, { onDelete: 'cascade' }),
+  role: text('role').default('member'), // owner, collaborator, member, viewer
+  joinedAt: integer('joinedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 
 export const mediaFiles = sqliteTable('mediaFiles', {
@@ -96,26 +98,13 @@ export const mediaFiles = sqliteTable('mediaFiles', {
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 
-export const roomMembers = sqliteTable('roomMembers', {
-  id: text('id').primaryKey(),
-  roomId: text('roomId')
-    .notNull()
-    .references(() => rooms.id),
-  userId: text('userId')
-    .notNull()
-    .references(() => user.id),
-  role: text('role').default('member'),
-  joinedAt: integer('joinedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
-});
-
 // Export all tables
 export const dbSchema = {
   user,
   session,
   account,
   verification,
-  rooms,
-  messages,
+  projects,
+  projectMembers,
   mediaFiles,
-  roomMembers,
 };

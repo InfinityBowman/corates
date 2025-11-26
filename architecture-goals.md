@@ -17,9 +17,11 @@ We will standardize on UUIDs for entity IDs. D1 is used only for the global user
 
 Client (browser) -- WebSocket/HTTP/WebAuth --> Edge Worker (auth check) --> Durable Object (per-project)
 
-Durable Object: holds Y.Doc (Yjs) for the project, validates domain constraints, and broadcasts updates to connected clients.
+Durable Object: holds Y.Doc (Yjs) for the project, validates domain constraints, and broadcasts updates to connected clients. Also holds user roles for the project: owner or member.
 
-Persistence: Users table is handled globally by the BetterAuth worker + D1. R2 is used for storing PDF documents uploaded by users for projects.
+D1 Persistence: Users table is handled globally by the BetterAuth worker + D1.
+
+R2 is used for storing PDF documents uploaded by users for projects.
 
 UI Local Persistence: Client persists Y.Doc to IndexedDB using y-indexeddb for offline support. When device reconnects, the Y.Doc merges with the DO and resolves conflicts automatically.
 
@@ -33,40 +35,68 @@ Client B ----------------------------------------|
 
 ## Data model mapping
 
-Mapping choices follow the approach of keeping per-project Y.Doc (single document) with typed collections for each logical table.
+Hierarchical Y.Doc structure per project:
 
-Top-level Y.Doc maps (example):
+```
+Project (1 Durable Object per project)
+  - meta: Y.Map { name, description, createdAt, updatedAt }
+  - members: Y.Map (userId => { role, joinedAt })
+  - reviews: Y.Map (reviewId => {
+      name, description, createdAt, updatedAt,
+      checklists: Y.Map (checklistId => {
+        title, assignedTo, status, createdAt, updatedAt,
+        answers: Y.Map (questionKey => { value, notes, updatedAt, updatedBy })
+      })
+    })
+```
 
-- meta: Y.Map (project metadata)
-- users: Y.Map (userId => Y.Map fields) — if per-project user cache is needed
-- reviews: Y.Map (reviewId => Y.Map)
-- checklists: Y.Map (checklistId => Y.Map)
-- checklist_answers: Y.Map (answerId => Y.Map) where answers is a Y.Array
-- project_members: Y.Map (userId => Y.Map({role, user_id})) OR Y.Map keyed by id if you prefer composite-string IDs
-- review_assignments: Y.Map keyed by assignmentId or userId
-
-Examples of Yjs types per entry:
+Example Yjs usage:
 
 ```js
 const ydoc = new Y.Doc();
-const reviews = ydoc.getMap('reviews');
-reviews.set('review-uuid', new Y.Map({ id: 'review-uuid', project_id: 'project-uuid', name: 'Initial review', created_at: Date.now() }));
 
-const answers = ydoc.getMap('checklist_answers');
-answers.set(
-  'answer-uuid',
-  new Y.Map({
-    id: 'answer-uuid',
-    checklist_id: 'checklist-uuid',
-    question_key: 'q1',
-    answers: new Y.Array(['yes', 'no']),
-    critical: true,
-    updated_at: Date.now(),
-  }),
+// Create a review
+const reviews = ydoc.getMap('reviews');
+const reviewId = crypto.randomUUID();
+const reviewMap = new Y.Map();
+reviewMap.set('name', 'Sleep Study Review');
+reviewMap.set('description', 'AMSTAR2 evaluation');
+reviewMap.set('createdAt', Date.now());
+reviewMap.set('checklists', new Y.Map());
+reviews.set(reviewId, reviewMap);
+
+// Add a checklist to the review
+const checklistsMap = reviewMap.get('checklists');
+const checklistId = crypto.randomUUID();
+const checklistMap = new Y.Map();
+checklistMap.set('title', 'Study 1 Assessment');
+checklistMap.set('assignedTo', 'user-uuid'); // reviewer userId
+checklistMap.set('status', 'pending'); // pending, in-progress, completed
+checklistMap.set('createdAt', Date.now());
+checklistMap.set('answers', new Y.Map());
+checklistsMap.set(checklistId, checklistMap);
+
+// Record an answer (AMSTAR2 format with boolean arrays per column)
+const answersMap = checklistMap.get('answers');
+answersMap.set(
+  'q1',
+  new Y.Map([
+    // Each question stores: answers (nested boolean arrays), critical flag, notes
+    ['answers', [[false, false, false, false], [false], [false, true]]], // matches column structure
+    ['critical', false],
+    ['notes', ''],
+    ['updatedAt', Date.now()],
+    ['updatedBy', 'user-uuid'],
+  ]),
 );
 ```
 
-Why Y.Map + Y.Array: fine-grained CRDT updates and efficient merges. Use Y.Map for key/value documents (row-like) and Y.Array for ordered, repeatable fields (answers array).
+Why this structure:
+
+- Hierarchical: Projects -> Reviews -> Checklists -> Answers
+- Fine-grained CRDT: Each level is a Y.Map for efficient merges
+- Assignments: Each checklist has `assignedTo` for reviewer assignment
+- Status tracking: Checklists have status (pending/in-progress/completed)
 
 ---
 
