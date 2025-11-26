@@ -5,18 +5,13 @@ compatibility_flags = ["nodejs_compat"]
 
 # Durable Objects
 [[durable_objects.bindings]]
-name = "CHAT_ROOM"
-class_name = "ChatRoom"
-script_name = "corates-workers"
-
-[[durable_objects.bindings]]
 name = "USER_SESSION"
 class_name = "UserSession"
 script_name = "corates-workers"
 
 [[durable_objects.bindings]]
-name = "COLLABORATIVE_DOC"
-class_name = "CollaborativeDoc"
+name = "PROJECT_DOC"
+class_name = "ProjectDoc"
 script_name = "corates-workers"
 
 # D1 Database

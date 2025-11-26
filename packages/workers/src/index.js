@@ -1,11 +1,10 @@
-import { ChatRoom } from './durable-objects/ChatRoom.js';
 import { UserSession } from './durable-objects/UserSession.js';
-import { CollaborativeDoc } from './durable-objects/CollaborativeDoc.js';
+import { ProjectDoc } from './durable-objects/ProjectDoc.js';
 import { handleAuthRoutes } from './auth/routes.js';
 import { verifyAuth, requireAuth } from './auth/config.js';
 import { createEmailService } from './auth/email.js';
 
-export { ChatRoom, UserSession, CollaborativeDoc };
+export { UserSession, ProjectDoc };
 
 export default {
   async fetch(request, env, ctx) {
@@ -83,20 +82,37 @@ async function handleAPI(request, env, path) {
     'Access-Control-Allow-Credentials': 'true',
   };
 
-  // Chat room endpoints (require auth)
-  if (path.startsWith('/api/rooms/')) {
-    const roomId = path.split('/')[3];
-    if (!roomId) {
-      return new Response(JSON.stringify({ error: 'Room ID required' }), {
+  // Project document endpoints (require auth)
+  if (path.startsWith('/api/project/')) {
+    const projectId = path.split('/')[3];
+    if (!projectId) {
+      return new Response(JSON.stringify({ error: 'Project ID required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const id = env.CHAT_ROOM.idFromName(roomId);
-    const room = env.CHAT_ROOM.get(id);
+    const id = env.PROJECT_DOC.idFromName(projectId);
+    const projectDoc = env.PROJECT_DOC.get(id);
 
-    return await room.fetch(request);
+    const response = await projectDoc.fetch(request);
+
+    // Handle WebSocket upgrade responses directly (status 101)
+    if (response.status === 101) {
+      return response;
+    }
+
+    // Ensure CORS headers are added to the response
+    const corsResponse = new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: {
+        ...Object.fromEntries(response.headers.entries()),
+        ...corsHeaders,
+      },
+    });
+
+    return corsResponse;
   }
 
   // User session endpoints (require auth)
@@ -112,39 +128,43 @@ async function handleAPI(request, env, path) {
     const id = env.USER_SESSION.idFromName(sessionId);
     const session = env.USER_SESSION.get(id);
 
-    return await session.fetch(request);
-  }
+    const response = await session.fetch(request);
 
-  // Collaborative document endpoints (require auth)
-  if (path.startsWith('/api/docs/')) {
-    const docId = path.split('/')[3];
-    if (!docId) {
-      return new Response(JSON.stringify({ error: 'Document ID required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // Handle WebSocket upgrade responses directly (status 101)
+    if (response.status === 101) {
+      return response;
     }
 
-    const id = env.COLLABORATIVE_DOC.idFromName(docId);
-    const doc = env.COLLABORATIVE_DOC.get(id);
+    // Ensure CORS headers are added to the response
+    const corsResponse = new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: {
+        ...Object.fromEntries(response.headers.entries()),
+        ...corsHeaders,
+      },
+    });
 
-    return await doc.fetch(request);
-  }
-
-  // Media upload endpoint (require auth)
-  if (path === '/api/media/upload' && request.method === 'POST') {
-    const authResult = await requireAuth(request, env);
-    if (authResult instanceof Response) {
-      return authResult; // Auth failed
-    }
-    return await handleMediaUpload(request, env, authResult.user);
+    return corsResponse;
   }
 
   // Database operations (require auth for most operations)
   if (path.startsWith('/api/db/')) {
     // Public migration endpoint (for development)
     if (path === '/api/db/migrate' && request.method === 'POST') {
-      return await handleDatabase(request, env, path);
+      const response = await handleDatabase(request, env, path);
+
+      // Ensure CORS headers are added to database responses
+      const corsResponse = new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: {
+          ...Object.fromEntries(response.headers.entries()),
+          ...corsHeaders,
+        },
+      });
+
+      return corsResponse;
     }
 
     // Other DB operations require auth
@@ -152,98 +172,139 @@ async function handleAPI(request, env, path) {
     if (authResult instanceof Response) {
       return authResult; // Auth failed
     }
-    return await handleDatabase(request, env, path, authResult.user);
+
+    const response = await handleDatabase(request, env, path, authResult.user);
+
+    // Ensure CORS headers are added to database responses
+    const corsResponse = new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: {
+        ...Object.fromEntries(response.headers.entries()),
+        ...corsHeaders,
+      },
+    });
+
+    return corsResponse;
+  }
+
+  // Project creation endpoint (require auth)
+  if (path === '/api/projects' && request.method === 'POST') {
+    const authResult = await requireAuth(request, env);
+    if (authResult instanceof Response) {
+      return authResult; // Auth failed
+    }
+
+    try {
+      const { name, description } = await request.json();
+
+      if (!name || !name.trim()) {
+        return new Response(JSON.stringify({ error: 'Project name is required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const projectId = crypto.randomUUID();
+      const now = Math.floor(Date.now() / 1000);
+
+      // Create the project
+      await env.DB.prepare(
+        `
+        INSERT INTO projects (id, name, description, createdBy, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `,
+      )
+        .bind(projectId, name.trim(), description?.trim() || null, authResult.user.id, now, now)
+        .run();
+
+      // Add the creator as owner
+      await env.DB.prepare(
+        `
+        INSERT INTO project_members (id, projectId, userId, role, joinedAt)
+        VALUES (?, ?, ?, 'owner', ?)
+      `,
+      )
+        .bind(crypto.randomUUID(), projectId, authResult.user.id, now)
+        .run();
+
+      // Return the created project
+      const newProject = {
+        id: projectId,
+        name: name.trim(),
+        description: description?.trim() || null,
+        role: 'owner',
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      return new Response(JSON.stringify(newProject), {
+        status: 201,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      console.error('Error creating project:', error);
+      return new Response(JSON.stringify({ error: 'Failed to create project' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
+  // User projects endpoint - fetch projects user has access to
+  if (path.startsWith('/api/users/') && path.includes('/projects')) {
+    const userId = path.split('/')[3];
+    if (!userId) {
+      return new Response(JSON.stringify({ error: 'User ID required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Verify user can access their own projects (or admin access)
+    const authResult = await requireAuth(request, env);
+    if (authResult instanceof Response) {
+      return authResult; // Auth failed
+    }
+
+    // Only allow users to access their own projects
+    if (authResult.user.id !== userId) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    try {
+      // Query user's projects from D1
+      const { results } = await env.DB.prepare(
+        `
+        SELECT p.id, p.name, p.description, pm.role, p.createdAt, p.updatedAt
+        FROM projects p
+        JOIN project_members pm ON p.id = pm.projectId
+        WHERE pm.userId = ?
+        ORDER BY p.updatedAt DESC
+      `,
+      )
+        .bind(userId)
+        .all();
+
+      return new Response(JSON.stringify(results), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      console.error('Error fetching user projects:', error);
+      return new Response(JSON.stringify({ error: 'Failed to fetch projects' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
   }
 
   return new Response(JSON.stringify({ error: 'Not Found' }), {
     status: 404,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
-}
-
-async function handleMediaUpload(request, env, user) {
-  // Dynamic CORS headers for credentialed requests
-  const allowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:8787',
-    // Add production origins here
-  ];
-  const requestOrigin = request.headers.get('Origin');
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
-  };
-
-  try {
-    const formData = await request.formData();
-    const file = formData.get('file');
-
-    if (!file) {
-      return new Response(JSON.stringify({ error: 'No file provided' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Generate unique filename
-    const fileName = `${Date.now()}-${file.name}`;
-
-    // Upload to R2
-    await env.MEDIA_BUCKET.put(fileName, file.stream(), {
-      httpMetadata: {
-        contentType: file.type,
-      },
-    });
-
-    // Store file metadata in database
-    const fileRecord = {
-      id: crypto.randomUUID(),
-      filename: fileName,
-      originalName: file.name,
-      fileType: file.type,
-      fileSize: file.size,
-      uploadedBy: user.id,
-      bucketKey: fileName,
-      createdAt: new Date().toISOString(),
-    };
-
-    await env.DB.prepare(
-      `
-      INSERT INTO media_files (id, filename, original_name, file_type, file_size, uploaded_by, bucket_key, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `,
-    )
-      .bind(
-        fileRecord.id,
-        fileRecord.filename,
-        fileRecord.originalName,
-        fileRecord.fileType,
-        fileRecord.fileSize,
-        fileRecord.uploadedBy,
-        fileRecord.bucketKey,
-        fileRecord.createdAt,
-      )
-      .run();
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        file: fileRecord,
-        url: `/api/media/${fileName}`,
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    );
-  } catch (error) {
-    console.error('Media upload error:', error);
-    return new Response(JSON.stringify({ error: 'Upload failed' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
 }
 
 async function handleDatabase(request, env, path, user = null) {
@@ -291,68 +352,19 @@ async function handleDatabase(request, env, path, user = null) {
     if (path === '/api/db/migrate' && request.method === 'POST') {
       try {
         // Check if tables exist
-        const tableCheck = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='users'").first();
+        const tableCheck = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='user'").first();
 
         if (!tableCheck) {
-          // Run the migration file content (simplified version)
-          await env.DB.exec(`
-            CREATE TABLE users (
-              id TEXT PRIMARY KEY,
-              username TEXT UNIQUE NOT NULL,
-              email TEXT UNIQUE NOT NULL,
-              display_name TEXT,
-              avatar_url TEXT,
-              email_verified BOOLEAN DEFAULT FALSE,
-              password_hash TEXT,
-              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE TABLE auth_sessions (
-              id TEXT PRIMARY KEY,
-              user_id TEXT NOT NULL,
-              expires_at DATETIME NOT NULL,
-              token TEXT UNIQUE NOT NULL,
-              ip_address TEXT,
-              user_agent TEXT,
-              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-            );
-
-            CREATE TABLE auth_accounts (
-              id TEXT PRIMARY KEY,
-              user_id TEXT NOT NULL,
-              provider TEXT NOT NULL,
-              provider_account_id TEXT NOT NULL,
-              access_token TEXT,
-              refresh_token TEXT,
-              expires_at DATETIME,
-              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              UNIQUE(provider, provider_account_id),
-              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-            );
-
-            CREATE TABLE rooms (
-              id TEXT PRIMARY KEY,
-              name TEXT NOT NULL,
-              description TEXT,
-              is_public BOOLEAN DEFAULT 1,
-              created_by TEXT,
-              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              FOREIGN KEY (created_by) REFERENCES users(id)
-            );
-
-            INSERT OR IGNORE INTO users (id, username, email, display_name, email_verified) VALUES
-              ('system', 'system', 'system@corates.com', 'System', TRUE),
-              ('demo-user', 'demo', 'demo@corates.com', 'Demo User', TRUE);
-
-            INSERT OR IGNORE INTO rooms (id, name, description, created_by) VALUES
-              ('general', 'General', 'General discussion room', 'system'),
-              ('random', 'Random', 'Random conversations', 'system');
-          `);
+          // Use the consolidated migration file from migrations folder
+          return new Response(
+            JSON.stringify({
+              success: false,
+              message: 'Please run: pnpm db:migrate in the workers directory',
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            },
+          );
         }
 
         return new Response(JSON.stringify({ success: true, message: 'Migration completed' }), {

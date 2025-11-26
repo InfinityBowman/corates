@@ -14,8 +14,8 @@ export function createAuth(env) {
 
   // Check if we're in production environment
   const isProduction = env.ENVIRONMENT === 'production';
-  const sendEmails = env.SEND_EMAILS_IN_DEV === 'true' || isProduction;
-  console.log(`Email sending is ${sendEmails ? 'ENABLED' : 'DISABLED'}`, env.SEND_EMAILS_IN_DEV);
+  // const sendEmails = env.SEND_EMAILS_IN_DEV === 'true' || isProduction;
+  // console.log(`Email sending is ${sendEmails ? 'ENABLED' : 'DISABLED'}`, env.SEND_EMAILS_IN_DEV);
 
   return betterAuth({
     database: drizzleAdapter(db, {
@@ -30,15 +30,19 @@ export function createAuth(env) {
 
     emailAndPassword: {
       enabled: true,
-      requireEmailVerification: sendEmails,
+      requireEmailVerification: true,
       minPasswordLength: 8,
     },
     // Add email verification and password reset functionality
     emailVerification: {
-      sendOnSignUp: sendEmails,
-      sendOnSignIn: sendEmails,
+      sendOnSignUp: true,
+      sendOnSignIn: true,
       autoSignInAfterVerification: true,
       sendVerificationEmail: async ({ user, url }) => {
+        console.log('📧 EMAIL VERIFICATION LINK (click to verify):');
+        console.log('🔗', url);
+        console.log('📨 Sending to:', user.email);
+        console.log('👤 For user:', user.displayName || user.username || user.name);
         return await emailService.sendEmailVerification(user.email, url, user.displayName || user.username || user.name);
       },
     },
@@ -46,6 +50,10 @@ export function createAuth(env) {
     resetPassword: {
       enabled: true,
       sendEmail: async ({ user, url, token }) => {
+        console.log('🔑 PASSWORD RESET LINK (click to reset):');
+        console.log('🔗', url);
+        console.log('📨 Sending to:', user.email);
+        console.log('👤 For user:', user.displayName || user.username || user.name);
         return await emailService.sendPasswordReset(user.email, url, user.displayName || user.username || user.name);
       },
     },

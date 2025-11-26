@@ -1,6 +1,6 @@
 import { createSignal, onMount, onCleanup } from 'solid-js';
 import { useNavigate, useSearchParams } from '@solidjs/router';
-import { useBetterAuth } from './BetterAuthStore.js';
+import { useBetterAuth } from '../api/better-auth-store.js';
 import { AiOutlineLoading3Quarters, AiOutlineMail } from 'solid-icons/ai';
 
 export default function CheckEmail() {
