@@ -2,12 +2,20 @@
  * CORS middleware utilities
  */
 
-export const allowedOrigins = [
+export let allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:8787',
   'https://corates.org',
   'https://www.corates.org',
 ];
+
+/**
+ * Set allowed origins dynamically
+ * @param {string[]} origins - Array of allowed origin URLs
+ */
+export function setAllowedOrigins(origins) {
+  allowedOrigins = origins;
+}
 
 /**
  * Get CORS headers for a request

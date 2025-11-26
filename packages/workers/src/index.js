@@ -14,6 +14,7 @@ import {
   wrapWithCors,
   jsonResponse,
   errorResponse,
+  setAllowedOrigins,
 } from './middleware/cors.js';
 import { handleProjects } from './routes/projects.js';
 import { handleMembers } from './routes/members.js';
@@ -26,6 +27,10 @@ export { UserSession, ProjectDoc };
 
 export default {
   async fetch(request, env, ctx) {
+    // Set allowed origins from environment
+    if (env.ALLOWED_ORIGINS) {
+      setAllowedOrigins(env.ALLOWED_ORIGINS.split(','));
+    }
     const url = new URL(request.url);
     const path = url.pathname;
 
