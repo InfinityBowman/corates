@@ -188,7 +188,7 @@ class ProjectDoc {
     // DO-side validation hooks here for domain invariants
 
     // Broadcast to other clients
-    this.clients.forEach((c) => c !== client && c.send(update));
+    this.clients.forEach(c => c !== client && c.send(update));
   }
 }
 ```
@@ -207,7 +207,10 @@ const answers = ydoc.getMap('checklist_answers');
 
 // create a new answer
 const ansId = uuidv4();
-answers.set(ansId, new Y.Map({ id: ansId, checklist_id, question_key, answers: new Y.Array(['yes']), critical: false }));
+answers.set(
+  ansId,
+  new Y.Map({ id: ansId, checklist_id, question_key, answers: new Y.Array(['yes']), critical: false }),
+);
 
 // Yjs + provider handles sync, DO enforces validation.
 ```
