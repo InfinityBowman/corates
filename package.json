@@ -4,16 +4,16 @@
   "private": true,
   "description": "Cloudflare Workers/Durable Objects web app",
   "scripts": {
-    "dev": "pnpm --filter web dev",
+    "dev": "concurrently -k \"pnpm dev:dns\" \"pnpm --filter web dev\"",
     "relay": "pnpm --filter smtp-relay dev",
     "dev:workers": "pnpm --filter workers dev",
     "dev:all": "concurrently -k -n relay,web -c yellow,blue \"pnpm --filter smtp-relay run dev\" \"pnpm --filter web dev\"",
-    "clear-workers": "rm -rf packages/workers/.wrangler/state",
     "build": "pnpm --recursive build",
     "deploy": "pnpm --recursive deploy",
     "format": "prettier --write .",
     "test": "pnpm --recursive test",
-    "prepare": "husky"
+    "dev:dns": "sudo node scripts/swap-dns.js dev & caddy run",
+    "prod:dns": "sudo node scripts/swap-dns.js prod"
   },
   "keywords": [
     "cloudflare",
@@ -25,7 +25,6 @@
   "license": "GNU GPLv3",
   "devDependencies": {
     "concurrently": "^9.2.1",
-    "husky": "^9.1.7",
     "prettier": "^3.6.2"
   },
   "engines": {

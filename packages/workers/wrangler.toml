@@ -33,7 +33,8 @@ id = "your-kv-namespace-id-here"
 # Environment variables (non-sensitive only)
 [vars]
 ENVIRONMENT = "development"
-AUTH_BASE_URL = "http://localhost:8787"
+AUTH_BASE_URL = "https://www.corates.org"
+ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:8787,https://corates.org,https://www.corates.org"
 # Email configuration (non-sensitive)
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = "587"
@@ -42,10 +43,15 @@ EMAIL_FROM_NAME = "CoRATES Development"
 # For production deployment
 [env.production]
 name = "corates-workers-prod"
+routes = [
+  { pattern = "www.corates.org/api/*", zone_name = "corates.org" },
+  { pattern = "corates.org/api/*", zone_name = "corates.org" }
+]
 
 [env.production.vars]
 ENVIRONMENT = "production"
-AUTH_BASE_URL = "https://your-production-domain.com"
+AUTH_BASE_URL = "https://www.corates.org"
+ALLOWED_ORIGINS = "https://corates.org,https://www.corates.org"
 # Email configuration (non-sensitive)
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = "587"

@@ -94,6 +94,9 @@ export function createAuth(env) {
     trustedOrigins: [
       'http://localhost:5173', // Vite dev server
       'http://localhost:8787', // Worker dev server
+      'https://corates.org',
+      'https://www.corates.org',
+      'https://api.corates.org',
       env.AUTH_BASE_URL || 'http://localhost:8787',
     ],
 

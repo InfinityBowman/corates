@@ -1,0 +1,16 @@
+# Caddyfile
+
+corates.org, www.corates.org { # Use a local trusted certificate
+tls internal
+
+    # Proxy API requests to workers
+    handle /api/* {
+        reverse_proxy localhost:8787
+    }
+
+    # Reverse proxy everything else to Vite dev server
+    handle {
+        reverse_proxy localhost:5173
+    }
+
+}
