@@ -38,7 +38,7 @@ export default function Navbar() {
         <div class='flex items-center space-x-4'>
           <A
             href='/dashboard'
-            class='text-xl font-bold bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent hover:from-blue-700 hover:to-indigo-700 transition-colors'
+            class='text-xl font-bold text-blue-600 hover:text-blue-700 transition-colors'
           >
             CoRATES
           </A>
@@ -80,7 +80,7 @@ export default function Navbar() {
               </A>
               <A
                 href='/signup'
-                class='bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg transition-all font-medium shadow-md'
+                class='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all font-medium shadow-md'
               >
                 Sign Up
               </A>
@@ -93,7 +93,7 @@ export default function Navbar() {
                 onClick={() => setShowUserMenu(!showUserMenu())}
                 class='flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors px-3 py-2 rounded-md hover:bg-gray-100'
               >
-                <div class='w-8 h-8 bg-linear-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-medium'>
+                <div class='w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium'>
                   {user()?.name?.charAt(0).toUpperCase() ||
                     user()?.email?.charAt(0).toUpperCase() ||
                     'U'}

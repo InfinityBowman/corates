@@ -74,7 +74,7 @@ export default function ProjectDashboard({ apiBase, userId }) {
           <p class='text-gray-500 mt-1'>Manage your research projects and AMSTAR2 checklists</p>
         </div>
         <button
-          class='inline-flex items-center px-4 py-2 bg-linear-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg gap-2'
+          class='inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg gap-2'
           onClick={() => setShowCreateForm(!showCreateForm())}
         >
           <span class='text-lg'>+</span>
@@ -117,7 +117,7 @@ export default function ProjectDashboard({ apiBase, userId }) {
             <button
               onClick={createProject}
               disabled={isCreating() || !newProjectName().trim()}
-              class='inline-flex items-center px-4 py-2 bg-linear-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200 shadow-md'
+              class='inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-md'
             >
               {isCreating() ? 'Creating...' : 'Create Project'}
             </button>

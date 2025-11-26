@@ -10,6 +10,11 @@
   - Split functionality into logically grouped modules.
   - Each file should ideally handle one coherent responsibility.
 
+## Additional References
+
+- The architecture-goals.md file contains relevant architecture and design patterns to follow.
+- The style-guide.md file contains additional style and formatting guidelines.
+
 ## Project Guidelines
 
 - Maintain consistent formatting and indentation.
@@ -25,15 +30,25 @@
 
 ## SolidJS Specific
 
-Destructuring props
+### Destructuring props
+
 With Solid, destructuring props is not recommended as it can break reactivity. Instead, you should access props directly from the props object, or wrap them in a function to ensure they are always up-to-date:
 
+```js
 function MyComponent(props) {
-const { name } = props; // ❌: breaks reactivity and will not update when the prop value changes
-const name = props.name; // ❌: another example of breaking reactivity
-const name = () => props.name; // ✓: by wrapping `props.name` into a function, `name()` always retrieves its current value
+  const { name } = props; // ❌: breaks reactivity and will not update when the prop value changes
+  const name = props.name; // ❌: another example of breaking reactivity
+  const name = () => props.name; // ✓: by wrapping `props.name` into a function, `name()` always retrieves its current value
 
-// or
-return <div>{props.name}</div>; // ✓: directly accessing props maintains reactivity
-
+  // or
+  return <div>{props.name}</div>; // ✓: directly accessing props maintains reactivity
 }
+```
+
+### Using createMemo for derived values
+
+When you need to compute a value based on props or state, use `createMemo` to ensure it updates reactively
+
+### Primitives
+
+You may create reusable logic in "primitives" (hooks) that can be shared across components. This keeps components clean and focused on rendering.

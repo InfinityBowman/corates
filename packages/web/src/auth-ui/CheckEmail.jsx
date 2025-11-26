@@ -122,27 +122,27 @@ export default function CheckEmail() {
   };
 
   return (
-    <div class='h-full bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 py-6 sm:py-12'>
+    <div class='h-full bg-blue-50 flex items-center justify-center px-4 py-6 sm:py-12'>
       <div class='w-full max-w-md sm:max-w-xl bg-white rounded-xl sm:rounded-3xl shadow-2xl p-6 sm:p-12 text-center space-y-6 border border-gray-100'>
         {loading() ?
           <>
             <div class='flex justify-center'>
-              <AiOutlineLoading3Quarters class='animate-spin text-indigo-600' size={48} />
+              <AiOutlineLoading3Quarters class='animate-spin text-blue-600' size={48} />
             </div>
             <h2 class='text-xl sm:text-2xl font-bold text-gray-900'>Email Verified!</h2>
             <p class='text-gray-600 text-sm sm:text-base'>Redirecting you to the dashboard...</p>
           </>
         : <>
             <div class='flex justify-center'>
-              <div class='bg-indigo-100 p-4 rounded-full'>
-                <AiOutlineMail class='text-indigo-600' size={48} />
+              <div class='bg-blue-100 p-4 rounded-full'>
+                <AiOutlineMail class='text-blue-600' size={48} />
               </div>
             </div>
 
             <div>
               <h2 class='text-xl sm:text-2xl font-bold text-gray-900 mb-2'>Check Your Email</h2>
               <p class='text-gray-600 text-sm sm:text-base'>We've sent a verification email to:</p>
-              <p class='text-indigo-600 font-semibold text-sm sm:text-base mt-1'>{email()}</p>
+              <p class='text-blue-600 font-semibold text-sm sm:text-base mt-1'>{email()}</p>
             </div>
 
             <div class='space-y-4'>
@@ -168,7 +168,7 @@ export default function CheckEmail() {
               <button
                 onClick={handleResendEmail}
                 disabled={resending()}
-                class='w-full py-2 sm:py-3 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg sm:rounded-xl shadow transition disabled:opacity-50 flex items-center justify-center'
+                class='w-full py-2 sm:py-3 text-sm sm:text-base bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg sm:rounded-xl shadow transition disabled:opacity-50 flex items-center justify-center'
               >
                 {resending() ?
                   <div class='flex items-center'>

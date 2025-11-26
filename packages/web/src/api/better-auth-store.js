@@ -24,16 +24,16 @@ function createBetterAuthStore() {
     }
   });
 
-  createEffect(() => {
-    console.log(
-      'Session loading:',
-      session().isPending,
-      'User:',
-      session().data?.user,
-      'isLoggedIn:',
-      isLoggedIn(),
-    );
-  });
+  // createEffect(() => {
+  //   console.log(
+  //     'Session loading:',
+  //     session().isPending,
+  //     'User:',
+  //     session().data?.user,
+  //     'isLoggedIn:',
+  //     isLoggedIn(),
+  //   );
+  // });
 
   // Listen for tab visibility changes to refresh session
   createEffect(() => {

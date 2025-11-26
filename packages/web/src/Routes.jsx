@@ -9,7 +9,7 @@ import AuthLayout from './components/AuthLayout.jsx';
 import MainLayout from './components/MainLayout.jsx';
 import AMSTAR2Checklist from './components/AMSTAR2Checklist.jsx';
 import ChecklistYjsWrapper from './components/ChecklistYjsWrapper.jsx';
-import ProjectView from './components/ProjectView.jsx';
+import ProjectView from './components/project/ProjectView.jsx';
 
 export const BASEPATH = import.meta.env.VITE_BASEPATH || '/';
 

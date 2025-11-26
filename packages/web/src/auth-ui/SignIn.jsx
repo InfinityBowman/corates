@@ -62,7 +62,7 @@ export default function SignIn() {
   }
 
   return (
-    <div class='h-full bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 py-8 sm:py-12'>
+    <div class='h-full bg-blue-50 flex items-center justify-center px-4 py-8 sm:py-12'>
       <form
         aria-labelledby='signin-heading'
         onSubmit={handleSubmit}
@@ -90,7 +90,7 @@ export default function SignIn() {
             spellCheck='false'
             value={email()}
             onInput={e => setEmail(e.target.value)}
-            class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition'
+            class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
             required
             id='email-input'
             placeholder='you@example.com'
@@ -116,7 +116,7 @@ export default function SignIn() {
 
         <button
           type='submit'
-          class='w-full py-2 sm:py-3 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg sm:rounded-xl shadow transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
+          class='w-full py-2 sm:py-3 text-sm sm:text-base bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg sm:rounded-xl shadow transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
           disabled={loading()}
         >
           <AnimatedShow when={loading()} fallback={'Sign In'}>
@@ -130,7 +130,7 @@ export default function SignIn() {
         <div class='text-center mt-1 sm:mt-2'>
           <a
             href='/reset-password'
-            class='text-indigo-600 hover:underline text-xs sm:text-sm font-semibold'
+            class='text-blue-600 hover:underline text-xs sm:text-sm font-semibold'
             onClick={e => {
               e.preventDefault();
               navigate('/reset-password');
@@ -144,7 +144,7 @@ export default function SignIn() {
           Don&apos;t have an account?{' '}
           <a
             href='/signup'
-            class='text-indigo-600 hover:underline font-semibold'
+            class='text-blue-600 hover:underline font-semibold'
             onClick={e => {
               e.preventDefault();
               navigate('/signup');
