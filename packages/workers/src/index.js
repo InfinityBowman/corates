@@ -8,7 +8,13 @@ import { UserSession } from './durable-objects/UserSession.js';
 import { ProjectDoc } from './durable-objects/ProjectDoc.js';
 import { handleAuthRoutes } from './auth/routes.js';
 import { requireAuth } from './auth/config.js';
-import { getCorsHeaders, handlePreflight, wrapWithCors, jsonResponse, errorResponse } from './middleware/cors.js';
+import {
+  getCorsHeaders,
+  handlePreflight,
+  wrapWithCors,
+  jsonResponse,
+  errorResponse,
+} from './middleware/cors.js';
 import { handleProjects } from './routes/projects.js';
 import { handleMembers } from './routes/members.js';
 import { handleUsers } from './routes/users.js';
@@ -35,7 +41,11 @@ export default {
       }
 
       // Test email endpoint (development only)
-      if (path === '/api/test-email' && request.method === 'POST' && env.ENVIRONMENT !== 'production') {
+      if (
+        path === '/api/test-email' &&
+        request.method === 'POST' &&
+        env.ENVIRONMENT !== 'production'
+      ) {
         return await handleTestEmail(request, env);
       }
 

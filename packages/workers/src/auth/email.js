@@ -87,7 +87,7 @@ export function createEmailService(env) {
             content: [
               { type: 'text/plain', value: text },
               { type: 'text/html', value: html },
-            ].filter((c) => c.value),
+            ].filter(c => c.value),
           }),
         });
 
@@ -136,7 +136,9 @@ export function createEmailService(env) {
     console.log(`Sending email verification to: ${to} with URL: ${verificationUrl}`);
     const subject = 'Verify Your Email Address - CoRATES';
     const name = userDisplayName || 'there';
-    const { getVerificationEmailHtml, getVerificationEmailText } = await import('./emailTemplates.js');
+    const { getVerificationEmailHtml, getVerificationEmailText } = await import(
+      './emailTemplates.js'
+    );
     const html = getVerificationEmailHtml({ name, subject, verificationUrl });
     const text = getVerificationEmailText({ name, verificationUrl });
     return await sendEmail({ to, subject, html, text });
@@ -153,7 +155,9 @@ export function createEmailService(env) {
     console.log(`Sending password reset to: ${to} with URL: ${resetUrl}`);
     const subject = 'Reset Your Password - CoRATES';
     const name = userDisplayName || 'there';
-    const { getPasswordResetEmailHtml, getPasswordResetEmailText } = await import('./emailTemplates.js');
+    const { getPasswordResetEmailHtml, getPasswordResetEmailText } = await import(
+      './emailTemplates.js'
+    );
     const html = getPasswordResetEmailHtml({ name, subject, resetUrl });
     const text = getPasswordResetEmailText({ name, resetUrl });
     return await sendEmail({ to, subject, html, text });
