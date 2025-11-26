@@ -70,11 +70,11 @@ export default function ProjectDashboard({ apiBase, userId }) {
       {/* Header */}
       <div class='flex justify-between items-center'>
         <div>
-          <h1 class='text-2xl font-bold text-white'>My Projects</h1>
-          <p class='text-gray-400 mt-1'>Manage your research projects and AMSTAR2 checklists</p>
+          <h1 class='text-2xl font-bold text-gray-900'>My Projects</h1>
+          <p class='text-gray-500 mt-1'>Manage your research projects and AMSTAR2 checklists</p>
         </div>
         <button
-          class='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2'
+          class='inline-flex items-center px-4 py-2 bg-linear-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg gap-2'
           onClick={() => setShowCreateForm(!showCreateForm())}
         >
           <span class='text-lg'>+</span>
@@ -84,23 +84,23 @@ export default function ProjectDashboard({ apiBase, userId }) {
 
       {/* Create Project Form */}
       <Show when={showCreateForm()}>
-        <div class='bg-gray-800 p-6 rounded-lg border border-gray-700'>
-          <h3 class='text-lg font-semibold text-white mb-4'>Create New Project</h3>
+        <div class='bg-white p-6 rounded-lg border border-gray-200 shadow-sm'>
+          <h3 class='text-lg font-semibold text-gray-900 mb-4'>Create New Project</h3>
 
           <div class='space-y-4'>
             <div>
-              <label class='block text-sm font-medium text-gray-300 mb-2'>Project Name</label>
+              <label class='block text-sm font-semibold text-gray-700 mb-2'>Project Name</label>
               <input
                 type='text'
                 placeholder='e.g., Sleep Study Meta-Analysis'
                 value={newProjectName()}
                 onInput={e => setNewProjectName(e.target.value)}
-                class='w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500'
+                class='w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
               />
             </div>
 
             <div>
-              <label class='block text-sm font-medium text-gray-300 mb-2'>
+              <label class='block text-sm font-semibold text-gray-700 mb-2'>
                 Description (Optional)
               </label>
               <textarea
@@ -108,7 +108,7 @@ export default function ProjectDashboard({ apiBase, userId }) {
                 value={newProjectDescription()}
                 onInput={e => setNewProjectDescription(e.target.value)}
                 rows='3'
-                class='w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500'
+                class='w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
               />
             </div>
           </div>
@@ -117,13 +117,13 @@ export default function ProjectDashboard({ apiBase, userId }) {
             <button
               onClick={createProject}
               disabled={isCreating() || !newProjectName().trim()}
-              class='bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors'
+              class='inline-flex items-center px-4 py-2 bg-linear-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200 shadow-md'
             >
               {isCreating() ? 'Creating...' : 'Create Project'}
             </button>
             <button
               onClick={() => setShowCreateForm(false)}
-              class='bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors'
+              class='px-4 py-2 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:border-blue-300 hover:text-blue-600 transition-colors'
             >
               Cancel
             </button>
@@ -137,18 +137,18 @@ export default function ProjectDashboard({ apiBase, userId }) {
           when={!projects.loading}
           fallback={
             <div class='col-span-full text-center py-8'>
-              <div class='text-gray-400'>Loading projects...</div>
+              <div class='text-gray-500'>Loading projects...</div>
             </div>
           }
         >
           <Show
             when={projects() && projects().length > 0}
             fallback={
-              <div class='col-span-full text-center py-12'>
-                <div class='text-gray-400 mb-4'>No projects yet</div>
+              <div class='col-span-full text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300'>
+                <div class='text-gray-500 mb-4'>No projects yet</div>
                 <button
                   onClick={() => setShowCreateForm(true)}
-                  class='text-blue-400 hover:text-blue-300 underline'
+                  class='text-blue-600 hover:text-blue-700 font-medium'
                 >
                   Create your first project
                 </button>
@@ -157,22 +157,24 @@ export default function ProjectDashboard({ apiBase, userId }) {
           >
             <For each={projects()}>
               {project => (
-                <div class='bg-gray-800 border border-gray-700 rounded-lg p-6 hover:border-gray-600 transition-colors'>
+                <div class='bg-white border border-gray-200 rounded-lg shadow-sm p-6 hover:shadow-md hover:border-gray-300 transition-all duration-200 group'>
                   <div class='mb-4'>
-                    <h3 class='text-lg font-semibold text-white mb-2'>{project.name}</h3>
+                    <h3 class='text-lg font-semibold text-gray-900 mb-2'>{project.name}</h3>
                     <Show when={project.description}>
-                      <p class='text-gray-400 text-sm line-clamp-3'>{project.description}</p>
+                      <p class='text-gray-500 text-sm line-clamp-3'>{project.description}</p>
                     </Show>
                   </div>
 
                   <div class='flex items-center justify-between text-xs text-gray-500 mb-4'>
-                    <span class='bg-gray-700 px-2 py-1 rounded capitalize'>{project.role}</span>
+                    <span class='inline-flex items-center px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-800 capitalize'>
+                      {project.role}
+                    </span>
                     <span>{new Date(project.createdAt * 1000).toLocaleDateString()}</span>
                   </div>
 
                   <button
                     onClick={() => openProject(project.id)}
-                    class='w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors'
+                    class='w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors font-medium'
                   >
                     Open Project
                   </button>

@@ -125,158 +125,160 @@ export default function ProjectView() {
   };
 
   return (
-    <div class='p-6 max-w-6xl mx-auto'>
-      <Show when={loading()}>
-        <div class='flex items-center justify-center py-12'>
-          <div class='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400'></div>
-          <span class='ml-3 text-gray-400'>Loading project...</span>
-        </div>
-      </Show>
-
-      <Show when={error() || yjsError()}>
-        <div class='bg-red-900/50 border border-red-700 rounded-lg p-4 text-red-300'>
-          Error: {error() || yjsError()}
-        </div>
-      </Show>
-
-      <Show when={!loading() && !error() && project()}>
-        {/* Connection Status */}
-        <Show when={!connected()}>
-          <div class='bg-yellow-900/50 border border-yellow-700 rounded-lg p-3 text-yellow-300 text-sm mb-4 flex items-center gap-2'>
-            <div class='animate-pulse w-2 h-2 bg-yellow-400 rounded-full'></div>
-            Connecting to real-time sync...
+    <div class='min-h-screen bg-linear-to-br from-blue-50 via-white to-indigo-50'>
+      <div class='p-6 max-w-4xl mx-auto'>
+        <Show when={loading()}>
+          <div class='flex items-center justify-center py-12'>
+            <div class='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+            <span class='ml-3 text-gray-500'>Loading project...</span>
           </div>
         </Show>
 
-        {/* Project Header */}
-        <div class='mb-8'>
-          <div class='flex items-center gap-4 mb-2'>
-            <button
-              onClick={() => navigate('/dashboard')}
-              class='text-gray-400 hover:text-white transition-colors'
-            >
-              <svg class='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path
-                  stroke-linecap='round'
-                  stroke-linejoin='round'
-                  stroke-width='2'
-                  d='M15 19l-7-7 7-7'
-                />
-              </svg>
-            </button>
-            <h1 class='text-2xl font-bold text-white'>{project().name}</h1>
-            <span class='bg-gray-700 text-gray-300 px-2 py-1 rounded text-sm capitalize'>
-              {project().role}
-            </span>
-            <Show when={connected()}>
-              <span class='flex items-center gap-1 text-green-400 text-sm'>
-                <div class='w-2 h-2 bg-green-400 rounded-full'></div>
-                Synced
+        <Show when={error() || yjsError()}>
+          <div class='bg-red-50 border border-red-200 rounded-lg p-4 text-red-700'>
+            Error: {error() || yjsError()}
+          </div>
+        </Show>
+
+        <Show when={!loading() && !error() && project()}>
+          {/* Connection Status */}
+          <Show when={!connected()}>
+            <div class='bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-yellow-700 text-sm mb-4 flex items-center gap-2'>
+              <div class='animate-pulse w-2 h-2 bg-yellow-500 rounded-full'></div>
+              Connecting to real-time sync...
+            </div>
+          </Show>
+
+          {/* Project Header */}
+          <div class='mb-8'>
+            <div class='flex items-center gap-4 mb-2'>
+              <button
+                onClick={() => navigate('/dashboard')}
+                class='text-gray-400 hover:text-gray-700 transition-colors'
+              >
+                <svg class='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path
+                    stroke-linecap='round'
+                    stroke-linejoin='round'
+                    stroke-width='2'
+                    d='M15 19l-7-7 7-7'
+                  />
+                </svg>
+              </button>
+              <h1 class='text-2xl font-bold text-gray-900'>{project().name}</h1>
+              <span class='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize'>
+                {project().role}
               </span>
+              <Show when={connected()}>
+                <span class='flex items-center gap-1 text-green-600 text-sm'>
+                  <div class='w-2 h-2 bg-green-500 rounded-full'></div>
+                  Synced
+                </span>
+              </Show>
+            </div>
+            <Show when={project().description}>
+              <p class='text-gray-500 ml-10'>{project().description}</p>
             </Show>
           </div>
-          <Show when={project().description}>
-            <p class='text-gray-400 ml-10'>{project().description}</p>
-          </Show>
-        </div>
 
-        {/* Reviews Section */}
-        <div class='space-y-6'>
-          <div class='flex items-center justify-between'>
-            <h2 class='text-xl font-semibold text-white'>Reviews</h2>
-            <button
-              onClick={() => setShowReviewForm(true)}
-              class='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2'
+          {/* Reviews Section */}
+          <div class='space-y-6'>
+            <div class='flex items-center justify-between'>
+              <h2 class='text-xl font-bold text-gray-900'>Reviews</h2>
+              <button
+                onClick={() => setShowReviewForm(true)}
+                class='inline-flex items-center px-4 py-2 bg-linear-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg gap-2'
+              >
+                <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path
+                    stroke-linecap='round'
+                    stroke-linejoin='round'
+                    stroke-width='2'
+                    d='M12 4v16m8-8H4'
+                  />
+                </svg>
+                New Review
+              </button>
+            </div>
+
+            {/* Create Review Form */}
+            <Show when={showReviewForm()}>
+              <ReviewForm
+                onSubmit={handleCreateReview}
+                onCancel={() => setShowReviewForm(false)}
+                loading={creatingReview()}
+              />
+            </Show>
+
+            {/* Reviews List */}
+            <Show
+              when={reviews().length > 0}
+              fallback={
+                <div class='text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300'>
+                  <p class='text-gray-500 mb-4'>No reviews yet</p>
+                  <button
+                    onClick={() => setShowReviewForm(true)}
+                    class='text-blue-600 hover:text-blue-700 font-medium'
+                  >
+                    Create your first review
+                  </button>
+                </div>
+              }
             >
-              <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path
-                  stroke-linecap='round'
-                  stroke-linejoin='round'
-                  stroke-width='2'
-                  d='M12 4v16m8-8H4'
-                />
-              </svg>
-              New Review
-            </button>
+              <div class='space-y-4'>
+                <For each={reviews()}>
+                  {review => (
+                    <ReviewCard
+                      review={review}
+                      members={dbMembers()}
+                      projectId={params.projectId}
+                      showChecklistForm={showChecklistForm() === review.id}
+                      onToggleChecklistForm={() =>
+                        setShowChecklistForm(prev => (prev === review.id ? null : review.id))
+                      }
+                      onAddChecklist={(type, assigneeId) =>
+                        handleCreateChecklist(review.id, type, assigneeId)
+                      }
+                      onOpenChecklist={checklistId => openChecklist(review.id, checklistId)}
+                      getAssigneeName={getAssigneeName}
+                      creatingChecklist={creatingChecklist()}
+                    />
+                  )}
+                </For>
+              </div>
+            </Show>
           </div>
 
-          {/* Create Review Form */}
-          <Show when={showReviewForm()}>
-            <ReviewForm
-              onSubmit={handleCreateReview}
-              onCancel={() => setShowReviewForm(false)}
-              loading={creatingReview()}
-            />
-          </Show>
-
-          {/* Reviews List */}
-          <Show
-            when={reviews().length > 0}
-            fallback={
-              <div class='text-center py-12 bg-gray-800/50 rounded-lg border border-gray-700'>
-                <p class='text-gray-400 mb-4'>No reviews yet</p>
-                <button
-                  onClick={() => setShowReviewForm(true)}
-                  class='text-blue-400 hover:text-blue-300 underline'
-                >
-                  Create your first review
-                </button>
-              </div>
-            }
-          >
-            <div class='space-y-4'>
-              <For each={reviews()}>
-                {review => (
-                  <ReviewCard
-                    review={review}
-                    members={dbMembers()}
-                    projectId={params.projectId}
-                    showChecklistForm={showChecklistForm() === review.id}
-                    onToggleChecklistForm={() =>
-                      setShowChecklistForm(prev => (prev === review.id ? null : review.id))
-                    }
-                    onAddChecklist={(type, assigneeId) =>
-                      handleCreateChecklist(review.id, type, assigneeId)
-                    }
-                    onOpenChecklist={checklistId => openChecklist(review.id, checklistId)}
-                    getAssigneeName={getAssigneeName}
-                    creatingChecklist={creatingChecklist()}
-                  />
+          {/* Members Section */}
+          <div class='mt-8'>
+            <h2 class='text-xl font-bold text-gray-900 mb-4'>Project Members</h2>
+            <div class='bg-white border border-gray-200 rounded-lg shadow-sm divide-y divide-gray-200'>
+              <For each={dbMembers()}>
+                {member => (
+                  <div class='p-4 flex items-center justify-between'>
+                    <div class='flex items-center gap-3'>
+                      <div class='w-10 h-10 bg-linear-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-medium'>
+                        {(member.displayName || member.name || member.email || '?')
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
+                      <div>
+                        <p class='text-gray-900 font-medium'>
+                          {member.displayName || member.name || 'Unknown'}
+                        </p>
+                        <p class='text-gray-500 text-sm'>{member.email}</p>
+                      </div>
+                    </div>
+                    <span class='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize'>
+                      {member.role}
+                    </span>
+                  </div>
                 )}
               </For>
             </div>
-          </Show>
-        </div>
-
-        {/* Members Section */}
-        <div class='mt-8'>
-          <h2 class='text-xl font-semibold text-white mb-4'>Project Members</h2>
-          <div class='bg-gray-800 border border-gray-700 rounded-lg divide-y divide-gray-700'>
-            <For each={dbMembers()}>
-              {member => (
-                <div class='p-4 flex items-center justify-between'>
-                  <div class='flex items-center gap-3'>
-                    <div class='w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium'>
-                      {(member.displayName || member.name || member.email || '?')
-                        .charAt(0)
-                        .toUpperCase()}
-                    </div>
-                    <div>
-                      <p class='text-white font-medium'>
-                        {member.displayName || member.name || 'Unknown'}
-                      </p>
-                      <p class='text-gray-400 text-sm'>{member.email}</p>
-                    </div>
-                  </div>
-                  <span class='bg-gray-700 text-gray-300 px-2 py-1 rounded text-sm capitalize'>
-                    {member.role}
-                  </span>
-                </div>
-              )}
-            </For>
           </div>
-        </div>
-      </Show>
+        </Show>
+      </div>
     </div>
   );
 }

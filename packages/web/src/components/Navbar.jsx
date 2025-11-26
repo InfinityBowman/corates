@@ -32,13 +32,13 @@ export default function Navbar() {
   });
 
   return (
-    <nav class='bg-gray-800 border-b border-gray-700 px-6 py-3'>
+    <nav class='bg-white border-b border-gray-200 px-6 py-3 shadow-sm'>
       <div class='flex items-center justify-between max-w-7xl mx-auto'>
         {/* Logo/Brand */}
         <div class='flex items-center space-x-4'>
           <A
             href='/dashboard'
-            class='text-xl font-bold text-white hover:text-blue-400 transition-colors'
+            class='text-xl font-bold bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent hover:from-blue-700 hover:to-indigo-700 transition-colors'
           >
             CoRATES
           </A>
@@ -49,15 +49,15 @@ export default function Navbar() {
           <Show when={!authLoading() && isLoggedIn()}>
             <A
               href='/dashboard'
-              class='text-gray-300 hover:text-white transition-colors'
-              activeClass='text-blue-400'
+              class='text-gray-600 hover:text-gray-900 transition-colors font-medium'
+              activeClass='text-blue-600'
             >
               Dashboard
             </A>
             <A
               href='/checklist'
-              class='text-gray-300 hover:text-white transition-colors'
-              activeClass='text-blue-400'
+              class='text-gray-600 hover:text-gray-900 transition-colors font-medium'
+              activeClass='text-blue-600'
             >
               Checklists
             </A>
@@ -67,20 +67,20 @@ export default function Navbar() {
         {/* Auth Section */}
         <div class='flex items-center space-x-4'>
           <Show when={authLoading()}>
-            <div class='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-400'></div>
+            <div class='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600'></div>
           </Show>
 
           <Show when={!authLoading() && !isLoggedIn()}>
             <div class='flex items-center space-x-3'>
               <A
                 href='/signin'
-                class='text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-md hover:bg-gray-700'
+                class='text-gray-600 hover:text-gray-900 transition-colors px-3 py-2 rounded-md hover:bg-gray-100 font-medium'
               >
                 Sign In
               </A>
               <A
                 href='/signup'
-                class='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors font-medium'
+                class='bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg transition-all font-medium shadow-md'
               >
                 Sign Up
               </A>
@@ -91,14 +91,14 @@ export default function Navbar() {
             <div class='relative' ref={userMenuRef}>
               <button
                 onClick={() => setShowUserMenu(!showUserMenu())}
-                class='flex items-center space-x-2 text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-md hover:bg-gray-700'
+                class='flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors px-3 py-2 rounded-md hover:bg-gray-100'
               >
-                <div class='w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium'>
+                <div class='w-8 h-8 bg-linear-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-medium'>
                   {user()?.name?.charAt(0).toUpperCase() ||
                     user()?.email?.charAt(0).toUpperCase() ||
                     'U'}
                 </div>
-                <span class='hidden sm:block'>{user()?.name || user()?.email}</span>
+                <span class='hidden sm:block font-medium'>{user()?.name || user()?.email}</span>
                 <svg
                   class={`w-4 h-4 transition-transform ${showUserMenu() ? 'rotate-180' : ''}`}
                   fill='none'
@@ -152,19 +152,19 @@ export default function Navbar() {
 
       {/* Mobile Navigation Menu */}
       <Show when={!authLoading() && isLoggedIn()}>
-        <div class='md:hidden mt-3 pt-3 border-t border-gray-700'>
+        <div class='md:hidden mt-3 pt-3 border-t border-gray-200'>
           <div class='flex flex-col space-y-2'>
             <A
               href='/dashboard'
-              class='text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-md hover:bg-gray-700'
-              activeClass='text-blue-400 bg-gray-700'
+              class='text-gray-600 hover:text-gray-900 transition-colors px-3 py-2 rounded-md hover:bg-gray-100 font-medium'
+              activeClass='text-blue-600 bg-blue-50'
             >
               Dashboard
             </A>
             <A
               href='/checklist'
-              class='text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-md hover:bg-gray-700'
-              activeClass='text-blue-400 bg-gray-700'
+              class='text-gray-600 hover:text-gray-900 transition-colors px-3 py-2 rounded-md hover:bg-gray-100 font-medium'
+              activeClass='text-blue-600 bg-blue-50'
             >
               Checklists
             </A>
