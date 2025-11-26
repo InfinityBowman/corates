@@ -51,7 +51,9 @@ export async function handleDatabase(request, env, path, authUser = null) {
   if (path === '/api/db/migrate' && request.method === 'POST') {
     try {
       // Check if tables exist (raw SQL for schema introspection)
-      const tableCheck = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='user'").first();
+      const tableCheck = await env.DB.prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='user'",
+      ).first();
 
       if (!tableCheck) {
         return jsonResponse(
