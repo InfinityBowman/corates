@@ -12,20 +12,20 @@ export default function ReviewCard(props) {
   };
 
   return (
-    <div class='bg-gray-800 border border-gray-700 rounded-lg overflow-hidden'>
+    <div class='bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden'>
       {/* Review Header */}
-      <div class='p-4 border-b border-gray-700'>
+      <div class='p-4 border-b border-gray-200 bg-gray-50'>
         <div class='flex items-center justify-between'>
           <div class='flex-1'>
-            <h3 class='text-lg font-semibold text-white'>{props.review.name}</h3>
+            <h3 class='text-lg font-semibold text-gray-900'>{props.review.name}</h3>
             <Show when={props.review.description}>
-              <p class='text-gray-400 text-sm mt-1'>{props.review.description}</p>
+              <p class='text-gray-500 text-sm mt-1'>{props.review.description}</p>
             </Show>
           </div>
           <div class='flex items-center gap-2'>
             <button
               onClick={() => props.onToggleChecklistForm()}
-              class='bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 text-sm'
+              class='inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors gap-1'
             >
               <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                 <path
@@ -55,10 +55,10 @@ export default function ReviewCard(props) {
       <Show
         when={props.review.checklists?.length > 0}
         fallback={
-          <div class='p-4 text-center text-gray-500 text-sm'>No checklists in this review yet</div>
+          <div class='p-4 text-center text-gray-400 text-sm'>No checklists in this review yet</div>
         }
       >
-        <div class='divide-y divide-gray-700'>
+        <div class='divide-y divide-gray-200'>
           <For each={props.review.checklists}>
             {checklist => (
               <ChecklistRow

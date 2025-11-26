@@ -8,7 +8,7 @@
 
 ### Logo/Brand Icon
 
-- Circular checkmark icon in gradient design
+- Circular checkmark icon
 - Primary color: `blue-600`
 - White checkmark symbol inside
 
@@ -48,7 +48,7 @@
 
 ### Background Colors
 
-- **Main Background**: `bg-gradient-to-br from-blue-50 via-white to-indigo-50`
+- **Main Background**: `bg-linear-to-br from-blue-50 via-white to-indigo-50`
 - **Card Background**: `bg-white`
 - **Feature Backgrounds**: `bg-blue-50`, `bg-blue-100`
 - **Sidebar Background**: Light gray tones
@@ -227,7 +227,7 @@ Primary: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
 
 - Feature icons: `w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-6`
 - Small icons: `w-4 h-4`, `w-5 h-5`
-- Avatar placeholders: `w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full`
+- Avatar placeholders: `w-10 h-10 bg-linear-to-br from-blue-500 to-indigo-600 rounded-full`
 
 #### SVG Icon Standards
 
