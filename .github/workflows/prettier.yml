@@ -2,7 +2,9 @@ name: Prettier
 
 on:
   push:
+    branches-ignore: [main]
   pull_request:
+    branches-ignore: [main]
 
 jobs:
   prettier:
