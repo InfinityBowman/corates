@@ -6,14 +6,34 @@
 - For UI icons, use the `solid-icons` library or SVGs only. Do not use emojis.
 - Follow standard JavaScript/SolidJS/Cloudflare best practices.
 - Prefer modern ES6+ syntax and features.
+- Keep files small, focused, and modular. Avoid large monolithic files.
+  - Split functionality into logically grouped modules.
+  - Each file should ideally handle one coherent responsibility.
 
 ## Project Guidelines
 
 - Maintain consistent formatting and indentation.
 - Avoid unnecessary dependencies.
-- Ensure code is readable and maintainable.
+- Ensure code is readable and maintainable, and structured into sensible modules.
+- Keep component, utility, and handler files concise and scoped to a single purpose.
 
 ## Copilot Usage
 
 - All code suggestions and completions must comply with these instructions.
 - If a suggestion includes an emoji, remove it and use `solid-icons` or SVGs instead.
+- Copilot should prefer generating smaller, modular files over large multi-purpose files.
+
+## SolidJS Specific
+
+Destructuring props
+With Solid, destructuring props is not recommended as it can break reactivity. Instead, you should access props directly from the props object, or wrap them in a function to ensure they are always up-to-date:
+
+function MyComponent(props) {
+const { name } = props; // ❌: breaks reactivity and will not update when the prop value changes
+const name = props.name; // ❌: another example of breaking reactivity
+const name = () => props.name; // ✓: by wrapping `props.name` into a function, `name()` always retrieves its current value
+
+// or
+return <div>{props.name}</div>; // ✓: directly accessing props maintains reactivity
+
+}

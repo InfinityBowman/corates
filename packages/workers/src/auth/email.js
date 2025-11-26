@@ -150,6 +150,7 @@ export function createEmailService(env) {
    * @returns {Promise<Object>} Result object
    */
   async function sendPasswordReset(to, resetUrl, userDisplayName = '') {
+    console.log(`Sending password reset to: ${to} with URL: ${resetUrl}`);
     const subject = 'Reset Your Password - CoRATES';
     const name = userDisplayName || 'there';
     const { getPasswordResetEmailHtml, getPasswordResetEmailText } = await import('./emailTemplates.js');

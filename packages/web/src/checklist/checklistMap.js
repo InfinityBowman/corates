@@ -1,4 +1,13 @@
 // Map the checklist state to actual checklist data for plotting and import/export
+
+// Available checklist types
+export const CHECKLIST_TYPES = {
+  AMSTAR2: {
+    name: 'AMSTAR 2',
+    description: 'A MeaSurement Tool to Assess systematic Reviews (version 2)',
+  },
+};
+
 export const AMSTAR_CHECKLIST = {
   q1: {
     text: '1. Did the research questions and inclusion criteria for the review include the components of PICO?',
@@ -22,12 +31,19 @@ export const AMSTAR_CHECKLIST = {
     columns: [
       {
         label: 'For Partial Yes:',
-        description: 'The authors state that they had a written protocol or guide that included ALL the following:',
-        options: ['review question(s)', 'a search strategy', 'inclusion/exclusion criteria', 'risk of bias assessment'],
+        description:
+          'The authors state that they had a written protocol or guide that included ALL the following:',
+        options: [
+          'review question(s)',
+          'a search strategy',
+          'inclusion/exclusion criteria',
+          'risk of bias assessment',
+        ],
       },
       {
         label: 'For Yes:',
-        description: 'As for Partial Yes, plus the protocol should be registered and should also have specified:',
+        description:
+          'As for Partial Yes, plus the protocol should be registered and should also have specified:',
         options: [
           'a meta-analysis/synthesis plan, if appropriate, and',
           'a plan for investigating causes of heterogeneity',

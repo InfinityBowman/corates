@@ -100,7 +100,7 @@ export default function AppRoutes() {
         )}
       />
       <Route
-        path='/projects/:projectId/checklists/:checklistId'
+        path='/projects/:projectId/reviews/:reviewId/checklists/:checklistId'
         component={() => (
           <MainLayout>
             <AuthenticatedRoute>
