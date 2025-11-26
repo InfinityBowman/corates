@@ -51,7 +51,7 @@ export default function ChecklistYjsWrapper() {
   }
 
   return (
-    <div class='min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50'>
+    <div class='min-h-screen bg-blue-50'>
       <div class='p-4 max-w-5xl mx-auto'>
         {/* Header with navigation */}
         <div class='mb-4 flex items-center gap-4'>

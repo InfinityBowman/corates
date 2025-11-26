@@ -1,8 +1,8 @@
 import { createSignal, createEffect, For, Show, onCleanup } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
-import useProject from '../primitives/useProject.js';
-import ReviewCard from './project/ReviewCard.jsx';
-import ReviewForm from './project/ReviewForm.jsx';
+import useProject from '../../primitives/useProject.js';
+import ReviewCard from './ReviewCard.jsx';
+import ReviewForm from './ReviewForm.jsx';
 
 const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
 
@@ -34,6 +34,12 @@ export default function ProjectView() {
     connect,
     disconnect,
   } = useProject(params.projectId);
+
+  // createEffect(() => {
+  //   console.log('Yjs Reviews Updated:');
+  //   console.log('reviews:', reviews());
+  //   console.log('members:', yjsMembers());
+  // });
 
   // Connect to Y.js on mount
   createEffect(() => {
@@ -125,7 +131,7 @@ export default function ProjectView() {
   };
 
   return (
-    <div class='min-h-screen bg-linear-to-br from-blue-50 via-white to-indigo-50'>
+    <div class='min-h-screen bg-blue-50'>
       <div class='p-6 max-w-4xl mx-auto'>
         <Show when={loading()}>
           <div class='flex items-center justify-center py-12'>
@@ -187,7 +193,7 @@ export default function ProjectView() {
               <h2 class='text-xl font-bold text-gray-900'>Reviews</h2>
               <button
                 onClick={() => setShowReviewForm(true)}
-                class='inline-flex items-center px-4 py-2 bg-linear-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg gap-2'
+                class='inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg gap-2'
               >
                 <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path
@@ -257,7 +263,7 @@ export default function ProjectView() {
                 {member => (
                   <div class='p-4 flex items-center justify-between'>
                     <div class='flex items-center gap-3'>
-                      <div class='w-10 h-10 bg-linear-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-medium'>
+                      <div class='w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium'>
                         {(member.displayName || member.name || member.email || '?')
                           .charAt(0)
                           .toUpperCase()}

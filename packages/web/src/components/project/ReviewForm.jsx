@@ -46,7 +46,7 @@ export default function ReviewForm(props) {
         <button
           onClick={handleSubmit}
           disabled={props.loading || !name().trim()}
-          class='inline-flex items-center px-4 py-2 bg-linear-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200 shadow-md'
+          class='inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-md'
         >
           {props.loading ? 'Creating...' : 'Create Review'}
         </button>

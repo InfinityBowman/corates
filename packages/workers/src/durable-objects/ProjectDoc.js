@@ -23,6 +23,8 @@ export class ProjectDoc {
     this.env = env;
     this.sessions = new Set();
     this.doc = null;
+    // this.saveTimeout = null;
+    // this.pendingSave = false;
   }
 
   async fetch(request) {
@@ -77,10 +79,12 @@ export class ProjectDoc {
         Y.applyUpdate(this.doc, new Uint8Array(persistedState));
       }
 
-      // Keep the Y.Doc persisted
-      this.doc.on('update', async (update) => {
-        // Persist the most recent update (overwrite last saved state)
-        await this.state.storage.put('yjs-state', Array.from(update));
+      // Persist the FULL document state on every update
+      // This ensures we don't lose data when the DO restarts
+      this.doc.on('update', async () => {
+        // Encode the full document state, not just the incremental update
+        const fullState = Y.encodeStateAsUpdate(this.doc);
+        await this.state.storage.put('yjs-state', Array.from(fullState));
       });
     }
   }
@@ -130,10 +134,13 @@ export class ProjectDoc {
 
     // If user joined broadcast presence message
     if (user) {
-      this.broadcast(JSON.stringify({ type: 'user-joined', user: { id: user.id, username: user.username } }), server);
+      this.broadcast(
+        JSON.stringify({ type: 'user-joined', user: { id: user.id, username: user.username } }),
+        server,
+      );
     }
 
-    server.addEventListener('message', async (event) => {
+    server.addEventListener('message', async event => {
       try {
         const data = JSON.parse(event.data);
 
@@ -154,7 +161,13 @@ export class ProjectDoc {
 
           server.user = authUser;
           server.send(JSON.stringify({ type: 'auth', success: true, user: authUser }));
-          this.broadcast(JSON.stringify({ type: 'user-joined', user: { id: authUser.id, username: authUser.username } }), server);
+          this.broadcast(
+            JSON.stringify({
+              type: 'user-joined',
+              user: { id: authUser.id, username: authUser.username },
+            }),
+            server,
+          );
           return;
         }
 
@@ -182,7 +195,12 @@ export class ProjectDoc {
     server.addEventListener('close', () => {
       this.sessions.delete(server);
       if (server.user) {
-        this.broadcast(JSON.stringify({ type: 'user-left', user: { id: server.user.id, username: server.user.username } }));
+        this.broadcast(
+          JSON.stringify({
+            type: 'user-left',
+            user: { id: server.user.id, username: server.user.username },
+          }),
+        );
       }
     });
 
@@ -261,7 +279,7 @@ export class ProjectDoc {
   }
 
   broadcast(message, exclude = null) {
-    this.sessions.forEach((session) => {
+    this.sessions.forEach(session => {
       if (session !== exclude && session.readyState === WebSocket.READY_STATE_OPEN) {
         session.send(message);
       }

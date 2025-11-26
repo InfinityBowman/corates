@@ -54,7 +54,7 @@ export default function ResetPassword() {
   }
 
   return (
-    <div class='h-full bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 py-8 sm:py-12'>
+    <div class='h-full bg-blue-50 flex items-center justify-center px-4 py-8 sm:py-12'>
       <div class='w-full max-w-md sm:max-w-xl bg-white rounded-xl sm:rounded-3xl shadow-2xl p-6 sm:p-12 space-y-4 border border-gray-100'>
         <div class='mb-2 sm:mb-4 text-center'>
           <h2 class='text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2'>Reset Password</h2>
@@ -89,7 +89,7 @@ export default function ResetPassword() {
                 spellCheck='false'
                 value={email()}
                 onInput={e => setEmail(e.target.value)}
-                class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition'
+                class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
                 required
                 id='email-input'
                 placeholder='you@example.com'
@@ -105,7 +105,7 @@ export default function ResetPassword() {
 
             <button
               type='submit'
-              class='w-full py-2 sm:py-3 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg sm:rounded-xl shadow transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
+              class='w-full py-2 sm:py-3 text-sm sm:text-base bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg sm:rounded-xl shadow transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
               disabled={loading()}
             >
               <AnimatedShow when={loading()} fallback={'Send Reset Email'}>
@@ -120,7 +120,7 @@ export default function ResetPassword() {
               Remember your password?{' '}
               <a
                 href='/signin'
-                class='text-indigo-600 hover:underline font-semibold'
+                class='text-blue-600 hover:underline font-semibold'
                 onClick={e => {
                   e.preventDefault();
                   navigate('/signin');

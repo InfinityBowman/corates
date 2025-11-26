@@ -83,7 +83,7 @@ export default function SignUp() {
   });
 
   return (
-    <div class='h-full bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 py-6 sm:py-12'>
+    <div class='h-full bg-blue-50 flex items-center justify-center px-4 py-6 sm:py-12'>
       <form
         aria-labelledby='signup-heading'
         onSubmit={handleSubmit}
@@ -111,7 +111,7 @@ export default function SignUp() {
               spellcheck='false'
               value={name()}
               onInput={e => setName(e.target.value)}
-              class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition'
+              class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
               required
               id='name-input'
               placeholder='What should we call you?'
@@ -133,7 +133,7 @@ export default function SignUp() {
               spellCheck='false'
               value={email()}
               onInput={e => setEmail(e.target.value)}
-              class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition'
+              class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
               required
               id='email-input'
               placeholder='you@example.com'
@@ -169,7 +169,7 @@ export default function SignUp() {
               spellCheck='false'
               value={confirmPassword()}
               onInput={e => setConfirmPassword(e.target.value)}
-              class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition big-placeholder'
+              class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition big-placeholder'
               required
               id='confirm-password-input'
               placeholder='••••••••'
@@ -178,7 +178,7 @@ export default function SignUp() {
         </div>
         <button
           type='submit'
-          class='w-full py-2 sm:py-3 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg sm:rounded-xl shadow transition disabled:opacity-50 flex items-center justify-center'
+          class='w-full py-2 sm:py-3 text-sm sm:text-base bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg sm:rounded-xl shadow transition disabled:opacity-50 flex items-center justify-center'
           disabled={loading()}
         >
           <AnimatedShow when={loading()} fallback={'Sign Up'}>
@@ -192,7 +192,7 @@ export default function SignUp() {
           Already have an account?{' '}
           <a
             href='/signin'
-            class='text-indigo-600 hover:underline font-semibold'
+            class='text-blue-600 hover:underline font-semibold'
             onClick={e => {
               e.preventDefault();
               navigate('/signin');
