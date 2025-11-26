@@ -25,26 +25,16 @@ export function createEmailService(env) {
     console.log(`Preparing to send email to: ${to}`, !isProduction, sendRealEmailsInDev);
     // Development mode with real email testing enabled
     if (!isProduction && sendRealEmailsInDev) {
-      console.log(`🧪 DEVELOPMENT: Sending REAL email to: ${to}`);
       return await sendRealEmail({ to, subject, html, text });
     }
 
-    // Production mode - always send real emails
+    // Production mode
     if (isProduction) {
-      console.log(`🚀 PRODUCTION: Sending email to: ${to}`);
       return await sendRealEmail({ to, subject, html, text });
     }
 
-    // Development mode without real email sending - just log
-    console.log('\n=== EMAIL (Development Mode - Simulated) ===');
-    console.log(`To: ${to}`);
-    console.log(`From: ${env.EMAIL_FROM_NAME || 'CoRATES'} <${env.EMAIL_FROM || 'dev@example.com'}>`);
-    console.log(`Subject: ${subject}`);
-    if (text) console.log(`Text: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`);
-    if (html) console.log(`HTML: ${html.substring(0, 200)}${html.length > 200 ? '...' : ''}`);
-    console.log('💡 To send real emails in dev, set SEND_EMAILS_IN_DEV=true in .dev.vars');
-    console.log('===========================================\n');
-    return { success: true, mode: 'development-simulated' };
+    // Development mode without real email sending
+    return { success: true, mode: 'development-not-sending' };
   }
 
   /**
@@ -123,7 +113,7 @@ export function createEmailService(env) {
           throw new Error(`SMTP relay error: ${error}`);
         }
         const result = await response.json();
-        console.log('Email sent via local SMTP relay:', result.messageId || result);
+        // console.log('Email sent via local SMTP relay:', result.messageId || result);
         return { success: true, service: 'smtp-relay', ...result };
       } catch (error) {
         console.error('Failed to send email via local SMTP relay:', error);

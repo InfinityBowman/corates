@@ -1,16 +1,18 @@
--- Better Auth with Drizzle Schema Migration
+-- Consolidated Corates Database Schema
 -- Run: wrangler d1 migrations apply corates-db --local
 
 -- Drop existing tables if they exist (for clean migration)
-DROP TABLE IF EXISTS room_members;
-DROP TABLE IF EXISTS media_files;
-DROP TABLE IF EXISTS messages;
-DROP TABLE IF EXISTS rooms;
+DROP TABLE IF EXISTS project_members;
+DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS email_verification_tokens;
 DROP TABLE IF EXISTS password_reset_tokens;
 DROP TABLE IF EXISTS auth_accounts;
 DROP TABLE IF EXISTS auth_sessions;
+DROP TABLE IF EXISTS verification;
+DROP TABLE IF EXISTS account;
+DROP TABLE IF EXISTS session;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS user;
 
 -- Better Auth user table
 CREATE TABLE user (
@@ -67,68 +69,54 @@ CREATE TABLE verification (
   updatedAt INTEGER DEFAULT (unixepoch())
 );
 
--- Application-specific tables
-CREATE TABLE rooms (
+-- Projects table (for user's research projects)
+CREATE TABLE projects (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT,
-  isPublic INTEGER DEFAULT 1,
-  createdBy TEXT REFERENCES user(id),
+  createdBy TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
   createdAt INTEGER DEFAULT (unixepoch()),
   updatedAt INTEGER DEFAULT (unixepoch())
 );
 
-CREATE TABLE messages (
+-- Project membership table (which users have access to which projects)
+CREATE TABLE project_members (
   id TEXT PRIMARY KEY,
-  roomId TEXT NOT NULL REFERENCES rooms(id),
-  userId TEXT NOT NULL REFERENCES user(id),
-  content TEXT NOT NULL,
-  messageType TEXT DEFAULT 'text',
-  metadata TEXT, -- JSON string
-  createdAt INTEGER DEFAULT (unixepoch())
-);
-
-CREATE TABLE mediaFiles (
-  id TEXT PRIMARY KEY,
-  filename TEXT NOT NULL,
-  originalName TEXT,
-  fileType TEXT,
-  fileSize INTEGER,
-  uploadedBy TEXT REFERENCES user(id),
-  bucketKey TEXT NOT NULL,
-  createdAt INTEGER DEFAULT (unixepoch())
-);
-
-CREATE TABLE roomMembers (
-  id TEXT PRIMARY KEY,
-  roomId TEXT NOT NULL REFERENCES rooms(id),
-  userId TEXT NOT NULL REFERENCES user(id),
-  role TEXT DEFAULT 'member',
-  joinedAt INTEGER DEFAULT (unixepoch())
+  projectId TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+  role TEXT DEFAULT 'member', -- owner, collaborator, member, viewer
+  joinedAt INTEGER DEFAULT (unixepoch()),
+  
+  -- Ensure unique user-project combinations
+  UNIQUE(projectId, userId)
 );
 
 -- Create indexes for better performance
+
+-- Auth indexes
 CREATE INDEX idx_session_userId ON session(userId);
 CREATE INDEX idx_session_token ON session(token);
 CREATE INDEX idx_account_userId ON account(userId);
 CREATE INDEX idx_account_providerId ON account(providerId);
 CREATE INDEX idx_verification_identifier ON verification(identifier);
-CREATE INDEX idx_messages_roomId ON messages(roomId);
-CREATE INDEX idx_messages_userId ON messages(userId);
-CREATE INDEX idx_messages_createdAt ON messages(createdAt);
-CREATE INDEX idx_mediaFiles_uploadedBy ON mediaFiles(uploadedBy);
-CREATE INDEX idx_roomMembers_roomId ON roomMembers(roomId);
-CREATE INDEX idx_roomMembers_userId ON roomMembers(userId);
+
+-- Project indexes
+CREATE INDEX idx_projects_createdBy ON projects(createdBy);
+CREATE INDEX idx_projects_createdAt ON projects(createdAt);
+CREATE INDEX idx_project_members_projectId ON project_members(projectId);
+CREATE INDEX idx_project_members_userId ON project_members(userId);
 
 -- Insert default data
 INSERT OR IGNORE INTO user (id, name, email, emailVerified, username, displayName) VALUES
   ('system', 'System', 'system@corates.com', 1, 'system', 'System'),
   ('demo-user', 'Demo User', 'demo@corates.com', 1, 'demo', 'Demo User');
 
-INSERT OR IGNORE INTO rooms (id, name, description, createdBy) VALUES
-  ('general', 'General', 'General discussion room', 'system'),
-  ('random', 'Random', 'Random conversations', 'system');
+INSERT OR IGNORE INTO projects (id, name, description, createdBy) VALUES
+  ('demo-project-1', 'Sleep Study Meta-Analysis', 'AMSTAR2 evaluation of sleep intervention studies', 'demo-user'),
+  ('demo-project-2', 'Exercise RCT Review', 'Systematic review of exercise interventions', 'demo-user'),
+  ('demo-project-3', 'Nutrition Guidelines', 'Evidence synthesis for dietary recommendations', 'demo-user');
 
-INSERT OR IGNORE INTO roomMembers (id, roomId, userId, role) VALUES
-  ('rm_1', 'general', 'demo-user', 'member'),
-  ('rm_2', 'random', 'demo-user', 'member');
+INSERT OR IGNORE INTO project_members (id, projectId, userId, role) VALUES
+  ('pm_1', 'demo-project-1', 'demo-user', 'owner'),
+  ('pm_2', 'demo-project-2', 'demo-user', 'owner'),
+  ('pm_3', 'demo-project-3', 'demo-user', 'owner');

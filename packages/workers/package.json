@@ -11,7 +11,7 @@
     "test": "vitest",
     "clear-workers": "rm -rf .wrangler/state",
     "db:migrate": "wrangler d1 migrations apply corates-db --local",
-    "db:migrate:prod": "wrangler d1 migrations apply corates-db"
+    "db:migrate:prod": "y | wrangler d1 migrations apply corates-db"
   },
   "dependencies": {
     "@cloudflare/workers-types": "^4.20251121.0",

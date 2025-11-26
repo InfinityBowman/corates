@@ -2,7 +2,7 @@ import { createSignal, createEffect } from 'solid-js';
 import StrengthIndicator from './StrengthIndicator.jsx';
 import PasswordInput from './PasswordInput.jsx';
 import { useNavigate } from '@solidjs/router';
-import { useBetterAuth } from './BetterAuthStore.js';
+import { useBetterAuth } from '../api/better-auth-store.js';
 import { AnimatedShow } from '../components/AnimatedShow.jsx';
 import { AiOutlineLoading3Quarters } from 'solid-icons/ai';
 
