@@ -1,7 +1,4 @@
-name: Prettier
-
-permissions:
-  contents: write
+name: Prettier (non-main)
 
 on:
   push:
@@ -39,10 +36,12 @@ jobs:
       - name: Run Prettier
         run: pnpm prettier --write .
 
+      # Only commit and push on push events, not on pull_request
       - name: Commit changes
         if: github.event_name == 'push'
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: 'style: format code with prettier'
-          branch: ${{ github.ref_name }}
-          file_pattern: '!.github/workflows/**'
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add -A
+          git diff --quiet && git diff --staged --quiet || git commit -m "Apply Prettier formatting"
+          git push
