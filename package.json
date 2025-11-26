@@ -12,7 +12,8 @@
     "build": "pnpm --recursive build",
     "deploy": "pnpm --recursive deploy",
     "format": "prettier --write .",
-    "test": "pnpm --recursive test"
+    "test": "pnpm --recursive test",
+    "prepare": "husky"
   },
   "keywords": [
     "cloudflare",
@@ -23,8 +24,9 @@
   "author": "Jacob Maynard",
   "license": "GNU GPLv3",
   "devDependencies": {
-    "prettier": "^3.6.2",
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "husky": "^9.1.7",
+    "prettier": "^3.6.2"
   },
   "engines": {
     "node": ">=24.0.0",
