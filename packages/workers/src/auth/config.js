@@ -39,10 +39,10 @@ export function createAuth(env) {
       sendOnSignIn: true,
       autoSignInAfterVerification: true,
       sendVerificationEmail: async ({ user, url }) => {
-        console.log('📧 EMAIL VERIFICATION LINK (click to verify):');
-        console.log('🔗', url);
-        console.log('📨 Sending to:', user.email);
-        console.log('👤 For user:', user.displayName || user.username || user.name);
+        // console.log('📧 EMAIL VERIFICATION LINK (click to verify):');
+        // console.log('🔗', url);
+        // console.log('📨 Sending to:', user.email);
+        // console.log('👤 For user:', user.displayName || user.username || user.name);
         return await emailService.sendEmailVerification(user.email, url, user.displayName || user.username || user.name);
       },
     },
@@ -50,10 +50,10 @@ export function createAuth(env) {
     resetPassword: {
       enabled: true,
       sendEmail: async ({ user, url, token }) => {
-        console.log('🔑 PASSWORD RESET LINK (click to reset):');
-        console.log('🔗', url);
-        console.log('📨 Sending to:', user.email);
-        console.log('👤 For user:', user.displayName || user.username || user.name);
+        // console.log('🔑 PASSWORD RESET LINK (click to reset):');
+        // console.log('🔗', url);
+        // console.log('📨 Sending to:', user.email);
+        // console.log('👤 For user:', user.displayName || user.username || user.name);
         return await emailService.sendPasswordReset(user.email, url, user.displayName || user.username || user.name);
       },
     },
