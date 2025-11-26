@@ -1,4 +1,4 @@
-import { AMSTAR_CHECKLIST } from './checklistMap.js';
+import { AMSTAR_CHECKLIST } from './checklist-map.js';
 
 /**
  * Creates a new AMSTAR2 checklist object with default empty answers for all questions.
@@ -16,7 +16,12 @@ import { AMSTAR_CHECKLIST } from './checklistMap.js';
  * Example:
  *   createChecklist({ name: 'My Checklist', id: 'chk-123', reviewerName: 'Alice' });
  */
-export function createChecklist({ name = null, id = null, createdAt = Date.now(), reviewerName = '' }) {
+export function createChecklist({
+  name = null,
+  id = null,
+  createdAt = Date.now(),
+  reviewerName = '',
+}) {
   if (!id || typeof id !== 'string' || !id.trim()) {
     throw new Error('AMSTAR2Checklist requires a non-empty string id.');
   }
@@ -185,7 +190,7 @@ function getSelectedAnswer(answers, question) {
   if (!Array.isArray(answers) || answers.length === 0) return null;
   const lastCol = answers[answers.length - 1];
   if (!Array.isArray(lastCol)) return null;
-  const idx = lastCol.findIndex((v) => v === true);
+  const idx = lastCol.findIndex(v => v === true);
   if (idx === -1) return null;
   if (customPatternQuestions.includes(question)) return customLabels[idx] || null;
   if (lastCol.length === 2) return idx === 0 ? 'Yes' : 'No';
@@ -259,8 +264,8 @@ export function exportChecklistsToCSV(checklists) {
 
   const rows = [];
 
-  list.forEach((cl) => {
-    questionKeys.forEach((q) => {
+  list.forEach(cl => {
+    questionKeys.forEach(q => {
       const question = AMSTAR_CHECKLIST[q];
       const questionText = question?.text || q;
       const columns = question?.columns || [];
@@ -293,8 +298,9 @@ export function exportChecklistsToCSV(checklists) {
   });
 
   // CSV encode
-  const escape = (val) => `"${String(val).replace(/"/g, '""').replace(/\n/g, ' ')}"`;
-  const csv = headers.map(escape).join(',') + '\n' + rows.map((row) => row.map(escape).join(',')).join('\n');
+  const escape = val => `"${String(val).replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+  const csv =
+    headers.map(escape).join(',') + '\n' + rows.map(row => row.map(escape).join(',')).join('\n');
   return csv;
 }
 

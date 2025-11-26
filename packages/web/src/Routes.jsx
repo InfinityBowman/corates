@@ -1,6 +1,5 @@
 import { Router, Route } from '@solidjs/router';
 import { Navigate } from '@solidjs/router';
-import { Show } from 'solid-js';
 import App from './App.jsx';
 import SignIn from './auth-ui/SignIn.jsx';
 import SignUp from './auth-ui/SignUp.jsx';
@@ -10,34 +9,9 @@ import AuthLayout from './components/AuthLayout.jsx';
 import MainLayout from './components/MainLayout.jsx';
 import AMSTAR2Checklist from './components/AMSTAR2Checklist.jsx';
 import ChecklistYjsWrapper from './components/ChecklistYjsWrapper.jsx';
-import UserYjsProvider from './components/UserYjsProvider.jsx';
 import ProjectView from './components/ProjectView.jsx';
-import { useBetterAuth } from './api/better-auth-store.js';
-
-const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
 
 export const BASEPATH = import.meta.env.VITE_BASEPATH || '/';
-
-// Component that provides authenticated user context to child routes
-function AuthenticatedRoute(props) {
-  const { user, authLoading, isLoggedIn } = useBetterAuth();
-
-  return (
-    <Show
-      when={!authLoading() && isLoggedIn() && user()}
-      fallback={
-        <div class='min-h-screen bg-gray-900 flex items-center justify-center'>
-          <div class='text-center text-white'>
-            <div class='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto'></div>
-            <p class='mt-4 text-gray-400'>Loading...</p>
-          </div>
-        </div>
-      }
-    >
-      {props.children(user().id)}
-    </Show>
-  );
-}
 
 export default function AppRoutes() {
   return (
@@ -76,7 +50,7 @@ export default function AppRoutes() {
         )}
       />
 
-      {/* Authenticated routes wrapped with MainLayout and UserYjsProvider */}
+      {/* Public routes - no auth required */}
       <Route
         path='/checklist'
         component={() => (
@@ -89,13 +63,7 @@ export default function AppRoutes() {
         path='/projects/:projectId'
         component={() => (
           <MainLayout>
-            <AuthenticatedRoute>
-              {userId => (
-                <UserYjsProvider userId={userId} apiBase={API_BASE}>
-                  <ProjectView userId={userId} />
-                </UserYjsProvider>
-              )}
-            </AuthenticatedRoute>
+            <ProjectView />
           </MainLayout>
         )}
       />
@@ -103,13 +71,7 @@ export default function AppRoutes() {
         path='/projects/:projectId/reviews/:reviewId/checklists/:checklistId'
         component={() => (
           <MainLayout>
-            <AuthenticatedRoute>
-              {userId => (
-                <UserYjsProvider userId={userId} apiBase={API_BASE}>
-                  <ChecklistYjsWrapper />
-                </UserYjsProvider>
-              )}
-            </AuthenticatedRoute>
+            <ChecklistYjsWrapper />
           </MainLayout>
         )}
       />
@@ -118,13 +80,7 @@ export default function AppRoutes() {
         path='/dashboard'
         component={() => (
           <MainLayout>
-            <AuthenticatedRoute>
-              {userId => (
-                <UserYjsProvider userId={userId} apiBase={API_BASE}>
-                  <App />
-                </UserYjsProvider>
-              )}
-            </AuthenticatedRoute>
+            <App />
           </MainLayout>
         )}
       />

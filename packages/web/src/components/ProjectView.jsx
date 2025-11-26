@@ -1,6 +1,6 @@
 import { createSignal, createEffect, For, Show, onCleanup } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
-import useProject from '../hooks/useProject.js';
+import useProject from '../primitives/useProject.js';
 import ReviewCard from './project/ReviewCard.jsx';
 import ReviewForm from './project/ReviewForm.jsx';
 
