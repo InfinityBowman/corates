@@ -1,6 +1,6 @@
 import { createSignal, createEffect, Show, For } from 'solid-js';
-import { AMSTAR_CHECKLIST } from '../AMSTAR2/checklist-map.js';
-import { createChecklist as createAMSTAR2Checklist } from '../AMSTAR2/checklist.js';
+import { AMSTAR_CHECKLIST } from '../../AMSTAR2/checklist-map.js';
+import { createChecklist as createAMSTAR2Checklist } from '../../AMSTAR2/checklist.js';
 import { useParams, useNavigate } from '@solidjs/router';
 
 export function Question1(props) {

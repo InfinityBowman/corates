@@ -26,7 +26,7 @@ async function loadManifest() {
 }
 
 // Create the MCP server
-const server = new McpServer({
+const server = new McpServer({  
   name: 'corates-icons',
   version: '1.0.0',
 });

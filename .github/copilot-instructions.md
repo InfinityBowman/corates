@@ -11,6 +11,16 @@
   - Each file should ideally handle one coherent responsibility.
 - Use aliases for imports when appropriate to improve readability.
 
+## Icon Search Tool
+
+When you need to find icons from `solid-icons`, use the `search_icons` MCP tool:
+
+- Search by keyword (e.g., "arrow", "check", "user")
+- The tool returns icon names with their library prefix and import statement
+- Example: `import { FaArrowRight } from 'solid-icons/fa';`
+
+Available icon libraries: ai, bi, bs, cg, fa, fi, hi, im, io, oc, ri, si, tb, ti, vs, wi
+
 ## Additional References
 
 - The architecture-goals.md file contains relevant architecture and design patterns to follow.

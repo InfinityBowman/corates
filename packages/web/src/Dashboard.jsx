@@ -1,9 +1,9 @@
 import { Show } from 'solid-js';
-import ProjectDashboard from '@components/ProjectDashboard.jsx';
-import LocalChecklistsDashboard from '@components/LocalChecklistsDashboard.jsx';
+import ProjectDashboard from '@project-ui/ProjectDashboard.jsx';
+import ChecklistsDashboard from '@checklist-ui/ChecklistsDashboard.jsx';
 import { useBetterAuth } from '@api/better-auth-store.js';
 
-export default function App() {
+export default function Dashboard() {
   const { user, authLoading, isLoggedIn } = useBetterAuth();
 
   const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
@@ -16,7 +16,7 @@ export default function App() {
             <Show when={isLoggedIn()}>
               <ProjectDashboard apiBase={API_BASE} userId={user() ? user().id : null} />
             </Show>
-            <LocalChecklistsDashboard isLoggedIn={isLoggedIn()} />
+            <ChecklistsDashboard isLoggedIn={isLoggedIn()} />
           </Show>
         </div>
       </main>

@@ -1,16 +1,16 @@
 import { Router, Route } from '@solidjs/router';
-import { Navigate } from '@solidjs/router';
-import App from './App.jsx';
-import SignIn from './auth-ui/SignIn.jsx';
-import SignUp from './auth-ui/SignUp.jsx';
-import CheckEmail from './auth-ui/CheckEmail.jsx';
-import ResetPassword from './auth-ui/ResetPassword.jsx';
-import AuthLayout from './components/AuthLayout.jsx';
-import MainLayout from './components/MainLayout.jsx';
-import AMSTAR2Checklist from './components/AMSTAR2Checklist.jsx';
-import ChecklistYjsWrapper from './components/ChecklistYjsWrapper.jsx';
-import ProjectView from './components/project/ProjectView.jsx';
-import LocalChecklistView from './components/LocalChecklistView.jsx';
+import Dashboard from './Dashboard.jsx';
+import SignIn from '@auth-ui/SignIn.jsx';
+import SignUp from '@auth-ui/SignUp.jsx';
+import CheckEmail from '@auth-ui/CheckEmail.jsx';
+import ResetPassword from '@auth-ui/ResetPassword.jsx';
+import AuthLayout from '@auth-ui/AuthLayout.jsx';
+import MainLayout from '@components/MainLayout.jsx';
+import HomePage from '@components/HomePage.jsx';
+import AMSTAR2Checklist from '@checklist-ui/AMSTAR2Checklist.jsx';
+import ChecklistYjsWrapper from '@checklist-ui/ChecklistYjsWrapper.jsx';
+import ProjectView from '@project-ui/ProjectView.jsx';
+import LocalChecklistView from '@checklist-ui/LocalChecklistView.jsx';
 
 export const BASEPATH = import.meta.env.VITE_BASEPATH || '/';
 
@@ -18,85 +18,25 @@ export default function AppRoutes() {
   return (
     <Router base={BASEPATH}>
       {/* Auth routes */}
-      <Route
-        path='/signin'
-        component={() => (
-          <AuthLayout>
-            <SignIn />
-          </AuthLayout>
-        )}
-      />
-      <Route
-        path='/signup'
-        component={() => (
-          <AuthLayout>
-            <SignUp />
-          </AuthLayout>
-        )}
-      />
-      <Route
-        path='/check-email'
-        component={() => (
-          <AuthLayout>
-            <CheckEmail />
-          </AuthLayout>
-        )}
-      />
-      <Route
-        path='/reset-password'
-        component={() => (
-          <AuthLayout>
-            <ResetPassword />
-          </AuthLayout>
-        )}
-      />
+      <Route path='/' component={AuthLayout}>
+        <Route path='/signin' component={SignIn} />
+        <Route path='/signup' component={SignUp} />
+        <Route path='/check-email' component={CheckEmail} />
+        <Route path='/reset-password' component={ResetPassword} />
+      </Route>
 
-      {/* Public routes - no auth required */}
-      <Route
-        path='/checklist'
-        component={() => (
-          <MainLayout>
-            <AMSTAR2Checklist />
-          </MainLayout>
-        )}
-      />
-      {/* Local checklist view - stored in IndexedDB */}
-      <Route
-        path='/checklist/:checklistId'
-        component={() => (
-          <MainLayout>
-            <LocalChecklistView />
-          </MainLayout>
-        )}
-      />
-      <Route
-        path='/projects/:projectId'
-        component={() => (
-          <MainLayout>
-            <ProjectView />
-          </MainLayout>
-        )}
-      />
-      <Route
-        path='/projects/:projectId/reviews/:reviewId/checklists/:checklistId'
-        component={() => (
-          <MainLayout>
-            <ChecklistYjsWrapper />
-          </MainLayout>
-        )}
-      />
-
-      <Route
-        path='/dashboard'
-        component={() => (
-          <MainLayout>
-            <App />
-          </MainLayout>
-        )}
-      />
-
-      {/* Redirect root to dashboard */}
-      <Route path='/' component={() => <Navigate href='/dashboard' />} />
+      {/* Main app routes */}
+      <Route path='/' component={MainLayout}>
+        <Route path='/' component={HomePage} />
+        <Route path='/dashboard' component={Dashboard} />
+        <Route path='/checklist' component={AMSTAR2Checklist} />
+        <Route path='/checklist/:checklistId' component={LocalChecklistView} />
+        <Route path='/projects/:projectId' component={ProjectView} />
+        <Route
+          path='/projects/:projectId/reviews/:reviewId/checklists/:checklistId'
+          component={ChecklistYjsWrapper}
+        />
+      </Route>
     </Router>
   );
 }

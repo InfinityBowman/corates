@@ -2,7 +2,7 @@ import { createSignal, For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
 
-export default function LocalChecklistsDashboard(props) {
+export default function ChecklistsDashboard(props) {
   const navigate = useNavigate();
   const [showCreateForm, setShowCreateForm] = createSignal(false);
   const [newChecklistName, setNewChecklistName] = createSignal('');
