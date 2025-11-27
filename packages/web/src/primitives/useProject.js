@@ -77,7 +77,12 @@ export function useProject(projectId) {
     setError(null);
 
     ydoc = new Y.Doc();
-    const wsUrl = API_BASE.replace('http', 'ws') + `/api/project/${projectId}`;
+
+    // Build WebSocket URL - handle both http and https
+    const wsProtocol = API_BASE.startsWith('https') ? 'wss' : 'ws';
+    const wsHost = API_BASE.replace(/^https?:\/\//, '');
+    const wsUrl = `${wsProtocol}://${wsHost}/api/project/${projectId}`;
+
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {

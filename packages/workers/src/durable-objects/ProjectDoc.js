@@ -33,9 +33,13 @@ export class ProjectDoc {
     // Note: CORS headers are added by the main worker (index.js) when wrapping responses
     // Do NOT add them here to avoid duplicate headers
 
+    // Debug: log upgrade header
+    const upgradeHeader = request.headers.get('Upgrade');
+    console.log('ProjectDoc fetch - Upgrade header:', upgradeHeader, 'Method:', request.method);
+
     try {
       // For HTTP requests verify auth (unless it's an upgrade to websocket)
-      if (request.headers.get('Upgrade') !== 'websocket') {
+      if (upgradeHeader !== 'websocket') {
         const { user } = await verifyAuth(request, this.env);
         if (!user) {
           return new Response(JSON.stringify({ error: 'Authentication required' }), {
@@ -47,7 +51,7 @@ export class ProjectDoc {
       }
 
       // WebSocket upgrade / real-time sync
-      if (request.headers.get('Upgrade') === 'websocket') {
+      if (upgradeHeader === 'websocket') {
         return await this.handleWebSocket(request);
       }
 
