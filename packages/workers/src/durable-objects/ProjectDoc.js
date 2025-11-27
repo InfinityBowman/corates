@@ -94,31 +94,40 @@ export class ProjectDoc {
   }
 
   async handleWebSocket(request) {
-    // For development, allow unauthenticated connections
-    // In production, we'd need to implement proper WebSocket auth
-    const isDevelopment = this.env.ENVIRONMENT !== 'production';
+    console.log('handleWebSocket called, ENVIRONMENT:', this.env.ENVIRONMENT);
 
     let user = null;
-    if (!isDevelopment) {
-      // Verify auth for WebSocket connections in production
+
+    // Try to authenticate via cookies (same as HTTP requests)
+    try {
+      const authResult = await verifyAuth(request, this.env);
+      user = authResult.user;
+      console.log('WebSocket auth result:', user ? `User ${user.id}` : 'No user');
+    } catch (err) {
+      console.error('WebSocket auth error:', err);
+    }
+
+    // In production, require authentication
+    const isDevelopment = this.env.ENVIRONMENT !== 'production';
+    if (!isDevelopment && !user) {
+      // Try token-based auth as fallback
       const url = new URL(request.url);
       const token = url.searchParams.get('token');
 
       if (token) {
         const authRequest = new Request(request.url, {
-          headers: {
-            ...request.headers,
+          headers: new Headers({
+            ...Object.fromEntries(request.headers.entries()),
             Authorization: `Bearer ${token}`,
-          },
+          }),
         });
 
         const authResult = await verifyAuth(authRequest, this.env);
         user = authResult.user;
+      }
 
-        if (!user) {
-          return new Response('Unauthorized', { status: 401 });
-        }
-      } else {
+      if (!user) {
+        console.log('WebSocket auth failed - no user');
         return new Response('Authentication required', { status: 401 });
       }
     }
