@@ -4,9 +4,12 @@
     "paths": {
       "@/*": ["src/*"],
       "@components/*": ["src/components/*"],
+      "@auth-ui/*": ["src/components/auth-ui/*"],
+      "@checklist-ui/*": ["src/components/checklist-ui/*"],
+      "@project-ui/*": ["src/components/project-ui/*"],
       "@routes/*": ["src/routes/*"],
       "@primitives/*": ["src/primitives/*"],
-      "@auth/*": ["src/auth-ui/*"],
+      "@auth/*": ["src/components/auth-ui/*"],
       "@offline/*": ["src/offline/*"],
       "@api/*": ["src/api/*"]
     }

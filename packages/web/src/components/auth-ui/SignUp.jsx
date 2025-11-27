@@ -2,8 +2,8 @@ import { createSignal, createEffect } from 'solid-js';
 import StrengthIndicator from './StrengthIndicator.jsx';
 import PasswordInput from './PasswordInput.jsx';
 import { useNavigate } from '@solidjs/router';
-import { useBetterAuth } from '../api/better-auth-store.js';
-import { AnimatedShow } from '../components/AnimatedShow.jsx';
+import { useBetterAuth } from '../../api/better-auth-store.js';
+import { AnimatedShow } from '../AnimatedShow.jsx';
 import { AiOutlineLoading3Quarters } from 'solid-icons/ai';
 
 export default function SignUp() {

@@ -1,6 +1,6 @@
 import { createSignal, createResource, createEffect, onCleanup, For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import useNotifications from '../primitives/useNotifications.js';
+import useNotifications from '../../primitives/useNotifications.js';
 
 export default function ProjectDashboard({ apiBase, userId }) {
   const navigate = useNavigate();

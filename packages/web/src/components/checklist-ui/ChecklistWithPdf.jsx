@@ -3,9 +3,9 @@
  * in a split-screen layout. Used by both local and project checklists.
  */
 
-import AMSTAR2Checklist from '@components/AMSTAR2Checklist.jsx';
-import PdfViewer from '@components/PdfViewer.jsx';
-import SplitScreenLayout from '@components/SplitScreenLayout.jsx';
+import AMSTAR2Checklist from '@checklist-ui/AMSTAR2Checklist.jsx';
+import PdfViewer from '@checklist-ui/PdfViewer.jsx';
+import SplitScreenLayout from '@checklist-ui/SplitScreenLayout.jsx';
 
 export default function ChecklistWithPdf(props) {
   // props.checklist - the checklist data

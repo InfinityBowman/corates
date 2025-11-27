@@ -1,6 +1,6 @@
 import { createSignal, createEffect, createMemo, Show } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
-import ChecklistWithPdf from '@components/ChecklistWithPdf.jsx';
+import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import useProject from '@primitives/useProject.js';
 
 export default function ChecklistYjsWrapper() {

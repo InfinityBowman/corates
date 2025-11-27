@@ -6,7 +6,7 @@
 
 import { createSignal, createEffect, Show, onCleanup } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
-import ChecklistWithPdf from '@components/ChecklistWithPdf.jsx';
+import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
 
 export default function LocalChecklistView() {
