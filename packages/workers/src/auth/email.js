@@ -37,41 +37,54 @@ export function createEmailService(env) {
     return { success: true, mode: 'development-not-sending' };
   }
 
+  // Helper to timeout fetch requests so they don't block workers for too long
+  function fetchWithTimeout(url, options = {}, timeoutMs = 3000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(id));
+  }
+
   /**
-   * Actually send email via configured service
+   * Send email directly to the provider (bypasses queue).
+   * This is used by EmailQueue DO to avoid infinite loops.
    */
-  async function sendRealEmail({ to, subject, html, text }) {
-    try {
-      // Option 1: Use Resend (recommended for Workers)
-      if (env.RESEND_API_KEY) {
-        const response = await fetch('https://api.resend.com/emails', {
+  async function sendDirectEmail({ to, subject, html, text }) {
+    // Option 1: Use Resend (recommended for Workers)
+    if (env.RESEND_API_KEY) {
+      const response = await fetchWithTimeout(
+        'https://api.resend.com/emails',
+        {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${env.RESEND_API_KEY}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: `${env.EMAIL_FROM_NAME || 'CoRATES'} <${env.EMAIL_FROM}>`,
+            from: `${'CoRATES'} <${env.EMAIL_FROM}>`,
             to: [to],
             subject: subject,
             html: html,
             text: text,
           }),
-        });
+        },
+        10000, // 10 second timeout for DO context
+      );
 
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(`Resend API error: ${error.message}`);
-        }
-
-        const result = await response.json();
-        console.log('Email sent successfully via Resend:', result.id);
-        return { success: true, id: result.id, service: 'resend' };
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`Resend API error: ${error.message}`);
       }
 
-      // Option 2: Use SendGrid
-      if (env.SENDGRID_API_KEY) {
-        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      const result = await response.json();
+      console.log('Email sent successfully via Resend:', result.id);
+      return { success: true, id: result.id, service: 'resend' };
+    }
+
+    // Option 2: Use SendGrid
+    if (env.SENDGRID_API_KEY) {
+      const response = await fetchWithTimeout(
+        'https://api.sendgrid.com/v3/mail/send',
+        {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${env.SENDGRID_API_KEY}`,
@@ -89,36 +102,66 @@ export function createEmailService(env) {
               { type: 'text/html', value: html },
             ].filter(c => c.value),
           }),
-        });
+        },
+        10000,
+      );
 
-        if (!response.ok) {
-          const error = await response.text();
-          throw new Error(`SendGrid API error: ${error}`);
-        }
-
-        console.log('Email sent successfully via SendGrid');
-        return { success: true, service: 'sendgrid' };
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`SendGrid API error: ${error}`);
       }
 
-      // Option 3: Use a simple SMTP relay server (for development)
-      try {
-        const relayUrl = env.SMTP_RELAY_URL || 'http://localhost:3001/send-email';
-        const response = await fetch(relayUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ to, subject, html, text }),
-        });
-        if (!response.ok) {
-          const error = await response.text();
-          throw new Error(`SMTP relay error: ${error}`);
+      console.log('Email sent successfully via SendGrid');
+      return { success: true, service: 'sendgrid' };
+    }
+
+    // Option 3: Use a simple SMTP relay server (for development)
+    const relayUrl = env.SMTP_RELAY_URL || 'http://localhost:3001/send-email';
+    const response = await fetchWithTimeout(
+      relayUrl,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to, subject, html, text }),
+      },
+      10000,
+    );
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`SMTP relay error: ${error}`);
+    }
+    const result = await response.json();
+    return { success: true, service: 'smtp-relay', ...result };
+  }
+
+  /**
+   * Actually send email via configured service (may use queue)
+   */
+  async function sendRealEmail({ to, subject, html, text }) {
+    try {
+      // If a Durable Object queue is configured, forward to it instead of
+      // calling the third-party provider directly. This keeps the request
+      // path fast and lets the EmailQueue DO handle retries.
+      if (env.EMAIL_QUEUE && typeof env.EMAIL_QUEUE.idFromName === 'function') {
+        try {
+          const id = env.EMAIL_QUEUE.idFromName('default');
+          const queue = env.EMAIL_QUEUE.get(id);
+          // Use a full URL to avoid 'Invalid URL: /' error
+          const req = new Request('https://email-queue/do', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to, subject, html, text }),
+          });
+          await queue.fetch(req);
+          return { success: true, service: 'email_queue' };
+        } catch (err) {
+          console.error('Failed to enqueue email to EmailQueue DO', err);
+          // Fall back to direct send below
         }
-        const result = await response.json();
-        // console.log('Email sent via local SMTP relay:', result.messageId || result);
-        return { success: true, service: 'smtp-relay', ...result };
-      } catch (error) {
-        console.error('Failed to send email via local SMTP relay:', error);
-        throw new Error(`Failed to send email via local SMTP relay: ${error.message}`);
       }
+
+      // Fall back to direct send if queue failed or not available
+      return await sendDirectEmail({ to, subject, html, text });
     } catch (error) {
       console.error('Failed to send email:', error);
       throw new Error(`Failed to send email: ${error.message}`);
@@ -163,10 +206,31 @@ export function createEmailService(env) {
     return await sendEmail({ to, subject, html, text });
   }
 
+  /**
+   * Fire-and-forget async email verification
+   */
+  function sendEmailVerificationAsync(to, verificationUrl, userDisplayName = '') {
+    sendEmailVerification(to, verificationUrl, userDisplayName).catch(err =>
+      console.error('Async email verification error:', err),
+    );
+  }
+
+  /**
+   * Fire-and-forget async password reset
+   */
+  function sendPasswordResetAsync(to, resetUrl, userDisplayName = '') {
+    sendPasswordReset(to, resetUrl, userDisplayName).catch(err =>
+      console.error('Async password reset error:', err),
+    );
+  }
+
   return {
     sendEmail,
+    sendDirectEmail,
     sendEmailVerification,
     sendPasswordReset,
+    sendEmailVerificationAsync,
+    sendPasswordResetAsync,
     isProduction,
   };
 }

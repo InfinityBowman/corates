@@ -38,31 +38,35 @@ export function createAuth(env) {
       sendOnSignUp: true,
       sendOnSignIn: true,
       autoSignInAfterVerification: true,
+      // Use an async, fire-and-forget wrapper so Workers do not block on slow
+      // third-party email providers. This returns immediately and logs errors.
       sendVerificationEmail: async ({ user, url }) => {
-        // console.log('📧 EMAIL VERIFICATION LINK (click to verify):');
-        // console.log('🔗', url);
-        // console.log('📨 Sending to:', user.email);
-        // console.log('👤 For user:', user.displayName || user.username || user.name);
-        return await emailService.sendEmailVerification(
-          user.email,
-          url,
-          user.displayName || user.username || user.name,
-        );
+        try {
+          emailService.sendEmailVerificationAsync(
+            user.email,
+            url,
+            user.displayName || user.username || user.name,
+          );
+        } catch (err) {
+          console.error('Async sendVerificationEmail error:', err);
+        }
+        return;
       },
     },
 
     resetPassword: {
       enabled: true,
       sendEmail: async ({ user, url, token }) => {
-        // console.log('🔑 PASSWORD RESET LINK (click to reset):');
-        // console.log('🔗', url);
-        // console.log('📨 Sending to:', user.email);
-        // console.log('👤 For user:', user.displayName || user.username || user.name);
-        return await emailService.sendPasswordReset(
-          user.email,
-          url,
-          user.displayName || user.username || user.name,
-        );
+        try {
+          emailService.sendPasswordResetAsync(
+            user.email,
+            url,
+            user.displayName || user.username || user.name,
+          );
+        } catch (err) {
+          console.error('Async sendPasswordReset error:', err);
+        }
+        return;
       },
     },
 

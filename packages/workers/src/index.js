@@ -6,6 +6,7 @@
 
 import { UserSession } from './durable-objects/UserSession.js';
 import { ProjectDoc } from './durable-objects/ProjectDoc.js';
+import { EmailQueue } from './durable-objects/EmailQueue.js';
 import { handleAuthRoutes } from './auth/routes.js';
 import { requireAuth } from './auth/config.js';
 import {
@@ -21,9 +22,10 @@ import { handleMembers } from './routes/members.js';
 import { handleUsers } from './routes/users.js';
 import { handleDatabase } from './routes/database.js';
 import { handleTestEmail } from './routes/email.js';
+import { handleEmailQueue } from './routes/email-queue.js';
 
 // Export Durable Objects
-export { UserSession, ProjectDoc };
+export { UserSession, ProjectDoc, EmailQueue };
 
 export default {
   async fetch(request, env, ctx) {
@@ -52,6 +54,11 @@ export default {
         env.ENVIRONMENT !== 'production'
       ) {
         return await handleTestEmail(request, env);
+      }
+
+      // Email queue endpoint - forward to Durable Object
+      if (path === '/api/email/queue' && request.method === 'POST') {
+        return await handleEmailQueue(request, env);
       }
 
       // API Routes

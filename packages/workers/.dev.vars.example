@@ -9,6 +9,9 @@ SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-gmail-app-password-here
 EMAIL_FROM=your-email@gmail.com
 
+# Resend API key
+RESEND_API_KEY=your-resend-api-key
+
 # Email testing (uncomment to send real emails in development)
 # SEND_EMAILS_IN_DEV=true
 

@@ -22,18 +22,50 @@ export async function handleTestEmail(request, env) {
 
     switch (type) {
       case 'verification':
-        result = await emailService.sendEmailVerification(
-          email,
-          'http://localhost:5173/auth/verify-email?token=test-token-12345',
-          'Test User',
-        );
+        if (env.EMAIL_QUEUE) {
+          const id = env.EMAIL_QUEUE.idFromName('default');
+          const queue = env.EMAIL_QUEUE.get(id);
+          await queue.fetch('/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: email,
+              subject: 'Verify Your Email Address - CoRATES',
+              html: '<p>Test verification link</p>',
+              text: 'Test verification link',
+            }),
+          });
+          result = { queued: true };
+        } else {
+          result = await emailService.sendEmailVerification(
+            email,
+            'http://localhost:5173/auth/verify-email?token=test-token-12345',
+            'Test User',
+          );
+        }
         break;
       case 'password-reset':
-        result = await emailService.sendPasswordReset(
-          email,
-          'http://localhost:5173/auth/reset-password?token=test-token-12345',
-          'Test User',
-        );
+        if (env.EMAIL_QUEUE) {
+          const id2 = env.EMAIL_QUEUE.idFromName('default');
+          const queue2 = env.EMAIL_QUEUE.get(id2);
+          await queue2.fetch('/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: email,
+              subject: 'Reset Your Password - CoRATES',
+              html: '<p>Test reset link</p>',
+              text: 'Test reset link',
+            }),
+          });
+          result = { queued: true };
+        } else {
+          result = await emailService.sendPasswordReset(
+            email,
+            'http://localhost:5173/auth/reset-password?token=test-token-12345',
+            'Test User',
+          );
+        }
         break;
       default:
         result = await emailService.sendEmail({
