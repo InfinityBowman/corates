@@ -21,6 +21,7 @@ export function useProject(projectId) {
   const [error, setError] = createSignal(null);
   const [reviews, setReviews] = createSignal([]);
   const [meta, setMeta] = createSignal({});
+  const [members, setMembers] = createSignal([]);
 
   // Check if this is a local-only project
   const isLocalProject = () => projectId && projectId.startsWith('local-');
@@ -73,6 +74,22 @@ export function useProject(projectId) {
     // Sync meta
     const metaMap = ydoc.getMap('meta');
     setMeta(metaMap.toJSON ? metaMap.toJSON() : {});
+
+    // Sync members
+    const membersMap = ydoc.getMap('members');
+    const membersList = [];
+    for (const [userId, memberYMap] of membersMap.entries()) {
+      const memberData = memberYMap.toJSON ? memberYMap.toJSON() : memberYMap;
+      membersList.push({
+        userId,
+        role: memberData.role,
+        joinedAt: memberData.joinedAt,
+        name: memberData.name,
+        email: memberData.email,
+        displayName: memberData.displayName,
+      });
+    }
+    setMembers(membersList);
   }
 
   // Connect to the project's WebSocket (or just IndexedDB for local projects)
@@ -419,7 +436,7 @@ export function useProject(projectId) {
     error,
     reviews,
     meta,
-    members: () => [], // Members come from D1, not Y.js
+    members,
     isLocalProject,
 
     // Operations

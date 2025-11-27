@@ -9,6 +9,29 @@ import { requireAuth } from '../auth/config.js';
 import { jsonResponse, errorResponse } from '../middleware/cors.js';
 
 /**
+ * Sync a member change to the Durable Object
+ */
+async function syncMemberToDO(env, projectId, action, memberData) {
+  try {
+    const doId = env.PROJECT_DOC.idFromName(projectId);
+    const projectDoc = env.PROJECT_DOC.get(doId);
+
+    await projectDoc.fetch(
+      new Request('https://internal/sync-member', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Internal-Request': 'true',
+        },
+        body: JSON.stringify({ action, member: memberData }),
+      }),
+    );
+  } catch (err) {
+    console.error('Failed to sync member to DO:', err);
+  }
+}
+
+/**
  * Handle project member routes
  * - GET /api/projects/:projectId/members - List all members
  * - POST /api/projects/:projectId/members - Add a member
@@ -57,12 +80,20 @@ export async function handleMembers(request, env, path) {
         return await addMember(request, env, db, projectId, isOwner);
       case 'PUT':
         if (memberId) {
-          return await updateMemberRole(request, db, projectId, memberId, isOwner);
+          return await updateMemberRole(request, env, db, projectId, memberId, isOwner);
         }
         break;
       case 'DELETE':
         if (memberId) {
-          return await removeMember(request, db, projectId, memberId, isOwner, authResult.user.id);
+          return await removeMember(
+            request,
+            env,
+            db,
+            projectId,
+            memberId,
+            isOwner,
+            authResult.user.id,
+          );
         }
         break;
     }
@@ -202,6 +233,16 @@ async function addMember(request, env, db, projectId, isOwner) {
     console.error('Failed to send project invite notification:', err);
   }
 
+  // Sync member to DO
+  await syncMemberToDO(env, projectId, 'add', {
+    userId: userToAdd.id,
+    role,
+    joinedAt: now.getTime(),
+    name: userToAdd.name,
+    email: userToAdd.email,
+    displayName: userToAdd.displayName,
+  });
+
   return jsonResponse(
     {
       userId: userToAdd.id,
@@ -220,7 +261,7 @@ async function addMember(request, env, db, projectId, isOwner) {
 /**
  * Update a member's role (owner only)
  */
-async function updateMemberRole(request, db, projectId, memberId, isOwner) {
+async function updateMemberRole(request, env, db, projectId, memberId, isOwner) {
   if (!isOwner) {
     return errorResponse('Only project owners can update member roles', 403, request);
   }
@@ -265,13 +306,19 @@ async function updateMemberRole(request, db, projectId, memberId, isOwner) {
     .set({ role })
     .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
 
+  // Sync role update to DO
+  await syncMemberToDO(env, projectId, 'update', {
+    userId: memberId,
+    role,
+  });
+
   return jsonResponse({ success: true, userId: memberId, role }, {}, request);
 }
 
 /**
  * Remove a member from the project (owner only, or self-removal)
  */
-async function removeMember(request, db, projectId, memberId, isOwner, currentUserId) {
+async function removeMember(request, env, db, projectId, memberId, isOwner, currentUserId) {
   const isSelfRemoval = memberId === currentUserId;
 
   if (!isOwner && !isSelfRemoval) {
@@ -309,6 +356,11 @@ async function removeMember(request, db, projectId, memberId, isOwner, currentUs
   await db
     .delete(projectMembers)
     .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
+
+  // Sync member removal to DO
+  await syncMemberToDO(env, projectId, 'remove', {
+    userId: memberId,
+  });
 
   return jsonResponse({ success: true, removed: memberId }, {}, request);
 }

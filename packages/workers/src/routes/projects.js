@@ -3,10 +3,33 @@
  */
 
 import { createDb } from '../db/client.js';
-import { projects, projectMembers } from '../db/schema.js';
+import { projects, projectMembers, user } from '../db/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
 import { requireAuth } from '../auth/config.js';
 import { jsonResponse, errorResponse } from '../middleware/cors.js';
+
+/**
+ * Sync project metadata and members to the Durable Object
+ */
+async function syncProjectToDO(env, projectId, meta, members) {
+  try {
+    const doId = env.PROJECT_DOC.idFromName(projectId);
+    const projectDoc = env.PROJECT_DOC.get(doId);
+
+    await projectDoc.fetch(
+      new Request('https://internal/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Internal-Request': 'true',
+        },
+        body: JSON.stringify({ meta, members }),
+      }),
+    );
+  } catch (err) {
+    console.error('Failed to sync project to DO:', err);
+  }
+}
 
 /**
  * Handle project routes
@@ -117,6 +140,40 @@ async function createProject(request, env, db) {
       joinedAt: now,
     });
 
+    // Get creator's user info for DO sync
+    const creator = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        displayName: user.displayName,
+      })
+      .from(user)
+      .where(eq(user.id, authResult.user.id))
+      .get();
+
+    // Sync to Durable Object
+    await syncProjectToDO(
+      env,
+      projectId,
+      {
+        name: name.trim(),
+        description: description?.trim() || null,
+        createdAt: now.getTime(),
+        updatedAt: now.getTime(),
+      },
+      [
+        {
+          userId: authResult.user.id,
+          role: 'owner',
+          joinedAt: now.getTime(),
+          name: creator?.name || null,
+          email: creator?.email || null,
+          displayName: creator?.displayName || null,
+        },
+      ],
+    );
+
     const newProject = {
       id: projectId,
       name: name.trim(),
@@ -167,6 +224,18 @@ async function updateProject(request, env, db, projectId) {
         updatedAt: now,
       })
       .where(eq(projects.id, projectId));
+
+    // Sync updated meta to DO
+    await syncProjectToDO(
+      env,
+      projectId,
+      {
+        name: name?.trim() || null,
+        description: description?.trim() || null,
+        updatedAt: now.getTime(),
+      },
+      null, // Don't update members
+    );
 
     return jsonResponse({ success: true, projectId }, {}, request);
   } catch (error) {
