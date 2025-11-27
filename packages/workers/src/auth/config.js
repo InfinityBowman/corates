@@ -4,6 +4,7 @@ import { drizzle } from 'drizzle-orm/d1';
 import { eq } from 'drizzle-orm';
 import * as schema from '../db/schema.js';
 import { createEmailService } from './email.js';
+import { errorResponse } from '../middleware/cors.js';
 
 export function createAuth(env, ctx) {
   // Initialize Drizzle with D1
@@ -214,13 +215,7 @@ export async function requireAuth(request, env) {
   const authResult = await verifyAuth(request, env);
 
   if (!authResult.user) {
-    return new Response(JSON.stringify({ error: 'Authentication required' }), {
-      status: 401,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+    return errorResponse('Authentication required', 401, request);
   }
 
   return authResult;
