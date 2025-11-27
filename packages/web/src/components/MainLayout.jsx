@@ -2,9 +2,9 @@ import Navbar from './Navbar.jsx';
 
 export default function MainLayout(props) {
   return (
-    <div class='min-h-screen bg-blue-50'>
+    <div class='h-screen flex flex-col bg-blue-50 overflow-hidden'>
       <Navbar />
-      <main class='text-gray-900'>{props.children}</main>
+      <main class='flex-1 overflow-auto text-gray-900'>{props.children}</main>
     </div>
   );
 }

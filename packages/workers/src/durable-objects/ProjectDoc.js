@@ -56,6 +56,9 @@ export class ProjectDoc {
         if (url.pathname === '/sync-member') {
           return await this.handleSyncMember(request);
         }
+        if (url.pathname === '/sync-pdf') {
+          return await this.handleSyncPdf(request);
+        }
       }
 
       // For HTTP requests verify auth (unless it's an upgrade to websocket)
@@ -182,6 +185,65 @@ export class ProjectDoc {
       });
     } catch (error) {
       console.error('handleSyncMember error:', error);
+      return new Response(JSON.stringify({ error: 'Sync failed' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
+  /**
+   * Handle PDF sync request from routes (add/remove PDF metadata for a study)
+   * Note: Y.js map key remains 'reviews' for backward compatibility
+   */
+  async handleSyncPdf(request) {
+    await this.initializeDoc();
+
+    try {
+      const { action, studyId, pdf, fileName } = await request.json();
+
+      // Note: Y.js map key remains 'reviews' for backward compatibility
+      const studiesMap = this.doc.getMap('reviews');
+      const studyYMap = studiesMap.get(studyId);
+
+      if (!studyYMap) {
+        return new Response(JSON.stringify({ error: 'Study not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Get or create the pdfs Y.Map for this study
+      let pdfsMap = studyYMap.get('pdfs');
+      if (!pdfsMap) {
+        pdfsMap = new Y.Map();
+        studyYMap.set('pdfs', pdfsMap);
+      }
+
+      if (action === 'add' && pdf) {
+        const pdfYMap = new Y.Map();
+        pdfYMap.set('key', pdf.key);
+        pdfYMap.set('fileName', pdf.fileName);
+        pdfYMap.set('size', pdf.size);
+        pdfYMap.set('uploadedBy', pdf.uploadedBy);
+        pdfYMap.set('uploadedAt', pdf.uploadedAt);
+        pdfsMap.set(pdf.fileName, pdfYMap);
+      } else if (action === 'remove' && fileName) {
+        pdfsMap.delete(fileName);
+      }
+
+      // Update study's updatedAt
+      studyYMap.set('updatedAt', Date.now());
+
+      // Broadcast update to connected clients
+      const update = Y.encodeStateAsUpdate(this.doc);
+      this.broadcast(JSON.stringify({ type: 'update', update: Array.from(update) }));
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      console.error('handleSyncPdf error:', error);
       return new Response(JSON.stringify({ error: 'Sync failed' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
@@ -369,7 +431,7 @@ export class ProjectDoc {
       });
     }
 
-    // Get reviews with nested checklists
+    // Get reviews with nested checklists and pdfs
     const reviewsMap = this.doc.getMap('reviews');
     for (const [reviewId, reviewValue] of reviewsMap.entries()) {
       const reviewData = this.yMapToPlain(reviewValue);
@@ -380,6 +442,7 @@ export class ProjectDoc {
         createdAt: reviewData.createdAt,
         updatedAt: reviewData.updatedAt,
         checklists: [],
+        pdfs: [],
       };
 
       // Get checklists within this review
@@ -395,6 +458,21 @@ export class ProjectDoc {
             createdAt: checklistData.createdAt,
             updatedAt: checklistData.updatedAt,
             answers: checklistData.answers || {},
+          });
+        }
+      }
+
+      // Get PDFs within this review
+      const pdfsMap = reviewValue.get('pdfs');
+      if (pdfsMap && pdfsMap.entries) {
+        for (const [fileName, pdfValue] of pdfsMap.entries()) {
+          const pdfData = this.yMapToPlain(pdfValue);
+          review.pdfs.push({
+            fileName,
+            key: pdfData.key,
+            size: pdfData.size,
+            uploadedBy: pdfData.uploadedBy,
+            uploadedAt: pdfData.uploadedAt,
           });
         }
       }

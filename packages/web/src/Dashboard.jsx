@@ -9,15 +9,13 @@ export default function Dashboard() {
   const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
 
   return (
-    <div class='min-h-screen'>
-      <main class='p-6'>
-        <div class='max-w-6xl mx-auto space-y-8'>
-          <Show when={isLoggedIn()}>
-            <ProjectDashboard apiBase={API_BASE} userId={user()?.id} />
-          </Show>
-          <ChecklistsDashboard isLoggedIn={isLoggedIn()} />
-        </div>
-      </main>
+    <div class='p-6'>
+      <div class='max-w-6xl mx-auto space-y-8'>
+        <Show when={isLoggedIn()}>
+          <ProjectDashboard apiBase={API_BASE} userId={user()?.id} />
+        </Show>
+        <ChecklistsDashboard isLoggedIn={isLoggedIn()} />
+      </div>
     </div>
   );
 }

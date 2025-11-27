@@ -60,9 +60,9 @@
   - [ ] Project-name based URLs
 
 - [ ] **Collaborative Project Dashboard**
-  - [ ] Randomly assign reviews to people
-  - [ ] Show who has completed reviews
-  - [ ] Show who is assigned to which reviews
+  - [ ] Randomly assign studies to people
+  - [ ] Show who has completed studies
+  - [ ] Show who is assigned to which studies
 
 - [ ] **Sidebar**
   - [ ] List projects and their checklists (expandable/collapsible)
@@ -87,7 +87,7 @@
   - [ ] Ex: What does it mean for something to be a critical item
 
 - [ ] **Quick Checklist**
-  - [ ] Let a user quickly score a review with pdf without creating a project
+  - [ ] Let a user quickly score a study with pdf without creating a project
   - [ ] Allow import/export to do this
 
 - [ ] **404 Page**
@@ -107,6 +107,6 @@
   - [ ] Animated Icons: https://animate-ui.com/docs/icons, https://lucide-animated.com/
   - [x] UI library: https://zagjs.com/overview/installation
 
-- pdfs can be linked to reviews
+- pdfs can be linked to studies
 
 <br><br>_This roadmap is a living document and will be updated as the project evolves._

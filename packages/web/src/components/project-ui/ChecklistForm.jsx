@@ -1,5 +1,5 @@
 /**
- * ChecklistForm component - Form to add a checklist to a review
+ * ChecklistForm component - Form to add a checklist to a study
  */
 
 import { createSignal, For } from 'solid-js';
@@ -43,7 +43,9 @@ export default function ChecklistForm(props) {
             <option value=''>Unassigned</option>
             <For each={members()}>
               {member => (
-                <option value={member.userId}>{member.userName || member.userEmail}</option>
+                <option value={member.userId}>
+                  {member.displayName || member.name || member.email || 'Unknown'}
+                </option>
               )}
             </For>
           </select>

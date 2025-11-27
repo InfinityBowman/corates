@@ -31,10 +31,10 @@ binding = "DB"
 database_name = "corates-db"
 database_id = "7ac6d425-2a7c-4087-9f42-0cd1a2ab367b"
 
-# R2 Bucket for media storage
-# [[r2_buckets]]
-# binding = "MEDIA_BUCKET"
-# bucket_name = "corates-media"
+# R2 Bucket for PDF storage
+[[r2_buckets]]
+binding = "PDF_BUCKET"
+bucket_name = "corates-pdfs"
 
 # Environment variables (non-sensitive only)
 [vars]
@@ -76,9 +76,9 @@ binding = "DB"
 database_name = "corates-db-prod"
 database_id = "bd15994e-1308-41b3-a91c-e30ab6c947da"
 
-# [[env.production.r2_buckets]]
-# binding = "MEDIA_BUCKET"
-# bucket_name = "corates-media-prod"
+[[env.production.r2_buckets]]
+binding = "PDF_BUCKET"
+bucket_name = "corates-pdfs-prod"
 
 # Production Durable Objects
 [[env.production.durable_objects.bindings]]

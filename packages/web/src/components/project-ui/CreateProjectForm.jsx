@@ -41,6 +41,9 @@ export default function CreateProjectForm(props) {
         const arrayBuffer = await readFileAsArrayBuffer(pdf.file);
         const title = await extractPdfTitle(arrayBuffer);
 
+        // Convert to array immediately to avoid detached ArrayBuffer issues
+        const dataArray = Array.from(new Uint8Array(arrayBuffer));
+
         setUploadedPdfs(prev =>
           prev.map(p =>
             p.id === pdf.id ?
@@ -48,7 +51,7 @@ export default function CreateProjectForm(props) {
                 ...p,
                 title: title || pdf.file.name.replace(/\.pdf$/i, ''),
                 extracting: false,
-                data: arrayBuffer,
+                data: dataArray,
               }
             : p,
           ),
@@ -117,7 +120,7 @@ export default function CreateProjectForm(props) {
       const newProject = await response.json();
 
       // Collect PDFs to pass along
-      const pdfsToProcess = uploadedPdfs().filter(p => p.title && !p.extracting);
+      const pdfsToProcess = uploadedPdfs().filter(p => p.title && !p.extracting && p.data);
 
       // Store in sessionStorage for the project view to pick up
       if (pdfsToProcess.length > 0) {
@@ -127,7 +130,7 @@ export default function CreateProjectForm(props) {
             pdfsToProcess.map(p => ({
               title: p.title,
               fileName: p.file.name,
-              data: Array.from(new Uint8Array(p.data)),
+              data: p.data, // Already stored as array
             })),
           ),
         );
@@ -184,7 +187,7 @@ export default function CreateProjectForm(props) {
             Upload PDFs (Optional)
           </label>
           <p class='text-sm text-gray-500 mb-3'>
-            Upload research papers to automatically create reviews. Titles will be extracted from
+            Upload research papers to automatically create studies. Titles will be extracted from
             each PDF.
           </p>
 
@@ -237,7 +240,7 @@ export default function CreateProjectForm(props) {
                           value={pdf.title || ''}
                           onInput={e => updatePdfTitle(pdf.id, e.target.value)}
                           class='w-full text-sm font-medium text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0'
-                          placeholder='Review title'
+                          placeholder='Study title'
                         />
                         <p class='text-xs text-gray-500 truncate'>{pdf.file.name}</p>
                       </Show>
@@ -254,7 +257,7 @@ export default function CreateProjectForm(props) {
               </For>
               <p class='text-xs text-gray-500 mt-2'>
                 {uploadedPdfs().length} PDF{uploadedPdfs().length !== 1 ? 's' : ''} will create{' '}
-                {uploadedPdfs().length} review{uploadedPdfs().length !== 1 ? 's' : ''}
+                {uploadedPdfs().length} stud{uploadedPdfs().length !== 1 ? 'ies' : 'y'}
               </p>
             </div>
           </Show>

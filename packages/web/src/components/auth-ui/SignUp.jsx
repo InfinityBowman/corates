@@ -12,7 +12,6 @@ export default function SignUp() {
   const [password, setPassword] = createSignal('');
   const [confirmPassword, setConfirmPassword] = createSignal('');
   const [error, setError] = createSignal('');
-  const [submitted, setSubmitted] = createSignal(false);
   const [unmetRequirements, setUnmetRequirements] = createSignal([]);
   const [loading, setLoading] = createSignal(false);
 
@@ -24,7 +23,6 @@ export default function SignUp() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setSubmitted(true);
     setError('');
 
     // Validation
@@ -148,7 +146,7 @@ export default function SignUp() {
             required
           />
           <AnimatedShow when={!!displayError()}>
-            <div class='pt-2 sm:pt-3 px-2 text-red-600 text-xs sm:text-sm bg-red-50 border border-red-200 rounded-lg'>
+            <div class='py-1 mt-2 px-2 text-red-600 text-xs sm:text-sm bg-red-50 border border-red-200 rounded-lg'>
               {displayError()}
             </div>
           </AnimatedShow>

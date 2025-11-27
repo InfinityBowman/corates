@@ -109,7 +109,7 @@ export default function SignIn() {
         </div>
 
         <AnimatedShow when={!!displayError()}>
-          <div class='pt-2 sm:pt-3 px-2 text-red-600 text-xs sm:text-sm bg-red-50 border border-red-200 rounded-lg'>
+          <div class='py-1 mt-2 px-2 text-red-600 text-xs sm:text-sm bg-red-50 border border-red-200 rounded-lg'>
             {displayError()}
           </div>
         </AnimatedShow>

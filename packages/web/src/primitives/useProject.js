@@ -10,7 +10,8 @@ import { createChecklist as createAMSTAR2Answers } from '../AMSTAR2/checklist.js
 const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
 
 /**
- * Hook to connect to a project's Y.Doc and manage reviews/checklists
+ * Hook to connect to a project's Y.Doc and manage studies/checklists
+ * Note: Y.js map key remains 'reviews' for backward compatibility with existing data
  * @param {string} projectId - The project ID to connect to
  * @returns {Object} Project state and operations
  */
@@ -19,7 +20,7 @@ export function useProject(projectId) {
   const [connecting, setConnecting] = createSignal(false);
   const [synced, setSynced] = createSignal(false);
   const [error, setError] = createSignal(null);
-  const [reviews, setReviews] = createSignal([]);
+  const [studies, setStudies] = createSignal([]);
   const [meta, setMeta] = createSignal({});
   const [members, setMembers] = createSignal([]);
 
@@ -34,26 +35,28 @@ export function useProject(projectId) {
   function syncFromYDoc() {
     if (!ydoc) return;
 
-    const reviewsMap = ydoc.getMap('reviews');
-    const reviewsList = [];
+    // Note: Y.js map key remains 'reviews' for backward compatibility
+    const studiesMap = ydoc.getMap('reviews');
+    const studiesList = [];
 
-    for (const [reviewId, reviewYMap] of reviewsMap.entries()) {
-      const reviewData = reviewYMap.toJSON ? reviewYMap.toJSON() : reviewYMap;
-      const review = {
-        id: reviewId,
-        name: reviewData.name || '',
-        description: reviewData.description || '',
-        createdAt: reviewData.createdAt,
-        updatedAt: reviewData.updatedAt,
+    for (const [studyId, studyYMap] of studiesMap.entries()) {
+      const studyData = studyYMap.toJSON ? studyYMap.toJSON() : studyYMap;
+      const study = {
+        id: studyId,
+        name: studyData.name || '',
+        description: studyData.description || '',
+        createdAt: studyData.createdAt,
+        updatedAt: studyData.updatedAt,
         checklists: [],
+        pdfs: [],
       };
 
       // Get checklists from nested Y.Map
-      const checklistsMap = reviewYMap.get ? reviewYMap.get('checklists') : null;
+      const checklistsMap = studyYMap.get ? studyYMap.get('checklists') : null;
       if (checklistsMap && typeof checklistsMap.entries === 'function') {
         for (const [checklistId, checklistYMap] of checklistsMap.entries()) {
           const checklistData = checklistYMap.toJSON ? checklistYMap.toJSON() : checklistYMap;
-          review.checklists.push({
+          study.checklists.push({
             id: checklistId,
             type: checklistData.type || 'AMSTAR2',
             assignedTo: checklistData.assignedTo || null,
@@ -64,12 +67,27 @@ export function useProject(projectId) {
         }
       }
 
-      reviewsList.push(review);
+      // Get PDFs from nested Y.Map
+      const pdfsMap = studyYMap.get ? studyYMap.get('pdfs') : null;
+      if (pdfsMap && typeof pdfsMap.entries === 'function') {
+        for (const [fileName, pdfYMap] of pdfsMap.entries()) {
+          const pdfData = pdfYMap.toJSON ? pdfYMap.toJSON() : pdfYMap;
+          study.pdfs.push({
+            fileName,
+            key: pdfData.key,
+            size: pdfData.size,
+            uploadedBy: pdfData.uploadedBy,
+            uploadedAt: pdfData.uploadedAt,
+          });
+        }
+      }
+
+      studiesList.push(study);
     }
 
     // Sort by createdAt
-    reviewsList.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-    setReviews(reviewsList);
+    studiesList.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    setStudies(studiesList);
 
     // Sync meta
     const metaMap = ydoc.getMap('meta');
@@ -193,67 +211,68 @@ export function useProject(projectId) {
     setSynced(false);
   }
 
-  // Create a new review
-  function createReview(name, description = '') {
+  // Create a new study
+  function createStudy(name, description = '') {
     if (!ydoc) return null;
     // For cloud projects, require connection; for local projects, just need ydoc
     if (!isLocalProject() && !connected()) return null;
 
-    const reviewId = crypto.randomUUID();
+    const studyId = crypto.randomUUID();
     const now = Date.now();
 
-    const reviewsMap = ydoc.getMap('reviews');
-    const reviewYMap = new Y.Map();
+    // Note: Y.js map key remains 'reviews' for backward compatibility
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = new Y.Map();
 
-    reviewYMap.set('name', name);
-    reviewYMap.set('description', description);
-    reviewYMap.set('createdAt', now);
-    reviewYMap.set('updatedAt', now);
-    reviewYMap.set('checklists', new Y.Map());
+    studyYMap.set('name', name);
+    studyYMap.set('description', description);
+    studyYMap.set('createdAt', now);
+    studyYMap.set('updatedAt', now);
+    studyYMap.set('checklists', new Y.Map());
 
-    reviewsMap.set(reviewId, reviewYMap);
+    studiesMap.set(studyId, studyYMap);
 
-    return reviewId;
+    return studyId;
   }
 
-  // Update a review
-  function updateReview(reviewId, updates) {
+  // Update a study
+  function updateStudy(studyId, updates) {
     if (!ydoc) return;
     if (!isLocalProject() && !connected()) return;
 
-    const reviewsMap = ydoc.getMap('reviews');
-    const reviewYMap = reviewsMap.get(reviewId);
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
 
-    if (!reviewYMap) return;
+    if (!studyYMap) return;
 
-    if (updates.name !== undefined) reviewYMap.set('name', updates.name);
-    if (updates.description !== undefined) reviewYMap.set('description', updates.description);
-    reviewYMap.set('updatedAt', Date.now());
+    if (updates.name !== undefined) studyYMap.set('name', updates.name);
+    if (updates.description !== undefined) studyYMap.set('description', updates.description);
+    studyYMap.set('updatedAt', Date.now());
   }
 
-  // Delete a review
-  function deleteReview(reviewId) {
+  // Delete a study
+  function deleteStudy(studyId) {
     if (!ydoc) return;
     if (!isLocalProject() && !connected()) return;
 
-    const reviewsMap = ydoc.getMap('reviews');
-    reviewsMap.delete(reviewId);
+    const studiesMap = ydoc.getMap('reviews');
+    studiesMap.delete(studyId);
   }
 
-  // Create a checklist in a review
-  function createChecklist(reviewId, type = 'AMSTAR2', assignedTo = null) {
+  // Create a checklist in a study
+  function createChecklist(studyId, type = 'AMSTAR2', assignedTo = null) {
     if (!ydoc) return null;
     if (!isLocalProject() && !connected()) return null;
 
-    const reviewsMap = ydoc.getMap('reviews');
-    const reviewYMap = reviewsMap.get(reviewId);
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
 
-    if (!reviewYMap) return null;
+    if (!studyYMap) return null;
 
-    let checklistsMap = reviewYMap.get('checklists');
+    let checklistsMap = studyYMap.get('checklists');
     if (!checklistsMap) {
       checklistsMap = new Y.Map();
-      reviewYMap.set('checklists', checklistsMap);
+      studyYMap.set('checklists', checklistsMap);
     }
 
     const checklistId = crypto.randomUUID();
@@ -294,22 +313,22 @@ export function useProject(projectId) {
 
     checklistsMap.set(checklistId, checklistYMap);
 
-    // Update review's updatedAt
-    reviewYMap.set('updatedAt', now);
+    // Update study's updatedAt
+    studyYMap.set('updatedAt', now);
 
     return checklistId;
   }
 
   // Update a checklist
-  function updateChecklist(reviewId, checklistId, updates) {
+  function updateChecklist(studyId, checklistId, updates) {
     if (!ydoc) return;
     if (!isLocalProject() && !connected()) return;
 
-    const reviewsMap = ydoc.getMap('reviews');
-    const reviewYMap = reviewsMap.get(reviewId);
-    if (!reviewYMap) return;
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
+    if (!studyYMap) return;
 
-    const checklistsMap = reviewYMap.get('checklists');
+    const checklistsMap = studyYMap.get('checklists');
     if (!checklistsMap) return;
 
     const checklistYMap = checklistsMap.get(checklistId);
@@ -322,30 +341,30 @@ export function useProject(projectId) {
   }
 
   // Delete a checklist
-  function deleteChecklist(reviewId, checklistId) {
+  function deleteChecklist(studyId, checklistId) {
     if (!ydoc) return;
     if (!isLocalProject() && !connected()) return;
 
-    const reviewsMap = ydoc.getMap('reviews');
-    const reviewYMap = reviewsMap.get(reviewId);
-    if (!reviewYMap) return;
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
+    if (!studyYMap) return;
 
-    const checklistsMap = reviewYMap.get('checklists');
+    const checklistsMap = studyYMap.get('checklists');
     if (!checklistsMap) return;
 
     checklistsMap.delete(checklistId);
-    reviewYMap.set('updatedAt', Date.now());
+    studyYMap.set('updatedAt', Date.now());
   }
 
   // Get a specific checklist's Y.Map for answer updates
-  function getChecklistAnswersMap(reviewId, checklistId) {
+  function getChecklistAnswersMap(studyId, checklistId) {
     if (!ydoc) return null;
 
-    const reviewsMap = ydoc.getMap('reviews');
-    const reviewYMap = reviewsMap.get(reviewId);
-    if (!reviewYMap) return null;
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
+    if (!studyYMap) return null;
 
-    const checklistsMap = reviewYMap.get('checklists');
+    const checklistsMap = studyYMap.get('checklists');
     if (!checklistsMap) return null;
 
     const checklistYMap = checklistsMap.get(checklistId);
@@ -355,14 +374,14 @@ export function useProject(projectId) {
   }
 
   // Get full checklist data including answers in plain object format
-  function getChecklistData(reviewId, checklistId) {
+  function getChecklistData(studyId, checklistId) {
     if (!ydoc) return null;
 
-    const reviewsMap = ydoc.getMap('reviews');
-    const reviewYMap = reviewsMap.get(reviewId);
-    if (!reviewYMap) return null;
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
+    if (!studyYMap) return null;
 
-    const checklistsMap = reviewYMap.get('checklists');
+    const checklistsMap = studyYMap.get('checklists');
     if (!checklistsMap) return null;
 
     const checklistYMap = checklistsMap.get(checklistId);
@@ -387,15 +406,15 @@ export function useProject(projectId) {
   }
 
   // Update a single answer in a checklist
-  function updateChecklistAnswer(reviewId, checklistId, questionKey, answerData) {
+  function updateChecklistAnswer(studyId, checklistId, questionKey, answerData) {
     if (!ydoc) return;
     if (!isLocalProject() && !connected()) return;
 
-    const reviewsMap = ydoc.getMap('reviews');
-    const reviewYMap = reviewsMap.get(reviewId);
-    if (!reviewYMap) return;
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
+    if (!studyYMap) return;
 
-    const checklistsMap = reviewYMap.get('checklists');
+    const checklistsMap = studyYMap.get('checklists');
     if (!checklistsMap) return;
 
     const checklistYMap = checklistsMap.get(checklistId);
@@ -434,15 +453,15 @@ export function useProject(projectId) {
     connecting,
     synced,
     error,
-    reviews,
+    studies,
     meta,
     members,
     isLocalProject,
 
     // Operations
-    createReview,
-    updateReview,
-    deleteReview,
+    createStudy,
+    updateStudy,
+    deleteStudy,
     createChecklist,
     updateChecklist,
     deleteChecklist,

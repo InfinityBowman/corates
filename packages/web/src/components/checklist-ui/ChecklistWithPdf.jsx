@@ -10,14 +10,14 @@ import SplitScreenLayout from '@checklist-ui/SplitScreenLayout.jsx';
 export default function ChecklistWithPdf(props) {
   // props.checklist - the checklist data
   // props.onUpdate - callback for checklist updates
-  // props.headerContent - optional content to show in the toolbar (left side)
+  // props.headerContent - optional content to show in the header bar (left side)
   // props.pdfData - saved PDF ArrayBuffer (optional)
   // props.pdfFileName - saved PDF file name (optional)
   // props.onPdfChange - callback when PDF changes: (data, fileName) => void
   // props.onPdfClear - callback when PDF is cleared
 
   return (
-    <div class='h-screen flex flex-col bg-blue-50'>
+    <div class='h-full flex flex-col bg-blue-50'>
       {/* Split screen with checklist and PDF */}
       <SplitScreenLayout
         defaultLayout='vertical'
@@ -26,9 +26,7 @@ export default function ChecklistWithPdf(props) {
         headerContent={props.headerContent}
       >
         {/* First panel: Checklist */}
-        <div class='h-full overflow-auto'>
-          <AMSTAR2Checklist externalChecklist={props.checklist} onExternalUpdate={props.onUpdate} />
-        </div>
+        <AMSTAR2Checklist externalChecklist={props.checklist} onExternalUpdate={props.onUpdate} />
 
         {/* Second panel: PDF Viewer */}
         <PdfViewer

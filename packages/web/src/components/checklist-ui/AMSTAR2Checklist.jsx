@@ -777,7 +777,7 @@ export default function AMSTAR2Checklist(props = {}) {
   };
 
   return (
-    <div class='min-h-screen bg-blue-50'>
+    <div class='bg-blue-50'>
       <div class='container mx-auto px-4 py-6 max-w-5xl'>
         {/* Header */}
         <div class='bg-white rounded-lg shadow-lg p-6 mb-8'>
