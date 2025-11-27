@@ -4,9 +4,7 @@
 # Auth configuration (REQUIRED)
 AUTH_SECRET=generate-a-very-long-random-secret-key-at-least-64-characters-long
 
-# Email configuration for SMTP (REQUIRED for email features)
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-gmail-app-password-here
+# Email configuration
 EMAIL_FROM=your-email@gmail.com
 
 # Resend API key

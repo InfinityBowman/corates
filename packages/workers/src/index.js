@@ -21,7 +21,6 @@ import { handleProjects } from './routes/projects.js';
 import { handleMembers } from './routes/members.js';
 import { handleUsers } from './routes/users.js';
 import { handleDatabase } from './routes/database.js';
-import { handleTestEmail } from './routes/email.js';
 import { handleEmailQueue } from './routes/email-queue.js';
 
 // Export Durable Objects
@@ -45,15 +44,6 @@ export default {
       // Auth routes (handled by better-auth)
       if (path.startsWith('/api/auth/')) {
         return await handleAuthRoutes(request, env, ctx, path);
-      }
-
-      // Test email endpoint (development only)
-      if (
-        path === '/api/test-email' &&
-        request.method === 'POST' &&
-        env.ENVIRONMENT !== 'production'
-      ) {
-        return await handleTestEmail(request, env);
       }
 
       // Email queue endpoint - forward to Durable Object
