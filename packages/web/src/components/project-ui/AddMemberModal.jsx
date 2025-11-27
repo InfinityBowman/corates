@@ -102,8 +102,6 @@ export default function AddMemberModal(props) {
         throw new Error(data.error || 'Failed to add member');
       }
 
-      const newMember = await response.json();
-      props.onMemberAdded(newMember);
       handleClose();
     } catch (err) {
       console.error('Error adding member:', err);

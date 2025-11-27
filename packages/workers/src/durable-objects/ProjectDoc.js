@@ -35,9 +35,29 @@ export class ProjectDoc {
 
     // Debug: log upgrade header
     const upgradeHeader = request.headers.get('Upgrade');
-    console.log('ProjectDoc fetch - Upgrade header:', upgradeHeader, 'Method:', request.method);
+    console.log(
+      'ProjectDoc fetch - Upgrade header:',
+      upgradeHeader,
+      'Method:',
+      request.method,
+      'Path:',
+      url.pathname,
+    );
+
+    // Check for internal requests (from worker routes)
+    const isInternalRequest = request.headers.get('X-Internal-Request') === 'true';
 
     try {
+      // Internal sync endpoints (from D1 routes) - no auth required
+      if (isInternalRequest) {
+        if (url.pathname === '/sync') {
+          return await this.handleSync(request);
+        }
+        if (url.pathname === '/sync-member') {
+          return await this.handleSyncMember(request);
+        }
+      }
+
       // For HTTP requests verify auth (unless it's an upgrade to websocket)
       if (upgradeHeader !== 'websocket') {
         const { user } = await verifyAuth(request, this.env);
@@ -67,6 +87,102 @@ export class ProjectDoc {
     } catch (error) {
       console.error('ProjectDoc error:', error);
       return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
+  /**
+   * Handle sync request from D1 routes (project metadata and initial members)
+   */
+  async handleSync(request) {
+    await this.initializeDoc();
+
+    try {
+      const { meta, members } = await request.json();
+
+      // Update meta if provided
+      if (meta) {
+        const metaMap = this.doc.getMap('meta');
+        for (const [key, value] of Object.entries(meta)) {
+          if (value !== undefined) {
+            metaMap.set(key, value);
+          }
+        }
+      }
+
+      // Update members if provided (full replacement for initial sync)
+      if (members && Array.isArray(members)) {
+        const membersMap = this.doc.getMap('members');
+        // Clear existing members and set new ones
+        for (const [userId] of membersMap.entries()) {
+          membersMap.delete(userId);
+        }
+        for (const member of members) {
+          const memberYMap = new Y.Map();
+          memberYMap.set('role', member.role);
+          memberYMap.set('joinedAt', member.joinedAt);
+          memberYMap.set('name', member.name || null);
+          memberYMap.set('email', member.email || null);
+          memberYMap.set('displayName', member.displayName || null);
+          membersMap.set(member.userId, memberYMap);
+        }
+      }
+
+      // Broadcast update to connected clients
+      const update = Y.encodeStateAsUpdate(this.doc);
+      this.broadcast(JSON.stringify({ type: 'update', update: Array.from(update) }));
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      console.error('handleSync error:', error);
+      return new Response(JSON.stringify({ error: 'Sync failed' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
+  /**
+   * Handle member sync request from D1 routes (add/update/remove single member)
+   */
+  async handleSyncMember(request) {
+    await this.initializeDoc();
+
+    try {
+      const { action, member } = await request.json();
+      const membersMap = this.doc.getMap('members');
+
+      if (action === 'add') {
+        const memberYMap = new Y.Map();
+        memberYMap.set('role', member.role);
+        memberYMap.set('joinedAt', member.joinedAt);
+        memberYMap.set('name', member.name || null);
+        memberYMap.set('email', member.email || null);
+        memberYMap.set('displayName', member.displayName || null);
+        membersMap.set(member.userId, memberYMap);
+      } else if (action === 'update') {
+        const existingMember = membersMap.get(member.userId);
+        if (existingMember) {
+          existingMember.set('role', member.role);
+        }
+      } else if (action === 'remove') {
+        membersMap.delete(member.userId);
+      }
+
+      // Broadcast update to connected clients
+      const update = Y.encodeStateAsUpdate(this.doc);
+      this.broadcast(JSON.stringify({ type: 'update', update: Array.from(update) }));
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      console.error('handleSyncMember error:', error);
+      return new Response(JSON.stringify({ error: 'Sync failed' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
