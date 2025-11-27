@@ -3,7 +3,7 @@
  */
 
 import { createDb } from '../db/client.js';
-import { projectMembers, user } from '../db/schema.js';
+import { projectMembers, user, projects } from '../db/schema.js';
 import { eq, and, count } from 'drizzle-orm';
 import { requireAuth } from '../auth/config.js';
 import { jsonResponse, errorResponse } from '../middleware/cors.js';
@@ -54,7 +54,7 @@ export async function handleMembers(request, env, path) {
         }
         break;
       case 'POST':
-        return await addMember(request, db, projectId, isOwner);
+        return await addMember(request, env, db, projectId, isOwner);
       case 'PUT':
         if (memberId) {
           return await updateMemberRole(request, db, projectId, memberId, isOwner);
@@ -100,7 +100,7 @@ async function listMembers(request, db, projectId) {
 /**
  * Add a member to the project (owner only)
  */
-async function addMember(request, db, projectId, isOwner) {
+async function addMember(request, env, db, projectId, isOwner) {
   if (!isOwner) {
     return errorResponse('Only project owners can add members', 403, request);
   }
@@ -172,6 +172,35 @@ async function addMember(request, db, projectId, isOwner) {
     role,
     joinedAt: now,
   });
+
+  // Get project name for notification
+  const project = await db
+    .select({ name: projects.name })
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .get();
+
+  // Send notification to the added user via their UserSession DO
+  try {
+    const userSessionId = env.USER_SESSION.idFromName(userToAdd.id);
+    const userSession = env.USER_SESSION.get(userSessionId);
+    await userSession.fetch(
+      new Request('https://internal/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'project-invite',
+          projectId,
+          projectName: project?.name || 'Unknown Project',
+          role,
+          timestamp: Date.now(),
+        }),
+      }),
+    );
+  } catch (err) {
+    // Don't fail the request if notification fails
+    console.error('Failed to send project invite notification:', err);
+  }
 
   return jsonResponse(
     {

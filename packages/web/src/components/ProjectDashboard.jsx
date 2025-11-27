@@ -1,5 +1,6 @@
-import { createSignal, createResource, For, Show } from 'solid-js';
+import { createSignal, createResource, createEffect, onCleanup, For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
+import useNotifications from '../primitives/useNotifications.js';
 
 export default function ProjectDashboard({ apiBase, userId }) {
   const navigate = useNavigate();
@@ -23,6 +24,27 @@ export default function ProjectDashboard({ apiBase, userId }) {
       console.error('Error fetching projects:', error);
       return [];
     }
+  });
+
+  // Connect to notifications for real-time project updates
+  const { connect, disconnect, notifications } = useNotifications(userId, {
+    onNotification: notification => {
+      if (notification.type === 'project-invite') {
+        // Refetch projects to get the new project with full details
+        refetch();
+      }
+    },
+  });
+
+  // Connect to notifications when component mounts
+  createEffect(() => {
+    if (userId) {
+      connect();
+    }
+  });
+
+  onCleanup(() => {
+    disconnect();
   });
 
   const createProject = async () => {

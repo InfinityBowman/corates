@@ -4,6 +4,7 @@
 
 import { createSignal, createEffect, onCleanup } from 'solid-js';
 import * as Y from 'yjs';
+import { IndexeddbPersistence } from 'y-indexeddb';
 import { createChecklist as createAMSTAR2Answers } from '../AMSTAR2/checklist.js';
 
 const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
@@ -16,12 +17,17 @@ const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
 export function useProject(projectId) {
   const [connected, setConnected] = createSignal(false);
   const [connecting, setConnecting] = createSignal(false);
+  const [synced, setSynced] = createSignal(false);
   const [error, setError] = createSignal(null);
   const [reviews, setReviews] = createSignal([]);
   const [meta, setMeta] = createSignal({});
 
+  // Check if this is a local-only project
+  const isLocalProject = () => projectId && projectId.startsWith('local-');
+
   let ws = null;
   let ydoc = null;
+  let indexeddbProvider = null;
 
   // Sync Y.Doc state to signals
   function syncFromYDoc() {
@@ -69,14 +75,38 @@ export function useProject(projectId) {
     setMeta(metaMap.toJSON ? metaMap.toJSON() : {});
   }
 
-  // Connect to the project's WebSocket
+  // Connect to the project's WebSocket (or just IndexedDB for local projects)
   function connect() {
-    if (ws || !projectId) return;
+    if (ydoc || !projectId) return;
 
     setConnecting(true);
     setError(null);
 
     ydoc = new Y.Doc();
+
+    // Set up IndexedDB persistence for offline support
+    indexeddbProvider = new IndexeddbPersistence(`corates-project-${projectId}`, ydoc);
+
+    indexeddbProvider.whenSynced.then(() => {
+      setSynced(true);
+      // Sync UI from locally persisted data immediately
+      syncFromYDoc();
+
+      // For local projects, we're "connected" once IndexedDB is synced
+      if (isLocalProject()) {
+        setConnecting(false);
+        setConnected(true);
+      }
+    });
+
+    // For local projects, don't connect to WebSocket
+    if (isLocalProject()) {
+      // Listen for local Y.Doc changes (no WebSocket sync)
+      ydoc.on('update', () => {
+        syncFromYDoc();
+      });
+      return;
+    }
 
     // Build WebSocket URL - handle both http and https
     const wsProtocol = API_BASE.startsWith('https') ? 'wss' : 'ws';
@@ -134,16 +164,23 @@ export function useProject(projectId) {
       ws.close();
       ws = null;
     }
+    if (indexeddbProvider) {
+      indexeddbProvider.destroy();
+      indexeddbProvider = null;
+    }
     if (ydoc) {
       ydoc.destroy();
       ydoc = null;
     }
     setConnected(false);
+    setSynced(false);
   }
 
   // Create a new review
   function createReview(name, description = '') {
-    if (!ydoc || !connected()) return null;
+    if (!ydoc) return null;
+    // For cloud projects, require connection; for local projects, just need ydoc
+    if (!isLocalProject() && !connected()) return null;
 
     const reviewId = crypto.randomUUID();
     const now = Date.now();
@@ -164,7 +201,8 @@ export function useProject(projectId) {
 
   // Update a review
   function updateReview(reviewId, updates) {
-    if (!ydoc || !connected()) return;
+    if (!ydoc) return;
+    if (!isLocalProject() && !connected()) return;
 
     const reviewsMap = ydoc.getMap('reviews');
     const reviewYMap = reviewsMap.get(reviewId);
@@ -178,7 +216,8 @@ export function useProject(projectId) {
 
   // Delete a review
   function deleteReview(reviewId) {
-    if (!ydoc || !connected()) return;
+    if (!ydoc) return;
+    if (!isLocalProject() && !connected()) return;
 
     const reviewsMap = ydoc.getMap('reviews');
     reviewsMap.delete(reviewId);
@@ -186,7 +225,8 @@ export function useProject(projectId) {
 
   // Create a checklist in a review
   function createChecklist(reviewId, type = 'AMSTAR2', assignedTo = null) {
-    if (!ydoc || !connected()) return null;
+    if (!ydoc) return null;
+    if (!isLocalProject() && !connected()) return null;
 
     const reviewsMap = ydoc.getMap('reviews');
     const reviewYMap = reviewsMap.get(reviewId);
@@ -245,7 +285,8 @@ export function useProject(projectId) {
 
   // Update a checklist
   function updateChecklist(reviewId, checklistId, updates) {
-    if (!ydoc || !connected()) return;
+    if (!ydoc) return;
+    if (!isLocalProject() && !connected()) return;
 
     const reviewsMap = ydoc.getMap('reviews');
     const reviewYMap = reviewsMap.get(reviewId);
@@ -265,7 +306,8 @@ export function useProject(projectId) {
 
   // Delete a checklist
   function deleteChecklist(reviewId, checklistId) {
-    if (!ydoc || !connected()) return;
+    if (!ydoc) return;
+    if (!isLocalProject() && !connected()) return;
 
     const reviewsMap = ydoc.getMap('reviews');
     const reviewYMap = reviewsMap.get(reviewId);
@@ -329,7 +371,8 @@ export function useProject(projectId) {
 
   // Update a single answer in a checklist
   function updateChecklistAnswer(reviewId, checklistId, questionKey, answerData) {
-    if (!ydoc || !connected()) return;
+    if (!ydoc) return;
+    if (!isLocalProject() && !connected()) return;
 
     const reviewsMap = ydoc.getMap('reviews');
     const reviewYMap = reviewsMap.get(reviewId);
@@ -372,10 +415,12 @@ export function useProject(projectId) {
     // State
     connected,
     connecting,
+    synced,
     error,
     reviews,
     meta,
     members: () => [], // Members come from D1, not Y.js
+    isLocalProject,
 
     // Operations
     createReview,

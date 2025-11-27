@@ -21,11 +21,6 @@
 - **Blue Light**: `blue-500` (#3b82f6)
 - **Blue Hover**: `blue-800` (#1e40af)
 
-### Secondary Colors
-
-- **Indigo Primary**: `indigo-600` (#4f46e5)
-- **Indigo Dark**: `indigo-700` (#4338ca)
-
 ### Accent Colors
 
 - **Red**: `red-600` (#dc2626) for destructive actions
@@ -48,7 +43,7 @@
 
 ### Background Colors
 
-- **Main Background**: `bg-linear-to-br from-blue-50 via-white to-indigo-50`
+- **Main Background**: `bg-blue-50`
 - **Card Background**: `bg-white`
 - **Feature Backgrounds**: `bg-blue-50`, `bg-blue-100`
 - **Sidebar Background**: Light gray tones
@@ -89,7 +84,7 @@ Primary: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
 - **Muted**: `text-gray-500`
 - **Placeholder**: `text-gray-400`
 - **Brand**: `text-blue-600`
-- **Links**: `text-indigo-600`
+- **Links**: `text-blue-600`
 
 ## Layout & Spacing
 
@@ -116,7 +111,7 @@ Primary: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
 #### Primary Button
 
 ```jsx
-<button class="inline-flex items-center px-8 py-4 bg-linear-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+<button class="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
 ```
 
 #### Secondary Button
@@ -154,7 +149,7 @@ Primary: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
 #### Input Field
 
 ```jsx
-<input class="w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition">
+<input class="w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
 ```
 
 #### Large Input
@@ -227,7 +222,7 @@ Primary: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
 
 - Feature icons: `w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-6`
 - Small icons: `w-4 h-4`, `w-5 h-5`
-- Avatar placeholders: `w-10 h-10 bg-linear-to-br from-blue-500 to-indigo-600 rounded-full`
+- Avatar placeholders: `w-10 h-10 bg-blue-600 rounded-full`
 
 #### SVG Icon Standards
 

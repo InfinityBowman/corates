@@ -1,6 +1,7 @@
 import { Show } from 'solid-js';
-import ProjectDashboard from './components/ProjectDashboard.jsx';
-import { useBetterAuth } from './api/better-auth-store.js';
+import ProjectDashboard from '@components/ProjectDashboard.jsx';
+import LocalChecklistsDashboard from '@components/LocalChecklistsDashboard.jsx';
+import { useBetterAuth } from '@api/better-auth-store.js';
 
 export default function App() {
   const { user, authLoading, isLoggedIn } = useBetterAuth();
@@ -10,16 +11,12 @@ export default function App() {
   return (
     <div class='min-h-screen'>
       <main class='p-6'>
-        <div class='max-w-6xl mx-auto'>
-          <Show
-            when={!authLoading() && isLoggedIn() && user()}
-            fallback={
-              <div class='text-center py-8'>
-                <div class='text-gray-500'>Loading user data...</div>
-              </div>
-            }
-          >
-            <ProjectDashboard apiBase={API_BASE} userId={user().id} />
+        <div class='max-w-6xl mx-auto space-y-8'>
+          <Show when={!authLoading()}>
+            <Show when={isLoggedIn()}>
+              <ProjectDashboard apiBase={API_BASE} userId={user() ? user().id : null} />
+            </Show>
+            <LocalChecklistsDashboard isLoggedIn={isLoggedIn()} />
           </Show>
         </div>
       </main>

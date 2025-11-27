@@ -61,6 +61,10 @@ export function createEmailService(env) {
    * Send email verification email
    */
   async function sendEmailVerification(to, verificationUrl, userDisplayName = '') {
+    if (env.SEND_EMAILS_IN_DEV !== 'true' && !isProduction) {
+      console.log('[Email] Development environment - email sending is DISABLED');
+      return { success: true, id: 'dev-id' };
+    }
     const subject = 'Verify Your Email Address - CoRATES';
     const name = userDisplayName || 'there';
     const html = getVerificationEmailHtml({ name, subject, verificationUrl });
