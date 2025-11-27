@@ -4,7 +4,7 @@ import ChecklistsDashboard from '@checklist-ui/ChecklistsDashboard.jsx';
 import { useBetterAuth } from '@api/better-auth-store.js';
 
 export default function Dashboard() {
-  const { user, authLoading, isLoggedIn } = useBetterAuth();
+  const { user, isLoggedIn } = useBetterAuth();
 
   const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
 
@@ -12,12 +12,10 @@ export default function Dashboard() {
     <div class='min-h-screen'>
       <main class='p-6'>
         <div class='max-w-6xl mx-auto space-y-8'>
-          <Show when={!authLoading()}>
-            <Show when={isLoggedIn()}>
-              <ProjectDashboard apiBase={API_BASE} userId={user() ? user().id : null} />
-            </Show>
-            <ChecklistsDashboard isLoggedIn={isLoggedIn()} />
+          <Show when={isLoggedIn()}>
+            <ProjectDashboard apiBase={API_BASE} userId={user()?.id} />
           </Show>
+          <ChecklistsDashboard isLoggedIn={isLoggedIn()} />
         </div>
       </main>
     </div>

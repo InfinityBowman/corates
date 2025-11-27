@@ -37,10 +37,6 @@ export default function ProjectView() {
     disconnect,
   } = useProject(params.projectId);
 
-  createEffect(() => {
-    console.log(members());
-  });
-
   // Derive current user's role from the members list
   const userRole = createMemo(() => {
     const currentUser = user();
@@ -62,10 +58,24 @@ export default function ProjectView() {
   });
 
   // Create a new review via Y.js
-  const handleCreateReview = async (name, description) => {
+  const handleCreateReview = async (name, description, pdfData = null, pdfFileName = null) => {
     setCreatingReview(true);
     try {
-      createReview(name, description);
+      const reviewId = createReview(name, description);
+
+      // If PDF data was provided, store it for the review
+      // TODO: Store PDF data in the review's Y.Doc or elsewhere
+      if (pdfData && reviewId) {
+        // For now, store in sessionStorage for the checklist to pick up
+        sessionStorage.setItem(
+          `review-${reviewId}-pdf`,
+          JSON.stringify({
+            fileName: pdfFileName,
+            data: Array.from(new Uint8Array(pdfData)),
+          }),
+        );
+      }
+
       setShowReviewForm(false);
     } catch (err) {
       console.error('Error creating review:', err);

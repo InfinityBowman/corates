@@ -120,16 +120,9 @@ export default function ChecklistsDashboard(props) {
       {/* Checklists Grid */}
       <div class='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
         <Show
-          when={!loading()}
+          when={checklists().length > 0}
           fallback={
-            <div class='col-span-full text-center py-8'>
-              <div class='text-gray-500'>Loading checklists...</div>
-            </div>
-          }
-        >
-          <Show
-            when={checklists().length > 0}
-            fallback={
+            <Show when={!loading()}>
               <div class='col-span-full text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300'>
                 <div class='text-gray-500 mb-4'>No checklists yet</div>
                 <button
@@ -139,62 +132,62 @@ export default function ChecklistsDashboard(props) {
                   Create your first checklist
                 </button>
               </div>
-            }
-          >
-            <For each={checklists()}>
-              {checklist => (
-                <div class='bg-white border border-gray-200 rounded-lg shadow-sm p-6 hover:shadow-md hover:border-gray-300 transition-all duration-200 group relative'>
-                  {/* Local badge */}
-                  <div class='absolute top-3 right-3'>
-                    <span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600'>
-                      Local
-                    </span>
-                  </div>
-
-                  <div class='mb-4'>
-                    <h3 class='text-lg font-semibold text-gray-900 mb-2 pr-12'>{checklist.name}</h3>
-                    <p class='text-gray-500 text-sm'>AMSTAR2 Checklist</p>
-                  </div>
-
-                  <div class='flex items-center justify-between text-xs text-gray-500 mb-4'>
-                    <span>
-                      Updated{' '}
-                      {new Date(checklist.updatedAt || checklist.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  <div class='flex gap-2'>
-                    <button
-                      onClick={() => openChecklist(checklist.id)}
-                      class='flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors font-medium'
-                    >
-                      Open
-                    </button>
-                    <button
-                      onClick={e => handleDelete(e, checklist.id)}
-                      class='p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors'
-                      title='Delete checklist'
-                    >
-                      <svg
-                        xmlns='http://www.w3.org/2000/svg'
-                        class='h-5 w-5'
-                        fill='none'
-                        viewBox='0 0 24 24'
-                        stroke='currentColor'
-                        stroke-width='2'
-                      >
-                        <path
-                          stroke-linecap='round'
-                          stroke-linejoin='round'
-                          d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                        />
-                      </svg>
-                    </button>
-                  </div>
+            </Show>
+          }
+        >
+          <For each={checklists()}>
+            {checklist => (
+              <div class='bg-white border border-gray-200 rounded-lg shadow-sm p-6 hover:shadow-md hover:border-gray-300 transition-all duration-200 group relative'>
+                {/* Local badge */}
+                <div class='absolute top-3 right-3'>
+                  <span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600'>
+                    Local
+                  </span>
                 </div>
-              )}
-            </For>
-          </Show>
+
+                <div class='mb-4'>
+                  <h3 class='text-lg font-semibold text-gray-900 mb-2 pr-12'>{checklist.name}</h3>
+                  <p class='text-gray-500 text-sm'>AMSTAR2 Checklist</p>
+                </div>
+
+                <div class='flex items-center justify-between text-xs text-gray-500 mb-4'>
+                  <span>
+                    Updated{' '}
+                    {new Date(checklist.updatedAt || checklist.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+
+                <div class='flex gap-2'>
+                  <button
+                    onClick={() => openChecklist(checklist.id)}
+                    class='flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors font-medium'
+                  >
+                    Open
+                  </button>
+                  <button
+                    onClick={e => handleDelete(e, checklist.id)}
+                    class='p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors'
+                    title='Delete checklist'
+                  >
+                    <svg
+                      xmlns='http://www.w3.org/2000/svg'
+                      class='h-5 w-5'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
+                      stroke-width='2'
+                    >
+                      <path
+                        stroke-linecap='round'
+                        stroke-linejoin='round'
+                        d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+          </For>
         </Show>
       </div>
     </div>
