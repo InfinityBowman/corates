@@ -13,7 +13,9 @@
     "format": "prettier --write .",
     "test": "pnpm --recursive test",
     "dev:dns": "sudo node scripts/swap-dns.js dev",
-    "prod:dns": "sudo node scripts/swap-dns.js prod"
+    "prod:dns": "sudo node scripts/swap-dns.js prod",
+    "mcp:start": "pnpm --filter @corates/icons-mcp start",
+    "mcp:stop": "pnpm --filter @corates/icons-mcp stop"
   },
   "keywords": [
     "cloudflare",

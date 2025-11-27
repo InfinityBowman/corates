@@ -1,0 +1,16 @@
+{
+  "name": "@corates/icons-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "corates-icons-mcp": "./server.js"
+  },
+  "scripts": {
+    "start": "nohup node server.js > /dev/null 2>&1 & echo 'MCP server started in background'",
+    "stop": "pkill -f 'node.*server.js' || echo 'No MCP server running'"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.23.0",
+    "zod": "^4.1.13"
+  }
+}

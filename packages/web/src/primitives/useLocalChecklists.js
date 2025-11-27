@@ -7,8 +7,9 @@ import { createSignal, createEffect, onCleanup } from 'solid-js';
 import { createChecklist as createAMSTAR2Template } from '@/AMSTAR2/checklist.js';
 
 const DB_NAME = 'corates-local-checklists';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Bumped for PDF store
 const STORE_NAME = 'checklists';
+const PDF_STORE_NAME = 'pdfs';
 
 // Shared database instance and initialization promise
 let dbInstance = null;
@@ -44,10 +45,17 @@ function openDatabase() {
     request.onupgradeneeded = event => {
       const db = event.target.result;
 
+      // Checklists store
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
         store.createIndex('createdAt', 'createdAt', { unique: false });
         store.createIndex('updatedAt', 'updatedAt', { unique: false });
+      }
+
+      // PDFs store - separate from checklists for better performance with large files
+      if (!db.objectStoreNames.contains(PDF_STORE_NAME)) {
+        const pdfStore = db.createObjectStore(PDF_STORE_NAME, { keyPath: 'checklistId' });
+        pdfStore.createIndex('updatedAt', 'updatedAt', { unique: false });
       }
     };
   });
@@ -189,15 +197,68 @@ export function useLocalChecklists() {
     const db = await getDb();
 
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.delete(checklistId);
+      // Delete both the checklist and its associated PDF
+      const transaction = db.transaction([STORE_NAME, PDF_STORE_NAME], 'readwrite');
+      const checklistStore = transaction.objectStore(STORE_NAME);
+      const pdfStore = transaction.objectStore(PDF_STORE_NAME);
 
-      request.onsuccess = () => {
+      checklistStore.delete(checklistId);
+      pdfStore.delete(checklistId);
+
+      transaction.oncomplete = () => {
         setChecklists(prev => prev.filter(c => c.id !== checklistId));
         resolve(true);
       };
 
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  // Save PDF data for a checklist
+  async function savePdf(checklistId, pdfData, fileName = 'document.pdf') {
+    const db = await getDb();
+
+    const pdfRecord = {
+      checklistId,
+      data: pdfData, // ArrayBuffer
+      fileName,
+      updatedAt: Date.now(),
+    };
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(PDF_STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(PDF_STORE_NAME);
+      const request = store.put(pdfRecord);
+
+      request.onsuccess = () => resolve(pdfRecord);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // Get PDF data for a checklist
+  async function getPdf(checklistId) {
+    const db = await getDb();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(PDF_STORE_NAME, 'readonly');
+      const store = transaction.objectStore(PDF_STORE_NAME);
+      const request = store.get(checklistId);
+
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // Delete PDF for a checklist
+  async function deletePdf(checklistId) {
+    const db = await getDb();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(PDF_STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(PDF_STORE_NAME);
+      const request = store.delete(checklistId);
+
+      request.onsuccess = () => resolve(true);
       request.onerror = () => reject(request.error);
     });
   }
@@ -215,6 +276,9 @@ export function useLocalChecklists() {
     getChecklist,
     updateChecklist,
     deleteChecklist,
+    savePdf,
+    getPdf,
+    deletePdf,
     refetch: loadChecklists,
   };
 }
