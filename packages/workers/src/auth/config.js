@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import * as schema from '../db/schema.js';
 import { createEmailService } from './email.js';
 
-export function createAuth(env) {
+export function createAuth(env, ctx) {
   // Initialize Drizzle with D1
   const db = drizzle(env.DB, { schema });
 
@@ -38,18 +38,19 @@ export function createAuth(env) {
       sendOnSignUp: true,
       sendOnSignIn: true,
       autoSignInAfterVerification: true,
-      // Use an async, fire-and-forget wrapper so Workers do not block on slow
-      // third-party email providers. This returns immediately and logs errors.
+      // Use ctx.waitUntil to send email in background without blocking the response
       sendVerificationEmail: async ({ user, url }) => {
-        try {
-          emailService.sendEmailVerificationAsync(
-            user.email,
-            url,
-            user.displayName || user.username || user.name,
-          );
-        } catch (err) {
-          console.error('Async sendVerificationEmail error:', err);
+        const emailPromise = emailService
+          .sendEmailVerification(user.email, url, user.displayName || user.username || user.name)
+          .catch(err => {
+            console.error('Background sendVerificationEmail error:', err);
+          });
+
+        // Use waitUntil to run in background if ctx is available
+        if (ctx && ctx.waitUntil) {
+          ctx.waitUntil(emailPromise);
         }
+        // Return immediately - don't await the email
         return;
       },
     },
@@ -57,15 +58,17 @@ export function createAuth(env) {
     resetPassword: {
       enabled: true,
       sendEmail: async ({ user, url, token }) => {
-        try {
-          emailService.sendPasswordResetAsync(
-            user.email,
-            url,
-            user.displayName || user.username || user.name,
-          );
-        } catch (err) {
-          console.error('Async sendPasswordReset error:', err);
+        const emailPromise = emailService
+          .sendPasswordReset(user.email, url, user.displayName || user.username || user.name)
+          .catch(err => {
+            console.error('Background sendPasswordReset error:', err);
+          });
+
+        // Use waitUntil to run in background if ctx is available
+        if (ctx && ctx.waitUntil) {
+          ctx.waitUntil(emailPromise);
         }
+        // Return immediately - don't await the email
         return;
       },
     },

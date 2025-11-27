@@ -92,3 +92,11 @@ class_name = "ProjectDoc"
 [[env.production.durable_objects.bindings]]
 name = "EMAIL_QUEUE"
 class_name = "EmailQueue"
+
+[[env.production.migrations]]
+tag = "v1"
+new_sqlite_classes = ["UserSession", "ProjectDoc"]
+
+[[env.production.migrations]]
+tag = "v2"
+new_sqlite_classes = ["EmailQueue"]

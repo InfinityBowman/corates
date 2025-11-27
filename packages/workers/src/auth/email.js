@@ -3,6 +3,13 @@
  * Handles email sending based on environment configuration
  */
 
+import {
+  getVerificationEmailHtml,
+  getVerificationEmailText,
+  getPasswordResetEmailHtml,
+  getPasswordResetEmailText,
+} from './emailTemplates.js';
+
 /**
  * Create email service based on environment
  * @param {Object} env - Environment variables
@@ -22,16 +29,9 @@ export function createEmailService(env) {
    * @returns {Promise<Object>} Result object
    */
   async function sendEmail({ to, subject, html, text }) {
-    console.log(`Preparing to send email to: ${to}`, !isProduction, sendRealEmailsInDev);
-    // Development mode with real email testing enabled
-    if (!isProduction && sendRealEmailsInDev) {
-      return await sendRealEmail({ to, subject, html, text });
-    }
+    console.log(`Preparing to send email to: ${to}`, isProduction, sendRealEmailsInDev);
 
-    // Production mode
-    if (isProduction) {
-      return await sendRealEmail({ to, subject, html, text });
-    }
+    return await sendRealEmail({ to, subject, html, text });
 
     // Development mode without real email sending
     return { success: true, mode: 'development-not-sending' };
@@ -152,7 +152,10 @@ export function createEmailService(env) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ to, subject, html, text }),
           });
-          await queue.fetch(req);
+          // Fire and forget - don't await the queue fetch
+          queue.fetch(req).catch(err => {
+            console.error('EmailQueue fetch error (fire-and-forget):', err);
+          });
           return { success: true, service: 'email_queue' };
         } catch (err) {
           console.error('Failed to enqueue email to EmailQueue DO', err);
@@ -179,9 +182,6 @@ export function createEmailService(env) {
     console.log(`Sending email verification to: ${to} with URL: ${verificationUrl}`);
     const subject = 'Verify Your Email Address - CoRATES';
     const name = userDisplayName || 'there';
-    const { getVerificationEmailHtml, getVerificationEmailText } = await import(
-      './emailTemplates.js'
-    );
     const html = getVerificationEmailHtml({ name, subject, verificationUrl });
     const text = getVerificationEmailText({ name, verificationUrl });
     return await sendEmail({ to, subject, html, text });
@@ -198,30 +198,9 @@ export function createEmailService(env) {
     console.log(`Sending password reset to: ${to} with URL: ${resetUrl}`);
     const subject = 'Reset Your Password - CoRATES';
     const name = userDisplayName || 'there';
-    const { getPasswordResetEmailHtml, getPasswordResetEmailText } = await import(
-      './emailTemplates.js'
-    );
     const html = getPasswordResetEmailHtml({ name, subject, resetUrl });
     const text = getPasswordResetEmailText({ name, resetUrl });
     return await sendEmail({ to, subject, html, text });
-  }
-
-  /**
-   * Fire-and-forget async email verification
-   */
-  function sendEmailVerificationAsync(to, verificationUrl, userDisplayName = '') {
-    sendEmailVerification(to, verificationUrl, userDisplayName).catch(err =>
-      console.error('Async email verification error:', err),
-    );
-  }
-
-  /**
-   * Fire-and-forget async password reset
-   */
-  function sendPasswordResetAsync(to, resetUrl, userDisplayName = '') {
-    sendPasswordReset(to, resetUrl, userDisplayName).catch(err =>
-      console.error('Async password reset error:', err),
-    );
   }
 
   return {
@@ -229,8 +208,6 @@ export function createEmailService(env) {
     sendDirectEmail,
     sendEmailVerification,
     sendPasswordReset,
-    sendEmailVerificationAsync,
-    sendPasswordResetAsync,
     isProduction,
   };
 }

@@ -4,7 +4,7 @@
   "private": true,
   "description": "Cloudflare Workers/Durable Objects web app",
   "scripts": {
-    "dev": "concurrently -k \"pnpm dev:dns && caddy run\" \"pnpm --filter web dev\"",
+    "dev": "pnpm --filter web dev",
     "relay": "pnpm --filter smtp-relay dev",
     "dev:workers": "pnpm --filter workers dev",
     "dev:all": "concurrently -k -n relay,web -c yellow,blue \"pnpm --filter smtp-relay run dev\" \"pnpm --filter web dev\"",

@@ -26,8 +26,9 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
+.env*
 .env
+!.env.example
 
 # Cloudflare Workers secrets
 packages/workers/.dev.vars
