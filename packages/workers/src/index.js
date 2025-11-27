@@ -44,7 +44,7 @@ export default {
     try {
       // Auth routes (handled by better-auth)
       if (path.startsWith('/api/auth/')) {
-        return await handleAuthRoutes(request, env, path);
+        return await handleAuthRoutes(request, env, ctx, path);
       }
 
       // Test email endpoint (development only)

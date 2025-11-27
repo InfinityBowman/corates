@@ -6,7 +6,7 @@ import {
 } from './templates.js';
 import { getCorsHeaders, handlePreflight } from '../middleware/cors.js';
 
-export async function handleAuthRoutes(request, env, path) {
+export async function handleAuthRoutes(request, env, ctx, path) {
   // Use the shared CORS configuration
   const corsHeaders = getCorsHeaders(request);
 
@@ -16,7 +16,7 @@ export async function handleAuthRoutes(request, env, path) {
   }
 
   try {
-    const auth = createAuth(env);
+    const auth = createAuth(env, ctx);
     const url = new URL(request.url);
 
     // Better Auth handles all its endpoints automatically

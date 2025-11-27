@@ -13,8 +13,7 @@
     "db:migrate": "y | wrangler d1 migrations apply corates-db --local",
     "db:migrate:prod": "wrangler d1 migrations apply corates-db --remote",
     "db:setup:prod": "wrangler d1 execute corates-db-prod --remote --file=migrations/0001_init.sql",
-    "db:wipe:prod": "wrangler d1 execute corates-db-prod --remote --command 'DROP TABLE IF EXISTS session;' && wrangler d1 execute corates-db-prod --remote --command 'DROP TABLE IF EXISTS user;' && wrangler d1 execute corates-db-prod --remote --command 'DROP TABLE IF EXISTS account;' && wrangler d1 execute corates-db-prod --remote --command 'DROP TABLE IF EXISTS verification;'",
-    "db:reset:prod": "node scripts/reset-db-and-deploy.js"
+    "db:reset:prod": "./scripts/reset-db-prod.sh"
   },
   "dependencies": {
     "@cloudflare/workers-types": "^4.20251126.0",
