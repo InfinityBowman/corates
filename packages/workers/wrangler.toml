@@ -43,7 +43,7 @@ ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:8787,https://corates.o
 name = "corates-workers-prod"
 routes = [
   { pattern = "corates.org/api/*", zone_name = "corates.org" },
-  { pattern = "corates.org/api/*", zone_name = "corates.org" }
+  { pattern = "www.corates.org/api/*", zone_name = "corates.org" }
 ]
 
 [env.production.vars]
