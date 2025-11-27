@@ -22,6 +22,7 @@ import { handleMembers } from './routes/members.js';
 import { handleUsers } from './routes/users.js';
 import { handleDatabase } from './routes/database.js';
 import { handleEmailQueue } from './routes/email-queue.js';
+import { uploadPdf, downloadPdf, deletePdf, listPdfs } from './routes/pdfs.js';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc, EmailQueue };
@@ -100,6 +101,11 @@ async function handleAPI(request, env, path) {
     return await handleMembers(request, env, path);
   }
 
+  // PDF routes: /api/projects/:id/studies/:studyId/pdf(s)
+  if (path.match(/^\/api\/projects\/[^/]+\/studies\/[^/]+\/pdfs?/)) {
+    return await handlePdfRoutes(request, env, path);
+  }
+
   // Project CRUD: /api/projects or /api/projects/:id
   if (path.match(/^\/api\/projects(\/[^/]+)?$/)) {
     return await handleProjects(request, env, path);
@@ -163,4 +169,35 @@ async function handleDatabaseRoutes(request, env, path) {
   }
 
   return await handleDatabase(request, env, path, authResult.user);
+}
+
+/**
+ * Handle PDF routes
+ */
+async function handlePdfRoutes(request, env, path) {
+  // List PDFs: GET /api/projects/:id/studies/:studyId/pdfs
+  if (path.endsWith('/pdfs') && request.method === 'GET') {
+    const response = await listPdfs(request, env);
+    return wrapWithCors(response, request);
+  }
+
+  // Upload PDF: POST /api/projects/:id/studies/:studyId/pdf
+  if (path.endsWith('/pdf') && request.method === 'POST') {
+    const response = await uploadPdf(request, env);
+    return wrapWithCors(response, request);
+  }
+
+  // Download PDF: GET /api/projects/:id/studies/:studyId/pdf/:fileName
+  if (path.match(/\/pdf\/[^/]+$/) && request.method === 'GET') {
+    const response = await downloadPdf(request, env);
+    return wrapWithCors(response, request);
+  }
+
+  // Delete PDF: DELETE /api/projects/:id/studies/:studyId/pdf/:fileName
+  if (path.match(/\/pdf\/[^/]+$/) && request.method === 'DELETE') {
+    const response = await deletePdf(request, env);
+    return wrapWithCors(response, request);
+  }
+
+  return errorResponse('Not Found', 404, request);
 }

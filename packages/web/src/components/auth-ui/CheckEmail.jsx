@@ -152,7 +152,7 @@ export default function CheckEmail() {
               </p>
 
               {error() && (
-                <div class='p-3 text-red-600 text-xs sm:text-sm bg-red-50 border border-red-200 rounded-lg'>
+                <div class='py-1 mt-2 px-2 text-red-600 text-xs sm:text-sm bg-red-50 border border-red-200 rounded-lg'>
                   {error()}
                 </div>
               )}

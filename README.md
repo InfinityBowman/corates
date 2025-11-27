@@ -2,7 +2,7 @@
 
 **Collaborative Research Appraisal Tool for Evidence Synthesis**
 
-CoRATES is a web application designed to streamline AMSTAR-2 quality assessments for systematic reviews. Built for researchers conducting evidence synthesis, it enables real-time collaboration, offline support, and seamless PDF annotation.
+CoRATES is a web application designed to streamline AMSTAR-2 quality assessments for systematic studies. Built for researchers conducting evidence synthesis, it enables real-time collaboration, offline support, and seamless PDF annotation.
 
 ## Features
 
@@ -10,7 +10,7 @@ CoRATES is a web application designed to streamline AMSTAR-2 quality assessments
 - **Real-time Collaboration** - Work simultaneously with team members using CRDT-based sync (Yjs). Changes merge automatically without conflicts
 - **Offline Support** - Keep working without internet. Progress saves locally (IndexedDB) and syncs when you're back online
 - **PDF Annotation** - View and annotate PDFs alongside your checklists in a split-screen layout
-- **Project Management** - Organize reviews into projects, invite team members, and track progress
+- **Project Management** - Organize studies into projects, invite team members, and track progress
 
 ## Tech Stack
 

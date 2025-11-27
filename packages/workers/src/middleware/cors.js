@@ -28,7 +28,7 @@ export function getCorsHeaders(request) {
     'Access-Control-Allow-Origin':
       allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-File-Name',
     'Access-Control-Allow-Credentials': 'true',
   };
 }

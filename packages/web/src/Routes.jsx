@@ -33,7 +33,7 @@ export default function AppRoutes() {
         <Route path='/checklist/:checklistId' component={LocalChecklistView} />
         <Route path='/projects/:projectId' component={ProjectView} />
         <Route
-          path='/projects/:projectId/reviews/:reviewId/checklists/:checklistId'
+          path='/projects/:projectId/studies/:studyId/checklists/:checklistId'
           component={ChecklistYjsWrapper}
         />
       </Route>

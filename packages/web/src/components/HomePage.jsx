@@ -137,7 +137,7 @@ export default function HomePage() {
               <div class='w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-4'>
                 2
               </div>
-              <h3 class='font-semibold text-gray-900 mb-2'>Add Reviews</h3>
+              <h3 class='font-semibold text-gray-900 mb-2'>Add Studies</h3>
               <p class='text-gray-600 text-sm'>
                 Upload PDFs and create checklists for each study you need to assess.
               </p>

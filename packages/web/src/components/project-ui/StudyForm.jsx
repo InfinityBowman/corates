@@ -1,5 +1,5 @@
 /**
- * ReviewForm component - Form to create a new review
+ * StudyForm component - Form to create a new study
  * Supports manual entry or PDF upload with automatic title extraction
  */
 
@@ -8,7 +8,7 @@ import { BiRegularCloudUpload, BiRegularTrash } from 'solid-icons/bi';
 import { CgFileDocument } from 'solid-icons/cg';
 import { extractPdfTitle, readFileAsArrayBuffer } from '@/lib/pdfUtils.js';
 
-export default function ReviewForm(props) {
+export default function StudyForm(props) {
   const [name, setName] = createSignal('');
   const [description, setDescription] = createSignal('');
   const [uploadMode, setUploadMode] = createSignal(false);
@@ -35,7 +35,9 @@ export default function ReviewForm(props) {
     for (const pdf of newPdfs) {
       try {
         const arrayBuffer = await readFileAsArrayBuffer(pdf.file);
-        const title = await extractPdfTitle(arrayBuffer);
+        // Make a copy for PDF.js since it may detach the original buffer
+        const bufferForExtraction = arrayBuffer.slice(0);
+        const title = await extractPdfTitle(bufferForExtraction);
 
         setUploadedPdfs(prev =>
           prev.map(p =>
@@ -51,6 +53,13 @@ export default function ReviewForm(props) {
         );
       } catch (error) {
         console.error('Error extracting PDF title:', error);
+        // Still need to read the file for upload even if title extraction fails
+        let fileData = null;
+        try {
+          fileData = await readFileAsArrayBuffer(pdf.file);
+        } catch (e) {
+          console.error('Error reading PDF file:', e);
+        }
         setUploadedPdfs(prev =>
           prev.map(p =>
             p.id === pdf.id ?
@@ -58,6 +67,7 @@ export default function ReviewForm(props) {
                 ...p,
                 title: pdf.file.name.replace(/\.pdf$/i, ''),
                 extracting: false,
+                data: fileData,
               }
             : p,
           ),
@@ -92,7 +102,7 @@ export default function ReviewForm(props) {
 
   const handleSubmit = () => {
     if (uploadMode()) {
-      // Submit each PDF as a separate review
+      // Submit each PDF as a separate study
       const pdfsToProcess = uploadedPdfs().filter(p => p.title && !p.extracting);
       for (const pdf of pdfsToProcess) {
         props.onSubmit(pdf.title, '', pdf.data, pdf.file.name);
@@ -124,7 +134,7 @@ export default function ReviewForm(props) {
   return (
     <div class='bg-white border border-gray-200 rounded-lg shadow-sm p-6'>
       <div class='flex items-center justify-between mb-4'>
-        <h3 class='text-lg font-semibold text-gray-900'>Create New Review</h3>
+        <h3 class='text-lg font-semibold text-gray-900'>Create New Study</h3>
         <div class='flex gap-1 bg-gray-100 p-1 rounded-lg'>
           <button
             onClick={() => setUploadMode(false)}
@@ -152,7 +162,7 @@ export default function ReviewForm(props) {
       <Show when={!uploadMode()}>
         <div class='space-y-4'>
           <div>
-            <label class='block text-sm font-semibold text-gray-700 mb-2'>Review Name</label>
+            <label class='block text-sm font-semibold text-gray-700 mb-2'>Study Name</label>
             <input
               type='text'
               placeholder='e.g., Sleep Interventions Systematic Review'
@@ -166,7 +176,7 @@ export default function ReviewForm(props) {
               Description (Optional)
             </label>
             <textarea
-              placeholder='Brief description of this review...'
+              placeholder='Brief description of this study...'
               value={description()}
               onInput={e => setDescription(e.target.value)}
               rows='2'
@@ -179,7 +189,7 @@ export default function ReviewForm(props) {
       <Show when={uploadMode()}>
         <div class='space-y-4'>
           <p class='text-sm text-gray-500'>
-            Upload PDFs to automatically create reviews. Titles will be extracted from each PDF.
+            Upload PDFs to automatically create studies. Titles will be extracted from each PDF.
           </p>
 
           {/* Drop zone */}
@@ -231,7 +241,7 @@ export default function ReviewForm(props) {
                           value={pdf.title || ''}
                           onInput={e => updatePdfTitle(pdf.id, e.target.value)}
                           class='w-full text-sm font-medium text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0'
-                          placeholder='Review title'
+                          placeholder='Study title'
                         />
                         <p class='text-xs text-gray-500 truncate'>{pdf.file.name}</p>
                       </Show>
@@ -248,7 +258,7 @@ export default function ReviewForm(props) {
               </For>
               <p class='text-xs text-gray-500'>
                 {uploadedPdfs().length} PDF{uploadedPdfs().length !== 1 ? 's' : ''} will create{' '}
-                {uploadedPdfs().length} review{uploadedPdfs().length !== 1 ? 's' : ''}
+                {uploadedPdfs().length} stud{uploadedPdfs().length !== 1 ? 'ies' : 'y'}
               </p>
             </div>
           </Show>
@@ -264,8 +274,8 @@ export default function ReviewForm(props) {
           {props.loading ?
             'Creating...'
           : uploadMode() ?
-            `Create ${uploadedPdfs().filter(p => !p.extracting).length} Review${uploadedPdfs().filter(p => !p.extracting).length !== 1 ? 's' : ''}`
-          : 'Create Review'}
+            `Create ${uploadedPdfs().filter(p => !p.extracting).length} Stud${uploadedPdfs().filter(p => !p.extracting).length !== 1 ? 'ies' : 'y'}`
+          : 'Create Study'}
         </button>
         <button
           onClick={handleCancel}
