@@ -4,6 +4,7 @@ import { useBetterAuth } from '../../api/better-auth-store.js';
 import { AnimatedShow } from '../AnimatedShow.jsx';
 import PasswordInput from './PasswordInput.jsx';
 import { AiOutlineLoading3Quarters } from 'solid-icons/ai';
+import ErrorMessage from './ErrorMessage.jsx';
 
 export default function SignIn() {
   const [email, setEmail] = createSignal('');
@@ -108,11 +109,7 @@ export default function SignIn() {
           />
         </div>
 
-        <AnimatedShow when={!!displayError()}>
-          <div class='py-1 mt-2 px-2 text-red-600 text-xs sm:text-sm bg-red-50 border border-red-200 rounded-lg'>
-            {displayError()}
-          </div>
-        </AnimatedShow>
+        <ErrorMessage displayError={displayError} />
 
         <button
           type='submit'

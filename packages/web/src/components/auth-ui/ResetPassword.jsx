@@ -97,11 +97,7 @@ export default function ResetPassword() {
               />
             </div>
 
-            <AnimatedShow when={!!displayError()}>
-              <div class='py-1 mt-2 px-2 text-red-600 text-xs sm:text-sm bg-red-50 border border-red-200 rounded-lg'>
-                {displayError()}
-              </div>
-            </AnimatedShow>
+            <ErrorMessage displayError={displayError} />
 
             <button
               type='submit'
