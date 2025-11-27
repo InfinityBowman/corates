@@ -1,6 +1,6 @@
 import { createSignal, createEffect, For, Show, onCleanup } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
-import useProject from '../../primitives/useProject.js';
+import useProject from '@primitives/useProject.js';
 import ReviewCard from './ReviewCard.jsx';
 import ReviewForm from './ReviewForm.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
@@ -32,6 +32,7 @@ export default function ProjectView() {
     reviews,
     members: yjsMembers,
     connected,
+    synced,
     error: yjsError,
     createReview,
     createChecklist,

@@ -9,11 +9,13 @@
 - Keep files small, focused, and modular. Avoid large monolithic files.
   - Split functionality into logically grouped modules.
   - Each file should ideally handle one coherent responsibility.
+- Use aliases for imports when appropriate to improve readability.
 
 ## Additional References
 
 - The architecture-goals.md file contains relevant architecture and design patterns to follow.
 - The style-guide.md file contains additional style and formatting guidelines.
+- See vite.config.js or jsconfig.json for path aliases and build configurations.
 
 ## Project Guidelines
 
