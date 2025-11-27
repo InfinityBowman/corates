@@ -16,6 +16,9 @@ export default defineConfig({
       '@api': path.resolve(__dirname, 'src/api'),
     },
   },
+  server: {
+    allowedHosts: ['corates.org', 'www.corates.org', 'localhost'],
+  },
   plugins: [solid(), tailwindcss()],
   // server: {
   //   port: 3000,

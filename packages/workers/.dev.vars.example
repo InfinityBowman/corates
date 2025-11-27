@@ -12,19 +12,5 @@ EMAIL_FROM=your-email@gmail.com
 # Email testing (uncomment to send real emails in development)
 # SEND_EMAILS_IN_DEV=true
 
-# Alternative: Use Resend instead of SMTP (OPTIONAL - recommended)
-# Get your API key from https://resend.com/
-# RESEND_API_KEY=re_your_resend_api_key_here
-
-# Alternative: Use SendGrid instead of SMTP (OPTIONAL)
-# Get your API key from https://sendgrid.com/
-# SENDGRID_API_KEY=SG.your_sendgrid_api_key_here
-
-# Database configuration (OPTIONAL - if using different dev database)
-# D1_DATABASE_ID=your-dev-database-id-here
-
-# Instructions:
-# 1. Copy this file: cp .dev.vars.example .dev.vars
-# 2. Replace the placeholder values with your actual secrets
-# 3. For Gmail: Enable 2FA and create an App Password
-# 4. Never commit the .dev.vars file to git!
+# CORS allowed origins
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:8787,https://corates.org,https://www.corates.org

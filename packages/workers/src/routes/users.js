@@ -94,15 +94,15 @@ async function searchUsers(request, env, currentUser) {
         .from(projectMembers)
         .where(eq(projectMembers.projectId, projectId));
 
-      const existingUserIds = new Set(existingMembers.map((m) => m.userId));
-      results = results.filter((u) => !existingUserIds.has(u.id));
+      const existingUserIds = new Set(existingMembers.map(m => m.userId));
+      results = results.filter(u => !existingUserIds.has(u.id));
     }
 
     // Don't include the current user in search results
-    results = results.filter((u) => u.id !== currentUser.id);
+    results = results.filter(u => u.id !== currentUser.id);
 
     // Sanitize results - don't expose full email to non-matching queries
-    const sanitizedResults = results.map((u) => ({
+    const sanitizedResults = results.map(u => ({
       id: u.id,
       name: u.name,
       displayName: u.displayName,

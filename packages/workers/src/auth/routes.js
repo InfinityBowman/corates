@@ -1,20 +1,14 @@
 import { createAuth, verifyAuth } from './config.js';
-import { getEmailVerificationSuccessPage, getEmailVerificationFailurePage, getEmailVerificationErrorPage } from './templates.js';
+import {
+  getEmailVerificationSuccessPage,
+  getEmailVerificationFailurePage,
+  getEmailVerificationErrorPage,
+} from './templates.js';
+import { getCorsHeaders, handlePreflight } from '../middleware/cors.js';
 
 export async function handleAuthRoutes(request, env, path) {
-  // Dynamically set CORS origin for credentialed requests
-  const allowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:8787',
-    // Add production origins here
-  ];
-  const requestOrigin = request.headers.get('Origin');
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
-  };
+  // Use the shared CORS configuration
+  const corsHeaders = getCorsHeaders(request);
 
   // Handle CORS preflight
   if (request.method === 'OPTIONS') {
@@ -67,7 +61,10 @@ export async function handleAuthRoutes(request, env, path) {
         const response = await auth.handler(authRequest);
 
         console.log('Email verification response status:', response.status);
-        console.log('Email verification response headers:', Object.fromEntries(response.headers.entries()));
+        console.log(
+          'Email verification response headers:',
+          Object.fromEntries(response.headers.entries()),
+        );
 
         // Check if verification was successful
         if (response.status >= 200 && response.status < 400) {

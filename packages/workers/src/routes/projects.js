@@ -147,7 +147,9 @@ async function updateProject(request, env, db, projectId) {
     const membership = await db
       .select({ role: projectMembers.role })
       .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, authResult.user.id)))
+      .where(
+        and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, authResult.user.id)),
+      )
       .get();
 
     if (!membership || !['owner', 'collaborator'].includes(membership.role)) {
@@ -187,7 +189,9 @@ async function deleteProject(request, env, db, projectId) {
     const membership = await db
       .select({ role: projectMembers.role })
       .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, authResult.user.id)))
+      .where(
+        and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, authResult.user.id)),
+      )
       .get();
 
     if (!membership || membership.role !== 'owner') {

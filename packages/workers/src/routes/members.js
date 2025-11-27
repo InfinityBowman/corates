@@ -36,7 +36,9 @@ export async function handleMembers(request, env, path) {
     const membership = await db
       .select({ role: projectMembers.role })
       .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, authResult.user.id)))
+      .where(
+        and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, authResult.user.id)),
+      )
       .get();
 
     if (!membership) {
@@ -112,7 +114,11 @@ async function addMember(request, db, projectId, isOwner) {
   // Validate role
   const validRoles = ['owner', 'collaborator', 'member', 'viewer'];
   if (!validRoles.includes(role)) {
-    return errorResponse('Invalid role. Must be one of: owner, collaborator, member, viewer', 400, request);
+    return errorResponse(
+      'Invalid role. Must be one of: owner, collaborator, member, viewer',
+      400,
+      request,
+    );
   }
 
   // Find user by email
@@ -180,7 +186,11 @@ async function updateMemberRole(request, db, projectId, memberId, isOwner) {
   // Validate role
   const validRoles = ['owner', 'collaborator', 'member', 'viewer'];
   if (!validRoles.includes(role)) {
-    return errorResponse('Invalid role. Must be one of: owner, collaborator, member, viewer', 400, request);
+    return errorResponse(
+      'Invalid role. Must be one of: owner, collaborator, member, viewer',
+      400,
+      request,
+    );
   }
 
   // Prevent removing the last owner
@@ -198,7 +208,11 @@ async function updateMemberRole(request, db, projectId, memberId, isOwner) {
       .get();
 
     if (targetMember?.role === 'owner' && ownerCountResult?.count <= 1) {
-      return errorResponse('Cannot remove the last owner. Assign another owner first.', 400, request);
+      return errorResponse(
+        'Cannot remove the last owner. Assign another owner first.',
+        400,
+        request,
+      );
     }
   }
 
@@ -240,11 +254,17 @@ async function removeMember(request, db, projectId, memberId, isOwner, currentUs
       .get();
 
     if (ownerCountResult?.count <= 1) {
-      return errorResponse('Cannot remove the last owner. Assign another owner first or delete the project.', 400, request);
+      return errorResponse(
+        'Cannot remove the last owner. Assign another owner first or delete the project.',
+        400,
+        request,
+      );
     }
   }
 
-  await db.delete(projectMembers).where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
+  await db
+    .delete(projectMembers)
+    .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
 
   return jsonResponse({ success: true, removed: memberId }, {}, request);
 }
