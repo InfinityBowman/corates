@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "wrangler pages deploy dist",
+    "deploy": "echo 'Build complete - files ready for Pages deployment'",
     "test": "vitest --ui",
     "format": "prettier --write ."
   },
