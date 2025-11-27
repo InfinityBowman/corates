@@ -68,7 +68,7 @@ export default function NotificationToast(props) {
                 </div>
                 <button
                   onClick={() => props.onDismiss(notification.timestamp)}
-                  class='flex-shrink-0 text-gray-400 hover:text-gray-600'
+                  class='shrink-0 text-gray-400 hover:text-gray-600'
                 >
                   <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                     <path
