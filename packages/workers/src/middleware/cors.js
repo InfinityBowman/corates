@@ -2,7 +2,20 @@
  * CORS middleware utilities
  */
 
-export const allowedOrigins = ['http://localhost:5173', 'http://localhost:8787', 'https://corates.org', 'https://www.corates.org'];
+export let allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:8787',
+  'https://corates.org',
+  'https://www.corates.org',
+];
+
+/**
+ * Set allowed origins dynamically
+ * @param {string[]} origins - Array of allowed origin URLs
+ */
+export function setAllowedOrigins(origins) {
+  allowedOrigins = origins;
+}
 
 /**
  * Get CORS headers for a request
@@ -12,7 +25,8 @@ export const allowedOrigins = ['http://localhost:5173', 'http://localhost:8787',
 export function getCorsHeaders(request) {
   const requestOrigin = request.headers.get('Origin');
   return {
-    'Access-Control-Allow-Origin': allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
+    'Access-Control-Allow-Origin':
+      allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Credentials': 'true',

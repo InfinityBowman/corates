@@ -8,7 +8,14 @@ import { UserSession } from './durable-objects/UserSession.js';
 import { ProjectDoc } from './durable-objects/ProjectDoc.js';
 import { handleAuthRoutes } from './auth/routes.js';
 import { requireAuth } from './auth/config.js';
-import { getCorsHeaders, handlePreflight, wrapWithCors, jsonResponse, errorResponse } from './middleware/cors.js';
+import {
+  getCorsHeaders,
+  handlePreflight,
+  wrapWithCors,
+  jsonResponse,
+  errorResponse,
+  setAllowedOrigins,
+} from './middleware/cors.js';
 import { handleProjects } from './routes/projects.js';
 import { handleMembers } from './routes/members.js';
 import { handleUsers } from './routes/users.js';
@@ -20,6 +27,10 @@ export { UserSession, ProjectDoc };
 
 export default {
   async fetch(request, env, ctx) {
+    // Set allowed origins from environment
+    if (env.ALLOWED_ORIGINS) {
+      setAllowedOrigins(env.ALLOWED_ORIGINS.split(','));
+    }
     const url = new URL(request.url);
     const path = url.pathname;
 
@@ -35,7 +46,11 @@ export default {
       }
 
       // Test email endpoint (development only)
-      if (path === '/api/test-email' && request.method === 'POST' && env.ENVIRONMENT !== 'production') {
+      if (
+        path === '/api/test-email' &&
+        request.method === 'POST' &&
+        env.ENVIRONMENT !== 'production'
+      ) {
         return await handleTestEmail(request, env);
       }
 

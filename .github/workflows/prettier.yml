@@ -1,17 +1,25 @@
-name: Prettier
+name: Prettier (non-main)
 
 on:
   push:
+    branches-ignore: [main]
   pull_request:
+    branches-ignore: [main]
 
 jobs:
   prettier:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          # On push → github.ref_name (branch)
+          # On PR   → github.head_ref (source branch)
+          ref: ${{ github.head_ref || github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup pnpm
@@ -31,8 +39,12 @@ jobs:
       - name: Run Prettier
         run: pnpm prettier --write .
 
+      # Only commit and push on push events, not on pull_request
       - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: 'style: format code with prettier'
-          branch: ${{ github.head_ref || github.ref_name }}
+        if: github.event_name == 'push'
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add -A
+          git diff --quiet && git diff --staged --quiet || git commit -m "Apply Prettier formatting"
+          git push

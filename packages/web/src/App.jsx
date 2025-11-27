@@ -1,5 +1,5 @@
 import { Show } from 'solid-js';
-import ProjectDashboard from './components/ProjectsDashboard.jsx';
+import ProjectDashboard from './components/ProjectDashboard.jsx';
 import { useBetterAuth } from './api/better-auth-store.js';
 
 export default function App() {

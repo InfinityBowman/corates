@@ -3,16 +3,19 @@ main = "src/index.js"
 compatibility_date = "2024-11-21"
 compatibility_flags = ["nodejs_compat"]
 
+# Durable Objects Migrations
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["UserSession", "ProjectDoc"]
+
 # Durable Objects
 [[durable_objects.bindings]]
 name = "USER_SESSION"
 class_name = "UserSession"
-script_name = "corates-workers"
 
 [[durable_objects.bindings]]
 name = "PROJECT_DOC"
 class_name = "ProjectDoc"
-script_name = "corates-workers"
 
 # D1 Database
 [[d1_databases]]
@@ -21,35 +24,37 @@ database_name = "corates-db"
 database_id = "7ac6d425-2a7c-4087-9f42-0cd1a2ab367b"
 
 # R2 Bucket for media storage
-[[r2_buckets]]
-binding = "MEDIA_BUCKET"
-bucket_name = "corates-media"
-
-# KV for caching (optional)
-[[kv_namespaces]]
-binding = "CACHE"
-id = "your-kv-namespace-id-here"
+# [[r2_buckets]]
+# binding = "MEDIA_BUCKET"
+# bucket_name = "corates-media"
 
 # Environment variables (non-sensitive only)
 [vars]
 ENVIRONMENT = "development"
-AUTH_BASE_URL = "http://localhost:8787"
+AUTH_BASE_URL = "https://www.corates.org"
+ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:8787,https://corates.org,https://www.corates.org"
 # Email configuration (non-sensitive)
-SMTP_HOST = "smtp.gmail.com"
-SMTP_PORT = "587"
-EMAIL_FROM_NAME = "CoRATES Development"
+# SMTP_HOST = "smtp.gmail.com"
+# SMTP_PORT = "587"
+# EMAIL_FROM_NAME = "CoRATES Development"
 
 # For production deployment
 [env.production]
 name = "corates-workers-prod"
+routes = [
+  { pattern = "www.corates.org/api/*", zone_name = "corates.org" },
+  { pattern = "corates.org/api/*", zone_name = "corates.org" }
+]
 
 [env.production.vars]
 ENVIRONMENT = "production"
-AUTH_BASE_URL = "https://your-production-domain.com"
+AUTH_BASE_URL = "https://www.corates.org"
+ALLOWED_ORIGINS = "https://corates.org,https://www.corates.org"
+
 # Email configuration (non-sensitive)
-SMTP_HOST = "smtp.gmail.com"
-SMTP_PORT = "587"
-EMAIL_FROM_NAME = "CoRATES"
+# SMTP_HOST = "smtp.gmail.com"
+# SMTP_PORT = "587"
+# EMAIL_FROM_NAME = "CoRATES"
 
 # Production secrets are managed via `wrangler secret put` command
 # Run these commands to set production secrets:
@@ -57,14 +62,21 @@ EMAIL_FROM_NAME = "CoRATES"
 # wrangler secret put SMTP_USER --env production
 # wrangler secret put SMTP_PASS --env production
 # wrangler secret put EMAIL_FROM --env production
-# wrangler secret put RESEND_API_KEY --env production  # Optional
-# wrangler secret put SENDGRID_API_KEY --env production  # Optional
 
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "corates-db-prod"
-database_id = "your-prod-database-id-here"
+database_id = "bd15994e-1308-41b3-a91c-e30ab6c947da"
 
-[[env.production.r2_buckets]]
-binding = "MEDIA_BUCKET"
-bucket_name = "corates-media-prod"
+# [[env.production.r2_buckets]]
+# binding = "MEDIA_BUCKET"
+# bucket_name = "corates-media-prod"
+
+# Production Durable Objects
+[[env.production.durable_objects.bindings]]
+name = "USER_SESSION"
+class_name = "UserSession"
+
+[[env.production.durable_objects.bindings]]
+name = "PROJECT_DOC"
+class_name = "ProjectDoc"
