@@ -1,8 +1,9 @@
 /**
  * Email service for BetterAuth
- * Handles email sending based on environment configuration
+ * Uses Resend SDK for Cloudflare Workers
  */
 
+import { Resend } from 'resend';
 import {
   getVerificationEmailHtml,
   getVerificationEmailText,
@@ -17,195 +18,69 @@ import {
  */
 export function createEmailService(env) {
   const isProduction = env.ENVIRONMENT === 'production';
-  const sendRealEmailsInDev = env.SEND_EMAILS_IN_DEV === 'true';
+
+  // Initialize Resend client if API key is available
+  const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
   /**
-   * Send email using SMTP configuration
-   * @param {Object} options - Email options
-   * @param {string} options.to - Recipient email
-   * @param {string} options.subject - Email subject
-   * @param {string} options.html - HTML content
-   * @param {string} options.text - Plain text content
-   * @returns {Promise<Object>} Result object
+   * Send email using Resend
    */
   async function sendEmail({ to, subject, html, text }) {
-    console.log(`Preparing to send email to: ${to}`, isProduction, sendRealEmailsInDev);
-
-    return await sendRealEmail({ to, subject, html, text });
-
-    // Development mode without real email sending
-    return { success: true, mode: 'development-not-sending' };
-  }
-
-  // Helper to timeout fetch requests so they don't block workers for too long
-  function fetchWithTimeout(url, options = {}, timeoutMs = 3000) {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeoutMs);
-    return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(id));
-  }
-
-  /**
-   * Send email directly to the provider (bypasses queue).
-   * This is used by EmailQueue DO to avoid infinite loops.
-   */
-  async function sendDirectEmail({ to, subject, html, text }) {
-    // Option 1: Use Resend (recommended for Workers)
-    if (env.RESEND_API_KEY) {
-      const response = await fetchWithTimeout(
-        'https://api.resend.com/emails',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${env.RESEND_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: `${'CoRATES'} <${env.EMAIL_FROM}>`,
-            to: [to],
-            subject: subject,
-            html: html,
-            text: text,
-          }),
-        },
-        10000, // 10 second timeout for DO context
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Resend API error: ${error.message}`);
-      }
-
-      const result = await response.json();
-      console.log('Email sent successfully via Resend:', result.id);
-      return { success: true, id: result.id, service: 'resend' };
+    if (env.SEND_EMAILS_IN_DEV !== 'true' && !isProduction) {
+      console.log('[Email] Development environment - email sending is DISABLED');
+      return { success: true, id: 'dev-id' };
     }
 
-    // Option 2: Use SendGrid
-    if (env.SENDGRID_API_KEY) {
-      const response = await fetchWithTimeout(
-        'https://api.sendgrid.com/v3/mail/send',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${env.SENDGRID_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            personalizations: [{ to: [{ email: to }] }],
-            from: {
-              email: env.EMAIL_FROM,
-              name: env.EMAIL_FROM_NAME || 'CoRATES',
-            },
-            subject: subject,
-            content: [
-              { type: 'text/plain', value: text },
-              { type: 'text/html', value: html },
-            ].filter(c => c.value),
-          }),
-        },
-        10000,
-      );
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`SendGrid API error: ${error}`);
-      }
-
-      console.log('Email sent successfully via SendGrid');
-      return { success: true, service: 'sendgrid' };
+    if (!resend) {
+      console.log('[Email] No RESEND_API_KEY configured, skipping email');
+      return { success: false, error: 'No email provider configured' };
     }
 
-    // Option 3: Use a simple SMTP relay server (for development)
-    const relayUrl = env.SMTP_RELAY_URL || 'http://localhost:3001/send-email';
-    const response = await fetchWithTimeout(
-      relayUrl,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to, subject, html, text }),
-      },
-      10000,
-    );
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`SMTP relay error: ${error}`);
-    }
-    const result = await response.json();
-    return { success: true, service: 'smtp-relay', ...result };
-  }
-
-  /**
-   * Actually send email via configured service (may use queue)
-   */
-  async function sendRealEmail({ to, subject, html, text }) {
     try {
-      // If a Durable Object queue is configured, forward to it instead of
-      // calling the third-party provider directly. This keeps the request
-      // path fast and lets the EmailQueue DO handle retries.
-      if (env.EMAIL_QUEUE && typeof env.EMAIL_QUEUE.idFromName === 'function') {
-        try {
-          const id = env.EMAIL_QUEUE.idFromName('default');
-          const queue = env.EMAIL_QUEUE.get(id);
-          // Use a full URL to avoid 'Invalid URL: /' error
-          const req = new Request('https://email-queue/do', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ to, subject, html, text }),
-          });
-          // Fire and forget - don't await the queue fetch
-          queue.fetch(req).catch(err => {
-            console.error('EmailQueue fetch error (fire-and-forget):', err);
-          });
-          return { success: true, service: 'email_queue' };
-        } catch (err) {
-          console.error('Failed to enqueue email to EmailQueue DO', err);
-          // Fall back to direct send below
-        }
+      const { data, error } = await resend.emails.send({
+        from: `CoRATES <${env.EMAIL_FROM || 'noreply@corates.org'}>`,
+        to: [to],
+        subject,
+        html,
+        text,
+      });
+
+      if (error) {
+        console.error('[Email] Resend API error:', JSON.stringify(error));
+        return { success: false, error: error.message };
       }
 
-      // Fall back to direct send if queue failed or not available
-      return await sendDirectEmail({ to, subject, html, text });
-    } catch (error) {
-      console.error('Failed to send email:', error);
-      throw new Error(`Failed to send email: ${error.message}`);
+      return { success: true, id: data?.id };
+    } catch (err) {
+      console.error('[Email] Exception during send:', err.message, err.stack);
+      return { success: false, error: err.message };
     }
   }
 
   /**
    * Send email verification email
-   * @param {string} to - Recipient email
-   * @param {string} verificationUrl - Verification URL
-   * @param {string} userDisplayName - User's display name
-   * @returns {Promise<Object>} Result object
    */
   async function sendEmailVerification(to, verificationUrl, userDisplayName = '') {
-    console.log(`Sending email verification to: ${to} with URL: ${verificationUrl}`);
     const subject = 'Verify Your Email Address - CoRATES';
     const name = userDisplayName || 'there';
     const html = getVerificationEmailHtml({ name, subject, verificationUrl });
     const text = getVerificationEmailText({ name, verificationUrl });
-    return await sendEmail({ to, subject, html, text });
+    return sendEmail({ to, subject, html, text });
   }
 
   /**
    * Send password reset email
-   * @param {string} to - Recipient email
-   * @param {string} resetUrl - Password reset URL
-   * @param {string} userDisplayName - User's display name
-   * @returns {Promise<Object>} Result object
    */
   async function sendPasswordReset(to, resetUrl, userDisplayName = '') {
-    console.log(`Sending password reset to: ${to} with URL: ${resetUrl}`);
     const subject = 'Reset Your Password - CoRATES';
     const name = userDisplayName || 'there';
     const html = getPasswordResetEmailHtml({ name, subject, resetUrl });
     const text = getPasswordResetEmailText({ name, resetUrl });
-    return await sendEmail({ to, subject, html, text });
+    return sendEmail({ to, subject, html, text });
   }
 
   return {
     sendEmail,
-    sendDirectEmail,
     sendEmailVerification,
     sendPasswordReset,
     isProduction,

@@ -9,7 +9,7 @@
     "deploy": "wrangler deploy --env production",
     "tail": "wrangler tail",
     "test": "vitest",
-    "clear-workers": "rm -rf .wrangler/state",
+    "clear-workers": "rm -rf .wrangler/state && pnpm run db:migrate",
     "db:migrate": "y | wrangler d1 migrations apply corates-db --local",
     "db:migrate:prod": "wrangler d1 migrations apply corates-db --remote",
     "db:setup:prod": "wrangler d1 execute corates-db-prod --remote --file=migrations/0001_init.sql",
@@ -19,6 +19,7 @@
     "@cloudflare/workers-types": "^4.20251126.0",
     "better-auth": "^1.4.1",
     "drizzle-orm": "^0.44.7",
+    "resend": "^6.5.2",
     "yjs": "^13.6.27"
   },
   "devDependencies": {
