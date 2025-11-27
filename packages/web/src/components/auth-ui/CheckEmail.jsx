@@ -7,7 +7,7 @@ export default function CheckEmail() {
   const [loading, setLoading] = createSignal(false);
   const [resending, setResending] = createSignal(false);
   const [resent, setResent] = createSignal(false);
-  const [error, setError] = createSignal('');
+  const [displayError, setDisplayError] = createSignal('');
   const [checkInterval, setCheckInterval] = createSignal(null);
 
   const navigate = useNavigate();
@@ -97,12 +97,12 @@ export default function CheckEmail() {
 
   const handleResendEmail = async () => {
     if (!email()) {
-      setError('No email address found');
+      setDisplayError('No email address found');
       return;
     }
 
     setResending(true);
-    setError('');
+    setDisplayError('');
 
     try {
       await resendVerificationEmail(email());
@@ -111,7 +111,7 @@ export default function CheckEmail() {
       // Reset the resent state after 5 seconds
       setTimeout(() => setResent(false), 5000);
     } catch (err) {
-      setError('Failed to resend email. Please try again.');
+      setDisplayError('Failed to resend email. Please try again.');
     } finally {
       setResending(false);
     }
@@ -151,11 +151,7 @@ export default function CheckEmail() {
                 you'll automatically be redirected to the dashboard.
               </p>
 
-              {error() && (
-                <div class='py-1 mt-2 px-2 text-red-600 text-xs sm:text-sm bg-red-50 border border-red-200 rounded-lg'>
-                  {error()}
-                </div>
-              )}
+              <ErrorMessage displayError={displayError} />
 
               {resent() && (
                 <div class='p-3 text-green-600 text-xs sm:text-sm bg-green-50 border border-green-200 rounded-lg'>
