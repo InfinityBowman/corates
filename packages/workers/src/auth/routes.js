@@ -68,11 +68,19 @@ export async function handleAuthRoutes(request, env, ctx, path) {
 
         // Check if verification was successful
         if (response.status >= 200 && response.status < 400) {
+          // Get auth cookies from the response, but filter out content-type
+          const preservedHeaders = {};
+          for (const [key, value] of response.headers.entries()) {
+            if (key.toLowerCase() !== 'content-type') {
+              preservedHeaders[key] = value;
+            }
+          }
+
           // Use the existing template from templates.js
           return new Response(getEmailVerificationSuccessPage(), {
             status: 200,
             headers: {
-              ...Object.fromEntries(response.headers.entries()), // Preserve auth cookies
+              ...preservedHeaders, // Preserve auth cookies but not content-type
               ...corsHeaders,
               'Content-Type': 'text/html; charset=utf-8',
             },
@@ -81,7 +89,10 @@ export async function handleAuthRoutes(request, env, ctx, path) {
           // Handle verification failure using existing template
           return new Response(getEmailVerificationFailurePage(), {
             status: response.status,
-            headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' },
+            headers: {
+              ...corsHeaders,
+              'Content-Type': 'text/html; charset=utf-8',
+            },
           });
         }
       } catch (error) {
