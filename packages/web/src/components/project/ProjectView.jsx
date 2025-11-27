@@ -3,6 +3,7 @@ import { useParams, useNavigate } from '@solidjs/router';
 import useProject from '../../primitives/useProject.js';
 import ReviewCard from './ReviewCard.jsx';
 import ReviewForm from './ReviewForm.jsx';
+import AddMemberModal from './AddMemberModal.jsx';
 
 const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
 
@@ -22,6 +23,9 @@ export default function ProjectView() {
   // Checklist form state
   const [showChecklistForm, setShowChecklistForm] = createSignal(null); // reviewId or null
   const [creatingChecklist, setCreatingChecklist] = createSignal(false);
+
+  // Add member modal state
+  const [showAddMemberModal, setShowAddMemberModal] = createSignal(false);
 
   // Use Y.js hook for real-time data
   const {
@@ -129,6 +133,14 @@ export default function ProjectView() {
     const member = dbMembers().find(m => m.userId === userId);
     return member?.displayName || member?.name || member?.email || 'Unknown';
   };
+
+  // Handle new member added
+  const handleMemberAdded = newMember => {
+    setDbMembers(prev => [...prev, newMember]);
+  };
+
+  // Check if current user is owner
+  const isOwner = () => project()?.role === 'owner';
 
   return (
     <div class='min-h-screen bg-blue-50'>
@@ -257,7 +269,25 @@ export default function ProjectView() {
 
           {/* Members Section */}
           <div class='mt-8'>
-            <h2 class='text-xl font-bold text-gray-900 mb-4'>Project Members</h2>
+            <div class='flex items-center justify-between mb-4'>
+              <h2 class='text-xl font-bold text-gray-900'>Project Members</h2>
+              <Show when={isOwner()}>
+                <button
+                  onClick={() => setShowAddMemberModal(true)}
+                  class='inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors gap-1.5'
+                >
+                  <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path
+                      stroke-linecap='round'
+                      stroke-linejoin='round'
+                      stroke-width='2'
+                      d='M12 4v16m8-8H4'
+                    />
+                  </svg>
+                  Add Member
+                </button>
+              </Show>
+            </div>
             <div class='bg-white border border-gray-200 rounded-lg shadow-sm divide-y divide-gray-200'>
               <For each={dbMembers()}>
                 {member => (
@@ -283,6 +313,14 @@ export default function ProjectView() {
               </For>
             </div>
           </div>
+
+          {/* Add Member Modal */}
+          <AddMemberModal
+            isOpen={showAddMemberModal()}
+            onClose={() => setShowAddMemberModal(false)}
+            projectId={params.projectId}
+            onMemberAdded={handleMemberAdded}
+          />
         </Show>
       </div>
     </div>

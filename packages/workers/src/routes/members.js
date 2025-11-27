@@ -105,10 +105,10 @@ async function addMember(request, db, projectId, isOwner) {
     return errorResponse('Only project owners can add members', 403, request);
   }
 
-  const { email, role = 'member' } = await request.json();
+  const { userId, email, role = 'member' } = await request.json();
 
-  if (!email) {
-    return errorResponse('Email is required', 400, request);
+  if (!userId && !email) {
+    return errorResponse('User ID or email is required', 400, request);
   }
 
   // Validate role
@@ -121,21 +121,36 @@ async function addMember(request, db, projectId, isOwner) {
     );
   }
 
-  // Find user by email
-  const userToAdd = await db
-    .select({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      username: user.username,
-      displayName: user.displayName,
-    })
-    .from(user)
-    .where(eq(user.email, email.toLowerCase()))
-    .get();
+  // Find user by userId or email
+  let userToAdd;
+  if (userId) {
+    userToAdd = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        username: user.username,
+        displayName: user.displayName,
+      })
+      .from(user)
+      .where(eq(user.id, userId))
+      .get();
+  } else {
+    userToAdd = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        username: user.username,
+        displayName: user.displayName,
+      })
+      .from(user)
+      .where(eq(user.email, email.toLowerCase()))
+      .get();
+  }
 
   if (!userToAdd) {
-    return errorResponse('User not found with that email', 404, request);
+    return errorResponse('User not found', 404, request);
   }
 
   // Check if already a member

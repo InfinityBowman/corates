@@ -4,7 +4,7 @@
 
 import { createDb } from '../db/client.js';
 import { projects, projectMembers, user } from '../db/schema.js';
-import { eq, desc, or, like, and, notInArray } from 'drizzle-orm';
+import { eq, desc, or, like, and, notInArray, sql } from 'drizzle-orm';
 import { requireAuth } from '../auth/config.js';
 import { jsonResponse, errorResponse } from '../middleware/cors.js';
 
@@ -64,7 +64,7 @@ async function searchUsers(request, env, currentUser) {
     const db = createDb(env.DB);
     const searchPattern = `%${query.toLowerCase()}%`;
 
-    // Build the query
+    // Build the query - use lower() for case-insensitive search
     let baseQuery = db
       .select({
         id: user.id,
@@ -77,10 +77,10 @@ async function searchUsers(request, env, currentUser) {
       .from(user)
       .where(
         or(
-          like(user.email, searchPattern),
-          like(user.name, searchPattern),
-          like(user.displayName, searchPattern),
-          like(user.username, searchPattern),
+          like(sql`lower(${user.email})`, searchPattern),
+          like(sql`lower(${user.name})`, searchPattern),
+          like(sql`lower(${user.displayName})`, searchPattern),
+          like(sql`lower(${user.username})`, searchPattern),
         ),
       )
       .limit(limit);
