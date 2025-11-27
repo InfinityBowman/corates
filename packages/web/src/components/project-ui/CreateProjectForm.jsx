@@ -1,17 +1,19 @@
-/**
- * ReviewForm component - Form to create a new review
- * Supports manual entry or PDF upload with automatic title extraction
- */
-
-import { createSignal, Show, For } from 'solid-js';
+import { createSignal, For, Show } from 'solid-js';
 import { BiRegularCloudUpload, BiRegularTrash } from 'solid-icons/bi';
 import { CgFileDocument } from 'solid-icons/cg';
 import { extractPdfTitle, readFileAsArrayBuffer } from '@/lib/pdfUtils.js';
 
-export default function ReviewForm(props) {
-  const [name, setName] = createSignal('');
-  const [description, setDescription] = createSignal('');
-  const [uploadMode, setUploadMode] = createSignal(false);
+/**
+ * Form for creating a new project with optional PDF uploads
+ * @param {Object} props
+ * @param {string} props.apiBase - API base URL
+ * @param {Function} props.onProjectCreated - Called with the new project when created
+ * @param {Function} props.onCancel - Called when form is cancelled
+ */
+export default function CreateProjectForm(props) {
+  const [projectName, setProjectName] = createSignal('');
+  const [projectDescription, setProjectDescription] = createSignal('');
+  const [isCreating, setIsCreating] = createSignal(false);
   const [uploadedPdfs, setUploadedPdfs] = createSignal([]);
   const [isDragging, setIsDragging] = createSignal(false);
 
@@ -22,6 +24,7 @@ export default function ReviewForm(props) {
     const pdfFiles = Array.from(files).filter(f => f.type === 'application/pdf');
     if (pdfFiles.length === 0) return;
 
+    // Add files with extracting state
     const newPdfs = pdfFiles.map(file => ({
       id: crypto.randomUUID(),
       file,
@@ -32,6 +35,7 @@ export default function ReviewForm(props) {
 
     setUploadedPdfs(prev => [...prev, ...newPdfs]);
 
+    // Extract titles for each PDF
     for (const pdf of newPdfs) {
       try {
         const arrayBuffer = await readFileAsArrayBuffer(pdf.file);
@@ -74,6 +78,7 @@ export default function ReviewForm(props) {
     setUploadedPdfs(prev => prev.map(p => (p.id === id ? { ...p, title: newTitle } : p)));
   };
 
+  // Handle drag and drop
   const handleDragOver = e => {
     e.preventDefault();
     setIsDragging(true);
@@ -90,96 +95,97 @@ export default function ReviewForm(props) {
     handlePdfSelect(e.dataTransfer.files);
   };
 
-  const handleSubmit = () => {
-    if (uploadMode()) {
-      // Submit each PDF as a separate review
-      const pdfsToProcess = uploadedPdfs().filter(p => p.title && !p.extracting);
-      for (const pdf of pdfsToProcess) {
-        props.onSubmit(pdf.title, '', pdf.data, pdf.file.name);
-      }
-      setUploadedPdfs([]);
-    } else {
-      if (!name().trim()) return;
-      props.onSubmit(name().trim(), description().trim());
-      setName('');
-      setDescription('');
-    }
-  };
+  const handleSubmit = async () => {
+    if (!projectName().trim()) return;
 
-  const canSubmit = () => {
-    if (uploadMode()) {
-      return uploadedPdfs().some(p => p.title && !p.extracting);
+    setIsCreating(true);
+    try {
+      const response = await fetch(`${props.apiBase}/api/projects`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: projectName().trim(),
+          description: projectDescription().trim(),
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to create project');
+
+      const newProject = await response.json();
+
+      // Collect PDFs to pass along
+      const pdfsToProcess = uploadedPdfs().filter(p => p.title && !p.extracting);
+
+      // Store in sessionStorage for the project view to pick up
+      if (pdfsToProcess.length > 0) {
+        sessionStorage.setItem(
+          `project-${newProject.id}-pdfs`,
+          JSON.stringify(
+            pdfsToProcess.map(p => ({
+              title: p.title,
+              fileName: p.file.name,
+              data: Array.from(new Uint8Array(p.data)),
+            })),
+          ),
+        );
+      }
+
+      props.onProjectCreated?.(newProject);
+    } catch (error) {
+      console.error('Error creating project:', error);
+      alert('Failed to create project. Please try again.');
+    } finally {
+      setIsCreating(false);
     }
-    return name().trim().length > 0;
   };
 
   const handleCancel = () => {
-    setName('');
-    setDescription('');
+    setProjectName('');
+    setProjectDescription('');
     setUploadedPdfs([]);
-    setUploadMode(false);
-    props.onCancel();
+    props.onCancel?.();
   };
 
   return (
-    <div class='bg-white border border-gray-200 rounded-lg shadow-sm p-6'>
-      <div class='flex items-center justify-between mb-4'>
-        <h3 class='text-lg font-semibold text-gray-900'>Create New Review</h3>
-        <div class='flex gap-1 bg-gray-100 p-1 rounded-lg'>
-          <button
-            onClick={() => setUploadMode(false)}
-            class={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-              !uploadMode() ?
-                'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Manual
-          </button>
-          <button
-            onClick={() => setUploadMode(true)}
-            class={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-              uploadMode() ?
-                'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Upload PDF
-          </button>
-        </div>
-      </div>
+    <div class='bg-white p-6 rounded-lg border border-gray-200 shadow-sm'>
+      <h3 class='text-lg font-semibold text-gray-900 mb-4'>Create New Project</h3>
 
-      <Show when={!uploadMode()}>
-        <div class='space-y-4'>
-          <div>
-            <label class='block text-sm font-semibold text-gray-700 mb-2'>Review Name</label>
-            <input
-              type='text'
-              placeholder='e.g., Sleep Interventions Systematic Review'
-              value={name()}
-              onInput={e => setName(e.target.value)}
-              class='w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
-            />
-          </div>
-          <div>
-            <label class='block text-sm font-semibold text-gray-700 mb-2'>
-              Description (Optional)
-            </label>
-            <textarea
-              placeholder='Brief description of this review...'
-              value={description()}
-              onInput={e => setDescription(e.target.value)}
-              rows='2'
-              class='w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
-            />
-          </div>
+      <div class='space-y-4'>
+        <div>
+          <label class='block text-sm font-semibold text-gray-700 mb-2'>Project Name</label>
+          <input
+            type='text'
+            placeholder='e.g., Sleep Study Meta-Analysis'
+            value={projectName()}
+            onInput={e => setProjectName(e.target.value)}
+            class='w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
+          />
         </div>
-      </Show>
 
-      <Show when={uploadMode()}>
-        <div class='space-y-4'>
-          <p class='text-sm text-gray-500'>
-            Upload PDFs to automatically create reviews. Titles will be extracted from each PDF.
+        <div>
+          <label class='block text-sm font-semibold text-gray-700 mb-2'>
+            Description (Optional)
+          </label>
+          <textarea
+            placeholder='Brief description of your research project...'
+            value={projectDescription()}
+            onInput={e => setProjectDescription(e.target.value)}
+            rows='3'
+            class='w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
+          />
+        </div>
+
+        {/* PDF Upload Section */}
+        <div>
+          <label class='block text-sm font-semibold text-gray-700 mb-2'>
+            Upload PDFs (Optional)
+          </label>
+          <p class='text-sm text-gray-500 mb-3'>
+            Upload research papers to automatically create reviews. Titles will be extracted from
+            each PDF.
           </p>
 
           {/* Drop zone */}
@@ -211,7 +217,7 @@ export default function ReviewForm(props) {
 
           {/* Uploaded PDFs list */}
           <Show when={uploadedPdfs().length > 0}>
-            <div class='space-y-2'>
+            <div class='mt-4 space-y-2'>
               <For each={uploadedPdfs()}>
                 {pdf => (
                   <div class='flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200'>
@@ -246,26 +252,22 @@ export default function ReviewForm(props) {
                   </div>
                 )}
               </For>
-              <p class='text-xs text-gray-500'>
+              <p class='text-xs text-gray-500 mt-2'>
                 {uploadedPdfs().length} PDF{uploadedPdfs().length !== 1 ? 's' : ''} will create{' '}
                 {uploadedPdfs().length} review{uploadedPdfs().length !== 1 ? 's' : ''}
               </p>
             </div>
           </Show>
         </div>
-      </Show>
+      </div>
 
-      <div class='flex gap-3 mt-4'>
+      <div class='flex gap-3 mt-6'>
         <button
           onClick={handleSubmit}
-          disabled={props.loading || !canSubmit()}
+          disabled={isCreating() || !projectName().trim()}
           class='inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-md'
         >
-          {props.loading ?
-            'Creating...'
-          : uploadMode() ?
-            `Create ${uploadedPdfs().filter(p => !p.extracting).length} Review${uploadedPdfs().filter(p => !p.extracting).length !== 1 ? 's' : ''}`
-          : 'Create Review'}
+          {isCreating() ? 'Creating...' : 'Create Project'}
         </button>
         <button
           onClick={handleCancel}

@@ -1,13 +1,12 @@
 import { createSignal, createResource, createEffect, onCleanup, For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import useNotifications from '../../primitives/useNotifications.js';
+import useNotifications from '@primitives/useNotifications.js';
+import CreateProjectForm from './CreateProjectForm.jsx';
+import ProjectCard from './ProjectCard.jsx';
 
 export default function ProjectDashboard({ apiBase, userId }) {
   const navigate = useNavigate();
   const [showCreateForm, setShowCreateForm] = createSignal(false);
-  const [newProjectName, setNewProjectName] = createSignal('');
-  const [newProjectDescription, setNewProjectDescription] = createSignal('');
-  const [isCreating, setIsCreating] = createSignal(false);
 
   // Fetch user's projects
   const [projects, { mutate: setProjects, refetch }] = createResource(async () => {
@@ -27,10 +26,9 @@ export default function ProjectDashboard({ apiBase, userId }) {
   });
 
   // Connect to notifications for real-time project updates
-  const { connect, disconnect, notifications } = useNotifications(userId, {
+  const { connect, disconnect } = useNotifications(userId, {
     onNotification: notification => {
       if (notification.type === 'project-invite') {
-        // Refetch projects to get the new project with full details
         refetch();
       }
     },
@@ -47,40 +45,10 @@ export default function ProjectDashboard({ apiBase, userId }) {
     disconnect();
   });
 
-  const createProject = async () => {
-    if (!newProjectName().trim()) return;
-
-    setIsCreating(true);
-    try {
-      const response = await fetch(`${apiBase}/api/projects`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: newProjectName().trim(),
-          description: newProjectDescription().trim(),
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to create project');
-
-      const newProject = await response.json();
-
-      // Add to existing projects list
-      setProjects(prev => [...(prev || []), newProject]);
-
-      // Reset form
-      setNewProjectName('');
-      setNewProjectDescription('');
-      setShowCreateForm(false);
-    } catch (error) {
-      console.error('Error creating project:', error);
-      alert('Failed to create project. Please try again.');
-    } finally {
-      setIsCreating(false);
-    }
+  const handleProjectCreated = newProject => {
+    setProjects(prev => [...(prev || []), newProject]);
+    setShowCreateForm(false);
+    navigate(`/projects/${newProject.id}`);
   };
 
   const openProject = projectId => {
@@ -106,66 +74,19 @@ export default function ProjectDashboard({ apiBase, userId }) {
 
       {/* Create Project Form */}
       <Show when={showCreateForm()}>
-        <div class='bg-white p-6 rounded-lg border border-gray-200 shadow-sm'>
-          <h3 class='text-lg font-semibold text-gray-900 mb-4'>Create New Project</h3>
-
-          <div class='space-y-4'>
-            <div>
-              <label class='block text-sm font-semibold text-gray-700 mb-2'>Project Name</label>
-              <input
-                type='text'
-                placeholder='e.g., Sleep Study Meta-Analysis'
-                value={newProjectName()}
-                onInput={e => setNewProjectName(e.target.value)}
-                class='w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
-              />
-            </div>
-
-            <div>
-              <label class='block text-sm font-semibold text-gray-700 mb-2'>
-                Description (Optional)
-              </label>
-              <textarea
-                placeholder='Brief description of your research project...'
-                value={newProjectDescription()}
-                onInput={e => setNewProjectDescription(e.target.value)}
-                rows='3'
-                class='w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
-              />
-            </div>
-          </div>
-
-          <div class='flex gap-3 mt-6'>
-            <button
-              onClick={createProject}
-              disabled={isCreating() || !newProjectName().trim()}
-              class='inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-md'
-            >
-              {isCreating() ? 'Creating...' : 'Create Project'}
-            </button>
-            <button
-              onClick={() => setShowCreateForm(false)}
-              class='px-4 py-2 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:border-blue-300 hover:text-blue-600 transition-colors'
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
+        <CreateProjectForm
+          apiBase={apiBase}
+          onProjectCreated={handleProjectCreated}
+          onCancel={() => setShowCreateForm(false)}
+        />
       </Show>
 
       {/* Projects Grid */}
       <div class='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
         <Show
-          when={!projects.loading}
+          when={projects()?.length > 0}
           fallback={
-            <div class='col-span-full text-center py-8'>
-              <div class='text-gray-500'>Loading projects...</div>
-            </div>
-          }
-        >
-          <Show
-            when={projects() && projects().length > 0}
-            fallback={
+            <Show when={!projects.loading}>
               <div class='col-span-full text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300'>
                 <div class='text-gray-500 mb-4'>No projects yet</div>
                 <button
@@ -175,35 +96,12 @@ export default function ProjectDashboard({ apiBase, userId }) {
                   Create your first project
                 </button>
               </div>
-            }
-          >
-            <For each={projects()}>
-              {project => (
-                <div class='bg-white border border-gray-200 rounded-lg shadow-sm p-6 hover:shadow-md hover:border-gray-300 transition-all duration-200 group'>
-                  <div class='mb-4'>
-                    <h3 class='text-lg font-semibold text-gray-900 mb-2'>{project.name}</h3>
-                    <Show when={project.description}>
-                      <p class='text-gray-500 text-sm line-clamp-3'>{project.description}</p>
-                    </Show>
-                  </div>
-
-                  <div class='flex items-center justify-between text-xs text-gray-500 mb-4'>
-                    <span class='inline-flex items-center px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-800 capitalize'>
-                      {project.role}
-                    </span>
-                    <span>{new Date(project.createdAt * 1000).toLocaleDateString()}</span>
-                  </div>
-
-                  <button
-                    onClick={() => openProject(project.id)}
-                    class='w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors font-medium'
-                  >
-                    Open Project
-                  </button>
-                </div>
-              )}
-            </For>
-          </Show>
+            </Show>
+          }
+        >
+          <For each={projects()}>
+            {project => <ProjectCard project={project} onOpen={openProject} />}
+          </For>
         </Show>
       </div>
     </div>
