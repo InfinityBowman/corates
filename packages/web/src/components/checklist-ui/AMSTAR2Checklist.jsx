@@ -315,7 +315,6 @@ export function Question9(props) {
     }
 
     const newQ9b = { ...props.checklistState().q9b, answers: newAnswersB };
-    console.log('Updating q9b to', newQ9b);
     props.onUpdateb(newQ9b);
   }
 
@@ -796,7 +795,6 @@ export default function AMSTAR2Checklist(props = {}) {
                 onChange={e => {
                   setReviewName(e.target.value);
                   handleChecklistChange({ name: e.target.value });
-                  console.log('Review name changed to', e.target.value);
 
                   // Update the route if checklist name changes
                   if (

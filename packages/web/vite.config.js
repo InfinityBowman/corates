@@ -17,6 +17,7 @@ export default defineConfig({
       '@project-ui': path.resolve(__dirname, 'src/components/project-ui'),
       '@offline': path.resolve(__dirname, 'src/offline'),
       '@api': path.resolve(__dirname, 'src/api'),
+      '@config': path.resolve(__dirname, 'src/config'),
     },
   },
   server: {

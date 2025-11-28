@@ -11,7 +11,8 @@
       "@primitives/*": ["src/primitives/*"],
       "@auth/*": ["src/components/auth-ui/*"],
       "@offline/*": ["src/offline/*"],
-      "@api/*": ["src/api/*"]
+      "@api/*": ["src/api/*"],
+      "@config/*": ["src/config/*"]
     }
   },
   "exclude": ["node_modules", "dist"]

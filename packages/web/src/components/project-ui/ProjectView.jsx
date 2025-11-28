@@ -3,6 +3,7 @@ import { useParams, useNavigate } from '@solidjs/router';
 import useProject from '@primitives/useProject.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf, getPdfUrl } from '@api/pdf-api.js';
+import { API_BASE } from '@config/api.js';
 import StudyCard from './StudyCard.jsx';
 import StudyForm from './StudyForm.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
@@ -160,7 +161,6 @@ export default function ProjectView() {
       return;
     }
     try {
-      const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
       const response = await fetch(`${API_BASE}/api/projects/${params.projectId}`, {
         method: 'DELETE',
         credentials: 'include',

@@ -1,10 +1,9 @@
 import { createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { useBetterAuth } from '../../api/better-auth-store.js';
-import { AnimatedShow } from '../AnimatedShow.jsx';
+import { useBetterAuth } from '@api/better-auth-store.js';
 import PasswordInput from './PasswordInput.jsx';
-import { AiOutlineLoading3Quarters } from 'solid-icons/ai';
 import ErrorMessage from './ErrorMessage.jsx';
+import { PrimaryButton, AuthLink } from './AuthButtons.jsx';
 
 export default function SignIn() {
   const [email, setEmail] = createSignal('');
@@ -111,44 +110,33 @@ export default function SignIn() {
 
         <ErrorMessage displayError={displayError} />
 
-        <button
-          type='submit'
-          class='w-full py-2 sm:py-3 text-sm sm:text-base bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg sm:rounded-xl shadow transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
-          disabled={loading()}
-        >
-          <AnimatedShow when={loading()} fallback={'Sign In'}>
-            <div class='flex items-center'>
-              <AiOutlineLoading3Quarters class='animate-spin mr-2' size={22} />
-              Signing In...
-            </div>
-          </AnimatedShow>
-        </button>
+        <PrimaryButton loading={loading()} loadingText='Signing In...'>
+          Sign In
+        </PrimaryButton>
 
         <div class='text-center mt-1 sm:mt-2'>
-          <a
+          <AuthLink
             href='/reset-password'
-            class='text-blue-600 hover:underline text-xs sm:text-sm font-semibold'
             onClick={e => {
               e.preventDefault();
               navigate('/reset-password');
             }}
           >
-            Forgot password?
-          </a>
+            <span class='text-xs sm:text-sm'>Forgot password?</span>
+          </AuthLink>
         </div>
 
         <div class='text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-4'>
           Don&apos;t have an account?{' '}
-          <a
+          <AuthLink
             href='/signup'
-            class='text-blue-600 hover:underline font-semibold'
             onClick={e => {
               e.preventDefault();
               navigate('/signup');
             }}
           >
             Sign Up
-          </a>
+          </AuthLink>
         </div>
       </form>
     </div>

@@ -1,8 +1,11 @@
 import { createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { useBetterAuth } from '../../api/better-auth-store.js';
+import { useBetterAuth } from '@api/better-auth-store.js';
 import { AnimatedShow } from '../AnimatedShow.jsx';
-import { AiOutlineLoading3Quarters } from 'solid-icons/ai';
+import ErrorMessage from './ErrorMessage.jsx';
+import { PrimaryButton, AuthLink } from './AuthButtons.jsx';
+
+const REDIRECT_DELAY_MS = 3000;
 
 export default function ResetPassword() {
   const [email, setEmail] = createSignal('');
@@ -12,7 +15,6 @@ export default function ResetPassword() {
   const navigate = useNavigate();
   const { resetPassword, authError } = useBetterAuth();
 
-  // Watch for auth errors from the store
   const displayError = () => error() || authError();
 
   async function handleSubmit(e) {
@@ -31,14 +33,12 @@ export default function ResetPassword() {
       await resetPassword(email());
       setSuccess(true);
 
-      // Navigate back to sign in after a delay
       setTimeout(() => {
         navigate('/signin');
-      }, 3000);
+      }, REDIRECT_DELAY_MS);
     } catch (err) {
       console.error('Reset password error:', err);
 
-      // Handle specific error types
       if (err.message?.includes('User not found')) {
         setError('No account found with this email address');
       } else if (err.message?.includes('Too many requests')) {
@@ -99,31 +99,21 @@ export default function ResetPassword() {
 
             <ErrorMessage displayError={displayError} />
 
-            <button
-              type='submit'
-              class='w-full py-2 sm:py-3 text-sm sm:text-base bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg sm:rounded-xl shadow transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
-              disabled={loading()}
-            >
-              <AnimatedShow when={loading()} fallback={'Send Reset Email'}>
-                <div class='flex items-center'>
-                  <AiOutlineLoading3Quarters class='animate-spin mr-2' size={22} />
-                  Sending Email...
-                </div>
-              </AnimatedShow>
-            </button>
+            <PrimaryButton loading={loading()} loadingText='Sending Email...'>
+              Send Reset Email
+            </PrimaryButton>
 
             <div class='text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-4'>
               Remember your password?{' '}
-              <a
+              <AuthLink
                 href='/signin'
-                class='text-blue-600 hover:underline font-semibold'
                 onClick={e => {
                   e.preventDefault();
                   navigate('/signin');
                 }}
               >
                 Sign In
-              </a>
+              </AuthLink>
             </div>
           </form>
         </AnimatedShow>
