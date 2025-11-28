@@ -26,6 +26,7 @@ Available icon libraries: ai, bi, bs, cg, fa, fi, hi, im, io, oc, ri, si, tb, ti
 - The architecture-goals.md file contains relevant architecture and design patterns to follow.
 - The style-guide.md file contains additional style and formatting guidelines.
 - See vite.config.js or jsconfig.json for path aliases and build configurations.
+- See TESTING.md for testing guidelines and best practices.
 
 ## Project Guidelines
 
