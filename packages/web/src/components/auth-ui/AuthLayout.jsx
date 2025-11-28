@@ -1,6 +1,6 @@
 import { createEffect, Show, createSignal, onMount } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { useBetterAuth } from '../../api/better-auth-store.js';
+import { useBetterAuth } from '@api/better-auth-store.js';
 
 export default function AuthLayout(props) {
   const { isLoggedIn, authLoading } = useBetterAuth();

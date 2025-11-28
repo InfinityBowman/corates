@@ -1,7 +1,8 @@
 import { createAuthClient } from 'better-auth/solid';
+import { API_BASE } from '@config/api.js';
 
 export const authClient = createAuthClient({
-  baseURL: import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787',
+  baseURL: API_BASE,
 
   fetchOptions: {
     credentials: 'include',

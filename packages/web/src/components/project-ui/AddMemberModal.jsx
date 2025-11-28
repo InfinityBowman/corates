@@ -1,6 +1,5 @@
 import { createSignal, For, Show, createEffect, onCleanup } from 'solid-js';
-
-const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
+import { API_BASE } from '@config/api.js';
 
 /**
  * Modal for searching and adding members to a project

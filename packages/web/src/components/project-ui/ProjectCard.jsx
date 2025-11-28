@@ -1,6 +1,30 @@
 import { Show } from 'solid-js';
 
 /**
+ * Format a date value that could be an ISO string, Unix timestamp, or Date object
+ * @param {string|number|Date} value - The date value to format
+ * @returns {string} Formatted date string
+ */
+function formatDate(value) {
+  if (!value) return '';
+
+  let date;
+  if (typeof value === 'string') {
+    // ISO string from JSON serialization
+    date = new Date(value);
+  } else if (typeof value === 'number') {
+    // Unix timestamp - check if seconds or milliseconds
+    date = value > 1e12 ? new Date(value) : new Date(value * 1000);
+  } else if (value instanceof Date) {
+    date = value;
+  } else {
+    return '';
+  }
+
+  return isNaN(date.getTime()) ? '' : date.toLocaleDateString();
+}
+
+/**
  * Card component for displaying a project in the dashboard grid
  * @param {Object} props
  * @param {Object} props.project - Project data
@@ -22,7 +46,7 @@ export default function ProjectCard(props) {
         <span class='inline-flex items-center px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-800 capitalize'>
           {project().role}
         </span>
-        <span>{new Date(project().createdAt * 1000).toLocaleDateString()}</span>
+        <span>{formatDate(project().createdAt)}</span>
       </div>
 
       <button

@@ -2,7 +2,7 @@
  * PDF API - Upload, download, and manage PDFs via R2 storage
  */
 
-const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
+import { API_BASE } from '@config/api.js';
 
 /**
  * Upload a PDF file for a study

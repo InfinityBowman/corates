@@ -1,10 +1,10 @@
 import { createSignal, createEffect } from 'solid-js';
 import StrengthIndicator from './StrengthIndicator.jsx';
 import PasswordInput from './PasswordInput.jsx';
+import ErrorMessage from './ErrorMessage.jsx';
 import { useNavigate } from '@solidjs/router';
-import { useBetterAuth } from '../../api/better-auth-store.js';
-import { AnimatedShow } from '../AnimatedShow.jsx';
-import { AiOutlineLoading3Quarters } from 'solid-icons/ai';
+import { useBetterAuth } from '@api/better-auth-store.js';
+import { PrimaryButton, AuthLink } from './AuthButtons.jsx';
 
 export default function SignUp() {
   const [name, setName] = createSignal('');
@@ -171,30 +171,20 @@ export default function SignUp() {
             />
           </div>
         </div>
-        <button
-          type='submit'
-          class='w-full py-2 sm:py-3 text-sm sm:text-base bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg sm:rounded-xl shadow transition disabled:opacity-50 flex items-center justify-center'
-          disabled={loading()}
-        >
-          <AnimatedShow when={loading()} fallback={'Sign Up'}>
-            <div class='flex items-center'>
-              <AiOutlineLoading3Quarters class='animate-spin mr-2' size={22} />
-              Signing Up...
-            </div>
-          </AnimatedShow>
-        </button>
+        <PrimaryButton loading={loading()} loadingText='Signing Up...'>
+          Sign Up
+        </PrimaryButton>
         <div class='text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-4'>
           Already have an account?{' '}
-          <a
+          <AuthLink
             href='/signin'
-            class='text-blue-600 hover:underline font-semibold'
             onClick={e => {
               e.preventDefault();
               navigate('/signin');
             }}
           >
             Sign In
-          </a>
+          </AuthLink>
         </div>
       </form>
     </div>

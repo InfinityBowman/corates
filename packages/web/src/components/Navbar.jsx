@@ -1,6 +1,6 @@
 import { Show, createEffect } from 'solid-js';
 import { A, useLocation } from '@solidjs/router';
-import { useBetterAuth } from '../api/better-auth-store.js';
+import { useBetterAuth } from '@api/better-auth-store.js';
 import { BASEPATH } from '../Routes.jsx';
 import { FiMenu } from 'solid-icons/fi';
 

@@ -6,8 +6,7 @@ import { createSignal, createEffect, onCleanup } from 'solid-js';
 import * as Y from 'yjs';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import { createChecklist as createAMSTAR2Answers } from '../AMSTAR2/checklist.js';
-
-const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
+import { API_BASE, getWsBaseUrl } from '@config/api.js';
 
 /**
  * Hook to connect to a project's Y.Doc and manage studies/checklists
@@ -143,10 +142,8 @@ export function useProject(projectId) {
       return;
     }
 
-    // Build WebSocket URL - handle both http and https
-    const wsProtocol = API_BASE.startsWith('https') ? 'wss' : 'ws';
-    const wsHost = API_BASE.replace(/^https?:\/\//, '');
-    const wsUrl = `${wsProtocol}://${wsHost}/api/project/${projectId}`;
+    // Build WebSocket URL
+    const wsUrl = `${getWsBaseUrl()}/api/project/${projectId}`;
 
     ws = new WebSocket(wsUrl);
 
