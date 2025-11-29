@@ -1,28 +1,28 @@
-import * as splitter from "@zag-js/splitter"
-import { normalizeProps, useMachine } from "@zag-js/solid"
-import { createMemo, createUniqueId } from "solid-js"
+import * as splitter from '@zag-js/splitter';
+import { normalizeProps, useMachine } from '@zag-js/solid';
+import { createMemo, createUniqueId } from 'solid-js';
 
 export function Splitter() {
   const service = useMachine(splitter.machine, {
     id: createUniqueId(),
     defaultSize: [80, 20],
     panels: [
-      { id: "a", minSize: 10 },
-      { id: "b", minSize: 10 },
+      { id: 'a', minSize: 10 },
+      { id: 'b', minSize: 10 },
     ],
-  })
+  });
 
-  const api = createMemo(() => splitter.connect(service, normalizeProps))
+  const api = createMemo(() => splitter.connect(service, normalizeProps));
 
   return (
     <div {...api().getRootProps()}>
-      <div {...api().getPanelProps({ id: "a" })}>
+      <div {...api().getPanelProps({ id: 'a' })}>
         <p>A</p>
       </div>
-      <div {...api().getResizeTriggerProps({ id: "a:b" })} />
-      <div {...api().getPanelProps({ id: "b" })}>
+      <div {...api().getResizeTriggerProps({ id: 'a:b' })} />
+      <div {...api().getPanelProps({ id: 'b' })}>
         <p>B</p>
       </div>
     </div>
-  )
+  );
 }

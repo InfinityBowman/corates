@@ -1,6 +1,5 @@
 Pricing models
 
-
 Annual costing structure
 ⭐ Free Tier — Single-Study Appraisal (Always Free)
 $0 forever
@@ -58,10 +57,6 @@ Single sign-on (SSO) options
 Department or university-wide license
 Onboarding + training support
 Integration pathways (API access roadmap)
-
-
-
-
 
 Feature
 Free
@@ -134,16 +129,6 @@ Institutional administration
 ✖
 ✔
 
-
-
-
-
-
-
-
-
-
-
 CoRATES Monthly Pricing
 A flexible monthly subscription model designed for researchers, students, and review teams.
 Start free. Upgrade anytime.
@@ -203,7 +188,6 @@ Single sign-on (SSO)
 Instructor/classroom support
 Onboarding + training
 Service-level agreement (SLA)
-
 
 Feature
 Free
@@ -270,5 +254,3 @@ SSO
 ✖
 ✖
 ✔
-
-
