@@ -118,7 +118,7 @@ export function createAuth(env, ctx) {
 
     advanced: {
       crossSubDomainCookies: {
-        enabled: false, // Disable for localhost development
+        enabled: !!env.COOKIE_DOMAIN, // Enable when COOKIE_DOMAIN is set (production)
         domain: env.COOKIE_DOMAIN, // Set via environment variable for production
       },
       generateId: () => crypto.randomUUID(),
