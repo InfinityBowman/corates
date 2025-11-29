@@ -21,13 +21,13 @@ When you need to find icons from `solid-icons`, use the `search_icons` MCP tool:
 
 ## Zag.js Documentation Tool
 
-When you need to implement UI components using Zag.js, use the MCP tools:
+When you need to implement UI components use zag.js and use the MCP tools for zag:
 
 - `search_zag_docs` - Search for components by name or description (e.g., "modal", "dropdown", "date")
 - `get_zag_component` - Get detailed info and usage template for a specific component (e.g., "dialog", "select")
 - `list_zag_components` - List all available Zag.js components
 
-The tools return Solid.js-specific documentation, installation commands, and usage templates. You should NOT need to add createEffect or similar SolidJS constructs manually to integrate Zag.js components callbacks.
+The tools return Solid.js-specific documentation, installation commands, and usage templates. You should NOT need to add createEffect manually to integrate Zag.js components callbacks. When adding a new zag component, place zag components into components/zag/* files.
 
 ## Additional References
 
