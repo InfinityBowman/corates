@@ -8,14 +8,14 @@
     "dev:landing": "pnpm --filter landing dev",
     "dev:workers": "pnpm --filter workers dev",
     "dev:front": "concurrently -k -n landing,web -c yellow,blue \"pnpm --filter landing dev\" \"pnpm --filter web dev\"",
-    "build": "pnpm --recursive build",
-    "deploy": "pnpm --recursive deploy",
-    "deploy:web": "pnpm --filter web deploy",
-    "deploy:workers": "pnpm --filter workers deploy",
-    "deploy:reset:workers": "pnpm --filter workers db:reset:prod",
-    "deploy:landing": "pnpm --filter landing deploy",
+    "build": "pnpm --recursive run build",
+    "deploy": "pnpm --recursive run deploy",
+    "deploy:web": "pnpm --filter web run deploy",
+    "deploy:workers": "pnpm --filter workers run deploy",
+    "deploy:reset:workers": "pnpm --filter workers run db:reset:prod",
+    "deploy:landing": "pnpm --filter landing run deploy",
     "format": "prettier --write .",
-    "test": "pnpm --recursive test"
+    "test": "pnpm --recursive run test"
   },
   "keywords": [
     "cloudflare",

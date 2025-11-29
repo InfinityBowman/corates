@@ -11,6 +11,8 @@ import AMSTAR2Checklist from '@checklist-ui/AMSTAR2Checklist.jsx';
 import ChecklistYjsWrapper from '@checklist-ui/ChecklistYjsWrapper.jsx';
 import ProjectView from '@project-ui/ProjectView.jsx';
 import LocalChecklistView from '@checklist-ui/LocalChecklistView.jsx';
+import ProfilePage from '@components/profile-ui/ProfilePage.jsx';
+import SettingsPage from '@components/profile-ui/SettingsPage.jsx';
 
 export const BASEPATH = import.meta.env.VITE_BASEPATH || '/';
 
@@ -29,7 +31,9 @@ export default function AppRoutes() {
       <Route path='/' component={MainLayout}>
         <Route path='/' component={HomePage} />
         <Route path='/dashboard' component={Dashboard} />
-        <Route path='/checklist' component={AMSTAR2Checklist} />
+        <Route path='/profile' component={ProfilePage} />
+        <Route path='/settings' component={SettingsPage} />
+        <Route path='/checklist/*' component={LocalChecklistView} />
         <Route path='/checklist/:checklistId' component={LocalChecklistView} />
         <Route path='/projects/:projectId' component={ProjectView} />
         <Route
