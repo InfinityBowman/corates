@@ -70,6 +70,7 @@ export default function SignUp() {
         setError('Too many registration attempts. Please try again later.');
       } else if (
         msg.includes('failed to fetch') ||
+        msg.includes('load failed') ||
         msg.includes('network') ||
         msg.includes('cors')
       ) {
@@ -79,7 +80,8 @@ export default function SignUp() {
       } else if (msg.includes('timeout')) {
         setError('The request timed out. Please try again.');
       } else {
-        setError(err.message || 'Something went wrong. Please try again.');
+        // Catch-all for any unhandled errors - don't show raw error messages
+        setError('Something went wrong. Please try again.');
       }
     } finally {
       setLoading(false);

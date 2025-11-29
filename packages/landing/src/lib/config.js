@@ -1,6 +1,6 @@
 // Environment configuration for the landing page
 export const config = {
-  appUrl: import.meta.env.VITE_APP_URL || 'https://app.corates.org',
+  appUrl: import.meta.env.PUBLIC_APP_URL || 'https://app.corates.org',
 };
 
 // Helper functions for common URLs
