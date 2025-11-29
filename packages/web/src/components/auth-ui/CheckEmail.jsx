@@ -26,7 +26,7 @@ export default function CheckEmail() {
   const checkVerificationStatus = async (forceRefresh = false) => {
     try {
       if (forceRefresh) {
-        await session().refetch?.();
+        await session()?.refetch?.();
       }
 
       const currentUser = user();
@@ -49,12 +49,9 @@ export default function CheckEmail() {
     }
   };
 
-  // Simple polling function that doesn't force session refresh
-  const pollVerificationStatus = () => {
-    const currentUser = user();
-    if (isAuthenticated() && currentUser?.emailVerified) {
-      checkVerificationStatus(false);
-    }
+  // Polling function that refetches session from server
+  const pollVerificationStatus = async () => {
+    await checkVerificationStatus(true);
   };
 
   onMount(() => {
