@@ -2,9 +2,19 @@
   "name": "corates",
   "compatibility_date": "2024-11-21",
   "workers_dev": true,
-  "routes": [{ "pattern": "app.corates.org/*", "zone_name": "corates.org" }],
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application",
+  },
+  "env": {
+    "production": {
+      "name": "corates",
+      "routes": [{ "pattern": "app.corates.org/*", "zone_name": "corates.org" }],
+      "vars": {
+        "VITE_WORKER_API_URL": "https://api.corates.org",
+        "VITE_LANDING_URL": "https://corates.org",
+        "VITE_BASEPATH": "/",
+      },
+    },
   },
 }

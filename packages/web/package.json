@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build --mode production",
     "preview": "vite preview",
-    "deploy": "pnpm run build && wrangler deploy",
+    "deploy": "pnpm run build && wrangler deploy --env production",
     "test": "vitest --ui",
     "format": "prettier --write ."
   },
