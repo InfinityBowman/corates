@@ -4,9 +4,7 @@
  */
 
 export const API_BASE = import.meta.env.VITE_WORKER_API_URL;
-
 export const LANDING_URL = import.meta.env.VITE_LANDING_URL;
-
 export const BASEPATH = import.meta.env.VITE_BASEPATH;
 
 /**
