@@ -1,12 +1,12 @@
 import { createSignal, onMount } from 'solid-js';
-import Navbar from './Navbar.jsx';
-import Sidebar from './Sidebar.jsx';
+import Navbar from './components/Navbar.jsx';
+import Sidebar from './components/Sidebar.jsx';
 
 const SIDEBAR_STORAGE_KEY = 'corates-sidebar-open';
 
 export default function MainLayout(props) {
-  // Initialize sidebar state from localStorage, default to open on desktop
-  const [sidebarOpen, setSidebarOpen] = createSignal(true);
+  // Initialize sidebar state from localStorage, default to closed
+  const [sidebarOpen, setSidebarOpen] = createSignal(false);
 
   onMount(() => {
     const storedOpen = localStorage.getItem(SIDEBAR_STORAGE_KEY);
