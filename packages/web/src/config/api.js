@@ -3,6 +3,10 @@
  * Centralized configuration for API endpoints
  */
 
+// Runtime check for production based on hostname (works in browser)
+// const isProduction =
+//   typeof window !== 'undefined' && window.location.hostname.includes('corates.org');
+
 const isProduction = import.meta.env.PROD;
 
 export const API_BASE =
