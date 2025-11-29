@@ -28,9 +28,11 @@ export function getCorsHeaders(request) {
   return {
     'Access-Control-Allow-Origin':
       allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-File-Name',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers':
+      'Content-Type, Authorization, X-File-Name, X-Requested-With, Accept, Origin, User-Agent',
     'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Max-Age': '86400', // Cache preflight for 24 hours
   };
 }
 
@@ -96,5 +98,9 @@ export function wrapWithCors(response, request) {
  * @returns {Response}
  */
 export function handlePreflight(request) {
-  return new Response(null, { headers: getCorsHeaders(request) });
+  // Safari prefers explicit 200 status for preflight
+  return new Response(null, {
+    status: 200,
+    headers: getCorsHeaders(request),
+  });
 }

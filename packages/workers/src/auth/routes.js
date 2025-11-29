@@ -10,9 +10,9 @@ export async function handleAuthRoutes(request, env, ctx, path) {
   // Use the shared CORS configuration
   const corsHeaders = getCorsHeaders(request);
 
-  // Handle CORS preflight
+  // Handle CORS preflight - Safari requires explicit 200 status
   if (request.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {

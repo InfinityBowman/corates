@@ -23,7 +23,7 @@ export class UserSession {
       'Access-Control-Allow-Origin':
         allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, User-Agent',
       'Access-Control-Allow-Credentials': 'true',
     };
 
