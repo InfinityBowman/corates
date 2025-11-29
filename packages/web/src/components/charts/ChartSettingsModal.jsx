@@ -15,6 +15,10 @@ import { BiRegularX } from 'solid-icons/bi';
  * - onRobvisTitleChange: (value) => void - update robvis title
  * - distributionTitle: string - title for the distribution chart
  * - onDistributionTitleChange: (value) => void - update distribution title
+ * - onExportRobvis: (format: 'svg' | 'png') => void - export quality assessment chart
+ * - onExportDistribution: (format: 'svg' | 'png') => void - export distribution chart
+ * - transparentExport: boolean - whether to export with transparent background
+ * - onTransparentExportChange: (value) => void - toggle transparent export
  */
 export default function ChartSettingsModal(props) {
   // Track if mousedown started on backdrop (not inside modal)
@@ -135,18 +139,70 @@ export default function ChartSettingsModal(props) {
               </label>
             </div>
 
-            {/* Future sections placeholder */}
+            {/* Export Section */}
             <div class='mt-6 pt-6 border-t border-gray-200'>
+              <h3 class='text-sm font-medium text-gray-700 mb-3'>Export Charts</h3>
+
+              <label class='flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors mb-3'>
+                <input
+                  type='checkbox'
+                  checked={props.transparentExport}
+                  onChange={e => props.onTransparentExportChange(e.target.checked)}
+                  class='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2'
+                />
+                <div>
+                  <span class='text-sm font-medium text-gray-700'>Transparent Background</span>
+                  <p class='text-xs text-gray-500'>Export without white background</p>
+                </div>
+              </label>
+
+              <div class='space-y-3'>
+                <div class='p-3 bg-gray-50 rounded-lg'>
+                  <p class='text-sm font-medium text-gray-700 mb-2'>Quality Assessment Chart</p>
+                  <div class='flex gap-2'>
+                    <button
+                      onClick={() => props.onExportRobvis('svg')}
+                      class='px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors'
+                    >
+                      Export SVG
+                    </button>
+                    <button
+                      onClick={() => props.onExportRobvis('png')}
+                      class='px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors'
+                    >
+                      Export PNG
+                    </button>
+                  </div>
+                </div>
+                <div class='p-3 bg-gray-50 rounded-lg'>
+                  <p class='text-sm font-medium text-gray-700 mb-2'>Distribution Chart</p>
+                  <div class='flex gap-2'>
+                    <button
+                      onClick={() => props.onExportDistribution('svg')}
+                      class='px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors'
+                    >
+                      Export SVG
+                    </button>
+                    <button
+                      onClick={() => props.onExportDistribution('png')}
+                      class='px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors'
+                    >
+                      Export PNG
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Future sections placeholder */}
+            {/* <div class='mt-6 pt-6 border-t border-gray-200'>
               <h3 class='text-sm font-medium text-gray-400 mb-2'>Coming Soon</h3>
               <div class='space-y-2'>
-                <div class='flex items-center gap-2 p-3 bg-gray-50 rounded-lg opacity-50'>
-                  <span class='text-sm text-gray-500'>Export Options (PNG, SVG, CSV)</span>
-                </div>
                 <div class='flex items-center gap-2 p-3 bg-gray-50 rounded-lg opacity-50'>
                   <span class='text-sm text-gray-500'>Color Customization</span>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Footer */}
