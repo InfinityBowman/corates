@@ -1,4 +1,4 @@
-import { createSignal, createEffect } from 'solid-js';
+import { createSignal, createEffect, onMount } from 'solid-js';
 import StrengthIndicator from './StrengthIndicator.jsx';
 import PasswordInput from '../zag/PasswordInput.jsx';
 import ErrorMessage from './ErrorMessage.jsx';
@@ -16,7 +16,10 @@ export default function SignUp() {
   const [loading, setLoading] = createSignal(false);
 
   const navigate = useNavigate();
-  const { signup, authError } = useBetterAuth();
+  const { signup, authError, clearAuthError } = useBetterAuth();
+
+  // Clear any stale auth errors when component mounts
+  onMount(() => clearAuthError());
 
   // Watch for auth errors from the store
   const displayError = () => error() || authError();
