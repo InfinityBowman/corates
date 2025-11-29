@@ -5,7 +5,7 @@ import { AiOutlineLoading3Quarters, AiOutlineMail } from 'solid-icons/ai';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton, SecondaryButton } from './AuthButtons.jsx';
 
-const POLL_INTERVAL_MS = 5000;
+const POLL_INTERVAL_MS = 3000;
 const REDIRECT_DELAY_MS = 1000;
 const RESENT_TIMEOUT_MS = 5000;
 
@@ -26,10 +26,21 @@ export default function CheckEmail() {
   const checkVerificationStatus = async (forceRefresh = false) => {
     try {
       if (forceRefresh) {
-        await session()?.refetch?.();
+        // session() returns { data, isPending, refetch }
+        const sessionObj = session();
+        console.log('Refetching session...', sessionObj);
+        if (sessionObj?.refetch) {
+          await sessionObj.refetch();
+        }
       }
 
       const currentUser = user();
+      console.log('Checking verification:', {
+        isAuthenticated: isAuthenticated(),
+        emailVerified: currentUser?.emailVerified,
+        user: currentUser,
+      });
+
       if (isAuthenticated() && currentUser?.emailVerified) {
         if (checkInterval()) {
           clearInterval(checkInterval());
