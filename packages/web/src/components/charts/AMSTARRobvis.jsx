@@ -8,9 +8,18 @@ import * as d3 from 'd3';
  * - height: number (default: 600)
  * - title: string (default: "AMSTAR-2 Quality Assessment")
  * - greyscale: boolean (default: false) - use greyscale colors
+ * - ref: (el) => void - optional ref callback for accessing the SVG element
  */
 export default function AMSTARRobvis(props) {
   let ref = null;
+
+  // Expose ref to parent if provided
+  const setRef = el => {
+    ref = el;
+    if (typeof props.ref === 'function') {
+      props.ref(el);
+    }
+  };
   const [containerSize, setContainerSize] = createSignal({ width: 800, height: 500 });
 
   // Responsive: observe parent container size
@@ -230,7 +239,7 @@ export default function AMSTARRobvis(props) {
   return (
     <div style='background: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 16px; margin: 16px 0;'>
       <svg
-        ref={ref}
+        ref={setRef}
         style={`width: 100%; height: ${svgHeight()}px; max-width: 100%; display: block;`}
       />
     </div>
