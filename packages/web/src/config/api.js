@@ -3,18 +3,11 @@
  * Centralized configuration for API endpoints
  */
 
-// Runtime check for production based on hostname (works in browser)
-const isProduction =
-  typeof window !== 'undefined' && window.location.hostname.includes('corates.org');
+export const API_BASE = import.meta.env.VITE_WORKER_API_URL;
 
-export const API_BASE =
-  import.meta.env.VITE_WORKER_API_URL ||
-  (isProduction ? 'https://api.corates.org' : 'http://localhost:8787');
+export const LANDING_URL = import.meta.env.VITE_LANDING_URL;
 
-export const LANDING_URL =
-  import.meta.env.VITE_LANDING_URL ||
-  (isProduction ? 'https://corates.org' : 'http://localhost:3010');
-export const BASEPATH = import.meta.env.VITE_BASEPATH || '/';
+export const BASEPATH = import.meta.env.VITE_BASEPATH;
 
 /**
  * Get WebSocket URL from API base
