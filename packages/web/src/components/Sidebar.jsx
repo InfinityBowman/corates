@@ -1,9 +1,9 @@
-import { Show, For, createSignal, createResource } from 'solid-js';
+import { Show, For, createSignal, createEffect } from 'solid-js';
 import { useNavigate, useLocation } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useLocalChecklists } from '@primitives/useLocalChecklists.js';
-import { useProject } from '@primitives/useProject.js';
-import { API_BASE } from '@config/api.js';
+import { useProjectData } from '@primitives/useProjectData.js';
+import projectStore from '@primitives/projectStore.js';
 import Collapsible from '@components/zag/Collapsible.jsx';
 import { AiOutlineFolder, AiOutlineFolderOpen } from 'solid-icons/ai';
 import { AiOutlineCloud } from 'solid-icons/ai';
@@ -21,24 +21,17 @@ export default function Sidebar(props) {
   // Track expanded projects
   const [expandedProjects, setExpandedProjects] = createSignal({});
 
-  // Fetch cloud projects for logged-in users
-  const [cloudProjects] = createResource(
-    () => isLoggedIn() && user()?.id,
-    async userId => {
-      if (!userId) return [];
-      try {
-        const response = await fetch(`${API_BASE}/api/users/${userId}/projects`, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        if (!response.ok) return [];
-        return await response.json();
-      } catch (error) {
-        console.error('Error fetching projects:', error);
-        return [];
-      }
-    },
-  );
+  // Read cloud projects from the store (same data as dashboard)
+  const cloudProjects = () => projectStore.getProjectList();
+  const isProjectsLoading = () => projectStore.isProjectListLoading();
+
+  // Fetch projects if user is logged in
+  createEffect(() => {
+    const userId = user()?.id;
+    if (isLoggedIn() && userId) {
+      projectStore.fetchProjectList(userId);
+    }
+  });
 
   const toggleProject = projectId => {
     setExpandedProjects(prev => ({
@@ -105,7 +98,7 @@ export default function Sidebar(props) {
               <Show
                 when={cloudProjects()?.length > 0}
                 fallback={
-                  <Show when={!cloudProjects.loading}>
+                  <Show when={!isProjectsLoading()}>
                     <div class='text-center py-4 px-2'>
                       <div class='w-8 h-8 bg-gray-100 rounded-lg mx-auto mb-2 flex items-center justify-center'>
                         <AiOutlineFolder class='w-4 h-4 text-gray-400' />
@@ -188,8 +181,8 @@ function ProjectTreeItem(props) {
   const projectPath = () => `/projects/${props.project.id}`;
   const isSelected = () => props.currentPath === projectPath();
 
-  // Use project hook to get studies when expanded
-  const project = useProject(props.project.id);
+  // Use lightweight hook to read project data from store
+  const project = useProjectData(props.project.id);
 
   return (
     <Collapsible
