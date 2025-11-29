@@ -2,6 +2,7 @@ import { createSignal, Show } from 'solid-js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { FiBell, FiMoon, FiShield, FiKey, FiEye, FiEyeOff } from 'solid-icons/fi';
 import { LANDING_URL } from '@config/api.js';
+import Switch from '@components/zag/Switch.jsx';
 
 export default function SettingsPage() {
   const { user } = useBetterAuth();
@@ -56,22 +57,6 @@ export default function SettingsPage() {
     }
   };
 
-  const ToggleSwitch = props => (
-    <button
-      type='button'
-      onClick={() => props.onChange(!props.checked)}
-      class={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        props.checked ? 'bg-blue-600' : 'bg-gray-200'
-      }`}
-    >
-      <span
-        class={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-          props.checked ? 'translate-x-6' : 'translate-x-1'
-        }`}
-      />
-    </button>
-  );
-
   return (
     <div class='max-w-2xl mx-auto p-6'>
       <h1 class='text-2xl font-bold text-gray-900 mb-6'>Settings</h1>
@@ -90,7 +75,7 @@ export default function SettingsPage() {
               <p class='font-medium text-gray-900'>Email Notifications</p>
               <p class='text-sm text-gray-500'>Receive email notifications about your account.</p>
             </div>
-            <ToggleSwitch checked={emailNotifications()} onChange={setEmailNotifications} />
+            <Switch checked={emailNotifications()} onChange={setEmailNotifications} />
           </div>
           <div class='flex items-center justify-between'>
             <div>
@@ -99,7 +84,7 @@ export default function SettingsPage() {
                 Get notified when collaborators make changes to your projects.
               </p>
             </div>
-            <ToggleSwitch checked={projectUpdates()} onChange={setProjectUpdates} />
+            <Switch checked={projectUpdates()} onChange={setProjectUpdates} />
           </div>
         </div>
       </div>
@@ -118,7 +103,7 @@ export default function SettingsPage() {
               <p class='font-medium text-gray-900'>Dark Mode</p>
               <p class='text-sm text-gray-500'>Use dark theme across the application.</p>
             </div>
-            <ToggleSwitch checked={darkMode()} onChange={setDarkMode} />
+            <Switch checked={darkMode()} onChange={setDarkMode} />
           </div>
         </div>
       </div>

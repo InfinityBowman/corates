@@ -19,7 +19,15 @@ When you need to find icons from `solid-icons`, use the `search_icons` MCP tool:
 - The tool returns icon names with their library prefix and import statement
 - Example: `import { FaArrowRight } from 'solid-icons/fa';`
 
-Available icon libraries: ai, bi, bs, cg, fa, fi, hi, im, io, oc, ri, si, tb, ti, vs, wi
+## Zag.js Documentation Tool
+
+When you need to implement UI components using Zag.js, use the MCP tools:
+
+- `search_zag_docs` - Search for components by name or description (e.g., "modal", "dropdown", "date")
+- `get_zag_component` - Get detailed info and usage template for a specific component (e.g., "dialog", "select")
+- `list_zag_components` - List all available Zag.js components
+
+The tools return Solid.js-specific documentation, installation commands, and usage templates. You should NOT need to add createEffect or similar SolidJS constructs manually to integrate Zag.js components callbacks.
 
 ## Additional References
 

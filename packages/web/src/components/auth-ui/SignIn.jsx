@@ -1,7 +1,7 @@
 import { createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import PasswordInput from './PasswordInput.jsx';
+import PasswordInput from '../zag/PasswordInput.jsx';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton, AuthLink } from './AuthButtons.jsx';
 
