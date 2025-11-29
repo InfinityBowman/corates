@@ -3,8 +3,15 @@
  * Centralized configuration for API endpoints
  */
 
-export const API_BASE = import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
-export const LANDING_URL = import.meta.env.VITE_LANDING_URL || 'http://localhost:3010';
+const isProduction = import.meta.env.PROD;
+
+export const API_BASE =
+  import.meta.env.VITE_WORKER_API_URL ||
+  (isProduction ? 'https://api.corates.org' : 'http://localhost:8787');
+
+export const LANDING_URL =
+  import.meta.env.VITE_LANDING_URL ||
+  (isProduction ? 'https://corates.org' : 'http://localhost:3010');
 export const BASEPATH = import.meta.env.VITE_BASEPATH || '/';
 
 /**

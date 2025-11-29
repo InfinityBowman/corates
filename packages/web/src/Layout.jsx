@@ -12,9 +12,8 @@ export default function MainLayout(props) {
     const storedOpen = localStorage.getItem(SIDEBAR_STORAGE_KEY);
     if (storedOpen !== null) {
       setSidebarOpen(storedOpen === 'true');
-    } else {
-      setSidebarOpen(window.innerWidth >= 768);
     }
+    // Default to closed if no stored preference
   });
 
   const toggleSidebar = () => {
