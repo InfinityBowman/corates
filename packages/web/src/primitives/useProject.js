@@ -158,8 +158,8 @@ export function useProject(projectId) {
 
         if (data.type === 'sync' || data.type === 'update') {
           const update = new Uint8Array(data.update);
-          Y.applyUpdate(ydoc, update);
-          syncFromYDoc();
+          // Apply with 'remote' origin - syncFromYDoc will be called by the update handler
+          Y.applyUpdate(ydoc, update, 'remote');
         } else if (data.type === 'error') {
           setError(data.message);
         }

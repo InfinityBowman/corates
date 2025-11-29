@@ -1,20 +1,19 @@
 import { Router, Route } from '@solidjs/router';
-import Dashboard from './Dashboard.jsx';
+import Dashboard from './components/Dashboard.jsx';
 import SignIn from '@auth-ui/SignIn.jsx';
 import SignUp from '@auth-ui/SignUp.jsx';
 import CheckEmail from '@auth-ui/CheckEmail.jsx';
 import ResetPassword from '@auth-ui/ResetPassword.jsx';
 import AuthLayout from '@auth-ui/AuthLayout.jsx';
-import MainLayout from '@components/MainLayout.jsx';
+import Layout from '@/Layout.jsx';
 import HomePage from '@components/HomePage.jsx';
-import AMSTAR2Checklist from '@checklist-ui/AMSTAR2Checklist.jsx';
 import ChecklistYjsWrapper from '@checklist-ui/ChecklistYjsWrapper.jsx';
 import ProjectView from '@project-ui/ProjectView.jsx';
 import LocalChecklistView from '@checklist-ui/LocalChecklistView.jsx';
 import ProfilePage from '@components/profile-ui/ProfilePage.jsx';
 import SettingsPage from '@components/profile-ui/SettingsPage.jsx';
-
-export const BASEPATH = import.meta.env.VITE_BASEPATH || '/';
+import NotFoundPage from '@components/NotFoundPage.jsx';
+import { BASEPATH } from '@config/api.js';
 
 export default function AppRoutes() {
   return (
@@ -28,7 +27,7 @@ export default function AppRoutes() {
       </Route>
 
       {/* Main app routes */}
-      <Route path='/' component={MainLayout}>
+      <Route path='/' component={Layout}>
         <Route path='/' component={HomePage} />
         <Route path='/dashboard' component={Dashboard} />
         <Route path='/profile' component={ProfilePage} />
@@ -41,6 +40,7 @@ export default function AppRoutes() {
           component={ChecklistYjsWrapper}
         />
       </Route>
+      <Route path='*' component={NotFoundPage} />
     </Router>
   );
 }
