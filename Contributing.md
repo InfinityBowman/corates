@@ -42,6 +42,10 @@ pnpm dev:workers
 
 ```
 
+## MCP
+
+This project utilizes a custom MCP server to provide agents with 
+
 ## Tips
 
 Clear worker storage

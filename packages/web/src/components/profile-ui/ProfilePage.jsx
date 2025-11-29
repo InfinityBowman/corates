@@ -64,7 +64,7 @@ export default function ProfilePage() {
 
       <div class='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden'>
         {/* Profile Header */}
-        <div class='bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-8'>
+        <div class='bg-linear-to-r from-blue-600 to-blue-500 px-6 py-8'>
           <div class='flex items-center space-x-4'>
             <div class='w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-white text-3xl font-bold'>
               {user()?.name?.charAt(0).toUpperCase() ||

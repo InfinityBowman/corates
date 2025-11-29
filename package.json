@@ -15,6 +15,7 @@
     "deploy:reset:workers": "pnpm --filter workers run db:reset:prod",
     "deploy:landing": "pnpm --filter landing run deploy",
     "format": "prettier --write .",
+    "initialize-mcp": "pnpm --filter mcp run scrape:all",
     "test": "pnpm --recursive run test"
   },
   "keywords": [

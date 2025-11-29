@@ -1,6 +1,6 @@
 import { createSignal, createEffect } from 'solid-js';
 import StrengthIndicator from './StrengthIndicator.jsx';
-import PasswordInput from './PasswordInput.jsx';
+import PasswordInput from '../zag/PasswordInput.jsx';
 import ErrorMessage from './ErrorMessage.jsx';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';

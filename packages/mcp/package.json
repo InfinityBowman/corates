@@ -1,14 +1,16 @@
 {
-  "name": "@corates/icons-mcp",
-  "version": "1.0.0",
+  "name": "@corates/mcp",
+  "version": "1.2.0",
   "type": "module",
   "bin": {
-    "corates-icons-mcp": "./server.js"
+    "corates-mcp": "./server.js"
   },
   "scripts": {
     "start": "nohup node server.js > /dev/null 2>&1 & echo 'MCP server started in background'",
     "stop": "pkill -f 'node.*server.js' || echo 'No MCP server running'",
-    "scrape": "node scrape-icons.js"
+    "scrape": "node scrape-icons.js",
+    "scrape:zag": "node scrape-zag.js",
+    "scrape:all": "node scrape-icons.js && node scrape-zag.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.23.0",
