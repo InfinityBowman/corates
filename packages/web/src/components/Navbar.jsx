@@ -2,6 +2,7 @@ import { Show, createEffect, createSignal, onMount, onCleanup } from 'solid-js';
 import { A, useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { FiMenu } from 'solid-icons/fi';
+import { LANDING_URL } from '@config/api.js';
 
 export default function Navbar(props) {
   const { user, signout, authLoading } = useBetterAuth();
@@ -66,7 +67,10 @@ export default function Navbar(props) {
             <FiMenu class='w-4 h-4' />
           </Show>
         </button>
-        <A href='/' class='font-extrabold text-base sm:text-lg tracking-tight drop-shadow'>
+        <A
+          href={LANDING_URL}
+          class='font-extrabold text-base sm:text-lg tracking-tight drop-shadow'
+        >
           CoRATES
         </A>
       </div>

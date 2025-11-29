@@ -28,7 +28,7 @@ export default function AppRoutes() {
 
       {/* Main app routes */}
       <Route path='/' component={Layout}>
-        <Route path='/' component={HomePage} />
+        <Route path='/' component={Dashboard} />
         <Route path='/dashboard' component={Dashboard} />
         <Route path='/profile' component={ProfilePage} />
         <Route path='/settings' component={SettingsPage} />

@@ -7,6 +7,7 @@ export let allowedOrigins = [
   'http://localhost:8787',
   'https://corates.org',
   'https://www.corates.org',
+  'https://app.corates.org',
 ];
 
 /**
