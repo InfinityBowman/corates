@@ -120,9 +120,8 @@ export default function SignIn() {
             required
             disabled={loading()}
           />
+          <ErrorMessage displayError={displayError} />
         </div>
-
-        <ErrorMessage displayError={displayError} />
 
         <PrimaryButton loading={loading()} loadingText='Signing In...'>
           Sign In
