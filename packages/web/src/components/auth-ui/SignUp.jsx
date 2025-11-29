@@ -54,20 +54,29 @@ export default function SignUp() {
     } catch (err) {
       console.error('Signup error:', err);
 
+      const msg = err.message?.toLowerCase() || '';
+
       // Handle specific error types
-      if (
-        err.message?.includes('User already exists') ||
-        err.message?.includes('Email already in use')
-      ) {
+      if (msg.includes('user already exists') || msg.includes('email already in use')) {
         setError('An account with this email already exists');
-      } else if (err.message?.includes('Invalid email')) {
+      } else if (msg.includes('invalid email')) {
         setError('Please enter a valid email address');
-      } else if (err.message?.includes('Password too weak')) {
+      } else if (msg.includes('password too weak')) {
         setError('Password is too weak. Please choose a stronger password.');
-      } else if (err.message?.includes('Too many requests')) {
+      } else if (msg.includes('too many requests')) {
         setError('Too many registration attempts. Please try again later.');
+      } else if (
+        msg.includes('failed to fetch') ||
+        msg.includes('network') ||
+        msg.includes('cors')
+      ) {
+        setError(
+          'Unable to connect to the server. Please check your internet connection and try again.',
+        );
+      } else if (msg.includes('timeout')) {
+        setError('The request timed out. Please try again.');
       } else {
-        setError(err.message || 'Sign up failed. Please try again.');
+        setError(err.message || 'Something went wrong. Please try again.');
       }
     } finally {
       setLoading(false);

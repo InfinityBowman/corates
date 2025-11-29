@@ -38,23 +38,32 @@ export default function SignIn() {
     } catch (err) {
       console.error('Sign in error:', err);
 
+      const msg = err.message?.toLowerCase() || '';
+
       // Handle specific error types
-      if (
-        err.message?.includes('Email not verified') ||
-        err.message?.includes('email_verified_at is null')
-      ) {
+      if (msg.includes('email not verified') || msg.includes('email_verified_at is null')) {
         navigate('/verify-email', { replace: true });
       } else if (
-        err.message?.includes('Invalid credentials') ||
-        err.message?.includes('Incorrect email or password')
+        msg.includes('invalid credentials') ||
+        msg.includes('incorrect email or password')
       ) {
         setError('Incorrect email or password');
-      } else if (err.message?.includes('User not found')) {
+      } else if (msg.includes('user not found')) {
         setError('No account found with this email');
-      } else if (err.message?.includes('Too many requests')) {
+      } else if (msg.includes('too many requests')) {
         setError('Too many sign-in attempts. Please try again later.');
+      } else if (
+        msg.includes('failed to fetch') ||
+        msg.includes('network') ||
+        msg.includes('cors')
+      ) {
+        setError(
+          'Unable to connect to the server. Please check your internet connection and try again.',
+        );
+      } else if (msg.includes('timeout')) {
+        setError('The request timed out. Please try again.');
       } else {
-        setError(err.message || 'Sign in failed. Please try again.');
+        setError(err.message || 'Something went wrong. Please try again.');
       }
     } finally {
       setLoading(false);
