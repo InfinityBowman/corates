@@ -2,11 +2,13 @@
  * LocalChecklistView - Wrapper component for viewing/editing local checklists
  * Loads checklist from IndexedDB and saves changes back automatically
  * Supports split-screen PDF viewing with persistent PDF storage
+ * Shows create form when no checklistId is provided
  */
 
 import { createSignal, createEffect, Show, onCleanup } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
+import CreateLocalChecklist from '@checklist-ui/CreateLocalChecklist.jsx';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
 
 export default function LocalChecklistView() {
@@ -27,8 +29,9 @@ export default function LocalChecklistView() {
   // Load the checklist and PDF on mount
   createEffect(async () => {
     const checklistId = params.checklistId;
+
+    // If no checklistId, show create form (handled in render)
     if (!checklistId) {
-      setError('No checklist ID provided');
       setLoading(false);
       return;
     }
@@ -181,6 +184,11 @@ export default function LocalChecklistView() {
       </Show>
     </>
   );
+
+  // Show create form if no checklistId
+  if (!params.checklistId) {
+    return <CreateLocalChecklist />;
+  }
 
   return (
     <Show

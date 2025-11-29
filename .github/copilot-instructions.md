@@ -40,6 +40,7 @@ Available icon libraries: ai, bi, bs, cg, fa, fi, hi, im, io, oc, ri, si, tb, ti
 - All code suggestions and completions must comply with these instructions.
 - If a suggestion includes an emoji, remove it and use `solid-icons` or SVGs instead.
 - Copilot should prefer generating smaller, modular files over large multi-purpose files.
+- Copilot should prefer using config files rather than hardcoding values.
 
 ## SolidJS Specific
 
