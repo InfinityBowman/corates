@@ -4,14 +4,16 @@ import useNotifications from '@primitives/useNotifications.js';
 import CreateProjectForm from './CreateProjectForm.jsx';
 import ProjectCard from './ProjectCard.jsx';
 
-export default function ProjectDashboard({ apiBase, userId }) {
+export default function ProjectDashboard(props) {
   const navigate = useNavigate();
   const [showCreateForm, setShowCreateForm] = createSignal(false);
+
+  const userId = () => props.userId;
 
   // Fetch user's projects
   const [projects, { mutate: setProjects, refetch }] = createResource(async () => {
     try {
-      const response = await fetch(`${apiBase}/api/users/${userId}/projects`, {
+      const response = await fetch(`${props.apiBase}/api/users/${userId()}/projects`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
@@ -26,7 +28,7 @@ export default function ProjectDashboard({ apiBase, userId }) {
   });
 
   // Connect to notifications for real-time project updates
-  const { connect, disconnect } = useNotifications(userId, {
+  const { connect, disconnect } = useNotifications(userId(), {
     onNotification: notification => {
       if (notification.type === 'project-invite') {
         refetch();
@@ -36,7 +38,7 @@ export default function ProjectDashboard({ apiBase, userId }) {
 
   // Connect to notifications when component mounts
   createEffect(() => {
-    if (userId) {
+    if (userId()) {
       connect();
     }
   });
@@ -75,7 +77,7 @@ export default function ProjectDashboard({ apiBase, userId }) {
       {/* Create Project Form */}
       <Show when={showCreateForm()}>
         <CreateProjectForm
-          apiBase={apiBase}
+          apiBase={props.apiBase}
           onProjectCreated={handleProjectCreated}
           onCancel={() => setShowCreateForm(false)}
         />
