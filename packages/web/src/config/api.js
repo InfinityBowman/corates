@@ -4,10 +4,8 @@
  */
 
 // Runtime check for production based on hostname (works in browser)
-// const isProduction =
-//   typeof window !== 'undefined' && window.location.hostname.includes('corates.org');
-
-const isProduction = import.meta.env.PROD;
+const isProduction =
+  typeof window !== 'undefined' && window.location.hostname.includes('corates.org');
 
 export const API_BASE =
   import.meta.env.VITE_WORKER_API_URL ||
