@@ -121,6 +121,11 @@ export function createAuth(env, ctx) {
         enabled: !!env.COOKIE_DOMAIN, // Enable when COOKIE_DOMAIN is set (production)
         domain: env.COOKIE_DOMAIN, // Set via environment variable for production
       },
+      // Cookies must be SameSite=None and Secure for cross-subdomain to work
+      cookieOptions: {
+        sameSite: env.COOKIE_DOMAIN ? 'none' : 'lax',
+        secure: !!env.COOKIE_DOMAIN, // Must be true for SameSite=None
+      },
       generateId: () => crypto.randomUUID(),
     },
   });
