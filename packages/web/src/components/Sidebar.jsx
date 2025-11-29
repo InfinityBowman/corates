@@ -37,7 +37,7 @@ export default function Sidebar(props) {
         console.error('Error fetching projects:', error);
         return [];
       }
-    }
+    },
   );
 
   const toggleProject = projectId => {
@@ -83,9 +83,9 @@ export default function Sidebar(props) {
             <button
               onClick={() => navigate('/dashboard')}
               class={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isCurrentPath('/dashboard')
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-700 hover:bg-gray-100'
+                isCurrentPath('/dashboard') ?
+                  'bg-blue-100 text-blue-700'
+                : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
               <AiOutlineHome class='w-4 h-4' />
@@ -341,11 +341,9 @@ function ChecklistTreeItem(props) {
       <Show when={props.checklist.status}>
         <span
           class={`text-3xs px-1 py-0.5 rounded ${
-            props.checklist.status === 'completed'
-              ? 'bg-green-100 text-green-700'
-              : props.checklist.status === 'in-progress'
-                ? 'bg-yellow-100 text-yellow-700'
-                : 'bg-gray-100 text-gray-600'
+            props.checklist.status === 'completed' ? 'bg-green-100 text-green-700'
+            : props.checklist.status === 'in-progress' ? 'bg-yellow-100 text-yellow-700'
+            : 'bg-gray-100 text-gray-600'
           }`}
         >
           {props.checklist.status}
