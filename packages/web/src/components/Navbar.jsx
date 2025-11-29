@@ -1,18 +1,11 @@
 import { Show, createEffect, createSignal, onMount, onCleanup } from 'solid-js';
-import { A, useLocation, useNavigate } from '@solidjs/router';
+import { A, useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { BASEPATH } from '../Routes.jsx';
 import { FiMenu } from 'solid-icons/fi';
-
-function normalizePath(path) {
-  return path.endsWith('/') ? path.slice(0, -1) : path;
-}
 
 export default function Navbar(props) {
   const { user, signout, authLoading } = useBetterAuth();
-  const location = useLocation();
   const navigate = useNavigate();
-  const isHome = () => normalizePath(location.pathname) === normalizePath(BASEPATH);
 
   const [showUserMenu, setShowUserMenu] = createSignal(false);
   let userMenuRef;
@@ -24,7 +17,8 @@ export default function Navbar(props) {
   createEffect(() => {
     if (user()) {
       localStorage.setItem('userName', user().name);
-    } else {
+    } else if (!authLoading()) {
+      // Only clear when auth has finished loading and there's no user
       localStorage.removeItem('userName');
     }
   });
@@ -78,47 +72,43 @@ export default function Navbar(props) {
       </div>
 
       <div class='flex space-x-4 items-center text-2xs sm:text-xs'>
-        <A href='/dashboard' class='hover:bg-blue-600 px-2 py-1.5 rounded transition font-medium'>
+        <A
+          href='/dashboard'
+          class='flex items-center h-9 hover:bg-blue-600 px-2 rounded transition font-medium'
+        >
           Dashboard
         </A>
         <Show
-          when={user()}
+          when={user() || (authLoading() && isLikelyLoggedIn)}
           fallback={
-            isLikelyLoggedIn && authLoading() ?
-              <>
-                <span class='font-medium'>Hello, {storedName}</span>
-                <button class='hover:bg-blue-600 px-2 py-1.5 rounded transition font-medium'>
-                  Sign Out
-                </button>
-              </>
-            : <>
-                <A
-                  href='/signin'
-                  class='hover:bg-blue-600 px-2 py-1.5 rounded transition font-medium'
-                >
-                  Sign In
-                </A>
-                <A
-                  href='/signup'
-                  class='hover:bg-blue-600 px-2 py-1.5 rounded transition font-medium'
-                >
-                  Sign Up
-                </A>
-              </>
+            <>
+              <A
+                href='/signin'
+                class='flex items-center h-9 hover:bg-blue-600 px-2 rounded transition font-medium'
+              >
+                Sign In
+              </A>
+              <A
+                href='/signup'
+                class='flex items-center h-9 hover:bg-blue-600 px-2 rounded transition font-medium'
+              >
+                Sign Up
+              </A>
+            </>
           }
         >
           {/* User dropdown menu */}
           <div class='relative' ref={userMenuRef}>
             <button
               onClick={() => setShowUserMenu(!showUserMenu())}
-              class='flex items-center space-x-2 hover:bg-blue-600 px-2 py-1.5 rounded transition font-medium'
+              class='flex items-center space-x-2 h-9 hover:bg-blue-600 px-2 rounded transition font-medium'
             >
               <div class='w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-white text-xs font-medium'>
                 {user()?.name?.charAt(0).toUpperCase() ||
-                  user()?.email?.charAt(0).toUpperCase() ||
+                  storedName?.charAt(0).toUpperCase() ||
                   'U'}
               </div>
-              <span class='hidden sm:block'>{user()?.name || user()?.email}</span>
+              <span class='hidden sm:block'>{user()?.name || storedName || 'Loading...'}</span>
               <svg
                 class={`w-3 h-3 transition-transform ${showUserMenu() ? 'rotate-180' : ''}`}
                 fill='none'

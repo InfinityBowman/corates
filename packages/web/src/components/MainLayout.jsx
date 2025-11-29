@@ -1,10 +1,35 @@
+import { createSignal, onMount } from 'solid-js';
 import Navbar from './Navbar.jsx';
+import Sidebar from './Sidebar.jsx';
+
+const SIDEBAR_STORAGE_KEY = 'corates-sidebar-open';
 
 export default function MainLayout(props) {
+  // Initialize sidebar state from localStorage, default to open on desktop
+  const [sidebarOpen, setSidebarOpen] = createSignal(true);
+
+  onMount(() => {
+    const storedOpen = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+    if (storedOpen !== null) {
+      setSidebarOpen(storedOpen === 'true');
+    } else {
+      setSidebarOpen(window.innerWidth >= 768);
+    }
+  });
+
+  const toggleSidebar = () => {
+    const newValue = !sidebarOpen();
+    setSidebarOpen(newValue);
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(newValue));
+  };
+
   return (
     <div class='h-screen flex flex-col bg-blue-50 overflow-hidden'>
-      <Navbar />
-      <main class='flex-1 overflow-auto text-gray-900'>{props.children}</main>
+      <Navbar open={sidebarOpen()} toggleSidebar={toggleSidebar} />
+      <div class='flex flex-1 overflow-hidden'>
+        <Sidebar open={sidebarOpen()} />
+        <main class='flex-1 overflow-auto text-gray-900'>{props.children}</main>
+      </div>
     </div>
   );
 }
