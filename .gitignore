@@ -23,7 +23,7 @@ npm-debug.log*
 # misc
 .DS_Store
 *.pem
-icon-manifest2.json
+icon-manifest.json
 
 # debug
 npm-debug.log*
