@@ -119,13 +119,9 @@ export function createAuth(env, ctx) {
     advanced: {
       crossSubDomainCookies: {
         enabled: !!env.COOKIE_DOMAIN, // Enable when COOKIE_DOMAIN is set (production)
-        domain: env.COOKIE_DOMAIN, // Set via environment variable for production
+        domain: env.COOKIE_DOMAIN, // e.g. "corates.org" (without leading dot)
       },
-      // Cookies must be SameSite=None and Secure for cross-subdomain to work
-      cookieOptions: {
-        sameSite: env.COOKIE_DOMAIN ? 'none' : 'lax',
-        secure: !!env.COOKIE_DOMAIN, // Must be true for SameSite=None
-      },
+      useSecureCookies: !!env.COOKIE_DOMAIN, // Force secure cookies in production
       generateId: () => crypto.randomUUID(),
     },
   });
