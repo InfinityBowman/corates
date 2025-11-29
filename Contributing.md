@@ -44,7 +44,17 @@ pnpm dev:workers
 
 ## MCP
 
-This project utilizes a custom MCP server to provide agents with
+This project utilizes a custom MCP server to provide agents with context
+To set this up do:
+```bash
+cd packages/mcp
+pnpm run scrape:all
+# Ensure you have the .vscode folder with the mcp.json
+# Press cmd + shift + p
+# Type MCP: List Servers
+# Find 'corates' and start it
+# Make sure it says 'running' afterwards
+```
 
 ## Tips
 
