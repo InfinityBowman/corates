@@ -2,6 +2,7 @@ import { createSignal, createEffect, createMemo, Show, onCleanup } from 'solid-j
 import { useParams, useNavigate } from '@solidjs/router';
 import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import useProject from '@primitives/useProject.js';
+import projectStore from '@primitives/projectStore.js';
 import { downloadPdf, uploadPdf, deletePdf } from '@api/pdf-api.js';
 
 export default function ChecklistYjsWrapper() {
@@ -12,12 +13,15 @@ export default function ChecklistYjsWrapper() {
   const [pdfFileName, setPdfFileName] = createSignal(null);
   const [pdfLoading, setPdfLoading] = createSignal(false);
 
-  const { studies, connected, connecting, error, updateChecklistAnswer, getChecklistData } =
-    useProject(params.projectId);
+  // Use full hook for write operations
+  const { error, updateChecklistAnswer, getChecklistData } = useProject(params.projectId);
 
-  // Find the current study and checklist from the Y.js data
+  // Read data directly from store for faster reactivity
+  const connectionState = () => projectStore.getConnectionState(params.projectId);
+
+  // Find the current study and checklist from the store
   const currentStudy = createMemo(() => {
-    return studies().find(s => s.id === params.studyId);
+    return projectStore.getStudy(params.projectId, params.studyId);
   });
 
   const currentChecklist = createMemo(() => {
@@ -133,13 +137,13 @@ export default function ChecklistYjsWrapper() {
           {currentChecklist()?.type || 'AMSTAR2'} Checklist
         </span>
       </div>
-      <Show when={connected()}>
+      <Show when={connectionState().connected}>
         <span class='flex items-center gap-1 text-green-600 text-xs whitespace-nowrap'>
           <div class='w-2 h-2 bg-green-500 rounded-full'></div>
           Synced
         </span>
       </Show>
-      <Show when={connecting()}>
+      <Show when={connectionState().connecting}>
         <span class='flex items-center gap-1 text-yellow-600 text-xs whitespace-nowrap'>
           <div class='w-2 h-2 bg-yellow-500 rounded-full animate-pulse'></div>
           Connecting...
@@ -161,7 +165,10 @@ export default function ChecklistYjsWrapper() {
         fallback={
           <div class='flex items-center justify-center min-h-screen bg-blue-50'>
             <div class='text-gray-500'>
-              <Show when={connecting() || pdfLoading()} fallback='Checklist not found'>
+              <Show
+                when={connectionState().connecting || pdfLoading()}
+                fallback='Checklist not found'
+              >
                 Loading...
               </Show>
             </div>

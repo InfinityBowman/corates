@@ -1,6 +1,7 @@
 import { createSignal, createEffect, createMemo, For, Show, onCleanup } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import useProject from '@primitives/useProject.js';
+import projectStore from '@primitives/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf, getPdfUrl } from '@api/pdf-api.js';
 import { API_BASE } from '@config/api.js';
@@ -27,13 +28,8 @@ export default function ProjectView() {
   // Add member modal state
   const [showAddMemberModal, setShowAddMemberModal] = createSignal(false);
 
-  // Use Y.js hook for real-time data (meta, members, studies all come from here)
+  // Use Y.js hook for write operations and connection management
   const {
-    studies,
-    members,
-    meta,
-    connected,
-    error: yjsError,
     createStudy,
     updateStudy,
     createChecklist,
@@ -43,7 +39,17 @@ export default function ProjectView() {
     getChecklistData,
     connect,
     disconnect,
+    error: yjsError,
   } = useProject(params.projectId);
+
+  // Read data directly from the store for faster reactivity
+  const studies = () => projectStore.getStudies(params.projectId);
+  const members = () => projectStore.getMembers(params.projectId);
+  const meta = () => projectStore.getMeta(params.projectId);
+  const connectionState = () => projectStore.getConnectionState(params.projectId);
+
+  // Check if we have cached data (either synced or previously loaded)
+  const hasData = () => connectionState().synced || studies().length > 0;
 
   // Derive current user's role from the members list
   const userRole = createMemo(() => {
@@ -242,7 +248,7 @@ export default function ProjectView() {
               {userRole()}
             </span>
           </Show>
-          <Show when={connected()}>
+          <Show when={connectionState().connected}>
             <span class='flex items-center gap-1 text-green-600 text-sm'>
               <div class='w-2 h-2 bg-green-500 rounded-full' />
               Synced
@@ -305,15 +311,24 @@ export default function ProjectView() {
         <Show
           when={studies().length > 0}
           fallback={
-            <div class='text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300'>
-              <p class='text-gray-500 mb-4'>No studies yet</p>
-              <button
-                onClick={() => setShowStudyForm(true)}
-                class='text-blue-600 hover:text-blue-700 font-medium'
-              >
-                Create your first study
-              </button>
-            </div>
+            <Show
+              when={hasData()}
+              fallback={
+                <div class='text-center py-12 bg-white rounded-lg border border-gray-200'>
+                  <p class='text-gray-400'>Loading studies...</p>
+                </div>
+              }
+            >
+              <div class='text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300'>
+                <p class='text-gray-500 mb-4'>No studies yet</p>
+                <button
+                  onClick={() => setShowStudyForm(true)}
+                  class='text-blue-600 hover:text-blue-700 font-medium'
+                >
+                  Create your first study
+                </button>
+              </div>
+            </Show>
           }
         >
           <div class='space-y-4'>

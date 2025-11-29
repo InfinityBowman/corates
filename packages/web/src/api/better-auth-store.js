@@ -1,6 +1,7 @@
 import { createSignal, createEffect, createRoot } from 'solid-js';
 import { authClient, useSession } from '@api/auth-client.js';
 import useOnlineStatus from '@primitives/useOnlineStatus.js';
+import projectStore from '@primitives/projectStore.js';
 
 function createBetterAuthStore() {
   const isOnline = useOnlineStatus();
@@ -103,6 +104,9 @@ function createBetterAuthStore() {
       if (error) {
         throw new Error(error.message);
       }
+
+      // Clear cached project data on logout
+      projectStore.clearProjectList();
     } catch (err) {
       setAuthError(err.message);
       throw err;

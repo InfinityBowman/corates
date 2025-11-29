@@ -2,11 +2,12 @@
  * useProject hook - Manages Y.js connection and operations for a single project
  */
 
-import { createSignal, createEffect, onCleanup } from 'solid-js';
+import { createSignal, createEffect, onCleanup, createMemo } from 'solid-js';
 import * as Y from 'yjs';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import { createChecklist as createAMSTAR2Answers } from '../AMSTAR2/checklist.js';
 import { API_BASE, getWsBaseUrl } from '@config/api.js';
+import projectStore from './projectStore.js';
 
 /**
  * Hook to connect to a project's Y.Doc and manage studies/checklists
@@ -15,14 +16,6 @@ import { API_BASE, getWsBaseUrl } from '@config/api.js';
  * @returns {Object} Project state and operations
  */
 export function useProject(projectId) {
-  const [connected, setConnected] = createSignal(false);
-  const [connecting, setConnecting] = createSignal(false);
-  const [synced, setSynced] = createSignal(false);
-  const [error, setError] = createSignal(null);
-  const [studies, setStudies] = createSignal([]);
-  const [meta, setMeta] = createSignal({});
-  const [members, setMembers] = createSignal([]);
-
   // Check if this is a local-only project
   const isLocalProject = () => projectId && projectId.startsWith('local-');
 
@@ -30,7 +23,19 @@ export function useProject(projectId) {
   let ydoc = null;
   let indexeddbProvider = null;
 
-  // Sync Y.Doc state to signals
+  // Reactive getters from store
+  const connectionState = createMemo(() => projectStore.getConnectionState(projectId));
+  const connected = () => connectionState().connected;
+  const connecting = () => connectionState().connecting;
+  const synced = () => connectionState().synced;
+  const error = () => connectionState().error;
+
+  const projectData = createMemo(() => projectStore.getProject(projectId));
+  const studies = () => projectData()?.studies || [];
+  const meta = () => projectData()?.meta || {};
+  const members = () => projectData()?.members || [];
+
+  // Sync Y.Doc state to store
   function syncFromYDoc() {
     if (!ydoc) return;
 
@@ -86,11 +91,10 @@ export function useProject(projectId) {
 
     // Sort by createdAt
     studiesList.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-    setStudies(studiesList);
 
     // Sync meta
     const metaMap = ydoc.getMap('meta');
-    setMeta(metaMap.toJSON ? metaMap.toJSON() : {});
+    const metaData = metaMap.toJSON ? metaMap.toJSON() : {};
 
     // Sync members
     const membersMap = ydoc.getMap('members');
@@ -106,15 +110,22 @@ export function useProject(projectId) {
         displayName: memberData.displayName,
       });
     }
-    setMembers(membersList);
+
+    // Update store with all data
+    projectStore.setProjectData(projectId, {
+      studies: studiesList,
+      meta: metaData,
+      members: membersList,
+    });
   }
 
   // Connect to the project's WebSocket (or just IndexedDB for local projects)
   function connect() {
     if (ydoc || !projectId) return;
 
-    setConnecting(true);
-    setError(null);
+    // Set this as the active project
+    projectStore.setActiveProject(projectId);
+    projectStore.setConnectionState(projectId, { connecting: true, error: null });
 
     ydoc = new Y.Doc();
 
@@ -122,14 +133,13 @@ export function useProject(projectId) {
     indexeddbProvider = new IndexeddbPersistence(`corates-project-${projectId}`, ydoc);
 
     indexeddbProvider.whenSynced.then(() => {
-      setSynced(true);
+      projectStore.setConnectionState(projectId, { synced: true });
       // Sync UI from locally persisted data immediately
       syncFromYDoc();
 
       // For local projects, we're "connected" once IndexedDB is synced
       if (isLocalProject()) {
-        setConnecting(false);
-        setConnected(true);
+        projectStore.setConnectionState(projectId, { connecting: false, connected: true });
       }
     });
 
@@ -148,8 +158,7 @@ export function useProject(projectId) {
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      setConnecting(false);
-      setConnected(true);
+      projectStore.setConnectionState(projectId, { connecting: false, connected: true });
     };
 
     ws.onmessage = event => {
@@ -161,7 +170,7 @@ export function useProject(projectId) {
           // Apply with 'remote' origin - syncFromYDoc will be called by the update handler
           Y.applyUpdate(ydoc, update, 'remote');
         } else if (data.type === 'error') {
-          setError(data.message);
+          projectStore.setConnectionState(projectId, { error: data.message });
         }
       } catch (err) {
         console.error('Error parsing WebSocket message:', err);
@@ -169,15 +178,16 @@ export function useProject(projectId) {
     };
 
     ws.onclose = () => {
-      setConnected(false);
-      setConnecting(false);
+      projectStore.setConnectionState(projectId, { connected: false, connecting: false });
     };
 
     ws.onerror = err => {
       console.error('WebSocket error:', err);
-      setError('Connection error');
-      setConnected(false);
-      setConnecting(false);
+      projectStore.setConnectionState(projectId, {
+        error: 'Connection error',
+        connected: false,
+        connecting: false,
+      });
     };
 
     // Listen for local Y.Doc changes
@@ -204,8 +214,7 @@ export function useProject(projectId) {
       ydoc.destroy();
       ydoc = null;
     }
-    setConnected(false);
-    setSynced(false);
+    projectStore.setConnectionState(projectId, { connected: false, synced: false });
   }
 
   // Create a new study

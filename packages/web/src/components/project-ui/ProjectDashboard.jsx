@@ -1,6 +1,7 @@
-import { createSignal, createResource, createEffect, onCleanup, For, Show } from 'solid-js';
+import { createEffect, createSignal, onCleanup, For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import useNotifications from '@primitives/useNotifications.js';
+import projectStore from '@primitives/projectStore.js';
 import CreateProjectForm from './CreateProjectForm.jsx';
 import ProjectCard from './ProjectCard.jsx';
 
@@ -10,20 +11,16 @@ export default function ProjectDashboard(props) {
 
   const userId = () => props.userId;
 
-  // Fetch user's projects
-  const [projects, { mutate: setProjects, refetch }] = createResource(async () => {
-    try {
-      const response = await fetch(`${props.apiBase}/api/users/${userId()}/projects`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) throw new Error('Failed to fetch projects');
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching projects:', error);
-      return [];
+  // Read from store
+  const projects = () => projectStore.getProjectList();
+  const isLoading = () => projectStore.isProjectListLoading();
+  const isLoaded = () => projectStore.isProjectListLoaded();
+  const error = () => projectStore.getProjectListError();
+
+  // Fetch on mount if not already loaded
+  createEffect(() => {
+    if (userId()) {
+      projectStore.fetchProjectList(userId());
     }
   });
 
@@ -31,7 +28,8 @@ export default function ProjectDashboard(props) {
   const { connect, disconnect } = useNotifications(userId(), {
     onNotification: notification => {
       if (notification.type === 'project-invite') {
-        refetch();
+        // Refresh to get the new project
+        projectStore.refreshProjectList(userId());
       }
     },
   });
@@ -48,7 +46,7 @@ export default function ProjectDashboard(props) {
   });
 
   const handleProjectCreated = newProject => {
-    setProjects(prev => [...(prev || []), newProject]);
+    projectStore.addProjectToList(newProject);
     setShowCreateForm(false);
     navigate(`/projects/${newProject.id}`);
   };
@@ -74,6 +72,16 @@ export default function ProjectDashboard(props) {
         </button>
       </div>
 
+      {/* Error display */}
+      <Show when={error()}>
+        <div class='bg-red-50 border border-red-200 rounded-lg p-4 text-red-700'>
+          {error()}
+          <button onClick={() => projectStore.refreshProjectList(userId())} class='ml-2 underline'>
+            Retry
+          </button>
+        </div>
+      </Show>
+
       {/* Create Project Form */}
       <Show when={showCreateForm()}>
         <CreateProjectForm
@@ -88,7 +96,7 @@ export default function ProjectDashboard(props) {
         <Show
           when={projects()?.length > 0}
           fallback={
-            <Show when={!projects.loading}>
+            <Show when={!isLoading()}>
               <div class='col-span-full text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300'>
                 <div class='text-gray-500 mb-4'>No projects yet</div>
                 <button
@@ -104,6 +112,13 @@ export default function ProjectDashboard(props) {
           <For each={projects()}>
             {project => <ProjectCard project={project} onOpen={openProject} />}
           </For>
+        </Show>
+
+        {/* Loading state */}
+        <Show when={isLoading() && !isLoaded()}>
+          <div class='col-span-full text-center py-12'>
+            <div class='text-gray-400'>Loading projects...</div>
+          </div>
         </Show>
       </div>
     </div>
