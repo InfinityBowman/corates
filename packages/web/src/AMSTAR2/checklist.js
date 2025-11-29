@@ -41,19 +41,19 @@ export function createChecklist({
     reviewerName: reviewerName || '',
     createdAt: createdAt,
     id: id,
-    q1: { answers: [[false, false, false, false], [false], [false, true]], critical: false },
+    q1: { answers: [[false, false, false, false], [false], [false, false]], critical: false },
     q2: {
       answers: [
         [false, false, false, false],
         [false, false, false],
-        [false, false, true],
+        [false, false, false],
       ],
       critical: true,
     },
     q3: {
       answers: [
         [false, false, false],
-        [false, true],
+        [false, false],
       ],
       critical: false,
     },
@@ -61,30 +61,30 @@ export function createChecklist({
       answers: [
         [false, false, false],
         [false, false, false, false, false],
-        [false, false, true],
+        [false, false, false],
       ],
       critical: true,
     },
     q5: {
       answers: [
         [false, false],
-        [false, true],
+        [false, false],
       ],
       critical: false,
     },
     q6: {
       answers: [
         [false, false],
-        [false, true],
+        [false, false],
       ],
       critical: false,
     },
-    q7: { answers: [[false], [false], [false, false, true]], critical: true },
+    q7: { answers: [[false], [false], [false, false, false]], critical: true },
     q8: {
       answers: [
         [false, false, false, false, false],
         [false, false, false, false],
-        [false, false, true],
+        [false, false, false],
       ],
       critical: false,
     },
@@ -92,7 +92,7 @@ export function createChecklist({
       answers: [
         [false, false],
         [false, false],
-        [false, false, true, false],
+        [false, false, false, false],
       ],
       critical: true,
     },
@@ -100,51 +100,51 @@ export function createChecklist({
       answers: [
         [false, false],
         [false, false],
-        [false, false, true, false],
+        [false, false, false, false],
       ],
       critical: true,
     },
-    q10: { answers: [[false], [false, true]], critical: false },
+    q10: { answers: [[false], [false, false]], critical: false },
     q11a: {
       answers: [
         [false, false, false],
-        [false, true, false],
+        [false, false, false],
       ],
       critical: true,
     },
     q11b: {
       answers: [
         [false, false, false, false],
-        [false, true, false],
+        [false, false, false],
       ],
       critical: true,
     },
     q12: {
       answers: [
         [false, false],
-        [false, true, false],
+        [false, false, false],
       ],
       critical: false,
     },
     q13: {
       answers: [
         [false, false],
-        [false, true],
+        [false, false],
       ],
       critical: true,
     },
     q14: {
       answers: [
         [false, false],
-        [false, true],
+        [false, false],
       ],
       critical: false,
     },
-    q15: { answers: [[false], [false, true, false]], critical: true },
+    q15: { answers: [[false], [false, tfalserue, false]], critical: true },
     q16: {
       answers: [
         [false, false],
-        [false, true],
+        [false, false],
       ],
       critical: false,
     },

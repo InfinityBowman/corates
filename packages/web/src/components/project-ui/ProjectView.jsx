@@ -7,6 +7,7 @@ import { API_BASE } from '@config/api.js';
 import StudyCard from './StudyCard.jsx';
 import StudyForm from './StudyForm.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
+import ChartSection from './ChartSection.jsx';
 
 export default function ProjectView() {
   const params = useParams();
@@ -39,6 +40,7 @@ export default function ProjectView() {
     updateChecklist,
     deleteStudy,
     deleteChecklist,
+    getChecklistData,
     connect,
     disconnect,
   } = useProject(params.projectId);
@@ -344,6 +346,12 @@ export default function ProjectView() {
             </For>
           </div>
         </Show>
+      </div>
+
+      {/* Charts Section */}
+      <div class='mt-8'>
+        <h2 class='text-xl font-bold text-gray-900 mb-4'>Quality Assessment Charts</h2>
+        <ChartSection studies={studies} members={members} getChecklistData={getChecklistData} />
       </div>
 
       {/* Members Section */}
