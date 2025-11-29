@@ -23,7 +23,6 @@
     "yjs": "^13.6.27"
   },
   "devDependencies": {
-    "vitest": "^4.0.13",
-    "wrangler": "^4.51.0"
+    "vitest": "^4.0.13"
   }
 }

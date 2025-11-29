@@ -10,6 +10,10 @@ npm-debug.log*
 # Vite cache
 .vite/
 
+# Vinxi/SolidStart
+.vinxi/
+.output/
+
 # testing
 /coverage
 
@@ -19,6 +23,7 @@ npm-debug.log*
 # misc
 .DS_Store
 *.pem
+icon-manifest2.json
 
 # debug
 npm-debug.log*

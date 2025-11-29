@@ -40,7 +40,7 @@ bucket_name = "corates-pdfs"
 [vars]
 ENVIRONMENT = "development"
 AUTH_BASE_URL = "http://localhost:8787"
-ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:8787,https://corates.org,https://www.corates.org"
+ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:8787,https://app.corates.org"
 # Email configuration (non-sensitive)
 # SMTP_HOST = "smtp.gmail.com"
 # SMTP_PORT = "587"
@@ -50,14 +50,13 @@ ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:8787,https://corates.o
 [env.production]
 name = "corates-workers-prod"
 routes = [
-  { pattern = "corates.org/api/*", zone_name = "corates.org" },
-  { pattern = "www.corates.org/api/*", zone_name = "corates.org" }
+  { pattern = "api.corates.org/*", zone_name = "corates.org" }
 ]
 
 [env.production.vars]
 ENVIRONMENT = "production"
-AUTH_BASE_URL = "https://corates.org"
-ALLOWED_ORIGINS = "https://corates.org,https://www.corates.org"
+AUTH_BASE_URL = "https://api.corates.org"
+ALLOWED_ORIGINS = "https://app.corates.org"
 
 # Email configuration (non-sensitive)
 # SMTP_HOST = "smtp.gmail.com"
