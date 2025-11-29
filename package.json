@@ -5,11 +5,15 @@
   "description": "Cloudflare Workers/Durable Objects web app",
   "scripts": {
     "dev": "pnpm --filter web dev",
-    "relay": "pnpm --filter smtp-relay dev",
+    "dev:landing": "pnpm --filter landing dev",
     "dev:workers": "pnpm --filter workers dev",
-    "dev:all": "concurrently -k -n relay,web -c yellow,blue \"pnpm --filter smtp-relay run dev\" \"pnpm --filter web dev\"",
+    "dev:front": "concurrently -k -n landing,web -c yellow,blue \"pnpm --filter landing dev\" \"pnpm --filter web dev\"",
     "build": "pnpm --recursive build",
     "deploy": "pnpm --recursive deploy",
+    "deploy:web": "pnpm --filter web deploy",
+    "deploy:workers": "pnpm --filter workers deploy",
+    "deploy:reset:workers": "pnpm --filter workers db:reset:prod",
+    "deploy:landing": "pnpm --filter landing deploy",
     "format": "prettier --write .",
     "test": "pnpm --recursive test"
   },
@@ -23,7 +27,8 @@
   "license": "GNU GPLv3",
   "devDependencies": {
     "concurrently": "^9.2.1",
-    "prettier": "^3.6.2"
+    "prettier": "^3.6.2",
+    "wrangler": "^4.51.0"
   },
   "engines": {
     "node": ">=24.0.0",

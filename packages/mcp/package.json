@@ -7,7 +7,8 @@
   },
   "scripts": {
     "start": "nohup node server.js > /dev/null 2>&1 & echo 'MCP server started in background'",
-    "stop": "pkill -f 'node.*server.js' || echo 'No MCP server running'"
+    "stop": "pkill -f 'node.*server.js' || echo 'No MCP server running'",
+    "scrape": "node scrape-icons.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.23.0",

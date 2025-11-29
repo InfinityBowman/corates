@@ -14,4 +14,4 @@ RESEND_API_KEY=your-resend-api-key
 # SEND_EMAILS_IN_DEV=true
 
 # CORS allowed origins
-ALLOWED_ORIGINS=http://localhost:5173,http://localhost:8787,https://corates.org,https://www.corates.org
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:8787,https://app.corates.org

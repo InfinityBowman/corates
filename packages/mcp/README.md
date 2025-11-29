@@ -1,0 +1,1 @@
+Creates an mcp server allowing an agent to search through a list of all icons in solidicons without destroying the context window

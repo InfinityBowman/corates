@@ -1,0 +1,13 @@
+{
+  "name": "corates-landing",
+  "compatibility_date": "2024-11-21",
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "corates.org/*", "zone_name": "corates.org" },
+    { "pattern": "www.corates.org/*", "zone_name": "corates.org" },
+  ],
+  "assets": {
+    "directory": "./.output/public",
+    "not_found_handling": "single-page-application",
+  },
+}
