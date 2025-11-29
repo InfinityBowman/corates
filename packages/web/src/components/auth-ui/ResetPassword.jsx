@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, onMount } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { AnimatedShow } from '../AnimatedShow.jsx';
@@ -13,7 +13,10 @@ export default function ResetPassword() {
   const [loading, setLoading] = createSignal(false);
   const [success, setSuccess] = createSignal(false);
   const navigate = useNavigate();
-  const { resetPassword, authError } = useBetterAuth();
+  const { resetPassword, authError, clearAuthError } = useBetterAuth();
+
+  // Clear any stale auth errors when component mounts
+  onMount(() => clearAuthError());
 
   const displayError = () => error() || authError();
 

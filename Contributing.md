@@ -46,6 +46,7 @@ pnpm dev:workers
 
 This project utilizes a custom MCP server to provide agents with context
 To set this up do:
+
 ```bash
 cd packages/mcp
 pnpm run scrape:all

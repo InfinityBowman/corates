@@ -271,6 +271,7 @@ function createBetterAuthStore() {
     resetPassword,
     resendVerificationEmail,
     authFetch,
+    clearAuthError: () => setAuthError(null),
 
     // Utility/compatibility methods
     getCurrentUser,

@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, onMount } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import PasswordInput from '../zag/PasswordInput.jsx';
@@ -11,7 +11,10 @@ export default function SignIn() {
   const [error, setError] = createSignal('');
   const [loading, setLoading] = createSignal(false);
   const navigate = useNavigate();
-  const { signin, authError } = useBetterAuth();
+  const { signin, authError, clearAuthError } = useBetterAuth();
+
+  // Clear any stale auth errors when component mounts
+  onMount(() => clearAuthError());
 
   // Watch for auth errors from the store
   const displayError = () => error() || authError();
