@@ -7,6 +7,88 @@ import { createStore, produce } from 'solid-js/store';
 import { BiRegularCog } from 'solid-icons/bi';
 
 /**
+ * Export an SVG element as a file
+ * @param {SVGElement} svgElement - The SVG element to export
+ * @param {string} filename - The filename (without extension)
+ * @param {'svg' | 'png'} format - The export format
+ * @param {boolean} transparent - Whether to use transparent background (PNG only)
+ */
+function exportChart(svgElement, filename, format, transparent = false) {
+  if (!svgElement) return;
+
+  // Clone the SVG to avoid modifying the original
+  const clonedSvg = svgElement.cloneNode(true);
+
+  // Ensure proper XML namespace
+  clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+  // Remove background style for transparent export
+  if (transparent) {
+    clonedSvg.style.background = 'transparent';
+  }
+
+  // Get the SVG as a string
+  const svgData = new XMLSerializer().serializeToString(clonedSvg);
+
+  if (format === 'svg') {
+    // Download as SVG
+    const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${filename}.svg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } else if (format === 'png') {
+    // Convert to PNG using canvas
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    // Get SVG dimensions
+    const svgWidth = svgElement.getAttribute('width') || svgElement.getBoundingClientRect().width;
+    const svgHeight =
+      svgElement.getAttribute('height') || svgElement.getBoundingClientRect().height;
+
+    // Set canvas size (2x for better quality)
+    const scale = 2;
+    canvas.width = svgWidth * scale;
+    canvas.height = svgHeight * scale;
+
+    img.onload = () => {
+      // Fill white background only if not transparent
+      if (!transparent) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // Draw the image scaled
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, 0, 0);
+
+      // Download as PNG
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${filename}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    };
+
+    // Encode SVG as data URL
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    img.src = url;
+  }
+}
+
+/**
  * ChartSection - Displays AMSTAR charts for a project's checklists
  *
  * Props:
@@ -18,6 +100,24 @@ export default function ChartSection(props) {
   const [showSettingsModal, setShowSettingsModal] = createSignal(false);
   const [customLabels, setCustomLabels] = createStore([]);
   const [greyscale, setGreyscale] = createSignal(false);
+  const [robvisTitle, setRobvisTitle] = createSignal('AMSTAR-2 Quality Assessment');
+  const [distributionTitle, setDistributionTitle] = createSignal(
+    'Distribution of AMSTAR Ratings on Each Item Across Included Reviews',
+  );
+  const [transparentExport, setTransparentExport] = createSignal(false);
+
+  // Refs for export
+  let robvisSvgRef = null;
+  let distributionSvgRef = null;
+
+  // Export handlers
+  const handleExportRobvis = format => {
+    exportChart(robvisSvgRef, 'amstar-quality-assessment', format, transparentExport());
+  };
+
+  const handleExportDistribution = format => {
+    exportChart(distributionSvgRef, 'amstar-distribution', format, transparentExport());
+  };
 
   const questionOrder = [
     'q1',
@@ -134,8 +234,18 @@ export default function ChartSection(props) {
           </button>
         </div>
 
-        <AMSTARRobvis data={checklistData()} greyscale={greyscale()} />
-        <AMSTARDistribution data={checklistData()} greyscale={greyscale()} />
+        <AMSTARRobvis
+          data={checklistData()}
+          greyscale={greyscale()}
+          title={robvisTitle()}
+          ref={el => (robvisSvgRef = el)}
+        />
+        <AMSTARDistribution
+          data={checklistData()}
+          greyscale={greyscale()}
+          title={distributionTitle()}
+          ref={el => (distributionSvgRef = el)}
+        />
 
         {/* Settings Modal */}
         <ChartSettingsModal
@@ -145,6 +255,14 @@ export default function ChartSection(props) {
           onLabelChange={handleLabelChange}
           greyscale={greyscale()}
           onGreyscaleChange={setGreyscale}
+          robvisTitle={robvisTitle()}
+          onRobvisTitleChange={setRobvisTitle}
+          distributionTitle={distributionTitle()}
+          onDistributionTitleChange={setDistributionTitle}
+          onExportRobvis={handleExportRobvis}
+          onExportDistribution={handleExportDistribution}
+          transparentExport={transparentExport()}
+          onTransparentExportChange={setTransparentExport}
         />
       </div>
     </Show>
