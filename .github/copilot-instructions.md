@@ -27,7 +27,7 @@ When you need to implement UI components use zag.js and use the MCP tools for za
 - `get_zag_component` - Get detailed info and usage template for a specific component (e.g., "dialog", "select")
 - `list_zag_components` - List all available Zag.js components
 
-The tools return Solid.js-specific documentation, installation commands, and usage templates. You should NOT need to add createEffect manually to integrate Zag.js components callbacks. When adding a new zag component, place zag components into components/zag/* files.
+The tools return Solid.js-specific documentation, installation commands, and usage templates. You should NOT need to add createEffect manually to integrate Zag.js components callbacks. When adding a new zag component, place zag components into components/zag/\* files.
 
 ## Additional References
 
