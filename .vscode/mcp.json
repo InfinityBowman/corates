@@ -1,6 +1,6 @@
 {
   "servers": {
-    "corates-icons": {
+    "corates": {
       "type": "stdio",
       "command": "node",
       "args": ["${workspaceFolder}/packages/mcp/server.js"]
