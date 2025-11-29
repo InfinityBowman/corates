@@ -18,6 +18,10 @@ export default function ChartSection(props) {
   const [showSettingsModal, setShowSettingsModal] = createSignal(false);
   const [customLabels, setCustomLabels] = createStore([]);
   const [greyscale, setGreyscale] = createSignal(false);
+  const [robvisTitle, setRobvisTitle] = createSignal('AMSTAR-2 Quality Assessment');
+  const [distributionTitle, setDistributionTitle] = createSignal(
+    'Distribution of AMSTAR Ratings on Each Item Across Included Reviews',
+  );
 
   const questionOrder = [
     'q1',
@@ -134,8 +138,12 @@ export default function ChartSection(props) {
           </button>
         </div>
 
-        <AMSTARRobvis data={checklistData()} greyscale={greyscale()} />
-        <AMSTARDistribution data={checklistData()} greyscale={greyscale()} />
+        <AMSTARRobvis data={checklistData()} greyscale={greyscale()} title={robvisTitle()} />
+        <AMSTARDistribution
+          data={checklistData()}
+          greyscale={greyscale()}
+          title={distributionTitle()}
+        />
 
         {/* Settings Modal */}
         <ChartSettingsModal
@@ -145,6 +153,10 @@ export default function ChartSection(props) {
           onLabelChange={handleLabelChange}
           greyscale={greyscale()}
           onGreyscaleChange={setGreyscale}
+          robvisTitle={robvisTitle()}
+          onRobvisTitleChange={setRobvisTitle}
+          distributionTitle={distributionTitle()}
+          onDistributionTitleChange={setDistributionTitle}
         />
       </div>
     </Show>
