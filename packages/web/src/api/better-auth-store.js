@@ -207,12 +207,13 @@ function createBetterAuthStore() {
     try {
       setAuthError(null);
       // Try to trigger email resend through Better Auth
-      const { error } = await authClient.sendVerificationEmail?.({ email });
+      const result = await authClient.sendVerificationEmail?.({ email });
+      const error = result?.error;
 
       if (error) {
         throw new Error(error.message);
       }
-    } catch (err) {
+    } catch {
       // If Better Auth doesn't have this method, we could call our backend directly
       try {
         const response = await fetch('/api/auth/send-verification-email', {
@@ -232,11 +233,6 @@ function createBetterAuthStore() {
         throw fetchErr;
       }
     }
-  }
-
-  async function verifyEmail(code) {
-    // Better Auth handles email verification automatically
-    console.warn('Email verification is handled automatically by Better Auth');
   }
 
   async function getCurrentUser() {
@@ -277,7 +273,6 @@ function createBetterAuthStore() {
     getCurrentUser,
     refreshAccessToken,
     sendEmailVerification,
-    verifyEmail,
     getPendingEmail,
     getAccessToken,
 

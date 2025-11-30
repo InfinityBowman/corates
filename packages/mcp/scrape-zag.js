@@ -71,7 +71,7 @@ const BASE_URL = 'https://zagjs.com/components/solid';
  * Extract main content from the Zag.js documentation page HTML
  * Filters to only include Solid.js specific content
  */
-function extractContent(html, componentName) {
+function extractContent(html, _componentName) {
   // Remove script tags and their content
   html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
 
@@ -299,7 +299,7 @@ async function main() {
   // Create docs directory
   try {
     await fs.mkdir(docsDir, { recursive: true });
-  } catch (err) {
+  } catch {
     // Directory exists
   }
 

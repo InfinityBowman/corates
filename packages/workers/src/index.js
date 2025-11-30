@@ -13,7 +13,6 @@ import {
   getCorsHeaders,
   handlePreflight,
   wrapWithCors,
-  jsonResponse,
   errorResponse,
   setAllowedOrigins,
 } from './middleware/cors.js';

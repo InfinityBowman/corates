@@ -30,7 +30,7 @@ export default function ProfilePage() {
       await new Promise(resolve => setTimeout(resolve, 500));
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
       setIsEditing(false);
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'Failed to update profile. Please try again.' });
     } finally {
       setSaving(false);

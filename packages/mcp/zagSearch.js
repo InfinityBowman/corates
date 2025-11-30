@@ -22,7 +22,7 @@ export async function loadManifest() {
     const manifestPath = path.join(__dirname, 'zag-manifest.json');
     try {
       manifestCache = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
-    } catch (err) {
+    } catch {
       console.error('Failed to load zag-manifest.json. Run `node scrape-zag.js` first.');
       manifestCache = {};
     }
@@ -41,7 +41,7 @@ export async function getComponentDocs(componentKey) {
 
   try {
     return await fs.readFile(docPath, 'utf8');
-  } catch (err) {
+  } catch {
     return null;
   }
 }

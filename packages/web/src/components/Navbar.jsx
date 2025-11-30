@@ -53,7 +53,7 @@ export default function Navbar(props) {
         {/* Sidebar toggle button */}
         <button
           class='-ml-1.5 bg-white/80 text-blue-700 p-1.5 rounded-full shadow hover:bg-white transition-all duration-200 border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400'
-          onClick={props.toggleSidebar}
+          onClick={() => props.toggleSidebar()}
           aria-label='Toggle sidebar'
         >
           <Show

@@ -7,7 +7,6 @@
  * For write operations (createStudy, updateChecklist, etc.), use useProject instead.
  */
 
-import { createMemo, createEffect, onCleanup } from 'solid-js';
 import projectStore from './projectStore.js';
 import { useProject } from './useProject.js';
 

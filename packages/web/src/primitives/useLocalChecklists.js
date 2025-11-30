@@ -3,7 +3,7 @@
  * These checklists exist only on the device and don't require authentication
  */
 
-import { createSignal, createEffect, onCleanup } from 'solid-js';
+import { createSignal, createEffect } from 'solid-js';
 import { createChecklist as createAMSTAR2Template } from '@/AMSTAR2/checklist.js';
 
 const DB_NAME = 'corates-local-checklists';

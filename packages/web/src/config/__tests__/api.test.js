@@ -6,12 +6,9 @@
  * - getWsBaseUrl() should convert HTTP URLs to WebSocket URLs (http->ws, https->wss)
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 describe('API Configuration', () => {
-  // Store original env
-  let originalEnv;
-
   beforeEach(() => {
     // Reset modules to allow re-importing with different env values
     vi.resetModules();

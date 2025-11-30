@@ -85,8 +85,9 @@ export default function AMSTARRobvis(props) {
   const colorMap = () => (greyscale() ? colorMapGreyscale : colorMapDefault);
 
   createEffect(() => {
-    // Track greyscale changes to re-render
-    const currentColorMap = colorMap();
+    // Track greyscale changes to re-render and capture reactive values
+    const colors = colorMap();
+    const cSize = cellSize();
     if (!data().length) return;
 
     // First, measure the widest label
@@ -134,10 +135,10 @@ export default function AMSTARRobvis(props) {
       .data(d3.range(1, nQuestions + 1))
       .enter()
       .append('text')
-      .attr('x', (d, i) => m.left + i * cellSize() + cellSize() / 2)
+      .attr('x', (d, i) => m.left + i * cSize + cSize / 2)
       .attr('y', m.top + chartHeight() + 20)
       .attr('text-anchor', 'middle')
-      .attr('font-size', Math.max(10, cellSize() * 0.4))
+      .attr('font-size', Math.max(10, cSize * 0.4))
       .attr('font-weight', '600')
       .attr('fill', '#374151')
       .text(d => `Q${d}`);
@@ -151,7 +152,7 @@ export default function AMSTARRobvis(props) {
       .enter()
       .append('text')
       .attr('x', m.left - 10)
-      .attr('y', (_, i) => m.top + i * cellSize() + cellSize() / 2)
+      .attr('y', (_, i) => m.top + i * cSize + cSize / 2)
       .attr('text-anchor', 'end')
       .attr('font-size', '12px')
       .attr('font-weight', '500')
@@ -165,19 +166,19 @@ export default function AMSTARRobvis(props) {
     data().forEach((row, rowIdx) => {
       for (let colIdx = 0; colIdx < nQuestions; colIdx++) {
         const value = row.questions[colIdx]?.toLowerCase?.() ?? '';
-        const cellColor = colorMap()[value] ?? '#e5e7eb';
+        const cellColor = colors[value] ?? '#e5e7eb';
 
         // Traffic light cell - filled rectangle
         cellGroup
           .append('rect')
-          .attr('x', m.left + colIdx * cellSize() + 2)
-          .attr('y', m.top + rowIdx * cellSize() + 2)
-          .attr('width', cellSize() - 4)
-          .attr('height', cellSize() - 4)
+          .attr('x', m.left + colIdx * cSize + 2)
+          .attr('y', m.top + rowIdx * cSize + 2)
+          .attr('width', cSize - 4)
+          .attr('height', cSize - 4)
           .attr('fill', cellColor)
           .attr('stroke', '#ffffff')
           .attr('stroke-width', 1)
-          .attr('rx', Math.max(2, cellSize() * 0.12))
+          .attr('rx', Math.max(2, cSize * 0.12))
           .style('filter', 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.1))');
       }
     });
@@ -210,7 +211,7 @@ export default function AMSTARRobvis(props) {
       .attr('width', 16)
       .attr('height', 16)
       .attr('rx', 2)
-      .attr('fill', d => colorMap()[d.key])
+      .attr('fill', d => colors[d.key])
       .attr('stroke', '#ffffff')
       .attr('stroke-width', 1);
 
@@ -242,10 +243,18 @@ export default function AMSTARRobvis(props) {
   });
 
   return (
-    <div style='background: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 16px; margin: 16px 0;'>
+    <div
+      style={{
+        background: '#ffffff',
+        'border-radius': '8px',
+        'box-shadow': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        padding: '16px',
+        margin: '16px 0',
+      }}
+    >
       <svg
-        ref={setRef}
-        style={`width: 100%; height: ${svgHeight()}px; max-width: 100%; display: block;`}
+        ref={el => setRef(el)}
+        style={{ width: '100%', 'max-width': '100%', display: 'block', height: `${svgHeight()}px` }}
       />
     </div>
   );

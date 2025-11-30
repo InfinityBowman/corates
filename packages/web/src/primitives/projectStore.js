@@ -186,24 +186,6 @@ function createProjectStore() {
   }
 
   /**
-   * Set project list loading state
-   */
-  function setProjectListLoading(loading) {
-    setStore('projectList', 'loading', loading);
-  }
-
-  /**
-   * Set the project list
-   */
-  function setProjectList(projects) {
-    setStore('projectList', {
-      items: projects,
-      loaded: true,
-      loading: false,
-    });
-  }
-
-  /**
    * Add a project to the list
    */
   function addProjectToList(project) {

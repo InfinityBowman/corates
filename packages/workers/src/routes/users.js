@@ -4,7 +4,7 @@
 
 import { createDb } from '../db/client.js';
 import { projects, projectMembers, user } from '../db/schema.js';
-import { eq, desc, or, like, and, notInArray, sql } from 'drizzle-orm';
+import { eq, desc, or, like, sql } from 'drizzle-orm';
 import { requireAuth } from '../auth/config.js';
 import { jsonResponse, errorResponse } from '../middleware/cors.js';
 

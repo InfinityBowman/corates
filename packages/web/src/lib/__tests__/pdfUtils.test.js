@@ -57,7 +57,7 @@ function cleanTitle(title) {
       // Remove excessive whitespace
       .replace(/\s+/g, ' ')
       // Remove common prefixes
-      .replace(/^(original\s+article|research\s+article|review|article)\s*[:\-]?\s*/i, '')
+      .replace(/^(original\s+article|research\s+article|review|article)\s*[:]?\s*/i, '')
       .trim()
   );
 }

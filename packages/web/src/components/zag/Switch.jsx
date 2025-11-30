@@ -5,9 +5,9 @@ import { createMemo, createUniqueId } from 'solid-js';
 export default function Switch(props) {
   const service = useMachine(zagSwitch.machine, {
     id: createUniqueId(),
-    defaultChecked: props.checked,
-    disabled: props.disabled,
-    name: props.name,
+    defaultChecked: () => props.checked,
+    disabled: () => props.disabled,
+    name: () => props.name,
     onCheckedChange(details) {
       props.onChange?.(details.checked);
     },

@@ -13,7 +13,7 @@
  * Domain Reference: https://amstar.ca/Amstar-2.php
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   createChecklist,
   scoreChecklist,

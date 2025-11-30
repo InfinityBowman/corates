@@ -3,5 +3,6 @@ packages:
 
 onlyBuiltDependencies:
   - esbuild
+  - puppeteer
   - sharp
   - workerd
