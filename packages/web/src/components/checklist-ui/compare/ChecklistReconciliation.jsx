@@ -5,7 +5,7 @@
 
 import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import {  AiOutlineArrowLeft, AiOutlineArrowRight } from 'solid-icons/ai';
+import { AiOutlineArrowLeft, AiOutlineArrowRight } from 'solid-icons/ai';
 import {
   compareChecklists,
   getReconciliationSummary,
@@ -82,7 +82,6 @@ export default function ChecklistReconciliation(props) {
   createEffect(() => {
     console.log('Initializing reconciliation state...', initialized());
     if (!props.checklist1 || initialized()) return;
-
 
     // If we have saved progress with actual answers, use it
     if (
