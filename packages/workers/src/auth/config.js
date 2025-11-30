@@ -118,10 +118,48 @@ export function createAuth(env, ctx) {
 
     advanced: {
       crossSubDomainCookies: {
-        enabled: !!env.COOKIE_DOMAIN, // Enable when COOKIE_DOMAIN is set (production)
-        domain: env.COOKIE_DOMAIN, // e.g. "corates.org" (without leading dot)
+        enabled: !!env.COOKIE_DOMAIN,
+        domain: env.COOKIE_DOMAIN,
       },
-      useSecureCookies: !!env.COOKIE_DOMAIN, // Force secure cookies in production
+      // Don't use useSecureCookies as it adds __Secure- prefix which conflicts with custom cookie names
+      // Instead, we set secure: true in individual cookie attributes
+      useSecureCookies: false,
+      // Override ALL cookie settings to use SameSite=None for cross-subdomain
+      cookies:
+        env.COOKIE_DOMAIN ?
+          {
+            session_token: {
+              name: 'better-auth.session_token',
+              attributes: {
+                sameSite: 'none',
+                secure: true,
+                httpOnly: true,
+                path: '/',
+                domain: env.COOKIE_DOMAIN,
+              },
+            },
+            dont_remember: {
+              name: 'better-auth.dont_remember',
+              attributes: {
+                sameSite: 'none',
+                secure: true,
+                httpOnly: true,
+                path: '/',
+                domain: env.COOKIE_DOMAIN,
+              },
+            },
+            session_data: {
+              name: 'better-auth.session_data',
+              attributes: {
+                sameSite: 'none',
+                secure: true,
+                httpOnly: true,
+                path: '/',
+                domain: env.COOKIE_DOMAIN,
+              },
+            },
+          }
+        : {},
       generateId: () => crypto.randomUUID(),
     },
   });

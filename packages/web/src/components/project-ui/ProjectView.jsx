@@ -1,5 +1,5 @@
 import { createSignal, createEffect, createMemo, For, Show, onCleanup } from 'solid-js';
-import { useParams, useNavigate } from '@solidjs/router';
+import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import useProject from '@primitives/useProject.js';
 import projectStore from '@primitives/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
@@ -13,6 +13,7 @@ import ChartSection from './ChartSection.jsx';
 export default function ProjectView() {
   const params = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useBetterAuth();
 
   const [error, setError] = createSignal(null);
@@ -63,6 +64,42 @@ export default function ProjectView() {
   createEffect(() => {
     if (params.projectId) {
       connect();
+    }
+  });
+
+  // Track if we've processed pending PDFs (to avoid re-processing on re-renders)
+  let pendingPdfsProcessed = false;
+
+  // Process pending PDFs from project creation (passed via navigation state)
+  // Only process if we have navigation state with pendingPdfs - this won't persist on refresh
+  createEffect(() => {
+    const state = connectionState();
+    // Wait for connected (not just synced) since createStudy requires connection
+    if (!state.connected || !params.projectId || pendingPdfsProcessed) return;
+
+    // Access location state - in SolidJS Router, location is reactive
+    const navState = location.state;
+    const pendingPdfs = navState?.pendingPdfs;
+
+    if (!Array.isArray(pendingPdfs) || pendingPdfs.length === 0) return;
+
+    // Mark as processed to prevent re-processing
+    pendingPdfsProcessed = true;
+
+    // Clear the navigation state to prevent any possibility of re-processing
+    // by replacing the current history entry without the state
+    window.history.replaceState({}, '', window.location.pathname);
+
+    // Process each PDF - create study and upload
+    for (const pdf of pendingPdfs) {
+      const studyId = createStudy(pdf.title, '');
+      if (studyId && pdf.data) {
+        // Convert array back to ArrayBuffer for upload
+        const arrayBuffer = new Uint8Array(pdf.data).buffer;
+        uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName).catch(err => {
+          console.error('Error uploading PDF for new study:', err);
+        });
+      }
     }
   });
 
@@ -177,6 +214,8 @@ export default function ProjectView() {
         const data = await response.json();
         throw new Error(data.error || 'Failed to delete project');
       }
+      // Remove from the store so dashboard updates immediately
+      projectStore.removeProjectFromList(params.projectId);
       navigate('/dashboard', { replace: true });
     } catch (err) {
       console.error('Error deleting project:', err);

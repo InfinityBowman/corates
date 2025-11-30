@@ -140,7 +140,7 @@ export function createChecklist({
       ],
       critical: false,
     },
-    q15: { answers: [[false], [false, tfalserue, false]], critical: true },
+    q15: { answers: [[false], [false, false, false]], critical: true },
     q16: {
       answers: [
         [false, false],

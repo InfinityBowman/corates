@@ -39,7 +39,9 @@ export default function CreateProjectForm(props) {
     for (const pdf of newPdfs) {
       try {
         const arrayBuffer = await readFileAsArrayBuffer(pdf.file);
-        const title = await extractPdfTitle(arrayBuffer);
+        // Make a copy for PDF.js since it may detach the original buffer
+        const bufferForExtraction = arrayBuffer.slice(0);
+        const title = await extractPdfTitle(bufferForExtraction);
 
         // Convert to array immediately to avoid detached ArrayBuffer issues
         const dataArray = Array.from(new Uint8Array(arrayBuffer));
@@ -119,24 +121,15 @@ export default function CreateProjectForm(props) {
 
       const newProject = await response.json();
 
-      // Collect PDFs to pass along
+      // Collect PDFs to pass along via callback
       const pdfsToProcess = uploadedPdfs().filter(p => p.title && !p.extracting && p.data);
+      const pendingPdfs = pdfsToProcess.map(p => ({
+        title: p.title,
+        fileName: p.file.name,
+        data: p.data, // Already stored as array
+      }));
 
-      // Store in sessionStorage for the project view to pick up
-      if (pdfsToProcess.length > 0) {
-        sessionStorage.setItem(
-          `project-${newProject.id}-pdfs`,
-          JSON.stringify(
-            pdfsToProcess.map(p => ({
-              title: p.title,
-              fileName: p.file.name,
-              data: p.data, // Already stored as array
-            })),
-          ),
-        );
-      }
-
-      props.onProjectCreated?.(newProject);
+      props.onProjectCreated?.(newProject, pendingPdfs);
     } catch (error) {
       console.error('Error creating project:', error);
       alert('Failed to create project. Please try again.');
@@ -256,7 +249,7 @@ export default function CreateProjectForm(props) {
                 )}
               </For>
               <p class='text-xs text-gray-500 mt-2'>
-                {uploadedPdfs().length} PDF{uploadedPdfs().length !== 1 ? 's' : ''} will create{' '}
+                {uploadedPdfs().length} PDF{uploadedPdfs().length !== 1 ? 's' : ''} will add{' '}
                 {uploadedPdfs().length} stud{uploadedPdfs().length !== 1 ? 'ies' : 'y'}
               </p>
             </div>
