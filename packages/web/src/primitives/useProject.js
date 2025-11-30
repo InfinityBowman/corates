@@ -2,7 +2,7 @@
  * useProject hook - Manages Y.js connection and operations for a single project
  */
 
-import {  createEffect, onCleanup, createMemo } from 'solid-js';
+import { createEffect, onCleanup, createMemo } from 'solid-js';
 import * as Y from 'yjs';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import { createChecklist as createAMSTAR2Answers } from '../AMSTAR2/checklist.js';

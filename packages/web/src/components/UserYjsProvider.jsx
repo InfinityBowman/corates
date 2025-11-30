@@ -165,6 +165,8 @@ export default function UserYjsProvider(props) {
   };
 
   return (
-    <UserProjectsContext.Provider value={contextValue}>{props.children}</UserProjectsContext.Provider>
+    <UserProjectsContext.Provider value={contextValue}>
+      {props.children}
+    </UserProjectsContext.Provider>
   );
 }

@@ -1,6 +1,6 @@
 import { createSignal, For, Show } from 'solid-js';
 import { VsBook } from 'solid-icons/vs';
-import Collapsible  from '@components/zag/Collapsible.jsx';
+import Collapsible from '@components/zag/Collapsible.jsx';
 import ChecklistTreeItem from './ChecklistTreeItem.jsx';
 
 /**
