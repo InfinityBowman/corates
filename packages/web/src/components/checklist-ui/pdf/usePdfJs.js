@@ -36,6 +36,7 @@ export default function usePdfJs(options = {}) {
   let containerRef = null;
   let fileInputRef = null;
   let resizeObserver = null;
+  let userCleared = false; // Track if user explicitly cleared the PDF
 
   // Initialize PDF.js on mount
   onMount(async () => {
@@ -85,7 +86,8 @@ export default function usePdfJs(options = {}) {
     const savedData = options.pdfData?.();
     const savedName = options.pdfFileName?.();
 
-    if (ready && savedData && !pdfSource()) {
+    // Don't reload from props if user explicitly cleared the PDF
+    if (ready && savedData && !pdfSource() && !userCleared) {
       // Clone the ArrayBuffer to avoid detached buffer issues
       const clonedData = savedData.slice(0);
       setFileName(savedName || 'document.pdf');
@@ -216,6 +218,9 @@ export default function usePdfJs(options = {}) {
       blobUrl = null;
     }
 
+    // Reset userCleared flag since user is uploading a new file
+    userCleared = false;
+
     try {
       const arrayBuffer = await file.arrayBuffer();
       setFileName(file.name);
@@ -237,6 +242,17 @@ export default function usePdfJs(options = {}) {
       URL.revokeObjectURL(blobUrl);
       blobUrl = null;
     }
+
+    // Clear the canvas
+    if (canvasRef) {
+      const context = canvasRef.getContext('2d');
+      context.clearRect(0, 0, canvasRef.width, canvasRef.height);
+      canvasRef.width = 0;
+      canvasRef.height = 0;
+    }
+
+    // Mark as user-cleared to prevent auto-reload from props
+    userCleared = true;
 
     setPdfDoc(null);
     setPdfSource(null);

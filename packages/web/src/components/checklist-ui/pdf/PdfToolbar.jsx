@@ -34,7 +34,7 @@ export default function PdfToolbar(props) {
     <div class='bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between gap-4 shrink-0'>
       {/* File upload and info */}
       <div class='flex items-center gap-2 min-w-0'>
-        <Show when={!props.readOnly}>
+        <Show when={!props.readOnly && !props.pdfDoc}>
           <input
             ref={props.fileInputRef}
             type='file'
