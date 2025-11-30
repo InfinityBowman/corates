@@ -48,7 +48,7 @@ export default function PdfToolbar(props) {
             class='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shrink-0'
           >
             <AiOutlineUpload class='w-4 h-4' />
-            {props.pdfDoc ? 'Change' : 'Open PDF'}
+            Open PDF
           </button>
         </Show>
 
