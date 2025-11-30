@@ -1,6 +1,7 @@
 import Footer from './Footer.jsx';
 import { AiOutlineArrowRight } from 'solid-icons/ai';
 import { For, Show } from 'solid-js';
+import { isMultiPartQuestion, getDataKeysForQuestion } from '@/AMSTAR2/checklist-compare.js';
 
 /**
  * Summary view showing all questions and their final answers
@@ -58,8 +59,34 @@ export default function SummaryView(props) {
             const comp = () => props.comparisonByQuestion[key];
             const isAgreement = () => comp()?.isAgreement ?? true;
             const final = () => props.finalAnswers[key];
+            const isCritical = () => {
+              if (!final()) return false;
+              // Handle multi-part questions (q9, q11)
+              if (isMultiPartQuestion(key)) {
+                const dataKeys = getDataKeysForQuestion(key);
+                // Check if any part is marked critical
+                return dataKeys.some(dk => final()[dk]?.critical);
+              }
+              return final()?.critical;
+            };
             const getFinalAnswer = () => {
               if (!final()) return 'Not set';
+
+              // Handle multi-part questions (q9, q11)
+              if (isMultiPartQuestion(key)) {
+                const dataKeys = getDataKeysForQuestion(key);
+                const partAnswers = [];
+                for (const dk of dataKeys) {
+                  if (!final()[dk]) return 'Not set';
+                  const lastCol = final()[dk].answers?.[final()[dk].answers.length - 1];
+                  if (!lastCol) return 'Not set';
+                  const idx = lastCol.findIndex(v => v === true);
+                  if (idx === -1) return 'Not set';
+                  partAnswers.push(['Yes', 'PY', 'No', 'No MA'][idx] || '?');
+                }
+                return partAnswers.join(' / ');
+              }
+
               const lastCol = final().answers?.[final().answers.length - 1];
               if (!lastCol) return 'Not set';
               const idx = lastCol.findIndex(v => v === true);
@@ -102,7 +129,7 @@ export default function SummaryView(props) {
                   >
                     {getFinalAnswer()}
                   </span>
-                  <Show when={final()?.critical}>
+                  <Show when={isCritical()}>
                     <span class='px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700'>
                       Critical
                     </span>

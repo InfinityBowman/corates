@@ -5,12 +5,14 @@
 
 import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import {  AiOutlineArrowLeft, AiOutlineArrowRight } from 'solid-icons/ai';
+import { AiOutlineArrowLeft, AiOutlineArrowRight } from 'solid-icons/ai';
 import {
   compareChecklists,
   getReconciliationSummary,
   getQuestionKeys,
-} from '../../../AMSTAR2/checklist-compare.js';
+  getDataKeysForQuestion,
+  isMultiPartQuestion,
+} from '@/AMSTAR2/checklist-compare.js';
 import ReconciliationQuestionPage from './ReconciliationQuestionPage.jsx';
 import SummaryView from './SummaryView.jsx';
 import Navbar from './Navbar.jsx';
@@ -78,11 +80,23 @@ export default function ChecklistReconciliation(props) {
   // Current question comparison
   const currentComparison = () => comparisonByQuestion()[currentQuestionKey()];
 
+  // Get reviewer answers for the current question (handles multi-part questions)
+  const getReviewerAnswers = (checklist, questionKey) => {
+    if (!checklist) return null;
+    if (isMultiPartQuestion(questionKey)) {
+      const dataKeys = getDataKeysForQuestion(questionKey);
+      const parts = {};
+      for (const dk of dataKeys) {
+        parts[dk] = checklist[dk];
+      }
+      return parts;
+    }
+    return checklist[questionKey];
+  };
+
   // Initialize final answers from saved progress or reviewer1 by default
   createEffect(() => {
-    console.log('Initializing reconciliation state...', initialized());
     if (!props.checklist1 || initialized()) return;
-
 
     // If we have saved progress with actual answers, use it
     if (
@@ -99,7 +113,22 @@ export default function ChecklistReconciliation(props) {
     // Otherwise initialize from reviewer1's answers
     const initial = {};
     for (const key of questionKeys) {
-      if (props.checklist1[key]) {
+      if (isMultiPartQuestion(key)) {
+        // For multi-part questions, store each part separately
+        const dataKeys = getDataKeysForQuestion(key);
+        const parts = {};
+        let hasAllParts = true;
+        for (const dk of dataKeys) {
+          if (props.checklist1[dk]) {
+            parts[dk] = JSON.parse(JSON.stringify(props.checklist1[dk]));
+          } else {
+            hasAllParts = false;
+          }
+        }
+        if (hasAllParts) {
+          initial[key] = parts;
+        }
+      } else if (props.checklist1[key]) {
         initial[key] = JSON.parse(JSON.stringify(props.checklist1[key]));
       }
     }
@@ -159,14 +188,31 @@ export default function ChecklistReconciliation(props) {
     setViewMode('questions');
   }
 
+  // Helper to check if a question has a valid final answer
+  function hasValidFinalAnswer(key, finals) {
+    if (!finals[key]) return false;
+
+    if (isMultiPartQuestion(key)) {
+      // For multi-part questions, check each part
+      const dataKeys = getDataKeysForQuestion(key);
+      for (const dk of dataKeys) {
+        if (!finals[key][dk]) return false;
+        const lastCol = finals[key][dk].answers?.[finals[key][dk].answers.length - 1];
+        if (!lastCol || !lastCol.some(v => v === true)) return false;
+      }
+      return true;
+    } else {
+      // Regular question
+      const lastCol = finals[key].answers?.[finals[key].answers.length - 1];
+      return lastCol && lastCol.some(v => v === true);
+    }
+  }
+
   // Check if all questions have been answered
   const allAnswered = createMemo(() => {
     const finals = finalAnswers();
     for (const key of questionKeys) {
-      if (!finals[key]) return false;
-      // Check if a final answer is selected in the last column
-      const lastCol = finals[key].answers?.[finals[key].answers.length - 1];
-      if (!lastCol || !lastCol.some(v => v === true)) return false;
+      if (!hasValidFinalAnswer(key, finals)) return false;
     }
     return true;
   });
@@ -176,10 +222,7 @@ export default function ChecklistReconciliation(props) {
     const finals = finalAnswers();
     let count = 0;
     for (const key of questionKeys) {
-      if (finals[key]) {
-        const lastCol = finals[key].answers?.[finals[key].answers.length - 1];
-        if (lastCol && lastCol.some(v => v === true)) count++;
-      }
+      if (hasValidFinalAnswer(key, finals)) count++;
     }
     return count;
   });
@@ -193,7 +236,25 @@ export default function ChecklistReconciliation(props) {
 
     setSaving(true);
     try {
-      // Build the reconciled checklist object
+      // Build the reconciled checklist object - flatten multi-part questions
+      const finals = finalAnswers();
+      const flattenedAnswers = {};
+      for (const key of questionKeys) {
+        if (isMultiPartQuestion(key)) {
+          // Flatten q9 -> q9a, q9b or q11 -> q11a, q11b
+          const dataKeys = getDataKeysForQuestion(key);
+          for (const dk of dataKeys) {
+            if (finals[key]?.[dk]) {
+              flattenedAnswers[dk] = finals[key][dk];
+            }
+          }
+        } else {
+          if (finals[key]) {
+            flattenedAnswers[key] = finals[key];
+          }
+        }
+      }
+
       const reconciled = {
         name: reconciledName(),
         reviewerName: 'Consensus',
@@ -201,7 +262,7 @@ export default function ChecklistReconciliation(props) {
         id: `reconciled-${Date.now()}`,
         isReconciled: true,
         sourceChecklists: [props.checklist1?.id, props.checklist2?.id],
-        ...finalAnswers(),
+        ...flattenedAnswers,
       };
 
       await props.onSaveReconciled?.(reconciled);
@@ -274,13 +335,14 @@ export default function ChecklistReconciliation(props) {
           >
             <ReconciliationQuestionPage
               questionKey={currentQuestionKey()}
-              reviewer1Answers={props.checklist1?.[currentQuestionKey()]}
-              reviewer2Answers={props.checklist2?.[currentQuestionKey()]}
+              reviewer1Answers={getReviewerAnswers(props.checklist1, currentQuestionKey())}
+              reviewer2Answers={getReviewerAnswers(props.checklist2, currentQuestionKey())}
               finalAnswers={currentFinalAnswer()}
               onFinalChange={handleFinalChange}
               reviewer1Name={props.reviewer1Name || props.checklist1?.reviewerName || 'Reviewer 1'}
               reviewer2Name={props.reviewer2Name || props.checklist2?.reviewerName || 'Reviewer 2'}
               isAgreement={currentComparison()?.isAgreement ?? true}
+              isMultiPart={isMultiPartQuestion(currentQuestionKey())}
             />
 
             {/* Navigation Buttons */}

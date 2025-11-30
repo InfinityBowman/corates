@@ -6,11 +6,38 @@
 import { AMSTAR_CHECKLIST } from './checklist-map.js';
 
 /**
- * Get all question keys from a checklist
- * @returns {string[]} Array of question keys (q1, q2, ..., q16)
+ * Get all question keys for display in reconciliation.
+ * Returns keys as they appear in AMSTAR_CHECKLIST (q1-q16), but q9 and q11
+ * are displayed as combined questions while their data is stored as q9a/q9b and q11a/q11b.
+ * @returns {string[]} Array of question keys for UI display
  */
 export function getQuestionKeys() {
   return Object.keys(AMSTAR_CHECKLIST);
+}
+
+/**
+ * Get the actual data keys for a question.
+ * For q9 and q11, returns the a/b parts. For others, returns the key as-is.
+ * @param {string} questionKey - The question key (e.g., 'q9')
+ * @returns {string[]} Array of data keys
+ */
+export function getDataKeysForQuestion(questionKey) {
+  if (questionKey === 'q9') {
+    return ['q9a', 'q9b'];
+  }
+  if (questionKey === 'q11') {
+    return ['q11a', 'q11b'];
+  }
+  return [questionKey];
+}
+
+/**
+ * Check if a question has multiple parts (a/b)
+ * @param {string} questionKey - The question key
+ * @returns {boolean}
+ */
+export function isMultiPartQuestion(questionKey) {
+  return questionKey === 'q9' || questionKey === 'q11';
 }
 
 /**
@@ -29,17 +56,35 @@ export function compareChecklists(checklist1, checklist2) {
   const disagreements = [];
 
   for (const key of questionKeys) {
-    const q1 = checklist1[key];
-    const q2 = checklist2[key];
+    // Handle multi-part questions (q9 and q11)
+    if (isMultiPartQuestion(key)) {
+      const dataKeys = getDataKeysForQuestion(key);
+      const q1Parts = dataKeys.map(dk => checklist1[dk]);
+      const q2Parts = dataKeys.map(dk => checklist2[dk]);
 
-    if (!q1 || !q2) continue;
+      // Skip if any part is missing
+      if (q1Parts.some(p => !p) || q2Parts.some(p => !p)) continue;
 
-    const comparison = compareQuestion(key, q1, q2);
+      const comparison = compareMultiPartQuestion(key, q1Parts, q2Parts, dataKeys);
 
-    if (comparison.isAgreement) {
-      agreements.push({ key, ...comparison });
+      if (comparison.isAgreement) {
+        agreements.push({ key, ...comparison });
+      } else {
+        disagreements.push({ key, ...comparison });
+      }
     } else {
-      disagreements.push({ key, ...comparison });
+      const q1 = checklist1[key];
+      const q2 = checklist2[key];
+
+      if (!q1 || !q2) continue;
+
+      const comparison = compareQuestion(key, q1, q2);
+
+      if (comparison.isAgreement) {
+        agreements.push({ key, ...comparison });
+      } else {
+        disagreements.push({ key, ...comparison });
+      }
     }
   }
 
@@ -52,6 +97,42 @@ export function compareChecklists(checklist1, checklist2) {
       disagreed: disagreements.length,
       agreementRate: agreements.length / (agreements.length + disagreements.length) || 0,
     },
+  };
+}
+
+/**
+ * Compare a multi-part question (q9 or q11) between two checklists
+ * @param {string} questionKey - The question key (e.g., 'q9')
+ * @param {Object[]} q1Parts - First reviewer's answer parts [q9a, q9b] or [q11a, q11b]
+ * @param {Object[]} q2Parts - Second reviewer's answer parts
+ * @param {string[]} dataKeys - The data keys ['q9a', 'q9b'] or ['q11a', 'q11b']
+ * @returns {Object} Comparison result for this question
+ */
+export function compareMultiPartQuestion(questionKey, q1Parts, q2Parts, dataKeys) {
+  // Compare each part
+  let allPartsAgree = true;
+  const partComparisons = [];
+
+  for (let i = 0; i < q1Parts.length; i++) {
+    const partComparison = compareQuestion(dataKeys[i], q1Parts[i], q2Parts[i]);
+    partComparisons.push(partComparison);
+    if (!partComparison.isAgreement) {
+      allPartsAgree = false;
+    }
+  }
+
+  return {
+    isAgreement: allPartsAgree,
+    isMultiPart: true,
+    parts: dataKeys.map((dk, i) => ({
+      key: dk,
+      ...partComparisons[i],
+      reviewer1Answer: q1Parts[i],
+      reviewer2Answer: q2Parts[i],
+    })),
+    // For compatibility, also include combined info
+    reviewer1Answer: q1Parts,
+    reviewer2Answer: q2Parts,
   };
 }
 
@@ -197,12 +278,20 @@ export function getReconciliationSummary(comparison) {
   const { agreements, disagreements, stats } = comparison;
 
   const criticalDisagreements = disagreements.filter(d => {
+    // Handle multi-part questions
+    if (d.isMultiPart && d.parts) {
+      return d.parts.some(part => part.reviewer1?.critical || part.reviewer2?.critical);
+    }
     // Check if either reviewer marked as critical or it's a critical question
-    return d.reviewer1.critical || d.reviewer2.critical;
+    return d.reviewer1?.critical || d.reviewer2?.critical;
   });
 
   const nonCriticalDisagreements = disagreements.filter(d => {
-    return !d.reviewer1.critical && !d.reviewer2.critical;
+    // Handle multi-part questions
+    if (d.isMultiPart && d.parts) {
+      return !d.parts.some(part => part.reviewer1?.critical || part.reviewer2?.critical);
+    }
+    return !d.reviewer1?.critical && !d.reviewer2?.critical;
   });
 
   return {

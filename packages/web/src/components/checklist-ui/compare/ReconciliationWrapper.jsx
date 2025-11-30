@@ -3,7 +3,7 @@
  * This component is used both for project-based (Y.js) and local checklists
  */
 
-import { createSignal, createMemo, createEffect, Show, onCleanup } from 'solid-js';
+import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import useProject from '@primitives/useProject.js';
 import projectStore from '@primitives/projectStore.js';
@@ -88,8 +88,12 @@ export default function ReconciliationWrapper() {
     return result;
   });
 
+  console.log('hello');
   // Get saved reconciliation progress
   const savedProgress = createMemo(() => {
+    // Make sure we're synced before trying to read progress
+    if (!connectionState().synced) return null;
+
     // Only return progress if it matches the current checklists being reconciled
     const progress = getReconciliationProgress(params.studyId);
     if (!progress) return null;

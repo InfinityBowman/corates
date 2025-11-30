@@ -1,4 +1,5 @@
-import {For} from 'solid-js';
+import { For } from 'solid-js';
+import { isMultiPartQuestion, getDataKeysForQuestion } from '@/AMSTAR2/checklist-compare.js';
 
 export default function Navbar(props) {
   // Props:
@@ -13,12 +14,25 @@ export default function Navbar(props) {
     <div class='mt-4 flex flex-wrap gap-1'>
       <For each={props.questionKeys}>
         {(key, index) => {
-          const isCurrentPage = () => props.viewMode === 'questions' && props.currentPage === index();
+          const isCurrentPage = () =>
+            props.viewMode === 'questions' && props.currentPage === index();
           const comp = () => props.comparisonByQuestion[key];
           const isAgreement = () => comp()?.isAgreement ?? true;
           const hasAnswer = () => {
             const final = props.finalAnswers[key];
             if (!final) return false;
+
+            // Handle multi-part questions (q9, q11)
+            if (isMultiPartQuestion(key)) {
+              const dataKeys = getDataKeysForQuestion(key);
+              for (const dk of dataKeys) {
+                if (!final[dk]) return false;
+                const lastCol = final[dk].answers?.[final[dk].answers.length - 1];
+                if (!lastCol || !lastCol.some(v => v === true)) return false;
+              }
+              return true;
+            }
+
             const lastCol = final.answers?.[final.answers.length - 1];
             return lastCol && lastCol.some(v => v === true);
           };
