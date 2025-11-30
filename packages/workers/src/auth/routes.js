@@ -1,10 +1,10 @@
-import { createAuth, verifyAuth } from './config.js';
+import { createAuth } from './config.js';
 import {
   getEmailVerificationSuccessPage,
   getEmailVerificationFailurePage,
   getEmailVerificationErrorPage,
 } from './templates.js';
-import { getCorsHeaders, handlePreflight } from '../middleware/cors.js';
+import { getCorsHeaders } from '../middleware/cors.js';
 
 export async function handleAuthRoutes(request, env, ctx, path) {
   // Use the shared CORS configuration

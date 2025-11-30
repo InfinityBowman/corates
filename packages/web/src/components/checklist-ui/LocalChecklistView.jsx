@@ -27,7 +27,7 @@ export default function LocalChecklistView() {
   let saveTimeout = null;
 
   // Load the checklist and PDF on mount
-  createEffect(async () => {
+  createEffect(() => {
     const checklistId = params.checklistId;
 
     // If no checklistId, show create form (handled in render)
@@ -43,35 +43,38 @@ export default function LocalChecklistView() {
       return;
     }
 
-    try {
-      setLoading(true);
+    // Handle async loading inside the effect
+    (async () => {
+      try {
+        setLoading(true);
 
-      // Load checklist and PDF in parallel
-      const [loaded, pdfRecord] = await Promise.all([
-        getChecklist(checklistId),
-        getPdf(checklistId),
-      ]);
+        // Load checklist and PDF in parallel
+        const [loaded, pdfRecord] = await Promise.all([
+          getChecklist(checklistId),
+          getPdf(checklistId),
+        ]);
 
-      if (!loaded) {
-        setError('Checklist not found');
+        if (!loaded) {
+          setError('Checklist not found');
+          setLoading(false);
+          return;
+        }
+
+        setChecklist(loaded);
+
+        // Load saved PDF if exists
+        if (pdfRecord) {
+          setPdfData(pdfRecord.data);
+          setPdfFileName(pdfRecord.fileName);
+        }
+
         setLoading(false);
-        return;
+      } catch (err) {
+        console.error('Error loading checklist:', err);
+        setError(err.message || 'Failed to load checklist');
+        setLoading(false);
       }
-
-      setChecklist(loaded);
-
-      // Load saved PDF if exists
-      if (pdfRecord) {
-        setPdfData(pdfRecord.data);
-        setPdfFileName(pdfRecord.fileName);
-      }
-
-      setLoading(false);
-    } catch (err) {
-      console.error('Error loading checklist:', err);
-      setError(err.message || 'Failed to load checklist');
-      setLoading(false);
-    }
+    })();
   });
 
   // Cleanup on unmount
@@ -185,44 +188,41 @@ export default function LocalChecklistView() {
     </>
   );
 
-  // Show create form if no checklistId
-  if (!params.checklistId) {
-    return <CreateLocalChecklist />;
-  }
-
   return (
-    <Show
-      when={!loading()}
-      fallback={
-        <div class='flex items-center justify-center min-h-screen bg-blue-50'>
-          <div class='text-gray-500'>Loading checklist...</div>
-        </div>
-      }
-    >
+    <Show when={params.checklistId} fallback={<CreateLocalChecklist />}>
       <Show
-        when={!error()}
+        when={!loading()}
         fallback={
-          <div class='flex flex-col items-center justify-center min-h-screen bg-blue-50 gap-4'>
-            <div class='text-red-600'>{error()}</div>
-            <button
-              onClick={handleBack}
-              class='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
-            >
-              Go Back
-            </button>
+          <div class='flex items-center justify-center min-h-screen bg-blue-50'>
+            <div class='text-gray-500'>Loading checklist...</div>
           </div>
         }
       >
-        <Show when={checklist()}>
-          <ChecklistWithPdf
-            checklist={checklist()}
-            onUpdate={handleUpdate}
-            headerContent={headerContent}
-            pdfData={pdfData()}
-            pdfFileName={pdfFileName()}
-            onPdfChange={handlePdfChange}
-            onPdfClear={handlePdfClear}
-          />
+        <Show
+          when={!error()}
+          fallback={
+            <div class='flex flex-col items-center justify-center min-h-screen bg-blue-50 gap-4'>
+              <div class='text-red-600'>{error()}</div>
+              <button
+                onClick={handleBack}
+                class='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+              >
+                Go Back
+              </button>
+            </div>
+          }
+        >
+          <Show when={checklist()}>
+            <ChecklistWithPdf
+              checklist={checklist()}
+              onUpdate={handleUpdate}
+              headerContent={headerContent}
+              pdfData={pdfData()}
+              pdfFileName={pdfFileName()}
+              onPdfChange={handlePdfChange}
+              onPdfClear={handlePdfClear}
+            />
+          </Show>
         </Show>
       </Show>
     </Show>

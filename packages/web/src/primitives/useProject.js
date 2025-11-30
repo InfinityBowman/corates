@@ -2,11 +2,11 @@
  * useProject hook - Manages Y.js connection and operations for a single project
  */
 
-import { createSignal, createEffect, onCleanup, createMemo } from 'solid-js';
+import { createEffect, onCleanup, createMemo } from 'solid-js';
 import * as Y from 'yjs';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import { createChecklist as createAMSTAR2Answers } from '../AMSTAR2/checklist.js';
-import { API_BASE, getWsBaseUrl } from '@config/api.js';
+import { getWsBaseUrl } from '@config/api.js';
 import projectStore from './projectStore.js';
 
 /**
@@ -83,6 +83,22 @@ export function useProject(projectId) {
             uploadedBy: pdfData.uploadedBy,
             uploadedAt: pdfData.uploadedAt,
           });
+        }
+      }
+
+      // Get reconciliation progress if any
+      const reconciliationMap = studyYMap.get ? studyYMap.get('reconciliation') : null;
+      if (reconciliationMap) {
+        const reconciliationData =
+          reconciliationMap.toJSON ? reconciliationMap.toJSON() : reconciliationMap;
+        if (reconciliationData.checklist1Id && reconciliationData.checklist2Id) {
+          study.reconciliation = {
+            checklist1Id: reconciliationData.checklist1Id,
+            checklist2Id: reconciliationData.checklist2Id,
+            currentPage: reconciliationData.currentPage || 0,
+            viewMode: reconciliationData.viewMode || 'questions',
+            updatedAt: reconciliationData.updatedAt,
+          };
         }
       }
 
@@ -441,6 +457,70 @@ export function useProject(projectId) {
     checklistYMap.set('updatedAt', Date.now());
   }
 
+  // Save reconciliation progress for a study
+  function saveReconciliationProgress(studyId, progressData) {
+    if (!ydoc) return;
+    if (!isLocalProject() && !connected()) return;
+
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
+    if (!studyYMap) return;
+
+    // Store reconciliation progress as a Y.Map
+    let reconciliationMap = studyYMap.get('reconciliation');
+    if (!reconciliationMap) {
+      reconciliationMap = new Y.Map();
+      studyYMap.set('reconciliation', reconciliationMap);
+    }
+
+    // Save the progress data
+    reconciliationMap.set('checklist1Id', progressData.checklist1Id);
+    reconciliationMap.set('checklist2Id', progressData.checklist2Id);
+    reconciliationMap.set('currentPage', progressData.currentPage);
+    reconciliationMap.set('viewMode', progressData.viewMode || 'questions');
+    reconciliationMap.set('finalAnswers', JSON.stringify(progressData.finalAnswers || {}));
+    reconciliationMap.set('updatedAt', Date.now());
+
+    studyYMap.set('updatedAt', Date.now());
+  }
+
+  // Get reconciliation progress for a study
+  function getReconciliationProgress(studyId) {
+    if (!ydoc) return null;
+
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
+    if (!studyYMap) return null;
+
+    const reconciliationMap = studyYMap.get('reconciliation');
+    if (!reconciliationMap) return null;
+
+    const data = reconciliationMap.toJSON ? reconciliationMap.toJSON() : {};
+    if (!data.checklist1Id || !data.checklist2Id) return null;
+
+    return {
+      checklist1Id: data.checklist1Id,
+      checklist2Id: data.checklist2Id,
+      currentPage: data.currentPage || 0,
+      viewMode: data.viewMode || 'questions',
+      finalAnswers: data.finalAnswers ? JSON.parse(data.finalAnswers) : {},
+      updatedAt: data.updatedAt,
+    };
+  }
+
+  // Clear reconciliation progress for a study
+  function clearReconciliationProgress(studyId) {
+    if (!ydoc) return;
+    if (!isLocalProject() && !connected()) return;
+
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
+    if (!studyYMap) return;
+
+    studyYMap.delete('reconciliation');
+    studyYMap.set('updatedAt', Date.now());
+  }
+
   // Auto-connect when projectId changes
   createEffect(() => {
     if (projectId) {
@@ -474,6 +554,9 @@ export function useProject(projectId) {
     getChecklistAnswersMap,
     getChecklistData,
     updateChecklistAnswer,
+    saveReconciliationProgress,
+    getReconciliationProgress,
+    clearReconciliationProgress,
 
     // Connection management
     connect,

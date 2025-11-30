@@ -1,5 +1,4 @@
-import { createMemo, For } from 'solid-js';
-import { createEffect } from 'solid-js';
+import { createMemo, For, createEffect } from 'solid-js';
 
 const requirementsList = [
   { label: 'At least 8 characters', test: pw => pw.length >= 8, error: 'at least 8 characters' },
@@ -14,7 +13,6 @@ const requirementsList = [
 ];
 
 function getStrength(password) {
-  password = password();
   if (!password) return { met: [], unmet: requirementsList.map(r => r.label) };
   const met = requirementsList.filter(r => r.test(password)).map(r => r.label);
   const unmet = requirementsList.filter(r => !r.test(password)).map(r => r.label);
@@ -23,7 +21,7 @@ function getStrength(password) {
 }
 
 export default function StrengthIndicator(props) {
-  const strength = createMemo(() => getStrength(() => props.password));
+  const strength = createMemo(() => getStrength(props.password));
 
   createEffect(() => {
     props.onUnmet?.(strength().errors);

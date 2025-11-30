@@ -94,7 +94,7 @@ export default function CreateLocalChecklist() {
     <div class='min-h-screen bg-gray-50 flex items-center justify-center p-6'>
       <div class='w-full max-w-lg'>
         <div class='bg-white rounded-xl shadow-sm border border-gray-200 p-8'>
-          <h1 class='text-2xl font-bold text-gray-900 mb-2'>Create New Checklist</h1>
+          <h1 class='text-2xl font-bold text-gray-900 mb-2'>Start an Appraisal</h1>
           <p class='text-gray-600 mb-6'>
             Start a new AMSTAR-2 assessment. Your checklist will be saved locally on this device.
           </p>

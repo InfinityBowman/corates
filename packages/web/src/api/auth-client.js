@@ -14,8 +14,8 @@ export const authClient = createAuthClient({
         console.error('Unauthorized');
       }
     },
-    onSuccess(data) {
-      // console.log('Auth action successful', data);
+    onSuccess() {
+      // Auth action successful
     },
   },
 });
