@@ -128,7 +128,7 @@ export default function MultiPartQuestionPage(props) {
   }
 
   // Get columns for each part
-  const getColumnsForPart = (partKey) => {
+  const getColumnsForPart = partKey => {
     if (props.questionKey === 'q9') {
       return partKey === 'q9a' ? question()?.columns : question()?.columns2;
     }
@@ -138,7 +138,7 @@ export default function MultiPartQuestionPage(props) {
     return question()?.columns;
   };
 
-  const getSubtitleForPart = (partKey) => {
+  const getSubtitleForPart = partKey => {
     if (props.questionKey === 'q9') {
       return partKey === 'q9a' ? question()?.subtitle : question()?.subtitle2;
     }
@@ -173,18 +173,20 @@ export default function MultiPartQuestionPage(props) {
             <button
               onClick={useReviewer1}
               class={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                selectedSource() === 'reviewer1'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                selectedSource() === 'reviewer1' ? 'bg-blue-600 text-white' : (
+                  'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                )
               }`}
             >
               {selectedSource() === 'reviewer1' ? 'Selected' : 'Use This'}
             </button>
           </div>
           <For each={dataKeys}>
-            {(partKey) => (
+            {partKey => (
               <div class='mb-4'>
-                <div class='text-xs font-medium text-gray-600 mb-2'>{getSubtitleForPart(partKey)}</div>
+                <div class='text-xs font-medium text-gray-600 mb-2'>
+                  {getSubtitleForPart(partKey)}
+                </div>
                 <AnswerPanel
                   answers={props.reviewer1Answers?.[partKey]}
                   questionKey={partKey}
@@ -204,18 +206,20 @@ export default function MultiPartQuestionPage(props) {
             <button
               onClick={useReviewer2}
               class={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                selectedSource() === 'reviewer2'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                selectedSource() === 'reviewer2' ?
+                  'bg-purple-600 text-white'
+                : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
               }`}
             >
               {selectedSource() === 'reviewer2' ? 'Selected' : 'Use This'}
             </button>
           </div>
           <For each={dataKeys}>
-            {(partKey) => (
+            {partKey => (
               <div class='mb-4'>
-                <div class='text-xs font-medium text-gray-600 mb-2'>{getSubtitleForPart(partKey)}</div>
+                <div class='text-xs font-medium text-gray-600 mb-2'>
+                  {getSubtitleForPart(partKey)}
+                </div>
                 <AnswerPanel
                   answers={props.reviewer2Answers?.[partKey]}
                   questionKey={partKey}
@@ -235,25 +239,29 @@ export default function MultiPartQuestionPage(props) {
             <button
               onClick={() => handleCriticalChange(!localFinal()?.[dataKeys[0]]?.critical)}
               class={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                localFinal()?.[dataKeys[0]]?.critical
-                  ? 'bg-red-100 text-red-700 border border-red-300'
-                  : 'bg-gray-100 text-gray-700 border border-gray-300'
+                localFinal()?.[dataKeys[0]]?.critical ?
+                  'bg-red-100 text-red-700 border border-red-300'
+                : 'bg-gray-100 text-gray-700 border border-gray-300'
               }`}
             >
               {localFinal()?.[dataKeys[0]]?.critical ? 'Critical' : 'Not Critical'}
             </button>
           </div>
           <For each={dataKeys}>
-            {(partKey) => (
+            {partKey => (
               <div class='mb-4'>
-                <div class='text-xs font-medium text-gray-600 mb-2'>{getSubtitleForPart(partKey)}</div>
+                <div class='text-xs font-medium text-gray-600 mb-2'>
+                  {getSubtitleForPart(partKey)}
+                </div>
                 <AnswerPanel
                   answers={localFinal()?.[partKey]}
                   questionKey={partKey}
                   columns={getColumnsForPart(partKey)}
                   readOnly={false}
                   compact={true}
-                  onCheckboxChange={(colIdx, optIdx) => handlePartCheckboxChange(partKey, colIdx, optIdx)}
+                  onCheckboxChange={(colIdx, optIdx) =>
+                    handlePartCheckboxChange(partKey, colIdx, optIdx)
+                  }
                   onRadioChange={(colIdx, optIdx) => handlePartRadioChange(partKey, colIdx, optIdx)}
                 />
               </div>
