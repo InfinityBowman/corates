@@ -26,8 +26,8 @@ export default function PdfViewer(props) {
   const pdf = usePdfJs({
     pdfData: () => props.pdfData,
     pdfFileName: () => props.pdfFileName,
-    onPdfChange: props.onPdfChange,
-    onPdfClear: props.onPdfClear,
+    onPdfChange: (data, name) => props.onPdfChange?.(data, name),
+    onPdfClear: () => props.onPdfClear?.(),
   });
 
   // Setup refs after mount

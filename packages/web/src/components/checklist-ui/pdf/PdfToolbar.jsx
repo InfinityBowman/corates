@@ -39,11 +39,11 @@ export default function PdfToolbar(props) {
             ref={props.fileInputRef}
             type='file'
             accept='application/pdf'
-            onChange={props.onFileUpload}
+            onChange={e => props.onFileUpload?.(e)}
             class='hidden'
           />
           <button
-            onClick={props.onOpenFile}
+            onClick={() => props.onOpenFile?.()}
             disabled={!props.libReady}
             class='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shrink-0'
           >
@@ -59,7 +59,7 @@ export default function PdfToolbar(props) {
           </span>
           <Show when={!props.readOnly}>
             <button
-              onClick={props.onClearPdf}
+              onClick={() => props.onClearPdf?.()}
               class='p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors shrink-0'
               title='Clear PDF'
             >
@@ -73,7 +73,7 @@ export default function PdfToolbar(props) {
       <Show when={props.pdfDoc}>
         <div class='flex items-center gap-2'>
           <button
-            onClick={props.onPrevPage}
+            onClick={() => props.onPrevPage?.()}
             disabled={props.currentPage <= 1}
             class='p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
             title='Previous page'
@@ -84,7 +84,7 @@ export default function PdfToolbar(props) {
             {props.currentPage} / {props.totalPages}
           </span>
           <button
-            onClick={props.onNextPage}
+            onClick={() => props.onNextPage?.()}
             disabled={props.currentPage >= props.totalPages}
             class='p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
             title='Next page'
@@ -96,7 +96,7 @@ export default function PdfToolbar(props) {
         {/* Zoom controls */}
         <div class='flex items-center gap-1'>
           <button
-            onClick={props.onZoomOut}
+            onClick={() => props.onZoomOut?.()}
             disabled={props.scale <= 0.5}
             class='p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
             title='Zoom out'
@@ -104,14 +104,14 @@ export default function PdfToolbar(props) {
             <AiOutlineMinus class='w-5 h-5' />
           </button>
           <button
-            onClick={props.onResetZoom}
+            onClick={() => props.onResetZoom?.()}
             class='px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded transition-colors min-w-[50px]'
             title='Reset zoom'
           >
             {Math.round(props.scale * 100)}%
           </button>
           <button
-            onClick={props.onZoomIn}
+            onClick={() => props.onZoomIn?.()}
             disabled={props.scale >= 3.0}
             class='p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
             title='Zoom in'
@@ -119,7 +119,7 @@ export default function PdfToolbar(props) {
             <AiOutlinePlus class='w-5 h-5' />
           </button>
           <button
-            onClick={props.onFitToWidth}
+            onClick={() => props.onFitToWidth?.()}
             class='p-1.5 rounded hover:bg-gray-100 transition-colors'
             title='Fit to width'
           >

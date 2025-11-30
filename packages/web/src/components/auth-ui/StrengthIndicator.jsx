@@ -13,7 +13,6 @@ const requirementsList = [
 ];
 
 function getStrength(password) {
-  password = password();
   if (!password) return { met: [], unmet: requirementsList.map(r => r.label) };
   const met = requirementsList.filter(r => r.test(password)).map(r => r.label);
   const unmet = requirementsList.filter(r => !r.test(password)).map(r => r.label);
@@ -22,7 +21,7 @@ function getStrength(password) {
 }
 
 export default function StrengthIndicator(props) {
-  const strength = createMemo(() => getStrength(() => props.password));
+  const strength = createMemo(() => getStrength(props.password));
 
   createEffect(() => {
     props.onUnmet?.(strength().errors);

@@ -80,8 +80,8 @@ export default function AMSTARDistribution(props) {
   const colorMap = () => (greyscale() ? colorMapGreyscale : colorMapDefault);
 
   createEffect(() => {
-    // Track greyscale changes to re-render
-    colorMap();
+    // Track greyscale changes to re-render and capture the value
+    const colors = colorMap();
     if (!data().length) return;
 
     const svg = d3
@@ -166,7 +166,7 @@ export default function AMSTARDistribution(props) {
             .attr('y', y)
             .attr('width', segmentWidth)
             .attr('height', barHeight)
-            .attr('fill', colorMap()[category])
+            .attr('fill', colors[category])
             .attr('stroke', '#ffffff')
             .attr('stroke-width', 1);
 
@@ -275,7 +275,7 @@ export default function AMSTARDistribution(props) {
       .attr('width', 16)
       .attr('height', 16)
       .attr('rx', 2)
-      .attr('fill', d => colorMap()[d.key])
+      .attr('fill', d => colors[d.key])
       .attr('stroke', '#ffffff')
       .attr('stroke-width', 1);
 
@@ -298,11 +298,17 @@ export default function AMSTARDistribution(props) {
   return (
     <div
       ref={containerRef}
-      style={{"background":"#ffffff","border-radius":"8px","box-shadow":"0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)","padding":"16px","margin":"16px 0"}}
+      style={{
+        background: '#ffffff',
+        'border-radius': '8px',
+        'box-shadow': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        padding: '16px',
+        margin: '16px 0',
+      }}
     >
       <svg
-        ref={setRef}
-        style={`width: 100%; height: ${height()}px; max-width: 100%; display: block;`}
+        ref={el => setRef(el)}
+        style={{ width: '100%', 'max-width': '100%', display: 'block', height: `${height()}px` }}
       />
     </div>
   );
