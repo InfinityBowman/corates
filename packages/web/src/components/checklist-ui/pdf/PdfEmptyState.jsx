@@ -46,7 +46,7 @@ export default function PdfEmptyState(props) {
             <div class='text-red-600 mb-2'>{props.error}</div>
             <Show when={!props.readOnly}>
               <button
-                onClick={props.onOpenFile}
+                onClick={() => props.onOpenFile()}
                 class='text-blue-600 hover:text-blue-700 font-medium'
               >
                 Try another file
@@ -63,7 +63,7 @@ export default function PdfEmptyState(props) {
           <p class='mb-2'>No PDF loaded</p>
           <Show when={!props.readOnly}>
             <button
-              onClick={props.onOpenFile}
+              onClick={() => props.onOpenFile()}
               class='text-blue-600 hover:text-blue-700 font-medium'
             >
               Open a PDF file

@@ -81,9 +81,9 @@ export default function CheckEmail() {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    return () => {
+    onCleanup(() => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    });
   });
 
   onCleanup(() => {

@@ -1,4 +1,4 @@
-import { createSignal, createEffect, For } from 'solid-js';
+import { createSignal, createEffect, createMemo, For } from 'solid-js';
 import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
 import { getDataKeysForQuestion } from '@/AMSTAR2/checklist-compare.js';
 import AnswerPanel from './AnswerPanel.jsx';
@@ -7,8 +7,10 @@ import AnswerPanel from './AnswerPanel.jsx';
  * MultiPartQuestionPage - Handles q9 and q11 which have a/b parts
  */
 export default function MultiPartQuestionPage(props) {
-  const question = () => AMSTAR_CHECKLIST[props.questionKey];
-  const dataKeys = getDataKeysForQuestion(props.questionKey);
+  const questionKey = () => props.questionKey;
+  const question = () => AMSTAR_CHECKLIST[questionKey()];
+
+  const dataKeys = createMemo(() => getDataKeysForQuestion(questionKey()));
 
   // Local state for each part
   const [localFinal, setLocalFinal] = createSignal({});
@@ -18,7 +20,7 @@ export default function MultiPartQuestionPage(props) {
   createEffect(() => {
     if (props.finalAnswers && typeof props.finalAnswers === 'object') {
       // Check if it has the expected part keys
-      const hasParts = dataKeys.every(dk => props.finalAnswers[dk]);
+      const hasParts = dataKeys().every(dk => props.finalAnswers[dk]);
       if (hasParts) {
         setLocalFinal(JSON.parse(JSON.stringify(props.finalAnswers)));
         // Determine source
@@ -33,7 +35,7 @@ export default function MultiPartQuestionPage(props) {
       }
     }
     // Default to reviewer1
-    if (props.reviewer1Answers && dataKeys.every(dk => props.reviewer1Answers[dk])) {
+    if (props.reviewer1Answers && dataKeys().every(dk => props.reviewer1Answers[dk])) {
       setLocalFinal(JSON.parse(JSON.stringify(props.reviewer1Answers)));
       setSelectedSource('reviewer1');
     }
@@ -41,7 +43,7 @@ export default function MultiPartQuestionPage(props) {
 
   function multiPartAnswersEqual(a, b) {
     if (!a || !b) return false;
-    for (const dk of dataKeys) {
+    for (const dk of dataKeys()) {
       if (!singleAnswerEqual(a[dk], b[dk])) return false;
     }
     return true;
@@ -117,7 +119,7 @@ export default function MultiPartQuestionPage(props) {
 
     // Update critical for all parts
     const newFinal = { ...current };
-    for (const dk of dataKeys) {
+    for (const dk of dataKeys()) {
       if (newFinal[dk]) {
         newFinal[dk] = { ...newFinal[dk], critical };
       }
@@ -181,7 +183,7 @@ export default function MultiPartQuestionPage(props) {
               {selectedSource() === 'reviewer1' ? 'Selected' : 'Use This'}
             </button>
           </div>
-          <For each={dataKeys}>
+          <For each={dataKeys()}>
             {partKey => (
               <div class='mb-4'>
                 <div class='text-xs font-medium text-gray-600 mb-2'>
@@ -214,7 +216,7 @@ export default function MultiPartQuestionPage(props) {
               {selectedSource() === 'reviewer2' ? 'Selected' : 'Use This'}
             </button>
           </div>
-          <For each={dataKeys}>
+          <For each={dataKeys()}>
             {partKey => (
               <div class='mb-4'>
                 <div class='text-xs font-medium text-gray-600 mb-2'>
@@ -237,17 +239,17 @@ export default function MultiPartQuestionPage(props) {
           <div class='flex items-center justify-between mb-3'>
             <h3 class='font-medium text-green-800'>Final Answer</h3>
             <button
-              onClick={() => handleCriticalChange(!localFinal()?.[dataKeys[0]]?.critical)}
+              onClick={() => handleCriticalChange(!localFinal()?.[dataKeys()[0]]?.critical)}
               class={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                localFinal()?.[dataKeys[0]]?.critical ?
+                localFinal()?.[dataKeys()[0]]?.critical ?
                   'bg-red-100 text-red-700 border border-red-300'
                 : 'bg-gray-100 text-gray-700 border border-gray-300'
               }`}
             >
-              {localFinal()?.[dataKeys[0]]?.critical ? 'Critical' : 'Not Critical'}
+              {localFinal()?.[dataKeys()[0]]?.critical ? 'Critical' : 'Not Critical'}
             </button>
           </div>
-          <For each={dataKeys}>
+          <For each={dataKeys()}>
             {partKey => (
               <div class='mb-4'>
                 <div class='text-xs font-medium text-gray-600 mb-2'>

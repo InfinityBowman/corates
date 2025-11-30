@@ -11,7 +11,7 @@ export default function Footer(props) {
   return (
     <div class='p-6 bg-gray-50 border-t border-gray-200 flex items-center justify-between'>
       <button
-        onClick={props.onBack}
+        onClick={() => props.onBack()}
         class='flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg font-medium hover:bg-gray-100 shadow transition-colors'
       >
         <AiOutlineArrowLeft class='w-4 h-4' />
@@ -19,7 +19,7 @@ export default function Footer(props) {
       </button>
 
       <button
-        onClick={props.onSave}
+        onClick={() => props.onSave()}
         disabled={!props.allAnswered || props.saving}
         class={`
             flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors

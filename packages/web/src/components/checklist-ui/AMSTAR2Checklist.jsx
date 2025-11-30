@@ -735,7 +735,7 @@ export default function AMSTAR2Checklist(props = {}) {
   const navigate = useNavigate();
 
   // If an external checklist is supplied (from Yjs DO), use that as the source of truth.
-  createEffect(async () => {
+  createEffect(() => {
     if (props.externalChecklist) {
       setCurrentChecklist(props.externalChecklist);
       return;

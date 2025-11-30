@@ -3,7 +3,7 @@
  * Supports vertical (side-by-side) and horizontal (stacked) orientations
  */
 
-import { createSignal, Show, children as resolveChildren } from 'solid-js';
+import { createSignal, createEffect, Show, children as resolveChildren } from 'solid-js';
 
 export default function SplitScreenLayout(props) {
   // props.headerContent - optional content to render on the left side of the toolbar
@@ -11,7 +11,12 @@ export default function SplitScreenLayout(props) {
   const [layout, setLayout] = createSignal(props.defaultLayout || 'vertical');
   const [splitRatio, setSplitRatio] = createSignal(props.defaultRatio || 50);
   const [isDragging, setIsDragging] = createSignal(false);
-  const [showSecondPanel, setShowSecondPanel] = createSignal(props.showSecondPanel ?? true);
+  const [showSecondPanel, setShowSecondPanel] = createSignal(true);
+
+  // Sync showSecondPanel with prop changes
+  createEffect(() => {
+    setShowSecondPanel(props.showSecondPanel ?? true);
+  });
 
   let containerRef;
 
