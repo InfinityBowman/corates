@@ -1,4 +1,4 @@
-import {For} from 'solid-js';
+import { For } from 'solid-js';
 
 export default function Navbar(props) {
   // Props:
@@ -13,7 +13,8 @@ export default function Navbar(props) {
     <div class='mt-4 flex flex-wrap gap-1'>
       <For each={props.questionKeys}>
         {(key, index) => {
-          const isCurrentPage = () => props.viewMode === 'questions' && props.currentPage === index();
+          const isCurrentPage = () =>
+            props.viewMode === 'questions' && props.currentPage === index();
           const comp = () => props.comparisonByQuestion[key];
           const isAgreement = () => comp()?.isAgreement ?? true;
           const hasAnswer = () => {
