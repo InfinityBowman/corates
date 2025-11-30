@@ -50,14 +50,14 @@ global.crypto.randomUUID = vi.fn(() => 'test-uuid-' + Math.random().toString(36)
 
 // Helper to create mock IndexedDB for testing
 export function createMockIndexedDB() {
-  const stores = new Map();
+  const _stores = new Map();
 
   return {
     open: vi.fn(() => {
       const request = {
         result: {
-          transaction: vi.fn((storeNames, mode) => ({
-            objectStore: vi.fn(name => ({
+          transaction: vi.fn((_storeNames, _mode) => ({
+            objectStore: vi.fn(_name => ({
               add: vi.fn(),
               put: vi.fn(),
               get: vi.fn(),

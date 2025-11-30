@@ -1,4 +1,4 @@
-import { For, Show, Index, createSignal } from 'solid-js';
+import { Show, Index, createSignal } from 'solid-js';
 import { BiRegularX } from 'solid-icons/bi';
 
 /**

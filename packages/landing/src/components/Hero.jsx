@@ -1,4 +1,3 @@
-import { BsClipboardCheck } from 'solid-icons/bs';
 import { AiOutlineArrowRight } from 'solid-icons/ai';
 import { urls } from '~/lib/config';
 

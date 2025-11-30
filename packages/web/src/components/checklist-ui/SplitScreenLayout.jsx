@@ -60,10 +60,6 @@ export default function SplitScreenLayout(props) {
     document.addEventListener('mouseup', handleMouseUp);
   }
 
-  function toggleLayout() {
-    setLayout(layout() === 'vertical' ? 'horizontal' : 'vertical');
-  }
-
   function toggleSecondPanel() {
     setShowSecondPanel(!showSecondPanel());
   }

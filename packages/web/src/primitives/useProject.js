@@ -2,11 +2,11 @@
  * useProject hook - Manages Y.js connection and operations for a single project
  */
 
-import { createSignal, createEffect, onCleanup, createMemo } from 'solid-js';
+import {  createEffect, onCleanup, createMemo } from 'solid-js';
 import * as Y from 'yjs';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import { createChecklist as createAMSTAR2Answers } from '../AMSTAR2/checklist.js';
-import { API_BASE, getWsBaseUrl } from '@config/api.js';
+import { getWsBaseUrl } from '@config/api.js';
 import projectStore from './projectStore.js';
 
 /**

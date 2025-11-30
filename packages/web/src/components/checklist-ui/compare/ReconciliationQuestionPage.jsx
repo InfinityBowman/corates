@@ -3,7 +3,7 @@
  * Shows Reviewer 1, Reviewer 2, and Final (editable) answer panels side by side
  */
 import AnswerPanel from './AnswerPanel.jsx';
-import { createSignal, createEffect, Show, For } from 'solid-js';
+import { createSignal, createEffect, Show } from 'solid-js';
 import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
 import MultiPartQuestionPage from './MultiPartQuestionPage.jsx';
 /**

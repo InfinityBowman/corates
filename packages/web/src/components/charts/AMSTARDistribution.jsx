@@ -81,7 +81,7 @@ export default function AMSTARDistribution(props) {
 
   createEffect(() => {
     // Track greyscale changes to re-render
-    const currentColorMap = colorMap();
+    colorMap();
     if (!data().length) return;
 
     const svg = d3
@@ -108,7 +108,7 @@ export default function AMSTARDistribution(props) {
       // Count responses for this question
       data().forEach(study => {
         const response = study.questions[q]?.toLowerCase?.() ?? 'no ma';
-        if (questionData.counts.hasOwnProperty(response)) {
+        if (Object.hasOwn(questionData.counts, response)) {
           questionData.counts[response]++;
         }
       });
@@ -298,7 +298,7 @@ export default function AMSTARDistribution(props) {
   return (
     <div
       ref={containerRef}
-      style='background: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 16px; margin: 16px 0;'
+      style={{"background":"#ffffff","border-radius":"8px","box-shadow":"0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)","padding":"16px","margin":"16px 0"}}
     >
       <svg
         ref={setRef}

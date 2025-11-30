@@ -13,7 +13,7 @@ export default function PdfCanvas(props) {
     <div class='flex justify-center relative min-w-fit'>
       <Show when={props.rendering}>
         <div class='absolute inset-0 flex items-center justify-center bg-white/50'>
-          <div class='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600'></div>
+          <div class='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600' />
         </div>
       </Show>
       <canvas ref={props.canvasRef} class='shadow-lg bg-white' />

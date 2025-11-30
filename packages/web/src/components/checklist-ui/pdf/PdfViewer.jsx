@@ -22,10 +22,6 @@ export default function PdfViewer(props) {
   // props.onPdfClear - Callback when PDF is cleared: () => void
   // props.readOnly - If true, hides upload/change/clear buttons (view only mode)
 
-  let containerRef;
-  let fileInputRef;
-  let canvasRef;
-
   // Use the PDF.js primitive
   const pdf = usePdfJs({
     pdfData: () => props.pdfData,
@@ -36,17 +32,14 @@ export default function PdfViewer(props) {
 
   // Setup refs after mount
   const setContainerRef = el => {
-    containerRef = el;
     pdf.setupResizeObserver(el);
   };
 
   const setFileInputRef = el => {
-    fileInputRef = el;
     pdf.setFileInputRef(el);
   };
 
   const setCanvasRef = el => {
-    canvasRef = el;
     pdf.setCanvasRef(el);
   };
 

@@ -60,7 +60,7 @@ export function createAuth(env, ctx) {
 
     resetPassword: {
       enabled: true,
-      sendEmail: async ({ user, url, token }) => {
+      sendEmail: async ({ user, url }) => {
         console.log('[Auth] Queuing reset email to:', user.email, 'URL:', url);
         if (ctx && ctx.waitUntil) {
           ctx.waitUntil(

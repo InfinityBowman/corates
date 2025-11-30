@@ -1,4 +1,4 @@
-import { createSignal, createEffect, createMemo, Show, onCleanup } from 'solid-js';
+import { createSignal, createEffect, createMemo, Show } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import useProject from '@primitives/useProject.js';
@@ -139,13 +139,13 @@ export default function ChecklistYjsWrapper() {
       </div>
       <Show when={connectionState().connected}>
         <span class='flex items-center gap-1 text-green-600 text-xs whitespace-nowrap'>
-          <div class='w-2 h-2 bg-green-500 rounded-full'></div>
+          <div class='w-2 h-2 bg-green-500 rounded-full' />
           Synced
         </span>
       </Show>
       <Show when={connectionState().connecting}>
         <span class='flex items-center gap-1 text-yellow-600 text-xs whitespace-nowrap'>
-          <div class='w-2 h-2 bg-yellow-500 rounded-full animate-pulse'></div>
+          <div class='w-2 h-2 bg-yellow-500 rounded-full animate-pulse' />
           Connecting...
         </span>
       </Show>

@@ -9,7 +9,7 @@ export function useUserProjects() {
   return useContext(UserProjectsContext);
 }
 
-export default function UserYjsProvider({ children, userId, apiBase }) {
+export default function UserYjsProvider(props) {
   const [connected, setConnected] = createSignal(false);
   const [userProjects, setUserProjects] = createSignal([]);
   const [projectConnections, setProjectConnections] = createSignal({});
@@ -19,11 +19,11 @@ export default function UserYjsProvider({ children, userId, apiBase }) {
   let connections = {};
 
   async function fetchUserProjects() {
-    if (!userId) return;
+    if (!props.userId) return;
 
     try {
       // Fetch user's projects from D1 via API
-      const response = await fetch(`${apiBase}/api/users/${userId}/projects`, {
+      const response = await fetch(`${props.apiBase}/api/users/${props.userId}/projects`, {
         credentials: 'include',
       });
 
@@ -50,7 +50,7 @@ export default function UserYjsProvider({ children, userId, apiBase }) {
 
     try {
       const ydoc = new Y.Doc();
-      const wsUrl = apiBase.replace('http', 'ws') + `/api/project/${projectId}`;
+      const wsUrl = props.apiBase.replace('http', 'ws') + `/api/project/${projectId}`;
       const ws = new WebSocket(wsUrl);
 
       connections[projectId] = { ws, ydoc, connected: false };
@@ -165,6 +165,6 @@ export default function UserYjsProvider({ children, userId, apiBase }) {
   };
 
   return (
-    <UserProjectsContext.Provider value={contextValue}>{children}</UserProjectsContext.Provider>
+    <UserProjectsContext.Provider value={contextValue}>{props.children}</UserProjectsContext.Provider>
   );
 }

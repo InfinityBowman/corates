@@ -16,8 +16,6 @@ export default function ProjectView() {
   const location = useLocation();
   const { user } = useBetterAuth();
 
-  const [error, setError] = createSignal(null);
-
   // Study form state
   const [showStudyForm, setShowStudyForm] = createSignal(false);
   const [creatingStudy, setCreatingStudy] = createSignal(false);
@@ -264,9 +262,9 @@ export default function ProjectView() {
 
   return (
     <div class='p-6 max-w-4xl mx-auto'>
-      <Show when={error() || yjsError()}>
+      <Show when={yjsError()}>
         <div class='bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 mb-4'>
-          Error: {error() || yjsError()}
+          Error: {yjsError()}
         </div>
       </Show>
 

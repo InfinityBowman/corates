@@ -197,7 +197,7 @@ export default function ReconciliationWithPdf(props) {
               fallback={
                 <div class='flex items-center justify-center h-full bg-gray-100'>
                   <div class='flex items-center gap-3 text-gray-500'>
-                    <div class='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600'></div>
+                    <div class='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600' />
                     Loading PDF...
                   </div>
                 </div>

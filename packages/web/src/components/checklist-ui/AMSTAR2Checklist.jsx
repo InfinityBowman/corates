@@ -758,7 +758,24 @@ export default function AMSTAR2Checklist(props = {}) {
     if (!cl) return;
     setReviewName(cl.name || '');
     setReviewerName(cl.reviewerName || '');
-    setReviewDate(cl.createdAt || '');
+    // Format createdAt to yyyy-MM-dd for date input
+    const dateValue = cl.createdAt;
+    if (dateValue) {
+      // Check if it's already in yyyy-MM-dd format
+      if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+        setReviewDate(dateValue);
+      } else {
+        // Convert timestamp or other date format to yyyy-MM-dd
+        const date = new Date(dateValue);
+        if (!isNaN(date.getTime())) {
+          setReviewDate(date.toISOString().split('T')[0]);
+        } else {
+          setReviewDate('');
+        }
+      }
+    } else {
+      setReviewDate('');
+    }
   });
 
   // Handler to update checklist state
