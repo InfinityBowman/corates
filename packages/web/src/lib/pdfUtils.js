@@ -8,8 +8,10 @@ let pdfjsInitPromise = null;
 
 /**
  * Initialize PDF.js library lazily
+ * This is the shared initialization function used by all PDF-related components
+ * @returns {Promise<Object>} - The initialized pdfjs-dist library
  */
-async function initPdfJs() {
+export async function initPdfJs() {
   if (pdfjsLib) return pdfjsLib;
 
   if (pdfjsInitPromise) return pdfjsInitPromise;

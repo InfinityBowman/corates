@@ -4,7 +4,7 @@
  */
 
 import AMSTAR2Checklist from '@checklist-ui/AMSTAR2Checklist.jsx';
-import PdfViewer from '@checklist-ui/PdfViewer.jsx';
+import PdfViewer from '@/components/checklist-ui/pdf/PdfViewer.jsx';
 import SplitScreenLayout from '@checklist-ui/SplitScreenLayout.jsx';
 
 export default function ChecklistWithPdf(props) {
