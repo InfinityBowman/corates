@@ -12,8 +12,8 @@ export default function PasswordInput(props) {
   });
 
   const api = createMemo(() => passwordInput.connect(service, normalizeProps));
-  const inputClass =
-    () => props.inputClass ||
+  const inputClass = () =>
+    props.inputClass ||
     'w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition big-placeholder';
   const iconSize = () => props.iconSize || 20;
 
