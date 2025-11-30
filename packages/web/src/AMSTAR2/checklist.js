@@ -212,7 +212,9 @@ export function getAnswers(checklist) {
 
   // Consolidate q9a and q9b into q9 by taking the lower score
   if ('q9a' in result && 'q9b' in result) {
-    if (result.q9a === 'No' || result.q9b === 'No') {
+    if (result.q9a === null || result.q9b === null) {
+      result.q9 = null;
+    } else if (result.q9a === 'No' || result.q9b === 'No') {
       result.q9 = 'No';
     } else if (result.q9a === 'No MA' && result.q9b === 'No MA') {
       result.q9 = 'No MA';
@@ -225,7 +227,9 @@ export function getAnswers(checklist) {
 
   // Consolidate q11a and q11b into q11 by taking the lower score
   if ('q11a' in result && 'q11b' in result) {
-    if (result.q11a === 'No' || result.q11b === 'No') {
+    if (result.q11a === null || result.q11b === null) {
+      result.q11 = null;
+    } else if (result.q11a === 'No' || result.q11b === 'No') {
       result.q11 = 'No';
     } else if (result.q11a === 'No MA' && result.q11b === 'No MA') {
       result.q11 = 'No MA';

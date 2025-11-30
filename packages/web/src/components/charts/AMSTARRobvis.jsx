@@ -49,8 +49,13 @@ export default function AMSTARRobvis(props) {
   // Dynamically calculate left margin based on label width
   const [dynamicMarginLeft, setDynamicMarginLeft] = createSignal(200);
 
-  // Make margin reactive
-  const margin = () => ({ top: 60, right: 170, bottom: 60, left: dynamicMarginLeft() });
+  // Make margin reactive - increase bottom margin when only one checklist for better Q label visibility
+  const margin = () => ({
+    top: 60,
+    right: 170,
+    bottom: data().length <= 1 ? 80 : 60,
+    left: dynamicMarginLeft(),
+  });
 
   // Calculate max cell size that keeps squares and fits both axes
   const cellSizeX = () => (width() - margin().left - margin().right) / nQuestions;
