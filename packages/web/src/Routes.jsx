@@ -6,7 +6,6 @@ import CheckEmail from '@auth-ui/CheckEmail.jsx';
 import ResetPassword from '@auth-ui/ResetPassword.jsx';
 import AuthLayout from '@auth-ui/AuthLayout.jsx';
 import Layout from '@/Layout.jsx';
-import HomePage from '@components/HomePage.jsx';
 import ChecklistYjsWrapper from '@checklist-ui/ChecklistYjsWrapper.jsx';
 import ReconciliationWrapper from '@/components/checklist-ui/compare/ReconciliationWrapper.jsx';
 import ProjectView from '@project-ui/ProjectView.jsx';

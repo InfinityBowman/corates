@@ -4,7 +4,6 @@
  */
 
 import { createSignal, createMemo, createEffect, Show } from 'solid-js';
-import { useNavigate } from '@solidjs/router';
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from 'solid-icons/ai';
 import {
   compareChecklists,
@@ -26,8 +25,6 @@ export default function ChecklistReconciliation(props) {
   // props.onCancel - Callback to cancel and go back
   // props.reviewer1Name - Display name for first reviewer
   // props.reviewer2Name - Display name for second reviewer
-
-  const navigate = useNavigate();
 
   // Track if we've initialized from saved progress
   const [initialized, setInitialized] = createSignal(false);

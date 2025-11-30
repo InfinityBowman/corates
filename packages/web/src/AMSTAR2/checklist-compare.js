@@ -275,7 +275,7 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
  * @returns {Object} Summary with counts and lists
  */
 export function getReconciliationSummary(comparison) {
-  const { agreements, disagreements, stats } = comparison;
+  const { disagreements, stats } = comparison;
 
   const criticalDisagreements = disagreements.filter(d => {
     // Handle multi-part questions

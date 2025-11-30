@@ -1,5 +1,4 @@
-import { createMemo, For } from 'solid-js';
-import { createEffect } from 'solid-js';
+import { createMemo, For, createEffect } from 'solid-js';
 
 const requirementsList = [
   { label: 'At least 8 characters', test: pw => pw.length >= 8, error: 'at least 8 characters' },

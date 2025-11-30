@@ -1,12 +1,9 @@
 import { createSignal, Show } from 'solid-js';
-import { useBetterAuth } from '@api/better-auth-store.js';
 import { FiBell, FiMoon, FiShield, FiKey, FiEye, FiEyeOff } from 'solid-icons/fi';
 import { LANDING_URL } from '@config/api.js';
 import Switch from '@components/zag/Switch.jsx';
 
 export default function SettingsPage() {
-  const { user } = useBetterAuth();
-
   // Notification settings
   const [emailNotifications, setEmailNotifications] = createSignal(true);
   const [projectUpdates, setProjectUpdates] = createSignal(true);
@@ -50,7 +47,7 @@ export default function SettingsPage() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (error) {
+    } catch {
       setPasswordError('Failed to change password. Please try again.');
     } finally {
       setChangingPassword(false);

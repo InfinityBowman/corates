@@ -86,7 +86,7 @@ export default function AMSTARRobvis(props) {
 
   createEffect(() => {
     // Track greyscale changes to re-render
-    const currentColorMap = colorMap();
+    colorMap();
     if (!data().length) return;
 
     // First, measure the widest label
@@ -242,7 +242,7 @@ export default function AMSTARRobvis(props) {
   });
 
   return (
-    <div style='background: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 16px; margin: 16px 0;'>
+    <div style={{"background":"#ffffff","border-radius":"8px","box-shadow":"0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)","padding":"16px","margin":"16px 0"}}>
       <svg
         ref={setRef}
         style={`width: 100%; height: ${svgHeight()}px; max-width: 100%; display: block;`}

@@ -3,7 +3,7 @@ import AMSTARDistribution from '@components/charts/AMSTARDistribution';
 import ChartSettingsModal from '@components/charts/ChartSettingsModal';
 import { getAnswers } from '@/AMSTAR2/checklist.js';
 import { createMemo, createSignal, createEffect, Show } from 'solid-js';
-import { createStore, produce } from 'solid-js/store';
+import { createStore } from 'solid-js/store';
 import { BiRegularCog } from 'solid-icons/bi';
 
 /**

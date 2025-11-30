@@ -1,4 +1,3 @@
-import { Show } from 'solid-js';
 import { AnimatedShow } from '../AnimatedShow.jsx';
 import { AiOutlineLoading3Quarters } from 'solid-icons/ai';
 
@@ -18,7 +17,7 @@ export function PrimaryButton(props) {
       type={props.type || 'submit'}
       class='w-full py-2 sm:py-3 text-sm sm:text-base bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg sm:rounded-xl shadow transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
       disabled={props.disabled || props.loading}
-      onClick={props.onClick}
+      onClick={() => props.onClick?.()}
     >
       <AnimatedShow when={props.loading} fallback={props.children}>
         <div class='flex items-center'>
@@ -44,7 +43,7 @@ export function SecondaryButton(props) {
       type={props.type || 'button'}
       class='w-full py-2 sm:py-3 text-sm sm:text-base border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg sm:rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed'
       disabled={props.disabled}
-      onClick={props.onClick}
+      onClick={() => props.onClick?.()}
     >
       {props.children}
     </button>
@@ -63,7 +62,7 @@ export function AuthLink(props) {
     <a
       href={props.href}
       class='text-blue-600 hover:underline font-semibold'
-      onClick={props.onClick}
+      onClick={() => props.onClick?.()}
     >
       {props.children}
     </a>
