@@ -4,78 +4,12 @@
  */
 
 import { Show } from 'solid-js';
-
-// Icon components for cleaner JSX
-function UploadIcon() {
-  return (
-    <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-      <path
-        stroke-linecap='round'
-        stroke-linejoin='round'
-        stroke-width='2'
-        d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'
-      />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-      <path
-        stroke-linecap='round'
-        stroke-linejoin='round'
-        stroke-width='2'
-        d='M6 18L18 6M6 6l12 12'
-      />
-    </svg>
-  );
-}
-
-function ChevronLeftIcon() {
-  return (
-    <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-      <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 19l-7-7 7-7' />
-    </svg>
-  );
-}
-
-function ChevronRightIcon() {
-  return (
-    <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-      <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 5l7 7-7 7' />
-    </svg>
-  );
-}
-
-function MinusIcon() {
-  return (
-    <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-      <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M20 12H4' />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-      <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 4v16m8-8H4' />
-    </svg>
-  );
-}
-
-function FitWidthIcon() {
-  return (
-    <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-      <path
-        stroke-linecap='round'
-        stroke-linejoin='round'
-        stroke-width='2'
-        d='M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4'
-      />
-    </svg>
-  );
-}
+import { AiOutlineUpload, AiOutlineClose, AiOutlineMinus, AiOutlinePlus } from 'solid-icons/ai';
+import {
+  BiRegularChevronLeft,
+  BiRegularChevronRight,
+  BiRegularExpandHorizontal,
+} from 'solid-icons/bi';
 
 export default function PdfToolbar(props) {
   // props.readOnly - If true, hides upload/change/clear buttons
@@ -113,7 +47,7 @@ export default function PdfToolbar(props) {
             disabled={!props.libReady}
             class='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shrink-0'
           >
-            <UploadIcon />
+            <AiOutlineUpload class='w-4 h-4' />
             {props.pdfDoc ? 'Change' : 'Open PDF'}
           </button>
         </Show>
@@ -129,7 +63,7 @@ export default function PdfToolbar(props) {
               class='p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors shrink-0'
               title='Clear PDF'
             >
-              <CloseIcon />
+              <AiOutlineClose class='w-4 h-4' />
             </button>
           </Show>
         </Show>
@@ -144,7 +78,7 @@ export default function PdfToolbar(props) {
             class='p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
             title='Previous page'
           >
-            <ChevronLeftIcon />
+            <BiRegularChevronLeft class='w-5 h-5' />
           </button>
           <span class='text-sm text-gray-600 min-w-20 text-center'>
             {props.currentPage} / {props.totalPages}
@@ -155,7 +89,7 @@ export default function PdfToolbar(props) {
             class='p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
             title='Next page'
           >
-            <ChevronRightIcon />
+            <BiRegularChevronRight class='w-5 h-5' />
           </button>
         </div>
 
@@ -167,7 +101,7 @@ export default function PdfToolbar(props) {
             class='p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
             title='Zoom out'
           >
-            <MinusIcon />
+            <AiOutlineMinus class='w-5 h-5' />
           </button>
           <button
             onClick={props.onResetZoom}
@@ -182,14 +116,14 @@ export default function PdfToolbar(props) {
             class='p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
             title='Zoom in'
           >
-            <PlusIcon />
+            <AiOutlinePlus class='w-5 h-5' />
           </button>
           <button
             onClick={props.onFitToWidth}
             class='p-1.5 rounded hover:bg-gray-100 transition-colors'
             title='Fit to width'
           >
-            <FitWidthIcon />
+            <BiRegularExpandHorizontal class='w-5 h-5' />
           </button>
         </div>
       </Show>

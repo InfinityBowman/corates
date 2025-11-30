@@ -59,7 +59,8 @@ export default function usePdfJs(options = {}) {
     resizeObserver = new ResizeObserver(() => {
       const doc = pdfDoc();
       if (doc && canvasRef) {
-        scheduleRender(currentPage());
+        // Re-render when container size changes
+        scheduleRender(currentPage(), scale());
       }
     });
 
@@ -105,14 +106,14 @@ export default function usePdfJs(options = {}) {
   createEffect(() => {
     const doc = pdfDoc();
     const page = currentPage();
-    const s = scale();
+    const currentScale = scale();
     if (doc && page) {
-      scheduleRender(page);
+      scheduleRender(page, currentScale);
     }
   });
 
   // Schedule a render, waiting for canvas to be available
-  function scheduleRender(pageNum) {
+  function scheduleRender(pageNum, scaleValue) {
     if (pendingRender) {
       cancelAnimationFrame(pendingRender);
     }
@@ -120,9 +121,9 @@ export default function usePdfJs(options = {}) {
     pendingRender = requestAnimationFrame(() => {
       pendingRender = null;
       if (canvasRef) {
-        renderPage(pageNum);
+        renderPage(pageNum, scaleValue);
       } else {
-        scheduleRender(pageNum);
+        scheduleRender(pageNum, scaleValue);
       }
     });
   }
@@ -153,7 +154,7 @@ export default function usePdfJs(options = {}) {
     }
   }
 
-  async function renderPage(pageNum) {
+  async function renderPage(pageNum, scaleValue) {
     const doc = pdfDoc();
     if (!doc || !canvasRef) return;
 
@@ -170,13 +171,18 @@ export default function usePdfJs(options = {}) {
 
     try {
       const page = await doc.getPage(pageNum);
-      const viewport = page.getViewport({ scale: scale() });
+      const viewport = page.getViewport({ scale: scaleValue });
 
       const canvas = canvasRef;
       const context = canvas.getContext('2d');
 
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
+      // Account for device pixel ratio for sharp rendering on high-DPI displays
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = viewport.width * dpr;
+      canvas.height = viewport.height * dpr;
+      canvas.style.width = `${viewport.width}px`;
+      canvas.style.height = `${viewport.height}px`;
+      context.scale(dpr, dpr);
       context.clearRect(0, 0, canvas.width, canvas.height);
 
       const renderContext = {
