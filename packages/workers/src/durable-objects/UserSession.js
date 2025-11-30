@@ -17,6 +17,8 @@ export class UserSession {
       'http://localhost:8787',
       'https://corates.org',
       'https://www.corates.org',
+      'https://app.corates.org',
+      'https://api.corates.org',
     ];
     const requestOrigin = request.headers.get('Origin');
     const corsHeaders = {

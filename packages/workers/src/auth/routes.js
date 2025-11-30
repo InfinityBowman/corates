@@ -68,22 +68,30 @@ export async function handleAuthRoutes(request, env, ctx, path) {
 
         // Check if verification was successful
         if (response.status >= 200 && response.status < 400) {
-          // Get auth cookies from the response, but filter out content-type
-          const preservedHeaders = {};
-          for (const [key, value] of response.headers.entries()) {
-            if (key.toLowerCase() !== 'content-type') {
-              preservedHeaders[key] = value;
-            }
-          }
+          // Collect all Set-Cookie headers from the response
+          const setCookieHeaders = response.headers.getSetCookie?.() || [];
+          console.log('Set-Cookie headers from verification:', setCookieHeaders);
+
+          // Build new headers preserving cookies
+          const newHeaders = new Headers();
+
+          // Add CORS headers
+          Object.entries(corsHeaders).forEach(([key, value]) => {
+            newHeaders.set(key, value);
+          });
+
+          // Set content type
+          newHeaders.set('Content-Type', 'text/html; charset=utf-8');
+
+          // Append all Set-Cookie headers (can have multiple)
+          setCookieHeaders.forEach(cookie => {
+            newHeaders.append('Set-Cookie', cookie);
+          });
 
           // Use the existing template from templates.js
           return new Response(getEmailVerificationSuccessPage(), {
             status: 200,
-            headers: {
-              ...preservedHeaders, // Preserve auth cookies but not content-type
-              ...corsHeaders,
-              'Content-Type': 'text/html; charset=utf-8',
-            },
+            headers: newHeaders,
           });
         } else {
           // Handle verification failure using existing template

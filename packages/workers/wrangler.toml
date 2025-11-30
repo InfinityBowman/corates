@@ -57,7 +57,7 @@ routes = [
 ENVIRONMENT = "production"
 AUTH_BASE_URL = "https://api.corates.org"
 ALLOWED_ORIGINS = "https://app.corates.org"
-COOKIE_DOMAIN = "corates.org"
+COOKIE_DOMAIN = ".corates.org"
 
 # Email configuration (non-sensitive)
 # SMTP_HOST = "smtp.gmail.com"

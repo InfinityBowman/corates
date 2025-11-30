@@ -257,7 +257,7 @@ export default function StudyForm(props) {
                 )}
               </For>
               <p class='text-xs text-gray-500'>
-                {uploadedPdfs().length} PDF{uploadedPdfs().length !== 1 ? 's' : ''} will create{' '}
+                {uploadedPdfs().length} PDF{uploadedPdfs().length !== 1 ? 's' : ''} will add{' '}
                 {uploadedPdfs().length} stud{uploadedPdfs().length !== 1 ? 'ies' : 'y'}
               </p>
             </div>
