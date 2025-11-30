@@ -247,7 +247,9 @@ export default function ProjectView() {
 
   // Open reconciliation view for two checklists
   const openReconciliation = (studyId, checklist1Id, checklist2Id) => {
-    navigate(`/projects/${params.projectId}/studies/${studyId}/reconcile/${checklist1Id}/${checklist2Id}`);
+    navigate(
+      `/projects/${params.projectId}/studies/${studyId}/reconcile/${checklist1Id}/${checklist2Id}`,
+    );
   };
 
   // Get assignee name from members list

@@ -35,7 +35,7 @@ export function compareChecklists(checklist1, checklist2) {
     if (!q1 || !q2) continue;
 
     const comparison = compareQuestion(key, q1, q2);
-    
+
     if (comparison.isAgreement) {
       agreements.push({ key, ...comparison });
     } else {
@@ -65,17 +65,17 @@ export function compareChecklists(checklist1, checklist2) {
 export function compareQuestion(questionKey, q1, q2) {
   const answers1 = q1.answers;
   const answers2 = q2.answers;
-  
+
   // Get the final answer (last column) for each
   const finalAnswer1 = getFinalAnswer(answers1, questionKey);
   const finalAnswer2 = getFinalAnswer(answers2, questionKey);
-  
+
   // Check if all individual checkboxes match
   const detailedMatch = answersMatch(answers1, answers2);
-  
+
   // Check if final answers match (main agreement criterion)
   const finalMatch = finalAnswer1 === finalAnswer2;
-  
+
   // Check if critical assessment matches
   const criticalMatch = q1.critical === q2.critical;
 
@@ -105,18 +105,18 @@ export function compareQuestion(questionKey, q1, q2) {
  */
 export function getFinalAnswer(answers, questionKey) {
   if (!Array.isArray(answers) || answers.length === 0) return null;
-  
+
   const lastCol = answers[answers.length - 1];
   if (!Array.isArray(lastCol)) return null;
-  
+
   const idx = lastCol.findIndex(v => v === true);
   if (idx === -1) return null;
-  
+
   // Determine the label based on question type and column length
   const customPatternQuestions = ['q11a', 'q11b', 'q12', 'q15'];
   const customLabels = ['Yes', 'No', 'No MA'];
   const defaultLabels = ['Yes', 'Partial Yes', 'No', 'No MA'];
-  
+
   if (customPatternQuestions.includes(questionKey)) {
     return customLabels[idx] || null;
   }
@@ -138,16 +138,16 @@ export function getFinalAnswer(answers, questionKey) {
 export function answersMatch(answers1, answers2) {
   if (!Array.isArray(answers1) || !Array.isArray(answers2)) return false;
   if (answers1.length !== answers2.length) return false;
-  
+
   for (let i = 0; i < answers1.length; i++) {
     if (!Array.isArray(answers1[i]) || !Array.isArray(answers2[i])) return false;
     if (answers1[i].length !== answers2[i].length) return false;
-    
+
     for (let j = 0; j < answers1[i].length; j++) {
       if (answers1[i][j] !== answers2[i][j]) return false;
     }
   }
-  
+
   return true;
 }
 
@@ -161,7 +161,7 @@ export function answersMatch(answers1, answers2) {
  */
 export function createReconciledChecklist(checklist1, checklist2, selections, metadata = {}) {
   const questionKeys = getQuestionKeys();
-  
+
   const reconciled = {
     name: metadata.name || 'Reconciled Checklist',
     reviewerName: metadata.reviewerName || 'Consensus',
@@ -170,10 +170,10 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
     isReconciled: true,
     sourceChecklists: [checklist1.id, checklist2.id],
   };
-  
+
   for (const key of questionKeys) {
     const selection = selections[key];
-    
+
     if (!selection || selection === 'reviewer1') {
       // Default to reviewer 1 if no selection
       reconciled[key] = JSON.parse(JSON.stringify(checklist1[key]));
@@ -184,7 +184,7 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
       reconciled[key] = JSON.parse(JSON.stringify(selection));
     }
   }
-  
+
   return reconciled;
 }
 
@@ -195,16 +195,16 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
  */
 export function getReconciliationSummary(comparison) {
   const { agreements, disagreements, stats } = comparison;
-  
+
   const criticalDisagreements = disagreements.filter(d => {
     // Check if either reviewer marked as critical or it's a critical question
     return d.reviewer1.critical || d.reviewer2.critical;
   });
-  
+
   const nonCriticalDisagreements = disagreements.filter(d => {
     return !d.reviewer1.critical && !d.reviewer2.critical;
   });
-  
+
   return {
     totalQuestions: stats.total,
     agreementCount: stats.agreed,

@@ -24,10 +24,13 @@ export default function StudyCard(props) {
   // Check if study has PDFs
   const hasPdfs = () => props.study.pdfs && props.study.pdfs.length > 0;
   const firstPdf = () => (hasPdfs() ? props.study.pdfs[0] : null);
-  
+
   // Check if study has enough checklists to reconcile (at least 2)
   const canReconcile = createMemo(() => (props.study.checklists?.length || 0) >= 2);
-  
+
+  // Check if there's a reconciliation in progress
+  const hasReconciliationInProgress = createMemo(() => !!props.study.reconciliation);
+
   // Check if exactly 2 checklists are selected
   const readyToReconcile = createMemo(() => selectedChecklists().length === 2);
 
@@ -100,6 +103,14 @@ export default function StudyCard(props) {
   const startReconciliation = () => {
     if (selectedChecklists().length === 2) {
       props.onReconcile?.(selectedChecklists()[0], selectedChecklists()[1]);
+    }
+  };
+
+  // Resume a reconciliation in progress
+  const resumeReconciliation = () => {
+    const rec = props.study.reconciliation;
+    if (rec) {
+      props.onReconcile?.(rec.checklist1Id, rec.checklist2Id);
     }
   };
 
@@ -205,13 +216,23 @@ export default function StudyCard(props) {
               </svg>
               Add Checklist
             </button>
-            <Show when={canReconcile()}>
+            <Show when={hasReconciliationInProgress()}>
+              <button
+                onClick={resumeReconciliation}
+                class='inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors gap-1.5 bg-green-100 text-green-700 hover:bg-green-200'
+                title='Resume reconciliation in progress'
+              >
+                <BsFileDiff class='w-4 h-4' />
+                Resume Reconciliation
+              </button>
+            </Show>
+            <Show when={canReconcile() && !hasReconciliationInProgress()}>
               <button
                 onClick={() => setReconcileMode(!reconcileMode())}
                 class={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors gap-1.5 ${
-                  reconcileMode()
-                    ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                  reconcileMode() ?
+                    'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                  : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                 }`}
                 title='Compare and reconcile two checklists'
               >
@@ -268,9 +289,9 @@ export default function StudyCard(props) {
                 onClick={startReconciliation}
                 disabled={!readyToReconcile()}
                 class={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                  readyToReconcile()
-                    ? 'bg-purple-600 text-white hover:bg-purple-700'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  readyToReconcile() ?
+                    'bg-purple-600 text-white hover:bg-purple-700'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
               >
                 Compare Checklists

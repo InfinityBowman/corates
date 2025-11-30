@@ -37,24 +37,24 @@ export default function ChecklistRow(props) {
   };
 
   return (
-    <div 
+    <div
       class={`p-4 transition-colors flex items-center justify-between group ${
-        props.reconcileMode 
-          ? props.isSelected 
-            ? 'bg-purple-50 border-l-4 border-purple-500 cursor-pointer' 
-            : 'hover:bg-purple-50/50 cursor-pointer'
-          : 'hover:bg-gray-50'
+        props.reconcileMode ?
+          props.isSelected ?
+            'bg-purple-50 border-l-4 border-purple-500 cursor-pointer'
+          : 'hover:bg-purple-50/50 cursor-pointer'
+        : 'hover:bg-gray-50'
       }`}
       onClick={handleRowClick}
     >
       {/* Selection checkbox in reconcile mode */}
       <Show when={props.reconcileMode}>
         <div class='mr-3'>
-          <div 
+          <div
             class={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-              props.isSelected 
-                ? 'bg-purple-600 border-purple-600' 
-                : 'border-gray-300 hover:border-purple-400'
+              props.isSelected ?
+                'bg-purple-600 border-purple-600'
+              : 'border-gray-300 hover:border-purple-400'
             }`}
           >
             <Show when={props.isSelected}>
@@ -121,7 +121,7 @@ export default function ChecklistRow(props) {
           </Show>
         </div>
       </div>
-      
+
       {/* Actions - hide in reconcile mode */}
       <Show when={!props.reconcileMode}>
         <div class='flex items-center gap-2'>

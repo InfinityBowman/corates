@@ -7,7 +7,7 @@ import { createSignal, createMemo, createEffect, Show, onCleanup } from 'solid-j
 import { useParams, useNavigate } from '@solidjs/router';
 import useProject from '@primitives/useProject.js';
 import projectStore from '@primitives/projectStore.js';
-import ChecklistReconciliation from './compare/ChecklistReconciliation.jsx';
+import ChecklistReconciliation from './ChecklistReconciliation.jsx';
 
 export default function ReconciliationWrapper() {
   const params = useParams();
@@ -90,9 +90,6 @@ export default function ReconciliationWrapper() {
 
   // Get saved reconciliation progress
   const savedProgress = createMemo(() => {
-    // Make sure we're synced before trying to read progress
-    if (!connectionState().synced) return null;
-
     // Only return progress if it matches the current checklists being reconciled
     const progress = getReconciliationProgress(params.studyId);
     if (!progress) return null;
