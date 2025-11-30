@@ -8,6 +8,7 @@ import AuthLayout from '@auth-ui/AuthLayout.jsx';
 import Layout from '@/Layout.jsx';
 import HomePage from '@components/HomePage.jsx';
 import ChecklistYjsWrapper from '@checklist-ui/ChecklistYjsWrapper.jsx';
+import ReconciliationWrapper from '@checklist-ui/ReconciliationWrapper.jsx';
 import ProjectView from '@project-ui/ProjectView.jsx';
 import LocalChecklistView from '@checklist-ui/LocalChecklistView.jsx';
 import ProfilePage from '@components/profile-ui/ProfilePage.jsx';
@@ -38,6 +39,10 @@ export default function AppRoutes() {
         <Route
           path='/projects/:projectId/studies/:studyId/checklists/:checklistId'
           component={ChecklistYjsWrapper}
+        />
+        <Route
+          path='/projects/:projectId/studies/:studyId/reconcile/:checklist1Id/:checklist2Id'
+          component={ReconciliationWrapper}
         />
       </Route>
       <Route path='*' component={NotFoundPage} />

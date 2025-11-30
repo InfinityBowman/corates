@@ -34,7 +34,7 @@ The tools return Solid.js-specific documentation, installation commands, and usa
 - The architecture-goals.md file contains relevant architecture and design patterns to follow.
 - The style-guide.md file contains additional style and formatting guidelines.
 - See vite.config.js or jsconfig.json for path aliases and build configurations.
-- See TESTING.md for testing guidelines and best practices.
+- See TESTING.md for testing guidelines and best practices, do NOT add tests unless asked.
 
 ## Project Guidelines
 

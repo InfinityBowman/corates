@@ -245,6 +245,11 @@ export default function ProjectView() {
     navigate(`/projects/${params.projectId}/studies/${studyId}/checklists/${checklistId}`);
   };
 
+  // Open reconciliation view for two checklists
+  const openReconciliation = (studyId, checklist1Id, checklist2Id) => {
+    navigate(`/projects/${params.projectId}/studies/${studyId}/reconcile/${checklist1Id}/${checklist2Id}`);
+  };
+
   // Get assignee name from members list
   const getAssigneeName = userId => {
     if (!userId) return 'Unassigned';
@@ -385,6 +390,9 @@ export default function ProjectView() {
                     handleCreateChecklist(study.id, type, assigneeId)
                   }
                   onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
+                  onReconcile={(checklist1Id, checklist2Id) =>
+                    openReconciliation(study.id, checklist1Id, checklist2Id)
+                  }
                   onViewPdf={pdf => handleViewPdf(study.id, pdf)}
                   onUploadPdf={file => handleUploadPdf(study.id, file)}
                   onUpdateStudy={updates => handleUpdateStudy(study.id, updates)}
