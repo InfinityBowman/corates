@@ -16,7 +16,7 @@ export default function Home() {
         name='description'
         content='CoRATES streamlines quality and risk-of-bias appraisal with intuitive workflows, real-time collaboration, automatic scoring, and clear visual summaries for evidence synthesis.'
       />
-      <div class='min-h-screen bg-linear-to-b from-gray-50 to-white'>
+      <div class='min-h-screen bg-linear-to-b from-blue-50 to-white'>
         <Navbar />
         <main>
           <Hero />

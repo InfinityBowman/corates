@@ -6,14 +6,11 @@ export default function Hero() {
   return (
     <section class='relative overflow-hidden'>
       <div class='max-w-6xl mx-auto px-6 py-16 md:py-24 text-center'>
-        <div class='inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm font-medium mb-6'>
-          <BsClipboardCheck class='w-4 h-4' />
-          <span>Evidence Synthesis Quality Assessment</span>
-        </div>
-
         <h1 class='text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight max-w-3xl mx-auto'>
-          Collaborative Research Appraisal Tool for
-          <span class='text-blue-600'> Evidence Synthesis</span>
+          <span class='text-blue-600'>Co</span>llaborative <span class='text-blue-600'>R</span>
+          esearch <span class='text-blue-600'>A</span>ppraisal 
+          <span class='text-blue-600'>T</span>ool for
+          <span class='text-blue-600'> E</span>vidence <span class='text-blue-600'>S</span>ynthesis
         </h1>
 
         <p class='text-lg text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto'>
