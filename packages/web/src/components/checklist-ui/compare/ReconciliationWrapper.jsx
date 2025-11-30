@@ -7,7 +7,8 @@ import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import useProject from '@primitives/useProject.js';
 import projectStore from '@primitives/projectStore.js';
-import ChecklistReconciliation from './ChecklistReconciliation.jsx';
+import { downloadPdf } from '@api/pdf-api.js';
+import ReconciliationWithPdf from './ReconciliationWithPdf.jsx';
 
 export default function ReconciliationWrapper() {
   const params = useParams();
@@ -36,6 +37,37 @@ export default function ReconciliationWrapper() {
   });
 
   const members = () => projectStore.getMembers(params.projectId);
+
+  // PDF state
+  const [pdfData, setPdfData] = createSignal(null);
+  const [pdfFileName, setPdfFileName] = createSignal(null);
+  const [pdfLoading, setPdfLoading] = createSignal(false);
+
+  // Get study PDF info
+  const studyPdf = createMemo(() => {
+    const study = currentStudy();
+    if (!study || !study.pdfs || study.pdfs.length === 0) return null;
+    return study.pdfs[0]; // Use the first PDF
+  });
+
+  // Load PDF when study has one
+  createEffect(() => {
+    const pdf = studyPdf();
+    if (pdf && !pdfData() && !pdfLoading()) {
+      setPdfLoading(true);
+      downloadPdf(params.projectId, params.studyId, pdf.fileName)
+        .then(data => {
+          setPdfData(data);
+          setPdfFileName(pdf.fileName);
+        })
+        .catch(err => {
+          console.error('Failed to load PDF:', err);
+        })
+        .finally(() => {
+          setPdfLoading(false);
+        });
+    }
+  });
 
   // Get checklist metadata from store
   const checklist1Meta = createMemo(() => {
@@ -193,7 +225,7 @@ export default function ReconciliationWrapper() {
           </div>
         }
       >
-        <ChecklistReconciliation
+        <ReconciliationWithPdf
           checklist1={checklist1Data()}
           checklist2={checklist2Data()}
           reviewer1Name={getReviewerName(checklist1Meta()?.assignedTo)}
@@ -202,6 +234,9 @@ export default function ReconciliationWrapper() {
           onSaveProgress={handleSaveProgress}
           onSaveReconciled={handleSaveReconciled}
           onCancel={handleCancel}
+          pdfData={pdfData()}
+          pdfFileName={pdfFileName()}
+          pdfLoading={pdfLoading()}
         />
       </Show>
     </Show>
