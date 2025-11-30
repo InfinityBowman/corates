@@ -38,7 +38,7 @@ export default function Hero() {
         <p class='mt-6 text-sm text-gray-500'>
           Want to try it first?{' '}
           <a href={urls.checklist()} class='text-blue-600 hover:text-blue-700 font-medium'>
-            Start a local checklist
+            Start an appraisal
           </a>
         </p>
       </div>

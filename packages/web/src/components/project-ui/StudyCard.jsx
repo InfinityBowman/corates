@@ -2,9 +2,10 @@
  * StudyCard component - Displays a single study with its checklists
  */
 
-import { For, Show, createSignal } from 'solid-js';
+import { For, Show, createSignal, createMemo } from 'solid-js';
 import { CgFileDocument } from 'solid-icons/cg';
 import { BiRegularUpload, BiRegularEdit } from 'solid-icons/bi';
+import { BsFileDiff } from 'solid-icons/bs';
 import ChecklistForm from './ChecklistForm.jsx';
 import ChecklistRow from './ChecklistRow.jsx';
 
@@ -13,6 +14,8 @@ export default function StudyCard(props) {
   const [uploading, setUploading] = createSignal(false);
   const [editing, setEditing] = createSignal(false);
   const [editName, setEditName] = createSignal('');
+  const [reconcileMode, setReconcileMode] = createSignal(false);
+  const [selectedChecklists, setSelectedChecklists] = createSignal([]);
 
   const handleCreateChecklist = (type, assigneeId) => {
     props.onAddChecklist(type, assigneeId);
@@ -21,6 +24,12 @@ export default function StudyCard(props) {
   // Check if study has PDFs
   const hasPdfs = () => props.study.pdfs && props.study.pdfs.length > 0;
   const firstPdf = () => (hasPdfs() ? props.study.pdfs[0] : null);
+  
+  // Check if study has enough checklists to reconcile (at least 2)
+  const canReconcile = createMemo(() => (props.study.checklists?.length || 0) >= 2);
+  
+  // Check if exactly 2 checklists are selected
+  const readyToReconcile = createMemo(() => selectedChecklists().length === 2);
 
   // Handle PDF file selection
   const handleFileSelect = async e => {
@@ -71,6 +80,33 @@ export default function StudyCard(props) {
     } else if (e.key === 'Escape') {
       cancelEdit();
     }
+  };
+
+  // Toggle checklist selection for reconciliation
+  const toggleChecklistSelection = checklistId => {
+    setSelectedChecklists(prev => {
+      if (prev.includes(checklistId)) {
+        return prev.filter(id => id !== checklistId);
+      }
+      // Only allow max 2 selections
+      if (prev.length >= 2) {
+        return [prev[1], checklistId];
+      }
+      return [...prev, checklistId];
+    });
+  };
+
+  // Start reconciliation with selected checklists
+  const startReconciliation = () => {
+    if (selectedChecklists().length === 2) {
+      props.onReconcile?.(selectedChecklists()[0], selectedChecklists()[1]);
+    }
+  };
+
+  // Cancel reconciliation mode
+  const cancelReconcileMode = () => {
+    setReconcileMode(false);
+    setSelectedChecklists([]);
   };
 
   return (
@@ -169,6 +205,20 @@ export default function StudyCard(props) {
               </svg>
               Add Checklist
             </button>
+            <Show when={canReconcile()}>
+              <button
+                onClick={() => setReconcileMode(!reconcileMode())}
+                class={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors gap-1.5 ${
+                  reconcileMode()
+                    ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                }`}
+                title='Compare and reconcile two checklists'
+              >
+                <BsFileDiff class='w-4 h-4' />
+                {reconcileMode() ? 'Cancel' : 'Reconcile'}
+              </button>
+            </Show>
             <button
               onClick={() => props.onDeleteStudy?.()}
               class='inline-flex items-center p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors'
@@ -197,6 +247,39 @@ export default function StudyCard(props) {
         />
       </Show>
 
+      {/* Reconciliation Mode Bar */}
+      <Show when={reconcileMode()}>
+        <div class='px-4 py-3 bg-purple-50 border-b border-purple-200'>
+          <div class='flex items-center justify-between'>
+            <div class='flex items-center gap-2'>
+              <BsFileDiff class='w-4 h-4 text-purple-600' />
+              <span class='text-sm text-purple-800'>
+                Select 2 checklists to compare ({selectedChecklists().length}/2 selected)
+              </span>
+            </div>
+            <div class='flex items-center gap-2'>
+              <button
+                onClick={cancelReconcileMode}
+                class='px-3 py-1 text-sm text-gray-600 hover:text-gray-800 transition-colors'
+              >
+                Cancel
+              </button>
+              <button
+                onClick={startReconciliation}
+                disabled={!readyToReconcile()}
+                class={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                  readyToReconcile()
+                    ? 'bg-purple-600 text-white hover:bg-purple-700'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                Compare Checklists
+              </button>
+            </div>
+          </div>
+        </div>
+      </Show>
+
       {/* Checklists List */}
       <Show
         when={props.study.checklists?.length > 0}
@@ -210,10 +293,13 @@ export default function StudyCard(props) {
               <ChecklistRow
                 checklist={checklist}
                 members={props.members}
-                onOpen={() => props.onOpenChecklist(checklist.id)}
+                onOpen={() => !reconcileMode() && props.onOpenChecklist(checklist.id)}
                 onUpdate={updates => props.onUpdateChecklist?.(checklist.id, updates)}
                 onDelete={() => props.onDeleteChecklist?.(checklist.id)}
                 getAssigneeName={props.getAssigneeName}
+                reconcileMode={reconcileMode()}
+                isSelected={selectedChecklists().includes(checklist.id)}
+                onToggleSelect={() => toggleChecklistSelection(checklist.id)}
               />
             )}
           </For>
