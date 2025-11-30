@@ -26,9 +26,76 @@ function getAnswerBadgeStyle(answer) {
  */
 export default function AnswerPanel(props) {
   const question = () => AMSTAR_CHECKLIST[props.questionKey];
-  const columns = () => question()?.columns || [];
+  // Use passed columns if provided, otherwise get from question
+  const columns = () => props.columns || question()?.columns || [];
   const answers = () => props.answers?.answers || [];
   const critical = () => props.answers?.critical ?? false;
+
+  // Compact mode for multi-part questions - skip header and critical toggle
+  if (props.compact) {
+    return (
+      <div class='space-y-3'>
+        <For each={columns()}>
+          {(col, colIdx) => {
+            const isLastColumn = () => colIdx() === columns().length - 1;
+            const colAnswers = () => answers()[colIdx()] || [];
+
+            return (
+              <div class='border-t border-gray-200 pt-2 first:border-t-0 first:pt-0'>
+                <Show when={col.label}>
+                  <div class='text-xs font-semibold text-gray-700 mb-1'>{col.label}</div>
+                </Show>
+                <div class='space-y-1'>
+                  <For each={col.options}>
+                    {(option, optIdx) => {
+                      const isChecked = () => colAnswers()[optIdx()] === true;
+
+                      return (
+                        <label
+                          class={`flex items-start gap-2 text-xs ${props.readOnly ? '' : 'cursor-pointer hover:bg-gray-50 p-1 rounded -m-1'}`}
+                        >
+                          <Show
+                            when={isLastColumn()}
+                            fallback={
+                              <input
+                                type='checkbox'
+                                checked={isChecked()}
+                                disabled={props.readOnly}
+                                onChange={() =>
+                                  !props.readOnly && props.onCheckboxChange?.(colIdx(), optIdx())
+                                }
+                                class='w-3 h-3 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 shrink-0'
+                              />
+                            }
+                          >
+                            <input
+                              type='radio'
+                              name={`${props.questionKey}-compact-${colIdx()}`}
+                              checked={isChecked()}
+                              disabled={props.readOnly}
+                              onChange={() =>
+                                !props.readOnly && props.onRadioChange?.(colIdx(), optIdx())
+                              }
+                              class='w-3 h-3 mt-0.5 text-blue-600 border-gray-300 focus:ring-blue-500 shrink-0'
+                            />
+                          </Show>
+                          <span
+                            class={`text-xs ${isChecked() ? 'text-gray-900 font-medium' : 'text-gray-600'}`}
+                          >
+                            {option}
+                          </span>
+                        </label>
+                      );
+                    }}
+                  </For>
+                </div>
+              </div>
+            );
+          }}
+        </For>
+      </div>
+    );
+  }
 
   return (
     <div class={`p-4 ${props.isFinal ? 'bg-green-50/30' : ''}`}>
