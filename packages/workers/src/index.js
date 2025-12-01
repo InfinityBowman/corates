@@ -9,13 +9,7 @@ import { ProjectDoc } from './durable-objects/ProjectDoc.js';
 import { EmailQueue } from './durable-objects/EmailQueue.js';
 import { handleAuthRoutes } from './auth/routes.js';
 import { requireAuth } from './auth/config.js';
-import {
-  getCorsHeaders,
-  handlePreflight,
-  wrapWithCors,
-  errorResponse,
-  setEnv,
-} from './middleware/cors.js';
+import { getCorsHeaders, handlePreflight, wrapWithCors, errorResponse } from './middleware/cors.js';
 import { handleProjects } from './routes/projects.js';
 import { handleMembers } from './routes/members.js';
 import { handleUsers } from './routes/users.js';
@@ -28,15 +22,12 @@ export { UserSession, ProjectDoc, EmailQueue };
 
 export default {
   async fetch(request, env, ctx) {
-    // Set environment for CORS origin checks
-    setEnv(env);
-
     const url = new URL(request.url);
     const path = url.pathname;
 
     // Handle CORS preflight
     if (request.method === 'OPTIONS') {
-      return handlePreflight(request);
+      return handlePreflight(request, env);
     }
 
     try {
@@ -57,20 +48,20 @@ export default {
 
       // Health check
       if (path === '/health') {
-        const corsHeaders = getCorsHeaders(request);
+        const corsHeaders = getCorsHeaders(request, env);
         return new Response('OK', {
           headers: { ...corsHeaders, 'Content-Type': 'text/plain' },
         });
       }
 
       // Default response
-      const corsHeaders = getCorsHeaders(request);
+      const corsHeaders = getCorsHeaders(request, env);
       return new Response('Corates Workers API', {
         headers: { ...corsHeaders, 'Content-Type': 'text/plain' },
       });
     } catch (error) {
       console.error('Worker error:', error);
-      return errorResponse('Internal Server Error', 500, request);
+      return errorResponse('Internal Server Error', 500, request, env);
     }
   },
 };
@@ -114,7 +105,7 @@ async function handleAPI(request, env, path) {
     return await handleUsers(request, env, path);
   }
 
-  return errorResponse('Not Found', 404, request);
+  return errorResponse('Not Found', 404, request, env);
 }
 
 /**
@@ -124,14 +115,14 @@ async function handleProjectDoc(request, env, path) {
   const projectId = path.split('/')[3];
 
   if (!projectId) {
-    return errorResponse('Project ID required', 400, request);
+    return errorResponse('Project ID required', 400, request, env);
   }
 
   const id = env.PROJECT_DOC.idFromName(projectId);
   const projectDoc = env.PROJECT_DOC.get(id);
   const response = await projectDoc.fetch(request);
 
-  return wrapWithCors(response, request);
+  return wrapWithCors(response, request, env);
 }
 
 /**
@@ -141,14 +132,14 @@ async function handleUserSession(request, env, path) {
   const sessionId = path.split('/')[3];
 
   if (!sessionId) {
-    return errorResponse('Session ID required', 400, request);
+    return errorResponse('Session ID required', 400, request, env);
   }
 
   const id = env.USER_SESSION.idFromName(sessionId);
   const session = env.USER_SESSION.get(id);
   const response = await session.fetch(request);
 
-  return wrapWithCors(response, request);
+  return wrapWithCors(response, request, env);
 }
 
 /**
@@ -176,26 +167,26 @@ async function handlePdfRoutes(request, env, path) {
   // List PDFs: GET /api/projects/:id/studies/:studyId/pdfs
   if (path.endsWith('/pdfs') && request.method === 'GET') {
     const response = await listPdfs(request, env);
-    return wrapWithCors(response, request);
+    return wrapWithCors(response, request, env);
   }
 
   // Upload PDF: POST /api/projects/:id/studies/:studyId/pdf
   if (path.endsWith('/pdf') && request.method === 'POST') {
     const response = await uploadPdf(request, env);
-    return wrapWithCors(response, request);
+    return wrapWithCors(response, request, env);
   }
 
   // Download PDF: GET /api/projects/:id/studies/:studyId/pdf/:fileName
   if (path.match(/\/pdf\/[^/]+$/) && request.method === 'GET') {
     const response = await downloadPdf(request, env);
-    return wrapWithCors(response, request);
+    return wrapWithCors(response, request, env);
   }
 
   // Delete PDF: DELETE /api/projects/:id/studies/:studyId/pdf/:fileName
   if (path.match(/\/pdf\/[^/]+$/) && request.method === 'DELETE') {
     const response = await deletePdf(request, env);
-    return wrapWithCors(response, request);
+    return wrapWithCors(response, request, env);
   }
 
-  return errorResponse('Not Found', 404, request);
+  return errorResponse('Not Found', 404, request, env);
 }

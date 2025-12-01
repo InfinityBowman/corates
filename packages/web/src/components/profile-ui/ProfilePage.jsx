@@ -249,7 +249,7 @@ export default function ProfilePage() {
             </div>
           </Show>
         </div>
-      </div>
+      </Show>
     </div>
   );
 }
