@@ -6,12 +6,12 @@ This setup provides comprehensive user authentication using BetterAuth with emai
 
 ## Features
 
-- ✅ Email/password authentication with BetterAuth
-- ✅ User data stored in D1 database
-- ✅ Session management with secure tokens
-- ✅ Protected Durable Objects (ChatRoom, CollaborativeDoc, UserSession)
-- ✅ Auth middleware for all API endpoints
-- ✅ WebSocket authentication support
+- Email/password authentication with BetterAuth
+- User data stored in D1 database
+- Session management with secure tokens
+- Protected Durable Objects (ChatRoom, CollaborativeDoc, UserSession)
+- Auth middleware for all API endpoints
+- WebSocket authentication support
 
 ## API Endpoints
 

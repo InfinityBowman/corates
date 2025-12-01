@@ -35,6 +35,7 @@ The tools return Solid.js-specific documentation, installation commands, and usa
 - The style-guide.md file contains additional style and formatting guidelines.
 - See vite.config.js or jsconfig.json for path aliases and build configurations.
 - See TESTING.md for testing guidelines and best practices, do NOT add tests unless asked.
+- Cloudflare Pages is not used in this project; only Cloudflare Workers is used for backend services and frontend deployments.
 
 ## Project Guidelines
 

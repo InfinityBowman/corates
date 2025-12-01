@@ -2,20 +2,33 @@
  * CORS middleware utilities
  */
 
-export let allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:8787',
-  'https://corates.org',
-  'https://www.corates.org',
-  'https://app.corates.org',
-];
+import {
+  getAllowedOrigins,
+  isOriginAllowed,
+  getAccessControlOrigin,
+  STATIC_ORIGINS,
+} from '../config/origins.js';
+
+// Module-level env reference for CORS checks
+let _env = {};
 
 /**
- * Set allowed origins dynamically
+ * Set the environment for origin checks
+ * @param {Object} env - Environment object
+ */
+export function setEnv(env) {
+  _env = env;
+}
+
+/**
+ * Set allowed origins dynamically (deprecated - use setEnv instead)
  * @param {string[]} origins - Array of allowed origin URLs
+ * @deprecated Use setEnv() and the centralized origins config instead
  */
 export function setAllowedOrigins(origins) {
-  allowedOrigins = origins;
+  // For backwards compatibility, we accept this but it's now a no-op
+  // Origins are managed through the centralized config
+  console.warn('setAllowedOrigins is deprecated. Origins are now managed in config/origins.js');
 }
 
 /**
@@ -26,8 +39,7 @@ export function setAllowedOrigins(origins) {
 export function getCorsHeaders(request) {
   const requestOrigin = request.headers.get('Origin');
   return {
-    'Access-Control-Allow-Origin':
-      allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
+    'Access-Control-Allow-Origin': getAccessControlOrigin(requestOrigin, _env),
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers':
       'Content-Type, Authorization, X-File-Name, X-Requested-With, Accept, Origin, User-Agent',

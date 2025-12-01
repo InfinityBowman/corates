@@ -1,4 +1,5 @@
 import { verifyAuth } from '../auth/config.js';
+import { getAccessControlOrigin } from '../config/origins.js';
 
 export class UserSession {
   constructor(state, env) {
@@ -11,19 +12,10 @@ export class UserSession {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // Dynamic CORS headers for credentialed requests
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:8787',
-      'https://corates.org',
-      'https://www.corates.org',
-      'https://app.corates.org',
-      'https://api.corates.org',
-    ];
+    // Dynamic CORS headers for credentialed requests using centralized config
     const requestOrigin = request.headers.get('Origin');
     const corsHeaders = {
-      'Access-Control-Allow-Origin':
-        allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0],
+      'Access-Control-Allow-Origin': getAccessControlOrigin(requestOrigin, this.env),
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, User-Agent',
       'Access-Control-Allow-Credentials': 'true',
