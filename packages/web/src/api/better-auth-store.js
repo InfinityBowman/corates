@@ -2,6 +2,7 @@ import { createSignal, createEffect, createRoot } from 'solid-js';
 import { authClient, useSession } from '@api/auth-client.js';
 import useOnlineStatus from '@primitives/useOnlineStatus.js';
 import projectStore from '@primitives/projectStore.js';
+import { API_BASE } from '@config/api.js';
 
 function createBetterAuthStore() {
   const isOnline = useOnlineStatus();
@@ -250,6 +251,33 @@ function createBetterAuthStore() {
     }
   }
 
+  async function deleteAccount() {
+    try {
+      setAuthError(null);
+      const response = await fetch(`${API_BASE}/api/users/me`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to delete account');
+      }
+
+      // Clear local data
+      projectStore.clearProjectList();
+      localStorage.removeItem('pendingEmail');
+
+      // Sign out after successful deletion
+      await authClient.signOut();
+
+      return { success: true };
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
   return {
     // State
     isLoggedIn,
@@ -266,6 +294,7 @@ function createBetterAuthStore() {
     changePassword,
     resetPassword,
     resendVerificationEmail,
+    deleteAccount,
     authFetch,
     clearAuthError: () => setAuthError(null),
 
