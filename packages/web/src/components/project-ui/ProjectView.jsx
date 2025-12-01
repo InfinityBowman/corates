@@ -9,7 +9,7 @@ import StudyCard from './StudyCard.jsx';
 import StudyForm from './StudyForm.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
 import ChartSection from './ChartSection.jsx';
-import { ConfirmDialog, useConfirmDialog } from '@components/zag/Dialog.jsx';
+import { useConfirmDialog } from '@components/zag/Dialog.jsx';
 import { showToast } from '@components/zag/Toast.jsx';
 
 export default function ProjectView() {
