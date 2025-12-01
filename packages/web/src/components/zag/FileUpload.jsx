@@ -1,0 +1,37 @@
+import * as fileUpload from "@zag-js/file-upload"
+import { normalizeProps, useMachine } from "@zag-js/solid"
+import { createUniqueId, createMemo, Index } from "solid-js"
+
+export function FileUpload() {
+  const service = useMachine(fileUpload.machine, {
+    id: createUniqueId(),
+  })
+
+  const api = createMemo(() => fileUpload.connect(service, normalizeProps))
+
+  return (
+    <div {...api().getRootProps()}>
+      <div {...api().getDropzoneProps()}>
+        <input {...api().getHiddenInputProps()} />
+        <span>Drag your file(s) here</span>
+      </div>
+
+      <button {...api().getTriggerProps()}>Choose file(s)</button>
+
+      <ul {...api().getItemGroupProps()}>
+        <Index each={api().acceptedFiles}>
+          {(file) => (
+            <li {...api().getItemProps({ file: file() })}>
+              <div {...api().getItemNameProps({ file: file() })}>
+                {file().name}
+              </div>
+              <button {...api().getItemDeleteTriggerProps({ file: file() })}>
+                Delete
+              </button>
+            </li>
+          )}
+        </Index>
+      </ul>
+    </div>
+  )
+}

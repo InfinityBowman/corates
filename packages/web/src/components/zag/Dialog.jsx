@@ -1,0 +1,208 @@
+import * as dialog from '@zag-js/dialog';
+import { Portal } from 'solid-js/web';
+import { useMachine, normalizeProps } from '@zag-js/solid';
+import { createMemo, createUniqueId, Show, createSignal } from 'solid-js';
+import { FiAlertTriangle, FiX } from 'solid-icons/fi';
+
+/**
+ * ConfirmDialog - A reusable confirmation dialog component
+ *
+ * Props:
+ * - open: boolean - Whether the dialog is open
+ * - onOpenChange: (open: boolean) => void - Callback when open state changes
+ * - onConfirm: () => void - Callback when user confirms
+ * - title: string - Dialog title
+ * - description: string - Dialog description/message
+ * - confirmText: string - Text for confirm button (default: "Confirm")
+ * - cancelText: string - Text for cancel button (default: "Cancel")
+ * - variant: 'danger' | 'warning' | 'info' - Visual variant (default: 'danger')
+ * - loading: boolean - Whether confirm action is in progress
+ */
+export default function ConfirmDialog(props) {
+  const service = useMachine(dialog.machine, {
+    id: createUniqueId(),
+    role: 'alertdialog',
+    open: () => props.open,
+    onOpenChange: details => props.onOpenChange?.(details.open),
+    closeOnInteractOutside: () => !props.loading,
+    closeOnEscape: () => !props.loading,
+  });
+
+  const api = createMemo(() => dialog.connect(service, normalizeProps));
+
+  const variant = () => props.variant || 'danger';
+
+  const getVariantStyles = () => {
+    switch (variant()) {
+      case 'warning':
+        return {
+          icon: 'text-amber-500',
+          iconBg: 'bg-amber-100',
+          button: 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500',
+        };
+      case 'info':
+        return {
+          icon: 'text-blue-500',
+          iconBg: 'bg-blue-100',
+          button: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500',
+        };
+      default: // danger
+        return {
+          icon: 'text-red-500',
+          iconBg: 'bg-red-100',
+          button: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
+        };
+    }
+  };
+
+  const handleConfirm = () => {
+    props.onConfirm?.();
+  };
+
+  const handleCancel = () => {
+    if (!props.loading) {
+      props.onOpenChange?.(false);
+    }
+  };
+
+  return (
+    <Show when={api().open}>
+      <Portal>
+        {/* Backdrop */}
+        <div
+          {...api().getBackdropProps()}
+          class='fixed inset-0 bg-black/50 z-50 transition-opacity'
+        />
+        {/* Positioner */}
+        <div
+          {...api().getPositionerProps()}
+          class='fixed inset-0 z-50 flex items-center justify-center p-4'
+        >
+          {/* Content */}
+          <div
+            {...api().getContentProps()}
+            class='bg-white rounded-lg shadow-xl max-w-md w-full overflow-hidden'
+          >
+            <div class='p-6'>
+              <div class='flex items-start gap-4'>
+                {/* Icon */}
+                <div class={`shrink-0 p-2 rounded-full ${getVariantStyles().iconBg}`}>
+                  <FiAlertTriangle class={`w-6 h-6 ${getVariantStyles().icon}`} />
+                </div>
+                {/* Text content */}
+                <div class='flex-1 min-w-0'>
+                  <h2 {...api().getTitleProps()} class='text-lg font-semibold text-gray-900'>
+                    {props.title}
+                  </h2>
+                  <p {...api().getDescriptionProps()} class='mt-2 text-sm text-gray-600'>
+                    {props.description}
+                  </p>
+                </div>
+                {/* Close button */}
+                <button
+                  {...api().getCloseTriggerProps()}
+                  disabled={props.loading}
+                  class='shrink-0 p-1 text-gray-400 hover:text-gray-500 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                >
+                  <FiX class='w-5 h-5' />
+                </button>
+              </div>
+            </div>
+            {/* Actions */}
+            <div class='px-6 py-4 bg-gray-50 flex justify-end gap-3'>
+              <button
+                onClick={handleCancel}
+                disabled={props.loading}
+                class='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+              >
+                {props.cancelText || 'Cancel'}
+              </button>
+              <button
+                onClick={handleConfirm}
+                disabled={props.loading}
+                class={`px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getVariantStyles().button}`}
+              >
+                {props.loading ? 'Please wait...' : props.confirmText || 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Portal>
+    </Show>
+  );
+}
+
+/**
+ * useConfirmDialog - Hook to manage confirm dialog state
+ *
+ * Returns:
+ * - isOpen: () => boolean
+ * - open: (config) => Promise<boolean> - Opens dialog, returns true if confirmed
+ * - close: () => void
+ * - dialogProps: object - Props to spread on ConfirmDialog
+ */
+export function useConfirmDialog() {
+  const [isOpen, setIsOpen] = createSignal(false);
+  const [config, setConfig] = createSignal({
+    title: '',
+    description: '',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    variant: 'danger',
+  });
+  const [loading, setLoading] = createSignal(false);
+
+  let resolvePromise = null;
+
+  const open = dialogConfig => {
+    return new Promise(resolve => {
+      resolvePromise = resolve;
+      setConfig({
+        title: dialogConfig.title || 'Confirm',
+        description: dialogConfig.description || 'Are you sure?',
+        confirmText: dialogConfig.confirmText || 'Confirm',
+        cancelText: dialogConfig.cancelText || 'Cancel',
+        variant: dialogConfig.variant || 'danger',
+      });
+      setIsOpen(true);
+    });
+  };
+
+  const close = () => {
+    setIsOpen(false);
+    setLoading(false);
+    if (resolvePromise) {
+      resolvePromise(false);
+      resolvePromise = null;
+    }
+  };
+
+  const handleConfirm = () => {
+    if (resolvePromise) {
+      resolvePromise(true);
+      resolvePromise = null;
+    }
+    setIsOpen(false);
+    setLoading(false);
+  };
+
+  const handleOpenChange = newOpen => {
+    if (!newOpen) {
+      close();
+    }
+  };
+
+  return {
+    isOpen,
+    open,
+    close,
+    setLoading,
+    dialogProps: () => ({
+      open: isOpen(),
+      onOpenChange: handleOpenChange,
+      onConfirm: handleConfirm,
+      loading: loading(),
+      ...config(),
+    }),
+  };
+}

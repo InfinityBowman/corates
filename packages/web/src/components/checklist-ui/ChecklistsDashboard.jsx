@@ -1,6 +1,7 @@
 import { createSignal, For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
+import { ConfirmDialog, useConfirmDialog } from '@components/zag/Dialog.jsx';
 
 export default function ChecklistsDashboard(props) {
   const navigate = useNavigate();
@@ -11,6 +12,9 @@ export default function ChecklistsDashboard(props) {
   const isLoggedIn = () => props.isLoggedIn ?? false;
 
   const { checklists, loading, createChecklist, deleteChecklist } = useLocalChecklists();
+
+  // Confirm dialog for delete actions
+  const confirmDialog = useConfirmDialog();
 
   const handleCreate = async () => {
     if (!newChecklistName().trim()) return;
@@ -38,7 +42,13 @@ export default function ChecklistsDashboard(props) {
 
   const handleDelete = async (e, checklistId) => {
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this checklist? This cannot be undone.')) {
+    const confirmed = await confirmDialog.open({
+      title: 'Delete Checklist',
+      description: 'Are you sure you want to delete this checklist? This cannot be undone.',
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (confirmed) {
       await deleteChecklist(checklistId);
     }
   };
@@ -190,6 +200,8 @@ export default function ChecklistsDashboard(props) {
           </For>
         </Show>
       </div>
+
+      <confirmDialog.ConfirmDialogComponent />
     </div>
   );
 }

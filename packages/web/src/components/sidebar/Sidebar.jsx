@@ -5,6 +5,7 @@ import { useLocalChecklists } from '@primitives/useLocalChecklists.js';
 import { useProjectData } from '@primitives/useProjectData.js';
 import projectStore from '@primitives/projectStore.js';
 import Collapsible from '@components/zag/Collapsible.jsx';
+import { ConfirmDialog, useConfirmDialog } from '@components/zag/Dialog.jsx';
 import { AiOutlineFolder, AiOutlineFolderOpen } from 'solid-icons/ai';
 import { AiOutlineCloud } from 'solid-icons/ai';
 import { HiOutlineDocumentCheck } from 'solid-icons/hi';
@@ -28,6 +29,10 @@ export default function Sidebar(props) {
   const cloudProjects = () => projectStore.getProjectList();
   const isProjectsLoading = () => projectStore.isProjectListLoading();
 
+  // Confirm dialog for delete actions
+  const confirmDialog = useConfirmDialog();
+  const [pendingDeleteId, setPendingDeleteId] = createSignal(null);
+
   // Fetch projects if user is logged in
   createEffect(() => {
     const userId = user()?.id;
@@ -47,9 +52,17 @@ export default function Sidebar(props) {
 
   const handleDeleteLocalChecklist = async (e, checklistId) => {
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this checklist? This cannot be undone.')) {
+    setPendingDeleteId(checklistId);
+    const confirmed = await confirmDialog.open({
+      title: 'Delete Checklist',
+      description: 'Are you sure you want to delete this checklist? This cannot be undone.',
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (confirmed) {
       await deleteChecklist(checklistId);
     }
+    setPendingDeleteId(null);
   };
 
   return (
@@ -172,6 +185,8 @@ export default function Sidebar(props) {
           <div class='h-8' />
         </div>
       </div>
+
+      <confirmDialog.ConfirmDialogComponent />
     </div>
   );
 }
