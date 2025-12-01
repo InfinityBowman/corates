@@ -174,80 +174,82 @@ export default function ProfilePage() {
       </div>
 
       {/* Danger Zone */}
-      <div class='mt-8 bg-white rounded-lg shadow-sm border border-red-200 overflow-hidden'>
-        <div class='px-6 py-4 border-b border-red-200 bg-red-50'>
-          <div class='flex items-center space-x-2'>
-            <FiAlertTriangle class='w-5 h-5 text-red-600' />
-            <h3 class='text-lg font-medium text-red-800'>Danger Zone</h3>
-          </div>
-        </div>
-        <div class='p-6'>
-          <Show
-            when={showDeleteConfirm()}
-            fallback={
-              <div class='flex items-center justify-between'>
-                <div>
-                  <p class='font-medium text-gray-900'>Delete Account</p>
-                  <p class='text-sm text-gray-500'>
-                    Permanently delete your account and all associated data.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  class='px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition'
-                >
-                  Delete Account
-                </button>
-              </div>
-            }
-          >
-            <div class='space-y-4'>
-              <div class='p-4 bg-red-50 border border-red-200 rounded-md'>
-                <p class='text-sm text-red-800 font-medium mb-2'>
-                  Are you sure you want to delete your account?
-                </p>
-                <ul class='text-sm text-red-700 list-disc list-inside space-y-1'>
-                  <li>All your projects will be permanently deleted</li>
-                  <li>All your checklists and reviews will be lost</li>
-                  <li>You will be removed from all shared projects</li>
-                  <li>This action cannot be undone</li>
-                </ul>
-              </div>
-
-              <div>
-                <label class='block text-sm font-medium text-gray-700 mb-1'>
-                  Type <span class='font-mono font-bold'>DELETE</span> to confirm
-                </label>
-                <input
-                  type='text'
-                  value={deleteConfirmText()}
-                  onInput={e => setDeleteConfirmText(e.target.value)}
-                  class='block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 text-sm'
-                  placeholder='DELETE'
-                />
-              </div>
-
-              <div class='flex space-x-3'>
-                <button
-                  onClick={handleDeleteAccount}
-                  disabled={deletingAccount() || deleteConfirmText() !== 'DELETE'}
-                  class='px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed'
-                >
-                  {deletingAccount() ? 'Deleting...' : 'Permanently Delete Account'}
-                </button>
-                <button
-                  type='button'
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setDeleteConfirmText('');
-                  }}
-                  class='px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition'
-                >
-                  Cancel
-                </button>
-              </div>
+      <Show when={user()}>
+        <div class='mt-8 bg-white rounded-lg shadow-sm border border-red-200 overflow-hidden'>
+          <div class='px-6 py-4 border-b border-red-200 bg-red-50'>
+            <div class='flex items-center space-x-2'>
+              <FiAlertTriangle class='w-5 h-5 text-red-600' />
+              <h3 class='text-lg font-medium text-red-800'>Danger Zone</h3>
             </div>
-          </Show>
+          </div>
+          <div class='p-6'>
+            <Show
+              when={showDeleteConfirm()}
+              fallback={
+                <div class='flex items-center justify-between'>
+                  <div>
+                    <p class='font-medium text-gray-900'>Delete Account</p>
+                    <p class='text-sm text-gray-500'>
+                      Permanently delete your account and all associated data.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    class='px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition'
+                  >
+                    Delete Account
+                  </button>
+                </div>
+              }
+            >
+              <div class='space-y-4'>
+                <div class='p-4 bg-red-50 border border-red-200 rounded-md'>
+                  <p class='text-sm text-red-800 font-medium mb-2'>
+                    Are you sure you want to delete your account?
+                  </p>
+                  <ul class='text-sm text-red-700 list-disc list-inside space-y-1'>
+                    <li>All your projects will be permanently deleted</li>
+                    <li>All your checklists and reviews will be lost</li>
+                    <li>You will be removed from all shared projects</li>
+                    <li>This action cannot be undone</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <label class='block text-sm font-medium text-gray-700 mb-1'>
+                    Type <span class='font-mono font-bold'>DELETE</span> to confirm
+                  </label>
+                  <input
+                    type='text'
+                    value={deleteConfirmText()}
+                    onInput={e => setDeleteConfirmText(e.target.value)}
+                    class='block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 text-sm'
+                    placeholder='DELETE'
+                  />
+                </div>
+
+                <div class='flex space-x-3'>
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={deletingAccount() || deleteConfirmText() !== 'DELETE'}
+                    class='px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed'
+                  >
+                    {deletingAccount() ? 'Deleting...' : 'Permanently Delete Account'}
+                  </button>
+                  <button
+                    type='button'
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setDeleteConfirmText('');
+                    }}
+                    class='px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition'
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </Show>
+          </div>
         </div>
       </Show>
     </div>

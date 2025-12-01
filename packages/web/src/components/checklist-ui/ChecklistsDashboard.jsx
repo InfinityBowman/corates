@@ -1,7 +1,7 @@
 import { createSignal, For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
-import { ConfirmDialog, useConfirmDialog } from '@components/zag/Dialog.jsx';
+import { useConfirmDialog } from '@components/zag/Dialog.jsx';
 
 export default function ChecklistsDashboard(props) {
   const navigate = useNavigate();
