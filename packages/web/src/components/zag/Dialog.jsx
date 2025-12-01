@@ -22,10 +22,16 @@ export default function ConfirmDialog(props) {
   const service = useMachine(dialog.machine, {
     id: createUniqueId(),
     role: 'alertdialog',
-    open: () => props.open,
+    get open() {
+      return props.open;
+    },
     onOpenChange: details => props.onOpenChange?.(details.open),
-    closeOnInteractOutside: () => !props.loading,
-    closeOnEscape: () => !props.loading,
+    get closeOnInteractOutside() {
+      return !props.loading;
+    },
+    get closeOnEscape() {
+      return !props.loading;
+    },
   });
 
   const api = createMemo(() => dialog.connect(service, normalizeProps));
@@ -192,11 +198,25 @@ export function useConfirmDialog() {
     }
   };
 
+  // Pre-bound component that uses the hook's state
+  function ConfirmDialogComponent() {
+    return (
+      <ConfirmDialog
+        open={isOpen()}
+        onOpenChange={handleOpenChange}
+        onConfirm={handleConfirm}
+        loading={loading()}
+        {...config()}
+      />
+    );
+  }
+
   return {
     isOpen,
     open,
     close,
     setLoading,
+    ConfirmDialogComponent,
     dialogProps: () => ({
       open: isOpen(),
       onOpenChange: handleOpenChange,

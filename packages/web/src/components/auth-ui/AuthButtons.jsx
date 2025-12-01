@@ -62,7 +62,7 @@ export function AuthLink(props) {
     <a
       href={props.href}
       class='text-blue-600 hover:underline font-semibold'
-      onClick={() => props.onClick?.()}
+      onClick={e => props.onClick?.(e)}
     >
       {props.children}
     </a>
