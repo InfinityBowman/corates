@@ -1,0 +1,20 @@
+import * as tooltip from '@zag-js/tooltip';
+import { normalizeProps, useMachine } from '@zag-js/solid';
+import { createMemo, createUniqueId, Show } from 'solid-js';
+
+export function Tooltip() {
+  const service = useMachine(tooltip.machine, { id: createUniqueId() });
+
+  const api = createMemo(() => tooltip.connect(service, normalizeProps));
+
+  return (
+    <div>
+      <button {...api().getTriggerProps()}>Hover me</button>
+      <Show when={api().open}>
+        <div {...api().getPositionerProps()}>
+          <div {...api().getContentProps()}>Tooltip</div>
+        </div>
+      </Show>
+    </div>
+  );
+}

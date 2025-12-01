@@ -1,9 +1,7 @@
 import { For } from 'solid-js';
-import { AiOutlineArrowRight } from 'solid-icons/ai';
 import { FaSolidGraduationCap } from 'solid-icons/fa';
 import { BiRegularPlusMedical } from 'solid-icons/bi';
 import { BsBook } from 'solid-icons/bs';
-import { urls } from '~/lib/config';
 
 export default function Audience() {
   const audiences = [
@@ -47,16 +45,6 @@ export default function Audience() {
               </div>
             )}
           </For>
-        </div>
-
-        <div class='text-center'>
-          <a
-            href={urls.checklist()}
-            class='inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors'
-          >
-            Try It Free - No Account Needed
-            <AiOutlineArrowRight class='w-5 h-5' />
-          </a>
         </div>
       </div>
     </section>
