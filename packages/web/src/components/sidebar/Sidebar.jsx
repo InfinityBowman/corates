@@ -167,7 +167,7 @@ export default function Sidebar(props) {
                 </div>
               }
             >
-              <For each={checklists()}>
+              <For each={checklists()?.filter(c => c?.id)}>
                 {checklist => (
                   <LocalChecklistItem
                     checklist={checklist}
