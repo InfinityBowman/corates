@@ -1,4 +1,3 @@
-import { AiOutlineArrowRight } from 'solid-icons/ai';
 import { urls } from '~/lib/config';
 
 export default function Navbar() {
@@ -26,8 +25,7 @@ export default function Navbar() {
           href={urls.signUp()}
           class='inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm'
         >
-          Get Started
-          <AiOutlineArrowRight class='w-4 h-4' />
+          Sign Up
         </a>
       </div>
     </nav>
