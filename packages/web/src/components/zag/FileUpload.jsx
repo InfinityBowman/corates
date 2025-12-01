@@ -1,13 +1,13 @@
-import * as fileUpload from "@zag-js/file-upload"
-import { normalizeProps, useMachine } from "@zag-js/solid"
-import { createUniqueId, createMemo, Index } from "solid-js"
+import * as fileUpload from '@zag-js/file-upload';
+import { normalizeProps, useMachine } from '@zag-js/solid';
+import { createUniqueId, createMemo, Index } from 'solid-js';
 
 export function FileUpload() {
   const service = useMachine(fileUpload.machine, {
     id: createUniqueId(),
-  })
+  });
 
-  const api = createMemo(() => fileUpload.connect(service, normalizeProps))
+  const api = createMemo(() => fileUpload.connect(service, normalizeProps));
 
   return (
     <div {...api().getRootProps()}>
@@ -20,18 +20,14 @@ export function FileUpload() {
 
       <ul {...api().getItemGroupProps()}>
         <Index each={api().acceptedFiles}>
-          {(file) => (
+          {file => (
             <li {...api().getItemProps({ file: file() })}>
-              <div {...api().getItemNameProps({ file: file() })}>
-                {file().name}
-              </div>
-              <button {...api().getItemDeleteTriggerProps({ file: file() })}>
-                Delete
-              </button>
+              <div {...api().getItemNameProps({ file: file() })}>{file().name}</div>
+              <button {...api().getItemDeleteTriggerProps({ file: file() })}>Delete</button>
             </li>
           )}
         </Index>
       </ul>
     </div>
-  )
+  );
 }
