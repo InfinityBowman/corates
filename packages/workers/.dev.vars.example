@@ -10,8 +10,5 @@ EMAIL_FROM=your-email@gmail.com
 # Resend API key
 RESEND_API_KEY=your-resend-api-key
 
-# Email testing (uncomment to send real emails in development)
-# SEND_EMAILS_IN_DEV=true
-
-# CORS allowed origins
-ALLOWED_ORIGINS=http://localhost:5173,http://localhost:8787,https://app.corates.org
+# Email testing (set to true to send real emails)
+# SEND_EMAILS_IN_DEV=false

@@ -14,7 +14,7 @@ import {
   handlePreflight,
   wrapWithCors,
   errorResponse,
-  setAllowedOrigins,
+  setEnv,
 } from './middleware/cors.js';
 import { handleProjects } from './routes/projects.js';
 import { handleMembers } from './routes/members.js';
@@ -28,10 +28,9 @@ export { UserSession, ProjectDoc, EmailQueue };
 
 export default {
   async fetch(request, env, ctx) {
-    // Set allowed origins from environment
-    if (env.ALLOWED_ORIGINS) {
-      setAllowedOrigins(env.ALLOWED_ORIGINS.split(','));
-    }
+    // Set environment for CORS origin checks
+    setEnv(env);
+
     const url = new URL(request.url);
     const path = url.pathname;
 

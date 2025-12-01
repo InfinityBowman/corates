@@ -4,6 +4,7 @@ import { drizzle } from 'drizzle-orm/d1';
 import * as schema from '../db/schema.js';
 import { createEmailService } from './email.js';
 import { errorResponse } from '../middleware/cors.js';
+import { getAllowedOrigins } from '../config/origins.js';
 
 export function createAuth(env, ctx) {
   // Initialize Drizzle with D1
@@ -106,15 +107,8 @@ export function createAuth(env, ctx) {
     secret: env.AUTH_SECRET || 'fallback-secret-change-in-production',
     baseURL: env.AUTH_BASE_URL || 'http://localhost:8787',
 
-    trustedOrigins: [
-      'http://localhost:5173', // Vite dev server
-      'http://localhost:8787', // Worker dev server
-      'https://corates.org',
-      'https://www.corates.org',
-      'https://app.corates.org', // Main app subdomain
-      'https://api.corates.org',
-      env.AUTH_BASE_URL || 'http://localhost:8787',
-    ],
+    // Use centralized origin configuration
+    trustedOrigins: getAllowedOrigins(env),
 
     advanced: {
       crossSubDomainCookies: {
