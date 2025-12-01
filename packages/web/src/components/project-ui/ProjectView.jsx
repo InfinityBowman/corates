@@ -9,12 +9,17 @@ import StudyCard from './StudyCard.jsx';
 import StudyForm from './StudyForm.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
 import ChartSection from './ChartSection.jsx';
+import { ConfirmDialog, useConfirmDialog } from '@components/zag/Dialog.jsx';
+import { showToast } from '@components/zag/Toast.jsx';
 
 export default function ProjectView() {
   const params = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useBetterAuth();
+
+  // Confirm dialog for destructive actions
+  const confirmDialog = useConfirmDialog();
 
   // Study form state
   const [showStudyForm, setShowStudyForm] = createSignal(false);
@@ -148,18 +153,20 @@ export default function ProjectView() {
 
   // Delete a study
   const handleDeleteStudy = async studyId => {
-    if (
-      !confirm(
+    const confirmed = await confirmDialog.open({
+      title: 'Delete Study',
+      description:
         'Are you sure you want to delete this study? This will also delete all checklists in it.',
-      )
-    ) {
-      return;
-    }
+      confirmText: 'Delete Study',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
     try {
       deleteStudy(studyId);
     } catch (err) {
       console.error('Error deleting study:', err);
-      alert('Failed to delete study');
+      showToast.error('Delete Failed', 'Failed to delete study');
     }
   };
 
@@ -169,20 +176,25 @@ export default function ProjectView() {
       updateStudy(studyId, updates);
     } catch (err) {
       console.error('Error updating study:', err);
-      alert('Failed to update study');
+      showToast.error('Update Failed', 'Failed to update study');
     }
   };
 
   // Delete a checklist
   const handleDeleteChecklist = async (studyId, checklistId) => {
-    if (!confirm('Are you sure you want to delete this checklist?')) {
-      return;
-    }
+    const confirmed = await confirmDialog.open({
+      title: 'Delete Checklist',
+      description: 'Are you sure you want to delete this checklist?',
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
     try {
       deleteChecklist(studyId, checklistId);
     } catch (err) {
       console.error('Error deleting checklist:', err);
-      alert('Failed to delete checklist');
+      showToast.error('Delete Failed', 'Failed to delete checklist');
     }
   };
 
@@ -192,17 +204,21 @@ export default function ProjectView() {
       updateChecklist(studyId, checklistId, updates);
     } catch (err) {
       console.error('Error updating checklist:', err);
-      alert('Failed to update checklist');
+      showToast.error('Update Failed', 'Failed to update checklist');
     }
   };
 
   // Delete the entire project
   const handleDeleteProject = async () => {
-    if (
-      !confirm('Are you sure you want to delete this entire project? This action cannot be undone.')
-    ) {
-      return;
-    }
+    const confirmed = await confirmDialog.open({
+      title: 'Delete Project',
+      description:
+        'Are you sure you want to delete this entire project? This action cannot be undone.',
+      confirmText: 'Delete Project',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
     try {
       const response = await fetch(`${API_BASE}/api/projects/${params.projectId}`, {
         method: 'DELETE',
@@ -217,7 +233,7 @@ export default function ProjectView() {
       navigate('/dashboard', { replace: true });
     } catch (err) {
       console.error('Error deleting project:', err);
-      alert(err.message || 'Failed to delete project');
+      showToast.error('Delete Failed', err.message || 'Failed to delete project');
     }
   };
 
@@ -471,6 +487,8 @@ export default function ProjectView() {
         onClose={() => setShowAddMemberModal(false)}
         projectId={params.projectId}
       />
+
+      <confirmDialog.ConfirmDialogComponent />
     </div>
   );
 }
