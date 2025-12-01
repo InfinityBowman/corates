@@ -3,7 +3,7 @@
  */
 
 import { createDb } from '../db/client.js';
-import { projects, projectMembers, user } from '../db/schema.js';
+import { projects, projectMembers, user, session, account, verification } from '../db/schema.js';
 import { eq, desc, or, like, sql } from 'drizzle-orm';
 import { requireAuth } from '../auth/config.js';
 import { jsonResponse, errorResponse } from '../middleware/cors.js';
@@ -12,11 +12,17 @@ import { jsonResponse, errorResponse } from '../middleware/cors.js';
  * Handle user routes
  * - GET /api/users/search?q=query&projectId=xxx - Search users by name/email
  * - GET /api/users/:userId/projects - Get user's projects
+ * - DELETE /api/users/me - Delete current user's account
  */
 export async function handleUsers(request, env, path) {
   const authResult = await requireAuth(request, env);
   if (authResult instanceof Response) {
     return authResult;
+  }
+
+  // Delete account endpoint: DELETE /api/users/me
+  if (path === '/api/users/me' && request.method === 'DELETE') {
+    return await deleteAccount(request, env, authResult.user);
   }
 
   // User search endpoint: GET /api/users/search?q=query
@@ -155,5 +161,44 @@ async function getUserProjects(request, env, userId) {
   } catch (error) {
     console.error('Error fetching user projects:', error);
     return errorResponse('Failed to fetch projects', 500, request);
+  }
+}
+
+/**
+ * Delete current user's account and all associated data
+ */
+async function deleteAccount(request, env, currentUser) {
+  try {
+    const db = createDb(env.DB);
+    const userId = currentUser.id;
+
+    // Delete in order to respect foreign key constraints
+    // (though CASCADE should handle most of this)
+
+    // 1. Delete project memberships
+    await db.delete(projectMembers).where(eq(projectMembers.userId, userId));
+
+    // 2. Delete projects where user is the creator
+    // Note: This will cascade delete project members for those projects
+    await db.delete(projects).where(eq(projects.createdBy, userId));
+
+    // 3. Delete verifications
+    await db.delete(verification).where(eq(verification.identifier, currentUser.email));
+
+    // 4. Delete accounts (OAuth/password)
+    await db.delete(account).where(eq(account.userId, userId));
+
+    // 5. Delete sessions
+    await db.delete(session).where(eq(session.userId, userId));
+
+    // 6. Finally, delete the user
+    await db.delete(user).where(eq(user.id, userId));
+
+    console.log(`Account deleted successfully for user: ${userId}`);
+
+    return jsonResponse({ success: true, message: 'Account deleted successfully' }, {}, request);
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    return errorResponse('Failed to delete account', 500, request);
   }
 }
