@@ -1,6 +1,7 @@
 import { createSignal, onMount } from 'solid-js';
 import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/sidebar/Sidebar.jsx';
+import { Toaster } from '@components/zag/Toast.jsx';
 
 const SIDEBAR_STORAGE_KEY = 'corates-sidebar-open';
 
@@ -29,6 +30,7 @@ export default function MainLayout(props) {
         <Sidebar open={sidebarOpen()} />
         <main class='flex-1 overflow-auto text-gray-900'>{props.children}</main>
       </div>
+      <Toaster />
     </div>
   );
 }

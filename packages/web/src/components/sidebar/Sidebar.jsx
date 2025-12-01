@@ -2,14 +2,13 @@ import { Show, For, createSignal, createEffect } from 'solid-js';
 import { useNavigate, useLocation } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useLocalChecklists } from '@primitives/useLocalChecklists.js';
-import { useProjectData } from '@primitives/useProjectData.js';
 import projectStore from '@primitives/projectStore.js';
-import Collapsible from '@components/zag/Collapsible.jsx';
-import { AiOutlineFolder, AiOutlineFolderOpen } from 'solid-icons/ai';
+import { useConfirmDialog } from '@components/zag/Dialog.jsx';
+import { AiOutlineFolder } from 'solid-icons/ai';
 import { AiOutlineCloud } from 'solid-icons/ai';
 import { HiOutlineDocumentCheck } from 'solid-icons/hi';
 import { AiOutlineHome } from 'solid-icons/ai';
-import StudyTreeItem from './StudyTreeItem.jsx';
+import ProjectTreeItem from './ProjectTreeItem.jsx';
 import LocalChecklistItem from './LocalChecklistItem.jsx';
 
 /**
@@ -27,6 +26,10 @@ export default function Sidebar(props) {
   // Read cloud projects from the store (same data as dashboard)
   const cloudProjects = () => projectStore.getProjectList();
   const isProjectsLoading = () => projectStore.isProjectListLoading();
+
+  // Confirm dialog for delete actions
+  const confirmDialog = useConfirmDialog();
+  const [_pendingDeleteId, setPendingDeleteId] = createSignal(null);
 
   // Fetch projects if user is logged in
   createEffect(() => {
@@ -47,9 +50,17 @@ export default function Sidebar(props) {
 
   const handleDeleteLocalChecklist = async (e, checklistId) => {
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this checklist? This cannot be undone.')) {
+    setPendingDeleteId(checklistId);
+    const confirmed = await confirmDialog.open({
+      title: 'Delete Checklist',
+      description: 'Are you sure you want to delete this checklist? This cannot be undone.',
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (confirmed) {
       await deleteChecklist(checklistId);
     }
+    setPendingDeleteId(null);
   };
 
   return (
@@ -156,7 +167,7 @@ export default function Sidebar(props) {
                 </div>
               }
             >
-              <For each={checklists()}>
+              <For each={checklists()?.filter(c => c?.id)}>
                 {checklist => (
                   <LocalChecklistItem
                     checklist={checklist}
@@ -172,90 +183,8 @@ export default function Sidebar(props) {
           <div class='h-8' />
         </div>
       </div>
+
+      <confirmDialog.ConfirmDialogComponent />
     </div>
-  );
-}
-
-/**
- * Project tree item with expandable studies using Zag collapsible
- */
-function ProjectTreeItem(props) {
-  const navigate = useNavigate();
-  const projectPath = () => `/projects/${props.project.id}`;
-  const isSelected = () => props.currentPath === projectPath();
-  const projectId = () => props.project.id;
-
-  // Use lightweight hook to read project data from store
-  const project = useProjectData(projectId());
-
-  return (
-    <Collapsible
-      open={props.isExpanded}
-      onOpenChange={open => {
-        if (open !== props.isExpanded) {
-          props.onToggle();
-        }
-      }}
-      trigger={api => (
-        <div
-          class={`
-            flex items-center group rounded-lg transition-colors cursor-pointer
-            ${isSelected() ? 'bg-blue-100 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}
-          `}
-        >
-          <button
-            {...api.getTriggerProps()}
-            class='p-2 hover:bg-gray-100 rounded-l-lg'
-            aria-label={props.isExpanded ? 'Collapse' : 'Expand'}
-          >
-            <svg
-              class={`w-3 h-3 text-gray-500 transition-transform ${props.isExpanded ? 'rotate-90' : ''}`}
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M9 5l7 7-7 7' />
-            </svg>
-          </button>
-          <button
-            onClick={() => navigate(projectPath())}
-            class='flex-1 flex items-center gap-2 py-2 pr-2 text-left'
-          >
-            <Show
-              when={props.isExpanded}
-              fallback={<AiOutlineFolder class='w-4 h-4 text-gray-500' />}
-            >
-              <AiOutlineFolderOpen class='w-4 h-4 text-blue-500' />
-            </Show>
-            <span class='text-sm font-medium truncate'>{props.project.name}</span>
-          </button>
-        </div>
-      )}
-    >
-      {/* Studies list */}
-      <div class='ml-6 pl-2 border-l border-gray-200 mt-0.5 space-y-0.5'>
-        <Show
-          when={project.studies()?.length > 0}
-          fallback={
-            <Show
-              when={project.connecting() || !project.synced()}
-              fallback={<div class='py-2 px-2 text-xs text-gray-500'>No studies yet</div>}
-            >
-              <div class='py-2 px-2 text-xs text-gray-400'>Loading...</div>
-            </Show>
-          }
-        >
-          <For each={project.studies()}>
-            {study => (
-              <StudyTreeItem
-                study={study}
-                projectId={props.project.id}
-                currentPath={props.currentPath}
-              />
-            )}
-          </For>
-        </Show>
-      </div>
-    </Collapsible>
   );
 }

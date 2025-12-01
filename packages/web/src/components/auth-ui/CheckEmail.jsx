@@ -28,18 +28,12 @@ export default function CheckEmail() {
       if (forceRefresh) {
         // session() returns { data, isPending, refetch }
         const sessionObj = session();
-        console.log('Refetching session...', sessionObj);
         if (sessionObj?.refetch) {
           await sessionObj.refetch();
         }
       }
 
       const currentUser = user();
-      console.log('Checking verification:', {
-        isAuthenticated: isAuthenticated(),
-        emailVerified: currentUser?.emailVerified,
-        user: currentUser,
-      });
 
       if (isAuthenticated() && currentUser?.emailVerified) {
         if (checkInterval()) {
