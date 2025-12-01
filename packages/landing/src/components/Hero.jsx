@@ -7,8 +7,8 @@ export default function Hero() {
       <div class='max-w-6xl mx-auto px-6 py-16 md:py-24 text-center'>
         <h1 class='text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight max-w-3xl mx-auto'>
           <span class='text-blue-600'>Co</span>llaborative <span class='text-blue-600'>R</span>
-          esearch <span class='text-blue-600'>A</span>ppraisal
-          <span class='text-blue-600'>T</span>ool for
+          esearch <span class='text-blue-600'>A</span>ppraisal 
+          <span class='text-blue-600'>T</span>ools for
           <span class='text-blue-600'> E</span>vidence <span class='text-blue-600'>S</span>ynthesis
         </h1>
 
@@ -23,7 +23,7 @@ export default function Hero() {
             href={urls.signUp()}
             class='inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm'
           >
-            Get Started Free
+            Get Started
             <AiOutlineArrowRight class='w-5 h-5' />
           </a>
           <a
@@ -36,7 +36,7 @@ export default function Hero() {
 
         <p class='mt-6 text-sm text-gray-500'>
           Want to try it first?{' '}
-          <a href={urls.checklist()} class='text-blue-600 hover:text-blue-700 font-medium'>
+          <a href={urls.checklist()} class='text-blue-600 hover:text-blue-700 font-medium hover:underline'>
             Start an appraisal
           </a>
         </p>
