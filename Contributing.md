@@ -66,4 +66,9 @@ cd packages/workers
 pnpm clear-workers
 pnpm db:migrate
 # db migrate may prompt for confirmation
+
+
+# See worker logs
+cd packages/workers
+pnpm wrangler tail corates-workers --env production
 ```

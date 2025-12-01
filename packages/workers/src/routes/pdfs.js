@@ -112,7 +112,7 @@ export async function uploadPdf(request, env) {
     const projectDocId = env.PROJECT_DOC.idFromName(projectId);
     const projectDoc = env.PROJECT_DOC.get(projectDocId);
 
-    await projectDoc.fetch(
+    const syncResponse = await projectDoc.fetch(
       new Request('https://internal/sync-pdf', {
         method: 'POST',
         headers: {
@@ -132,6 +132,25 @@ export async function uploadPdf(request, env) {
         }),
       }),
     );
+
+    if (!syncResponse.ok) {
+      // PDF was uploaded to R2 but sync failed - log the error
+      const syncError = await syncResponse.json().catch(() => ({}));
+      console.error('PDF sync to DO failed:', syncError);
+      // Still return success since PDF is in R2, but include warning
+      return new Response(
+        JSON.stringify({
+          success: true,
+          key,
+          fileName,
+          size: pdfData.byteLength,
+          warning: 'PDF uploaded but real-time sync may be delayed',
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
+    }
 
     return new Response(
       JSON.stringify({

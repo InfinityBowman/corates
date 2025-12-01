@@ -204,13 +204,17 @@ export class ProjectDoc {
 
       // Note: Y.js map key remains 'reviews' for backward compatibility
       const studiesMap = this.doc.getMap('reviews');
-      const studyYMap = studiesMap.get(studyId);
+      let studyYMap = studiesMap.get(studyId);
 
+      // Create the study if it doesn't exist (handles race condition where
+      // PDF upload arrives before Y.js sync creates the study)
       if (!studyYMap) {
-        return new Response(JSON.stringify({ error: 'Study not found' }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        studyYMap = new Y.Map();
+        studyYMap.set('name', 'Untitled Study');
+        studyYMap.set('createdAt', Date.now());
+        studyYMap.set('updatedAt', Date.now());
+        studyYMap.set('checklists', new Y.Map());
+        studiesMap.set(studyId, studyYMap);
       }
 
       // Get or create the pdfs Y.Map for this study
