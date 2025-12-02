@@ -4,17 +4,21 @@ import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import useProject from '@primitives/useProject.js';
 import projectStore from '@primitives/projectStore.js';
 import { downloadPdf, uploadPdf, deletePdf } from '@api/pdf-api.js';
+import { showToast } from '@components/zag/Toast.jsx';
+import { useBetterAuth } from '@api/better-auth-store.js';
 
 export default function ChecklistYjsWrapper() {
   const params = useParams();
   const navigate = useNavigate();
+  const { user } = useBetterAuth();
 
   const [pdfData, setPdfData] = createSignal(null);
   const [pdfFileName, setPdfFileName] = createSignal(null);
   const [pdfLoading, setPdfLoading] = createSignal(false);
 
   // Use full hook for write operations
-  const { error, updateChecklistAnswer, getChecklistData } = useProject(params.projectId);
+  const { error, updateChecklistAnswer, getChecklistData, addPdfToStudy, removePdfFromStudy } =
+    useProject(params.projectId);
 
   // Read data directly from store for faster reactivity
   const connectionState = () => projectStore.getConnectionState(params.projectId);
@@ -59,12 +63,20 @@ export default function ChecklistYjsWrapper() {
   // Handle PDF change (upload new PDF)
   const handlePdfChange = async (data, fileName) => {
     try {
-      await uploadPdf(params.projectId, params.studyId, data, fileName);
+      const result = await uploadPdf(params.projectId, params.studyId, data, fileName);
+      // Update Y.js with PDF metadata
+      addPdfToStudy(params.studyId, {
+        key: result.key,
+        fileName: result.fileName,
+        size: result.size,
+        uploadedBy: user()?.id,
+        uploadedAt: Date.now(),
+      });
       setPdfData(data);
       setPdfFileName(fileName);
     } catch (err) {
       console.error('Failed to upload PDF:', err);
-      alert('Failed to upload PDF');
+      showToast.error('Upload Failed', 'Failed to upload PDF');
     }
   };
 
@@ -75,11 +87,13 @@ export default function ChecklistYjsWrapper() {
 
     try {
       await deletePdf(params.projectId, params.studyId, fileName);
+      // Update Y.js to remove PDF metadata
+      removePdfFromStudy(params.studyId, fileName);
       setPdfData(null);
       setPdfFileName(null);
     } catch (err) {
       console.error('Failed to delete PDF:', err);
-      alert('Failed to delete PDF');
+      showToast.error('Delete Failed', 'Failed to delete PDF');
     }
   };
 

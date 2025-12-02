@@ -2,6 +2,7 @@ import { createSignal, For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
 import { useConfirmDialog } from '@components/zag/Dialog.jsx';
+import { showToast } from '@components/zag/Toast.jsx';
 
 export default function ChecklistsDashboard(props) {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ export default function ChecklistsDashboard(props) {
       }
     } catch (error) {
       console.error('Error creating checklist:', error);
-      alert('Failed to create checklist. Please try again.');
+      showToast.error('Creation Failed', 'Failed to create checklist. Please try again.');
     } finally {
       setIsCreating(false);
     }
