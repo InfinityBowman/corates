@@ -17,7 +17,7 @@ export default function WhatIsCoRATES() {
       <div class='max-w-4xl mx-auto px-6 py-20'>
         <h2 class='text-2xl md:text-3xl font-bold text-gray-900 mb-8'>What is CoRATES?</h2>
         <div class='space-y-5 text-gray-600 leading-relaxed'>
-          <p class='text-lg'>
+          <p>
             CoRATES is more than a checklist platform. It is an ecosystem built to support
             high-quality and efficient study appraisal by bringing every part of the process into
             one organized, interactive workspace. Instead of manually managing PDF or Word
