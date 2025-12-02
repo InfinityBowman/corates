@@ -66,14 +66,14 @@ export default function CreateLocalChecklist() {
         <div class='bg-white rounded-xl shadow-sm border border-gray-200 p-8'>
           <h1 class='text-2xl font-bold text-gray-900 mb-2'>Start an Appraisal</h1>
           <p class='text-gray-600 mb-6'>
-            Start a new AMSTAR-2 assessment. Your checklist will be saved locally on this device.
+            Start a new AMSTAR-2 assessment. Your progress will be saved locally on this device.
           </p>
 
           <form onSubmit={handleSubmit} class='space-y-6'>
             {/* Checklist Name */}
             <div>
               <label for='checklist-name' class='block text-sm font-medium text-gray-700 mb-2'>
-                Checklist Name
+                Study Name
               </label>
               <input
                 id='checklist-name'
@@ -142,7 +142,7 @@ export default function CreateLocalChecklist() {
                 disabled={creating()}
                 class='flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed'
               >
-                {creating() ? 'Creating...' : 'Create Checklist'}
+                {creating() ? 'Creating...' : 'Create Study'}
               </button>
             </div>
           </form>
@@ -150,10 +150,10 @@ export default function CreateLocalChecklist() {
           {/* Info box */}
           <div class='mt-6 p-4 bg-gray-50 rounded-lg'>
             <p class='text-xs text-gray-500'>
-              Local checklists are stored only on this device and don't require an account. To
-              collaborate with others or access your checklists from multiple devices,{' '}
+              Local studies are stored only on this device and don't require an account. To
+              collaborate with others or access your studies from multiple devices,{' '}
               <a href='/signup' class='text-blue-600 hover:underline'>
-                create a free account
+                create an account
               </a>
               .
             </p>
