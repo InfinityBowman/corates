@@ -1,7 +1,8 @@
 import { createSignal, For, Show } from 'solid-js';
-import { BiRegularCloudUpload, BiRegularTrash } from 'solid-icons/bi';
+import { BiRegularTrash } from 'solid-icons/bi';
 import { CgFileDocument } from 'solid-icons/cg';
 import { showToast } from '@components/zag/Toast.jsx';
+import { FileUpload } from '@components/zag/FileUpload.jsx';
 import { extractPdfTitle, readFileAsArrayBuffer } from '@/lib/pdfUtils.js';
 
 /**
@@ -16,13 +17,10 @@ export default function CreateProjectForm(props) {
   const [projectDescription, setProjectDescription] = createSignal('');
   const [isCreating, setIsCreating] = createSignal(false);
   const [uploadedPdfs, setUploadedPdfs] = createSignal([]);
-  const [isDragging, setIsDragging] = createSignal(false);
-
-  let fileInputRef;
 
   // Handle PDF file selection
   const handlePdfSelect = async files => {
-    const pdfFiles = Array.from(files).filter(f => f.type === 'application/pdf');
+    const pdfFiles = files.filter(f => f.type === 'application/pdf');
     if (pdfFiles.length === 0) return;
 
     // Add files with extracting state
@@ -82,23 +80,6 @@ export default function CreateProjectForm(props) {
 
   const updatePdfTitle = (id, newTitle) => {
     setUploadedPdfs(prev => prev.map(p => (p.id === id ? { ...p, title: newTitle } : p)));
-  };
-
-  // Handle drag and drop
-  const handleDragOver = e => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = e => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = e => {
-    e.preventDefault();
-    setIsDragging(false);
-    handlePdfSelect(e.dataTransfer.files);
   };
 
   const handleSubmit = async () => {
@@ -185,34 +166,16 @@ export default function CreateProjectForm(props) {
             each PDF.
           </p>
 
-          {/* Drop zone */}
-          <div
-            class={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-              isDragging() ?
-                'border-blue-500 bg-blue-50'
-              : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-            }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef?.click()}
-          >
-            <BiRegularCloudUpload class='w-10 h-10 mx-auto text-gray-400 mb-2' />
-            <p class='text-sm text-gray-600'>
-              <span class='font-medium text-blue-600'>Click to upload</span> or drag and drop
-            </p>
-            <p class='text-xs text-gray-500 mt-1'>PDF files only</p>
-            <input
-              ref={fileInputRef}
-              type='file'
-              accept='application/pdf'
-              multiple
-              class='hidden'
-              onChange={e => handlePdfSelect(e.target.files)}
-            />
-          </div>
+          {/* Drop zone using zag FileUpload */}
+          <FileUpload
+            accept='application/pdf'
+            multiple
+            helpText='PDF files only'
+            showFileList={false}
+            onFilesChange={handlePdfSelect}
+          />
 
-          {/* Uploaded PDFs list */}
+          {/* Custom Uploaded PDFs list with editable titles */}
           <Show when={uploadedPdfs().length > 0}>
             <div class='mt-4 space-y-2'>
               <For each={uploadedPdfs()}>
