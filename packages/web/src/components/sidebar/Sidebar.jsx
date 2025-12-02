@@ -146,7 +146,7 @@ export default function Sidebar(props) {
           <div class='px-3 pt-6 pb-2'>
             <h3 class='text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5'>
               <HiOutlineDocumentCheck class='w-3 h-3' />
-              Local Checklists
+              Appraisals
             </h3>
           </div>
           <div class='px-2 space-y-0.5'>
@@ -157,7 +157,7 @@ export default function Sidebar(props) {
                   <div class='w-8 h-8 bg-gray-100 rounded-lg mx-auto mb-2 flex items-center justify-center'>
                     <HiOutlineDocumentCheck class='w-4 h-4 text-gray-400' />
                   </div>
-                  <p class='text-xs text-gray-500 font-medium'>No local checklists</p>
+                  <p class='text-xs text-gray-500 font-medium'>No appraisals</p>
                   <button
                     onClick={() => navigate('/checklist/new')}
                     class='text-xs text-blue-600 hover:text-blue-700 mt-1'

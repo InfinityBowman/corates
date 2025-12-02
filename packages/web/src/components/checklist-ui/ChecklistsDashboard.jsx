@@ -59,9 +59,9 @@ export default function ChecklistsDashboard(props) {
       {/* Header */}
       <div class='flex justify-between items-center'>
         <div>
-          <h1 class='text-2xl font-bold text-gray-900'>My Checklists</h1>
+          <h1 class='text-2xl font-bold text-gray-900'>My Appraisals</h1>
           <p class='text-gray-500 mt-1'>
-            Create and manage AMSTAR2 checklists locally on this device
+            Create and manage AMSTAR2 appraisals locally on this device
           </p>
         </div>
         <button
@@ -69,7 +69,7 @@ export default function ChecklistsDashboard(props) {
           onClick={() => setShowCreateForm(!showCreateForm())}
         >
           <span class='text-lg'>+</span>
-          New Checklist
+          New Appraisal
         </button>
       </div>
 
@@ -135,12 +135,12 @@ export default function ChecklistsDashboard(props) {
           fallback={
             <Show when={!loading()}>
               <div class='col-span-full text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300'>
-                <div class='text-gray-500 mb-4'>No checklists yet</div>
+                <div class='text-gray-500 mb-4'>No appraisals yet</div>
                 <button
                   onClick={() => setShowCreateForm(true)}
                   class='text-blue-600 hover:text-blue-700 font-medium'
                 >
-                  Create your first checklist
+                  Create your first appraisal
                 </button>
               </div>
             </Show>
