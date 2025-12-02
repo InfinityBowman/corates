@@ -4,6 +4,7 @@
 
 import { Show } from 'solid-js';
 import { HiOutlineDocument } from 'solid-icons/hi';
+import { FileUpload } from '@components/zag/FileUpload.jsx';
 
 function LoadingSpinner() {
   return <div class='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600' />;
@@ -15,7 +16,13 @@ export default function PdfEmptyState(props) {
   // props.error - Error message if any
   // props.pdfDoc - The loaded PDF document
   // props.readOnly - If true, hides "Open a PDF file" button
-  // props.onOpenFile - Handler to open file picker
+  // props.onFileAccept - Handler when files are accepted: (details: { files: File[] }) => void
+
+  const handleFileAccept = details => {
+    if (details.files.length > 0) {
+      props.onFileAccept?.(details.files[0]);
+    }
+  };
 
   return (
     <>
@@ -45,12 +52,14 @@ export default function PdfEmptyState(props) {
           <div class='text-center'>
             <div class='text-red-600 mb-2'>{props.error}</div>
             <Show when={!props.readOnly}>
-              <button
-                onClick={() => props.onOpenFile()}
-                class='text-blue-600 hover:text-blue-700 font-medium'
-              >
-                Try another file
-              </button>
+              <FileUpload
+                accept='application/pdf'
+                helpText='PDF files only'
+                showFileList={false}
+                onFileAccept={handleFileAccept}
+                compact
+                class='mt-4 max-w-sm mx-auto'
+              />
             </Show>
           </div>
         </div>
@@ -60,14 +69,18 @@ export default function PdfEmptyState(props) {
       <Show when={props.libReady && !props.loading && !props.error && !props.pdfDoc}>
         <div class='flex flex-col items-center justify-center h-full text-gray-500'>
           <HiOutlineDocument class='w-16 h-16 mb-4 text-gray-300' />
-          <p class='mb-2'>No PDF loaded</p>
-          <Show when={!props.readOnly}>
-            <button
-              onClick={() => props.onOpenFile()}
-              class='text-blue-600 hover:text-blue-700 font-medium'
-            >
-              Open a PDF file
-            </button>
+          <p class='mb-4'>No PDF loaded</p>
+          <Show
+            when={!props.readOnly}
+            fallback={<p class='text-sm text-gray-400'>PDF will be displayed here</p>}
+          >
+            <FileUpload
+              accept='application/pdf'
+              helpText='PDF files only'
+              showFileList={false}
+              onFileAccept={handleFileAccept}
+              class='max-w-sm w-full'
+            />
           </Show>
         </div>
       </Show>

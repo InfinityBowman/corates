@@ -8,7 +8,7 @@ export default function Hero() {
         <h1 class='text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight max-w-3xl mx-auto'>
           <span class='text-blue-600'>Co</span>llaborative <span class='text-blue-600'>R</span>
           esearch <span class='text-blue-600'>A</span>ppraisal
-          <span class='text-blue-600'>T</span>ools for
+          <span class='text-blue-600'> T</span>ools for
           <span class='text-blue-600'> E</span>vidence <span class='text-blue-600'>S</span>ynthesis
         </h1>
 
