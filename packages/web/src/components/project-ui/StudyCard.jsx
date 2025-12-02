@@ -6,6 +6,7 @@ import { For, Show, createSignal, createMemo } from 'solid-js';
 import { CgFileDocument } from 'solid-icons/cg';
 import { BiRegularUpload, BiRegularEdit } from 'solid-icons/bi';
 import { BsFileDiff } from 'solid-icons/bs';
+import { showToast } from '@components/zag/Toast.jsx';
 import ChecklistForm from './ChecklistForm.jsx';
 import ChecklistRow from './ChecklistRow.jsx';
 
@@ -38,7 +39,7 @@ export default function StudyCard(props) {
   const handleFileSelect = async e => {
     const file = e.target.files?.[0];
     if (!file || file.type !== 'application/pdf') {
-      alert('Please select a PDF file');
+      showToast.error('Invalid File', 'Please select a PDF file');
       return;
     }
 
@@ -47,7 +48,7 @@ export default function StudyCard(props) {
       await props.onUploadPdf?.(file);
     } catch (err) {
       console.error('Error uploading PDF:', err);
-      alert('Failed to upload PDF');
+      showToast.error('Upload Failed', 'Failed to upload PDF');
     } finally {
       setUploading(false);
       // Reset the input so the same file can be selected again

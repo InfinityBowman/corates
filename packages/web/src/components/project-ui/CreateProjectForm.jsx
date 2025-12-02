@@ -1,6 +1,7 @@
 import { createSignal, For, Show } from 'solid-js';
 import { BiRegularCloudUpload, BiRegularTrash } from 'solid-icons/bi';
 import { CgFileDocument } from 'solid-icons/cg';
+import { showToast } from '@components/zag/Toast.jsx';
 import { extractPdfTitle, readFileAsArrayBuffer } from '@/lib/pdfUtils.js';
 
 /**
@@ -132,7 +133,7 @@ export default function CreateProjectForm(props) {
       props.onProjectCreated?.(newProject, pendingPdfs);
     } catch (error) {
       console.error('Error creating project:', error);
-      alert('Failed to create project. Please try again.');
+      showToast.error('Creation Failed', 'Failed to create project. Please try again.');
     } finally {
       setIsCreating(false);
     }
