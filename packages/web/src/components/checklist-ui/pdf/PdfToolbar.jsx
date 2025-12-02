@@ -76,7 +76,7 @@ export default function PdfToolbar(props) {
             onClick={() => props.onPrevPage?.()}
             disabled={props.currentPage <= 1}
             class='p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
-            title='Previous page'
+            title='Scroll to previous page'
           >
             <BiRegularChevronLeft class='w-5 h-5' />
           </button>
@@ -87,7 +87,7 @@ export default function PdfToolbar(props) {
             onClick={() => props.onNextPage?.()}
             disabled={props.currentPage >= props.totalPages}
             class='p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
-            title='Next page'
+            title='Scroll to next page'
           >
             <BiRegularChevronRight class='w-5 h-5' />
           </button>

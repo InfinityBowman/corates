@@ -1,18 +1,17 @@
 /**
- * PdfViewer - Component for viewing PDF files
- * Supports zoom, page navigation, file upload, and persistent PDF data
+ * PdfViewer - Component for viewing PDF files with continuous scrolling
+ * Supports zoom, page navigation via scroll, file upload, and persistent PDF data
  *
  * This is the main component that composes:
  * - usePdfJs: Primitive for PDF.js state management
  * - PdfToolbar: File controls, navigation, and zoom
- * - PdfCanvas: PDF page rendering
+ * - PdfCanvas: PDF page rendering (now renders all pages)
  * - PdfEmptyState: Loading, error, and empty states
  */
 
-import { Show } from 'solid-js';
+import { Show, For, Index } from 'solid-js';
 import usePdfJs from './usePdfJs.js';
 import PdfToolbar from './PdfToolbar.jsx';
-import PdfCanvas from './PdfCanvas.jsx';
 import PdfEmptyState from './PdfEmptyState.jsx';
 
 export default function PdfViewer(props) {
@@ -39,10 +38,6 @@ export default function PdfViewer(props) {
     pdf.setFileInputRef(el);
   };
 
-  const setCanvasRef = el => {
-    pdf.setCanvasRef(el);
-  };
-
   return (
     <div class='flex flex-col h-full bg-gray-100' ref={setContainerRef}>
       <PdfToolbar
@@ -65,8 +60,8 @@ export default function PdfViewer(props) {
         onFileUpload={pdf.handleFileUpload}
       />
 
-      {/* PDF Content */}
-      <div class='flex-1 overflow-auto p-4'>
+      {/* PDF Content - Scrollable container for all pages */}
+      <div class='flex-1 overflow-auto p-4' ref={pdf.setScrollContainerRef}>
         <PdfEmptyState
           libReady={pdf.libReady()}
           loading={pdf.loading()}
@@ -76,9 +71,27 @@ export default function PdfViewer(props) {
           onFileAccept={pdf.handleFile}
         />
 
-        {/* PDF Canvas - only shown when PDF is loaded */}
+        {/* PDF Pages - Render all pages in a continuous scroll */}
         <Show when={pdf.libReady() && !pdf.loading() && !pdf.error() && pdf.pdfDoc()}>
-          <PdfCanvas canvasRef={setCanvasRef} rendering={pdf.rendering()} />
+          <div class='flex flex-col items-center gap-8 min-w-fit pt-2'>
+            <Index each={Array(pdf.totalPages())}>
+              {(_, index) => {
+                const pageNum = index + 1;
+                return (
+                  <div ref={el => pdf.setPageRef(pageNum, el)} class='relative'>
+                    {/* Page number label */}
+                    <div class='text-xs text-gray-500 mb-1'>
+                      Page {pageNum} of {pdf.totalPages()}
+                    </div>
+                    <canvas
+                      ref={el => pdf.setPageCanvasRef(pageNum, el)}
+                      class='shadow-lg bg-white'
+                    />
+                  </div>
+                );
+              }}
+            </Index>
+          </div>
         </Show>
       </div>
     </div>
