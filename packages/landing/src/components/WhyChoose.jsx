@@ -36,7 +36,7 @@ export default function WhyChoose() {
       icon: <AiOutlineBarChart class='w-5 h-5 text-blue-600' />,
       title: 'Automates scoring and documentation',
       description:
-        'CoRATES applies scoring rules automatically and records your inputs without the need for spreadsheets or manual data entry, eliminating calculation errors.',
+        'CoRATES applies scoring rules automatically and records your inputs without the need for spreadsheets, eliminating calculation errors.',
     },
     {
       icon: <AiOutlineFolderOpen class='w-5 h-5 text-blue-600' />,
