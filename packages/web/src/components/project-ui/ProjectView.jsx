@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import useProject from '@primitives/useProject.js';
 import projectStore from '@primitives/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { uploadPdf, getPdfUrl } from '@api/pdf-api.js';
+import { uploadPdf, deletePdf, getPdfUrl } from '@api/pdf-api.js';
 import { API_BASE } from '@config/api.js';
 import StudyCard from './StudyCard.jsx';
 import StudyForm from './StudyForm.jsx';
@@ -263,6 +263,21 @@ export default function ProjectView() {
   // Upload/change a PDF for a study
   const handleUploadPdf = async (studyId, file) => {
     try {
+      // Find the study and remove any existing PDFs first
+      const study = studies().find(s => s.id === studyId);
+      if (study?.pdfs?.length > 0) {
+        // Remove all existing PDFs (both from R2 and Y.js)
+        for (const existingPdf of study.pdfs) {
+          try {
+            await deletePdf(params.projectId, studyId, existingPdf.fileName);
+            removePdfFromStudy(studyId, existingPdf.fileName);
+          } catch (deleteErr) {
+            console.warn('Failed to delete old PDF:', deleteErr);
+            // Continue anyway - the new PDF will still be uploaded
+          }
+        }
+      }
+
       const result = await uploadPdf(params.projectId, studyId, file, file.name);
       // After successful upload, add PDF metadata to Y.js
       addPdfToStudy(studyId, {

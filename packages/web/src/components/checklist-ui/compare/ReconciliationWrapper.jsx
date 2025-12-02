@@ -120,7 +120,6 @@ export default function ReconciliationWrapper() {
     return result;
   });
 
-  console.log('hello');
   // Get saved reconciliation progress
   const savedProgress = createMemo(() => {
     // Make sure we're synced before trying to read progress
