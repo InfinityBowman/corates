@@ -29,17 +29,22 @@ export default function About() {
           {/* Origin Story */}
           <section class='bg-gray-50 border-y border-gray-100'>
             <div class='max-w-4xl mx-auto px-6 py-16'>
-              <h2 class='text-2xl font-bold text-gray-900 mb-6'>Our Story</h2>
+              <h2 class='text-2xl font-bold text-gray-900 mb-6'>What is CoRATES?</h2>
               <div class='space-y-4 text-gray-600 leading-relaxed'>
                 <p>
-                  Born out of real frustrations with the study appraisal process, including managing
-                  PDF or Word checklists, using multiple spreadsheets, applying complex scoring
-                  rules, and using separate visualization tools, CoRATES brings the entire workflow
-                  into one streamlined and collaborative space.
+                  CoRATES is more than a checklist platform. It is an ecosystem built to support
+                  high-quality and efficient study appraisal by bringing every part of the process
+                  into one organized, interactive workspace. Instead of manually managing PDF or
+                  Word checklists, tracking decisions across spreadsheets, emailing files back and
+                  forth, and creating visualizations in statistical software, CoRATES automates
+                  these steps within a single, integrated platform. What typically requires multiple
+                  tools and extensive manual effort is handled seamlessly within CoRATES.
                 </p>
                 <p>
-                  Our goal is simple: to support high-quality evidence synthesis by making study
-                  appraisal easier to manage and more reliable to complete.
+                  Beyond streamlining and automating the study appraisal process, CoRATES is
+                  intentionally designed to strengthen rigor by embedding the practices that support
+                  high-quality appraisal, including double coding, consensus processes, transparent
+                  documentation, and consistent rule-based scoring.
                 </p>
                 <p>
                   Developed collaboratively by an expert in research synthesis and a software
