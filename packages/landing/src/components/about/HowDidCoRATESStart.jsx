@@ -6,7 +6,7 @@ export default function HowDidCoRATESStart() {
 
         <div class='bg-white rounded-2xl p-8 md:p-10 shadow-sm border border-gray-100'>
           <div class='space-y-5 text-gray-600 leading-relaxed'>
-            <p class='text-lg'>
+            <p>
               CoRATES began with a problem familiar to anyone involved in evidence synthesis: the
               study appraisal process was far more cumbersome than it needed to be. Managing PDF or
               Word checklists, juggling multiple spreadsheets, applying complex scoring rules, and

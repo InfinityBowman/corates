@@ -12,6 +12,8 @@ This file contains instructions for GitHub Copilot to follow when generating cod
   - Split functionality into logically grouped modules.
   - Each file should ideally handle one coherent responsibility.
 - Use aliases for imports when appropriate to improve readability.
+- Use responsive design principles for UI components.
+- Prefer using config files rather than hardcoding values.
 
 ## Icon Search Tool
 
@@ -38,20 +40,7 @@ The tools return Solid.js-specific documentation, installation commands, and usa
 - See vite.config.js or jsconfig.json for path aliases and build configurations.
 - See TESTING.md for testing guidelines and best practices, do NOT add tests unless asked.
 - Cloudflare Pages is not used in this project; only Cloudflare Workers is used for backend services and frontend deployments.
-
-## Project Guidelines
-
-- Maintain consistent formatting and indentation.
-- Avoid unnecessary dependencies.
-- Ensure code is readable and maintainable, and structured into sensible modules.
-- Keep component, utility, and handler files concise and scoped to a single purpose.
-
-## Copilot Usage
-
-- All code suggestions and completions must comply with these instructions.
-- If a suggestion includes an emoji, remove it and use `solid-icons` or SVGs instead.
-- Copilot should prefer generating smaller, modular files over large multi-purpose files.
-- Copilot should prefer using config files rather than hardcoding values.
+- This project is split into multiple packages under the `packages/` directory. Each package may have its own dependencies and configurations. The landing/marketing site, the main app, and the backend services.
 
 ## SolidJS Specific
 

@@ -27,11 +27,19 @@ export default function WhoDevelopedCoRATES() {
           <div class='space-y-4 text-gray-600 text-sm leading-relaxed'>
             <p>
               Brandy is a research synthesist with extensive expertise in systematic review
-              methodology and evidence appraisal. She completed her first systematic review as a
-              Campbell Collaboration review during her PhD, reflecting her commitment to rigorous
-              and transparent methods from the very beginning of her career. She has been actively
-              involved with the Campbell Collaboration for over 15 years as an author and currently
-              serves as Co-Chair and Editor of the Social Welfare Coordinating Group.
+              methodology and evidence appraisal. She completed her first systematic review as a{' '}
+              <a
+                href='https://www.campbellcollaboration.org'
+                target='_blank'
+                rel='noopener noreferrer'
+                class='text-blue-600 hover:text-blue-700 hover:underline'
+              >
+                Campbell Collaboration
+              </a>{' '}
+              review during her PhD, reflecting her commitment to rigorous and transparent methods
+              from the very beginning of her career. She has been actively involved with the
+              Campbell Collaboration for over 15 years as an author and currently serves as Co-Chair
+              and Editor of the Social Welfare Coordinating Group.
             </p>
             <p>
               Over her career, Brandy has authored more than 30 systematic reviews and overviews,
@@ -43,8 +51,17 @@ export default function WhoDevelopedCoRATES() {
             </p>
             <p>
               While CoRATES is a project Brandy is deeply passionate about, she spends most of her
-              time at Saint Louis University, where she serves as a Professor and Associate Dean for
-              Academic Affairs in the School of Social Work.
+              time at{' '}
+              <a
+                href='https://www.slu.edu/social-work/faculty/maynard-brandy.php'
+                target='_blank'
+                rel='noopener noreferrer'
+                class='text-blue-600 hover:text-blue-700 hover:underline'
+              >
+                Saint Louis University
+              </a>
+              , where she serves as a Professor and Associate Dean for Academic Affairs in the
+              School of Social Work.
             </p>
           </div>
         </div>
