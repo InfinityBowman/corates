@@ -63,6 +63,20 @@ export default function ChecklistYjsWrapper() {
   // Handle PDF change (upload new PDF)
   const handlePdfChange = async (data, fileName) => {
     try {
+      // Remove any existing PDFs first
+      const study = currentStudy();
+      if (study?.pdfs?.length > 0) {
+        for (const existingPdf of study.pdfs) {
+          try {
+            await deletePdf(params.projectId, params.studyId, existingPdf.fileName);
+            removePdfFromStudy(params.studyId, existingPdf.fileName);
+          } catch (deleteErr) {
+            console.warn('Failed to delete old PDF:', deleteErr);
+            // Continue anyway - the new PDF will still be uploaded
+          }
+        }
+      }
+
       const result = await uploadPdf(params.projectId, params.studyId, data, fileName);
       // Update Y.js with PDF metadata
       addPdfToStudy(params.studyId, {
