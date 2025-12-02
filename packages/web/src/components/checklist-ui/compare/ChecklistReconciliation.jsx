@@ -5,6 +5,7 @@
 
 import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from 'solid-icons/ai';
+import { showToast } from '@components/zag/Toast.jsx';
 import {
   compareChecklists,
   getReconciliationSummary,
@@ -227,7 +228,7 @@ export default function ChecklistReconciliation(props) {
   // Handle save
   async function handleSave() {
     if (!allAnswered()) {
-      alert('Please review all questions before saving.');
+      showToast.error('Incomplete Review', 'Please review all questions before saving.');
       return;
     }
 
@@ -265,7 +266,7 @@ export default function ChecklistReconciliation(props) {
       await props.onSaveReconciled?.(reconciled);
     } catch (err) {
       console.error('Error saving reconciled checklist:', err);
-      alert('Failed to save reconciled checklist. Please try again.');
+      showToast.error('Save Failed', 'Failed to save reconciled checklist. Please try again.');
     } finally {
       setSaving(false);
     }

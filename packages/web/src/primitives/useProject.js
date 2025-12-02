@@ -281,6 +281,49 @@ export function useProject(projectId) {
     studiesMap.delete(studyId);
   }
 
+  // Add PDF metadata to a study (called after successful upload to R2)
+  function addPdfToStudy(studyId, pdfInfo) {
+    if (!ydoc) return;
+    if (!isLocalProject() && !connected()) return;
+
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
+    if (!studyYMap) return;
+
+    let pdfsMap = studyYMap.get('pdfs');
+    if (!pdfsMap) {
+      pdfsMap = new Y.Map();
+      studyYMap.set('pdfs', pdfsMap);
+    }
+
+    const pdfYMap = new Y.Map();
+    pdfYMap.set('key', pdfInfo.key);
+    pdfYMap.set('fileName', pdfInfo.fileName);
+    pdfYMap.set('size', pdfInfo.size);
+    pdfYMap.set('uploadedBy', pdfInfo.uploadedBy);
+    pdfYMap.set('uploadedAt', pdfInfo.uploadedAt || Date.now());
+    pdfsMap.set(pdfInfo.fileName, pdfYMap);
+
+    studyYMap.set('updatedAt', Date.now());
+  }
+
+  // Remove PDF metadata from a study (called after successful delete from R2)
+  function removePdfFromStudy(studyId, fileName) {
+    if (!ydoc) return;
+    if (!isLocalProject() && !connected()) return;
+
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
+    if (!studyYMap) return;
+
+    const pdfsMap = studyYMap.get('pdfs');
+    if (pdfsMap) {
+      pdfsMap.delete(fileName);
+    }
+
+    studyYMap.set('updatedAt', Date.now());
+  }
+
   // Create a checklist in a study
   function createChecklist(studyId, type = 'AMSTAR2', assignedTo = null) {
     if (!ydoc) return null;
@@ -548,6 +591,8 @@ export function useProject(projectId) {
     createStudy,
     updateStudy,
     deleteStudy,
+    addPdfToStudy,
+    removePdfFromStudy,
     createChecklist,
     updateChecklist,
     deleteChecklist,

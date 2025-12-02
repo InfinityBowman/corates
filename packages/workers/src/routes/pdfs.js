@@ -108,50 +108,8 @@ export async function uploadPdf(request, env) {
       },
     });
 
-    // Sync PDF metadata to the ProjectDoc DO
-    const projectDocId = env.PROJECT_DOC.idFromName(projectId);
-    const projectDoc = env.PROJECT_DOC.get(projectDocId);
-
-    const syncResponse = await projectDoc.fetch(
-      new Request('https://internal/sync-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Internal-Request': 'true',
-        },
-        body: JSON.stringify({
-          action: 'add',
-          studyId,
-          pdf: {
-            key,
-            fileName,
-            size: pdfData.byteLength,
-            uploadedBy: user.id,
-            uploadedAt: Date.now(),
-          },
-        }),
-      }),
-    );
-
-    if (!syncResponse.ok) {
-      // PDF was uploaded to R2 but sync failed - log the error
-      const syncError = await syncResponse.json().catch(() => ({}));
-      console.error('PDF sync to DO failed:', syncError);
-      // Still return success since PDF is in R2, but include warning
-      return new Response(
-        JSON.stringify({
-          success: true,
-          key,
-          fileName,
-          size: pdfData.byteLength,
-          warning: 'PDF uploaded but real-time sync may be delayed',
-        }),
-        {
-          headers: { 'Content-Type': 'application/json' },
-        },
-      );
-    }
-
+    // Return success - the client will update Y.js with PDF metadata
+    // This simplifies the architecture by avoiding server-side Y.js sync for PDFs
     return new Response(
       JSON.stringify({
         success: true,
@@ -294,25 +252,7 @@ export async function deletePdf(request, env) {
   try {
     await env.PDF_BUCKET.delete(key);
 
-    // Sync deletion to the ProjectDoc DO
-    const projectDocId = env.PROJECT_DOC.idFromName(projectId);
-    const projectDoc = env.PROJECT_DOC.get(projectDocId);
-
-    await projectDoc.fetch(
-      new Request('https://internal/sync-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Internal-Request': 'true',
-        },
-        body: JSON.stringify({
-          action: 'remove',
-          studyId,
-          fileName,
-        }),
-      }),
-    );
-
+    // Return success - the client will update Y.js to remove PDF metadata
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json' },
     });
