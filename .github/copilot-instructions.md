@@ -1,5 +1,7 @@
 # GitHub Copilot Instructions
 
+This file contains instructions for GitHub Copilot to follow when generating code for this project. Please adhere to these guidelines to ensure consistency and maintainability across the codebase. This project is CoRATES (Collaborative Research Appraisal Tools for Evidence Synthesis), a SolidJS-based web application deployed on Cloudflare Workers.
+
 ## Coding Standards
 
 - Do not use emojis in code, comments, documentation, or commit messages.
