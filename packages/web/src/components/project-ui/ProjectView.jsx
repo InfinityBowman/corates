@@ -40,6 +40,8 @@ export default function ProjectView() {
     updateChecklist,
     deleteStudy,
     deleteChecklist,
+    addPdfToStudy,
+    removePdfFromStudy,
     getChecklistData,
     connect,
     disconnect,
@@ -99,9 +101,20 @@ export default function ProjectView() {
       if (studyId && pdf.data) {
         // Convert array back to ArrayBuffer for upload
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
-        uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName).catch(err => {
-          console.error('Error uploading PDF for new study:', err);
-        });
+        uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName)
+          .then(result => {
+            // After successful upload, add PDF metadata to Y.js (syncs to other clients)
+            addPdfToStudy(studyId, {
+              key: result.key,
+              fileName: result.fileName,
+              size: result.size,
+              uploadedBy: user()?.id,
+              uploadedAt: Date.now(),
+            });
+          })
+          .catch(err => {
+            console.error('Error uploading PDF for new study:', err);
+          });
       }
     }
   });
@@ -124,14 +137,17 @@ export default function ProjectView() {
         } catch (uploadErr) {
           console.error('Error uploading PDF:', uploadErr);
           // Study was created, but PDF upload failed - show warning but don't fail
-          alert('Study created, but PDF upload failed. You can try uploading again later.');
+          showToast.error(
+            'PDF Upload Failed',
+            'Study created, but PDF upload failed. You can try uploading again later.',
+          );
         }
       }
 
       setShowStudyForm(false);
     } catch (err) {
       console.error('Error creating study:', err);
-      alert('Failed to create study');
+      showToast.error('Creation Failed', 'Failed to create study');
     } finally {
       setCreatingStudy(false);
     }
@@ -145,7 +161,7 @@ export default function ProjectView() {
       setShowChecklistForm(null);
     } catch (err) {
       console.error('Error creating checklist:', err);
-      alert('Failed to create checklist');
+      showToast.error('Creation Failed', 'Failed to create checklist');
     } finally {
       setCreatingChecklist(false);
     }
@@ -247,7 +263,15 @@ export default function ProjectView() {
   // Upload/change a PDF for a study
   const handleUploadPdf = async (studyId, file) => {
     try {
-      await uploadPdf(params.projectId, studyId, file, file.name);
+      const result = await uploadPdf(params.projectId, studyId, file, file.name);
+      // After successful upload, add PDF metadata to Y.js
+      addPdfToStudy(studyId, {
+        key: result.key,
+        fileName: result.fileName,
+        size: result.size,
+        uploadedBy: user()?.id,
+        uploadedAt: Date.now(),
+      });
     } catch (err) {
       console.error('Error uploading PDF:', err);
       throw err; // Re-throw so StudyCard can show the error

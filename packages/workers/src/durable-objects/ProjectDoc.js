@@ -200,7 +200,7 @@ export class ProjectDoc {
     await this.initializeDoc();
 
     try {
-      const { action, studyId, pdf, fileName } = await request.json();
+      const { action, studyId, studyName, pdf, fileName } = await request.json();
 
       // Note: Y.js map key remains 'reviews' for backward compatibility
       const studiesMap = this.doc.getMap('reviews');
@@ -210,7 +210,7 @@ export class ProjectDoc {
       // PDF upload arrives before Y.js sync creates the study)
       if (!studyYMap) {
         studyYMap = new Y.Map();
-        studyYMap.set('name', 'Untitled Study');
+        studyYMap.set('name', studyName || 'Untitled Study');
         studyYMap.set('createdAt', Date.now());
         studyYMap.set('updatedAt', Date.now());
         studyYMap.set('checklists', new Y.Map());
