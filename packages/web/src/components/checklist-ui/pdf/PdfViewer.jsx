@@ -73,7 +73,7 @@ export default function PdfViewer(props) {
           error={pdf.error()}
           pdfDoc={pdf.pdfDoc()}
           readOnly={props.readOnly}
-          onOpenFile={pdf.openFilePicker}
+          onFileAccept={pdf.handleFile}
         />
 
         {/* PDF Canvas - only shown when PDF is loaded */}

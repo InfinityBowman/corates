@@ -57,7 +57,7 @@ export default function HomePage() {
                     href='/signup'
                     class='inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm'
                   >
-                    Get Started Free
+                    Get Started
                     <AiOutlineArrowRight class='w-5 h-5' />
                   </A>
                   <A
@@ -88,10 +88,11 @@ export default function HomePage() {
       <section class='max-w-6xl mx-auto px-6 py-16'>
         <div class='text-center mb-12'>
           <h2 class='text-2xl md:text-3xl font-bold text-gray-900 mb-4'>
-            Everything you need for quality assessments
+            Everything you need to support rigorous study appraisal
           </h2>
           <p class='text-gray-600 max-w-2xl mx-auto'>
-            Built specifically for researchers conducting systematic reviews with the AMSTAR-2 tool.
+            Built specifically for researchers who need to appraise study quality and risk of bias
+            in evidence reviews
           </p>
         </div>
 
@@ -180,7 +181,7 @@ export default function HomePage() {
               href='/signup'
               class='inline-flex items-center justify-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors'
             >
-              Get Started Free
+              Get Started
               <AiOutlineArrowRight class='w-5 h-5' />
             </A>
           }

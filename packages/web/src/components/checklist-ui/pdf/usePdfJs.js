@@ -204,8 +204,7 @@ export default function usePdfJs(options = {}) {
     }
   }
 
-  async function handleFileUpload(event) {
-    const file = event.target.files[0];
+  async function handleFile(file) {
     if (!file) return;
 
     if (file.type !== 'application/pdf') {
@@ -233,7 +232,11 @@ export default function usePdfJs(options = {}) {
       console.error('Error reading PDF file:', err);
       setError('Failed to read PDF file');
     }
+  }
 
+  async function handleFileUpload(event) {
+    const file = event.target.files[0];
+    await handleFile(file);
     event.target.value = '';
   }
 
@@ -347,6 +350,7 @@ export default function usePdfJs(options = {}) {
     setupResizeObserver,
 
     // Actions
+    handleFile,
     handleFileUpload,
     clearPdf,
     openFilePicker,
