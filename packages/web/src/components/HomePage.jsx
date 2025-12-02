@@ -88,10 +88,11 @@ export default function HomePage() {
       <section class='max-w-6xl mx-auto px-6 py-16'>
         <div class='text-center mb-12'>
           <h2 class='text-2xl md:text-3xl font-bold text-gray-900 mb-4'>
-            Everything you need for quality assessments
+            Everything you need to support rigorous study appraisal
           </h2>
           <p class='text-gray-600 max-w-2xl mx-auto'>
-            Built specifically for researchers conducting systematic reviews with the AMSTAR-2 tool.
+            Built specifically for researchers who need to appraise study quality and risk of bias
+            in evidence reviews
           </p>
         </div>
 
