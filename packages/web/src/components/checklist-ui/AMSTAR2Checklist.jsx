@@ -1,7 +1,6 @@
 import { createSignal, createEffect, Show, For } from 'solid-js';
-import { AMSTAR_CHECKLIST } from '../../AMSTAR2/checklist-map.js';
-import { createChecklist as createAMSTAR2Checklist } from '../../AMSTAR2/checklist.js';
-import { useParams, useNavigate } from '@solidjs/router';
+import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
+import { createChecklist as createAMSTAR2Checklist } from '@/AMSTAR2/checklist.js';
 
 export function Question1(props) {
   const state = () => props.checklistState().q1;
@@ -727,12 +726,7 @@ function StandardQuestionInternal(props) {
 }
 
 export default function AMSTAR2Checklist(props = {}) {
-  const [reviewName, setReviewName] = createSignal('');
-  const [reviewerName, setReviewerName] = createSignal('');
-  const [reviewDate, setReviewDate] = createSignal('');
   const [currentChecklist, setCurrentChecklist] = createSignal(null);
-  const params = useParams();
-  const navigate = useNavigate();
 
   // If an external checklist is supplied (from Yjs DO), use that as the source of truth.
   createEffect(() => {
@@ -743,39 +737,13 @@ export default function AMSTAR2Checklist(props = {}) {
 
     // fallback: initialize a fresh checklist when not externally provided
     const newChecklist = createAMSTAR2Checklist({
-      name: 'New 2 Checklist',
+      name: 'New Checklist',
       id: 'local-1234',
       createdAt: Date.now(),
       reviewerName: '',
       reviewDate: '',
     });
     setCurrentChecklist(newChecklist);
-  });
-
-  // Keep the small UI fields in sync when the checklist (external or local) changes
-  createEffect(() => {
-    const cl = currentChecklist();
-    if (!cl) return;
-    setReviewName(cl.name || '');
-    setReviewerName(cl.reviewerName || '');
-    // Format createdAt to yyyy-MM-dd for date input
-    const dateValue = cl.createdAt;
-    if (dateValue) {
-      // Check if it's already in yyyy-MM-dd format
-      if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-        setReviewDate(dateValue);
-      } else {
-        // Convert timestamp or other date format to yyyy-MM-dd
-        const date = new Date(dateValue);
-        if (!isNaN(date.getTime())) {
-          setReviewDate(date.toISOString().split('T')[0]);
-        } else {
-          setReviewDate('');
-        }
-      }
-    } else {
-      setReviewDate('');
-    }
   });
 
   // Handler to update checklist state
@@ -795,82 +763,6 @@ export default function AMSTAR2Checklist(props = {}) {
   return (
     <div class='bg-blue-50'>
       <div class='container mx-auto px-4 py-6 max-w-5xl'>
-        {/* Header */}
-        <div class='bg-white rounded-lg shadow-lg p-6 mb-8'>
-          <h1 class='text-2xl font-bold text-gray-900 mb-4'>AMSTAR 2 Checklist</h1>
-
-          {/* Review Details */}
-          <div class='grid md:grid-cols-3 gap-4 text-xs'>
-            <div>
-              <label for='reviewName' class='block font-medium text-gray-700 mb-2'>
-                Review Title
-              </label>
-              <input
-                type='text'
-                value={reviewName()}
-                id='reviewName'
-                onChange={e => {
-                  setReviewName(e.target.value);
-                  handleChecklistChange({ name: e.target.value });
-
-                  // Update the route if checklist name changes
-                  if (
-                    params.projectSlug &&
-                    params.reviewSlug &&
-                    params.checklistSlug &&
-                    currentChecklist()
-                  ) {
-                    const lastDash = params.checklistSlug.lastIndexOf('-');
-                    const checklistId =
-                      lastDash !== -1 ?
-                        params.checklistSlug.slice(lastDash + 1)
-                      : params.checklistSlug;
-                    navigate(
-                      `/projects/${params.projectSlug}/reviews/${params.reviewSlug}/checklists/${checklistId}`,
-                      {
-                        replace: true,
-                      },
-                    );
-                  }
-                }}
-                class='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs'
-                placeholder='Enter review title'
-              />
-            </div>
-            <div>
-              <label for='reviewerName' class='block font-medium text-gray-700 mb-2'>
-                Reviewer Name
-              </label>
-              <input
-                type='text'
-                id='reviewerName'
-                value={reviewerName()}
-                onChange={e => {
-                  setReviewerName(e.target.value);
-                  handleChecklistChange({ reviewerName: e.target.value });
-                }}
-                class='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs'
-                placeholder='Enter your name'
-              />
-            </div>
-            <div>
-              <label for='reviewDate' class='block font-medium text-gray-700 mb-2'>
-                Review Date
-              </label>
-              <input
-                type='date'
-                id='reviewDate'
-                value={reviewDate()}
-                onChange={e => {
-                  setReviewDate(e.target.value);
-                  handleChecklistChange({ reviewDate: e.target.value });
-                }}
-                class='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs'
-              />
-            </div>
-          </div>
-        </div>
-
         {/* Questions */}
         <Show when={currentChecklist()} fallback={<div>Loading...</div>}>
           <div class='space-y-6'>
