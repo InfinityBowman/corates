@@ -1,6 +1,6 @@
 name = "corates-workers"
 main = "src/index.js"
-compatibility_date = "2024-11-21"
+compatibility_date = "2025-12-01"
 compatibility_flags = ["nodejs_compat"]
 
 # Durable Objects Migrations

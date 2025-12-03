@@ -3,7 +3,6 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { drizzle } from 'drizzle-orm/d1';
 import * as schema from '../db/schema.js';
 import { createEmailService } from './email.js';
-import { errorResponse } from '../middleware/cors.js';
 import { getAllowedOrigins } from '../config/origins.js';
 
 export function createAuth(env, ctx) {
@@ -176,15 +175,4 @@ export async function verifyAuth(request, env) {
     console.error('Auth verification error:', error);
     return { user: null, session: null };
   }
-}
-
-// Require authentication middleware
-export async function requireAuth(request, env) {
-  const authResult = await verifyAuth(request, env);
-
-  if (!authResult.user) {
-    return errorResponse('Authentication required', 401, request);
-  }
-
-  return authResult;
 }
