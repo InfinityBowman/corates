@@ -1,192 +1,111 @@
 /**
- * Corates Workers API - Main Entry Point
+ * Corates Workers API - Main Entry Point (Hono)
  *
- * This is the main router that delegates to specific route handlers.
+ * This is the main Hono application that routes to specific handlers.
  */
 
+import { Hono } from 'hono';
 import { UserSession } from './durable-objects/UserSession.js';
 import { ProjectDoc } from './durable-objects/ProjectDoc.js';
 import { EmailQueue } from './durable-objects/EmailQueue.js';
-import { handleAuthRoutes } from './auth/routes.js';
-import { requireAuth } from './auth/config.js';
-import { getCorsHeaders, handlePreflight, wrapWithCors, errorResponse } from './middleware/cors.js';
-import { handleProjects } from './routes/projects.js';
-import { handleMembers } from './routes/members.js';
-import { handleUsers } from './routes/users.js';
-import { handleDatabase } from './routes/database.js';
-import { handleEmailQueue } from './routes/email-queue.js';
-import { uploadPdf, downloadPdf, deletePdf, listPdfs } from './routes/pdfs.js';
+import { createCorsMiddleware } from './middleware/cors.js';
+
+// Route imports
+import { auth } from './auth/routes.js';
+import { projectRoutes } from './routes/projects.js';
+import { memberRoutes } from './routes/members.js';
+import { userRoutes } from './routes/users.js';
+import { pdfRoutes } from './routes/pdfs.js';
+import { dbRoutes } from './routes/database.js';
+import { emailRoutes } from './routes/email.js';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc, EmailQueue };
 
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    const path = url.pathname;
+// Create main Hono app
+const app = new Hono();
 
-    // Handle CORS preflight
-    if (request.method === 'OPTIONS') {
-      return handlePreflight(request, env);
-    }
+// Apply CORS middleware globally (needs env, so we do it per-request)
+app.use('*', async (c, next) => {
+  const corsMiddleware = createCorsMiddleware(c.env);
+  return corsMiddleware(c, next);
+});
 
-    try {
-      // Auth routes (handled by better-auth)
-      if (path.startsWith('/api/auth/')) {
-        return await handleAuthRoutes(request, env, ctx, path);
-      }
+// Health check
+app.get('/health', c => c.text('OK'));
 
-      // Email queue endpoint - forward to Durable Object
-      if (path === '/api/email/queue' && request.method === 'POST') {
-        return await handleEmailQueue(request, env);
-      }
+// Root endpoint
+app.get('/', c => c.text('Corates Workers API'));
 
-      // API Routes
-      if (path.startsWith('/api/')) {
-        return await handleAPI(request, env, path);
-      }
+// Mount auth routes
+app.route('/api/auth', auth);
 
-      // Health check
-      if (path === '/health') {
-        const corsHeaders = getCorsHeaders(request, env);
-        return new Response('OK', {
-          headers: { ...corsHeaders, 'Content-Type': 'text/plain' },
-        });
-      }
+// Mount email routes
+app.route('/api/email', emailRoutes);
 
-      // Default response
-      const corsHeaders = getCorsHeaders(request, env);
-      return new Response('Corates Workers API', {
-        headers: { ...corsHeaders, 'Content-Type': 'text/plain' },
-      });
-    } catch (error) {
-      console.error('Worker error:', error);
-      return errorResponse('Internal Server Error', 500, request, env);
-    }
-  },
-};
+// Mount database routes
+app.route('/api/db', dbRoutes);
 
-/**
- * Main API router
- */
-async function handleAPI(request, env, path) {
-  // Project document endpoints (Durable Object - real-time sync)
-  if (path.startsWith('/api/project/')) {
-    return await handleProjectDoc(request, env, path);
-  }
+// Mount user routes
+app.route('/api/users', userRoutes);
 
-  // User session endpoints (Durable Object)
-  if (path.startsWith('/api/sessions/')) {
-    return await handleUserSession(request, env, path);
-  }
+// Mount project routes (must be before members to avoid conflicts)
+app.route('/api/projects', projectRoutes);
 
-  // Database operations
-  if (path.startsWith('/api/db/')) {
-    return await handleDatabaseRoutes(request, env, path);
-  }
+// Mount project member routes: /api/projects/:projectId/members
+app.route('/api/projects/:projectId/members', memberRoutes);
 
-  // Project members management: /api/projects/:id/members
-  if (path.match(/^\/api\/projects\/[^/]+\/members/)) {
-    return await handleMembers(request, env, path);
-  }
+// Mount PDF routes: /api/projects/:projectId/studies/:studyId/pdf(s)
+app.route('/api/projects/:projectId/studies/:studyId/pdfs', pdfRoutes);
+app.route('/api/projects/:projectId/studies/:studyId/pdf', pdfRoutes);
 
-  // PDF routes: /api/projects/:id/studies/:studyId/pdf(s)
-  if (path.match(/^\/api\/projects\/[^/]+\/studies\/[^/]+\/pdfs?/)) {
-    return await handlePdfRoutes(request, env, path);
-  }
-
-  // Project CRUD: /api/projects or /api/projects/:id
-  if (path.match(/^\/api\/projects(\/[^/]+)?$/)) {
-    return await handleProjects(request, env, path);
-  }
-
-  // User endpoints: /api/users/:id/...
-  if (path.startsWith('/api/users/')) {
-    return await handleUsers(request, env, path);
-  }
-
-  return errorResponse('Not Found', 404, request, env);
-}
-
-/**
- * Handle ProjectDoc Durable Object requests
- */
-async function handleProjectDoc(request, env, path) {
-  const projectId = path.split('/')[3];
+// Project Document Durable Object routes
+app.all('/api/project/:projectId/*', async c => {
+  const projectId = c.req.param('projectId');
 
   if (!projectId) {
-    return errorResponse('Project ID required', 400, request, env);
+    return c.json({ error: 'Project ID required' }, 400);
   }
 
-  const id = env.PROJECT_DOC.idFromName(projectId);
-  const projectDoc = env.PROJECT_DOC.get(id);
-  const response = await projectDoc.fetch(request);
+  const id = c.env.PROJECT_DOC.idFromName(projectId);
+  const projectDoc = c.env.PROJECT_DOC.get(id);
+  const response = await projectDoc.fetch(c.req.raw);
 
-  return wrapWithCors(response, request, env);
-}
+  // Don't wrap WebSocket upgrade responses
+  if (response.status === 101) {
+    return response;
+  }
 
-/**
- * Handle UserSession Durable Object requests
- */
-async function handleUserSession(request, env, path) {
-  const sessionId = path.split('/')[3];
+  return response;
+});
+
+// User Session Durable Object routes
+app.all('/api/sessions/:sessionId/*', async c => {
+  const sessionId = c.req.param('sessionId');
 
   if (!sessionId) {
-    return errorResponse('Session ID required', 400, request, env);
+    return c.json({ error: 'Session ID required' }, 400);
   }
 
-  const id = env.USER_SESSION.idFromName(sessionId);
-  const session = env.USER_SESSION.get(id);
-  const response = await session.fetch(request);
+  const id = c.env.USER_SESSION.idFromName(sessionId);
+  const session = c.env.USER_SESSION.get(id);
+  const response = await session.fetch(c.req.raw);
 
-  return wrapWithCors(response, request, env);
-}
-
-/**
- * Handle database routes with auth
- */
-async function handleDatabaseRoutes(request, env, path) {
-  // Public migration endpoint (for development)
-  if (path === '/api/db/migrate' && request.method === 'POST') {
-    return await handleDatabase(request, env, path);
+  // Don't wrap WebSocket upgrade responses
+  if (response.status === 101) {
+    return response;
   }
 
-  // Other DB operations require auth
-  const authResult = await requireAuth(request, env);
-  if (authResult instanceof Response) {
-    return authResult;
-  }
+  return response;
+});
 
-  return await handleDatabase(request, env, path, authResult.user);
-}
+// 404 handler
+app.notFound(c => c.json({ error: 'Not Found' }, 404));
 
-/**
- * Handle PDF routes
- */
-async function handlePdfRoutes(request, env, path) {
-  // List PDFs: GET /api/projects/:id/studies/:studyId/pdfs
-  if (path.endsWith('/pdfs') && request.method === 'GET') {
-    const response = await listPdfs(request, env);
-    return wrapWithCors(response, request, env);
-  }
+// Error handler
+app.onError((err, c) => {
+  console.error('Worker error:', err);
+  return c.json({ error: 'Internal Server Error' }, 500);
+});
 
-  // Upload PDF: POST /api/projects/:id/studies/:studyId/pdf
-  if (path.endsWith('/pdf') && request.method === 'POST') {
-    const response = await uploadPdf(request, env);
-    return wrapWithCors(response, request, env);
-  }
-
-  // Download PDF: GET /api/projects/:id/studies/:studyId/pdf/:fileName
-  if (path.match(/\/pdf\/[^/]+$/) && request.method === 'GET') {
-    const response = await downloadPdf(request, env);
-    return wrapWithCors(response, request, env);
-  }
-
-  // Delete PDF: DELETE /api/projects/:id/studies/:studyId/pdf/:fileName
-  if (path.match(/\/pdf\/[^/]+$/) && request.method === 'DELETE') {
-    const response = await deletePdf(request, env);
-    return wrapWithCors(response, request, env);
-  }
-
-  return errorResponse('Not Found', 404, request, env);
-}
+export default app;
