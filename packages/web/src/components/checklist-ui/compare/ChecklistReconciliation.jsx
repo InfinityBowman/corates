@@ -15,7 +15,6 @@ import {
 } from '@/AMSTAR2/checklist-compare.js';
 import ReconciliationQuestionPage from './ReconciliationQuestionPage.jsx';
 import SummaryView from './SummaryView.jsx';
-import Navbar from './Navbar.jsx';
 
 export default function ChecklistReconciliation(props) {
   // props.checklist1 - First reviewer's checklist data
@@ -26,6 +25,7 @@ export default function ChecklistReconciliation(props) {
   // props.onCancel - Callback to cancel and go back
   // props.reviewer1Name - Display name for first reviewer
   // props.reviewer2Name - Display name for second reviewer
+  // props.navbarRef - Ref callback to expose navbar props for external rendering
 
   // Track if we've initialized from saved progress
   const [initialized, setInitialized] = createSignal(false);
@@ -70,6 +70,24 @@ export default function ChecklistReconciliation(props) {
       map[item.key] = item;
     }
     return map;
+  });
+
+  // Expose navbar props for external rendering
+  createEffect(() => {
+    if (props.navbarRef) {
+      props.navbarRef({
+        questionKeys,
+        viewMode: viewMode(),
+        setViewMode,
+        currentPage: currentPage(),
+        goToQuestion,
+        comparisonByQuestion: comparisonByQuestion(),
+        finalAnswers: finalAnswers(),
+        summary: summary(),
+        reviewedCount: reviewedCount(),
+        totalPages,
+      });
+    }
   });
 
   // Current question key
@@ -273,58 +291,8 @@ export default function ChecklistReconciliation(props) {
   }
 
   return (
-    <div class='min-h-screen bg-blue-50'>
-      <div class='container mx-auto px-4 py-6 max-w-7xl'>
-        {/* Header */}
-        <div class='bg-white rounded-lg shadow-lg p-4 mb-4'>
-          <div class='flex items-center justify-between'>
-            <div class='flex items-center gap-4'>
-              <button
-                onClick={() => props.onCancel?.()}
-                class='p-2 hover:bg-gray-100 rounded-lg transition-colors'
-                title='Go back'
-              >
-                <AiOutlineArrowLeft class='w-5 h-5 text-gray-600' />
-              </button>
-              <div>
-                <h1 class='text-xl font-bold text-gray-900'>Checklist Reconciliation</h1>
-                <p class='text-gray-500 text-sm'>
-                  {props.reviewer1Name || 'Reviewer 1'} vs {props.reviewer2Name || 'Reviewer 2'}
-                </p>
-              </div>
-            </div>
-
-            {/* Progress */}
-            <div class='flex items-center gap-4'>
-              <div class='text-sm text-gray-600'>
-                <span class='font-medium'>{reviewedCount()}</span> of{' '}
-                <span class='font-medium'>{totalPages}</span> reviewed
-              </div>
-              <Show when={summary()}>
-                <div class='flex items-center gap-2'>
-                  <span class='px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded'>
-                    {summary().agreementCount} agree
-                  </span>
-                  <span class='px-2 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded'>
-                    {summary().disagreementCount} differ
-                  </span>
-                </div>
-              </Show>
-            </div>
-          </div>
-
-          {/* Question Navigation Pills */}
-          <Navbar
-            questionKeys={questionKeys}
-            viewMode={viewMode()}
-            setViewMode={setViewMode}
-            currentPage={currentPage()}
-            goToQuestion={goToQuestion}
-            comparisonByQuestion={comparisonByQuestion()}
-            finalAnswers={finalAnswers()}
-          />
-        </div>
-
+    <div class='bg-blue-50'>
+      <div class='px-4 py-4 max-w-7xl mx-auto'>
         {/* Main Content */}
         <Show when={viewMode() === 'questions'}>
           <Show

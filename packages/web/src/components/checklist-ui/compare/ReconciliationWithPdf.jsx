@@ -4,8 +4,11 @@
  */
 
 import { createSignal, Show } from 'solid-js';
+import { AiOutlineArrowLeft } from 'solid-icons/ai';
 import PdfViewer from '@/components/checklist-ui/pdf/PdfViewer.jsx';
 import ChecklistReconciliation from './ChecklistReconciliation.jsx';
+import Navbar from './Navbar.jsx';
+import SplitPanelControls from '@/components/checklist-ui/SplitPanelControls.jsx';
 
 export default function ReconciliationWithPdf(props) {
   // props.checklist1 - First reviewer's checklist data
@@ -25,6 +28,9 @@ export default function ReconciliationWithPdf(props) {
   const [layout, setLayout] = createSignal('vertical'); // 'vertical' = side by side, 'horizontal' = stacked
   const [splitRatio, setSplitRatio] = createSignal(60); // Slightly more space for reconciliation
   const [isDragging, setIsDragging] = createSignal(false);
+
+  // Navbar state from ChecklistReconciliation
+  const [navbarProps, setNavbarProps] = createSignal(null);
 
   let containerRef;
 
@@ -63,87 +69,66 @@ export default function ReconciliationWithPdf(props) {
   const hasPdf = () => props.pdfData || props.pdfLoading;
 
   return (
-    <div class='h-screen flex flex-col bg-blue-50'>
-      {/* Layout controls toolbar */}
-      <div class='bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-end gap-2 shrink-0'>
+    <div class='h-full flex flex-col bg-blue-50'>
+      {/* Header toolbar */}
+      <div class='bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-4 shrink-0'>
+        {/* Back button */}
+        <button
+          onClick={() => props.onCancel?.()}
+          class='p-2 hover:bg-gray-100 rounded-lg transition-colors shrink-0'
+          title='Go back'
+        >
+          <AiOutlineArrowLeft class='w-5 h-5 text-gray-600' />
+        </button>
+
+        {/* Title */}
+        <div class='shrink-0'>
+          <h1 class='text-lg font-bold text-gray-900'>Reconciliation</h1>
+          <p class='text-gray-500 text-xs'>
+            {props.reviewer1Name || 'Reviewer 1'} vs {props.reviewer2Name || 'Reviewer 2'}
+          </p>
+        </div>
+
+        <div class='h-8 w-px bg-gray-200 shrink-0' />
+
+        {/* Navbar - question navigation pills */}
+        <Show when={navbarProps()}>
+          <div class='flex-1 flex items-center gap-4 overflow-x-auto'>
+            <Navbar
+              questionKeys={navbarProps().questionKeys}
+              viewMode={navbarProps().viewMode}
+              setViewMode={navbarProps().setViewMode}
+              currentPage={navbarProps().currentPage}
+              goToQuestion={navbarProps().goToQuestion}
+              comparisonByQuestion={navbarProps().comparisonByQuestion}
+              finalAnswers={navbarProps().finalAnswers}
+            />
+            {/* Progress indicator */}
+            {/* <div class='flex items-center gap-2 text-sm text-gray-600 shrink-0'>
+              <span class='font-medium'>{navbarProps().reviewedCount}</span>/
+              <span>{navbarProps().totalPages}</span>
+              <Show when={navbarProps().summary}>
+                <span class='px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded'>
+                  {navbarProps().summary.agreementCount} agree
+                </span>
+                <span class='px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs rounded'>
+                  {navbarProps().summary.disagreementCount} differ
+                </span>
+              </Show>
+            </div> */}
+          </div>
+        </Show>
+
         <Show when={hasPdf()}>
-          {/* Toggle PDF panel */}
-          <button
-            onClick={() => setShowPdf(!showPdf())}
-            class={`p-1.5 rounded transition-colors ${
-              showPdf() ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 text-gray-600'
-            }`}
-            title={showPdf() ? 'Hide PDF viewer' : 'Show PDF viewer'}
-          >
-            <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path
-                stroke-linecap='round'
-                stroke-linejoin='round'
-                stroke-width='2'
-                d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
-              />
-            </svg>
-          </button>
-
-          <Show when={showPdf()}>
-            <div class='h-4 w-px bg-gray-300 mx-1' />
-
-            {/* Vertical split (side by side) */}
-            <button
-              onClick={() => setLayout('vertical')}
-              class={`p-1.5 rounded transition-colors ${
-                layout() === 'vertical' ?
-                  'bg-blue-100 text-blue-700'
-                : 'hover:bg-gray-100 text-gray-600'
-              }`}
-              title='Side by side'
-            >
-              <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path
-                  stroke-linecap='round'
-                  stroke-linejoin='round'
-                  stroke-width='2'
-                  d='M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2'
-                />
-              </svg>
-            </button>
-
-            {/* Horizontal split (stacked) */}
-            <button
-              onClick={() => setLayout('horizontal')}
-              class={`p-1.5 rounded transition-colors ${
-                layout() === 'horizontal' ?
-                  'bg-blue-100 text-blue-700'
-                : 'hover:bg-gray-100 text-gray-600'
-              }`}
-              title='Stacked'
-            >
-              <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path
-                  stroke-linecap='round'
-                  stroke-linejoin='round'
-                  stroke-width='2'
-                  d='M4 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z'
-                />
-              </svg>
-            </button>
-
-            {/* Reset ratio */}
-            <button
-              onClick={() => setSplitRatio(60)}
-              class='p-1.5 rounded hover:bg-gray-100 text-gray-600 transition-colors'
-              title='Reset split (60/40)'
-            >
-              <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path
-                  stroke-linecap='round'
-                  stroke-linejoin='round'
-                  stroke-width='2'
-                  d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
-                />
-              </svg>
-            </button>
-          </Show>
+          <SplitPanelControls
+            showSecondPanel={showPdf()}
+            onToggleSecondPanel={() => setShowPdf(!showPdf())}
+            layout={layout()}
+            onSetLayout={setLayout}
+            onResetRatio={() => setSplitRatio(60)}
+            secondPanelLabel='PDF viewer'
+            defaultRatioLabel='60/40'
+          />
         </Show>
       </div>
 
@@ -171,6 +156,7 @@ export default function ReconciliationWithPdf(props) {
             onSaveProgress={props.onSaveProgress}
             onSaveReconciled={props.onSaveReconciled}
             onCancel={props.onCancel}
+            navbarRef={setNavbarProps}
           />
         </div>
 

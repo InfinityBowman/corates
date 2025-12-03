@@ -11,7 +11,7 @@ export default function Navbar(props) {
   // - comparisonByQuestion: object mapping question keys to comparison data
   // - finalAnswers: object mapping question keys to final answers
   return (
-    <div class='mt-4 flex flex-wrap gap-1'>
+    <div class='flex flex-wrap gap-1 py-1'>
       <For each={props.questionKeys}>
         {(key, index) => {
           const isCurrentPage = () =>
