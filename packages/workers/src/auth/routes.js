@@ -1,140 +1,124 @@
+/**
+ * Auth routes for Hono
+ * Handles better-auth integration and custom auth endpoints
+ */
+
+import { Hono } from 'hono';
 import { createAuth } from './config.js';
 import {
   getEmailVerificationSuccessPage,
   getEmailVerificationFailurePage,
   getEmailVerificationErrorPage,
 } from './templates.js';
-import { getCorsHeaders } from '../middleware/cors.js';
 
-export async function handleAuthRoutes(request, env, ctx, path) {
-  // Use the shared CORS configuration
-  const corsHeaders = getCorsHeaders(request);
+const auth = new Hono();
 
-  // Handle CORS preflight - Safari requires explicit 200 status
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { status: 200, headers: corsHeaders });
-  }
-
+/**
+ * GET /api/auth/session
+ * Custom session endpoint for WebSocket authentication
+ */
+auth.get('/session', async (c) => {
   try {
-    const auth = createAuth(env, ctx);
-    const url = new URL(request.url);
+    const betterAuth = createAuth(c.env, c.executionCtx);
+    const session = await betterAuth.api.getSession({
+      headers: c.req.raw.headers,
+    });
 
-    // Better Auth handles all its endpoints automatically
-    // We just need to forward the request with the correct path
+    return c.json({
+      user: session?.user || null,
+      session: session?.session || null,
+      sessionToken: session?.session?.id || null,
+    });
+  } catch (error) {
+    console.error('Session fetch error:', error);
+    return c.json({ user: null, session: null });
+  }
+});
+
+/**
+ * Email verification handler
+ * Provides custom HTML responses for email verification
+ */
+auth.get('/verify-email', async (c) => {
+  try {
+    const betterAuth = createAuth(c.env, c.executionCtx);
+    const url = new URL(c.req.url);
+
+    // Create request for better-auth
+    const authUrl = new URL('/api/auth/verify-email', url.origin);
+    authUrl.search = url.search;
+    const authRequest = new Request(authUrl.toString(), {
+      method: 'GET',
+      headers: c.req.raw.headers,
+    });
+
+    // Let Better Auth handle the verification
+    const response = await betterAuth.handler(authRequest);
+
+    console.log('Email verification response status:', response.status);
+
+    // Check if verification was successful
+    if (response.status >= 200 && response.status < 400) {
+      // Collect all Set-Cookie headers from the response
+      const setCookieHeaders = response.headers.getSetCookie?.() || [];
+      console.log('Set-Cookie headers from verification:', setCookieHeaders);
+
+      // Build response with cookies preserved
+      const headers = new Headers();
+      headers.set('Content-Type', 'text/html; charset=utf-8');
+
+      // Append all Set-Cookie headers
+      setCookieHeaders.forEach((cookie) => {
+        headers.append('Set-Cookie', cookie);
+      });
+
+      return new Response(getEmailVerificationSuccessPage(), {
+        status: 200,
+        headers,
+      });
+    } else {
+      return new Response(getEmailVerificationFailurePage(), {
+        status: response.status,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      });
+    }
+  } catch (error) {
+    console.error('Email verification error:', error);
+    return new Response(getEmailVerificationErrorPage(), {
+      status: 500,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    });
+  }
+});
+
+/**
+ * Catch-all handler for all other auth routes
+ * Forwards to better-auth handler
+ */
+auth.all('/*', async (c) => {
+  try {
+    const betterAuth = createAuth(c.env, c.executionCtx);
+    const url = new URL(c.req.url);
+    const path = url.pathname;
+
     // Create a new request with the auth path, preserving query parameters
     const authUrl = new URL(path, url.origin);
-    authUrl.search = url.search; // Preserve query parameters like ?token=...
+    authUrl.search = url.search;
     const authRequest = new Request(authUrl.toString(), {
-      method: request.method,
-      headers: request.headers,
-      body: request.body,
+      method: c.req.method,
+      headers: c.req.raw.headers,
+      body: c.req.raw.body,
     });
-
-    // Handle session endpoint for WebSocket authentication
-    if (path === '/api/auth/session' && request.method === 'GET') {
-      try {
-        const session = await auth.api.getSession({
-          headers: request.headers,
-        });
-
-        const responseData = {
-          user: session?.user || null,
-          session: session?.session || null,
-          sessionToken: session?.session?.id || null,
-        };
-
-        return new Response(JSON.stringify(responseData), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      } catch (error) {
-        console.error('Session fetch error:', error);
-        return new Response(JSON.stringify({ user: null, session: null }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-    }
-
-    // Handle email verification - custom handling for redirect
-    if (path === '/api/auth/verify-email') {
-      try {
-        // Let Better Auth handle the verification
-        const response = await auth.handler(authRequest);
-
-        console.log('Email verification response status:', response.status);
-        console.log(
-          'Email verification response headers:',
-          Object.fromEntries(response.headers.entries()),
-        );
-
-        // Check if verification was successful
-        if (response.status >= 200 && response.status < 400) {
-          // Collect all Set-Cookie headers from the response
-          const setCookieHeaders = response.headers.getSetCookie?.() || [];
-          console.log('Set-Cookie headers from verification:', setCookieHeaders);
-
-          // Build new headers preserving cookies
-          const newHeaders = new Headers();
-
-          // Add CORS headers
-          Object.entries(corsHeaders).forEach(([key, value]) => {
-            newHeaders.set(key, value);
-          });
-
-          // Set content type
-          newHeaders.set('Content-Type', 'text/html; charset=utf-8');
-
-          // Append all Set-Cookie headers (can have multiple)
-          setCookieHeaders.forEach(cookie => {
-            newHeaders.append('Set-Cookie', cookie);
-          });
-
-          // Use the existing template from templates.js
-          return new Response(getEmailVerificationSuccessPage(), {
-            status: 200,
-            headers: newHeaders,
-          });
-        } else {
-          // Handle verification failure using existing template
-          return new Response(getEmailVerificationFailurePage(), {
-            status: response.status,
-            headers: {
-              ...corsHeaders,
-              'Content-Type': 'text/html; charset=utf-8',
-            },
-          });
-        }
-      } catch (error) {
-        console.error('Email verification error:', error);
-        return new Response(getEmailVerificationErrorPage(), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' },
-        });
-      }
-    }
-
-    // Better Auth handles all its endpoints automatically
-    // We just need to forward the request with the correct path
-    // ...existing code...
 
     // Let Better Auth handle the request
-    const response = await auth.handler(authRequest);
+    const response = await betterAuth.handler(authRequest);
 
-    // Add CORS headers to the response
-    const corsResponse = new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: {
-        ...Object.fromEntries(response.headers.entries()),
-        ...corsHeaders,
-      },
-    });
-
-    return corsResponse;
+    // Return the response (CORS is handled by global middleware)
+    return response;
   } catch (error) {
     console.error('Auth route error:', error);
-    return new Response(JSON.stringify({ error: 'Authentication error', details: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return c.json({ error: 'Authentication error', details: error.message }, 500);
   }
-}
+});
+
+export { auth };
