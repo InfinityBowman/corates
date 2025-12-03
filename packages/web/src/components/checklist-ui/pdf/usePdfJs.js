@@ -29,6 +29,7 @@ export default function usePdfJs(options = {}) {
   const [libReady, setLibReady] = createSignal(false);
   const [rendering, setRendering] = createSignal(false);
   const [pageCanvases, setPageCanvases] = createSignal([]);
+  const [pageTextLayers, setPageTextLayers] = createSignal([]);
 
   let currentRenderTasks = new Map(); // Track render tasks per page
   let renderingPages = new Set(); // Track which pages are currently rendering
@@ -221,9 +222,10 @@ export default function usePdfJs(options = {}) {
       setTotalPages(pdf.numPages);
       setCurrentPage(1);
 
-      // Initialize canvas refs array - the effect watching pageCanvases
+      // Initialize canvas and text layer refs arrays - the effect watching pageCanvases
       // will render pages as canvases are mounted in the DOM
       setPageCanvases(Array(pdf.numPages).fill(null));
+      setPageTextLayers(Array(pdf.numPages).fill(null));
     } catch (err) {
       console.error('Error loading PDF:', err);
       setError('Failed to load PDF. Please try another file.');
@@ -314,6 +316,24 @@ export default function usePdfJs(options = {}) {
       currentRenderTasks.set(pageNum, renderTask);
       await renderTask.promise;
       currentRenderTasks.delete(pageNum);
+
+      // Render text layer for text selection
+      const textLayers = pageTextLayers();
+      const textLayerDiv = textLayers[pageNum - 1];
+      if (textLayerDiv && pdfjsLib.TextLayer) {
+        // Clear existing text layer content
+        textLayerDiv.innerHTML = '';
+        textLayerDiv.style.width = `${viewport.width}px`;
+        textLayerDiv.style.height = `${viewport.height}px`;
+
+        const textContent = await page.getTextContent();
+        const textLayer = new pdfjsLib.TextLayer({
+          textContentSource: textContent,
+          container: textLayerDiv,
+          viewport: viewport,
+        });
+        await textLayer.render();
+      }
     } catch (err) {
       if (err.name !== 'RenderingCancelledException') {
         console.error('Error rendering page:', pageNum, err);
@@ -341,6 +361,15 @@ export default function usePdfJs(options = {}) {
 
     // Don't automatically render here - let renderAllPages handle initial render
     // to avoid race conditions with multiple canvases mounting simultaneously
+  }
+
+  // Set text layer ref for a specific page
+  function setPageTextLayerRef(pageNum, ref) {
+    setPageTextLayers(prev => {
+      const newLayers = [...prev];
+      newLayers[pageNum - 1] = ref;
+      return newLayers;
+    });
   }
 
   async function handleFile(file) {
@@ -404,6 +433,7 @@ export default function usePdfJs(options = {}) {
     setCurrentPage(1);
     setTotalPages(0);
     setPageCanvases([]);
+    setPageTextLayers([]);
     setError(null);
     pageRefs.clear();
 
@@ -500,6 +530,7 @@ export default function usePdfJs(options = {}) {
 
     // Ref setters
     setPageCanvasRef,
+    setPageTextLayerRef,
     setPageRef,
     setFileInputRef,
     setScrollContainerRef,
