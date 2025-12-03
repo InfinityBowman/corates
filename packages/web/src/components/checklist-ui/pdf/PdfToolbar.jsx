@@ -3,7 +3,7 @@
  * Contains file controls, page navigation, and zoom controls
  */
 
-import { Show } from 'solid-js';
+import { Show, createSignal } from 'solid-js';
 import { AiOutlineUpload, AiOutlineClose, AiOutlineMinus, AiOutlinePlus } from 'solid-icons/ai';
 import {
   BiRegularChevronLeft,
@@ -26,9 +26,37 @@ export default function PdfToolbar(props) {
   // props.onZoomIn - Handler for zoom in
   // props.onZoomOut - Handler for zoom out
   // props.onResetZoom - Handler for reset zoom
+  // props.onSetScale - Handler to set specific zoom scale
+  // props.onGoToPage - Handler to go to specific page
   // props.onFitToWidth - Handler for fit to width
   // props.fileInputRef - Ref setter for hidden file input
   // props.onFileUpload - Handler for file upload
+
+  // Local state for page input
+  const [pageInput, setPageInput] = createSignal('');
+  const [zoomInput, setZoomInput] = createSignal('');
+
+  // Handle page input submission
+  function handlePageSubmit(e) {
+    e.preventDefault();
+    const pageNum = parseInt(pageInput(), 10);
+    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= props.totalPages) {
+      props.onGoToPage?.(pageNum);
+    }
+    setPageInput('');
+    e.target.querySelector('input')?.blur();
+  }
+
+  // Handle zoom input submission
+  function handleZoomSubmit(e) {
+    e.preventDefault();
+    const zoomPercent = parseInt(zoomInput(), 10);
+    if (!isNaN(zoomPercent) && zoomPercent >= 50 && zoomPercent <= 300) {
+      props.onSetScale?.(zoomPercent / 100);
+    }
+    setZoomInput('');
+    e.target.querySelector('input')?.blur();
+  }
 
   return (
     <div class='bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between gap-4 shrink-0'>
@@ -80,9 +108,18 @@ export default function PdfToolbar(props) {
           >
             <BiRegularChevronLeft class='w-5 h-5' />
           </button>
-          <span class='text-sm text-gray-600 min-w-20 text-center'>
-            {props.currentPage} / {props.totalPages}
-          </span>
+          <form onSubmit={handlePageSubmit} class='flex items-center gap-1 whitespace-nowrap'>
+            <input
+              type='text'
+              inputmode='numeric'
+              value={pageInput()}
+              onInput={e => setPageInput(e.target.value)}
+              placeholder={String(props.currentPage)}
+              class='w-10 text-center text-sm text-gray-600 border border-gray-200 rounded px-1 py-0.5 focus:outline-none focus:border-blue-400'
+              title='Enter page number'
+            />
+            <span class='text-sm text-gray-600'>/ {props.totalPages}</span>
+          </form>
           <button
             onClick={() => props.onNextPage?.()}
             disabled={props.currentPage >= props.totalPages}
@@ -103,13 +140,17 @@ export default function PdfToolbar(props) {
           >
             <AiOutlineMinus class='w-5 h-5' />
           </button>
-          <button
-            onClick={() => props.onResetZoom?.()}
-            class='px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded transition-colors min-w-[50px]'
-            title='Reset zoom'
-          >
-            {Math.round(props.scale * 100)}%
-          </button>
+          <form onSubmit={handleZoomSubmit} class='flex items-center'>
+            <input
+              type='text'
+              inputmode='numeric'
+              value={zoomInput()}
+              onInput={e => setZoomInput(e.target.value)}
+              placeholder={`${Math.round(props.scale * 100)}%`}
+              class='w-14 text-center text-sm text-gray-600 border border-gray-200 rounded px-1 py-0.5 focus:outline-none focus:border-blue-400'
+              title='Enter zoom percentage (50-300)'
+            />
+          </form>
           <button
             onClick={() => props.onZoomIn?.()}
             disabled={props.scale >= 3.0}
