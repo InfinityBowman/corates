@@ -83,10 +83,14 @@ export default function PdfViewer(props) {
                     <div class='text-xs text-gray-500 mb-1'>
                       Page {pageNum} of {pdf.totalPages()}
                     </div>
-                    <canvas
-                      ref={el => pdf.setPageCanvasRef(pageNum, el)}
-                      class='shadow-lg bg-white'
-                    />
+                    <div class='relative shadow-lg'>
+                      <canvas ref={el => pdf.setPageCanvasRef(pageNum, el)} class='bg-white' />
+                      {/* Text layer for text selection */}
+                      <div
+                        ref={el => pdf.setPageTextLayerRef(pageNum, el)}
+                        class='pdf-text-layer absolute top-0 left-0 overflow-hidden'
+                      />
+                    </div>
                   </div>
                 );
               }}
