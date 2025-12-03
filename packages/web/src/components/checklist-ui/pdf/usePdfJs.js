@@ -547,6 +547,7 @@ export default function usePdfJs(options = {}) {
     zoomIn,
     zoomOut,
     resetZoom,
+    setScale,
     fitToWidth,
   };
 }
