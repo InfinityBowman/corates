@@ -55,6 +55,8 @@ export default function PdfViewer(props) {
         onZoomIn={pdf.zoomIn}
         onZoomOut={pdf.zoomOut}
         onResetZoom={pdf.resetZoom}
+        onSetScale={pdf.setScale}
+        onGoToPage={pdf.goToPage}
         onFitToWidth={pdf.fitToWidth}
         fileInputRef={setFileInputRef}
         onFileUpload={pdf.handleFileUpload}
