@@ -6,7 +6,7 @@
 import { Show } from 'solid-js';
 import { AiOutlineFilePdf } from 'solid-icons/ai';
 import { VsSplitHorizontal, VsSplitVertical } from 'solid-icons/vs';
-import { VsRefresh } from 'solid-icons/vs'
+import { VsRefresh } from 'solid-icons/vs';
 
 export default function SplitPanelControls(props) {
   // props.showSecondPanel - boolean, whether second panel is visible

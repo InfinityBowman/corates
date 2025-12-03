@@ -15,7 +15,7 @@ const dbRoutes = new Hono();
  * GET /api/db/users
  * List users (requires auth)
  */
-dbRoutes.get('/users', requireAuth, async (c) => {
+dbRoutes.get('/users', requireAuth, async c => {
   const db = createDb(c.env.DB);
 
   try {
@@ -43,7 +43,7 @@ dbRoutes.get('/users', requireAuth, async (c) => {
  * POST /api/db/users
  * Redirect to auth for user registration
  */
-dbRoutes.post('/users', (c) => {
+dbRoutes.post('/users', c => {
   return c.json({ error: 'Use /api/auth/register for user registration' }, 400);
 });
 
@@ -51,7 +51,7 @@ dbRoutes.post('/users', (c) => {
  * POST /api/db/migrate
  * Check migration status (public endpoint for development)
  */
-dbRoutes.post('/migrate', async (c) => {
+dbRoutes.post('/migrate', async c => {
   try {
     // Check if tables exist (raw SQL for schema introspection)
     const tableCheck = await c.env.DB.prepare(

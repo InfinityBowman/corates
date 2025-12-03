@@ -50,7 +50,7 @@ pdfRoutes.use('*', verifyProjectMembership);
  * GET /api/projects/:projectId/studies/:studyId/pdfs
  * List PDFs for a study
  */
-pdfRoutes.get('/', async (c) => {
+pdfRoutes.get('/', async c => {
   const projectId = c.get('projectId');
   const studyId = c.get('studyId');
 
@@ -59,7 +59,7 @@ pdfRoutes.get('/', async (c) => {
   try {
     const listed = await c.env.PDF_BUCKET.list({ prefix });
 
-    const pdfs = listed.objects.map((obj) => ({
+    const pdfs = listed.objects.map(obj => ({
       key: obj.key,
       fileName: obj.key.replace(prefix, ''),
       size: obj.size,
@@ -77,7 +77,7 @@ pdfRoutes.get('/', async (c) => {
  * POST /api/projects/:projectId/studies/:studyId/pdf
  * Upload a PDF for a study
  */
-pdfRoutes.post('/', async (c) => {
+pdfRoutes.post('/', async c => {
   const { user } = getAuth(c);
   const projectId = c.get('projectId');
   const studyId = c.get('studyId');
@@ -148,7 +148,7 @@ pdfRoutes.post('/', async (c) => {
  * GET /api/projects/:projectId/studies/:studyId/pdf/:fileName
  * Download a PDF for a study
  */
-pdfRoutes.get('/:fileName', async (c) => {
+pdfRoutes.get('/:fileName', async c => {
   const projectId = c.get('projectId');
   const studyId = c.get('studyId');
   const fileName = decodeURIComponent(c.req.param('fileName'));
@@ -183,7 +183,7 @@ pdfRoutes.get('/:fileName', async (c) => {
  * DELETE /api/projects/:projectId/studies/:studyId/pdf/:fileName
  * Delete a PDF for a study
  */
-pdfRoutes.delete('/:fileName', async (c) => {
+pdfRoutes.delete('/:fileName', async c => {
   const memberRole = c.get('memberRole');
 
   // Verify user has edit permissions

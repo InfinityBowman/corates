@@ -41,7 +41,7 @@ async function syncProjectToDO(env, projectId, meta, members) {
  * GET /api/projects/:id
  * Get a single project by ID
  */
-projectRoutes.get('/:id', async (c) => {
+projectRoutes.get('/:id', async c => {
   const { user: authUser } = getAuth(c);
   const projectId = c.req.param('id');
   const db = createDb(c.env.DB);
@@ -77,7 +77,7 @@ projectRoutes.get('/:id', async (c) => {
  * POST /api/projects
  * Create a new project
  */
-projectRoutes.post('/', async (c) => {
+projectRoutes.post('/', async c => {
   const { user: authUser } = getAuth(c);
   const db = createDb(c.env.DB);
 
@@ -164,7 +164,7 @@ projectRoutes.post('/', async (c) => {
  * PUT /api/projects/:id
  * Update project details
  */
-projectRoutes.put('/:id', async (c) => {
+projectRoutes.put('/:id', async c => {
   const { user: authUser } = getAuth(c);
   const projectId = c.req.param('id');
   const db = createDb(c.env.DB);
@@ -216,7 +216,7 @@ projectRoutes.put('/:id', async (c) => {
  * DELETE /api/projects/:id
  * Delete a project (owner only)
  */
-projectRoutes.delete('/:id', async (c) => {
+projectRoutes.delete('/:id', async c => {
   const { user: authUser } = getAuth(c);
   const projectId = c.req.param('id');
   const db = createDb(c.env.DB);
