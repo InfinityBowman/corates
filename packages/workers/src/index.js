@@ -32,10 +32,10 @@ app.use('*', async (c, next) => {
 });
 
 // Health check
-app.get('/health', (c) => c.text('OK'));
+app.get('/health', c => c.text('OK'));
 
 // Root endpoint
-app.get('/', (c) => c.text('Corates Workers API'));
+app.get('/', c => c.text('Corates Workers API'));
 
 // Mount auth routes
 app.route('/api/auth', auth);
@@ -60,7 +60,7 @@ app.route('/api/projects/:projectId/studies/:studyId/pdfs', pdfRoutes);
 app.route('/api/projects/:projectId/studies/:studyId/pdf', pdfRoutes);
 
 // Project Document Durable Object routes
-app.all('/api/project/:projectId/*', async (c) => {
+app.all('/api/project/:projectId/*', async c => {
   const projectId = c.req.param('projectId');
 
   if (!projectId) {
@@ -80,7 +80,7 @@ app.all('/api/project/:projectId/*', async (c) => {
 });
 
 // User Session Durable Object routes
-app.all('/api/sessions/:sessionId/*', async (c) => {
+app.all('/api/sessions/:sessionId/*', async c => {
   const sessionId = c.req.param('sessionId');
 
   if (!sessionId) {
@@ -100,7 +100,7 @@ app.all('/api/sessions/:sessionId/*', async (c) => {
 });
 
 // 404 handler
-app.notFound((c) => c.json({ error: 'Not Found' }, 404));
+app.notFound(c => c.json({ error: 'Not Found' }, 404));
 
 // Error handler
 app.onError((err, c) => {
