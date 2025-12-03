@@ -11,7 +11,7 @@ const emailRoutes = new Hono();
  * POST /api/email/queue
  * Enqueue email payload to Durable Object
  */
-emailRoutes.post('/queue', async (c) => {
+emailRoutes.post('/queue', async c => {
   try {
     const payload = await c.req.json();
 

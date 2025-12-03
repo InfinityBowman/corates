@@ -75,7 +75,7 @@ memberRoutes.use('*', projectMembershipMiddleware);
  * GET /api/projects/:projectId/members
  * List all members of a project
  */
-memberRoutes.get('/', async (c) => {
+memberRoutes.get('/', async c => {
   const projectId = c.get('projectId');
   const db = createDb(c.env.DB);
 
@@ -107,7 +107,7 @@ memberRoutes.get('/', async (c) => {
  * POST /api/projects/:projectId/members
  * Add a member to the project (owner only)
  */
-memberRoutes.post('/', async (c) => {
+memberRoutes.post('/', async c => {
   const isOwner = c.get('isOwner');
   const projectId = c.get('projectId');
 
@@ -244,7 +244,7 @@ memberRoutes.post('/', async (c) => {
  * PUT /api/projects/:projectId/members/:userId
  * Update a member's role (owner only)
  */
-memberRoutes.put('/:userId', async (c) => {
+memberRoutes.put('/:userId', async c => {
   const isOwner = c.get('isOwner');
   const projectId = c.get('projectId');
   const memberId = c.req.param('userId');
@@ -281,10 +281,7 @@ memberRoutes.put('/:userId', async (c) => {
         .get();
 
       if (targetMember?.role === 'owner' && ownerCountResult?.count <= 1) {
-        return c.json(
-          { error: 'Cannot remove the last owner. Assign another owner first.' },
-          400,
-        );
+        return c.json({ error: 'Cannot remove the last owner. Assign another owner first.' }, 400);
       }
     }
 
@@ -310,7 +307,7 @@ memberRoutes.put('/:userId', async (c) => {
  * DELETE /api/projects/:projectId/members/:userId
  * Remove a member from the project (owner only, or self-removal)
  */
-memberRoutes.delete('/:userId', async (c) => {
+memberRoutes.delete('/:userId', async c => {
   const { user: authUser } = getAuth(c);
   const isOwner = c.get('isOwner');
   const projectId = c.get('projectId');
@@ -346,7 +343,10 @@ memberRoutes.delete('/:userId', async (c) => {
 
       if (ownerCountResult?.count <= 1) {
         return c.json(
-          { error: 'Cannot remove the last owner. Assign another owner first or delete the project.' },
+          {
+            error:
+              'Cannot remove the last owner. Assign another owner first or delete the project.',
+          },
           400,
         );
       }

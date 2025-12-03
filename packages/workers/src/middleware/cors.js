@@ -12,7 +12,7 @@ import { getAllowedOrigins, isOriginAllowed, STATIC_ORIGINS } from '../config/or
  */
 export function createCorsMiddleware(env) {
   return cors({
-    origin: (origin) => {
+    origin: origin => {
       if (isOriginAllowed(origin, env)) {
         return origin;
       }

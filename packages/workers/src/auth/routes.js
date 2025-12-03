@@ -17,7 +17,7 @@ const auth = new Hono();
  * GET /api/auth/session
  * Custom session endpoint for WebSocket authentication
  */
-auth.get('/session', async (c) => {
+auth.get('/session', async c => {
   try {
     const betterAuth = createAuth(c.env, c.executionCtx);
     const session = await betterAuth.api.getSession({
@@ -39,7 +39,7 @@ auth.get('/session', async (c) => {
  * Email verification handler
  * Provides custom HTML responses for email verification
  */
-auth.get('/verify-email', async (c) => {
+auth.get('/verify-email', async c => {
   try {
     const betterAuth = createAuth(c.env, c.executionCtx);
     const url = new URL(c.req.url);
@@ -68,7 +68,7 @@ auth.get('/verify-email', async (c) => {
       headers.set('Content-Type', 'text/html; charset=utf-8');
 
       // Append all Set-Cookie headers
-      setCookieHeaders.forEach((cookie) => {
+      setCookieHeaders.forEach(cookie => {
         headers.append('Set-Cookie', cookie);
       });
 
@@ -95,7 +95,7 @@ auth.get('/verify-email', async (c) => {
  * Catch-all handler for all other auth routes
  * Forwards to better-auth handler
  */
-auth.all('/*', async (c) => {
+auth.all('/*', async c => {
   try {
     const betterAuth = createAuth(c.env, c.executionCtx);
     const url = new URL(c.req.url);
