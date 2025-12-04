@@ -4,7 +4,7 @@ import useProject from '@primitives/useProject.js';
 import projectStore from '@primitives/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf, deletePdf, getPdfUrl } from '@api/pdf-api.js';
-import { cachePdf, removeCachedPdf } from '@primitives/pdfCache.js';
+import { cachePdf, removeCachedPdf, getCachedPdf } from '@primitives/pdfCache.js';
 import { API_BASE } from '@config/api.js';
 import StudyCard from './StudyCard.jsx';
 import StudyForm from './StudyForm.jsx';
@@ -258,9 +258,23 @@ export default function ProjectView() {
     }
   };
 
-  // View a PDF in a new tab
-  const handleViewPdf = (studyId, pdf) => {
+  // View a PDF - try cache first for offline support, fall back to URL
+  const handleViewPdf = async (studyId, pdf) => {
     if (!pdf || !pdf.fileName) return;
+
+    // Try to get from cache first (works offline)
+    const cachedData = await getCachedPdf(params.projectId, studyId, pdf.fileName);
+    if (cachedData) {
+      // Create a blob URL from cached data and open it
+      const blob = new Blob([cachedData], { type: 'application/pdf' });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+      // Clean up blob URL after a delay (browser needs time to load it)
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+      return;
+    }
+
+    // Fall back to direct URL (requires network)
     const url = getPdfUrl(params.projectId, studyId, pdf.fileName);
     window.open(url, '_blank');
   };
