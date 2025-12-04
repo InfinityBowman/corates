@@ -41,6 +41,7 @@
     "puppeteer": "^24.31.0",
     "tailwindcss": "^4.1.17",
     "vite": "^7.2.4",
+    "vite-plugin-pwa": "^1.2.0",
     "vite-plugin-solid": "^2.11.10",
     "vitest": "^4.0.14"
   }

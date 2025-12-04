@@ -236,8 +236,9 @@ export function useProject(projectId) {
   // Create a new study
   function createStudy(name, description = '') {
     if (!ydoc) return null;
-    // For cloud projects, require connection; for local projects, just need ydoc
-    if (!isLocalProject() && !connected()) return null;
+    // Allow writes if Y.js doc is synced from IndexedDB (local-first)
+    // Changes will sync to server when WebSocket reconnects
+    if (!synced()) return null;
 
     const studyId = crypto.randomUUID();
     const now = Date.now();
@@ -260,7 +261,7 @@ export function useProject(projectId) {
   // Update a study
   function updateStudy(studyId, updates) {
     if (!ydoc) return;
-    if (!isLocalProject() && !connected()) return;
+    if (!synced()) return;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -275,7 +276,7 @@ export function useProject(projectId) {
   // Delete a study
   function deleteStudy(studyId) {
     if (!ydoc) return;
-    if (!isLocalProject() && !connected()) return;
+    if (!synced()) return;
 
     const studiesMap = ydoc.getMap('reviews');
     studiesMap.delete(studyId);
@@ -284,7 +285,7 @@ export function useProject(projectId) {
   // Add PDF metadata to a study (called after successful upload to R2)
   function addPdfToStudy(studyId, pdfInfo) {
     if (!ydoc) return;
-    if (!isLocalProject() && !connected()) return;
+    if (!synced()) return;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -310,7 +311,7 @@ export function useProject(projectId) {
   // Remove PDF metadata from a study (called after successful delete from R2)
   function removePdfFromStudy(studyId, fileName) {
     if (!ydoc) return;
-    if (!isLocalProject() && !connected()) return;
+    if (!synced()) return;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -327,7 +328,7 @@ export function useProject(projectId) {
   // Create a checklist in a study
   function createChecklist(studyId, type = 'AMSTAR2', assignedTo = null) {
     if (!ydoc) return null;
-    if (!isLocalProject() && !connected()) return null;
+    if (!synced()) return null;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -387,7 +388,7 @@ export function useProject(projectId) {
   // Update a checklist
   function updateChecklist(studyId, checklistId, updates) {
     if (!ydoc) return;
-    if (!isLocalProject() && !connected()) return;
+    if (!synced()) return;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -408,7 +409,7 @@ export function useProject(projectId) {
   // Delete a checklist
   function deleteChecklist(studyId, checklistId) {
     if (!ydoc) return;
-    if (!isLocalProject() && !connected()) return;
+    if (!synced()) return;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -473,7 +474,7 @@ export function useProject(projectId) {
   // Update a single answer in a checklist
   function updateChecklistAnswer(studyId, checklistId, questionKey, answerData) {
     if (!ydoc) return;
-    if (!isLocalProject() && !connected()) return;
+    if (!synced()) return;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -503,7 +504,7 @@ export function useProject(projectId) {
   // Save reconciliation progress for a study
   function saveReconciliationProgress(studyId, progressData) {
     if (!ydoc) return;
-    if (!isLocalProject() && !connected()) return;
+    if (!synced()) return;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -554,7 +555,7 @@ export function useProject(projectId) {
   // Clear reconciliation progress for a study
   function clearReconciliationProgress(studyId) {
     if (!ydoc) return;
-    if (!isLocalProject() && !connected()) return;
+    if (!synced()) return;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);

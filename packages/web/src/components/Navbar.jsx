@@ -1,12 +1,14 @@
 import { Show, createEffect, createSignal, onMount, onCleanup } from 'solid-js';
 import { A, useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { FiMenu } from 'solid-icons/fi';
+import { FiMenu, FiWifiOff } from 'solid-icons/fi';
 import { LANDING_URL } from '@config/api.js';
+import useOnlineStatus from '@primitives/useOnlineStatus.js';
 
 export default function Navbar(props) {
   const { user, signout, authLoading } = useBetterAuth();
   const navigate = useNavigate();
+  const isOnline = useOnlineStatus();
 
   const [showUserMenu, setShowUserMenu] = createSignal(false);
   let userMenuRef;
@@ -73,6 +75,13 @@ export default function Navbar(props) {
         >
           CoRATES
         </A>
+        {/* Offline indicator */}
+        <Show when={!isOnline()}>
+          <div class='flex items-center gap-1 bg-amber-500/90 text-white text-xs px-2 py-1 rounded-full'>
+            <FiWifiOff class='w-3 h-3' />
+            <span class='hidden sm:inline'>Offline</span>
+          </div>
+        </Show>
       </div>
 
       <div class='flex space-x-4 items-center text-2xs sm:text-xs'>
