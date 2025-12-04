@@ -117,12 +117,19 @@ export function rateLimit(options = {}) {
  * Pre-configured rate limiters for common use cases
  */
 
-// Strict rate limit for auth endpoints (login, register)
+// Strict rate limit for sensitive auth endpoints (login, register, password reset)
 export const authRateLimit = rateLimit({
-  limit: 10,
+  limit: 20,
   windowMs: 15 * 60 * 1000, // 15 minutes
   keyPrefix: 'auth',
   skipFailedRequests: true, // Don't count failed auth attempts against limit
+});
+
+// Lenient rate limit for session checks (called frequently by better-auth)
+export const sessionRateLimit = rateLimit({
+  limit: 200,
+  windowMs: 60 * 1000, // 1 minute
+  keyPrefix: 'session',
 });
 
 // Rate limit for email sending
