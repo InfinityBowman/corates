@@ -44,6 +44,7 @@ export default function AppRoutes() {
           component={ReconciliationWrapper}
         />
       </Route>
+
       <Route path='*' component={NotFoundPage} />
     </Router>
   );

@@ -1,0 +1,132 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import DocLayout from '../../layouts/DocLayout.astro';
+import { getCollection, getEntry } from 'astro:content';
+
+export async function getStaticPaths() {
+  const docs = await getCollection('docs');
+  return docs.map((doc) => ({
+    params: { slug: doc.slug },
+    props: { doc },
+  }));
+}
+
+const { doc } = Astro.props;
+const { Content } = await doc.render();
+
+// Get all docs for sidebar navigation
+const allDocs = await getCollection('docs');
+const docsByCategory = allDocs.reduce((acc, d) => {
+  const category = d.data.category || 'other';
+  if (!acc[category]) acc[category] = [];
+  acc[category].push(d);
+  return acc;
+}, {} as Record<string, typeof allDocs>);
+
+const categoryLabels: Record<string, string> = {
+  'getting-started': 'Getting Started',
+  'evidence-synthesis': 'Evidence Synthesis',
+  'amstar2': 'AMSTAR-2',
+  'systematic-reviews': 'Systematic Reviews',
+  'meta-analysis': 'Meta-Analysis',
+  'tools-methods': 'Tools & Methods',
+};
+
+const categoryOrder = ['getting-started', 'evidence-synthesis', 'amstar2', 'systematic-reviews', 'meta-analysis', 'tools-methods'];
+---
+
+<Layout title={doc.data.title}>
+  <div class="flex gap-8">
+    <!-- Sidebar -->
+    <aside class="hidden lg:block w-64 shrink-0">
+      <nav class="sticky top-20 space-y-6">
+        {categoryOrder.filter(cat => docsByCategory[cat]).map((category) => (
+          <div>
+            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              {categoryLabels[category]}
+            </h3>
+            <ul class="space-y-1">
+              {docsByCategory[category]
+                .sort((a, b) => (a.data.order || 100) - (b.data.order || 100))
+                .map((d) => (
+                  <li>
+                    <a
+                      href={`/learn/docs/${d.slug}`}
+                      class:list={[
+                        "block px-2 py-1.5 text-sm rounded-md transition-colors",
+                        d.slug === doc.slug
+                          ? "text-blue-600 bg-blue-50 font-medium"
+                          : "text-slate-600 hover:text-blue-600 hover:bg-slate-100"
+                      ]}
+                    >
+                      {d.data.title}
+                    </a>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        ))}
+
+        <div>
+          <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            Resources
+          </h3>
+          <ul class="space-y-1">
+            <li>
+              <a href="/learn/tutorials/first-review" class="block px-2 py-1.5 text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-md transition-colors">
+                Tutorials
+              </a>
+            </li>
+            <li>
+              <a href="/learn/glossary" class="block px-2 py-1.5 text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-md transition-colors">
+                Glossary
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <article class="flex-1 min-w-0">
+      <!-- Meta info -->
+      <div class="mb-8 pb-6 border-b border-slate-200">
+        <div class="flex items-center gap-2 text-sm text-slate-500 mb-2">
+          <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-medium">
+            {categoryLabels[doc.data.category] || doc.data.category}
+          </span>
+          {doc.data.lastUpdated && (
+            <span>Last updated: {new Date(doc.data.lastUpdated).toLocaleDateString()}</span>
+          )}
+        </div>
+        <h1 class="text-3xl font-bold text-slate-900 mb-2">
+          {doc.data.title}
+        </h1>
+        {doc.data.description && (
+          <p class="text-lg text-slate-600">
+            {doc.data.description}
+          </p>
+        )}
+      </div>
+
+      <!-- Content -->
+      <div class="prose prose-slate max-w-none prose-headings:scroll-mt-20 prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline">
+        <Content />
+      </div>
+
+      <!-- Tags -->
+      {doc.data.tags && doc.data.tags.length > 0 && (
+        <div class="mt-8 pt-6 border-t border-slate-200">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-sm text-slate-500">Tags:</span>
+            {doc.data.tags.map((tag: string) => (
+              <span class="text-sm bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </article>
+  </div>
+</Layout>

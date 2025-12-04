@@ -1,0 +1,75 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const glossary = await getCollection('glossary');
+const sortedGlossary = glossary.sort((a, b) => a.data.term.localeCompare(b.data.term));
+
+// Group by first letter
+const groupedTerms = sortedGlossary.reduce((acc, term) => {
+  const letter = term.data.term[0].toUpperCase();
+  if (!acc[letter]) acc[letter] = [];
+  acc[letter].push(term);
+  return acc;
+}, {} as Record<string, typeof glossary>);
+---
+
+<Layout title="Glossary">
+  <div class="max-w-4xl mx-auto">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-slate-900 mb-2">Glossary</h1>
+      <p class="text-lg text-slate-600">
+        Key terms and concepts in evidence synthesis and systematic reviews.
+      </p>
+    </div>
+
+    <!-- Alphabet navigation -->
+    <div class="flex flex-wrap gap-2 mb-8 pb-4 border-b border-slate-200">
+      {Object.keys(groupedTerms).sort().map((letter) => (
+        <a
+          href={`#letter-${letter}`}
+          class="w-8 h-8 flex items-center justify-center text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+        >
+          {letter}
+        </a>
+      ))}
+    </div>
+
+    <!-- Terms list -->
+    <div class="space-y-8">
+      {Object.entries(groupedTerms).sort(([a], [b]) => a.localeCompare(b)).map(([letter, terms]) => (
+        <div id={`letter-${letter}`}>
+          <h2 class="text-xl font-semibold text-slate-900 mb-4 pb-2 border-b border-slate-200">
+            {letter}
+          </h2>
+          <ul class="space-y-3">
+            {terms.map((term) => (
+              <li>
+                <a
+                  href={`/learn/glossary/${term.slug}`}
+                  class="group block p-4 bg-white border border-slate-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all"
+                >
+                  <div class="flex items-start justify-between">
+                    <div>
+                      <h3 class="font-medium text-slate-900 group-hover:text-blue-600 transition-colors">
+                        {term.data.term}
+                        {term.data.abbreviation && (
+                          <span class="ml-2 text-sm text-slate-400">
+                            ({term.data.abbreviation})
+                          </span>
+                        )}
+                      </h3>
+                    </div>
+                    <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </div>
+</Layout>

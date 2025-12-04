@@ -1,0 +1,118 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const tutorials = await getCollection('tutorials');
+  return tutorials.map((tutorial) => ({
+    params: { slug: tutorial.slug },
+    props: { tutorial },
+  }));
+}
+
+const { tutorial } = Astro.props;
+const { Content } = await tutorial.render();
+
+const allTutorials = await getCollection('tutorials');
+---
+
+<Layout title={tutorial.data.title}>
+  <div class="flex gap-8">
+    <!-- Sidebar -->
+    <aside class="hidden lg:block w-64 shrink-0">
+      <nav class="sticky top-20 space-y-6">
+        <div>
+          <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            Tutorials
+          </h3>
+          <ul class="space-y-1">
+            {allTutorials
+              .sort((a, b) => (a.data.order || 100) - (b.data.order || 100))
+              .map((t) => (
+                <li>
+                  <a
+                    href={`/learn/tutorials/${t.slug}`}
+                    class:list={[
+                      "block px-2 py-1.5 text-sm rounded-md transition-colors",
+                      t.slug === tutorial.slug
+                        ? "text-green-600 bg-green-50 font-medium"
+                        : "text-slate-600 hover:text-green-600 hover:bg-slate-100"
+                    ]}
+                  >
+                    {t.data.title}
+                  </a>
+                </li>
+              ))}
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            Resources
+          </h3>
+          <ul class="space-y-1">
+            <li>
+              <a href="/learn/docs/introduction" class="block px-2 py-1.5 text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-md transition-colors">
+                Documentation
+              </a>
+            </li>
+            <li>
+              <a href="/learn/glossary" class="block px-2 py-1.5 text-sm text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-md transition-colors">
+                Glossary
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <article class="flex-1 min-w-0">
+      <!-- Meta info -->
+      <div class="mb-8 pb-6 border-b border-slate-200">
+        <div class="flex items-center gap-3 text-sm mb-3">
+          <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-medium">
+            Tutorial
+          </span>
+          <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">
+            {tutorial.data.difficulty}
+          </span>
+          {tutorial.data.estimatedTime && (
+            <span class="text-slate-500">
+              {tutorial.data.estimatedTime}
+            </span>
+          )}
+        </div>
+        <h1 class="text-3xl font-bold text-slate-900 mb-2">
+          {tutorial.data.title}
+        </h1>
+        {tutorial.data.description && (
+          <p class="text-lg text-slate-600">
+            {tutorial.data.description}
+          </p>
+        )}
+
+        {tutorial.data.prerequisites && tutorial.data.prerequisites.length > 0 && (
+          <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <h4 class="text-sm font-medium text-amber-800 mb-2">Prerequisites</h4>
+            <ul class="text-sm text-amber-700 space-y-1">
+              {tutorial.data.prerequisites.map((prereq: string) => (
+                <li class="flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  {prereq}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <!-- Content -->
+      <div class="prose prose-slate max-w-none prose-headings:scroll-mt-20 prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline">
+        <Content />
+      </div>
+    </article>
+  </div>
+</Layout>

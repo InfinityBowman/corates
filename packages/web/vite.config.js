@@ -16,6 +16,7 @@ export default defineConfig({
       '@auth-ui': path.resolve(__dirname, 'src/components/auth-ui'),
       '@checklist-ui': path.resolve(__dirname, 'src/components/checklist-ui'),
       '@project-ui': path.resolve(__dirname, 'src/components/project-ui'),
+      '@learn-ui': path.resolve(__dirname, 'src/components/learn'),
       '@offline': path.resolve(__dirname, 'src/offline'),
       '@api': path.resolve(__dirname, 'src/api'),
       '@config': path.resolve(__dirname, 'src/config'),

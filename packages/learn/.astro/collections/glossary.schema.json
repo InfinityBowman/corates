@@ -1,0 +1,30 @@
+{
+  "$ref": "#/definitions/glossary",
+  "definitions": {
+    "glossary": {
+      "type": "object",
+      "properties": {
+        "term": {
+          "type": "string"
+        },
+        "abbreviation": {
+          "type": "string"
+        },
+        "relatedTerms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "$schema": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "term"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

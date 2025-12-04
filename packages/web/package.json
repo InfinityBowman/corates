@@ -24,7 +24,7 @@
     "@zag-js/switch": "^1.30.0",
     "@zag-js/toast": "^1.30.0",
     "@zag-js/tooltip": "^1.30.0",
-    "better-auth": "^1.4.3",
+    "better-auth": "^1.4.5",
     "d3": "^7.9.0",
     "pdfjs-dist": "^5.4.449",
     "solid-icons": "^1.1.0",
@@ -35,14 +35,14 @@
   "devDependencies": {
     "@solidjs/testing-library": "^0.8.10",
     "@tailwindcss/vite": "^4.1.17",
-    "@vitest/ui": "^4.0.14",
+    "@vitest/ui": "^4.0.15",
     "jsdom": "^27.2.0",
-    "prettier": "^3.7.2",
-    "puppeteer": "^24.31.0",
+    "prettier": "^3.7.4",
+    "puppeteer": "^24.32.0",
     "tailwindcss": "^4.1.17",
-    "vite": "^7.2.4",
+    "vite": "^7.2.6",
     "vite-plugin-pwa": "^1.2.0",
     "vite-plugin-solid": "^2.11.10",
-    "vitest": "^4.0.14"
+    "vitest": "^4.0.15"
   }
 }

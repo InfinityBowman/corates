@@ -1,0 +1,28 @@
+{
+  "name": "@corates/learn",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --port 4321",
+    "build": "astro build",
+    "preview": "astro preview",
+    "keystatic": "keystatic dev",
+    "deploy": "pnpm run build && wrangler pages deploy dist"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^12.6.0",
+    "@astrojs/markdoc": "^0.13.4",
+    "@astrojs/react": "^4.4.1",
+    "@keystatic/astro": "^5.0.6",
+    "@keystatic/core": "^0.5.48",
+    "astro": "^5.10.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.17",
+    "tailwindcss": "^4.1.17",
+    "wrangler": "^4.23.0"
+  }
+}

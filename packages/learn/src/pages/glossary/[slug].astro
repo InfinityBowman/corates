@@ -1,0 +1,60 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const glossary = await getCollection('glossary');
+  return glossary.map((term) => ({
+    params: { slug: term.slug },
+    props: { term },
+  }));
+}
+
+const { term } = Astro.props;
+const { Content } = await term.render();
+---
+
+<Layout title={term.data.term}>
+  <div class="max-w-4xl mx-auto">
+    <!-- Back link -->
+    <a
+      href="/learn/glossary"
+      class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 mb-6"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+      Back to Glossary
+    </a>
+
+    <article>
+      <!-- Header -->
+      <div class="mb-8 pb-6 border-b border-slate-200">
+        <h1 class="text-3xl font-bold text-slate-900 mb-2">
+          {term.data.term}
+          {term.data.abbreviation && (
+            <span class="ml-3 text-xl text-slate-400 font-normal">
+              ({term.data.abbreviation})
+            </span>
+          )}
+        </h1>
+        
+        {term.data.relatedTerms && term.data.relatedTerms.length > 0 && (
+          <div class="flex items-center gap-2 mt-3">
+            <span class="text-sm text-slate-500">Related:</span>
+            {term.data.relatedTerms.map((related: string) => (
+              <span class="text-sm bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                {related}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <!-- Content -->
+      <div class="prose prose-slate max-w-none prose-headings:scroll-mt-20 prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline">
+        <Content />
+      </div>
+    </article>
+  </div>
+</Layout>

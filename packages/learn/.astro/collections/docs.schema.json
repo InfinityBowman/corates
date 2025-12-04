@@ -1,0 +1,62 @@
+{
+  "$ref": "#/definitions/docs",
+  "definitions": {
+    "docs": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "getting-started",
+            "evidence-synthesis",
+            "amstar2",
+            "systematic-reviews",
+            "meta-analysis",
+            "tools-methods"
+          ],
+          "default": "getting-started"
+        },
+        "order": {
+          "type": "number",
+          "default": 100
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "lastUpdated": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "integer",
+              "format": "unix-time"
+            }
+          ]
+        },
+        "$schema": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
