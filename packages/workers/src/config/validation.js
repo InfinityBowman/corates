@@ -56,9 +56,11 @@ export const memberSchemas = {
     .object({
       userId: z.string().uuid('Invalid user ID format').optional(),
       email: z.email('Invalid email address').optional(),
-      role: z.enum(PROJECT_ROLES, {
-        error: `Role must be one of: ${PROJECT_ROLES.join(', ')}`,
-      }).default('member'),
+      role: z
+        .enum(PROJECT_ROLES, {
+          error: `Role must be one of: ${PROJECT_ROLES.join(', ')}`,
+        })
+        .default('member'),
     })
     .refine(data => data.userId || data.email, {
       message: 'Either userId or email is required',
@@ -92,14 +94,16 @@ export const userSchemas = {
  * Email schemas
  */
 export const emailSchemas = {
-  queue: z.object({
-    to: z.email('Invalid recipient email address'),
-    subject: z.string().min(1, 'Subject is required').max(255, 'Subject too long').optional(),
-    html: z.string().optional(),
-    text: z.string().optional(),
-  }).refine(data => data.html || data.text, {
-    message: 'Either html or text content is required',
-  }),
+  queue: z
+    .object({
+      to: z.email('Invalid recipient email address'),
+      subject: z.string().min(1, 'Subject is required').max(255, 'Subject too long').optional(),
+      html: z.string().optional(),
+      text: z.string().optional(),
+    })
+    .refine(data => data.html || data.text, {
+      message: 'Either html or text content is required',
+    }),
 };
 
 /**
@@ -110,7 +114,7 @@ export const emailSchemas = {
  */
 export function validateBody(schema, data) {
   const result = schema.safeParse(data);
-  
+
   if (result.success) {
     return { success: true, data: result.data };
   }
