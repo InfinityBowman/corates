@@ -9,11 +9,7 @@ export default defineConfig({
   site: 'https://app.corates.org',
   base: '/learn',
   output: 'static',
-  integrations: [
-    react(),
-    markdoc(),
-    keystatic(),
-  ],
+  integrations: [react(), markdoc(), keystatic()],
   vite: {
     plugins: [tailwindcss()],
   },

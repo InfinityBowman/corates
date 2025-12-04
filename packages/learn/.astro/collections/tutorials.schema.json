@@ -12,11 +12,7 @@
         },
         "difficulty": {
           "type": "string",
-          "enum": [
-            "beginner",
-            "intermediate",
-            "advanced"
-          ],
+          "enum": ["beginner", "intermediate", "advanced"],
           "default": "beginner"
         },
         "estimatedTime": {
@@ -36,9 +32,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "title"
-      ],
+      "required": ["title"],
       "additionalProperties": false
     }
   },
