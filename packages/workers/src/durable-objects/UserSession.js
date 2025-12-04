@@ -1,5 +1,6 @@
 import { verifyAuth } from '../auth/config.js';
 import { getAccessControlOrigin } from '../config/origins.js';
+import { SESSION_CONFIG } from '../config/constants.js';
 
 export class UserSession {
   constructor(state, env) {
@@ -48,7 +49,7 @@ export class UserSession {
       // Extract the userId from the URL path
       // URL pattern: /api/sessions/:sessionId/*
       const sessionUserId = this.extractUserIdFromPath(path);
-      
+
       // Ensure user can only access their own session
       if (!sessionUserId || sessionUserId !== user.id) {
         return new Response(JSON.stringify({ error: 'Access denied' }), {
@@ -105,6 +106,9 @@ export class UserSession {
       sessionData.lastActive = new Date().toISOString();
       await this.state.storage.put('session', sessionData);
 
+      // Schedule cleanup alarm if not already set
+      await this.scheduleCleanupAlarm();
+
       return new Response(JSON.stringify(sessionData), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -129,6 +133,9 @@ export class UserSession {
       };
 
       await this.state.storage.put('session', sessionData);
+
+      // Schedule cleanup alarm
+      await this.scheduleCleanupAlarm();
 
       return new Response(JSON.stringify(sessionData), {
         status: 201,
@@ -302,14 +309,24 @@ export class UserSession {
       const now = new Date();
       const hoursSinceActive = (now - lastActive) / (1000 * 60 * 60);
 
-      // Delete session if inactive for more than 24 hours
-      if (hoursSinceActive > 24) {
+      // Delete session if inactive for configured hours
+      if (hoursSinceActive > SESSION_CONFIG.CLEANUP_HOURS) {
         await this.state.storage.deleteAll();
+        console.log('UserSession: cleaned up inactive session');
       } else {
         // Schedule next cleanup check
-        const nextCheck = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour
-        await this.state.storage.setAlarm(nextCheck);
+        await this.state.storage.setAlarm(now.getTime() + SESSION_CONFIG.ALARM_INTERVAL_MS);
       }
+    }
+  }
+
+  /**
+   * Schedule cleanup alarm if not already set
+   */
+  async scheduleCleanupAlarm() {
+    const currentAlarm = await this.state.storage.getAlarm();
+    if (!currentAlarm) {
+      await this.state.storage.setAlarm(Date.now() + SESSION_CONFIG.ALARM_INTERVAL_MS);
     }
   }
 

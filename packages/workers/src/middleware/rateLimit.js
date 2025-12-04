@@ -16,7 +16,7 @@ let lastCleanup = Date.now();
 function cleanupExpiredEntries() {
   const now = Date.now();
   if (now - lastCleanup < CLEANUP_INTERVAL) return;
-  
+
   lastCleanup = now;
   for (const [key, value] of rateLimitStore.entries()) {
     if (value.resetAt < now) {
@@ -78,7 +78,7 @@ export function rateLimit(options = {}) {
     // Check if limit exceeded
     if (record.count >= limit) {
       const retryAfter = Math.ceil((record.resetAt - now) / 1000);
-      
+
       return c.json(
         {
           error: 'Too many requests',
