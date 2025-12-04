@@ -201,9 +201,8 @@ export class UserSession {
       console.error('WebSocket auth error:', err);
     }
 
-    // In production, require authentication
-    const isDevelopment = this.env.ENVIRONMENT !== 'production';
-    if (!isDevelopment && !user) {
+    // Require authentication
+    if (!user) {
       return new Response('Authentication required', { status: 401 });
     }
 

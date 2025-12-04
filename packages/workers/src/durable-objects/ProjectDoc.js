@@ -289,10 +289,8 @@ export class ProjectDoc {
       console.error('WebSocket auth error:', err);
     }
 
-    // In production, require authentication
-    const isDevelopment = this.env.ENVIRONMENT !== 'production';
-    if (!isDevelopment && !user) {
-      // Try token-based auth as fallback
+    // Require authentication - try token-based auth as fallback if cookie auth failed
+    if (!user) {
       const url = new URL(request.url);
       const token = url.searchParams.get('token');
 
