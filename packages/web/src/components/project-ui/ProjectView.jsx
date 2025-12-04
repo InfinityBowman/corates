@@ -4,6 +4,7 @@ import useProject from '@primitives/useProject.js';
 import projectStore from '@primitives/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf, deletePdf, getPdfUrl } from '@api/pdf-api.js';
+import { cachePdf, removeCachedPdf } from '@primitives/pdfCache.js';
 import { API_BASE } from '@config/api.js';
 import StudyCard from './StudyCard.jsx';
 import StudyForm from './StudyForm.jsx';
@@ -103,6 +104,10 @@ export default function ProjectView() {
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
         uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName)
           .then(result => {
+            // Cache the PDF locally for faster access
+            cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(err =>
+              console.warn('Failed to cache PDF:', err),
+            );
             // After successful upload, add PDF metadata to Y.js (syncs to other clients)
             addPdfToStudy(studyId, {
               key: result.key,
@@ -266,11 +271,15 @@ export default function ProjectView() {
       // Find the study and remove any existing PDFs first
       const study = studies().find(s => s.id === studyId);
       if (study?.pdfs?.length > 0) {
-        // Remove all existing PDFs (both from R2 and Y.js)
+        // Remove all existing PDFs (both from R2, Y.js, and local cache)
         for (const existingPdf of study.pdfs) {
           try {
             await deletePdf(params.projectId, studyId, existingPdf.fileName);
             removePdfFromStudy(studyId, existingPdf.fileName);
+            // Also remove from local cache
+            removeCachedPdf(params.projectId, studyId, existingPdf.fileName).catch(err =>
+              console.warn('Failed to remove PDF from cache:', err),
+            );
           } catch (deleteErr) {
             console.warn('Failed to delete old PDF:', deleteErr);
             // Continue anyway - the new PDF will still be uploaded
@@ -279,6 +288,13 @@ export default function ProjectView() {
       }
 
       const result = await uploadPdf(params.projectId, studyId, file, file.name);
+
+      // Cache the uploaded PDF locally for faster access
+      const arrayBuffer = await file.arrayBuffer();
+      cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(err =>
+        console.warn('Failed to cache PDF:', err),
+      );
+
       // After successful upload, add PDF metadata to Y.js
       addPdfToStudy(studyId, {
         key: result.key,
