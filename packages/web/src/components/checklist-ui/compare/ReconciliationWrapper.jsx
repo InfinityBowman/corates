@@ -8,6 +8,7 @@ import { useParams, useNavigate } from '@solidjs/router';
 import useProject from '@primitives/useProject.js';
 import projectStore from '@primitives/projectStore.js';
 import { downloadPdf } from '@api/pdf-api.js';
+import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
 import ReconciliationWithPdf from './ReconciliationWithPdf.jsx';
 
 export default function ReconciliationWrapper() {
@@ -50,23 +51,50 @@ export default function ReconciliationWrapper() {
     return study.pdfs[0]; // Use the first PDF
   });
 
-  // Load PDF when study has one
+  // Track which PDF we've attempted to load (to prevent infinite retries)
+  const [attemptedPdfFile, setAttemptedPdfFile] = createSignal(null);
+
+  // Load PDF when study has one - try cache first, then cloud
   createEffect(() => {
     const pdf = studyPdf();
-    if (pdf && !pdfData() && !pdfLoading()) {
-      setPdfLoading(true);
-      downloadPdf(params.projectId, params.studyId, pdf.fileName)
-        .then(data => {
-          setPdfData(data);
-          setPdfFileName(pdf.fileName);
-        })
-        .catch(err => {
-          console.error('Failed to load PDF:', err);
-        })
-        .finally(() => {
-          setPdfLoading(false);
-        });
+    const fileName = pdf?.fileName;
+
+    // Skip if no PDF, already loaded, currently loading, or already attempted this file
+    if (!fileName || pdfData() || pdfLoading() || attemptedPdfFile() === fileName) {
+      return;
     }
+
+    setAttemptedPdfFile(fileName);
+    setPdfLoading(true);
+
+    // Try cache first, then fall back to cloud
+    getCachedPdf(params.projectId, params.studyId, fileName)
+      .then(cachedData => {
+        if (cachedData) {
+          // Found in cache - use it immediately
+          setPdfData(cachedData);
+          setPdfFileName(fileName);
+          setPdfLoading(false);
+          return null; // Skip cloud fetch
+        }
+        // Not in cache - fetch from cloud
+        return downloadPdf(params.projectId, params.studyId, fileName);
+      })
+      .then(cloudData => {
+        if (cloudData) {
+          // Got from cloud - save to cache and use it
+          setPdfData(cloudData);
+          setPdfFileName(fileName);
+          // Cache it for next time (fire and forget)
+          cachePdf(params.projectId, params.studyId, fileName, cloudData);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load PDF:', err);
+      })
+      .finally(() => {
+        setPdfLoading(false);
+      });
   });
 
   // Get checklist metadata from store

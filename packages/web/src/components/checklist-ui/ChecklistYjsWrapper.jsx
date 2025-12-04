@@ -4,6 +4,7 @@ import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import useProject from '@primitives/useProject.js';
 import projectStore from '@primitives/projectStore.js';
 import { downloadPdf, uploadPdf, deletePdf } from '@api/pdf-api.js';
+import { getCachedPdf, cachePdf, removeCachedPdf } from '@primitives/pdfCache.js';
 import { showToast } from '@components/zag/Toast.jsx';
 import { useBetterAuth } from '@api/better-auth-store.js';
 
@@ -41,23 +42,50 @@ export default function ChecklistYjsWrapper() {
     return study.pdfs[0]; // Use the first PDF
   });
 
-  // Load PDF when study has one
+  // Track which PDF we've attempted to load (to prevent infinite retries)
+  const [attemptedPdfFile, setAttemptedPdfFile] = createSignal(null);
+
+  // Load PDF when study has one - try cache first, then cloud
   createEffect(() => {
     const pdf = studyPdf();
-    if (pdf && !pdfData() && !pdfLoading()) {
-      setPdfLoading(true);
-      downloadPdf(params.projectId, params.studyId, pdf.fileName)
-        .then(data => {
-          setPdfData(data);
-          setPdfFileName(pdf.fileName);
-        })
-        .catch(err => {
-          console.error('Failed to load PDF:', err);
-        })
-        .finally(() => {
-          setPdfLoading(false);
-        });
+    const fileName = pdf?.fileName;
+
+    // Skip if no PDF, already loaded, currently loading, or already attempted this file
+    if (!fileName || pdfData() || pdfLoading() || attemptedPdfFile() === fileName) {
+      return;
     }
+
+    setAttemptedPdfFile(fileName);
+    setPdfLoading(true);
+
+    // Try cache first, then fall back to cloud
+    getCachedPdf(params.projectId, params.studyId, fileName)
+      .then(cachedData => {
+        if (cachedData) {
+          // Found in cache - use it immediately
+          setPdfData(cachedData);
+          setPdfFileName(fileName);
+          setPdfLoading(false);
+          return null; // Skip cloud fetch
+        }
+        // Not in cache - fetch from cloud
+        return downloadPdf(params.projectId, params.studyId, fileName);
+      })
+      .then(cloudData => {
+        if (cloudData) {
+          // Got from cloud - save to cache and use it
+          setPdfData(cloudData);
+          setPdfFileName(fileName);
+          // Cache it for next time (fire and forget)
+          cachePdf(params.projectId, params.studyId, fileName, cloudData);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load PDF:', err);
+      })
+      .finally(() => {
+        setPdfLoading(false);
+      });
   });
 
   // Handle PDF change (upload new PDF)
@@ -70,6 +98,8 @@ export default function ChecklistYjsWrapper() {
           try {
             await deletePdf(params.projectId, params.studyId, existingPdf.fileName);
             removePdfFromStudy(params.studyId, existingPdf.fileName);
+            // Also remove from cache
+            removeCachedPdf(params.projectId, params.studyId, existingPdf.fileName);
           } catch (deleteErr) {
             console.warn('Failed to delete old PDF:', deleteErr);
             // Continue anyway - the new PDF will still be uploaded
@@ -88,6 +118,8 @@ export default function ChecklistYjsWrapper() {
       });
       setPdfData(data);
       setPdfFileName(fileName);
+      // Cache the uploaded PDF locally
+      cachePdf(params.projectId, params.studyId, fileName, data);
     } catch (err) {
       console.error('Failed to upload PDF:', err);
       showToast.error('Upload Failed', 'Failed to upload PDF');
@@ -103,6 +135,8 @@ export default function ChecklistYjsWrapper() {
       await deletePdf(params.projectId, params.studyId, fileName);
       // Update Y.js to remove PDF metadata
       removePdfFromStudy(params.studyId, fileName);
+      // Remove from cache
+      removeCachedPdf(params.projectId, params.studyId, fileName);
       setPdfData(null);
       setPdfFileName(null);
     } catch (err) {
