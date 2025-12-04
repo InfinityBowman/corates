@@ -37,10 +37,21 @@ export function FileUpload(props) {
   const service = useMachine(fileUpload.machine, {
     id: createUniqueId(),
     accept: merged.accept ? { [merged.accept]: [] } : undefined,
-    maxFiles: merged.multiple ? undefined : 1,
+    // maxFiles > 1 enables the native multi-select file picker (Cmd+click)
+    // Setting to a high number allows unlimited files when multiple is true
+    maxFiles: merged.multiple ? 100 : 1,
     disabled: merged.disabled,
     onFileChange: details => {
       merged.onFilesChange?.(details.acceptedFiles);
+      // When showFileList is false, parent manages files externally
+      // Clear internal state so deleted files don't reappear on next selection
+      if (!merged.showFileList && details.acceptedFiles.length > 0) {
+        // Use queueMicrotask to clear after the callback completes
+        queueMicrotask(() => {
+          const currentApi = fileUpload.connect(service, normalizeProps);
+          currentApi.clearFiles();
+        });
+      }
     },
     onFileAccept: details => {
       merged.onFileAccept?.(details);

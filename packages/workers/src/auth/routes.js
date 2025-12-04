@@ -10,12 +10,20 @@ import {
   getEmailVerificationFailurePage,
   getEmailVerificationErrorPage,
 } from './templates.js';
-import { authRateLimit } from '../middleware/rateLimit.js';
+import { authRateLimit, sessionRateLimit } from '../middleware/rateLimit.js';
 
 const auth = new Hono();
 
-// Apply rate limiting to auth endpoints
-auth.use('*', authRateLimit);
+// Apply lenient rate limiting to session endpoints (called frequently)
+auth.use('/get-session', sessionRateLimit);
+auth.use('/session', sessionRateLimit);
+
+// Apply strict rate limiting to sensitive auth endpoints (login, register, etc.)
+// These are matched after the session routes above
+auth.use('/sign-in/*', authRateLimit);
+auth.use('/sign-up/*', authRateLimit);
+auth.use('/forget-password/*', authRateLimit);
+auth.use('/reset-password/*', authRateLimit);
 
 /**
  * GET /api/auth/session

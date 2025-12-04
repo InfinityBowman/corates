@@ -73,37 +73,55 @@ export default function ProjectView() {
     }
   });
 
-  // Track if we've processed pending PDFs (to avoid re-processing on re-renders)
-  let pendingPdfsProcessed = false;
+  // Store pending PDFs from navigation state in a signal (captured on mount)
+  const [pendingPdfs, setPendingPdfs] = createSignal(location.state?.pendingPdfs || null);
+
+  // Debug: Log what we captured
+  console.log(
+    '[ProjectView] Initial pendingPdfs from location.state:',
+    location.state,
+    pendingPdfs(),
+  );
 
   // Process pending PDFs from project creation (passed via navigation state)
-  // Only process if we have navigation state with pendingPdfs - this won't persist on refresh
   createEffect(() => {
     const state = connectionState();
-    // Wait for connected (not just synced) since createStudy requires connection
-    if (!state.connected || !params.projectId || pendingPdfsProcessed) return;
+    const pdfs = pendingPdfs();
 
-    // Access location state - in SolidJS Router, location is reactive
-    const navState = location.state;
-    const pendingPdfs = navState?.pendingPdfs;
+    console.log(
+      '[ProjectView] Effect check - connected:',
+      state.connected,
+      'synced:',
+      state.synced,
+      'projectId:',
+      params.projectId,
+      'pdfs:',
+      pdfs?.length,
+    );
 
-    if (!Array.isArray(pendingPdfs) || pendingPdfs.length === 0) return;
+    // Wait for synced (not just connected) since createStudy requires Y.js to be synced
+    if (!state.synced || !params.projectId) return;
+    if (!Array.isArray(pdfs) || pdfs.length === 0) return;
 
-    // Mark as processed to prevent re-processing
-    pendingPdfsProcessed = true;
+    console.log('[ProjectView] Processing', pdfs.length, 'pending PDFs');
 
-    // Clear the navigation state to prevent any possibility of re-processing
-    // by replacing the current history entry without the state
+    // Clear immediately to prevent re-processing
+    setPendingPdfs(null);
+
+    // Clear the navigation state
     window.history.replaceState({}, '', window.location.pathname);
 
     // Process each PDF - create study and upload
-    for (const pdf of pendingPdfs) {
+    for (const pdf of pdfs) {
+      console.log('[ProjectView] Creating study for PDF:', pdf.title);
       const studyId = createStudy(pdf.title, '');
+      console.log('[ProjectView] Created study:', studyId);
       if (studyId && pdf.data) {
         // Convert array back to ArrayBuffer for upload
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
         uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName)
           .then(result => {
+            console.log('[ProjectView] PDF uploaded:', result);
             // Cache the PDF locally for faster access
             cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(err =>
               console.warn('Failed to cache PDF:', err),
