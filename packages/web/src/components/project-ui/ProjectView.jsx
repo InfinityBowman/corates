@@ -1,4 +1,4 @@
-import { createSignal, createEffect, createMemo, For, Show, onCleanup } from 'solid-js';
+import { createSignal, createEffect, createMemo, For, Show, onCleanup, batch } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import useProject from '@primitives/useProject.js';
 import projectStore from '@primitives/projectStore.js';
@@ -76,52 +76,30 @@ export default function ProjectView() {
   // Store pending PDFs from navigation state in a signal (captured on mount)
   const [pendingPdfs, setPendingPdfs] = createSignal(location.state?.pendingPdfs || null);
 
-  // Debug: Log what we captured
-  console.log(
-    '[ProjectView] Initial pendingPdfs from location.state:',
-    location.state,
-    pendingPdfs(),
-  );
-
   // Process pending PDFs from project creation (passed via navigation state)
   createEffect(() => {
     const state = connectionState();
     const pdfs = pendingPdfs();
 
-    console.log(
-      '[ProjectView] Effect check - connected:',
-      state.connected,
-      'synced:',
-      state.synced,
-      'projectId:',
-      params.projectId,
-      'pdfs:',
-      pdfs?.length,
-    );
-
     // Wait for synced (not just connected) since createStudy requires Y.js to be synced
     if (!state.synced || !params.projectId) return;
     if (!Array.isArray(pdfs) || pdfs.length === 0) return;
 
-    console.log('[ProjectView] Processing', pdfs.length, 'pending PDFs');
-
-    // Clear immediately to prevent re-processing
-    setPendingPdfs(null);
-
-    // Clear the navigation state
-    window.history.replaceState({}, '', window.location.pathname);
+    // Clear state immediately and atomically to prevent re-processing
+    // Use batch to prevent the setter from triggering another effect run
+    batch(() => {
+      setPendingPdfs(null);
+      window.history.replaceState({}, '', window.location.pathname);
+    });
 
     // Process each PDF - create study and upload
     for (const pdf of pdfs) {
-      console.log('[ProjectView] Creating study for PDF:', pdf.title);
       const studyId = createStudy(pdf.title, '');
-      console.log('[ProjectView] Created study:', studyId);
       if (studyId && pdf.data) {
         // Convert array back to ArrayBuffer for upload
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
         uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName)
           .then(result => {
-            console.log('[ProjectView] PDF uploaded:', result);
             // Cache the PDF locally for faster access
             cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(err =>
               console.warn('Failed to cache PDF:', err),
