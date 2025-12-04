@@ -489,7 +489,7 @@ export class ProjectDoc {
 
   broadcast(message, exclude = null) {
     this.sessions.forEach(session => {
-      if (session !== exclude && session.readyState === WebSocket.READY_STATE_OPEN) {
+      if (session !== exclude && session.readyState === 1) {
         session.send(message);
       }
     });

@@ -8,6 +8,7 @@ import { createDb } from '../db/client.js';
 import { projects, projectMembers, user, session, account, verification } from '../db/schema.js';
 import { eq, desc, or, like, sql } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
+import { searchRateLimit } from '../middleware/rateLimit.js';
 
 const userRoutes = new Hono();
 
@@ -33,7 +34,7 @@ function maskEmail(email) {
  *   - projectId: optional - exclude users already in this project
  *   - limit: max results (default 10, max 20)
  */
-userRoutes.get('/search', async c => {
+userRoutes.get('/search', searchRateLimit, async c => {
   const { user: currentUser } = getAuth(c);
   const query = c.req.query('q')?.trim();
   const projectId = c.req.query('projectId');

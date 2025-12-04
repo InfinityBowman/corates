@@ -45,9 +45,12 @@ export class UserSession {
         });
       }
 
+      // Extract the userId from the URL path
+      // URL pattern: /api/sessions/:sessionId/*
+      const sessionUserId = this.extractUserIdFromPath(path);
+      
       // Ensure user can only access their own session
-      const sessionId = await this.state.id.toString();
-      if (sessionId !== user.id) {
+      if (!sessionUserId || sessionUserId !== user.id) {
         return new Response(JSON.stringify({ error: 'Access denied' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -261,7 +264,7 @@ export class UserSession {
       // Broadcast to all connected clients
       let delivered = false;
       for (const conn of this.connections) {
-        if (conn.readyState === WebSocket.READY_STATE_OPEN) {
+        if (conn.readyState === 1) {
           conn.send(JSON.stringify(notification));
           delivered = true;
         }
@@ -308,5 +311,16 @@ export class UserSession {
         await this.state.storage.setAlarm(nextCheck);
       }
     }
+  }
+
+  /**
+   * Extract user ID from the URL path
+   * Expected pattern: /api/sessions/:userId/...
+   * @param {string} path - URL pathname
+   * @returns {string|null} - The user ID or null if not found
+   */
+  extractUserIdFromPath(path) {
+    const match = path.match(/\/api\/sessions\/([^/]+)/);
+    return match ? match[1] : null;
   }
 }

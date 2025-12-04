@@ -21,7 +21,8 @@
     "drizzle-orm": "^0.44.7",
     "hono": "^4.10.7",
     "resend": "^6.5.2",
-    "yjs": "^13.6.27"
+    "yjs": "^13.6.27",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "vitest": "^4.0.13"
