@@ -91,6 +91,18 @@ CREATE TABLE project_members (
   UNIQUE(projectId, userId)
 );
 
+-- Media files table (for uploaded files stored in R2)
+CREATE TABLE mediaFiles (
+  id TEXT PRIMARY KEY,
+  filename TEXT NOT NULL,
+  originalName TEXT,
+  fileType TEXT,
+  fileSize INTEGER,
+  uploadedBy TEXT REFERENCES user(id),
+  bucketKey TEXT NOT NULL,
+  createdAt INTEGER DEFAULT (unixepoch())
+);
+
 -- Create indexes for better performance
 
 -- Auth indexes

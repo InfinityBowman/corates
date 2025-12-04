@@ -7,6 +7,9 @@
 
 import { Hono } from 'hono';
 import { requireAuth, getAuth } from '../middleware/auth.js';
+import { createDb } from '../db/client.js';
+import { projectMembers } from '../db/schema.js';
+import { eq, and } from 'drizzle-orm';
 
 const pdfRoutes = new Hono();
 
@@ -25,12 +28,13 @@ async function verifyProjectMembership(c, next) {
     return c.json({ error: 'Missing project or study ID' }, 400);
   }
 
-  // Verify user is a member of this project
-  const membership = await c.env.DB.prepare(
-    'SELECT role FROM project_members WHERE projectId = ? AND userId = ?',
-  )
-    .bind(projectId, user.id)
-    .first();
+  // Verify user is a member of this project using Drizzle ORM
+  const db = createDb(c.env.DB);
+  const membership = await db
+    .select({ role: projectMembers.role })
+    .from(projectMembers)
+    .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, user.id)))
+    .get();
 
   if (!membership) {
     return c.json({ error: 'Not a member of this project' }, 403);

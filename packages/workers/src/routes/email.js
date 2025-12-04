@@ -4,8 +4,12 @@
  */
 
 import { Hono } from 'hono';
+import { emailRateLimit } from '../middleware/rateLimit.js';
 
 const emailRoutes = new Hono();
+
+// Apply rate limiting to email endpoints
+emailRoutes.use('*', emailRateLimit);
 
 /**
  * POST /api/email/queue

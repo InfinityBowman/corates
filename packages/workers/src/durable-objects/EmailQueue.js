@@ -30,21 +30,28 @@ export class EmailQueue {
   }
 
   async sendEmail(payload) {
-    // Use sendDirectEmail to avoid infinite loop (bypasses queue)
     const { createEmailService } = await import('../auth/email.js');
     const emailService = createEmailService(this.env);
 
-    // Attempt to send directly to provider
+    // Attempt to send email
     try {
-      await emailService.sendDirectEmail(payload);
-      console.log('EmailQueue: email sent to', payload.to);
+      const result = await emailService.sendEmail(payload);
+      if (result.success) {
+        console.log('EmailQueue: email sent to', payload.to);
+      } else {
+        throw new Error(result.error || 'Unknown email error');
+      }
     } catch (err) {
       console.error('EmailQueue: failed to send', err);
       // Minimal retry logic: single retry after delay
       try {
         await new Promise(r => setTimeout(r, 500));
-        await emailService.sendDirectEmail(payload);
-        console.log('EmailQueue: email retry succeeded for', payload.to);
+        const retryResult = await emailService.sendEmail(payload);
+        if (retryResult.success) {
+          console.log('EmailQueue: email retry succeeded for', payload.to);
+        } else {
+          throw new Error(retryResult.error || 'Retry failed');
+        }
       } catch (err2) {
         console.error('EmailQueue: retry failed for', payload.to, err2);
       }

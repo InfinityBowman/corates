@@ -103,7 +103,6 @@ export function createAuth(env, ctx) {
       },
     },
 
-    secret: env.AUTH_SECRET || 'fallback-secret-change-in-production',
     baseURL: env.AUTH_BASE_URL || 'http://localhost:8787',
 
     // Use centralized origin configuration
@@ -155,7 +154,27 @@ export function createAuth(env, ctx) {
         : {},
       generateId: () => crypto.randomUUID(),
     },
+
+    secret: getAuthSecret(env),
   });
+}
+
+/**
+ * Get AUTH_SECRET with proper validation
+ * Throws in production if not configured
+ */
+function getAuthSecret(env) {
+  if (env.AUTH_SECRET) {
+    return env.AUTH_SECRET;
+  }
+
+  if (env.ENVIRONMENT === 'production') {
+    throw new Error('AUTH_SECRET must be configured in production environment');
+  }
+
+  // Development fallback only
+  console.warn('[Auth] Using development fallback secret - DO NOT use in production');
+  return 'dev-only-fallback-secret-not-for-production';
 }
 
 // Auth middleware to verify sessions

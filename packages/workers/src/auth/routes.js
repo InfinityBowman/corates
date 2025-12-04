@@ -10,8 +10,12 @@ import {
   getEmailVerificationFailurePage,
   getEmailVerificationErrorPage,
 } from './templates.js';
+import { authRateLimit } from '../middleware/rateLimit.js';
 
 const auth = new Hono();
+
+// Apply rate limiting to auth endpoints
+auth.use('*', authRateLimit);
 
 /**
  * GET /api/auth/session

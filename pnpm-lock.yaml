@@ -178,6 +178,9 @@ importers:
       yjs:
         specifier: ^13.6.27
         version: 13.6.27
+      zod:
+        specifier: ^4.1.13
+        version: 4.1.13
     devDependencies:
       vitest:
         specifier: ^4.0.13
@@ -5972,9 +5975,6 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
-  zod@4.1.12:
-    resolution: {integrity: sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ==}
-
   zod@4.1.13:
     resolution: {integrity: sha512-AvvthqfqrAhNH9dnfmrfKzX5upOdjUVJYFqNSlkmGf64gRaTzlPwz99IHYnVs28qYAybvAlBV+H7pn0saFY4Ig==}
 
@@ -6715,7 +6715,7 @@ snapshots:
       jose: 6.1.2
       kysely: 0.28.8
       nanostores: 1.1.0
-      zod: 4.1.12
+      zod: 4.1.13
 
   '@better-auth/core@1.4.3(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.18)(better-call@1.1.0)(jose@6.1.2)(kysely@0.28.8)(nanostores@1.1.0)':
     dependencies:
@@ -8458,7 +8458,7 @@ snapshots:
       jose: 6.1.2
       kysely: 0.28.8
       nanostores: 1.1.0
-      zod: 4.1.12
+      zod: 4.1.13
 
   better-auth@1.4.3(solid-js@1.9.10):
     dependencies:
@@ -12287,8 +12287,6 @@ snapshots:
   zod@3.22.3: {}
 
   zod@3.25.76: {}
-
-  zod@4.1.12: {}
 
   zod@4.1.13: {}
 
