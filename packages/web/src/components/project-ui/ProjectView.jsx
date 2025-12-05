@@ -22,6 +22,7 @@ import IncludedStudiesTab from './tabs/IncludedStudiesTab.jsx';
 import InProgressTab from './tabs/InProgressTab.jsx';
 import ReadyToReconcileTab from './tabs/ReadyToReconcileTab.jsx';
 import CompletedTab from './tabs/CompletedTab.jsx';
+import ReferenceImportModal from './ReferenceImportModal.jsx';
 
 export default function ProjectView() {
   const params = useParams();
@@ -42,6 +43,9 @@ export default function ProjectView() {
 
   // Add member modal state
   const [showAddMemberModal, setShowAddMemberModal] = createSignal(false);
+
+  // Reference import modal state
+  const [showReferenceImportModal, setShowReferenceImportModal] = createSignal(false);
 
   // Use Y.js hook for write operations and connection management
   const {
@@ -87,6 +91,7 @@ export default function ProjectView() {
 
   // Store pending PDFs from navigation state in a signal (captured on mount)
   const [pendingPdfs, setPendingPdfs] = createSignal(location.state?.pendingPdfs || null);
+  const [pendingRefs, setPendingRefs] = createSignal(location.state?.pendingRefs || null);
 
   // Process pending PDFs from project creation (passed via navigation state)
   createEffect(() => {
@@ -125,6 +130,24 @@ export default function ProjectView() {
     }
   });
 
+  // Process pending references from project creation (passed via navigation state)
+  createEffect(() => {
+    const state = connectionState();
+    const refs = pendingRefs();
+
+    if (!state.synced || !params.projectId) return;
+    if (!Array.isArray(refs) || refs.length === 0) return;
+
+    batch(() => {
+      setPendingRefs(null);
+      window.history.replaceState({}, '', window.location.pathname);
+    });
+
+    for (const ref of refs) {
+      createStudy(ref.title, ref.metadata?.abstract || '', ref.metadata || {});
+    }
+  });
+
   // Cleanup on unmount
   onCleanup(() => {
     disconnect();
@@ -139,13 +162,31 @@ export default function ProjectView() {
 
   // ============ Handlers ============
 
-  const handleCreateStudy = async (name, description, pdfData = null, pdfFileName = null) => {
+  const handleCreateStudy = async (
+    name,
+    description,
+    pdfData = null,
+    pdfFileName = null,
+    metadata = {},
+  ) => {
     setCreatingStudy(true);
     try {
-      const studyId = createStudy(name, description);
+      const studyId = createStudy(name, description, metadata);
       if (pdfData && studyId) {
         try {
-          await uploadPdf(params.projectId, studyId, pdfData, pdfFileName);
+          const result = await uploadPdf(params.projectId, studyId, pdfData, pdfFileName);
+          // Cache the PDF locally
+          cachePdf(params.projectId, studyId, result.fileName, pdfData).catch(err =>
+            console.warn('Failed to cache PDF:', err),
+          );
+          // Store PDF metadata in Y.js document
+          addPdfToStudy(studyId, {
+            key: result.key,
+            fileName: result.fileName,
+            size: result.size,
+            uploadedBy: user()?.id,
+            uploadedAt: Date.now(),
+          });
         } catch (uploadErr) {
           console.error('Error uploading PDF:', uploadErr);
           showToast.error(
@@ -161,6 +202,34 @@ export default function ProjectView() {
     } finally {
       setCreatingStudy(false);
     }
+  };
+
+  // Handle importing references from Zotero/EndNote files
+  const handleImportReferences = references => {
+    let successCount = 0;
+    for (const ref of references) {
+      try {
+        createStudy(ref.title, ref.abstract || '', {
+          firstAuthor: ref.firstAuthor,
+          publicationYear: ref.publicationYear,
+          authors: ref.authors,
+          journal: ref.journal,
+          doi: ref.doi,
+          abstract: ref.abstract,
+          importSource: 'reference-file',
+        });
+        successCount++;
+      } catch (err) {
+        console.error('Error importing reference:', err);
+      }
+    }
+    if (successCount > 0) {
+      showToast.success(
+        'Import Complete',
+        `Successfully imported ${successCount} ${successCount === 1 ? 'study' : 'studies'}.`,
+      );
+    }
+    setShowReferenceImportModal(false);
   };
 
   const handleCreateChecklist = async (studyId, type, assigneeId) => {
@@ -414,11 +483,21 @@ export default function ProjectView() {
                 getChecklistData={getChecklistData}
                 onAddMember={() => setShowAddMemberModal(true)}
                 onRemoveMember={handleRemoveMember}
+                onAssignReviewers={handleUpdateStudy}
               />
             </Show>
 
             <Show when={tabValue === 'included-studies'}>
-              <IncludedStudiesTab studies={studies} getAssigneeName={getAssigneeName} />
+              <IncludedStudiesTab
+                studies={studies}
+                getAssigneeName={getAssigneeName}
+                hasData={hasData}
+                showStudyForm={showStudyForm}
+                creatingStudy={creatingStudy}
+                onSetShowStudyForm={setShowStudyForm}
+                onCreateStudy={handleCreateStudy}
+                onOpenImportModal={() => setShowReferenceImportModal(true)}
+              />
             </Show>
 
             <Show when={tabValue === 'in-progress'}>
@@ -426,6 +505,7 @@ export default function ProjectView() {
                 studies={studies}
                 members={members}
                 projectId={params.projectId}
+                currentUserId={user()?.id}
                 hasData={hasData}
                 showStudyForm={showStudyForm}
                 creatingStudy={creatingStudy}
@@ -444,6 +524,7 @@ export default function ProjectView() {
                 onOpenReconciliation={openReconciliation}
                 onViewPdf={handleViewPdf}
                 onUploadPdf={handleUploadPdf}
+                onOpenImportModal={() => setShowReferenceImportModal(true)}
               />
             </Show>
 
@@ -462,6 +543,12 @@ export default function ProjectView() {
         isOpen={showAddMemberModal()}
         onClose={() => setShowAddMemberModal(false)}
         projectId={params.projectId}
+      />
+
+      <ReferenceImportModal
+        open={showReferenceImportModal()}
+        onClose={() => setShowReferenceImportModal(false)}
+        onImport={handleImportReferences}
       />
 
       <confirmDialog.ConfirmDialogComponent />
