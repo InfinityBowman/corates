@@ -16,12 +16,20 @@ export function createAuth(env, ctx) {
   const socialProviders = {};
 
   if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
+    console.log(
+      '[Auth] Google OAuth configured with client ID:',
+      env.GOOGLE_CLIENT_ID.substring(0, 10) + '...',
+    );
     socialProviders.google = {
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
       // Request Drive read-only access for PDF import
       scope: ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/drive.readonly'],
     };
+  } else {
+    console.log(
+      '[Auth] Google OAuth NOT configured - missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET',
+    );
   }
 
   return betterAuth({

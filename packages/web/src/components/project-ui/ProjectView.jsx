@@ -23,6 +23,7 @@ import InProgressTab from './tabs/InProgressTab.jsx';
 import ReadyToReconcileTab from './tabs/ReadyToReconcileTab.jsx';
 import CompletedTab from './tabs/CompletedTab.jsx';
 import ReferenceImportModal from './ReferenceImportModal.jsx';
+import GoogleDrivePickerModal from './GoogleDrivePickerModal.jsx';
 
 export default function ProjectView() {
   const params = useParams();
@@ -46,6 +47,10 @@ export default function ProjectView() {
 
   // Reference import modal state
   const [showReferenceImportModal, setShowReferenceImportModal] = createSignal(false);
+
+  // Google Drive picker modal state
+  const [showGoogleDriveModal, setShowGoogleDriveModal] = createSignal(false);
+  const [googleDriveTargetStudyId, setGoogleDriveTargetStudyId] = createSignal(null);
 
   // Use Y.js hook for write operations and connection management
   const {
@@ -419,6 +424,28 @@ export default function ProjectView() {
     }
   };
 
+  // Handle opening Google Drive picker for a specific study
+  const handleOpenGoogleDrive = studyId => {
+    setGoogleDriveTargetStudyId(studyId);
+    setShowGoogleDriveModal(true);
+  };
+
+  // Handle successful import from Google Drive
+  const handleGoogleDriveImportSuccess = file => {
+    const studyId = googleDriveTargetStudyId();
+    if (!studyId || !file) return;
+
+    // Add the imported PDF to the study's Y.js state
+    addPdfToStudy(studyId, {
+      key: file.key,
+      fileName: file.fileName,
+      size: file.size,
+      uploadedBy: user()?.id,
+      uploadedAt: Date.now(),
+      source: 'google-drive',
+    });
+  };
+
   const openChecklist = (studyId, checklistId) => {
     navigate(`/projects/${params.projectId}/studies/${studyId}/checklists/${checklistId}`);
   };
@@ -496,7 +523,12 @@ export default function ProjectView() {
                 creatingStudy={creatingStudy}
                 onSetShowStudyForm={setShowStudyForm}
                 onCreateStudy={handleCreateStudy}
+                onUpdateStudy={handleUpdateStudy}
+                onDeleteStudy={handleDeleteStudy}
+                onViewPdf={handleViewPdf}
+                onUploadPdf={handleUploadPdf}
                 onOpenImportModal={() => setShowReferenceImportModal(true)}
+                onOpenGoogleDrive={handleOpenGoogleDrive}
               />
             </Show>
 
@@ -549,6 +581,17 @@ export default function ProjectView() {
         open={showReferenceImportModal()}
         onClose={() => setShowReferenceImportModal(false)}
         onImport={handleImportReferences}
+      />
+
+      <GoogleDrivePickerModal
+        open={showGoogleDriveModal()}
+        onClose={() => {
+          setShowGoogleDriveModal(false);
+          setGoogleDriveTargetStudyId(null);
+        }}
+        projectId={params.projectId}
+        studyId={googleDriveTargetStudyId()}
+        onImportSuccess={handleGoogleDriveImportSuccess}
       />
 
       <confirmDialog.ConfirmDialogComponent />
