@@ -254,6 +254,49 @@ export default function ProjectView() {
     }
   };
 
+  // Remove a member from the project
+  const handleRemoveMember = async (memberId, memberName) => {
+    const currentUser = user();
+    const isSelf = currentUser?.id === memberId;
+
+    const confirmed = await confirmDialog.open({
+      title: isSelf ? 'Leave Project' : 'Remove Member',
+      description:
+        isSelf ?
+          'Are you sure you want to leave this project? You will need to be re-invited to rejoin.'
+        : `Are you sure you want to remove ${memberName} from this project?`,
+      confirmText: isSelf ? 'Leave Project' : 'Remove',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/projects/${params.projectId}/members/${memberId}`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+        },
+      );
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to remove member');
+      }
+
+      if (isSelf) {
+        // If user removed themselves, navigate away
+        projectStore.removeProjectFromList(params.projectId);
+        navigate('/dashboard', { replace: true });
+        showToast.success('Left Project', 'You have left the project');
+      } else {
+        showToast.success('Member Removed', `${memberName} has been removed from the project`);
+      }
+    } catch (err) {
+      console.error('Error removing member:', err);
+      showToast.error('Remove Failed', err.message || 'Failed to remove member');
+    }
+  };
+
   // View a PDF - try cache first for offline support, fall back to URL
   const handleViewPdf = async (studyId, pdf) => {
     if (!pdf || !pdf.fileName) return;
@@ -521,26 +564,64 @@ export default function ProjectView() {
         <Show when={members().length > 0}>
           <div class='bg-white border border-gray-200 rounded-lg shadow-sm divide-y divide-gray-200'>
             <For each={members()}>
-              {member => (
-                <div class='p-4 flex items-center justify-between'>
-                  <div class='flex items-center gap-3'>
-                    <div class='w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium'>
-                      {(member.displayName || member.name || member.email || '?')
-                        .charAt(0)
-                        .toUpperCase()}
+              {member => {
+                const currentUser = user();
+                const isSelf = currentUser?.id === member.userId;
+                const canRemove = isOwner() || isSelf;
+                // Check if this member is the last owner (can't remove)
+                const isLastOwner =
+                  member.role === 'owner' && members().filter(m => m.role === 'owner').length <= 1;
+
+                return (
+                  <div class='p-4 flex items-center justify-between'>
+                    <div class='flex items-center gap-3'>
+                      <div class='w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium'>
+                        {(member.displayName || member.name || member.email || '?')
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
+                      <div>
+                        <p class='text-gray-900 font-medium'>
+                          {member.displayName || member.name || 'Unknown'}
+                          {isSelf && <span class='text-gray-400 ml-1'>(you)</span>}
+                        </p>
+                        <p class='text-gray-500 text-sm'>{member.email}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p class='text-gray-900 font-medium'>
-                        {member.displayName || member.name || 'Unknown'}
-                      </p>
-                      <p class='text-gray-500 text-sm'>{member.email}</p>
+                    <div class='flex items-center gap-2'>
+                      <span class='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize'>
+                        {member.role}
+                      </span>
+                      <Show when={canRemove && !isLastOwner}>
+                        <button
+                          onClick={() =>
+                            handleRemoveMember(
+                              member.userId,
+                              member.displayName || member.name || member.email,
+                            )
+                          }
+                          class='p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors'
+                          title={isSelf ? 'Leave project' : 'Remove member'}
+                        >
+                          <svg
+                            class='w-4 h-4'
+                            fill='none'
+                            stroke='currentColor'
+                            viewBox='0 0 24 24'
+                          >
+                            <path
+                              stroke-linecap='round'
+                              stroke-linejoin='round'
+                              stroke-width='2'
+                              d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+                            />
+                          </svg>
+                        </button>
+                      </Show>
                     </div>
                   </div>
-                  <span class='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize'>
-                    {member.role}
-                  </span>
-                </div>
-              )}
+                );
+              }}
             </For>
           </div>
         </Show>
