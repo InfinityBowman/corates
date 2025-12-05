@@ -5,7 +5,7 @@
 import { createSignal, createEffect, For, Show } from 'solid-js';
 import { Dialog } from '@components/zag/Dialog.jsx';
 import { showToast } from '@components/zag/Toast.jsx';
-import { FaBrandsGoogleDrive } from 'solid-icons/fa';
+
 import { FiSearch, FiFile, FiChevronRight, FiExternalLink } from 'solid-icons/fi';
 import { BiRegularImport } from 'solid-icons/bi';
 import {
@@ -158,7 +158,7 @@ export default function GoogleDrivePickerModal(props) {
         {/* Not connected state */}
         <Show when={!loading() && connected() === false}>
           <div class='text-center py-8'>
-            <FaBrandsGoogleDrive class='w-16 h-16 text-gray-300 mx-auto mb-4' />
+            <img src='/logos/drive.svg' alt='Google Drive' class='w-16 h-16 mx-auto mb-4' />
             <h3 class='text-lg font-medium text-gray-900 mb-2'>Connect Google Drive</h3>
             <p class='text-sm text-gray-500 mb-6 max-w-sm mx-auto'>
               Connect your Google account to browse and import PDFs from your Google Drive.
@@ -168,7 +168,7 @@ export default function GoogleDrivePickerModal(props) {
               onClick={handleConnectGoogle}
               class='inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors'
             >
-              <FaBrandsGoogleDrive class='w-4 h-4' />
+              <img src='/logos/drive.svg' alt='Google Drive' class='w-4 h-4' />
               Connect Google Account
             </button>
           </div>

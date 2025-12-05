@@ -1,5 +1,4 @@
 import { Show } from 'solid-js';
-import { FaBrandsGoogle } from 'solid-icons/fa';
 
 /**
  * Google sign in/up button
@@ -22,7 +21,10 @@ export function GoogleButton(props) {
           disabled={props.loading}
           class={`${baseClass} w-full py-2.5 sm:py-3 text-sm sm:text-base gap-3`}
         >
-          <Show when={props.loading} fallback={<FaBrandsGoogle class='w-5 h-5' />}>
+          <Show
+            when={props.loading}
+            fallback={<img src='/logos/google.svg' alt='Google' class='w-5 h-5' />}
+          >
             <div class='w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin' />
           </Show>
           Continue with Google
@@ -36,7 +38,10 @@ export function GoogleButton(props) {
         class={`${baseClass} p-3 sm:p-3.5`}
         title='Continue with Google'
       >
-        <Show when={props.loading} fallback={<FaBrandsGoogle class='w-5 h-5 sm:w-6 sm:h-6' />}>
+        <Show
+          when={props.loading}
+          fallback={<img src='/logos/google.svg' alt='Google' class='w-5 h-5 sm:w-6 sm:h-6' />}
+        >
           <div class='w-5 h-5 sm:w-6 sm:h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin' />
         </Show>
       </button>
