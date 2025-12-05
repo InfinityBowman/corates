@@ -12,7 +12,7 @@ export const toaster = toast.createStore({
   overlap: true,
   gap: 12,
   offsets: '16px',
-  removeDelay: 0, // Remove immediately when dismissed
+  removeDelay: 200, // Allow time for fade out animation
 });
 
 /**
@@ -59,7 +59,7 @@ function ToastItem(props) {
   return (
     <div
       {...api().getRootProps()}
-      class={`pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg border shadow-lg ${getStyles()}`}
+      class={`toast-item pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg border shadow-lg ${getStyles()}`}
     >
       <div class='p-4'>
         <div class='flex items-start'>
