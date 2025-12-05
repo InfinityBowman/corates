@@ -1,6 +1,6 @@
 import * as toast from '@zag-js/toast';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, For, Show } from 'solid-js';
+import { normalizeProps, useMachine, Key } from '@zag-js/solid';
+import { createMemo, createUniqueId, Show } from 'solid-js';
 import { FiX, FiCheck, FiAlertCircle, FiInfo, FiLoader } from 'solid-icons/fi';
 
 /**
@@ -58,16 +58,6 @@ function ToastItem(props) {
     <div
       {...api().getRootProps()}
       class={`pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg border shadow-lg ${getStyles()}`}
-      style={{
-        translate: 'var(--x) var(--y)',
-        scale: 'var(--scale)',
-        'z-index': 'var(--z-index)',
-        height: 'var(--height)',
-        opacity: 'var(--opacity)',
-        'will-change': 'translate, opacity, scale',
-        transition: 'translate 400ms, scale 400ms, opacity 400ms',
-        'transition-timing-function': 'cubic-bezier(0.21, 1.02, 0.73, 1)',
-      }}
     >
       <div class='p-4'>
         <div class='flex items-start'>
@@ -86,8 +76,9 @@ function ToastItem(props) {
           </div>
           <div class='ml-4 flex shrink-0'>
             <button
+              type='button'
               onClick={() => api().dismiss()}
-              class='inline-flex rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+              class='inline-flex rounded-md bg-transparent text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 p-1 cursor-pointer'
             >
               <span class='sr-only'>Close</span>
               <FiX class='h-5 w-5' />
@@ -116,9 +107,9 @@ export function Toaster() {
       {...api().getGroupProps()}
       class='pointer-events-none fixed inset-0 z-50 flex flex-col items-end p-4 sm:p-6'
     >
-      <For each={api().getToasts()}>
-        {(toastItem, index) => <ToastItem toast={() => toastItem} parent={service} index={index} />}
-      </For>
+      <Key each={api().getToasts()} by={t => t.id}>
+        {(toastItem, index) => <ToastItem toast={toastItem} parent={service} index={index} />}
+      </Key>
     </div>
   );
 }

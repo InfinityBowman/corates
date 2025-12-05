@@ -40,7 +40,8 @@ export async function initPdfJs() {
 export async function extractPdfTitle(pdfData) {
   try {
     const pdfjs = await initPdfJs();
-    const pdf = await pdfjs.getDocument({ data: pdfData }).promise;
+    // verbosity: 0 = ERRORS only (suppress warnings about malformed PDFs)
+    const pdf = await pdfjs.getDocument({ data: pdfData, verbosity: 0 }).promise;
 
     // Try to get title from PDF metadata first
     const metadata = await pdf.getMetadata();
