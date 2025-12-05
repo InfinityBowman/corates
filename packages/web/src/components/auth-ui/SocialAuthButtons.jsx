@@ -50,6 +50,55 @@ export function GoogleButton(props) {
 }
 
 /**
+ * ORCID sign in/up button for researcher authentication
+ * @param {Object} props
+ * @param {boolean} props.loading - Whether the button is in loading state
+ * @param {Function} props.onClick - Click handler
+ * @param {boolean} props.iconOnly - Show only icon (for compact layout)
+ */
+export function OrcidButton(props) {
+  const baseClass =
+    'border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg sm:rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center';
+
+  return (
+    <Show
+      when={props.iconOnly}
+      fallback={
+        <button
+          type='button'
+          onClick={() => props.onClick?.()}
+          disabled={props.loading}
+          class={`${baseClass} w-full py-2.5 sm:py-3 text-sm sm:text-base gap-3`}
+        >
+          <Show
+            when={props.loading}
+            fallback={<img src='/logos/orcid.svg' alt='ORCID' class='w-5 h-5' />}
+          >
+            <div class='w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin' />
+          </Show>
+          Continue with ORCID
+        </button>
+      }
+    >
+      <button
+        type='button'
+        onClick={() => props.onClick?.()}
+        disabled={props.loading}
+        class={`${baseClass} p-3 sm:p-3.5`}
+        title='Continue with ORCID'
+      >
+        <Show
+          when={props.loading}
+          fallback={<img src='/logos/orcid.svg' alt='ORCID' class='w-5 h-5 sm:w-6 sm:h-6' />}
+        >
+          <div class='w-5 h-5 sm:w-6 sm:h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin' />
+        </Show>
+      </button>
+    </Show>
+  );
+}
+
+/**
  * Container for multiple social auth buttons
  * Automatically switches between horizontal icons and vertical full buttons
  * @param {Object} props

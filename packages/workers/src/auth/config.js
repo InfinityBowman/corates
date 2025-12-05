@@ -1,5 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { genericOAuth } from 'better-auth/plugins';
 import { drizzle } from 'drizzle-orm/d1';
 import * as schema from '../db/schema.js';
 import { createEmailService } from './email.js';
@@ -29,6 +30,52 @@ export function createAuth(env, ctx) {
   } else {
     console.log(
       '[Auth] Google OAuth NOT configured - missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET',
+    );
+  }
+
+  // Build plugins array
+  const plugins = [];
+
+  // ORCID OAuth provider for researcher authentication (using genericOAuth plugin)
+  if (env.ORCID_CLIENT_ID && env.ORCID_CLIENT_SECRET) {
+    console.log(
+      '[Auth] ORCID OAuth configured with client ID:',
+      env.ORCID_CLIENT_ID.substring(0, 10) + '...',
+    );
+    plugins.push(
+      genericOAuth({
+        config: [
+          {
+            providerId: 'orcid',
+            clientId: env.ORCID_CLIENT_ID,
+            clientSecret: env.ORCID_CLIENT_SECRET,
+            authorizationUrl: 'https://orcid.org/oauth/authorize',
+            tokenUrl: 'https://orcid.org/oauth/token',
+            userInfoUrl: 'https://orcid.org/oauth/userinfo',
+            scopes: ['openid'],
+            // Map ORCID profile to user fields
+            getUserInfo: async ({ accessToken }) => {
+              const response = await fetch('https://orcid.org/oauth/userinfo', {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                },
+              });
+              const profile = await response.json();
+              return {
+                id: profile.sub,
+                name: profile.name || `${profile.given_name || ''} ${profile.family_name || ''}`.trim() || profile.sub,
+                email: profile.email || `${profile.sub}@orcid.org`,
+                emailVerified: !!profile.email,
+                image: null,
+              };
+            },
+          },
+        ],
+      }),
+    );
+  } else {
+    console.log(
+      '[Auth] ORCID OAuth NOT configured - missing ORCID_CLIENT_ID or ORCID_CLIENT_SECRET',
     );
   }
 
@@ -71,6 +118,10 @@ export function createAuth(env, ctx) {
 
     // Social/OAuth providers
     socialProviders,
+
+    // Plugins (including genericOAuth for ORCID)
+    plugins,
+
     // Add email verification and password reset functionality
     emailVerification: {
       sendOnSignUp: true,

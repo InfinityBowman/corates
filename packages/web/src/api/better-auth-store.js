@@ -105,6 +105,29 @@ function createBetterAuthStore() {
     }
   }
 
+  async function signinWithOrcid(callbackPath) {
+    try {
+      setAuthError(null);
+      // Build full callback URL using current origin
+      const callbackURL = `${window.location.origin}${callbackPath || '/dashboard'}`;
+
+      // Use genericOAuth signIn for custom providers
+      const { data, error } = await authClient.signIn.oauth2({
+        providerId: 'orcid',
+        callbackURL,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data;
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
   async function signin(email, password) {
     try {
       setAuthError(null);
@@ -342,6 +365,7 @@ function createBetterAuthStore() {
     signup,
     signin,
     signinWithGoogle,
+    signinWithOrcid,
     signout,
     updateProfile,
     changePassword,

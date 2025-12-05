@@ -3,7 +3,12 @@ import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton, AuthLink } from './AuthButtons.jsx';
-import { GoogleButton, SocialAuthContainer, AuthDivider } from './SocialAuthButtons.jsx';
+import {
+  GoogleButton,
+  OrcidButton,
+  SocialAuthContainer,
+  AuthDivider,
+} from './SocialAuthButtons.jsx';
 
 /**
  * Sign Up page - minimal friction, just email or social providers
@@ -14,12 +19,13 @@ export default function SignUp() {
   const [error, setError] = createSignal('');
   const [loading, setLoading] = createSignal(false);
   const [googleLoading, setGoogleLoading] = createSignal(false);
+  const [orcidLoading, setOrcidLoading] = createSignal(false);
 
   const navigate = useNavigate();
-  const { signup, signinWithGoogle, authError, clearAuthError } = useBetterAuth();
+  const { signup, signinWithGoogle, signinWithOrcid, authError, clearAuthError } = useBetterAuth();
 
   // Number of social providers (update as you add more)
-  const socialProviderCount = 1;
+  const socialProviderCount = 2;
 
   onMount(() => clearAuthError());
 
@@ -36,6 +42,20 @@ export default function SignUp() {
       console.error('Google sign-up error:', err);
       setError('Failed to sign up with Google. Please try again.');
       setGoogleLoading(false);
+    }
+  }
+
+  async function handleOrcidSignUp() {
+    setOrcidLoading(true);
+    setError('');
+
+    try {
+      // OAuth users will be redirected to complete-profile after auth
+      await signinWithOrcid('/complete-profile');
+    } catch (err) {
+      console.error('ORCID sign-up error:', err);
+      setError('Failed to sign up with ORCID. Please try again.');
+      setOrcidLoading(false);
     }
   }
 
@@ -132,7 +152,11 @@ export default function SignUp() {
             onClick={handleGoogleSignUp}
             iconOnly={socialProviderCount > 1}
           />
-          {/* Add more social buttons here as needed */}
+          <OrcidButton
+            loading={orcidLoading()}
+            onClick={handleOrcidSignUp}
+            iconOnly={socialProviderCount > 1}
+          />
         </SocialAuthContainer>
 
         <p class='text-center text-xs text-gray-400 mt-4'>
