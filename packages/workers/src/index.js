@@ -18,6 +18,7 @@ import { userRoutes } from './routes/users.js';
 import { pdfRoutes } from './routes/pdfs.js';
 import { dbRoutes } from './routes/database.js';
 import { emailRoutes } from './routes/email.js';
+import { googleDriveRoutes } from './routes/google-drive.js';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc, EmailQueue };
@@ -125,6 +126,9 @@ app.route('/api/projects/:projectId/members', memberRoutes);
 // Mount PDF routes: /api/projects/:projectId/studies/:studyId/pdf(s)
 app.route('/api/projects/:projectId/studies/:studyId/pdfs', pdfRoutes);
 app.route('/api/projects/:projectId/studies/:studyId/pdf', pdfRoutes);
+
+// Mount Google Drive routes
+app.route('/api/google-drive', googleDriveRoutes);
 
 // Project Document Durable Object routes
 app.all('/api/project/:projectId/*', async c => {
