@@ -216,7 +216,8 @@ export default function usePdfJs(options = {}) {
     currentRenderTasks.clear();
 
     try {
-      const loadingTask = pdfjsLib.getDocument(source);
+      // verbosity: 0 = ERRORS only (suppress warnings about malformed PDFs)
+      const loadingTask = pdfjsLib.getDocument({ ...source, verbosity: 0 });
       const pdf = await loadingTask.promise;
       setPdfDoc(pdf);
       setTotalPages(pdf.numPages);
