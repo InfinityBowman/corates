@@ -43,15 +43,13 @@ export default function InProgressTab(props) {
                   props.onOpenReconciliation(study.id, checklist1Id, checklist2Id)
                 }
                 onViewPdf={pdf => props.onViewPdf(study.id, pdf)}
-                onUploadPdf={file => props.onUploadPdf(study.id, file)}
-                onUpdateStudy={updates => props.onUpdateStudy(study.id, updates)}
-                onDeleteStudy={() => props.onDeleteStudy(study.id)}
                 onUpdateChecklist={(checklistId, updates) =>
                   props.onUpdateChecklist(study.id, checklistId, updates)
                 }
                 onDeleteChecklist={checklistId => props.onDeleteChecklist(study.id, checklistId)}
                 getAssigneeName={props.getAssigneeName}
                 creatingChecklist={props.creatingChecklist()}
+                hideManagementActions={true}
               />
             )}
           </For>
