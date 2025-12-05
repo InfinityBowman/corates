@@ -2,6 +2,7 @@
 -- Run: wrangler d1 migrations apply corates-db --local
 
 -- Drop existing tables if they exist (for clean migration)
+DROP TABLE IF EXISTS mediaFiles;
 DROP TABLE IF EXISTS project_members;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS email_verification_tokens;
