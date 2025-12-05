@@ -9,6 +9,7 @@
     "deploy": "wrangler deploy --env production",
     "tail": "wrangler tail",
     "test": "vitest",
+    "logs": "pnpm wrangler tail corates-workers-prod",
     "clear-workers": "rm -rf .wrangler/state && pnpm run db:migrate",
     "db:migrate": "y | wrangler d1 migrations apply corates-db --local",
     "db:migrate:prod": "wrangler d1 migrations apply corates-db --remote",
