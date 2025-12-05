@@ -160,12 +160,6 @@ export default function StudyCard(props) {
                   <BiRegularEdit class='w-4 h-4' />
                 </button>
               </Show>
-              <Show when={hasPdfs()}>
-                <span class='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 gap-1'>
-                  <CgFileDocument class='w-3 h-3' />
-                  PDF
-                </span>
-              </Show>
             </div>
             <Show when={props.study.description}>
               <p class='text-gray-500 text-sm mt-1'>{props.study.description}</p>
