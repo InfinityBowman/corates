@@ -1,5 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { genericOAuth } from 'better-auth/plugins';
 import { drizzle } from 'drizzle-orm/d1';
 import * as schema from '../db/schema.js';
 import { createEmailService } from './email.js';
@@ -32,6 +33,55 @@ export function createAuth(env, ctx) {
     );
   }
 
+  // Build plugins array
+  const plugins = [];
+
+  // ORCID OAuth provider for researcher authentication (using genericOAuth plugin)
+  if (env.ORCID_CLIENT_ID && env.ORCID_CLIENT_SECRET) {
+    console.log(
+      '[Auth] ORCID OAuth configured with client ID:',
+      env.ORCID_CLIENT_ID.substring(0, 10) + '...',
+    );
+    plugins.push(
+      genericOAuth({
+        config: [
+          {
+            providerId: 'orcid',
+            clientId: env.ORCID_CLIENT_ID,
+            clientSecret: env.ORCID_CLIENT_SECRET,
+            authorizationUrl: 'https://orcid.org/oauth/authorize',
+            tokenUrl: 'https://orcid.org/oauth/token',
+            userInfoUrl: 'https://orcid.org/oauth/userinfo',
+            scopes: ['openid'],
+            // Map ORCID profile to user fields
+            getUserInfo: async ({ accessToken }) => {
+              const response = await fetch('https://orcid.org/oauth/userinfo', {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                },
+              });
+              const profile = await response.json();
+              return {
+                id: profile.sub,
+                name:
+                  profile.name ||
+                  `${profile.given_name || ''} ${profile.family_name || ''}`.trim() ||
+                  profile.sub,
+                email: profile.email || `${profile.sub}@orcid.org`,
+                emailVerified: !!profile.email,
+                image: null,
+              };
+            },
+          },
+        ],
+      }),
+    );
+  } else {
+    console.log(
+      '[Auth] ORCID OAuth NOT configured - missing ORCID_CLIENT_ID or ORCID_CLIENT_SECRET',
+    );
+  }
+
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: 'sqlite',
@@ -47,10 +97,34 @@ export function createAuth(env, ctx) {
       enabled: true,
       requireEmailVerification: true,
       minPasswordLength: 8,
+      // Password reset - sendResetPassword is required for requestPasswordReset to work
+      sendResetPassword: async ({ user, url }) => {
+        console.log('[Auth] Queuing reset email to:', user.email, 'URL:', url);
+        if (ctx && ctx.waitUntil) {
+          ctx.waitUntil(
+            (async () => {
+              try {
+                await emailService.sendPasswordReset(
+                  user.email,
+                  url,
+                  user.displayName || user.username || user.name,
+                );
+              } catch (err) {
+                console.error('Background email error:', err);
+              }
+            })(),
+          );
+        }
+        return;
+      },
     },
 
     // Social/OAuth providers
     socialProviders,
+
+    // Plugins (including genericOAuth for ORCID)
+    plugins,
+
     // Add email verification and password reset functionality
     emailVerification: {
       sendOnSignUp: true,
@@ -81,29 +155,6 @@ export function createAuth(env, ctx) {
       },
     },
 
-    resetPassword: {
-      enabled: true,
-      sendEmail: async ({ user, url }) => {
-        console.log('[Auth] Queuing reset email to:', user.email, 'URL:', url);
-        if (ctx && ctx.waitUntil) {
-          ctx.waitUntil(
-            (async () => {
-              try {
-                await emailService.sendPasswordReset(
-                  user.email,
-                  url,
-                  user.displayName || user.username || user.name,
-                );
-              } catch (err) {
-                console.error('Background email error:', err);
-              }
-            })(),
-          );
-        }
-        return;
-      },
-    },
-
     session: {
       expiresIn: 60 * 60 * 24 * 7, // 7 days
       updateAge: 60 * 60 * 24, // 1 day
@@ -120,6 +171,10 @@ export function createAuth(env, ctx) {
           required: false,
         },
         avatarUrl: {
+          type: 'string',
+          required: false,
+        },
+        role: {
           type: 'string',
           required: false,
         },

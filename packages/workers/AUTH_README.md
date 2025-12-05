@@ -99,23 +99,23 @@ The authentication system uses these tables (managed by BetterAuth):
 | `AUTH_SECRET`   | Secret key for signing tokens. Must be a long, random string in production. |
 | `AUTH_BASE_URL` | Base URL for auth callbacks (e.g., `https://api.corates.app`)               |
 
-### Optional (Email)
+### Email
 
 | Variable         | Description                      |
 | ---------------- | -------------------------------- |
 | `RESEND_API_KEY` | API key for Resend email service |
 | `EMAIL_FROM`     | From address for auth emails     |
 
-### Optional (Google OAuth)
+### Google OAuth
 
-Required for Google Drive integration:
+Used for Google Drive integration:
 
 | Variable               | Description                                       |
 | ---------------------- | ------------------------------------------------- |
 | `GOOGLE_CLIENT_ID`     | OAuth 2.0 Client ID from Google Cloud Console     |
 | `GOOGLE_CLIENT_SECRET` | OAuth 2.0 Client Secret from Google Cloud Console |
 
-### Optional (Cross-subdomain cookies)
+### Cross-subdomain cookies
 
 | Variable        | Description                                                   |
 | --------------- | ------------------------------------------------------------- |
