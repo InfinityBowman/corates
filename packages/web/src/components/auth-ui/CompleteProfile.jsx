@@ -28,10 +28,12 @@ export default function CompleteProfile() {
   const { user, updateProfile, authLoading } = useBetterAuth();
 
   // Check if user needs to set password (email signup vs OAuth)
+  // OAuth users (Google, ORCID) already have authentication - they don't need a password
+  // We detect OAuth users by checking if they have emailVerified=true AND came from OAuth flow
+  // The 'oauthSignup' flag is set in localStorage during OAuth signup flow
   const needsPassword = () => {
-    const currentUser = user();
-    // OAuth users already have their account linked, email users need to set password
-    return !currentUser?.image; // OAuth typically provides an image, email signup doesn't
+    const isOAuthUser = localStorage.getItem('oauthSignup') === 'true';
+    return !isOAuthUser;
   };
 
   // Pre-fill name if available from OAuth
@@ -115,6 +117,9 @@ export default function CompleteProfile() {
         displayName: fullName,
         role: selectedRole || 'other', // Default to 'other' if skipped
       });
+
+      // Clear the OAuth signup flag
+      localStorage.removeItem('oauthSignup');
 
       await new Promise(resolve => setTimeout(resolve, 200));
       navigate('/dashboard', { replace: true });

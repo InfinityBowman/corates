@@ -36,11 +36,14 @@ export default function SignUp() {
     setError('');
 
     try {
+      // Mark this as an OAuth signup so complete-profile knows not to ask for password
+      localStorage.setItem('oauthSignup', 'true');
       // OAuth users will be redirected to complete-profile after auth
       await signinWithGoogle('/complete-profile');
     } catch (err) {
       console.error('Google sign-up error:', err);
       setError('Failed to sign up with Google. Please try again.');
+      localStorage.removeItem('oauthSignup');
       setGoogleLoading(false);
     }
   }
@@ -50,11 +53,14 @@ export default function SignUp() {
     setError('');
 
     try {
+      // Mark this as an OAuth signup so complete-profile knows not to ask for password
+      localStorage.setItem('oauthSignup', 'true');
       // OAuth users will be redirected to complete-profile after auth
       await signinWithOrcid('/complete-profile');
     } catch (err) {
       console.error('ORCID sign-up error:', err);
       setError('Failed to sign up with ORCID. Please try again.');
+      localStorage.removeItem('oauthSignup');
       setOrcidLoading(false);
     }
   }
