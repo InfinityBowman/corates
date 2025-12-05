@@ -9,6 +9,8 @@ import {
   getVerificationEmailText,
   getPasswordResetEmailHtml,
   getPasswordResetEmailText,
+  getMagicLinkEmailHtml,
+  getMagicLinkEmailText,
 } from './emailTemplates.js';
 
 /**
@@ -83,10 +85,26 @@ export function createEmailService(env) {
     return sendEmail({ to, subject, html, text });
   }
 
+  /**
+   * Send magic link email for passwordless sign-in
+   */
+  async function sendMagicLink(to, magicLinkUrl) {
+    if (env.SEND_EMAILS_IN_DEV !== 'true' && !isProduction) {
+      console.log('[Email] Development environment - email sending is DISABLED');
+      console.log('[Email] Magic link URL:', magicLinkUrl);
+      return { success: true, id: 'dev-id' };
+    }
+    const subject = 'Sign in to CoRATES';
+    const html = getMagicLinkEmailHtml({ subject, magicLinkUrl });
+    const text = getMagicLinkEmailText({ magicLinkUrl });
+    return sendEmail({ to, subject, html, text });
+  }
+
   return {
     sendEmail,
     sendEmailVerification,
     sendPasswordReset,
+    sendMagicLink,
     isProduction,
   };
 }
