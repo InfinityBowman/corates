@@ -10,7 +10,7 @@ import { PROJECT_ROLES } from './constants.js';
  * Common field validators
  */
 export const commonFields = {
-  uuid: z.string().uuid('Invalid UUID format'),
+  uuid: z.uuid('Invalid UUID format'),
   email: z.email('Invalid email address'),
   nonEmptyString: z.string().min(1, 'Field cannot be empty'),
   optionalString: z.string().optional(),
@@ -54,8 +54,9 @@ export const projectSchemas = {
 export const memberSchemas = {
   add: z
     .object({
-      userId: z.string().uuid('Invalid user ID format').optional(),
-      email: z.email('Invalid email address').optional(),
+      // userId is a better-auth generated ID, not a UUID
+      userId: z.string().min(1, 'Invalid user ID').optional(),
+      email: z.string().email('Invalid email address').optional(),
       role: z
         .enum(PROJECT_ROLES, {
           error: `Role must be one of: ${PROJECT_ROLES.join(', ')}`,
