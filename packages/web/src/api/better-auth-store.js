@@ -54,14 +54,21 @@ function createBetterAuthStore() {
   });
 
   // --- API methods ---
-  async function signup(email, password, name) {
+  async function signup(email, password, name, role = null) {
     try {
       setAuthError(null);
-      const { data, error } = await authClient.signUp.email({
+      const signupData = {
         email,
         password,
         name,
-      });
+      };
+
+      // Only include role if provided
+      if (role) {
+        signupData.role = role;
+      }
+
+      const { data, error } = await authClient.signUp.email(signupData);
 
       if (error) {
         throw new Error(error.message);
@@ -69,6 +76,28 @@ function createBetterAuthStore() {
 
       // Store pending email for verification if needed
       localStorage.setItem('pendingEmail', email);
+      return data;
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  async function signinWithGoogle(callbackPath) {
+    try {
+      setAuthError(null);
+      // Build full callback URL using current origin
+      const callbackURL = `${window.location.origin}${callbackPath || '/dashboard'}`;
+
+      const { data, error } = await authClient.signIn.social({
+        provider: 'google',
+        callbackURL,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
       return data;
     } catch (err) {
       setAuthError(err.message);
@@ -123,6 +152,9 @@ function createBetterAuthStore() {
         throw new Error(error.message);
       }
 
+      // Refresh session to get updated user data
+      await session().refetch?.();
+
       return updated;
     } catch (err) {
       setAuthError(err.message);
@@ -150,8 +182,28 @@ function createBetterAuthStore() {
   async function resetPassword(email) {
     try {
       setAuthError(null);
-      const { error } = await authClient.forgetPassword({
+      // BetterAuth uses requestPasswordReset to send reset email
+      const { error } = await authClient.requestPasswordReset({
         email,
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  // Confirm password reset with token and new password
+  async function confirmPasswordReset(token, newPassword) {
+    try {
+      setAuthError(null);
+      const { error } = await authClient.resetPassword({
+        token,
+        newPassword,
       });
 
       if (error) {
@@ -289,10 +341,12 @@ function createBetterAuthStore() {
     // Actions
     signup,
     signin,
+    signinWithGoogle,
     signout,
     updateProfile,
     changePassword,
     resetPassword,
+    confirmPasswordReset,
     resendVerificationEmail,
     deleteAccount,
     authFetch,

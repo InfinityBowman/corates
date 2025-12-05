@@ -30,6 +30,6 @@ export const {
   updateUser,
   changePassword,
   resetPassword,
-  forgetPassword,
+  requestPasswordReset,
   verifyEmail,
 } = authClient;
