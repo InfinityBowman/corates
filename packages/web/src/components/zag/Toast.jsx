@@ -18,15 +18,12 @@ export const toaster = toast.createStore({
  * Individual Toast component
  */
 function ToastItem(props) {
-  const service = useMachine(toast.machine, {
-    id: () => props.toast().id,
-    type: () => props.toast().type,
-    title: () => props.toast().title,
-    description: () => props.toast().description,
-    duration: () => props.toast().duration,
-    parent: () => props.parent,
-    index: () => props.index(),
-  });
+  const machineProps = createMemo(() => ({
+    ...props.toast(),
+    parent: props.parent,
+    index: props.index(),
+  }));
+  const service = useMachine(toast.machine, machineProps);
   const api = createMemo(() => toast.connect(service, normalizeProps));
 
   const getIcon = () => {
