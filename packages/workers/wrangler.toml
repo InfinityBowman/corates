@@ -40,8 +40,6 @@ bucket_name = "corates-pdfs"
 [vars]
 ENVIRONMENT = "development"
 AUTH_BASE_URL = "http://localhost:8787"
-GOOGLE_CLIENT_ID = "your-client-id"
-GOOGLE_CLIENT_SECRET = "your-client-secret"
 
 # For production deployment
 [env.production]

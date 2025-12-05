@@ -3,6 +3,7 @@ import { AiOutlineBook, AiOutlineFileSync } from 'solid-icons/ai';
 import { BiRegularImport, BiRegularEdit, BiRegularUpload } from 'solid-icons/bi';
 import { CgFileDocument } from 'solid-icons/cg';
 import { FiTrash2 } from 'solid-icons/fi';
+import { FaBrandsGoogleDrive } from 'solid-icons/fa';
 import StudyForm from '../StudyForm.jsx';
 import { showToast } from '@components/zag/Toast.jsx';
 
@@ -231,15 +232,24 @@ export default function IncludedStudiesTab(props) {
                     <Show
                       when={hasPdfs()}
                       fallback={
-                        <button
-                          onClick={() => fileInputRef?.click()}
-                          disabled={uploading()}
-                          class='inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded hover:bg-gray-200 transition-colors gap-1 disabled:opacity-50'
-                          title='Add PDF'
-                        >
-                          <BiRegularUpload class='w-3.5 h-3.5' />
-                          {uploading() ? 'Uploading...' : 'Add PDF'}
-                        </button>
+                        <div class='flex items-center gap-1'>
+                          <button
+                            onClick={() => fileInputRef?.click()}
+                            disabled={uploading()}
+                            class='inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded hover:bg-gray-200 transition-colors gap-1 disabled:opacity-50'
+                            title='Upload PDF from computer'
+                          >
+                            <BiRegularUpload class='w-3.5 h-3.5' />
+                            {uploading() ? 'Uploading...' : 'Add PDF'}
+                          </button>
+                          <button
+                            onClick={() => props.onOpenGoogleDrive?.(study.id)}
+                            class='p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors'
+                            title='Import from Google Drive'
+                          >
+                            <FaBrandsGoogleDrive class='w-3.5 h-3.5' />
+                          </button>
+                        </div>
                       }
                     >
                       <button
@@ -254,9 +264,16 @@ export default function IncludedStudiesTab(props) {
                         onClick={() => fileInputRef?.click()}
                         disabled={uploading()}
                         class='p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50'
-                        title='Change PDF'
+                        title='Upload new PDF'
                       >
                         <AiOutlineFileSync class='w-3.5 h-3.5' />
+                      </button>
+                      <button
+                        onClick={() => props.onOpenGoogleDrive?.(study.id)}
+                        class='p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors'
+                        title='Import from Google Drive'
+                      >
+                        <FaBrandsGoogleDrive class='w-3.5 h-3.5' />
                       </button>
                     </Show>
                     {/* Delete button */}

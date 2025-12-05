@@ -1,7 +1,8 @@
 import { createSignal, Show } from 'solid-js';
-import { FiBell, FiMoon, FiShield, FiKey, FiEye, FiEyeOff } from 'solid-icons/fi';
+import { FiBell, FiMoon, FiShield, FiKey, FiEye, FiEyeOff, FiLink } from 'solid-icons/fi';
 import { LANDING_URL } from '@config/api.js';
 import Switch from '@components/zag/Switch.jsx';
+import GoogleDriveSettings from './GoogleDriveSettings.jsx';
 
 export default function SettingsPage() {
   // Notification settings
@@ -102,6 +103,19 @@ export default function SettingsPage() {
             </div>
             <Switch checked={darkMode()} onChange={setDarkMode} />
           </div>
+        </div>
+      </div>
+
+      {/* Connected Services Section */}
+      <div class='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6'>
+        <div class='px-6 py-4 border-b border-gray-200 bg-gray-50'>
+          <div class='flex items-center space-x-2'>
+            <FiLink class='w-5 h-5 text-gray-600' />
+            <h2 class='text-lg font-medium text-gray-900'>Connected Services</h2>
+          </div>
+        </div>
+        <div class='p-6'>
+          <GoogleDriveSettings />
         </div>
       </div>
 
