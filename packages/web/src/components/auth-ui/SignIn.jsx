@@ -48,10 +48,15 @@ export default function SignIn() {
         navigate('/verify-email', { replace: true });
       } else if (
         msg.includes('invalid credentials') ||
-        msg.includes('incorrect email or password')
+        msg.includes('incorrect email or password') ||
+        msg.includes('invalid email or password')
       ) {
         setError('Incorrect email or password');
-      } else if (msg.includes('user not found')) {
+      } else if (
+        msg.includes('user not found') ||
+        msg.includes('user does not exist') ||
+        msg.includes('no user found')
+      ) {
         setError('No account found with this email');
       } else if (msg.includes('too many requests')) {
         setError('Too many sign-in attempts. Please try again later.');
