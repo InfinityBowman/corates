@@ -24,6 +24,8 @@ export default function MagicLinkForm(props) {
     setLoading(true);
 
     try {
+      // Mark as magic link signup so CompleteProfile knows not to ask for password
+      localStorage.setItem('magicLinkSignup', 'true');
       await signinWithMagicLink(email(), props.callbackPath || '/complete-profile');
       setSent(true);
     } catch (err) {
@@ -114,11 +116,11 @@ export default function MagicLinkForm(props) {
             <ErrorMessage displayError={displayError} />
 
             <PrimaryButton loading={loading()} loadingText='Sending Link...'>
-              Send Sign-In Link
+              {props.buttonText || 'Send Sign-In Link'}
             </PrimaryButton>
 
             <p class='text-center text-xs text-gray-500'>
-              We'll email you a magic link for password-free sign in.
+              {props.description || "We'll email you a magic link for password-free sign in."}
             </p>
           </div>
         </form>
