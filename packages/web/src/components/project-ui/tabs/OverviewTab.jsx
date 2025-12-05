@@ -1,11 +1,12 @@
 import { For, Show } from 'solid-js';
 import ChartSection from '../ChartSection.jsx';
+import ReviewerAssignment from '../ReviewerAssignment.jsx';
 
 export default function OverviewTab(props) {
   return (
     <>
       {/* Stats Summary */}
-      <div class='grid grid-cols-3 gap-4 mb-6'>
+      <div class='grid grid-cols-2 gap-4 mb-6'>
         <div class='bg-gray-50 rounded-lg p-4 text-center'>
           <p class='text-2xl font-bold text-gray-900'>{props.studies().length}</p>
           <p class='text-sm text-gray-500'>Studies</p>
@@ -14,13 +15,18 @@ export default function OverviewTab(props) {
           <p class='text-2xl font-bold text-gray-900'>{props.members().length}</p>
           <p class='text-sm text-gray-500'>Members</p>
         </div>
-        <div class='bg-gray-50 rounded-lg p-4 text-center'>
-          <p class='text-2xl font-bold text-gray-900'>
-            {props.studies().reduce((acc, s) => acc + (s.checklists?.length || 0), 0)}
-          </p>
-          <p class='text-sm text-gray-500'>Checklists</p>
-        </div>
       </div>
+
+      {/* Reviewer Assignment Section */}
+      <Show when={props.isOwner() && props.studies().length > 0}>
+        <div class='mb-8'>
+          <ReviewerAssignment
+            studies={props.studies}
+            members={props.members}
+            onAssignReviewers={props.onAssignReviewers}
+          />
+        </div>
+      </Show>
 
       {/* Charts Section */}
       <div class='mb-8'>

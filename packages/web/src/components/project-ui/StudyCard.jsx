@@ -161,6 +161,17 @@ export default function StudyCard(props) {
                 </button>
               </Show>
             </div>
+            {/* Author/Year citation line */}
+            <Show when={props.study.firstAuthor || props.study.publicationYear}>
+              <p class='text-sm text-gray-600 mt-0.5'>
+                <span class='font-medium'>{props.study.firstAuthor || 'Unknown'}</span>
+                {props.study.publicationYear && ` (${props.study.publicationYear})`}
+                <Show when={props.study.journal}>
+                  <span class='mx-1'>-</span>
+                  <span class='italic text-gray-500'>{props.study.journal}</span>
+                </Show>
+              </p>
+            </Show>
             <Show when={props.study.description}>
               <p class='text-gray-500 text-sm mt-1'>{props.study.description}</p>
             </Show>
