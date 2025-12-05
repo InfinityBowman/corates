@@ -270,8 +270,8 @@ function SetNewPasswordForm(props) {
 
           <ErrorMessage displayError={displayError} />
 
-          <PrimaryButton loading={loading()} loadingText='Resetting Password...'>
-            Reset Password
+          <PrimaryButton loading={loading()} loadingText='Setting Password...'>
+            Set Password
           </PrimaryButton>
 
           <div class='text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-4'>

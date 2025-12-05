@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { genericOAuth, magicLink } from 'better-auth/plugins';
+import { genericOAuth, magicLink, twoFactor } from 'better-auth/plugins';
 import { drizzle } from 'drizzle-orm/d1';
 import * as schema from '../db/schema.js';
 import { createEmailService } from './email.js';
@@ -103,6 +103,18 @@ export function createAuth(env, ctx) {
     }),
   );
 
+  // Two-Factor Authentication plugin
+  plugins.push(
+    twoFactor({
+      issuer: 'CoRATES',
+      // Optional: customize backup codes
+      backupCodes: {
+        length: 10, // 10 backup codes
+        characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+      },
+    }),
+  );
+
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: 'sqlite',
@@ -111,6 +123,7 @@ export function createAuth(env, ctx) {
         session: schema.session,
         account: schema.account,
         verification: schema.verification,
+        twoFactor: schema.twoFactor,
       },
     }),
 

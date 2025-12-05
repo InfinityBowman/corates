@@ -16,6 +16,7 @@ export const user = sqliteTable('user', {
   displayName: text('displayName'),
   avatarUrl: text('avatarUrl'),
   role: text('role'), // researcher, student, librarian, other
+  twoFactorEnabled: integer('twoFactorEnabled', { mode: 'boolean' }).default(false),
 });
 
 // Sessions table
@@ -99,12 +100,25 @@ export const mediaFiles = sqliteTable('mediaFiles', {
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 
+// Two-Factor Authentication table
+export const twoFactor = sqliteTable('twoFactor', {
+  id: text('id').primaryKey(),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  secret: text('secret').notNull(),
+  backupCodes: text('backupCodes').notNull(), // JSON array of backup codes
+  createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+});
+
 // Export all tables
 export const dbSchema = {
   user,
   session,
   account,
   verification,
+  twoFactor,
   projects,
   projectMembers,
   mediaFiles,

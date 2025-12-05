@@ -4,6 +4,7 @@ import { LANDING_URL } from '@config/api.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import Switch from '@components/zag/Switch.jsx';
 import GoogleDriveSettings from './GoogleDriveSettings.jsx';
+import TwoFactorSetup from './TwoFactorSetup.jsx';
 
 export default function SettingsPage() {
   const { user, resetPassword } = useBetterAuth();
@@ -301,6 +302,12 @@ export default function SettingsPage() {
               </div>
             </form>
           </Show>
+
+          {/* Divider */}
+          <div class='border-t border-gray-200' />
+
+          {/* Two-Factor Authentication */}
+          <TwoFactorSetup />
         </div>
       </div>
 
