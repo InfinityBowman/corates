@@ -27,13 +27,14 @@ export default function CompleteProfile() {
   const navigate = useNavigate();
   const { user, updateProfile, authLoading } = useBetterAuth();
 
-  // Check if user needs to set password (email signup vs OAuth)
-  // OAuth users (Google, ORCID) already have authentication - they don't need a password
-  // We detect OAuth users by checking if they have emailVerified=true AND came from OAuth flow
+  // Check if user needs to set password (email verification signup vs OAuth/magic link)
+  // OAuth users (Google, ORCID) and magic link users already have authentication - they don't need a password
   // The 'oauthSignup' flag is set in localStorage during OAuth signup flow
+  // The 'magicLinkSignup' flag is set in localStorage during magic link signup flow
   const needsPassword = () => {
     const isOAuthUser = localStorage.getItem('oauthSignup') === 'true';
-    return !isOAuthUser;
+    const isMagicLinkUser = localStorage.getItem('magicLinkSignup') === 'true';
+    return !isOAuthUser && !isMagicLinkUser;
   };
 
   // Pre-fill name if available from OAuth
@@ -118,8 +119,9 @@ export default function CompleteProfile() {
         role: selectedRole || 'other', // Default to 'other' if skipped
       });
 
-      // Clear the OAuth signup flag
+      // Clear the signup flags
       localStorage.removeItem('oauthSignup');
+      localStorage.removeItem('magicLinkSignup');
 
       await new Promise(resolve => setTimeout(resolve, 200));
       navigate('/dashboard', { replace: true });
