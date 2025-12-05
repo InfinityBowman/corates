@@ -40,6 +40,8 @@ bucket_name = "corates-pdfs"
 [vars]
 ENVIRONMENT = "development"
 AUTH_BASE_URL = "http://localhost:8787"
+GOOGLE_CLIENT_ID = "your-client-id"
+GOOGLE_CLIENT_SECRET = "your-client-secret"
 
 # For production deployment
 [env.production]
@@ -59,6 +61,8 @@ COOKIE_DOMAIN = ".corates.org"
 # wrangler secret put SMTP_USER --env production
 # wrangler secret put SMTP_PASS --env production
 # wrangler secret put EMAIL_FROM --env production
+# wrangler secret put GOOGLE_CLIENT_ID --env production
+# wrangler secret put GOOGLE_CLIENT_SECRET --env production
 
 [[env.production.d1_databases]]
 binding = "DB"

@@ -1,55 +1,64 @@
-# Authentication Setup for Corates
+yes# Authentication Setup for Corates
 
 ## Overview
 
-This setup provides comprehensive user authentication using BetterAuth with email/password authentication, storing users in D1 database, and protecting all Durable Objects and Workers endpoints.
+This setup provides comprehensive user authentication using BetterAuth with email/password authentication, storing users in D1 database, and protecting all Workers endpoints.
 
 ## Features
 
 - Email/password authentication with BetterAuth
+- Email verification with customizable templates
+- Password reset functionality
+- Google OAuth integration (for Google Drive access)
 - User data stored in D1 database
-- Session management with secure tokens
-- Protected Durable Objects (ChatRoom, CollaborativeDoc, UserSession)
-- Auth middleware for all API endpoints
+- Session management with secure cookies
+- Rate limiting on auth endpoints
 - WebSocket authentication support
 
 ## API Endpoints
 
 ### Authentication
 
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/logout` - Logout user
-- `GET /api/auth/me` - Get current user info
-- `GET /api/auth/verify` - Verify current session
+- `POST /api/auth/sign-up/email` - Register new user with email/password
+- `POST /api/auth/sign-in/email` - Login with email/password
+- `POST /api/auth/sign-out` - Logout user
+- `GET /api/auth/session` - Get current session info
+- `GET /api/auth/verify-email` - Verify email address (from email link)
+- `POST /api/auth/forget-password` - Request password reset
+- `POST /api/auth/reset-password` - Reset password with token
+
+### OAuth (Google)
+
+- `GET /api/auth/sign-in/social?provider=google` - Initiate Google OAuth flow
+- `GET /api/auth/callback/google` - OAuth callback handler
 
 ### Protected Resources
 
-- `GET|POST /api/rooms/{id}` - Chat room access (requires auth)
-- `GET|PUT|POST|DELETE /api/sessions/{id}` - User session management (requires auth)
-- `GET /api/docs/{id}` - Document collaboration (requires auth)
-- `POST /api/media/upload` - File upload (requires auth)
-- `GET /api/db/users` - Get users list (requires auth)
+- `/api/projects/*` - Project management (requires auth)
+- `/api/projects/:projectId/members/*` - Project member management (requires auth)
+- `/api/projects/:projectId/studies/:studyId/pdfs/*` - PDF management (requires auth)
+- `/api/users/*` - User management (requires auth)
+- `/api/sessions/:sessionId/*` - User session Durable Object (requires auth)
+- `/api/project/:projectId/*` - Project Document Durable Object (requires auth)
 
 ## Usage Examples
 
 ### Register a new user
 
 ```bash
-curl -X POST http://localhost:8787/api/auth/register \
+curl -X POST http://localhost:8787/api/auth/sign-up/email \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
     "password": "securepassword",
-    "username": "johndoe",
-    "displayName": "John Doe"
+    "name": "John Doe"
   }'
 ```
 
 ### Login
 
 ```bash
-curl -X POST http://localhost:8787/api/auth/login \
+curl -X POST http://localhost:8787/api/auth/sign-in/email \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -57,54 +66,111 @@ curl -X POST http://localhost:8787/api/auth/login \
   }'
 ```
 
-### Access protected resource
+### Get current session
 
 ```bash
-curl -X GET http://localhost:8787/api/auth/me \
-  -H "Authorization: Bearer YOUR_SESSION_TOKEN"
+curl -X GET http://localhost:8787/api/auth/session \
+  --cookie "better-auth.session_token=YOUR_SESSION_TOKEN"
 ```
 
 ### WebSocket Authentication
 
-For WebSocket connections, you can authenticate in two ways:
-
-1. **Via URL parameter:**
+For WebSocket connections, authenticate via URL parameter:
 
 ```javascript
-const ws = new WebSocket('ws://localhost:8787/api/rooms/general?token=YOUR_SESSION_TOKEN');
-```
-
-2. **Via initial message:**
-
-```javascript
-const ws = new WebSocket('ws://localhost:8787/api/rooms/general');
-ws.onopen = () => {
-  ws.send(
-    JSON.stringify({
-      type: 'auth',
-      token: 'YOUR_SESSION_TOKEN',
-    }),
-  );
-};
+const ws = new WebSocket('ws://localhost:8787/api/project/my-project?token=YOUR_SESSION_TOKEN');
 ```
 
 ## Database Schema
 
-The authentication system uses these tables:
+The authentication system uses these tables (managed by BetterAuth):
 
-- `users` - User profiles with email/password
-- `auth_sessions` - Active user sessions
-- `auth_accounts` - OAuth provider accounts (future)
-- `email_verification_tokens` - Email verification tokens
-- `password_reset_tokens` - Password reset tokens
+- `user` - User profiles (id, name, email, emailVerified, username, displayName, avatarUrl)
+- `session` - Active user sessions with tokens
+- `account` - OAuth provider accounts (stores access/refresh tokens for Google, etc.)
+- `verification` - Email verification and password reset tokens
+
+## Environment Variables
+
+### Required
+
+| Variable        | Description                                                                 |
+| --------------- | --------------------------------------------------------------------------- |
+| `AUTH_SECRET`   | Secret key for signing tokens. Must be a long, random string in production. |
+| `AUTH_BASE_URL` | Base URL for auth callbacks (e.g., `https://api.corates.app`)               |
+
+### Optional (Email)
+
+| Variable         | Description                      |
+| ---------------- | -------------------------------- |
+| `RESEND_API_KEY` | API key for Resend email service |
+| `EMAIL_FROM`     | From address for auth emails     |
+
+### Optional (Google OAuth)
+
+Required for Google Drive integration:
+
+| Variable               | Description                                       |
+| ---------------------- | ------------------------------------------------- |
+| `GOOGLE_CLIENT_ID`     | OAuth 2.0 Client ID from Google Cloud Console     |
+| `GOOGLE_CLIENT_SECRET` | OAuth 2.0 Client Secret from Google Cloud Console |
+
+### Optional (Cross-subdomain cookies)
+
+| Variable        | Description                                                   |
+| --------------- | ------------------------------------------------------------- |
+| `COOKIE_DOMAIN` | Domain for cookies (e.g., `.corates.app` for cross-subdomain) |
+
+## Google OAuth Setup
+
+Google OAuth is used to allow users to connect their Google account and access their Google Drive (e.g., to import PDFs).
+
+### 1. Create Google Cloud Project
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the **Google Drive API** under APIs & Services > Library
+
+### 2. Configure OAuth Consent Screen
+
+1. Go to APIs & Services > OAuth consent screen
+2. Choose "External" user type
+3. Fill in app name, support email, and developer contact
+4. Add scopes:
+   - `openid`
+   - `email`
+   - `profile`
+   - `https://www.googleapis.com/auth/drive.readonly` (for reading Drive files)
+
+### 3. Create OAuth Credentials
+
+1. Go to APIs & Services > Credentials
+2. Click "Create Credentials" > "OAuth 2.0 Client ID"
+3. Choose "Web application"
+4. Add authorized redirect URIs:
+   - Development: `http://localhost:8787/api/auth/callback/google`
+   - Production: `https://your-api-domain.com/api/auth/callback/google`
+5. Copy the Client ID and Client Secret
+
+### 4. Add to Cloudflare Workers
+
+```bash
+# Development (in wrangler.toml [vars])
+GOOGLE_CLIENT_ID = "your-client-id.apps.googleusercontent.com"
+
+# Production (as secrets)
+wrangler secret put GOOGLE_CLIENT_ID
+wrangler secret put GOOGLE_CLIENT_SECRET
+```
 
 ## Security Features
 
-1. **Password Hashing**: Uses BetterAuth's secure password hashing
-2. **Session Tokens**: Secure JWT-like tokens for session management
-3. **CORS Protection**: Proper CORS headers with credential support
-4. **Auth Middleware**: Every Durable Object checks authentication
-5. **User Isolation**: Users can only access their own sessions
+1. **Password Hashing**: BetterAuth's secure password hashing (Argon2)
+2. **Secure Cookies**: HttpOnly, SameSite, Secure flags on session cookies
+3. **CORS Protection**: Configurable allowed origins with credential support
+4. **Rate Limiting**: Strict limits on auth endpoints, lenient on session checks
+5. **Email Verification**: Required before account is fully activated
+6. **Token Expiry**: Sessions expire after 7 days, refresh after 1 day
 
 ## Development Setup
 
@@ -115,10 +181,10 @@ cd packages/workers
 pnpm install
 ```
 
-2. Run database migration:
+2. Run database migrations:
 
 ```bash
-pnpm run db:migrate
+pnpm run db:migrate:local
 ```
 
 3. Start development server:
@@ -127,48 +193,19 @@ pnpm run db:migrate
 pnpm run dev
 ```
 
-4. Test the setup:
-
-```bash
-# Run migration
-curl -X POST http://localhost:8787/api/db/migrate
-
-# Register a user
-curl -X POST http://localhost:8787/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password123","username":"testuser"}'
-
-# Login
-curl -X POST http://localhost:8787/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password123"}'
-```
-
 ## Production Deployment
 
-1. Update `wrangler.toml` with production secrets:
-   - Set `AUTH_SECRET` to a long, random string
-   - Set `AUTH_BASE_URL` to your production domain
-   - Update database and bucket IDs
+1. Set required secrets:
+
+```bash
+wrangler secret put AUTH_SECRET
+wrangler secret put GOOGLE_CLIENT_ID
+wrangler secret put GOOGLE_CLIENT_SECRET
+wrangler secret put RESEND_API_KEY
+```
 
 2. Deploy:
 
 ```bash
 pnpm run deploy
 ```
-
-## Configuration
-
-Environment variables in `wrangler.toml`:
-
-- `AUTH_SECRET` - Secret key for token signing (change in production!)
-- `AUTH_BASE_URL` - Base URL for your application
-- `ENVIRONMENT` - Current environment (development/production)
-
-## Next Steps
-
-- Add email verification
-- Implement OAuth providers (Google, GitHub, etc.)
-- Add role-based access control
-- Implement rate limiting
-- Add audit logging
