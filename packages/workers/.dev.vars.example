@@ -12,3 +12,6 @@ RESEND_API_KEY=your-resend-api-key
 
 # Email testing (set to true to send real emails)
 # SEND_EMAILS_IN_DEV=false
+
+GOOGLE_CLIENT_ID = "your-client-id"
+GOOGLE_CLIENT_SECRET = "your-client-secret"

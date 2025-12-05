@@ -12,6 +12,26 @@ export function createAuth(env, ctx) {
   // Create email service
   const emailService = createEmailService(env);
 
+  // Build social providers config if credentials are present
+  const socialProviders = {};
+
+  if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
+    console.log(
+      '[Auth] Google OAuth configured with client ID:',
+      env.GOOGLE_CLIENT_ID.substring(0, 10) + '...',
+    );
+    socialProviders.google = {
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+      // Request Drive read-only access for PDF import
+      scope: ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/drive.readonly'],
+    };
+  } else {
+    console.log(
+      '[Auth] Google OAuth NOT configured - missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET',
+    );
+  }
+
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: 'sqlite',
@@ -28,6 +48,9 @@ export function createAuth(env, ctx) {
       requireEmailVerification: true,
       minPasswordLength: 8,
     },
+
+    // Social/OAuth providers
+    socialProviders,
     // Add email verification and password reset functionality
     emailVerification: {
       sendOnSignUp: true,

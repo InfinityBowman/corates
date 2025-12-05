@@ -59,6 +59,8 @@ COOKIE_DOMAIN = ".corates.org"
 # wrangler secret put SMTP_USER --env production
 # wrangler secret put SMTP_PASS --env production
 # wrangler secret put EMAIL_FROM --env production
+# wrangler secret put GOOGLE_CLIENT_ID --env production
+# wrangler secret put GOOGLE_CLIENT_SECRET --env production
 
 [[env.production.d1_databases]]
 binding = "DB"
