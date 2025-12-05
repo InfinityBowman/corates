@@ -1,23 +1,60 @@
-import { createSignal, onMount } from 'solid-js';
+import { createSignal, onMount, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import PasswordInput from '../zag/PasswordInput.jsx';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton, AuthLink } from './AuthButtons.jsx';
+import {
+  GoogleButton,
+  OrcidButton,
+  SocialAuthContainer,
+  AuthDivider,
+} from './SocialAuthButtons.jsx';
 
 export default function SignIn() {
   const [email, setEmail] = createSignal('');
   const [password, setPassword] = createSignal('');
   const [error, setError] = createSignal('');
   const [loading, setLoading] = createSignal(false);
+  const [googleLoading, setGoogleLoading] = createSignal(false);
+  const [orcidLoading, setOrcidLoading] = createSignal(false);
   const navigate = useNavigate();
-  const { signin, authError, clearAuthError } = useBetterAuth();
+  const { signin, signinWithGoogle, signinWithOrcid, authError, clearAuthError } = useBetterAuth();
+
+  // Number of social providers
+  const socialProviderCount = 2;
 
   // Clear any stale auth errors when component mounts
   onMount(() => clearAuthError());
 
   // Watch for auth errors from the store
   const displayError = () => error() || authError();
+
+  async function handleGoogleSignIn() {
+    setGoogleLoading(true);
+    setError('');
+
+    try {
+      await signinWithGoogle('/dashboard');
+    } catch (err) {
+      console.error('Google sign-in error:', err);
+      setError('Failed to sign in with Google. Please try again.');
+      setGoogleLoading(false);
+    }
+  }
+
+  async function handleOrcidSignIn() {
+    setOrcidLoading(true);
+    setError('');
+
+    try {
+      await signinWithOrcid('/dashboard');
+    } catch (err) {
+      console.error('ORCID sign-in error:', err);
+      setError('Failed to sign in with ORCID. Please try again.');
+      setOrcidLoading(false);
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -143,6 +180,21 @@ export default function SignIn() {
             <span class='text-xs sm:text-sm'>Forgot password?</span>
           </AuthLink>
         </div>
+
+        <AuthDivider />
+
+        <SocialAuthContainer buttonCount={socialProviderCount}>
+          <GoogleButton
+            loading={googleLoading()}
+            onClick={handleGoogleSignIn}
+            iconOnly={socialProviderCount > 1}
+          />
+          <OrcidButton
+            loading={orcidLoading()}
+            onClick={handleOrcidSignIn}
+            iconOnly={socialProviderCount > 1}
+          />
+        </SocialAuthContainer>
 
         <div class='text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-4'>
           Don&apos;t have an account?{' '}

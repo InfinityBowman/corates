@@ -15,6 +15,7 @@ export const user = sqliteTable('user', {
   username: text('username').unique(),
   displayName: text('displayName'),
   avatarUrl: text('avatarUrl'),
+  role: text('role'), // researcher, student, librarian, other
 });
 
 // Sessions table

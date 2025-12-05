@@ -19,6 +19,7 @@ import { pdfRoutes } from './routes/pdfs.js';
 import { dbRoutes } from './routes/database.js';
 import { emailRoutes } from './routes/email.js';
 import { googleDriveRoutes } from './routes/google-drive.js';
+import { avatarRoutes } from './routes/avatars.js';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc, EmailQueue };
@@ -116,6 +117,9 @@ app.route('/api/db', dbRoutes);
 
 // Mount user routes
 app.route('/api/users', userRoutes);
+
+// Mount avatar routes
+app.route('/api/users/avatar', avatarRoutes);
 
 // Mount project routes (must be before members to avoid conflicts)
 app.route('/api/projects', projectRoutes);
