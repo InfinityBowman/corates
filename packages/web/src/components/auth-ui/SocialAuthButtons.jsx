@@ -1,0 +1,75 @@
+import { Show } from 'solid-js';
+import { FaBrandsGoogle } from 'solid-icons/fa';
+
+/**
+ * Google sign in/up button
+ * @param {Object} props
+ * @param {boolean} props.loading - Whether the button is in loading state
+ * @param {Function} props.onClick - Click handler
+ * @param {boolean} props.iconOnly - Show only icon (for compact layout)
+ */
+export function GoogleButton(props) {
+  const baseClass =
+    'border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg sm:rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center';
+
+  return (
+    <Show
+      when={props.iconOnly}
+      fallback={
+        <button
+          type='button'
+          onClick={() => props.onClick?.()}
+          disabled={props.loading}
+          class={`${baseClass} w-full py-2.5 sm:py-3 text-sm sm:text-base gap-3`}
+        >
+          <Show when={props.loading} fallback={<FaBrandsGoogle class='w-5 h-5' />}>
+            <div class='w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin' />
+          </Show>
+          Continue with Google
+        </button>
+      }
+    >
+      <button
+        type='button'
+        onClick={() => props.onClick?.()}
+        disabled={props.loading}
+        class={`${baseClass} p-3 sm:p-3.5`}
+        title='Continue with Google'
+      >
+        <Show when={props.loading} fallback={<FaBrandsGoogle class='w-5 h-5 sm:w-6 sm:h-6' />}>
+          <div class='w-5 h-5 sm:w-6 sm:h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin' />
+        </Show>
+      </button>
+    </Show>
+  );
+}
+
+/**
+ * Container for multiple social auth buttons
+ * Automatically switches between horizontal icons and vertical full buttons
+ * @param {Object} props
+ * @param {JSX.Element} props.children - Social auth buttons
+ * @param {number} props.buttonCount - Number of buttons (used for layout decisions)
+ */
+export function SocialAuthContainer(props) {
+  // Use compact horizontal layout when there are multiple providers
+  const isCompact = () => (props.buttonCount || 1) > 1;
+
+  return <div class={isCompact() ? 'flex gap-3 justify-center' : 'w-full'}>{props.children}</div>;
+}
+
+/**
+ * Divider between social and email auth
+ */
+export function AuthDivider() {
+  return (
+    <div class='relative my-4 sm:my-5'>
+      <div class='absolute inset-0 flex items-center'>
+        <div class='w-full border-t border-gray-200' />
+      </div>
+      <div class='relative flex justify-center text-xs sm:text-sm'>
+        <span class='px-3 bg-white text-gray-500'>or</span>
+      </div>
+    </div>
+  );
+}

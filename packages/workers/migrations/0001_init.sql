@@ -27,7 +27,8 @@ CREATE TABLE user (
   -- Custom fields for your app
   username TEXT UNIQUE,
   displayName TEXT,
-  avatarUrl TEXT
+  avatarUrl TEXT,
+  role TEXT -- researcher, student, librarian, other
 );
 
 -- Better Auth session table

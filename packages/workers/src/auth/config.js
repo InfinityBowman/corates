@@ -47,6 +47,26 @@ export function createAuth(env, ctx) {
       enabled: true,
       requireEmailVerification: true,
       minPasswordLength: 8,
+      // Password reset - sendResetPassword is required for requestPasswordReset to work
+      sendResetPassword: async ({ user, url }) => {
+        console.log('[Auth] Queuing reset email to:', user.email, 'URL:', url);
+        if (ctx && ctx.waitUntil) {
+          ctx.waitUntil(
+            (async () => {
+              try {
+                await emailService.sendPasswordReset(
+                  user.email,
+                  url,
+                  user.displayName || user.username || user.name,
+                );
+              } catch (err) {
+                console.error('Background email error:', err);
+              }
+            })(),
+          );
+        }
+        return;
+      },
     },
 
     // Social/OAuth providers
@@ -81,29 +101,6 @@ export function createAuth(env, ctx) {
       },
     },
 
-    resetPassword: {
-      enabled: true,
-      sendEmail: async ({ user, url }) => {
-        console.log('[Auth] Queuing reset email to:', user.email, 'URL:', url);
-        if (ctx && ctx.waitUntil) {
-          ctx.waitUntil(
-            (async () => {
-              try {
-                await emailService.sendPasswordReset(
-                  user.email,
-                  url,
-                  user.displayName || user.username || user.name,
-                );
-              } catch (err) {
-                console.error('Background email error:', err);
-              }
-            })(),
-          );
-        }
-        return;
-      },
-    },
-
     session: {
       expiresIn: 60 * 60 * 24 * 7, // 7 days
       updateAge: 60 * 60 * 24, // 1 day
@@ -120,6 +117,10 @@ export function createAuth(env, ctx) {
           required: false,
         },
         avatarUrl: {
+          type: 'string',
+          required: false,
+        },
+        role: {
           type: 'string',
           required: false,
         },
