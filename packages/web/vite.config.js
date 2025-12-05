@@ -37,6 +37,11 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
+            // Ignore API requests - let them pass through without caching or warnings
+            urlPattern: /^https:\/\/api\.corates\.org\/.*/i,
+            handler: 'NetworkOnly',
+          },
+          {
             // Cache fonts from Google Fonts or other CDNs
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',

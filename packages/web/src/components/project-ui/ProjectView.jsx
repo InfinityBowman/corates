@@ -46,7 +46,6 @@ export default function ProjectView() {
     getChecklistData,
     connect,
     disconnect,
-    error: yjsError,
   } = useProject(params.projectId);
 
   // Read data directly from the store for faster reactivity
@@ -386,12 +385,6 @@ export default function ProjectView() {
 
   return (
     <div class='p-6 max-w-4xl mx-auto'>
-      <Show when={yjsError()}>
-        <div class='bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 mb-4'>
-          Error: {yjsError()}
-        </div>
-      </Show>
-
       {/* Project Header */}
       <div class='mb-8'>
         <div class='flex items-center gap-4 mb-2'>
