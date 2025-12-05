@@ -1,35 +1,31 @@
 import { createSignal, onMount } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import ErrorMessage from './ErrorMessage.jsx';
-import { PrimaryButton, AuthLink } from './AuthButtons.jsx';
+import { AuthLink } from './AuthButtons.jsx';
 import {
   GoogleButton,
   OrcidButton,
   SocialAuthContainer,
   AuthDivider,
 } from './SocialAuthButtons.jsx';
+import MagicLinkForm from './MagicLinkForm.jsx';
 
 /**
- * Sign Up page - minimal friction, just email or social providers
- * After signup: email users go to check-email, OAuth users go to complete-profile
+ * Sign Up page - minimal friction with magic link or social providers
+ * After signup: users go to complete-profile to set name and role
  */
 export default function SignUp() {
-  const [email, setEmail] = createSignal('');
   const [error, setError] = createSignal('');
-  const [loading, setLoading] = createSignal(false);
   const [googleLoading, setGoogleLoading] = createSignal(false);
   const [orcidLoading, setOrcidLoading] = createSignal(false);
 
   const navigate = useNavigate();
-  const { signup, signinWithGoogle, signinWithOrcid, authError, clearAuthError } = useBetterAuth();
+  const { signinWithGoogle, signinWithOrcid, clearAuthError } = useBetterAuth();
 
   // Number of social providers (update as you add more)
   const socialProviderCount = 2;
 
   onMount(() => clearAuthError());
-
-  const displayError = () => error() || authError();
 
   async function handleGoogleSignUp() {
     setGoogleLoading(true);
@@ -65,52 +61,6 @@ export default function SignUp() {
     }
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError('');
-
-    if (!email().trim()) {
-      setError('Please enter your email address');
-      return;
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email())) {
-      setError('Please enter a valid email address');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // Sign up with just email - password will be set in complete-profile
-      // Using a temporary password that will be changed
-      const tempPassword = crypto.randomUUID() + 'Aa1!';
-      await signup(email(), tempPassword, email().split('@')[0]);
-
-      await new Promise(resolve => setTimeout(resolve, 200));
-      navigate(`/check-email?email=${encodeURIComponent(email())}`, { replace: true });
-    } catch (err) {
-      console.error('Signup error:', err);
-      const msg = err.message?.toLowerCase() || '';
-
-      if (msg.includes('user already exists') || msg.includes('email already in use')) {
-        setError('An account with this email already exists. Try signing in instead.');
-      } else if (msg.includes('invalid email')) {
-        setError('Please enter a valid email address');
-      } else if (msg.includes('too many requests')) {
-        setError('Too many attempts. Please try again later.');
-      } else if (msg.includes('failed to fetch') || msg.includes('network')) {
-        setError('Unable to connect. Please check your connection.');
-      } else {
-        setError('Something went wrong. Please try again.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <div class='h-full bg-blue-50 flex items-center justify-center px-4 py-8 sm:py-12'>
       <div class='w-full max-w-md sm:max-w-xl bg-white rounded-xl sm:rounded-3xl shadow-2xl p-6 sm:p-12 border border-gray-100'>
@@ -121,39 +71,7 @@ export default function SignUp() {
           <p class='text-gray-500 text-xs sm:text-sm'>Get started with CoRATES</p>
         </div>
 
-        {/* Email signup form */}
-        <form onSubmit={handleSubmit} class='space-y-4' autocomplete='off'>
-          <div>
-            <label
-              class='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'
-              for='email-input'
-            >
-              Email Address
-            </label>
-            <input
-              type='email'
-              autoComplete='email'
-              autocapitalize='off'
-              spellCheck='false'
-              value={email()}
-              onInput={e => setEmail(e.target.value)}
-              class='w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
-              required
-              id='email-input'
-              placeholder='you@example.com'
-            />
-          </div>
-
-          <ErrorMessage displayError={displayError} />
-
-          <PrimaryButton loading={loading()} loadingText='Continuing...'>
-            Continue with Email
-          </PrimaryButton>
-        </form>
-
-        <AuthDivider />
-
-        {/* Social providers */}
+        {/* Social providers first - most common */}
         <SocialAuthContainer buttonCount={socialProviderCount}>
           <GoogleButton
             loading={googleLoading()}
@@ -167,7 +85,16 @@ export default function SignUp() {
           />
         </SocialAuthContainer>
 
-        <p class='text-center text-xs text-gray-400 mt-4'>
+        <AuthDivider />
+
+        {/* Magic Link Form - simple email signup */}
+        <MagicLinkForm
+          callbackPath='/complete-profile'
+          buttonText='Continue with Email'
+          description="We'll send you a link to create your account - no password needed."
+        />
+
+        <p class='text-center text-xs text-gray-400 mt-6'>
           By continuing, you agree to our{' '}
           <a
             href='https://corates.org/terms'

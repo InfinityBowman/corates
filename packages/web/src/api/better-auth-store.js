@@ -128,6 +128,30 @@ function createBetterAuthStore() {
     }
   }
 
+  async function signinWithMagicLink(email, callbackPath) {
+    try {
+      setAuthError(null);
+      const callbackURL = `${window.location.origin}${callbackPath || '/dashboard'}`;
+
+      const { data, error } = await authClient.signIn.magicLink({
+        email,
+        callbackURL,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Store pending email for the check-email page
+      localStorage.setItem('pendingEmail', email);
+      localStorage.setItem('magicLinkSent', 'true');
+      return data;
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
   async function signin(email, password) {
     try {
       setAuthError(null);
@@ -366,6 +390,7 @@ function createBetterAuthStore() {
     signin,
     signinWithGoogle,
     signinWithOrcid,
+    signinWithMagicLink,
     signout,
     updateProfile,
     changePassword,
