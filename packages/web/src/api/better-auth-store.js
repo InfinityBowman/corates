@@ -164,6 +164,11 @@ function createBetterAuthStore() {
         throw new Error(error.message);
       }
 
+      // Check if 2FA is required
+      if (data?.twoFactorRedirect) {
+        return { twoFactorRequired: true };
+      }
+
       // Clear pending email on successful sign in
       localStorage.removeItem('pendingEmail');
       return data;
@@ -260,6 +265,91 @@ function createBetterAuthStore() {
       setAuthError(err.message);
       throw err;
     }
+  }
+
+  // --- Two-Factor Authentication ---
+
+  // Enable 2FA - returns QR code URI and secret for setup
+  // Requires password for security verification
+  async function enableTwoFactor(password) {
+    try {
+      setAuthError(null);
+      const { data, error } = await authClient.twoFactor.enable({
+        password,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data; // { totpURI, secret, backupCodes }
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  // Verify and complete 2FA setup with code from authenticator app
+  async function verifyTwoFactorSetup(code) {
+    try {
+      setAuthError(null);
+      const { data, error } = await authClient.twoFactor.verifyTotp({
+        code,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data;
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  // Disable 2FA (requires password for security)
+  async function disableTwoFactor(password) {
+    try {
+      setAuthError(null);
+      const { data, error } = await authClient.twoFactor.disable({
+        password,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data;
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  // Verify 2FA code during sign-in
+  async function verifyTwoFactor(code) {
+    try {
+      setAuthError(null);
+      const { data, error } = await authClient.twoFactor.verifyTotp({
+        code,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data;
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  // Get 2FA status for current user - check from session user data
+  function getTwoFactorStatus() {
+    const currentUser = user();
+    return { enabled: currentUser?.twoFactorEnabled ?? false };
   }
 
   async function authFetch(url, options = {}) {
@@ -400,6 +490,13 @@ function createBetterAuthStore() {
     deleteAccount,
     authFetch,
     clearAuthError: () => setAuthError(null),
+
+    // Two-Factor Authentication
+    enableTwoFactor,
+    verifyTwoFactorSetup,
+    disableTwoFactor,
+    verifyTwoFactor,
+    getTwoFactorStatus,
 
     // Utility/compatibility methods
     getCurrentUser,

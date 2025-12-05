@@ -12,6 +12,7 @@ export const toaster = toast.createStore({
   overlap: true,
   gap: 12,
   offsets: '16px',
+  removeDelay: 0, // Remove immediately when dismissed
 });
 
 /**
@@ -120,13 +121,13 @@ export function Toaster() {
  */
 export const showToast = {
   success: (title, description) =>
-    toaster.create({ title, description, type: 'success', duration: 4000 }),
+    toaster.create({ title, description, type: 'success', duration: 3000 }),
 
   error: (title, description) =>
-    toaster.create({ title, description, type: 'error', duration: 6000 }),
+    toaster.create({ title, description, type: 'error', duration: 5000 }),
 
   info: (title, description) =>
-    toaster.create({ title, description, type: 'info', duration: 4000 }),
+    toaster.create({ title, description, type: 'info', duration: 3000 }),
 
   loading: (title, description) =>
     toaster.create({ title, description, type: 'loading', duration: Infinity }),

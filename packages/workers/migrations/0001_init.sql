@@ -14,6 +14,7 @@ DROP TABLE IF EXISTS account;
 DROP TABLE IF EXISTS session;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS user;
+DROP TABLE IF EXISTS twoFactor;
 
 -- Better Auth user table
 CREATE TABLE user (
@@ -29,7 +30,8 @@ CREATE TABLE user (
   username TEXT UNIQUE,
   displayName TEXT,
   avatarUrl TEXT,
-  role TEXT -- researcher, student, librarian, other
+  role TEXT, -- researcher, student, librarian, other
+  twoFactorEnabled INTEGER DEFAULT 0
 );
 
 -- Better Auth session table
@@ -67,6 +69,16 @@ CREATE TABLE verification (
   identifier TEXT NOT NULL,
   value TEXT NOT NULL,
   expiresAt INTEGER NOT NULL,
+  createdAt INTEGER DEFAULT (unixepoch()),
+  updatedAt INTEGER DEFAULT (unixepoch())
+);
+
+-- Better Auth two-factor table
+CREATE TABLE twoFactor (
+  id TEXT PRIMARY KEY,
+  secret TEXT NOT NULL,
+  backupCodes TEXT NOT NULL,
+  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
   createdAt INTEGER DEFAULT (unixepoch()),
   updatedAt INTEGER DEFAULT (unixepoch())
 );
@@ -113,6 +125,9 @@ CREATE INDEX idx_session_token ON session(token);
 CREATE INDEX idx_account_userId ON account(userId);
 CREATE INDEX idx_account_providerId ON account(providerId);
 CREATE INDEX idx_verification_identifier ON verification(identifier);
+
+-- Two-factor indexes
+CREATE INDEX idx_twoFactor_userId ON twoFactor(userId);
 
 -- Project indexes
 CREATE INDEX idx_projects_createdBy ON projects(createdBy);

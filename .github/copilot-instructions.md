@@ -33,6 +33,23 @@ When you need to implement UI components use zag.js and use the MCP tools for za
 
 The tools return Solid.js-specific documentation, installation commands, and usage templates. You should NOT need to add createEffect manually to integrate Zag.js components callbacks. When adding a new zag component, place zag components into components/zag/\* files.
 
+### Existing Zag Components
+
+The following Zag components already exist in `packages/web/src/components/zag/` and should be reused:
+
+- `Checkbox.jsx` - Checkbox input with label
+- `Collapsible.jsx` - Expandable/collapsible content sections
+- `Dialog.jsx` - Modal dialogs
+- `FileUpload.jsx` - File upload with drag-and-drop
+- `PasswordInput.jsx` - Password input with show/hide toggle (supports `label`, `password`, `onPasswordChange`, `autoComplete`, `inputClass` props)
+- `Splitter.jsx` - Resizable split panes
+- `Switch.jsx` - Toggle switch
+- `Tabs.jsx` - Tabbed content
+- `Toast.jsx` - Toast notifications (use via `useToast` from `@primitives/useToast.jsx`)
+- `Tooltip.jsx` - Tooltips with arrow support (supports `content`, `placement`, `openDelay`, `closeDelay` props)
+
+Always check for existing Zag components before creating new ones or using plain HTML inputs.
+
 ## Additional References
 
 - The architecture-goals.md file contains relevant architecture and design patterns to follow.
@@ -41,6 +58,12 @@ The tools return Solid.js-specific documentation, installation commands, and usa
 - See TESTING.md for testing guidelines and best practices, do NOT add tests unless asked.
 - Cloudflare Pages is not used in this project; only Cloudflare Workers is used for backend services and frontend deployments.
 - This project is split into multiple packages under the `packages/` directory. Each package may have its own dependencies and configurations. The landing/marketing site, the main app, and the backend services.
+
+## Database Migrations
+
+- All migrations should go in a single file: `packages/workers/migrations/0001_init.sql`
+- Do NOT create separate migration files (e.g., 0002_xxx.sql) since this project is not yet in production
+- When adding new tables or schema changes, edit the existing 0001_init.sql file directly
 
 ## SolidJS Specific
 
