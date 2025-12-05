@@ -35,10 +35,15 @@ export default function SignIn() {
     setError('');
 
     try {
-      await signinWithGoogle('/dashboard');
+      // Mark as OAuth signup in case this is a new user who needs to complete profile
+      localStorage.setItem('oauthSignup', 'true');
+      // Redirect to complete-profile which will check if profile is complete
+      // and redirect to dashboard if so
+      await signinWithGoogle('/complete-profile');
     } catch (err) {
       console.error('Google sign-in error:', err);
       setError('Failed to sign in with Google. Please try again.');
+      localStorage.removeItem('oauthSignup');
       setGoogleLoading(false);
     }
   }
@@ -48,10 +53,14 @@ export default function SignIn() {
     setError('');
 
     try {
-      await signinWithOrcid('/dashboard');
+      // Mark as OAuth signup in case this is a new user who needs to complete profile
+      localStorage.setItem('oauthSignup', 'true');
+      // Redirect to complete-profile which will check if profile is complete
+      await signinWithOrcid('/complete-profile');
     } catch (err) {
       console.error('ORCID sign-in error:', err);
       setError('Failed to sign in with ORCID. Please try again.');
+      localStorage.removeItem('oauthSignup');
       setOrcidLoading(false);
     }
   }
