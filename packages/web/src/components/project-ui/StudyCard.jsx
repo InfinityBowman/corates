@@ -6,6 +6,7 @@ import { For, Show, createSignal, createMemo } from 'solid-js';
 import { CgFileDocument } from 'solid-icons/cg';
 import { BiRegularUpload, BiRegularEdit } from 'solid-icons/bi';
 import { BsFileDiff } from 'solid-icons/bs';
+import { AiOutlineFileSync } from 'solid-icons/ai';
 import { showToast } from '@components/zag/Toast.jsx';
 import ChecklistForm from './ChecklistForm.jsx';
 import ChecklistRow from './ChecklistRow.jsx';
@@ -152,34 +153,34 @@ export default function StudyCard(props) {
                 }
               >
                 <h3 class='text-lg font-semibold text-gray-900'>{props.study.name}</h3>
-                <button
-                  onClick={startEditing}
-                  class='p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors'
-                  title='Edit study name'
-                >
-                  <BiRegularEdit class='w-4 h-4' />
-                </button>
+                <Show when={!props.hideManagementActions}>
+                  <button
+                    onClick={startEditing}
+                    class='p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors'
+                    title='Edit study name'
+                  >
+                    <BiRegularEdit class='w-4 h-4' />
+                  </button>
+                </Show>
               </Show>
             </div>
+            {/* Author/Year citation line */}
+            <Show when={props.study.firstAuthor || props.study.publicationYear}>
+              <p class='text-sm text-gray-600 mt-0.5'>
+                <span class='font-medium'>{props.study.firstAuthor || 'Unknown'}</span>
+                {props.study.publicationYear && ` (${props.study.publicationYear})`}
+                <Show when={props.study.journal}>
+                  <span class='mx-1'>-</span>
+                  <span class='italic text-gray-500'>{props.study.journal}</span>
+                </Show>
+              </p>
+            </Show>
             <Show when={props.study.description}>
               <p class='text-gray-500 text-sm mt-1'>{props.study.description}</p>
             </Show>
           </div>
           <div class='flex items-center gap-2'>
-            <Show
-              when={hasPdfs()}
-              fallback={
-                <button
-                  onClick={() => fileInputRef?.click()}
-                  disabled={uploading()}
-                  class='inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors gap-1.5 disabled:opacity-50'
-                  title='Add PDF'
-                >
-                  <BiRegularUpload class='w-4 h-4' />
-                  {uploading() ? 'Uploading...' : 'Add PDF'}
-                </button>
-              }
-            >
+            <Show when={hasPdfs()}>
               <button
                 onClick={() => props.onViewPdf?.(firstPdf())}
                 class='inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors gap-1.5'
@@ -188,13 +189,26 @@ export default function StudyCard(props) {
                 <CgFileDocument class='w-4 h-4' />
                 View PDF
               </button>
+            </Show>
+            <Show when={!hasPdfs() && !props.hideManagementActions}>
+              <button
+                onClick={() => fileInputRef?.click()}
+                disabled={uploading()}
+                class='inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors gap-1.5 disabled:opacity-50'
+                title='Add PDF'
+              >
+                <BiRegularUpload class='w-4 h-4' />
+                {uploading() ? 'Uploading...' : 'Add PDF'}
+              </button>
+            </Show>
+            <Show when={hasPdfs() && !props.hideManagementActions}>
               <button
                 onClick={() => fileInputRef?.click()}
                 disabled={uploading()}
                 class='inline-flex items-center p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors'
                 title='Change PDF'
               >
-                <BiRegularUpload class='w-4 h-4' />
+                <AiOutlineFileSync class='w-4 h-4' />
               </button>
             </Show>
             <button
@@ -235,20 +249,22 @@ export default function StudyCard(props) {
                 {reconcileMode() ? 'Cancel' : 'Reconcile'}
               </button>
             </Show>
-            <button
-              onClick={() => props.onDeleteStudy?.()}
-              class='inline-flex items-center p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors'
-              title='Delete Study'
-            >
-              <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path
-                  stroke-linecap='round'
-                  stroke-linejoin='round'
-                  stroke-width='2'
-                  d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                />
-              </svg>
-            </button>
+            <Show when={!props.hideManagementActions}>
+              <button
+                onClick={() => props.onDeleteStudy?.()}
+                class='inline-flex items-center p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors'
+                title='Delete Study'
+              >
+                <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path
+                    stroke-linecap='round'
+                    stroke-linejoin='round'
+                    stroke-width='2'
+                    d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+                  />
+                </svg>
+              </button>
+            </Show>
           </div>
         </div>
       </div>
@@ -257,6 +273,7 @@ export default function StudyCard(props) {
       <Show when={props.showChecklistForm}>
         <ChecklistForm
           members={props.members}
+          currentUserId={props.currentUserId}
           onSubmit={handleCreateChecklist}
           onCancel={() => props.onToggleChecklistForm()}
           loading={props.creatingChecklist}

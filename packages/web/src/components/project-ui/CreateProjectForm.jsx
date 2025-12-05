@@ -1,9 +1,16 @@
-import { createSignal, For, Show } from 'solid-js';
-import { BiRegularTrash } from 'solid-icons/bi';
+import { createSignal, Show } from 'solid-js';
+import { BiRegularImport, BiRegularSearch } from 'solid-icons/bi';
 import { CgFileDocument } from 'solid-icons/cg';
 import { showToast } from '@components/zag/Toast.jsx';
-import { FileUpload } from '@components/zag/FileUpload.jsx';
 import { extractPdfTitle, readFileAsArrayBuffer } from '@/lib/pdfUtils.js';
+import { parseReferenceFile } from '@/lib/referenceParser.js';
+import { fetchReferenceByIdentifier, parseIdentifiers } from '@/lib/referenceLookup.js';
+import {
+  PdfUploadTab,
+  ReferenceImportTab,
+  DoiLookupTab,
+  StudyAddSummary,
+} from './create-form/index.js';
 
 /**
  * Form for creating a new project with optional PDF uploads
@@ -18,12 +25,27 @@ export default function CreateProjectForm(props) {
   const [isCreating, setIsCreating] = createSignal(false);
   const [uploadedPdfs, setUploadedPdfs] = createSignal([]);
 
-  // Handle PDF file selection
+  // Reference import state
+  const [importedRefs, setImportedRefs] = createSignal([]);
+  const [selectedRefIds, setSelectedRefIds] = createSignal(new Set());
+  const [refFileName, setRefFileName] = createSignal('');
+  const [parsingRefs, setParsingRefs] = createSignal(false);
+
+  // DOI/PMID lookup state
+  const [identifierInput, setIdentifierInput] = createSignal('');
+  const [lookupRefs, setLookupRefs] = createSignal([]);
+  const [selectedLookupIds, setSelectedLookupIds] = createSignal(new Set());
+  const [lookingUp, setLookingUp] = createSignal(false);
+  const [lookupErrors, setLookupErrors] = createSignal([]);
+
+  // Tab state: 'pdfs', 'references', or 'lookup'
+  const [activeTab, setActiveTab] = createSignal('pdfs');
+
+  // ============ PDF Handlers ============
   const handlePdfSelect = async files => {
     const pdfFiles = files.filter(f => f.type === 'application/pdf');
     if (pdfFiles.length === 0) return;
 
-    // Add files with extracting state
     const newPdfs = pdfFiles.map(file => ({
       id: crypto.randomUUID(),
       file,
@@ -34,15 +56,11 @@ export default function CreateProjectForm(props) {
 
     setUploadedPdfs(prev => [...prev, ...newPdfs]);
 
-    // Extract titles for each PDF
     for (const pdf of newPdfs) {
       try {
         const arrayBuffer = await readFileAsArrayBuffer(pdf.file);
-        // Make a copy for PDF.js since it may detach the original buffer
         const bufferForExtraction = arrayBuffer.slice(0);
         const title = await extractPdfTitle(bufferForExtraction);
-
-        // Convert to array immediately to avoid detached ArrayBuffer issues
         const dataArray = Array.from(new Uint8Array(arrayBuffer));
 
         setUploadedPdfs(prev =>
@@ -82,6 +100,178 @@ export default function CreateProjectForm(props) {
     setUploadedPdfs(prev => prev.map(p => (p.id === id ? { ...p, title: newTitle } : p)));
   };
 
+  // ============ Reference Import Handlers ============
+  const handleReferenceFileSelect = async files => {
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    setRefFileName(file.name);
+    setParsingRefs(true);
+
+    try {
+      const refs = await parseReferenceFile(file);
+
+      if (refs.length === 0) {
+        showToast.warning('No References Found', 'The file does not contain any valid references.');
+        setImportedRefs([]);
+        setSelectedRefIds(new Set());
+        return;
+      }
+
+      const refsWithIds = refs.map((ref, index) => ({
+        ...ref,
+        _id: `ref-${index}`,
+      }));
+
+      setImportedRefs(refsWithIds);
+      setSelectedRefIds(new Set(refsWithIds.map(r => r._id)));
+
+      showToast.success(
+        'References Parsed',
+        `Found ${refs.length} reference${refs.length === 1 ? '' : 's'}.`,
+      );
+    } catch (error) {
+      console.error('Error parsing reference file:', error);
+      showToast.error('Parse Error', 'Failed to parse the reference file.');
+      setImportedRefs([]);
+      setSelectedRefIds(new Set());
+    } finally {
+      setParsingRefs(false);
+    }
+  };
+
+  const toggleRefSelection = id => {
+    setSelectedRefIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAllRefs = () => {
+    if (selectedRefIds().size === importedRefs().length) {
+      setSelectedRefIds(new Set());
+    } else {
+      setSelectedRefIds(new Set(importedRefs().map(r => r._id)));
+    }
+  };
+
+  const clearImportedRefs = () => {
+    setImportedRefs([]);
+    setSelectedRefIds(new Set());
+    setRefFileName('');
+  };
+
+  const selectedRefs = () => {
+    const ids = selectedRefIds();
+    return importedRefs().filter(r => ids.has(r._id));
+  };
+
+  // ============ DOI/PMID Lookup Handlers ============
+  const handleLookup = async () => {
+    const input = identifierInput().trim();
+    if (!input) return;
+
+    const identifiers = parseIdentifiers(input);
+    if (identifiers.length === 0) {
+      showToast.warning('No Identifiers', 'Could not find any valid DOIs or PMIDs in the input.');
+      return;
+    }
+
+    setLookingUp(true);
+    setLookupErrors([]);
+
+    const results = [];
+    const errors = [];
+
+    for (const id of identifiers) {
+      try {
+        const ref = await fetchReferenceByIdentifier(id);
+        if (ref) {
+          results.push({
+            ...ref,
+            _id: `lookup-${lookupRefs().length + results.length}`,
+          });
+        }
+      } catch (error) {
+        console.error(`Error looking up ${id}:`, error);
+        errors.push({ identifier: id, error: error.message });
+      }
+    }
+
+    if (results.length > 0) {
+      setLookupRefs(prev => [...prev, ...results]);
+      setSelectedLookupIds(prev => {
+        const next = new Set(prev);
+        results.forEach(r => next.add(r._id));
+        return next;
+      });
+      showToast.success(
+        'References Found',
+        `Found ${results.length} reference${results.length === 1 ? '' : 's'}.`,
+      );
+    }
+
+    if (errors.length > 0) {
+      setLookupErrors(errors);
+      if (results.length === 0) {
+        showToast.error(
+          'Lookup Failed',
+          `Could not find references for ${errors.length} identifier(s).`,
+        );
+      }
+    }
+
+    setIdentifierInput('');
+    setLookingUp(false);
+  };
+
+  const toggleLookupSelection = id => {
+    setSelectedLookupIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAllLookup = () => {
+    if (selectedLookupIds().size === lookupRefs().length) {
+      setSelectedLookupIds(new Set());
+    } else {
+      setSelectedLookupIds(new Set(lookupRefs().map(r => r._id)));
+    }
+  };
+
+  const clearLookupRefs = () => {
+    setLookupRefs([]);
+    setSelectedLookupIds(new Set());
+    setIdentifierInput('');
+    setLookupErrors([]);
+  };
+
+  const selectedLookupRefs = () => {
+    const ids = selectedLookupIds();
+    return lookupRefs().filter(r => ids.has(r._id));
+  };
+
+  const removeLookupRef = id => {
+    setLookupRefs(prev => prev.filter(r => r._id !== id));
+    setSelectedLookupIds(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  // ============ Form Handlers ============
   const handleSubmit = async () => {
     if (!projectName().trim()) return;
 
@@ -103,15 +293,44 @@ export default function CreateProjectForm(props) {
 
       const newProject = await response.json();
 
-      // Collect PDFs to pass along via callback
+      // Collect PDFs
       const pdfsToProcess = uploadedPdfs().filter(p => p.title && !p.extracting && p.data);
       const pendingPdfs = pdfsToProcess.map(p => ({
         title: p.title,
         fileName: p.file.name,
-        data: p.data, // Already stored as array
+        data: p.data,
       }));
 
-      props.onProjectCreated?.(newProject, pendingPdfs);
+      // Collect file-imported references
+      const refsToImport = selectedRefs().map(({ _id, ...ref }) => ({
+        title: ref.title,
+        metadata: {
+          firstAuthor: ref.firstAuthor,
+          publicationYear: ref.publicationYear,
+          authors: ref.authors,
+          journal: ref.journal,
+          doi: ref.doi,
+          abstract: ref.abstract,
+          importSource: 'reference-file',
+        },
+      }));
+
+      // Collect DOI/PMID lookup references
+      const lookupRefsToImport = selectedLookupRefs().map(({ _id, ...ref }) => ({
+        title: ref.title,
+        metadata: {
+          firstAuthor: ref.firstAuthor,
+          publicationYear: ref.publicationYear,
+          authors: ref.authors,
+          journal: ref.journal,
+          doi: ref.doi,
+          abstract: ref.abstract,
+          importSource: ref.importSource || 'doi-lookup',
+        },
+      }));
+
+      const allRefsToImport = [...refsToImport, ...lookupRefsToImport];
+      props.onProjectCreated?.(newProject, pendingPdfs, allRefsToImport);
     } catch (error) {
       console.error('Error creating project:', error);
       showToast.error('Creation Failed', 'Failed to create project. Please try again.');
@@ -124,8 +343,20 @@ export default function CreateProjectForm(props) {
     setProjectName('');
     setProjectDescription('');
     setUploadedPdfs([]);
+    setImportedRefs([]);
+    setSelectedRefIds(new Set());
+    setRefFileName('');
+    setLookupRefs([]);
+    setSelectedLookupIds(new Set());
+    setIdentifierInput('');
+    setLookupErrors([]);
     props.onCancel?.();
   };
+
+  // Count of items to be added
+  const pdfCount = () => uploadedPdfs().filter(p => p.title && !p.extracting).length;
+  const refCount = () => selectedRefIds().size;
+  const lookupCount = () => selectedLookupIds().size;
 
   return (
     <div class='bg-white p-6 rounded-lg border border-gray-200 shadow-sm'>
@@ -156,69 +387,114 @@ export default function CreateProjectForm(props) {
           />
         </div>
 
-        {/* PDF Upload Section */}
+        {/* Add Studies Section with Tabs */}
         <div>
           <label class='block text-sm font-semibold text-gray-700 mb-2'>
-            Upload PDFs (Optional)
+            Add Studies (Optional)
           </label>
-          <p class='text-sm text-gray-500 mb-3'>
-            Upload research papers to automatically create studies. Titles will be extracted from
-            each PDF.
-          </p>
 
-          {/* Drop zone using zag FileUpload */}
-          <FileUpload
-            accept='application/pdf'
-            multiple
-            helpText='PDF files only'
-            showFileList={false}
-            onFilesChange={handlePdfSelect}
-          />
+          {/* Tab buttons */}
+          <div class='flex border-b border-gray-200 mb-4'>
+            <button
+              type='button'
+              onClick={() => setActiveTab('pdfs')}
+              class={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab() === 'pdfs' ?
+                  'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <span class='flex items-center gap-2'>
+                <CgFileDocument class='w-4 h-4' />
+                Upload PDFs
+                <Show when={uploadedPdfs().length > 0}>
+                  <span class='bg-blue-100 text-blue-600 text-xs px-1.5 py-0.5 rounded-full'>
+                    {uploadedPdfs().length}
+                  </span>
+                </Show>
+              </span>
+            </button>
+            <button
+              type='button'
+              onClick={() => setActiveTab('references')}
+              class={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab() === 'references' ?
+                  'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <span class='flex items-center gap-2'>
+                <BiRegularImport class='w-4 h-4' />
+                Import References
+                <Show when={selectedRefIds().size > 0}>
+                  <span class='bg-blue-100 text-blue-600 text-xs px-1.5 py-0.5 rounded-full'>
+                    {selectedRefIds().size}
+                  </span>
+                </Show>
+              </span>
+            </button>
+            <button
+              type='button'
+              onClick={() => setActiveTab('lookup')}
+              class={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab() === 'lookup' ?
+                  'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <span class='flex items-center gap-2'>
+                <BiRegularSearch class='w-4 h-4' />
+                DOI / PMID
+                <Show when={selectedLookupIds().size > 0}>
+                  <span class='bg-blue-100 text-blue-600 text-xs px-1.5 py-0.5 rounded-full'>
+                    {selectedLookupIds().size}
+                  </span>
+                </Show>
+              </span>
+            </button>
+          </div>
 
-          {/* Custom Uploaded PDFs list with editable titles */}
-          <Show when={uploadedPdfs().length > 0}>
-            <div class='mt-4 space-y-2'>
-              <For each={uploadedPdfs()}>
-                {pdf => (
-                  <div class='flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200'>
-                    <CgFileDocument class='w-5 h-5 text-red-500 shrink-0' />
-                    <div class='flex-1 min-w-0'>
-                      <Show
-                        when={!pdf.extracting}
-                        fallback={
-                          <div class='flex items-center gap-2'>
-                            <div class='w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin' />
-                            <span class='text-sm text-gray-500'>Extracting title...</span>
-                          </div>
-                        }
-                      >
-                        <input
-                          type='text'
-                          value={pdf.title || ''}
-                          onInput={e => updatePdfTitle(pdf.id, e.target.value)}
-                          class='w-full text-sm font-medium text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0'
-                          placeholder='Study title'
-                        />
-                        <p class='text-xs text-gray-500 truncate'>{pdf.file.name}</p>
-                      </Show>
-                    </div>
-                    <button
-                      type='button'
-                      onClick={() => removePdf(pdf.id)}
-                      class='p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors'
-                    >
-                      <BiRegularTrash class='w-4 h-4' />
-                    </button>
-                  </div>
-                )}
-              </For>
-              <p class='text-xs text-gray-500 mt-2'>
-                {uploadedPdfs().length} PDF{uploadedPdfs().length !== 1 ? 's' : ''} will add{' '}
-                {uploadedPdfs().length} stud{uploadedPdfs().length !== 1 ? 'ies' : 'y'}
-              </p>
-            </div>
+          {/* Tab Content */}
+          <Show when={activeTab() === 'pdfs'}>
+            <PdfUploadTab
+              uploadedPdfs={uploadedPdfs}
+              onFilesChange={handlePdfSelect}
+              onRemove={removePdf}
+              onUpdateTitle={updatePdfTitle}
+            />
+          </Show>
+
+          <Show when={activeTab() === 'references'}>
+            <ReferenceImportTab
+              importedRefs={importedRefs}
+              selectedRefIds={selectedRefIds}
+              refFileName={refFileName}
+              parsingRefs={parsingRefs}
+              onFileSelect={handleReferenceFileSelect}
+              onToggleSelection={toggleRefSelection}
+              onToggleSelectAll={toggleSelectAllRefs}
+              onClear={clearImportedRefs}
+            />
+          </Show>
+
+          <Show when={activeTab() === 'lookup'}>
+            <DoiLookupTab
+              identifierInput={identifierInput}
+              setIdentifierInput={setIdentifierInput}
+              lookupRefs={lookupRefs}
+              selectedLookupIds={selectedLookupIds}
+              lookingUp={lookingUp}
+              lookupErrors={lookupErrors}
+              onLookup={handleLookup}
+              onToggleSelection={toggleLookupSelection}
+              onToggleSelectAll={toggleSelectAllLookup}
+              onRemove={removeLookupRef}
+              onClear={clearLookupRefs}
+            />
           </Show>
         </div>
+
+        <StudyAddSummary pdfCount={pdfCount} refCount={refCount} lookupCount={lookupCount} />
       </div>
 
       <div class='flex gap-3 mt-6'>

@@ -6,21 +6,22 @@
  */
 
 import { createSignal, Show, For, createEffect, onMount, onCleanup } from 'solid-js';
+import { createStore, produce } from 'solid-js/store';
 import { BiRegularTrash } from 'solid-icons/bi';
 import { CgFileDocument } from 'solid-icons/cg';
 import { FileUpload } from '@components/zag/FileUpload.jsx';
 import { extractPdfTitle, readFileAsArrayBuffer } from '@/lib/pdfUtils.js';
 
 export default function StudyForm(props) {
-  const [uploadedPdfs, setUploadedPdfs] = createSignal([]);
+  const [uploadedPdfs, setUploadedPdfs] = createStore([]);
   const [isDraggingOver, setIsDraggingOver] = createSignal(false);
   let containerRef;
 
   // When studies are added and form collapses, clear the list
   createEffect(() => {
-    if (!props.expanded && uploadedPdfs().length > 0) {
+    if (!props.expanded && uploadedPdfs.length > 0) {
       // Only clear if not in the middle of processing
-      const hasProcessing = uploadedPdfs().some(p => p.extracting);
+      const hasProcessing = uploadedPdfs.some(p => p.extracting);
       if (!hasProcessing && !props.loading) {
         setUploadedPdfs([]);
       }
@@ -93,7 +94,7 @@ export default function StudyForm(props) {
       data: null,
     }));
 
-    setUploadedPdfs(prev => [...prev, ...newPdfs]);
+    setUploadedPdfs(produce(pdfs => pdfs.push(...newPdfs)));
 
     for (const pdf of newPdfs) {
       try {
@@ -102,18 +103,11 @@ export default function StudyForm(props) {
         const bufferForExtraction = arrayBuffer.slice(0);
         const title = await extractPdfTitle(bufferForExtraction);
 
-        setUploadedPdfs(prev =>
-          prev.map(p =>
-            p.id === pdf.id ?
-              {
-                ...p,
-                title: title || pdf.file.name.replace(/\.pdf$/i, ''),
-                extracting: false,
-                data: arrayBuffer,
-              }
-            : p,
-          ),
-        );
+        setUploadedPdfs(p => p.id === pdf.id, {
+          title: title || pdf.file.name.replace(/\.pdf$/i, ''),
+          extracting: false,
+          data: arrayBuffer,
+        });
       } catch (error) {
         console.error('Error extracting PDF title:', error);
         // Still need to read the file for upload even if title extraction fails
@@ -123,28 +117,26 @@ export default function StudyForm(props) {
         } catch (e) {
           console.error('Error reading PDF file:', e);
         }
-        setUploadedPdfs(prev =>
-          prev.map(p =>
-            p.id === pdf.id ?
-              {
-                ...p,
-                title: pdf.file.name.replace(/\.pdf$/i, ''),
-                extracting: false,
-                data: fileData,
-              }
-            : p,
-          ),
-        );
+        setUploadedPdfs(p => p.id === pdf.id, {
+          title: pdf.file.name.replace(/\.pdf$/i, ''),
+          extracting: false,
+          data: fileData,
+        });
       }
     }
   };
 
   const removePdf = id => {
-    setUploadedPdfs(prev => prev.filter(p => p.id !== id));
+    setUploadedPdfs(
+      produce(pdfs => {
+        const idx = pdfs.findIndex(p => p.id === id);
+        if (idx !== -1) pdfs.splice(idx, 1);
+      }),
+    );
   };
 
   const updatePdfTitle = (id, newTitle) => {
-    setUploadedPdfs(prev => prev.map(p => (p.id === id ? { ...p, title: newTitle } : p)));
+    setUploadedPdfs(p => p.id === id, 'title', newTitle);
   };
 
   // Add a blank study entry (no PDF)
@@ -152,20 +144,21 @@ export default function StudyForm(props) {
     if (props.onExpand) {
       props.onExpand();
     }
-    setUploadedPdfs(prev => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        file: null,
-        title: '',
-        extracting: false,
-        data: null,
-      },
-    ]);
+    setUploadedPdfs(
+      produce(pdfs => {
+        pdfs.push({
+          id: crypto.randomUUID(),
+          file: null,
+          title: '',
+          extracting: false,
+          data: null,
+        });
+      }),
+    );
   };
 
   const handleSubmit = () => {
-    const studiesToProcess = uploadedPdfs().filter(p => p.title?.trim() && !p.extracting);
+    const studiesToProcess = uploadedPdfs.filter(p => p.title?.trim() && !p.extracting);
     for (const study of studiesToProcess) {
       props.onSubmit(study.title.trim(), '', study.data, study.file?.name || null);
     }
@@ -173,7 +166,7 @@ export default function StudyForm(props) {
   };
 
   const canSubmit = () => {
-    return uploadedPdfs().some(p => p.title?.trim() && !p.extracting);
+    return uploadedPdfs.some(p => p.title?.trim() && !p.extracting);
   };
 
   const handleCancel = () => {
@@ -181,8 +174,8 @@ export default function StudyForm(props) {
     props.onCancel?.();
   };
 
-  const studyCount = () => uploadedPdfs().filter(p => p.title?.trim() && !p.extracting).length;
-  const hasStudies = () => uploadedPdfs().length > 0;
+  const studyCount = () => uploadedPdfs.filter(p => p.title?.trim() && !p.extracting).length;
+  const hasStudies = () => uploadedPdfs.length > 0;
   const isExpanded = () => props.expanded || hasStudies();
   const showDropZone = () => !props.hasExistingStudies || isExpanded();
 
@@ -246,9 +239,9 @@ export default function StudyForm(props) {
         {/* Expanded content */}
         <Show when={isExpanded()}>
           {/* Studies list */}
-          <Show when={uploadedPdfs().length > 0}>
+          <Show when={uploadedPdfs.length > 0}>
             <div class='space-y-2'>
-              <For each={uploadedPdfs()}>
+              <For each={uploadedPdfs}>
                 {pdf => (
                   <div class='flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200'>
                     <Show
