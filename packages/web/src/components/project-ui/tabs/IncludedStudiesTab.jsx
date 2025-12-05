@@ -1,7 +1,10 @@
-import { For, Show } from 'solid-js';
-import { AiOutlineBook } from 'solid-icons/ai';
-import { BiRegularImport } from 'solid-icons/bi';
+import { For, Show, createSignal } from 'solid-js';
+import { AiOutlineBook, AiOutlineFileSync } from 'solid-icons/ai';
+import { BiRegularImport, BiRegularEdit, BiRegularUpload } from 'solid-icons/bi';
+import { CgFileDocument } from 'solid-icons/cg';
+import { FiTrash2 } from 'solid-icons/fi';
 import StudyForm from '../StudyForm.jsx';
+import { showToast } from '@components/zag/Toast.jsx';
 
 export default function IncludedStudiesTab(props) {
   return (
@@ -60,6 +63,11 @@ export default function IncludedStudiesTab(props) {
         <div class='bg-gray-50 rounded-lg divide-y divide-gray-200'>
           <For each={props.studies()}>
             {study => {
+              const [editing, setEditing] = createSignal(false);
+              const [editName, setEditName] = createSignal('');
+              const [uploading, setUploading] = createSignal(false);
+              let fileInputRef;
+
               // Get assigned reviewers from study-level assignments
               const assignedReviewers = () => {
                 const reviewers = [];
@@ -83,12 +91,98 @@ export default function IncludedStudiesTab(props) {
                 return Array.from(uniqueAssignees.values());
               };
 
+              // Check if study has PDFs
+              const hasPdfs = () => study.pdfs && study.pdfs.length > 0;
+              const firstPdf = () => (hasPdfs() ? study.pdfs[0] : null);
+
+              // Start editing the study name
+              const startEditing = () => {
+                setEditName(study.name || '');
+                setEditing(true);
+              };
+
+              // Save the edited name
+              const saveEdit = () => {
+                const newName = editName().trim();
+                if (newName && newName !== study.name) {
+                  props.onUpdateStudy?.(study.id, { name: newName });
+                }
+                setEditing(false);
+              };
+
+              // Cancel editing
+              const cancelEdit = () => {
+                setEditing(false);
+                setEditName('');
+              };
+
+              // Handle key press in edit input
+              const handleKeyDown = e => {
+                if (e.key === 'Enter') {
+                  saveEdit();
+                } else if (e.key === 'Escape') {
+                  cancelEdit();
+                }
+              };
+
+              // Handle PDF file selection
+              const handleFileSelect = async e => {
+                const file = e.target.files?.[0];
+                if (!file || file.type !== 'application/pdf') {
+                  showToast.error('Invalid File', 'Please select a PDF file');
+                  return;
+                }
+
+                setUploading(true);
+                try {
+                  await props.onUploadPdf?.(study.id, file);
+                } catch (err) {
+                  console.error('Error uploading PDF:', err);
+                  showToast.error('Upload Failed', 'Failed to upload PDF');
+                } finally {
+                  setUploading(false);
+                  if (fileInputRef) fileInputRef.value = '';
+                }
+              };
+
               return (
                 <div class='p-4 flex items-center justify-between'>
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type='file'
+                    accept='application/pdf'
+                    class='hidden'
+                    onChange={handleFileSelect}
+                  />
                   <div class='flex-1 min-w-0'>
-                    <p class='text-gray-900 font-medium truncate'>
-                      {study.name || 'Untitled Study'}
-                    </p>
+                    <div class='flex items-center gap-2'>
+                      <Show
+                        when={!editing()}
+                        fallback={
+                          <input
+                            type='text'
+                            value={editName()}
+                            onInput={e => setEditName(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            onBlur={saveEdit}
+                            class='text-gray-900 font-medium border border-blue-400 rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            autofocus
+                          />
+                        }
+                      >
+                        <p class='text-gray-900 font-medium truncate'>
+                          {study.name || 'Untitled Study'}
+                        </p>
+                        <button
+                          onClick={startEditing}
+                          class='p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors'
+                          title='Edit study name'
+                        >
+                          <BiRegularEdit class='w-4 h-4' />
+                        </button>
+                      </Show>
+                    </div>
                     {/* Author/Year citation */}
                     <Show when={study.firstAuthor || study.publicationYear}>
                       <p class='text-xs text-gray-600'>
@@ -133,6 +227,46 @@ export default function IncludedStudiesTab(props) {
                         </div>
                       </Show>
                     </Show>
+                    {/* PDF View/Upload buttons */}
+                    <Show
+                      when={hasPdfs()}
+                      fallback={
+                        <button
+                          onClick={() => fileInputRef?.click()}
+                          disabled={uploading()}
+                          class='inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded hover:bg-gray-200 transition-colors gap-1 disabled:opacity-50'
+                          title='Add PDF'
+                        >
+                          <BiRegularUpload class='w-3.5 h-3.5' />
+                          {uploading() ? 'Uploading...' : 'Add PDF'}
+                        </button>
+                      }
+                    >
+                      <button
+                        onClick={() => props.onViewPdf?.(study.id, firstPdf())}
+                        class='inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded hover:bg-gray-200 transition-colors gap-1'
+                        title='View PDF'
+                      >
+                        <CgFileDocument class='w-3.5 h-3.5' />
+                        PDF
+                      </button>
+                      <button
+                        onClick={() => fileInputRef?.click()}
+                        disabled={uploading()}
+                        class='p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50'
+                        title='Change PDF'
+                      >
+                        <AiOutlineFileSync class='w-3.5 h-3.5' />
+                      </button>
+                    </Show>
+                    {/* Delete button */}
+                    <button
+                      onClick={() => props.onDeleteStudy?.(study.id)}
+                      class='p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors'
+                      title='Delete Study'
+                    >
+                      <FiTrash2 class='w-4 h-4' />
+                    </button>
                   </div>
                 </div>
               );
