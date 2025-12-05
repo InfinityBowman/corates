@@ -1,4 +1,4 @@
-import { createSignal, createEffect, createMemo, For, Show, onCleanup, batch } from 'solid-js';
+import { createSignal, createEffect, createMemo, Show, onCleanup, batch } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import useProject from '@primitives/useProject.js';
 import projectStore from '@primitives/projectStore.js';
@@ -6,17 +6,22 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf, deletePdf, getPdfUrl } from '@api/pdf-api.js';
 import { cachePdf, removeCachedPdf, getCachedPdf } from '@primitives/pdfCache.js';
 import { API_BASE } from '@config/api.js';
-import StudyCard from './StudyCard.jsx';
-import StudyForm from './StudyForm.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
-import ChartSection from './ChartSection.jsx';
+import ProjectHeader from './ProjectHeader.jsx';
 import { useConfirmDialog } from '@components/zag/Dialog.jsx';
 import { showToast } from '@components/zag/Toast.jsx';
 import { Tabs } from '@components/zag/Tabs.jsx';
 import { BiRegularHome } from 'solid-icons/bi';
 import { BsListTask } from 'solid-icons/bs';
 import { CgArrowsExchange } from 'solid-icons/cg';
-import { AiFillCheckCircle } from 'solid-icons/ai';
+import { AiFillCheckCircle, AiOutlineBook } from 'solid-icons/ai';
+
+// Tab components
+import OverviewTab from './tabs/OverviewTab.jsx';
+import IncludedStudiesTab from './tabs/IncludedStudiesTab.jsx';
+import InProgressTab from './tabs/InProgressTab.jsx';
+import ReadyToReconcileTab from './tabs/ReadyToReconcileTab.jsx';
+import CompletedTab from './tabs/CompletedTab.jsx';
 
 export default function ProjectView() {
   const params = useParams();
@@ -32,7 +37,7 @@ export default function ProjectView() {
   const [creatingStudy, setCreatingStudy] = createSignal(false);
 
   // Checklist form state
-  const [showChecklistForm, setShowChecklistForm] = createSignal(null); // studyId or null
+  const [showChecklistForm, setShowChecklistForm] = createSignal(null);
   const [creatingChecklist, setCreatingChecklist] = createSignal(false);
 
   // Add member modal state
@@ -70,6 +75,9 @@ export default function ProjectView() {
     return member?.role || null;
   });
 
+  // Check if current user is owner
+  const isOwner = () => userRole() === 'owner';
+
   // Connect to Y.js on mount
   createEffect(() => {
     if (params.projectId) {
@@ -85,30 +93,23 @@ export default function ProjectView() {
     const state = connectionState();
     const pdfs = pendingPdfs();
 
-    // Wait for synced (not just connected) since createStudy requires Y.js to be synced
     if (!state.synced || !params.projectId) return;
     if (!Array.isArray(pdfs) || pdfs.length === 0) return;
 
-    // Clear state immediately and atomically to prevent re-processing
-    // Use batch to prevent the setter from triggering another effect run
     batch(() => {
       setPendingPdfs(null);
       window.history.replaceState({}, '', window.location.pathname);
     });
 
-    // Process each PDF - create study and upload
     for (const pdf of pdfs) {
       const studyId = createStudy(pdf.title, '');
       if (studyId && pdf.data) {
-        // Convert array back to ArrayBuffer for upload
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
         uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName)
           .then(result => {
-            // Cache the PDF locally for faster access
             cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(err =>
               console.warn('Failed to cache PDF:', err),
             );
-            // After successful upload, add PDF metadata to Y.js (syncs to other clients)
             addPdfToStudy(studyId, {
               key: result.key,
               fileName: result.fileName,
@@ -129,26 +130,30 @@ export default function ProjectView() {
     disconnect();
   });
 
-  // Create a new study via Y.js
+  // Get assignee name from members list
+  const getAssigneeName = userId => {
+    if (!userId) return 'Unassigned';
+    const member = members().find(m => m.userId === userId);
+    return member?.displayName || member?.name || member?.email || 'Unknown';
+  };
+
+  // ============ Handlers ============
+
   const handleCreateStudy = async (name, description, pdfData = null, pdfFileName = null) => {
     setCreatingStudy(true);
     try {
       const studyId = createStudy(name, description);
-
-      // If PDF data was provided, upload it to R2
       if (pdfData && studyId) {
         try {
           await uploadPdf(params.projectId, studyId, pdfData, pdfFileName);
         } catch (uploadErr) {
           console.error('Error uploading PDF:', uploadErr);
-          // Study was created, but PDF upload failed - show warning but don't fail
           showToast.error(
             'PDF Upload Failed',
             'Study created, but PDF upload failed. You can try uploading again later.',
           );
         }
       }
-
       setShowStudyForm(false);
     } catch (err) {
       console.error('Error creating study:', err);
@@ -158,7 +163,6 @@ export default function ProjectView() {
     }
   };
 
-  // Create a new checklist in a study via Y.js
   const handleCreateChecklist = async (studyId, type, assigneeId) => {
     setCreatingChecklist(true);
     try {
@@ -172,7 +176,6 @@ export default function ProjectView() {
     }
   };
 
-  // Delete a study
   const handleDeleteStudy = async studyId => {
     const confirmed = await confirmDialog.open({
       title: 'Delete Study',
@@ -191,7 +194,6 @@ export default function ProjectView() {
     }
   };
 
-  // Update a study name
   const handleUpdateStudy = (studyId, updates) => {
     try {
       updateStudy(studyId, updates);
@@ -201,7 +203,6 @@ export default function ProjectView() {
     }
   };
 
-  // Delete a checklist
   const handleDeleteChecklist = async (studyId, checklistId) => {
     const confirmed = await confirmDialog.open({
       title: 'Delete Checklist',
@@ -219,7 +220,6 @@ export default function ProjectView() {
     }
   };
 
-  // Update a checklist (e.g., change assignee)
   const handleUpdateChecklist = (studyId, checklistId, updates) => {
     try {
       updateChecklist(studyId, checklistId, updates);
@@ -229,7 +229,6 @@ export default function ProjectView() {
     }
   };
 
-  // Delete the entire project
   const handleDeleteProject = async () => {
     const confirmed = await confirmDialog.open({
       title: 'Delete Project',
@@ -249,7 +248,6 @@ export default function ProjectView() {
         const data = await response.json();
         throw new Error(data.error || 'Failed to delete project');
       }
-      // Remove from the store so dashboard updates immediately
       projectStore.removeProjectFromList(params.projectId);
       navigate('/dashboard', { replace: true });
     } catch (err) {
@@ -258,7 +256,6 @@ export default function ProjectView() {
     }
   };
 
-  // Remove a member from the project
   const handleRemoveMember = async (memberId, memberName) => {
     const currentUser = user();
     const isSelf = currentUser?.id === memberId;
@@ -288,7 +285,6 @@ export default function ProjectView() {
       }
 
       if (isSelf) {
-        // If user removed themselves, navigate away
         projectStore.removeProjectFromList(params.projectId);
         navigate('/dashboard', { replace: true });
         showToast.success('Left Project', 'You have left the project');
@@ -301,58 +297,46 @@ export default function ProjectView() {
     }
   };
 
-  // View a PDF - try cache first for offline support, fall back to URL
   const handleViewPdf = async (studyId, pdf) => {
     if (!pdf || !pdf.fileName) return;
 
-    // Try to get from cache first (works offline)
     const cachedData = await getCachedPdf(params.projectId, studyId, pdf.fileName);
     if (cachedData) {
-      // Create a blob URL from cached data and open it
       const blob = new Blob([cachedData], { type: 'application/pdf' });
       const blobUrl = URL.createObjectURL(blob);
       window.open(blobUrl, '_blank');
-      // Clean up blob URL after a delay (browser needs time to load it)
       setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
       return;
     }
 
-    // Fall back to direct URL (requires network)
     const url = getPdfUrl(params.projectId, studyId, pdf.fileName);
     window.open(url, '_blank');
   };
 
-  // Upload/change a PDF for a study
   const handleUploadPdf = async (studyId, file) => {
     try {
-      // Find the study and remove any existing PDFs first
       const study = studies().find(s => s.id === studyId);
       if (study?.pdfs?.length > 0) {
-        // Remove all existing PDFs (both from R2, Y.js, and local cache)
         for (const existingPdf of study.pdfs) {
           try {
             await deletePdf(params.projectId, studyId, existingPdf.fileName);
             removePdfFromStudy(studyId, existingPdf.fileName);
-            // Also remove from local cache
             removeCachedPdf(params.projectId, studyId, existingPdf.fileName).catch(err =>
               console.warn('Failed to remove PDF from cache:', err),
             );
           } catch (deleteErr) {
             console.warn('Failed to delete old PDF:', deleteErr);
-            // Continue anyway - the new PDF will still be uploaded
           }
         }
       }
 
       const result = await uploadPdf(params.projectId, studyId, file, file.name);
 
-      // Cache the uploaded PDF locally for faster access
       const arrayBuffer = await file.arrayBuffer();
       cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(err =>
         console.warn('Failed to cache PDF:', err),
       );
 
-      // After successful upload, add PDF metadata to Y.js
       addPdfToStudy(studyId, {
         key: result.key,
         fileName: result.fileName,
@@ -362,31 +346,19 @@ export default function ProjectView() {
       });
     } catch (err) {
       console.error('Error uploading PDF:', err);
-      throw err; // Re-throw so StudyCard can show the error
+      throw err;
     }
   };
 
-  // Open checklist for editing
   const openChecklist = (studyId, checklistId) => {
     navigate(`/projects/${params.projectId}/studies/${studyId}/checklists/${checklistId}`);
   };
 
-  // Open reconciliation view for two checklists
   const openReconciliation = (studyId, checklist1Id, checklist2Id) => {
     navigate(
       `/projects/${params.projectId}/studies/${studyId}/reconcile/${checklist1Id}/${checklist2Id}`,
     );
   };
-
-  // Get assignee name from members list
-  const getAssigneeName = userId => {
-    if (!userId) return 'Unassigned';
-    const member = members().find(m => m.userId === userId);
-    return member?.displayName || member?.name || member?.email || 'Unknown';
-  };
-
-  // Check if current user is owner
-  const isOwner = () => userRole() === 'owner';
 
   // Tab definitions with icons
   const tabDefinitions = createMemo(() => [
@@ -396,10 +368,15 @@ export default function ProjectView() {
       icon: <BiRegularHome class='w-4 h-4' />,
     },
     {
+      value: 'included-studies',
+      label: 'Included Studies',
+      icon: <AiOutlineBook class='w-4 h-4' />,
+      count: studies().length,
+    },
+    {
       value: 'in-progress',
       label: 'In Progress',
       icon: <BsListTask class='w-4 h-4' />,
-      count: studies().length,
     },
     {
       value: 'ready-to-reconcile',
@@ -415,280 +392,72 @@ export default function ProjectView() {
 
   return (
     <div class='p-6 max-w-4xl mx-auto'>
-      {/* Project Header */}
-      <div class='mb-8'>
-        <div class='flex items-center gap-4 mb-2'>
-          <button
-            onClick={() => navigate('/dashboard')}
-            class='text-gray-400 hover:text-gray-700 transition-colors'
-          >
-            <svg class='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path
-                stroke-linecap='round'
-                stroke-linejoin='round'
-                stroke-width='2'
-                d='M15 19l-7-7 7-7'
-              />
-            </svg>
-          </button>
-          <Show when={meta()?.name}>
-            <h1 class='text-2xl font-bold text-gray-900'>{meta().name}</h1>
-          </Show>
-          <Show when={userRole()}>
-            <span class='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize'>
-              {userRole()}
-            </span>
-          </Show>
-          <Show when={connectionState().connected}>
-            <span class='flex items-center gap-1 text-green-600 text-sm'>
-              <div class='w-2 h-2 bg-green-500 rounded-full' />
-              Synced
-            </span>
-          </Show>
-          <div class='flex-1' />
-          <Show when={isOwner()}>
-            <button
-              onClick={handleDeleteProject}
-              class='inline-flex items-center px-3 py-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 text-sm font-medium rounded-lg transition-colors gap-1.5'
-              title='Delete Project'
-            >
-              <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path
-                  stroke-linecap='round'
-                  stroke-linejoin='round'
-                  stroke-width='2'
-                  d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                />
-              </svg>
-              Delete Project
-            </button>
-          </Show>
-        </div>
-        <Show when={meta()?.description}>
-          <p class='text-gray-500 ml-10'>{meta().description}</p>
-        </Show>
-      </div>
+      <ProjectHeader
+        name={meta()?.name}
+        description={meta()?.description}
+        userRole={userRole()}
+        isConnected={connectionState().connected}
+        isOwner={isOwner()}
+        onBack={() => navigate('/dashboard')}
+        onDeleteProject={handleDeleteProject}
+      />
 
-      {/* Tabbed Content */}
       <Tabs tabs={tabDefinitions()} defaultValue='overview'>
         {tabValue => (
           <>
-            {/* Overview Tab */}
             <Show when={tabValue === 'overview'}>
-              {/* Stats Summary */}
-              <div class='grid grid-cols-3 gap-4 mb-6'>
-                <div class='bg-gray-50 rounded-lg p-4 text-center'>
-                  <p class='text-2xl font-bold text-gray-900'>{studies().length}</p>
-                  <p class='text-sm text-gray-500'>Studies</p>
-                </div>
-                <div class='bg-gray-50 rounded-lg p-4 text-center'>
-                  <p class='text-2xl font-bold text-gray-900'>{members().length}</p>
-                  <p class='text-sm text-gray-500'>Members</p>
-                </div>
-                <div class='bg-gray-50 rounded-lg p-4 text-center'>
-                  <p class='text-2xl font-bold text-gray-900'>
-                    {studies().reduce((acc, s) => acc + (s.checklists?.length || 0), 0)}
-                  </p>
-                  <p class='text-sm text-gray-500'>Checklists</p>
-                </div>
-              </div>
-
-              {/* Charts Section */}
-              <div class='mb-8'>
-                <h3 class='text-lg font-semibold text-gray-900 mb-4'>Quality Assessment Charts</h3>
-                <ChartSection
-                  studies={studies}
-                  members={members}
-                  getChecklistData={getChecklistData}
-                />
-              </div>
-
-              {/* Members Section */}
-              <div>
-                <div class='flex items-center justify-between mb-4'>
-                  <h3 class='text-lg font-semibold text-gray-900'>Project Members</h3>
-                  <Show when={isOwner()}>
-                    <button
-                      onClick={() => setShowAddMemberModal(true)}
-                      class='inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors gap-1.5'
-                    >
-                      <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                        <path
-                          stroke-linecap='round'
-                          stroke-linejoin='round'
-                          stroke-width='2'
-                          d='M12 4v16m8-8H4'
-                        />
-                      </svg>
-                      Add Member
-                    </button>
-                  </Show>
-                </div>
-                <Show when={members().length > 0}>
-                  <div class='bg-gray-50 rounded-lg divide-y divide-gray-200'>
-                    <For each={members()}>
-                      {member => {
-                        const currentUser = user();
-                        const isSelf = currentUser?.id === member.userId;
-                        const canRemove = isOwner() || isSelf;
-                        const isLastOwner =
-                          member.role === 'owner' &&
-                          members().filter(m => m.role === 'owner').length <= 1;
-
-                        return (
-                          <div class='p-4 flex items-center justify-between'>
-                            <div class='flex items-center gap-3'>
-                              <div class='w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium'>
-                                {(member.displayName || member.name || member.email || '?')
-                                  .charAt(0)
-                                  .toUpperCase()}
-                              </div>
-                              <div>
-                                <p class='text-gray-900 font-medium'>
-                                  {member.displayName || member.name || 'Unknown'}
-                                  {isSelf && <span class='text-gray-400 ml-1'>(you)</span>}
-                                </p>
-                                <p class='text-gray-500 text-sm'>{member.email}</p>
-                              </div>
-                            </div>
-                            <div class='flex items-center gap-2'>
-                              <span class='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize'>
-                                {member.role}
-                              </span>
-                              <Show when={canRemove && !isLastOwner}>
-                                <button
-                                  onClick={() =>
-                                    handleRemoveMember(
-                                      member.userId,
-                                      member.displayName || member.name || member.email,
-                                    )
-                                  }
-                                  class='p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors'
-                                  title={isSelf ? 'Leave project' : 'Remove member'}
-                                >
-                                  <svg
-                                    class='w-4 h-4'
-                                    fill='none'
-                                    stroke='currentColor'
-                                    viewBox='0 0 24 24'
-                                  >
-                                    <path
-                                      stroke-linecap='round'
-                                      stroke-linejoin='round'
-                                      stroke-width='2'
-                                      d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                                    />
-                                  </svg>
-                                </button>
-                              </Show>
-                            </div>
-                          </div>
-                        );
-                      }}
-                    </For>
-                  </div>
-                </Show>
-              </div>
+              <OverviewTab
+                studies={studies}
+                members={members}
+                isOwner={isOwner}
+                currentUserId={user()?.id}
+                getChecklistData={getChecklistData}
+                onAddMember={() => setShowAddMemberModal(true)}
+                onRemoveMember={handleRemoveMember}
+              />
             </Show>
 
-            {/* In Progress Tab */}
+            <Show when={tabValue === 'included-studies'}>
+              <IncludedStudiesTab studies={studies} getAssigneeName={getAssigneeName} />
+            </Show>
+
             <Show when={tabValue === 'in-progress'}>
-              <div class='space-y-6'>
-                {/* Always-visible Study Form / Drop Zone */}
-                <Show
-                  when={hasData()}
-                  fallback={
-                    <div class='text-center py-12 bg-gray-50 rounded-lg'>
-                      <p class='text-gray-400'>Loading studies...</p>
-                    </div>
-                  }
-                >
-                  <StudyForm
-                    onSubmit={handleCreateStudy}
-                    onCancel={() => setShowStudyForm(false)}
-                    onExpand={() => setShowStudyForm(true)}
-                    expanded={showStudyForm()}
-                    loading={creatingStudy()}
-                    hasExistingStudies={studies().length > 0}
-                  />
-                </Show>
-
-                {/* Studies List */}
-                <Show
-                  when={studies().length > 0}
-                  fallback={
-                    <Show when={hasData()}>
-                      <div class='text-center py-12 bg-gray-50 rounded-lg'>
-                        <p class='text-gray-500'>No studies yet. Add your first study above.</p>
-                      </div>
-                    </Show>
-                  }
-                >
-                  <div class='space-y-4'>
-                    <For each={studies()}>
-                      {study => (
-                        <StudyCard
-                          study={study}
-                          members={members()}
-                          projectId={params.projectId}
-                          showChecklistForm={showChecklistForm() === study.id}
-                          onToggleChecklistForm={() =>
-                            setShowChecklistForm(prev => (prev === study.id ? null : study.id))
-                          }
-                          onAddChecklist={(type, assigneeId) =>
-                            handleCreateChecklist(study.id, type, assigneeId)
-                          }
-                          onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
-                          onReconcile={(checklist1Id, checklist2Id) =>
-                            openReconciliation(study.id, checklist1Id, checklist2Id)
-                          }
-                          onViewPdf={pdf => handleViewPdf(study.id, pdf)}
-                          onUploadPdf={file => handleUploadPdf(study.id, file)}
-                          onUpdateStudy={updates => handleUpdateStudy(study.id, updates)}
-                          onDeleteStudy={() => handleDeleteStudy(study.id)}
-                          onUpdateChecklist={(checklistId, updates) =>
-                            handleUpdateChecklist(study.id, checklistId, updates)
-                          }
-                          onDeleteChecklist={checklistId =>
-                            handleDeleteChecklist(study.id, checklistId)
-                          }
-                          getAssigneeName={getAssigneeName}
-                          creatingChecklist={creatingChecklist()}
-                        />
-                      )}
-                    </For>
-                  </div>
-                </Show>
-              </div>
+              <InProgressTab
+                studies={studies}
+                members={members}
+                projectId={params.projectId}
+                hasData={hasData}
+                showStudyForm={showStudyForm}
+                creatingStudy={creatingStudy}
+                showChecklistForm={showChecklistForm}
+                creatingChecklist={creatingChecklist}
+                getAssigneeName={getAssigneeName}
+                onSetShowStudyForm={setShowStudyForm}
+                onSetShowChecklistForm={setShowChecklistForm}
+                onCreateStudy={handleCreateStudy}
+                onCreateChecklist={handleCreateChecklist}
+                onUpdateStudy={handleUpdateStudy}
+                onDeleteStudy={handleDeleteStudy}
+                onUpdateChecklist={handleUpdateChecklist}
+                onDeleteChecklist={handleDeleteChecklist}
+                onOpenChecklist={openChecklist}
+                onOpenReconciliation={openReconciliation}
+                onViewPdf={handleViewPdf}
+                onUploadPdf={handleUploadPdf}
+              />
             </Show>
 
-            {/* Ready to Reconcile Tab */}
             <Show when={tabValue === 'ready-to-reconcile'}>
-              <div class='text-center py-16'>
-                <CgArrowsExchange class='w-12 h-12 text-gray-300 mx-auto mb-4' />
-                <h3 class='text-lg font-medium text-gray-900 mb-2'>Ready to Reconcile</h3>
-                <p class='text-gray-500 max-w-md mx-auto'>
-                  Studies where both reviewers have completed their checklists will appear here,
-                  ready for reconciliation.
-                </p>
-              </div>
+              <ReadyToReconcileTab />
             </Show>
 
-            {/* Completed Tab */}
             <Show when={tabValue === 'completed'}>
-              <div class='text-center py-16'>
-                <AiFillCheckCircle class='w-12 h-12 text-gray-300 mx-auto mb-4' />
-                <h3 class='text-lg font-medium text-gray-900 mb-2'>Completed</h3>
-                <p class='text-gray-500 max-w-md mx-auto'>
-                  Studies that have completed reconciliation will appear here.
-                </p>
-              </div>
+              <CompletedTab />
             </Show>
           </>
         )}
       </Tabs>
 
-      {/* Add Member Modal */}
       <AddMemberModal
         isOpen={showAddMemberModal()}
         onClose={() => setShowAddMemberModal(false)}
