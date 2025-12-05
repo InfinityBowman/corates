@@ -273,6 +273,7 @@ export default function StudyCard(props) {
       <Show when={props.showChecklistForm}>
         <ChecklistForm
           members={props.members}
+          currentUserId={props.currentUserId}
           onSubmit={handleCreateChecklist}
           onCancel={() => props.onToggleChecklistForm()}
           loading={props.creatingChecklist}

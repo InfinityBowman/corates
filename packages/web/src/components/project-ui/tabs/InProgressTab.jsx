@@ -31,6 +31,7 @@ export default function InProgressTab(props) {
                 study={study}
                 members={props.members()}
                 projectId={props.projectId}
+                currentUserId={props.currentUserId}
                 showChecklistForm={props.showChecklistForm() === study.id}
                 onToggleChecklistForm={() =>
                   props.onSetShowChecklistForm(prev => (prev === study.id ? null : study.id))
