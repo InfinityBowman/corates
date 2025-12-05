@@ -63,7 +63,10 @@ export function createAuth(env, ctx) {
               const profile = await response.json();
               return {
                 id: profile.sub,
-                name: profile.name || `${profile.given_name || ''} ${profile.family_name || ''}`.trim() || profile.sub,
+                name:
+                  profile.name ||
+                  `${profile.given_name || ''} ${profile.family_name || ''}`.trim() ||
+                  profile.sub,
                 email: profile.email || `${profile.sub}@orcid.org`,
                 emailVerified: !!profile.email,
                 image: null,
