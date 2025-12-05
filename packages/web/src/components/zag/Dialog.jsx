@@ -5,6 +5,87 @@ import { createMemo, createUniqueId, Show, createSignal } from 'solid-js';
 import { FiAlertTriangle, FiX } from 'solid-icons/fi';
 
 /**
+ * Dialog - A generic dialog/modal component
+ *
+ * Props:
+ * - open: boolean - Whether the dialog is open
+ * - onOpenChange: (open: boolean) => void - Callback when open state changes
+ * - title: string - Dialog title
+ * - description: string - Optional description below title
+ * - children: JSX.Element - Dialog content
+ * - size: 'sm' | 'md' | 'lg' | 'xl' - Dialog width (default: 'md')
+ */
+export function Dialog(props) {
+  const service = useMachine(dialog.machine, {
+    id: createUniqueId(),
+    get open() {
+      return props.open;
+    },
+    onOpenChange: details => props.onOpenChange?.(details.open),
+  });
+
+  const api = createMemo(() => dialog.connect(service, normalizeProps));
+
+  const getSizeClass = () => {
+    switch (props.size) {
+      case 'sm':
+        return 'max-w-sm';
+      case 'lg':
+        return 'max-w-lg';
+      case 'xl':
+        return 'max-w-xl';
+      default:
+        return 'max-w-md';
+    }
+  };
+
+  return (
+    <Show when={api().open}>
+      <Portal>
+        {/* Backdrop */}
+        <div
+          {...api().getBackdropProps()}
+          class='fixed inset-0 bg-black/50 z-50 transition-opacity'
+        />
+        {/* Positioner */}
+        <div
+          {...api().getPositionerProps()}
+          class='fixed inset-0 z-50 flex items-center justify-center p-4'
+        >
+          {/* Content */}
+          <div
+            {...api().getContentProps()}
+            class={`bg-white rounded-lg shadow-xl w-full overflow-hidden ${getSizeClass()}`}
+          >
+            {/* Header */}
+            <div class='flex items-center justify-between p-4 border-b border-gray-200'>
+              <div>
+                <h2 {...api().getTitleProps()} class='text-lg font-semibold text-gray-900'>
+                  {props.title}
+                </h2>
+                <Show when={props.description}>
+                  <p {...api().getDescriptionProps()} class='mt-1 text-sm text-gray-500'>
+                    {props.description}
+                  </p>
+                </Show>
+              </div>
+              <button
+                {...api().getCloseTriggerProps()}
+                class='p-1 text-gray-400 hover:text-gray-500 rounded-md hover:bg-gray-100 transition-colors'
+              >
+                <FiX class='w-5 h-5' />
+              </button>
+            </div>
+            {/* Body */}
+            <div class='p-4'>{props.children}</div>
+          </div>
+        </div>
+      </Portal>
+    </Show>
+  );
+}
+
+/**
  * ConfirmDialog - A reusable confirmation dialog component
  *
  * Props:

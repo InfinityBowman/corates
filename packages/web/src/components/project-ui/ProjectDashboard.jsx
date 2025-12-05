@@ -45,10 +45,10 @@ export default function ProjectDashboard(props) {
     disconnect();
   });
 
-  const handleProjectCreated = (newProject, pendingPdfs = []) => {
+  const handleProjectCreated = (newProject, pendingPdfs = [], pendingRefs = []) => {
     projectStore.addProjectToList(newProject);
     setShowCreateForm(false);
-    navigate(`/projects/${newProject.id}`, { state: { pendingPdfs } });
+    navigate(`/projects/${newProject.id}`, { state: { pendingPdfs, pendingRefs } });
   };
 
   const openProject = projectId => {

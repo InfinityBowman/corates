@@ -35,7 +35,7 @@ export default function Navbar(props) {
 
             const lastCol = final.answers?.[final.answers.length - 1];
             return lastCol && lastCol.some(v => v === true);
-          };  
+          };
 
           return (
             <button

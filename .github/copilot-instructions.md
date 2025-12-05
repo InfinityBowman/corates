@@ -62,7 +62,7 @@ function MyComponent(props) {
 ### Using createMemo for derived values and stores for complex state
 
 When you need to compute a value based on props or state, use `createMemo` to ensure it updates reactively
-When you have complex state or state objects, use Solid's `createStore` for better performance and reactivity.
+When you have complex state or state objects, use Solid's `createStore` for better performance and reactivity. Stores are great, use them!
 
 ### Primitives
 
