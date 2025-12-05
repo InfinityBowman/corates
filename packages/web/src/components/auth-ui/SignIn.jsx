@@ -4,7 +4,12 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import PasswordInput from '../zag/PasswordInput.jsx';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton, AuthLink } from './AuthButtons.jsx';
-import { GoogleButton, SocialAuthContainer, AuthDivider } from './SocialAuthButtons.jsx';
+import {
+  GoogleButton,
+  OrcidButton,
+  SocialAuthContainer,
+  AuthDivider,
+} from './SocialAuthButtons.jsx';
 
 export default function SignIn() {
   const [email, setEmail] = createSignal('');
@@ -12,11 +17,12 @@ export default function SignIn() {
   const [error, setError] = createSignal('');
   const [loading, setLoading] = createSignal(false);
   const [googleLoading, setGoogleLoading] = createSignal(false);
+  const [orcidLoading, setOrcidLoading] = createSignal(false);
   const navigate = useNavigate();
-  const { signin, signinWithGoogle, authError, clearAuthError } = useBetterAuth();
+  const { signin, signinWithGoogle, signinWithOrcid, authError, clearAuthError } = useBetterAuth();
 
   // Number of social providers
-  const socialProviderCount = 1;
+  const socialProviderCount = 2;
 
   // Clear any stale auth errors when component mounts
   onMount(() => clearAuthError());
@@ -34,6 +40,19 @@ export default function SignIn() {
       console.error('Google sign-in error:', err);
       setError('Failed to sign in with Google. Please try again.');
       setGoogleLoading(false);
+    }
+  }
+
+  async function handleOrcidSignIn() {
+    setOrcidLoading(true);
+    setError('');
+
+    try {
+      await signinWithOrcid('/dashboard');
+    } catch (err) {
+      console.error('ORCID sign-in error:', err);
+      setError('Failed to sign in with ORCID. Please try again.');
+      setOrcidLoading(false);
     }
   }
 
@@ -170,7 +189,11 @@ export default function SignIn() {
             onClick={handleGoogleSignIn}
             iconOnly={socialProviderCount > 1}
           />
-          {/* Add more social buttons here as needed */}
+          <OrcidButton
+            loading={orcidLoading()}
+            onClick={handleOrcidSignIn}
+            iconOnly={socialProviderCount > 1}
+          />
         </SocialAuthContainer>
 
         <div class='text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-4'>

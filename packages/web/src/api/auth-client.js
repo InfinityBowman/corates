@@ -1,8 +1,11 @@
 import { createAuthClient } from 'better-auth/solid';
+import { genericOAuthClient } from 'better-auth/client/plugins';
 import { API_BASE } from '@config/api.js';
 
 export const authClient = createAuthClient({
   baseURL: API_BASE,
+
+  plugins: [genericOAuthClient()],
 
   fetchOptions: {
     credentials: 'include',
