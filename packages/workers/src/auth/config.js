@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { genericOAuth } from 'better-auth/plugins';
+import { genericOAuth, magicLink } from 'better-auth/plugins';
 import { drizzle } from 'drizzle-orm/d1';
 import * as schema from '../db/schema.js';
 import { createEmailService } from './email.js';
@@ -81,6 +81,27 @@ export function createAuth(env, ctx) {
       '[Auth] ORCID OAuth NOT configured - missing ORCID_CLIENT_ID or ORCID_CLIENT_SECRET',
     );
   }
+
+  // Magic Link plugin for passwordless authentication
+  plugins.push(
+    magicLink({
+      sendMagicLink: async ({ email, url }) => {
+        console.log('[Auth] Queuing magic link email to:', email, 'URL:', url);
+        if (ctx && ctx.waitUntil) {
+          ctx.waitUntil(
+            (async () => {
+              try {
+                await emailService.sendMagicLink(email, url);
+              } catch (err) {
+                console.error('[Auth:waitUntil] Magic link email error:', err);
+              }
+            })(),
+          );
+        }
+      },
+      expiresIn: 60 * 10, // 10 minutes
+    }),
+  );
 
   return betterAuth({
     database: drizzleAdapter(db, {

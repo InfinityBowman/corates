@@ -22,8 +22,8 @@ export default function AuthLayout(props) {
       const currentPath = location.pathname;
       const currentUser = user();
 
-      // Don't redirect if already on complete-profile
-      if (currentPath === '/complete-profile') {
+      // Don't redirect if on complete-profile or reset-password (allow setting password while logged in)
+      if (currentPath === '/complete-profile' || currentPath === '/reset-password') {
         return;
       }
 
@@ -42,11 +42,11 @@ export default function AuthLayout(props) {
 
   // Show content for:
   // 1. Non-logged-in users (signup, signin, etc.)
-  // 2. Logged-in users on complete-profile page
+  // 2. Logged-in users on complete-profile or reset-password page
   const showContent = () => {
     if (!initialLoadComplete()) return false;
     const currentPath = location.pathname;
-    if (currentPath === '/complete-profile') return true;
+    if (currentPath === '/complete-profile' || currentPath === '/reset-password') return true;
     return !isLoggedIn();
   };
 
