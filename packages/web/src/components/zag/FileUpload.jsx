@@ -68,13 +68,14 @@ export function FileUpload(props) {
           // Compact mode - minimal dropzone
           <div
             {...api().getDropzoneProps()}
-            class={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+            class={`border-2 border-dashed rounded-lg py-8 px-4 text-center cursor-pointer transition-colors ${
               api().isDragging ?
                 'border-blue-500 bg-blue-50'
               : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
             } ${merged.dropzoneClass || ''}`}
           >
             <input {...api().getHiddenInputProps()} />
+            <BiRegularCloudUpload class='w-8 h-8 mx-auto text-gray-400 mb-2' />
             <p class='text-sm text-gray-600'>
               <span class='font-medium text-blue-600'>Click to upload</span> or drag and drop
             </p>

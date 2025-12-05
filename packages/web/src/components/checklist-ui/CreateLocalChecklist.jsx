@@ -142,7 +142,7 @@ export default function CreateLocalChecklist() {
                 disabled={creating()}
                 class='flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed'
               >
-                {creating() ? 'Creating...' : 'Create Study'}
+                {creating() ? 'Adding...' : 'Add Study'}
               </button>
             </div>
           </form>

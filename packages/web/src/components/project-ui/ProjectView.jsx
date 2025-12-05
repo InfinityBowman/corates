@@ -148,7 +148,7 @@ export default function ProjectView() {
       setShowStudyForm(false);
     } catch (err) {
       console.error('Error creating study:', err);
-      showToast.error('Creation Failed', 'Failed to create study');
+      showToast.error('Addition Failed', 'Failed to add study');
     } finally {
       setCreatingStudy(false);
     }
@@ -161,8 +161,8 @@ export default function ProjectView() {
       createChecklist(studyId, type, assigneeId);
       setShowChecklistForm(null);
     } catch (err) {
-      console.error('Error creating checklist:', err);
-      showToast.error('Creation Failed', 'Failed to create checklist');
+      console.error('Error adding checklist:', err);
+      showToast.error('Addition Failed', 'Failed to add checklist');
     } finally {
       setCreatingChecklist(false);
     }
@@ -448,57 +448,29 @@ export default function ProjectView() {
 
       {/* Studies Section */}
       <div class='space-y-6'>
-        <div class='flex items-center justify-between'>
-          <h2 class='text-xl font-bold text-gray-900'>Studies</h2>
-          <button
-            onClick={() => setShowStudyForm(true)}
-            class='inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg gap-2'
-          >
-            <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path
-                stroke-linecap='round'
-                stroke-linejoin='round'
-                stroke-width='2'
-                d='M12 4v16m8-8H4'
-              />
-            </svg>
-            New Study
-          </button>
-        </div>
+        <h2 class='text-xl font-bold text-gray-900'>Studies</h2>
 
-        {/* Create Study Form */}
-        <Show when={showStudyForm()}>
+        {/* Always-visible Study Form / Drop Zone */}
+        <Show
+          when={hasData()}
+          fallback={
+            <div class='text-center py-12 bg-white rounded-lg border border-gray-200'>
+              <p class='text-gray-400'>Loading studies...</p>
+            </div>
+          }
+        >
           <StudyForm
             onSubmit={handleCreateStudy}
             onCancel={() => setShowStudyForm(false)}
+            onExpand={() => setShowStudyForm(true)}
+            expanded={showStudyForm()}
             loading={creatingStudy()}
+            hasExistingStudies={studies().length > 0}
           />
         </Show>
 
         {/* Studies List */}
-        <Show
-          when={studies().length > 0}
-          fallback={
-            <Show
-              when={hasData()}
-              fallback={
-                <div class='text-center py-12 bg-white rounded-lg border border-gray-200'>
-                  <p class='text-gray-400'>Loading studies...</p>
-                </div>
-              }
-            >
-              <div class='text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300'>
-                <p class='text-gray-500 mb-4'>No studies yet</p>
-                <button
-                  onClick={() => setShowStudyForm(true)}
-                  class='text-blue-600 hover:text-blue-700 font-medium'
-                >
-                  Create your first study
-                </button>
-              </div>
-            </Show>
-          }
-        >
+        <Show when={studies().length > 0}>
           <div class='space-y-4'>
             <For each={studies()}>
               {study => (
