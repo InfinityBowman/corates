@@ -13,6 +13,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import Tooltip from '@components/zag/Tooltip.jsx';
 import PasswordInput from '@components/zag/PasswordInput.jsx';
 import { showToast } from '@components/zag/Toast.jsx';
+import QRCode from '@components/QRCode.jsx';
 
 export default function TwoFactorSetup() {
   const { user, enableTwoFactor, verifyTwoFactorSetup, disableTwoFactor, getTwoFactorStatus } =
@@ -336,14 +337,10 @@ export default function TwoFactorSetup() {
                 </div>
               </div>
 
-              {/* QR Code */}
+              {/* QR Code - Generated client-side for security */}
               <div class='flex justify-center'>
                 <div class='p-4 bg-white border border-gray-200 rounded-lg'>
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(totpUri())}`}
-                    alt='2FA QR Code'
-                    class='w-48 h-48'
-                  />
+                  <QRCode data={totpUri()} size={192} alt='2FA QR Code' />
                 </div>
               </div>
 
