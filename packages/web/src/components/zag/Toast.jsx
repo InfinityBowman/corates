@@ -23,6 +23,7 @@ function ToastItem(props) {
     parent: props.parent,
     index: props.index(),
   }));
+  // eslint-disable-next-line solid/reactivity
   const service = useMachine(toast.machine, machineProps);
   const api = createMemo(() => toast.connect(service, normalizeProps));
 

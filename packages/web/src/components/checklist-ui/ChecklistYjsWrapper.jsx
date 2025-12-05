@@ -199,7 +199,7 @@ export default function ChecklistYjsWrapper() {
   const headerContent = (
     <>
       <button
-        onClick={() => navigate(`/projects/${params.projectId}`)}
+        onClick={() => navigate(`/projects/${params.projectId}?tab=in-progress`)}
         class='text-gray-400 hover:text-gray-700 transition-colors'
       >
         <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>

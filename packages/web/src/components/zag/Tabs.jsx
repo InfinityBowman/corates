@@ -7,12 +7,16 @@ import { createMemo, createUniqueId, For, Show } from 'solid-js';
  * @param {Object} props
  * @param {Array<{value: string, label: string, icon?: any}>} props.tabs - Array of tab definitions
  * @param {string} [props.defaultValue] - Default selected tab value
+ * @param {string} [props.value] - Controlled tab value (e.g., from URL)
  * @param {(value: string) => void} [props.onValueChange] - Callback when tab changes
  * @param {Object} props.children - Tab content as children (use TabContent component)
  */
 export function Tabs(props) {
   const service = useMachine(tabs.machine, {
     id: createUniqueId(),
+    get value() {
+      return props.value;
+    },
     get defaultValue() {
       return props.defaultValue || props.tabs[0]?.value;
     },

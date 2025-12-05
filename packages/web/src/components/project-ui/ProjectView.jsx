@@ -486,6 +486,32 @@ export default function ProjectView() {
     },
   ]);
 
+  // Get tab from URL query parameter
+  const validTabs = [
+    'overview',
+    'included-studies',
+    'in-progress',
+    'ready-to-reconcile',
+    'completed',
+  ];
+  const tabFromUrl = () => {
+    const searchParams = new URLSearchParams(location.search);
+    const tab = searchParams.get('tab');
+    return validTabs.includes(tab) ? tab : 'overview';
+  };
+
+  // Update URL when tab changes
+  const handleTabChange = value => {
+    const searchParams = new URLSearchParams(location.search);
+    if (value === 'overview') {
+      searchParams.delete('tab');
+    } else {
+      searchParams.set('tab', value);
+    }
+    const newSearch = searchParams.toString();
+    navigate(`${location.pathname}${newSearch ? `?${newSearch}` : ''}`, { replace: true });
+  };
+
   return (
     <div class='p-6 max-w-4xl mx-auto'>
       <ProjectHeader
@@ -498,7 +524,7 @@ export default function ProjectView() {
         onDeleteProject={handleDeleteProject}
       />
 
-      <Tabs tabs={tabDefinitions()} defaultValue='overview'>
+      <Tabs tabs={tabDefinitions()} value={tabFromUrl()} onValueChange={handleTabChange}>
         {tabValue => (
           <>
             <Show when={tabValue === 'overview'}>
