@@ -312,8 +312,28 @@ export class ProjectDoc {
       return new Response('Authentication required', { status: 401 });
     }
 
-    await this.initializeDoc();
+    // Verify project membership
+    // Extract projectId from URL: /api/project/:projectId/...
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const projectId = pathParts[3]; // /api/project/{projectId}/...
+    console.log(`Verifying membership for user ${user.id} in project ${projectId}`);
 
+    // Check if user is in the members map
+    await this.initializeDoc();
+    const membersMap = this.doc.getMap('members');
+    const isMember = membersMap.has(user.id);
+
+    if (!isMember) {
+      console.log(`User ${user.id} is not a member of project ${projectId}`);
+      // Use 1008 (Policy Violation) close code so client can detect membership issue
+      return new Response('Not a project member', {
+        status: 403,
+        headers: { 'X-Close-Reason': 'not-a-member' },
+      });
+    }
+
+    console.log(`User ${user.id} verified as member of project ${projectId}`);
     const webSocketPair = new WebSocketPair();
     const [client, server] = Object.values(webSocketPair);
 
@@ -323,6 +343,12 @@ export class ProjectDoc {
 
     // Send current full state to new client
     const currentState = Y.encodeStateAsUpdate(this.doc);
+    console.log(`Sending full state to user ${user.id}, state size: ${currentState.length} bytes`);
+
+    // Log current document contents for debugging
+    const reviewsMap = this.doc.getMap('reviews');
+    console.log(`Document has ${reviewsMap.size} studies and ${membersMap.size} members`);
+
     server.send(JSON.stringify({ type: 'sync', update: Array.from(currentState) }));
 
     // If user joined broadcast presence message
