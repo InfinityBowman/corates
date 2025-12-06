@@ -72,3 +72,5 @@ export function Checkbox(props) {
     </label>
   );
 }
+
+export default Checkbox;

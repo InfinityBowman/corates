@@ -53,16 +53,18 @@ export function Tabs(props) {
         </For>
         <div {...api().getIndicatorProps()} class='hidden' />
       </div>
-      <For each={props.tabs}>
-        {tab => (
-          <div
-            {...api().getContentProps({ value: tab.value })}
-            class='bg-white rounded-b-lg border border-t-0 border-gray-200 p-6'
-          >
-            {props.children?.(tab.value)}
-          </div>
-        )}
-      </For>
+      <Show when={props.children}>
+        <For each={props.tabs}>
+          {tab => (
+            <div
+              {...api().getContentProps({ value: tab.value })}
+              class='bg-white rounded-b-lg border border-t-0 border-gray-200 p-6'
+            >
+              {props.children?.(tab.value)}
+            </div>
+          )}
+        </For>
+      </Show>
     </div>
   );
 }

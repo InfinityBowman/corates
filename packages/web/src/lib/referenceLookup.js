@@ -1,6 +1,61 @@
 /**
  * Reference Lookup API - Fetch metadata from DOI (CrossRef) and PMID (PubMed)
+ * Also checks for PDF availability via Unpaywall
  */
+
+// Unpaywall API email (required for their API)
+const UNPAYWALL_EMAIL = 'support@corates.org';
+
+/**
+ * Check if a PDF is available via Unpaywall
+ * @param {string} doi - The DOI to check
+ * @returns {Promise<{available: boolean, url: string|null, source: string|null}>}
+ */
+export async function checkPdfAvailability(doi) {
+  if (!doi) return { available: false, url: null, source: null };
+
+  const cleanDoi = doi
+    .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
+    .replace(/^doi:/i, '')
+    .trim();
+
+  try {
+    const response = await fetch(
+      `https://api.unpaywall.org/v2/${encodeURIComponent(cleanDoi)}?email=${UNPAYWALL_EMAIL}`,
+    );
+
+    if (!response.ok) {
+      return { available: false, url: null, source: null };
+    }
+
+    const data = await response.json();
+
+    // Check for best open access location with PDF
+    if (data.best_oa_location?.url_for_pdf) {
+      return {
+        available: true,
+        url: data.best_oa_location.url_for_pdf,
+        source: data.best_oa_location.host_type || 'open-access',
+      };
+    }
+
+    // Check all OA locations for any PDF
+    for (const location of data.oa_locations || []) {
+      if (location.url_for_pdf) {
+        return {
+          available: true,
+          url: location.url_for_pdf,
+          source: location.host_type || 'open-access',
+        };
+      }
+    }
+
+    return { available: false, url: null, source: null };
+  } catch (error) {
+    console.error('Unpaywall check failed:', error);
+    return { available: false, url: null, source: null };
+  }
+}
 
 /**
  * Fetch reference metadata from a DOI using CrossRef API
@@ -238,39 +293,52 @@ function formatAuthorList(authors) {
 /**
  * Detect identifier type and fetch metadata
  * @param {string} identifier - DOI, PMID, or URL
- * @returns {Promise<Object>} - Normalized reference object with source type
+ * @returns {Promise<Object>} - Normalized reference object with source type and PDF availability
  */
 export async function fetchReferenceByIdentifier(identifier) {
   const trimmed = identifier.trim();
+  let ref;
 
   // Check if it's a PubMed ID
   if (/^(pmid:?)?\d+$/i.test(trimmed)) {
-    const ref = await fetchFromPMID(trimmed);
-    return { ...ref, importSource: 'pubmed' };
+    ref = await fetchFromPMID(trimmed);
+    ref.importSource = 'pubmed';
   }
-
   // Check if it's a PubMed URL
-  if (/pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)/i.test(trimmed)) {
+  else if (/pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)/i.test(trimmed)) {
     const match = trimmed.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)/i);
-    const ref = await fetchFromPMID(match[1]);
-    return { ...ref, importSource: 'pubmed' };
+    ref = await fetchFromPMID(match[1]);
+    ref.importSource = 'pubmed';
   }
-
   // Check if it's a DOI (various formats)
-  if (/^10\.\d{4,}/i.test(trimmed) || /^doi:/i.test(trimmed) || /doi\.org\//i.test(trimmed)) {
-    const ref = await fetchFromDOI(trimmed);
-    return { ...ref, importSource: 'doi' };
+  else if (/^10\.\d{4,}/i.test(trimmed) || /^doi:/i.test(trimmed) || /doi\.org\//i.test(trimmed)) {
+    ref = await fetchFromDOI(trimmed);
+    ref.importSource = 'doi';
+  } else {
+    // Try DOI as fallback for unknown format
+    try {
+      ref = await fetchFromDOI(trimmed);
+      ref.importSource = 'doi';
+    } catch {
+      throw new Error(
+        'Could not identify reference. Please enter a valid DOI (e.g., 10.1234/example) or PubMed ID (e.g., 12345678).',
+      );
+    }
   }
 
-  // Try DOI as fallback for unknown format
-  try {
-    const ref = await fetchFromDOI(trimmed);
-    return { ...ref, importSource: 'doi' };
-  } catch {
-    throw new Error(
-      'Could not identify reference. Please enter a valid DOI (e.g., 10.1234/example) or PubMed ID (e.g., 12345678).',
-    );
+  // Check PDF availability via Unpaywall (requires DOI)
+  if (ref.doi) {
+    const pdfInfo = await checkPdfAvailability(ref.doi);
+    ref.pdfAvailable = pdfInfo.available;
+    ref.pdfUrl = pdfInfo.url;
+    ref.pdfSource = pdfInfo.source;
+  } else {
+    ref.pdfAvailable = false;
+    ref.pdfUrl = null;
+    ref.pdfSource = null;
   }
+
+  return ref;
 }
 
 /**

@@ -1,17 +1,21 @@
+/**
+ * PdfUploadSection - PDF upload section for AddStudiesForm
+ * Handles PDF file selection, title extraction, and management
+ */
+
 import { For, Show } from 'solid-js';
 import { BiRegularTrash } from 'solid-icons/bi';
 import { CgFileDocument } from 'solid-icons/cg';
 import { FileUpload } from '@components/zag/FileUpload.jsx';
 
 /**
- * PDF upload tab for project creation form
  * @param {Object} props
- * @param {Function} props.uploadedPdfs - Signal getter for uploaded PDFs
+ * @param {Array} props.uploadedPdfs - Store of uploaded PDFs
  * @param {Function} props.onFilesChange - Handler for new files
- * @param {Function} props.onRemove - Handler to remove a PDF
- * @param {Function} props.onUpdateTitle - Handler to update a PDF title
+ * @param {Function} props.onRemove - Handler to remove a PDF by id
+ * @param {Function} props.onUpdateTitle - Handler to update a PDF title (id, newTitle)
  */
-export default function PdfUploadTab(props) {
+export default function PdfUploadSection(props) {
   return (
     <div class='space-y-3'>
       <p class='text-sm text-gray-500'>
@@ -28,10 +32,9 @@ export default function PdfUploadTab(props) {
         compact
       />
 
-      {/* Uploaded PDFs list */}
-      <Show when={props.uploadedPdfs().length > 0}>
+      <Show when={props.uploadedPdfs.length > 0}>
         <div class='space-y-2'>
-          <For each={props.uploadedPdfs()}>
+          <For each={props.uploadedPdfs}>
             {pdf => (
               <div class='flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200'>
                 <CgFileDocument class='w-5 h-5 text-red-500 shrink-0' />
