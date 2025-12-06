@@ -1,31 +1,22 @@
 /**
- * useProjectPdfHandlers - Extracted PDF handlers for ProjectView
+ * useProjectPdfHandlers - Extracted PDF handlers
  * Handles PDF viewing, uploading, and Google Drive integration
  */
 
 import { uploadPdf, deletePdf, getPdfUrl } from '@api/pdf-api.js';
 import { cachePdf, removeCachedPdf, getCachedPdf } from '@primitives/pdfCache.js';
+import projectStore from '@primitives/projectStore.js';
+import { useBetterAuth } from '@api/better-auth-store.js';
 
 /**
- * @param {Object} options
- * @param {string} options.projectId - The project ID
- * @param {Function} options.user - Signal getter for current user
- * @param {Function} options.studies - Signal getter for studies array
- * @param {Object} options.projectActions - Actions from useProject hook
- * @param {Function} options.setShowGoogleDriveModal - Signal setter
- * @param {Function} options.setGoogleDriveTargetStudyId - Signal setter
- * @param {Function} options.googleDriveTargetStudyId - Signal getter
+ * @param {string} projectId - The project ID
+ * @param {Object} projectActions - Actions from useProject hook (addPdfToStudy, removePdfFromStudy)
  */
-export default function useProjectPdfHandlers(options) {
-  const {
-    projectId,
-    user,
-    studies,
-    projectActions,
-    setShowGoogleDriveModal,
-    setGoogleDriveTargetStudyId,
-    googleDriveTargetStudyId,
-  } = options;
+export default function useProjectPdfHandlers(projectId, projectActions) {
+  const { user } = useBetterAuth();
+
+  // Read from store directly
+  const studies = () => projectStore.getStudies(projectId);
 
   const { addPdfToStudy, removePdfFromStudy } = projectActions;
 
@@ -82,13 +73,7 @@ export default function useProjectPdfHandlers(options) {
     }
   };
 
-  const handleOpenGoogleDrive = studyId => {
-    setGoogleDriveTargetStudyId(studyId);
-    setShowGoogleDriveModal(true);
-  };
-
-  const handleGoogleDriveImportSuccess = file => {
-    const studyId = googleDriveTargetStudyId();
+  const handleGoogleDriveImportSuccess = (studyId, file) => {
     if (!studyId || !file) return;
 
     addPdfToStudy(studyId, {
@@ -104,7 +89,6 @@ export default function useProjectPdfHandlers(options) {
   return {
     handleViewPdf,
     handleUploadPdf,
-    handleOpenGoogleDrive,
     handleGoogleDriveImportSuccess,
   };
 }

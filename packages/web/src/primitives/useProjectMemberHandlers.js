@@ -1,21 +1,21 @@
 /**
- * useProjectMemberHandlers - Extracted member/project management handlers for ProjectView
+ * useProjectMemberHandlers - Extracted member/project management handlers
  * Handles project deletion, member removal, and related operations
  */
 
+import { useNavigate } from '@solidjs/router';
 import { API_BASE } from '@config/api.js';
 import { showToast } from '@components/zag/Toast.jsx';
 import projectStore from '@primitives/projectStore.js';
+import { useBetterAuth } from '@api/better-auth-store.js';
 
 /**
- * @param {Object} options
- * @param {string} options.projectId - The project ID
- * @param {Function} options.user - Signal getter for current user
- * @param {Object} options.confirmDialog - Confirm dialog instance
- * @param {Function} options.navigate - Navigation function
+ * @param {string} projectId - The project ID
+ * @param {Object} confirmDialog - Confirm dialog instance
  */
-export default function useProjectMemberHandlers(options) {
-  const { projectId, user, confirmDialog, navigate } = options;
+export default function useProjectMemberHandlers(projectId, confirmDialog) {
+  const navigate = useNavigate();
+  const { user } = useBetterAuth();
 
   const handleDeleteProject = async () => {
     const confirmed = await confirmDialog.open({

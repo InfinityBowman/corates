@@ -1,13 +1,26 @@
 import { For, Show, createMemo } from 'solid-js';
 import { CgArrowsExchange } from 'solid-icons/cg';
 import ReconcileStudyCard from '../ReconcileStudyCard.jsx';
+import projectStore from '@primitives/projectStore.js';
 
+/**
+ * ReadyToReconcileTab - Shows studies ready for reconciliation
+ *
+ * Props:
+ * - projectId: string - The project ID
+ * - checklistHandlers: { openReconciliation }
+ * - pdfHandlers: { handleViewPdf }
+ * - getAssigneeName: (userId) => string
+ */
 export default function ReadyToReconcileTab(props) {
+  // Read from store directly
+  const studies = () => projectStore.getStudies(props.projectId);
+
   // Filter studies that are ready to reconcile:
   // - Has at least 2 checklists
   // - Both checklists are marked as completed
   const readyToReconcileStudies = createMemo(() => {
-    return props.studies().filter(study => {
+    return studies().filter(study => {
       const checklists = study.checklists || [];
       if (checklists.length < 2) return false;
 
@@ -38,9 +51,9 @@ export default function ReadyToReconcileTab(props) {
               <ReconcileStudyCard
                 study={study}
                 onReconcile={(checklist1Id, checklist2Id) =>
-                  props.onOpenReconciliation(study.id, checklist1Id, checklist2Id)
+                  props.checklistHandlers.openReconciliation(study.id, checklist1Id, checklist2Id)
                 }
-                onViewPdf={pdf => props.onViewPdf(study.id, pdf)}
+                onViewPdf={pdf => props.pdfHandlers.handleViewPdf(study.id, pdf)}
                 getAssigneeName={props.getAssigneeName}
               />
             )}

@@ -1,49 +1,34 @@
 /**
- * useProjectHandlers - Extracted handlers for ProjectView
- * Handles study creation, PDF uploads, checklist management, and member operations
+ * useProjectStudyHandlers - Extracted handlers for study management
+ * Reads from projectStore directly to avoid prop drilling
  */
 
 import { uploadPdf, fetchPdfViaProxy } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
 import { showToast } from '@components/zag/Toast.jsx';
 import { generateStudyName, getDefaultNamingConvention } from '@/lib/studyNaming.js';
+import projectStore from '@primitives/projectStore.js';
+import { useBetterAuth } from '@api/better-auth-store.js';
 
 /**
- * @param {Object} options
- * @param {string} options.projectId - The project ID
- * @param {Function} options.user - Signal getter for current user
- * @param {Function} options.studies - Signal getter for studies array
- * @param {Function} options.meta - Signal getter for project meta
- * @param {Object} options.projectActions - Actions from useProject hook
- * @param {Object} options.confirmDialog - Confirm dialog instance
- * @param {Function} options.navigate - Navigation function
- * @param {Function} options.setShowStudyForm - Signal setter
- * @param {Function} options.setCreatingStudy - Signal setter
- * @param {Function} options.setShowChecklistForm - Signal setter
- * @param {Function} options.setCreatingChecklist - Signal setter
- * @param {Function} options.setShowReferenceImportModal - Signal setter
+ * @param {string} projectId - The project ID
+ * @param {Object} projectActions - Actions from useProject hook (createStudy, updateStudy, deleteStudy, addPdfToStudy)
+ * @param {Object} confirmDialog - Confirm dialog instance
  */
-export default function useProjectHandlers(options) {
-  const {
-    projectId,
-    user,
-    studies,
-    meta,
-    projectActions,
-    confirmDialog,
-    setShowStudyForm,
-    setCreatingStudy,
-    setShowReferenceImportModal,
-  } = options;
+export default function useProjectStudyHandlers(projectId, projectActions, confirmDialog) {
+  const { user } = useBetterAuth();
+
+  // Read from store directly
+  const studies = () => projectStore.getStudies(projectId);
+  const meta = () => projectStore.getMeta(projectId);
 
   const { createStudy, updateStudy, deleteStudy, addPdfToStudy } = projectActions;
 
   // Get the naming convention from project meta
-  const getNamingConvention = () => meta?.()?.studyNamingConvention || getDefaultNamingConvention();
+  const getNamingConvention = () => meta()?.studyNamingConvention || getDefaultNamingConvention();
 
   // Unified handler for adding studies from AddStudiesForm
   const handleAddStudies = async studiesToAdd => {
-    setCreatingStudy(true);
     let successCount = 0;
     let manualPdfCount = 0;
     const namingConvention = getNamingConvention();
@@ -132,53 +117,11 @@ export default function useProjectHandlers(options) {
           );
         }
       }
-      setShowStudyForm(false);
+      return { successCount, manualPdfCount };
     } catch (err) {
       console.error('Error adding studies:', err);
       showToast.error('Addition Failed', 'Failed to add studies');
-    } finally {
-      setCreatingStudy(false);
-    }
-  };
-
-  // Legacy handler for single study creation
-  const handleCreateStudy = async (
-    name,
-    description,
-    pdfData = null,
-    pdfFileName = null,
-    metadata = {},
-  ) => {
-    setCreatingStudy(true);
-    try {
-      const studyId = createStudy(name, description, metadata);
-      if (pdfData && studyId) {
-        try {
-          const result = await uploadPdf(projectId, studyId, pdfData, pdfFileName);
-          cachePdf(projectId, studyId, result.fileName, pdfData).catch(err =>
-            console.warn('Failed to cache PDF:', err),
-          );
-          addPdfToStudy(studyId, {
-            key: result.key,
-            fileName: result.fileName,
-            size: result.size,
-            uploadedBy: user()?.id,
-            uploadedAt: Date.now(),
-          });
-        } catch (uploadErr) {
-          console.error('Error uploading PDF:', uploadErr);
-          showToast.error(
-            'PDF Upload Failed',
-            'Study created, but PDF upload failed. You can try uploading again later.',
-          );
-        }
-      }
-      setShowStudyForm(false);
-    } catch (err) {
-      console.error('Error creating study:', err);
-      showToast.error('Addition Failed', 'Failed to add study');
-    } finally {
-      setCreatingStudy(false);
+      throw err;
     }
   };
 
@@ -212,7 +155,7 @@ export default function useProjectHandlers(options) {
         `Successfully imported ${successCount} ${successCount === 1 ? 'study' : 'studies'}.`,
       );
     }
-    setShowReferenceImportModal(false);
+    return successCount;
   };
 
   const handleUpdateStudy = (studyId, updates) => {
@@ -244,7 +187,7 @@ export default function useProjectHandlers(options) {
 
   // Apply naming convention to all existing studies
   const handleApplyNamingToAll = async namingConvention => {
-    const currentStudies = studies?.() || [];
+    const currentStudies = studies() || [];
     if (currentStudies.length === 0) return;
 
     let successCount = 0;
@@ -283,7 +226,6 @@ export default function useProjectHandlers(options) {
 
   return {
     handleAddStudies,
-    handleCreateStudy,
     handleImportReferences,
     handleUpdateStudy,
     handleDeleteStudy,
