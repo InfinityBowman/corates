@@ -94,7 +94,14 @@ export function getPasswordResetEmailText({ name, resetUrl }) {
   `;
 }
 
-export function getMagicLinkEmailHtml({ subject, magicLinkUrl }) {
+// Magic link expiration time in minutes - used by both config and email templates
+export const MAGIC_LINK_EXPIRY_MINUTES = 10;
+
+export function getMagicLinkEmailHtml({
+  subject,
+  magicLinkUrl,
+  expiryMinutes = MAGIC_LINK_EXPIRY_MINUTES,
+}) {
   return `
     <!DOCTYPE html>
     <html>
@@ -114,7 +121,7 @@ export function getMagicLinkEmailHtml({ subject, magicLinkUrl }) {
         </div>
         <p style="color: #4b5563;">If the button doesn't work, you can copy and paste this link into your browser:</p>
         <p style="word-break: break-all; color: #6b7280; background: #f3f4f6; padding: 12px; border-radius: 8px; font-size: 14px;">${magicLinkUrl}</p>
-        <p style="color: #4b5563;">This link will expire in 10 minutes for security reasons.</p>
+        <p style="color: #4b5563;">This link will expire in ${expiryMinutes} minutes for security reasons.</p>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
         <p style="color: #6b7280; font-size: 14px;">If you didn't request this sign-in link, you can safely ignore this email.</p>
         <p style="color: #6b7280; font-size: 14px;">Best regards,<br>The CoRATES Team</p>
@@ -124,7 +131,7 @@ export function getMagicLinkEmailHtml({ subject, magicLinkUrl }) {
   `;
 }
 
-export function getMagicLinkEmailText({ magicLinkUrl }) {
+export function getMagicLinkEmailText({ magicLinkUrl, expiryMinutes = MAGIC_LINK_EXPIRY_MINUTES }) {
   return `
     Hi there,
 
@@ -132,7 +139,7 @@ export function getMagicLinkEmailText({ magicLinkUrl }) {
 
     ${magicLinkUrl}
 
-    This link will expire in 10 minutes for security reasons.
+    This link will expire in ${expiryMinutes} minutes for security reasons.
 
     If you didn't request this sign-in link, you can safely ignore this email.
 

@@ -26,16 +26,32 @@ function createBetterAuthStore() {
     }
   });
 
-  // createEffect(() => {
-  //   console.log(
-  //     'Session loading:',
-  //     session().isPending,
-  //     'User:',
-  //     session().data?.user,
-  //     'isLoggedIn:',
-  //     isLoggedIn(),
-  //   );
-  // });
+  // BroadcastChannel for cross-tab auth state sync
+  const authChannel =
+    typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('corates-auth') : null;
+
+  // Listen for auth state changes from other tabs
+  createEffect(() => {
+    if (!authChannel) return;
+
+    const handleMessage = event => {
+      if (event.data?.type === 'auth-changed') {
+        // Another tab changed auth state, refetch session
+        session().refetch?.();
+      }
+    };
+
+    authChannel.addEventListener('message', handleMessage);
+
+    return () => {
+      authChannel.removeEventListener('message', handleMessage);
+    };
+  });
+
+  // Broadcast auth changes to other tabs
+  function broadcastAuthChange() {
+    authChannel?.postMessage({ type: 'auth-changed', timestamp: Date.now() });
+  }
 
   // Listen for tab visibility changes to refresh session
   createEffect(() => {
@@ -171,6 +187,10 @@ function createBetterAuthStore() {
 
       // Clear pending email on successful sign in
       localStorage.removeItem('pendingEmail');
+
+      // Notify other tabs of auth change
+      broadcastAuthChange();
+
       return data;
     } catch (err) {
       setAuthError(err.message);
@@ -189,6 +209,9 @@ function createBetterAuthStore() {
 
       // Clear cached project data on logout
       projectStore.clearProjectList();
+
+      // Notify other tabs of auth change
+      broadcastAuthChange();
     } catch (err) {
       setAuthError(err.message);
       throw err;
@@ -301,6 +324,9 @@ function createBetterAuthStore() {
         throw new Error(error.message);
       }
 
+      // Notify other tabs of auth change (2FA enabled)
+      broadcastAuthChange();
+
       return data;
     } catch (err) {
       setAuthError(err.message);
@@ -320,6 +346,9 @@ function createBetterAuthStore() {
         throw new Error(error.message);
       }
 
+      // Notify other tabs of auth change (2FA disabled)
+      broadcastAuthChange();
+
       return data;
     } catch (err) {
       setAuthError(err.message);
@@ -338,6 +367,9 @@ function createBetterAuthStore() {
       if (error) {
         throw new Error(error.message);
       }
+
+      // Notify other tabs of auth change (2FA completed)
+      broadcastAuthChange();
 
       return data;
     } catch (err) {
