@@ -8625,8 +8625,11 @@ packages:
       }
 
   stripe@20.0.0:
-    resolution: {integrity: sha512-EaZeWpbJOCcDytdjKSwdrL5BxzbDGNueiCfHjHXlPdBQvLqoxl6AAivC35SPzTmVXJb5duXQlXFGS45H0+e6Gg==}
-    engines: {node: '>=16'}
+    resolution:
+      {
+        integrity: sha512-EaZeWpbJOCcDytdjKSwdrL5BxzbDGNueiCfHjHXlPdBQvLqoxl6AAivC35SPzTmVXJb5duXQlXFGS45H0+e6Gg==,
+      }
+    engines: { node: '>=16' }
     peerDependencies:
       '@types/node': '>=16'
     peerDependenciesMeta:
