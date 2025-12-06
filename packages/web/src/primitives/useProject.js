@@ -57,6 +57,8 @@ export function useProject(projectId) {
     const studiesMap = ydoc.getMap('reviews');
     const studiesList = [];
 
+    console.log(`[Project ${projectId}] syncFromYDoc: processing ${studiesMap.size} studies`);
+
     for (const [studyId, studyYMap] of studiesMap.entries()) {
       const studyData = studyYMap.toJSON ? studyYMap.toJSON() : studyYMap;
       const study = {
@@ -180,6 +182,7 @@ export function useProject(projectId) {
     projectStore.setConnectionState(projectId, { connecting: true });
 
     ws.onopen = () => {
+      console.log(`[Project ${projectId}] WebSocket connected`);
       projectStore.setConnectionState(projectId, { connecting: false, connected: true });
       reconnectAttempts = 0; // Reset on successful connection
     };
@@ -189,9 +192,18 @@ export function useProject(projectId) {
         const data = JSON.parse(event.data);
 
         if (data.type === 'sync' || data.type === 'update') {
+          console.log(
+            `[Project ${projectId}] Received ${data.type}, update size: ${data.update?.length} bytes`,
+          );
           const update = new Uint8Array(data.update);
           // Apply with 'remote' origin - syncFromYDoc will be called by the update handler
           Y.applyUpdate(ydoc, update, 'remote');
+
+          // Log current state after applying update
+          const studiesMap = ydoc.getMap('reviews');
+          console.log(
+            `[Project ${projectId}] After ${data.type}, doc has ${studiesMap.size} studies`,
+          );
         } else if (data.type === 'error') {
           projectStore.setConnectionState(projectId, { error: data.message });
         }
@@ -199,9 +211,21 @@ export function useProject(projectId) {
         console.error('Error parsing WebSocket message:', err);
       }
     };
-
     ws.onclose = event => {
       projectStore.setConnectionState(projectId, { connected: false, connecting: false });
+
+      // If we got a 403 (not a member), clear IndexedDB and don't reconnect
+      if (event.code === 1008 || event.reason?.includes('member')) {
+        console.log(`[Project ${projectId}] Access denied - not a member. Clearing local data.`);
+        if (indexeddbProvider) {
+          indexeddbProvider.clearData();
+        }
+        projectStore.setConnectionState(projectId, {
+          error: 'You are not a member of this project',
+        });
+        shouldReconnect = false;
+        return;
+      }
 
       // Don't reconnect if it was a clean close (code 1000) or if we've exceeded max attempts
       const isCleanClose = event.code === 1000;
@@ -301,6 +325,9 @@ export function useProject(projectId) {
     ydoc.on('update', (update, origin) => {
       // Only send if the update originated locally (not from WebSocket)
       if (origin !== 'remote' && ws && ws.readyState === WebSocket.OPEN) {
+        console.log(
+          `[Project ${projectId}] Sending local update via WebSocket, size: ${update.length} bytes`,
+        );
         ws.send(JSON.stringify({ type: 'update', update: Array.from(update) }));
       }
       syncFromYDoc();
@@ -343,6 +370,8 @@ export function useProject(projectId) {
 
     const studyId = crypto.randomUUID();
     const now = Date.now();
+
+    console.log(`[Project ${projectId}] Creating study: ${name}`);
 
     // Note: Y.js map key remains 'reviews' for backward compatibility
     const studiesMap = ydoc.getMap('reviews');
