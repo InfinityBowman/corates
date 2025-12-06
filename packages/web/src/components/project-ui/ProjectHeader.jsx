@@ -1,6 +1,9 @@
 import { Show } from 'solid-js';
+import { useProjectContext } from './ProjectContext.jsx';
 
 export default function ProjectHeader(props) {
+  const { userRole } = useProjectContext();
+
   return (
     <div class='mb-8'>
       <div class='flex items-center gap-4 mb-2'>
@@ -20,9 +23,9 @@ export default function ProjectHeader(props) {
         <Show when={props.name}>
           <h1 class='text-2xl font-bold text-gray-900'>{props.name}</h1>
         </Show>
-        <Show when={props.userRole}>
+        <Show when={userRole()}>
           <span class='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize'>
-            {props.userRole}
+            {userRole()}
           </span>
         </Show>
       </div>

@@ -2,17 +2,15 @@ import { For, Show, createMemo, createSignal } from 'solid-js';
 import StudyCard from '../StudyCard.jsx';
 import projectStore from '@primitives/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
+import { useProjectContext } from '../ProjectContext.jsx';
 
 /**
  * InProgressTab - Shows studies assigned to the current user
- *
- * Props:
- * - projectId: string - The project ID
- * - checklistHandlers: { handleCreateChecklist, handleUpdateChecklist, handleDeleteChecklist, openChecklist, openReconciliation }
- * - pdfHandlers: { handleViewPdf }
- * - getAssigneeName: (userId) => string
+ * Uses ProjectContext for projectId, handlers, and helpers
  */
-export default function InProgressTab(props) {
+export default function InProgressTab() {
+  const { projectId, handlers, getAssigneeName } = useProjectContext();
+  const { checklistHandlers, pdfHandlers } = handlers;
   const { user } = useBetterAuth();
 
   // Local UI state
@@ -20,9 +18,9 @@ export default function InProgressTab(props) {
   const [creatingChecklist, setCreatingChecklist] = createSignal(false);
 
   // Read from store directly
-  const studies = () => projectStore.getStudies(props.projectId);
-  const members = () => projectStore.getMembers(props.projectId);
-  const connectionState = () => projectStore.getConnectionState(props.projectId);
+  const studies = () => projectStore.getStudies(projectId);
+  const members = () => projectStore.getMembers(projectId);
+  const connectionState = () => projectStore.getConnectionState(projectId);
   const hasData = () => connectionState().synced || studies().length > 0;
   const currentUserId = () => user()?.id;
 
@@ -44,11 +42,7 @@ export default function InProgressTab(props) {
   const handleCreateChecklist = async (studyId, type, assigneeId) => {
     setCreatingChecklist(true);
     try {
-      const success = await props.checklistHandlers.handleCreateChecklist(
-        studyId,
-        type,
-        assigneeId,
-      );
+      const success = await checklistHandlers.handleCreateChecklist(studyId, type, assigneeId);
       if (success) setShowChecklistForm(null);
     } finally {
       setCreatingChecklist(false);
@@ -74,7 +68,7 @@ export default function InProgressTab(props) {
               <StudyCard
                 study={study}
                 members={members()}
-                projectId={props.projectId}
+                projectId={projectId}
                 currentUserId={currentUserId()}
                 showChecklistForm={showChecklistForm() === study.id}
                 onToggleChecklistForm={() =>
@@ -84,19 +78,19 @@ export default function InProgressTab(props) {
                   handleCreateChecklist(study.id, type, assigneeId)
                 }
                 onOpenChecklist={checklistId =>
-                  props.checklistHandlers.openChecklist(study.id, checklistId)
+                  checklistHandlers.openChecklist(study.id, checklistId)
                 }
                 onReconcile={(checklist1Id, checklist2Id) =>
-                  props.checklistHandlers.openReconciliation(study.id, checklist1Id, checklist2Id)
+                  checklistHandlers.openReconciliation(study.id, checklist1Id, checklist2Id)
                 }
-                onViewPdf={pdf => props.pdfHandlers.handleViewPdf(study.id, pdf)}
+                onViewPdf={pdf => pdfHandlers.handleViewPdf(study.id, pdf)}
                 onUpdateChecklist={(checklistId, updates) =>
-                  props.checklistHandlers.handleUpdateChecklist(study.id, checklistId, updates)
+                  checklistHandlers.handleUpdateChecklist(study.id, checklistId, updates)
                 }
                 onDeleteChecklist={checklistId =>
-                  props.checklistHandlers.handleDeleteChecklist(study.id, checklistId)
+                  checklistHandlers.handleDeleteChecklist(study.id, checklistId)
                 }
-                getAssigneeName={props.getAssigneeName}
+                getAssigneeName={getAssigneeName}
                 creatingChecklist={creatingChecklist()}
                 hideManagementActions={true}
               />

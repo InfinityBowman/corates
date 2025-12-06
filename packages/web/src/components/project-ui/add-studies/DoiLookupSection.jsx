@@ -17,26 +17,14 @@ import { Checkbox } from '@components/zag/Checkbox.jsx';
 import { Tooltip } from '@components/zag/Tooltip.jsx';
 import { getRefDisplayName } from '@/lib/referenceParser.js';
 import { showToast } from '@components/zag/Toast.jsx';
+import { useStudiesContext } from './AddStudiesContext.jsx';
 
-/**
- * @param {Object} props
- * @param {Function} props.identifierInput - Signal getter for input text
- * @param {Function} props.setIdentifierInput - Signal setter for input text
- * @param {Function} props.lookupRefs - Signal getter for looked up references
- * @param {Function} props.selectedLookupIds - Signal getter for selected IDs (Set)
- * @param {Function} props.lookingUp - Signal getter for loading state
- * @param {Function} props.lookupErrors - Signal getter for errors array
- * @param {Function} props.onLookup - Handler for lookup action
- * @param {Function} props.onToggleSelection - Handler to toggle ref selection (id)
- * @param {Function} props.onToggleSelectAll - Handler to toggle all selections
- * @param {Function} props.onRemove - Handler to remove a single ref (id)
- * @param {Function} props.onClear - Handler to clear all refs
- * @param {Function} props.onAttachPdf - Handler to attach manual PDF to a ref (id, file, arrayBuffer)
- */
-export default function DoiLookupSection(props) {
+export default function DoiLookupSection() {
+  const studies = useStudiesContext();
+
   // Count refs with PDFs available
-  const refsWithPdf = createMemo(() => props.lookupRefs().filter(r => r.pdfAvailable));
-  const refsWithoutPdf = createMemo(() => props.lookupRefs().filter(r => !r.pdfAvailable));
+  const refsWithPdf = createMemo(() => studies.lookupRefs().filter(r => r.pdfAvailable));
+  const refsWithoutPdf = createMemo(() => studies.lookupRefs().filter(r => !r.pdfAvailable));
 
   return (
     <div class='space-y-3'>
@@ -48,19 +36,19 @@ export default function DoiLookupSection(props) {
       <div class='space-y-2'>
         <textarea
           placeholder='10.1000/xyz123&#10;32615397&#10;10.1016/j.example.2023.01.001'
-          value={props.identifierInput()}
-          onInput={e => props.setIdentifierInput(e.target.value)}
+          value={studies.identifierInput()}
+          onInput={e => studies.setIdentifierInput(e.target.value)}
           rows='4'
           class='w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition font-mono'
         />
         <button
           type='button'
-          onClick={() => props.onLookup()}
-          disabled={props.lookingUp() || !props.identifierInput().trim()}
+          onClick={() => studies.handleLookup()}
+          disabled={studies.lookingUp() || !studies.identifierInput().trim()}
           class='inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors'
         >
           <Show
-            when={!props.lookingUp()}
+            when={!studies.lookingUp()}
             fallback={
               <>
                 <div class='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
@@ -74,11 +62,11 @@ export default function DoiLookupSection(props) {
         </button>
       </div>
 
-      <Show when={props.lookupErrors().length > 0}>
+      <Show when={studies.lookupErrors().length > 0}>
         <div class='bg-red-50 border border-red-200 rounded-lg p-3'>
           <p class='text-sm font-medium text-red-700 mb-1'>Some lookups failed:</p>
           <ul class='text-xs text-red-600 list-disc list-inside'>
-            <For each={props.lookupErrors()}>
+            <For each={studies.lookupErrors()}>
               {err => (
                 <li>
                   <code class='font-mono'>{err.identifier}</code>: {err.error}
@@ -89,7 +77,7 @@ export default function DoiLookupSection(props) {
         </div>
       </Show>
 
-      <Show when={props.lookupRefs().length > 0}>
+      <Show when={studies.lookupRefs().length > 0}>
         <div class='space-y-2'>
           <div class='flex items-center justify-between'>
             <span class='text-sm text-gray-600'>
@@ -102,7 +90,7 @@ export default function DoiLookupSection(props) {
             </span>
             <button
               type='button'
-              onClick={() => props.onClear()}
+              onClick={() => studies.clearLookupRefs()}
               class='text-xs text-red-600 hover:text-red-700 hover:underline'
             >
               Clear all
@@ -112,13 +100,13 @@ export default function DoiLookupSection(props) {
           <Show when={refsWithPdf().length > 0}>
             <div class='flex items-center gap-2 pb-2 border-b border-gray-200'>
               <Checkbox
-                checked={props.selectedLookupIds().size === refsWithPdf().length}
+                checked={studies.selectedLookupIds().size === refsWithPdf().length}
                 indeterminate={
-                  props.selectedLookupIds().size > 0 &&
-                  props.selectedLookupIds().size < refsWithPdf().length
+                  studies.selectedLookupIds().size > 0 &&
+                  studies.selectedLookupIds().size < refsWithPdf().length
                 }
-                onChange={props.onToggleSelectAll}
-                label={`Select all with PDF (${props.selectedLookupIds().size}/${refsWithPdf().length})`}
+                onChange={studies.toggleSelectAllLookup}
+                label={`Select all with PDF (${studies.selectedLookupIds().size}/${refsWithPdf().length})`}
               />
             </div>
           </Show>
@@ -140,7 +128,7 @@ export default function DoiLookupSection(props) {
 
                   try {
                     const arrayBuffer = await file.arrayBuffer();
-                    props.onAttachPdf?.(ref._id, file.name, arrayBuffer);
+                    studies.attachPdfToLookupRef?.(ref._id, file.name, arrayBuffer);
                     showToast.success('PDF Attached', `Attached ${file.name}`);
                   } catch (err) {
                     console.error('Error reading PDF:', err);
@@ -153,11 +141,11 @@ export default function DoiLookupSection(props) {
                 return (
                   <div
                     class={`flex items-start gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
-                      props.selectedLookupIds().has(ref._id) ?
+                      studies.selectedLookupIds().has(ref._id) ?
                         'bg-green-50 hover:bg-green-100 border border-green-200'
                       : 'bg-gray-50 hover:bg-gray-100 border border-transparent'
                     }`}
-                    onClick={() => props.onToggleSelection(ref._id)}
+                    onClick={() => studies.toggleLookupSelection(ref._id)}
                   >
                     {/* Hidden file input for manual PDF upload */}
                     <input
@@ -168,8 +156,8 @@ export default function DoiLookupSection(props) {
                       onChange={handleManualPdfSelect}
                     />
                     <Checkbox
-                      checked={props.selectedLookupIds().has(ref._id)}
-                      onChange={() => props.onToggleSelection(ref._id)}
+                      checked={studies.selectedLookupIds().has(ref._id)}
+                      onChange={() => studies.toggleLookupSelection(ref._id)}
                       class='mt-0.5'
                     />
                     <div class='flex-1 min-w-0'>
@@ -262,7 +250,7 @@ export default function DoiLookupSection(props) {
                       type='button'
                       onClick={e => {
                         e.stopPropagation();
-                        props.onRemove(ref._id);
+                        studies.removeLookupRef(ref._id);
                       }}
                       class='p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors'
                     >
@@ -314,7 +302,7 @@ export default function DoiLookupSection(props) {
                         type='button'
                         onClick={e => {
                           e.stopPropagation();
-                          props.onRemove(ref._id);
+                          studies.removeLookupRef(ref._id);
                         }}
                         class='p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors'
                       >
