@@ -129,6 +129,9 @@ export default function ProjectDashboard(props) {
           </div>
         </Show>
       </div>
+
+      {/* Confirm dialog */}
+      <confirmDialog.ConfirmDialogComponent />
     </div>
   );
 }
