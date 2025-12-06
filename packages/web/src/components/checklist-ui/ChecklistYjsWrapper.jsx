@@ -7,6 +7,7 @@ import { downloadPdf, uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf, removeCachedPdf } from '@primitives/pdfCache.js';
 import { showToast } from '@components/zag/Toast.jsx';
 import { useBetterAuth } from '@api/better-auth-store.js';
+import { scoreChecklist } from '@/AMSTAR2/checklist.js';
 
 export default function ChecklistYjsWrapper() {
   const params = useParams();
@@ -195,6 +196,29 @@ export default function ChecklistYjsWrapper() {
     }
   }
 
+  // Compute the current score based on checklist answers
+  const currentScore = createMemo(() => {
+    const checklist = checklistForUI();
+    if (!checklist) return null;
+    return scoreChecklist(checklist);
+  });
+
+  // Get score badge styling based on score level
+  const getScoreStyle = score => {
+    switch (score) {
+      case 'High':
+        return 'bg-green-100 text-green-800';
+      case 'Moderate':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Low':
+        return 'bg-orange-100 text-orange-800';
+      case 'Critically Low':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-600';
+    }
+  };
+
   // Header content for the split screen toolbar (left side)
   const headerContent = (
     <>
@@ -232,7 +256,14 @@ export default function ChecklistYjsWrapper() {
           Connecting...
         </span>
       </Show>
-      <div class='ml-auto'>
+      <div class='ml-auto flex items-center gap-3'>
+        <Show when={currentScore()}>
+          <span
+            class={`px-2.5 py-1 text-xs font-medium rounded-full ${getScoreStyle(currentScore())}`}
+          >
+            Score: {currentScore()}
+          </span>
+        </Show>
         <button
           onClick={handleToggleComplete}
           class={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
