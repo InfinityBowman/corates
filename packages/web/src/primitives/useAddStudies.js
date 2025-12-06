@@ -145,7 +145,6 @@ export function useAddStudies(options = {}) {
   // ===================
 
   const handlePdfSelect = async files => {
-    console.log('Selected PDF files:', files);
     const pdfFiles = files.filter(f => f.type === 'application/pdf');
     if (pdfFiles.length === 0) return;
 
@@ -167,13 +166,11 @@ export function useAddStudies(options = {}) {
           extractPdfTitle(arrayBuffer.slice(0)),
           extractPdfDoi(arrayBuffer.slice(0)),
         ]);
-        console.log('Extracted PDF metadata:', { title, doi });
 
         // If DOI was extracted, fetch author/year metadata
         let metadata = null;
         if (doi) {
           try {
-            console.log('Fetching metadata for DOI:', doi);
             const refData = await fetchFromDOI(doi);
             metadata = {
               firstAuthor: refData.firstAuthor || null,
@@ -182,7 +179,6 @@ export function useAddStudies(options = {}) {
               journal: refData.journal || null,
               abstract: refData.abstract || null,
             };
-            console.log('Fetched metadata:', metadata);
           } catch (err) {
             console.warn('Could not fetch metadata for DOI:', doi, err);
           }
@@ -250,7 +246,6 @@ export function useAddStudies(options = {}) {
 
       for (const pdf of pdfs) {
         if (refDoi && pdf.doi && refDoi === pdf.doi) {
-          console.log('DOI match found:', refDoi, '=', pdf.doi);
           setLookupRefs(prev =>
             prev.map(r =>
               r._id === ref._id ?
@@ -276,7 +271,6 @@ export function useAddStudies(options = {}) {
 
         const pdfTitleNorm = normalizeTitle(pdf.title);
         if (refTitleNorm && pdfTitleNorm && refTitleNorm === pdfTitleNorm) {
-          console.log('Title match found:', refTitleNorm);
           setLookupRefs(prev =>
             prev.map(r =>
               r._id === ref._id ?
@@ -508,10 +502,8 @@ export function useAddStudies(options = {}) {
         let isMatch = false;
 
         if (pdfDoi && refDoi && pdfDoi === refDoi) {
-          console.log('Ref import: DOI match found:', pdfDoi);
           isMatch = true;
         } else if (pdfTitleNorm && refTitleNorm && pdfTitleNorm === refTitleNorm) {
-          console.log('Ref import: Title match found:', pdfTitleNorm);
           isMatch = true;
         }
 
