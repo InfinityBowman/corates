@@ -12,7 +12,8 @@
       "@auth/*": ["src/components/auth-ui/*"],
       "@offline/*": ["src/offline/*"],
       "@api/*": ["src/api/*"],
-      "@config/*": ["src/config/*"]
+      "@config/*": ["src/config/*"],
+      "@lib/*": ["src/lib/*"]
     }
   },
   "exclude": ["node_modules", "dist"]
