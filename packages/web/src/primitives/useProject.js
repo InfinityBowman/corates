@@ -8,6 +8,7 @@ import { IndexeddbPersistence } from 'y-indexeddb';
 import { createChecklist as createAMSTAR2Answers } from '../AMSTAR2/checklist.js';
 import { getWsBaseUrl } from '@config/api.js';
 import projectStore from './projectStore.js';
+import useOnlineStatus from './useOnlineStatus.js';
 
 /**
  * Hook to connect to a project's Y.Doc and manage studies/checklists
@@ -22,6 +23,13 @@ export function useProject(projectId) {
   let ws = null;
   let ydoc = null;
   let indexeddbProvider = null;
+  let reconnectTimeout = null;
+  let reconnectAttempts = 0;
+  let shouldReconnect = false; // Track if we should reconnect when online
+  const MAX_RECONNECT_ATTEMPTS = 10;
+  const BASE_RECONNECT_DELAY = 1000; // Start with 1 second
+
+  const isOnline = useOnlineStatus();
 
   // Reactive getters from store
   const connectionState = createMemo(() => projectStore.getConnectionState(projectId));
@@ -34,6 +42,12 @@ export function useProject(projectId) {
   const studies = () => projectData()?.studies || [];
   const meta = () => projectData()?.meta || {};
   const members = () => projectData()?.members || [];
+
+  // Get reconnect delay with exponential backoff (max 30 seconds)
+  function getReconnectDelay() {
+    const delay = Math.min(BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts), 30000);
+    return delay;
+  }
 
   // Sync Y.Doc state to store
   function syncFromYDoc() {
@@ -147,9 +161,109 @@ export function useProject(projectId) {
     });
   }
 
+  // Clear reconnect timeout helper
+  function clearReconnectTimeout() {
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+      reconnectTimeout = null;
+    }
+  }
+
+  // Setup WebSocket connection (can be called multiple times for reconnection)
+  function setupWebSocket() {
+    if (!ydoc || isLocalProject()) return;
+
+    // Build WebSocket URL
+    const wsUrl = `${getWsBaseUrl()}/api/project/${projectId}`;
+
+    ws = new WebSocket(wsUrl);
+    projectStore.setConnectionState(projectId, { connecting: true });
+
+    ws.onopen = () => {
+      projectStore.setConnectionState(projectId, { connecting: false, connected: true });
+      reconnectAttempts = 0; // Reset on successful connection
+    };
+
+    ws.onmessage = event => {
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'sync' || data.type === 'update') {
+          const update = new Uint8Array(data.update);
+          // Apply with 'remote' origin - syncFromYDoc will be called by the update handler
+          Y.applyUpdate(ydoc, update, 'remote');
+        } else if (data.type === 'error') {
+          projectStore.setConnectionState(projectId, { error: data.message });
+        }
+      } catch (err) {
+        console.error('Error parsing WebSocket message:', err);
+      }
+    };
+
+    ws.onclose = event => {
+      projectStore.setConnectionState(projectId, { connected: false, connecting: false });
+
+      // Don't reconnect if it was a clean close (code 1000) or if we've exceeded max attempts
+      const isCleanClose = event.code === 1000;
+      if (isCleanClose || reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+          projectStore.setConnectionState(projectId, {
+            error: 'Maximum reconnection attempts reached. Please refresh the page.',
+          });
+        }
+        shouldReconnect = false;
+        return;
+      }
+
+      // Mark that we should reconnect
+      shouldReconnect = true;
+
+      // If we're offline, wait for online event instead of attempting now
+      if (!isOnline()) {
+        console.log('WebSocket closed while offline. Will reconnect when online.');
+        projectStore.setConnectionState(projectId, {
+          error: 'Offline - will reconnect when online',
+        });
+        return;
+      }
+
+      // Attempt to reconnect with exponential backoff
+      reconnectAttempts++;
+      const delay = getReconnectDelay();
+      console.log(
+        `WebSocket closed. Reconnecting in ${delay}ms (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`,
+      );
+
+      reconnectTimeout = setTimeout(() => {
+        // Clean up old WebSocket before reconnecting
+        if (ws) {
+          ws.onclose = null;
+          ws.onerror = null;
+          ws.onmessage = null;
+          ws = null;
+        }
+
+        // Reconnect by calling setupWebSocket again
+        setupWebSocket();
+      }, delay);
+    };
+
+    ws.onerror = err => {
+      console.error('WebSocket error:', err);
+      projectStore.setConnectionState(projectId, {
+        error: 'Connection error',
+        connected: false,
+        connecting: false,
+      });
+    };
+  }
+
   // Connect to the project's WebSocket (or just IndexedDB for local projects)
   function connect() {
     if (ydoc || !projectId) return;
+
+    // Clear any pending reconnection attempts
+    clearReconnectTimeout();
 
     // Set this as the active project
     projectStore.setActiveProject(projectId);
@@ -180,43 +294,8 @@ export function useProject(projectId) {
       return;
     }
 
-    // Build WebSocket URL
-    const wsUrl = `${getWsBaseUrl()}/api/project/${projectId}`;
-
-    ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {
-      projectStore.setConnectionState(projectId, { connecting: false, connected: true });
-    };
-
-    ws.onmessage = event => {
-      try {
-        const data = JSON.parse(event.data);
-
-        if (data.type === 'sync' || data.type === 'update') {
-          const update = new Uint8Array(data.update);
-          // Apply with 'remote' origin - syncFromYDoc will be called by the update handler
-          Y.applyUpdate(ydoc, update, 'remote');
-        } else if (data.type === 'error') {
-          projectStore.setConnectionState(projectId, { error: data.message });
-        }
-      } catch (err) {
-        console.error('Error parsing WebSocket message:', err);
-      }
-    };
-
-    ws.onclose = () => {
-      projectStore.setConnectionState(projectId, { connected: false, connecting: false });
-    };
-
-    ws.onerror = err => {
-      console.error('WebSocket error:', err);
-      projectStore.setConnectionState(projectId, {
-        error: 'Connection error',
-        connected: false,
-        connecting: false,
-      });
-    };
+    // Initial WebSocket setup
+    setupWebSocket();
 
     // Listen for local Y.Doc changes
     ydoc.on('update', (update, origin) => {
@@ -230,8 +309,15 @@ export function useProject(projectId) {
 
   // Disconnect from WebSocket
   function disconnect() {
+    clearReconnectTimeout();
+    shouldReconnect = false;
+
     if (ws) {
-      ws.close();
+      // Set handlers to null to prevent reconnection on close
+      ws.onclose = null;
+      ws.onerror = null;
+      ws.onmessage = null;
+      ws.close(1000); // Clean close code
       ws = null;
     }
     if (indexeddbProvider) {
@@ -242,6 +328,8 @@ export function useProject(projectId) {
       ydoc.destroy();
       ydoc = null;
     }
+
+    reconnectAttempts = 0;
     projectStore.setConnectionState(projectId, { connected: false, synced: false });
   }
 
@@ -614,6 +702,30 @@ export function useProject(projectId) {
   createEffect(() => {
     if (projectId) {
       connect();
+    }
+  });
+
+  // Reconnect when coming back online
+  createEffect(() => {
+    if (isOnline() && shouldReconnect && !connected() && !connecting()) {
+      console.log('Network is back online. Attempting to reconnect...');
+      shouldReconnect = false;
+      reconnectAttempts = 0; // Reset attempts when coming back online
+      clearReconnectTimeout();
+
+      // Clean up old WebSocket if exists
+      if (ws) {
+        ws.onclose = null;
+        ws.onerror = null;
+        ws.onmessage = null;
+        ws.close();
+        ws = null;
+      }
+
+      // Reconnect (ydoc already exists, just need to setup WebSocket)
+      if (ydoc && !isLocalProject()) {
+        setupWebSocket();
+      }
     }
   });
 
