@@ -76,6 +76,7 @@ export default function ProjectView() {
     projectId: params.projectId,
     user,
     studies,
+    meta,
     projectActions,
     confirmDialog,
     navigate,
@@ -177,14 +178,14 @@ export default function ProjectView() {
     return member?.displayName || member?.name || member?.email || 'Unknown';
   };
 
-  // Tab configuration
-  const tabDefinitions = createMemo(() => [
+  // Tab configuration - static to prevent re-renders
+  const tabDefinitions = [
     { value: 'overview', label: 'Overview', icon: <BiRegularHome class='w-4 h-4' /> },
     {
       value: 'included-studies',
       label: 'Included Studies',
       icon: <AiOutlineBook class='w-4 h-4' />,
-      count: studies().length,
+      getCount: () => studies().length,
     },
     { value: 'in-progress', label: 'In Progress', icon: <BsListTask class='w-4 h-4' /> },
     {
@@ -193,7 +194,7 @@ export default function ProjectView() {
       icon: <CgArrowsExchange class='w-4 h-4' />,
     },
     { value: 'completed', label: 'Completed', icon: <AiFillCheckCircle class='w-4 h-4' /> },
-  ]);
+  ];
 
   const validTabs = [
     'overview',
@@ -226,19 +227,22 @@ export default function ProjectView() {
         onDeleteProject={memberHandlers.handleDeleteProject}
       />
 
-      <Tabs tabs={tabDefinitions()} value={tabFromUrl()} onValueChange={handleTabChange}>
+      <Tabs tabs={tabDefinitions} value={tabFromUrl()} onValueChange={handleTabChange}>
         {tabValue => (
           <>
             <Show when={tabValue === 'overview'}>
               <OverviewTab
                 studies={studies}
                 members={members}
+                meta={meta}
                 isOwner={isOwner}
                 currentUserId={user()?.id}
                 getChecklistData={getChecklistData}
                 onAddMember={() => setShowAddMemberModal(true)}
                 onRemoveMember={memberHandlers.handleRemoveMember}
                 onAssignReviewers={studyHandlers.handleUpdateStudy}
+                onUpdateSettings={projectActions.updateProjectSettings}
+                onApplyNamingToAll={studyHandlers.handleApplyNamingToAll}
               />
             </Show>
 

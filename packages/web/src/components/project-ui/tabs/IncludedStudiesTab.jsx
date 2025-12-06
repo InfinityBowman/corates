@@ -78,9 +78,10 @@ export default function IncludedStudiesTab(props) {
                 return Array.from(uniqueAssignees.values());
               };
 
-              // Check if study has PDFs
+              // Check if study has PDFs (uploaded or external URL)
               const hasPdfs = () => study.pdfs && study.pdfs.length > 0;
               const firstPdf = () => (hasPdfs() ? study.pdfs[0] : null);
+              const hasExternalPdf = () => study.pdfUrl && !hasPdfs();
 
               // Start editing the study name
               const startEditing = () => {
@@ -218,24 +219,41 @@ export default function IncludedStudiesTab(props) {
                     <Show
                       when={hasPdfs()}
                       fallback={
-                        <div class='flex items-center gap-1'>
-                          <button
-                            onClick={() => fileInputRef?.click()}
-                            disabled={uploading()}
-                            class='inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded hover:bg-gray-200 transition-colors gap-1 disabled:opacity-50'
-                            title='Upload PDF from computer'
+                        <Show
+                          when={hasExternalPdf()}
+                          fallback={
+                            <div class='flex items-center gap-1'>
+                              <button
+                                onClick={() => fileInputRef?.click()}
+                                disabled={uploading()}
+                                class='inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded hover:bg-gray-200 transition-colors gap-1 disabled:opacity-50'
+                                title='Upload PDF from computer'
+                              >
+                                <BiRegularUpload class='w-3.5 h-3.5' />
+                                {uploading() ? 'Uploading...' : 'Add PDF'}
+                              </button>
+                              <button
+                                onClick={() => props.onOpenGoogleDrive?.(study.id)}
+                                class='p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors'
+                                title='Import from Google Drive'
+                              >
+                                <FaBrandsGoogleDrive class='w-3.5 h-3.5' />
+                              </button>
+                            </div>
+                          }
+                        >
+                          {/* External PDF link from Unpaywall/open access */}
+                          <a
+                            href={study.pdfUrl}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            class='inline-flex items-center px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded hover:bg-green-200 transition-colors gap-1'
+                            title={`Open PDF via ${study.pdfSource || 'open access'}`}
                           >
-                            <BiRegularUpload class='w-3.5 h-3.5' />
-                            {uploading() ? 'Uploading...' : 'Add PDF'}
-                          </button>
-                          <button
-                            onClick={() => props.onOpenGoogleDrive?.(study.id)}
-                            class='p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors'
-                            title='Import from Google Drive'
-                          >
-                            <FaBrandsGoogleDrive class='w-3.5 h-3.5' />
-                          </button>
-                        </div>
+                            <CgFileDocument class='w-3.5 h-3.5' />
+                            PDF
+                          </a>
+                        </Show>
                       }
                     >
                       <button

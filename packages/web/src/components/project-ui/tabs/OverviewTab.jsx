@@ -1,6 +1,7 @@
 import { For, Show } from 'solid-js';
 import ChartSection from '../ChartSection.jsx';
 import ReviewerAssignment from '../ReviewerAssignment.jsx';
+import ProjectSettings from '../ProjectSettings.jsx';
 
 export default function OverviewTab(props) {
   return (
@@ -15,6 +16,17 @@ export default function OverviewTab(props) {
           <p class='text-2xl font-bold text-gray-900'>{props.members().length}</p>
           <p class='text-sm text-gray-500'>Members</p>
         </div>
+      </div>
+
+      {/* Project Settings */}
+      <div class='mb-8'>
+        <ProjectSettings
+          meta={props.meta}
+          studies={props.studies}
+          onUpdateSettings={props.onUpdateSettings}
+          onApplyNamingToAll={props.onApplyNamingToAll}
+          isOwner={props.isOwner()}
+        />
       </div>
 
       {/* Reviewer Assignment Section */}

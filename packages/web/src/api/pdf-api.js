@@ -5,6 +5,31 @@
 import { API_BASE } from '@config/api.js';
 
 /**
+ * Fetch a PDF from an external URL via the backend proxy (avoids CORS issues)
+ * @param {string} url - The external PDF URL (e.g., from Unpaywall)
+ * @returns {Promise<ArrayBuffer>} - The PDF data as ArrayBuffer
+ */
+export async function fetchPdfViaProxy(url) {
+  const proxyUrl = `${API_BASE}/api/pdf-proxy`;
+
+  const response = await fetch(proxyUrl, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ url }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Proxy fetch failed' }));
+    throw new Error(error.error || 'Failed to fetch PDF from external URL');
+  }
+
+  return response.arrayBuffer();
+}
+
+/**
  * Upload a PDF file for a study
  * @param {string} projectId - The project ID
  * @param {string} studyId - The study ID

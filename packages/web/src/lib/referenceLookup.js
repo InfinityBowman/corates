@@ -6,13 +6,73 @@
 // Unpaywall API email (required for their API)
 const UNPAYWALL_EMAIL = 'support@corates.org';
 
+// Repositories that allow programmatic PDF access (vs publishers that block bots)
+const ACCESSIBLE_REPOSITORIES = [
+  'pubmedcentral',
+  'pmc',
+  'europepmc',
+  'arxiv',
+  'biorxiv',
+  'medrxiv',
+  'zenodo',
+  'figshare',
+  'hal',
+  'oapen',
+  'doaj',
+  'core',
+  'semanticscholar',
+];
+
+/**
+ * Check if a PDF URL is likely to be programmatically accessible
+ * Publisher-hosted PDFs often block automated access
+ */
+function isPdfAccessible(location) {
+  if (!location?.url_for_pdf) return false;
+
+  const url = location.url_for_pdf.toLowerCase();
+  const hostType = (location.host_type || '').toLowerCase();
+
+  // Repository sources are generally accessible
+  if (hostType === 'repository') {
+    // Check for known accessible repositories
+    for (const repo of ACCESSIBLE_REPOSITORIES) {
+      if (url.includes(repo)) return true;
+    }
+    // Most other repositories are also accessible
+    return true;
+  }
+
+  // Check URL patterns for known accessible sources
+  for (const repo of ACCESSIBLE_REPOSITORIES) {
+    if (url.includes(repo)) return true;
+  }
+
+  // PMC URLs
+  if (url.includes('ncbi.nlm.nih.gov/pmc')) return true;
+
+  // Direct PDF file URLs (often work)
+  if (url.endsWith('.pdf') && !url.includes('sciencedirect') && !url.includes('elsevier')) {
+    return true;
+  }
+
+  // Publisher sources are often blocked
+  if (hostType === 'publisher') {
+    return false;
+  }
+
+  // Default to false for unknown sources
+  return false;
+}
+
 /**
  * Check if a PDF is available via Unpaywall
+ * Prioritizes repository sources that allow programmatic access
  * @param {string} doi - The DOI to check
- * @returns {Promise<{available: boolean, url: string|null, source: string|null}>}
+ * @returns {Promise<{available: boolean, url: string|null, source: string|null, accessible: boolean}>}
  */
 export async function checkPdfAvailability(doi) {
-  if (!doi) return { available: false, url: null, source: null };
+  if (!doi) return { available: false, url: null, source: null, accessible: false };
 
   const cleanDoi = doi
     .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
@@ -25,35 +85,49 @@ export async function checkPdfAvailability(doi) {
     );
 
     if (!response.ok) {
-      return { available: false, url: null, source: null };
+      return { available: false, url: null, source: null, accessible: false };
     }
 
     const data = await response.json();
+    const locations = data.oa_locations || [];
 
-    // Check for best open access location with PDF
-    if (data.best_oa_location?.url_for_pdf) {
-      return {
-        available: true,
-        url: data.best_oa_location.url_for_pdf,
-        source: data.best_oa_location.host_type || 'open-access',
-      };
-    }
-
-    // Check all OA locations for any PDF
-    for (const location of data.oa_locations || []) {
-      if (location.url_for_pdf) {
+    // First pass: look for accessible repository PDFs
+    for (const location of locations) {
+      if (location.url_for_pdf && isPdfAccessible(location)) {
         return {
           available: true,
           url: location.url_for_pdf,
-          source: location.host_type || 'open-access',
+          source: location.host_type || 'repository',
+          accessible: true,
         };
       }
     }
 
-    return { available: false, url: null, source: null };
+    // Second pass: return any PDF URL (may require manual download)
+    if (data.best_oa_location?.url_for_pdf) {
+      return {
+        available: true,
+        url: data.best_oa_location.url_for_pdf,
+        source: data.best_oa_location.host_type || 'publisher',
+        accessible: false,
+      };
+    }
+
+    for (const location of locations) {
+      if (location.url_for_pdf) {
+        return {
+          available: true,
+          url: location.url_for_pdf,
+          source: location.host_type || 'publisher',
+          accessible: false,
+        };
+      }
+    }
+
+    return { available: false, url: null, source: null, accessible: false };
   } catch (error) {
     console.error('Unpaywall check failed:', error);
-    return { available: false, url: null, source: null };
+    return { available: false, url: null, source: null, accessible: false };
   }
 }
 
@@ -332,10 +406,12 @@ export async function fetchReferenceByIdentifier(identifier) {
     ref.pdfAvailable = pdfInfo.available;
     ref.pdfUrl = pdfInfo.url;
     ref.pdfSource = pdfInfo.source;
+    ref.pdfAccessible = pdfInfo.accessible; // true = can auto-download, false = needs manual download
   } else {
     ref.pdfAvailable = false;
     ref.pdfUrl = null;
     ref.pdfSource = null;
+    ref.pdfAccessible = false;
   }
 
   return ref;
