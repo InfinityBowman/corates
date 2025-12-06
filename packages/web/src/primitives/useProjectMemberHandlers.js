@@ -10,14 +10,14 @@ import projectStore from '@primitives/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 
 /**
- * @param {string} projectId - The project ID
+ * @param {string} projectId - The project ID (can be null for dashboard use)
  * @param {Object} confirmDialog - Confirm dialog instance
  */
 export default function useProjectMemberHandlers(projectId, confirmDialog) {
   const navigate = useNavigate();
   const { user } = useBetterAuth();
 
-  const handleDeleteProject = async () => {
+  const handleDeleteProject = async (targetProjectId = projectId) => {
     const confirmed = await confirmDialog.open({
       title: 'Delete Project',
       description:
@@ -28,7 +28,7 @@ export default function useProjectMemberHandlers(projectId, confirmDialog) {
     if (!confirmed) return;
 
     try {
-      const response = await fetch(`${API_BASE}/api/projects/${projectId}`, {
+      const response = await fetch(`${API_BASE}/api/projects/${targetProjectId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -36,8 +36,13 @@ export default function useProjectMemberHandlers(projectId, confirmDialog) {
         const data = await response.json();
         throw new Error(data.error || 'Failed to delete project');
       }
-      projectStore.removeProjectFromList(projectId);
-      navigate('/dashboard', { replace: true });
+      projectStore.removeProjectFromList(targetProjectId);
+      // Only navigate if we're deleting from within the project view
+      if (projectId) {
+        navigate('/dashboard', { replace: true });
+      } else {
+        showToast.success('Project Deleted', 'The project has been deleted successfully');
+      }
     } catch (err) {
       console.error('Error deleting project:', err);
       showToast.error('Delete Failed', err.message || 'Failed to delete project');

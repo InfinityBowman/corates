@@ -181,10 +181,7 @@ export default function ProjectView() {
         name={meta()?.name}
         description={meta()?.description}
         userRole={userRole()}
-        isConnected={connectionState().connected}
-        isOwner={isOwner()}
         onBack={() => navigate('/dashboard')}
-        onDeleteProject={memberHandlers.handleDeleteProject}
       />
 
       <Tabs tabs={tabDefinitions} value={tabFromUrl()} onValueChange={handleTabChange}>
