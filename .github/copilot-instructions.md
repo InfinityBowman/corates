@@ -77,14 +77,14 @@ Always check for existing Zag components before creating new ones or using plain
 ### State Architecture (Very Important)
 
 To keep the codebase maintainable and avoid prop drilling:
-	•	Do NOT prop-drill application state.
-	•	Shared or cross-feature state must live in external stores under packages/web/src/stores/ or relative to the component file.
-	•	Import stores directly where needed instead of passing values through multiple components.
-	•	Components should receive at most 1–5 props, and only for local configuration, not shared state.
-	•	If a component would need more than 5 props, move the shared data into:
-	•	an external store
-	•	a primitive
-	•	or Solid context (when scoped to a feature)
+• Do NOT prop-drill application state.
+• Shared or cross-feature state must live in external stores under packages/web/src/stores/ or relative to the component file.
+• Import stores directly where needed instead of passing values through multiple components.
+• Components should receive at most 1–5 props, and only for local configuration, not shared state.
+• If a component would need more than 5 props, move the shared data into:
+• an external store
+• a primitive
+• or Solid context (when scoped to a feature)
 ALWAYS prefer the CLEANEST solution.
 
 ### Destructuring props
@@ -112,9 +112,10 @@ When you have complex state or state objects, use Solid's `createStore` for bett
 You may create reusable logic in "primitives" (hooks) that can be shared across components. This keeps components clean and focused on rendering.
 
 # Component Guidelines
-	•	Components should be lean and focused.
-	•	They should not implement business logic; move that into:
-	•	stores
-	•	utilities
-	•	primitives
-	•	Never have a component act as a “God component” coordinating multiple large concerns.
+
+    •	Components should be lean and focused.
+    •	They should not implement business logic; move that into:
+    •	stores
+    •	utilities
+    •	primitives
+    •	Never have a component act as a “God component” coordinating multiple large concerns.
