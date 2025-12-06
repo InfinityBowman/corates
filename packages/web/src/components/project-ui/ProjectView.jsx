@@ -3,7 +3,7 @@
  * Displays tabs for overview, included studies, in-progress, reconciliation, and completed
  */
 
-import { createSignal, createEffect, createMemo, Show, onCleanup, batch } from 'solid-js';
+import { createSignal, createEffect, Show, onCleanup, batch } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import useProject from '@primitives/useProject.js';
 import projectStore from '@primitives/projectStore.js';
@@ -24,6 +24,7 @@ import useProjectPdfHandlers from '@primitives/useProjectPdfHandlers.js';
 import useProjectMemberHandlers from '@primitives/useProjectMemberHandlers.js';
 
 // Components
+import { ProjectProvider } from './ProjectContext.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
 import ProjectHeader from './ProjectHeader.jsx';
 import OverviewTab from './tabs/OverviewTab.jsx';
@@ -31,7 +32,6 @@ import IncludedStudiesTab from './tabs/IncludedStudiesTab.jsx';
 import InProgressTab from './tabs/InProgressTab.jsx';
 import ReadyToReconcileTab from './tabs/ReadyToReconcileTab.jsx';
 import CompletedTab from './tabs/CompletedTab.jsx';
-import ReferenceImportModal from './ReferenceImportModal.jsx';
 
 export default function ProjectView() {
   const params = useParams();
@@ -42,26 +42,15 @@ export default function ProjectView() {
 
   // Modal state that needs to be at this level (shared across tabs or triggered from header)
   const [showAddMemberModal, setShowAddMemberModal] = createSignal(false);
-  const [showReferenceImportModal, setShowReferenceImportModal] = createSignal(false);
 
   // Y.js hook for write operations
   const projectActions = useProject(params.projectId);
   const { connect, disconnect, createStudy, addPdfToStudy } = projectActions;
 
-  // Read data from store
+  // Read data from store (only what's needed at this level)
   const studies = () => projectStore.getStudies(params.projectId);
-  const members = () => projectStore.getMembers(params.projectId);
   const meta = () => projectStore.getMeta(params.projectId);
   const connectionState = () => projectStore.getConnectionState(params.projectId);
-
-  // Derived state
-  const userRole = createMemo(() => {
-    const currentUser = user();
-    if (!currentUser) return null;
-    const member = members().find(m => m.userId === currentUser.id);
-    return member?.role || null;
-  });
-  const isOwner = () => userRole() === 'owner';
 
   // Create handlers with simplified API - they read from store directly
   const studyHandlers = useProjectStudyHandlers(params.projectId, projectActions, confirmDialog);
@@ -131,13 +120,6 @@ export default function ProjectView() {
 
   onCleanup(() => disconnect());
 
-  // Helper function for getting assignee names
-  const getAssigneeName = userId => {
-    if (!userId) return 'Unassigned';
-    const member = members().find(m => m.userId === userId);
-    return member?.displayName || member?.name || member?.email || 'Unknown';
-  };
-
   // Tab configuration
   const tabDefinitions = [
     { value: 'overview', label: 'Overview', icon: <BiRegularHome class='w-4 h-4' /> },
@@ -177,74 +159,49 @@ export default function ProjectView() {
 
   return (
     <div class='p-6 max-w-4xl mx-auto'>
-      <ProjectHeader
-        name={meta()?.name}
-        description={meta()?.description}
-        userRole={userRole()}
-        isConnected={connectionState().connected}
-        isOwner={isOwner()}
-        onBack={() => navigate('/dashboard')}
-        onDeleteProject={memberHandlers.handleDeleteProject}
-      />
+      <ProjectProvider
+        projectId={params.projectId}
+        handlers={{ studyHandlers, checklistHandlers, pdfHandlers, memberHandlers }}
+        projectActions={projectActions}
+        onAddMember={() => setShowAddMemberModal(true)}
+      >
+        <ProjectHeader
+          name={meta()?.name}
+          description={meta()?.description}
+          onBack={() => navigate('/dashboard')}
+        />
 
-      <Tabs tabs={tabDefinitions} value={tabFromUrl()} onValueChange={handleTabChange}>
-        {tabValue => (
-          <>
-            <Show when={tabValue === 'overview'}>
-              <OverviewTab
-                projectId={params.projectId}
-                isOwner={isOwner()}
-                studyHandlers={studyHandlers}
-                memberHandlers={memberHandlers}
-                projectActions={projectActions}
-                onAddMember={() => setShowAddMemberModal(true)}
-              />
-            </Show>
+        <Tabs tabs={tabDefinitions} value={tabFromUrl()} onValueChange={handleTabChange}>
+          {tabValue => (
+            <>
+              <Show when={tabValue === 'overview'}>
+                <OverviewTab onAddMember={() => setShowAddMemberModal(true)} />
+              </Show>
 
-            <Show when={tabValue === 'included-studies'}>
-              <IncludedStudiesTab
-                projectId={params.projectId}
-                studyHandlers={studyHandlers}
-                pdfHandlers={pdfHandlers}
-                getAssigneeName={getAssigneeName}
-              />
-            </Show>
+              <Show when={tabValue === 'included-studies'}>
+                <IncludedStudiesTab />
+              </Show>
 
-            <Show when={tabValue === 'in-progress'}>
-              <InProgressTab
-                projectId={params.projectId}
-                checklistHandlers={checklistHandlers}
-                pdfHandlers={pdfHandlers}
-                getAssigneeName={getAssigneeName}
-              />
-            </Show>
+              <Show when={tabValue === 'in-progress'}>
+                <InProgressTab />
+              </Show>
 
-            <Show when={tabValue === 'ready-to-reconcile'}>
-              <ReadyToReconcileTab
-                projectId={params.projectId}
-                checklistHandlers={checklistHandlers}
-                pdfHandlers={pdfHandlers}
-                getAssigneeName={getAssigneeName}
-              />
-            </Show>
+              <Show when={tabValue === 'ready-to-reconcile'}>
+                <ReadyToReconcileTab />
+              </Show>
 
-            <Show when={tabValue === 'completed'}>
-              <CompletedTab />
-            </Show>
-          </>
-        )}
-      </Tabs>
+              <Show when={tabValue === 'completed'}>
+                <CompletedTab />
+              </Show>
+            </>
+          )}
+        </Tabs>
+      </ProjectProvider>
 
       <AddMemberModal
         isOpen={showAddMemberModal()}
         onClose={() => setShowAddMemberModal(false)}
         projectId={params.projectId}
-      />
-
-      <ReferenceImportModal
-        open={showReferenceImportModal()}
-        onClose={() => setShowReferenceImportModal(false)}
-        onImport={studyHandlers.handleImportReferences}
       />
 
       <confirmDialog.ConfirmDialogComponent />

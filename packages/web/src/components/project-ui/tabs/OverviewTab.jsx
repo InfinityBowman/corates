@@ -4,25 +4,22 @@ import ReviewerAssignment from '../ReviewerAssignment.jsx';
 import ProjectSettings from '../ProjectSettings.jsx';
 import projectStore from '@primitives/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
+import { useProjectContext } from '../ProjectContext.jsx';
 
 /**
  * OverviewTab - Project overview with stats, settings, and members
  *
  * Props:
- * - projectId: string - The project ID
- * - isOwner: boolean - Whether current user is project owner
- * - studyHandlers: { handleUpdateStudy, handleApplyNamingToAll }
- * - memberHandlers: { handleRemoveMember }
- * - projectActions: { updateProjectSettings, getChecklistData }
  * - onAddMember: () => void
  */
 export default function OverviewTab(props) {
   const { user } = useBetterAuth();
+  const { projectId, handlers, projectActions, isOwner } = useProjectContext();
 
   // Read from store directly
-  const studies = () => projectStore.getStudies(props.projectId);
-  const members = () => projectStore.getMembers(props.projectId);
-  const meta = () => projectStore.getMeta(props.projectId);
+  const studies = () => projectStore.getStudies(projectId);
+  const members = () => projectStore.getMembers(projectId);
+  const meta = () => projectStore.getMeta(projectId);
   const currentUserId = () => user()?.id;
 
   return (
@@ -44,19 +41,19 @@ export default function OverviewTab(props) {
         <ProjectSettings
           meta={meta}
           studies={studies}
-          onUpdateSettings={props.projectActions.updateProjectSettings}
-          onApplyNamingToAll={props.studyHandlers.handleApplyNamingToAll}
-          isOwner={props.isOwner}
+          onUpdateSettings={projectActions.updateProjectSettings}
+          onApplyNamingToAll={handlers.studyHandlers.handleApplyNamingToAll}
+          isOwner={isOwner()}
         />
       </div>
 
       {/* Reviewer Assignment Section */}
-      <Show when={props.isOwner && studies().length > 0}>
+      <Show when={isOwner() && studies().length > 0}>
         <div class='mb-8'>
           <ReviewerAssignment
             studies={studies}
             members={members}
-            onAssignReviewers={props.studyHandlers.handleUpdateStudy}
+            onAssignReviewers={handlers.studyHandlers.handleUpdateStudy}
           />
         </div>
       </Show>
@@ -65,7 +62,7 @@ export default function OverviewTab(props) {
       <div class='mb-8'>
         <div class='flex items-center justify-between mb-4'>
           <h3 class='text-lg font-semibold text-gray-900'>Project Members</h3>
-          <Show when={props.isOwner}>
+          <Show when={isOwner()}>
             <button
               onClick={() => props.onAddMember()}
               class='inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors gap-1.5'
@@ -87,7 +84,7 @@ export default function OverviewTab(props) {
             <For each={members()}>
               {member => {
                 const isSelf = currentUserId() === member.userId;
-                const canRemove = props.isOwner || isSelf;
+                const canRemove = isOwner() || isSelf;
                 const isLastOwner =
                   member.role === 'owner' && members().filter(m => m.role === 'owner').length <= 1;
 
@@ -125,7 +122,7 @@ export default function OverviewTab(props) {
                       <Show when={canRemove && !isLastOwner}>
                         <button
                           onClick={() =>
-                            props.memberHandlers.handleRemoveMember(
+                            handlers.memberHandlers.handleRemoveMember(
                               member.userId,
                               member.displayName || member.name || member.email,
                             )
@@ -163,7 +160,7 @@ export default function OverviewTab(props) {
         <ChartSection
           studies={studies}
           members={members}
-          getChecklistData={props.projectActions.getChecklistData}
+          getChecklistData={projectActions.getChecklistData}
         />
       </div>
     </>

@@ -8,37 +8,26 @@ import AddStudiesForm from '../AddStudiesForm.jsx';
 import GoogleDrivePickerModal from '../GoogleDrivePickerModal.jsx';
 import { showToast } from '@components/zag/Toast.jsx';
 import projectStore from '@primitives/projectStore.js';
+import { useProjectContext } from '../ProjectContext.jsx';
 
 /**
  * IncludedStudiesTab - Displays all studies in a project
- *
- * Props:
- * - projectId: string - The project ID
- * - studyHandlers: { handleAddStudies, handleUpdateStudy, handleDeleteStudy }
- * - pdfHandlers: { handleViewPdf, handleUploadPdf, handleGoogleDriveImportSuccess }
- * - getAssigneeName: (userId) => string
  */
-export default function IncludedStudiesTab(props) {
+export default function IncludedStudiesTab() {
+  const { projectId, handlers, getAssigneeName } = useProjectContext();
+
   // Local UI state - managed here, not in parent
-  const [showStudyForm, setShowStudyForm] = createSignal(false);
-  const [creatingStudy, setCreatingStudy] = createSignal(false);
   const [showGoogleDriveModal, setShowGoogleDriveModal] = createSignal(false);
   const [googleDriveTargetStudyId, setGoogleDriveTargetStudyId] = createSignal(null);
 
   // Read from store directly
-  const studies = () => projectStore.getStudies(props.projectId);
-  const connectionState = () => projectStore.getConnectionState(props.projectId);
+  const studies = () => projectStore.getStudies(projectId);
+  const connectionState = () => projectStore.getConnectionState(projectId);
   const hasData = () => connectionState().synced || studies().length > 0;
 
-  // Wrap handlers to manage local loading state
+  // Handler for adding studies - AddStudiesForm manages its own loading state
   const handleAddStudies = async studiesToAdd => {
-    setCreatingStudy(true);
-    try {
-      await props.studyHandlers.handleAddStudies(studiesToAdd);
-      setShowStudyForm(false);
-    } finally {
-      setCreatingStudy(false);
-    }
+    await handlers.studyHandlers.handleAddStudies(studiesToAdd);
   };
 
   const handleOpenGoogleDrive = studyId => {
@@ -48,20 +37,13 @@ export default function IncludedStudiesTab(props) {
 
   const handleGoogleDriveImportSuccess = file => {
     const studyId = googleDriveTargetStudyId();
-    props.pdfHandlers.handleGoogleDriveImportSuccess(studyId, file);
+    handlers.pdfHandlers.handleGoogleDriveImportSuccess(studyId, file);
   };
   return (
     <div class='space-y-4'>
       {/* Add Studies Section - Unified form with PDF upload, reference import, and DOI lookup */}
       <Show when={hasData()}>
-        <AddStudiesForm
-          onAddStudies={handleAddStudies}
-          loading={creatingStudy()}
-          expanded={showStudyForm()}
-          onExpand={() => setShowStudyForm(true)}
-          onCollapse={() => setShowStudyForm(false)}
-          hasExistingStudies={studies().length > 0}
-        />
+        <AddStudiesForm projectId={projectId} onAddStudies={handleAddStudies} />
       </Show>
 
       <Show when={!hasData()} fallback={null}>
@@ -99,8 +81,8 @@ export default function IncludedStudiesTab(props) {
               // Get assigned reviewers from study-level assignments
               const assignedReviewers = () => {
                 const reviewers = [];
-                if (study.reviewer1) reviewers.push(props.getAssigneeName(study.reviewer1));
-                if (study.reviewer2) reviewers.push(props.getAssigneeName(study.reviewer2));
+                if (study.reviewer1) reviewers.push(getAssigneeName(study.reviewer1));
+                if (study.reviewer2) reviewers.push(getAssigneeName(study.reviewer2));
                 return reviewers;
               };
               const hasAssignedReviewers = () => study.reviewer1 || study.reviewer2;
@@ -112,7 +94,7 @@ export default function IncludedStudiesTab(props) {
                   if (checklist.assigneeId) {
                     uniqueAssignees.set(
                       checklist.assigneeId,
-                      props.getAssigneeName(checklist.assigneeId),
+                      getAssigneeName(checklist.assigneeId),
                     );
                   }
                 }
@@ -134,7 +116,7 @@ export default function IncludedStudiesTab(props) {
               const saveEdit = () => {
                 const newName = editName().trim();
                 if (newName && newName !== study.name) {
-                  props.studyHandlers.handleUpdateStudy(study.id, { name: newName });
+                  handlers.studyHandlers.handleUpdateStudy(study.id, { name: newName });
                 }
                 setEditing(false);
               };
@@ -164,7 +146,7 @@ export default function IncludedStudiesTab(props) {
 
                 setUploading(true);
                 try {
-                  await props.pdfHandlers.handleUploadPdf(study.id, file);
+                  await handlers.pdfHandlers.handleUploadPdf(study.id, file);
                 } catch (err) {
                   console.error('Error uploading PDF:', err);
                   showToast.error('Upload Failed', 'Failed to upload PDF');
@@ -298,7 +280,7 @@ export default function IncludedStudiesTab(props) {
                       }
                     >
                       <button
-                        onClick={() => props.pdfHandlers.handleViewPdf(study.id, firstPdf())}
+                        onClick={() => handlers.pdfHandlers.handleViewPdf(study.id, firstPdf())}
                         class='inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded hover:bg-gray-200 transition-colors gap-1'
                         title='View PDF'
                       >
@@ -323,7 +305,7 @@ export default function IncludedStudiesTab(props) {
                     </Show>
                     {/* Delete button */}
                     <button
-                      onClick={() => props.studyHandlers.handleDeleteStudy(study.id)}
+                      onClick={() => handlers.studyHandlers.handleDeleteStudy(study.id)}
                       class='p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors'
                       title='Delete Study'
                     >
@@ -344,7 +326,7 @@ export default function IncludedStudiesTab(props) {
           setShowGoogleDriveModal(false);
           setGoogleDriveTargetStudyId(null);
         }}
-        projectId={props.projectId}
+        projectId={projectId}
         studyId={googleDriveTargetStudyId()}
         onImportSuccess={handleGoogleDriveImportSuccess}
       />

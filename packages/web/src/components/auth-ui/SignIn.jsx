@@ -12,6 +12,7 @@ import {
 } from './SocialAuthButtons.jsx';
 import MagicLinkForm from './MagicLinkForm.jsx';
 import TwoFactorVerify from './TwoFactorVerify.jsx';
+import LastLoginHint from './LastLoginHint.jsx';
 
 export default function SignIn() {
   const [email, setEmail] = createSignal('');
@@ -163,6 +164,8 @@ export default function SignIn() {
             </h2>
             <p class='text-gray-500 text-xs sm:text-sm'>Sign in to your account.</p>
           </div>
+
+          <LastLoginHint />
 
           {/* Toggle between password and magic link */}
           <div class='flex rounded-lg bg-gray-100 p-1'>

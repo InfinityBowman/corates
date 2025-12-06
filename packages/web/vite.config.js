@@ -19,6 +19,7 @@ export default defineConfig({
       '@offline': path.resolve(__dirname, 'src/offline'),
       '@api': path.resolve(__dirname, 'src/api'),
       '@config': path.resolve(__dirname, 'src/config'),
+      '@lib': path.resolve(__dirname, 'src/lib'),
     },
   },
   server: {

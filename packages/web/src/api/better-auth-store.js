@@ -3,6 +3,7 @@ import { authClient, useSession } from '@api/auth-client.js';
 import useOnlineStatus from '@primitives/useOnlineStatus.js';
 import projectStore from '@primitives/projectStore.js';
 import { API_BASE } from '@config/api.js';
+import { saveLastLoginMethod, LOGIN_METHODS } from '@lib/lastLoginMethod.js';
 
 function createBetterAuthStore() {
   const isOnline = useOnlineStatus();
@@ -105,6 +106,9 @@ function createBetterAuthStore() {
       // Build full callback URL using current origin
       const callbackURL = `${window.location.origin}${callbackPath || '/dashboard'}`;
 
+      // Save login method before redirect
+      saveLastLoginMethod(LOGIN_METHODS.GOOGLE);
+
       const { data, error } = await authClient.signIn.social({
         provider: 'google',
         callbackURL,
@@ -126,6 +130,9 @@ function createBetterAuthStore() {
       setAuthError(null);
       // Build full callback URL using current origin
       const callbackURL = `${window.location.origin}${callbackPath || '/dashboard'}`;
+
+      // Save login method before redirect
+      saveLastLoginMethod(LOGIN_METHODS.ORCID);
 
       // Use genericOAuth signIn for custom providers
       const { data, error } = await authClient.signIn.oauth2({
@@ -161,6 +168,10 @@ function createBetterAuthStore() {
       // Store pending email for the check-email page
       localStorage.setItem('pendingEmail', email);
       localStorage.setItem('magicLinkSent', 'true');
+
+      // Save login method for when they click the link
+      saveLastLoginMethod(LOGIN_METHODS.MAGIC_LINK);
+
       return data;
     } catch (err) {
       setAuthError(err.message);
@@ -187,6 +198,9 @@ function createBetterAuthStore() {
 
       // Clear pending email on successful sign in
       localStorage.removeItem('pendingEmail');
+
+      // Save login method on successful sign in
+      saveLastLoginMethod(LOGIN_METHODS.EMAIL);
 
       // Notify other tabs of auth change
       broadcastAuthChange();
