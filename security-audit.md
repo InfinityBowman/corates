@@ -58,7 +58,6 @@ Current limits are insufficient for distributed attacks:
 
 ---
 
-
 ## Low Severity Findings
 
 ### L-2: Sensitive Data in localStorage
