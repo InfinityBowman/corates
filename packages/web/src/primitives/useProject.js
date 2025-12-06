@@ -57,7 +57,10 @@ export function useProject(projectId) {
     const studiesMap = ydoc.getMap('reviews');
     const studiesList = [];
 
-    console.log(`[Project ${projectId}] syncFromYDoc: processing ${studiesMap.size} studies`);
+    // Debug: log all root-level maps
+    const allMaps = Array.from(ydoc.share.keys());
+    console.log(`[Project ${projectId}] syncFromYDoc: Y.Doc has maps:`, allMaps);
+    console.log(`[Project ${projectId}] syncFromYDoc: 'reviews' map size: ${studiesMap.size}`);
 
     for (const [studyId, studyYMap] of studiesMap.entries()) {
       const studyData = studyYMap.toJSON ? studyYMap.toJSON() : studyYMap;
@@ -185,6 +188,18 @@ export function useProject(projectId) {
       console.log(`[Project ${projectId}] WebSocket connected`);
       projectStore.setConnectionState(projectId, { connecting: false, connected: true });
       reconnectAttempts = 0; // Reset on successful connection
+
+      // Send any local state that might exist from IndexedDB
+      // This ensures local changes are synced to server after connection
+      if (ydoc) {
+        const localState = Y.encodeStateAsUpdate(ydoc);
+        if (localState.length > 0) {
+          console.log(
+            `[Project ${projectId}] Sending local state to server on connect, size: ${localState.length} bytes`,
+          );
+          ws.send(JSON.stringify({ type: 'update', update: Array.from(localState) }));
+        }
+      }
     };
 
     ws.onmessage = event => {
@@ -199,11 +214,14 @@ export function useProject(projectId) {
           // Apply with 'remote' origin - syncFromYDoc will be called by the update handler
           Y.applyUpdate(ydoc, update, 'remote');
 
-          // Log current state after applying update
-          const studiesMap = ydoc.getMap('reviews');
-          console.log(
-            `[Project ${projectId}] After ${data.type}, doc has ${studiesMap.size} studies`,
-          );
+          // Log ALL root-level maps after applying update
+          const allMapKeys = Array.from(ydoc.share.keys());
+          const mapSizes = {};
+          allMapKeys.forEach(key => {
+            const map = ydoc.getMap(key);
+            mapSizes[key] = map.size;
+          });
+          console.log(`[Project ${projectId}] After ${data.type}, Y.Doc maps:`, mapSizes);
         } else if (data.type === 'error') {
           projectStore.setConnectionState(projectId, { error: data.message });
         }
