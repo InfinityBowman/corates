@@ -121,6 +121,7 @@ projectRoutes.post('/', validateRequest(projectSchemas.create), async c => {
         name: user.name,
         email: user.email,
         displayName: user.displayName,
+        image: user.image,
       })
       .from(user)
       .where(eq(user.id, authUser.id))
@@ -144,6 +145,7 @@ projectRoutes.post('/', validateRequest(projectSchemas.create), async c => {
           name: creator?.name || null,
           email: creator?.email || null,
           displayName: creator?.displayName || null,
+          image: creator?.image || null,
         },
       ],
     );

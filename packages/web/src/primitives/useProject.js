@@ -135,6 +135,7 @@ export function useProject(projectId) {
         name: memberData.name,
         email: memberData.email,
         displayName: memberData.displayName,
+        image: memberData.image,
       });
     }
 

@@ -8,6 +8,9 @@
 import { Hono } from 'hono';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { createErrorResponse, ERROR_CODES } from '../config/constants.js';
+import { createDb } from '../db/client.js';
+import { projectMembers } from '../db/schema.js';
+import { eq } from 'drizzle-orm';
 
 const avatarRoutes = new Hono();
 
@@ -19,6 +22,47 @@ const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
 
 // Allowed image types
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+/**
+ * Sync avatar URL to all project memberships for a user
+ */
+async function syncAvatarToProjects(env, userId, avatarUrl) {
+  try {
+    const db = createDb(env.DB);
+
+    // Get all projects the user is a member of
+    const memberships = await db
+      .select({ projectId: projectMembers.projectId })
+      .from(projectMembers)
+      .where(eq(projectMembers.userId, userId));
+
+    // Update each project's Durable Object
+    for (const { projectId } of memberships) {
+      try {
+        const doId = env.PROJECT_DOC.idFromName(projectId);
+        const projectDoc = env.PROJECT_DOC.get(doId);
+
+        await projectDoc.fetch(
+          new Request('https://internal/sync-member', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Internal-Request': 'true',
+            },
+            body: JSON.stringify({
+              action: 'update',
+              member: { userId, image: avatarUrl },
+            }),
+          }),
+        );
+      } catch (err) {
+        console.error(`Failed to sync avatar to project ${projectId}:`, err);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to sync avatar to projects:', err);
+  }
+}
 
 /**
  * POST /api/users/avatar
@@ -103,6 +147,9 @@ avatarRoutes.post('/', async c => {
 
       // Generate the public URL - serve through our API
       const avatarUrl = `${c.req.url.split('/api/')[0]}/api/users/avatar/${user.id}`;
+
+      // Sync the new avatar URL to all project memberships
+      await syncAvatarToProjects(c.env, user.id, avatarUrl);
 
       return c.json({
         success: true,

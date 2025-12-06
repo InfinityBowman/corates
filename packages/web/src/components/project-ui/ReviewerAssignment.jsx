@@ -6,7 +6,14 @@
 import { createSignal, createMemo, For, Show } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { showToast } from '@components/zag/Toast.jsx';
-import { BiRegularShuffle, BiRegularCheck, BiRegularX } from 'solid-icons/bi';
+import {
+  BiRegularShuffle,
+  BiRegularCheck,
+  BiRegularX,
+  BiRegularChevronDown,
+  BiRegularChevronUp,
+} from 'solid-icons/bi';
+import { FiUsers } from 'solid-icons/fi';
 
 /**
  * @param {Object} props
@@ -15,6 +22,9 @@ import { BiRegularShuffle, BiRegularCheck, BiRegularX } from 'solid-icons/bi';
  * @param {Function} props.onAssignReviewers - Callback to update study with reviewer assignments
  */
 export default function ReviewerAssignment(props) {
+  // Expanded state
+  const [isExpanded, setIsExpanded] = createSignal(false);
+
   // Reviewer pools with percentages
   // Each pool item: { userId: string, percent: number }
   const [reviewer1Pool, setReviewer1Pool] = createStore([]);
@@ -408,142 +418,173 @@ export default function ReviewerAssignment(props) {
     );
   };
 
+  // Collapse and reset state
+  const handleCollapse = () => {
+    setIsExpanded(false);
+    setShowPreview(false);
+    setPreviewAssignments([]);
+  };
+
   return (
-    <div class='bg-white border border-gray-200 rounded-lg p-4'>
-      <h3 class='text-lg font-semibold text-gray-900 mb-4'>Assign Reviewers to Studies</h3>
-
-      <Show
-        when={members().length >= 2}
-        fallback={
-          <p class='text-gray-500 text-sm'>
-            At least 2 project members are required to assign reviewers.
-          </p>
-        }
+    <div class='bg-white border border-gray-200 rounded-lg overflow-hidden'>
+      {/* Trigger Button */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded())}
+        class='w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'
       >
-        <Show
-          when={unassignedStudies().length > 0 || showPreview()}
-          fallback={
-            <div class='flex items-center gap-2 text-green-600'>
-              <BiRegularCheck class='w-5 h-5' />
-              <p class='text-sm'>All studies have reviewers assigned.</p>
-            </div>
-          }
-        >
-          <div class='space-y-4'>
-            <p class='text-sm text-gray-600'>
-              Add reviewers to each pool and set their percentage. Studies will be randomly assigned
-              one reviewer from each pool based on the percentages.
-            </p>
+        <div class='flex items-center gap-2'>
+          <FiUsers class='w-4 h-4 text-blue-600' />
+          <span class='text-sm font-medium text-gray-900'>Assign Reviewers to Studies</span>
+        </div>
+        <Show when={isExpanded()} fallback={<BiRegularChevronDown class='w-5 h-5 text-gray-400' />}>
+          <BiRegularChevronUp class='w-5 h-5 text-gray-400' />
+        </Show>
+      </button>
 
-            {/* Reviewer Pools */}
-            <div class='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              <ReviewerPoolSection
-                title='1st Reviewer Pool'
-                pool={reviewer1Pool}
-                available={availableForPool1()}
-                total={pool1Total()}
-                isValid={isPool1Valid()}
-                onAdd={addToPool1}
-                onRemove={removeFromPool1}
-                onUpdatePercent={updatePool1Percent}
-                onDistributeEvenly={distributeEvenly1}
-              />
-              <ReviewerPoolSection
-                title='2nd Reviewer Pool'
-                pool={reviewer2Pool}
-                available={availableForPool2()}
-                total={pool2Total()}
-                isValid={isPool2Valid()}
-                onAdd={addToPool2}
-                onRemove={removeFromPool2}
-                onUpdatePercent={updatePool2Percent}
-                onDistributeEvenly={distributeEvenly2}
-              />
-            </div>
-
-            <p class='text-xs text-gray-500'>
-              {unassignedStudies().length} {unassignedStudies().length === 1 ? 'study' : 'studies'}{' '}
-              without reviewers
-            </p>
-
-            {/* Preview Button */}
-            <Show when={!showPreview()}>
-              <button
-                onClick={handlePreview}
-                disabled={!canGenerate() || unassignedStudies().length === 0}
-                class='inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors gap-2'
-              >
-                <BiRegularShuffle class='w-4 h-4' />
-                Generate Random Assignments
-              </button>
-            </Show>
-
-            {/* Preview Section */}
-            <Show when={showPreview()}>
-              <div class='border border-blue-200 rounded-lg overflow-hidden'>
-                <div class='bg-blue-50 px-4 py-2 border-b border-blue-200 flex items-center justify-between'>
-                  <h4 class='text-sm font-semibold text-blue-900'>
-                    Preview Assignments ({previewAssignments().length} studies)
-                  </h4>
-                  <button
-                    onClick={handleReshuffle}
-                    class='inline-flex items-center px-2 py-1 text-blue-700 text-xs font-medium hover:bg-blue-100 rounded transition-colors gap-1'
-                  >
-                    <BiRegularShuffle class='w-3 h-3' />
-                    Reshuffle
-                  </button>
+      {/* Expandable Content */}
+      <Show when={isExpanded()}>
+        <div class='px-4 pb-4 border-t border-gray-200'>
+          <Show
+            when={members().length >= 2}
+            fallback={
+              <p class='text-gray-500 text-sm mt-4'>
+                At least 2 project members are required to assign reviewers.
+              </p>
+            }
+          >
+            <Show
+              when={unassignedStudies().length > 0 || showPreview()}
+              fallback={
+                <div class='flex items-center gap-2 text-green-600 mt-4'>
+                  <BiRegularCheck class='w-5 h-5' />
+                  <p class='text-sm'>All studies have reviewers assigned.</p>
                 </div>
-                <div class='max-h-64 overflow-y-auto'>
-                  <table class='w-full text-sm'>
-                    <thead class='bg-gray-50 sticky top-0'>
-                      <tr>
-                        <th class='text-left px-4 py-2 font-medium text-gray-700'>Study</th>
-                        <th class='text-left px-4 py-2 font-medium text-gray-700'>1st Reviewer</th>
-                        <th class='text-left px-4 py-2 font-medium text-gray-700'>2nd Reviewer</th>
-                      </tr>
-                    </thead>
-                    <tbody class='divide-y divide-gray-200'>
-                      <For each={previewAssignments()}>
-                        {assignment => (
-                          <tr
-                            class={`hover:bg-gray-50 ${assignment.sameReviewer ? 'bg-red-50' : ''}`}
-                          >
-                            <td class='px-4 py-2 text-gray-900 truncate max-w-xs'>
-                              {assignment.studyName}
-                            </td>
-                            <td class='px-4 py-2 text-gray-600'>{assignment.reviewer1Name}</td>
-                            <td
-                              class={`px-4 py-2 ${assignment.sameReviewer ? 'text-red-600 font-medium' : 'text-gray-600'}`}
-                            >
-                              {assignment.reviewer2Name}
-                              {assignment.sameReviewer && ' (conflict)'}
-                            </td>
+              }
+            >
+              <div class='space-y-4'>
+                <p class='text-sm text-gray-600 mt-4'>
+                  Add reviewers to each pool and set their percentage. Studies will be randomly
+                  assigned one reviewer from each pool based on the percentages.
+                </p>
+
+                {/* Reviewer Pools */}
+                <div class='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <ReviewerPoolSection
+                    title='1st Reviewer Pool'
+                    pool={reviewer1Pool}
+                    available={availableForPool1()}
+                    total={pool1Total()}
+                    isValid={isPool1Valid()}
+                    onAdd={addToPool1}
+                    onRemove={removeFromPool1}
+                    onUpdatePercent={updatePool1Percent}
+                    onDistributeEvenly={distributeEvenly1}
+                  />
+                  <ReviewerPoolSection
+                    title='2nd Reviewer Pool'
+                    pool={reviewer2Pool}
+                    available={availableForPool2()}
+                    total={pool2Total()}
+                    isValid={isPool2Valid()}
+                    onAdd={addToPool2}
+                    onRemove={removeFromPool2}
+                    onUpdatePercent={updatePool2Percent}
+                    onDistributeEvenly={distributeEvenly2}
+                  />
+                </div>
+
+                <p class='text-xs text-gray-500'>
+                  {unassignedStudies().length}{' '}
+                  {unassignedStudies().length === 1 ? 'study' : 'studies'} without reviewers
+                </p>
+
+                {/* Preview Button */}
+                <Show when={!showPreview()}>
+                  <button
+                    onClick={handlePreview}
+                    disabled={!canGenerate() || unassignedStudies().length === 0}
+                    class='inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors gap-2'
+                  >
+                    <BiRegularShuffle class='w-4 h-4' />
+                    Generate Random Assignments
+                  </button>
+                </Show>
+
+                {/* Preview Section */}
+                <Show when={showPreview()}>
+                  <div class='border border-blue-200 rounded-lg overflow-hidden'>
+                    <div class='bg-blue-50 px-4 py-2 border-b border-blue-200 flex items-center justify-between'>
+                      <h4 class='text-sm font-semibold text-blue-900'>
+                        Preview Assignments ({previewAssignments().length} studies)
+                      </h4>
+                      <button
+                        onClick={handleReshuffle}
+                        class='inline-flex items-center px-2 py-1 text-blue-700 text-xs font-medium hover:bg-blue-100 rounded transition-colors gap-1'
+                      >
+                        <BiRegularShuffle class='w-3 h-3' />
+                        Reshuffle
+                      </button>
+                    </div>
+                    <div class='max-h-64 overflow-y-auto'>
+                      <table class='w-full text-sm'>
+                        <thead class='bg-gray-50 sticky top-0'>
+                          <tr>
+                            <th class='text-left px-4 py-2 font-medium text-gray-700'>Study</th>
+                            <th class='text-left px-4 py-2 font-medium text-gray-700'>
+                              1st Reviewer
+                            </th>
+                            <th class='text-left px-4 py-2 font-medium text-gray-700'>
+                              2nd Reviewer
+                            </th>
                           </tr>
-                        )}
-                      </For>
-                    </tbody>
-                  </table>
-                </div>
-                <div class='bg-gray-50 px-4 py-3 border-t border-gray-200 flex gap-2'>
-                  <button
-                    onClick={handleApply}
-                    disabled={previewAssignments().some(a => a.sameReviewer)}
-                    class='inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors gap-2'
-                  >
-                    <BiRegularCheck class='w-4 h-4' />
-                    Apply Assignments
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    class='px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:border-gray-400 transition-colors'
-                  >
-                    Cancel
-                  </button>
-                </div>
+                        </thead>
+                        <tbody class='divide-y divide-gray-200'>
+                          <For each={previewAssignments()}>
+                            {assignment => (
+                              <tr
+                                class={`hover:bg-gray-50 ${assignment.sameReviewer ? 'bg-red-50' : ''}`}
+                              >
+                                <td class='px-4 py-2 text-gray-900 truncate max-w-xs'>
+                                  {assignment.studyName}
+                                </td>
+                                <td class='px-4 py-2 text-gray-600'>{assignment.reviewer1Name}</td>
+                                <td
+                                  class={`px-4 py-2 ${assignment.sameReviewer ? 'text-red-600 font-medium' : 'text-gray-600'}`}
+                                >
+                                  {assignment.reviewer2Name}
+                                  {assignment.sameReviewer && ' (conflict)'}
+                                </td>
+                              </tr>
+                            )}
+                          </For>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class='bg-gray-50 px-4 py-3 border-t border-gray-200 flex gap-2'>
+                      <button
+                        onClick={() => {
+                          handleApply();
+                          handleCollapse();
+                        }}
+                        disabled={previewAssignments().some(a => a.sameReviewer)}
+                        class='inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors gap-2'
+                      >
+                        <BiRegularCheck class='w-4 h-4' />
+                        Apply Assignments
+                      </button>
+                      <button
+                        onClick={handleCancel}
+                        class='px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:border-gray-400 transition-colors'
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </Show>
               </div>
             </Show>
-          </div>
-        </Show>
+          </Show>
+        </div>
       </Show>
     </div>
   );
