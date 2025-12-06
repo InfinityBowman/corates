@@ -175,9 +175,6 @@ export default function StudyCard(props) {
                 </Show>
               </p>
             </Show>
-            <Show when={props.study.description}>
-              <p class='text-gray-500 text-sm mt-1'>{props.study.description}</p>
-            </Show>
           </div>
           <div class='flex items-center gap-2'>
             <Show when={hasPdfs()}>
