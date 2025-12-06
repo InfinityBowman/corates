@@ -65,7 +65,9 @@ export async function createCheckoutSession(tier, interval = 'monthly') {
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to create checkout session' }));
+    const error = await response
+      .json()
+      .catch(() => ({ error: 'Failed to create checkout session' }));
     throw new Error(error.error || 'Failed to create checkout session');
   }
 
