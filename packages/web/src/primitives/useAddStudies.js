@@ -168,7 +168,7 @@ export function useAddStudies(options = {}) {
           extractPdfDoi(arrayBuffer.slice(0)),
         ]);
         console.log('Extracted PDF metadata:', { title, doi });
-        
+
         // If DOI was extracted, fetch author/year metadata
         let metadata = null;
         if (doi) {
@@ -187,7 +187,7 @@ export function useAddStudies(options = {}) {
             console.warn('Could not fetch metadata for DOI:', doi, err);
           }
         }
-        
+
         setUploadedPdfs(p => p.id === pdf.id, {
           title: title || pdf.file.name.replace(/\.pdf$/i, ''),
           extracting: false,

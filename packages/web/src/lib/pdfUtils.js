@@ -186,22 +186,31 @@ export async function extractPdfDoi(pdfData) {
     // Try metadata first
     const metadata = await pdf.getMetadata();
 
-    // Check various metadata fields that might contain DOI
-    const metadataStr = JSON.stringify(metadata?.info || {}).toLowerCase();
-    const doiMatch = metadataStr.match(DOI_REGEX);
-    if (doiMatch) {
-      return cleanDoi(doiMatch[0]);
+    // Check specific metadata fields that commonly contain DOI
+    const info = metadata?.info || {};
+
+    // Check common DOI fields directly
+    const doiFields = ['doi', 'DOI', 'Subject', 'Keywords', 'Description'];
+    for (const field of doiFields) {
+      if (info[field]) {
+        const fieldValue = String(info[field]);
+        const match = fieldValue.match(DOI_REGEX);
+        if (match) {
+          return cleanDoi(match[0]);
+        }
+      }
     }
 
     // Check custom metadata
-    if (metadata?.metadata) {
-      const xmlStr =
-        metadata.metadata._metadataMap ?
-          JSON.stringify(Object.fromEntries(metadata.metadata._metadataMap))
-        : '';
-      const xmlMatch = xmlStr.match(DOI_REGEX);
-      if (xmlMatch) {
-        return cleanDoi(xmlMatch[0]);
+    if (metadata?.metadata?._metadataMap) {
+      for (const [key, value] of metadata.metadata._metadataMap) {
+        const valueStr = String(value || '');
+        if (valueStr && /doi/i.test(key)) {
+          const match = valueStr.match(DOI_REGEX);
+          if (match) {
+            return cleanDoi(match[0]);
+          }
+        }
       }
     }
 
@@ -227,13 +236,25 @@ export async function extractPdfDoi(pdfData) {
  */
 function cleanDoi(doi) {
   if (!doi) return null;
-  // Remove common prefixes and trailing punctuation
-  return doi
+
+  // Remove common prefixes
+  let cleaned = doi
     .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
     .replace(/^doi:/i, '')
+    .trim();
+
+  // Remove trailing punctuation and common trailing artifacts
+  cleaned = cleaned
     .replace(/[.,;)\]}>]+$/, '')
-    .trim()
-    .toLowerCase();
+    // Remove anything after quotes, brackets, or common JSON delimiters
+    .replace(/["'\]},].*$/, '')
+    // Remove URL-encoded characters that might have been included
+    .replace(/%22.*$/, '') // Stop at URL-encoded quote
+    .replace(/%2C.*$/, '') // Stop at URL-encoded comma
+    .replace(/%7D.*$/, '') // Stop at URL-encoded }
+    .trim();
+
+  return cleaned.toLowerCase();
 }
 
 /**
