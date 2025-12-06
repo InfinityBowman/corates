@@ -1,6 +1,14 @@
+import { onMount, Show } from 'solid-js';
 import { urls } from '~/lib/config';
+import { checkSession, useAuth } from '~/lib/auth';
 
 export default function Navbar() {
+  const { isLoggedIn, isLoading } = useAuth();
+
+  onMount(() => {
+    checkSession();
+  });
+
   return (
     <nav class='bg-white border-b border-gray-100'>
       <div class='flex items-center justify-between max-w-6xl mx-auto px-6 py-4'>
@@ -16,18 +24,34 @@ export default function Navbar() {
           </a>
         </div>
         <div class='flex gap-3'>
-          <a
-            href={urls.dashboard()}
-            class='hidden sm:inline-flex items-center px-4 py-2 text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors'
-          >
-            Open App
-          </a>
-          <a
-            href={urls.signUp()}
-            class='inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm'
-          >
-            Sign Up
-          </a>
+          <Show when={!isLoading()}>
+            <Show
+              when={isLoggedIn()}
+              fallback={
+                <>
+                  <a
+                    href={urls.signIn()}
+                    class='hidden sm:inline-flex items-center px-4 py-2 text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors'
+                  >
+                    Sign In
+                  </a>
+                  <a
+                    href={urls.signUp()}
+                    class='inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm'
+                  >
+                    Sign Up
+                  </a>
+                </>
+              }
+            >
+              <a
+                href={urls.dashboard()}
+                class='inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm'
+              >
+                Open App
+              </a>
+            </Show>
+          </Show>
         </div>
       </div>
     </nav>
