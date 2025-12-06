@@ -122,6 +122,8 @@ export default function AddStudiesForm(props) {
       .filter(r => selectedLookups.has(r._id) && r.pdfAvailable)
       .map(({ _id, ...ref }) => ({
         title: ref.title,
+        pdfData: ref.manualPdfData || null,
+        pdfFileName: ref.manualPdfFileName || null,
         metadata: {
           firstAuthor: ref.firstAuthor,
           publicationYear: ref.publicationYear,
@@ -131,6 +133,7 @@ export default function AddStudiesForm(props) {
           abstract: ref.abstract,
           pdfUrl: ref.pdfUrl,
           pdfSource: ref.pdfSource,
+          pdfAccessible: ref.pdfAccessible,
           importSource: ref.importSource || 'doi-lookup',
         },
       }));
@@ -353,26 +356,6 @@ export default function AddStudiesForm(props) {
           return next;
         });
         setIdentifierInput('');
-
-        const withPdf = newRefs.filter(r => r.pdfAvailable).length;
-        const withoutPdf = newRefs.length - withPdf;
-
-        if (withPdf > 0 && withoutPdf === 0) {
-          showToast.success(
-            'Lookup Complete',
-            `Found ${withPdf} reference${withPdf === 1 ? '' : 's'} with PDF.`,
-          );
-        } else if (withPdf > 0 && withoutPdf > 0) {
-          showToast.info(
-            'Lookup Complete',
-            `Found ${withPdf} with PDF, ${withoutPdf} without PDF access.`,
-          );
-        } else {
-          showToast.warning(
-            'No PDFs Available',
-            `Found ${withoutPdf} reference${withoutPdf === 1 ? '' : 's'}, but none have open-access PDFs.`,
-          );
-        }
       }
 
       if (errors.length > 0) setLookupErrors(errors);
@@ -421,6 +404,17 @@ export default function AddStudiesForm(props) {
     setLookupErrors([]);
   };
 
+  // Attach a manually uploaded PDF to a lookup ref
+  const attachPdfToLookupRef = (refId, fileName, arrayBuffer) => {
+    setLookupRefs(prev =>
+      prev.map(ref =>
+        ref._id === refId ?
+          { ...ref, manualPdfData: arrayBuffer, manualPdfFileName: fileName }
+        : ref,
+      ),
+    );
+  };
+
   // Google Drive handlers
   const toggleDriveFile = file => {
     setSelectedDriveFiles(prev => {
@@ -462,6 +456,8 @@ export default function AddStudiesForm(props) {
     for (const ref of selectedRefs) {
       studies.push({
         title: ref.title,
+        firstAuthor: ref.firstAuthor,
+        publicationYear: ref.publicationYear,
         authors: ref.authors,
         journal: ref.journal,
         doi: ref.doi,
@@ -477,12 +473,18 @@ export default function AddStudiesForm(props) {
     for (const ref of selectedLookups) {
       studies.push({
         title: ref.title,
+        firstAuthor: ref.firstAuthor,
+        publicationYear: ref.publicationYear,
         authors: ref.authors,
         journal: ref.journal,
         doi: ref.doi,
         abstract: ref.abstract,
         pdfUrl: ref.pdfUrl,
         pdfSource: ref.pdfSource,
+        pdfAccessible: ref.pdfAccessible,
+        // Include manual PDF data if user uploaded one
+        pdfData: ref.manualPdfData || null,
+        pdfFileName: ref.manualPdfFileName || null,
         importSource: 'identifier-lookup',
       });
     }
@@ -542,14 +544,16 @@ export default function AddStudiesForm(props) {
 
       {/* Collapsed button */}
       <Show when={!isExpanded() && props.hasExistingStudies}>
-        <button
-          type='button'
-          onClick={handleExpand}
-          class='inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm'
-        >
-          <BiRegularPlus class='w-4 h-4' />
-          Add Studies
-        </button>
+        <div class='flex justify-end'>
+          <button
+            type='button'
+            onClick={handleExpand}
+            class='inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm'
+          >
+            <BiRegularPlus class='w-4 h-4' />
+            Add Studies
+          </button>
+        </div>
       </Show>
 
       {/* Expanded form */}
@@ -641,6 +645,7 @@ export default function AddStudiesForm(props) {
                 onToggleSelectAll={toggleSelectAllLookup}
                 onRemove={removeLookupRef}
                 onClear={clearLookupRefs}
+                onAttachPdf={attachPdfToLookupRef}
               />
             </Show>
 

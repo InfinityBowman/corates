@@ -43,9 +43,9 @@ export function Tabs(props) {
                 <span class='w-4 h-4'>{tab.icon}</span>
               </Show>
               {tab.label}
-              <Show when={tab.count !== undefined}>
+              <Show when={tab.count !== undefined || tab.getCount}>
                 <span class='ml-1 px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600 data-selected:bg-blue-100 data-selected:text-blue-700'>
-                  {tab.count}
+                  {tab.getCount ? tab.getCount() : tab.count}
                 </span>
               </Show>
             </button>

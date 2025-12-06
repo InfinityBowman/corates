@@ -306,6 +306,18 @@ export function useProject(projectId) {
     studyYMap.set('updatedAt', Date.now());
   }
 
+  // Update project settings (stored in meta map)
+  function updateProjectSettings(settings) {
+    if (!ydoc) return;
+    if (!synced()) return;
+
+    const metaMap = ydoc.getMap('meta');
+    for (const [key, value] of Object.entries(settings)) {
+      metaMap.set(key, value);
+    }
+    metaMap.set('updatedAt', Date.now());
+  }
+
   // Delete a study
   function deleteStudy(studyId) {
     if (!ydoc) return;
@@ -624,6 +636,7 @@ export function useProject(projectId) {
     // Operations
     createStudy,
     updateStudy,
+    updateProjectSettings,
     deleteStudy,
     addPdfToStudy,
     removePdfFromStudy,

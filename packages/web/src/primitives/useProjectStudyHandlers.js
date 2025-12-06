@@ -3,15 +3,17 @@
  * Handles study creation, PDF uploads, checklist management, and member operations
  */
 
-import { uploadPdf } from '@api/pdf-api.js';
+import { uploadPdf, fetchPdfViaProxy } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
 import { showToast } from '@components/zag/Toast.jsx';
+import { generateStudyName, getDefaultNamingConvention } from '@/lib/studyNaming.js';
 
 /**
  * @param {Object} options
  * @param {string} options.projectId - The project ID
  * @param {Function} options.user - Signal getter for current user
  * @param {Function} options.studies - Signal getter for studies array
+ * @param {Function} options.meta - Signal getter for project meta
  * @param {Object} options.projectActions - Actions from useProject hook
  * @param {Object} options.confirmDialog - Confirm dialog instance
  * @param {Function} options.navigate - Navigation function
@@ -25,6 +27,8 @@ export default function useProjectHandlers(options) {
   const {
     projectId,
     user,
+    studies,
+    meta,
     projectActions,
     confirmDialog,
     setShowStudyForm,
@@ -34,39 +38,79 @@ export default function useProjectHandlers(options) {
 
   const { createStudy, updateStudy, deleteStudy, addPdfToStudy } = projectActions;
 
+  // Get the naming convention from project meta
+  const getNamingConvention = () => meta?.()?.studyNamingConvention || getDefaultNamingConvention();
+
   // Unified handler for adding studies from AddStudiesForm
   const handleAddStudies = async studiesToAdd => {
     setCreatingStudy(true);
     let successCount = 0;
+    let manualPdfCount = 0;
+    const namingConvention = getNamingConvention();
 
     try {
       for (const study of studiesToAdd) {
         try {
           const metadata = {
+            firstAuthor: study.firstAuthor,
+            publicationYear: study.publicationYear,
             authors: study.authors,
             journal: study.journal,
             doi: study.doi,
             abstract: study.abstract,
             importSource: study.importSource,
+            pdfUrl: study.pdfUrl,
+            pdfSource: study.pdfSource,
           };
 
-          const studyId = createStudy(study.title, study.abstract || '', metadata);
+          // Generate study name based on naming convention
+          const studyName = generateStudyName(study, namingConvention);
 
-          if (study.pdfData && studyId) {
-            try {
-              const result = await uploadPdf(projectId, studyId, study.pdfData, study.pdfFileName);
-              cachePdf(projectId, studyId, result.fileName, study.pdfData).catch(err =>
-                console.warn('Failed to cache PDF:', err),
-              );
-              addPdfToStudy(studyId, {
-                key: result.key,
-                fileName: result.fileName,
-                size: result.size,
-                uploadedBy: user()?.id,
-                uploadedAt: Date.now(),
-              });
-            } catch (uploadErr) {
-              console.error('Error uploading PDF:', uploadErr);
+          const studyId = createStudy(studyName, study.abstract || '', metadata);
+
+          // Handle PDF attachment - either from direct upload or from URL
+          if (studyId) {
+            let pdfData = study.pdfData;
+            let pdfFileName = study.pdfFileName;
+
+            // If no direct PDF data but we have a pdfUrl, check if it's accessible
+            if (!pdfData && study.pdfUrl) {
+              if (study.pdfAccessible) {
+                // Repository-hosted PDFs can be auto-downloaded
+                try {
+                  pdfData = await fetchPdfViaProxy(study.pdfUrl);
+                  // Generate filename from DOI or title
+                  const safeName = (study.doi || study.title || 'document')
+                    .replace(/[^a-zA-Z0-9.-]/g, '_')
+                    .substring(0, 50);
+                  pdfFileName = `${safeName}.pdf`;
+                } catch (fetchErr) {
+                  console.warn('Failed to fetch PDF from URL:', fetchErr);
+                  manualPdfCount++;
+                }
+              } else {
+                // Publisher-hosted PDFs need manual download
+                manualPdfCount++;
+              }
+            }
+
+            // Upload the PDF if we have data
+            if (pdfData) {
+              try {
+                const result = await uploadPdf(projectId, studyId, pdfData, pdfFileName);
+                cachePdf(projectId, studyId, result.fileName, pdfData).catch(err =>
+                  console.warn('Failed to cache PDF:', err),
+                );
+                addPdfToStudy(studyId, {
+                  key: result.key,
+                  fileName: result.fileName,
+                  size: result.size,
+                  uploadedBy: user()?.id,
+                  uploadedAt: Date.now(),
+                });
+              } catch (uploadErr) {
+                console.error('Error uploading PDF:', uploadErr);
+              }
             }
           }
           successCount++;
@@ -76,10 +120,17 @@ export default function useProjectHandlers(options) {
       }
 
       if (successCount > 0) {
-        showToast.success(
-          'Studies Added',
-          `Successfully added ${successCount} ${successCount === 1 ? 'study' : 'studies'}.`,
-        );
+        if (manualPdfCount > 0) {
+          showToast.info(
+            'Studies Added',
+            `Added ${successCount} ${successCount === 1 ? 'study' : 'studies'}. ${manualPdfCount} PDF${manualPdfCount === 1 ? ' requires' : 's require'} manual download from the publisher.`,
+          );
+        } else {
+          showToast.success(
+            'Studies Added',
+            `Successfully added ${successCount} ${successCount === 1 ? 'study' : 'studies'}.`,
+          );
+        }
       }
       setShowStudyForm(false);
     } catch (err) {
@@ -134,9 +185,14 @@ export default function useProjectHandlers(options) {
   // Handle importing references from Zotero/EndNote files
   const handleImportReferences = references => {
     let successCount = 0;
+    const namingConvention = getNamingConvention();
+
     for (const ref of references) {
       try {
-        createStudy(ref.title, ref.abstract || '', {
+        // Generate study name based on naming convention
+        const studyName = generateStudyName(ref, namingConvention);
+
+        createStudy(studyName, ref.abstract || '', {
           firstAuthor: ref.firstAuthor,
           publicationYear: ref.publicationYear,
           authors: ref.authors,
@@ -186,11 +242,51 @@ export default function useProjectHandlers(options) {
     }
   };
 
+  // Apply naming convention to all existing studies
+  const handleApplyNamingToAll = async namingConvention => {
+    const currentStudies = studies?.() || [];
+    if (currentStudies.length === 0) return;
+
+    let successCount = 0;
+    for (const study of currentStudies) {
+      try {
+        // Generate new name based on study metadata
+        const newName = generateStudyName(
+          {
+            title: study.name,
+            firstAuthor: study.firstAuthor,
+            publicationYear: study.publicationYear,
+            authors: study.authors,
+          },
+          namingConvention,
+        );
+
+        // Only update if the name would change
+        if (newName && newName !== study.name) {
+          updateStudy(study.id, { name: newName });
+          successCount++;
+        }
+      } catch (err) {
+        console.error('Error renaming study:', err);
+      }
+    }
+
+    if (successCount > 0) {
+      showToast.success(
+        'Studies Renamed',
+        `Successfully renamed ${successCount} ${successCount === 1 ? 'study' : 'studies'}.`,
+      );
+    } else {
+      showToast.info('No Changes', 'All studies already match the naming convention.');
+    }
+  };
+
   return {
     handleAddStudies,
     handleCreateStudy,
     handleImportReferences,
     handleUpdateStudy,
     handleDeleteStudy,
+    handleApplyNamingToAll,
   };
 }
