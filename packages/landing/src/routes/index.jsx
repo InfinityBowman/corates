@@ -1,9 +1,11 @@
 import { Title, Meta } from '@solidjs/meta';
 import Hero from '~/components/Hero';
-import Features from '~/components/Features';
-import WhyChoose from '~/components/WhyChoose';
+import TrustLogos from '~/components/TrustLogos';
+import Stats from '~/components/Stats';
+import FeatureShowcase from '~/components/FeatureShowcase';
 import HowItWorks from '~/components/HowItWorks';
-import Audience from '~/components/Audience';
+import SupportedTools from '~/components/SupportedTools';
+import Testimonials from '~/components/Testimonials';
 import CTA from '~/components/CTA';
 import Navbar from '~/components/Navbar';
 import Footer from '~/components/Footer';
@@ -16,14 +18,16 @@ export default function Home() {
         name='description'
         content='CoRATES streamlines quality and risk-of-bias appraisal with intuitive workflows, real-time collaboration, automatic scoring, and clear visual summaries for evidence synthesis.'
       />
-      <div class='min-h-screen bg-linear-to-b from-blue-50 to-white'>
+      <div class='min-h-screen bg-white'>
         <Navbar />
         <main>
           <Hero />
-          <Features />
-          <WhyChoose />
+          <TrustLogos />
+          <Stats />
+          <FeatureShowcase />
           <HowItWorks />
-          <Audience />
+          <SupportedTools />
+          <Testimonials />
           <CTA />
         </main>
         <Footer />
