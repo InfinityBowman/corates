@@ -2,7 +2,7 @@ import * as tooltip from '@zag-js/tooltip';
 import { normalizeProps, useMachine } from '@zag-js/solid';
 import { createMemo, createUniqueId, Show } from 'solid-js';
 
-export default function Tooltip(props) {
+export function Tooltip(props) {
   const service = useMachine(tooltip.machine, () => ({
     id: createUniqueId(),
     positioning: {
@@ -33,3 +33,5 @@ export default function Tooltip(props) {
     </>
   );
 }
+
+export default Tooltip;

@@ -8,12 +8,19 @@ This file contains instructions for GitHub Copilot to follow when generating cod
 - For UI icons, use the `solid-icons` library or SVGs only. Do not use emojis.
 - Follow standard JavaScript/SolidJS/Cloudflare best practices.
 - Prefer modern ES6+ syntax and features.
-- Keep files small, focused, and modular. Avoid large monolithic files.
-  - Split functionality into logically grouped modules.
-  - Each file should ideally handle one coherent responsibility.
 - Use aliases for imports when appropriate to improve readability.
 - Use responsive design principles for UI components.
 - Prefer using config files rather than hardcoding values.
+
+## File Size Guidelines
+
+- **Keep files small, focused, and modular.** Aim for ~200-300 lines max per component file.
+- If a component exceeds ~300 lines, consider refactoring:
+  - Extract sub-components into a folder (e.g., `ComponentName/` with `index.jsx` and helper components)
+  - Move complex logic into separate utility files or primitives
+  - Split large forms into section components (see `add-studies/` folder pattern)
+- Each file should handle one coherent responsibility
+- Group related components in subdirectories with an `index.js` barrel export
 
 ## Icon Search Tool
 

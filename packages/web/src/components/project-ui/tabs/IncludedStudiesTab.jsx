@@ -1,39 +1,25 @@
 import { For, Show, createSignal } from 'solid-js';
 import { AiOutlineBook, AiOutlineFileSync } from 'solid-icons/ai';
-import { BiRegularImport, BiRegularEdit, BiRegularUpload } from 'solid-icons/bi';
+import { BiRegularEdit, BiRegularUpload } from 'solid-icons/bi';
 import { CgFileDocument } from 'solid-icons/cg';
 import { FiTrash2 } from 'solid-icons/fi';
 import { FaBrandsGoogleDrive } from 'solid-icons/fa';
-import StudyForm from '../StudyForm.jsx';
+import AddStudiesForm from '../AddStudiesForm.jsx';
 import { showToast } from '@components/zag/Toast.jsx';
 
 export default function IncludedStudiesTab(props) {
   return (
     <div class='space-y-4'>
-      {/* Add Studies Section - Import button and StudyForm side by side */}
+      {/* Add Studies Section - Unified form with PDF upload, reference import, and DOI lookup */}
       <Show when={props.hasData()}>
-        <div class='flex gap-4 items-start'>
-          {/* Study Form / Drop Zone */}
-          <div class='flex-1'>
-            <StudyForm
-              onSubmit={props.onCreateStudy}
-              onCancel={() => props.onSetShowStudyForm(false)}
-              onExpand={() => props.onSetShowStudyForm(true)}
-              expanded={props.showStudyForm()}
-              loading={props.creatingStudy()}
-              hasExistingStudies={props.studies().length > 0}
-            />
-          </div>
-          {/* Import from Reference Manager Button */}
-          <button
-            type='button'
-            onClick={() => props.onOpenImportModal?.()}
-            class='inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors shrink-0'
-          >
-            <BiRegularImport class='w-4 h-4' />
-            Import References
-          </button>
-        </div>
+        <AddStudiesForm
+          onAddStudies={props.onAddStudies}
+          loading={props.creatingStudy()}
+          expanded={props.showStudyForm()}
+          onExpand={() => props.onSetShowStudyForm(true)}
+          onCollapse={() => props.onSetShowStudyForm(false)}
+          hasExistingStudies={props.studies().length > 0}
+        />
       </Show>
 
       <Show when={!props.hasData()} fallback={null}>

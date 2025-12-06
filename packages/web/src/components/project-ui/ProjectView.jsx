@@ -1,22 +1,31 @@
+/**
+ * ProjectView - Main view for a single project
+ * Displays tabs for overview, included studies, in-progress, reconciliation, and completed
+ */
+
 import { createSignal, createEffect, createMemo, Show, onCleanup, batch } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import useProject from '@primitives/useProject.js';
 import projectStore from '@primitives/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { uploadPdf, deletePdf, getPdfUrl } from '@api/pdf-api.js';
-import { cachePdf, removeCachedPdf, getCachedPdf } from '@primitives/pdfCache.js';
-import { API_BASE } from '@config/api.js';
-import AddMemberModal from './AddMemberModal.jsx';
-import ProjectHeader from './ProjectHeader.jsx';
+import { uploadPdf } from '@api/pdf-api.js';
+import { cachePdf } from '@primitives/pdfCache.js';
 import { useConfirmDialog } from '@components/zag/Dialog.jsx';
-import { showToast } from '@components/zag/Toast.jsx';
 import { Tabs } from '@components/zag/Tabs.jsx';
 import { BiRegularHome } from 'solid-icons/bi';
 import { BsListTask } from 'solid-icons/bs';
 import { CgArrowsExchange } from 'solid-icons/cg';
 import { AiFillCheckCircle, AiOutlineBook } from 'solid-icons/ai';
 
-// Tab components
+// Extracted handler hooks
+import useProjectStudyHandlers from '@primitives/useProjectStudyHandlers.js';
+import useProjectChecklistHandlers from '@primitives/useProjectChecklistHandlers.js';
+import useProjectPdfHandlers from '@primitives/useProjectPdfHandlers.js';
+import useProjectMemberHandlers from '@primitives/useProjectMemberHandlers.js';
+
+// Components
+import AddMemberModal from './AddMemberModal.jsx';
+import ProjectHeader from './ProjectHeader.jsx';
 import OverviewTab from './tabs/OverviewTab.jsx';
 import IncludedStudiesTab from './tabs/IncludedStudiesTab.jsx';
 import InProgressTab from './tabs/InProgressTab.jsx';
@@ -30,81 +39,93 @@ export default function ProjectView() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useBetterAuth();
-
-  // Confirm dialog for destructive actions
   const confirmDialog = useConfirmDialog();
 
-  // Study form state
+  // UI state signals
   const [showStudyForm, setShowStudyForm] = createSignal(false);
   const [creatingStudy, setCreatingStudy] = createSignal(false);
-
-  // Checklist form state
   const [showChecklistForm, setShowChecklistForm] = createSignal(null);
   const [creatingChecklist, setCreatingChecklist] = createSignal(false);
-
-  // Add member modal state
   const [showAddMemberModal, setShowAddMemberModal] = createSignal(false);
-
-  // Reference import modal state
   const [showReferenceImportModal, setShowReferenceImportModal] = createSignal(false);
-
-  // Google Drive picker modal state
   const [showGoogleDriveModal, setShowGoogleDriveModal] = createSignal(false);
   const [googleDriveTargetStudyId, setGoogleDriveTargetStudyId] = createSignal(null);
 
-  // Use Y.js hook for write operations and connection management
-  const {
-    createStudy,
-    updateStudy,
-    createChecklist,
-    updateChecklist,
-    deleteStudy,
-    deleteChecklist,
-    addPdfToStudy,
-    removePdfFromStudy,
-    getChecklistData,
-    connect,
-    disconnect,
-  } = useProject(params.projectId);
+  // Y.js hook for write operations
+  const projectActions = useProject(params.projectId);
+  const { connect, disconnect, getChecklistData, createStudy, addPdfToStudy } = projectActions;
 
-  // Read data directly from the store for faster reactivity
+  // Read data from store
   const studies = () => projectStore.getStudies(params.projectId);
   const members = () => projectStore.getMembers(params.projectId);
   const meta = () => projectStore.getMeta(params.projectId);
   const connectionState = () => projectStore.getConnectionState(params.projectId);
-
-  // Check if we have cached data (either synced or previously loaded)
   const hasData = () => connectionState().synced || studies().length > 0;
 
-  // Derive current user's role from the members list
+  // Derived state
   const userRole = createMemo(() => {
     const currentUser = user();
     if (!currentUser) return null;
     const member = members().find(m => m.userId === currentUser.id);
     return member?.role || null;
   });
-
-  // Check if current user is owner
   const isOwner = () => userRole() === 'owner';
+
+  // Extract handlers using custom hooks
+  const studyHandlers = useProjectStudyHandlers({
+    projectId: params.projectId,
+    user,
+    studies,
+    projectActions,
+    confirmDialog,
+    navigate,
+    setShowStudyForm,
+    setCreatingStudy,
+    setShowChecklistForm,
+    setCreatingChecklist,
+    setShowReferenceImportModal,
+  });
+
+  const checklistHandlers = useProjectChecklistHandlers({
+    projectId: params.projectId,
+    projectActions,
+    confirmDialog,
+    navigate,
+    setShowChecklistForm,
+    setCreatingChecklist,
+  });
+
+  const pdfHandlers = useProjectPdfHandlers({
+    projectId: params.projectId,
+    user,
+    studies,
+    projectActions,
+    setShowGoogleDriveModal,
+    setGoogleDriveTargetStudyId,
+    googleDriveTargetStudyId,
+  });
+
+  const memberHandlers = useProjectMemberHandlers({
+    projectId: params.projectId,
+    user,
+    confirmDialog,
+    navigate,
+  });
 
   // Connect to Y.js on mount
   createEffect(() => {
-    if (params.projectId) {
-      connect();
-    }
+    if (params.projectId) connect();
   });
 
-  // Store pending PDFs from navigation state in a signal (captured on mount)
+  // Store pending data from navigation state
   const [pendingPdfs, setPendingPdfs] = createSignal(location.state?.pendingPdfs || null);
   const [pendingRefs, setPendingRefs] = createSignal(location.state?.pendingRefs || null);
 
-  // Process pending PDFs from project creation (passed via navigation state)
+  // Process pending PDFs from project creation
   createEffect(() => {
     const state = connectionState();
     const pdfs = pendingPdfs();
-
-    if (!state.synced || !params.projectId) return;
-    if (!Array.isArray(pdfs) || pdfs.length === 0) return;
+    if (!state.synced || !params.projectId || !Array.isArray(pdfs) || pdfs.length === 0) return;
 
     batch(() => {
       setPendingPdfs(null);
@@ -117,9 +138,7 @@ export default function ProjectView() {
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
         uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName)
           .then(result => {
-            cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(err =>
-              console.warn('Failed to cache PDF:', err),
-            );
+            cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(console.warn);
             addPdfToStudy(studyId, {
               key: result.key,
               fileName: result.fileName,
@@ -128,20 +147,16 @@ export default function ProjectView() {
               uploadedAt: Date.now(),
             });
           })
-          .catch(err => {
-            console.error('Error uploading PDF for new study:', err);
-          });
+          .catch(err => console.error('Error uploading PDF for new study:', err));
       }
     }
   });
 
-  // Process pending references from project creation (passed via navigation state)
+  // Process pending references from project creation
   createEffect(() => {
     const state = connectionState();
     const refs = pendingRefs();
-
-    if (!state.synced || !params.projectId) return;
-    if (!Array.isArray(refs) || refs.length === 0) return;
+    if (!state.synced || !params.projectId || !Array.isArray(refs) || refs.length === 0) return;
 
     batch(() => {
       setPendingRefs(null);
@@ -153,340 +168,33 @@ export default function ProjectView() {
     }
   });
 
-  // Cleanup on unmount
-  onCleanup(() => {
-    disconnect();
-  });
+  onCleanup(() => disconnect());
 
-  // Get assignee name from members list
+  // Helper functions
   const getAssigneeName = userId => {
     if (!userId) return 'Unassigned';
     const member = members().find(m => m.userId === userId);
     return member?.displayName || member?.name || member?.email || 'Unknown';
   };
 
-  // ============ Handlers ============
-
-  const handleCreateStudy = async (
-    name,
-    description,
-    pdfData = null,
-    pdfFileName = null,
-    metadata = {},
-  ) => {
-    setCreatingStudy(true);
-    try {
-      const studyId = createStudy(name, description, metadata);
-      if (pdfData && studyId) {
-        try {
-          const result = await uploadPdf(params.projectId, studyId, pdfData, pdfFileName);
-          // Cache the PDF locally
-          cachePdf(params.projectId, studyId, result.fileName, pdfData).catch(err =>
-            console.warn('Failed to cache PDF:', err),
-          );
-          // Store PDF metadata in Y.js document
-          addPdfToStudy(studyId, {
-            key: result.key,
-            fileName: result.fileName,
-            size: result.size,
-            uploadedBy: user()?.id,
-            uploadedAt: Date.now(),
-          });
-        } catch (uploadErr) {
-          console.error('Error uploading PDF:', uploadErr);
-          showToast.error(
-            'PDF Upload Failed',
-            'Study created, but PDF upload failed. You can try uploading again later.',
-          );
-        }
-      }
-      setShowStudyForm(false);
-    } catch (err) {
-      console.error('Error creating study:', err);
-      showToast.error('Addition Failed', 'Failed to add study');
-    } finally {
-      setCreatingStudy(false);
-    }
-  };
-
-  // Handle importing references from Zotero/EndNote files
-  const handleImportReferences = references => {
-    let successCount = 0;
-    for (const ref of references) {
-      try {
-        createStudy(ref.title, ref.abstract || '', {
-          firstAuthor: ref.firstAuthor,
-          publicationYear: ref.publicationYear,
-          authors: ref.authors,
-          journal: ref.journal,
-          doi: ref.doi,
-          abstract: ref.abstract,
-          importSource: 'reference-file',
-        });
-        successCount++;
-      } catch (err) {
-        console.error('Error importing reference:', err);
-      }
-    }
-    if (successCount > 0) {
-      showToast.success(
-        'Import Complete',
-        `Successfully imported ${successCount} ${successCount === 1 ? 'study' : 'studies'}.`,
-      );
-    }
-    setShowReferenceImportModal(false);
-  };
-
-  const handleCreateChecklist = async (studyId, type, assigneeId) => {
-    setCreatingChecklist(true);
-    try {
-      createChecklist(studyId, type, assigneeId);
-      setShowChecklistForm(null);
-    } catch (err) {
-      console.error('Error adding checklist:', err);
-      showToast.error('Addition Failed', 'Failed to add checklist');
-    } finally {
-      setCreatingChecklist(false);
-    }
-  };
-
-  const handleDeleteStudy = async studyId => {
-    const confirmed = await confirmDialog.open({
-      title: 'Delete Study',
-      description:
-        'Are you sure you want to delete this study? This will also delete all checklists in it.',
-      confirmText: 'Delete Study',
-      variant: 'danger',
-    });
-    if (!confirmed) return;
-
-    try {
-      deleteStudy(studyId);
-    } catch (err) {
-      console.error('Error deleting study:', err);
-      showToast.error('Delete Failed', 'Failed to delete study');
-    }
-  };
-
-  const handleUpdateStudy = (studyId, updates) => {
-    try {
-      updateStudy(studyId, updates);
-    } catch (err) {
-      console.error('Error updating study:', err);
-      showToast.error('Update Failed', 'Failed to update study');
-    }
-  };
-
-  const handleDeleteChecklist = async (studyId, checklistId) => {
-    const confirmed = await confirmDialog.open({
-      title: 'Delete Checklist',
-      description: 'Are you sure you want to delete this checklist?',
-      confirmText: 'Delete',
-      variant: 'danger',
-    });
-    if (!confirmed) return;
-
-    try {
-      deleteChecklist(studyId, checklistId);
-    } catch (err) {
-      console.error('Error deleting checklist:', err);
-      showToast.error('Delete Failed', 'Failed to delete checklist');
-    }
-  };
-
-  const handleUpdateChecklist = (studyId, checklistId, updates) => {
-    try {
-      updateChecklist(studyId, checklistId, updates);
-    } catch (err) {
-      console.error('Error updating checklist:', err);
-      showToast.error('Update Failed', 'Failed to update checklist');
-    }
-  };
-
-  const handleDeleteProject = async () => {
-    const confirmed = await confirmDialog.open({
-      title: 'Delete Project',
-      description:
-        'Are you sure you want to delete this entire project? This action cannot be undone.',
-      confirmText: 'Delete Project',
-      variant: 'danger',
-    });
-    if (!confirmed) return;
-
-    try {
-      const response = await fetch(`${API_BASE}/api/projects/${params.projectId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to delete project');
-      }
-      projectStore.removeProjectFromList(params.projectId);
-      navigate('/dashboard', { replace: true });
-    } catch (err) {
-      console.error('Error deleting project:', err);
-      showToast.error('Delete Failed', err.message || 'Failed to delete project');
-    }
-  };
-
-  const handleRemoveMember = async (memberId, memberName) => {
-    const currentUser = user();
-    const isSelf = currentUser?.id === memberId;
-
-    const confirmed = await confirmDialog.open({
-      title: isSelf ? 'Leave Project' : 'Remove Member',
-      description:
-        isSelf ?
-          'Are you sure you want to leave this project? You will need to be re-invited to rejoin.'
-        : `Are you sure you want to remove ${memberName} from this project?`,
-      confirmText: isSelf ? 'Leave Project' : 'Remove',
-      variant: 'danger',
-    });
-    if (!confirmed) return;
-
-    try {
-      const response = await fetch(
-        `${API_BASE}/api/projects/${params.projectId}/members/${memberId}`,
-        {
-          method: 'DELETE',
-          credentials: 'include',
-        },
-      );
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to remove member');
-      }
-
-      if (isSelf) {
-        projectStore.removeProjectFromList(params.projectId);
-        navigate('/dashboard', { replace: true });
-        showToast.success('Left Project', 'You have left the project');
-      } else {
-        showToast.success('Member Removed', `${memberName} has been removed from the project`);
-      }
-    } catch (err) {
-      console.error('Error removing member:', err);
-      showToast.error('Remove Failed', err.message || 'Failed to remove member');
-    }
-  };
-
-  const handleViewPdf = async (studyId, pdf) => {
-    if (!pdf || !pdf.fileName) return;
-
-    const cachedData = await getCachedPdf(params.projectId, studyId, pdf.fileName);
-    if (cachedData) {
-      const blob = new Blob([cachedData], { type: 'application/pdf' });
-      const blobUrl = URL.createObjectURL(blob);
-      window.open(blobUrl, '_blank');
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-      return;
-    }
-
-    const url = getPdfUrl(params.projectId, studyId, pdf.fileName);
-    window.open(url, '_blank');
-  };
-
-  const handleUploadPdf = async (studyId, file) => {
-    try {
-      const study = studies().find(s => s.id === studyId);
-      if (study?.pdfs?.length > 0) {
-        for (const existingPdf of study.pdfs) {
-          try {
-            await deletePdf(params.projectId, studyId, existingPdf.fileName);
-            removePdfFromStudy(studyId, existingPdf.fileName);
-            removeCachedPdf(params.projectId, studyId, existingPdf.fileName).catch(err =>
-              console.warn('Failed to remove PDF from cache:', err),
-            );
-          } catch (deleteErr) {
-            console.warn('Failed to delete old PDF:', deleteErr);
-          }
-        }
-      }
-
-      const result = await uploadPdf(params.projectId, studyId, file, file.name);
-
-      const arrayBuffer = await file.arrayBuffer();
-      cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(err =>
-        console.warn('Failed to cache PDF:', err),
-      );
-
-      addPdfToStudy(studyId, {
-        key: result.key,
-        fileName: result.fileName,
-        size: result.size,
-        uploadedBy: user()?.id,
-        uploadedAt: Date.now(),
-      });
-    } catch (err) {
-      console.error('Error uploading PDF:', err);
-      throw err;
-    }
-  };
-
-  // Handle opening Google Drive picker for a specific study
-  const handleOpenGoogleDrive = studyId => {
-    setGoogleDriveTargetStudyId(studyId);
-    setShowGoogleDriveModal(true);
-  };
-
-  // Handle successful import from Google Drive
-  const handleGoogleDriveImportSuccess = file => {
-    const studyId = googleDriveTargetStudyId();
-    if (!studyId || !file) return;
-
-    // Add the imported PDF to the study's Y.js state
-    addPdfToStudy(studyId, {
-      key: file.key,
-      fileName: file.fileName,
-      size: file.size,
-      uploadedBy: user()?.id,
-      uploadedAt: Date.now(),
-      source: 'google-drive',
-    });
-  };
-
-  const openChecklist = (studyId, checklistId) => {
-    navigate(`/projects/${params.projectId}/studies/${studyId}/checklists/${checklistId}`);
-  };
-
-  const openReconciliation = (studyId, checklist1Id, checklist2Id) => {
-    navigate(
-      `/projects/${params.projectId}/studies/${studyId}/reconcile/${checklist1Id}/${checklist2Id}`,
-    );
-  };
-
-  // Tab definitions with icons
+  // Tab configuration
   const tabDefinitions = createMemo(() => [
-    {
-      value: 'overview',
-      label: 'Overview',
-      icon: <BiRegularHome class='w-4 h-4' />,
-    },
+    { value: 'overview', label: 'Overview', icon: <BiRegularHome class='w-4 h-4' /> },
     {
       value: 'included-studies',
       label: 'Included Studies',
       icon: <AiOutlineBook class='w-4 h-4' />,
       count: studies().length,
     },
-    {
-      value: 'in-progress',
-      label: 'In Progress',
-      icon: <BsListTask class='w-4 h-4' />,
-    },
+    { value: 'in-progress', label: 'In Progress', icon: <BsListTask class='w-4 h-4' /> },
     {
       value: 'ready-to-reconcile',
       label: 'Ready to Reconcile',
       icon: <CgArrowsExchange class='w-4 h-4' />,
     },
-    {
-      value: 'completed',
-      label: 'Completed',
-      icon: <AiFillCheckCircle class='w-4 h-4' />,
-    },
+    { value: 'completed', label: 'Completed', icon: <AiFillCheckCircle class='w-4 h-4' /> },
   ]);
 
-  // Get tab from URL query parameter
   const validTabs = [
     'overview',
     'included-studies',
@@ -495,19 +203,13 @@ export default function ProjectView() {
     'completed',
   ];
   const tabFromUrl = () => {
-    const searchParams = new URLSearchParams(location.search);
-    const tab = searchParams.get('tab');
+    const tab = new URLSearchParams(location.search).get('tab');
     return validTabs.includes(tab) ? tab : 'overview';
   };
 
-  // Update URL when tab changes
   const handleTabChange = value => {
     const searchParams = new URLSearchParams(location.search);
-    if (value === 'overview') {
-      searchParams.delete('tab');
-    } else {
-      searchParams.set('tab', value);
-    }
+    value === 'overview' ? searchParams.delete('tab') : searchParams.set('tab', value);
     const newSearch = searchParams.toString();
     navigate(`${location.pathname}${newSearch ? `?${newSearch}` : ''}`, { replace: true });
   };
@@ -521,7 +223,7 @@ export default function ProjectView() {
         isConnected={connectionState().connected}
         isOwner={isOwner()}
         onBack={() => navigate('/dashboard')}
-        onDeleteProject={handleDeleteProject}
+        onDeleteProject={memberHandlers.handleDeleteProject}
       />
 
       <Tabs tabs={tabDefinitions()} value={tabFromUrl()} onValueChange={handleTabChange}>
@@ -535,8 +237,8 @@ export default function ProjectView() {
                 currentUserId={user()?.id}
                 getChecklistData={getChecklistData}
                 onAddMember={() => setShowAddMemberModal(true)}
-                onRemoveMember={handleRemoveMember}
-                onAssignReviewers={handleUpdateStudy}
+                onRemoveMember={memberHandlers.handleRemoveMember}
+                onAssignReviewers={studyHandlers.handleUpdateStudy}
               />
             </Show>
 
@@ -548,13 +250,12 @@ export default function ProjectView() {
                 showStudyForm={showStudyForm}
                 creatingStudy={creatingStudy}
                 onSetShowStudyForm={setShowStudyForm}
-                onCreateStudy={handleCreateStudy}
-                onUpdateStudy={handleUpdateStudy}
-                onDeleteStudy={handleDeleteStudy}
-                onViewPdf={handleViewPdf}
-                onUploadPdf={handleUploadPdf}
-                onOpenImportModal={() => setShowReferenceImportModal(true)}
-                onOpenGoogleDrive={handleOpenGoogleDrive}
+                onAddStudies={studyHandlers.handleAddStudies}
+                onUpdateStudy={studyHandlers.handleUpdateStudy}
+                onDeleteStudy={studyHandlers.handleDeleteStudy}
+                onViewPdf={pdfHandlers.handleViewPdf}
+                onUploadPdf={pdfHandlers.handleUploadPdf}
+                onOpenGoogleDrive={pdfHandlers.handleOpenGoogleDrive}
               />
             </Show>
 
@@ -572,16 +273,16 @@ export default function ProjectView() {
                 getAssigneeName={getAssigneeName}
                 onSetShowStudyForm={setShowStudyForm}
                 onSetShowChecklistForm={setShowChecklistForm}
-                onCreateStudy={handleCreateStudy}
-                onCreateChecklist={handleCreateChecklist}
-                onUpdateStudy={handleUpdateStudy}
-                onDeleteStudy={handleDeleteStudy}
-                onUpdateChecklist={handleUpdateChecklist}
-                onDeleteChecklist={handleDeleteChecklist}
-                onOpenChecklist={openChecklist}
-                onOpenReconciliation={openReconciliation}
-                onViewPdf={handleViewPdf}
-                onUploadPdf={handleUploadPdf}
+                onCreateStudy={studyHandlers.handleCreateStudy}
+                onCreateChecklist={checklistHandlers.handleCreateChecklist}
+                onUpdateStudy={studyHandlers.handleUpdateStudy}
+                onDeleteStudy={studyHandlers.handleDeleteStudy}
+                onUpdateChecklist={checklistHandlers.handleUpdateChecklist}
+                onDeleteChecklist={checklistHandlers.handleDeleteChecklist}
+                onOpenChecklist={checklistHandlers.openChecklist}
+                onOpenReconciliation={checklistHandlers.openReconciliation}
+                onViewPdf={pdfHandlers.handleViewPdf}
+                onUploadPdf={pdfHandlers.handleUploadPdf}
                 onOpenImportModal={() => setShowReferenceImportModal(true)}
               />
             </Show>
@@ -606,7 +307,7 @@ export default function ProjectView() {
       <ReferenceImportModal
         open={showReferenceImportModal()}
         onClose={() => setShowReferenceImportModal(false)}
-        onImport={handleImportReferences}
+        onImport={studyHandlers.handleImportReferences}
       />
 
       <GoogleDrivePickerModal
@@ -617,7 +318,7 @@ export default function ProjectView() {
         }}
         projectId={params.projectId}
         studyId={googleDriveTargetStudyId()}
-        onImportSuccess={handleGoogleDriveImportSuccess}
+        onImportSuccess={pdfHandlers.handleGoogleDriveImportSuccess}
       />
 
       <confirmDialog.ConfirmDialogComponent />
