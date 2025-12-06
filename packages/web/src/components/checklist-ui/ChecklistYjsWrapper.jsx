@@ -244,18 +244,6 @@ export default function ChecklistYjsWrapper() {
           {currentChecklist()?.type || 'AMSTAR2'} Checklist
         </span>
       </div>
-      <Show when={connectionState().connected}>
-        <span class='flex items-center gap-1 text-green-600 text-xs whitespace-nowrap'>
-          <div class='w-2 h-2 bg-green-500 rounded-full' />
-          Synced
-        </span>
-      </Show>
-      <Show when={connectionState().connecting}>
-        <span class='flex items-center gap-1 text-yellow-600 text-xs whitespace-nowrap'>
-          <div class='w-2 h-2 bg-yellow-500 rounded-full animate-pulse' />
-          Connecting...
-        </span>
-      </Show>
       <div class='ml-auto flex items-center gap-3'>
         <Show when={currentScore()}>
           <span
