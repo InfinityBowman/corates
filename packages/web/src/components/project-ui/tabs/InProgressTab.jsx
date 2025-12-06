@@ -3,12 +3,18 @@ import StudyCard from '../StudyCard.jsx';
 
 export default function InProgressTab(props) {
   // Filter studies to only show ones assigned to the current user
+  // Also filter checklists so reviewers only see their own
   const myStudies = createMemo(() => {
     const userId = props.currentUserId;
     if (!userId) return [];
     return props
       .studies()
-      .filter(study => study.reviewer1 === userId || study.reviewer2 === userId);
+      .filter(study => study.reviewer1 === userId || study.reviewer2 === userId)
+      .map(study => ({
+        ...study,
+        // Filter checklists to only show the current user's checklists
+        checklists: (study.checklists || []).filter(c => c.assignedTo === userId),
+      }));
   });
 
   return (

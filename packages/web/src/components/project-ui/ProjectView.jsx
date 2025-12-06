@@ -292,7 +292,12 @@ export default function ProjectView() {
             </Show>
 
             <Show when={tabValue === 'ready-to-reconcile'}>
-              <ReadyToReconcileTab />
+              <ReadyToReconcileTab
+                studies={studies}
+                getAssigneeName={getAssigneeName}
+                onOpenReconciliation={checklistHandlers.openReconciliation}
+                onViewPdf={pdfHandlers.handleViewPdf}
+              />
             </Show>
 
             <Show when={tabValue === 'completed'}>
