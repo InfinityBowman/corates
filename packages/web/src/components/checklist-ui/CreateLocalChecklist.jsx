@@ -61,7 +61,7 @@ export default function CreateLocalChecklist() {
   };
 
   return (
-    <div class='min-h-screen bg-gray-50 flex items-center justify-center p-6'>
+    <div class='min-h-full flex items-center justify-center p-6'>
       <div class='w-full max-w-lg'>
         <div class='bg-white rounded-xl shadow-sm border border-gray-200 p-8'>
           <h1 class='text-2xl font-bold text-gray-900 mb-2'>Start an Appraisal</h1>
@@ -142,7 +142,7 @@ export default function CreateLocalChecklist() {
                 disabled={creating()}
                 class='flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed'
               >
-                {creating() ? 'Creating...' : 'Create Study'}
+                {creating() ? 'Adding...' : 'Add Study'}
               </button>
             </div>
           </form>

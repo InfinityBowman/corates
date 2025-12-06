@@ -8,4 +8,5 @@ export const urls = {
   signIn: () => `${config.appUrl}/signin`,
   signUp: () => `${config.appUrl}/signup`,
   checklist: () => `${config.appUrl}/checklist`,
+  dashboard: () => `${config.appUrl}/dashboard`,
 };

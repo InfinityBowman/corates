@@ -2,40 +2,16 @@ import { createSignal, For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
 import { useConfirmDialog } from '@components/zag/Dialog.jsx';
-import { showToast } from '@components/zag/Toast.jsx';
 
 export default function ChecklistsDashboard(props) {
   const navigate = useNavigate();
-  const [showCreateForm, setShowCreateForm] = createSignal(false);
-  const [newChecklistName, setNewChecklistName] = createSignal('');
-  const [isCreating, setIsCreating] = createSignal(false);
 
   const isLoggedIn = () => props.isLoggedIn ?? false;
 
-  const { checklists, loading, createChecklist, deleteChecklist } = useLocalChecklists();
+  const { checklists, loading, deleteChecklist } = useLocalChecklists();
 
   // Confirm dialog for delete actions
   const confirmDialog = useConfirmDialog();
-
-  const handleCreate = async () => {
-    if (!newChecklistName().trim()) return;
-
-    setIsCreating(true);
-    try {
-      const checklist = await createChecklist(newChecklistName().trim());
-      if (checklist) {
-        setNewChecklistName('');
-        setShowCreateForm(false);
-        // Navigate to the new checklist
-        navigate(`/checklist/${checklist.id}`);
-      }
-    } catch (error) {
-      console.error('Error creating checklist:', error);
-      showToast.error('Creation Failed', 'Failed to create checklist. Please try again.');
-    } finally {
-      setIsCreating(false);
-    }
-  };
 
   const openChecklist = checklistId => {
     navigate(`/checklist/${checklistId}`);
@@ -66,7 +42,7 @@ export default function ChecklistsDashboard(props) {
         </div>
         <button
           class='inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg gap-2'
-          onClick={() => setShowCreateForm(!showCreateForm())}
+          onClick={() => navigate('/checklist')}
         >
           <span class='text-lg'>+</span>
           New Appraisal
@@ -91,43 +67,6 @@ export default function ChecklistsDashboard(props) {
         </div>
       </Show>
 
-      {/* Create Appraisal Form */}
-      <Show when={showCreateForm()}>
-        <div class='bg-white p-6 rounded-lg border border-gray-200 shadow-sm'>
-          <h3 class='text-lg font-semibold text-gray-900 mb-4'>Start a New Appraisal</h3>
-
-          <div class='space-y-4'>
-            <div>
-              <label class='block text-sm font-semibold text-gray-700 mb-2'>Appraisal Name</label>
-              <input
-                type='text'
-                placeholder='e.g., Sleep Study Review'
-                value={newChecklistName()}
-                onInput={e => setNewChecklistName(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleCreate()}
-                class='w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
-              />
-            </div>
-          </div>
-
-          <div class='flex gap-3 mt-6'>
-            <button
-              onClick={handleCreate}
-              disabled={isCreating() || !newChecklistName().trim()}
-              class='inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-md'
-            >
-              {isCreating() ? 'Creating...' : 'Create Checklist'}
-            </button>
-            <button
-              onClick={() => setShowCreateForm(false)}
-              class='px-4 py-2 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:border-blue-300 hover:text-blue-600 transition-colors'
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </Show>
-
       {/* Checklists Grid */}
       <div class='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
         <Show
@@ -137,7 +76,7 @@ export default function ChecklistsDashboard(props) {
               <div class='col-span-full text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300'>
                 <div class='text-gray-500 mb-4'>No appraisals yet</div>
                 <button
-                  onClick={() => setShowCreateForm(true)}
+                  onClick={() => navigate('/checklist')}
                   class='text-blue-600 hover:text-blue-700 font-medium'
                 >
                   Create your first appraisal

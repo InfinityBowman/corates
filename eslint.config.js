@@ -25,6 +25,7 @@ export default [
         fetch: 'readonly',
         URL: 'readonly',
         URLSearchParams: 'readonly',
+        BroadcastChannel: 'readonly',
         FormData: 'readonly',
         Blob: 'readonly',
         File: 'readonly',

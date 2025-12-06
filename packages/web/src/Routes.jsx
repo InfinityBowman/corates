@@ -3,6 +3,7 @@ import Dashboard from './components/Dashboard.jsx';
 import SignIn from '@auth-ui/SignIn.jsx';
 import SignUp from '@auth-ui/SignUp.jsx';
 import CheckEmail from '@auth-ui/CheckEmail.jsx';
+import CompleteProfile from '@auth-ui/CompleteProfile.jsx';
 import ResetPassword from '@auth-ui/ResetPassword.jsx';
 import AuthLayout from '@auth-ui/AuthLayout.jsx';
 import Layout from '@/Layout.jsx';
@@ -23,6 +24,7 @@ export default function AppRoutes() {
         <Route path='/signin' component={SignIn} />
         <Route path='/signup' component={SignUp} />
         <Route path='/check-email' component={CheckEmail} />
+        <Route path='/complete-profile' component={CompleteProfile} />
         <Route path='/reset-password' component={ResetPassword} />
       </Route>
 

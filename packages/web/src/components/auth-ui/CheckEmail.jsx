@@ -34,6 +34,11 @@ export default function CheckEmail() {
       }
 
       const currentUser = user();
+      console.log('[CheckEmail] Checking verification:', {
+        isAuthenticated: isAuthenticated(),
+        emailVerified: currentUser?.emailVerified,
+        role: currentUser?.role,
+      });
 
       if (isAuthenticated() && currentUser?.emailVerified) {
         if (checkInterval()) {
@@ -42,8 +47,19 @@ export default function CheckEmail() {
         }
         setLoading(true);
 
+        // Capture role now before the timeout
+        const hasRole = !!currentUser?.role;
+
         setTimeout(() => {
-          navigate('/dashboard', { replace: true });
+          // Redirect to complete-profile if user hasn't set up their profile yet
+          // Otherwise go to dashboard
+          if (!hasRole) {
+            console.log('[CheckEmail] Redirecting to complete-profile');
+            navigate('/complete-profile', { replace: true });
+          } else {
+            console.log('[CheckEmail] Redirecting to dashboard');
+            navigate('/dashboard', { replace: true });
+          }
         }, REDIRECT_DELAY_MS);
         return true;
       }

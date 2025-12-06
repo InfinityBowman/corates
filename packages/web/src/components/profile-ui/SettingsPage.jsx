@@ -1,9 +1,14 @@
 import { createSignal, Show } from 'solid-js';
-import { FiBell, FiMoon, FiShield, FiKey, FiEye, FiEyeOff } from 'solid-icons/fi';
+import { FiBell, FiMoon, FiShield, FiKey, FiEye, FiEyeOff, FiLink, FiMail } from 'solid-icons/fi';
 import { LANDING_URL } from '@config/api.js';
+import { useBetterAuth } from '@api/better-auth-store.js';
 import Switch from '@components/zag/Switch.jsx';
+import GoogleDriveSettings from './GoogleDriveSettings.jsx';
+import TwoFactorSetup from './TwoFactorSetup.jsx';
 
 export default function SettingsPage() {
+  const { user, resetPassword } = useBetterAuth();
+
   // Notification settings
   const [emailNotifications, setEmailNotifications] = createSignal(true);
   const [projectUpdates, setProjectUpdates] = createSignal(true);
@@ -21,6 +26,10 @@ export default function SettingsPage() {
   const [passwordError, setPasswordError] = createSignal('');
   const [passwordSuccess, setPasswordSuccess] = createSignal('');
   const [changingPassword, setChangingPassword] = createSignal(false);
+
+  // Add password (for magic link / OAuth users)
+  const [addPasswordLoading, setAddPasswordLoading] = createSignal(false);
+  const [addPasswordSent, setAddPasswordSent] = createSignal(false);
 
   const handlePasswordChange = async e => {
     e.preventDefault();
@@ -105,6 +114,19 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* Connected Services Section */}
+      <div class='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6'>
+        <div class='px-6 py-4 border-b border-gray-200 bg-gray-50'>
+          <div class='flex items-center space-x-2'>
+            <FiLink class='w-5 h-5 text-gray-600' />
+            <h2 class='text-lg font-medium text-gray-900'>Connected Services</h2>
+          </div>
+        </div>
+        <div class='p-6'>
+          <GoogleDriveSettings />
+        </div>
+      </div>
+
       {/* Security Section */}
       <div class='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6'>
         <div class='px-6 py-4 border-b border-gray-200 bg-gray-50'>
@@ -113,22 +135,74 @@ export default function SettingsPage() {
             <h2 class='text-lg font-medium text-gray-900'>Security</h2>
           </div>
         </div>
-        <div class='p-6'>
+        <div class='p-6 space-y-6'>
           <Show when={passwordSuccess()}>
-            <div class='mb-4 p-3 rounded-md text-sm bg-green-50 text-green-700 border border-green-200'>
+            <div class='p-3 rounded-md text-sm bg-green-50 text-green-700 border border-green-200'>
               {passwordSuccess()}
             </div>
           </Show>
 
+          {/* Add Password Option - for users who signed up via magic link or OAuth */}
+          <Show when={addPasswordSent()}>
+            <div class='p-4 rounded-lg bg-blue-50 border border-blue-200'>
+              <div class='flex items-start space-x-3'>
+                <FiMail class='w-5 h-5 text-blue-600 mt-0.5' />
+                <div>
+                  <p class='font-medium text-blue-900'>Check your email</p>
+                  <p class='text-sm text-blue-700 mt-1'>
+                    We sent a link to <strong>{user()?.email}</strong> to set your password.
+                  </p>
+                  <button
+                    type='button'
+                    onClick={() => setAddPasswordSent(false)}
+                    class='text-sm text-blue-600 hover:text-blue-800 mt-2 font-medium'
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Show>
+
+          <Show when={!addPasswordSent()}>
+            <div class='flex items-center justify-between'>
+              <div>
+                <p class='font-medium text-gray-900'>Add Password</p>
+                <p class='text-sm text-gray-500'>Set a password to sign in without email links.</p>
+              </div>
+              <button
+                onClick={async () => {
+                  setAddPasswordLoading(true);
+                  setPasswordError('');
+                  try {
+                    await resetPassword(user()?.email);
+                    setAddPasswordSent(true);
+                  } catch (err) {
+                    setPasswordError('Failed to send password setup email. Please try again.');
+                  } finally {
+                    setAddPasswordLoading(false);
+                  }
+                }}
+                disabled={addPasswordLoading()}
+                class='flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition disabled:opacity-50'
+              >
+                <FiMail class='w-4 h-4' />
+                <span>{addPasswordLoading() ? 'Sending...' : 'Send Setup Email'}</span>
+              </button>
+            </div>
+          </Show>
+
+          {/* Divider */}
+          <div class='border-t border-gray-200' />
+
+          {/* Change Password Option - for users who already have a password */}
           <Show
             when={showPasswordForm()}
             fallback={
               <div class='flex items-center justify-between'>
                 <div>
                   <p class='font-medium text-gray-900'>Change Password</p>
-                  <p class='text-sm text-gray-500'>
-                    Update your password to keep your account secure.
-                  </p>
+                  <p class='text-sm text-gray-500'>Update your existing password.</p>
                 </div>
                 <button
                   onClick={() => setShowPasswordForm(true)}
@@ -228,6 +302,12 @@ export default function SettingsPage() {
               </div>
             </form>
           </Show>
+
+          {/* Divider */}
+          <div class='border-t border-gray-200' />
+
+          {/* Two-Factor Authentication */}
+          <TwoFactorSetup />
         </div>
       </div>
 

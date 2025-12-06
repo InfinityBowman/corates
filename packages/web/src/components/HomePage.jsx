@@ -190,8 +190,30 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer class='border-t border-gray-100 py-8'>
-        <div class='max-w-6xl mx-auto px-6 text-center text-gray-500 text-sm'>
-          <p>CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis</p>
+        <div class='max-w-6xl mx-auto px-6'>
+          <div class='flex flex-col sm:flex-row items-center justify-between gap-4'>
+            <p class='text-gray-500 text-sm'>
+              CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis
+            </p>
+            <div class='flex gap-6 text-sm'>
+              <a
+                href='https://corates.org/privacy'
+                target='_blank'
+                rel='noopener noreferrer'
+                class='text-gray-500 hover:text-gray-700 transition-colors'
+              >
+                Privacy
+              </a>
+              <a
+                href='https://corates.org/terms'
+                target='_blank'
+                rel='noopener noreferrer'
+                class='text-gray-500 hover:text-gray-700 transition-colors'
+              >
+                Terms
+              </a>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

@@ -1,23 +1,73 @@
-import { createSignal, onMount } from 'solid-js';
+import { createSignal, onMount, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import PasswordInput from '../zag/PasswordInput.jsx';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton, AuthLink } from './AuthButtons.jsx';
+import {
+  GoogleButton,
+  OrcidButton,
+  SocialAuthContainer,
+  AuthDivider,
+} from './SocialAuthButtons.jsx';
+import MagicLinkForm from './MagicLinkForm.jsx';
+import TwoFactorVerify from './TwoFactorVerify.jsx';
 
 export default function SignIn() {
   const [email, setEmail] = createSignal('');
   const [password, setPassword] = createSignal('');
   const [error, setError] = createSignal('');
   const [loading, setLoading] = createSignal(false);
+  const [googleLoading, setGoogleLoading] = createSignal(false);
+  const [orcidLoading, setOrcidLoading] = createSignal(false);
+  const [useMagicLink, setUseMagicLink] = createSignal(false);
+  const [showTwoFactor, setShowTwoFactor] = createSignal(false);
   const navigate = useNavigate();
-  const { signin, authError, clearAuthError } = useBetterAuth();
+  const { signin, signinWithGoogle, signinWithOrcid, authError, clearAuthError } = useBetterAuth();
+
+  // Number of social providers
+  const socialProviderCount = 2;
 
   // Clear any stale auth errors when component mounts
   onMount(() => clearAuthError());
 
   // Watch for auth errors from the store
   const displayError = () => error() || authError();
+
+  async function handleGoogleSignIn() {
+    setGoogleLoading(true);
+    setError('');
+
+    try {
+      // Mark as OAuth signup in case this is a new user who needs to complete profile
+      localStorage.setItem('oauthSignup', 'true');
+      // Redirect to complete-profile which will check if profile is complete
+      // and redirect to dashboard if so
+      await signinWithGoogle('/complete-profile');
+    } catch (err) {
+      console.error('Google sign-in error:', err);
+      setError('Failed to sign in with Google. Please try again.');
+      localStorage.removeItem('oauthSignup');
+      setGoogleLoading(false);
+    }
+  }
+
+  async function handleOrcidSignIn() {
+    setOrcidLoading(true);
+    setError('');
+
+    try {
+      // Mark as OAuth signup in case this is a new user who needs to complete profile
+      localStorage.setItem('oauthSignup', 'true');
+      // Redirect to complete-profile which will check if profile is complete
+      await signinWithOrcid('/complete-profile');
+    } catch (err) {
+      console.error('ORCID sign-in error:', err);
+      setError('Failed to sign in with ORCID. Please try again.');
+      localStorage.removeItem('oauthSignup');
+      setOrcidLoading(false);
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -31,7 +81,14 @@ export default function SignIn() {
     setLoading(true);
 
     try {
-      await signin(email(), password());
+      const result = await signin(email(), password());
+
+      // Check if 2FA is required
+      if (result?.twoFactorRequired) {
+        setShowTwoFactor(true);
+        setLoading(false);
+        return;
+      }
 
       // Small delay for better UX
       await new Promise(resolve => setTimeout(resolve, 200));
@@ -48,10 +105,15 @@ export default function SignIn() {
         navigate('/verify-email', { replace: true });
       } else if (
         msg.includes('invalid credentials') ||
-        msg.includes('incorrect email or password')
+        msg.includes('incorrect email or password') ||
+        msg.includes('invalid email or password')
       ) {
         setError('Incorrect email or password');
-      } else if (msg.includes('user not found')) {
+      } else if (
+        msg.includes('user not found') ||
+        msg.includes('user does not exist') ||
+        msg.includes('no user found')
+      ) {
         setError('No account found with this email');
       } else if (msg.includes('too many requests')) {
         setError('Too many sign-in attempts. Please try again later.');
@@ -75,83 +137,150 @@ export default function SignIn() {
     }
   }
 
+  // Handle cancel from 2FA screen
+  function handleTwoFactorCancel() {
+    setShowTwoFactor(false);
+    setPassword('');
+    setError('');
+  }
+
   return (
     <div class='h-full bg-blue-50 flex items-center justify-center px-4 py-8 sm:py-12'>
-      <form
-        aria-labelledby='signin-heading'
-        onSubmit={handleSubmit}
-        class='w-full max-w-md sm:max-w-xl bg-white rounded-xl sm:rounded-3xl shadow-2xl p-6 sm:p-12 space-y-4 border border-gray-100'
-        autocomplete='off'
-      >
-        <div class='mb-2 sm:mb-4 text-center'>
-          <h2 class='text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2' id='signin-heading'>
-            Welcome Back
-          </h2>
-          <p class='text-gray-500 text-xs sm:text-sm'>Sign in to your account.</p>
-        </div>
+      <div class='w-full max-w-md sm:max-w-xl bg-white rounded-xl sm:rounded-3xl shadow-2xl p-6 sm:p-12 space-y-4 border border-gray-100'>
+        {/* Two-Factor Verification */}
+        <Show when={showTwoFactor()}>
+          <TwoFactorVerify onCancel={handleTwoFactorCancel} />
+        </Show>
 
-        <div>
-          <label
-            class='block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2'
-            for='email-input'
-          >
-            Email
-          </label>
-          <input
-            type='email'
-            autoComplete='email'
-            autocapitalize='off'
-            spellCheck='false'
-            value={email()}
-            onInput={e => setEmail(e.target.value)}
-            class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
-            required
-            id='email-input'
-            placeholder='you@example.com'
-            disabled={loading()}
-          />
-        </div>
+        {/* Normal Sign In */}
+        <Show when={!showTwoFactor()}>
+          <div class='mb-2 sm:mb-4 text-center'>
+            <h2
+              class='text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2'
+              id='signin-heading'
+            >
+              Welcome Back
+            </h2>
+            <p class='text-gray-500 text-xs sm:text-sm'>Sign in to your account.</p>
+          </div>
 
-        <div>
-          <PasswordInput
-            password={password()}
-            onPasswordChange={setPassword}
-            autoComplete='current-password'
-            required
-            disabled={loading()}
-          />
-          <ErrorMessage displayError={displayError} />
-        </div>
+          {/* Toggle between password and magic link */}
+          <div class='flex rounded-lg bg-gray-100 p-1'>
+            <button
+              type='button'
+              onClick={() => setUseMagicLink(false)}
+              class={`flex-1 py-2 px-3 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+                !useMagicLink() ?
+                  'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Password
+            </button>
+            <button
+              type='button'
+              onClick={() => setUseMagicLink(true)}
+              class={`flex-1 py-2 px-3 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+                useMagicLink() ?
+                  'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Email Link
+            </button>
+          </div>
 
-        <PrimaryButton loading={loading()} loadingText='Signing In...'>
-          Sign In
-        </PrimaryButton>
+          {/* Magic Link Form */}
+          <Show when={useMagicLink()}>
+            <MagicLinkForm callbackPath='/complete-profile' />
+          </Show>
 
-        <div class='text-center mt-1 sm:mt-2'>
-          <AuthLink
-            href='/reset-password'
-            onClick={e => {
-              e.preventDefault();
-              navigate('/reset-password');
-            }}
-          >
-            <span class='text-xs sm:text-sm'>Forgot password?</span>
-          </AuthLink>
-        </div>
+          {/* Password Form */}
+          <Show when={!useMagicLink()}>
+            <form aria-labelledby='signin-heading' onSubmit={handleSubmit} autocomplete='off'>
+              <div class='space-y-4'>
+                <div>
+                  <label
+                    class='block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2'
+                    for='email-input'
+                  >
+                    Email
+                  </label>
+                  <input
+                    type='email'
+                    autoComplete='email'
+                    autocapitalize='off'
+                    spellCheck='false'
+                    value={email()}
+                    onInput={e => setEmail(e.target.value)}
+                    class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
+                    required
+                    id='email-input'
+                    placeholder='you@example.com'
+                    disabled={loading()}
+                  />
+                </div>
 
-        <div class='text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-4'>
-          Don&apos;t have an account?{' '}
-          <AuthLink
-            href='/signup'
-            onClick={e => {
-              e.preventDefault();
-              navigate('/signup');
-            }}
-          >
-            Sign Up
-          </AuthLink>
-        </div>
-      </form>
+                <div>
+                  <PasswordInput
+                    password={password()}
+                    onPasswordChange={setPassword}
+                    autoComplete='current-password'
+                    required
+                    disabled={loading()}
+                  />
+                </div>
+
+                <ErrorMessage displayError={displayError} />
+
+                <PrimaryButton loading={loading()} loadingText='Signing In...'>
+                  Sign In
+                </PrimaryButton>
+
+                <div class='text-center'>
+                  <AuthLink
+                    href='/reset-password'
+                    onClick={e => {
+                      e.preventDefault();
+                      navigate('/reset-password');
+                    }}
+                  >
+                    <span class='text-xs sm:text-sm'>Forgot password?</span>
+                  </AuthLink>
+                </div>
+              </div>
+            </form>
+          </Show>
+
+          <AuthDivider />
+
+          <SocialAuthContainer buttonCount={socialProviderCount}>
+            <GoogleButton
+              loading={googleLoading()}
+              onClick={handleGoogleSignIn}
+              iconOnly={socialProviderCount > 1}
+            />
+            <OrcidButton
+              loading={orcidLoading()}
+              onClick={handleOrcidSignIn}
+              iconOnly={socialProviderCount > 1}
+            />
+          </SocialAuthContainer>
+
+          <div class='text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-4'>
+            Don&apos;t have an account?{' '}
+            <AuthLink
+              href='/signup'
+              onClick={e => {
+                e.preventDefault();
+                navigate('/signup');
+              }}
+            >
+              Sign Up
+            </AuthLink>
+          </div>
+        </Show>
+      </div>
     </div>
   );
 }

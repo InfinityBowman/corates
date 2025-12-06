@@ -1,5 +1,6 @@
 import { verifyAuth } from '../auth/config.js';
 import { getAccessControlOrigin } from '../config/origins.js';
+import { SESSION_CONFIG } from '../config/constants.js';
 
 export class UserSession {
   constructor(state, env) {
@@ -45,9 +46,12 @@ export class UserSession {
         });
       }
 
+      // Extract the userId from the URL path
+      // URL pattern: /api/sessions/:sessionId/*
+      const sessionUserId = this.extractUserIdFromPath(path);
+
       // Ensure user can only access their own session
-      const sessionId = await this.state.id.toString();
-      if (sessionId !== user.id) {
+      if (!sessionUserId || sessionUserId !== user.id) {
         return new Response(JSON.stringify({ error: 'Access denied' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -102,6 +106,9 @@ export class UserSession {
       sessionData.lastActive = new Date().toISOString();
       await this.state.storage.put('session', sessionData);
 
+      // Schedule cleanup alarm if not already set
+      await this.scheduleCleanupAlarm();
+
       return new Response(JSON.stringify(sessionData), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -126,6 +133,9 @@ export class UserSession {
       };
 
       await this.state.storage.put('session', sessionData);
+
+      // Schedule cleanup alarm
+      await this.scheduleCleanupAlarm();
 
       return new Response(JSON.stringify(sessionData), {
         status: 201,
@@ -201,9 +211,8 @@ export class UserSession {
       console.error('WebSocket auth error:', err);
     }
 
-    // In production, require authentication
-    const isDevelopment = this.env.ENVIRONMENT !== 'production';
-    if (!isDevelopment && !user) {
+    // Require authentication
+    if (!user) {
       return new Response('Authentication required', { status: 401 });
     }
 
@@ -262,7 +271,7 @@ export class UserSession {
       // Broadcast to all connected clients
       let delivered = false;
       for (const conn of this.connections) {
-        if (conn.readyState === WebSocket.READY_STATE_OPEN) {
+        if (conn.readyState === 1) {
           conn.send(JSON.stringify(notification));
           delivered = true;
         }
@@ -300,14 +309,35 @@ export class UserSession {
       const now = new Date();
       const hoursSinceActive = (now - lastActive) / (1000 * 60 * 60);
 
-      // Delete session if inactive for more than 24 hours
-      if (hoursSinceActive > 24) {
+      // Delete session if inactive for configured hours
+      if (hoursSinceActive > SESSION_CONFIG.CLEANUP_HOURS) {
         await this.state.storage.deleteAll();
+        console.log('UserSession: cleaned up inactive session');
       } else {
         // Schedule next cleanup check
-        const nextCheck = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour
-        await this.state.storage.setAlarm(nextCheck);
+        await this.state.storage.setAlarm(now.getTime() + SESSION_CONFIG.ALARM_INTERVAL_MS);
       }
     }
+  }
+
+  /**
+   * Schedule cleanup alarm if not already set
+   */
+  async scheduleCleanupAlarm() {
+    const currentAlarm = await this.state.storage.getAlarm();
+    if (!currentAlarm) {
+      await this.state.storage.setAlarm(Date.now() + SESSION_CONFIG.ALARM_INTERVAL_MS);
+    }
+  }
+
+  /**
+   * Extract user ID from the URL path
+   * Expected pattern: /api/sessions/:userId/...
+   * @param {string} path - URL pathname
+   * @returns {string|null} - The user ID or null if not found
+   */
+  extractUserIdFromPath(path) {
+    const match = path.match(/\/api\/sessions\/([^/]+)/);
+    return match ? match[1] : null;
   }
 }

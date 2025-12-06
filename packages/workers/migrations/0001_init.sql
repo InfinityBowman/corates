@@ -3,6 +3,7 @@
 
 -- Drop existing tables if they exist (for clean migration)
 DROP TABLE IF EXISTS subscriptions;
+DROP TABLE IF EXISTS mediaFiles;
 DROP TABLE IF EXISTS project_members;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS email_verification_tokens;
@@ -14,6 +15,7 @@ DROP TABLE IF EXISTS account;
 DROP TABLE IF EXISTS session;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS user;
+DROP TABLE IF EXISTS twoFactor;
 
 -- Better Auth user table
 CREATE TABLE user (
@@ -24,11 +26,11 @@ CREATE TABLE user (
   image TEXT,
   createdAt INTEGER DEFAULT (unixepoch()),
   updatedAt INTEGER DEFAULT (unixepoch()),
-  
-  -- Custom fields for your app
   username TEXT UNIQUE,
   displayName TEXT,
-  avatarUrl TEXT
+  avatarUrl TEXT,
+  role TEXT, -- researcher, student, librarian, other
+  twoFactorEnabled INTEGER DEFAULT 0
 );
 
 -- Better Auth session table
@@ -66,6 +68,16 @@ CREATE TABLE verification (
   identifier TEXT NOT NULL,
   value TEXT NOT NULL,
   expiresAt INTEGER NOT NULL,
+  createdAt INTEGER DEFAULT (unixepoch()),
+  updatedAt INTEGER DEFAULT (unixepoch())
+);
+
+-- Better Auth two-factor table
+CREATE TABLE twoFactor (
+  id TEXT PRIMARY KEY,
+  secret TEXT NOT NULL,
+  backupCodes TEXT NOT NULL,
+  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
   createdAt INTEGER DEFAULT (unixepoch()),
   updatedAt INTEGER DEFAULT (unixepoch())
 );
@@ -109,6 +121,18 @@ CREATE TABLE subscriptions (
   UNIQUE(userId)
 );
 
+-- Media files table (for uploaded files stored in R2)
+CREATE TABLE mediaFiles (
+  id TEXT PRIMARY KEY,
+  filename TEXT NOT NULL,
+  originalName TEXT,
+  fileType TEXT,
+  fileSize INTEGER,
+  uploadedBy TEXT REFERENCES user(id),
+  bucketKey TEXT NOT NULL,
+  createdAt INTEGER DEFAULT (unixepoch())
+);
+
 -- Create indexes for better performance
 
 -- Auth indexes
@@ -117,6 +141,9 @@ CREATE INDEX idx_session_token ON session(token);
 CREATE INDEX idx_account_userId ON account(userId);
 CREATE INDEX idx_account_providerId ON account(providerId);
 CREATE INDEX idx_verification_identifier ON verification(identifier);
+
+-- Two-factor indexes
+CREATE INDEX idx_twoFactor_userId ON twoFactor(userId);
 
 -- Project indexes
 CREATE INDEX idx_projects_createdBy ON projects(createdBy);

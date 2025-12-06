@@ -49,6 +49,17 @@ export function useProject(projectId) {
         id: studyId,
         name: studyData.name || '',
         description: studyData.description || '',
+        // Reference metadata fields
+        firstAuthor: studyData.firstAuthor || null,
+        publicationYear: studyData.publicationYear || null,
+        authors: studyData.authors || null,
+        journal: studyData.journal || null,
+        doi: studyData.doi || null,
+        abstract: studyData.abstract || null,
+        importSource: studyData.importSource || null,
+        // Reviewer assignments
+        reviewer1: studyData.reviewer1 || null,
+        reviewer2: studyData.reviewer2 || null,
         createdAt: studyData.createdAt,
         updatedAt: studyData.updatedAt,
         checklists: [],
@@ -124,6 +135,7 @@ export function useProject(projectId) {
         name: memberData.name,
         email: memberData.email,
         displayName: memberData.displayName,
+        image: memberData.image,
       });
     }
 
@@ -234,7 +246,8 @@ export function useProject(projectId) {
   }
 
   // Create a new study
-  function createStudy(name, description = '') {
+  // metadata can include: firstAuthor, publicationYear, authors, journal, doi, abstract, importSource
+  function createStudy(name, description = '', metadata = {}) {
     if (!ydoc) return null;
     // Allow writes if Y.js doc is synced from IndexedDB (local-first)
     // Changes will sync to server when WebSocket reconnects
@@ -253,6 +266,15 @@ export function useProject(projectId) {
     studyYMap.set('updatedAt', now);
     studyYMap.set('checklists', new Y.Map());
 
+    // Set optional reference metadata fields
+    if (metadata.firstAuthor) studyYMap.set('firstAuthor', metadata.firstAuthor);
+    if (metadata.publicationYear) studyYMap.set('publicationYear', metadata.publicationYear);
+    if (metadata.authors) studyYMap.set('authors', metadata.authors);
+    if (metadata.journal) studyYMap.set('journal', metadata.journal);
+    if (metadata.doi) studyYMap.set('doi', metadata.doi);
+    if (metadata.abstract) studyYMap.set('abstract', metadata.abstract);
+    if (metadata.importSource) studyYMap.set('importSource', metadata.importSource);
+
     studiesMap.set(studyId, studyYMap);
 
     return studyId;
@@ -270,7 +292,30 @@ export function useProject(projectId) {
 
     if (updates.name !== undefined) studyYMap.set('name', updates.name);
     if (updates.description !== undefined) studyYMap.set('description', updates.description);
+    // Reference metadata fields
+    if (updates.firstAuthor !== undefined) studyYMap.set('firstAuthor', updates.firstAuthor);
+    if (updates.publicationYear !== undefined)
+      studyYMap.set('publicationYear', updates.publicationYear);
+    if (updates.authors !== undefined) studyYMap.set('authors', updates.authors);
+    if (updates.journal !== undefined) studyYMap.set('journal', updates.journal);
+    if (updates.doi !== undefined) studyYMap.set('doi', updates.doi);
+    if (updates.abstract !== undefined) studyYMap.set('abstract', updates.abstract);
+    // Reviewer assignment fields
+    if (updates.reviewer1 !== undefined) studyYMap.set('reviewer1', updates.reviewer1);
+    if (updates.reviewer2 !== undefined) studyYMap.set('reviewer2', updates.reviewer2);
     studyYMap.set('updatedAt', Date.now());
+  }
+
+  // Update project settings (stored in meta map)
+  function updateProjectSettings(settings) {
+    if (!ydoc) return;
+    if (!synced()) return;
+
+    const metaMap = ydoc.getMap('meta');
+    for (const [key, value] of Object.entries(settings)) {
+      metaMap.set(key, value);
+    }
+    metaMap.set('updatedAt', Date.now());
   }
 
   // Delete a study
@@ -591,6 +636,7 @@ export function useProject(projectId) {
     // Operations
     createStudy,
     updateStudy,
+    updateProjectSettings,
     deleteStudy,
     addPdfToStudy,
     removePdfFromStudy,

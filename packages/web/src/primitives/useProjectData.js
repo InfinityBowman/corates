@@ -12,7 +12,7 @@ import { useProject } from './useProject.js';
 
 /**
  * Get reactive project data from the store
- * Optionally ensures a Y.js connection exists
+ * Ensures a Y.js connection exists
  *
  * @param {string} projectId - The project ID
  * @param {Object} options - Options

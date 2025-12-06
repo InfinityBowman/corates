@@ -116,11 +116,22 @@ export default function Navbar(props) {
               onClick={() => setShowUserMenu(!showUserMenu())}
               class='flex items-center space-x-2 h-9 hover:bg-blue-600 px-2 rounded transition font-medium'
             >
-              <div class='w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-white text-xs font-medium'>
-                {user()?.name?.charAt(0).toUpperCase() ||
-                  storedName?.charAt(0).toUpperCase() ||
-                  'U'}
-              </div>
+              <Show
+                when={user()?.image}
+                fallback={
+                  <div class='w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-white text-xs font-medium'>
+                    {user()?.name?.charAt(0).toUpperCase() ||
+                      storedName?.charAt(0).toUpperCase() ||
+                      'U'}
+                  </div>
+                }
+              >
+                <img
+                  src={user().image}
+                  alt={user()?.name || 'User'}
+                  class='w-6 h-6 rounded-full object-cover'
+                />
+              </Show>
               <span class='hidden sm:block'>{user()?.name || storedName || 'Loading...'}</span>
               <svg
                 class={`w-3 h-3 transition-transform ${showUserMenu() ? 'rotate-180' : ''}`}

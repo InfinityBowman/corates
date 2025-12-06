@@ -1,6 +1,6 @@
 import * as toast from '@zag-js/toast';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, For, Show } from 'solid-js';
+import { normalizeProps, useMachine, Key } from '@zag-js/solid';
+import { createMemo, createUniqueId, Show } from 'solid-js';
 import { FiX, FiCheck, FiAlertCircle, FiInfo, FiLoader } from 'solid-icons/fi';
 
 /**
@@ -12,21 +12,20 @@ export const toaster = toast.createStore({
   overlap: true,
   gap: 12,
   offsets: '16px',
+  removeDelay: 200, // Allow time for fade out animation
 });
 
 /**
  * Individual Toast component
  */
 function ToastItem(props) {
-  const service = useMachine(toast.machine, {
-    id: () => props.toast().id,
-    type: () => props.toast().type,
-    title: () => props.toast().title,
-    description: () => props.toast().description,
-    duration: () => props.toast().duration,
-    parent: () => props.parent,
-    index: () => props.index(),
-  });
+  const machineProps = createMemo(() => ({
+    ...props.toast(),
+    parent: props.parent,
+    index: props.index(),
+  }));
+  // eslint-disable-next-line solid/reactivity
+  const service = useMachine(toast.machine, machineProps);
   const api = createMemo(() => toast.connect(service, normalizeProps));
 
   const getIcon = () => {
@@ -60,17 +59,7 @@ function ToastItem(props) {
   return (
     <div
       {...api().getRootProps()}
-      class={`pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg border shadow-lg ${getStyles()}`}
-      style={{
-        translate: 'var(--x) var(--y)',
-        scale: 'var(--scale)',
-        'z-index': 'var(--z-index)',
-        height: 'var(--height)',
-        opacity: 'var(--opacity)',
-        'will-change': 'translate, opacity, scale',
-        transition: 'translate 400ms, scale 400ms, opacity 400ms',
-        'transition-timing-function': 'cubic-bezier(0.21, 1.02, 0.73, 1)',
-      }}
+      class={`toast-item pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg border shadow-lg ${getStyles()}`}
     >
       <div class='p-4'>
         <div class='flex items-start'>
@@ -89,8 +78,9 @@ function ToastItem(props) {
           </div>
           <div class='ml-4 flex shrink-0'>
             <button
+              type='button'
               onClick={() => api().dismiss()}
-              class='inline-flex rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+              class='inline-flex rounded-md bg-transparent text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 p-1 cursor-pointer'
             >
               <span class='sr-only'>Close</span>
               <FiX class='h-5 w-5' />
@@ -104,7 +94,6 @@ function ToastItem(props) {
 
 /**
  * Toaster component - renders all active toasts
- * Add this once at the root of your app (e.g., in Layout.jsx)
  */
 export function Toaster() {
   const service = useMachine(toast.group.machine, {
@@ -119,9 +108,9 @@ export function Toaster() {
       {...api().getGroupProps()}
       class='pointer-events-none fixed inset-0 z-50 flex flex-col items-end p-4 sm:p-6'
     >
-      <For each={api().getToasts()}>
-        {(toastItem, index) => <ToastItem toast={() => toastItem} parent={service} index={index} />}
-      </For>
+      <Key each={api().getToasts()} by={t => t.id}>
+        {(toastItem, index) => <ToastItem toast={toastItem} parent={service} index={index} />}
+      </Key>
     </div>
   );
 }
@@ -131,13 +120,13 @@ export function Toaster() {
  */
 export const showToast = {
   success: (title, description) =>
-    toaster.create({ title, description, type: 'success', duration: 4000 }),
+    toaster.create({ title, description, type: 'success', duration: 3000 }),
 
   error: (title, description) =>
-    toaster.create({ title, description, type: 'error', duration: 6000 }),
+    toaster.create({ title, description, type: 'error', duration: 5000 }),
 
   info: (title, description) =>
-    toaster.create({ title, description, type: 'info', duration: 4000 }),
+    toaster.create({ title, description, type: 'info', duration: 3000 }),
 
   loading: (title, description) =>
     toaster.create({ title, description, type: 'loading', duration: Infinity }),
