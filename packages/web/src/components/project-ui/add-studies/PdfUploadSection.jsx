@@ -41,7 +41,7 @@ export default function PdfUploadSection() {
                     fallback={
                       <div class='flex items-center gap-2'>
                         <div class='w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin' />
-                        <span class='text-sm text-gray-500'>Extracting title...</span>
+                        <span class='text-sm text-gray-500'>Extracting metadata...</span>
                       </div>
                     }
                   >
@@ -63,7 +63,21 @@ export default function PdfUploadSection() {
                         </span>
                       </Show>
                     </div>
-                    <p class='text-xs text-gray-500 truncate'>{pdf.file.name}</p>
+                    <div class='flex items-center gap-2'>
+                      <p class='text-xs text-gray-500 truncate'>{pdf.file.name}</p>
+                      <Show when={pdf.metadata?.firstAuthor || pdf.metadata?.publicationYear}>
+                        <span class='text-xs text-gray-400'>•</span>
+                        <span class='text-xs text-gray-600 shrink-0'>
+                          <Show when={pdf.metadata.firstAuthor}>
+                            {pdf.metadata.firstAuthor}
+                            <Show when={pdf.metadata.publicationYear}>, </Show>
+                          </Show>
+                          <Show when={pdf.metadata.publicationYear}>
+                            {pdf.metadata.publicationYear}
+                          </Show>
+                        </span>
+                      </Show>
+                    </div>
                   </Show>
                 </div>
                 <button

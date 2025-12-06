@@ -17,6 +17,7 @@ import {
   fetchReferenceByIdentifier,
   parseIdentifiers,
   checkPdfAvailability,
+  fetchFromDOI,
 } from '@/lib/referenceLookup.js';
 
 /**
@@ -83,6 +84,8 @@ export function useAddStudies(options = {}) {
         title: p.title,
         fileName: p.file.name,
         data: p.data,
+        doi: p.doi || null,
+        metadata: p.metadata || null,
       }));
 
     const selectedIds = selectedRefIds();
@@ -165,11 +168,32 @@ export function useAddStudies(options = {}) {
           extractPdfDoi(arrayBuffer.slice(0)),
         ]);
         console.log('Extracted PDF metadata:', { title, doi });
+        
+        // If DOI was extracted, fetch author/year metadata
+        let metadata = null;
+        if (doi) {
+          try {
+            console.log('Fetching metadata for DOI:', doi);
+            const refData = await fetchFromDOI(doi);
+            metadata = {
+              firstAuthor: refData.firstAuthor || null,
+              publicationYear: refData.publicationYear || null,
+              authors: refData.authors || null,
+              journal: refData.journal || null,
+              abstract: refData.abstract || null,
+            };
+            console.log('Fetched metadata:', metadata);
+          } catch (err) {
+            console.warn('Could not fetch metadata for DOI:', doi, err);
+          }
+        }
+        
         setUploadedPdfs(p => p.id === pdf.id, {
           title: title || pdf.file.name.replace(/\.pdf$/i, ''),
           extracting: false,
           data: arrayBuffer,
           doi: doi || null,
+          metadata: metadata,
         });
       } catch (error) {
         console.error('Error extracting PDF metadata:', error);
@@ -184,6 +208,7 @@ export function useAddStudies(options = {}) {
           extracting: false,
           data: fileData,
           doi: null,
+          metadata: null,
         });
       }
     }
@@ -681,8 +706,7 @@ export function useAddStudies(options = {}) {
           doi: pdf.doi || null,
           pdfData: pdf.data,
           pdfFileName: pdf.file?.name || null,
-          // PDFs don't have rich metadata
-          metadata: null,
+          metadata: pdf.metadata || null,
         });
       }
     }
