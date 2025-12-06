@@ -39,7 +39,9 @@ export default function Hero() {
         <div class='relative w-full max-w-6xl px-4'>
           <div
             class='bg-linear-to-br from-gray-100 to-gray-50 rounded-2xl border border-gray-200 shadow-2xl overflow-hidden mb-0 mt-0'
-            style={{ transform: 'perspective(1200px) rotateX(14deg) rotateZ(-10deg) rotateY(8deg)' }}
+            style={{
+              transform: 'perspective(1200px) rotateX(14deg) rotateZ(-10deg) rotateY(8deg)',
+            }}
           >
             <div class='aspect-16/7 flex items-center justify-center p-2'>
               <div class='text-center'>
