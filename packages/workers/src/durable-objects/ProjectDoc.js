@@ -280,7 +280,7 @@ export class ProjectDoc {
 
     let user = null;
 
-    // Try to authenticate via cookies (same as HTTP requests)
+    // Authenticate via cookies (standard HTTP cookie auth)
     try {
       const authResult = await verifyAuth(request, this.env);
       user = authResult.user;
@@ -289,27 +289,10 @@ export class ProjectDoc {
       console.error('WebSocket auth error:', err);
     }
 
-    // Require authentication - try token-based auth as fallback if cookie auth failed
+    // Require authentication
     if (!user) {
-      const url = new URL(request.url);
-      const token = url.searchParams.get('token');
-
-      if (token) {
-        const authRequest = new Request(request.url, {
-          headers: new Headers({
-            ...Object.fromEntries(request.headers.entries()),
-            Authorization: `Bearer ${token}`,
-          }),
-        });
-
-        const authResult = await verifyAuth(authRequest, this.env);
-        user = authResult.user;
-      }
-
-      if (!user) {
-        console.log('WebSocket auth failed - no user');
-        return new Response('Authentication required', { status: 401 });
-      }
+      console.log('WebSocket auth failed - no user');
+      return new Response('Authentication required', { status: 401 });
     }
 
     await this.initializeDoc();
