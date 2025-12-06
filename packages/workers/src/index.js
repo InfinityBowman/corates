@@ -9,6 +9,7 @@ import { UserSession } from './durable-objects/UserSession.js';
 import { ProjectDoc } from './durable-objects/ProjectDoc.js';
 import { EmailQueue } from './durable-objects/EmailQueue.js';
 import { createCorsMiddleware } from './middleware/cors.js';
+import { securityHeaders } from './middleware/securityHeaders.js';
 
 // Route imports
 import { auth } from './auth/routes.js';
@@ -32,6 +33,9 @@ app.use('*', async (c, next) => {
   const corsMiddleware = createCorsMiddleware(c.env);
   return corsMiddleware(c, next);
 });
+
+// Apply security headers to all responses
+app.use('*', securityHeaders());
 
 // Health check with dependency checks
 app.get('/health', async c => {
