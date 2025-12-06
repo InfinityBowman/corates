@@ -105,7 +105,7 @@ export function rateLimit(options = {}) {
 
     await next();
 
-    // Optionally decrement count for failed requests
+    // Decrement count for failed requests
     if (skipFailedRequests && c.res.status >= 400) {
       record.count = Math.max(0, record.count - 1);
       rateLimitStore.set(key, record);

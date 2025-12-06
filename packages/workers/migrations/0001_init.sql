@@ -25,8 +25,6 @@ CREATE TABLE user (
   image TEXT,
   createdAt INTEGER DEFAULT (unixepoch()),
   updatedAt INTEGER DEFAULT (unixepoch()),
-  
-  -- Custom fields for your app
   username TEXT UNIQUE,
   displayName TEXT,
   avatarUrl TEXT,

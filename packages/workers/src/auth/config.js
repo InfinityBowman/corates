@@ -108,7 +108,7 @@ export function createAuth(env, ctx) {
   plugins.push(
     twoFactor({
       issuer: 'CoRATES',
-      // Optional: customize backup codes
+      // Customize backup codes
       backupCodes: {
         length: 10, // 10 backup codes
         characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',

@@ -94,7 +94,6 @@ function ToastItem(props) {
 
 /**
  * Toaster component - renders all active toasts
- * Add this once at the root of your app (e.g., in Layout.jsx)
  */
 export function Toaster() {
   const service = useMachine(toast.group.machine, {
