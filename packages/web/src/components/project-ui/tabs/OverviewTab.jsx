@@ -2,18 +2,39 @@ import { For, Show } from 'solid-js';
 import ChartSection from '../ChartSection.jsx';
 import ReviewerAssignment from '../ReviewerAssignment.jsx';
 import ProjectSettings from '../ProjectSettings.jsx';
+import projectStore from '@primitives/projectStore.js';
+import { useBetterAuth } from '@api/better-auth-store.js';
 
+/**
+ * OverviewTab - Project overview with stats, settings, and members
+ *
+ * Props:
+ * - projectId: string - The project ID
+ * - isOwner: boolean - Whether current user is project owner
+ * - studyHandlers: { handleUpdateStudy, handleApplyNamingToAll }
+ * - memberHandlers: { handleRemoveMember }
+ * - projectActions: { updateProjectSettings, getChecklistData }
+ * - onAddMember: () => void
+ */
 export default function OverviewTab(props) {
+  const { user } = useBetterAuth();
+
+  // Read from store directly
+  const studies = () => projectStore.getStudies(props.projectId);
+  const members = () => projectStore.getMembers(props.projectId);
+  const meta = () => projectStore.getMeta(props.projectId);
+  const currentUserId = () => user()?.id;
+
   return (
     <>
       {/* Stats Summary */}
       <div class='grid grid-cols-2 gap-4 mb-6'>
         <div class='bg-gray-50 rounded-lg p-4 text-center'>
-          <p class='text-2xl font-bold text-gray-900'>{props.studies().length}</p>
+          <p class='text-2xl font-bold text-gray-900'>{studies().length}</p>
           <p class='text-sm text-gray-500'>Studies</p>
         </div>
         <div class='bg-gray-50 rounded-lg p-4 text-center'>
-          <p class='text-2xl font-bold text-gray-900'>{props.members().length}</p>
+          <p class='text-2xl font-bold text-gray-900'>{members().length}</p>
           <p class='text-sm text-gray-500'>Members</p>
         </div>
       </div>
@@ -21,21 +42,21 @@ export default function OverviewTab(props) {
       {/* Project Settings */}
       <div class='mb-8'>
         <ProjectSettings
-          meta={props.meta}
-          studies={props.studies}
-          onUpdateSettings={props.onUpdateSettings}
-          onApplyNamingToAll={props.onApplyNamingToAll}
-          isOwner={props.isOwner()}
+          meta={meta}
+          studies={studies}
+          onUpdateSettings={props.projectActions.updateProjectSettings}
+          onApplyNamingToAll={props.studyHandlers.handleApplyNamingToAll}
+          isOwner={props.isOwner}
         />
       </div>
 
       {/* Reviewer Assignment Section */}
-      <Show when={props.isOwner() && props.studies().length > 0}>
+      <Show when={props.isOwner && studies().length > 0}>
         <div class='mb-8'>
           <ReviewerAssignment
-            studies={props.studies}
-            members={props.members}
-            onAssignReviewers={props.onAssignReviewers}
+            studies={studies}
+            members={members}
+            onAssignReviewers={props.studyHandlers.handleUpdateStudy}
           />
         </div>
       </Show>
@@ -44,7 +65,7 @@ export default function OverviewTab(props) {
       <div class='mb-8'>
         <div class='flex items-center justify-between mb-4'>
           <h3 class='text-lg font-semibold text-gray-900'>Project Members</h3>
-          <Show when={props.isOwner()}>
+          <Show when={props.isOwner}>
             <button
               onClick={() => props.onAddMember()}
               class='inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors gap-1.5'
@@ -61,15 +82,14 @@ export default function OverviewTab(props) {
             </button>
           </Show>
         </div>
-        <Show when={props.members().length > 0}>
+        <Show when={members().length > 0}>
           <div class='bg-gray-50 rounded-lg divide-y divide-gray-200'>
-            <For each={props.members()}>
+            <For each={members()}>
               {member => {
-                const isSelf = props.currentUserId === member.userId;
-                const canRemove = props.isOwner() || isSelf;
+                const isSelf = currentUserId() === member.userId;
+                const canRemove = props.isOwner || isSelf;
                 const isLastOwner =
-                  member.role === 'owner' &&
-                  props.members().filter(m => m.role === 'owner').length <= 1;
+                  member.role === 'owner' && members().filter(m => m.role === 'owner').length <= 1;
 
                 return (
                   <div class='p-4 flex items-center justify-between'>
@@ -105,7 +125,7 @@ export default function OverviewTab(props) {
                       <Show when={canRemove && !isLastOwner}>
                         <button
                           onClick={() =>
-                            props.onRemoveMember(
+                            props.memberHandlers.handleRemoveMember(
                               member.userId,
                               member.displayName || member.name || member.email,
                             )
@@ -141,9 +161,9 @@ export default function OverviewTab(props) {
       <div>
         <h3 class='text-lg font-semibold text-gray-900 mb-4'>Quality Assessment Charts</h3>
         <ChartSection
-          studies={props.studies}
-          members={props.members}
-          getChecklistData={props.getChecklistData}
+          studies={studies}
+          members={members}
+          getChecklistData={props.projectActions.getChecklistData}
         />
       </div>
     </>

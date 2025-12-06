@@ -1,14 +1,37 @@
-import { For, Show, createMemo } from 'solid-js';
+import { For, Show, createMemo, createSignal } from 'solid-js';
 import StudyCard from '../StudyCard.jsx';
+import projectStore from '@primitives/projectStore.js';
+import { useBetterAuth } from '@api/better-auth-store.js';
 
+/**
+ * InProgressTab - Shows studies assigned to the current user
+ *
+ * Props:
+ * - projectId: string - The project ID
+ * - checklistHandlers: { handleCreateChecklist, handleUpdateChecklist, handleDeleteChecklist, openChecklist, openReconciliation }
+ * - pdfHandlers: { handleViewPdf }
+ * - getAssigneeName: (userId) => string
+ */
 export default function InProgressTab(props) {
+  const { user } = useBetterAuth();
+
+  // Local UI state
+  const [showChecklistForm, setShowChecklistForm] = createSignal(null);
+  const [creatingChecklist, setCreatingChecklist] = createSignal(false);
+
+  // Read from store directly
+  const studies = () => projectStore.getStudies(props.projectId);
+  const members = () => projectStore.getMembers(props.projectId);
+  const connectionState = () => projectStore.getConnectionState(props.projectId);
+  const hasData = () => connectionState().synced || studies().length > 0;
+  const currentUserId = () => user()?.id;
+
   // Filter studies to only show ones assigned to the current user
   // Also filter checklists so reviewers only see their own
   const myStudies = createMemo(() => {
-    const userId = props.currentUserId;
+    const userId = currentUserId();
     if (!userId) return [];
-    return props
-      .studies()
+    return studies()
       .filter(study => study.reviewer1 === userId || study.reviewer2 === userId)
       .map(study => ({
         ...study,
@@ -17,13 +40,28 @@ export default function InProgressTab(props) {
       }));
   });
 
+  // Wrap checklist creation to manage local loading state
+  const handleCreateChecklist = async (studyId, type, assigneeId) => {
+    setCreatingChecklist(true);
+    try {
+      const success = await props.checklistHandlers.handleCreateChecklist(
+        studyId,
+        type,
+        assigneeId,
+      );
+      if (success) setShowChecklistForm(null);
+    } finally {
+      setCreatingChecklist(false);
+    }
+  };
+
   return (
     <div class='space-y-6'>
       {/* Studies List */}
       <Show
         when={myStudies().length > 0}
         fallback={
-          <Show when={props.hasData()}>
+          <Show when={hasData()}>
             <div class='text-center py-12 bg-gray-50 rounded-lg'>
               <p class='text-gray-500'>No studies assigned to you yet.</p>
             </div>
@@ -35,27 +73,31 @@ export default function InProgressTab(props) {
             {study => (
               <StudyCard
                 study={study}
-                members={props.members()}
+                members={members()}
                 projectId={props.projectId}
-                currentUserId={props.currentUserId}
-                showChecklistForm={props.showChecklistForm() === study.id}
+                currentUserId={currentUserId()}
+                showChecklistForm={showChecklistForm() === study.id}
                 onToggleChecklistForm={() =>
-                  props.onSetShowChecklistForm(prev => (prev === study.id ? null : study.id))
+                  setShowChecklistForm(prev => (prev === study.id ? null : study.id))
                 }
                 onAddChecklist={(type, assigneeId) =>
-                  props.onCreateChecklist(study.id, type, assigneeId)
+                  handleCreateChecklist(study.id, type, assigneeId)
                 }
-                onOpenChecklist={checklistId => props.onOpenChecklist(study.id, checklistId)}
+                onOpenChecklist={checklistId =>
+                  props.checklistHandlers.openChecklist(study.id, checklistId)
+                }
                 onReconcile={(checklist1Id, checklist2Id) =>
-                  props.onOpenReconciliation(study.id, checklist1Id, checklist2Id)
+                  props.checklistHandlers.openReconciliation(study.id, checklist1Id, checklist2Id)
                 }
-                onViewPdf={pdf => props.onViewPdf(study.id, pdf)}
+                onViewPdf={pdf => props.pdfHandlers.handleViewPdf(study.id, pdf)}
                 onUpdateChecklist={(checklistId, updates) =>
-                  props.onUpdateChecklist(study.id, checklistId, updates)
+                  props.checklistHandlers.handleUpdateChecklist(study.id, checklistId, updates)
                 }
-                onDeleteChecklist={checklistId => props.onDeleteChecklist(study.id, checklistId)}
+                onDeleteChecklist={checklistId =>
+                  props.checklistHandlers.handleDeleteChecklist(study.id, checklistId)
+                }
                 getAssigneeName={props.getAssigneeName}
-                creatingChecklist={props.creatingChecklist()}
+                creatingChecklist={creatingChecklist()}
                 hideManagementActions={true}
               />
             )}

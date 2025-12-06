@@ -1,41 +1,28 @@
 /**
- * useProjectChecklistHandlers - Extracted checklist handlers for ProjectView
- * Handles checklist creation, updating, and deletion
+ * useProjectChecklistHandlers - Extracted checklist handlers
+ * Handles checklist creation, updating, deletion, and navigation
  */
 
+import { useNavigate } from '@solidjs/router';
 import { showToast } from '@components/zag/Toast.jsx';
 
 /**
- * @param {Object} options
- * @param {string} options.projectId - The project ID
- * @param {Object} options.projectActions - Actions from useProject hook
- * @param {Object} options.confirmDialog - Confirm dialog instance
- * @param {Function} options.navigate - Navigation function
- * @param {Function} options.setShowChecklistForm - Signal setter
- * @param {Function} options.setCreatingChecklist - Signal setter
+ * @param {string} projectId - The project ID
+ * @param {Object} projectActions - Actions from useProject hook (createChecklist, updateChecklist, deleteChecklist)
+ * @param {Object} confirmDialog - Confirm dialog instance
  */
-export default function useProjectChecklistHandlers(options) {
-  const {
-    projectId,
-    projectActions,
-    confirmDialog,
-    navigate,
-    setShowChecklistForm,
-    setCreatingChecklist,
-  } = options;
-
+export default function useProjectChecklistHandlers(projectId, projectActions, confirmDialog) {
+  const navigate = useNavigate();
   const { createChecklist, updateChecklist, deleteChecklist } = projectActions;
 
   const handleCreateChecklist = async (studyId, type, assigneeId) => {
-    setCreatingChecklist(true);
     try {
       createChecklist(studyId, type, assigneeId);
-      setShowChecklistForm(null);
+      return true;
     } catch (err) {
       console.error('Error adding checklist:', err);
       showToast.error('Addition Failed', 'Failed to add checklist');
-    } finally {
-      setCreatingChecklist(false);
+      return false;
     }
   };
 

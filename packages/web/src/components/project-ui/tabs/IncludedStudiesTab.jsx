@@ -5,24 +5,66 @@ import { CgFileDocument } from 'solid-icons/cg';
 import { FiTrash2 } from 'solid-icons/fi';
 import { FaBrandsGoogleDrive } from 'solid-icons/fa';
 import AddStudiesForm from '../AddStudiesForm.jsx';
+import GoogleDrivePickerModal from '../GoogleDrivePickerModal.jsx';
 import { showToast } from '@components/zag/Toast.jsx';
+import projectStore from '@primitives/projectStore.js';
 
+/**
+ * IncludedStudiesTab - Displays all studies in a project
+ *
+ * Props:
+ * - projectId: string - The project ID
+ * - studyHandlers: { handleAddStudies, handleUpdateStudy, handleDeleteStudy }
+ * - pdfHandlers: { handleViewPdf, handleUploadPdf, handleGoogleDriveImportSuccess }
+ * - getAssigneeName: (userId) => string
+ */
 export default function IncludedStudiesTab(props) {
+  // Local UI state - managed here, not in parent
+  const [showStudyForm, setShowStudyForm] = createSignal(false);
+  const [creatingStudy, setCreatingStudy] = createSignal(false);
+  const [showGoogleDriveModal, setShowGoogleDriveModal] = createSignal(false);
+  const [googleDriveTargetStudyId, setGoogleDriveTargetStudyId] = createSignal(null);
+
+  // Read from store directly
+  const studies = () => projectStore.getStudies(props.projectId);
+  const connectionState = () => projectStore.getConnectionState(props.projectId);
+  const hasData = () => connectionState().synced || studies().length > 0;
+
+  // Wrap handlers to manage local loading state
+  const handleAddStudies = async studiesToAdd => {
+    setCreatingStudy(true);
+    try {
+      await props.studyHandlers.handleAddStudies(studiesToAdd);
+      setShowStudyForm(false);
+    } finally {
+      setCreatingStudy(false);
+    }
+  };
+
+  const handleOpenGoogleDrive = studyId => {
+    setGoogleDriveTargetStudyId(studyId);
+    setShowGoogleDriveModal(true);
+  };
+
+  const handleGoogleDriveImportSuccess = file => {
+    const studyId = googleDriveTargetStudyId();
+    props.pdfHandlers.handleGoogleDriveImportSuccess(studyId, file);
+  };
   return (
     <div class='space-y-4'>
       {/* Add Studies Section - Unified form with PDF upload, reference import, and DOI lookup */}
-      <Show when={props.hasData()}>
+      <Show when={hasData()}>
         <AddStudiesForm
-          onAddStudies={props.onAddStudies}
-          loading={props.creatingStudy()}
-          expanded={props.showStudyForm()}
-          onExpand={() => props.onSetShowStudyForm(true)}
-          onCollapse={() => props.onSetShowStudyForm(false)}
-          hasExistingStudies={props.studies().length > 0}
+          onAddStudies={handleAddStudies}
+          loading={creatingStudy()}
+          expanded={showStudyForm()}
+          onExpand={() => setShowStudyForm(true)}
+          onCollapse={() => setShowStudyForm(false)}
+          hasExistingStudies={studies().length > 0}
         />
       </Show>
 
-      <Show when={!props.hasData()} fallback={null}>
+      <Show when={!hasData()} fallback={null}>
         <div class='text-center py-12 bg-gray-50 rounded-lg'>
           <p class='text-gray-400'>Loading studies...</p>
         </div>
@@ -31,15 +73,14 @@ export default function IncludedStudiesTab(props) {
       {/* Study count */}
       <div class='flex items-center justify-between'>
         <p class='text-sm text-gray-500'>
-          {props.studies().length} {props.studies().length === 1 ? 'study' : 'studies'} in this
-          project
+          {studies().length} {studies().length === 1 ? 'study' : 'studies'} in this project
         </p>
       </div>
 
       <Show
-        when={props.studies().length > 0}
+        when={studies().length > 0}
         fallback={
-          <Show when={props.hasData()}>
+          <Show when={hasData()}>
             <div class='text-center py-12 bg-gray-50 rounded-lg'>
               <AiOutlineBook class='w-12 h-12 text-gray-300 mx-auto mb-4' />
               <p class='text-gray-500'>No studies added yet. Add your first study above.</p>
@@ -48,7 +89,7 @@ export default function IncludedStudiesTab(props) {
         }
       >
         <div class='bg-gray-50 rounded-lg divide-y divide-gray-200'>
-          <For each={props.studies()}>
+          <For each={studies()}>
             {study => {
               const [editing, setEditing] = createSignal(false);
               const [editName, setEditName] = createSignal('');
@@ -93,7 +134,7 @@ export default function IncludedStudiesTab(props) {
               const saveEdit = () => {
                 const newName = editName().trim();
                 if (newName && newName !== study.name) {
-                  props.onUpdateStudy?.(study.id, { name: newName });
+                  props.studyHandlers.handleUpdateStudy(study.id, { name: newName });
                 }
                 setEditing(false);
               };
@@ -123,7 +164,7 @@ export default function IncludedStudiesTab(props) {
 
                 setUploading(true);
                 try {
-                  await props.onUploadPdf?.(study.id, file);
+                  await props.pdfHandlers.handleUploadPdf(study.id, file);
                 } catch (err) {
                   console.error('Error uploading PDF:', err);
                   showToast.error('Upload Failed', 'Failed to upload PDF');
@@ -233,7 +274,7 @@ export default function IncludedStudiesTab(props) {
                                 {uploading() ? 'Uploading...' : 'Add PDF'}
                               </button>
                               <button
-                                onClick={() => props.onOpenGoogleDrive?.(study.id)}
+                                onClick={() => handleOpenGoogleDrive(study.id)}
                                 class='p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors'
                                 title='Import from Google Drive'
                               >
@@ -257,7 +298,7 @@ export default function IncludedStudiesTab(props) {
                       }
                     >
                       <button
-                        onClick={() => props.onViewPdf?.(study.id, firstPdf())}
+                        onClick={() => props.pdfHandlers.handleViewPdf(study.id, firstPdf())}
                         class='inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded hover:bg-gray-200 transition-colors gap-1'
                         title='View PDF'
                       >
@@ -273,7 +314,7 @@ export default function IncludedStudiesTab(props) {
                         <AiOutlineFileSync class='w-3.5 h-3.5' />
                       </button>
                       <button
-                        onClick={() => props.onOpenGoogleDrive?.(study.id)}
+                        onClick={() => handleOpenGoogleDrive(study.id)}
                         class='p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors'
                         title='Import from Google Drive'
                       >
@@ -282,7 +323,7 @@ export default function IncludedStudiesTab(props) {
                     </Show>
                     {/* Delete button */}
                     <button
-                      onClick={() => props.onDeleteStudy?.(study.id)}
+                      onClick={() => props.studyHandlers.handleDeleteStudy(study.id)}
                       class='p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors'
                       title='Delete Study'
                     >
@@ -295,6 +336,18 @@ export default function IncludedStudiesTab(props) {
           </For>
         </div>
       </Show>
+
+      {/* Google Drive Modal - managed locally */}
+      <GoogleDrivePickerModal
+        open={showGoogleDriveModal()}
+        onClose={() => {
+          setShowGoogleDriveModal(false);
+          setGoogleDriveTargetStudyId(null);
+        }}
+        projectId={props.projectId}
+        studyId={googleDriveTargetStudyId()}
+        onImportSuccess={handleGoogleDriveImportSuccess}
+      />
     </div>
   );
 }

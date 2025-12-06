@@ -17,7 +17,7 @@ import { BsListTask } from 'solid-icons/bs';
 import { CgArrowsExchange } from 'solid-icons/cg';
 import { AiFillCheckCircle, AiOutlineBook } from 'solid-icons/ai';
 
-// Extracted handler hooks
+// Handler hooks - now with simplified API
 import useProjectStudyHandlers from '@primitives/useProjectStudyHandlers.js';
 import useProjectChecklistHandlers from '@primitives/useProjectChecklistHandlers.js';
 import useProjectPdfHandlers from '@primitives/useProjectPdfHandlers.js';
@@ -32,7 +32,6 @@ import InProgressTab from './tabs/InProgressTab.jsx';
 import ReadyToReconcileTab from './tabs/ReadyToReconcileTab.jsx';
 import CompletedTab from './tabs/CompletedTab.jsx';
 import ReferenceImportModal from './ReferenceImportModal.jsx';
-import GoogleDrivePickerModal from './GoogleDrivePickerModal.jsx';
 
 export default function ProjectView() {
   const params = useParams();
@@ -41,26 +40,19 @@ export default function ProjectView() {
   const { user } = useBetterAuth();
   const confirmDialog = useConfirmDialog();
 
-  // UI state signals
-  const [showStudyForm, setShowStudyForm] = createSignal(false);
-  const [creatingStudy, setCreatingStudy] = createSignal(false);
-  const [showChecklistForm, setShowChecklistForm] = createSignal(null);
-  const [creatingChecklist, setCreatingChecklist] = createSignal(false);
+  // Modal state that needs to be at this level (shared across tabs or triggered from header)
   const [showAddMemberModal, setShowAddMemberModal] = createSignal(false);
   const [showReferenceImportModal, setShowReferenceImportModal] = createSignal(false);
-  const [showGoogleDriveModal, setShowGoogleDriveModal] = createSignal(false);
-  const [googleDriveTargetStudyId, setGoogleDriveTargetStudyId] = createSignal(null);
 
   // Y.js hook for write operations
   const projectActions = useProject(params.projectId);
-  const { connect, disconnect, getChecklistData, createStudy, addPdfToStudy } = projectActions;
+  const { connect, disconnect, createStudy, addPdfToStudy } = projectActions;
 
   // Read data from store
   const studies = () => projectStore.getStudies(params.projectId);
   const members = () => projectStore.getMembers(params.projectId);
   const meta = () => projectStore.getMeta(params.projectId);
   const connectionState = () => projectStore.getConnectionState(params.projectId);
-  const hasData = () => connectionState().synced || studies().length > 0;
 
   // Derived state
   const userRole = createMemo(() => {
@@ -71,47 +63,15 @@ export default function ProjectView() {
   });
   const isOwner = () => userRole() === 'owner';
 
-  // Extract handlers using custom hooks
-  const studyHandlers = useProjectStudyHandlers({
-    projectId: params.projectId,
-    user,
-    studies,
-    meta,
+  // Create handlers with simplified API - they read from store directly
+  const studyHandlers = useProjectStudyHandlers(params.projectId, projectActions, confirmDialog);
+  const checklistHandlers = useProjectChecklistHandlers(
+    params.projectId,
     projectActions,
     confirmDialog,
-    navigate,
-    setShowStudyForm,
-    setCreatingStudy,
-    setShowChecklistForm,
-    setCreatingChecklist,
-    setShowReferenceImportModal,
-  });
-
-  const checklistHandlers = useProjectChecklistHandlers({
-    projectId: params.projectId,
-    projectActions,
-    confirmDialog,
-    navigate,
-    setShowChecklistForm,
-    setCreatingChecklist,
-  });
-
-  const pdfHandlers = useProjectPdfHandlers({
-    projectId: params.projectId,
-    user,
-    studies,
-    projectActions,
-    setShowGoogleDriveModal,
-    setGoogleDriveTargetStudyId,
-    googleDriveTargetStudyId,
-  });
-
-  const memberHandlers = useProjectMemberHandlers({
-    projectId: params.projectId,
-    user,
-    confirmDialog,
-    navigate,
-  });
+  );
+  const pdfHandlers = useProjectPdfHandlers(params.projectId, projectActions);
+  const memberHandlers = useProjectMemberHandlers(params.projectId, confirmDialog);
 
   // Connect to Y.js on mount
   createEffect(() => {
@@ -171,14 +131,14 @@ export default function ProjectView() {
 
   onCleanup(() => disconnect());
 
-  // Helper functions
+  // Helper function for getting assignee names
   const getAssigneeName = userId => {
     if (!userId) return 'Unassigned';
     const member = members().find(m => m.userId === userId);
     return member?.displayName || member?.name || member?.email || 'Unknown';
   };
 
-  // Tab configuration - static to prevent re-renders
+  // Tab configuration
   const tabDefinitions = [
     { value: 'overview', label: 'Overview', icon: <BiRegularHome class='w-4 h-4' /> },
     {
@@ -232,71 +192,39 @@ export default function ProjectView() {
           <>
             <Show when={tabValue === 'overview'}>
               <OverviewTab
-                studies={studies}
-                members={members}
-                meta={meta}
-                isOwner={isOwner}
-                currentUserId={user()?.id}
-                getChecklistData={getChecklistData}
+                projectId={params.projectId}
+                isOwner={isOwner()}
+                studyHandlers={studyHandlers}
+                memberHandlers={memberHandlers}
+                projectActions={projectActions}
                 onAddMember={() => setShowAddMemberModal(true)}
-                onRemoveMember={memberHandlers.handleRemoveMember}
-                onAssignReviewers={studyHandlers.handleUpdateStudy}
-                onUpdateSettings={projectActions.updateProjectSettings}
-                onApplyNamingToAll={studyHandlers.handleApplyNamingToAll}
               />
             </Show>
 
             <Show when={tabValue === 'included-studies'}>
               <IncludedStudiesTab
-                studies={studies}
+                projectId={params.projectId}
+                studyHandlers={studyHandlers}
+                pdfHandlers={pdfHandlers}
                 getAssigneeName={getAssigneeName}
-                hasData={hasData}
-                showStudyForm={showStudyForm}
-                creatingStudy={creatingStudy}
-                onSetShowStudyForm={setShowStudyForm}
-                onAddStudies={studyHandlers.handleAddStudies}
-                onUpdateStudy={studyHandlers.handleUpdateStudy}
-                onDeleteStudy={studyHandlers.handleDeleteStudy}
-                onViewPdf={pdfHandlers.handleViewPdf}
-                onUploadPdf={pdfHandlers.handleUploadPdf}
-                onOpenGoogleDrive={pdfHandlers.handleOpenGoogleDrive}
               />
             </Show>
 
             <Show when={tabValue === 'in-progress'}>
               <InProgressTab
-                studies={studies}
-                members={members}
                 projectId={params.projectId}
-                currentUserId={user()?.id}
-                hasData={hasData}
-                showStudyForm={showStudyForm}
-                creatingStudy={creatingStudy}
-                showChecklistForm={showChecklistForm}
-                creatingChecklist={creatingChecklist}
+                checklistHandlers={checklistHandlers}
+                pdfHandlers={pdfHandlers}
                 getAssigneeName={getAssigneeName}
-                onSetShowStudyForm={setShowStudyForm}
-                onSetShowChecklistForm={setShowChecklistForm}
-                onCreateStudy={studyHandlers.handleCreateStudy}
-                onCreateChecklist={checklistHandlers.handleCreateChecklist}
-                onUpdateStudy={studyHandlers.handleUpdateStudy}
-                onDeleteStudy={studyHandlers.handleDeleteStudy}
-                onUpdateChecklist={checklistHandlers.handleUpdateChecklist}
-                onDeleteChecklist={checklistHandlers.handleDeleteChecklist}
-                onOpenChecklist={checklistHandlers.openChecklist}
-                onOpenReconciliation={checklistHandlers.openReconciliation}
-                onViewPdf={pdfHandlers.handleViewPdf}
-                onUploadPdf={pdfHandlers.handleUploadPdf}
-                onOpenImportModal={() => setShowReferenceImportModal(true)}
               />
             </Show>
 
             <Show when={tabValue === 'ready-to-reconcile'}>
               <ReadyToReconcileTab
-                studies={studies}
+                projectId={params.projectId}
+                checklistHandlers={checklistHandlers}
+                pdfHandlers={pdfHandlers}
                 getAssigneeName={getAssigneeName}
-                onOpenReconciliation={checklistHandlers.openReconciliation}
-                onViewPdf={pdfHandlers.handleViewPdf}
               />
             </Show>
 
@@ -317,17 +245,6 @@ export default function ProjectView() {
         open={showReferenceImportModal()}
         onClose={() => setShowReferenceImportModal(false)}
         onImport={studyHandlers.handleImportReferences}
-      />
-
-      <GoogleDrivePickerModal
-        open={showGoogleDriveModal()}
-        onClose={() => {
-          setShowGoogleDriveModal(false);
-          setGoogleDriveTargetStudyId(null);
-        }}
-        projectId={params.projectId}
-        studyId={googleDriveTargetStudyId()}
-        onImportSuccess={pdfHandlers.handleGoogleDriveImportSuccess}
       />
 
       <confirmDialog.ConfirmDialogComponent />
