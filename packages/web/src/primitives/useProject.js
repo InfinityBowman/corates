@@ -57,11 +57,6 @@ export function useProject(projectId) {
     const studiesMap = ydoc.getMap('reviews');
     const studiesList = [];
 
-    // Debug: log all root-level maps
-    const allMaps = Array.from(ydoc.share.keys());
-    console.log(`[Project ${projectId}] syncFromYDoc: Y.Doc has maps:`, allMaps);
-    console.log(`[Project ${projectId}] syncFromYDoc: 'reviews' map size: ${studiesMap.size}`);
-
     for (const [studyId, studyYMap] of studiesMap.entries()) {
       const studyData = studyYMap.toJSON ? studyYMap.toJSON() : studyYMap;
       const study = {
@@ -185,7 +180,6 @@ export function useProject(projectId) {
     projectStore.setConnectionState(projectId, { connecting: true });
 
     ws.onopen = () => {
-      console.log(`[Project ${projectId}] WebSocket connected`);
       projectStore.setConnectionState(projectId, { connecting: false, connected: true });
       reconnectAttempts = 0; // Reset on successful connection
 
@@ -194,9 +188,6 @@ export function useProject(projectId) {
       if (ydoc) {
         const localState = Y.encodeStateAsUpdate(ydoc);
         if (localState.length > 0) {
-          console.log(
-            `[Project ${projectId}] Sending local state to server on connect, size: ${localState.length} bytes`,
-          );
           ws.send(JSON.stringify({ type: 'update', update: Array.from(localState) }));
         }
       }
@@ -207,21 +198,9 @@ export function useProject(projectId) {
         const data = JSON.parse(event.data);
 
         if (data.type === 'sync' || data.type === 'update') {
-          console.log(
-            `[Project ${projectId}] Received ${data.type}, update size: ${data.update?.length} bytes`,
-          );
           const update = new Uint8Array(data.update);
           // Apply with 'remote' origin - syncFromYDoc will be called by the update handler
           Y.applyUpdate(ydoc, update, 'remote');
-
-          // Log ALL root-level maps after applying update
-          const allMapKeys = Array.from(ydoc.share.keys());
-          const mapSizes = {};
-          allMapKeys.forEach(key => {
-            const map = ydoc.getMap(key);
-            mapSizes[key] = map.size;
-          });
-          console.log(`[Project ${projectId}] After ${data.type}, Y.Doc maps:`, mapSizes);
         } else if (data.type === 'error') {
           projectStore.setConnectionState(projectId, { error: data.message });
         }
@@ -234,7 +213,6 @@ export function useProject(projectId) {
 
       // If we got a 403 (not a member), clear IndexedDB and don't reconnect
       if (event.code === 1008 || event.reason?.includes('member')) {
-        console.log(`[Project ${projectId}] Access denied - not a member. Clearing local data.`);
         if (indexeddbProvider) {
           indexeddbProvider.clearData();
         }
@@ -343,9 +321,6 @@ export function useProject(projectId) {
     ydoc.on('update', (update, origin) => {
       // Only send if the update originated locally (not from WebSocket)
       if (origin !== 'remote' && ws && ws.readyState === WebSocket.OPEN) {
-        console.log(
-          `[Project ${projectId}] Sending local update via WebSocket, size: ${update.length} bytes`,
-        );
         ws.send(JSON.stringify({ type: 'update', update: Array.from(update) }));
       }
       syncFromYDoc();
@@ -388,8 +363,6 @@ export function useProject(projectId) {
 
     const studyId = crypto.randomUUID();
     const now = Date.now();
-
-    console.log(`[Project ${projectId}] Creating study: ${name}`);
 
     // Note: Y.js map key remains 'reviews' for backward compatibility
     const studiesMap = ydoc.getMap('reviews');

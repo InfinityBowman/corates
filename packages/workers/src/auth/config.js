@@ -18,10 +18,6 @@ export function createAuth(env, ctx) {
   const socialProviders = {};
 
   if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
-    // console.log(
-    //   '[Auth] Google OAuth configured with client ID:',
-    //   env.GOOGLE_CLIENT_ID.substring(0, 10) + '...',
-    // );
     socialProviders.google = {
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
@@ -29,7 +25,7 @@ export function createAuth(env, ctx) {
       scope: ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/drive.readonly'],
     };
   } else {
-    console.log(
+    console.error(
       '[Auth] Google OAuth NOT configured - missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET',
     );
   }
@@ -39,10 +35,6 @@ export function createAuth(env, ctx) {
 
   // ORCID OAuth provider for researcher authentication (using genericOAuth plugin)
   if (env.ORCID_CLIENT_ID && env.ORCID_CLIENT_SECRET) {
-    // console.log(
-    //   '[Auth] ORCID OAuth configured with client ID:',
-    //   env.ORCID_CLIENT_ID.substring(0, 10) + '...',
-    // );
     plugins.push(
       genericOAuth({
         config: [
@@ -78,7 +70,7 @@ export function createAuth(env, ctx) {
       }),
     );
   } else {
-    console.log(
+    console.error(
       '[Auth] ORCID OAuth NOT configured - missing ORCID_CLIENT_ID or ORCID_CLIENT_SECRET',
     );
   }
