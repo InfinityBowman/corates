@@ -395,14 +395,7 @@ export class ProjectDoc {
           const update = new Uint8Array(data.update);
           Y.applyUpdate(this.doc, update);
 
-          const reviewsMap = this.doc.getMap('reviews');
-          console.log(
-            `Update applied from user ${server.user?.id}, doc now has ${reviewsMap.size} studies`,
-          );
-
           // Broadcast to others
-          const connectedCount = this.sessions.size - 1; // excluding sender
-          console.log(`Broadcasting update to ${connectedCount} other clients`);
           this.broadcast(
             JSON.stringify({
               type: 'update',
