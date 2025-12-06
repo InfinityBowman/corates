@@ -359,9 +359,54 @@ export const SUPPORTED_FORMATS = [
   { extension: '.enw', name: 'EndNote', description: 'EndNote export format' },
   { extension: '.bib', name: 'BibTeX', description: 'LaTeX bibliography format' },
   { extension: '.bibtex', name: 'BibTeX', description: 'LaTeX bibliography format' },
+  { extension: '.pdf', name: 'PDF', description: 'PDF files (auto-matched to references)' },
 ];
 
 /**
- * Get accept string for file input
+ * Get accept string for file input (reference files only, no PDFs)
  */
 export const REFERENCE_FILE_ACCEPT = '.ris,.enw,.bib,.bibtex';
+
+/**
+ * Get accept string for mixed import (reference files + PDFs)
+ */
+export const MIXED_IMPORT_ACCEPT = '.ris,.enw,.bib,.bibtex,.pdf,application/pdf';
+
+/**
+ * Check if a file is a reference file (RIS, BibTeX, etc.)
+ * @param {File} file
+ * @returns {boolean}
+ */
+export function isReferenceFile(file) {
+  const ext = file.name.toLowerCase().split('.').pop();
+  return ['ris', 'enw', 'bib', 'bibtex'].includes(ext);
+}
+
+/**
+ * Check if a file is a PDF
+ * @param {File} file
+ * @returns {boolean}
+ */
+export function isPdfFile(file) {
+  return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+}
+
+/**
+ * Separate files into reference files and PDFs
+ * @param {File[]} files
+ * @returns {{ referenceFiles: File[], pdfFiles: File[] }}
+ */
+export function separateFileTypes(files) {
+  const referenceFiles = [];
+  const pdfFiles = [];
+
+  for (const file of files) {
+    if (isPdfFile(file)) {
+      pdfFiles.push(file);
+    } else if (isReferenceFile(file)) {
+      referenceFiles.push(file);
+    }
+  }
+
+  return { referenceFiles, pdfFiles };
+}

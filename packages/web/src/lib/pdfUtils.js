@@ -6,6 +6,9 @@
 let pdfjsLib = null;
 let pdfjsInitPromise = null;
 
+// DOI regex pattern
+const DOI_REGEX = /\b(10\.\d{4,}(?:\.\d+)*\/\S+)\b/gi;
+
 /**
  * Initialize PDF.js library lazily
  * This is the shared initialization function used by all PDF-related components
@@ -168,4 +171,81 @@ export function readFileAsArrayBuffer(file) {
     reader.onerror = () => reject(reader.error);
     reader.readAsArrayBuffer(file);
   });
+}
+
+/**
+ * Extract DOI from PDF metadata or first page text
+ * @param {ArrayBuffer} pdfData - The PDF file as ArrayBuffer
+ * @returns {Promise<string|null>} - The extracted DOI or null
+ */
+export async function extractPdfDoi(pdfData) {
+  try {
+    const pdfjs = await initPdfJs();
+    const pdf = await pdfjs.getDocument({ data: pdfData, verbosity: 0 }).promise;
+
+    // Try metadata first
+    const metadata = await pdf.getMetadata();
+
+    // Check various metadata fields that might contain DOI
+    const metadataStr = JSON.stringify(metadata?.info || {}).toLowerCase();
+    const doiMatch = metadataStr.match(DOI_REGEX);
+    if (doiMatch) {
+      return cleanDoi(doiMatch[0]);
+    }
+
+    // Check custom metadata
+    if (metadata?.metadata) {
+      const xmlStr =
+        metadata.metadata._metadataMap ?
+          JSON.stringify(Object.fromEntries(metadata.metadata._metadataMap))
+        : '';
+      const xmlMatch = xmlStr.match(DOI_REGEX);
+      if (xmlMatch) {
+        return cleanDoi(xmlMatch[0]);
+      }
+    }
+
+    // Fall back to extracting from first page text
+    const firstPage = await pdf.getPage(1);
+    const textContent = await firstPage.getTextContent();
+    const pageText = textContent.items.map(item => item.str).join(' ');
+
+    const textMatch = pageText.match(DOI_REGEX);
+    if (textMatch) {
+      return cleanDoi(textMatch[0]);
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error extracting DOI from PDF:', error);
+    return null;
+  }
+}
+
+/**
+ * Clean and normalize a DOI string
+ */
+function cleanDoi(doi) {
+  if (!doi) return null;
+  // Remove common prefixes and trailing punctuation
+  return doi
+    .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
+    .replace(/^doi:/i, '')
+    .replace(/[.,;)\]}>]+$/, '')
+    .trim()
+    .toLowerCase();
+}
+
+/**
+ * Normalize a title for comparison (lowercase, remove punctuation, extra spaces)
+ * @param {string} title
+ * @returns {string}
+ */
+export function normalizeTitle(title) {
+  if (!title) return '';
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s]/g, '') // Remove punctuation
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim();
 }

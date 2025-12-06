@@ -13,15 +13,11 @@ import {
   formatFileSize,
   formatDate,
 } from '@/api/google-drive.js';
+import { useStudiesContext } from './AddStudiesContext.jsx';
 
-/**
- * @param {Object} props
- * @param {Array} props.selectedFiles - Currently selected Google Drive files
- * @param {Function} props.onToggleFile - Toggle selection of a file
- * @param {Function} props.onRemoveFile - Remove a file from selection
- * @param {Function} props.onClear - Clear all selected files
- */
-export default function GoogleDriveSection(props) {
+export default function GoogleDriveSection() {
+  const studies = useStudiesContext();
+
   const [loading, setLoading] = createSignal(true);
   const [files, setFiles] = createSignal([]);
   const [searchQuery, setSearchQuery] = createSignal('');
@@ -104,10 +100,10 @@ export default function GoogleDriveSection(props) {
   };
 
   const isFileSelected = fileId => {
-    return props.selectedFiles().some(f => f.id === fileId);
+    return studies.selectedDriveFiles().some(f => f.id === fileId);
   };
 
-  const selectedCount = () => props.selectedFiles().length;
+  const selectedCount = () => studies.selectedDriveFiles().length;
 
   return (
     <div class='space-y-3'>
@@ -124,14 +120,14 @@ export default function GoogleDriveSection(props) {
             </span>
             <button
               type='button'
-              onClick={() => props.onClear()}
+              onClick={() => studies.clearDriveFiles()}
               class='text-xs text-gray-500 hover:text-red-600 transition-colors'
             >
               Clear all
             </button>
           </div>
           <div class='space-y-2 max-h-40 overflow-y-auto'>
-            <For each={props.selectedFiles()}>
+            <For each={studies.selectedDriveFiles()}>
               {file => (
                 <div class='flex items-center gap-3 p-2 bg-blue-50 rounded-lg border border-blue-200'>
                   <FiFile class='w-4 h-4 text-red-500 shrink-0' />
@@ -141,7 +137,7 @@ export default function GoogleDriveSection(props) {
                   </div>
                   <button
                     type='button'
-                    onClick={() => props.onRemoveFile(file.id)}
+                    onClick={() => studies.removeDriveFile(file.id)}
                     class='p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors'
                   >
                     <BiRegularTrash class='w-4 h-4' />
@@ -248,7 +244,7 @@ export default function GoogleDriveSection(props) {
                       return (
                         <button
                           type='button'
-                          onClick={() => props.onToggleFile(file)}
+                          onClick={() => studies.toggleDriveFile(file)}
                           class={`w-full flex items-center gap-3 p-2.5 text-left hover:bg-gray-50 transition-colors ${
                             selected() ? 'bg-blue-50 hover:bg-blue-100' : ''
                           }`}
