@@ -5,6 +5,7 @@ import { drizzle } from 'drizzle-orm/d1';
 import * as schema from '../db/schema.js';
 import { createEmailService } from './email.js';
 import { getAllowedOrigins } from '../config/origins.js';
+import { MAGIC_LINK_EXPIRY_MINUTES } from './emailTemplates.js';
 
 export function createAuth(env, ctx) {
   // Initialize Drizzle with D1
@@ -99,7 +100,7 @@ export function createAuth(env, ctx) {
           );
         }
       },
-      expiresIn: 60 * 10, // 10 minutes
+      expiresIn: 60 * MAGIC_LINK_EXPIRY_MINUTES,
     }),
   );
 
@@ -280,13 +281,7 @@ function getAuthSecret(env) {
     return env.AUTH_SECRET;
   }
 
-  if (env.ENVIRONMENT === 'production') {
-    throw new Error('AUTH_SECRET must be configured in production environment');
-  }
-
-  // Development fallback only
-  console.warn('[Auth] Using development fallback secret - DO NOT use in production');
-  return 'dev-only-fallback-secret-not-for-production';
+  throw new Error('AUTH_SECRET must be configured');
 }
 
 // Auth middleware to verify sessions
