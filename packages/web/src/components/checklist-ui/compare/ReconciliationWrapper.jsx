@@ -203,8 +203,8 @@ export default function ReconciliationWrapper() {
       // Clear the reconciliation progress since we've completed it
       clearReconciliationProgress(params.studyId);
 
-      // Navigate back to the project view
-      navigate(`/projects/${params.projectId}`);
+      // Navigate back to the project view (ready-to-reconcile tab)
+      navigate(`/projects/${params.projectId}?tab=ready-to-reconcile`);
     } catch (err) {
       console.error('Error saving reconciled checklist:', err);
       setError(err.message);
@@ -213,7 +213,7 @@ export default function ReconciliationWrapper() {
 
   // Handle cancel
   function handleCancel() {
-    navigate(`/projects/${params.projectId}`);
+    navigate(`/projects/${params.projectId}?tab=ready-to-reconcile`);
   }
 
   // Connect on mount

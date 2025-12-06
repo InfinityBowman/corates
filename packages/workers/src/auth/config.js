@@ -1,9 +1,11 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { genericOAuth, magicLink, twoFactor } from 'better-auth/plugins';
 import { drizzle } from 'drizzle-orm/d1';
 import * as schema from '../db/schema.js';
 import { createEmailService } from './email.js';
 import { getAllowedOrigins } from '../config/origins.js';
+import { MAGIC_LINK_EXPIRY_MINUTES } from './emailTemplates.js';
 
 export function createAuth(env, ctx) {
   // Initialize Drizzle with D1
@@ -11,6 +13,108 @@ export function createAuth(env, ctx) {
 
   // Create email service
   const emailService = createEmailService(env);
+
+  // Build social providers config if credentials are present
+  const socialProviders = {};
+
+  if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
+    console.log(
+      '[Auth] Google OAuth configured with client ID:',
+      env.GOOGLE_CLIENT_ID.substring(0, 10) + '...',
+    );
+    socialProviders.google = {
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+      // Request Drive read-only access for PDF import
+      scope: ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/drive.readonly'],
+    };
+  } else {
+    console.log(
+      '[Auth] Google OAuth NOT configured - missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET',
+    );
+  }
+
+  // Build plugins array
+  const plugins = [];
+
+  // ORCID OAuth provider for researcher authentication (using genericOAuth plugin)
+  if (env.ORCID_CLIENT_ID && env.ORCID_CLIENT_SECRET) {
+    console.log(
+      '[Auth] ORCID OAuth configured with client ID:',
+      env.ORCID_CLIENT_ID.substring(0, 10) + '...',
+    );
+    plugins.push(
+      genericOAuth({
+        config: [
+          {
+            providerId: 'orcid',
+            clientId: env.ORCID_CLIENT_ID,
+            clientSecret: env.ORCID_CLIENT_SECRET,
+            authorizationUrl: 'https://orcid.org/oauth/authorize',
+            tokenUrl: 'https://orcid.org/oauth/token',
+            userInfoUrl: 'https://orcid.org/oauth/userinfo',
+            scopes: ['openid'],
+            // Map ORCID profile to user fields
+            getUserInfo: async ({ accessToken }) => {
+              const response = await fetch('https://orcid.org/oauth/userinfo', {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                },
+              });
+              const profile = await response.json();
+              return {
+                id: profile.sub,
+                name:
+                  profile.name ||
+                  `${profile.given_name || ''} ${profile.family_name || ''}`.trim() ||
+                  profile.sub,
+                email: profile.email || `${profile.sub}@orcid.org`,
+                emailVerified: !!profile.email,
+                image: null,
+              };
+            },
+          },
+        ],
+      }),
+    );
+  } else {
+    console.log(
+      '[Auth] ORCID OAuth NOT configured - missing ORCID_CLIENT_ID or ORCID_CLIENT_SECRET',
+    );
+  }
+
+  // Magic Link plugin for passwordless authentication
+  plugins.push(
+    magicLink({
+      sendMagicLink: async ({ email, url }) => {
+        console.log('[Auth] Queuing magic link email to:', email, 'URL:', url);
+        if (ctx && ctx.waitUntil) {
+          ctx.waitUntil(
+            (async () => {
+              try {
+                await emailService.sendMagicLink(email, url);
+              } catch (err) {
+                console.error('[Auth:waitUntil] Magic link email error:', err);
+              }
+            })(),
+          );
+        }
+      },
+      expiresIn: 60 * MAGIC_LINK_EXPIRY_MINUTES,
+    }),
+  );
+
+  // Two-Factor Authentication plugin
+  plugins.push(
+    twoFactor({
+      issuer: 'CoRATES',
+      // Customize backup codes
+      backupCodes: {
+        length: 10, // 10 backup codes
+        characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+      },
+    }),
+  );
 
   return betterAuth({
     database: drizzleAdapter(db, {
@@ -20,6 +124,7 @@ export function createAuth(env, ctx) {
         session: schema.session,
         account: schema.account,
         verification: schema.verification,
+        twoFactor: schema.twoFactor,
       },
     }),
 
@@ -27,7 +132,34 @@ export function createAuth(env, ctx) {
       enabled: true,
       requireEmailVerification: true,
       minPasswordLength: 8,
+      // Password reset - sendResetPassword is required for requestPasswordReset to work
+      sendResetPassword: async ({ user, url }) => {
+        console.log('[Auth] Queuing reset email to:', user.email, 'URL:', url);
+        if (ctx && ctx.waitUntil) {
+          ctx.waitUntil(
+            (async () => {
+              try {
+                await emailService.sendPasswordReset(
+                  user.email,
+                  url,
+                  user.displayName || user.username || user.name,
+                );
+              } catch (err) {
+                console.error('Background email error:', err);
+              }
+            })(),
+          );
+        }
+        return;
+      },
     },
+
+    // Social/OAuth providers
+    socialProviders,
+
+    // Plugins (including genericOAuth for ORCID)
+    plugins,
+
     // Add email verification and password reset functionality
     emailVerification: {
       sendOnSignUp: true,
@@ -58,29 +190,6 @@ export function createAuth(env, ctx) {
       },
     },
 
-    resetPassword: {
-      enabled: true,
-      sendEmail: async ({ user, url }) => {
-        console.log('[Auth] Queuing reset email to:', user.email, 'URL:', url);
-        if (ctx && ctx.waitUntil) {
-          ctx.waitUntil(
-            (async () => {
-              try {
-                await emailService.sendPasswordReset(
-                  user.email,
-                  url,
-                  user.displayName || user.username || user.name,
-                );
-              } catch (err) {
-                console.error('Background email error:', err);
-              }
-            })(),
-          );
-        }
-        return;
-      },
-    },
-
     session: {
       expiresIn: 60 * 60 * 24 * 7, // 7 days
       updateAge: 60 * 60 * 24, // 1 day
@@ -100,10 +209,13 @@ export function createAuth(env, ctx) {
           type: 'string',
           required: false,
         },
+        role: {
+          type: 'string',
+          required: false,
+        },
       },
     },
 
-    secret: env.AUTH_SECRET || 'fallback-secret-change-in-production',
     baseURL: env.AUTH_BASE_URL || 'http://localhost:8787',
 
     // Use centralized origin configuration
@@ -155,7 +267,21 @@ export function createAuth(env, ctx) {
         : {},
       generateId: () => crypto.randomUUID(),
     },
+
+    secret: getAuthSecret(env),
   });
+}
+
+/**
+ * Get AUTH_SECRET with proper validation
+ * Throws in production if not configured
+ */
+function getAuthSecret(env) {
+  if (env.AUTH_SECRET) {
+    return env.AUTH_SECRET;
+  }
+
+  throw new Error('AUTH_SECRET must be configured');
 }
 
 // Auth middleware to verify sessions

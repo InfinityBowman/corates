@@ -1,194 +1,122 @@
-import { createSignal, createEffect, onMount } from 'solid-js';
-import StrengthIndicator from './StrengthIndicator.jsx';
-import PasswordInput from '../zag/PasswordInput.jsx';
-import ErrorMessage from './ErrorMessage.jsx';
+import { createSignal, onMount } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { PrimaryButton, AuthLink } from './AuthButtons.jsx';
+import { AuthLink } from './AuthButtons.jsx';
+import {
+  GoogleButton,
+  OrcidButton,
+  SocialAuthContainer,
+  AuthDivider,
+} from './SocialAuthButtons.jsx';
+import MagicLinkForm from './MagicLinkForm.jsx';
 
+/**
+ * Sign Up page - minimal friction with magic link or social providers
+ * After signup: users go to complete-profile to set name and role
+ */
 export default function SignUp() {
-  const [name, setName] = createSignal('');
-  const [email, setEmail] = createSignal('');
-  const [password, setPassword] = createSignal('');
-  const [confirmPassword, setConfirmPassword] = createSignal('');
   const [error, setError] = createSignal('');
-  const [unmetRequirements, setUnmetRequirements] = createSignal([]);
-  const [loading, setLoading] = createSignal(false);
+  const [googleLoading, setGoogleLoading] = createSignal(false);
+  const [orcidLoading, setOrcidLoading] = createSignal(false);
 
   const navigate = useNavigate();
-  const { signup, authError, clearAuthError } = useBetterAuth();
+  const { signinWithGoogle, signinWithOrcid, clearAuthError } = useBetterAuth();
 
-  // Clear any stale auth errors when component mounts
+  // Number of social providers (update as you add more)
+  const socialProviderCount = 2;
+
   onMount(() => clearAuthError());
 
-  // Watch for auth errors from the store
-  const displayError = () => error() || authError();
-
-  async function handleSubmit(e) {
-    e.preventDefault();
+  async function handleGoogleSignUp() {
+    setGoogleLoading(true);
     setError('');
 
-    // Validation
-    if (!name() || !email() || !password() || !confirmPassword()) {
-      setError('Please fill out all fields');
-      return;
-    }
-
-    if (password() !== confirmPassword()) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (unmetRequirements().length > 0) {
-      setError(`Password must include ${unmetRequirements()[0]}`);
-      return;
-    }
-
-    setLoading(true);
-
     try {
-      await signup(email(), password(), name());
-
-      // Small delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Navigate to check email page with email parameter
-      navigate(`/check-email?email=${encodeURIComponent(email())}`, { replace: true });
+      // Mark this as an OAuth signup so complete-profile knows not to ask for password
+      localStorage.setItem('oauthSignup', 'true');
+      // OAuth users will be redirected to complete-profile after auth
+      await signinWithGoogle('/complete-profile');
     } catch (err) {
-      console.error('Signup error:', err);
-
-      const msg = err.message?.toLowerCase() || '';
-
-      // Handle specific error types
-      if (msg.includes('user already exists') || msg.includes('email already in use')) {
-        setError('An account with this email already exists');
-      } else if (msg.includes('invalid email')) {
-        setError('Please enter a valid email address');
-      } else if (msg.includes('password too weak')) {
-        setError('Password is too weak. Please choose a stronger password.');
-      } else if (msg.includes('too many requests')) {
-        setError('Too many registration attempts. Please try again later.');
-      } else if (
-        msg.includes('failed to fetch') ||
-        msg.includes('load failed') ||
-        msg.includes('network') ||
-        msg.includes('cors')
-      ) {
-        setError(
-          'Unable to connect to the server. Please check your internet connection and try again.',
-        );
-      } else if (msg.includes('timeout')) {
-        setError('The request timed out. Please try again.');
-      } else {
-        // Catch-all for any unhandled errors - don't show raw error messages
-        setError('Something went wrong. Please try again.');
-      }
-    } finally {
-      setLoading(false);
+      console.error('Google sign-up error:', err);
+      setError('Failed to sign up with Google. Please try again.');
+      localStorage.removeItem('oauthSignup');
+      setGoogleLoading(false);
     }
   }
 
-  createEffect(() => {
-    if (password() === confirmPassword()) {
-      setError('');
+  async function handleOrcidSignUp() {
+    setOrcidLoading(true);
+    setError('');
+
+    try {
+      // Mark this as an OAuth signup so complete-profile knows not to ask for password
+      localStorage.setItem('oauthSignup', 'true');
+      // OAuth users will be redirected to complete-profile after auth
+      await signinWithOrcid('/complete-profile');
+    } catch (err) {
+      console.error('ORCID sign-up error:', err);
+      setError('Failed to sign up with ORCID. Please try again.');
+      localStorage.removeItem('oauthSignup');
+      setOrcidLoading(false);
     }
-  });
+  }
 
   return (
-    <div class='h-full bg-blue-50 flex items-center justify-center px-4 py-6 sm:py-12'>
-      <form
-        aria-labelledby='signup-heading'
-        onSubmit={handleSubmit}
-        class='w-full max-w-md sm:max-w-xl bg-white rounded-xl sm:rounded-3xl shadow-2xl p-6 sm:p-12 space-y-4 border border-gray-100'
-        autocomplete='off'
-      >
-        <div class='mb-2 text-center'>
-          <h2 class='text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2' id='signup-heading'>
-            Get Started
+    <div class='h-full bg-blue-50 flex items-center justify-center px-4 py-8 sm:py-12'>
+      <div class='w-full max-w-md sm:max-w-xl bg-white rounded-xl sm:rounded-3xl shadow-2xl p-6 sm:p-12 border border-gray-100'>
+        <div class='text-center mb-4 sm:mb-6'>
+          <h2 class='text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2'>
+            Create an Account
           </h2>
-          <p class='text-gray-500 text-xs sm:text-sm'>Create a new account.</p>
+          <p class='text-gray-500 text-xs sm:text-sm'>Get started with CoRATES</p>
         </div>
-        <div>
-          <label
-            class='block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2'
-            for='name-input'
-          >
-            Name
-          </label>
-          <div class='relative'>
-            <input
-              type='text'
-              autoComplete='name'
-              autocapitalize='words'
-              spellcheck='false'
-              value={name()}
-              onInput={e => setName(e.target.value)}
-              class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
-              required
-              id='name-input'
-              placeholder='What should we call you?'
-            />
-          </div>
-        </div>
-        <div>
-          <label
-            class='block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2'
-            for='email-input'
-          >
-            Email
-          </label>
-          <div class='relative'>
-            <input
-              type='email'
-              autoComplete='email'
-              autocapitalize='off'
-              spellCheck='false'
-              value={email()}
-              onInput={e => setEmail(e.target.value)}
-              class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
-              required
-              id='email-input'
-              placeholder='you@example.com'
-            />
-          </div>
-        </div>
-        <div>
-          <PasswordInput
-            password={password()}
-            onPasswordChange={setPassword}
-            autoComplete='new-password'
-            required
-          />
-          <ErrorMessage displayError={displayError} />
 
-          <StrengthIndicator password={password()} onUnmet={setUnmetRequirements} />
-        </div>
-        <div>
-          <label
-            class='block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2'
-            for='confirm-password-input'
+        {/* Social providers first - most common */}
+        <SocialAuthContainer buttonCount={socialProviderCount}>
+          <GoogleButton
+            loading={googleLoading()}
+            onClick={handleGoogleSignUp}
+            iconOnly={socialProviderCount > 1}
+          />
+          <OrcidButton
+            loading={orcidLoading()}
+            onClick={handleOrcidSignUp}
+            iconOnly={socialProviderCount > 1}
+          />
+        </SocialAuthContainer>
+
+        <AuthDivider />
+
+        {/* Magic Link Form - simple email signup */}
+        <MagicLinkForm
+          callbackPath='/complete-profile'
+          buttonText='Continue with Email'
+          description="We'll send you a link to create your account - no password needed."
+        />
+
+        <p class='text-center text-xs text-gray-400 mt-6'>
+          By continuing, you agree to our{' '}
+          <a
+            href='https://corates.org/terms'
+            target='_blank'
+            rel='noopener noreferrer'
+            class='text-blue-500 hover:underline'
           >
-            Confirm Password
-          </label>
-          <div class='relative'>
-            <input
-              type='password'
-              autoComplete='new-password'
-              autocapitalize='off'
-              spellCheck='false'
-              value={confirmPassword()}
-              onInput={e => setConfirmPassword(e.target.value)}
-              class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition big-placeholder'
-              required
-              id='confirm-password-input'
-              placeholder='••••••••'
-            />
-          </div>
-        </div>
-        <PrimaryButton loading={loading()} loadingText='Signing Up...'>
-          Sign Up
-        </PrimaryButton>
-        <div class='text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-4'>
+            Terms of Service
+          </a>{' '}
+          and{' '}
+          <a
+            href='https://corates.org/privacy'
+            target='_blank'
+            rel='noopener noreferrer'
+            class='text-blue-500 hover:underline'
+          >
+            Privacy Policy
+          </a>
+          .
+        </p>
+
+        <div class='text-center text-xs sm:text-sm text-gray-500 mt-4 pt-4 border-t border-gray-100'>
           Already have an account?{' '}
           <AuthLink
             href='/signin'
@@ -200,7 +128,7 @@ export default function SignUp() {
             Sign In
           </AuthLink>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

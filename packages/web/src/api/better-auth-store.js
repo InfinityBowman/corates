@@ -26,16 +26,32 @@ function createBetterAuthStore() {
     }
   });
 
-  // createEffect(() => {
-  //   console.log(
-  //     'Session loading:',
-  //     session().isPending,
-  //     'User:',
-  //     session().data?.user,
-  //     'isLoggedIn:',
-  //     isLoggedIn(),
-  //   );
-  // });
+  // BroadcastChannel for cross-tab auth state sync
+  const authChannel =
+    typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('corates-auth') : null;
+
+  // Listen for auth state changes from other tabs
+  createEffect(() => {
+    if (!authChannel) return;
+
+    const handleMessage = event => {
+      if (event.data?.type === 'auth-changed') {
+        // Another tab changed auth state, refetch session
+        session().refetch?.();
+      }
+    };
+
+    authChannel.addEventListener('message', handleMessage);
+
+    return () => {
+      authChannel.removeEventListener('message', handleMessage);
+    };
+  });
+
+  // Broadcast auth changes to other tabs
+  function broadcastAuthChange() {
+    authChannel?.postMessage({ type: 'auth-changed', timestamp: Date.now() });
+  }
 
   // Listen for tab visibility changes to refresh session
   createEffect(() => {
@@ -54,14 +70,21 @@ function createBetterAuthStore() {
   });
 
   // --- API methods ---
-  async function signup(email, password, name) {
+  async function signup(email, password, name, role = null) {
     try {
       setAuthError(null);
-      const { data, error } = await authClient.signUp.email({
+      const signupData = {
         email,
         password,
         name,
-      });
+      };
+
+      // Only include role if provided
+      if (role) {
+        signupData.role = role;
+      }
+
+      const { data, error } = await authClient.signUp.email(signupData);
 
       if (error) {
         throw new Error(error.message);
@@ -69,6 +92,75 @@ function createBetterAuthStore() {
 
       // Store pending email for verification if needed
       localStorage.setItem('pendingEmail', email);
+      return data;
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  async function signinWithGoogle(callbackPath) {
+    try {
+      setAuthError(null);
+      // Build full callback URL using current origin
+      const callbackURL = `${window.location.origin}${callbackPath || '/dashboard'}`;
+
+      const { data, error } = await authClient.signIn.social({
+        provider: 'google',
+        callbackURL,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data;
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  async function signinWithOrcid(callbackPath) {
+    try {
+      setAuthError(null);
+      // Build full callback URL using current origin
+      const callbackURL = `${window.location.origin}${callbackPath || '/dashboard'}`;
+
+      // Use genericOAuth signIn for custom providers
+      const { data, error } = await authClient.signIn.oauth2({
+        providerId: 'orcid',
+        callbackURL,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data;
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  async function signinWithMagicLink(email, callbackPath) {
+    try {
+      setAuthError(null);
+      const callbackURL = `${window.location.origin}${callbackPath || '/dashboard'}`;
+
+      const { data, error } = await authClient.signIn.magicLink({
+        email,
+        callbackURL,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Store pending email for the check-email page
+      localStorage.setItem('pendingEmail', email);
+      localStorage.setItem('magicLinkSent', 'true');
       return data;
     } catch (err) {
       setAuthError(err.message);
@@ -88,8 +180,17 @@ function createBetterAuthStore() {
         throw new Error(error.message);
       }
 
+      // Check if 2FA is required
+      if (data?.twoFactorRedirect) {
+        return { twoFactorRequired: true };
+      }
+
       // Clear pending email on successful sign in
       localStorage.removeItem('pendingEmail');
+
+      // Notify other tabs of auth change
+      broadcastAuthChange();
+
       return data;
     } catch (err) {
       setAuthError(err.message);
@@ -108,6 +209,9 @@ function createBetterAuthStore() {
 
       // Clear cached project data on logout
       projectStore.clearProjectList();
+
+      // Notify other tabs of auth change
+      broadcastAuthChange();
     } catch (err) {
       setAuthError(err.message);
       throw err;
@@ -122,6 +226,9 @@ function createBetterAuthStore() {
       if (error) {
         throw new Error(error.message);
       }
+
+      // Refresh session to get updated user data
+      await session().refetch?.();
 
       return updated;
     } catch (err) {
@@ -150,8 +257,10 @@ function createBetterAuthStore() {
   async function resetPassword(email) {
     try {
       setAuthError(null);
-      const { error } = await authClient.forgetPassword({
+      // BetterAuth uses requestPasswordReset to send reset email
+      const { error } = await authClient.requestPasswordReset({
         email,
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) {
@@ -161,6 +270,118 @@ function createBetterAuthStore() {
       setAuthError(err.message);
       throw err;
     }
+  }
+
+  // Confirm password reset with token and new password
+  async function confirmPasswordReset(token, newPassword) {
+    try {
+      setAuthError(null);
+      const { error } = await authClient.resetPassword({
+        token,
+        newPassword,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  // --- Two-Factor Authentication ---
+
+  // Enable 2FA - returns QR code URI and secret for setup
+  // Requires password for security verification
+  async function enableTwoFactor(password) {
+    try {
+      setAuthError(null);
+      const { data, error } = await authClient.twoFactor.enable({
+        password,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data; // { totpURI, secret, backupCodes }
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  // Verify and complete 2FA setup with code from authenticator app
+  async function verifyTwoFactorSetup(code) {
+    try {
+      setAuthError(null);
+      const { data, error } = await authClient.twoFactor.verifyTotp({
+        code,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Notify other tabs of auth change (2FA enabled)
+      broadcastAuthChange();
+
+      return data;
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  // Disable 2FA (requires password for security)
+  async function disableTwoFactor(password) {
+    try {
+      setAuthError(null);
+      const { data, error } = await authClient.twoFactor.disable({
+        password,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Notify other tabs of auth change (2FA disabled)
+      broadcastAuthChange();
+
+      return data;
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  // Verify 2FA code during sign-in
+  async function verifyTwoFactor(code) {
+    try {
+      setAuthError(null);
+      const { data, error } = await authClient.twoFactor.verifyTotp({
+        code,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Notify other tabs of auth change (2FA completed)
+      broadcastAuthChange();
+
+      return data;
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  // Get 2FA status for current user - check from session user data
+  function getTwoFactorStatus() {
+    const currentUser = user();
+    return { enabled: currentUser?.twoFactorEnabled ?? false };
   }
 
   async function authFetch(url, options = {}) {
@@ -289,14 +510,25 @@ function createBetterAuthStore() {
     // Actions
     signup,
     signin,
+    signinWithGoogle,
+    signinWithOrcid,
+    signinWithMagicLink,
     signout,
     updateProfile,
     changePassword,
     resetPassword,
+    confirmPasswordReset,
     resendVerificationEmail,
     deleteAccount,
     authFetch,
     clearAuthError: () => setAuthError(null),
+
+    // Two-Factor Authentication
+    enableTwoFactor,
+    verifyTwoFactorSetup,
+    disableTwoFactor,
+    verifyTwoFactor,
+    getTwoFactorStatus,
 
     // Utility/compatibility methods
     getCurrentUser,

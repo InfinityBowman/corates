@@ -8,6 +8,8 @@ import { createDb } from '../db/client.js';
 import { projects, projectMembers, user } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
+import { projectSchemas, validateRequest } from '../config/validation.js';
+import { createErrorResponse, ERROR_CODES, EDIT_ROLES } from '../config/constants.js';
 
 const projectRoutes = new Hono();
 
@@ -63,13 +65,13 @@ projectRoutes.get('/:id', async c => {
       .get();
 
     if (!result) {
-      return c.json({ error: 'Project not found or access denied' }, 404);
+      return c.json(createErrorResponse(ERROR_CODES.PROJECT_NOT_FOUND), 404);
     }
 
     return c.json(result);
   } catch (error) {
     console.error('Error fetching project:', error);
-    return c.json({ error: 'Failed to fetch project' }, 500);
+    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
   }
 });
 
@@ -77,38 +79,40 @@ projectRoutes.get('/:id', async c => {
  * POST /api/projects
  * Create a new project
  */
-projectRoutes.post('/', async c => {
+projectRoutes.post('/', validateRequest(projectSchemas.create), async c => {
   const { user: authUser } = getAuth(c);
   const db = createDb(c.env.DB);
+  const { name, description } = c.get('validatedBody');
+
+  const projectId = crypto.randomUUID();
+  const now = new Date();
 
   try {
-    const { name, description } = await c.req.json();
+    // Use D1 batch for transaction-like behavior
+    // D1 doesn't support true transactions, but batch ensures atomicity
+    const statements = [
+      c.env.DB.prepare(
+        'INSERT INTO projects (id, name, description, createdBy, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
+      ).bind(
+        projectId,
+        name,
+        description,
+        authUser.id,
+        Math.floor(now.getTime() / 1000),
+        Math.floor(now.getTime() / 1000),
+      ),
+      c.env.DB.prepare(
+        'INSERT INTO project_members (id, projectId, userId, role, joinedAt) VALUES (?, ?, ?, ?, ?)',
+      ).bind(
+        crypto.randomUUID(),
+        projectId,
+        authUser.id,
+        'owner',
+        Math.floor(now.getTime() / 1000),
+      ),
+    ];
 
-    if (!name || !name.trim()) {
-      return c.json({ error: 'Project name is required' }, 400);
-    }
-
-    const projectId = crypto.randomUUID();
-    const now = new Date();
-
-    // Create the project
-    await db.insert(projects).values({
-      id: projectId,
-      name: name.trim(),
-      description: description?.trim() || null,
-      createdBy: authUser.id,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    // Add the creator as owner
-    await db.insert(projectMembers).values({
-      id: crypto.randomUUID(),
-      projectId,
-      userId: authUser.id,
-      role: 'owner',
-      joinedAt: now,
-    });
+    await c.env.DB.batch(statements);
 
     // Get creator's user info for DO sync
     const creator = await db
@@ -117,6 +121,7 @@ projectRoutes.post('/', async c => {
         name: user.name,
         email: user.email,
         displayName: user.displayName,
+        image: user.image,
       })
       .from(user)
       .where(eq(user.id, authUser.id))
@@ -140,14 +145,15 @@ projectRoutes.post('/', async c => {
           name: creator?.name || null,
           email: creator?.email || null,
           displayName: creator?.displayName || null,
+          image: creator?.image || null,
         },
       ],
     );
 
     const newProject = {
       id: projectId,
-      name: name.trim(),
-      description: description?.trim() || null,
+      name,
+      description,
       role: 'owner',
       createdAt: now,
       updatedAt: now,
@@ -156,7 +162,7 @@ projectRoutes.post('/', async c => {
     return c.json(newProject, 201);
   } catch (error) {
     console.error('Error creating project:', error);
-    return c.json({ error: 'Failed to create project' }, 500);
+    return c.json(createErrorResponse(ERROR_CODES.DB_TRANSACTION_FAILED, error.message), 500);
   }
 });
 
@@ -164,10 +170,11 @@ projectRoutes.post('/', async c => {
  * PUT /api/projects/:id
  * Update project details
  */
-projectRoutes.put('/:id', async c => {
+projectRoutes.put('/:id', validateRequest(projectSchemas.update), async c => {
   const { user: authUser } = getAuth(c);
   const projectId = c.req.param('id');
   const db = createDb(c.env.DB);
+  const { name, description } = c.get('validatedBody');
 
   try {
     // Check if user can edit
@@ -177,18 +184,23 @@ projectRoutes.put('/:id', async c => {
       .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, authUser.id)))
       .get();
 
-    if (!membership || !['owner', 'collaborator'].includes(membership.role)) {
-      return c.json({ error: 'Only owners and collaborators can update projects' }, 403);
+    if (!membership || !EDIT_ROLES.includes(membership.role)) {
+      return c.json(
+        createErrorResponse(
+          ERROR_CODES.AUTH_FORBIDDEN,
+          'Only owners and collaborators can update projects',
+        ),
+        403,
+      );
     }
 
-    const { name, description } = await c.req.json();
     const now = new Date();
 
     await db
       .update(projects)
       .set({
-        name: name?.trim() || null,
-        description: description?.trim() || null,
+        name: name || undefined,
+        description: description,
         updatedAt: now,
       })
       .where(eq(projects.id, projectId));
@@ -198,8 +210,8 @@ projectRoutes.put('/:id', async c => {
       c.env,
       projectId,
       {
-        name: name?.trim() || null,
-        description: description?.trim() || null,
+        name: name || undefined,
+        description: description,
         updatedAt: now.getTime(),
       },
       null,
@@ -208,7 +220,7 @@ projectRoutes.put('/:id', async c => {
     return c.json({ success: true, projectId });
   } catch (error) {
     console.error('Error updating project:', error);
-    return c.json({ error: 'Failed to update project' }, 500);
+    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
   }
 });
 
@@ -230,7 +242,10 @@ projectRoutes.delete('/:id', async c => {
       .get();
 
     if (!membership || membership.role !== 'owner') {
-      return c.json({ error: 'Only project owners can delete projects' }, 403);
+      return c.json(
+        createErrorResponse(ERROR_CODES.AUTH_FORBIDDEN, 'Only project owners can delete projects'),
+        403,
+      );
     }
 
     // Delete project (cascade will remove members)
@@ -239,7 +254,7 @@ projectRoutes.delete('/:id', async c => {
     return c.json({ success: true, deleted: projectId });
   } catch (error) {
     console.error('Error deleting project:', error);
-    return c.json({ error: 'Failed to delete project' }, 500);
+    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
   }
 });
 

@@ -129,6 +129,7 @@ export class ProjectDoc {
           memberYMap.set('name', member.name || null);
           memberYMap.set('email', member.email || null);
           memberYMap.set('displayName', member.displayName || null);
+          memberYMap.set('image', member.image || null);
           membersMap.set(member.userId, memberYMap);
         }
       }
@@ -166,11 +167,27 @@ export class ProjectDoc {
         memberYMap.set('name', member.name || null);
         memberYMap.set('email', member.email || null);
         memberYMap.set('displayName', member.displayName || null);
+        memberYMap.set('image', member.image || null);
         membersMap.set(member.userId, memberYMap);
       } else if (action === 'update') {
         const existingMember = membersMap.get(member.userId);
         if (existingMember) {
-          existingMember.set('role', member.role);
+          // Update role if provided
+          if (member.role !== undefined) {
+            existingMember.set('role', member.role);
+          }
+          // Update image if provided
+          if (member.image !== undefined) {
+            existingMember.set('image', member.image);
+          }
+          // Update display name if provided
+          if (member.displayName !== undefined) {
+            existingMember.set('displayName', member.displayName);
+          }
+          // Update name if provided
+          if (member.name !== undefined) {
+            existingMember.set('name', member.name);
+          }
         }
       } else if (action === 'remove') {
         membersMap.delete(member.userId);
@@ -280,7 +297,7 @@ export class ProjectDoc {
 
     let user = null;
 
-    // Try to authenticate via cookies (same as HTTP requests)
+    // Authenticate via cookies (standard HTTP cookie auth)
     try {
       const authResult = await verifyAuth(request, this.env);
       user = authResult.user;
@@ -289,29 +306,10 @@ export class ProjectDoc {
       console.error('WebSocket auth error:', err);
     }
 
-    // In production, require authentication
-    const isDevelopment = this.env.ENVIRONMENT !== 'production';
-    if (!isDevelopment && !user) {
-      // Try token-based auth as fallback
-      const url = new URL(request.url);
-      const token = url.searchParams.get('token');
-
-      if (token) {
-        const authRequest = new Request(request.url, {
-          headers: new Headers({
-            ...Object.fromEntries(request.headers.entries()),
-            Authorization: `Bearer ${token}`,
-          }),
-        });
-
-        const authResult = await verifyAuth(authRequest, this.env);
-        user = authResult.user;
-      }
-
-      if (!user) {
-        console.log('WebSocket auth failed - no user');
-        return new Response('Authentication required', { status: 401 });
-      }
+    // Require authentication
+    if (!user) {
+      console.log('WebSocket auth failed - no user');
+      return new Response('Authentication required', { status: 401 });
     }
 
     await this.initializeDoc();
@@ -491,7 +489,7 @@ export class ProjectDoc {
 
   broadcast(message, exclude = null) {
     this.sessions.forEach(session => {
-      if (session !== exclude && session.readyState === WebSocket.READY_STATE_OPEN) {
+      if (session !== exclude && session.readyState === 1) {
         session.send(message);
       }
     });

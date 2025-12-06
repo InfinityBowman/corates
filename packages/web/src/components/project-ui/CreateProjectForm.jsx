@@ -1,85 +1,41 @@
-import { createSignal, For, Show } from 'solid-js';
-import { BiRegularTrash } from 'solid-icons/bi';
-import { CgFileDocument } from 'solid-icons/cg';
+import { createSignal, Show } from 'solid-js';
 import { showToast } from '@components/zag/Toast.jsx';
-import { FileUpload } from '@components/zag/FileUpload.jsx';
-import { extractPdfTitle, readFileAsArrayBuffer } from '@/lib/pdfUtils.js';
+import AddStudiesForm from './AddStudiesForm.jsx';
 
 /**
- * Form for creating a new project with optional PDF uploads
+ * Form for creating a new project with optional study imports
+ * Uses AddStudiesForm in collect mode to avoid duplicate code
+ *
  * @param {Object} props
  * @param {string} props.apiBase - API base URL
- * @param {Function} props.onProjectCreated - Called with the new project when created
+ * @param {Function} props.onProjectCreated - Called with (project, pendingPdfs, allRefs)
  * @param {Function} props.onCancel - Called when form is cancelled
  */
 export default function CreateProjectForm(props) {
   const [projectName, setProjectName] = createSignal('');
   const [projectDescription, setProjectDescription] = createSignal('');
   const [isCreating, setIsCreating] = createSignal(false);
-  const [uploadedPdfs, setUploadedPdfs] = createSignal([]);
 
-  // Handle PDF file selection
-  const handlePdfSelect = async files => {
-    const pdfFiles = files.filter(f => f.type === 'application/pdf');
-    if (pdfFiles.length === 0) return;
+  // Collected studies from AddStudiesForm (via collect mode)
+  const [collectedStudies, setCollectedStudies] = createSignal({
+    pdfs: [],
+    refs: [],
+    lookups: [],
+    driveFiles: [],
+  });
 
-    // Add files with extracting state
-    const newPdfs = pdfFiles.map(file => ({
-      id: crypto.randomUUID(),
-      file,
-      title: null,
-      extracting: true,
-      data: null,
-    }));
-
-    setUploadedPdfs(prev => [...prev, ...newPdfs]);
-
-    // Extract titles for each PDF
-    for (const pdf of newPdfs) {
-      try {
-        const arrayBuffer = await readFileAsArrayBuffer(pdf.file);
-        // Make a copy for PDF.js since it may detach the original buffer
-        const bufferForExtraction = arrayBuffer.slice(0);
-        const title = await extractPdfTitle(bufferForExtraction);
-
-        // Convert to array immediately to avoid detached ArrayBuffer issues
-        const dataArray = Array.from(new Uint8Array(arrayBuffer));
-
-        setUploadedPdfs(prev =>
-          prev.map(p =>
-            p.id === pdf.id ?
-              {
-                ...p,
-                title: title || pdf.file.name.replace(/\.pdf$/i, ''),
-                extracting: false,
-                data: dataArray,
-              }
-            : p,
-          ),
-        );
-      } catch (error) {
-        console.error('Error extracting PDF title:', error);
-        setUploadedPdfs(prev =>
-          prev.map(p =>
-            p.id === pdf.id ?
-              {
-                ...p,
-                title: pdf.file.name.replace(/\.pdf$/i, ''),
-                extracting: false,
-              }
-            : p,
-          ),
-        );
-      }
-    }
+  const totalStudyCount = () => {
+    const studies = collectedStudies();
+    return (
+      studies.pdfs.length +
+      studies.refs.length +
+      studies.lookups.length +
+      (studies.driveFiles?.length || 0)
+    );
   };
 
-  const removePdf = id => {
-    setUploadedPdfs(prev => prev.filter(p => p.id !== id));
-  };
-
-  const updatePdfTitle = (id, newTitle) => {
-    setUploadedPdfs(prev => prev.map(p => (p.id === id ? { ...p, title: newTitle } : p)));
+  const handleStudiesChange = data => {
+    setCollectedStudies(data);
   };
 
   const handleSubmit = async () => {
@@ -102,16 +58,18 @@ export default function CreateProjectForm(props) {
       if (!response.ok) throw new Error('Failed to create project');
 
       const newProject = await response.json();
+      const studies = collectedStudies();
 
-      // Collect PDFs to pass along via callback
-      const pdfsToProcess = uploadedPdfs().filter(p => p.title && !p.extracting && p.data);
-      const pendingPdfs = pdfsToProcess.map(p => ({
-        title: p.title,
-        fileName: p.file.name,
-        data: p.data, // Already stored as array
-      }));
+      // Pass PDFs with their binary data
+      const pendingPdfs = studies.pdfs;
 
-      props.onProjectCreated?.(newProject, pendingPdfs);
+      // Combine refs and lookups
+      const allRefsToImport = [...studies.refs, ...studies.lookups];
+
+      // Pass Google Drive files
+      const driveFiles = studies.driveFiles || [];
+
+      props.onProjectCreated?.(newProject, pendingPdfs, allRefsToImport, driveFiles);
     } catch (error) {
       console.error('Error creating project:', error);
       showToast.error('Creation Failed', 'Failed to create project. Please try again.');
@@ -123,7 +81,7 @@ export default function CreateProjectForm(props) {
   const handleCancel = () => {
     setProjectName('');
     setProjectDescription('');
-    setUploadedPdfs([]);
+    setCollectedStudies({ pdfs: [], refs: [], lookups: [], driveFiles: [] });
     props.onCancel?.();
   };
 
@@ -156,69 +114,26 @@ export default function CreateProjectForm(props) {
           />
         </div>
 
-        {/* PDF Upload Section */}
+        {/* Add Studies Section */}
         <div>
           <label class='block text-sm font-semibold text-gray-700 mb-2'>
-            Upload PDFs (Optional)
+            Add Studies (Optional)
           </label>
-          <p class='text-sm text-gray-500 mb-3'>
-            Upload research papers to automatically create studies. Titles will be extracted from
-            each PDF.
-          </p>
-
-          {/* Drop zone using zag FileUpload */}
-          <FileUpload
-            accept='application/pdf'
-            multiple
-            helpText='PDF files only'
-            showFileList={false}
-            onFilesChange={handlePdfSelect}
+          <AddStudiesForm
+            collectMode
+            alwaysExpanded
+            hideTitle
+            onStudiesChange={handleStudiesChange}
           />
-
-          {/* Custom Uploaded PDFs list with editable titles */}
-          <Show when={uploadedPdfs().length > 0}>
-            <div class='mt-4 space-y-2'>
-              <For each={uploadedPdfs()}>
-                {pdf => (
-                  <div class='flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200'>
-                    <CgFileDocument class='w-5 h-5 text-red-500 shrink-0' />
-                    <div class='flex-1 min-w-0'>
-                      <Show
-                        when={!pdf.extracting}
-                        fallback={
-                          <div class='flex items-center gap-2'>
-                            <div class='w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin' />
-                            <span class='text-sm text-gray-500'>Extracting title...</span>
-                          </div>
-                        }
-                      >
-                        <input
-                          type='text'
-                          value={pdf.title || ''}
-                          onInput={e => updatePdfTitle(pdf.id, e.target.value)}
-                          class='w-full text-sm font-medium text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0'
-                          placeholder='Study title'
-                        />
-                        <p class='text-xs text-gray-500 truncate'>{pdf.file.name}</p>
-                      </Show>
-                    </div>
-                    <button
-                      type='button'
-                      onClick={() => removePdf(pdf.id)}
-                      class='p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors'
-                    >
-                      <BiRegularTrash class='w-4 h-4' />
-                    </button>
-                  </div>
-                )}
-              </For>
-              <p class='text-xs text-gray-500 mt-2'>
-                {uploadedPdfs().length} PDF{uploadedPdfs().length !== 1 ? 's' : ''} will add{' '}
-                {uploadedPdfs().length} stud{uploadedPdfs().length !== 1 ? 'ies' : 'y'}
-              </p>
-            </div>
-          </Show>
         </div>
+
+        {/* Study count summary */}
+        <Show when={totalStudyCount() > 0}>
+          <div class='bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-sm text-blue-700'>
+            <span class='font-medium'>{totalStudyCount()}</span>{' '}
+            {totalStudyCount() === 1 ? 'study' : 'studies'} will be added to this project
+          </div>
+        </Show>
       </div>
 
       <div class='flex gap-3 mt-6'>

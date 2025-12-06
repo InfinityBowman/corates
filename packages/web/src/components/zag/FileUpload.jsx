@@ -37,10 +37,21 @@ export function FileUpload(props) {
   const service = useMachine(fileUpload.machine, {
     id: createUniqueId(),
     accept: merged.accept ? { [merged.accept]: [] } : undefined,
-    maxFiles: merged.multiple ? undefined : 1,
+    // maxFiles > 1 enables the native multi-select file picker (Cmd+click)
+    // Setting to a high number allows unlimited files when multiple is true
+    maxFiles: merged.multiple ? 100 : 1,
     disabled: merged.disabled,
     onFileChange: details => {
       merged.onFilesChange?.(details.acceptedFiles);
+      // When showFileList is false, parent manages files externally
+      // Clear internal state so deleted files don't reappear on next selection
+      if (!merged.showFileList && details.acceptedFiles.length > 0) {
+        // Use queueMicrotask to clear after the callback completes
+        queueMicrotask(() => {
+          const currentApi = fileUpload.connect(service, normalizeProps);
+          currentApi.clearFiles();
+        });
+      }
     },
     onFileAccept: details => {
       merged.onFileAccept?.(details);
@@ -57,13 +68,14 @@ export function FileUpload(props) {
           // Compact mode - minimal dropzone
           <div
             {...api().getDropzoneProps()}
-            class={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+            class={`border-2 border-dashed rounded-lg py-8 px-4 text-center cursor-pointer transition-colors ${
               api().isDragging ?
                 'border-blue-500 bg-blue-50'
               : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
             } ${merged.dropzoneClass || ''}`}
           >
             <input {...api().getHiddenInputProps()} />
+            <BiRegularCloudUpload class='w-8 h-8 mx-auto text-gray-400 mb-2' />
             <p class='text-sm text-gray-600'>
               <span class='font-medium text-blue-600'>Click to upload</span> or drag and drop
             </p>

@@ -70,5 +70,5 @@ pnpm db:migrate
 
 # See worker logs
 cd packages/workers
-pnpm wrangler tail corates-workers --env production
+pnpm wrangler tail corates-workers-prod
 ```

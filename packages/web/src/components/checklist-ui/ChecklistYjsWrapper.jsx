@@ -18,8 +18,14 @@ export default function ChecklistYjsWrapper() {
   const [pdfLoading, setPdfLoading] = createSignal(false);
 
   // Use full hook for write operations
-  const { error, updateChecklistAnswer, getChecklistData, addPdfToStudy, removePdfFromStudy } =
-    useProject(params.projectId);
+  const {
+    error,
+    updateChecklistAnswer,
+    updateChecklist,
+    getChecklistData,
+    addPdfToStudy,
+    removePdfFromStudy,
+  } = useProject(params.projectId);
 
   // Read data directly from store for faster reactivity
   const connectionState = () => projectStore.getConnectionState(params.projectId);
@@ -174,11 +180,26 @@ export default function ChecklistYjsWrapper() {
     });
   }
 
+  // Toggle checklist completion status
+  function handleToggleComplete() {
+    const checklist = currentChecklist();
+    if (!checklist) return;
+
+    const newStatus = checklist.status === 'completed' ? 'in-progress' : 'completed';
+    updateChecklist(params.studyId, params.checklistId, { status: newStatus });
+
+    if (newStatus === 'completed') {
+      showToast.success('Checklist Completed', 'This checklist has been marked as completed');
+    } else {
+      showToast.info('Status Updated', 'Checklist marked as in-progress');
+    }
+  }
+
   // Header content for the split screen toolbar (left side)
   const headerContent = (
     <>
       <button
-        onClick={() => navigate(`/projects/${params.projectId}`)}
+        onClick={() => navigate(`/projects/${params.projectId}?tab=in-progress`)}
         class='text-gray-400 hover:text-gray-700 transition-colors'
       >
         <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -211,6 +232,18 @@ export default function ChecklistYjsWrapper() {
           Connecting...
         </span>
       </Show>
+      <div class='ml-auto'>
+        <button
+          onClick={handleToggleComplete}
+          class={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+            currentChecklist()?.status === 'completed' ?
+              'bg-green-100 text-green-700 hover:bg-green-200'
+            : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          {currentChecklist()?.status === 'completed' ? 'Completed' : 'Mark Complete'}
+        </button>
+      </div>
     </>
   );
 

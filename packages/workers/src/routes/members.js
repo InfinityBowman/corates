@@ -8,6 +8,14 @@ import { createDb } from '../db/client.js';
 import { projectMembers, user, projects } from '../db/schema.js';
 import { eq, and, count } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
+import { memberSchemas, validateRequest } from '../config/validation.js';
+import {
+  createErrorResponse,
+  ERROR_CODES,
+  PROJECT_ROLES,
+  isValidRole,
+  canManageMembers,
+} from '../config/constants.js';
 
 const memberRoutes = new Hono();
 
@@ -45,7 +53,7 @@ async function projectMembershipMiddleware(c, next) {
   const projectId = c.req.param('projectId');
 
   if (!projectId) {
-    return c.json({ error: 'Project ID required' }, 400);
+    return c.json(createErrorResponse(ERROR_CODES.MISSING_FIELD, 'Project ID required'), 400);
   }
 
   const db = createDb(c.env.DB);
@@ -58,7 +66,7 @@ async function projectMembershipMiddleware(c, next) {
     .get();
 
   if (!membership) {
-    return c.json({ error: 'Project not found or access denied' }, 404);
+    return c.json(createErrorResponse(ERROR_CODES.PROJECT_ACCESS_DENIED), 404);
   }
 
   c.set('projectId', projectId);
@@ -99,7 +107,7 @@ memberRoutes.get('/', async c => {
     return c.json(results);
   } catch (error) {
     console.error('Error listing members:', error);
-    return c.json({ error: 'Failed to list members' }, 500);
+    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
   }
 });
 
@@ -107,29 +115,19 @@ memberRoutes.get('/', async c => {
  * POST /api/projects/:projectId/members
  * Add a member to the project (owner only)
  */
-memberRoutes.post('/', async c => {
+memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
   const isOwner = c.get('isOwner');
   const projectId = c.get('projectId');
 
   if (!isOwner) {
-    return c.json({ error: 'Only project owners can add members' }, 403);
+    return c.json(
+      createErrorResponse(ERROR_CODES.AUTH_FORBIDDEN, 'Only project owners can add members'),
+      403,
+    );
   }
 
   const db = createDb(c.env.DB);
-  const { userId, email, role = 'member' } = await c.req.json();
-
-  if (!userId && !email) {
-    return c.json({ error: 'User ID or email is required' }, 400);
-  }
-
-  // Validate role
-  const validRoles = ['owner', 'collaborator', 'member', 'viewer'];
-  if (!validRoles.includes(role)) {
-    return c.json(
-      { error: 'Invalid role. Must be one of: owner, collaborator, member, viewer' },
-      400,
-    );
-  }
+  const { userId, email, role } = c.get('validatedBody');
 
   try {
     // Find user by userId or email
@@ -142,6 +140,7 @@ memberRoutes.post('/', async c => {
           email: user.email,
           username: user.username,
           displayName: user.displayName,
+          image: user.image,
         })
         .from(user)
         .where(eq(user.id, userId))
@@ -154,6 +153,7 @@ memberRoutes.post('/', async c => {
           email: user.email,
           username: user.username,
           displayName: user.displayName,
+          image: user.image,
         })
         .from(user)
         .where(eq(user.email, email.toLowerCase()))
@@ -161,7 +161,7 @@ memberRoutes.post('/', async c => {
     }
 
     if (!userToAdd) {
-      return c.json({ error: 'User not found' }, 404);
+      return c.json(createErrorResponse(ERROR_CODES.NOT_FOUND, 'User not found'), 404);
     }
 
     // Check if already a member
@@ -172,7 +172,7 @@ memberRoutes.post('/', async c => {
       .get();
 
     if (existingMember) {
-      return c.json({ error: 'User is already a member of this project' }, 409);
+      return c.json(createErrorResponse(ERROR_CODES.PROJECT_MEMBER_EXISTS), 409);
     }
 
     const now = new Date();
@@ -220,6 +220,7 @@ memberRoutes.post('/', async c => {
       name: userToAdd.name,
       email: userToAdd.email,
       displayName: userToAdd.displayName,
+      image: userToAdd.image,
     });
 
     return c.json(
@@ -229,6 +230,7 @@ memberRoutes.post('/', async c => {
         email: userToAdd.email,
         username: userToAdd.username,
         displayName: userToAdd.displayName,
+        image: userToAdd.image,
         role,
         joinedAt: now,
       },
@@ -236,7 +238,7 @@ memberRoutes.post('/', async c => {
     );
   } catch (error) {
     console.error('Error adding member:', error);
-    return c.json({ error: 'Failed to add member' }, 500);
+    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
   }
 });
 
@@ -244,26 +246,23 @@ memberRoutes.post('/', async c => {
  * PUT /api/projects/:projectId/members/:userId
  * Update a member's role (owner only)
  */
-memberRoutes.put('/:userId', async c => {
+memberRoutes.put('/:userId', validateRequest(memberSchemas.updateRole), async c => {
   const isOwner = c.get('isOwner');
   const projectId = c.get('projectId');
   const memberId = c.req.param('userId');
 
   if (!isOwner) {
-    return c.json({ error: 'Only project owners can update member roles' }, 403);
+    return c.json(
+      createErrorResponse(
+        ERROR_CODES.AUTH_FORBIDDEN,
+        'Only project owners can update member roles',
+      ),
+      403,
+    );
   }
 
   const db = createDb(c.env.DB);
-  const { role } = await c.req.json();
-
-  // Validate role
-  const validRoles = ['owner', 'collaborator', 'member', 'viewer'];
-  if (!validRoles.includes(role)) {
-    return c.json(
-      { error: 'Invalid role. Must be one of: owner, collaborator, member, viewer' },
-      400,
-    );
-  }
+  const { role } = c.get('validatedBody');
 
   try {
     // Prevent removing the last owner
@@ -281,7 +280,10 @@ memberRoutes.put('/:userId', async c => {
         .get();
 
       if (targetMember?.role === 'owner' && ownerCountResult?.count <= 1) {
-        return c.json({ error: 'Cannot remove the last owner. Assign another owner first.' }, 400);
+        return c.json(
+          createErrorResponse(ERROR_CODES.PROJECT_LAST_OWNER, 'Assign another owner first'),
+          400,
+        );
       }
     }
 
@@ -299,7 +301,7 @@ memberRoutes.put('/:userId', async c => {
     return c.json({ success: true, userId: memberId, role });
   } catch (error) {
     console.error('Error updating member role:', error);
-    return c.json({ error: 'Failed to update member role' }, 500);
+    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
   }
 });
 
@@ -316,7 +318,10 @@ memberRoutes.delete('/:userId', async c => {
   const isSelfRemoval = memberId === authUser.id;
 
   if (!isOwner && !isSelfRemoval) {
-    return c.json({ error: 'Only project owners can remove members' }, 403);
+    return c.json(
+      createErrorResponse(ERROR_CODES.AUTH_FORBIDDEN, 'Only project owners can remove members'),
+      403,
+    );
   }
 
   const db = createDb(c.env.DB);
@@ -330,7 +335,7 @@ memberRoutes.delete('/:userId', async c => {
       .get();
 
     if (!targetMember) {
-      return c.json({ error: 'Member not found' }, 404);
+      return c.json(createErrorResponse(ERROR_CODES.NOT_FOUND, 'Member not found'), 404);
     }
 
     // Prevent removing the last owner
@@ -343,10 +348,10 @@ memberRoutes.delete('/:userId', async c => {
 
       if (ownerCountResult?.count <= 1) {
         return c.json(
-          {
-            error:
-              'Cannot remove the last owner. Assign another owner first or delete the project.',
-          },
+          createErrorResponse(
+            ERROR_CODES.PROJECT_LAST_OWNER,
+            'Assign another owner first or delete the project',
+          ),
           400,
         );
       }
@@ -364,7 +369,7 @@ memberRoutes.delete('/:userId', async c => {
     return c.json({ success: true, removed: memberId });
   } catch (error) {
     console.error('Error removing member:', error);
-    return c.json({ error: 'Failed to remove member' }, 500);
+    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
   }
 });
 

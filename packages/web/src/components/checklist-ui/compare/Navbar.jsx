@@ -37,20 +37,28 @@ export default function Navbar(props) {
             return lastCol && lastCol.some(v => v === true);
           };
 
+          // Determine pill styling based on state
+          const getPillStyle = () => {
+            if (isCurrentPage()) {
+              return 'bg-blue-600 text-white ring-2 ring-blue-300';
+            }
+            if (hasAnswer()) {
+              // Answered - show solid color
+              return isAgreement() ?
+                  'bg-green-500 text-white hover:bg-green-600'
+                : 'bg-amber-500 text-white hover:bg-amber-600';
+            }
+            // Not answered yet - show lighter color to indicate agreement/disagreement status
+            return isAgreement() ?
+                'bg-green-100 text-green-700 hover:bg-green-200'
+              : 'bg-amber-100 text-amber-700 hover:bg-amber-200';
+          };
+
           return (
             <button
               onClick={() => props.goToQuestion(index())}
-              class={`
-                        w-8 h-8 rounded-full text-xs font-medium transition-all
-                        ${
-                          isCurrentPage() ? 'bg-blue-600 text-white ring-2 ring-blue-300'
-                          : hasAnswer() ?
-                            isAgreement() ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                            : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }
-                      `}
-              title={`Question ${index() + 1}${!isAgreement() ? ' (reviewers differ)' : ''}`}
+              class={`w-8 h-8 rounded-full text-xs font-medium transition-all ${getPillStyle()}`}
+              title={`Question ${index() + 1}${!isAgreement() ? ' (reviewers differ)' : ' (reviewers agree)'}`}
             >
               {index() + 1}
             </button>

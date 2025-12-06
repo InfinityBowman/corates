@@ -9,7 +9,7 @@
  * - PdfEmptyState: Loading, error, and empty states
  */
 
-import { Show, For, Index } from 'solid-js';
+import { Show, Index } from 'solid-js';
 import usePdfJs from './usePdfJs.js';
 import PdfToolbar from './PdfToolbar.jsx';
 import PdfEmptyState from './PdfEmptyState.jsx';

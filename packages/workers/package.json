@@ -9,6 +9,7 @@
     "deploy": "wrangler deploy --env production",
     "tail": "wrangler tail",
     "test": "vitest",
+    "logs": "pnpm wrangler tail corates-workers-prod",
     "clear-workers": "rm -rf .wrangler/state && pnpm run db:migrate",
     "db:migrate": "y | wrangler d1 migrations apply corates-db --local",
     "db:migrate:prod": "wrangler d1 migrations apply corates-db --remote",
@@ -22,7 +23,8 @@
     "hono": "^4.10.7",
     "resend": "^6.5.2",
     "stripe": "^20.0.0",
-    "yjs": "^13.6.27"
+    "yjs": "^13.6.27",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "vitest": "^4.0.13"
