@@ -140,6 +140,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
           email: user.email,
           username: user.username,
           displayName: user.displayName,
+          image: user.image,
         })
         .from(user)
         .where(eq(user.id, userId))
@@ -152,6 +153,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
           email: user.email,
           username: user.username,
           displayName: user.displayName,
+          image: user.image,
         })
         .from(user)
         .where(eq(user.email, email.toLowerCase()))
@@ -218,6 +220,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
       name: userToAdd.name,
       email: userToAdd.email,
       displayName: userToAdd.displayName,
+      image: userToAdd.image,
     });
 
     return c.json(
@@ -227,6 +230,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         email: userToAdd.email,
         username: userToAdd.username,
         displayName: userToAdd.displayName,
+        image: userToAdd.image,
         role,
         joinedAt: now,
       },

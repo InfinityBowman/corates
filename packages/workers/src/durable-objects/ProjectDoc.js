@@ -129,6 +129,7 @@ export class ProjectDoc {
           memberYMap.set('name', member.name || null);
           memberYMap.set('email', member.email || null);
           memberYMap.set('displayName', member.displayName || null);
+          memberYMap.set('image', member.image || null);
           membersMap.set(member.userId, memberYMap);
         }
       }
@@ -166,11 +167,27 @@ export class ProjectDoc {
         memberYMap.set('name', member.name || null);
         memberYMap.set('email', member.email || null);
         memberYMap.set('displayName', member.displayName || null);
+        memberYMap.set('image', member.image || null);
         membersMap.set(member.userId, memberYMap);
       } else if (action === 'update') {
         const existingMember = membersMap.get(member.userId);
         if (existingMember) {
-          existingMember.set('role', member.role);
+          // Update role if provided
+          if (member.role !== undefined) {
+            existingMember.set('role', member.role);
+          }
+          // Update image if provided
+          if (member.image !== undefined) {
+            existingMember.set('image', member.image);
+          }
+          // Update display name if provided
+          if (member.displayName !== undefined) {
+            existingMember.set('displayName', member.displayName);
+          }
+          // Update name if provided
+          if (member.name !== undefined) {
+            existingMember.set('name', member.name);
+          }
         }
       } else if (action === 'remove') {
         membersMap.delete(member.userId);

@@ -28,18 +28,8 @@ export default function OverviewTab(props) {
         </div>
       </Show>
 
-      {/* Charts Section */}
-      <div class='mb-8'>
-        <h3 class='text-lg font-semibold text-gray-900 mb-4'>Quality Assessment Charts</h3>
-        <ChartSection
-          studies={props.studies}
-          members={props.members}
-          getChecklistData={props.getChecklistData}
-        />
-      </div>
-
       {/* Members Section */}
-      <div>
+      <div class='mb-8'>
         <div class='flex items-center justify-between mb-4'>
           <h3 class='text-lg font-semibold text-gray-900'>Project Members</h3>
           <Show when={props.isOwner()}>
@@ -72,11 +62,22 @@ export default function OverviewTab(props) {
                 return (
                   <div class='p-4 flex items-center justify-between'>
                     <div class='flex items-center gap-3'>
-                      <div class='w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium'>
-                        {(member.displayName || member.name || member.email || '?')
-                          .charAt(0)
-                          .toUpperCase()}
-                      </div>
+                      <Show
+                        when={member.image}
+                        fallback={
+                          <div class='w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium'>
+                            {(member.displayName || member.name || member.email || '?')
+                              .charAt(0)
+                              .toUpperCase()}
+                          </div>
+                        }
+                      >
+                        <img
+                          src={member.image}
+                          alt={member.displayName || member.name || 'User'}
+                          class='w-10 h-10 rounded-full object-cover'
+                        />
+                      </Show>
                       <div>
                         <p class='text-gray-900 font-medium'>
                           {member.displayName || member.name || 'Unknown'}
@@ -122,6 +123,16 @@ export default function OverviewTab(props) {
             </For>
           </div>
         </Show>
+      </div>
+
+      {/* Charts Section */}
+      <div>
+        <h3 class='text-lg font-semibold text-gray-900 mb-4'>Quality Assessment Charts</h3>
+        <ChartSection
+          studies={props.studies}
+          members={props.members}
+          getChecklistData={props.getChecklistData}
+        />
       </div>
     </>
   );
