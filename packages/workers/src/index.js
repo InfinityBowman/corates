@@ -18,6 +18,7 @@ import { userRoutes } from './routes/users.js';
 import { pdfRoutes } from './routes/pdfs.js';
 import { dbRoutes } from './routes/database.js';
 import { emailRoutes } from './routes/email.js';
+import { billingRoutes } from './routes/billing/index.js';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc, EmailQueue };
@@ -42,6 +43,9 @@ app.route('/api/auth', auth);
 
 // Mount email routes
 app.route('/api/email', emailRoutes);
+
+// Mount billing routes
+app.route('/api/billing', billingRoutes);
 
 // Mount database routes
 app.route('/api/db', dbRoutes);

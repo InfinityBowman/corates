@@ -21,6 +21,7 @@
     "drizzle-orm": "^0.44.7",
     "hono": "^4.10.7",
     "resend": "^6.5.2",
+    "stripe": "^20.0.0",
     "yjs": "^13.6.27"
   },
   "devDependencies": {

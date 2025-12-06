@@ -2,6 +2,7 @@
 -- Run: wrangler d1 migrations apply corates-db --local
 
 -- Drop existing tables if they exist (for clean migration)
+DROP TABLE IF EXISTS subscriptions;
 DROP TABLE IF EXISTS project_members;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS email_verification_tokens;
@@ -91,6 +92,23 @@ CREATE TABLE project_members (
   UNIQUE(projectId, userId)
 );
 
+-- Subscriptions table (Stripe billing)
+CREATE TABLE subscriptions (
+  id TEXT PRIMARY KEY,
+  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+  stripeCustomerId TEXT UNIQUE,
+  stripeSubscriptionId TEXT UNIQUE,
+  tier TEXT NOT NULL DEFAULT 'free', -- 'free', 'pro', 'team', 'enterprise'
+  status TEXT NOT NULL DEFAULT 'active', -- 'active', 'canceled', 'past_due', 'trialing', 'incomplete'
+  currentPeriodStart INTEGER,
+  currentPeriodEnd INTEGER,
+  cancelAtPeriodEnd INTEGER DEFAULT 0,
+  createdAt INTEGER DEFAULT (unixepoch()),
+  updatedAt INTEGER DEFAULT (unixepoch()),
+  
+  UNIQUE(userId)
+);
+
 -- Create indexes for better performance
 
 -- Auth indexes
@@ -105,6 +123,11 @@ CREATE INDEX idx_projects_createdBy ON projects(createdBy);
 CREATE INDEX idx_projects_createdAt ON projects(createdAt);
 CREATE INDEX idx_project_members_projectId ON project_members(projectId);
 CREATE INDEX idx_project_members_userId ON project_members(userId);
+
+-- Subscription indexes
+CREATE INDEX idx_subscriptions_userId ON subscriptions(userId);
+CREATE INDEX idx_subscriptions_stripeCustomerId ON subscriptions(stripeCustomerId);
+CREATE INDEX idx_subscriptions_stripeSubscriptionId ON subscriptions(stripeSubscriptionId);
 
 -- Insert default data
 INSERT OR IGNORE INTO user (id, name, email, emailVerified, username, displayName) VALUES

@@ -40,6 +40,7 @@ bucket_name = "corates-pdfs"
 [vars]
 ENVIRONMENT = "development"
 AUTH_BASE_URL = "http://localhost:8787"
+APP_URL = "http://localhost:5173"
 
 # For production deployment
 [env.production]
@@ -52,6 +53,7 @@ routes = [
 ENVIRONMENT = "production"
 AUTH_BASE_URL = "https://api.corates.org"
 COOKIE_DOMAIN = ".corates.org"
+APP_URL = "https://app.corates.org"
 
 # Production secrets are managed via `wrangler secret put` command
 # Run these commands to set production secrets:
@@ -59,6 +61,8 @@ COOKIE_DOMAIN = ".corates.org"
 # wrangler secret put SMTP_USER --env production
 # wrangler secret put SMTP_PASS --env production
 # wrangler secret put EMAIL_FROM --env production
+# wrangler secret put STRIPE_SECRET_KEY --env production
+# wrangler secret put STRIPE_WEBHOOK_SECRET --env production
 
 [[env.production.d1_databases]]
 binding = "DB"
