@@ -17,10 +17,10 @@ export default function Navbar() {
         </div>
         <div class='flex gap-3'>
           <a
-            href={urls.signIn()}
+            href={urls.dashboard()}
             class='hidden sm:inline-flex items-center px-4 py-2 text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors'
           >
-            Sign In
+            Open App
           </a>
           <a
             href={urls.signUp()}
