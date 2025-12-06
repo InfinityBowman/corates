@@ -199,34 +199,37 @@ export function useSubscription() {
 
 ### Phase 2: Core Frontend
 
-- [ ] Create `useSubscription` primitive
-- [ ] Create billing API functions (`lib/billing.js`)
-- [ ] Build `PricingTable` component
-- [ ] Build `UpgradeButton` component
-- [ ] Create billing settings page route
+- [x] Create `useSubscription` primitive (`src/primitives/useSubscription.js`)
+- [x] Create billing API functions (`src/api/billing.js`)
+- [x] Build `PricingTable` component
+- [x] Build `SubscriptionCard` component
+- [x] Build `UpgradePrompt` component
+- [x] Create billing settings page route (`/settings/billing`)
+- [x] Add billing link to settings page
 
 ### Phase 3: Portal & Management
 
-- [ ] Implement `/api/billing/portal` endpoint
-- [ ] Implement `/api/billing/subscription` GET endpoint
-- [ ] Build `SubscriptionCard` component
-- [ ] Build `ManageButton` component
-- [ ] Add cancellation confirmation dialog
+- [x] Implement `/api/billing/portal` endpoint (done in Phase 1)
+- [x] Implement `/api/billing/subscription` GET endpoint (done in Phase 1)
+- [x] Build `SubscriptionCard` component (done in Phase 2)
+- [x] Build manage subscription button (integrated in SubscriptionCard)
+- [ ] Add cancellation confirmation dialog (handled by Stripe Portal)
 
 ### Phase 4: Permissions & Gating
 
-- [ ] Create backend `requireTier` middleware
+- [x] Create backend `requireTier` middleware
+- [x] Create backend `requireFeature` middleware
 - [ ] Apply middleware to protected routes
-- [ ] Add `canAccess` checks to frontend features
-- [ ] Build upgrade prompt component
-- [ ] Handle expired/past-due subscription states
+- [x] Add `canAccess` checks to frontend (`useSubscription` primitive)
+- [x] Build upgrade prompt component
+- [x] Handle expired/past-due subscription states (in SubscriptionCard)
 
 ### Phase 5: Polish & Edge Cases
 
 - [ ] Handle webhook retries (idempotency)
-- [ ] Add loading states and error handling
-- [ ] Handle failed payments gracefully
-- [ ] Add subscription status indicators in UI
+- [x] Add loading states and error handling
+- [x] Handle failed payments gracefully (status indicators)
+- [x] Add subscription status indicators in UI
 - [ ] Test upgrade/downgrade flows
 - [ ] Test cancellation and reactivation
 
