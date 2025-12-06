@@ -17,7 +17,7 @@ import { BsListTask } from 'solid-icons/bs';
 import { CgArrowsExchange } from 'solid-icons/cg';
 import { AiFillCheckCircle, AiOutlineBook } from 'solid-icons/ai';
 
-// Handler hooks - now with simplified API
+// Handler hooks
 import useProjectStudyHandlers from '@primitives/useProjectStudyHandlers.js';
 import useProjectChecklistHandlers from '@primitives/useProjectChecklistHandlers.js';
 import useProjectPdfHandlers from '@primitives/useProjectPdfHandlers.js';

@@ -10,8 +10,6 @@ export const user = sqliteTable('user', {
   image: text('image'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
-
-  // Custom fields for your app
   username: text('username').unique(),
   displayName: text('displayName'),
   avatarUrl: text('avatarUrl'),
@@ -62,7 +60,7 @@ export const verification = sqliteTable('verification', {
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 
-// Your app-specific tables
+// App-specific tables
 
 // Projects table (for user's research projects)
 export const projects = sqliteTable('projects', {
