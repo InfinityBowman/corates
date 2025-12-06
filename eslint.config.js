@@ -24,6 +24,7 @@ export default [
         console: 'readonly',
         fetch: 'readonly',
         URL: 'readonly',
+        queueMicrotask: 'readonly',
         URLSearchParams: 'readonly',
         BroadcastChannel: 'readonly',
         FormData: 'readonly',

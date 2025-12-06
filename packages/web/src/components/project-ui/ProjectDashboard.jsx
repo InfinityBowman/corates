@@ -2,6 +2,8 @@ import { createEffect, createSignal, onCleanup, For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import useNotifications from '@primitives/useNotifications.js';
 import projectStore from '@primitives/projectStore.js';
+import { useConfirmDialog } from '@components/zag/Dialog.jsx';
+import useProjectMemberHandlers from '@primitives/useProjectMemberHandlers.js';
 import CreateProjectForm from './CreateProjectForm.jsx';
 import ProjectCard from './ProjectCard.jsx';
 
@@ -54,6 +56,10 @@ export default function ProjectDashboard(props) {
   const openProject = projectId => {
     navigate(`/projects/${projectId}`);
   };
+
+  // Confirm dialog and handlers for delete
+  const confirmDialog = useConfirmDialog();
+  const { handleDeleteProject } = useProjectMemberHandlers(null, confirmDialog);
 
   return (
     <div class='space-y-6'>
@@ -110,7 +116,9 @@ export default function ProjectDashboard(props) {
           }
         >
           <For each={projects()}>
-            {project => <ProjectCard project={project} onOpen={openProject} />}
+            {project => (
+              <ProjectCard project={project} onOpen={openProject} onDelete={handleDeleteProject} />
+            )}
           </For>
         </Show>
 
@@ -121,6 +129,9 @@ export default function ProjectDashboard(props) {
           </div>
         </Show>
       </div>
+
+      {/* Confirm dialog */}
+      <confirmDialog.ConfirmDialogComponent />
     </div>
   );
 }
