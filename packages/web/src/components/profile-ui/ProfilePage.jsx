@@ -68,6 +68,22 @@ async function compressImage(file) {
   });
 }
 
+/**
+ * Sync profile changes to all projects the user is a member of
+ * This updates the Y.js documents so other project members see the changes
+ */
+async function syncProfileToProjects() {
+  try {
+    await fetch(`${API_BASE}/api/users/sync-profile`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+  } catch (err) {
+    // Silently fail - this is a background sync operation
+    console.error('Failed to sync profile to projects:', err);
+  }
+}
+
 export default function ProfilePage() {
   const auth = useBetterAuth();
   const user = () => auth.user();
@@ -146,6 +162,8 @@ export default function ProfilePage() {
         name: fullName,
         displayName: fullName,
       });
+      // Sync to all projects in background
+      syncProfileToProjects();
       showToast.success('Profile Updated', 'Your name has been updated successfully.');
       setIsEditingName(false);
     } catch {
@@ -218,6 +236,9 @@ export default function ProfilePage() {
       await auth.updateProfile({
         image: url,
       });
+
+      // Sync to all projects in background
+      syncProfileToProjects();
 
       // Clear optimistic image now that server has the real one
       setOptimisticImage(null);

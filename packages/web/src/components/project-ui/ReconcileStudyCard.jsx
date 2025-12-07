@@ -1,46 +1,27 @@
 /**
  * ReconcileStudyCard - Displays a study card specifically for the Ready to Reconcile tab
- * Simplified version focused on reconciliation workflow
+ * Automatically compares the two completed checklists without requiring selection
  */
 
-import { For, Show, createSignal, createMemo } from 'solid-js';
+import { Show } from 'solid-js';
 import { CgFileDocument } from 'solid-icons/cg';
 import { BsFileDiff } from 'solid-icons/bs';
-import { AiOutlineCheck } from 'solid-icons/ai';
 
 export default function ReconcileStudyCard(props) {
-  const [selectedChecklists, setSelectedChecklists] = createSignal([]);
-
   // Check if study has PDFs
   const hasPdfs = () => props.study.pdfs && props.study.pdfs.length > 0;
   const firstPdf = () => (hasPdfs() ? props.study.pdfs[0] : null);
 
-  // Get completed checklists only
-  const completedChecklists = createMemo(() => {
+  // Get the two completed checklists (guaranteed to be exactly 2)
+  const completedChecklists = () => {
     return (props.study.checklists || []).filter(c => c.status === 'completed');
-  });
-
-  // Check if exactly 2 checklists are selected
-  const canStartReconcile = createMemo(() => selectedChecklists().length === 2);
-
-  // Toggle checklist selection for reconciliation
-  const toggleChecklistSelection = checklistId => {
-    setSelectedChecklists(prev => {
-      if (prev.includes(checklistId)) {
-        return prev.filter(id => id !== checklistId);
-      }
-      // Only allow max 2 selections
-      if (prev.length >= 2) {
-        return [prev[1], checklistId];
-      }
-      return [...prev, checklistId];
-    });
   };
 
-  // Start reconciliation with selected checklists
+  // Start reconciliation - directly compare the two completed checklists
   const startReconciliation = () => {
-    if (selectedChecklists().length === 2) {
-      props.onReconcile?.(selectedChecklists()[0], selectedChecklists()[1]);
+    const [checklist1, checklist2] = completedChecklists();
+    if (checklist1 && checklist2) {
+      props.onReconcile?.(checklist1.id, checklist2.id);
     }
   };
 
@@ -53,7 +34,7 @@ export default function ReconcileStudyCard(props) {
   return (
     <div class='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
       {/* Study Header */}
-      <div class='p-4 border-b border-gray-200 bg-purple-50'>
+      <div class='p-4 border-b border-gray-200'>
         <div class='flex items-center justify-between'>
           <div class='flex-1'>
             <h3 class='text-lg font-semibold text-gray-900'>{props.study.name}</h3>
@@ -83,75 +64,23 @@ export default function ReconcileStudyCard(props) {
         </div>
       </div>
 
-      {/* Instructions */}
-      <div class='px-4 py-3 bg-purple-50/50 border-b border-purple-100'>
-        <div class='flex items-center gap-2'>
-          <BsFileDiff class='w-4 h-4 text-purple-600' />
-          <span class='text-sm text-purple-800'>
-            Select 2 checklists to compare ({selectedChecklists().length}/2 selected)
-          </span>
+      {/* Reviewers and Action */}
+      <div class='px-4 py-3 flex items-center justify-between gap-3 bg-gray-50'>
+        <div class='flex items-center gap-2 text-sm text-gray-700'>
+          <Show when={completedChecklists()[0]}>
+            {checklist => <span>{getReviewerName(checklist())}</span>}
+          </Show>
+          <span class='text-gray-400'>vs</span>
+          <Show when={completedChecklists()[1]}>
+            {checklist => <span>{getReviewerName(checklist())}</span>}
+          </Show>
         </div>
-      </div>
-
-      {/* Checklists List */}
-      <div class='divide-y divide-gray-200'>
-        <For each={completedChecklists()}>
-          {checklist => {
-            const isSelected = () => selectedChecklists().includes(checklist.id);
-
-            return (
-              <div
-                class={`p-4 transition-colors flex items-center gap-3 cursor-pointer ${
-                  isSelected() ?
-                    'bg-purple-50 border-l-4 border-purple-500'
-                  : 'hover:bg-purple-50/50 border-l-4 border-transparent'
-                }`}
-                onClick={() => toggleChecklistSelection(checklist.id)}
-              >
-                {/* Selection checkbox */}
-                <div
-                  class={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors shrink-0 ${
-                    isSelected() ?
-                      'bg-purple-600 border-purple-600'
-                    : 'border-gray-300 hover:border-purple-400'
-                  }`}
-                >
-                  <Show when={isSelected()}>
-                    <AiOutlineCheck class='w-3 h-3 text-white' />
-                  </Show>
-                </div>
-
-                {/* Checklist info */}
-                <div class='flex-1'>
-                  <div class='flex items-center gap-3'>
-                    <h4 class='text-gray-900 font-medium'>
-                      {checklist.type || 'AMSTAR2'} Checklist
-                    </h4>
-                    <span class='text-sm text-gray-600'>({getReviewerName(checklist)})</span>
-                    <span class='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'>
-                      completed
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          }}
-        </For>
-      </div>
-
-      {/* Reconcile Action */}
-      <div class='p-4 bg-gray-50 border-t border-gray-200'>
         <button
           onClick={startReconciliation}
-          disabled={!canStartReconcile()}
-          class={`w-full px-4 py-2.5 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${
-            canStartReconcile() ?
-              'bg-purple-600 text-white hover:bg-purple-700'
-            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-          }`}
+          class='px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700'
         >
           <BsFileDiff class='w-4 h-4' />
-          Start Reconciliation
+          Reconcile
         </button>
       </div>
     </div>
