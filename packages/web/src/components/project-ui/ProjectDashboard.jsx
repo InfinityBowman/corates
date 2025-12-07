@@ -4,12 +4,14 @@ import useNotifications from '@primitives/useNotifications.js';
 import projectStore from '@primitives/projectStore.js';
 import { useConfirmDialog } from '@components/zag/Dialog.jsx';
 import useProjectMemberHandlers from '@primitives/useProjectMemberHandlers.js';
+import { useBetterAuth } from '@api/better-auth-store.js';
 import CreateProjectForm from './CreateProjectForm.jsx';
 import ProjectCard from './ProjectCard.jsx';
 
 export default function ProjectDashboard(props) {
   const navigate = useNavigate();
   const [showCreateForm, setShowCreateForm] = createSignal(false);
+  const { isOnline } = useBetterAuth();
 
   const userId = () => props.userId;
 
@@ -18,6 +20,14 @@ export default function ProjectDashboard(props) {
   const isLoading = () => projectStore.isProjectListLoading();
   const isLoaded = () => projectStore.isProjectListLoaded();
   const error = () => projectStore.getProjectListError();
+
+  // Check if error is due to offline state
+  const isOfflineError = () => {
+    const err = error();
+    return (
+      err && (err.includes('No internet connection') || err.includes('connection error'))
+    );
+  };
 
   // Fetch on mount if not already loaded
   createEffect(() => {
@@ -67,22 +77,39 @@ export default function ProjectDashboard(props) {
       <div class='flex justify-between items-center'>
         <div>
           <h1 class='text-2xl font-bold text-gray-900'>My Projects</h1>
-          <p class='text-gray-500 mt-1'>Manage your research projects and AMSTAR2 checklists</p>
+          <p class='text-gray-500 mt-1'>
+            Manage your research projects and AMSTAR2 checklists
+          </p>
         </div>
         <button
-          class='inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg gap-2'
+          class='inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100'
           onClick={() => setShowCreateForm(!showCreateForm())}
+          disabled={!isOnline()}
+          title={!isOnline() ? 'Cannot create projects while offline' : ''}
         >
           <span class='text-lg'>+</span>
           New Project
         </button>
       </div>
 
+      {/* Offline indicator */}
+      <Show when={!isOnline()}>
+        <div class='bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-800'>
+          <div class='flex items-center gap-2'>
+            <span class='font-medium'>You're offline</span>
+            <span class='text-sm'>- Showing cached data</span>
+          </div>
+        </div>
+      </Show>
+
       {/* Error display */}
-      <Show when={error()}>
+      <Show when={error() && !isOfflineError()}>
         <div class='bg-red-50 border border-red-200 rounded-lg p-4 text-red-700'>
           {error()}
-          <button onClick={() => projectStore.refreshProjectList(userId())} class='ml-2 underline'>
+          <button
+            onClick={() => projectStore.refreshProjectList(userId())}
+            class='ml-2 underline'
+          >
             Retry
           </button>
         </div>
@@ -117,7 +144,11 @@ export default function ProjectDashboard(props) {
         >
           <For each={projects()}>
             {project => (
-              <ProjectCard project={project} onOpen={openProject} onDelete={handleDeleteProject} />
+              <ProjectCard
+                project={project}
+                onOpen={openProject}
+                onDelete={handleDeleteProject}
+              />
             )}
           </For>
         </Show>
