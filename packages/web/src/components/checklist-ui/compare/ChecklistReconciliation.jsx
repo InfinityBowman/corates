@@ -168,6 +168,21 @@ export default function ChecklistReconciliation(props) {
 
   // Navigation
   function goToNext() {
+    // Auto-confirm current question's answer when clicking Next
+    const key = currentQuestionKey();
+    const currentFinal = finalAnswers()[key];
+
+    // If no final answer set yet, use reviewer1's answer as default
+    if (!currentFinal && props.checklist1) {
+      const defaultAnswer = getReviewerAnswers(props.checklist1, key);
+      if (defaultAnswer) {
+        setFinalAnswers(prev => ({
+          ...prev,
+          [key]: JSON.parse(JSON.stringify(defaultAnswer)),
+        }));
+      }
+    }
+
     if (currentPage() < totalPages - 1) {
       setCurrentPage(p => p + 1);
     } else {
