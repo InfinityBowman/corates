@@ -25,7 +25,7 @@ export default function ChecklistReconciliation(props) {
   // props.onCancel - Callback to cancel and go back
   // props.reviewer1Name - Display name for first reviewer
   // props.reviewer2Name - Display name for second reviewer
-  // props.navbarRef - Ref callback to expose navbar props for external rendering
+  // props.setNavbarStore - Store setter for navbar state (deep reactivity)
 
   // Track if we've initialized from saved progress
   const [initialized, setInitialized] = createSignal(false);
@@ -72,20 +72,21 @@ export default function ChecklistReconciliation(props) {
     return map;
   });
 
-  // Expose navbar props for external rendering
+  // Expose navbar props for external rendering via store
   createEffect(() => {
-    if (props.navbarRef) {
-      props.navbarRef({
+    if (props.setNavbarStore) {
+      props.setNavbarStore({
         questionKeys,
         viewMode: viewMode(),
-        setViewMode,
         currentPage: currentPage(),
-        goToQuestion,
         comparisonByQuestion: comparisonByQuestion(),
         finalAnswers: finalAnswers(),
         summary: summary(),
         reviewedCount: reviewedCount(),
         totalPages,
+        setViewMode,
+        goToQuestion,
+        onReset: handleReset,
       });
     }
   });
@@ -110,7 +111,7 @@ export default function ChecklistReconciliation(props) {
     return checklist[questionKey];
   };
 
-  // Initialize final answers from saved progress or reviewer1 by default
+  // Initialize final answers from saved progress or auto-fill agreements
   createEffect(() => {
     if (!props.checklist1 || initialized()) return;
 
@@ -126,29 +127,15 @@ export default function ChecklistReconciliation(props) {
       return;
     }
 
-    // Otherwise initialize from reviewer1's answers
-    const initial = {};
-    for (const key of questionKeys) {
-      if (isMultiPartQuestion(key)) {
-        // For multi-part questions, store each part separately
-        const dataKeys = getDataKeysForQuestion(key);
-        const parts = {};
-        let hasAllParts = true;
-        for (const dk of dataKeys) {
-          if (props.checklist1[dk]) {
-            parts[dk] = JSON.parse(JSON.stringify(props.checklist1[dk]));
-          } else {
-            hasAllParts = false;
-          }
-        }
-        if (hasAllParts) {
-          initial[key] = parts;
-        }
-      } else if (props.checklist1[key]) {
-        initial[key] = JSON.parse(JSON.stringify(props.checklist1[key]));
-      }
+    // Initialize with empty answers - all questions require manual reconciliation
+    const comp = comparison();
+    if (!comp) {
+      setInitialized(true);
+      return;
     }
-    setFinalAnswers(initial);
+
+    // Start with empty final answers - user must manually reconcile everything
+    setFinalAnswers({});
     setInitialized(true);
   });
 
@@ -202,6 +189,15 @@ export default function ChecklistReconciliation(props) {
   function goToQuestion(index) {
     setCurrentPage(index);
     setViewMode('questions');
+  }
+
+  // Reset all reconciliation answers
+  function handleReset() {
+    // Clear all answers - everything goes back to unresolved
+    setFinalAnswers({});
+    setCurrentPage(0);
+    setViewMode('questions');
+    showToast.info('Reconciliation Reset', 'All reconciliations have been cleared.');
   }
 
   // Helper to check if a question has a valid final answer

@@ -29,7 +29,6 @@ export default function AnswerPanel(props) {
   // Use passed columns if provided, otherwise get from question
   const columns = () => props.columns || question()?.columns || [];
   const answers = () => props.answers?.answers || [];
-  const critical = () => props.answers?.critical ?? false;
 
   return (
     <Show
@@ -110,7 +109,7 @@ export default function AnswerPanel(props) {
               </span>
             </Show>
           </div>
-          <Show when={!props.isFinal}>
+          <Show when={!props.isFinal && !props.hideSelectButtons}>
             <button
               onClick={() => props.onUseThis?.()}
               class={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
@@ -125,23 +124,13 @@ export default function AnswerPanel(props) {
         </div>
 
         {/* Final Answer Badge */}
-        <div class='mb-4'>
-          <span class='text-xs text-gray-500 block mb-1'>Result:</span>
+        <div class='mb-4 flex flex-wrap items-center gap-2'>
+          <span class='text-xs text-gray-500'>Result:</span>
           <span
             class={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium border ${getAnswerBadgeStyle(props.finalAnswer)}`}
           >
             {props.finalAnswer || 'Not selected'}
           </span>
-        </div>
-
-        {/* Critical Toggle */}
-        <div class='mb-4'>
-          <div class='flex items-center gap-2'>
-            <span class='text-xs text-gray-500'>Critical:</span>
-            <span class={`text-xs font-medium ${critical() ? 'text-red-600' : 'text-gray-600'}`}>
-              {critical() ? 'Yes' : 'No'}
-            </span>
-          </div>
         </div>
 
         {/* Answer Columns */}

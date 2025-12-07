@@ -48,6 +48,9 @@ function SingleQuestionPage(props) {
   const [localFinal, setLocalFinal] = createSignal(null);
   const [selectedSource, setSelectedSource] = createSignal(null); // 'reviewer1' | 'reviewer2' | 'custom'
 
+  // Check if both reviewers have the same answers
+  const reviewersAgree = () => answersEqual(props.reviewer1Answers, props.reviewer2Answers);
+
   // Initialize local final from props or default to reviewer1
   createEffect(() => {
     if (props.finalAnswers) {
@@ -137,13 +140,20 @@ function SingleQuestionPage(props) {
   const finalFinalAnswer = () =>
     getFinalAnswerFromAnswers(localFinal()?.answers, props.questionKey);
 
+  const isCritical = () => props.reviewer1Answers?.critical || props.reviewer2Answers?.critical;
+
   return (
     <div class='bg-white rounded-lg shadow-lg overflow-hidden'>
       {/* Question Header */}
       <div
         class={`p-4 ${props.isAgreement ? 'bg-green-50 border-b border-green-200' : 'bg-amber-50 border-b border-amber-200'}`}
       >
-        <h2 class='text-lg font-semibold text-gray-900'>{question()?.text}</h2>
+        <h2 class='text-lg font-semibold text-gray-900'>
+          {question()?.text}
+          <Show when={isCritical()}>
+            <span class='ml-2 text-sm font-medium text-red-600'>(Critical)</span>
+          </Show>
+        </h2>
         <div class='mt-2 flex items-center gap-3'>
           <span
             class={`text-sm font-medium ${props.isAgreement ? 'text-green-700' : 'text-amber-700'}`}
@@ -168,6 +178,7 @@ function SingleQuestionPage(props) {
           onUseThis={useReviewer1}
           readOnly={true}
           highlightColor='blue'
+          hideSelectButtons={reviewersAgree()}
         />
 
         {/* Reviewer 2 Panel */}
@@ -180,6 +191,7 @@ function SingleQuestionPage(props) {
           onUseThis={useReviewer2}
           readOnly={true}
           highlightColor='purple'
+          hideSelectButtons={reviewersAgree()}
         />
 
         {/* Final/Merged Panel */}
