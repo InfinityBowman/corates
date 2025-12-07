@@ -24,31 +24,40 @@ export default function AMSTARDistribution(props) {
   const data = () => props.data ?? [];
   const [containerSize, setContainerSize] = createSignal({ width: 900, height: 600 });
 
-  // Observe parent container size
+  // Observe parent container size with ResizeObserver
   onMount(() => {
+    if (!containerRef) return;
+
     const resize = () => {
       if (containerRef) {
         const rect = containerRef.getBoundingClientRect();
-        setContainerSize({
-          width: Math.max(rect.width, 400),
-          height: Math.max(rect.height, 400),
-        });
+        // Only update if we have actual dimensions (not hidden)
+        if (rect.width > 0 && rect.height > 0) {
+          setContainerSize({
+            width: Math.max(rect.width, 400),
+            height: Math.max(rect.height, 400),
+          });
+        }
       }
     };
+
+    // Use ResizeObserver to detect when element becomes visible
+    const resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0) {
+          resize();
+        }
+      }
+    });
+
+    resizeObserver.observe(containerRef);
     resize();
     window.addEventListener('resize', resize);
-    onCleanup(() => window.removeEventListener('resize', resize));
-  });
 
-  // Trigger resize when data changes
-  createEffect(() => {
-    if (containerRef) {
-      const rect = containerRef.getBoundingClientRect();
-      setContainerSize({
-        width: Math.max(rect.width, 400),
-        height: Math.max(rect.height, 400),
-      });
-    }
+    onCleanup(() => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', resize);
+    });
   });
 
   const width = () => props.width ?? containerSize().width;
