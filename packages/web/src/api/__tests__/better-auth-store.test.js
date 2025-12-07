@@ -5,7 +5,7 @@
  * Better Auth client internals are mocked.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock dependencies before importing the store
 vi.mock('@api/auth-client.js', () => ({
@@ -471,7 +471,9 @@ describe('better-auth-store - Two-Factor Authentication', () => {
       error: { message: 'Invalid password' },
     });
 
-    await expect(authStore.enableTwoFactor('wrongPassword')).rejects.toThrow('Invalid password');
+    await expect(authStore.enableTwoFactor('wrongPassword')).rejects.toThrow(
+      'Invalid password',
+    );
     expect(authStore.authError()).toBe('Invalid password');
   });
 });
@@ -513,7 +515,9 @@ describe('better-auth-store - Profile Management', () => {
       error: { message: 'Update failed' },
     });
 
-    await expect(authStore.updateProfile({ name: 'Test' })).rejects.toThrow('Update failed');
+    await expect(authStore.updateProfile({ name: 'Test' })).rejects.toThrow(
+      'Update failed',
+    );
     expect(authStore.authError()).toBe('Update failed');
   });
 });

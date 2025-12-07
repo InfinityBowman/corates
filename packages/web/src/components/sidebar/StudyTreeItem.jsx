@@ -1,4 +1,4 @@
-import { createSignal, For, Show } from 'solid-js';
+import { createMemo, createSignal, For, Show } from 'solid-js';
 import { VsBook } from 'solid-icons/vs';
 import Collapsible from '@components/zag/Collapsible.jsx';
 import ChecklistTreeItem from './ChecklistTreeItem.jsx';
@@ -8,6 +8,12 @@ import ChecklistTreeItem from './ChecklistTreeItem.jsx';
  */
 export default function StudyTreeItem(props) {
   const [isExpanded, setIsExpanded] = createSignal(false);
+
+  const assignedChecklists = createMemo(() => {
+    const list = props.study.checklists || [];
+    if (!props.userId) return list;
+    return list.filter(checklist => checklist?.assignedTo === props.userId);
+  });
 
   return (
     <Collapsible
@@ -39,10 +45,14 @@ export default function StudyTreeItem(props) {
       {/* Checklists list */}
       <div class='ml-4 pl-2 border-l border-gray-100 mt-0.5 space-y-0.5'>
         <Show
-          when={props.study.checklists?.length > 0}
-          fallback={<div class='py-1 px-2 text-2xs text-gray-400'>No checklists</div>}
+          when={assignedChecklists()?.length > 0}
+          fallback={
+            <div class='py-1 px-2 text-2xs text-gray-400'>
+              {props.userId ? 'No checklists assigned to you' : 'No checklists'}
+            </div>
+          }
         >
-          <For each={props.study.checklists}>
+          <For each={assignedChecklists()}>
             {checklist => (
               <ChecklistTreeItem
                 checklist={checklist}

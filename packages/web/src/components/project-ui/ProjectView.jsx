@@ -53,7 +53,11 @@ export default function ProjectView() {
   const connectionState = () => projectStore.getConnectionState(params.projectId);
 
   // Create handlers with simplified API - they read from store directly
-  const studyHandlers = useProjectStudyHandlers(params.projectId, projectActions, confirmDialog);
+  const studyHandlers = useProjectStudyHandlers(
+    params.projectId,
+    projectActions,
+    confirmDialog,
+  );
   const checklistHandlers = useProjectChecklistHandlers(
     params.projectId,
     projectActions,
@@ -75,7 +79,8 @@ export default function ProjectView() {
   createEffect(() => {
     const state = connectionState();
     const pdfs = pendingPdfs();
-    if (!state.synced || !params.projectId || !Array.isArray(pdfs) || pdfs.length === 0) return;
+    if (!state.synced || !params.projectId || !Array.isArray(pdfs) || pdfs.length === 0)
+      return;
 
     batch(() => {
       setPendingPdfs(null);
@@ -88,7 +93,9 @@ export default function ProjectView() {
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
         uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName)
           .then(result => {
-            cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(console.warn);
+            cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(
+              console.warn,
+            );
             addPdfToStudy(studyId, {
               key: result.key,
               fileName: result.fileName,
@@ -106,7 +113,8 @@ export default function ProjectView() {
   createEffect(() => {
     const state = connectionState();
     const refs = pendingRefs();
-    if (!state.synced || !params.projectId || !Array.isArray(refs) || refs.length === 0) return;
+    if (!state.synced || !params.projectId || !Array.isArray(refs) || refs.length === 0)
+      return;
 
     batch(() => {
       setPendingRefs(null);
@@ -124,8 +132,9 @@ export default function ProjectView() {
   const getInProgressCount = () => {
     const userId = user()?.id;
     if (!userId) return 0;
-    return studies().filter(study => study.reviewer1 === userId || study.reviewer2 === userId)
-      .length;
+    return studies().filter(
+      study => study.reviewer1 === userId || study.reviewer2 === userId,
+    ).length;
   };
 
   const getReadyToReconcileCount = () => {
@@ -156,7 +165,11 @@ export default function ProjectView() {
       icon: <CgArrowsExchange class='w-4 h-4' />,
       getCount: getReadyToReconcileCount,
     },
-    { value: 'completed', label: 'Completed', icon: <AiFillCheckCircle class='w-4 h-4' /> },
+    {
+      value: 'completed',
+      label: 'Completed',
+      icon: <AiFillCheckCircle class='w-4 h-4' />,
+    },
   ];
 
   const validTabs = [
@@ -175,7 +188,9 @@ export default function ProjectView() {
     const searchParams = new URLSearchParams(location.search);
     value === 'overview' ? searchParams.delete('tab') : searchParams.set('tab', value);
     const newSearch = searchParams.toString();
-    navigate(`${location.pathname}${newSearch ? `?${newSearch}` : ''}`, { replace: true });
+    navigate(`${location.pathname}${newSearch ? `?${newSearch}` : ''}`, {
+      replace: true,
+    });
   };
 
   return (
@@ -189,6 +204,7 @@ export default function ProjectView() {
         <ProjectHeader
           name={meta()?.name}
           description={meta()?.description}
+          onRename={projectActions.renameProject}
           onBack={() => navigate('/dashboard')}
         />
 

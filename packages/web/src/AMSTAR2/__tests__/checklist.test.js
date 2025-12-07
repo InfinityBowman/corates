@@ -141,8 +141,28 @@ describe('createChecklist', () => {
     });
 
     // Critical questions per AMSTAR2: 2, 4, 7, 9, 11, 13, 15
-    const criticalQuestions = ['q2', 'q4', 'q7', 'q9a', 'q9b', 'q11a', 'q11b', 'q13', 'q15'];
-    const nonCriticalQuestions = ['q1', 'q3', 'q5', 'q6', 'q8', 'q10', 'q12', 'q14', 'q16'];
+    const criticalQuestions = [
+      'q2',
+      'q4',
+      'q7',
+      'q9a',
+      'q9b',
+      'q11a',
+      'q11b',
+      'q13',
+      'q15',
+    ];
+    const nonCriticalQuestions = [
+      'q1',
+      'q3',
+      'q5',
+      'q6',
+      'q8',
+      'q10',
+      'q12',
+      'q14',
+      'q16',
+    ];
 
     criticalQuestions.forEach(q => {
       it(`should mark ${q} as critical`, () => {
@@ -162,7 +182,7 @@ describe('createChecklist', () => {
       Object.keys(checklist).forEach(key => {
         if (!/^q\d+[a-z]*$/i.test(key)) return;
         const question = checklist[key];
-        question.answers.forEach((col, colIdx) => {
+        question.answers.forEach((col, _colIdx) => {
           // All columns should have all false values by default
           const allFalse = col.every(v => v === false);
           expect(allFalse).toBe(true);

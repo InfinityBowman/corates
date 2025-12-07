@@ -13,11 +13,17 @@ import { createMemo, createUniqueId } from 'solid-js';
  * @param {JSX.Element} props.children - The content to show/hide
  */
 export default function Collapsible(props) {
+  const open = () => props.open;
+  const defaultOpen = () => props.defaultOpen;
+  const disabled = () => props.disabled;
+  const trigger = () => props.trigger;
+  const children = () => props.children;
+
   const service = useMachine(collapsible.machine, () => ({
     id: createUniqueId(),
-    open: props.open,
-    defaultOpen: props.defaultOpen,
-    disabled: props.disabled,
+    open: open(),
+    defaultOpen: defaultOpen(),
+    disabled: disabled(),
     onOpenChange(details) {
       props.onOpenChange?.(details.open);
     },
@@ -27,8 +33,8 @@ export default function Collapsible(props) {
 
   return (
     <div {...api().getRootProps()}>
-      {props.trigger?.(api())}
-      <div {...api().getContentProps()}>{props.children}</div>
+      {trigger()?.(api())}
+      <div {...api().getContentProps()}>{children()}</div>
     </div>
   );
 }

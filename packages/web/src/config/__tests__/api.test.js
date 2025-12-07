@@ -6,7 +6,7 @@
  * - getWsBaseUrl() should convert HTTP URLs to WebSocket URLs (http->ws, https->wss)
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 describe('API Configuration', () => {
   describe('API_BASE', () => {
@@ -38,7 +38,9 @@ describe('API Configuration', () => {
 
     it('should preserve the host and port in the URL', async () => {
       const { getWsBaseUrl } = await import('@config/api.js');
-      expect(getWsBaseUrl('https://api.example.com:3000')).toBe('wss://api.example.com:3000');
+      expect(getWsBaseUrl('https://api.example.com:3000')).toBe(
+        'wss://api.example.com:3000',
+      );
     });
 
     it('should handle URLs with paths correctly', async () => {

@@ -9,13 +9,7 @@ import { projectMembers, user, projects } from '../db/schema.js';
 import { eq, and, count } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { memberSchemas, validateRequest } from '../config/validation.js';
-import {
-  createErrorResponse,
-  ERROR_CODES,
-  PROJECT_ROLES,
-  isValidRole,
-  canManageMembers,
-} from '../config/constants.js';
+import { createErrorResponse, ERROR_CODES } from '../config/constants.js';
 
 const memberRoutes = new Hono();
 
@@ -53,7 +47,10 @@ async function projectMembershipMiddleware(c, next) {
   const projectId = c.req.param('projectId');
 
   if (!projectId) {
-    return c.json(createErrorResponse(ERROR_CODES.MISSING_FIELD, 'Project ID required'), 400);
+    return c.json(
+      createErrorResponse(ERROR_CODES.MISSING_FIELD, 'Project ID required'),
+      400,
+    );
   }
 
   const db = createDb(c.env.DB);
@@ -62,7 +59,12 @@ async function projectMembershipMiddleware(c, next) {
   const membership = await db
     .select({ role: projectMembers.role })
     .from(projectMembers)
-    .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, authUser.id)))
+    .where(
+      and(
+        eq(projectMembers.projectId, projectId),
+        eq(projectMembers.userId, authUser.id),
+      ),
+    )
     .get();
 
   if (!membership) {
@@ -121,7 +123,10 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
 
   if (!isOwner) {
     return c.json(
-      createErrorResponse(ERROR_CODES.AUTH_FORBIDDEN, 'Only project owners can add members'),
+      createErrorResponse(
+        ERROR_CODES.AUTH_FORBIDDEN,
+        'Only project owners can add members',
+      ),
       403,
     );
   }
@@ -168,7 +173,12 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
     const existingMember = await db
       .select({ id: projectMembers.id })
       .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userToAdd.id)))
+      .where(
+        and(
+          eq(projectMembers.projectId, projectId),
+          eq(projectMembers.userId, userToAdd.id),
+        ),
+      )
       .get();
 
     if (existingMember) {
@@ -270,18 +280,28 @@ memberRoutes.put('/:userId', validateRequest(memberSchemas.updateRole), async c 
       const ownerCountResult = await db
         .select({ count: count() })
         .from(projectMembers)
-        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.role, 'owner')))
+        .where(
+          and(eq(projectMembers.projectId, projectId), eq(projectMembers.role, 'owner')),
+        )
         .get();
 
       const targetMember = await db
         .select({ role: projectMembers.role })
         .from(projectMembers)
-        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)))
+        .where(
+          and(
+            eq(projectMembers.projectId, projectId),
+            eq(projectMembers.userId, memberId),
+          ),
+        )
         .get();
 
       if (targetMember?.role === 'owner' && ownerCountResult?.count <= 1) {
         return c.json(
-          createErrorResponse(ERROR_CODES.PROJECT_LAST_OWNER, 'Assign another owner first'),
+          createErrorResponse(
+            ERROR_CODES.PROJECT_LAST_OWNER,
+            'Assign another owner first',
+          ),
           400,
         );
       }
@@ -290,7 +310,9 @@ memberRoutes.put('/:userId', validateRequest(memberSchemas.updateRole), async c 
     await db
       .update(projectMembers)
       .set({ role })
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
+      .where(
+        and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)),
+      );
 
     // Sync role update to DO
     await syncMemberToDO(c.env, projectId, 'update', {
@@ -319,7 +341,10 @@ memberRoutes.delete('/:userId', async c => {
 
   if (!isOwner && !isSelfRemoval) {
     return c.json(
-      createErrorResponse(ERROR_CODES.AUTH_FORBIDDEN, 'Only project owners can remove members'),
+      createErrorResponse(
+        ERROR_CODES.AUTH_FORBIDDEN,
+        'Only project owners can remove members',
+      ),
       403,
     );
   }
@@ -331,7 +356,9 @@ memberRoutes.delete('/:userId', async c => {
     const targetMember = await db
       .select({ role: projectMembers.role })
       .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)))
+      .where(
+        and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)),
+      )
       .get();
 
     if (!targetMember) {
@@ -343,7 +370,9 @@ memberRoutes.delete('/:userId', async c => {
       const ownerCountResult = await db
         .select({ count: count() })
         .from(projectMembers)
-        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.role, 'owner')))
+        .where(
+          and(eq(projectMembers.projectId, projectId), eq(projectMembers.role, 'owner')),
+        )
         .get();
 
       if (ownerCountResult?.count <= 1) {
@@ -359,7 +388,9 @@ memberRoutes.delete('/:userId', async c => {
 
     await db
       .delete(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
+      .where(
+        and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)),
+      );
 
     // Sync member removal to DO
     await syncMemberToDO(c.env, projectId, 'remove', {

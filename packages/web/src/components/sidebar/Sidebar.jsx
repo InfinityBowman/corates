@@ -20,6 +20,8 @@ export default function Sidebar(props) {
   const { user, isLoggedIn } = useBetterAuth();
   const { checklists, deleteChecklist } = useLocalChecklists();
 
+  const currentUserId = () => user()?.id;
+
   // Track expanded projects
   const [expandedProjects, setExpandedProjects] = createSignal({});
 
@@ -134,6 +136,7 @@ export default function Sidebar(props) {
                       project={project}
                       isExpanded={expandedProjects()[project.id]}
                       onToggle={() => toggleProject(project.id)}
+                      userId={currentUserId()}
                       currentPath={location.pathname}
                     />
                   )}

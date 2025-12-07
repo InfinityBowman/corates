@@ -1,5 +1,14 @@
 import { createSignal, Show } from 'solid-js';
-import { FiBell, FiMoon, FiShield, FiKey, FiEye, FiEyeOff, FiLink, FiMail } from 'solid-icons/fi';
+import {
+  FiBell,
+  FiMoon,
+  FiShield,
+  FiKey,
+  FiEye,
+  FiEyeOff,
+  FiLink,
+  FiMail,
+} from 'solid-icons/fi';
 import { LANDING_URL } from '@config/api.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import Switch from '@components/zag/Switch.jsx';
@@ -79,7 +88,9 @@ export default function SettingsPage() {
           <div class='flex items-center justify-between'>
             <div>
               <p class='font-medium text-gray-900'>Email Notifications</p>
-              <p class='text-sm text-gray-500'>Receive email notifications about your account.</p>
+              <p class='text-sm text-gray-500'>
+                Receive email notifications about your account.
+              </p>
             </div>
             <Switch checked={emailNotifications()} onChange={setEmailNotifications} />
           </div>
@@ -150,7 +161,8 @@ export default function SettingsPage() {
                 <div>
                   <p class='font-medium text-blue-900'>Check your email</p>
                   <p class='text-sm text-blue-700 mt-1'>
-                    We sent a link to <strong>{user()?.email}</strong> to set your password.
+                    We sent a link to <strong>{user()?.email}</strong> to set your
+                    password.
                   </p>
                   <button
                     type='button'
@@ -168,7 +180,9 @@ export default function SettingsPage() {
             <div class='flex items-center justify-between'>
               <div>
                 <p class='font-medium text-gray-900'>Add Password</p>
-                <p class='text-sm text-gray-500'>Set a password to sign in without email links.</p>
+                <p class='text-sm text-gray-500'>
+                  Set a password to sign in without email links.
+                </p>
               </div>
               <button
                 onClick={async () => {
@@ -177,8 +191,10 @@ export default function SettingsPage() {
                   try {
                     await resetPassword(user()?.email);
                     setAddPasswordSent(true);
-                  } catch (err) {
-                    setPasswordError('Failed to send password setup email. Please try again.');
+                  } catch (_err) {
+                    setPasswordError(
+                      'Failed to send password setup email. Please try again.',
+                    );
                   } finally {
                     setAddPasswordLoading(false);
                   }
@@ -222,7 +238,9 @@ export default function SettingsPage() {
               </Show>
 
               <div>
-                <label class='block text-sm font-medium text-gray-700 mb-1'>Current Password</label>
+                <label class='block text-sm font-medium text-gray-700 mb-1'>
+                  Current Password
+                </label>
                 <div class='relative'>
                   <input
                     type={showCurrentPassword() ? 'text' : 'password'}
@@ -236,7 +254,10 @@ export default function SettingsPage() {
                     onClick={() => setShowCurrentPassword(!showCurrentPassword())}
                     class='absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600'
                   >
-                    <Show when={showCurrentPassword()} fallback={<FiEye class='w-4 h-4' />}>
+                    <Show
+                      when={showCurrentPassword()}
+                      fallback={<FiEye class='w-4 h-4' />}
+                    >
                       <FiEyeOff class='w-4 h-4' />
                     </Show>
                   </button>
@@ -244,7 +265,9 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label class='block text-sm font-medium text-gray-700 mb-1'>New Password</label>
+                <label class='block text-sm font-medium text-gray-700 mb-1'>
+                  New Password
+                </label>
                 <div class='relative'>
                   <input
                     type={showNewPassword() ? 'text' : 'password'}
@@ -319,8 +342,8 @@ export default function SettingsPage() {
         <div class='p-6'>
           <div class='space-y-2 text-sm text-gray-600'>
             <p>
-              <span class='font-medium text-gray-900'>CoRATES</span> - Collaborative Review
-              Assessment Tool for Evidence Synthesis
+              <span class='font-medium text-gray-900'>CoRATES</span> - Collaborative
+              Review Assessment Tool for Evidence Synthesis
             </p>
             <p>Version 1.0.0</p>
             <p class='pt-2'>

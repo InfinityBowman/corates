@@ -14,35 +14,43 @@ import { useMachine, normalizeProps } from '@zag-js/solid';
  * @param {'L'|'M'|'Q'|'H'} [props.ecc='M'] - Error correction level (L=7%, M=15%, Q=25%, H=30%)
  */
 export default function QRCode(props) {
+  const data = () => props.data;
+  const ecc = () => props.ecc;
+  const size = () => props.size;
+  const classValue = () => props.class;
+  const alt = () => props.alt;
+
   const service = useMachine(qrCode.machine, {
     id: createUniqueId(),
-    value: props.data,
+    // eslint-disable-next-line solid/reactivity
+    value: data(),
     encoding: {
-      ecc: props.ecc || 'M',
+      // eslint-disable-next-line solid/reactivity
+      ecc: ecc() || 'M',
     },
   });
 
   const api = createMemo(() => qrCode.connect(service, normalizeProps));
 
   createEffect(() => {
-    const data = props.data;
-    if (data) {
-      api().setValue(data);
+    const currentData = data();
+    if (currentData) {
+      api().setValue(currentData);
     }
   });
 
-  const containerSize = () => props.size || 200;
+  const containerSize = () => size() || 200;
 
   return (
     <div
       {...api().getRootProps()}
-      class={props.class}
+      class={classValue()}
       style={{
         width: `${containerSize()}px`,
         height: `${containerSize()}px`,
       }}
-      role="img"
-      aria-label={props.alt || 'QR Code'}
+      role='img'
+      aria-label={alt() || 'QR Code'}
     >
       <svg {...api().getFrameProps()}>
         <path {...api().getPatternProps()} />

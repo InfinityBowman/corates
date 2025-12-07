@@ -6,7 +6,7 @@ import { createEffect, onCleanup, createMemo } from 'solid-js';
 import * as Y from 'yjs';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import { createChecklist as createAMSTAR2Answers } from '../AMSTAR2/checklist.js';
-import { getWsBaseUrl } from '@config/api.js';
+import { API_BASE, getWsBaseUrl } from '@config/api.js';
 import projectStore from './projectStore.js';
 import useOnlineStatus from './useOnlineStatus.js';
 
@@ -84,7 +84,8 @@ export function useProject(projectId) {
       const checklistsMap = studyYMap.get ? studyYMap.get('checklists') : null;
       if (checklistsMap && typeof checklistsMap.entries === 'function') {
         for (const [checklistId, checklistYMap] of checklistsMap.entries()) {
-          const checklistData = checklistYMap.toJSON ? checklistYMap.toJSON() : checklistYMap;
+          const checklistData =
+            checklistYMap.toJSON ? checklistYMap.toJSON() : checklistYMap;
           study.checklists.push({
             id: checklistId,
             type: checklistData.type || 'AMSTAR2',
@@ -301,7 +302,10 @@ export function useProject(projectId) {
 
       // For local projects, we're "connected" once IndexedDB is synced
       if (isLocalProject()) {
-        projectStore.setConnectionState(projectId, { connecting: false, connected: true });
+        projectStore.setConnectionState(projectId, {
+          connecting: false,
+          connected: true,
+        });
       }
     });
 
@@ -376,7 +380,8 @@ export function useProject(projectId) {
 
     // Set optional reference metadata fields
     if (metadata.firstAuthor) studyYMap.set('firstAuthor', metadata.firstAuthor);
-    if (metadata.publicationYear) studyYMap.set('publicationYear', metadata.publicationYear);
+    if (metadata.publicationYear)
+      studyYMap.set('publicationYear', metadata.publicationYear);
     if (metadata.authors) studyYMap.set('authors', metadata.authors);
     if (metadata.journal) studyYMap.set('journal', metadata.journal);
     if (metadata.doi) studyYMap.set('doi', metadata.doi);
@@ -399,9 +404,11 @@ export function useProject(projectId) {
     if (!studyYMap) return;
 
     if (updates.name !== undefined) studyYMap.set('name', updates.name);
-    if (updates.description !== undefined) studyYMap.set('description', updates.description);
+    if (updates.description !== undefined)
+      studyYMap.set('description', updates.description);
     // Reference metadata fields
-    if (updates.firstAuthor !== undefined) studyYMap.set('firstAuthor', updates.firstAuthor);
+    if (updates.firstAuthor !== undefined)
+      studyYMap.set('firstAuthor', updates.firstAuthor);
     if (updates.publicationYear !== undefined)
       studyYMap.set('publicationYear', updates.publicationYear);
     if (updates.authors !== undefined) studyYMap.set('authors', updates.authors);
@@ -424,6 +431,51 @@ export function useProject(projectId) {
       metaMap.set(key, value);
     }
     metaMap.set('updatedAt', Date.now());
+  }
+
+  // Rename project (owner only server-side)
+  async function renameProject(newName) {
+    const trimmed = (newName || '').trim();
+    if (!trimmed) {
+      throw new Error('Project name is required');
+    }
+
+    const response = await fetch(`${API_BASE}/api/projects/${projectId}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: trimmed }),
+    });
+
+    if (!response.ok) {
+      let message = 'Failed to rename project';
+      try {
+        const errorBody = await response.json();
+        message = errorBody?.error || message;
+      } catch (_err) {
+        // ignore
+      }
+      throw new Error(message);
+    }
+
+    const now = Date.now();
+
+    if (ydoc && synced()) {
+      const metaMap = ydoc.getMap('meta');
+      metaMap.set('name', trimmed);
+      metaMap.set('updatedAt', now);
+    }
+
+    const existingMeta = projectStore.getMeta(projectId) || {};
+    projectStore.setProjectData(projectId, {
+      meta: { ...existingMeta, name: trimmed, updatedAt: now },
+    });
+    projectStore.updateProjectInList(projectId, {
+      name: trimmed,
+      updatedAt: new Date(now),
+    });
+
+    return trimmed;
   }
 
   // Delete a study
@@ -554,7 +606,8 @@ export function useProject(projectId) {
     if (!checklistYMap) return;
 
     if (updates.title !== undefined) checklistYMap.set('title', updates.title);
-    if (updates.assignedTo !== undefined) checklistYMap.set('assignedTo', updates.assignedTo);
+    if (updates.assignedTo !== undefined)
+      checklistYMap.set('assignedTo', updates.assignedTo);
     if (updates.status !== undefined) checklistYMap.set('status', updates.status);
     checklistYMap.set('updatedAt', Date.now());
   }
@@ -675,7 +728,10 @@ export function useProject(projectId) {
     reconciliationMap.set('checklist2Id', progressData.checklist2Id);
     reconciliationMap.set('currentPage', progressData.currentPage);
     reconciliationMap.set('viewMode', progressData.viewMode || 'questions');
-    reconciliationMap.set('finalAnswers', JSON.stringify(progressData.finalAnswers || {}));
+    reconciliationMap.set(
+      'finalAnswers',
+      JSON.stringify(progressData.finalAnswers || {}),
+    );
     reconciliationMap.set('updatedAt', Date.now());
 
     studyYMap.set('updatedAt', Date.now());
@@ -773,6 +829,7 @@ export function useProject(projectId) {
     addPdfToStudy,
     removePdfFromStudy,
     createChecklist,
+    renameProject,
     updateChecklist,
     deleteChecklist,
     getChecklistAnswersMap,
