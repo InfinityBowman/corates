@@ -2,29 +2,33 @@ import { urls } from '~/lib/config';
 
 export default function Hero() {
   return (
-    <section class='relative overflow-hidden min-h-screen'>
-      <div class='max-w-7xl mx-auto px-6 pt-8 md:pt-14 pb-0 flex flex-col items-start'>
-        <div class='w-full mb-2'>
-          <h1 class='text-4xl md:text-6xl font-extrabold text-gray-900 mb-6 tracking-tight leading-tight'>
-            CoRATES is a{' '}
-            <span class='text-blue-600'>
-              Collaborative Research Appraisal Tool for Evidence Synthesis
-            </span>
-          </h1>
-          <p class='text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed max-w-3xl'>
-            Streamline quality and risk-of-bias appraisal with real-time collaboration, automatic
-            scoring, and transparent workflows for systematic reviews.
+    <section class='relative overflow-hidden min-h-screen bg-blue-700/5'>
+      <div class='max-w-7xl mx-auto px-6 pt-8 md:pt-14 pb-0 flex flex-col items-center'>
+        <div class='w-2/3 mb-2'>
+          <div class='flex items-center justify-center gap-4 mb-6'>
+            <img src='/icon.png' alt='CoRATES logo' class='w-24 h-24 absolute left-60 rounded-md' />
+            <h1 class='text-5xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight text-center m-0'>
+              <span class='text-blue-700'>Co</span>llaborative <span class='text-blue-700'>R</span>
+              esearch <span class='text-blue-700'>A</span>ppraisal
+              <span class='text-blue-700'> T</span>ool for<span class='text-blue-700'> E</span>
+              vidence <span class='text-blue-700'>S</span>ynthesis
+            </h1>
+          </div>
+          <p class='text-xl md:text-xl text-gray-600 mb-8 max-w-3xl leading-tight text-center'>
+            Streamline the entire quality and risk-of-bias appraisal process with intuitive
+            workflows, real-time collaboration, and automation, creating greater transparency and
+            efficiency at every step.
           </p>
-          <div class='flex flex-col sm:flex-row gap-3 mb-2'>
+          <div class='flex flex-col sm:flex-row gap-12 mb-2 justify-center'>
             <a
               href={urls.checklist()}
-              class='inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold text-base hover:bg-blue-700 transition-colors shadow-md shadow-blue-600/20'
+              class='inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold text-base hover:bg-blue-500 transition-colors shadow-md shadow-blue-600/20'
             >
               Start an Appraisal
             </a>
             <a
               href={urls.signUp()}
-              class='inline-flex items-center justify-center gap-2 bg-white text-gray-700 px-6 py-3 rounded-lg font-semibold text-base hover:bg-gray-50 transition-colors border border-gray-200 shadow-sm'
+              class='inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold text-base hover:bg-blue-500 transition-colors shadow-md shadow-blue-600/20'
             >
               Start a Review Project
             </a>
@@ -34,9 +38,9 @@ export default function Hero() {
       {/* Product Screenshot Placeholder: full width, bottom, angled */}
       <div
         class='w-full flex justify-center absolute'
-        style={{ bottom: 'auto', top: '44%', left: '80px' }}
+        style={{ bottom: 'auto', top: '42%', left: '80px' }}
       >
-        <div class='relative w-full max-w-6xl px-4'>
+        <div class='relative w-full max-w-5xl px-4 opacity-80'>
           <div
             class='bg-linear-to-br from-gray-100 to-gray-50 rounded-2xl border border-gray-200 shadow-2xl overflow-hidden mb-0 mt-0'
             style={{
@@ -77,8 +81,8 @@ export default function Hero() {
         </div>
       </div>
       {/* Background decoration */}
-      <div class='absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[1000px] bg-linear-to-b from-blue-50/60 to-transparent rounded-full blur-3xl -z-10' />
-      <div class='absolute top-1/2 right-0 w-[500px] h-[500px] bg-linear-to-l from-blue-50/40 to-transparent rounded-full blur-3xl -z-10' />
+      <div class='absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[1000px] bg-linear-to-b from-blue-700/5 to-transparent rounded-full blur-3xl -z-10' />
+      <div class='absolute top-1/2 right-0 w-[500px] h-[500px] bg-linear-to-l from-blue-700/5 to-transparent rounded-full blur-3xl -z-10' />
     </section>
   );
 }

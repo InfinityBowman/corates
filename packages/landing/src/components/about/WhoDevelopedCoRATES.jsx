@@ -19,10 +19,10 @@ export default function WhoDevelopedCoRATES() {
             <img
               src='/brandy.jpg'
               alt='Brandy Maynard'
-              class='w-28 h-28 rounded-full object-cover ring-4 ring-blue-50 mb-4'
+              class='w-28 h-28 rounded-full object-cover ring-4 ring-blue-700/10 mb-4'
             />
             <h3 class='text-xl font-semibold text-gray-900'>Brandy Maynard</h3>
-            <p class='text-sm text-blue-600 font-medium mt-1'>Research Synthesis Expert</p>
+            <p class='text-sm text-blue-700 font-medium mt-1'>Research Synthesis Expert</p>
           </div>
           <div class='space-y-4 text-gray-600 text-sm leading-relaxed'>
             <p>
@@ -32,7 +32,7 @@ export default function WhoDevelopedCoRATES() {
                 href='https://www.campbellcollaboration.org'
                 target='_blank'
                 rel='noopener noreferrer'
-                class='text-blue-600 hover:text-blue-700 hover:underline'
+                class='text-blue-700 hover:text-blue-700/90 hover:underline'
               >
                 Campbell Collaboration
               </a>{' '}
@@ -56,7 +56,7 @@ export default function WhoDevelopedCoRATES() {
                 href='https://www.slu.edu/social-work/faculty/maynard-brandy.php'
                 target='_blank'
                 rel='noopener noreferrer'
-                class='text-blue-600 hover:text-blue-700 hover:underline'
+                class='text-blue-700 hover:text-blue-700/90 hover:underline'
               >
                 Saint Louis University
               </a>
@@ -72,10 +72,10 @@ export default function WhoDevelopedCoRATES() {
             <img
               src='/jacob.jpeg'
               alt='Jacob Maynard'
-              class='w-28 h-28 rounded-full object-cover ring-4 ring-blue-50 mb-4'
+              class='w-28 h-28 rounded-full object-cover ring-4 ring-blue-700/10 mb-4'
             />
             <h3 class='text-xl font-semibold text-gray-900'>Jacob Maynard</h3>
-            <p class='text-sm text-blue-600 font-medium mt-1'>Software Engineer & Data Scientist</p>
+            <p class='text-sm text-blue-700 font-medium mt-1'>Software Engineer & Data Scientist</p>
           </div>
           <div class='space-y-4 text-gray-600 text-sm leading-relaxed'>
             <p>

@@ -42,10 +42,10 @@ export default function HowItWorks() {
               )}
 
               <div class='relative'>
-                <div class='w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-600/20'>
+                <div class='w-16 h-16 bg-blue-700 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-700/20'>
                   {step.icon}
                 </div>
-                <div class='absolute -top-2 -right-2 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold md:hidden'>
+                <div class='absolute -top-2 -right-2 w-6 h-6 bg-blue-700/10 text-blue-700 rounded-full flex items-center justify-center text-sm font-bold md:hidden'>
                   {step.number}
                 </div>
               </div>

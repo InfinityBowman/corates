@@ -14,7 +14,7 @@ export default function Stats() {
         <For each={stats}>
           {stat => (
             <div class='text-center'>
-              <div class='text-3xl md:text-4xl font-bold text-blue-600 mb-1'>{stat.value}</div>
+              <div class='text-3xl md:text-4xl font-bold text-blue-700 mb-1'>{stat.value}</div>
               <div class='text-sm text-gray-600'>{stat.label}</div>
             </div>
           )}

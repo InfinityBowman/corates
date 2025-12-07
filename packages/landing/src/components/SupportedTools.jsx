@@ -11,11 +11,9 @@ export default function SupportedTools() {
   return (
     <section class='max-w-6xl mx-auto px-6 py-16'>
       <div class='text-center mb-10'>
-        <h2 class='text-2xl md:text-3xl font-bold text-gray-900 mb-4'>
-          Supported Appraisal Frameworks
-        </h2>
+        <h2 class='text-2xl md:text-3xl font-bold text-gray-900 mb-4'>Supported Appraisal tools</h2>
         <p class='text-gray-600 max-w-xl mx-auto'>
-          Start with AMSTAR-2 today. More frameworks coming soon based on researcher demand.
+          Start with AMSTAR-2 today. More tools coming soon based on researcher demand.
         </p>
       </div>
 
@@ -25,7 +23,7 @@ export default function SupportedTools() {
             <div
               class={`rounded-xl p-5 text-center border ${
                 tool.status === 'available' ?
-                  'bg-blue-50 border-blue-200'
+                  'bg-blue-700/10 border-blue-700/20'
                 : 'bg-gray-50 border-gray-200'
               }`}
             >
@@ -38,7 +36,7 @@ export default function SupportedTools() {
               </p>
               <p class='text-xs text-gray-500 mb-2'>{tool.description}</p>
               {tool.status === 'available' ?
-                <span class='inline-block text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full'>
+                <span class='inline-block text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full'>
                   Available
                 </span>
               : <span class='inline-block text-xs bg-gray-300 text-gray-600 px-2 py-0.5 rounded-full'>

@@ -6,31 +6,31 @@ import { FaSolidSchool, FaSolidBriefcaseMedical, FaSolidFileLines } from 'solid-
 export default function WhoIsCoRATESFor() {
   const audiences = [
     {
-      icon: <AiOutlineUsergroupAdd class='w-6 h-6 text-blue-600' />,
+      icon: <AiOutlineUsergroupAdd class='w-6 h-6 text-blue-700' />,
       title: 'Systematic review and evidence synthesis teams',
       description:
         'Appraise multiple studies in a structured, consistent way that supports rigorous, transparent, and well-documented review processes.',
     },
     {
-      icon: <IoSchoolOutline class='w-6 h-6 text-blue-600' />,
+      icon: <IoSchoolOutline class='w-6 h-6 text-blue-700' />,
       title: 'Students learning to appraise research',
       description:
         'Learn study appraisal by using validated tools in a guided interface, with free single-study assessments for easy practice.',
     },
     {
-      icon: <FaSolidSchool class='w-6 h-6 text-blue-600' />,
+      icon: <FaSolidSchool class='w-6 h-6 text-blue-700' />,
       title: 'Faculty teaching research methods or appraisal',
       description:
         'Use structured appraisal activities to help students understand what makes different research designs rigorous by examining real published studies.',
     },
     {
-      icon: <FaSolidBriefcaseMedical class='w-6 h-6 text-blue-600' />,
+      icon: <FaSolidBriefcaseMedical class='w-6 h-6 text-blue-700' />,
       title: 'Clinicians and practitioners',
       description:
         'Evaluate the quality of individual studies when deciding whether evidence should inform practice, policy, or program decisions.',
     },
     {
-      icon: <FaSolidFileLines class='w-6 h-6 text-blue-600' />,
+      icon: <FaSolidFileLines class='w-6 h-6 text-blue-700' />,
       title: 'Anyone needing to appraise a single study',
       description:
         'CoRATES makes it easy to complete a one-off appraisal for free, including automatic study-level scoring.',
@@ -54,7 +54,7 @@ export default function WhoIsCoRATESFor() {
         <For each={audiences}>
           {audience => (
             <div class='bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200'>
-              <div class='w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4'>
+              <div class='w-12 h-12 bg-blue-700/10 rounded-lg flex items-center justify-center mb-4'>
                 {audience.icon}
               </div>
               <h3 class='font-semibold text-gray-900 mb-2'>{audience.title}</h3>

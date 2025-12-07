@@ -7,7 +7,7 @@ import { HiOutlineClipboardDocumentCheck } from 'solid-icons/hi';
 function ReasonCard(props) {
   return (
     <div class='flex gap-4'>
-      <div class='shrink-0 w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center'>
+      <div class='shrink-0 w-10 h-10 bg-blue-700/10 rounded-lg flex items-center justify-center'>
         {props.icon}
       </div>
       <div>
@@ -21,43 +21,43 @@ function ReasonCard(props) {
 export default function WhyChoose() {
   const reasons = [
     {
-      icon: <AiOutlineUsergroupAdd class='w-5 h-5 text-blue-600' />,
+      icon: <AiOutlineUsergroupAdd class='w-5 h-5 text-blue-700' />,
       title: 'Enhances team collaboration',
       description:
         'Shared access, synchronized progress, and transparent reviewer inputs make collaborative appraisal straightforward.',
     },
     {
-      icon: <BiRegularCheckShield class='w-5 h-5 text-blue-600' />,
+      icon: <BiRegularCheckShield class='w-5 h-5 text-blue-700' />,
       title: 'Supports double coding and real-time consensus',
       description:
         'Enable independent ratings, calculate inter-rater reliability, compare results instantly, and resolve discrepancies efficiently.',
     },
     {
-      icon: <AiOutlineBarChart class='w-5 h-5 text-blue-600' />,
+      icon: <AiOutlineBarChart class='w-5 h-5 text-blue-700' />,
       title: 'Automates scoring and documentation',
       description:
         'CoRATES applies scoring rules automatically and records your inputs without the need for spreadsheets, eliminating calculation errors.',
     },
     {
-      icon: <AiOutlineFolderOpen class='w-5 h-5 text-blue-600' />,
+      icon: <AiOutlineFolderOpen class='w-5 h-5 text-blue-700' />,
       title: 'Centralizes PDFs, annotations, and notes',
       description:
         'Upload studies, annotate documents, and keep all appraisal materials organized in a single, unified workspace.',
     },
     {
-      icon: <BsPieChart class='w-5 h-5 text-blue-600' />,
+      icon: <BsPieChart class='w-5 h-5 text-blue-700' />,
       title: 'Generates visual summaries automatically',
       description:
         'Instantly produce study-level and across-study visuals for intuitive interpretation and publication-ready graphics.',
     },
     {
-      icon: <BsClockHistory class='w-5 h-5 text-blue-600' />,
+      icon: <BsClockHistory class='w-5 h-5 text-blue-700' />,
       title: 'Creates an audit trail for every appraisal',
       description:
         'Track decisions, revisions, and reviewer inputs to support transparency, reproducibility, and methodological rigor.',
     },
     {
-      icon: <HiOutlineClipboardDocumentCheck class='w-5 h-5 text-blue-600' />,
+      icon: <HiOutlineClipboardDocumentCheck class='w-5 h-5 text-blue-700' />,
       title: 'Scales easily from one study to hundreds',
       description:
         'Adaptable for quick, one-off appraisals, classroom use, or large-scale evidence synthesis projects.',

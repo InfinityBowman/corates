@@ -9,7 +9,7 @@ export default function Footer() {
         <div class='grid md:grid-cols-4 gap-8 mb-8'>
           {/* Brand */}
           <div class='md:col-span-1'>
-            <a href='/' class='text-xl font-bold text-blue-600'>
+            <a href='/' class='text-xl font-bold text-blue-700'>
               CoRATES
             </a>
             <p class='text-sm text-gray-500 mt-2'>
@@ -78,7 +78,7 @@ export default function Footer() {
             </a>
             <a
               href={urls.signUp()}
-              class='text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors'
+              class='text-sm text-blue-700 hover:text-blue-700/90 font-medium transition-colors'
             >
               Get Started
             </a>

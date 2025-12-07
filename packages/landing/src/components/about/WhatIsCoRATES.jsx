@@ -39,7 +39,7 @@ export default function WhatIsCoRATES() {
               <For each={features}>
                 {feature => (
                   <li class='flex items-start gap-3'>
-                    <AiOutlineCheckCircle class='w-5 h-5 text-blue-600 mt-0.5 shrink-0' />
+                    <AiOutlineCheckCircle class='w-5 h-5 text-blue-700 mt-0.5 shrink-0' />
                     <span>{feature}</span>
                   </li>
                 )}

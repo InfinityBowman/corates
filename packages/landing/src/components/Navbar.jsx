@@ -13,7 +13,7 @@ export default function Navbar() {
     <nav class='sticky top-0 z-50 bg-white border-b border-gray-100'>
       <div class='flex items-center justify-between max-w-6xl mx-auto px-6 py-4'>
         <div class='flex items-center gap-8'>
-          <a href='/' class='text-xl font-bold text-blue-600'>
+          <a href='/' class='text-xl font-bold text-blue-700'>
             CoRATES
           </a>
           <a
@@ -37,7 +37,7 @@ export default function Navbar() {
                   </a>
                   <a
                     href={urls.signUp()}
-                    class='inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm'
+                    class='inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-700 rounded-lg hover:bg-blue-700/90 transition-colors shadow-sm'
                   >
                     Sign Up
                   </a>
@@ -46,7 +46,7 @@ export default function Navbar() {
             >
               <a
                 href={urls.dashboard()}
-                class='inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm'
+                class='inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-700 rounded-lg hover:bg-blue-700/90 transition-colors shadow-sm'
               >
                 Open App
               </a>

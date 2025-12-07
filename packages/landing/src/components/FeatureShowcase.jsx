@@ -7,7 +7,7 @@ function FeaturePlaceholder(props) {
     <div class='bg-linear-to-br from-gray-100 to-gray-50 rounded-xl border border-gray-200 overflow-hidden'>
       <div class='aspect-4/3 flex items-center justify-center p-6'>
         <div class='text-center'>
-          <div class='w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3'>
+          <div class='w-12 h-12 bg-blue-700/10 rounded-lg flex items-center justify-center mx-auto mb-3'>
             {props.icon}
           </div>
           <p class='text-gray-400 text-sm'>{props.placeholder}</p>
@@ -33,7 +33,7 @@ function FeatureSection(props) {
             {bullet => (
               <li class='flex items-start gap-3'>
                 <svg
-                  class='w-5 h-5 text-blue-600 mt-0.5 shrink-0'
+                  class='w-5 h-5 text-blue-700 mt-0.5 shrink-0'
                   fill='none'
                   stroke='currentColor'
                   viewBox='0 0 24 24'
@@ -62,7 +62,7 @@ export default function FeatureShowcase() {
       description:
         'Work together with your team seamlessly. See updates instantly as reviewers complete their assessments.',
       placeholder: 'Collaboration screenshot',
-      icon: <AiOutlineUsergroupAdd class='w-6 h-6 text-blue-600' />,
+      icon: <AiOutlineUsergroupAdd class='w-6 h-6 text-blue-700' />,
       bullets: [
         'Independent ratings with blinded mode',
         'Automatic inter-rater reliability calculation',
@@ -74,7 +74,7 @@ export default function FeatureShowcase() {
       description:
         'Eliminate manual calculation errors. Scores are computed instantly as you complete each checklist item.',
       placeholder: 'Scoring results screenshot',
-      icon: <AiOutlineBarChart class='w-6 h-6 text-blue-600' />,
+      icon: <AiOutlineBarChart class='w-6 h-6 text-blue-700' />,
       bullets: ['AMSTAR-2 scoring built in', 'Visual summary charts', 'Export-ready reports'],
     },
     {
@@ -82,7 +82,7 @@ export default function FeatureShowcase() {
       description:
         'Annotate study PDFs directly alongside your checklist. Keep all evidence linked and organized.',
       placeholder: 'PDF annotation screenshot',
-      icon: <HiOutlineDocumentText class='w-6 h-6 text-blue-600' />,
+      icon: <HiOutlineDocumentText class='w-6 h-6 text-blue-700' />,
       bullets: [
         'Highlight and comment on PDFs',
         'Link annotations to checklist items',

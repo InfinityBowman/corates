@@ -6,17 +6,17 @@ import { BsBook } from 'solid-icons/bs';
 export default function Audience() {
   const audiences = [
     {
-      icon: <FaSolidGraduationCap class='w-6 h-6 text-blue-600' />,
+      icon: <FaSolidGraduationCap class='w-6 h-6 text-blue-700' />,
       title: 'Graduate Students',
       description: 'Learning how to appraise study quality',
     },
     {
-      icon: <BiRegularPlusMedical class='w-6 h-6 text-blue-600' />,
+      icon: <BiRegularPlusMedical class='w-6 h-6 text-blue-700' />,
       title: 'Clinicians & Practitioners',
       description: 'Needing quick, one-off appraisals',
     },
     {
-      icon: <BsBook class='w-6 h-6 text-blue-600' />,
+      icon: <BsBook class='w-6 h-6 text-blue-700' />,
       title: 'Faculty & Educators',
       description: 'Teaching appraisal or methodology courses',
     },
@@ -37,7 +37,7 @@ export default function Audience() {
           <For each={audiences}>
             {audience => (
               <div class='text-center p-4'>
-                <div class='w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mx-auto mb-3'>
+                <div class='w-12 h-12 bg-blue-700/10 rounded-lg flex items-center justify-center mx-auto mb-3'>
                   {audience.icon}
                 </div>
                 <h3 class='font-semibold text-gray-900 mb-1'>{audience.title}</h3>
