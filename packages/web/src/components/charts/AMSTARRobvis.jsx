@@ -22,21 +22,41 @@ export default function AMSTARRobvis(props) {
   };
   const [containerSize, setContainerSize] = createSignal({ width: 800, height: 500 });
 
-  // Responsive: observe parent container size
+  // Responsive: observe parent container size with ResizeObserver
   createEffect(() => {
+    if (!ref || !ref.parentElement) return;
+
     function updateSize() {
       if (ref && ref.parentElement) {
         const rect = ref.parentElement.getBoundingClientRect();
-        setContainerSize({
-          // Minimum size to avoid too small charts (600, 400)
-          width: Math.max(rect.width, 600),
-          height: Math.max(rect.height, 400),
-        });
+        // Only update if we have actual dimensions (not hidden)
+        if (rect.width > 0 && rect.height > 0) {
+          setContainerSize({
+            // Minimum size to avoid too small charts (600, 400)
+            width: Math.max(rect.width, 600),
+            height: Math.max(rect.height, 400),
+          });
+        }
       }
     }
+
+    // Use ResizeObserver to detect when element becomes visible
+    const resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0) {
+          updateSize();
+        }
+      }
+    });
+
+    resizeObserver.observe(ref.parentElement);
     updateSize();
     window.addEventListener('resize', updateSize);
-    onCleanup(() => window.removeEventListener('resize', updateSize));
+
+    onCleanup(() => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateSize);
+    });
   });
 
   const data = () => props.data ?? [];

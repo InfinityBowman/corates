@@ -8,10 +8,16 @@
  */
 export const NAMING_CONVENTIONS = [
   {
+    id: 'shortTitle',
+    label: 'Short Title',
+    description: 'Abbreviated title (max 30 characters)',
+    example: 'Effects of Exercise on Sleep',
+  },
+  {
     id: 'title',
-    label: 'Study Title',
-    description: 'Use the full study title',
-    example: 'Effects of Exercise on Sleep Quality',
+    label: 'Full Title',
+    description: 'Use the complete study title',
+    example: 'Effects of Exercise on Sleep Quality: A Systematic Review and Meta-Analysis',
   },
   {
     id: 'lastNameYear',
@@ -19,18 +25,18 @@ export const NAMING_CONVENTIONS = [
     description: 'First author last name and publication year',
     example: 'Smith (2023)',
   },
-  {
-    id: 'lastNameEtAlYear',
-    label: 'Last Name et al. (Year)',
-    description: 'First author last name with et al. and year',
-    example: 'Smith et al. (2023)',
-  },
-  {
-    id: 'authorsYear',
-    label: 'Authors (Year)',
-    description: 'Up to 3 authors with publication year',
-    example: 'Smith, Jones & Brown (2023)',
-  },
+  // {
+  //   id: 'lastNameEtAlYear',
+  //   label: 'Last Name et al. (Year)',
+  //   description: 'First author last name with et al. and year',
+  //   example: 'Smith et al. (2023)',
+  // },
+  // {
+  //   id: 'authorsYear',
+  //   label: 'Authors (Year)',
+  //   description: 'Up to 3 authors with publication year',
+  //   example: 'Smith, Jones & Brown (2023)',
+  // },
   {
     id: 'lastNameYearShortTitle',
     label: 'Last Name (Year) - Short Title',
@@ -106,7 +112,7 @@ function parseAuthors(authorsString) {
  * @param {number} maxLength - Maximum characters
  * @returns {string} Truncated title
  */
-function truncateTitle(title, maxLength = 40) {
+function truncateTitle(title, maxLength = 30) {
   if (!title || title.length <= maxLength) return title;
 
   const truncated = title.substring(0, maxLength);
@@ -133,6 +139,10 @@ export function generateStudyName(studyData, convention = 'title') {
   const hasYear = publicationYear;
 
   switch (convention) {
+    case 'shortTitle': {
+      return truncateTitle(title) || 'Untitled Study';
+    }
+
     case 'lastNameYear': {
       if (!hasAuthorInfo) return title || 'Untitled Study';
       const lastName = firstAuthor || extractLastName(parseAuthors(authors)[0]);
@@ -207,5 +217,5 @@ export function generateStudyName(studyData, convention = 'title') {
  * @returns {string} The default convention ID
  */
 export function getDefaultNamingConvention() {
-  return 'title';
+  return 'shortTitle';
 }
