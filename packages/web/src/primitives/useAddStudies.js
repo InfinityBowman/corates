@@ -172,13 +172,15 @@ export function useAddStudies(options = {}) {
         if (doi) {
           try {
             const refData = await fetchFromDOI(doi);
-            metadata = {
-              firstAuthor: refData.firstAuthor || null,
-              publicationYear: refData.publicationYear || null,
-              authors: refData.authors || null,
-              journal: refData.journal || null,
-              abstract: refData.abstract || null,
-            };
+            if (refData) {
+              metadata = {
+                firstAuthor: refData.firstAuthor || null,
+                publicationYear: refData.publicationYear || null,
+                authors: refData.authors || null,
+                journal: refData.journal || null,
+                abstract: refData.abstract || null,
+              };
+            }
           } catch (err) {
             console.warn('Could not fetch metadata for DOI:', doi, err);
           }

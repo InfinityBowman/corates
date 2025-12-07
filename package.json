@@ -19,7 +19,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "initialize-mcp": "pnpm --filter mcp run scrape:all",
-    "test": "pnpm --recursive run test",
+    "test": "pnpm --filter web test",
+    "test:ci": "pnpm --recursive run test:ci",
     "logs": "pnpm --filter workers run logs"
   },
   "keywords": [

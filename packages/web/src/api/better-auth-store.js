@@ -1,12 +1,18 @@
-import { createSignal, createEffect, createRoot } from 'solid-js';
+import { createSignal } from 'solid-js';
 import { authClient, useSession } from '@api/auth-client.js';
-import useOnlineStatus from '@primitives/useOnlineStatus.js';
 import projectStore from '@primitives/projectStore.js';
 import { API_BASE } from '@config/api.js';
 import { saveLastLoginMethod, LOGIN_METHODS } from '@lib/lastLoginMethod.js';
 
 function createBetterAuthStore() {
-  const isOnline = useOnlineStatus();
+  // Track online status without reactive primitives (for singleton context)
+  const [isOnline, setIsOnline] = createSignal(navigator.onLine);
+
+  // Set up event listeners for online/offline
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', () => setIsOnline(true));
+    window.addEventListener('offline', () => setIsOnline(false));
+  }
 
   // Use Better Auth's built-in session hook
   const session = useSession();
@@ -20,21 +26,12 @@ function createBetterAuthStore() {
   // Error state for auth operations
   const [authError, setAuthError] = createSignal(null);
 
-  // Clear error when going online
-  createEffect(() => {
-    if (isOnline()) {
-      setAuthError(null);
-    }
-  });
-
   // BroadcastChannel for cross-tab auth state sync
   const authChannel =
     typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('corates-auth') : null;
 
   // Listen for auth state changes from other tabs
-  createEffect(() => {
-    if (!authChannel) return;
-
+  if (authChannel) {
     const handleMessage = event => {
       if (event.data?.type === 'auth-changed') {
         // Another tab changed auth state, refetch session
@@ -43,11 +40,7 @@ function createBetterAuthStore() {
     };
 
     authChannel.addEventListener('message', handleMessage);
-
-    return () => {
-      authChannel.removeEventListener('message', handleMessage);
-    };
-  });
+  }
 
   // Broadcast auth changes to other tabs
   function broadcastAuthChange() {
@@ -55,7 +48,7 @@ function createBetterAuthStore() {
   }
 
   // Listen for tab visibility changes to refresh session
-  createEffect(() => {
+  if (typeof document !== 'undefined') {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && !authLoading() && isOnline()) {
         // Refresh session when tab becomes visible (user might have verified email in another tab)
@@ -64,11 +57,7 @@ function createBetterAuthStore() {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  });
+  }
 
   // --- API methods ---
   async function signup(email, password, name, role = null) {
@@ -556,7 +545,9 @@ function createBetterAuthStore() {
   };
 }
 
-const betterAuth = createRoot(createBetterAuthStore);
+// Create singleton instance without createRoot
+// This is a plain object with reactive primitives, not a component tree
+const betterAuth = createBetterAuthStore();
 
 export function useBetterAuth() {
   return betterAuth;
