@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, createRoot } from 'solid-js';
 import { authClient, useSession } from '@api/auth-client.js';
 import projectStore from '@primitives/projectStore.js';
 import { API_BASE } from '@config/api.js';
@@ -14,14 +14,19 @@ function createBetterAuthStore() {
     window.addEventListener('offline', () => setIsOnline(false));
   }
 
-  // Use Better Auth's built-in session hook
-  const session = useSession();
+  // Better Auth's useSession uses reactive primitives, so wrap in createRoot
+  // This is acceptable for this singleton as we want the session to persist
+  const { session, isLoggedIn, isAuthenticated, user, authLoading } = createRoot(() => {
+    const session = useSession();
 
-  // Derived signals from Better Auth session
-  const isLoggedIn = () => !!session().data?.user;
-  const isAuthenticated = () => !!session().data?.user;
-  const user = () => session().data?.user || null;
-  const authLoading = () => session().isPending;
+    // Derived signals from Better Auth session
+    const isLoggedIn = () => !!session().data?.user;
+    const isAuthenticated = () => !!session().data?.user;
+    const user = () => session().data?.user || null;
+    const authLoading = () => session().isPending;
+
+    return { session, isLoggedIn, isAuthenticated, user, authLoading };
+  });
 
   // Error state for auth operations
   const [authError, setAuthError] = createSignal(null);
