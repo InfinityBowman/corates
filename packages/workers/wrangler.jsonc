@@ -57,6 +57,15 @@
     "AUTH_BASE_URL": "http://localhost:8787"
   },
 
+  "observability": {
+    "logs": {
+      "enabled": false,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true
+    }
+  },
+
   // For production deployment
   "env": {
     "production": {
