@@ -16,10 +16,9 @@ describe('NAMING_CONVENTIONS', () => {
   it('should have all expected conventions', () => {
     const ids = NAMING_CONVENTIONS.map(c => c.id);
 
+    expect(ids).toContain('shortTitle');
     expect(ids).toContain('title');
     expect(ids).toContain('lastNameYear');
-    expect(ids).toContain('lastNameEtAlYear');
-    expect(ids).toContain('authorsYear');
     expect(ids).toContain('lastNameYearShortTitle');
   });
 
@@ -34,8 +33,8 @@ describe('NAMING_CONVENTIONS', () => {
 });
 
 describe('getDefaultNamingConvention', () => {
-  it('should return title as default', () => {
-    expect(getDefaultNamingConvention()).toBe('title');
+  it('should return shortTitle as default', () => {
+    expect(getDefaultNamingConvention()).toBe('shortTitle');
   });
 });
 
@@ -43,7 +42,9 @@ describe('generateStudyName', () => {
   describe('title convention', () => {
     it('should return full title', () => {
       const study = { title: 'Effects of Exercise on Sleep Quality' };
-      expect(generateStudyName(study, 'title')).toBe('Effects of Exercise on Sleep Quality');
+      expect(generateStudyName(study, 'title')).toBe(
+        'Effects of Exercise on Sleep Quality',
+      );
     });
 
     it('should return Untitled Study for missing title', () => {
@@ -107,85 +108,6 @@ describe('generateStudyName', () => {
     });
   });
 
-  describe('lastNameEtAlYear convention', () => {
-    it('should not add et al. for single author', () => {
-      const study = {
-        firstAuthor: 'Smith',
-        authors: 'Smith, John',
-        publicationYear: 2023,
-      };
-      expect(generateStudyName(study, 'lastNameEtAlYear')).toBe('Smith (2023)');
-    });
-
-    it('should add et al. for multiple authors', () => {
-      const study = {
-        firstAuthor: 'Smith',
-        authors: 'Smith, John, Doe, Jane, and Brown, Bob',
-        publicationYear: 2023,
-      };
-      expect(generateStudyName(study, 'lastNameEtAlYear')).toBe('Smith et al. (2023)');
-    });
-
-    it('should detect multiple authors from "and" keyword', () => {
-      const study = {
-        firstAuthor: 'Smith',
-        authors: 'Smith and Doe',
-        publicationYear: 2023,
-      };
-      expect(generateStudyName(study, 'lastNameEtAlYear')).toBe('Smith et al. (2023)');
-    });
-
-    it('should omit year if not provided', () => {
-      const study = {
-        firstAuthor: 'Smith',
-        authors: 'Smith, John, and Doe, Jane',
-      };
-      expect(generateStudyName(study, 'lastNameEtAlYear')).toBe('Smith et al.');
-    });
-  });
-
-  describe('authorsYear convention', () => {
-    it('should show single author without et al.', () => {
-      const study = {
-        authors: 'Smith, John',
-        publicationYear: 2023,
-      };
-      expect(generateStudyName(study, 'authorsYear')).toBe('Smith (2023)');
-    });
-
-    it('should show two authors with ampersand', () => {
-      const study = {
-        authors: 'Smith, John, and Doe, Jane',
-        publicationYear: 2023,
-      };
-      expect(generateStudyName(study, 'authorsYear')).toBe('Smith & Doe (2023)');
-    });
-
-    it('should show three authors with commas and ampersand', () => {
-      const study = {
-        authors: 'Smith, John, Doe, Jane, and Brown, Bob',
-        publicationYear: 2023,
-      };
-      expect(generateStudyName(study, 'authorsYear')).toBe('Smith, Doe & Brown (2023)');
-    });
-
-    it('should show et al. for more than three authors', () => {
-      const study = {
-        authors: 'Smith, John, Doe, Jane, Brown, Bob, and Wilson, Tom',
-        publicationYear: 2023,
-      };
-      expect(generateStudyName(study, 'authorsYear')).toBe('Smith, Doe, Brown et al. (2023)');
-    });
-
-    it('should use firstAuthor if authors list is empty', () => {
-      const study = {
-        firstAuthor: 'Garcia',
-        publicationYear: 2024,
-      };
-      expect(generateStudyName(study, 'authorsYear')).toBe('Garcia (2024)');
-    });
-  });
-
   describe('lastNameYearShortTitle convention', () => {
     it('should format as "LastName (Year) - Short Title"', () => {
       const study = {
@@ -245,7 +167,7 @@ describe('generateStudyName', () => {
         authors: "O'Brien, Patrick, and McDonald, Ian",
         publicationYear: 2023,
       };
-      const result = generateStudyName(study, 'authorsYear');
+      const result = generateStudyName(study, 'lastNameYear');
       expect(result).toContain("O'Brien");
     });
 
@@ -254,7 +176,7 @@ describe('generateStudyName', () => {
         authors: 'Smith, John; Doe, Jane',
         publicationYear: 2023,
       };
-      const result = generateStudyName(study, 'authorsYear');
+      const result = generateStudyName(study, 'lastNameYear');
       expect(result).toContain('Smith');
     });
 
@@ -263,9 +185,8 @@ describe('generateStudyName', () => {
         authors: 'Smith, John & Doe, Jane',
         publicationYear: 2023,
       };
-      const result = generateStudyName(study, 'authorsYear');
+      const result = generateStudyName(study, 'lastNameYear');
       expect(result).toContain('Smith');
-      expect(result).toContain('Doe');
     });
 
     it('should handle null/undefined study data gracefully', () => {
