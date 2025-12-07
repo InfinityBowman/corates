@@ -120,6 +120,22 @@ export default function ProjectView() {
 
   onCleanup(() => disconnect());
 
+  // Helper functions to count studies for tab badges
+  const getInProgressCount = () => {
+    const userId = user()?.id;
+    if (!userId) return 0;
+    return studies().filter(study => study.reviewer1 === userId || study.reviewer2 === userId)
+      .length;
+  };
+
+  const getReadyToReconcileCount = () => {
+    return studies().filter(study => {
+      const checklists = study.checklists || [];
+      const completedChecklists = checklists.filter(c => c.status === 'completed');
+      return completedChecklists.length === 2;
+    }).length;
+  };
+
   // Tab configuration
   const tabDefinitions = [
     { value: 'overview', label: 'Overview', icon: <BiRegularHome class='w-4 h-4' /> },
@@ -127,13 +143,18 @@ export default function ProjectView() {
       value: 'included-studies',
       label: 'Included Studies',
       icon: <AiOutlineBook class='w-4 h-4' />,
-      getCount: () => studies().length,
     },
-    { value: 'in-progress', label: 'In Progress', icon: <BsListTask class='w-4 h-4' /> },
+    {
+      value: 'in-progress',
+      label: 'In Progress',
+      icon: <BsListTask class='w-4 h-4' />,
+      getCount: getInProgressCount,
+    },
     {
       value: 'ready-to-reconcile',
       label: 'Ready to Reconcile',
       icon: <CgArrowsExchange class='w-4 h-4' />,
+      getCount: getReadyToReconcileCount,
     },
     { value: 'completed', label: 'Completed', icon: <AiFillCheckCircle class='w-4 h-4' /> },
   ];

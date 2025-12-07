@@ -136,29 +136,12 @@ export default function AnswerPanel(props) {
 
         {/* Critical Toggle */}
         <div class='mb-4'>
-          <Show
-            when={!props.readOnly}
-            fallback={
-              <div class='flex items-center gap-2'>
-                <span class='text-xs text-gray-500'>Critical:</span>
-                <span
-                  class={`text-xs font-medium ${critical() ? 'text-red-600' : 'text-gray-600'}`}
-                >
-                  {critical() ? 'Yes' : 'No'}
-                </span>
-              </div>
-            }
-          >
-            <label class='flex items-center gap-2 cursor-pointer'>
-              <input
-                type='checkbox'
-                checked={critical()}
-                onChange={e => props.onCriticalChange?.(e.target.checked)}
-                class='w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500'
-              />
-              <span class='text-xs font-medium text-gray-700'>Mark as Critical</span>
-            </label>
-          </Show>
+          <div class='flex items-center gap-2'>
+            <span class='text-xs text-gray-500'>Critical:</span>
+            <span class={`text-xs font-medium ${critical() ? 'text-red-600' : 'text-gray-600'}`}>
+              {critical() ? 'Yes' : 'No'}
+            </span>
+          </div>
         </div>
 
         {/* Answer Columns */}

@@ -16,16 +16,14 @@ export default function ReadyToReconcileTab() {
   const studies = () => projectStore.getStudies(projectId);
 
   // Filter studies that are ready to reconcile:
-  // - Has at least 2 checklists
-  // - Both checklists are marked as completed
+  // - Has exactly 2 completed checklists (standard workflow)
   const readyToReconcileStudies = createMemo(() => {
     return studies().filter(study => {
       const checklists = study.checklists || [];
-      if (checklists.length < 2) return false;
-
       // Count completed checklists
       const completedChecklists = checklists.filter(c => c.status === 'completed');
-      return completedChecklists.length >= 2;
+      // Only show studies with exactly 2 completed checklists for automatic reconciliation
+      return completedChecklists.length === 2;
     });
   });
 

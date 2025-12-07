@@ -9,7 +9,8 @@
     "build": "vite build --mode production",
     "preview": "vite preview",
     "deploy": "pnpm run build && wrangler deploy --env production",
-    "test": "vitest --ui",
+    "test": "vitest --ui --ui.port=51234",
+    "test:ci": "vitest run --reporter=verbose",
     "format": "prettier --write ."
   },
   "dependencies": {

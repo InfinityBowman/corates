@@ -91,5 +91,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/__tests__/setup.js'],
     include: ['src/**/*.{test,spec}.{js,jsx}'],
+    // Only configure UI when explicitly using --ui flag
+    // Don't specify ui config here to prevent UI from starting in CI mode
   },
 });
