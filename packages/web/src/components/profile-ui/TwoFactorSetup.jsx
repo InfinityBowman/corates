@@ -13,7 +13,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import Tooltip from '@components/zag/Tooltip.jsx';
 import PasswordInput from '@components/zag/PasswordInput.jsx';
 import { showToast } from '@components/zag/Toast.jsx';
-import QRCode from '@components/QRCode.jsx';
+import QRCode from '@components/zag/QRCode.jsx';
 
 export default function TwoFactorSetup() {
   const { user, enableTwoFactor, verifyTwoFactorSetup, disableTwoFactor, getTwoFactorStatus } =
