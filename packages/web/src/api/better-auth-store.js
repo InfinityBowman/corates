@@ -83,19 +83,22 @@ function createBetterAuthStore() {
   const [cachedUser, setCachedUser] = createSignal(cachedAuth);
 
   // Cache user data when session is successfully fetched (only when online)
-  createEffect(() => {
-    const sessionData = session().data;
-    if (isOnline()) {
-      if (sessionData?.user) {
-        // Cache when we have a user and we're online
-        saveCachedAuth(sessionData.user);
-        setCachedUser(sessionData.user);
-      } else if (!authLoading()) {
-        // Clear cache when logged out (only after loading completes to avoid clearing on initial load)
-        saveCachedAuth(null);
-        setCachedUser(null);
+  // Wrap in createRoot to properly dispose of the effect
+  createRoot(() => {
+    createEffect(() => {
+      const sessionData = session().data;
+      if (isOnline()) {
+        if (sessionData?.user) {
+          // Cache when we have a user and we're online
+          saveCachedAuth(sessionData.user);
+          setCachedUser(sessionData.user);
+        } else if (!authLoading()) {
+          // Clear cache when logged out (only after loading completes to avoid clearing on initial load)
+          saveCachedAuth(null);
+          setCachedUser(null);
+        }
       }
-    }
+    });
   });
 
   // Combined signals that use cached data when offline
