@@ -42,7 +42,7 @@ vi.mock('../projectStore.js', () => ({
 }));
 
 vi.mock('../useOnlineStatus.js', () => ({
-  default: () => () => true,  // Return a function that returns true
+  default: () => () => true, // Return a function that returns true
 }));
 
 vi.mock('@config/api.js', () => ({

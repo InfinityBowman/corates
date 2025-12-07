@@ -140,9 +140,9 @@ describe('better-auth-store - Signup Flow', () => {
       error: { message: 'Email already exists' },
     });
 
-    await expect(
-      authStore.signup('test@example.com', 'password123', 'Test User'),
-    ).rejects.toThrow('Email already exists');
+    await expect(authStore.signup('test@example.com', 'password123', 'Test User')).rejects.toThrow(
+      'Email already exists',
+    );
 
     expect(authStore.authError()).toBe('Email already exists');
   });
