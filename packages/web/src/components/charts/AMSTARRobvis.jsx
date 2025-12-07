@@ -78,15 +78,17 @@ export default function AMSTARRobvis(props) {
   });
 
   // Calculate max cell size that keeps squares and fits both axes
-  const cellSizeX = () => (width() - margin().left - margin().right) / nQuestions;
-  const cellSizeY = () => (height() - margin().top - margin().bottom) / Math.max(data().length, 1);
-  const cellSize = () => Math.min(cellSizeX(), cellSizeY());
+  const cellSizeX = () =>
+    Math.max(0, (width() - margin().left - margin().right) / nQuestions);
+  const cellSizeY = () =>
+    Math.max(0, (height() - margin().top - margin().bottom) / Math.max(data().length, 1));
+  const cellSize = () => Math.max(0, Math.min(cellSizeX(), cellSizeY()));
 
   // Adjust chart area to fit grid
-  const chartWidth = () => cellSize() * nQuestions;
-  const chartHeight = () => cellSize() * Math.max(data().length, 1);
-  const svgWidth = () => margin().left + chartWidth() + margin().right;
-  const svgHeight = () => margin().top + chartHeight() + margin().bottom;
+  const chartWidth = () => Math.max(0, cellSize() * nQuestions);
+  const chartHeight = () => Math.max(0, cellSize() * Math.max(data().length, 1));
+  const svgWidth = () => Math.max(0, margin().left + chartWidth() + margin().right);
+  const svgHeight = () => Math.max(0, margin().top + chartHeight() + margin().bottom);
 
   const colorMapDefault = {
     yes: '#10b981',
@@ -109,6 +111,11 @@ export default function AMSTARRobvis(props) {
     const colors = colorMap();
     const cSize = cellSize();
     if (!data().length) return;
+
+    // Prevent rendering if dimensions are invalid
+    if (cSize <= 0 || svgWidth() <= 0 || svgHeight() <= 0) {
+      return;
+    }
 
     // First, measure the widest label
     if (ref) {
@@ -143,7 +150,10 @@ export default function AMSTARRobvis(props) {
       .attr('width', svgWidth())
       .attr('height', svgHeight())
       .style('background', '#ffffff')
-      .style('font-family', '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif');
+      .style(
+        'font-family',
+        '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      );
 
     svg.selectAll('*').remove();
 
@@ -188,18 +198,24 @@ export default function AMSTARRobvis(props) {
         const value = row.questions[colIdx]?.toLowerCase?.() ?? '';
         const cellColor = colors[value] ?? '#e5e7eb';
 
-        // Traffic light cell - filled rectangle
-        cellGroup
-          .append('rect')
-          .attr('x', m.left + colIdx * cSize + 2)
-          .attr('y', m.top + rowIdx * cSize + 2)
-          .attr('width', cSize - 4)
-          .attr('height', cSize - 4)
-          .attr('fill', cellColor)
-          .attr('stroke', '#ffffff')
-          .attr('stroke-width', 1)
-          .attr('rx', Math.max(2, cSize * 0.12))
-          .style('filter', 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.1))');
+        // Ensure cell size is positive before drawing
+        const cellWidth = Math.max(0, cSize - 4);
+        const cellHeight = Math.max(0, cSize - 4);
+
+        if (cellWidth > 0 && cellHeight > 0) {
+          // Traffic light cell - filled rectangle
+          cellGroup
+            .append('rect')
+            .attr('x', m.left + colIdx * cSize + 2)
+            .attr('y', m.top + rowIdx * cSize + 2)
+            .attr('width', cellWidth)
+            .attr('height', cellHeight)
+            .attr('fill', cellColor)
+            .attr('stroke', '#ffffff')
+            .attr('stroke-width', 1)
+            .attr('rx', Math.max(2, cSize * 0.12))
+            .style('filter', 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.1))');
+        }
       }
     });
 
@@ -267,14 +283,20 @@ export default function AMSTARRobvis(props) {
       style={{
         background: '#ffffff',
         'border-radius': '8px',
-        'box-shadow': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        'box-shadow':
+          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
         padding: '16px',
         margin: '16px 0',
       }}
     >
       <svg
         ref={el => setRef(el)}
-        style={{ width: '100%', 'max-width': '100%', display: 'block', height: `${svgHeight()}px` }}
+        style={{
+          width: '100%',
+          'max-width': '100%',
+          display: 'block',
+          height: `${svgHeight()}px`,
+        }}
       />
     </div>
   );

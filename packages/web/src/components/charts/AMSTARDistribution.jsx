@@ -67,8 +67,8 @@ export default function AMSTARDistribution(props) {
   const greyscale = () => props.greyscale ?? false;
 
   const margin = { top: 50, right: 150, bottom: 60, left: 80 };
-  const chartWidth = () => width() - margin.left - margin.right;
-  const chartHeight = () => height() - margin.top - margin.bottom;
+  const chartWidth = () => Math.max(0, width() - margin.left - margin.right);
+  const chartHeight = () => Math.max(0, height() - margin.top - margin.bottom);
   // Responsive font size based on width
   const titleFont = () => Math.max(Math.round(width() / 50), 12) + 1; // e.g. 900px => 18px, 400px => 10px
 
@@ -93,12 +93,22 @@ export default function AMSTARDistribution(props) {
     const colors = colorMap();
     if (!data().length) return;
 
+    // Prevent rendering if dimensions are invalid
+    const w = width();
+    const h = height();
+    if (w <= 0 || h <= 0 || chartWidth() <= 0 || chartHeight() <= 0) {
+      return;
+    }
+
     const svg = d3
       .select(ref)
-      .attr('width', width())
-      .attr('height', height())
+      .attr('width', w)
+      .attr('height', h)
       .style('background', '#ffffff')
-      .style('font-family', '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif');
+      .style(
+        'font-family',
+        '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      );
 
     svg.selectAll('*').remove();
 
@@ -131,14 +141,17 @@ export default function AMSTARDistribution(props) {
       processedData.push(questionData);
     }
 
-    // Create scales
+    // Create scales - ensure chart dimensions are positive
+    const safeChartHeight = Math.max(1, chartHeight());
+    const safeChartWidth = Math.max(1, chartWidth());
+
     const yScale = d3
       .scaleBand()
       .domain(processedData.map(d => d.label))
-      .range([0, chartHeight()])
+      .range([0, safeChartHeight])
       .padding(0.1);
 
-    const xScale = d3.scaleLinear().domain([0, 100]).range([0, chartWidth()]);
+    const xScale = d3.scaleLinear().domain([0, 100]).range([0, safeChartWidth]);
 
     // Create main chart group
     const chartGroup = svg
@@ -159,15 +172,15 @@ export default function AMSTARDistribution(props) {
     // Create stacked bars
     processedData.forEach(d => {
       let cumulativePercent = 0;
-      const barHeight = yScale.bandwidth();
+      const barHeight = Math.max(0, yScale.bandwidth());
       const y = yScale(d.label);
 
       // Draw each segment
       ['yes', 'partial yes', 'no ma', 'no'].forEach(category => {
         const percent = d.percentages[category];
-        const segmentWidth = xScale(percent);
+        const segmentWidth = Math.max(0, xScale(percent));
 
-        if (percent > 0) {
+        if (percent > 0 && segmentWidth > 0 && barHeight > 0) {
           // Bar segment
           chartGroup
             .append('rect')
@@ -183,7 +196,9 @@ export default function AMSTARDistribution(props) {
           if (percent >= 5) {
             // Determine text color based on background
             const isLightBg =
-              greyscale() ? category === 'no' || category === 'no ma' : category === 'partial yes';
+              greyscale() ?
+                category === 'no' || category === 'no ma'
+              : category === 'partial yes';
 
             chartGroup
               .append('text')
@@ -310,14 +325,20 @@ export default function AMSTARDistribution(props) {
       style={{
         background: '#ffffff',
         'border-radius': '8px',
-        'box-shadow': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        'box-shadow':
+          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
         padding: '16px',
         margin: '16px 0',
       }}
     >
       <svg
         ref={el => setRef(el)}
-        style={{ width: '100%', 'max-width': '100%', display: 'block', height: `${height()}px` }}
+        style={{
+          width: '100%',
+          'max-width': '100%',
+          display: 'block',
+          height: `${height()}px`,
+        }}
       />
     </div>
   );
