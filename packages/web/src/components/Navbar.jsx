@@ -130,6 +130,7 @@ export default function Navbar(props) {
                   src={user().image}
                   alt={user()?.name || 'User'}
                   class='w-6 h-6 rounded-full object-cover'
+                  referrerPolicy='no-referrer'
                 />
               </Show>
               <span class='hidden sm:block'>{user()?.name || storedName || 'Loading...'}</span>

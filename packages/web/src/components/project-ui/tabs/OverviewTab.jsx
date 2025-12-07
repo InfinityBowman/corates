@@ -105,6 +105,7 @@ export default function OverviewTab(props) {
                           src={member.image}
                           alt={member.displayName || member.name || 'User'}
                           class='w-10 h-10 rounded-full object-cover'
+                          referrerPolicy='no-referrer'
                         />
                       </Show>
                       <div>
