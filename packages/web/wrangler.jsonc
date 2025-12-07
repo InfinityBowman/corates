@@ -9,7 +9,7 @@
   "env": {
     "production": {
       "name": "corates",
-      "routes": [{ "pattern": "app.corates.org/*", "zone_name": "corates.org" }],
+      "routes": [{ "pattern": "corates.org/*", "zone_name": "corates.org" }],
       "vars": {
         "VITE_WORKER_API_URL": "https://api.corates.org",
         "VITE_LANDING_URL": "https://corates.org",
