@@ -9,7 +9,6 @@
     "deploy": "wrangler deploy --env production",
     "tail": "wrangler tail",
     "test": "vitest run",
-    "test:ci": "vitest run",
     "test:watch": "vitest",
     "logs": "pnpm wrangler tail corates-workers-prod",
     "clear-workers": "rm -rf .wrangler/state && pnpm run db:migrate",
