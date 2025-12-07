@@ -4,9 +4,9 @@
   "workers_dev": true,
   "routes": [
     { "pattern": "corates.org/", "zone_name": "corates.org" },
-    { "pattern": "corates.org/about", "zone_name": "corates.org" },
-    { "pattern": "corates.org/privacy", "zone_name": "corates.org" },
-    { "pattern": "corates.org/terms", "zone_name": "corates.org" },
+    { "pattern": "corates.org/about*", "zone_name": "corates.org" },
+    { "pattern": "corates.org/privacy*", "zone_name": "corates.org" },
+    { "pattern": "corates.org/terms*", "zone_name": "corates.org" },
     { "pattern": "www.corates.org/*", "zone_name": "corates.org" },
   ],
   "assets": {
