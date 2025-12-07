@@ -5,7 +5,6 @@
  * The Y.js sync engine updates this store, and UI components read from it.
  */
 
-import { createRoot } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { API_BASE } from '@config/api.js';
 
@@ -336,7 +335,8 @@ function createProjectStore() {
   };
 }
 
-// Create singleton store
-const projectStore = createRoot(createProjectStore);
+// Create singleton store without createRoot
+// createStore doesn't need a reactive owner/root context
+const projectStore = createProjectStore();
 
 export default projectStore;

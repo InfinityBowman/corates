@@ -113,22 +113,6 @@ export default function MultiPartQuestionPage(props) {
     props.onFinalChange?.(newFinal);
   }
 
-  function handleCriticalChange(critical) {
-    const current = localFinal();
-    if (!current) return;
-
-    // Update critical for all parts
-    const newFinal = { ...current };
-    for (const dk of dataKeys()) {
-      if (newFinal[dk]) {
-        newFinal[dk] = { ...newFinal[dk], critical };
-      }
-    }
-    setLocalFinal(newFinal);
-    setSelectedSource('custom');
-    props.onFinalChange?.(newFinal);
-  }
-
   // Get columns for each part
   const getColumnsForPart = partKey => {
     if (props.questionKey === 'q9') {
@@ -238,16 +222,18 @@ export default function MultiPartQuestionPage(props) {
         <div class='p-4 bg-green-50/30'>
           <div class='flex items-center justify-between mb-3'>
             <h3 class='font-medium text-green-800'>Final Answer</h3>
-            <button
-              onClick={() => handleCriticalChange(!localFinal()?.[dataKeys()[0]]?.critical)}
-              class={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                localFinal()?.[dataKeys()[0]]?.critical ?
-                  'bg-red-100 text-red-700 border border-red-300'
-                : 'bg-gray-100 text-gray-700 border border-gray-300'
-              }`}
-            >
-              {localFinal()?.[dataKeys()[0]]?.critical ? 'Critical' : 'Not Critical'}
-            </button>
+            <div class='flex items-center gap-2'>
+              <span class='text-xs text-gray-500'>Critical:</span>
+              <span
+                class={`px-2 py-1 text-xs font-medium rounded ${
+                  localFinal()?.[dataKeys()[0]]?.critical ?
+                    'bg-red-100 text-red-700'
+                  : 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                {localFinal()?.[dataKeys()[0]]?.critical ? 'Yes' : 'No'}
+              </span>
+            </div>
           </div>
           <For each={dataKeys()}>
             {partKey => (

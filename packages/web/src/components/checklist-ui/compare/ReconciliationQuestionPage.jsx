@@ -130,17 +130,6 @@ function SingleQuestionPage(props) {
     props.onFinalChange?.(newFinal);
   }
 
-  // Handle critical toggle in final panel
-  function handleFinalCriticalChange(critical) {
-    const current = localFinal();
-    if (!current) return;
-
-    const newFinal = { ...current, critical };
-    setLocalFinal(newFinal);
-    setSelectedSource('custom');
-    props.onFinalChange?.(newFinal);
-  }
-
   const reviewer1FinalAnswer = () =>
     getFinalAnswerFromAnswers(props.reviewer1Answers?.answers, props.questionKey);
   const reviewer2FinalAnswer = () =>
@@ -204,7 +193,6 @@ function SingleQuestionPage(props) {
           readOnly={false}
           onCheckboxChange={handleFinalCheckboxChange}
           onRadioChange={handleFinalRadioChange}
-          onCriticalChange={handleFinalCriticalChange}
           highlightColor='green'
           selectedSource={selectedSource()}
         />
