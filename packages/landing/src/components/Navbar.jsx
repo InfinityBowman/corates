@@ -10,7 +10,7 @@ export default function Navbar() {
   });
 
   return (
-    <nav class='bg-white border-b border-gray-100'>
+    <nav class='sticky top-0 z-50 bg-white border-b border-gray-100'>
       <div class='flex items-center justify-between max-w-6xl mx-auto px-6 py-4'>
         <div class='flex items-center gap-8'>
           <a href='/' class='text-xl font-bold text-blue-600'>
