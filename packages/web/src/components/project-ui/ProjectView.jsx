@@ -179,7 +179,7 @@ export default function ProjectView() {
   };
 
   return (
-    <div class='p-6 max-w-4xl mx-auto'>
+    <div class='p-6 max-w-7xl mx-auto'>
       <ProjectProvider
         projectId={params.projectId}
         handlers={{ studyHandlers, checklistHandlers, pdfHandlers, memberHandlers }}
