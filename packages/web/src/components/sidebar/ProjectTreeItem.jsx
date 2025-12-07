@@ -88,6 +88,7 @@ export default function ProjectTreeItem(props) {
                     <StudyTreeItem
                       study={study}
                       projectId={projectId}
+                      userId={props.userId}
                       currentPath={props.currentPath}
                     />
                   )}

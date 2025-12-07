@@ -1,7 +1,6 @@
 import { createSignal, Show, onMount, For } from 'solid-js';
 import {
   FiShield,
-  FiCheck,
   FiX,
   FiCopy,
   FiSmartphone,
@@ -16,8 +15,13 @@ import { showToast } from '@components/zag/Toast.jsx';
 import QRCode from '@components/zag/QRCode.jsx';
 
 export default function TwoFactorSetup() {
-  const { user, enableTwoFactor, verifyTwoFactorSetup, disableTwoFactor, getTwoFactorStatus } =
-    useBetterAuth();
+  const {
+    user,
+    enableTwoFactor,
+    verifyTwoFactorSetup,
+    disableTwoFactor,
+    getTwoFactorStatus,
+  } = useBetterAuth();
 
   // State
   const [isEnabled, setIsEnabled] = createSignal(false);
@@ -74,7 +78,10 @@ export default function TwoFactorSetup() {
     } catch (err) {
       const message = err.message || 'Failed to start 2FA setup';
       // Check if error is about missing/invalid password - close setup and show message
-      if (message.toLowerCase().includes('password') || message.toLowerCase().includes('invalid')) {
+      if (
+        message.toLowerCase().includes('password') ||
+        message.toLowerCase().includes('invalid')
+      ) {
         setNeedsPassword(true);
         setSetupMode(false); // Close setup mode to show the message in main view
         setPassword('');
@@ -142,7 +149,10 @@ export default function TwoFactorSetup() {
       showToast.success('Two-factor authentication has been disabled');
     } catch (err) {
       const message = err.message || 'Failed to disable 2FA';
-      if (message.toLowerCase().includes('password') || message.toLowerCase().includes('invalid')) {
+      if (
+        message.toLowerCase().includes('password') ||
+        message.toLowerCase().includes('invalid')
+      ) {
         setNeedsPassword(true);
         setDisableMode(false); // Close disable mode to show message in main view
         setPassword('');
@@ -195,8 +205,8 @@ export default function TwoFactorSetup() {
             <div class='text-sm text-amber-800'>
               <p class='font-medium'>Password required</p>
               <p class='mt-1'>
-                Two-factor authentication requires a password. Use the "Add Password" option above
-                to set one up first.
+                Two-factor authentication requires a password. Use the "Add Password"
+                option above to set one up first.
               </p>
             </div>
           </div>
@@ -205,7 +215,9 @@ export default function TwoFactorSetup() {
         <div class='flex items-center justify-between'>
           <div>
             <div class='flex items-center space-x-2'>
-              <FiShield class={`w-5 h-5 ${isEnabled() ? 'text-green-600' : 'text-gray-400'}`} />
+              <FiShield
+                class={`w-5 h-5 ${isEnabled() ? 'text-green-600' : 'text-gray-400'}`}
+              />
               <p class='font-medium text-gray-900'>Two-Factor Authentication</p>
               <Show when={isEnabled()}>
                 <span class='px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full'>
@@ -267,8 +279,8 @@ export default function TwoFactorSetup() {
               <div class='text-sm text-amber-800'>
                 <p class='font-medium'>Password required</p>
                 <p class='mt-1'>
-                  Two-factor authentication requires a password. Use the "Add Password" option above
-                  to set one up first.
+                  Two-factor authentication requires a password. Use the "Add Password"
+                  option above to set one up first.
                 </p>
               </div>
             </div>
@@ -281,7 +293,9 @@ export default function TwoFactorSetup() {
                 <FiLock class='w-5 h-5 text-blue-600 mt-0.5' />
                 <div class='text-sm text-blue-800'>
                   <p class='font-medium'>Verify your identity</p>
-                  <p class='mt-1'>Enter your password to enable two-factor authentication.</p>
+                  <p class='mt-1'>
+                    Enter your password to enable two-factor authentication.
+                  </p>
                 </div>
               </div>
 
@@ -331,8 +345,8 @@ export default function TwoFactorSetup() {
                 <div class='text-sm text-blue-800'>
                   <p class='font-medium'>Step 1: Scan QR Code</p>
                   <p class='mt-1'>
-                    Open your authenticator app (Google Authenticator, Authy, etc.) and scan the QR
-                    code below.
+                    Open your authenticator app (Google Authenticator, Authy, etc.) and
+                    scan the QR code below.
                   </p>
                 </div>
               </div>
@@ -380,7 +394,9 @@ export default function TwoFactorSetup() {
                 <FiShield class='w-5 h-5 text-blue-600 mt-0.5' />
                 <div class='text-sm text-blue-800'>
                   <p class='font-medium'>Step 2: Verify Setup</p>
-                  <p class='mt-1'>Enter the 6-digit code from your authenticator app to verify.</p>
+                  <p class='mt-1'>
+                    Enter the 6-digit code from your authenticator app to verify.
+                  </p>
                 </div>
               </div>
 
@@ -428,8 +444,8 @@ export default function TwoFactorSetup() {
                 <div class='text-sm text-yellow-800'>
                   <p class='font-medium'>Save Your Backup Codes</p>
                   <p class='mt-1'>
-                    Store these codes in a safe place. You can use them to access your account if
-                    you lose your authenticator device.
+                    Store these codes in a safe place. You can use them to access your
+                    account if you lose your authenticator device.
                   </p>
                 </div>
               </div>
@@ -481,8 +497,8 @@ export default function TwoFactorSetup() {
               <div class='text-sm text-amber-800'>
                 <p class='font-medium'>Password required</p>
                 <p class='mt-1'>
-                  Disabling two-factor authentication requires a password. Use the "Add Password"
-                  option above to set one up first.
+                  Disabling two-factor authentication requires a password. Use the "Add
+                  Password" option above to set one up first.
                 </p>
               </div>
             </div>
@@ -493,7 +509,8 @@ export default function TwoFactorSetup() {
             <div class='text-sm text-yellow-800'>
               <p class='font-medium'>Are you sure?</p>
               <p class='mt-1'>
-                Disabling 2FA will make your account less secure. Enter your password to confirm.
+                Disabling 2FA will make your account less secure. Enter your password to
+                confirm.
               </p>
             </div>
           </div>

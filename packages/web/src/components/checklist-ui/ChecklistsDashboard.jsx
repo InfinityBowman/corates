@@ -1,4 +1,4 @@
-import { createSignal, For, Show } from 'solid-js';
+import { For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
 import { useConfirmDialog } from '@components/zag/Dialog.jsx';
@@ -21,7 +21,8 @@ export default function ChecklistsDashboard(props) {
     e.stopPropagation();
     const confirmed = await confirmDialog.open({
       title: 'Delete Checklist',
-      description: 'Are you sure you want to delete this checklist? This cannot be undone.',
+      description:
+        'Are you sure you want to delete this checklist? This cannot be undone.',
       confirmText: 'Delete',
       variant: 'danger',
     });
@@ -96,14 +97,18 @@ export default function ChecklistsDashboard(props) {
                 </div>
 
                 <div class='mb-4'>
-                  <h3 class='text-lg font-semibold text-gray-900 mb-2 pr-12'>{checklist.name}</h3>
+                  <h3 class='text-lg font-semibold text-gray-900 mb-2 pr-12'>
+                    {checklist.name}
+                  </h3>
                   <p class='text-gray-500 text-sm'>AMSTAR2 Checklist</p>
                 </div>
 
                 <div class='flex items-center justify-between text-xs text-gray-500 mb-4'>
                   <span>
                     Updated{' '}
-                    {new Date(checklist.updatedAt || checklist.createdAt).toLocaleDateString()}
+                    {new Date(
+                      checklist.updatedAt || checklist.createdAt,
+                    ).toLocaleDateString()}
                   </span>
                 </div>
 

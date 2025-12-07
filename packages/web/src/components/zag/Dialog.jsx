@@ -16,10 +16,16 @@ import { FiAlertTriangle, FiX } from 'solid-icons/fi';
  * - size: 'sm' | 'md' | 'lg' | 'xl' - Dialog width (default: 'md')
  */
 export function Dialog(props) {
+  const open = () => props.open;
+  const size = () => props.size;
+  const title = () => props.title;
+  const description = () => props.description;
+  const children = () => props.children;
+
   const service = useMachine(dialog.machine, {
     id: createUniqueId(),
     get open() {
-      return props.open;
+      return open();
     },
     onOpenChange: details => props.onOpenChange?.(details.open),
   });
@@ -27,7 +33,7 @@ export function Dialog(props) {
   const api = createMemo(() => dialog.connect(service, normalizeProps));
 
   const getSizeClass = () => {
-    switch (props.size) {
+    switch (size()) {
       case 'sm':
         return 'max-w-sm';
       case 'lg':
@@ -60,12 +66,15 @@ export function Dialog(props) {
             {/* Header */}
             <div class='flex items-center justify-between p-4 border-b border-gray-200'>
               <div>
-                <h2 {...api().getTitleProps()} class='text-lg font-semibold text-gray-900'>
-                  {props.title}
+                <h2
+                  {...api().getTitleProps()}
+                  class='text-lg font-semibold text-gray-900'
+                >
+                  {title()}
                 </h2>
-                <Show when={props.description}>
+                <Show when={description()}>
                   <p {...api().getDescriptionProps()} class='mt-1 text-sm text-gray-500'>
-                    {props.description}
+                    {description()}
                   </p>
                 </Show>
               </div>
@@ -77,7 +86,7 @@ export function Dialog(props) {
               </button>
             </div>
             {/* Body */}
-            <div class='p-4'>{props.children}</div>
+            <div class='p-4'>{children()}</div>
           </div>
         </div>
       </Portal>
@@ -100,24 +109,30 @@ export function Dialog(props) {
  * - loading: boolean - Whether confirm action is in progress
  */
 export default function ConfirmDialog(props) {
+  const open = () => props.open;
+  const loading = () => props.loading;
+  const variant = () => props.variant || 'danger';
+  const title = () => props.title;
+  const description = () => props.description;
+  const confirmText = () => props.confirmText;
+  const cancelText = () => props.cancelText;
+
   const service = useMachine(dialog.machine, {
     id: createUniqueId(),
     role: 'alertdialog',
     get open() {
-      return props.open;
+      return open();
     },
     onOpenChange: details => props.onOpenChange?.(details.open),
     get closeOnInteractOutside() {
-      return !props.loading;
+      return !loading();
     },
     get closeOnEscape() {
-      return !props.loading;
+      return !loading();
     },
   });
 
   const api = createMemo(() => dialog.connect(service, normalizeProps));
-
-  const variant = () => props.variant || 'danger';
 
   const getVariantStyles = () => {
     switch (variant()) {
@@ -147,7 +162,7 @@ export default function ConfirmDialog(props) {
   };
 
   const handleCancel = () => {
-    if (!props.loading) {
+    if (!loading()) {
       props.onOpenChange?.(false);
     }
   };
@@ -178,17 +193,20 @@ export default function ConfirmDialog(props) {
                 </div>
                 {/* Text content */}
                 <div class='flex-1 min-w-0'>
-                  <h2 {...api().getTitleProps()} class='text-lg font-semibold text-gray-900'>
-                    {props.title}
+                  <h2
+                    {...api().getTitleProps()}
+                    class='text-lg font-semibold text-gray-900'
+                  >
+                    {title()}
                   </h2>
                   <p {...api().getDescriptionProps()} class='mt-2 text-sm text-gray-600'>
-                    {props.description}
+                    {description()}
                   </p>
                 </div>
                 {/* Close button */}
                 <button
                   {...api().getCloseTriggerProps()}
-                  disabled={props.loading}
+                  disabled={loading()}
                   class='shrink-0 p-1 text-gray-400 hover:text-gray-500 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                 >
                   <FiX class='w-5 h-5' />
@@ -199,17 +217,17 @@ export default function ConfirmDialog(props) {
             <div class='px-6 py-4 bg-gray-50 flex justify-end gap-3'>
               <button
                 onClick={handleCancel}
-                disabled={props.loading}
+                disabled={loading()}
                 class='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
               >
-                {props.cancelText || 'Cancel'}
+                {cancelText() || 'Cancel'}
               </button>
               <button
                 onClick={handleConfirm}
-                disabled={props.loading}
+                disabled={loading()}
                 class={`px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getVariantStyles().button}`}
               >
-                {props.loading ? 'Please wait...' : props.confirmText || 'Confirm'}
+                {loading() ? 'Please wait...' : confirmText() || 'Confirm'}
               </button>
             </div>
           </div>

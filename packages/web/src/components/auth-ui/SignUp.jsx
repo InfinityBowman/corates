@@ -2,6 +2,7 @@ import { createSignal, onMount } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { AuthLink } from './AuthButtons.jsx';
+import ErrorMessage from './ErrorMessage.jsx';
 import {
   GoogleButton,
   OrcidButton,
@@ -86,6 +87,8 @@ export default function SignUp() {
         </SocialAuthContainer>
 
         <AuthDivider />
+
+        <ErrorMessage message={error()} />
 
         {/* Magic Link Form - simple email signup */}
         <MagicLinkForm

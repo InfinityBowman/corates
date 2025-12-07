@@ -4,7 +4,7 @@
  * Tests project creation, retrieval, updates, and deletion
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock dependencies
 const mockDb = {
@@ -101,11 +101,6 @@ describe('Project Routes - POST /api/projects', () => {
 
     mockDb.get.mockResolvedValue(mockUser);
     mockEnv.DB.batch.mockResolvedValue([{ success: true }, { success: true }]);
-
-    const projectData = {
-      name: 'New Project',
-      description: 'A new test project',
-    };
 
     expect(mockEnv.DB.batch).toBeDefined();
     expect(mockEnv.PROJECT_DOC.get).toBeDefined();

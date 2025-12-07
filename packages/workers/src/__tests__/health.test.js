@@ -5,7 +5,7 @@
  * You can expand this to test other routes, middleware, and Durable Objects.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 describe('Health Check Endpoint', () => {
   it('should be a placeholder test', () => {

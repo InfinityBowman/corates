@@ -27,13 +27,22 @@ export function Checkbox(props) {
     props,
   );
 
+  const checked = () => merged.checked;
+  const indeterminate = () => merged.indeterminate;
+  const defaultChecked = () => merged.defaultChecked;
+  const disabled = () => merged.disabled;
+  const name = () => merged.name;
+  const value = () => merged.value;
+  const classValue = () => merged.class;
+  const label = () => merged.label;
+
   const service = useMachine(checkbox.machine, () => ({
     id: createUniqueId(),
-    checked: merged.indeterminate ? 'indeterminate' : merged.checked,
-    defaultChecked: merged.defaultChecked,
-    disabled: merged.disabled,
-    name: merged.name,
-    value: merged.value,
+    checked: indeterminate() ? 'indeterminate' : checked(),
+    defaultChecked: defaultChecked(),
+    disabled: disabled(),
+    name: name(),
+    value: value(),
     onCheckedChange(details) {
       merged.onChange?.(details.checked === true);
     },
@@ -45,8 +54,8 @@ export function Checkbox(props) {
     <label
       {...api().getRootProps()}
       class={`inline-flex items-center gap-2 cursor-pointer select-none ${
-        merged.disabled ? 'opacity-50 cursor-not-allowed' : ''
-      } ${merged.class || ''}`}
+        disabled() ? 'opacity-50 cursor-not-allowed' : ''
+      } ${classValue() || ''}`}
     >
       <div
         {...api().getControlProps()}
@@ -64,9 +73,9 @@ export function Checkbox(props) {
         </Show>
       </div>
       <input {...api().getHiddenInputProps()} />
-      <Show when={merged.label}>
+      <Show when={label()}>
         <span {...api().getLabelProps()} class='text-sm text-gray-700'>
-          {merged.label}
+          {label()}
         </span>
       </Show>
     </label>

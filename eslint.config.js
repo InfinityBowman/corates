@@ -119,6 +119,7 @@ export default [
       '**/.vinxi/**',
       '**/.output/**',
       '**/coverage/**',
+      'packages/learn/.astro/**',
     ],
   },
 ];
