@@ -31,11 +31,16 @@ vi.mock('@api/auth-client.js', () => ({
     },
     sendVerificationEmail: vi.fn(),
   },
-  useSession: vi.fn(() => ({
-    data: { user: null },
-    isPending: false,
-    refetch: vi.fn(),
-  })),
+  // useSession returns a signal (function) that returns session state
+  useSession: vi.fn(() => {
+    // Return a signal function, not a plain object
+    const sessionSignal = () => ({
+      data: { user: null },
+      isPending: false,
+    });
+    sessionSignal.refetch = vi.fn();
+    return sessionSignal;
+  }),
 }));
 
 vi.mock('@primitives/useOnlineStatus.js', () => ({
