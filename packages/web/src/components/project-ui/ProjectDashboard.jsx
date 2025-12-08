@@ -92,16 +92,6 @@ export default function ProjectDashboard(props) {
         </button>
       </div>
 
-      {/* Offline indicator */}
-      <Show when={!isOnline()}>
-        <div class='bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-800'>
-          <div class='flex items-center gap-2'>
-            <span class='font-medium'>You're offline</span>
-            <span class='text-sm'>- Showing cached data</span>
-          </div>
-        </div>
-      </Show>
-
       {/* Error display */}
       <Show when={error() && !isOfflineError()}>
         <div class='bg-red-50 border border-red-200 rounded-lg p-4 text-red-700'>
