@@ -1,6 +1,5 @@
 {
   "name": "corates-landing",
-  "main": "src/worker.js",
   "compatibility_date": "2025-12-01",
   "workers_dev": true,
   "routes": [
@@ -9,6 +8,5 @@
   ],
   "assets": {
     "directory": "./.output/public",
-    "binding": "ASSETS",
   },
 }
