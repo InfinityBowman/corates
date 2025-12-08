@@ -10,6 +10,8 @@
     "dev:workers": "pnpm --filter workers dev",
     "dev:front": "concurrently -k -n landing,web -c yellow,blue \"pnpm --filter landing dev\" \"pnpm --filter web dev\"",
     "build": "pnpm --recursive run build",
+    "build:web": "pnpm --filter web run build",
+    "build:landing": "pnpm --filter landing run build",
     "deploy": "pnpm run deploy:workers && pnpm run deploy:landing && pnpm run deploy:web",
     "deploy:web": "pnpm --filter web run deploy",
     "deploy:workers": "pnpm --filter workers run deploy",
