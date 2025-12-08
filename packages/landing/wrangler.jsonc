@@ -1,17 +1,14 @@
 {
   "name": "corates-landing",
+  "main": "src/worker.js",
   "compatibility_date": "2025-12-01",
   "workers_dev": true,
   "routes": [
-    { "pattern": "corates.org/", "zone_name": "corates.org" },
-    { "pattern": "corates.org/about*", "zone_name": "corates.org" },
-    { "pattern": "corates.org/privacy*", "zone_name": "corates.org" },
-    { "pattern": "corates.org/terms*", "zone_name": "corates.org" },
-    { "pattern": "corates.org/_build/*", "zone_name": "corates.org" },
+    { "pattern": "corates.org/*", "zone_name": "corates.org" },
     { "pattern": "www.corates.org/*", "zone_name": "corates.org" },
   ],
   "assets": {
     "directory": "./.output/public",
-    "not_found_handling": "single-page-application",
+    "binding": "ASSETS",
   },
 }
