@@ -21,60 +21,12 @@ CoRATES is a web application designed to streamline AMSTAR-2 quality assessments
 - **Sync**: Yjs (CRDT), y-indexeddb for local persistence
 - **Auth**: BetterAuth
 
-## Project Structure
-
-```
-corates/
-├── packages/
-│   ├── web/          # SolidJS frontend application
-│   ├── workers/      # Cloudflare Workers backend (auth, API, Durable Objects)
-│   ├── mcp/          # MCP server for icon search
-│   └── smtp-relay/   # Email relay service
-└── scripts/          # Utility scripts
-```
-
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js >= 24.0.0
 - pnpm >= 10.0.0
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/InfinityBowman/corates.git
-cd corates
-
-# Install dependencies
-pnpm install
-```
-
-### Development
-
-```bash
-# Run the web frontend
-pnpm dev
-
-# Run the workers backend
-pnpm dev:workers
-
-# Run both web and SMTP relay
-pnpm dev:all
-```
-
-### Building
-
-```bash
-pnpm build
-```
-
-### Deployment
-
-```bash
-pnpm deploy
-```
 
 ## Architecture
 
