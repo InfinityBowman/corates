@@ -168,7 +168,7 @@ export default function ChartSection(props) {
         const reviewerName = getAssigneeName(checklist.assignedTo, membersList);
         data.push({
           id: `${study.id}-${checklist.id}`,
-          label: `${study.name} - ${reviewerName}`,
+          label: `${study.name.length > 10 ? study.name.slice(0, 10) + '...' : study.name}`,
           reviewer: reviewerName,
           reviewName: study.name,
           questions: questionOrder.map(q => answersObj[q]),
