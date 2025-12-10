@@ -20,7 +20,7 @@ describe('API Configuration', () => {
 
     it('should default to localhost:8787 in test environment', async () => {
       const { API_BASE } = await import('@config/api.js');
-      // In test environment without VITE_WORKER_API_URL set, should use default
+      // In test environment without VITE_API_URL set, should use default
       expect(API_BASE).toBe('http://localhost:8787');
     });
   });
