@@ -38,7 +38,7 @@ export default function ChecklistsDashboard(props) {
         <div>
           <h1 class='text-2xl font-bold text-gray-900'>My Appraisals</h1>
           <p class='text-gray-500 mt-1'>
-            Create and manage AMSTAR2 appraisals locally on this device
+            Create and manage appraisals locally on this device
           </p>
         </div>
         <button
