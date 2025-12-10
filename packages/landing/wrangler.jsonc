@@ -20,8 +20,6 @@
     }
   },
   "vars": {
-    "VITE_WORKER_API_URL": "https://api.corates.org",
-    "VITE_LANDING_URL": "https://corates.org",
     "VITE_BASEPATH": "/",
     "VITE_PUBLIC_APP_URL": "https://corates.org",
     "VITE_API_URL": "https://api.corates.org"

@@ -5,11 +5,11 @@
 
 // Helper to get API base - can be overridden for testing
 function getApiBase() {
-  return import.meta.env.VITE_WORKER_API_URL || 'http://localhost:8787';
+  return import.meta.env.VITE_API_URL || 'http://localhost:8787';
 }
 
 export const API_BASE = getApiBase();
-export const LANDING_URL = import.meta.env.VITE_LANDING_URL;
+export const LANDING_URL = import.meta.env.VITE_PUBLIC_APP_URL;
 export const BASEPATH = import.meta.env.VITE_BASEPATH;
 
 /**
