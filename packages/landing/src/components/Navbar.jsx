@@ -24,7 +24,6 @@ export default function Navbar() {
           </a>
         </div>
         <div class='flex gap-3'>
-          {/* <Show when={!isLoading()}> */}
           <Show
             when={isLoggedIn()}
             fallback={
@@ -54,7 +53,6 @@ export default function Navbar() {
               Open App
             </a>
           </Show>
-          {/* </Show> */}
         </div>
       </div>
     </nav>

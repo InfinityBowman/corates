@@ -78,7 +78,7 @@ export default function ProjectDashboard(props) {
         <div>
           <h1 class='text-2xl font-bold text-gray-900'>My Projects</h1>
           <p class='text-gray-500 mt-1'>
-            Manage your research projects and AMSTAR2 checklists
+            Manage your research projects
           </p>
         </div>
         <button
