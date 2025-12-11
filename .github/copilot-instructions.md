@@ -32,22 +32,20 @@ When you need to find icons from `solid-icons`, use the `search_icons` MCP tool:
 
 ## Zag.js Documentation Tool
 
-When you need to implement UI components use zag.js and use the MCP tools for zag:
-
-- `search_zag_docs` - Search for components by name or description (e.g., "modal", "dropdown", "date")
-- `get_zag_component` - Get detailed info and usage template for a specific component (e.g., "dialog", "select")
-- `list_zag_components` - List all available Zag.js components
-
-The tools return Solid.js-specific documentation, installation commands, and usage templates. You should NOT need to add createEffect manually to integrate Zag.js components callbacks. When adding a new zag component, place zag components into components/zag/\* files.
+When you need to implement UI components use zag.js
+The Zag.js docs are located at /docs/zag
+When adding a new zag component, place zag components into components/zag/\* files.
 
 ### Existing Zag Components
 
 The following Zag components already exist in `packages/web/src/components/zag/` and should be reused:
 
+- `Avatar.jsx` - User avatar with image and fallback initials (supports `src`, `name`, `alt`, `onStatusChange`, `class` props)
 - `Checkbox.jsx` - Checkbox input with label
 - `Collapsible.jsx` - Expandable/collapsible content sections
 - `Dialog.jsx` - Modal dialogs
 - `FileUpload.jsx` - File upload with drag-and-drop
+- `FloatingPanel.jsx` - Draggable and resizable floating panel (supports `open`, `onOpenChange`, `title`, `defaultSize`, `defaultPosition`, `size`, `position`, `onSizeChange`, `onPositionChange`, `onStageChange`, `resizable`, `draggable`, `minSize`, `maxSize`, `lockAspectRatio`, `showControls`, `showResizeHandles` props)
 - `PasswordInput.jsx` - Password input with show/hide toggle (supports `label`, `password`, `onPasswordChange`, `autoComplete`, `inputClass` props)
 - `Splitter.jsx` - Resizable split panes
 - `Switch.jsx` - Toggle switch
@@ -77,14 +75,14 @@ Always check for existing Zag components before creating new ones or using plain
 ### State Architecture (Very Important)
 
 To keep the codebase maintainable and avoid prop drilling:
-	•	Do NOT prop-drill application state.
-	•	Shared or cross-feature state must live in external stores under packages/web/src/stores/ or relative to the component file.
-	•	Import stores directly where needed instead of passing values through multiple components.
-	•	Components should receive at most 1–5 props, and only for local configuration, not shared state.
-	•	If a component would need more than 5 props, move the shared data into:
-	•	an external store
-	•	a primitive
-	•	or Solid context (when scoped to a feature)
+• Do NOT prop-drill application state.
+• Shared or cross-feature state must live in external stores under packages/web/src/stores/ or relative to the component file.
+• Import stores directly where needed instead of passing values through multiple components.
+• Components should receive at most 1–5 props, and only for local configuration, not shared state.
+• If a component would need more than 5 props, move the shared data into:
+• an external store
+• a primitive
+• or Solid context (when scoped to a feature)
 ALWAYS prefer the CLEANEST solution.
 
 ### Destructuring props
@@ -112,9 +110,10 @@ When you have complex state or state objects, use Solid's `createStore` for bett
 You may create reusable logic in "primitives" (hooks) that can be shared across components. This keeps components clean and focused on rendering.
 
 # Component Guidelines
-	•	Components should be lean and focused.
-	•	They should not implement business logic; move that into:
-	•	stores
-	•	utilities
-	•	primitives
-	•	Never have a component act as a “God component” coordinating multiple large concerns.
+
+    •	Components should be lean and focused.
+    •	They should not implement business logic; move that into:
+    •	stores
+    •	utilities
+    •	primitives
+    •	Never have a component act as a “God component” coordinating multiple large concerns.

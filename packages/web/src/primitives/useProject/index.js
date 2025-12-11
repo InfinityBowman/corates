@@ -1,7 +1,7 @@
 /**
  * useProject hook - Manages Y.js connection and operations for a single project
  *
- * This is the main coordinator that combines all the extracted modules.
+ * This is the main coordinator that combines all the sub-modules.
  */
 
 import { createEffect, onCleanup, createMemo } from 'solid-js';
