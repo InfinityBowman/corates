@@ -4,13 +4,14 @@
  */
 
 import { createSignal, Show } from 'solid-js';
-import { useNavigate } from '@solidjs/router';
+import { useNavigate, useSearchParams } from '@solidjs/router';
 import { FiFileText, FiX } from 'solid-icons/fi';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
 import { FileUpload } from '@components/zag/FileUpload.jsx';
 
 export default function CreateLocalChecklist() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { createChecklist, savePdf } = useLocalChecklists();
 
   const [name, setName] = createSignal('');
@@ -60,19 +61,35 @@ export default function CreateLocalChecklist() {
     }
   };
 
+  const handleCancel = () => {
+    const fromParam = searchParams.from;
+
+    // If coming from landing page, navigate to landing
+    if (fromParam === 'landing') {
+      window.location.href = '/';
+    } else {
+      // Otherwise go to dashboard
+      navigate('/dashboard');
+    }
+  };
+
   return (
     <div class='min-h-full flex items-center justify-center p-6'>
       <div class='w-full max-w-lg'>
         <div class='bg-white rounded-xl shadow-sm border border-gray-200 p-8'>
           <h1 class='text-2xl font-bold text-gray-900 mb-2'>Start an Appraisal</h1>
           <p class='text-gray-600 mb-6'>
-            Start a new AMSTAR-2 assessment. Your progress will be saved locally on this device.
+            Start a new AMSTAR-2 assessment. Your progress will be saved locally on this
+            device.
           </p>
 
           <form onSubmit={handleSubmit} class='space-y-6'>
             {/* Checklist Name */}
             <div>
-              <label for='checklist-name' class='block text-sm font-medium text-gray-700 mb-2'>
+              <label
+                for='checklist-name'
+                class='block text-sm font-medium text-gray-700 mb-2'
+              >
                 Study Name
               </label>
               <input
@@ -105,7 +122,9 @@ export default function CreateLocalChecklist() {
                 <div class='flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg'>
                   <FiFileText class='w-8 h-8 text-blue-600 shrink-0' />
                   <div class='flex-1 min-w-0'>
-                    <p class='text-sm font-medium text-gray-900 truncate'>{pdfFile().name}</p>
+                    <p class='text-sm font-medium text-gray-900 truncate'>
+                      {pdfFile().name}
+                    </p>
                     <p class='text-xs text-gray-500'>
                       {(pdfFile().size / 1024 / 1024).toFixed(2)} MB
                     </p>
@@ -132,7 +151,7 @@ export default function CreateLocalChecklist() {
             <div class='flex gap-3'>
               <button
                 type='button'
-                onClick={() => navigate('/dashboard')}
+                onClick={handleCancel}
                 class='flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium'
               >
                 Cancel
@@ -142,7 +161,7 @@ export default function CreateLocalChecklist() {
                 disabled={creating()}
                 class='flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed'
               >
-                {creating() ? 'Adding...' : 'Add Study'}
+                {creating() ? 'Adding...' : 'Start'}
               </button>
             </div>
           </form>
@@ -150,8 +169,8 @@ export default function CreateLocalChecklist() {
           {/* Info box */}
           <div class='mt-6 p-4 bg-gray-50 rounded-lg'>
             <p class='text-xs text-gray-500'>
-              Local studies are stored only on this device and don't require an account. To
-              collaborate with others or access your studies from multiple devices,{' '}
+              Local studies are stored only on this device and don't require an account.
+              To collaborate with others or access your studies from multiple devices,{' '}
               <a href='/signup' class='text-blue-600 hover:underline'>
                 create an account
               </a>
