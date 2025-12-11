@@ -5,10 +5,10 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 
 /**
- * InProgressTab - Shows studies assigned to the current user
+ * ToDoTab - Shows studies assigned to the current user
  * Uses ProjectContext for projectId, handlers, and helpers
  */
-export default function InProgressTab() {
+export default function ToDoTab() {
   const { projectId, handlers, getAssigneeName } = useProjectContext();
   const { checklistHandlers, pdfHandlers } = handlers;
   const { user } = useBetterAuth();

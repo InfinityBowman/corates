@@ -8,7 +8,7 @@
  */
 
 import projectStore from './projectStore.js';
-import { useProject } from './useProject.js';
+import { useProject } from './useProject/index.js';
 
 /**
  * Get reactive project data from the store
@@ -28,7 +28,8 @@ export function useProjectData(projectId, options = {}) {
   if (autoConnect) {
     // Only create connection if we need one
     const connectionState = () => projectStore.getConnectionState(projectId);
-    const needsConnection = () => !connectionState().connected && !connectionState().connecting;
+    const needsConnection = () =>
+      !connectionState().connected && !connectionState().connecting;
 
     if (needsConnection()) {
       projectHook = useProject(projectId);

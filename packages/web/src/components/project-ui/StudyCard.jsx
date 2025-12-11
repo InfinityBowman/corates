@@ -1,5 +1,39 @@
 /**
- * StudyCard component - Displays a single study with its checklists
+ * StudyCard component - Displays a single study with its checklists and controls for
+ * managing PDFs, editing the study name, and creating checklists.
+ *
+ * Props
+ * @param {Object} props - Component props
+ * @param {Object} props.study - The study object to display
+ * @param {string} props.study.name - The display name of the study
+ * @param {Array<Object>} [props.study.pdfs] - Array of PDF objects for the study (if any)
+ * @param {string} [props.study.firstAuthor] - First author for the study citation line
+ * @param {string|number} [props.study.publicationYear] - Publication year for the study
+ * @param {string} [props.study.journal] - Journal name for the study
+ * @param {Array<Object>} [props.study.checklists] - Array of checklist objects attached to this study
+ * @param {Array<Object>} [props.members] - List of project members used to populate assignee dropdowns
+ * @param {string|number} [props.currentUserId] - Current user id used to pre-select assignee in forms
+ * @param {boolean} [props.showChecklistForm] - Whether the create-checklist form is visible
+ * @param {boolean} [props.hideAddChecklist] - If true, hide the "Add Checklist" button
+ * @param {boolean} [props.hideManagementActions] - If true, hide edit/upload/delete buttons
+ * @param {boolean} [props.creatingChecklist] - Loading state for checklist creation
+ * @param {function(type: string, assigneeId: string|number)} props.onAddChecklist - Creates a new checklist for a study
+ * @param {function(File): Promise} [props.onUploadPdf] - Upload handler for PDF files; should accept a File and return a Promise
+ * @param {function(Object)} [props.onUpdateStudy] - Update the study (partial update object expected)
+ * @param {function(): void} [props.onDeleteStudy] - Deletes the study
+ * @param {function(Object): void} [props.onViewPdf] - Called to open/view a PDF (passed a PDF object from study.pdfs)
+ * @param {function(): void} [props.onToggleChecklistForm] - Toggles visibility for the checklist creation form
+ * @param {function(checklistId: string|number): void} [props.onOpenChecklist] - Open a specific checklist for editing/review
+ * @param {function(checklistId: string|number, updates: Object): void} [props.onUpdateChecklist] - Update checklist metadata
+ * @param {function(checklistId: string|number): void} [props.onDeleteChecklist] - Delete a checklist
+ * @param {function(assigneeId: string|number): string} [props.getAssigneeName] - Get member display name by id
+ *
+ * Behavior
+ * - Renders a card header with the study title and optional citation line
+ * - Shows a View / Add / Change PDF button depending on whether PDFs exist
+ * - Allows editing the study name inline and saving changes via `onUpdateStudy`
+ * - Allows creating new checklists via an `Add Checklist` button and `ChecklistForm`
+ * - Renders existing checklists using `ChecklistRow` and forwards checklist actions
  */
 
 import { For, Show, createSignal } from 'solid-js';
@@ -166,7 +200,12 @@ export default function StudyCard(props) {
                 onClick={() => props.onToggleChecklistForm()}
                 class='inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors gap-1'
               >
-                <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <svg
+                  class='w-4 h-4'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
                   <path
                     stroke-linecap='round'
                     stroke-linejoin='round'
@@ -183,7 +222,12 @@ export default function StudyCard(props) {
                 class='inline-flex items-center p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors'
                 title='Delete Study'
               >
-                <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <svg
+                  class='w-4 h-4'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
                   <path
                     stroke-linecap='round'
                     stroke-linejoin='round'
@@ -212,7 +256,9 @@ export default function StudyCard(props) {
       <Show
         when={props.study.checklists?.length > 0}
         fallback={
-          <div class='p-4 text-center text-gray-400 text-sm'>No checklists in this study yet</div>
+          <div class='p-4 text-center text-gray-400 text-sm'>
+            No checklists in this study yet
+          </div>
         }
       >
         <div class='divide-y divide-gray-200'>
