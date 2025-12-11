@@ -88,7 +88,7 @@ export default function SignUp() {
 
         <AuthDivider />
 
-        <ErrorMessage message={error()} />
+        <ErrorMessage displayError={error} />
 
         {/* Magic Link Form - simple email signup */}
         <MagicLinkForm
