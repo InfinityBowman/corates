@@ -1,11 +1,11 @@
 /**
  * ProjectView - Main view for a single project
- * Displays tabs for overview, included studies, in-progress, reconciliation, and completed
+ * Displays tabs for overview, all studies, to-do, reconciliation, and completed
  */
 
 import { createSignal, createEffect, Show, onCleanup, batch } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
-import useProject from '@primitives/useProject.js';
+import useProject from '@/primitives/useProject/index.js';
 import projectStore from '@primitives/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf } from '@api/pdf-api.js';
@@ -29,7 +29,7 @@ import AddMemberModal from './AddMemberModal.jsx';
 import ProjectHeader from './ProjectHeader.jsx';
 import OverviewTab from './tabs/OverviewTab.jsx';
 import IncludedStudiesTab from './tabs/IncludedStudiesTab.jsx';
-import InProgressTab from './tabs/InProgressTab.jsx';
+import ToDoTab from './tabs/ToDoTab.jsx';
 import ReadyToReconcileTab from './tabs/ReadyToReconcileTab.jsx';
 import CompletedTab from './tabs/CompletedTab.jsx';
 
@@ -52,7 +52,7 @@ export default function ProjectView() {
   const meta = () => projectStore.getMeta(params.projectId);
   const connectionState = () => projectStore.getConnectionState(params.projectId);
 
-  // Create handlers with simplified API - they read from store directly
+  // Create handlers
   const studyHandlers = useProjectStudyHandlers(
     params.projectId,
     projectActions,
@@ -129,7 +129,7 @@ export default function ProjectView() {
   onCleanup(() => disconnect());
 
   // Helper functions to count studies for tab badges
-  const getInProgressCount = () => {
+  const getToDoCount = () => {
     const userId = user()?.id;
     if (!userId) return 0;
     return studies().filter(
@@ -149,15 +149,15 @@ export default function ProjectView() {
   const tabDefinitions = [
     { value: 'overview', label: 'Overview', icon: <BiRegularHome class='w-4 h-4' /> },
     {
-      value: 'included-studies',
-      label: 'Included Studies',
+      value: 'all-studies',
+      label: 'All Studies',
       icon: <AiOutlineBook class='w-4 h-4' />,
     },
     {
-      value: 'in-progress',
-      label: 'In Progress',
+      value: 'todo',
+      label: 'To Do',
       icon: <BsListTask class='w-4 h-4' />,
-      getCount: getInProgressCount,
+      getCount: getToDoCount,
     },
     {
       value: 'ready-to-reconcile',
@@ -172,16 +172,9 @@ export default function ProjectView() {
     },
   ];
 
-  const validTabs = [
-    'overview',
-    'included-studies',
-    'in-progress',
-    'ready-to-reconcile',
-    'completed',
-  ];
   const tabFromUrl = () => {
     const tab = new URLSearchParams(location.search).get('tab');
-    return validTabs.includes(tab) ? tab : 'overview';
+    return tabDefinitions.map(tab => tab.value).includes(tab) ? tab : 'overview';
   };
 
   const handleTabChange = value => {
@@ -215,12 +208,12 @@ export default function ProjectView() {
                 <OverviewTab onAddMember={() => setShowAddMemberModal(true)} />
               </Show>
 
-              <Show when={tabValue === 'included-studies'}>
+              <Show when={tabValue === 'all-studies'}>
                 <IncludedStudiesTab />
               </Show>
 
-              <Show when={tabValue === 'in-progress'}>
-                <InProgressTab />
+              <Show when={tabValue === 'todo'}>
+                <ToDoTab />
               </Show>
 
               <Show when={tabValue === 'ready-to-reconcile'}>

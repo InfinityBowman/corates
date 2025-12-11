@@ -5,7 +5,7 @@
 
 import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
-import useProject from '@primitives/useProject.js';
+import useProject from '@/primitives/useProject/index.js';
 import projectStore from '@primitives/projectStore.js';
 import { downloadPdf } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
@@ -194,10 +194,17 @@ export default function ReconciliationWrapper() {
       }
 
       // Update each question's answer
-      const questionKeys = Object.keys(reconciledChecklist).filter(k => /^q\d+[a-z]*$/i.test(k));
+      const questionKeys = Object.keys(reconciledChecklist).filter(k =>
+        /^q\d+[a-z]*$/i.test(k),
+      );
 
       for (const key of questionKeys) {
-        updateChecklistAnswer(params.studyId, newChecklistId, key, reconciledChecklist[key]);
+        updateChecklistAnswer(
+          params.studyId,
+          newChecklistId,
+          key,
+          reconciledChecklist[key],
+        );
       }
 
       // Clear the reconciliation progress since we've completed it

@@ -23,21 +23,19 @@ export default function OverviewTab(props) {
   const currentUserId = () => user()?.id;
 
   // Calculate additional stats
-  const studiesWithChecklists = () => studies().filter(s => {
-    const checklists = s.checklists || [];
-    return checklists.some(c => c.status === 'completed');
-  }).length;
 
-  const inProgressStudies = () => studies().filter(s => {
-    const checklists = s.checklists || [];
-    return checklists.some(c => c.status === 'in_progress');
-  }).length;
+  const inProgressStudies = () =>
+    studies().filter(s => {
+      const checklists = s.checklists || [];
+      return checklists.some(c => c.status === 'in_progress');
+    }).length;
 
-  const readyToReconcile = () => studies().filter(s => {
-    const checklists = s.checklists || [];
-    const completedChecklists = checklists.filter(c => c.status === 'completed');
-    return completedChecklists.length === 2;
-  }).length;
+  const readyToReconcile = () =>
+    studies().filter(s => {
+      const checklists = s.checklists || [];
+      const completedChecklists = checklists.filter(c => c.status === 'completed');
+      return completedChecklists.length === 2;
+    }).length;
 
   return (
     <>
@@ -51,13 +49,9 @@ export default function OverviewTab(props) {
           <p class='text-2xl font-bold text-blue-900'>{inProgressStudies()}</p>
           <p class='text-sm text-blue-600'>In Progress</p>
         </div>
-        <div class='bg-purple-50 rounded-lg p-4 text-center'>
-          <p class='text-2xl font-bold text-purple-900'>{readyToReconcile()}</p>
-          <p class='text-sm text-purple-600'>Ready to Reconcile</p>
-        </div>
         <div class='bg-green-50 rounded-lg p-4 text-center'>
-          <p class='text-2xl font-bold text-green-900'>{studiesWithChecklists()}</p>
-          <p class='text-sm text-green-600'>With Checklists</p>
+          <p class='text-2xl font-bold text-green-900'>{readyToReconcile()}</p>
+          <p class='text-sm text-green-600'>Ready to Reconcile</p>
         </div>
       </div>
 
@@ -95,7 +89,12 @@ export default function OverviewTab(props) {
                   onClick={() => props.onAddMember()}
                   class='inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors gap-1.5'
                 >
-                  <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <svg
+                    class='w-4 h-4'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
                     <path
                       stroke-linecap='round'
                       stroke-linejoin='round'
@@ -124,7 +123,12 @@ export default function OverviewTab(props) {
                             when={member.image}
                             fallback={
                               <div class='w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium'>
-                                {(member.displayName || member.name || member.email || '?')
+                                {(
+                                  member.displayName ||
+                                  member.name ||
+                                  member.email ||
+                                  '?'
+                                )
                                   .charAt(0)
                                   .toUpperCase()}
                               </div>
@@ -188,7 +192,9 @@ export default function OverviewTab(props) {
 
       {/* Charts Section - Full width */}
       <div>
-        <h3 class='text-lg font-semibold text-gray-900 mb-4'>Quality Assessment Charts</h3>
+        <h3 class='text-lg font-semibold text-gray-900 mb-4'>
+          Quality Assessment Charts
+        </h3>
         <ChartSection
           studies={studies}
           members={members}

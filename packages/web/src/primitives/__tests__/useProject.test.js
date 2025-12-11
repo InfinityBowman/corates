@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createRoot } from 'solid-js';
-import { useProject } from '../useProject.js';
+import { useProject } from '../useProject/index.js';
 import * as Y from 'yjs';
 
 // Mock dependencies
@@ -42,7 +42,7 @@ vi.mock('../projectStore.js', () => ({
 }));
 
 vi.mock('../useOnlineStatus.js', () => ({
-  default: () => () => true,  // Return a function that returns true
+  default: () => () => true, // Return a function that returns true
 }));
 
 vi.mock('@config/api.js', () => ({
