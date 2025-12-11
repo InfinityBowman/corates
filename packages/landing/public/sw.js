@@ -1,5 +1,5 @@
 /* eslint-env serviceworker */
-const CACHE_NAME = 'corates-landing-v3';
+const CACHE_NAME = 'corates-landing-v1';
 
 const STATIC_ASSETS = [
   '/',
@@ -33,7 +33,9 @@ self.addEventListener('install', event => {
               const pageResponse = await fetch(page);
               if (pageResponse.ok) {
                 const html = await pageResponse.text();
-                const matches = html.matchAll(/(?:src|href)=["']((?:\/_build)?\/assets\/[^"']+)["']/g);
+                const matches = html.matchAll(
+                  /(?:src|href)=["']((?:\/_build)?\/assets\/[^"']+)["']/g,
+                );
                 for (const match of matches) {
                   allAssets.add(match[1]);
                 }
@@ -90,19 +92,53 @@ self.addEventListener('fetch', event => {
   // Skip non-http(s) requests
   if (!request.url.startsWith('http')) return;
 
+  // Skip API requests
+  if (url.hostname === 'api.corates.org') return;
+
   // Check if this is a JS/CSS asset
   const isAsset = url.pathname.match(/\.(js|css|woff2?|ttf)$/);
 
   event.respondWith(
     caches.match(request).then(cachedResponse => {
       if (cachedResponse) {
+        // For navigation requests, we cannot use a redirected response directly
+        // We need to create a new response without the redirect flag
+        if (request.mode === 'navigate' && cachedResponse.redirected) {
+          // Create a new response from the cached redirected response body
+          return cachedResponse.blob().then(body => {
+            return new Response(body, {
+              status: cachedResponse.status,
+              statusText: cachedResponse.statusText,
+              headers: cachedResponse.headers,
+            });
+          });
+        }
+
         // Return cached response and update cache in background
         event.waitUntil(
-          fetch(request)
+          fetch(request, { redirect: 'follow' })
             .then(response => {
               if (response.ok) {
-                caches.open(CACHE_NAME).then(cache => {
-                  cache.put(request, response);
+                // For responses we want to cache, ensure we strip redirect flag
+                const responseToCache =
+                  response.redirected ?
+                    response
+                      .clone()
+                      .blob()
+                      .then(
+                        body =>
+                          new Response(body, {
+                            status: response.status,
+                            statusText: response.statusText,
+                            headers: response.headers,
+                          }),
+                      )
+                  : Promise.resolve(response.clone());
+
+                responseToCache.then(finalResponse => {
+                  caches.open(CACHE_NAME).then(cache => {
+                    cache.put(request, finalResponse);
+                  });
                 });
               }
             })
@@ -112,14 +148,31 @@ self.addEventListener('fetch', event => {
       }
 
       // Not in cache, fetch from network
-      return fetch(request)
+      return fetch(request, { redirect: 'follow' })
         .then(response => {
           // Cache successful responses for same-origin requests
           // Always cache JS/CSS assets and other same-origin requests
           if (response.ok && request.url.startsWith(self.location.origin)) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(request, responseClone);
+            // For responses we want to cache, ensure we strip redirect flag
+            const responseToCache =
+              response.redirected ?
+                response
+                  .clone()
+                  .blob()
+                  .then(
+                    body =>
+                      new Response(body, {
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: response.headers,
+                      }),
+                  )
+              : Promise.resolve(response.clone());
+
+            responseToCache.then(finalResponse => {
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put(request, finalResponse);
+              });
             });
           }
           return response;
