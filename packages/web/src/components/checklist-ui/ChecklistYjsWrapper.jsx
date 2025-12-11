@@ -8,6 +8,8 @@ import { getCachedPdf, cachePdf, removeCachedPdf } from '@primitives/pdfCache.js
 import { showToast } from '@components/zag/Toast.jsx';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { scoreChecklist } from '@/AMSTAR2/checklist.js';
+import { getScoreStyle } from '@/components/checklist-ui/navbar-utils.js';
+import { IoChevronBack } from 'solid-icons/io';
 
 export default function ChecklistYjsWrapper() {
   const params = useParams();
@@ -206,22 +208,6 @@ export default function ChecklistYjsWrapper() {
     return scoreChecklist(checklist);
   });
 
-  // Get score badge styling based on score level
-  const getScoreStyle = score => {
-    switch (score) {
-      case 'High':
-        return 'bg-green-100 text-green-800';
-      case 'Moderate':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Low':
-        return 'bg-orange-100 text-orange-800';
-      case 'Critically Low':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-600';
-    }
-  };
-
   // Header content for the split screen toolbar (left side)
   const headerContent = (
     <>
@@ -229,14 +215,7 @@ export default function ChecklistYjsWrapper() {
         onClick={() => navigate(`/projects/${params.projectId}?tab=in-progress`)}
         class='text-gray-400 hover:text-gray-700 transition-colors'
       >
-        <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-          <path
-            stroke-linecap='round'
-            stroke-linejoin='round'
-            stroke-width='2'
-            d='M15 19l-7-7 7-7'
-          />
-        </svg>
+        <IoChevronBack size={20} />
       </button>
       <div class='text-sm text-gray-600 truncate'>
         <Show when={currentStudy()}>
