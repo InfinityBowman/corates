@@ -14,13 +14,20 @@ export default function Footer() {
             <a href='/about' class='text-gray-500 hover:text-gray-700 transition-colors'>
               About
             </a>
-            <a href='/privacy' class='text-gray-500 hover:text-gray-700 transition-colors'>
+            <a
+              href='/privacy'
+              class='text-gray-500 hover:text-gray-700 transition-colors'
+            >
               Privacy
             </a>
             <a href='/terms' class='text-gray-500 hover:text-gray-700 transition-colors'>
               Terms
             </a>
-            <a href={urls.signIn()} class='text-gray-500 hover:text-gray-700 transition-colors'>
+            <a
+              href={urls.signIn()}
+              rel='external'
+              class='text-gray-500 hover:text-gray-700 transition-colors'
+            >
               Sign In
             </a>
           </div>

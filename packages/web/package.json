@@ -15,10 +15,12 @@
   },
   "dependencies": {
     "@solidjs/router": "^0.15.4",
+    "@zag-js/avatar": "^1.31.1",
     "@zag-js/checkbox": "^1.31.0",
     "@zag-js/collapsible": "^1.30.0",
     "@zag-js/dialog": "^1.30.0",
     "@zag-js/file-upload": "^1.30.0",
+    "@zag-js/floating-panel": "^1.31.1",
     "@zag-js/password-input": "^1.30.0",
     "@zag-js/pin-input": "^1.30.0",
     "@zag-js/qr-code": "^1.31.0",
