@@ -8,6 +8,7 @@ import { useNavigate, useSearchParams } from '@solidjs/router';
 import { FiFileText, FiX } from 'solid-icons/fi';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
 import { FileUpload } from '@components/zag/FileUpload.jsx';
+import { LANDING_URL } from '@config/api.js';
 
 export default function CreateLocalChecklist() {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ export default function CreateLocalChecklist() {
 
     // If coming from landing page, navigate to landing
     if (fromParam === 'landing') {
-      window.location.href = '/';
+      window.location.href = LANDING_URL;
     } else {
       // Otherwise go to dashboard
       navigate('/dashboard');

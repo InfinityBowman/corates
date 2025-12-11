@@ -10,6 +10,7 @@ import {
   AuthDivider,
 } from './SocialAuthButtons.jsx';
 import MagicLinkForm from './MagicLinkForm.jsx';
+import { LANDING_URL } from '@config/api.js';
 
 /**
  * Sign Up page - minimal friction with magic link or social providers
@@ -72,7 +73,7 @@ export default function SignUp() {
           <p class='text-gray-500 text-xs sm:text-sm'>Get started with CoRATES</p>
         </div>
 
-        {/* Social providers first - most common */}
+        {/* Social providers */}
         <SocialAuthContainer buttonCount={socialProviderCount}>
           <GoogleButton
             loading={googleLoading()}
@@ -100,16 +101,16 @@ export default function SignUp() {
         <p class='text-center text-xs text-gray-400 mt-6'>
           By continuing, you agree to our{' '}
           <a
-            href='https://corates.org/terms'
+            href={`${LANDING_URL}/terms`}
             target='_blank'
-            rel='noopener noreferrer'
             class='text-blue-500 hover:underline'
+            rel='noopener noreferrer'
           >
             Terms of Service
           </a>{' '}
           and{' '}
           <a
-            href='https://corates.org/privacy'
+            href={`${LANDING_URL}/privacy`}
             target='_blank'
             rel='noopener noreferrer'
             class='text-blue-500 hover:underline'
