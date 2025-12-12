@@ -1,57 +1,97 @@
-import { AiOutlineArrowRight } from 'solid-icons/ai';
 import { urls } from '~/lib/config';
 
 export default function Hero() {
   return (
-    <section class='relative overflow-hidden'>
-      <div class='max-w-6xl mx-auto px-6 py-16 md:py-24 text-center'>
-        <h1 class='text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight max-w-3xl mx-auto'>
-          <span class='text-blue-600'>Co</span>llaborative{' '}
-          <span class='text-blue-600'>R</span>
-          esearch <span class='text-blue-600'>A</span>ppraisal
-          <span class='text-blue-600'> T</span>ool for
-          <span class='text-blue-600'> E</span>vidence{' '}
-          <span class='text-blue-600'>S</span>ynthesis
-        </h1>
-
-        <p class='text-lg text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto'>
-          Streamline the entire quality and risk-of-bias appraisal process with intuitive
-          workflows, real-time collaboration, automatic scoring, and clear visual
-          summaries, creating greater transparency and efficiency at every step.
-        </p>
-
-        <div class='flex flex-col sm:flex-row gap-4 justify-center'>
-          <a
-            href={urls.signUp()}
-            rel='external'
-            class='inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm'
-          >
-            Get Started
-            <AiOutlineArrowRight class='w-5 h-5' />
-          </a>
-          <a
-            href={urls.signIn()}
-            rel='external'
-            class='inline-flex items-center justify-center gap-2 bg-white text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors border border-gray-200'
-          >
-            Sign In
-          </a>
+    <section class='relative overflow-hidden min-h-screen'>
+      <div class='max-w-7xl mx-auto px-6 pt-8 md:pt-14 pb-0 flex flex-col items-center'>
+        <div class='w-2/3 mb-2'>
+          <div class='flex items-center justify-center gap-4 mb-6'>
+            {/* <img
+              src='/icon.png'
+              alt='CoRATES logo'
+              class='w-24 h-24 absolute left-60 rounded-md'
+            /> */}
+            <h1 class='text-5xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight text-center m-0'>
+              <span class='text-blue-700'>Co</span>llaborative{' '}
+              <span class='text-blue-700'>R</span>
+              esearch <span class='text-blue-700'>A</span>ppraisal
+              <span class='text-blue-700'> T</span>ool for
+              <span class='text-blue-700'> E</span>
+              vidence <span class='text-blue-700'>S</span>ynthesis
+            </h1>
+          </div>
+          <p class='text-xl md:text-xl text-gray-600 mb-8 max-w-3xl leading-tight text-center'>
+            Streamline the entire quality and risk-of-bias appraisal process with
+            intuitive workflows, real-time collaboration, and automation, creating greater
+            transparency and efficiency at every step.
+          </p>
+          <div class='flex flex-col sm:flex-row gap-12 mb-2 justify-center'>
+            <a
+              href={urls.checklist()}
+              rel='external'
+              class='inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold text-base hover:bg-blue-500 transition-colors shadow-md shadow-blue-600/20'
+            >
+              Start an Appraisal
+            </a>
+            <a
+              href={urls.signUp()}
+              rel='external'
+              class='inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold text-base hover:bg-blue-500 transition-colors shadow-md shadow-blue-600/20'
+            >
+              Start a Review Project
+            </a>
+          </div>
         </div>
-
-        <p class='mt-6 text-sm text-gray-500'>
-          Want to try it first?{' '}
-          <a
-            href={urls.checklist()}
-            class='text-blue-600 hover:text-blue-700 font-medium hover:underline'
-            rel='external'
-          >
-            Start an appraisal
-          </a>
-        </p>
       </div>
-
-      {/* Background blur */}
-      <div class='absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-linear-to-b from-blue-50/50 to-transparent rounded-full blur-3xl -z-10' />
+      {/* Product Screenshot Placeholder: full width, bottom, angled */}
+      <div
+        class='w-full flex justify-center absolute'
+        style={{ bottom: 'auto', top: '42%', left: '80px' }}
+      >
+        <div class='relative w-full max-w-5xl px-4 opacity-80'>
+          <div
+            class='bg-linear-to-br from-gray-100 to-gray-50 rounded-2xl border border-gray-200 shadow-2xl overflow-hidden mb-0 mt-0'
+            style={{
+              transform:
+                'perspective(1200px) rotateX(14deg) rotateZ(-10deg) rotateY(8deg)',
+            }}
+          >
+            <div class='aspect-16/7 flex items-center justify-center p-2'>
+              <div class='text-center'>
+                <div
+                  class='bg-gray-50 border border-gray-200 rounded-xl shadow-lg w-full h-full flex flex-col'
+                  style={{ 'box-shadow': '0 6px 32px 0 rgba(0,0,0,0.10)' }}
+                >
+                  {/* Browser top bar */}
+                  <div class='flex items-center px-4 py-2 border-b border-gray-200 bg-gray-100 rounded-t-xl'>
+                    <div class='flex items-center gap-2'>
+                      <span class='w-3 h-3 rounded-full bg-red-400 inline-block' />
+                      <span class='w-3 h-3 rounded-full bg-yellow-400 inline-block' />
+                      <span class='w-3 h-3 rounded-full bg-green-400 inline-block' />
+                    </div>
+                    <div class='flex-1 mx-4'>
+                      <div class='bg-white border border-gray-300 rounded-md px-3 py-1 text-xs text-gray-500 truncate max-w-[320px] mx-auto'>
+                        corates.org/dashboard
+                      </div>
+                    </div>
+                  </div>
+                  <div class='flex-1 flex items-center justify-center bg-white rounded-b-xl overflow-hidden'>
+                    <img
+                      src='/product.png'
+                      alt='CoRATES product screenshot'
+                      class='w-full h-full object-cover'
+                      style={{ display: 'block' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Background decoration */}
+      <div class='absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[1000px] bg-linear-to-b from-blue-700/5 to-transparent rounded-full blur-3xl -z-10' />
+      <div class='absolute top-1/2 right-0 w-[500px] h-[500px] bg-linear-to-l from-blue-700/5 to-transparent rounded-full blur-3xl -z-10' />
     </section>
   );
 }
