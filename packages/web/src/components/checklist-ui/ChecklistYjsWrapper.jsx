@@ -212,7 +212,7 @@ export default function ChecklistYjsWrapper() {
   const headerContent = (
     <>
       <button
-        onClick={() => navigate(`/projects/${params.projectId}?tab=in-progress`)}
+        onClick={() => navigate(`/projects/${params.projectId}?tab=todo`)}
         class='text-gray-400 hover:text-gray-700 transition-colors'
       >
         <IoChevronBack size={20} />
