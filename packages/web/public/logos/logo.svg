@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Top bar - three shades -->
+  <rect x="23" y="18" width="150" height="108" fill="#1e4d8b"/>
+  <rect x="173" y="18" width="155" height="108" fill="#4a7ab8"/>
+  <rect x="328" y="18" width="162" height="108" fill="#7eb8e8"/>
+  
+  <!-- Middle bar - two shades -->
+  <rect x="23" y="168" width="195" height="108" fill="#4a7ab8"/>
+  <rect x="218" y="168" width="162" height="108" fill="#7eb8e8"/>
+  
+  <!-- Bottom bar - one shade wider segment -->
+  <rect x="23" y="318" width="145" height="108" fill="#7eb8e8"/>
+  
+  <!-- White checkmark - larger outer stroke, moved up -->
+  <path d="M 100 285 L 195 380 L 480 95" fill="none" stroke="#ffffff" stroke-width="115" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Blue checkmark - inner accent, moved up -->
+  <path d="M 100 285 L 195 380 L 480 95" fill="none" stroke="#1e4d8b" stroke-width="55" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

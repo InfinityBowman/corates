@@ -1,5 +1,5 @@
 import { Show, createEffect, createSignal, createMemo } from 'solid-js';
-import { FiEdit2, FiX, FiCheck } from 'solid-icons/fi';
+import { FiEdit2, FiX, FiCheck, FiChevronLeft } from 'solid-icons/fi';
 import { useProjectContext } from './ProjectContext.jsx';
 
 export default function ProjectHeader(props) {
@@ -56,14 +56,7 @@ export default function ProjectHeader(props) {
           onClick={() => props.onBack()}
           class='text-gray-400 hover:text-gray-700 transition-colors'
         >
-          <svg class='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-            <path
-              stroke-linecap='round'
-              stroke-linejoin='round'
-              stroke-width='2'
-              d='M15 19l-7-7 7-7'
-            />
-          </svg>
+          <FiChevronLeft class='w-6 h-6' />
         </button>
         <div class='flex items-center gap-2 flex-wrap'>
           <Show when={editing()}>

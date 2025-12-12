@@ -1,5 +1,6 @@
 import { createMemo, createSignal, For, Show } from 'solid-js';
 import { VsBook } from 'solid-icons/vs';
+import { FiChevronRight } from 'solid-icons/fi';
 import Collapsible from '@components/zag/Collapsible.jsx';
 import ChecklistTreeItem from './ChecklistTreeItem.jsx';
 
@@ -26,14 +27,9 @@ export default function StudyTreeItem(props) {
             class='p-1.5 hover:bg-gray-100 rounded'
             aria-label={isExpanded() ? 'Collapse' : 'Expand'}
           >
-            <svg
+            <FiChevronRight
               class={`w-2.5 h-2.5 text-gray-400 transition-transform ${isExpanded() ? 'rotate-90' : ''}`}
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M9 5l7 7-7 7' />
-            </svg>
+            />
           </button>
           <div class='flex-1 flex items-center gap-1.5 py-1.5 pr-2 text-left'>
             <VsBook class='w-3.5 h-3.5 text-gray-400' />
