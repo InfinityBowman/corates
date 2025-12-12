@@ -2,9 +2,21 @@ import { createMemo, For, createEffect } from 'solid-js';
 import { FiCheck, FiX } from 'solid-icons/fi';
 
 const requirementsList = [
-  { label: 'At least 8 characters', test: pw => pw.length >= 8, error: 'at least 8 characters' },
-  { label: 'Uppercase letter (A-Z)', test: pw => /[A-Z]/.test(pw), error: 'an uppercase letter' },
-  { label: 'Lowercase letter (a-z)', test: pw => /[a-z]/.test(pw), error: 'a lowercase letter' },
+  {
+    label: 'At least 8 characters',
+    test: pw => pw.length >= 8,
+    error: 'at least 8 characters',
+  },
+  {
+    label: 'Uppercase letter (A-Z)',
+    test: pw => /[A-Z]/.test(pw),
+    error: 'an uppercase letter',
+  },
+  {
+    label: 'Lowercase letter (a-z)',
+    test: pw => /[a-z]/.test(pw),
+    error: 'a lowercase letter',
+  },
   { label: 'Number (0-9)', test: pw => /\d/.test(pw), error: 'a number' },
   {
     label: 'Special character (e.g. !?<>@#$%)',
@@ -46,9 +58,13 @@ export default function StrengthIndicator(props) {
                     }`}
                     aria-hidden='true'
                   >
-                    {met() ? <FiCheck class='w-3 h-3' /> : <FiX class='w-3 h-3' />}
+                    {met() ?
+                      <FiCheck class='w-3 h-3' />
+                    : <FiX class='w-3 h-3' />}
                   </span>
-                  <span class={met() ? 'text-green-500' : 'text-red-500'}>{req.label}</span>
+                  <span class={met() ? 'text-green-500' : 'text-red-500'}>
+                    {req.label}
+                  </span>
                 </li>
               );
             }}

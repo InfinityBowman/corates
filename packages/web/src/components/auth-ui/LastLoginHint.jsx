@@ -1,5 +1,9 @@
 import { createSignal, onMount, Show } from 'solid-js';
-import { getLastLoginMethod, LOGIN_METHOD_LABELS, LOGIN_METHODS } from '@lib/lastLoginMethod.js';
+import {
+  getLastLoginMethod,
+  LOGIN_METHOD_LABELS,
+  LOGIN_METHODS,
+} from '@lib/lastLoginMethod.js';
 import { AiOutlineGoogle } from 'solid-icons/ai';
 import { FaBrandsOrcid } from 'solid-icons/fa';
 import { FiLock, FiMail } from 'solid-icons/fi';
@@ -21,21 +25,13 @@ export default function LastLoginHint() {
   const getIcon = () => {
     switch (lastMethod()) {
       case LOGIN_METHODS.GOOGLE:
-        return (
-          <AiOutlineGoogle class='w-4 h-4' />
-        );
+        return <AiOutlineGoogle class='w-4 h-4' />;
       case LOGIN_METHODS.ORCID:
-        return (
-          <FaBrandsOrcid class='w-4 h-4' />
-        );
+        return <FaBrandsOrcid class='w-4 h-4' />;
       case LOGIN_METHODS.MAGIC_LINK:
-        return (
-          <FiMail class='w-4 h-4' />
-        );
+        return <FiMail class='w-4 h-4' />;
       default:
-        return (
-          <FiLock class='w-4 h-4' />
-        );
+        return <FiLock class='w-4 h-4' />;
     }
   };
 

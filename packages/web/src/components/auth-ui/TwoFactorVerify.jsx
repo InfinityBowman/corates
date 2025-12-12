@@ -90,7 +90,9 @@ export default function TwoFactorVerify(props) {
             maxLength={useBackupCode() ? 20 : 6}
             value={code()}
             onInput={e =>
-              setCode(useBackupCode() ? e.target.value : e.target.value.replace(/\D/g, ''))
+              setCode(
+                useBackupCode() ? e.target.value : e.target.value.replace(/\D/g, ''),
+              )
             }
             class='w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-center font-mono text-xl tracking-widest'
             placeholder={useBackupCode() ? 'XXXX-XXXX-XXXX' : '000000'}
