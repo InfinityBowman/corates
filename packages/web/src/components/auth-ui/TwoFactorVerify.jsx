@@ -3,6 +3,7 @@ import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton } from './AuthButtons.jsx';
+import { FiLock } from 'solid-icons/fi';
 
 export default function TwoFactorVerify(props) {
   const [code, setCode] = createSignal('');
@@ -67,14 +68,7 @@ export default function TwoFactorVerify(props) {
     <div class='space-y-4'>
       <div class='text-center mb-4'>
         <div class='w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-          <svg class='w-8 h-8 text-blue-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-            <path
-              stroke-linecap='round'
-              stroke-linejoin='round'
-              stroke-width='2'
-              d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'
-            />
-          </svg>
+          <FiLock class='w-8 h-8 text-blue-600' />
         </div>
         <h2 class='text-xl font-bold text-gray-900 mb-1'>Two-Factor Authentication</h2>
         <p class='text-gray-500 text-sm'>
