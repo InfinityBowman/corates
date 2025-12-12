@@ -10,9 +10,9 @@ import { useParams, useNavigate } from '@solidjs/router';
 import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import CreateLocalChecklist from '@checklist-ui/CreateLocalChecklist.jsx';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
-import { getScoreStyle } from '@/components/checklist-ui/navbar-utils.js';
 import { scoreChecklist } from '@/AMSTAR2/checklist.js';
 import { IoChevronBack } from 'solid-icons/io';
+import ScoreTag from '@/components/checklist-ui/ScoreTag.jsx';
 
 export default function LocalChecklistView() {
   const params = useParams();
@@ -164,14 +164,7 @@ export default function LocalChecklistView() {
       <span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600'>
         Local Only
       </span>
-
-      <Show when={currentScore()}>
-        <span
-          class={`px-2.5 py-1 text-xs font-medium rounded-full ${getScoreStyle(currentScore())}`}
-        >
-          Score: {currentScore()}
-        </span>
-      </Show>
+      <ScoreTag currentScore={currentScore()} />
     </>
   );
 

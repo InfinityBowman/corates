@@ -8,8 +8,8 @@ import { getCachedPdf, cachePdf, removeCachedPdf } from '@primitives/pdfCache.js
 import { showToast } from '@components/zag/Toast.jsx';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { scoreChecklist } from '@/AMSTAR2/checklist.js';
-import { getScoreStyle } from '@/components/checklist-ui/navbar-utils.js';
 import { IoChevronBack } from 'solid-icons/io';
+import ScoreTag from '@/components/checklist-ui/ScoreTag.jsx';
 
 export default function ChecklistYjsWrapper() {
   const params = useParams();
@@ -227,13 +227,7 @@ export default function ChecklistYjsWrapper() {
         </span>
       </div>
       <div class='ml-auto flex items-center gap-3'>
-        <Show when={currentScore()}>
-          <span
-            class={`px-2.5 py-1 text-xs font-medium rounded-full ${getScoreStyle(currentScore())}`}
-          >
-            Score: {currentScore()}
-          </span>
-        </Show>
+        <ScoreTag currentScore={currentScore()} />
         <button
           onClick={handleToggleComplete}
           class={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${

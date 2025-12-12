@@ -68,7 +68,6 @@ export default function ToDoTab() {
               <StudyCard
                 study={study}
                 members={members()}
-                projectId={projectId}
                 currentUserId={currentUserId()}
                 showChecklistForm={showChecklistForm() === study.id}
                 onToggleChecklistForm={() =>
@@ -80,9 +79,6 @@ export default function ToDoTab() {
                 onOpenChecklist={checklistId =>
                   checklistHandlers.openChecklist(study.id, checklistId)
                 }
-                onReconcile={(checklist1Id, checklist2Id) =>
-                  checklistHandlers.openReconciliation(study.id, checklist1Id, checklist2Id)
-                }
                 onViewPdf={pdf => pdfHandlers.handleViewPdf(study.id, pdf)}
                 onUpdateChecklist={(checklistId, updates) =>
                   checklistHandlers.handleUpdateChecklist(study.id, checklistId, updates)
@@ -92,7 +88,6 @@ export default function ToDoTab() {
                 }
                 getAssigneeName={getAssigneeName}
                 creatingChecklist={creatingChecklist()}
-                hideManagementActions={true}
               />
             )}
           </For>

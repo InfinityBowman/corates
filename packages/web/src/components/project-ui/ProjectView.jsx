@@ -28,7 +28,7 @@ import { ProjectProvider } from './ProjectContext.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
 import ProjectHeader from './ProjectHeader.jsx';
 import OverviewTab from './tabs/OverviewTab.jsx';
-import IncludedStudiesTab from './tabs/IncludedStudiesTab.jsx';
+import IncludedStudiesTab from './tabs/AllStudiesTab.jsx';
 import ToDoTab from './tabs/ToDoTab.jsx';
 import ReadyToReconcileTab from './tabs/ReadyToReconcileTab.jsx';
 import CompletedTab from './tabs/CompletedTab.jsx';
