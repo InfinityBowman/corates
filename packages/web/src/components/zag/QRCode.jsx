@@ -22,10 +22,8 @@ export default function QRCode(props) {
 
   const service = useMachine(qrCode.machine, {
     id: createUniqueId(),
-    // eslint-disable-next-line solid/reactivity
     value: data(),
     encoding: {
-      // eslint-disable-next-line solid/reactivity
       ecc: ecc() || 'M',
     },
   });
