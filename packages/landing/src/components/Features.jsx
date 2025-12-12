@@ -1,6 +1,10 @@
 import { For } from 'solid-js';
 import { HiOutlineClipboardDocumentCheck } from 'solid-icons/hi';
-import { AiOutlineUsergroupAdd, AiOutlineBarChart, AiOutlineFolderOpen } from 'solid-icons/ai';
+import {
+  AiOutlineUsergroupAdd,
+  AiOutlineBarChart,
+  AiOutlineFolderOpen,
+} from 'solid-icons/ai';
 import { BsClockHistory } from 'solid-icons/bs';
 import { BiRegularExpand } from 'solid-icons/bi';
 
@@ -63,26 +67,13 @@ export default function Features() {
           Everything you need to support rigorous study appraisal
         </h2>
         <p class='text-gray-600 max-w-2xl mx-auto'>
-          Built specifically for researchers who need to appraise study quality and risk of bias in
-          evidence reviews.
+          Built specifically for researchers who need to appraise study quality and risk
+          of bias in evidence reviews.
         </p>
       </div>
 
       <div class='grid md:grid-cols-2 lg:grid-cols-3 gap-6'>
         <For each={features}>{feature => <FeatureCard {...feature} />}</For>
-      </div>
-
-      {/* Supported Tools */}
-      <div class='mt-12 text-center'>
-        <p class='text-sm text-gray-500 mb-3'>Currently supported appraisal tools:</p>
-        <div class='flex flex-wrap justify-center gap-3'>
-          <span class='bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-sm font-medium'>
-            AMSTAR-2
-          </span>
-          <span class='bg-gray-100 text-gray-500 px-4 py-2 rounded-full text-sm'>
-            More coming soon
-          </span>
-        </div>
       </div>
     </section>
   );
