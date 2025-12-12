@@ -44,17 +44,17 @@ export default function Hero() {
         </div>
       </div>
       {/* Product Screenshot Placeholder: full width, bottom, angled */}
-      <div class='w-full flex justify-center px-4 sm:px-6'>
+      <div class='w-full flex justify-center px-4 sm:px-6 md:translate-x-10'>
         <div class='relative w-full max-w-5xl opacity-80'>
           <div class='bg-linear-to-br from-gray-100 to-gray-50 rounded-2xl border border-gray-200 shadow-2xl overflow-hidden mb-0 mt-0 transform-[perspective(900px)_rotateX(10deg)_rotateZ(-6deg)_rotateY(6deg)] md:transform-[perspective(1200px)_rotateX(14deg)_rotateZ(-10deg)_rotateY(8deg)]'>
-            <div class='aspect-16/7 flex items-center justify-center p-2'>
+            <div class='aspect-16/7 flex items-center justify-center p-1 sm:p-2'>
               <div class='text-center'>
                 <div
                   class='bg-gray-50 border border-gray-200 rounded-xl shadow-lg w-full h-full flex flex-col'
                   style={{ 'box-shadow': '0 6px 32px 0 rgba(0,0,0,0.10)' }}
                 >
                   {/* Browser top bar */}
-                  <div class='flex items-center px-4 py-2 border-b border-gray-200 bg-gray-100 rounded-t-xl'>
+                  <div class='flex items-center px-2 py-1 sm:px-4 sm:py-2 border-b border-gray-200 bg-gray-100 rounded-t-xl'>
                     <div class='flex items-center gap-2'>
                       <span class='w-3 h-3 rounded-full bg-red-400 inline-block' />
                       <span class='w-3 h-3 rounded-full bg-yellow-400 inline-block' />
