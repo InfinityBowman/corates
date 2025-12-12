@@ -202,11 +202,7 @@ export function FileUpload(props) {
         });
       }
 
-      console.log(
-        'After filtering:',
-        filteredFiles.length,
-        'files match accept criteria',
-      );
+      console.log('After filtering:', filteredFiles.length, 'files match accept criteria');
 
       if (filteredFiles.length > 0) {
         // Directly call the callback since we're bypassing Zag's internal handling
@@ -311,9 +307,7 @@ export function FileUpload(props) {
                   >
                     {file().name}
                   </div>
-                  <p class='text-xs text-gray-500'>
-                    {(file().size / 1024 / 1024).toFixed(2)} MB
-                  </p>
+                  <p class='text-xs text-gray-500'>{(file().size / 1024 / 1024).toFixed(2)} MB</p>
                 </div>
                 <button
                   {...api().getItemDeleteTriggerProps({ file: file() })}

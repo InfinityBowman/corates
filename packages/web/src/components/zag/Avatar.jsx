@@ -31,12 +31,7 @@ export function Avatar(props) {
       >
         {getInitials()}
       </span>
-      <img
-        alt={alt()}
-        src={src()}
-        {...api().getImageProps()}
-        class='w-full h-full object-cover'
-      />
+      <img alt={alt()} src={src()} {...api().getImageProps()} class='w-full h-full object-cover' />
     </div>
   );
 }

@@ -1,9 +1,5 @@
 import { createSignal, onMount, Show } from 'solid-js';
-import {
-  getLastLoginMethod,
-  LOGIN_METHOD_LABELS,
-  LOGIN_METHODS,
-} from '@lib/lastLoginMethod.js';
+import { getLastLoginMethod, LOGIN_METHOD_LABELS, LOGIN_METHODS } from '@lib/lastLoginMethod.js';
 import { AiOutlineGoogle } from 'solid-icons/ai';
 import { FaBrandsOrcid } from 'solid-icons/fa';
 import { FiLock, FiMail } from 'solid-icons/fi';

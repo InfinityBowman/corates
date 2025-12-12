@@ -22,10 +22,7 @@ export default function Footer() {
             <h4 class='font-semibold text-gray-900 mb-3'>Product</h4>
             <ul class='space-y-2 text-sm'>
               <li>
-                <a
-                  href='/#features'
-                  class='text-gray-500 hover:text-gray-700 transition-colors'
-                >
+                <a href='/#features' class='text-gray-500 hover:text-gray-700 transition-colors'>
                   Features
                 </a>
               </li>
@@ -46,10 +43,7 @@ export default function Footer() {
             <h4 class='font-semibold text-gray-900 mb-3'>Company</h4>
             <ul class='space-y-2 text-sm'>
               <li>
-                <a
-                  href='/about'
-                  class='text-gray-500 hover:text-gray-700 transition-colors'
-                >
+                <a href='/about' class='text-gray-500 hover:text-gray-700 transition-colors'>
                   About
                 </a>
               </li>
@@ -61,18 +55,12 @@ export default function Footer() {
             <h4 class='font-semibold text-gray-900 mb-3'>Legal</h4>
             <ul class='space-y-2 text-sm'>
               <li>
-                <a
-                  href='/privacy'
-                  class='text-gray-500 hover:text-gray-700 transition-colors'
-                >
+                <a href='/privacy' class='text-gray-500 hover:text-gray-700 transition-colors'>
                   Privacy Policy
                 </a>
               </li>
               <li>
-                <a
-                  href='/terms'
-                  class='text-gray-500 hover:text-gray-700 transition-colors'
-                >
+                <a href='/terms' class='text-gray-500 hover:text-gray-700 transition-colors'>
                   Terms of Service
                 </a>
               </li>

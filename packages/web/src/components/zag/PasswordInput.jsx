@@ -45,10 +45,7 @@ export default function PasswordInput(props) {
           class='absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-gray-400'
         >
           <span {...api().getIndicatorProps()}>
-            <Show
-              when={api().visible}
-              fallback={<FiEyeOff size={computedIconSize() - 2} />}
-            >
+            <Show when={api().visible} fallback={<FiEyeOff size={computedIconSize() - 2} />}>
               <FiEye size={computedIconSize()} />
             </Show>
           </span>

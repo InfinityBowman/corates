@@ -192,10 +192,7 @@ export default function ChecklistYjsWrapper() {
     updateChecklist(params.studyId, params.checklistId, { status: newStatus });
 
     if (newStatus === 'completed') {
-      showToast.success(
-        'Checklist Completed',
-        'This checklist has been marked as completed',
-      );
+      showToast.success('Checklist Completed', 'This checklist has been marked as completed');
     } else {
       showToast.info('Status Updated', 'Checklist marked as in-progress');
     }

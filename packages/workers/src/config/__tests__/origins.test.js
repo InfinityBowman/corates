@@ -86,7 +86,7 @@ describe('getAllowedOrigins', () => {
   it('should not duplicate AUTH_BASE_URL if already in list', () => {
     const env = {
       AUTH_BASE_URL: 'https://custom.com',
-      ALLOWED_ORIGINS: 'https://custom.com'
+      ALLOWED_ORIGINS: 'https://custom.com',
     };
     const origins = getAllowedOrigins(env);
 

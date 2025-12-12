@@ -145,9 +145,9 @@ describe('better-auth-store - Signup Flow', () => {
       error: { message: 'Email already exists' },
     });
 
-    await expect(
-      authStore.signup('test@example.com', 'password123', 'Test User'),
-    ).rejects.toThrow('Email already exists');
+    await expect(authStore.signup('test@example.com', 'password123', 'Test User')).rejects.toThrow(
+      'Email already exists',
+    );
 
     expect(authStore.authError()).toBe('Email already exists');
   });
@@ -476,9 +476,7 @@ describe('better-auth-store - Two-Factor Authentication', () => {
       error: { message: 'Invalid password' },
     });
 
-    await expect(authStore.enableTwoFactor('wrongPassword')).rejects.toThrow(
-      'Invalid password',
-    );
+    await expect(authStore.enableTwoFactor('wrongPassword')).rejects.toThrow('Invalid password');
     expect(authStore.authError()).toBe('Invalid password');
   });
 });
@@ -520,9 +518,7 @@ describe('better-auth-store - Profile Management', () => {
       error: { message: 'Update failed' },
     });
 
-    await expect(authStore.updateProfile({ name: 'Test' })).rejects.toThrow(
-      'Update failed',
-    );
+    await expect(authStore.updateProfile({ name: 'Test' })).rejects.toThrow('Update failed');
     expect(authStore.authError()).toBe('Update failed');
   });
 });

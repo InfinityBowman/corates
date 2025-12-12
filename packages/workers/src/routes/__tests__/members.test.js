@@ -242,9 +242,7 @@ describe('Member Routes - PUT /api/projects/:projectId/members/:userId', () => {
   });
 
   it('should allow promoting to owner', async () => {
-    mockDb.get
-      .mockResolvedValueOnce({ count: 1 })
-      .mockResolvedValueOnce({ role: 'collaborator' });
+    mockDb.get.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ role: 'collaborator' });
 
     mockDb.update = vi.fn().mockReturnThis();
     mockDb.set.mockReturnThis();
@@ -266,9 +264,7 @@ describe('Member Routes - PUT /api/projects/:projectId/members/:userId', () => {
   });
 
   it('should sync role update to Durable Object', async () => {
-    mockDb.get
-      .mockResolvedValueOnce({ count: 2 })
-      .mockResolvedValueOnce({ role: 'collaborator' });
+    mockDb.get.mockResolvedValueOnce({ count: 2 }).mockResolvedValueOnce({ role: 'collaborator' });
 
     const doFetch = vi.fn().mockResolvedValue({ ok: true });
     mockEnv.PROJECT_DOC.get.mockReturnValue({ fetch: doFetch });
@@ -340,9 +336,7 @@ describe('Member Routes - DELETE /api/projects/:projectId/members/:userId', () =
   });
 
   it('should sync member removal to Durable Object', async () => {
-    mockDb.get
-      .mockResolvedValueOnce({ role: 'collaborator' })
-      .mockResolvedValueOnce({ count: 2 });
+    mockDb.get.mockResolvedValueOnce({ role: 'collaborator' }).mockResolvedValueOnce({ count: 2 });
 
     const doFetch = vi.fn().mockResolvedValue({ ok: true });
     mockEnv.PROJECT_DOC.get.mockReturnValue({ fetch: doFetch });

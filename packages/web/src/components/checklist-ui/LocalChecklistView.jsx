@@ -17,8 +17,7 @@ import ScoreTag from '@/components/checklist-ui/ScoreTag.jsx';
 export default function LocalChecklistView() {
   const params = useParams();
   const navigate = useNavigate();
-  const { getChecklist, updateChecklist, getPdf, savePdf, deletePdf } =
-    useLocalChecklists();
+  const { getChecklist, updateChecklist, getPdf, savePdf, deletePdf } = useLocalChecklists();
 
   const [checklist, setChecklist] = createSignal(null);
   const [pdfData, setPdfData] = createSignal(null);

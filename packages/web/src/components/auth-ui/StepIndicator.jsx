@@ -17,9 +17,7 @@ export default function StepIndicator(props) {
             <>
               <div
                 class={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold transition-colors ${
-                  props.currentStep >= step ?
-                    'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-500'
+                  props.currentStep >= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
                 }`}
               >
                 {step}

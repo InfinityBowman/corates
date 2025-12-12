@@ -28,8 +28,7 @@ export function useProjectData(projectId, options = {}) {
   if (autoConnect) {
     // Only create connection if we need one
     const connectionState = () => projectStore.getConnectionState(projectId);
-    const needsConnection = () =>
-      !connectionState().connected && !connectionState().connecting;
+    const needsConnection = () => !connectionState().connected && !connectionState().connecting;
 
     if (needsConnection()) {
       projectHook = useProject(projectId);

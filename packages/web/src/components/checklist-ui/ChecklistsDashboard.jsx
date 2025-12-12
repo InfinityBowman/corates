@@ -22,8 +22,7 @@ export default function ChecklistsDashboard(props) {
     e.stopPropagation();
     const confirmed = await confirmDialog.open({
       title: 'Delete Checklist',
-      description:
-        'Are you sure you want to delete this checklist? This cannot be undone.',
+      description: 'Are you sure you want to delete this checklist? This cannot be undone.',
       confirmText: 'Delete',
       variant: 'danger',
     });
@@ -38,9 +37,7 @@ export default function ChecklistsDashboard(props) {
       <div class='flex justify-between items-center'>
         <div>
           <h1 class='text-2xl font-bold text-gray-900'>My Appraisals</h1>
-          <p class='text-gray-500 mt-1'>
-            Create and manage appraisals locally on this device
-          </p>
+          <p class='text-gray-500 mt-1'>Create and manage appraisals locally on this device</p>
         </div>
         <button
           class='inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg gap-2'
@@ -98,18 +95,14 @@ export default function ChecklistsDashboard(props) {
                 </div>
 
                 <div class='mb-4'>
-                  <h3 class='text-lg font-semibold text-gray-900 mb-2 pr-12'>
-                    {checklist.name}
-                  </h3>
+                  <h3 class='text-lg font-semibold text-gray-900 mb-2 pr-12'>{checklist.name}</h3>
                   <p class='text-gray-500 text-sm'>AMSTAR2 Checklist</p>
                 </div>
 
                 <div class='flex items-center justify-between text-xs text-gray-500 mb-4'>
                   <span>
                     Updated{' '}
-                    {new Date(
-                      checklist.updatedAt || checklist.createdAt,
-                    ).toLocaleDateString()}
+                    {new Date(checklist.updatedAt || checklist.createdAt).toLocaleDateString()}
                   </span>
                 </div>
 

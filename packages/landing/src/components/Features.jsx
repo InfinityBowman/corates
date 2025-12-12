@@ -1,10 +1,6 @@
 import { For } from 'solid-js';
 import { HiOutlineClipboardDocumentCheck } from 'solid-icons/hi';
-import {
-  AiOutlineUsergroupAdd,
-  AiOutlineBarChart,
-  AiOutlineFolderOpen,
-} from 'solid-icons/ai';
+import { AiOutlineUsergroupAdd, AiOutlineBarChart, AiOutlineFolderOpen } from 'solid-icons/ai';
 import { BsClockHistory } from 'solid-icons/bs';
 import { BiRegularExpand } from 'solid-icons/bi';
 
@@ -67,8 +63,8 @@ export default function Features() {
           Everything you need to support rigorous study appraisal
         </h2>
         <p class='text-gray-600 max-w-2xl mx-auto'>
-          Built specifically for researchers who need to appraise study quality and risk
-          of bias in evidence reviews.
+          Built specifically for researchers who need to appraise study quality and risk of bias in
+          evidence reviews.
         </p>
       </div>
 

@@ -25,10 +25,7 @@ export function Tooltip(props) {
       <span {...api().getTriggerProps()}>{children()}</span>
       <Show when={api().open}>
         <div {...api().getPositionerProps()}>
-          <div
-            {...api().getArrowProps()}
-            class='[--arrow-size:8px] [--arrow-background:#111827]'
-          >
+          <div {...api().getArrowProps()} class='[--arrow-size:8px] [--arrow-background:#111827]'>
             <div {...api().getArrowTipProps()} />
           </div>
           <div

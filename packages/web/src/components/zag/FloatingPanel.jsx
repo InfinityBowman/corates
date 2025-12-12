@@ -95,10 +95,7 @@ export function FloatingPanel(props) {
                 {...api().getHeaderProps()}
                 class='flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200 cursor-move'
               >
-                <h3
-                  {...api().getTitleProps()}
-                  class='text-sm font-semibold text-gray-900'
-                >
+                <h3 {...api().getTitleProps()} class='text-sm font-semibold text-gray-900'>
                   {title()}
                 </h3>
                 <Show when={showControls()}>

@@ -37,10 +37,7 @@ export function createReconciliationOperations(projectId, getYDoc, isSynced) {
     reconciliationMap.set('checklist2Id', progressData.checklist2Id);
     reconciliationMap.set('currentPage', progressData.currentPage);
     reconciliationMap.set('viewMode', progressData.viewMode || 'questions');
-    reconciliationMap.set(
-      'finalAnswers',
-      JSON.stringify(progressData.finalAnswers || {}),
-    );
+    reconciliationMap.set('finalAnswers', JSON.stringify(progressData.finalAnswers || {}));
     reconciliationMap.set('updatedAt', Date.now());
 
     studyYMap.set('updatedAt', Date.now());

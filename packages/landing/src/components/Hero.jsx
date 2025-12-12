@@ -12,8 +12,7 @@ export default function Hero() {
               class='w-24 h-24 absolute left-60 rounded-md'
             /> */}
             <h1 class='text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight text-center m-0'>
-              <span class='text-blue-700'>Co</span>llaborative{' '}
-              <span class='text-blue-700'>R</span>
+              <span class='text-blue-700'>Co</span>llaborative <span class='text-blue-700'>R</span>
               esearch <span class='text-blue-700'>A</span>ppraisal
               <span class='text-blue-700'> T</span>ool for
               <span class='text-blue-700'> E</span>
@@ -21,9 +20,9 @@ export default function Hero() {
             </h1>
           </div>
           <p class='text-lg sm:text-xl text-gray-600 mb-8 max-w-3xl leading-tight text-center mx-auto'>
-            Streamline the entire quality and risk-of-bias appraisal process with
-            intuitive workflows, real-time collaboration, and automation, creating greater
-            transparency and efficiency at every step.
+            Streamline the entire quality and risk-of-bias appraisal process with intuitive
+            workflows, real-time collaboration, and automation, creating greater transparency and
+            efficiency at every step.
           </p>
           <div class='flex flex-col sm:flex-row gap-4 sm:gap-12 mb-2 justify-center'>
             <a

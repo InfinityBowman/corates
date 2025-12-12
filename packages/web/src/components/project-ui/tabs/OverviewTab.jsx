@@ -112,12 +112,7 @@ export default function OverviewTab(props) {
                             when={member.image}
                             fallback={
                               <div class='w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium'>
-                                {(
-                                  member.displayName ||
-                                  member.name ||
-                                  member.email ||
-                                  '?'
-                                )
+                                {(member.displayName || member.name || member.email || '?')
                                   .charAt(0)
                                   .toUpperCase()}
                               </div>
@@ -169,9 +164,7 @@ export default function OverviewTab(props) {
 
       {/* Charts Section - Full width */}
       <div>
-        <h3 class='text-lg font-semibold text-gray-900 mb-4'>
-          Quality Assessment Charts
-        </h3>
+        <h3 class='text-lg font-semibold text-gray-900 mb-4'>Quality Assessment Charts</h3>
         <ChartSection
           studies={studies}
           members={members}

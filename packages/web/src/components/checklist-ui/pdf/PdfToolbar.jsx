@@ -4,12 +4,7 @@
  */
 
 import { Show, createSignal } from 'solid-js';
-import {
-  AiOutlineUpload,
-  AiOutlineClose,
-  AiOutlineMinus,
-  AiOutlinePlus,
-} from 'solid-icons/ai';
+import { AiOutlineUpload, AiOutlineClose, AiOutlineMinus, AiOutlinePlus } from 'solid-icons/ai';
 import {
   BiRegularChevronLeft,
   BiRegularChevronRight,
@@ -128,10 +123,7 @@ export default function PdfToolbar(props) {
           >
             <BiRegularChevronLeft class='w-5 h-5' />
           </button>
-          <form
-            onSubmit={handlePageSubmit}
-            class='flex items-center gap-1 whitespace-nowrap'
-          >
+          <form onSubmit={handlePageSubmit} class='flex items-center gap-1 whitespace-nowrap'>
             <input
               type='text'
               inputmode='numeric'

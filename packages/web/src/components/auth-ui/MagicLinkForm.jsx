@@ -109,8 +109,7 @@ export default function MagicLinkForm(props) {
             </PrimaryButton>
 
             <p class='text-center text-xs text-gray-500'>
-              {props.description ||
-                "We'll email you a magic link for password-free sign in."}
+              {props.description || "We'll email you a magic link for password-free sign in."}
             </p>
           </div>
         </form>
