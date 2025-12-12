@@ -17,7 +17,8 @@ export default function MultiPartQuestionPage(props) {
   const [selectedSource, setSelectedSource] = createSignal(null);
 
   // Check if both reviewers have the same answers
-  const reviewersAgree = () => multiPartAnswersEqual(props.reviewer1Answers, props.reviewer2Answers);
+  const reviewersAgree = () =>
+    multiPartAnswersEqual(props.reviewer1Answers, props.reviewer2Answers);
 
   // Initialize from props
   createEffect(() => {

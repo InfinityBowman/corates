@@ -66,10 +66,7 @@ export function Dialog(props) {
             {/* Header */}
             <div class='flex items-center justify-between p-4 border-b border-gray-200'>
               <div>
-                <h2
-                  {...api().getTitleProps()}
-                  class='text-lg font-semibold text-gray-900'
-                >
+                <h2 {...api().getTitleProps()} class='text-lg font-semibold text-gray-900'>
                   {title()}
                 </h2>
                 <Show when={description()}>
@@ -193,10 +190,7 @@ export default function ConfirmDialog(props) {
                 </div>
                 {/* Text content */}
                 <div class='flex-1 min-w-0'>
-                  <h2
-                    {...api().getTitleProps()}
-                    class='text-lg font-semibold text-gray-900'
-                  >
+                  <h2 {...api().getTitleProps()} class='text-lg font-semibold text-gray-900'>
                     {title()}
                   </h2>
                   <p {...api().getDescriptionProps()} class='mt-2 text-sm text-gray-600'>

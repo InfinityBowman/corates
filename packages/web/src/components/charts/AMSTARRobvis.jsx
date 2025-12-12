@@ -78,8 +78,7 @@ export default function AMSTARRobvis(props) {
   });
 
   // Calculate max cell size that keeps squares and fits both axes
-  const cellSizeX = () =>
-    Math.max(0, (width() - margin().left - margin().right) / nQuestions);
+  const cellSizeX = () => Math.max(0, (width() - margin().left - margin().right) / nQuestions);
   const cellSizeY = () =>
     Math.max(0, (height() - margin().top - margin().bottom) / Math.max(data().length, 1));
   const cellSize = () => Math.max(0, Math.min(cellSizeX(), cellSizeY()));
@@ -150,10 +149,7 @@ export default function AMSTARRobvis(props) {
       .attr('width', svgWidth())
       .attr('height', svgHeight())
       .style('background', '#ffffff')
-      .style(
-        'font-family',
-        '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      );
+      .style('font-family', '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif');
 
     svg.selectAll('*').remove();
 
@@ -283,8 +279,7 @@ export default function AMSTARRobvis(props) {
       style={{
         background: '#ffffff',
         'border-radius': '8px',
-        'box-shadow':
-          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        'box-shadow': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
         padding: '16px',
         margin: '16px 0',
       }}

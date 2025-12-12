@@ -62,9 +62,7 @@ export default function StrengthIndicator(props) {
                       <FiCheck class='w-3 h-3' />
                     : <FiX class='w-3 h-3' />}
                   </span>
-                  <span class={met() ? 'text-green-500' : 'text-red-500'}>
-                    {req.label}
-                  </span>
+                  <span class={met() ? 'text-green-500' : 'text-red-500'}>{req.label}</span>
                 </li>
               );
             }}

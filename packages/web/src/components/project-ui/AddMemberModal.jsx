@@ -85,20 +85,17 @@ export default function AddMemberModal(props) {
     setError(null);
 
     try {
-      const response = await fetch(
-        `${API_BASE}/api/projects/${props.projectId}/members`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: user.id,
-            role: selectedRole(),
-          }),
+      const response = await fetch(`${API_BASE}/api/projects/${props.projectId}/members`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      );
+        body: JSON.stringify({
+          userId: user.id,
+          role: selectedRole(),
+        }),
+      });
 
       if (!response.ok) {
         const data = await response.json();
@@ -211,9 +208,7 @@ export default function AddMemberModal(props) {
                 !selectedUser()
               }
             >
-              <p class='text-gray-500 text-sm'>
-                No users found matching "{searchQuery()}"
-              </p>
+              <p class='text-gray-500 text-sm'>No users found matching "{searchQuery()}"</p>
             </Show>
 
             {/* Selected User Display */}

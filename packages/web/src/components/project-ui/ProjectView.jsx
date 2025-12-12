@@ -53,11 +53,7 @@ export default function ProjectView() {
   const connectionState = () => projectStore.getConnectionState(params.projectId);
 
   // Create handlers
-  const studyHandlers = useProjectStudyHandlers(
-    params.projectId,
-    projectActions,
-    confirmDialog,
-  );
+  const studyHandlers = useProjectStudyHandlers(params.projectId, projectActions, confirmDialog);
   const checklistHandlers = useProjectChecklistHandlers(
     params.projectId,
     projectActions,
@@ -79,8 +75,7 @@ export default function ProjectView() {
   createEffect(() => {
     const state = connectionState();
     const pdfs = pendingPdfs();
-    if (!state.synced || !params.projectId || !Array.isArray(pdfs) || pdfs.length === 0)
-      return;
+    if (!state.synced || !params.projectId || !Array.isArray(pdfs) || pdfs.length === 0) return;
 
     batch(() => {
       setPendingPdfs(null);
@@ -93,9 +88,7 @@ export default function ProjectView() {
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
         uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName)
           .then(result => {
-            cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(
-              console.warn,
-            );
+            cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(console.warn);
             addPdfToStudy(studyId, {
               key: result.key,
               fileName: result.fileName,
@@ -113,8 +106,7 @@ export default function ProjectView() {
   createEffect(() => {
     const state = connectionState();
     const refs = pendingRefs();
-    if (!state.synced || !params.projectId || !Array.isArray(refs) || refs.length === 0)
-      return;
+    if (!state.synced || !params.projectId || !Array.isArray(refs) || refs.length === 0) return;
 
     batch(() => {
       setPendingRefs(null);
@@ -132,9 +124,8 @@ export default function ProjectView() {
   const getToDoCount = () => {
     const userId = user()?.id;
     if (!userId) return 0;
-    return studies().filter(
-      study => study.reviewer1 === userId || study.reviewer2 === userId,
-    ).length;
+    return studies().filter(study => study.reviewer1 === userId || study.reviewer2 === userId)
+      .length;
   };
 
   const getReadyToReconcileCount = () => {

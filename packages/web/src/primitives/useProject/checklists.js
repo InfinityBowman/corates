@@ -100,8 +100,7 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
     if (!checklistYMap) return;
 
     if (updates.title !== undefined) checklistYMap.set('title', updates.title);
-    if (updates.assignedTo !== undefined)
-      checklistYMap.set('assignedTo', updates.assignedTo);
+    if (updates.assignedTo !== undefined) checklistYMap.set('assignedTo', updates.assignedTo);
     if (updates.status !== undefined) checklistYMap.set('status', updates.status);
     checklistYMap.set('updatedAt', Date.now());
   }

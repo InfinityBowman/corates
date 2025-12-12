@@ -17,8 +17,7 @@ export const NAMING_CONVENTIONS = [
     id: 'title',
     label: 'Full Title',
     description: 'Use the complete study title',
-    example:
-      'Effects of Exercise on Sleep Quality: A Systematic Review and Meta-Analysis',
+    example: 'Effects of Exercise on Sleep Quality: A Systematic Review and Meta-Analysis',
   },
   {
     id: 'lastNameYear',

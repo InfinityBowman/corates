@@ -39,8 +39,7 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
 
     // Set optional reference metadata fields
     if (metadata.firstAuthor) studyYMap.set('firstAuthor', metadata.firstAuthor);
-    if (metadata.publicationYear)
-      studyYMap.set('publicationYear', metadata.publicationYear);
+    if (metadata.publicationYear) studyYMap.set('publicationYear', metadata.publicationYear);
     if (metadata.authors) studyYMap.set('authors', metadata.authors);
     if (metadata.journal) studyYMap.set('journal', metadata.journal);
     if (metadata.doi) studyYMap.set('doi', metadata.doi);
@@ -67,11 +66,9 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
     if (!studyYMap) return;
 
     if (updates.name !== undefined) studyYMap.set('name', updates.name);
-    if (updates.description !== undefined)
-      studyYMap.set('description', updates.description);
+    if (updates.description !== undefined) studyYMap.set('description', updates.description);
     // Reference metadata fields
-    if (updates.firstAuthor !== undefined)
-      studyYMap.set('firstAuthor', updates.firstAuthor);
+    if (updates.firstAuthor !== undefined) studyYMap.set('firstAuthor', updates.firstAuthor);
     if (updates.publicationYear !== undefined)
       studyYMap.set('publicationYear', updates.publicationYear);
     if (updates.authors !== undefined) studyYMap.set('authors', updates.authors);

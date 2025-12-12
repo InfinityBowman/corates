@@ -42,9 +42,7 @@ describe('generateStudyName', () => {
   describe('title convention', () => {
     it('should return full title', () => {
       const study = { title: 'Effects of Exercise on Sleep Quality' };
-      expect(generateStudyName(study, 'title')).toBe(
-        'Effects of Exercise on Sleep Quality',
-      );
+      expect(generateStudyName(study, 'title')).toBe('Effects of Exercise on Sleep Quality');
     });
 
     it('should return Untitled Study for missing title', () => {

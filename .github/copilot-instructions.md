@@ -34,7 +34,7 @@ When you need to find icons from `solid-icons`, use the `search_icons` MCP tool:
 
 When you need to implement UI components use zag.js
 The Zag.js docs are located at /docs/zag
-When adding a new zag component, place zag components into components/zag/* files.
+When adding a new zag component, place zag components into components/zag/\* files.
 
 ### Existing Zag Components
 

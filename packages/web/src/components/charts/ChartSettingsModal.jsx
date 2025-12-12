@@ -99,9 +99,7 @@ export default function ChartSettingsModal(props) {
               <h3 class='text-sm font-medium text-gray-700 mb-3'>Chart Titles</h3>
               <div class='space-y-3'>
                 <div>
-                  <label class='block text-xs text-gray-500 mb-1'>
-                    Quality Assessment Chart
-                  </label>
+                  <label class='block text-xs text-gray-500 mb-1'>Quality Assessment Chart</label>
                   <input
                     type='text'
                     value={props.robvisTitle}
@@ -110,9 +108,7 @@ export default function ChartSettingsModal(props) {
                   />
                 </div>
                 <div>
-                  <label class='block text-xs text-gray-500 mb-1'>
-                    Distribution Chart
-                  </label>
+                  <label class='block text-xs text-gray-500 mb-1'>Distribution Chart</label>
                   <input
                     type='text'
                     value={props.distributionTitle}
@@ -155,18 +151,14 @@ export default function ChartSettingsModal(props) {
                   class='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2'
                 />
                 <div>
-                  <span class='text-sm font-medium text-gray-700'>
-                    Transparent Background
-                  </span>
+                  <span class='text-sm font-medium text-gray-700'>Transparent Background</span>
                   <p class='text-xs text-gray-500'>Export without white background</p>
                 </div>
               </label>
 
               <div class='space-y-3'>
                 <div class='p-3 bg-gray-50 rounded-lg'>
-                  <p class='text-sm font-medium text-gray-700 mb-2'>
-                    Quality Assessment Chart
-                  </p>
+                  <p class='text-sm font-medium text-gray-700 mb-2'>Quality Assessment Chart</p>
                   <div class='flex gap-2'>
                     <button
                       onClick={() => props.onExportRobvis('svg')}
@@ -206,26 +198,25 @@ export default function ChartSettingsModal(props) {
             <div class='mt-6 pt-6 border-t border-gray-200'>
               <h3 class='text-sm font-medium text-gray-700 mb-3'>How to Cite CoRATES</h3>
               <p class='text-xs text-gray-500 mb-4'>
-                Use this citation when you reference CoRATES as the software used for
-                study appraisal.
+                Use this citation when you reference CoRATES as the software used for study
+                appraisal.
               </p>
 
               <div class='space-y-4'>
                 <div class='p-4 bg-gray-50 rounded-lg'>
                   <h4 class='text-xs font-semibold text-gray-700 mb-2'>APA</h4>
                   <p class='text-sm text-gray-700 leading-relaxed'>
-                    Maynard, J. A., & Maynard, B. R. (2025). CoRATES (Collaborative
-                    Risk-of-Bias and Appraisal Tracking for Evidence Synthesis)
-                    [Software]. https://corates.org
+                    Maynard, J. A., & Maynard, B. R. (2025). CoRATES (Collaborative Risk-of-Bias and
+                    Appraisal Tracking for Evidence Synthesis) [Software]. https://corates.org
                   </p>
                 </div>
 
                 <div class='p-4 bg-gray-50 rounded-lg'>
                   <h4 class='text-xs font-semibold text-gray-700 mb-2'>AMA</h4>
                   <p class='text-sm text-gray-700 leading-relaxed'>
-                    Maynard JA, Maynard BR. CoRATES (Collaborative Risk-of-Bias and
-                    Appraisal Tracking for Evidence Synthesis)[software]. 2025. Accessed
-                    Month Day, Year. https://corates.org
+                    Maynard JA, Maynard BR. CoRATES (Collaborative Risk-of-Bias and Appraisal
+                    Tracking for Evidence Synthesis)[software]. 2025. Accessed Month Day, Year.
+                    https://corates.org
                   </p>
                 </div>
               </div>

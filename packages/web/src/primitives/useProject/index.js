@@ -148,12 +148,7 @@ export function useProject(projectId) {
 
   // Reconnect when coming back online
   createEffect(() => {
-    if (
-      isOnline() &&
-      connectionManager?.getShouldReconnect() &&
-      !connected() &&
-      !connecting()
-    ) {
+    if (isOnline() && connectionManager?.getShouldReconnect() && !connected() && !connecting()) {
       console.log('Network is back online. Attempting to reconnect...');
       connectionManager.setShouldReconnect(false);
       connectionManager.reconnect();
@@ -196,10 +191,8 @@ export function useProject(projectId) {
     removePdfFromStudy: (...args) => pdfOps?.removePdfFromStudy(...args),
 
     // Reconciliation operations
-    saveReconciliationProgress: (...args) =>
-      reconciliationOps?.saveReconciliationProgress(...args),
-    getReconciliationProgress: (...args) =>
-      reconciliationOps?.getReconciliationProgress(...args),
+    saveReconciliationProgress: (...args) => reconciliationOps?.saveReconciliationProgress(...args),
+    getReconciliationProgress: (...args) => reconciliationOps?.getReconciliationProgress(...args),
     clearReconciliationProgress: (...args) =>
       reconciliationOps?.clearReconciliationProgress(...args),
 

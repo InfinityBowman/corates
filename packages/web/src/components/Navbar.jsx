@@ -134,9 +134,7 @@ export default function Navbar(props) {
                   referrerPolicy='no-referrer'
                 />
               </Show>
-              <span class='hidden sm:block'>
-                {user()?.name || storedName || 'Loading...'}
-              </span>
+              <span class='hidden sm:block'>{user()?.name || storedName || 'Loading...'}</span>
               <svg
                 class={`w-3 h-3 transition-transform ${showUserMenu() ? 'rotate-180' : ''}`}
                 fill='none'

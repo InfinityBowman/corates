@@ -141,28 +141,8 @@ describe('createChecklist', () => {
     });
 
     // Critical questions per AMSTAR2: 2, 4, 7, 9, 11, 13, 15
-    const criticalQuestions = [
-      'q2',
-      'q4',
-      'q7',
-      'q9a',
-      'q9b',
-      'q11a',
-      'q11b',
-      'q13',
-      'q15',
-    ];
-    const nonCriticalQuestions = [
-      'q1',
-      'q3',
-      'q5',
-      'q6',
-      'q8',
-      'q10',
-      'q12',
-      'q14',
-      'q16',
-    ];
+    const criticalQuestions = ['q2', 'q4', 'q7', 'q9a', 'q9b', 'q11a', 'q11b', 'q13', 'q15'];
+    const nonCriticalQuestions = ['q1', 'q3', 'q5', 'q6', 'q8', 'q10', 'q12', 'q14', 'q16'];
 
     criticalQuestions.forEach(q => {
       it(`should mark ${q} as critical`, () => {

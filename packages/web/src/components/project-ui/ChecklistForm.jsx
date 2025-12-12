@@ -18,9 +18,7 @@ export default function ChecklistForm(props) {
     <div class='bg-blue-50 border border-blue-200 rounded-lg p-4 m-4'>
       <div class='space-y-3'>
         <div>
-          <label class='block text-sm font-semibold text-gray-700 mb-1'>
-            Checklist Type
-          </label>
+          <label class='block text-sm font-semibold text-gray-700 mb-1'>Checklist Type</label>
           <select
             value={type()}
             onChange={e => setType(e.target.value)}

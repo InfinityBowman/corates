@@ -21,9 +21,7 @@ export default function ChecklistRow(props) {
     <div class='p-4 transition-colors flex items-center justify-between group hover:bg-gray-50'>
       <div class='flex-1'>
         <div class='flex items-center gap-3'>
-          <h4 class='text-gray-900 font-medium'>
-            {props.checklist.type || 'AMSTAR2'} Checklist
-          </h4>
+          <h4 class='text-gray-900 font-medium'>{props.checklist.type || 'AMSTAR2'} Checklist</h4>
           <span
             class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusStyle(props.checklist.status)}`}
           >

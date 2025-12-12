@@ -19,8 +19,7 @@ export default function HowItWorks() {
       number: 3,
       icon: <AiOutlineTeam class='w-6 h-6' />,
       title: 'Appraise Together',
-      description:
-        'Complete assessments collaboratively with automatic scoring and summaries.',
+      description: 'Complete assessments collaboratively with automatic scoring and summaries.',
     },
   ];
 

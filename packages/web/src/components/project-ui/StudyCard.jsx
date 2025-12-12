@@ -103,9 +103,7 @@ export default function StudyCard(props) {
       <Show
         when={props.study.checklists?.length > 0}
         fallback={
-          <div class='p-4 text-center text-gray-400 text-sm'>
-            No checklists in this study yet
-          </div>
+          <div class='p-4 text-center text-gray-400 text-sm'>No checklists in this study yet</div>
         }
       >
         <div class='divide-y divide-gray-200'>

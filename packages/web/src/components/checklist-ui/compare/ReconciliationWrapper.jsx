@@ -194,17 +194,10 @@ export default function ReconciliationWrapper() {
       }
 
       // Update each question's answer
-      const questionKeys = Object.keys(reconciledChecklist).filter(k =>
-        /^q\d+[a-z]*$/i.test(k),
-      );
+      const questionKeys = Object.keys(reconciledChecklist).filter(k => /^q\d+[a-z]*$/i.test(k));
 
       for (const key of questionKeys) {
-        updateChecklistAnswer(
-          params.studyId,
-          newChecklistId,
-          key,
-          reconciledChecklist[key],
-        );
+        updateChecklistAnswer(params.studyId, newChecklistId, key, reconciledChecklist[key]);
       }
 
       // Clear the reconciliation progress since we've completed it
