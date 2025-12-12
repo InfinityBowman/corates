@@ -12,8 +12,8 @@
   <rect x="23" y="318" width="145" height="108" fill="#7eb8e8"/>
   
   <!-- White checkmark - larger outer stroke, moved up -->
-  <path d="M 100 285 L 195 380 L 480 95" fill="none" stroke="#ffffff" stroke-width="115" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- <path d="M 100 285 L 195 380 L 480 95" fill="none" stroke="#ffffff" stroke-width="115" stroke-linecap="round" stroke-linejoin="round"/> -->
   
   <!-- Blue checkmark - inner accent, moved up -->
-  <path d="M 100 285 L 195 380 L 480 95" fill="none" stroke="#1e4d8b" stroke-width="55" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- <path d="M 100 285 L 195 380 L 480 95" fill="none" stroke="#1e4d8b" stroke-width="55" stroke-linecap="round" stroke-linejoin="round"/> -->
 </svg>

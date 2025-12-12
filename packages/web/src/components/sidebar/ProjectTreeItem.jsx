@@ -68,7 +68,9 @@ export default function ProjectTreeItem(props) {
                 fallback={
                   <Show
                     when={projectData.connecting() || !projectData.synced()}
-                    fallback={<div class='py-2 px-2 text-xs text-gray-500'>No studies yet</div>}
+                    fallback={
+                      <div class='py-2 px-2 text-xs text-gray-500'>No studies yet</div>
+                    }
                   >
                     <div class='py-2 px-2 text-xs text-gray-400'>Loading...</div>
                   </Show>

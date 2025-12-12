@@ -154,7 +154,11 @@ export default function CompleteProfile() {
   }
 
   createEffect(() => {
-    if (needsPassword() && password() === confirmPassword() && error().includes('match')) {
+    if (
+      needsPassword() &&
+      password() === confirmPassword() &&
+      error().includes('match')
+    ) {
       setError('');
     }
   });
@@ -178,7 +182,9 @@ export default function CompleteProfile() {
               <h2 class='text-xl sm:text-2xl font-bold text-gray-900 mb-1'>
                 Complete Your Profile
               </h2>
-              <p class='text-gray-500 text-xs sm:text-sm'>Just a few details to get you started</p>
+              <p class='text-gray-500 text-xs sm:text-sm'>
+                Just a few details to get you started
+              </p>
             </div>
 
             <form onSubmit={handleNextStep} class='space-y-4' autocomplete='off'>
@@ -235,7 +241,10 @@ export default function CompleteProfile() {
                     autoComplete='new-password'
                     required
                   />
-                  <StrengthIndicator password={password()} onUnmet={setUnmetRequirements} />
+                  <StrengthIndicator
+                    password={password()}
+                    onUnmet={setUnmetRequirements}
+                  />
                 </div>
 
                 <div>
@@ -283,7 +292,9 @@ export default function CompleteProfile() {
               <h2 class='text-xl sm:text-2xl font-bold text-gray-900 mb-1'>
                 What best describes you?
               </h2>
-              <p class='text-gray-500 text-xs sm:text-sm'>This helps us tailor your experience</p>
+              <p class='text-gray-500 text-xs sm:text-sm'>
+                This helps us tailor your experience
+              </p>
             </div>
 
             <form onSubmit={handleFinish} class='space-y-4'>
@@ -291,7 +302,11 @@ export default function CompleteProfile() {
 
               <ErrorMessage displayError={displayError} />
 
-              <PrimaryButton loading={loading()} loadingText='Finishing...' disabled={!role()}>
+              <PrimaryButton
+                loading={loading()}
+                loadingText='Finishing...'
+                disabled={!role()}
+              >
                 Finish Setup
               </PrimaryButton>
 

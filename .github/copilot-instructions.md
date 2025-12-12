@@ -34,11 +34,11 @@ When you need to find icons from `solid-icons`, use the `search_icons` MCP tool:
 
 When you need to implement UI components use zag.js
 The Zag.js docs are located at /docs/zag
-When adding a new zag component, place zag components into components/zag/\* files.
+When adding a new zag component, place zag components into components/zag/* files.
 
 ### Existing Zag Components
 
-The following Zag components already exist in `packages/web/src/components/zag/` and should be reused:
+The following Zag components already exist in `packages/web/src/components/zag/*` and should be reused:
 
 - `Avatar.jsx` - User avatar with image and fallback initials (supports `src`, `name`, `alt`, `onStatusChange`, `class` props)
 - `Checkbox.jsx` - Checkbox input with label
