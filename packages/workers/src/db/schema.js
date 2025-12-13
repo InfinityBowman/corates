@@ -13,7 +13,9 @@ export const user = sqliteTable('user', {
   username: text('username').unique(),
   displayName: text('displayName'),
   avatarUrl: text('avatarUrl'),
-  role: text('role'), // researcher, student, librarian, other
+  role: text('role'), // Better Auth admin/plugin role (e.g. 'user', 'admin')
+  persona: text('persona'), // optional: researcher, student, librarian, other
+  profileCompletedAt: integer('profileCompletedAt'), // unix timestamp (seconds)
   twoFactorEnabled: integer('twoFactorEnabled', { mode: 'boolean' }).default(false),
   // Admin plugin fields
   banned: integer('banned', { mode: 'boolean' }).default(false),
@@ -103,6 +105,24 @@ export const mediaFiles = sqliteTable('mediaFiles', {
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 
+// Subscriptions table (Stripe billing)
+export const subscriptions = sqliteTable('subscriptions', {
+  id: text('id').primaryKey(),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' })
+    .unique(),
+  stripeCustomerId: text('stripeCustomerId').unique(),
+  stripeSubscriptionId: text('stripeSubscriptionId').unique(),
+  tier: text('tier').notNull().default('free'), // 'free', 'basic', 'pro', 'enterprise'
+  status: text('status').notNull().default('active'), // 'active', 'canceled', 'past_due', 'trialing', 'incomplete'
+  currentPeriodStart: integer('currentPeriodStart', { mode: 'timestamp' }),
+  currentPeriodEnd: integer('currentPeriodEnd', { mode: 'timestamp' }),
+  cancelAtPeriodEnd: integer('cancelAtPeriodEnd', { mode: 'boolean' }).default(false),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+});
+
 // Two-Factor Authentication table
 export const twoFactor = sqliteTable('twoFactor', {
   id: text('id').primaryKey(),
@@ -125,4 +145,5 @@ export const dbSchema = {
   projects,
   projectMembers,
   mediaFiles,
+  subscriptions,
 };

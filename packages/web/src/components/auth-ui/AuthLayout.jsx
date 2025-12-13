@@ -29,7 +29,7 @@ export default function AuthLayout(props) {
 
       // If user hasn't completed profile setup, send to complete-profile
       // Otherwise send to dashboard
-      if (!currentUser?.role) {
+      if (!currentUser?.profileCompletedAt) {
         navigate('/complete-profile', { replace: true });
       } else {
         navigate('/dashboard', { replace: true });
