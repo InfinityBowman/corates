@@ -55,10 +55,19 @@ export default function ProjectDashboard(props) {
     disconnect();
   });
 
-  const handleProjectCreated = (newProject, pendingPdfs = [], pendingRefs = []) => {
+  const handleProjectCreated = (
+    newProject,
+    pendingPdfs = [],
+    pendingRefs = [],
+    driveFiles = [],
+  ) => {
     projectStore.addProjectToList(newProject);
+    // Store non-serializable data in projectStore instead of router state
+    if (pendingPdfs.length > 0 || pendingRefs.length > 0 || driveFiles.length > 0) {
+      projectStore.setPendingProjectData(newProject.id, { pendingPdfs, pendingRefs, driveFiles });
+    }
     setShowCreateForm(false);
-    navigate(`/projects/${newProject.id}`, { state: { pendingPdfs, pendingRefs } });
+    navigate(`/projects/${newProject.id}`);
   };
 
   const openProject = projectId => {

@@ -81,7 +81,7 @@ export default function HomePage() {
         </div>
 
         {/* Background decoration */}
-        <div class='absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-linear-to-b from-blue-50/50 to-transparent rounded-full blur-3xl -z-10' />
+        <div class='absolute top-0 left-1/2 -translate-x-1/2 w-200 h-200 bg-linear-to-b from-blue-50/50 to-transparent rounded-full blur-3xl -z-10' />
       </section>
 
       {/* Features Section */}
