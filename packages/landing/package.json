@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vinxi dev --port 3010",
+    "dev:prod": "pnpm run build:prod && pnpm --filter @corates/web build && wrangler dev --port 3010",
     "build": "vinxi build --mode production",
     "build:prod": "vinxi build --mode production",
-    "preview": "npx serve .output/public -l 3010",
-    "deploy": "pnpm run build:prod && wrangler deploy"
+    "preview": "npx serve .output/public",
+    "deploy": "pnpm run build:prod && pnpm --filter @corates/web build && wrangler deploy"
   },
   "dependencies": {
     "@solidjs/meta": "^0.29.4",

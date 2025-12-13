@@ -3,6 +3,7 @@ import { useNavigate } from '@solidjs/router';
 import { useProjectData } from '@primitives/useProjectData.js';
 import Collapsible from '@components/zag/Collapsible.jsx';
 import { AiOutlineFolder, AiOutlineFolderOpen } from 'solid-icons/ai';
+import { FiChevronRight } from 'solid-icons/fi';
 import StudyTreeItem from './StudyTreeItem.jsx';
 
 /**
@@ -41,19 +42,9 @@ export default function ProjectTreeItem(props) {
                   class='p-2 hover:bg-gray-100 rounded-l-lg'
                   aria-label={props.isExpanded ? 'Collapse' : 'Expand'}
                 >
-                  <svg
+                  <FiChevronRight
                     class={`w-3 h-3 text-gray-500 transition-transform ${props.isExpanded ? 'rotate-90' : ''}`}
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth='2'
-                      d='M9 5l7 7-7 7'
-                    />
-                  </svg>
+                  />
                 </button>
                 <button
                   onClick={() => navigate(projectPath)}
@@ -88,6 +79,7 @@ export default function ProjectTreeItem(props) {
                     <StudyTreeItem
                       study={study}
                       projectId={projectId}
+                      userId={props.userId}
                       currentPath={props.currentPath}
                     />
                   )}

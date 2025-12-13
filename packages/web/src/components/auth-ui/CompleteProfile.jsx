@@ -7,6 +7,7 @@ import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton } from './AuthButtons.jsx';
 import RoleSelector from './RoleSelector.jsx';
 import StepIndicator from './StepIndicator.jsx';
+import { FiChevronLeft } from 'solid-icons/fi';
 
 /**
  * Complete Profile page - shown after email verification or OAuth signup
@@ -273,14 +274,7 @@ export default function CompleteProfile() {
                 onClick={handleBack}
                 class='text-sm text-gray-500 hover:text-gray-700 flex items-center'
               >
-                <svg class='w-4 h-4 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path
-                    stroke-linecap='round'
-                    stroke-linejoin='round'
-                    stroke-width='2'
-                    d='M15 19l-7-7 7-7'
-                  />
-                </svg>
+                <FiChevronLeft class='w-4 h-4 mr-1' />
                 Back
               </button>
             </div>

@@ -11,9 +11,9 @@ import projectStore from '@primitives/projectStore.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 
 /**
- * IncludedStudiesTab - Displays all studies in a project
+ * AllStudiesTab - Displays all studies in a project
  */
-export default function IncludedStudiesTab() {
+export default function AllStudiesTab() {
   const { projectId, handlers, getAssigneeName } = useProjectContext();
 
   // Local UI state - managed here, not in parent
@@ -319,7 +319,7 @@ export default function IncludedStudiesTab() {
         </div>
       </Show>
 
-      {/* Google Drive Modal - managed locally */}
+      {/* Google Drive Modal */}
       <GoogleDrivePickerModal
         open={showGoogleDriveModal()}
         onClose={() => {

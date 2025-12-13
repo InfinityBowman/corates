@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "corates": {
+      "enabled": true,
+      "type": "stdio",
+      "command": "node",
+      "args": ["${workspaceFolder}/packages/mcp/server.js"]
+    }
+  }
+}

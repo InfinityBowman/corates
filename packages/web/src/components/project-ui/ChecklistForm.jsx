@@ -3,7 +3,7 @@
  */
 
 import { createSignal, For } from 'solid-js';
-import { CHECKLIST_TYPES } from '../../AMSTAR2/checklist-map';
+import { CHECKLIST_TYPES } from '@/AMSTAR2/checklist-map';
 
 export default function ChecklistForm(props) {
   const [type, setType] = createSignal('AMSTAR2');
@@ -16,7 +16,6 @@ export default function ChecklistForm(props) {
 
   return (
     <div class='bg-blue-50 border border-blue-200 rounded-lg p-4 m-4'>
-      <h4 class='text-base font-semibold text-gray-900 mb-3'>Add Checklist</h4>
       <div class='space-y-3'>
         <div>
           <label class='block text-sm font-semibold text-gray-700 mb-1'>Checklist Type</label>

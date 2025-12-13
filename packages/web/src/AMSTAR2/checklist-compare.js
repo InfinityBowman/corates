@@ -254,15 +254,29 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
 
   for (const key of questionKeys) {
     const selection = selections[key];
+    const dataKeys = getDataKeysForQuestion(key);
 
-    if (!selection || selection === 'reviewer1') {
-      // Default to reviewer 1 if no selection
-      reconciled[key] = JSON.parse(JSON.stringify(checklist1[key]));
-    } else if (selection === 'reviewer2') {
-      reconciled[key] = JSON.parse(JSON.stringify(checklist2[key]));
-    } else if (typeof selection === 'object') {
-      // Custom merged answer
-      reconciled[key] = JSON.parse(JSON.stringify(selection));
+    // Handle multi-part questions (q9 and q11)
+    if (isMultiPartQuestion(key)) {
+      for (const dataKey of dataKeys) {
+        if (!selection || selection === 'reviewer1') {
+          reconciled[dataKey] = JSON.parse(JSON.stringify(checklist1[dataKey]));
+        } else if (selection === 'reviewer2') {
+          reconciled[dataKey] = JSON.parse(JSON.stringify(checklist2[dataKey]));
+        } else if (typeof selection === 'object' && selection[dataKey]) {
+          reconciled[dataKey] = JSON.parse(JSON.stringify(selection[dataKey]));
+        }
+      }
+    } else {
+      if (!selection || selection === 'reviewer1') {
+        // Default to reviewer 1 if no selection
+        reconciled[key] = JSON.parse(JSON.stringify(checklist1[key]));
+      } else if (selection === 'reviewer2') {
+        reconciled[key] = JSON.parse(JSON.stringify(checklist2[key]));
+      } else if (typeof selection === 'object') {
+        // Custom merged answer
+        reconciled[key] = JSON.parse(JSON.stringify(selection));
+      }
     }
   }
 

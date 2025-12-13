@@ -1,4 +1,4 @@
-import { createSignal, createEffect, createMemo, For } from 'solid-js';
+import { createSignal, createEffect, createMemo, For, Show } from 'solid-js';
 import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
 import { getDataKeysForQuestion } from '@/AMSTAR2/checklist-compare.js';
 import AnswerPanel from './AnswerPanel.jsx';
@@ -15,6 +15,10 @@ export default function MultiPartQuestionPage(props) {
   // Local state for each part
   const [localFinal, setLocalFinal] = createSignal({});
   const [selectedSource, setSelectedSource] = createSignal(null);
+
+  // Check if both reviewers have the same answers
+  const reviewersAgree = () =>
+    multiPartAnswersEqual(props.reviewer1Answers, props.reviewer2Answers);
 
   // Initialize from props
   createEffect(() => {
@@ -113,22 +117,6 @@ export default function MultiPartQuestionPage(props) {
     props.onFinalChange?.(newFinal);
   }
 
-  function handleCriticalChange(critical) {
-    const current = localFinal();
-    if (!current) return;
-
-    // Update critical for all parts
-    const newFinal = { ...current };
-    for (const dk of dataKeys()) {
-      if (newFinal[dk]) {
-        newFinal[dk] = { ...newFinal[dk], critical };
-      }
-    }
-    setLocalFinal(newFinal);
-    setSelectedSource('custom');
-    props.onFinalChange?.(newFinal);
-  }
-
   // Get columns for each part
   const getColumnsForPart = partKey => {
     if (props.questionKey === 'q9') {
@@ -150,13 +138,26 @@ export default function MultiPartQuestionPage(props) {
     return null;
   };
 
+  const isCritical = () => {
+    const firstPartKey = dataKeys()[0];
+    return (
+      props.reviewer1Answers?.[firstPartKey]?.critical ||
+      props.reviewer2Answers?.[firstPartKey]?.critical
+    );
+  };
+
   return (
     <div class='bg-white rounded-lg shadow-lg overflow-hidden'>
       {/* Question Header */}
       <div
         class={`p-4 ${props.isAgreement ? 'bg-green-50 border-b border-green-200' : 'bg-amber-50 border-b border-amber-200'}`}
       >
-        <h2 class='text-lg font-semibold text-gray-900'>{question()?.text}</h2>
+        <h2 class='text-lg font-semibold text-gray-900'>
+          {question()?.text}
+          <Show when={isCritical()}>
+            <span class='ml-2 text-sm font-medium text-red-600'>(Critical)</span>
+          </Show>
+        </h2>
         <div class='mt-2 flex items-center gap-3'>
           <span
             class={`text-sm font-medium ${props.isAgreement ? 'text-green-700' : 'text-amber-700'}`}
@@ -172,16 +173,18 @@ export default function MultiPartQuestionPage(props) {
         <div class='p-4 bg-blue-50/30'>
           <div class='flex items-center justify-between mb-3'>
             <h3 class='font-medium text-blue-800'>{props.reviewer1Name || 'Reviewer 1'}</h3>
-            <button
-              onClick={useReviewer1}
-              class={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                selectedSource() === 'reviewer1' ? 'bg-blue-600 text-white' : (
-                  'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                )
-              }`}
-            >
-              {selectedSource() === 'reviewer1' ? 'Selected' : 'Use This'}
-            </button>
+            <Show when={!reviewersAgree()}>
+              <button
+                onClick={useReviewer1}
+                class={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                  selectedSource() === 'reviewer1' ? 'bg-blue-600 text-white' : (
+                    'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  )
+                }`}
+              >
+                {selectedSource() === 'reviewer1' ? 'Selected' : 'Use This'}
+              </button>
+            </Show>
           </div>
           <For each={dataKeys()}>
             {partKey => (
@@ -205,16 +208,18 @@ export default function MultiPartQuestionPage(props) {
         <div class='p-4 bg-purple-50/30'>
           <div class='flex items-center justify-between mb-3'>
             <h3 class='font-medium text-purple-800'>{props.reviewer2Name || 'Reviewer 2'}</h3>
-            <button
-              onClick={useReviewer2}
-              class={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                selectedSource() === 'reviewer2' ?
-                  'bg-purple-600 text-white'
-                : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-              }`}
-            >
-              {selectedSource() === 'reviewer2' ? 'Selected' : 'Use This'}
-            </button>
+            <Show when={!reviewersAgree()}>
+              <button
+                onClick={useReviewer2}
+                class={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                  selectedSource() === 'reviewer2' ?
+                    'bg-purple-600 text-white'
+                  : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                }`}
+              >
+                {selectedSource() === 'reviewer2' ? 'Selected' : 'Use This'}
+              </button>
+            </Show>
           </div>
           <For each={dataKeys()}>
             {partKey => (
@@ -236,18 +241,8 @@ export default function MultiPartQuestionPage(props) {
 
         {/* Final Panel */}
         <div class='p-4 bg-green-50/30'>
-          <div class='flex items-center justify-between mb-3'>
+          <div class='mb-3'>
             <h3 class='font-medium text-green-800'>Final Answer</h3>
-            <button
-              onClick={() => handleCriticalChange(!localFinal()?.[dataKeys()[0]]?.critical)}
-              class={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                localFinal()?.[dataKeys()[0]]?.critical ?
-                  'bg-red-100 text-red-700 border border-red-300'
-                : 'bg-gray-100 text-gray-700 border border-gray-300'
-              }`}
-            >
-              {localFinal()?.[dataKeys()[0]]?.critical ? 'Critical' : 'Not Critical'}
-            </button>
           </div>
           <For each={dataKeys()}>
             {partKey => (

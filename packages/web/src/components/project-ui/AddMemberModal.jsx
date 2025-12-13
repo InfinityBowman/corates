@@ -1,5 +1,6 @@
 import { createSignal, For, Show, createEffect, onCleanup } from 'solid-js';
 import { API_BASE } from '@config/api.js';
+import { FiX } from 'solid-icons/fi';
 
 /**
  * Modal for searching and adding members to a project
@@ -143,14 +144,7 @@ export default function AddMemberModal(props) {
               onClick={handleClose}
               class='text-gray-400 hover:text-gray-600 transition-colors'
             >
-              <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path
-                  stroke-linecap='round'
-                  stroke-linejoin='round'
-                  stroke-width='2'
-                  d='M6 18L18 6M6 6l12 12'
-                />
-              </svg>
+              <FiX class='w-5 h-5' />
             </button>
           </div>
 
@@ -245,14 +239,7 @@ export default function AddMemberModal(props) {
                   }}
                   class='text-gray-400 hover:text-gray-600'
                 >
-                  <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path
-                      stroke-linecap='round'
-                      stroke-linejoin='round'
-                      stroke-width='2'
-                      d='M6 18L18 6M6 6l12 12'
-                    />
-                  </svg>
+                  <FiX class='w-5 h-5' />
                 </button>
               </div>
             </Show>

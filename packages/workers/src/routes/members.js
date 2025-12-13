@@ -9,13 +9,7 @@ import { projectMembers, user, projects } from '../db/schema.js';
 import { eq, and, count } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { memberSchemas, validateRequest } from '../config/validation.js';
-import {
-  createErrorResponse,
-  ERROR_CODES,
-  PROJECT_ROLES,
-  isValidRole,
-  canManageMembers,
-} from '../config/constants.js';
+import { createErrorResponse, ERROR_CODES } from '../config/constants.js';
 
 const memberRoutes = new Hono();
 

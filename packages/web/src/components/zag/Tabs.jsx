@@ -12,13 +12,18 @@ import { createMemo, createUniqueId, For, Show } from 'solid-js';
  * @param {Object} props.children - Tab content as children (use TabContent component)
  */
 export function Tabs(props) {
+  const value = () => props.value;
+  const defaultValue = () => props.defaultValue;
+  const tabsList = () => props.tabs;
+  const children = () => props.children;
+
   const service = useMachine(tabs.machine, {
     id: createUniqueId(),
     get value() {
-      return props.value;
+      return value();
     },
     get defaultValue() {
-      return props.defaultValue || props.tabs[0]?.value;
+      return defaultValue() || tabsList()[0]?.value;
     },
     onValueChange(details) {
       props.onValueChange?.(details.value);
@@ -33,7 +38,7 @@ export function Tabs(props) {
         {...api().getListProps()}
         class='flex border-b border-gray-200 bg-white rounded-t-lg overflow-x-auto'
       >
-        <For each={props.tabs}>
+        <For each={tabsList()}>
           {tab => (
             <button
               {...api().getTriggerProps({ value: tab.value })}
@@ -53,14 +58,14 @@ export function Tabs(props) {
         </For>
         <div {...api().getIndicatorProps()} class='hidden' />
       </div>
-      <Show when={props.children}>
-        <For each={props.tabs}>
+      <Show when={children()}>
+        <For each={tabsList()}>
           {tab => (
             <div
               {...api().getContentProps({ value: tab.value })}
               class='bg-white rounded-b-lg border border-t-0 border-gray-200 p-6'
             >
-              {props.children?.(tab.value)}
+              {children()?.(tab.value)}
             </div>
           )}
         </For>

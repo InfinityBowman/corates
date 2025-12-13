@@ -10,6 +10,7 @@ import {
   BiRegularChevronRight,
   BiRegularExpandHorizontal,
 } from 'solid-icons/bi';
+import { useConfirmDialog } from '@components/zag/Dialog.jsx';
 
 export default function PdfToolbar(props) {
   // props.readOnly - If true, hides upload/change/clear buttons
@@ -36,6 +37,8 @@ export default function PdfToolbar(props) {
   const [pageInput, setPageInput] = createSignal('');
   const [zoomInput, setZoomInput] = createSignal('');
 
+  const confirmRemovePdf = useConfirmDialog();
+
   // Handle page input submission
   function handlePageSubmit(e) {
     e.preventDefault();
@@ -60,6 +63,7 @@ export default function PdfToolbar(props) {
 
   return (
     <div class='bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between gap-4 shrink-0'>
+      <confirmRemovePdf.ConfirmDialogComponent />
       {/* File upload and info */}
       <div class='flex items-center gap-2 min-w-0'>
         <Show when={!props.readOnly && !props.pdfDoc}>
@@ -87,7 +91,18 @@ export default function PdfToolbar(props) {
           </span>
           <Show when={!props.readOnly}>
             <button
-              onClick={() => props.onClearPdf?.()}
+              onClick={async () => {
+                const didConfirm = await confirmRemovePdf.open({
+                  title: 'Remove PDF?',
+                  description:
+                    'This will remove the currently loaded PDF from this checklist. You can upload it again later.',
+                  confirmText: 'Remove',
+                  cancelText: 'Cancel',
+                  variant: 'danger',
+                });
+
+                if (didConfirm) props.onClearPdf?.();
+              }}
               class='p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors shrink-0'
               title='Clear PDF'
             >

@@ -2,6 +2,7 @@ import { createSignal, Show } from 'solid-js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton } from './AuthButtons.jsx';
+import { FiMail } from 'solid-icons/fi';
 
 export default function MagicLinkForm(props) {
   const [email, setEmail] = createSignal(props.initialEmail || '');
@@ -56,19 +57,7 @@ export default function MagicLinkForm(props) {
       <Show when={sent()}>
         <div class='text-center py-4'>
           <div class='w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3'>
-            <svg
-              class='w-7 h-7 text-green-600'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path
-                stroke-linecap='round'
-                stroke-linejoin='round'
-                stroke-width='2'
-                d='M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'
-              />
-            </svg>
+            <FiMail class='w-7 h-7 text-green-600' />
           </div>
           <h3 class='text-base font-semibold text-gray-900 mb-1'>Check your email</h3>
           <p class='text-gray-600 text-sm mb-3'>

@@ -5,10 +5,10 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 
 /**
- * InProgressTab - Shows studies assigned to the current user
+ * ToDoTab - Shows studies assigned to the current user
  * Uses ProjectContext for projectId, handlers, and helpers
  */
-export default function InProgressTab() {
+export default function ToDoTab() {
   const { projectId, handlers, getAssigneeName } = useProjectContext();
   const { checklistHandlers, pdfHandlers } = handlers;
   const { user } = useBetterAuth();
@@ -68,7 +68,6 @@ export default function InProgressTab() {
               <StudyCard
                 study={study}
                 members={members()}
-                projectId={projectId}
                 currentUserId={currentUserId()}
                 showChecklistForm={showChecklistForm() === study.id}
                 onToggleChecklistForm={() =>
@@ -80,9 +79,6 @@ export default function InProgressTab() {
                 onOpenChecklist={checklistId =>
                   checklistHandlers.openChecklist(study.id, checklistId)
                 }
-                onReconcile={(checklist1Id, checklist2Id) =>
-                  checklistHandlers.openReconciliation(study.id, checklist1Id, checklist2Id)
-                }
                 onViewPdf={pdf => pdfHandlers.handleViewPdf(study.id, pdf)}
                 onUpdateChecklist={(checklistId, updates) =>
                   checklistHandlers.handleUpdateChecklist(study.id, checklistId, updates)
@@ -92,7 +88,6 @@ export default function InProgressTab() {
                 }
                 getAssigneeName={getAssigneeName}
                 creatingChecklist={creatingChecklist()}
-                hideManagementActions={true}
               />
             )}
           </For>

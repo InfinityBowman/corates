@@ -32,6 +32,7 @@ PDF library + annotations
 Export (CSV, PDF, structured JSON)
 3 collaborators included for free
 Additional collaborators: +$15/user
+Sync local checklists between devices
 (Or upgrade to Team Tier)
 
 ⭐ Team Tier — For Labs, Centers, & Multi-Project Teams
