@@ -15,6 +15,10 @@ export const user = sqliteTable('user', {
   avatarUrl: text('avatarUrl'),
   role: text('role'), // researcher, student, librarian, other
   twoFactorEnabled: integer('twoFactorEnabled', { mode: 'boolean' }).default(false),
+  // Admin plugin fields
+  banned: integer('banned', { mode: 'boolean' }).default(false),
+  banReason: text('banReason'),
+  banExpires: integer('banExpires', { mode: 'timestamp' }),
 });
 
 // Sessions table
@@ -29,6 +33,7 @@ export const session = sqliteTable('session', {
   userId: text('userId')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
+  impersonatedBy: text('impersonatedBy').references(() => user.id, { onDelete: 'set null' }),
 });
 
 // Accounts table (for OAuth)

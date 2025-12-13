@@ -14,6 +14,7 @@ import LocalChecklistView from '@checklist-ui/LocalChecklistView.jsx';
 import ProfilePage from '@components/profile-ui/ProfilePage.jsx';
 import SettingsPage from '@components/profile-ui/SettingsPage.jsx';
 import NotFoundPage from '@components/NotFoundPage.jsx';
+import { AdminDashboard } from '@components/admin-ui/index.js';
 import { BASEPATH } from '@config/api.js';
 
 export default function AppRoutes() {
@@ -34,6 +35,7 @@ export default function AppRoutes() {
         <Route path='/dashboard' component={Dashboard} />
         <Route path='/profile' component={ProfilePage} />
         <Route path='/settings' component={SettingsPage} />
+        <Route path='/admin' component={AdminDashboard} />
         <Route path='/checklist/*' component={LocalChecklistView} />
         <Route path='/checklist/:checklistId' component={LocalChecklistView} />
         <Route path='/projects/:projectId' component={ProjectView} />

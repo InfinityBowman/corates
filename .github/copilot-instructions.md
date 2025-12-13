@@ -30,7 +30,11 @@ When you need to find icons from `solid-icons`, use the `search_icons` MCP tool:
 - The tool returns icon names with their library prefix and import statement
 - Example: `import { FaArrowRight } from 'solid-icons/fa';`
 
-## Zag.js Documentation Tool
+## Documentation Tool
+
+Use the `docs_list` and `docs_get_llms_txt` MCP tools to explore local documentation sources
+
+## Zag.js Documentation
 
 When you need to implement UI components use zag.js
 The Zag.js docs are located at /docs/zag
