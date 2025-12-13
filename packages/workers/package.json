@@ -18,17 +18,17 @@
     "db:reset:prod": "./scripts/reset-db-prod.sh"
   },
   "dependencies": {
-    "@cloudflare/workers-types": "^4.20251126.0",
-    "better-auth": "^1.4.1",
-    "drizzle-orm": "^0.44.7",
-    "hono": "^4.10.7",
-    "resend": "^6.5.2",
+    "@cloudflare/workers-types": "^4.20251213.0",
+    "better-auth": "^1.4.6",
+    "drizzle-orm": "^0.45.1",
+    "hono": "^4.10.8",
+    "resend": "^6.6.0",
     "yjs": "^13.6.27",
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.10.14",
+    "@cloudflare/vitest-pool-workers": "^0.10.15",
     "vitest": "^4.0.15",
-    "wrangler": "^4.53.0"
+    "wrangler": "^4.54.0"
   }
 }

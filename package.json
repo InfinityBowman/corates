@@ -23,7 +23,9 @@
     "initialize-mcp": "pnpm --filter mcp run scrape:all",
     "test:ui": "pnpm --filter web test",
     "test": "pnpm --recursive run test",
-    "logs": "pnpm --filter workers run logs"
+    "logs": "pnpm --filter workers run logs",
+    "deps:update": "pnpm -r up",
+    "deps:update:latest": "pnpm -r up --latest"
   },
   "keywords": [
     "cloudflare",
@@ -34,13 +36,13 @@
   "author": "Jacob Maynard",
   "license": "GNU GPLv3",
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "@typescript-eslint/parser": "^8.48.1",
+    "@eslint/js": "^9.39.2",
+    "@typescript-eslint/parser": "^8.49.0",
     "concurrently": "^9.2.1",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
     "eslint-plugin-solid": "^0.14.5",
     "prettier": "^3.7.4",
-    "wrangler": "^4.53.0"
+    "wrangler": "^4.54.0"
   },
   "engines": {
     "node": ">=24.0.0",
