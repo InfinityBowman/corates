@@ -1,8 +1,6 @@
 import { createSignal, createEffect, onMount, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import StrengthIndicator from './StrengthIndicator.jsx';
-import PasswordInput from '../zag/PasswordInput.jsx';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton } from './AuthButtons.jsx';
 import RoleSelector from './RoleSelector.jsx';
@@ -11,56 +9,66 @@ import { FiChevronLeft } from 'solid-icons/fi';
 
 /**
  * Complete Profile page - shown after email verification or OAuth signup
- * Step 1: first name, last name, password (email users)
- * Step 2: role selection (optional, can skip)
+ * Step 1: first name, last name (required)
+ * Step 2: persona selection (optional, can skip)
  */
 export default function CompleteProfile() {
   const [step, setStep] = createSignal(1);
   const [firstName, setFirstName] = createSignal('');
   const [lastName, setLastName] = createSignal('');
-  const [password, setPassword] = createSignal('');
-  const [confirmPassword, setConfirmPassword] = createSignal('');
-  const [role, setRole] = createSignal('');
+  const [persona, setPersona] = createSignal('');
   const [error, setError] = createSignal('');
-  const [unmetRequirements, setUnmetRequirements] = createSignal([]);
   const [loading, setLoading] = createSignal(false);
 
   const navigate = useNavigate();
   const { user, updateProfile, authLoading } = useBetterAuth();
 
-  // Check if user needs to set password (email verification signup vs OAuth/magic link)
-  // OAuth users (Google, ORCID) and magic link users already have authentication - they don't need a password
-  // The 'oauthSignup' flag is set in localStorage during OAuth signup flow
-  // The 'magicLinkSignup' flag is set in localStorage during magic link signup flow
-  const needsPassword = () => {
-    const isOAuthUser = localStorage.getItem('oauthSignup') === 'true';
-    const isMagicLinkUser = localStorage.getItem('magicLinkSignup') === 'true';
-    return !isOAuthUser && !isMagicLinkUser;
-  };
-
-  // Pre-fill name if available from OAuth
-  onMount(() => {
+  // Pre-fill from session user (OAuth can provide name). Only fill when fields are empty.
+  createEffect(() => {
     const currentUser = user();
-    if (currentUser?.name) {
-      const nameParts = currentUser.name.split(' ');
+    if (!currentUser) {
+      // Magic link users may not have a meaningful name yet; use the pending email as a placeholder.
+      const pendingName = localStorage.getItem('pendingName');
+      if (!firstName().trim() && !lastName().trim() && pendingName) {
+        setFirstName(pendingName);
+      }
+      return;
+    }
+
+    // If the backend created a placeholder name (e.g. 'user'), prefer the submitted email as the initial value.
+    const pendingName = localStorage.getItem('pendingName');
+    if (
+      pendingName &&
+      !firstName().trim() &&
+      !lastName().trim() &&
+      (!currentUser?.name || String(currentUser.name).trim().toLowerCase() === 'user')
+    ) {
+      setFirstName(pendingName);
+    }
+
+    if (!firstName().trim() && !lastName().trim() && currentUser?.name) {
+      const nameParts = String(currentUser.name).trim().split(/\s+/).filter(Boolean);
       if (nameParts.length >= 2) {
         setFirstName(nameParts[0]);
         setLastName(nameParts.slice(1).join(' '));
-      } else {
-        setFirstName(currentUser.name);
+      } else if (nameParts.length === 1) {
+        // If magic link created a placeholder name (e.g. the email), keep last name empty so user must provide it.
+        setFirstName(nameParts[0]);
       }
     }
 
-    // Check for pending role from OAuth flow
-    const pendingRole = localStorage.getItem('pendingRole');
-    if (pendingRole) {
-      setRole(pendingRole);
-      localStorage.removeItem('pendingRole');
-    }
-
-    // If user already has a role set, redirect to dashboard
-    if (currentUser?.role) {
+    // If already completed onboarding, go to dashboard.
+    if (currentUser?.profileCompletedAt) {
       navigate('/dashboard', { replace: true });
+    }
+  });
+
+  onMount(() => {
+    // Preserve any pre-selected persona from earlier steps if present.
+    const pendingPersona = localStorage.getItem('pendingPersona');
+    if (pendingPersona) {
+      setPersona(pendingPersona);
+      localStorage.removeItem('pendingPersona');
     }
   });
 
@@ -81,23 +89,6 @@ export default function CompleteProfile() {
       return;
     }
 
-    if (needsPassword()) {
-      if (!password() || !confirmPassword()) {
-        setError('Please set a password');
-        return;
-      }
-
-      if (password() !== confirmPassword()) {
-        setError('Passwords do not match');
-        return;
-      }
-
-      if (unmetRequirements().length > 0) {
-        setError(`Password must include ${unmetRequirements()[0]}`);
-        return;
-      }
-    }
-
     setStep(2);
   }
 
@@ -107,7 +98,7 @@ export default function CompleteProfile() {
   }
 
   // Final submit - save profile (role is optional)
-  async function handleSubmit(selectedRole = role()) {
+  async function handleSubmit(selectedPersona = persona()) {
     setLoading(true);
     setError('');
 
@@ -116,13 +107,16 @@ export default function CompleteProfile() {
 
       await updateProfile({
         name: fullName,
-        displayName: fullName,
-        role: selectedRole || 'other', // Default to 'other' if skipped
+        // persona is optional, but we store a default when skipped
+        persona: selectedPersona || 'other',
+        profileCompletedAt: Math.floor(Date.now() / 1000),
       });
 
       // Clear the signup flags
       localStorage.removeItem('oauthSignup');
       localStorage.removeItem('magicLinkSignup');
+      localStorage.removeItem('pendingName');
+      localStorage.removeItem('pendingPersona');
 
       await new Promise(resolve => setTimeout(resolve, 200));
       navigate('/dashboard', { replace: true });
@@ -141,7 +135,7 @@ export default function CompleteProfile() {
   }
 
   function handleRoleSelect(selectedRole) {
-    setRole(selectedRole);
+    setPersona(selectedRole);
   }
 
   function handleSkip() {
@@ -150,14 +144,8 @@ export default function CompleteProfile() {
 
   function handleFinish(e) {
     e.preventDefault();
-    handleSubmit(role());
+    handleSubmit(persona());
   }
-
-  createEffect(() => {
-    if (needsPassword() && password() === confirmPassword() && error().includes('match')) {
-      setError('');
-    }
-  });
 
   const displayError = () => error();
 
@@ -172,7 +160,7 @@ export default function CompleteProfile() {
         <div class='w-full max-w-md sm:max-w-xl bg-white rounded-xl sm:rounded-3xl shadow-2xl p-5 sm:p-10 border border-gray-100'>
           <StepIndicator currentStep={step()} totalSteps={2} />
 
-          {/* Step 1: Name and Password */}
+          {/* Step 1: Name */}
           <Show when={step() === 1}>
             <div class='text-center mb-5'>
               <h2 class='text-xl sm:text-2xl font-bold text-gray-900 mb-1'>
@@ -226,47 +214,13 @@ export default function CompleteProfile() {
                 </div>
               </div>
 
-              {/* Password fields - only for email signups */}
-              <Show when={needsPassword()}>
-                <div>
-                  <PasswordInput
-                    password={password()}
-                    onPasswordChange={setPassword}
-                    autoComplete='new-password'
-                    required
-                  />
-                  <StrengthIndicator password={password()} onUnmet={setUnmetRequirements} />
-                </div>
-
-                <div>
-                  <label
-                    class='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'
-                    for='confirm-password-input'
-                  >
-                    Confirm Password
-                  </label>
-                  <input
-                    type='password'
-                    autoComplete='new-password'
-                    autocapitalize='off'
-                    spellCheck='false'
-                    value={confirmPassword()}
-                    onInput={e => setConfirmPassword(e.target.value)}
-                    class='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition big-placeholder'
-                    required
-                    id='confirm-password-input'
-                    placeholder='••••••••'
-                  />
-                </div>
-              </Show>
-
               <ErrorMessage displayError={displayError} />
 
               <PrimaryButton loading={false}>Next</PrimaryButton>
             </form>
           </Show>
 
-          {/* Step 2: Role Selection */}
+          {/* Step 2: Persona Selection */}
           <Show when={step() === 2}>
             <div class='mb-3'>
               <button
@@ -287,11 +241,11 @@ export default function CompleteProfile() {
             </div>
 
             <form onSubmit={handleFinish} class='space-y-4'>
-              <RoleSelector selectedRole={role()} onSelect={handleRoleSelect} />
+              <RoleSelector selectedRole={persona()} onSelect={handleRoleSelect} />
 
               <ErrorMessage displayError={displayError} />
 
-              <PrimaryButton loading={loading()} loadingText='Finishing...' disabled={!role()}>
+              <PrimaryButton loading={loading()} loadingText='Finishing...' disabled={!persona()}>
                 Finish Setup
               </PrimaryButton>
 

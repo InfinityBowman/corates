@@ -21,6 +21,7 @@ export default function AuthLayout(props) {
     if (!authLoading() && isLoggedIn()) {
       const currentPath = location.pathname;
       const currentUser = user();
+      console.log('[AuthLayout]', user());
 
       // Don't redirect if on complete-profile or reset-password (allow setting password while logged in)
       if (currentPath === '/complete-profile' || currentPath === '/reset-password') {
@@ -29,7 +30,7 @@ export default function AuthLayout(props) {
 
       // If user hasn't completed profile setup, send to complete-profile
       // Otherwise send to dashboard
-      if (!currentUser?.role) {
+      if (!currentUser?.profileCompletedAt) {
         navigate('/complete-profile', { replace: true });
       } else {
         navigate('/dashboard', { replace: true });
