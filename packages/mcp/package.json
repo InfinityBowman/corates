@@ -11,7 +11,7 @@
     "scrape": "node scrape-icons.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.23.0",
+    "@modelcontextprotocol/sdk": "^1.24.3",
     "zod": "^4.1.13"
   }
 }

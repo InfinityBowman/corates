@@ -1,11 +1,16 @@
 import { createAuthClient } from 'better-auth/solid';
-import { genericOAuthClient, magicLinkClient, twoFactorClient } from 'better-auth/client/plugins';
+import {
+  genericOAuthClient,
+  magicLinkClient,
+  twoFactorClient,
+  adminClient,
+} from 'better-auth/client/plugins';
 import { API_BASE } from '@config/api.js';
 
 export const authClient = createAuthClient({
   baseURL: API_BASE,
 
-  plugins: [genericOAuthClient(), magicLinkClient(), twoFactorClient()],
+  plugins: [genericOAuthClient(), magicLinkClient(), twoFactorClient(), adminClient()],
 
   fetchOptions: {
     credentials: 'include',
@@ -35,4 +40,5 @@ export const {
   resetPassword,
   requestPasswordReset,
   verifyEmail,
+  admin,
 } = authClient;

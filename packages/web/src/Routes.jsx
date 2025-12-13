@@ -15,6 +15,7 @@ import ProfilePage from '@components/profile-ui/ProfilePage.jsx';
 import SettingsPage from '@components/profile-ui/SettingsPage.jsx';
 import BillingPage from '@components/billing/BillingPage.jsx';
 import NotFoundPage from '@components/NotFoundPage.jsx';
+import { AdminDashboard } from '@components/admin-ui/index.js';
 import { BASEPATH } from '@config/api.js';
 
 export default function AppRoutes() {
@@ -35,6 +36,7 @@ export default function AppRoutes() {
         <Route path='/dashboard' component={Dashboard} />
         <Route path='/profile' component={ProfilePage} />
         <Route path='/settings' component={SettingsPage} />
+        <Route path='/admin' component={AdminDashboard} />
         <Route path='/settings/billing' component={BillingPage} />
         <Route path='/checklist/*' component={LocalChecklistView} />
         <Route path='/checklist/:checklistId' component={LocalChecklistView} />
