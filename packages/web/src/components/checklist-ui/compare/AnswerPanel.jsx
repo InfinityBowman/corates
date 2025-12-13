@@ -70,7 +70,7 @@ export default function AnswerPanel(props) {
                             >
                               <input
                                 type='radio'
-                                name={`${props.questionKey}-compact-${colIdx()}`}
+                                name={`${props.panelId || props.title || 'panel'}-${props.questionKey}-compact-${colIdx()}`}
                                 checked={isChecked()}
                                 disabled={props.readOnly}
                                 onChange={() =>
