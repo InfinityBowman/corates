@@ -162,19 +162,3 @@ CREATE INDEX idx_project_members_userId ON project_members(userId);
 CREATE INDEX idx_subscriptions_userId ON subscriptions(userId);
 CREATE INDEX idx_subscriptions_stripeCustomerId ON subscriptions(stripeCustomerId);
 CREATE INDEX idx_subscriptions_stripeSubscriptionId ON subscriptions(stripeSubscriptionId);
-
--- Insert default data
-INSERT OR IGNORE INTO user (id, name, email, emailVerified, username, displayName, role) VALUES
-  ('system', 'System', 'system@corates.com', 1, 'system', 'System', NULL),
-  ('demo-user', 'Demo User', 'demo@corates.com', 1, 'demo', 'Demo User', NULL),
-  ('admin', 'Admin', 'admin@admin.com', 1, 'admin', 'Admin', 'admin');
-
-INSERT OR IGNORE INTO projects (id, name, description, createdBy) VALUES
-  ('demo-project-1', 'Sleep Study Meta-Analysis', 'AMSTAR2 evaluation of sleep intervention studies', 'demo-user'),
-  ('demo-project-2', 'Exercise RCT Review', 'Systematic review of exercise interventions', 'demo-user'),
-  ('demo-project-3', 'Nutrition Guidelines', 'Evidence synthesis for dietary recommendations', 'demo-user');
-
-INSERT OR IGNORE INTO project_members (id, projectId, userId, role) VALUES
-  ('pm_1', 'demo-project-1', 'demo-user', 'owner'),
-  ('pm_2', 'demo-project-2', 'demo-user', 'owner'),
-  ('pm_3', 'demo-project-3', 'demo-user', 'owner');
