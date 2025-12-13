@@ -1,10 +1,11 @@
 import { createSignal, createEffect, createMemo, For, Show } from 'solid-js';
 import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
-import { getDataKeysForQuestion } from '@/AMSTAR2/checklist-compare.js';
+import { getDataKeysForQuestion, getFinalAnswer } from '@/AMSTAR2/checklist-compare.js';
 import AnswerPanel from './AnswerPanel.jsx';
 
 /**
  * MultiPartQuestionPage - Handles q9 and q11 which have a/b parts
+ * Styled to match SingleQuestionPage in ReconciliationQuestionPage
  */
 export default function MultiPartQuestionPage(props) {
   const questionKey = () => props.questionKey;
@@ -20,11 +21,14 @@ export default function MultiPartQuestionPage(props) {
   const reviewersAgree = () =>
     multiPartAnswersEqual(props.reviewer1Answers, props.reviewer2Answers);
 
-  // Initialize from props
+  // Initialize from props or default to reviewer1
   createEffect(() => {
+    const keys = dataKeys();
+    if (!keys || keys.length === 0) return;
+
+    // If we have valid finalAnswers, use them
     if (props.finalAnswers && typeof props.finalAnswers === 'object') {
-      // Check if it has the expected part keys
-      const hasParts = dataKeys().every(dk => props.finalAnswers[dk]);
+      const hasParts = keys.some(dk => props.finalAnswers[dk]);
       if (hasParts) {
         setLocalFinal(JSON.parse(JSON.stringify(props.finalAnswers)));
         // Determine source
@@ -38,8 +42,9 @@ export default function MultiPartQuestionPage(props) {
         return;
       }
     }
-    // Default to reviewer1
-    if (props.reviewer1Answers && dataKeys().every(dk => props.reviewer1Answers[dk])) {
+
+    // Default to reviewer1 if available
+    if (props.reviewer1Answers && keys.some(dk => props.reviewer1Answers[dk])) {
       setLocalFinal(JSON.parse(JSON.stringify(props.reviewer1Answers)));
       setSelectedSource('reviewer1');
     }
@@ -138,6 +143,12 @@ export default function MultiPartQuestionPage(props) {
     return null;
   };
 
+  // Get final answer for a part
+  const getFinalAnswerForPart = (answers, partKey) => {
+    if (!answers?.[partKey]?.answers) return null;
+    return getFinalAnswer(answers[partKey].answers, partKey);
+  };
+
   const isCritical = () => {
     const firstPartKey = dataKeys()[0];
     return (
@@ -167,18 +178,19 @@ export default function MultiPartQuestionPage(props) {
         </div>
       </div>
 
-      {/* Three Column Layout with Parts */}
+      {/* Three Column Layout - matches SingleQuestionPage */}
       <div class='grid grid-cols-3 divide-x divide-gray-200'>
         {/* Reviewer 1 Panel */}
-        <div class='p-4 bg-blue-50/30'>
-          <div class='flex items-center justify-between mb-3'>
-            <h3 class='font-medium text-blue-800'>{props.reviewer1Name || 'Reviewer 1'}</h3>
+        <div class='p-4'>
+          {/* Panel Header */}
+          <div class='flex items-center justify-between mb-4'>
+            <h3 class='font-semibold text-gray-900'>{props.reviewer1Name || 'Reviewer 1'}</h3>
             <Show when={!reviewersAgree()}>
               <button
                 onClick={useReviewer1}
-                class={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                class={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                   selectedSource() === 'reviewer1' ? 'bg-blue-600 text-white' : (
-                    'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                    'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
                   )
                 }`}
               >
@@ -186,11 +198,19 @@ export default function MultiPartQuestionPage(props) {
               </button>
             </Show>
           </div>
+
+          {/* Parts */}
           <For each={dataKeys()}>
             {partKey => (
-              <div class='mb-4'>
-                <div class='text-xs font-medium text-gray-600 mb-2'>
-                  {getSubtitleForPart(partKey)}
+              <div class='mb-6 last:mb-0'>
+                <div class='mb-2 flex flex-wrap items-center gap-2'>
+                  <span class='text-xs font-semibold text-gray-700'>
+                    {getSubtitleForPart(partKey)}
+                  </span>
+                  <span class='text-xs text-gray-500'>Result:</span>
+                  <span class='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border bg-gray-100 text-gray-600 border-gray-200'>
+                    {getFinalAnswerForPart(props.reviewer1Answers, partKey) || 'Not selected'}
+                  </span>
                 </div>
                 <AnswerPanel
                   answers={props.reviewer1Answers?.[partKey]}
@@ -198,6 +218,7 @@ export default function MultiPartQuestionPage(props) {
                   columns={getColumnsForPart(partKey)}
                   readOnly={true}
                   compact={true}
+                  panelId='reviewer1'
                 />
               </div>
             )}
@@ -205,27 +226,36 @@ export default function MultiPartQuestionPage(props) {
         </div>
 
         {/* Reviewer 2 Panel */}
-        <div class='p-4 bg-purple-50/30'>
-          <div class='flex items-center justify-between mb-3'>
-            <h3 class='font-medium text-purple-800'>{props.reviewer2Name || 'Reviewer 2'}</h3>
+        <div class='p-4'>
+          {/* Panel Header */}
+          <div class='flex items-center justify-between mb-4'>
+            <h3 class='font-semibold text-gray-900'>{props.reviewer2Name || 'Reviewer 2'}</h3>
             <Show when={!reviewersAgree()}>
               <button
                 onClick={useReviewer2}
-                class={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                  selectedSource() === 'reviewer2' ?
-                    'bg-purple-600 text-white'
-                  : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                class={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  selectedSource() === 'reviewer2' ? 'bg-blue-600 text-white' : (
+                    'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+                  )
                 }`}
               >
                 {selectedSource() === 'reviewer2' ? 'Selected' : 'Use This'}
               </button>
             </Show>
           </div>
+
+          {/* Parts */}
           <For each={dataKeys()}>
             {partKey => (
-              <div class='mb-4'>
-                <div class='text-xs font-medium text-gray-600 mb-2'>
-                  {getSubtitleForPart(partKey)}
+              <div class='mb-6 last:mb-0'>
+                <div class='mb-2 flex flex-wrap items-center gap-2'>
+                  <span class='text-xs font-semibold text-gray-700'>
+                    {getSubtitleForPart(partKey)}
+                  </span>
+                  <span class='text-xs text-gray-500'>Result:</span>
+                  <span class='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border bg-gray-100 text-gray-600 border-gray-200'>
+                    {getFinalAnswerForPart(props.reviewer2Answers, partKey) || 'Not selected'}
+                  </span>
                 </div>
                 <AnswerPanel
                   answers={props.reviewer2Answers?.[partKey]}
@@ -233,22 +263,41 @@ export default function MultiPartQuestionPage(props) {
                   columns={getColumnsForPart(partKey)}
                   readOnly={true}
                   compact={true}
+                  panelId='reviewer2'
                 />
               </div>
             )}
           </For>
         </div>
 
-        {/* Final Panel */}
+        {/* Final/Merged Panel */}
         <div class='p-4 bg-green-50/30'>
-          <div class='mb-3'>
-            <h3 class='font-medium text-green-800'>Final Answer</h3>
+          {/* Panel Header */}
+          <div class='flex items-center justify-between mb-4'>
+            <div>
+              <h3 class='font-semibold text-gray-900'>Final Answer</h3>
+              <Show when={selectedSource()}>
+                <span class='text-xs text-gray-500'>
+                  {selectedSource() === 'custom' ?
+                    'Custom selection'
+                  : `Based on ${selectedSource() === 'reviewer1' ? 'Reviewer 1' : 'Reviewer 2'}`}
+                </span>
+              </Show>
+            </div>
           </div>
+
+          {/* Parts */}
           <For each={dataKeys()}>
             {partKey => (
-              <div class='mb-4'>
-                <div class='text-xs font-medium text-gray-600 mb-2'>
-                  {getSubtitleForPart(partKey)}
+              <div class='mb-6 last:mb-0'>
+                <div class='mb-2 flex flex-wrap items-center gap-2'>
+                  <span class='text-xs font-semibold text-gray-700'>
+                    {getSubtitleForPart(partKey)}
+                  </span>
+                  <span class='text-xs text-gray-500'>Result:</span>
+                  <span class='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border bg-green-100 text-green-800 border-green-200'>
+                    {getFinalAnswerForPart(localFinal(), partKey) || 'Not selected'}
+                  </span>
                 </div>
                 <AnswerPanel
                   answers={localFinal()?.[partKey]}
@@ -256,6 +305,7 @@ export default function MultiPartQuestionPage(props) {
                   columns={getColumnsForPart(partKey)}
                   readOnly={false}
                   compact={true}
+                  panelId='final'
                   onCheckboxChange={(colIdx, optIdx) =>
                     handlePartCheckboxChange(partKey, colIdx, optIdx)
                   }

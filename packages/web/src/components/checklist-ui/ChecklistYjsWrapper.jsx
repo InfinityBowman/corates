@@ -215,10 +215,6 @@ export default function ChecklistYjsWrapper() {
         <IoChevronBack size={20} />
       </button>
       <div class='text-sm text-gray-600 truncate'>
-        <Show when={currentStudy()}>
-          <span class='truncate'>{currentStudy().name}</span>
-          <span class='mx-2 text-gray-400'>/</span>
-        </Show>
         <span class='text-gray-900 font-medium'>
           {currentChecklist()?.type || 'AMSTAR2'} Checklist
         </span>
