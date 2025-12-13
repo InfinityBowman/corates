@@ -114,7 +114,7 @@ export const subscriptions = sqliteTable('subscriptions', {
     .unique(),
   stripeCustomerId: text('stripeCustomerId').unique(),
   stripeSubscriptionId: text('stripeSubscriptionId').unique(),
-  tier: text('tier').notNull().default('free'), // 'free', 'pro', 'team', 'enterprise'
+  tier: text('tier').notNull().default('free'), // 'free', 'basic', 'pro', 'enterprise'
   status: text('status').notNull().default('active'), // 'active', 'canceled', 'past_due', 'trialing', 'incomplete'
   currentPeriodStart: integer('currentPeriodStart', { mode: 'timestamp' }),
   currentPeriodEnd: integer('currentPeriodEnd', { mode: 'timestamp' }),
