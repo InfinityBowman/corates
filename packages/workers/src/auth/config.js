@@ -1,10 +1,11 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { genericOAuth, magicLink, twoFactor } from 'better-auth/plugins';
+import { genericOAuth, magicLink, twoFactor, admin } from 'better-auth/plugins';
 import { drizzle } from 'drizzle-orm/d1';
 import * as schema from '../db/schema.js';
 import { createEmailService } from './email.js';
 import { getAllowedOrigins } from '../config/origins.js';
+import { isAdminUser } from './admin.js';
 import { MAGIC_LINK_EXPIRY_MINUTES } from './emailTemplates.js';
 
 export function createAuth(env, ctx) {
@@ -105,6 +106,17 @@ export function createAuth(env, ctx) {
         length: 10, // 10 backup codes
         characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
       },
+    }),
+  );
+
+  // Admin plugin for user management and impersonation
+  plugins.push(
+    admin({
+      async isAdmin(user) {
+        return isAdminUser(user);
+      },
+      defaultRole: 'user',
+      impersonationSessionDuration: 60 * 60, // 1 hour
     }),
   );
 

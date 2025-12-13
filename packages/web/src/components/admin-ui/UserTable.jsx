@@ -1,0 +1,387 @@
+/**
+ * User Table component for admin dashboard
+ */
+
+import { createSignal, Show, For } from 'solid-js';
+import {
+  FiMoreVertical,
+  FiUserX,
+  FiUserCheck,
+  FiTrash2,
+  FiLogIn,
+  FiXCircle,
+  FiCheckCircle,
+  FiClock,
+} from 'solid-icons/fi';
+import {
+  banUser,
+  unbanUser,
+  impersonateUser,
+  revokeUserSessions,
+  deleteUser,
+} from '@/stores/adminStore.js';
+import Avatar from '@components/zag/Avatar.jsx';
+import Dialog from '@components/zag/Dialog.jsx';
+
+export default function UserTable(props) {
+  const [actionMenuOpen, setActionMenuOpen] = createSignal(null);
+  const [menuPosition, setMenuPosition] = createSignal({ top: 0, right: 0 });
+  const [confirmDialog, setConfirmDialog] = createSignal(null);
+  const [banDialog, setBanDialog] = createSignal(null);
+  const [banReason, setBanReason] = createSignal('');
+  const [loading, setLoading] = createSignal(false);
+  const [error, setError] = createSignal(null);
+
+  const formatDate = timestamp => {
+    if (!timestamp) return '-';
+    // Handle both ISO strings and unix timestamps
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp * 1000);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+  const handleAction = async (action, user) => {
+    setActionMenuOpen(null);
+    setError(null);
+
+    if (action === 'ban') {
+      setBanDialog(user);
+      return;
+    }
+
+    if (action === 'delete') {
+      setConfirmDialog({ type: 'delete', user });
+      return;
+    }
+
+    if (action === 'revoke') {
+      setConfirmDialog({ type: 'revoke', user });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (action === 'unban') {
+        await unbanUser(user.id);
+      } else if (action === 'impersonate') {
+        await impersonateUser(user.id);
+        return; // Page will redirect
+      }
+      props.onRefresh?.();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBan = async () => {
+    const user = banDialog();
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      await banUser(user.id, banReason() || 'Banned by administrator');
+      setBanDialog(null);
+      setBanReason('');
+      props.onRefresh?.();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirm = async () => {
+    const dialog = confirmDialog();
+    if (!dialog) return;
+
+    setLoading(true);
+    try {
+      if (dialog.type === 'delete') {
+        await deleteUser(dialog.user.id);
+      } else if (dialog.type === 'revoke') {
+        await revokeUserSessions(dialog.user.id);
+      }
+      setConfirmDialog(null);
+      props.onRefresh?.();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      {/* Error Toast */}
+      <Show when={error()}>
+        <div class='mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center justify-between'>
+          <span>{error()}</span>
+          <button onClick={() => setError(null)} class='text-red-500 hover:text-red-700'>
+            <FiXCircle class='w-4 h-4' />
+          </button>
+        </div>
+      </Show>
+
+      <div class='overflow-x-auto'>
+        <table class='w-full'>
+          <thead>
+            <tr class='bg-gray-50 border-b border-gray-200'>
+              <th class='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                User
+              </th>
+              <th class='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                Email
+              </th>
+              <th class='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                Status
+              </th>
+              <th class='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                Joined
+              </th>
+              <th class='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class='divide-y divide-gray-200'>
+            <For
+              each={props.users}
+              fallback={
+                <tr>
+                  <td colspan='5' class='px-6 py-12 text-center text-gray-500'>
+                    No users found
+                  </td>
+                </tr>
+              }
+            >
+              {user => (
+                <tr class='hover:bg-gray-50'>
+                  <td class='px-6 py-4'>
+                    <div class='flex items-center space-x-3'>
+                      <Avatar
+                        src={user.avatarUrl || user.image}
+                        name={user.displayName || user.name}
+                        class='w-8 h-8'
+                      />
+                      <div>
+                        <p class='font-medium text-gray-900'>
+                          {user.displayName || user.name || 'Unknown'}
+                        </p>
+                        <Show when={user.username}>
+                          <p class='text-sm text-gray-500'>@{user.username}</p>
+                        </Show>
+                      </div>
+                    </div>
+                  </td>
+                  <td class='px-6 py-4'>
+                    <div class='flex items-center space-x-2'>
+                      <span class='text-sm text-gray-600'>{user.email}</span>
+                      <Show when={user.emailVerified}>
+                        <FiCheckCircle class='w-4 h-4 text-green-500' title='Email verified' />
+                      </Show>
+                    </div>
+                  </td>
+                  <td class='px-6 py-4'>
+                    <Show
+                      when={user.banned}
+                      fallback={
+                        <span class='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'>
+                          Active
+                        </span>
+                      }
+                    >
+                      <span class='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800'>
+                        Banned
+                      </span>
+                    </Show>
+                  </td>
+                  <td class='px-6 py-4 text-sm text-gray-500'>{formatDate(user.createdAt)}</td>
+                  <td class='px-6 py-4 text-right'>
+                    <div class='relative'>
+                      <button
+                        onClick={e => {
+                          if (actionMenuOpen() === user.id) {
+                            setActionMenuOpen(null);
+                          } else {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setMenuPosition({
+                              top: rect.bottom + window.scrollY,
+                              right: window.innerWidth - rect.right,
+                            });
+                            setActionMenuOpen(user.id);
+                          }
+                        }}
+                        class='p-2 rounded-lg hover:bg-gray-100'
+                      >
+                        <FiMoreVertical class='w-4 h-4 text-gray-500' />
+                      </button>
+
+                      {/* Action Menu */}
+                      <Show when={actionMenuOpen() === user.id}>
+                        <div
+                          class='fixed w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50'
+                          style={{
+                            top: `${menuPosition().top}px`,
+                            right: `${menuPosition().right}px`,
+                          }}
+                        >
+                          <button
+                            onClick={() => handleAction('impersonate', user)}
+                            class='w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2'
+                          >
+                            <FiLogIn class='w-4 h-4' />
+                            <span>Impersonate</span>
+                          </button>
+                          <Show
+                            when={user.banned}
+                            fallback={
+                              <button
+                                onClick={() => handleAction('ban', user)}
+                                class='w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2'
+                              >
+                                <FiUserX class='w-4 h-4' />
+                                <span>Ban User</span>
+                              </button>
+                            }
+                          >
+                            <button
+                              onClick={() => handleAction('unban', user)}
+                              class='w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2'
+                            >
+                              <FiUserCheck class='w-4 h-4' />
+                              <span>Unban User</span>
+                            </button>
+                          </Show>
+                          <button
+                            onClick={() => handleAction('revoke', user)}
+                            class='w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2'
+                          >
+                            <FiClock class='w-4 h-4' />
+                            <span>Revoke Sessions</span>
+                          </button>
+                          <hr class='my-1 border-gray-200' />
+                          <button
+                            onClick={() => handleAction('delete', user)}
+                            class='w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2'
+                          >
+                            <FiTrash2 class='w-4 h-4' />
+                            <span>Delete User</span>
+                          </button>
+                        </div>
+                      </Show>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </For>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Ban Dialog */}
+      <Dialog
+        open={!!banDialog()}
+        onOpenChange={open => !open && setBanDialog(null)}
+        title='Ban User'
+      >
+        <div class='space-y-4'>
+          <p class='text-sm text-gray-600'>
+            Are you sure you want to ban{' '}
+            <strong>{banDialog()?.displayName || banDialog()?.name || banDialog()?.email}</strong>?
+            They will be logged out and unable to sign in.
+          </p>
+          <div>
+            <label class='block text-sm font-medium text-gray-700 mb-1'>Reason (optional)</label>
+            <textarea
+              value={banReason()}
+              onInput={e => setBanReason(e.target.value)}
+              placeholder='Enter reason for ban...'
+              class='w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500'
+              rows={3}
+            />
+          </div>
+          <div class='flex justify-end space-x-3'>
+            <button
+              onClick={() => setBanDialog(null)}
+              class='px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200'
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleBan}
+              disabled={loading()}
+              class='px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50'
+            >
+              {loading() ? 'Banning...' : 'Ban User'}
+            </button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Confirm Dialog */}
+      <Dialog
+        open={!!confirmDialog()}
+        onOpenChange={open => !open && setConfirmDialog(null)}
+        title={confirmDialog()?.type === 'delete' ? 'Delete User' : 'Revoke Sessions'}
+        role='alertdialog'
+      >
+        <div class='space-y-4'>
+          <Show when={confirmDialog()?.type === 'delete'}>
+            <p class='text-sm text-gray-600'>
+              Are you sure you want to permanently delete{' '}
+              <strong>
+                {confirmDialog()?.user?.displayName ||
+                  confirmDialog()?.user?.name ||
+                  confirmDialog()?.user?.email}
+              </strong>
+              ? This action cannot be undone.
+            </p>
+          </Show>
+          <Show when={confirmDialog()?.type === 'revoke'}>
+            <p class='text-sm text-gray-600'>
+              This will log out{' '}
+              <strong>
+                {confirmDialog()?.user?.displayName ||
+                  confirmDialog()?.user?.name ||
+                  confirmDialog()?.user?.email}
+              </strong>{' '}
+              from all devices.
+            </p>
+          </Show>
+          <div class='flex justify-end space-x-3'>
+            <button
+              onClick={() => setConfirmDialog(null)}
+              class='px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200'
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={loading()}
+              class={`px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50 ${
+                confirmDialog()?.type === 'delete' ?
+                  'bg-red-600 hover:bg-red-700'
+                : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {loading() ?
+                'Processing...'
+              : confirmDialog()?.type === 'delete' ?
+                'Delete'
+              : 'Revoke'}
+            </button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Click outside to close action menu */}
+      <Show when={actionMenuOpen()}>
+        <div class='fixed inset-0 z-0' onClick={() => setActionMenuOpen(null)} />
+      </Show>
+    </>
+  );
+}

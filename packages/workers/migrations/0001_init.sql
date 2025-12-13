@@ -30,7 +30,11 @@ CREATE TABLE user (
   displayName TEXT,
   avatarUrl TEXT,
   role TEXT, -- researcher, student, librarian, other
-  twoFactorEnabled INTEGER DEFAULT 0
+  twoFactorEnabled INTEGER DEFAULT 0,
+  -- Admin plugin fields
+  banned INTEGER DEFAULT 0,
+  banReason TEXT,
+  banExpires INTEGER
 );
 
 -- Better Auth session table
@@ -42,7 +46,8 @@ CREATE TABLE session (
   updatedAt INTEGER DEFAULT (unixepoch()),
   ipAddress TEXT,
   userAgent TEXT,
-  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE
+  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+  impersonatedBy TEXT REFERENCES user(id) ON DELETE SET NULL
 );
 
 -- Better Auth account table (for OAuth and password)
@@ -157,9 +162,10 @@ CREATE INDEX idx_subscriptions_stripeCustomerId ON subscriptions(stripeCustomerI
 CREATE INDEX idx_subscriptions_stripeSubscriptionId ON subscriptions(stripeSubscriptionId);
 
 -- Insert default data
-INSERT OR IGNORE INTO user (id, name, email, emailVerified, username, displayName) VALUES
-  ('system', 'System', 'system@corates.com', 1, 'system', 'System'),
-  ('demo-user', 'Demo User', 'demo@corates.com', 1, 'demo', 'Demo User');
+INSERT OR IGNORE INTO user (id, name, email, emailVerified, username, displayName, role) VALUES
+  ('system', 'System', 'system@corates.com', 1, 'system', 'System', NULL),
+  ('demo-user', 'Demo User', 'demo@corates.com', 1, 'demo', 'Demo User', NULL),
+  ('admin', 'Admin', 'admin@admin.com', 1, 'admin', 'Admin', 'admin');
 
 INSERT OR IGNORE INTO projects (id, name, description, createdBy) VALUES
   ('demo-project-1', 'Sleep Study Meta-Analysis', 'AMSTAR2 evaluation of sleep intervention studies', 'demo-user'),
