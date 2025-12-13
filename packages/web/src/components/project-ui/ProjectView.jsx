@@ -85,7 +85,10 @@ export default function ProjectView() {
     });
 
     for (const pdf of pdfs) {
-      const studyId = createStudy(pdf.title, '');
+      // Use metadata if available (from merged ref/lookup data)
+      const abstract = pdf.metadata?.abstract || '';
+      const metadata = pdf.metadata || {};
+      const studyId = createStudy(pdf.title, abstract, metadata);
       if (studyId && pdf.data) {
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
         uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName)
@@ -131,8 +134,11 @@ export default function ProjectView() {
     });
 
     for (const file of driveFiles) {
-      const title = file.name.replace(/\.pdf$/i, '');
-      const studyId = createStudy(title, '');
+      // Use title from merged data if available, otherwise extract from filename
+      const title = file.title || file.name.replace(/\\.pdf$/i, '');
+      const abstract = file.metadata?.abstract || '';
+      const metadata = file.metadata || {};
+      const studyId = createStudy(title, abstract, metadata);
       if (studyId && file.id) {
         importFromGoogleDrive(file.id, params.projectId, studyId)
           .then(result => {

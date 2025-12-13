@@ -75,69 +75,88 @@ export function useAddStudies(options = {}) {
     typeof options.collectMode === 'function' ? options.collectMode() : options.collectMode;
 
   // Collect mode effect - notify parent of study changes
+  // Uses getStudiesToSubmit() to get deduplicated, merged studies
   createEffect(() => {
     if (!isCollectMode() || !options.onStudiesChange) return;
 
-    const pdfs = uploadedPdfs
-      .filter(p => p.title?.trim() && !p.extracting && p.data)
-      .map(p => ({
-        title: p.title,
-        fileName: p.file.name,
-        data: p.data,
-        doi: p.doi || null,
-        metadata: p.metadata || null,
-      }));
+    // Trigger reactivity on all relevant signals
+    const _pdfs = uploadedPdfs.filter(p => p.title?.trim() && !p.extracting && p.data);
+    const _selectedRefIds = selectedRefIds();
+    const _selectedLookupIds = selectedLookupIds();
+    const _driveFiles = selectedDriveFiles();
 
-    const selectedIds = selectedRefIds();
-    const refs = importedRefs()
-      .filter(r => selectedIds.has(r._id))
-      .map(({ _id, ...ref }) => ({
-        title: ref.title,
-        pdfData: ref.pdfData || null,
-        pdfFileName: ref.pdfFileName || null,
-        metadata: {
-          firstAuthor: ref.firstAuthor,
-          publicationYear: ref.publicationYear,
-          authors: ref.authors,
-          journal: ref.journal,
-          doi: ref.doi,
-          abstract: ref.abstract,
-          pdfUrl: ref.pdfUrl || null,
-          pdfSource: ref.pdfSource || null,
-          pdfAccessible: ref.pdfAccessible || false,
-          importSource: 'reference-file',
-        },
-      }));
+    // Get deduplicated, merged studies
+    const mergedStudies = getStudiesToSubmit();
 
-    const selectedLookups = selectedLookupIds();
-    const lookups = lookupRefs()
-      .filter(r => selectedLookups.has(r._id) && r.pdfAvailable)
-      .map(({ _id, ...ref }) => ({
-        title: ref.title,
-        pdfData: ref.manualPdfData || null,
-        pdfFileName: ref.manualPdfFileName || null,
-        metadata: {
-          firstAuthor: ref.firstAuthor,
-          publicationYear: ref.publicationYear,
-          authors: ref.authors,
-          journal: ref.journal,
-          doi: ref.doi,
-          abstract: ref.abstract,
-          pdfUrl: ref.pdfUrl,
-          pdfSource: ref.pdfSource,
-          pdfAccessible: ref.pdfAccessible,
-          importSource: ref.importSource || 'doi-lookup',
-        },
-      }));
+    // Separate into categories for backward compatibility with ProjectView processing
+    // but now they are deduplicated
+    const pdfs = [];
+    const refs = [];
+    const driveFiles = [];
 
-    const driveFiles = selectedDriveFiles().map(file => ({
-      id: file.id,
-      name: file.name,
-      size: file.size,
-      importSource: 'google-drive',
-    }));
+    for (const study of mergedStudies) {
+      // If it has direct PDF data (from upload), treat as PDF
+      if (study.pdfData) {
+        pdfs.push({
+          title: study.title,
+          fileName: study.pdfFileName,
+          data: study.pdfData,
+          doi: study.doi,
+          metadata:
+            study.abstract ?
+              {
+                firstAuthor: study.firstAuthor,
+                publicationYear: study.publicationYear,
+                authors: study.authors,
+                journal: study.journal,
+                abstract: study.abstract,
+              }
+            : null,
+        });
+      }
+      // If it has Google Drive info, treat as drive file
+      else if (study.googleDriveFileId) {
+        driveFiles.push({
+          id: study.googleDriveFileId,
+          name: study.googleDriveFileName,
+          importSource: 'google-drive',
+          // Include metadata if available
+          title: study.title,
+          metadata:
+            study.abstract ?
+              {
+                firstAuthor: study.firstAuthor,
+                publicationYear: study.publicationYear,
+                authors: study.authors,
+                journal: study.journal,
+                abstract: study.abstract,
+              }
+            : null,
+        });
+      }
+      // Otherwise treat as reference (metadata only, may have pdfUrl)
+      else {
+        refs.push({
+          title: study.title,
+          pdfData: null,
+          pdfFileName: null,
+          metadata: {
+            firstAuthor: study.firstAuthor,
+            publicationYear: study.publicationYear,
+            authors: study.authors,
+            journal: study.journal,
+            doi: study.doi,
+            abstract: study.abstract,
+            pdfUrl: study.pdfUrl,
+            pdfSource: study.pdfSource,
+            pdfAccessible: study.pdfAccessible,
+            importSource: study.importSource,
+          },
+        });
+      }
+    }
 
-    options.onStudiesChange({ pdfs, refs, lookups, driveFiles });
+    options.onStudiesChange({ pdfs, refs, lookups: [], driveFiles });
   });
 
   // ===================
@@ -686,8 +705,9 @@ export function useAddStudies(options = {}) {
   /**
    * Builds deduplicated studies to submit by merging entries that match by DOI or title.
    * Priority: metadata from refs/lookups, PDF data from uploads.
+   * Note: Using function declaration for hoisting (used in collect mode effect above)
    */
-  const getStudiesToSubmit = () => {
+  function getStudiesToSubmit() {
     // Collect all study candidates with their source type
     const candidates = [];
 
@@ -890,7 +910,7 @@ export function useAddStudies(options = {}) {
     }
 
     return merged;
-  };
+  }
 
   const clearAll = () => {
     setUploadedPdfs([]);
