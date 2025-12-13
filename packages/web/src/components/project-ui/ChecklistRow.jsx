@@ -1,4 +1,4 @@
-/**
+""/**
  * ChecklistRow component - Displays a single checklist in a study
  */
 

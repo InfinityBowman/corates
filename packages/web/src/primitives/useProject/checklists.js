@@ -56,8 +56,10 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
 
     const checklistYMap = new Y.Map();
     checklistYMap.set('type', type);
+    checklistYMap.set('title', `${type} Checklist`);
     checklistYMap.set('assignedTo', assignedTo);
     checklistYMap.set('status', 'pending');
+    checklistYMap.set('isReconciled', false);
     checklistYMap.set('createdAt', now);
     checklistYMap.set('updatedAt', now);
 
@@ -102,6 +104,7 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
     if (updates.title !== undefined) checklistYMap.set('title', updates.title);
     if (updates.assignedTo !== undefined) checklistYMap.set('assignedTo', updates.assignedTo);
     if (updates.status !== undefined) checklistYMap.set('status', updates.status);
+    if (updates.isReconciled !== undefined) checklistYMap.set('isReconciled', updates.isReconciled);
     checklistYMap.set('updatedAt', Date.now());
   }
 

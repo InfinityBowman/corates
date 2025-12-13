@@ -15,6 +15,7 @@ export default function ChecklistWithPdf(props) {
   // props.pdfFileName - saved PDF file name (optional)
   // props.onPdfChange - callback when PDF changes: (data, fileName) => void
   // props.onPdfClear - callback when PDF is cleared
+  // props.readOnly - if true, disables checklist updates and PDF uploads
 
   return (
     <div class='h-full flex flex-col bg-blue-50'>
@@ -26,7 +27,11 @@ export default function ChecklistWithPdf(props) {
         headerContent={props.headerContent}
       >
         {/* First panel: Checklist */}
-        <AMSTAR2Checklist externalChecklist={props.checklist} onExternalUpdate={props.onUpdate} />
+        <AMSTAR2Checklist
+          externalChecklist={props.checklist}
+          onExternalUpdate={props.onUpdate}
+          readOnly={props.readOnly}
+        />
 
         {/* Second panel: PDF Viewer */}
         <PdfViewer
@@ -34,6 +39,7 @@ export default function ChecklistWithPdf(props) {
           pdfFileName={props.pdfFileName}
           onPdfChange={props.onPdfChange}
           onPdfClear={props.onPdfClear}
+          readOnly={props.readOnly}
         />
       </SplitScreenLayout>
     </div>

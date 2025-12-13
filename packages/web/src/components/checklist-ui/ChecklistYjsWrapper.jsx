@@ -44,6 +44,8 @@ export default function ChecklistYjsWrapper() {
     return study.checklists?.find(c => c.id === params.checklistId);
   });
 
+  const isReadOnly = () => currentChecklist()?.isReconciled === true;
+
   // Get the first PDF from the study (if any)
   const studyPdf = createMemo(() => {
     const study = currentStudy();
@@ -175,6 +177,7 @@ export default function ChecklistYjsWrapper() {
 
   // Handle partial updates from AMSTAR2Checklist
   function handlePartialUpdate(patch) {
+    if (isReadOnly()) return;
     // Filter to only update answer keys (q1, q2, etc.)
     Object.entries(patch).forEach(([key, value]) => {
       if (/^q\d+[a-z]*$/i.test(key)) {
@@ -185,6 +188,7 @@ export default function ChecklistYjsWrapper() {
 
   // Toggle checklist completion status
   function handleToggleComplete() {
+    if (isReadOnly()) return;
     const checklist = currentChecklist();
     if (!checklist) return;
 
@@ -221,16 +225,25 @@ export default function ChecklistYjsWrapper() {
       </div>
       <div class='ml-auto flex items-center gap-3'>
         <ScoreTag currentScore={currentScore()} />
-        <button
-          onClick={handleToggleComplete}
-          class={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-            currentChecklist()?.status === 'completed' ?
-              'bg-green-100 text-green-700 hover:bg-green-200'
-            : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
+        <Show
+          when={!isReadOnly()}
+          fallback={
+            <span class='px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-700'>
+              Read-only
+            </span>
+          }
         >
-          {currentChecklist()?.status === 'completed' ? 'Completed' : 'Mark Complete'}
-        </button>
+          <button
+            onClick={handleToggleComplete}
+            class={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              currentChecklist()?.status === 'completed' ?
+                'bg-green-100 text-green-700 hover:bg-green-200'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            {currentChecklist()?.status === 'completed' ? 'Completed' : 'Mark Complete'}
+          </button>
+        </Show>
       </div>
     </>
   );
@@ -266,6 +279,7 @@ export default function ChecklistYjsWrapper() {
           pdfFileName={pdfFileName()}
           onPdfChange={handlePdfChange}
           onPdfClear={handlePdfClear}
+          readOnly={isReadOnly()}
         />
       </Show>
     </>
