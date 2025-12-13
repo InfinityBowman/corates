@@ -8,7 +8,7 @@
  */
 
 import projectStore from './projectStore.js';
-import { useProject } from './useProject.js';
+import { useProject } from './useProject/index.js';
 
 /**
  * Get reactive project data from the store

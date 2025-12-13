@@ -158,18 +158,14 @@ describe('createChecklist', () => {
 
     it('should initialize all answers to false (no selection)', () => {
       // Check that answers are arrays of arrays with all false values
-      // The last element in answers may have a true for "No" as default
-      // Based on the code, the last column has [false, false, true] for "No" default
+      // All answers should be initialized to false (no default selection)
       Object.keys(checklist).forEach(key => {
         if (!/^q\d+[a-z]*$/i.test(key)) return;
         const question = checklist[key];
-        question.answers.forEach((col, colIdx) => {
-          // Last column may have a default "No" selected
-          if (colIdx === question.answers.length - 1) {
-            // At least one should be true in last column (the default answer)
-            const hasSelection = col.some(v => v === true);
-            expect(hasSelection).toBe(true);
-          }
+        question.answers.forEach((col, _colIdx) => {
+          // All columns should have all false values by default
+          const allFalse = col.every(v => v === false);
+          expect(allFalse).toBe(true);
         });
       });
     });

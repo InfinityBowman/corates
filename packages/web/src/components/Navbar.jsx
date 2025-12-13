@@ -69,12 +69,13 @@ export default function Navbar(props) {
             <FiMenu class='w-4 h-4' />
           </Show>
         </button>
-        <A
+        <a
           href={LANDING_URL}
+          rel='external'
           class='font-extrabold text-base sm:text-lg tracking-tight drop-shadow'
         >
           CoRATES
-        </A>
+        </a>
         {/* Offline indicator */}
         <Show when={!isOnline()}>
           <div class='flex items-center gap-1 bg-amber-500/90 text-white text-xs px-2 py-1 rounded-full'>
@@ -130,6 +131,7 @@ export default function Navbar(props) {
                   src={user().image}
                   alt={user()?.name || 'User'}
                   class='w-6 h-6 rounded-full object-cover'
+                  referrerPolicy='no-referrer'
                 />
               </Show>
               <span class='hidden sm:block'>{user()?.name || storedName || 'Loading...'}</span>

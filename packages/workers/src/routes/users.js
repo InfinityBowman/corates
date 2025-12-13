@@ -176,4 +176,80 @@ userRoutes.delete('/me', async c => {
   }
 });
 
+/**
+ * POST /api/users/sync-profile
+ * Sync the current user's profile changes to all their project memberships
+ * This ensures name/displayName/image updates propagate to Y.js docs
+ */
+userRoutes.post('/sync-profile', async c => {
+  const { user: currentUser } = getAuth(c);
+  const db = createDb(c.env.DB);
+
+  try {
+    // Get fresh user data from DB
+    const [userData] = await db
+      .select({
+        name: user.name,
+        displayName: user.displayName,
+        image: user.image,
+      })
+      .from(user)
+      .where(eq(user.id, currentUser.id))
+      .limit(1);
+
+    if (!userData) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
+    // Get all projects this user is a member of
+    const userProjects = await db
+      .select({ projectId: projectMembers.projectId })
+      .from(projectMembers)
+      .where(eq(projectMembers.userId, currentUser.id));
+
+    // Sync to each project's Durable Object
+    const syncPromises = userProjects.map(async ({ projectId }) => {
+      try {
+        const doId = c.env.PROJECT_DOC.idFromName(projectId);
+        const projectDoc = c.env.PROJECT_DOC.get(doId);
+
+        await projectDoc.fetch(
+          new Request('https://internal/sync-member', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Internal-Request': 'true',
+            },
+            body: JSON.stringify({
+              action: 'update',
+              member: {
+                userId: currentUser.id,
+                name: userData.name,
+                displayName: userData.displayName,
+                image: userData.image,
+              },
+            }),
+          }),
+        );
+        return { projectId, success: true };
+      } catch (err) {
+        console.error(`Failed to sync profile to project ${projectId}:`, err);
+        return { projectId, success: false, error: err.message };
+      }
+    });
+
+    const results = await Promise.all(syncPromises);
+    const successCount = results.filter(r => r.success).length;
+
+    return c.json({
+      success: true,
+      synced: successCount,
+      total: userProjects.length,
+    });
+  } catch (error) {
+    console.error('Error syncing profile:', error);
+    return c.json({ error: 'Failed to sync profile' }, 500);
+  }
+});
+
 export { userRoutes };

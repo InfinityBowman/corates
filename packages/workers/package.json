@@ -8,7 +8,8 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --env production",
     "tail": "wrangler tail",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "logs": "pnpm wrangler tail corates-workers-prod",
     "clear-workers": "rm -rf .wrangler/state && pnpm run db:migrate",
     "db:migrate": "y | wrangler d1 migrations apply corates-db --local",
@@ -27,6 +28,8 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "vitest": "^4.0.13"
+    "@cloudflare/vitest-pool-workers": "^0.10.14",
+    "vitest": "^4.0.15",
+    "wrangler": "^4.53.0"
   }
 }

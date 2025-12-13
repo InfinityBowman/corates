@@ -113,19 +113,28 @@ export function FileUpload(props) {
 
   // Allow directories by default when multiple files are allowed
   const allowDirs = () => merged.allowDirectories ?? merged.multiple;
+  const showFileList = () => merged.showFileList;
+  const accept = () => merged.accept;
+  const classValue = () => merged.class;
+  const compact = () => merged.compact;
+  const dropzoneClass = () => merged.dropzoneClass;
+  const helpText = () => merged.helpText;
 
   const service = useMachine(fileUpload.machine, {
     id: createUniqueId(),
+    // eslint-disable-next-line solid/reactivity
     accept: merged.accept ? { [merged.accept]: [] } : undefined,
     // maxFiles > 1 enables the native multi-select file picker (Cmd+click)
     // Setting to a high number allows unlimited files when multiple is true
+    // eslint-disable-next-line solid/reactivity
     maxFiles: merged.multiple ? 100 : 1,
+    // eslint-disable-next-line solid/reactivity
     disabled: merged.disabled,
     onFileChange: details => {
       merged.onFilesChange?.(details.acceptedFiles);
       // When showFileList is false, parent manages files externally
       // Clear internal state so deleted files don't reappear on next selection
-      if (!merged.showFileList && details.acceptedFiles.length > 0) {
+      if (!showFileList() && details.acceptedFiles.length > 0) {
         // Use queueMicrotask to clear after the callback completes
         queueMicrotask(() => {
           const currentApi = fileUpload.connect(service, normalizeProps);
@@ -173,8 +182,10 @@ export function FileUpload(props) {
 
       // Filter files based on accept prop if specified
       let filteredFiles = allFiles;
-      if (merged.accept) {
-        const acceptPatterns = merged.accept.split(',').map(p => p.trim().toLowerCase());
+      if (accept()) {
+        const acceptPatterns = accept()
+          .split(',')
+          .map(p => p.trim().toLowerCase());
         filteredFiles = allFiles.filter(file => {
           const ext = '.' + file.name.split('.').pop().toLowerCase();
           const mimeType = (file.type || '').toLowerCase();
@@ -219,9 +230,9 @@ export function FileUpload(props) {
   };
 
   return (
-    <div {...api().getRootProps()} class={merged.class}>
+    <div {...api().getRootProps()} class={classValue()}>
       <Show
-        when={!merged.compact}
+        when={!compact()}
         fallback={
           // Compact mode - minimal dropzone
           <div
@@ -231,7 +242,7 @@ export function FileUpload(props) {
               : isHighlighted() ?
                 'border-blue-400 bg-blue-50/50 scale-[1.01] ring-4 ring-blue-100 animate-pulse'
               : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-            } ${merged.dropzoneClass || ''}`}
+            } ${dropzoneClass() || ''}`}
           >
             <input {...api().getHiddenInputProps()} />
             <BiRegularCloudUpload
@@ -245,8 +256,8 @@ export function FileUpload(props) {
               </span>
               {!isHighlighted() && ' or drag and drop'}
             </p>
-            <Show when={merged.helpText}>
-              <p class='text-xs text-gray-500 mt-1'>{merged.helpText}</p>
+            <Show when={helpText()}>
+              <p class='text-xs text-gray-500 mt-1'>{helpText()}</p>
             </Show>
           </div>
         }
@@ -259,7 +270,7 @@ export function FileUpload(props) {
             : isHighlighted() ?
               'border-blue-400 bg-blue-50/50 scale-[1.01] ring-4 ring-blue-100 animate-pulse'
             : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-          } ${merged.dropzoneClass || ''}`}
+          } ${dropzoneClass() || ''}`}
         >
           <input {...api().getHiddenInputProps()} />
           <BiRegularCloudUpload
@@ -273,14 +284,14 @@ export function FileUpload(props) {
             </span>
             {!isHighlighted() && ' or drag and drop'}
           </p>
-          <Show when={merged.helpText}>
-            <p class='text-xs text-gray-500 mt-1'>{merged.helpText}</p>
+          <Show when={helpText()}>
+            <p class='text-xs text-gray-500 mt-1'>{helpText()}</p>
           </Show>
         </div>
       </Show>
 
       {/* File list */}
-      <Show when={merged.showFileList && api().acceptedFiles.length > 0}>
+      <Show when={showFileList() && api().acceptedFiles.length > 0}>
         <ul {...api().getItemGroupProps()} class='mt-4 space-y-2'>
           <Index each={api().acceptedFiles}>
             {file => (

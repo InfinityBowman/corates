@@ -4,6 +4,7 @@
  */
 
 import { createSignal, Show } from 'solid-js';
+import { createStore } from 'solid-js/store';
 import { AiOutlineArrowLeft } from 'solid-icons/ai';
 import PdfViewer from '@/components/checklist-ui/pdf/PdfViewer.jsx';
 import ChecklistReconciliation from './ChecklistReconciliation.jsx';
@@ -29,8 +30,20 @@ export default function ReconciliationWithPdf(props) {
   const [splitRatio, setSplitRatio] = createSignal(60); // Slightly more space for reconciliation
   const [isDragging, setIsDragging] = createSignal(false);
 
-  // Navbar state from ChecklistReconciliation
-  const [navbarProps, setNavbarProps] = createSignal(null);
+  // Navbar store for deep reactivity - ChecklistReconciliation will update this
+  const [navbarStore, setNavbarStore] = createStore({
+    questionKeys: [],
+    viewMode: 'questions',
+    currentPage: 0,
+    comparisonByQuestion: {},
+    finalAnswers: {},
+    summary: null,
+    reviewedCount: 0,
+    totalPages: 0,
+    setViewMode: null,
+    goToQuestion: null,
+    onReset: null,
+  });
 
   let containerRef;
 
@@ -92,27 +105,19 @@ export default function ReconciliationWithPdf(props) {
         <div class='h-8 w-px bg-gray-200 shrink-0' />
 
         {/* Navbar - question navigation pills */}
-        <Show when={navbarProps()}>
+        <Show when={navbarStore.questionKeys.length > 0}>
           <div class='flex-1 flex items-center gap-4 overflow-x-auto'>
-            <Navbar
-              questionKeys={navbarProps().questionKeys}
-              viewMode={navbarProps().viewMode}
-              setViewMode={navbarProps().setViewMode}
-              currentPage={navbarProps().currentPage}
-              goToQuestion={navbarProps().goToQuestion}
-              comparisonByQuestion={navbarProps().comparisonByQuestion}
-              finalAnswers={navbarProps().finalAnswers}
-            />
+            <Navbar store={navbarStore} />
             {/* Progress indicator */}
             {/* <div class='flex items-center gap-2 text-sm text-gray-600 shrink-0'>
-              <span class='font-medium'>{navbarProps().reviewedCount}</span>/
-              <span>{navbarProps().totalPages}</span>
-              <Show when={navbarProps().summary}>
+              <span class='font-medium'>{navbarStore.reviewedCount}</span>/
+              <span>{navbarStore.totalPages}</span>
+              <Show when={navbarStore.summary}>
                 <span class='px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded'>
-                  {navbarProps().summary.agreementCount} agree
+                  {navbarStore.summary.agreementCount} agree
                 </span>
                 <span class='px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs rounded'>
-                  {navbarProps().summary.disagreementCount} differ
+                  {navbarStore.summary.disagreementCount} differ
                 </span>
               </Show>
             </div> */}
@@ -156,7 +161,7 @@ export default function ReconciliationWithPdf(props) {
             onSaveProgress={props.onSaveProgress}
             onSaveReconciled={props.onSaveReconciled}
             onCancel={props.onCancel}
-            navbarRef={setNavbarProps}
+            setNavbarStore={setNavbarStore}
           />
         </div>
 

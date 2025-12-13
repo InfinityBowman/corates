@@ -1,15 +1,34 @@
-import { Title, Meta } from '@solidjs/meta';
+import { Title, Meta, Link } from '@solidjs/meta';
 import Navbar from '~/components/Navbar';
 import Footer from '~/components/Footer';
+import { config } from '~/lib/config';
 
 export default function PrivacyPolicy() {
+  const pageUrl = `${config.appUrl}/privacy`;
+  const title = 'Privacy Policy - CoRATES';
+  const description =
+    'Privacy Policy for CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis';
+  const imageUrl = `${config.appUrl}/product.png`;
+
   return (
     <>
-      <Title>Privacy Policy - CoRATES</Title>
-      <Meta
-        name='description'
-        content='Privacy Policy for CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis'
-      />
+      <Title>{title}</Title>
+      <Meta name='description' content={description} />
+      <Link rel='canonical' href={pageUrl} />
+
+      <Meta property='og:type' content='website' />
+      <Meta property='og:site_name' content='CoRATES' />
+      <Meta property='og:title' content={title} />
+      <Meta property='og:description' content={description} />
+      <Meta property='og:url' content={pageUrl} />
+      <Meta property='og:image' content={imageUrl} />
+
+      <Meta name='twitter:card' content='summary_large_image' />
+      <Meta name='twitter:title' content={title} />
+      <Meta name='twitter:description' content={description} />
+      <Meta name='twitter:image' content={imageUrl} />
+
+      <Meta name='robots' content='index,follow,max-image-preview:large' />
 
       <div class='min-h-screen flex flex-col'>
         <Navbar />

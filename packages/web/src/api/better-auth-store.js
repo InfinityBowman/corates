@@ -1,40 +1,140 @@
-import { createSignal, createEffect, createRoot } from 'solid-js';
+import { createSignal, createRoot, createEffect } from 'solid-js';
 import { authClient, useSession } from '@api/auth-client.js';
-import useOnlineStatus from '@primitives/useOnlineStatus.js';
 import projectStore from '@primitives/projectStore.js';
 import { API_BASE } from '@config/api.js';
 import { saveLastLoginMethod, LOGIN_METHODS } from '@lib/lastLoginMethod.js';
 
+// LocalStorage keys for offline caching
+const AUTH_CACHE_KEY = 'corates-auth-cache';
+const AUTH_CACHE_TIMESTAMP_KEY = 'corates-auth-cache-timestamp';
+const AUTH_CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 function createBetterAuthStore() {
-  const isOnline = useOnlineStatus();
+  // Track online status without reactive primitives (for singleton context)
+  const [isOnline, setIsOnline] = createSignal(navigator.onLine);
 
-  // Use Better Auth's built-in session hook
-  const session = useSession();
+  // Set up event listeners for online/offline
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', () => setIsOnline(true));
+    window.addEventListener('offline', () => setIsOnline(false));
+  }
 
-  // Derived signals from Better Auth session
-  const isLoggedIn = () => !!session().data?.user;
-  const isAuthenticated = () => !!session().data?.user;
-  const user = () => session().data?.user || null;
-  const authLoading = () => session().isPending;
+  // Load cached auth data from localStorage
+  function loadCachedAuth() {
+    if (typeof window === 'undefined') return null;
+    try {
+      const cached = localStorage.getItem(AUTH_CACHE_KEY);
+      const timestamp = localStorage.getItem(AUTH_CACHE_TIMESTAMP_KEY);
+      if (!cached || !timestamp) return null;
+
+      const age = Date.now() - parseInt(timestamp, 10);
+      if (age > AUTH_CACHE_MAX_AGE) {
+        // Cache expired, clear it
+        localStorage.removeItem(AUTH_CACHE_KEY);
+        localStorage.removeItem(AUTH_CACHE_TIMESTAMP_KEY);
+        return null;
+      }
+
+      return JSON.parse(cached);
+    } catch (err) {
+      console.error('Error loading cached auth:', err);
+      return null;
+    }
+  }
+
+  // Save auth data to localStorage
+  function saveCachedAuth(userData) {
+    if (typeof window === 'undefined') return;
+    try {
+      if (userData) {
+        localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(userData));
+        localStorage.setItem(AUTH_CACHE_TIMESTAMP_KEY, Date.now().toString());
+      } else {
+        localStorage.removeItem(AUTH_CACHE_KEY);
+        localStorage.removeItem(AUTH_CACHE_TIMESTAMP_KEY);
+      }
+    } catch (err) {
+      console.error('Error saving cached auth:', err);
+    }
+  }
+
+  // Better Auth's useSession uses reactive primitives, so wrap in createRoot
+  // This is acceptable for this singleton as we want the session to persist
+  const {
+    session,
+    isLoggedIn: sessionIsLoggedIn,
+    isAuthenticated: sessionIsAuthenticated,
+    user: sessionUser,
+    authLoading,
+  } = createRoot(() => {
+    const session = useSession();
+
+    // Derived signals from Better Auth session
+    const isLoggedIn = () => !!session().data?.user;
+    const isAuthenticated = () => !!session().data?.user;
+    const user = () => session().data?.user || null;
+    const authLoading = () => session().isPending;
+
+    return { session, isLoggedIn, isAuthenticated, user, authLoading };
+  });
+
+  // Enhanced signals that fall back to cached data when offline
+  const cachedAuth = loadCachedAuth();
+  const [cachedUser, setCachedUser] = createSignal(cachedAuth);
+
+  // Cache user data when session is successfully fetched (only when online)
+  // Wrap in createRoot to properly dispose of the effect
+  createRoot(() => {
+    createEffect(() => {
+      const sessionData = session().data;
+      if (isOnline()) {
+        if (sessionData?.user) {
+          // Cache when we have a user and we're online
+          saveCachedAuth(sessionData.user);
+          setCachedUser(sessionData.user);
+        } else if (!authLoading()) {
+          // Clear cache when logged out (only after loading completes to avoid clearing on initial load)
+          saveCachedAuth(null);
+          setCachedUser(null);
+        }
+      }
+    });
+  });
+
+  // Combined signals that use cached data when offline
+  const isLoggedIn = () => {
+    if (isOnline()) {
+      return sessionIsLoggedIn();
+    }
+    // When offline, use cached data
+    return !!cachedUser();
+  };
+
+  const isAuthenticated = () => {
+    if (isOnline()) {
+      return sessionIsAuthenticated();
+    }
+    // When offline, use cached data
+    return !!cachedUser();
+  };
+
+  const user = () => {
+    if (isOnline()) {
+      return sessionUser();
+    }
+    // When offline, return cached user
+    return cachedUser();
+  };
 
   // Error state for auth operations
   const [authError, setAuthError] = createSignal(null);
-
-  // Clear error when going online
-  createEffect(() => {
-    if (isOnline()) {
-      setAuthError(null);
-    }
-  });
 
   // BroadcastChannel for cross-tab auth state sync
   const authChannel =
     typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('corates-auth') : null;
 
   // Listen for auth state changes from other tabs
-  createEffect(() => {
-    if (!authChannel) return;
-
+  if (authChannel) {
     const handleMessage = event => {
       if (event.data?.type === 'auth-changed') {
         // Another tab changed auth state, refetch session
@@ -43,11 +143,7 @@ function createBetterAuthStore() {
     };
 
     authChannel.addEventListener('message', handleMessage);
-
-    return () => {
-      authChannel.removeEventListener('message', handleMessage);
-    };
-  });
+  }
 
   // Broadcast auth changes to other tabs
   function broadcastAuthChange() {
@@ -55,7 +151,7 @@ function createBetterAuthStore() {
   }
 
   // Listen for tab visibility changes to refresh session
-  createEffect(() => {
+  if (typeof document !== 'undefined') {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && !authLoading() && isOnline()) {
         // Refresh session when tab becomes visible (user might have verified email in another tab)
@@ -64,11 +160,7 @@ function createBetterAuthStore() {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  });
+  }
 
   // --- API methods ---
   async function signup(email, password, name, role = null) {
@@ -220,6 +312,10 @@ function createBetterAuthStore() {
       if (error) {
         throw new Error(error.message);
       }
+
+      // Clear cached auth data
+      saveCachedAuth(null);
+      setCachedUser(null);
 
       // Clear cached project data on logout
       projectStore.clearProjectList();
@@ -502,6 +598,8 @@ function createBetterAuthStore() {
       // Clear local data
       projectStore.clearProjectList();
       localStorage.removeItem('pendingEmail');
+      saveCachedAuth(null);
+      setCachedUser(null);
 
       // Sign out after successful deletion
       await authClient.signOut();
@@ -520,6 +618,7 @@ function createBetterAuthStore() {
     user,
     authLoading,
     authError,
+    isOnline,
 
     // Actions
     signup,
@@ -556,7 +655,9 @@ function createBetterAuthStore() {
   };
 }
 
-const betterAuth = createRoot(createBetterAuthStore);
+// Create singleton instance without createRoot
+// This is a plain object with reactive primitives, not a component tree
+const betterAuth = createBetterAuthStore();
 
 export function useBetterAuth() {
   return betterAuth;

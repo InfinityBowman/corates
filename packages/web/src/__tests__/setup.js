@@ -8,7 +8,7 @@ import { vi } from 'vitest';
 // Mock import.meta.env for tests
 vi.stubGlobal('import.meta', {
   env: {
-    VITE_WORKER_API_URL: 'http://localhost:8787',
+    VITE_API_URL: 'http://localhost:8787',
     VITE_BASEPATH: '/',
   },
 });

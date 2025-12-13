@@ -10,6 +10,9 @@ import { useParams, useNavigate } from '@solidjs/router';
 import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import CreateLocalChecklist from '@checklist-ui/CreateLocalChecklist.jsx';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
+import { scoreChecklist } from '@/AMSTAR2/checklist.js';
+import { IoChevronBack } from 'solid-icons/io';
+import ScoreTag from '@/components/checklist-ui/ScoreTag.jsx';
 
 export default function LocalChecklistView() {
   const params = useParams();
@@ -21,7 +24,6 @@ export default function LocalChecklistView() {
   const [pdfFileName, setPdfFileName] = createSignal(null);
   const [loading, setLoading] = createSignal(true);
   const [error, setError] = createSignal(null);
-  const [saveStatus, setSaveStatus] = createSignal('saved');
 
   // Debounce timer for auto-save
   let saveTimeout = null;
@@ -32,13 +34,6 @@ export default function LocalChecklistView() {
 
     // If no checklistId, show create form (handled in render)
     if (!checklistId) {
-      setLoading(false);
-      return;
-    }
-
-    // Verify it's a local checklist
-    if (!checklistId.startsWith('local-')) {
-      setError('Invalid local checklist ID');
       setLoading(false);
       return;
     }
@@ -93,7 +88,6 @@ export default function LocalChecklistView() {
     });
 
     // Debounce the save to IndexedDB
-    setSaveStatus('saving');
     if (saveTimeout) {
       clearTimeout(saveTimeout);
     }
@@ -102,10 +96,8 @@ export default function LocalChecklistView() {
       try {
         const checklistId = params.checklistId;
         await updateChecklist(checklistId, updates);
-        setSaveStatus('saved');
       } catch (err) {
         console.error('Error saving checklist:', err);
-        setSaveStatus('error');
       }
     }, 500);
   };
@@ -148,43 +140,30 @@ export default function LocalChecklistView() {
     navigate('/dashboard');
   };
 
-  // Header content for the toolbar (merged with layout controls)
+  // Compute the current score based on checklist answers
+  const currentScore = () => {
+    const currChecklist = checklist();
+    if (!currChecklist) return null;
+    return scoreChecklist(currChecklist);
+  };
+
+  // Header content for the toolbar
   const headerContent = (
     <>
       <button
         onClick={handleBack}
         class='inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors'
       >
-        <svg
-          xmlns='http://www.w3.org/2000/svg'
-          class='h-5 w-5'
-          fill='none'
-          viewBox='0 0 24 24'
-          stroke='currentColor'
-          stroke-width='2'
-        >
-          <path stroke-linecap='round' stroke-linejoin='round' d='M15 19l-7-7 7-7' />
-        </svg>
+        <IoChevronBack size={20} />
         Back
       </button>
 
       <div class='h-4 w-px bg-gray-300' />
 
-      {/* Local badge */}
       <span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600'>
         Local Only
       </span>
-
-      {/* Save status indicator */}
-      <Show when={saveStatus() === 'saving'}>
-        <span class='text-sm text-gray-500'>Saving...</span>
-      </Show>
-      <Show when={saveStatus() === 'saved'}>
-        <span class='text-sm text-green-600'>Saved</span>
-      </Show>
-      <Show when={saveStatus() === 'error'}>
-        <span class='text-sm text-red-600'>Save failed</span>
-      </Show>
+      <ScoreTag currentScore={currentScore()} />
     </>
   );
 

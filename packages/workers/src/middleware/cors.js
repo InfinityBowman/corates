@@ -3,7 +3,7 @@
  */
 
 import { cors } from 'hono/cors';
-import { getAllowedOrigins, isOriginAllowed, STATIC_ORIGINS } from '../config/origins.js';
+import { isOriginAllowed, STATIC_ORIGINS } from '../config/origins.js';
 
 /**
  * Create CORS middleware for Hono

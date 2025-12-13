@@ -71,19 +71,6 @@ export default function Features() {
       <div class='grid md:grid-cols-2 lg:grid-cols-3 gap-6'>
         <For each={features}>{feature => <FeatureCard {...feature} />}</For>
       </div>
-
-      {/* Supported Tools */}
-      <div class='mt-12 text-center'>
-        <p class='text-sm text-gray-500 mb-3'>Currently supported appraisal tools:</p>
-        <div class='flex flex-wrap justify-center gap-3'>
-          <span class='bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-sm font-medium'>
-            AMSTAR-2
-          </span>
-          <span class='bg-gray-100 text-gray-500 px-4 py-2 rounded-full text-sm'>
-            More coming soon
-          </span>
-        </div>
-      </div>
     </section>
   );
 }

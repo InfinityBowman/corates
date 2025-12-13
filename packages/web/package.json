@@ -6,20 +6,24 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build --mode production",
+    "build": "vite build --mode production && node scripts/copy-to-landing.js",
     "preview": "vite preview",
-    "deploy": "pnpm run build && wrangler deploy --env production",
-    "test": "vitest --ui",
+    "deploy": "pnpm run build",
+    "test:ui": "vitest --ui --ui.port=51234",
+    "test": "vitest run --reporter=verbose",
     "format": "prettier --write ."
   },
   "dependencies": {
     "@solidjs/router": "^0.15.4",
+    "@zag-js/avatar": "^1.31.1",
     "@zag-js/checkbox": "^1.31.0",
     "@zag-js/collapsible": "^1.30.0",
     "@zag-js/dialog": "^1.30.0",
     "@zag-js/file-upload": "^1.30.0",
+    "@zag-js/floating-panel": "^1.31.1",
     "@zag-js/password-input": "^1.30.0",
     "@zag-js/pin-input": "^1.30.0",
+    "@zag-js/qr-code": "^1.31.0",
     "@zag-js/solid": "^1.30.0",
     "@zag-js/splitter": "^1.30.0",
     "@zag-js/switch": "^1.30.0",
@@ -29,7 +33,6 @@
     "better-auth": "^1.4.3",
     "d3": "^7.9.0",
     "pdfjs-dist": "^5.4.449",
-    "qrcode": "^1.5.4",
     "solid-icons": "^1.1.0",
     "solid-js": "^1.9.10",
     "y-indexeddb": "^9.0.12",
@@ -44,7 +47,6 @@
     "puppeteer": "^24.31.0",
     "tailwindcss": "^4.1.17",
     "vite": "^7.2.4",
-    "vite-plugin-pwa": "^1.2.0",
     "vite-plugin-solid": "^2.11.10",
     "vitest": "^4.0.14"
   }

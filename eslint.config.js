@@ -111,6 +111,20 @@ export default [
     },
   },
   {
+    // Service worker configuration
+    files: ['**/sw.js', '**/service-worker.js'],
+    languageOptions: {
+      globals: {
+        self: 'readonly',
+        caches: 'readonly',
+        clients: 'readonly',
+        skipWaiting: 'readonly',
+        registration: 'readonly',
+        ServiceWorkerGlobalScope: 'readonly',
+      },
+    },
+  },
+  {
     ignores: [
       '**/node_modules/**',
       '**/dist/**',
@@ -119,6 +133,7 @@ export default [
       '**/.vinxi/**',
       '**/.output/**',
       '**/coverage/**',
+      'packages/learn/.astro/**',
     ],
   },
 ];

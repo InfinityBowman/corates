@@ -4,13 +4,15 @@
  */
 
 import { createSignal, Show } from 'solid-js';
-import { useNavigate } from '@solidjs/router';
+import { useNavigate, useSearchParams } from '@solidjs/router';
 import { FiFileText, FiX } from 'solid-icons/fi';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
 import { FileUpload } from '@components/zag/FileUpload.jsx';
+import { LANDING_URL } from '@config/api.js';
 
 export default function CreateLocalChecklist() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { createChecklist, savePdf } = useLocalChecklists();
 
   const [name, setName] = createSignal('');
@@ -57,6 +59,18 @@ export default function CreateLocalChecklist() {
       console.error('Error creating checklist:', err);
       setError(err.message || 'Failed to create checklist');
       setCreating(false);
+    }
+  };
+
+  const handleCancel = () => {
+    const fromParam = searchParams.from;
+
+    // If coming from landing page, navigate to landing
+    if (fromParam === 'landing') {
+      window.location.href = LANDING_URL;
+    } else {
+      // Otherwise go to dashboard
+      navigate('/dashboard');
     }
   };
 
@@ -132,7 +146,7 @@ export default function CreateLocalChecklist() {
             <div class='flex gap-3'>
               <button
                 type='button'
-                onClick={() => navigate('/dashboard')}
+                onClick={handleCancel}
                 class='flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium'
               >
                 Cancel
@@ -142,7 +156,7 @@ export default function CreateLocalChecklist() {
                 disabled={creating()}
                 class='flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed'
               >
-                {creating() ? 'Adding...' : 'Add Study'}
+                {creating() ? 'Adding...' : 'Start'}
               </button>
             </div>
           </form>

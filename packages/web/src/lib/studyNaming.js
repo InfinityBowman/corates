@@ -8,28 +8,22 @@
  */
 export const NAMING_CONVENTIONS = [
   {
+    id: 'shortTitle',
+    label: 'Short Title',
+    description: 'Abbreviated title (max 30 characters)',
+    example: 'Effects of Exercise on Sleep',
+  },
+  {
     id: 'title',
-    label: 'Study Title',
-    description: 'Use the full study title',
-    example: 'Effects of Exercise on Sleep Quality',
+    label: 'Full Title',
+    description: 'Use the complete study title',
+    example: 'Effects of Exercise on Sleep Quality: A Systematic Review and Meta-Analysis',
   },
   {
     id: 'lastNameYear',
     label: 'Last Name (Year)',
     description: 'First author last name and publication year',
     example: 'Smith (2023)',
-  },
-  {
-    id: 'lastNameEtAlYear',
-    label: 'Last Name et al. (Year)',
-    description: 'First author last name with et al. and year',
-    example: 'Smith et al. (2023)',
-  },
-  {
-    id: 'authorsYear',
-    label: 'Authors (Year)',
-    description: 'Up to 3 authors with publication year',
-    example: 'Smith, Jones & Brown (2023)',
   },
   {
     id: 'lastNameYearShortTitle',
@@ -106,7 +100,7 @@ function parseAuthors(authorsString) {
  * @param {number} maxLength - Maximum characters
  * @returns {string} Truncated title
  */
-function truncateTitle(title, maxLength = 40) {
+function truncateTitle(title, maxLength = 30) {
   if (!title || title.length <= maxLength) return title;
 
   const truncated = title.substring(0, maxLength);
@@ -133,6 +127,10 @@ export function generateStudyName(studyData, convention = 'title') {
   const hasYear = publicationYear;
 
   switch (convention) {
+    case 'shortTitle': {
+      return truncateTitle(title) || 'Untitled Study';
+    }
+
     case 'lastNameYear': {
       if (!hasAuthorInfo) return title || 'Untitled Study';
       const lastName = firstAuthor || extractLastName(parseAuthors(authors)[0]);
@@ -140,45 +138,6 @@ export function generateStudyName(studyData, convention = 'title') {
         return `${lastName} (${publicationYear})`;
       }
       return lastName || title || 'Untitled Study';
-    }
-
-    case 'lastNameEtAlYear': {
-      if (!hasAuthorInfo) return title || 'Untitled Study';
-      const lastName = firstAuthor || extractLastName(parseAuthors(authors)[0]);
-      const authorList = parseAuthors(authors);
-      const hasMultipleAuthors = authorList.length > 1 || (authors && authors.includes(' and '));
-
-      let name = lastName;
-      if (hasMultipleAuthors) {
-        name += ' et al.';
-      }
-      if (hasYear) {
-        name += ` (${publicationYear})`;
-      }
-      return name || title || 'Untitled Study';
-    }
-
-    case 'authorsYear': {
-      if (!hasAuthorInfo) return title || 'Untitled Study';
-      const authorList = parseAuthors(authors);
-
-      let authorStr;
-      if (authorList.length === 0) {
-        authorStr = firstAuthor || '';
-      } else if (authorList.length === 1) {
-        authorStr = extractLastName(authorList[0]);
-      } else if (authorList.length === 2) {
-        authorStr = `${extractLastName(authorList[0])} & ${extractLastName(authorList[1])}`;
-      } else if (authorList.length === 3) {
-        authorStr = `${extractLastName(authorList[0])}, ${extractLastName(authorList[1])} & ${extractLastName(authorList[2])}`;
-      } else {
-        authorStr = `${extractLastName(authorList[0])}, ${extractLastName(authorList[1])}, ${extractLastName(authorList[2])} et al.`;
-      }
-
-      if (hasYear) {
-        return `${authorStr} (${publicationYear})`;
-      }
-      return authorStr || title || 'Untitled Study';
     }
 
     case 'lastNameYearShortTitle': {
@@ -207,5 +166,5 @@ export function generateStudyName(studyData, convention = 'title') {
  * @returns {string} The default convention ID
  */
 export function getDefaultNamingConvention() {
-  return 'title';
+  return 'shortTitle';
 }
