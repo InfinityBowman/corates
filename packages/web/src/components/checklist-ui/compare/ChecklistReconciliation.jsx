@@ -6,6 +6,7 @@
 import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from 'solid-icons/ai';
 import { showToast } from '@components/zag/Toast.jsx';
+import { useConfirmDialog } from '@components/zag/Dialog.jsx';
 import {
   compareChecklists,
   getReconciliationSummary,
@@ -39,6 +40,8 @@ export default function ChecklistReconciliation(props) {
   // Reconciled checklist metadata
   const [reconciledName, setReconciledName] = createSignal('Reconciled Checklist');
   const [saving, setSaving] = createSignal(false);
+
+  const confirmDialog = useConfirmDialog();
 
   // View mode: 'questions' or 'summary'
   const [viewMode, setViewMode] = createSignal('questions');
@@ -261,6 +264,17 @@ export default function ChecklistReconciliation(props) {
       return;
     }
 
+    const confirmed = await confirmDialog.open({
+      title: 'Finish reconciliation?',
+      description:
+        'This will save a final reconciled checklist and end this reconciliation. You will no longer be able to edit these reconciliation answers afterwards.',
+      confirmText: 'Finish',
+      cancelText: 'Cancel',
+      variant: 'warning',
+    });
+
+    if (!confirmed) return;
+
     setSaving(true);
     try {
       // Build the reconciled checklist object - flatten multi-part questions
@@ -304,6 +318,7 @@ export default function ChecklistReconciliation(props) {
   return (
     <div class='bg-blue-50'>
       <div class='px-4 py-4 max-w-7xl mx-auto'>
+        <confirmDialog.ConfirmDialogComponent />
         {/* Main Content */}
         <Show when={viewMode() === 'questions'}>
           <Show

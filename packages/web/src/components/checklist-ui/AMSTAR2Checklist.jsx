@@ -748,6 +748,7 @@ export default function AMSTAR2Checklist(props = {}) {
 
   // Handler to update checklist state
   const handleChecklistChange = newState => {
+    if (props.readOnly) return;
     // If parent provided a controlled update handler, forward the partial update
     if (props.onExternalUpdate) {
       props.onExternalUpdate(newState);
@@ -769,74 +770,76 @@ export default function AMSTAR2Checklist(props = {}) {
               {currentChecklist().name || 'AMSTAR 2 Checklist'}
             </div>
           </div>
-          <div class='space-y-6'>
-            <Question1
-              onUpdate={newQ1 => handleChecklistChange({ q1: newQ1 })}
-              checklistState={currentChecklist}
-            />
-            <Question2
-              onUpdate={newQ2 => handleChecklistChange({ q2: newQ2 })}
-              checklistState={currentChecklist}
-            />
-            <Question3
-              onUpdate={newQ3 => handleChecklistChange({ q3: newQ3 })}
-              checklistState={currentChecklist}
-            />
-            <Question4
-              onUpdate={newQ4 => handleChecklistChange({ q4: newQ4 })}
-              checklistState={currentChecklist}
-            />
-            <Question5
-              onUpdate={newQ5 => handleChecklistChange({ q5: newQ5 })}
-              checklistState={currentChecklist}
-            />
-            <Question6
-              onUpdate={newQ6 => handleChecklistChange({ q6: newQ6 })}
-              checklistState={currentChecklist}
-            />
-            <Question7
-              onUpdate={newQ7 => handleChecklistChange({ q7: newQ7 })}
-              checklistState={currentChecklist}
-            />
-            <Question8
-              onUpdate={newQ8 => handleChecklistChange({ q8: newQ8 })}
-              checklistState={currentChecklist}
-            />
-            <Question9
-              onUpdatea={newQ9a => handleChecklistChange({ q9a: newQ9a })}
-              onUpdateb={newQ9b => handleChecklistChange({ q9b: newQ9b })}
-              checklistState={currentChecklist}
-            />
-            <Question10
-              onUpdate={newQ10 => handleChecklistChange({ q10: newQ10 })}
-              checklistState={currentChecklist}
-            />
-            <Question11
-              onUpdatea={newQ11a => handleChecklistChange({ q11a: newQ11a })}
-              onUpdateb={newQ11b => handleChecklistChange({ q11b: newQ11b })}
-              checklistState={currentChecklist}
-            />
-            <Question12
-              onUpdate={newQ12 => handleChecklistChange({ q12: newQ12 })}
-              checklistState={currentChecklist}
-            />
-            <Question13
-              onUpdate={newQ13 => handleChecklistChange({ q13: newQ13 })}
-              checklistState={currentChecklist}
-            />
-            <Question14
-              onUpdate={newQ14 => handleChecklistChange({ q14: newQ14 })}
-              checklistState={currentChecklist}
-            />
-            <Question15
-              onUpdate={newQ15 => handleChecklistChange({ q15: newQ15 })}
-              checklistState={currentChecklist}
-            />
-            <Question16
-              onUpdate={newQ16 => handleChecklistChange({ q16: newQ16 })}
-              checklistState={currentChecklist}
-            />
-          </div>
+          <fieldset disabled={!!props.readOnly} class={props.readOnly ? 'opacity-90' : ''}>
+            <div class='space-y-6'>
+              <Question1
+                onUpdate={newQ1 => handleChecklistChange({ q1: newQ1 })}
+                checklistState={currentChecklist}
+              />
+              <Question2
+                onUpdate={newQ2 => handleChecklistChange({ q2: newQ2 })}
+                checklistState={currentChecklist}
+              />
+              <Question3
+                onUpdate={newQ3 => handleChecklistChange({ q3: newQ3 })}
+                checklistState={currentChecklist}
+              />
+              <Question4
+                onUpdate={newQ4 => handleChecklistChange({ q4: newQ4 })}
+                checklistState={currentChecklist}
+              />
+              <Question5
+                onUpdate={newQ5 => handleChecklistChange({ q5: newQ5 })}
+                checklistState={currentChecklist}
+              />
+              <Question6
+                onUpdate={newQ6 => handleChecklistChange({ q6: newQ6 })}
+                checklistState={currentChecklist}
+              />
+              <Question7
+                onUpdate={newQ7 => handleChecklistChange({ q7: newQ7 })}
+                checklistState={currentChecklist}
+              />
+              <Question8
+                onUpdate={newQ8 => handleChecklistChange({ q8: newQ8 })}
+                checklistState={currentChecklist}
+              />
+              <Question9
+                onUpdatea={newQ9a => handleChecklistChange({ q9a: newQ9a })}
+                onUpdateb={newQ9b => handleChecklistChange({ q9b: newQ9b })}
+                checklistState={currentChecklist}
+              />
+              <Question10
+                onUpdate={newQ10 => handleChecklistChange({ q10: newQ10 })}
+                checklistState={currentChecklist}
+              />
+              <Question11
+                onUpdatea={newQ11a => handleChecklistChange({ q11a: newQ11a })}
+                onUpdateb={newQ11b => handleChecklistChange({ q11b: newQ11b })}
+                checklistState={currentChecklist}
+              />
+              <Question12
+                onUpdate={newQ12 => handleChecklistChange({ q12: newQ12 })}
+                checklistState={currentChecklist}
+              />
+              <Question13
+                onUpdate={newQ13 => handleChecklistChange({ q13: newQ13 })}
+                checklistState={currentChecklist}
+              />
+              <Question14
+                onUpdate={newQ14 => handleChecklistChange({ q14: newQ14 })}
+                checklistState={currentChecklist}
+              />
+              <Question15
+                onUpdate={newQ15 => handleChecklistChange({ q15: newQ15 })}
+                checklistState={currentChecklist}
+              />
+              <Question16
+                onUpdate={newQ16 => handleChecklistChange({ q16: newQ16 })}
+                checklistState={currentChecklist}
+              />
+            </div>
+          </fieldset>
         </Show>
       </div>
     </div>

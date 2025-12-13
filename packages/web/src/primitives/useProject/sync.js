@@ -85,8 +85,10 @@ function buildStudyFromYMap(studyId, studyData, studyYMap) {
       study.checklists.push({
         id: checklistId,
         type: checklistData.type || 'AMSTAR2',
+        title: checklistData.title || null,
         assignedTo: checklistData.assignedTo || null,
         status: checklistData.status || 'pending',
+        isReconciled: checklistData.isReconciled || false,
         createdAt: checklistData.createdAt,
         updatedAt: checklistData.updatedAt,
       });

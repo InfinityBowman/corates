@@ -23,6 +23,7 @@ export default function ReconciliationWrapper() {
   const {
     createChecklist: createProjectChecklist,
     updateChecklistAnswer,
+    updateChecklist,
     getChecklistData,
     getReconciliationProgress,
     saveReconciliationProgress,
@@ -200,11 +201,19 @@ export default function ReconciliationWrapper() {
         updateChecklistAnswer(params.studyId, newChecklistId, key, reconciledChecklist[key]);
       }
 
+      // Mark it as a reconciled/consensus checklist so it appears in the Completed tab
+      updateChecklist(params.studyId, newChecklistId, {
+        status: 'completed',
+        title: 'Reconciled Checklist',
+        isReconciled: true,
+        assignedTo: null,
+      });
+
       // Clear the reconciliation progress since we've completed it
       clearReconciliationProgress(params.studyId);
 
-      // Navigate back to the project view (ready-to-reconcile tab)
-      navigate(`/projects/${params.projectId}?tab=ready-to-reconcile`);
+      // Navigate back to the project view (completed tab)
+      navigate(`/projects/${params.projectId}?tab=completed`);
     } catch (err) {
       console.error('Error saving reconciled checklist:', err);
       setError(err.message);
