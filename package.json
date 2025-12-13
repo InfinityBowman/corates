@@ -17,6 +17,7 @@
     "deploy:workers": "pnpm --filter workers run deploy",
     "deploy:reset:workers": "pnpm --filter workers run db:reset:prod",
     "deploy:landing": "pnpm --filter landing run deploy",
+    "clear-workers": "pnpm --filter workers run clear-workers",
     "format": "prettier --write .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
