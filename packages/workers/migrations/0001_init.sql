@@ -29,7 +29,9 @@ CREATE TABLE user (
   username TEXT UNIQUE,
   displayName TEXT,
   avatarUrl TEXT,
-  role TEXT, -- researcher, student, librarian, other
+  role TEXT, -- Better Auth admin/plugin role (e.g. 'user', 'admin')
+  persona TEXT, -- optional: researcher, student, librarian, other
+  profileCompletedAt INTEGER, -- unix timestamp (seconds)
   twoFactorEnabled INTEGER DEFAULT 0,
   -- Admin plugin fields
   banned INTEGER DEFAULT 0,

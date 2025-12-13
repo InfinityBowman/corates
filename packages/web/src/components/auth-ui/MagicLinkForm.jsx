@@ -27,6 +27,8 @@ export default function MagicLinkForm(props) {
     try {
       // Mark as magic link signup so CompleteProfile knows not to ask for password
       localStorage.setItem('magicLinkSignup', 'true');
+      // Use email as the initial placeholder name for new users
+      localStorage.setItem('pendingName', email());
       await signinWithMagicLink(email(), props.callbackPath || '/complete-profile');
       setSent(true);
     } catch (err) {

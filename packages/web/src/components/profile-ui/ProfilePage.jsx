@@ -144,7 +144,7 @@ export default function ProfilePage() {
   };
 
   const startEditingRole = () => {
-    setEditRole(user()?.role || '');
+    setEditRole(user()?.persona || '');
     setIsEditingRole(true);
   };
 
@@ -160,7 +160,6 @@ export default function ProfilePage() {
       const fullName = `${editFirstName().trim()} ${editLastName().trim()}`.trim();
       await auth.updateProfile({
         name: fullName,
-        displayName: fullName,
       });
       // Sync to all projects in background
       syncProfileToProjects();
@@ -178,12 +177,12 @@ export default function ProfilePage() {
 
     try {
       await auth.updateProfile({
-        role: editRole(),
+        persona: editRole() || null,
       });
-      showToast.success('Profile Updated', 'Your role has been updated successfully.');
+      showToast.success('Profile Updated', 'Your persona has been updated successfully.');
       setIsEditingRole(false);
     } catch {
-      showToast.error('Update Failed', 'Failed to update role. Please try again.');
+      showToast.error('Update Failed', 'Failed to update persona. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -353,9 +352,9 @@ export default function ProfilePage() {
             <div>
               <h2 class='text-lg font-semibold text-gray-900'>{user()?.name || 'User'}</h2>
               <p class='text-sm text-gray-500'>{user()?.email}</p>
-              <Show when={user()?.role}>
+              <Show when={user()?.persona}>
                 <span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700 mt-1'>
-                  {getRoleLabel(user()?.role)}
+                  {getRoleLabel(user()?.persona)}
                 </span>
               </Show>
             </div>
@@ -443,16 +442,16 @@ export default function ProfilePage() {
               </Show>
             </div>
 
-            {/* Role Field */}
+            {/* Persona Field */}
             <div class='flex items-start justify-between pt-4 border-t border-gray-100'>
               <div class='flex-1'>
                 <label class='block text-xs font-medium text-gray-500 uppercase tracking-wide'>
-                  Role
+                  Persona
                 </label>
                 <Show
                   when={isEditingRole()}
                   fallback={
-                    <p class='mt-1 text-gray-900'>{getRoleLabel(user()?.role) || 'Not set'}</p>
+                    <p class='mt-1 text-gray-900'>{getRoleLabel(user()?.persona) || 'Not set'}</p>
                   }
                 >
                   <select
@@ -460,7 +459,7 @@ export default function ProfilePage() {
                     onChange={e => setEditRole(e.target.value)}
                     class='mt-1 block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm'
                   >
-                    <option value=''>Select a role</option>
+                    <option value=''>Select a persona</option>
                     <For each={ROLES}>{role => <option value={role.id}>{role.label}</option>}</For>
                   </select>
                 </Show>

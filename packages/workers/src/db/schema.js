@@ -13,7 +13,9 @@ export const user = sqliteTable('user', {
   username: text('username').unique(),
   displayName: text('displayName'),
   avatarUrl: text('avatarUrl'),
-  role: text('role'), // researcher, student, librarian, other
+  role: text('role'), // Better Auth admin/plugin role (e.g. 'user', 'admin')
+  persona: text('persona'), // optional: researcher, student, librarian, other
+  profileCompletedAt: integer('profileCompletedAt'), // unix timestamp (seconds)
   twoFactorEnabled: integer('twoFactorEnabled', { mode: 'boolean' }).default(false),
   // Admin plugin fields
   banned: integer('banned', { mode: 'boolean' }).default(false),
