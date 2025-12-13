@@ -1,0 +1,1036 @@
+# Yjs CRDT Framework
+
+Yjs is a high-performance CRDT (Conflict-free Replicated Data Type) implementation that enables real-time collaborative editing. It exposes shared data types (Array, Map, Text, XML) that automatically merge concurrent changes without conflicts, supporting peer-to-peer synchronization, offline editing, undo/redo, and version snapshots. The framework is network-agnostic, scales to unlimited users, and integrates with popular editors like ProseMirror, Quill, Monaco, and CodeMirror.
+
+Built on the YATA algorithm, Yjs efficiently handles concurrent edits through lamport timestamps and optimized struct merging. It provides both V1 and V2 update formats (V2 offers superior compression), supports relative positions that remain valid across document changes, and includes features like garbage collection control, subdocuments, and comprehensive attribution tracking. The attribution system uses efficient IdSet and IdMap data structures to track authorship of insertions, deletions, and formatting changes, enabling Google Docs-style version history and change visualization. The library can be used in browser, Node.js, or as part of larger collaborative applications with various network providers (WebSocket, WebRTC, Matrix, etc.).
+
+## API Documentation
+
+### Creating and Initializing a Yjs Document
+
+Create a new Yjs document to hold shared data types.
+
+```javascript
+import * as Y from 'yjs'
+
+// Create a new document
+const doc = new Y.Doc()
+
+// Configure document options
+const docWithOptions = new Y.Doc({
+  gc: false,              // Disable garbage collection to preserve history
+  guid: 'my-doc-id',      // Custom document identifier
+  collectionid: 'project-1',  // Associate with a collection
+  autoLoad: true,         // Auto-load subdocuments
+  meta: { creator: 'user@example.com' }  // Custom metadata
+})
+
+// Access the unique client ID
+console.log(doc.clientID)  // => Random uint32 number
+
+// Check if document is destroyed
+console.log(doc.isDestroyed)  // => false
+```
+
+### Y.Array - Shared Array Type
+
+A shared array supporting efficient insert/delete operations at any position.
+
+```javascript
+import * as Y from 'yjs'
+
+const doc = new Y.Doc()
+const yarray = doc.getArray('my-array')
+
+// Insert elements at specific positions
+yarray.insert(0, ['apple', 'banana'])
+yarray.insert(1, ['orange'])  // ['apple', 'orange', 'banana']
+
+// Push and unshift operations
+yarray.push(['grape'])  // Append to end
+yarray.unshift(['mango'])  // Prepend to start
+
+// Access elements
+console.log(yarray.get(0))  // => 'mango'
+console.log(yarray.length)  // => 5
+
+// Delete elements
+yarray.delete(1, 2)  // Delete 2 elements starting at index 1
+
+// Iterate and transform
+yarray.forEach((item, index) => {
+  console.log(`${index}: ${item}`)
+})
+
+const doubled = yarray.map(item => item.toUpperCase())
+console.log(doubled)  // => ['MANGO', 'BANANA', 'GRAPE']
+
+// Get a slice
+const slice = yarray.slice(0, 2)
+
+// Convert to plain JavaScript array
+const plainArray = yarray.toArray()
+
+// Observe changes
+yarray.observe(event => {
+  console.log('Array changed:', event.changes)
+  event.changes.delta.forEach(change => {
+    if (change.insert) console.log('Inserted:', change.insert)
+    if (change.delete) console.log('Deleted:', change.delete)
+    if (change.retain) console.log('Retained:', change.retain)
+  })
+})
+
+// Create array from existing data
+const yarray2 = Y.Array.from(['x', 'y', 'z'])
+
+// Clone array
+const cloned = yarray.clone()
+```
+
+### Y.Map - Shared Map Type
+
+A shared key-value map supporting concurrent updates.
+
+```javascript
+import * as Y from 'yjs'
+
+const doc = new Y.Doc()
+const ymap = doc.getMap('my-map')
+
+// Set key-value pairs
+ymap.set('name', 'Alice')
+ymap.set('age', 30)
+ymap.set('settings', { theme: 'dark', fontSize: 14 })
+
+// Get values
+console.log(ymap.get('name'))  // => 'Alice'
+console.log(ymap.has('age'))   // => true
+console.log(ymap.size)         // => 3
+
+// Delete keys
+ymap.delete('age')
+
+// Clear all entries
+ymap.clear()
+
+// Iterate over entries
+ymap.set('a', 1)
+ymap.set('b', 2)
+ymap.forEach((value, key) => {
+  console.log(`${key}: ${value}`)
+})
+
+// Use iterators
+for (const [key, value] of ymap) {
+  console.log(`${key} = ${value}`)
+}
+
+const keys = Array.from(ymap.keys())      // ['a', 'b']
+const values = Array.from(ymap.values())  // [1, 2]
+const entries = Array.from(ymap.entries()) // [['a', 1], ['b', 2]]
+
+// Convert to plain JavaScript object
+const obj = ymap.toJSON()
+console.log(obj)  // => { a: 1, b: 2 }
+
+// Observe changes
+ymap.observe(event => {
+  console.log('Keys changed:', event.keysChanged)
+  event.keys.forEach((change, key) => {
+    console.log(`${key}: ${change.action}`)  // 'add', 'update', or 'delete'
+    if (change.oldValue !== undefined) {
+      console.log(`Old value: ${change.oldValue}`)
+    }
+  })
+})
+
+// Clone map
+const cloned = ymap.clone()
+
+// Create map with initial entries
+const ymap2 = new Y.Map([['x', 10], ['y', 20]])
+doc.getArray('container').insert(0, [ymap2])
+```
+
+### Y.Text - Shared Rich Text Type
+
+A shared text type optimized for collaborative text editing with formatting.
+
+```javascript
+import * as Y from 'yjs'
+
+const doc = new Y.Doc()
+const ytext = doc.getText('document')
+
+// Insert plain text
+ytext.insert(0, 'Hello World')
+
+// Insert formatted text
+ytext.insert(0, 'Bold Text', { bold: true })
+ytext.insert(10, 'Italic', { italic: true, color: '#ff0000' })
+
+// Delete text
+ytext.delete(5, 3)  // Delete 3 characters starting at position 5
+
+// Format existing text
+ytext.format(0, 4, { bold: true, fontSize: '14px' })
+
+// Insert embeds (images, videos, nested types)
+const nestedMap = new Y.Map()
+ytext.insertEmbed(0, nestedMap, { align: 'center' })
+ytext.insertEmbed(5, { image: 'https://example.com/img.png' })
+
+// Get text content
+console.log(ytext.toString())  // => Unformatted text content
+console.log(ytext.length)      // => Character count
+
+// Apply Quill Delta format
+ytext.applyDelta([
+  { insert: 'Gandalf', attributes: { bold: true } },
+  { insert: ' the ' },
+  { insert: 'Grey', attributes: { color: '#cccccc' } }
+])
+
+// Get content as Delta
+const delta = ytext.toDelta()
+console.log(delta)
+// => [
+//   { insert: 'Gandalf', attributes: { bold: true } },
+//   { insert: ' the ' },
+//   { insert: 'Grey', attributes: { color: '#cccccc' } }
+// ]
+
+// Block-level attributes (for Xml-Text nodes)
+ytext.setAttribute('align', 'center')
+ytext.setAttribute('heading', 'h1')
+console.log(ytext.getAttribute('align'))  // => 'center'
+console.log(ytext.getAttributes())        // => { align: 'center', heading: 'h1' }
+ytext.removeAttribute('heading')
+
+// Observe changes
+ytext.observe(event => {
+  console.log('Text changed')
+  console.log('Delta:', event.delta)
+  // Delta format shows changes
+  event.delta.forEach(change => {
+    if (change.insert) console.log('Inserted:', change.insert)
+    if (change.delete) console.log('Deleted:', change.delete)
+    if (change.retain) console.log('Retained:', change.retain)
+  })
+})
+
+// Clone text
+const cloned = ytext.clone()
+```
+
+### Document Updates and Synchronization
+
+Exchange document updates between peers for synchronization.
+
+```javascript
+import * as Y from 'yjs'
+
+const doc1 = new Y.Doc()
+const doc2 = new Y.Doc()
+
+// Listen to updates and sync to another document
+doc1.on('update', (update, origin, doc) => {
+  // Apply update to doc2
+  Y.applyUpdate(doc2, update)
+})
+
+doc2.on('update', (update, origin, doc) => {
+  // Apply update to doc1
+  Y.applyUpdate(doc1, update)
+})
+
+// Now changes propagate automatically
+doc1.getArray('data').insert(0, ['hello'])
+console.log(doc2.getArray('data').toArray())  // => ['hello']
+
+// Encode entire document state
+const stateUpdate = Y.encodeStateAsUpdate(doc1)
+// Send to remote peer and apply
+Y.applyUpdate(doc2, stateUpdate)
+
+// Efficient sync using state vectors
+const stateVector1 = Y.encodeStateVector(doc1)
+const stateVector2 = Y.encodeStateVector(doc2)
+
+// Compute only the differences
+const diff1 = Y.encodeStateAsUpdate(doc1, stateVector2)
+const diff2 = Y.encodeStateAsUpdate(doc2, stateVector1)
+
+Y.applyUpdate(doc1, diff2)
+Y.applyUpdate(doc2, diff1)
+
+// Use V2 format for better compression
+doc1.on('updateV2', (update, origin, doc) => {
+  Y.applyUpdateV2(doc2, update)
+})
+
+const stateV2 = Y.encodeStateAsUpdateV2(doc1)
+Y.applyUpdateV2(doc2, stateV2)
+
+// Convert between formats
+const v1Update = Y.encodeStateAsUpdate(doc1)
+const v2Update = Y.convertUpdateFormatV1ToV2(v1Update)
+const backToV1 = Y.convertUpdateFormatV2ToV1(v2Update)
+
+// Merge multiple updates
+const updates = [update1, update2, update3]
+const merged = Y.mergeUpdates(updates)
+
+// Work with updates without loading document
+const currentState = Y.encodeStateAsUpdate(doc1)
+const sv = Y.encodeStateVectorFromUpdate(currentState)
+const diff = Y.diffUpdate(currentState, sv)
+
+// Obfuscate updates (for bug reports without sensitive data)
+const update = Y.encodeStateAsUpdate(doc1)
+const obfuscated = Y.obfuscateUpdate(update)
+const testDoc = new Y.Doc()
+Y.applyUpdate(testDoc, obfuscated)  // Structure preserved, content scrambled
+```
+
+### Transactions - Batching Changes
+
+Bundle multiple changes into a single transaction for efficiency.
+
+```javascript
+import * as Y from 'yjs'
+
+const doc = new Y.Doc()
+const yarray = doc.getArray('list')
+const ymap = doc.getMap('data')
+
+// Without transaction: each operation triggers update event
+yarray.insert(0, ['a'])
+yarray.insert(1, ['b'])
+ymap.set('x', 1)
+// Result: 3 separate update events
+
+// With transaction: all changes bundled
+doc.transact(() => {
+  yarray.insert(0, ['a'])
+  yarray.insert(1, ['b'])
+  ymap.set('x', 1)
+})
+// Result: 1 update event with all changes
+
+// Specify transaction origin for tracking
+doc.transact(() => {
+  yarray.push(['item'])
+}, 'user-action')
+
+// Listen for transactions
+doc.on('beforeTransaction', (transaction, doc) => {
+  console.log('Transaction starting')
+})
+
+doc.on('afterTransaction', (transaction, doc) => {
+  console.log('Transaction completed')
+  console.log('Origin:', transaction.origin)
+  console.log('Changed types:', transaction.changed)
+})
+
+// Nested transactions
+doc.transact(() => {
+  yarray.insert(0, ['x'])
+  doc.transact(() => {
+    ymap.set('nested', true)
+  })
+}, 'outer')
+
+// All transactions complete event
+doc.on('afterAllTransactions', (doc, transactions) => {
+  console.log(`${transactions.length} transactions completed`)
+})
+```
+
+### Y.UndoManager - Undo/Redo Operations
+
+Selective undo/redo management for shared types.
+
+```javascript
+import * as Y from 'yjs'
+
+const doc = new Y.Doc()
+const ytext = doc.getText('content')
+const ymap = doc.getMap('metadata')
+
+// Create UndoManager for specific types
+const undoManager = new Y.UndoManager(ytext)
+
+// Make changes
+ytext.insert(0, 'Hello')
+ytext.insert(5, ' World')
+
+// Undo last change
+undoManager.undo()
+console.log(ytext.toString())  // => 'Hello'
+
+// Redo
+undoManager.redo()
+console.log(ytext.toString())  // => 'Hello World'
+
+// Check if undo/redo available
+console.log(undoManager.canUndo())  // => true
+console.log(undoManager.canRedo())  // => false
+
+// Manage multiple types
+const multiUndoManager = new Y.UndoManager([ytext, ymap], {
+  captureTimeout: 500,  // Merge changes within 500ms
+  trackedOrigins: new Set([null, 'user-input'])
+})
+
+// Stop merging changes
+ytext.insert(0, 'a')
+multiUndoManager.stopCapturing()
+ytext.insert(1, 'b')
+multiUndoManager.undo()
+console.log(ytext.toString())  // => 'a' (only 'b' was undone)
+
+// Track specific origins
+class UserEdit {}
+const originUndoManager = new Y.UndoManager(ytext, {
+  trackedOrigins: new Set([UserEdit, 42])
+})
+
+doc.transact(() => {
+  ytext.insert(0, 'tracked')
+}, new UserEdit())
+
+originUndoManager.undo()  // This will be undone
+
+doc.transact(() => {
+  ytext.insert(0, 'not tracked')
+}, 'other-origin')
+
+originUndoManager.undo()  // This won't be undone
+
+// Listen to stack events
+undoManager.on('stack-item-added', event => {
+  console.log('Added to stack:', event.type)  // 'undo' or 'redo'
+  // Store cursor position
+  event.stackItem.meta.set('cursor', getCurrentCursorPosition())
+})
+
+undoManager.on('stack-item-popped', event => {
+  console.log('Popped from stack:', event.type)
+  // Restore cursor position
+  const cursor = event.stackItem.meta.get('cursor')
+  restoreCursorPosition(cursor)
+})
+
+undoManager.on('stack-cleared', event => {
+  console.log('Undo cleared:', event.undoStackCleared)
+  console.log('Redo cleared:', event.redoStackCleared)
+})
+
+// Custom delete filter
+const filteredUndoManager = new Y.UndoManager(ytext, {
+  deleteFilter: (item) => {
+    // Don't delete items with 'protected' attribute
+    return !item.content?.attributes?.protected
+  }
+})
+
+// Clear stacks
+undoManager.clear(true, false)  // Clear undo only
+undoManager.clear(false, true)  // Clear redo only
+undoManager.clear()             // Clear both
+
+// Clean up
+undoManager.destroy()
+```
+
+### Relative Positions - Cursor Tracking
+
+Track positions that remain valid as document changes.
+
+```javascript
+import * as Y from 'yjs'
+
+const doc = new Y.Doc()
+const ytext = doc.getText('editor')
+
+ytext.insert(0, 'Hello World')
+
+// Create relative position at index 6
+const relPos = Y.createRelativePositionFromTypeIndex(ytext, 6)
+
+// Make changes before the position
+ytext.insert(0, 'Greetings! ')
+
+// Resolve relative position to absolute
+const absPos = Y.createAbsolutePositionFromRelativePosition(relPos, doc)
+console.log(absPos.type === ytext)  // => true
+console.log(absPos.index)           // => 17 (adjusted for insertion)
+
+// Association direction
+const relPosLeft = Y.createRelativePositionFromTypeIndex(ytext, 5, -1)  // Associate left
+const relPosRight = Y.createRelativePositionFromTypeIndex(ytext, 5, 1)  // Associate right
+
+// Encode relative position as JSON
+const encodedJSON = JSON.stringify(relPos)
+// Send to remote peer...
+const decodedJSON = JSON.parse(encodedJSON)
+const remotePos = Y.createAbsolutePositionFromRelativePosition(decodedJSON, remoteDoc)
+
+// Encode as Uint8Array for efficiency
+const encodedBinary = Y.encodeRelativePosition(relPos)
+// Send to remote peer...
+const decodedBinary = Y.decodeRelativePosition(encodedBinary)
+const remotePosFromBinary = Y.createAbsolutePositionFromRelativePosition(
+  decodedBinary,
+  remoteDoc
+)
+
+// Compare relative positions
+const relPos1 = Y.createRelativePositionFromTypeIndex(ytext, 5)
+const relPos2 = Y.createRelativePositionFromTypeIndex(ytext, 10)
+const comparison = Y.compareRelativePositions(relPos1, relPos2)
+// Returns null if uncomparable, or comparison result
+
+// Track cursor selection across changes
+function saveCursorPosition() {
+  const start = Y.createRelativePositionFromTypeIndex(ytext, editor.selectionStart)
+  const end = Y.createRelativePositionFromTypeIndex(ytext, editor.selectionEnd)
+  return { start, end }
+}
+
+function restoreCursorPosition(savedPos) {
+  const start = Y.createAbsolutePositionFromRelativePosition(savedPos.start, doc)
+  const end = Y.createAbsolutePositionFromRelativePosition(savedPos.end, doc)
+  if (start && end) {
+    editor.setSelection(start.index, end.index)
+  }
+}
+
+const cursor = saveCursorPosition()
+// ... document changes ...
+restoreCursorPosition(cursor)  // Cursor stays at correct position
+```
+
+### Subdocuments and Nested Documents
+
+Create hierarchical document structures with subdocuments.
+
+```javascript
+import * as Y from 'yjs'
+
+const rootDoc = new Y.Doc()
+const ymap = rootDoc.getMap('root')
+
+// Create subdocument
+const subdoc = new Y.Doc({
+  guid: 'subdoc-1',
+  autoLoad: true,
+  collectionid: 'project-docs'
+})
+
+// Embed subdocument
+ymap.set('page1', subdoc)
+
+// Access subdocuments
+console.log(rootDoc.subdocs)  // Set of all subdocuments
+const subdocGuids = rootDoc.getSubdocGuids()
+
+// Load subdocument on demand
+subdoc.load()  // Request loading from provider
+
+// Listen for subdocument changes
+rootDoc.on('subdocs', ({ added, removed, loaded }) => {
+  added.forEach(doc => console.log('Subdocument added:', doc.guid))
+  removed.forEach(doc => console.log('Subdocument removed:', doc.guid))
+  loaded.forEach(doc => console.log('Subdocument loaded:', doc.guid))
+})
+
+// Work with subdocument content
+const subdocText = subdoc.getText('content')
+subdocText.insert(0, 'Subdocument content')
+
+// Sync subdocuments
+rootDoc.on('update', (update, origin) => {
+  // Sync root document
+  Y.applyUpdate(remoteRootDoc, update)
+})
+
+// Subdocument updates propagate through root
+subdocText.insert(0, 'More text')  // Triggers rootDoc 'subdocs' event
+
+// Destroy subdocument
+subdoc.destroy()
+```
+
+### Providers - WebSocket and WebRTC Sync
+
+Connect documents over the network with providers.
+
+```javascript
+import * as Y from 'yjs'
+import { WebsocketProvider } from 'y-websocket'
+import { WebrtcProvider } from 'y-webrtc'
+import { IndexeddbPersistence } from 'y-indexeddb'
+
+const doc = new Y.Doc()
+
+// IndexedDB persistence (offline support)
+const indexeddbProvider = new IndexeddbPersistence('my-doc-name', doc)
+indexeddbProvider.whenSynced.then(() => {
+  console.log('Loaded data from IndexedDB')
+})
+
+// WebSocket provider (central server sync)
+const wsProvider = new WebsocketProvider(
+  'wss://demos.yjs.dev',
+  'my-room-name',
+  doc,
+  { connect: true }
+)
+
+wsProvider.on('status', event => {
+  console.log('WebSocket status:', event.status)  // 'connected' or 'disconnected'
+})
+
+wsProvider.on('sync', isSynced => {
+  console.log('Synced with server:', isSynced)
+})
+
+// WebRTC provider (peer-to-peer sync)
+const webrtcProvider = new WebrtcProvider(
+  'my-room-name',
+  doc,
+  {
+    signaling: ['wss://signaling.yjs.dev'],
+    password: 'optional-room-password',  // Encrypt connection
+    awareness: null,
+    maxConns: 20,
+    filterBcConns: true,
+    peerOpts: {}
+  }
+)
+
+// Awareness (share cursor positions, user info)
+const awareness = wsProvider.awareness
+
+// Set local user state
+awareness.setLocalState({
+  user: {
+    name: 'Alice',
+    color: '#ff0000'
+  },
+  cursor: {
+    anchor: 10,
+    head: 15
+  }
+})
+
+// Listen to awareness changes
+awareness.on('change', ({ added, updated, removed }) => {
+  // added, updated, removed are arrays of client IDs
+  const states = awareness.getStates()
+  states.forEach((state, clientId) => {
+    console.log(`Client ${clientId}:`, state)
+  })
+})
+
+// Get specific client state
+const clientState = awareness.getLocalState()
+
+// Destroy providers
+wsProvider.destroy()
+webrtcProvider.destroy()
+indexeddbProvider.destroy()
+
+// Complete example: offline-first collaborative editor
+const ydoc = new Y.Doc()
+const ytext = ydoc.getText('document')
+
+// Local persistence
+const persistence = new IndexeddbPersistence('doc-123', ydoc)
+
+// Network sync
+const provider = new WebsocketProvider('wss://my-server.com', 'doc-123', ydoc)
+
+// Wait for initial load
+persistence.whenSynced.then(() => {
+  console.log('Initial data loaded')
+  // Initialize editor with content
+  initEditor(ytext.toString())
+})
+
+// Sync status
+provider.on('sync', synced => {
+  if (synced) {
+    console.log('✓ Synced with server')
+  } else {
+    console.log('⚠ Offline mode')
+  }
+})
+
+// Collaborative editing is now automatic!
+ytext.insert(0, 'Collaborative editing works!')
+```
+
+### Snapshots and Version History
+
+Create and restore document snapshots for version control.
+
+```javascript
+import * as Y from 'yjs'
+
+const doc = new Y.Doc()
+const ytext = doc.getText('content')
+
+ytext.insert(0, 'Version 1')
+
+// Create snapshot
+const snapshot1 = Y.snapshot(doc)
+
+// Make more changes
+ytext.insert(9, ' - Updated')
+
+// Create another snapshot
+const snapshot2 = Y.snapshot(doc)
+
+// Encode snapshot for storage
+const encodedSnapshot = Y.encodeSnapshot(snapshot1)
+// Store to database...
+
+// Decode snapshot
+const decodedSnapshot = Y.decodeSnapshot(encodedSnapshot)
+
+// Create document from snapshot
+const docFromSnapshot = Y.createDocFromSnapshot(doc, snapshot1)
+console.log(docFromSnapshot.getText('content').toString())  // => 'Version 1'
+
+// Compare snapshots
+const areEqual = Y.equalSnapshots(snapshot1, snapshot2)
+console.log(areEqual)  // => false
+
+// Empty snapshot (initial state)
+const emptySnap = Y.emptySnapshot
+
+// Use V2 encoding for better compression
+const encodedV2 = Y.encodeSnapshotV2(snapshot1)
+const decodedV2 = Y.decodeSnapshotV2(encodedV2)
+
+// Check if update is contained in snapshot
+const update = Y.encodeStateAsUpdate(doc)
+const contained = Y.snapshotContainsUpdate(snapshot2, update)
+```
+
+### XML Types - Structured Documents
+
+Work with XML-like structures for rich document formats.
+
+```javascript
+import * as Y from 'yjs'
+
+const doc = new Y.Doc()
+const xmlFragment = doc.getXmlFragment('document')
+
+// Create XML elements
+const paragraph = new Y.XmlElement('p')
+paragraph.setAttribute('align', 'center')
+paragraph.setAttribute('class', 'highlight')
+
+// Insert text into element
+const xmlText = new Y.XmlText()
+xmlText.insert(0, 'Hello World', { bold: true })
+paragraph.insert(0, [xmlText])
+
+// Build structure
+xmlFragment.insert(0, [paragraph])
+
+const heading = new Y.XmlElement('h1')
+heading.insert(0, [new Y.XmlText('Title')])
+xmlFragment.insert(0, [heading])
+
+// Get attributes
+console.log(paragraph.getAttribute('align'))  // => 'center'
+console.log(paragraph.getAttributes())        // => { align: 'center', class: 'highlight' }
+
+// Remove attributes
+paragraph.removeAttribute('class')
+
+// Navigate structure
+console.log(xmlFragment.firstChild === heading)
+console.log(paragraph.nextSibling)
+console.log(paragraph.prevSibling)
+
+// Get children
+console.log(paragraph.get(0))     // First child
+const children = paragraph.toArray()
+
+// Convert to DOM
+const domElement = paragraph.toDOM()
+document.body.appendChild(domElement)
+
+// Get XML string
+const xmlString = xmlFragment.toString()
+console.log(xmlString)
+// => <h1>Title</h1><p align="center"><bold>Hello World</bold></p>
+
+// Clone
+const cloned = xmlFragment.clone()
+
+// Observe changes
+xmlFragment.observe(event => {
+  console.log('XML structure changed')
+})
+
+xmlFragment.observeDeep(events => {
+  events.forEach(event => {
+    console.log('Deep change in structure')
+  })
+})
+
+// Tree walker
+const walker = xmlFragment.createTreeWalker(node => {
+  return node instanceof Y.XmlElement
+})
+
+for (const node of walker) {
+  console.log('Element:', node)
+}
+```
+
+### Attribution Tracking - Authorship and Change History
+
+Track who created, modified, or deleted content in collaborative documents.
+
+```javascript
+import * as Y from 'yjs'
+
+// Setup documents with garbage collection disabled
+const doc = new Y.Doc({ gc: false })
+const ytext = doc.getText('document')
+
+// Initial content
+ytext.insert(0, 'Hello World!')
+
+// Create a baseline snapshot
+const baselineDoc = new Y.Doc({ gc: false })
+Y.applyUpdate(baselineDoc, Y.encodeStateAsUpdate(doc))
+
+// User makes changes
+ytext.format(0, 5, { bold: true })
+ytext.delete(6, 5)
+ytext.insert(6, 'Universe')
+
+// Create IdSets to track changes
+const insertionSet = Y.createInsertSetFromStructStore(doc.store)
+const deleteSet = Y.createDeleteSetFromStructStore(doc.store)
+
+// Calculate differences from baseline
+const baselineInsertions = Y.createInsertSetFromStructStore(baselineDoc.store)
+const baselineDeletions = Y.createDeleteSetFromStructStore(baselineDoc.store)
+const insertionDiff = Y.diffIdSet(insertionSet, baselineInsertions)
+const deletionDiff = Y.diffIdSet(deleteSet, baselineDeletions)
+
+// Attribute changes to users
+const attributedInsertions = Y.createIdMapFromIdSet(
+  insertionDiff,
+  [Y.createAttributionItem('insert', 'Alice')]
+)
+const attributedDeletions = Y.createIdMapFromIdSet(
+  deletionDiff,
+  [Y.createAttributionItem('delete', 'Alice')]
+)
+
+// Create attribution manager
+const attributionManager = new Y.TwosetAttributionManager(
+  attributedInsertions,
+  attributedDeletions
+)
+
+// Get attributed content
+const attributedDelta = ytext.toDelta(attributionManager)
+console.log(JSON.stringify(attributedDelta, null, 2))
+// [
+//   {
+//     "insert": "Hello",
+//     "attributes": { "bold": true },
+//     "attribution": {
+//       "attributes": { "bold": ["Alice"] }
+//     }
+//   },
+//   {
+//     "insert": " World",
+//     "attribution": { "delete": ["Alice"] }
+//   },
+//   {
+//     "insert": "Universe",
+//     "attribution": { "insert": ["Alice"] }
+//   },
+//   { "insert": "!" }
+// ]
+
+// Use DiffAttributionManager to compare two documents
+const doc1 = new Y.Doc({ gc: false })
+const doc2 = new Y.Doc({ gc: false })
+doc1.getText().insert(0, 'Hello World')
+doc2.getText().insert(0, 'Hello Universe')
+
+const diffManager = Y.createAttributionManagerFromDiff(doc1, doc2, {
+  insertLabel: 'added',
+  deleteLabel: 'removed'
+})
+
+const diffDelta = doc2.getText().toDelta(diffManager)
+// Shows what changed between doc1 and doc2
+
+// Listen to changes with attribution
+ytext.observe(event => {
+  // Standard delta without attribution
+  console.log('Standard:', event.delta)
+
+  // Attributed delta
+  const attributed = event.changes.delta.map(op => {
+    // Process with attribution manager if needed
+    return op
+  })
+})
+
+// Encode and decode IdMaps and IdSets
+const encodedInsertions = Y.encodeIdMap(attributedInsertions)
+const encodedDeletions = Y.encodeIdSet(deletionDiff)
+
+// Send over network...
+const decodedInsertions = Y.decodeIdMap(encodedInsertions)
+const decodedDeletions = Y.decodeIdSet(encodedDeletions)
+
+// Merge IdSets and IdMaps
+const mergedInsertions = Y.mergeIdMaps([attributedInsertions, otherInsertions])
+const mergedDeletions = Y.mergeIdSets([deletionDiff, otherDeletions])
+
+// Check equality
+const areSetsEqual = Y.equalIdSets(deletionDiff, otherDeletions)
+
+// Render attributed content in UI
+function renderWithAuthorship(ytext, attributionManager) {
+  const delta = ytext.toDelta(attributionManager)
+
+  return delta.map(op => {
+    const authors = op.attribution?.insert ||
+                   op.attribution?.delete ||
+                   op.attribution?.attributes || []
+
+    return {
+      text: op.insert,
+      authors: Array.isArray(authors) ? authors : Object.values(authors).flat(),
+      isDeleted: !!op.attribution?.delete,
+      formatting: op.attributes || {}
+    }
+  })
+}
+
+// Track multiple contributors
+const multiUserAttribution = Y.createIdMapFromIdSet(
+  insertionDiff,
+  [
+    Y.createAttributionItem('insert', 'Alice'),
+    Y.createAttributionItem('insert', 'Bob')
+  ]
+)
+
+// Use noAttributionsManager when you don't need attribution
+const noAttribution = Y.noAttributionsManager
+const plainDelta = ytext.toDelta(noAttribution)
+```
+
+### IdSet and IdMap - Efficient Range Tracking
+
+Work with efficient data structures for tracking ranges of content by ID.
+
+```javascript
+import * as Y from 'yjs'
+
+const doc = new Y.Doc()
+const ytext = doc.getText('content')
+ytext.insert(0, 'Hello World')
+
+// Create IdSet from document
+const insertionSet = Y.createInsertSetFromStructStore(doc.store)
+const deleteSet = Y.createDeleteSetFromStructStore(doc.store)
+
+// Create empty IdSet
+const customIdSet = Y.createIdSet()
+
+// Insert ranges into IdSet
+Y.insertIntoIdSet(customIdSet, doc.clientID, 0, 5)
+
+// Create IdMap with attributes
+const idMap = Y.createIdMap()
+Y.insertIntoIdMap(idMap, doc.clientID, 0, 5, ['attribute1', 'attribute2'])
+
+// Read IdSet and IdMap from encoded data
+const encodedSet = Y.encodeIdSet(insertionSet)
+const decodedSet = Y.readIdSet(decoder)  // From UpdateDecoder
+
+const encodedMap = Y.encodeIdMap(idMap)
+const decodedMap = Y.readIdMap(decoder)  // From UpdateDecoder
+
+// Diff operations
+const diffSet = Y.diffIdSet(insertionSet, deleteSet)
+const diffMap = Y.diffIdMap(idMap, otherIdMap)
+
+// Merge operations
+const mergedSets = Y.mergeIdSets([insertionSet, deleteSet, customIdSet])
+const mergedMaps = Y.mergeIdMaps([idMap, otherIdMap])
+
+// Convert IdSet to IdMap
+const idMapFromSet = Y.createIdMapFromIdSet(insertionSet, [
+  Y.createAttributionItem('author', 'Alice')
+])
+
+// Iterate through structs by IdSet
+Y.iterateStructsByIdSet(doc.store, insertionSet, struct => {
+  console.log('Struct:', struct)
+})
+
+// Read ID ranges from updates
+const update = Y.encodeStateAsUpdate(doc)
+const idRanges = Y.readUpdateIdRanges(update)
+console.log('ID ranges:', idRanges)
+
+const updateV2 = Y.encodeStateAsUpdateV2(doc)
+const idRangesV2 = Y.readUpdateIdRangesV2(updateV2)
+
+// Check equality
+const areMapsEqual = Y.equalIdSets(insertionSet, customIdSet)
+
+// Practical example: Track deletions across sessions
+function trackDeletions(doc, previousState) {
+  const currentDeletions = Y.createDeleteSetFromStructStore(doc.store)
+  const previousDeletions = Y.createDeleteSetFromStructStore(previousState.store)
+
+  // Get only new deletions
+  const newDeletions = Y.diffIdSet(currentDeletions, previousDeletions)
+
+  // Attribute to current user
+  const attributedDeletions = Y.createIdMapFromIdSet(
+    newDeletions,
+    [Y.createAttributionItem('delete', getCurrentUser())]
+  )
+
+  return attributedDeletions
+}
+
+// Use with document comparison
+function diffDocsToDelta(doc1, doc2) {
+  const delta = Y.diffDocsToDelta(doc1, doc2)
+  console.log('Differences:', delta)
+  return delta
+}
+```
+
+## Integration Patterns and Use Cases
+
+Yjs excels in building collaborative applications across various domains. For real-time text editors, bind Yjs to ProseMirror, Quill, Monaco, or CodeMirror using official bindings (y-prosemirror, y-quill, etc.) to enable Google Docs-style collaborative editing with cursor tracking and presence. The framework automatically handles conflict resolution, allowing multiple users to edit simultaneously without data loss.
+
+For offline-first applications, combine IndexedDB persistence (y-indexeddb) with network providers to cache documents locally and sync when connectivity returns. Use WebSocket providers (y-websocket, Hocuspocus) for server-authoritative architectures, or WebRTC providers (y-webrtc) for decentralized peer-to-peer collaboration. Yjs integrates with state management libraries (valtio-yjs, immer-yjs, SyncedStore) for React/Vue applications, supports end-to-end encryption through providers like secsync, and enables version control through snapshots and UndoManager. The attribution system with TwosetAttributionManager and DiffAttributionManager provides granular change tracking for implementing features like authorship highlighting, blame views, and change history visualization similar to Google Docs version history. Common use cases include collaborative note-taking apps, code editors, design tools, form builders, project management systems, and any application requiring real-time multi-user synchronization with offline support.

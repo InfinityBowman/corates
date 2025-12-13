@@ -1,0 +1,1518 @@
+# D3.js v7 - Data-Driven Documents
+
+D3 (Data-Driven Documents) is a JavaScript library for manipulating documents based on data. D3 helps you bring data to life using HTML, SVG, and CSS. This is version 7.9.0 of D3, which provides a comprehensive suite of tools for data visualization through DOM manipulation, with modules for selections, transitions, scales, axes, shapes, layouts, geographic projections, and interactive behaviors.
+
+D3 v7 emphasizes modern web standards and ES modules, giving you the full capabilities of current browsers without tying yourself to a proprietary framework. The library uses a declarative, data-driven approach where you bind data to DOM elements using the enter-update-exit pattern and the modern join API. D3 v7 includes powerful visualization components like force-directed graphs, geographic projections, hierarchical layouts, Delaunay triangulations, and time series utilities. Unlike high-level charting libraries, D3 provides direct control over visual encodings, enabling infinite customization while maintaining excellent performance. D3 v7 requires Node.js 12 or higher and ships as pure ES modules.
+
+## DOM Selection and Manipulation
+
+### Select and modify elements
+
+Select DOM elements using CSS selectors and modify their attributes, styles, and content.
+
+```javascript
+// Select single element and modify
+d3.select("#chart")
+    .style("background-color", "lightgray")
+    .attr("width", 960)
+    .attr("height", 500);
+
+// Select all elements and apply changes
+d3.selectAll("p")
+    .style("color", "blue")
+    .text("Updated paragraph text");
+
+// Select with function for dynamic styling
+d3.selectAll("circle")
+    .style("fill", (d, i) => i % 2 === 0 ? "red" : "blue")
+    .attr("r", (d, i) => 5 + i * 2);
+
+// Chain selections
+d3.select("body")
+  .append("svg")
+    .attr("width", 960)
+    .attr("height", 500)
+  .append("g")
+    .attr("transform", "translate(20,20)")
+  .append("rect")
+    .attr("width", 920)
+    .attr("height", 460);
+
+// Create detached elements
+const svg = d3.create("svg")
+    .attr("width", 960)
+    .attr("height", 500);
+```
+
+### Data binding with enter-update-exit and join
+
+Bind data to elements and handle entering, updating, and exiting elements based on data changes. D3 v7 features the modern join API for simpler data binding.
+
+```javascript
+const data = [4, 8, 15, 16, 23, 42];
+
+// Modern join API (recommended in v7)
+d3.select("body")
+  .selectAll("div")
+  .data(data)
+  .join("div")
+    .text(d => d)
+    .style("width", d => d * 10 + "px")
+    .style("background-color", "steelblue");
+
+// Join with enter, update, and exit handlers
+d3.select("svg")
+  .selectAll("circle")
+  .data(data)
+  .join(
+    enter => enter.append("circle")
+        .attr("fill", "green")
+        .attr("r", 0)
+      .call(enter => enter.transition()
+        .duration(500)
+        .attr("r", 5)),
+    update => update
+        .attr("fill", "blue"),
+    exit => exit
+      .call(exit => exit.transition()
+        .duration(500)
+        .attr("r", 0)
+        .remove())
+  )
+    .attr("cx", (d, i) => i * 50 + 25)
+    .attr("cy", 50);
+
+// Traditional enter-update-exit pattern (still supported)
+const div = d3.select("body").selectAll("div")
+    .data(data);
+
+// Enter
+div.enter().append("div")
+    .text(d => d)
+    .style("width", d => d * 10 + "px");
+
+// Update
+div.text(d => d)
+    .style("width", d => d * 10 + "px");
+
+// Exit
+div.exit().remove();
+
+// Nested selections for tables
+const matrix = [
+  [11975, 5871, 8916, 2868],
+  [1951, 10048, 2060, 6171],
+  [8010, 16145, 8090, 8045],
+  [1013, 990, 940, 6907]
+];
+
+const tr = d3.select("body")
+  .append("table")
+  .selectAll("tr")
+  .data(matrix)
+  .join("tr");
+
+tr.selectAll("td")
+  .data(d => d)
+  .join("td")
+    .text(d => d);
+```
+
+## Scales and Axes
+
+### Linear and power scales
+
+Map continuous domains to continuous ranges for position or color encodings.
+
+```javascript
+// Basic linear scale for positions
+const x = d3.scaleLinear()
+    .domain([10, 130])
+    .range([0, 960]);
+
+x(20); // 80
+x(50); // 320
+x.invert(80); // 20
+
+// Color scale with interpolation
+const color = d3.scaleLinear()
+    .domain([10, 100])
+    .range(["brown", "steelblue"]);
+
+color(20); // "rgb(154, 52, 57)"
+color(50); // "rgb(123, 81, 103)"
+
+// Piecewise scale (diverging)
+const diverging = d3.scaleLinear()
+    .domain([-1, 0, 1])
+    .range(["red", "white", "green"]);
+
+diverging(-0.5); // "rgb(255, 128, 128)"
+diverging(+0.5); // "rgb(128, 192, 128)"
+
+// Scale with nice domain and ticks
+const scale = d3.scaleLinear()
+    .domain([0.241079, 0.969679])
+    .range([0, 960])
+    .nice();
+
+scale.domain(); // [0.2, 1]
+scale.ticks(); // [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+scale.tickFormat()(0.5); // "0.5"
+
+// Power and square root scales
+const pow = d3.scalePow()
+    .exponent(0.5)
+    .domain([0, 100])
+    .range([0, 960]);
+
+const sqrt = d3.scaleSqrt()
+    .domain([0, 100])
+    .range([0, 960]);
+
+// Logarithmic scale
+const log = d3.scaleLog()
+    .domain([1, 1000])
+    .range([0, 960]);
+
+// Radial scale (new in v6)
+const radial = d3.scaleRadial()
+    .domain([0, 100])
+    .range([0, 500]);
+```
+
+### Time and ordinal scales
+
+Handle temporal data and categorical ordinal data.
+
+```javascript
+// Time scale
+const timeScale = d3.scaleTime()
+    .domain([new Date(2023, 0, 1), new Date(2023, 11, 31)])
+    .range([0, 960]);
+
+// Band scale for bar charts (replaces rangeBands)
+const xBand = d3.scaleBand()
+    .domain(['A', 'B', 'C', 'D', 'E', 'F'])
+    .range([0, 960])
+    .padding(0.1);
+
+xBand('A'); // 0
+xBand.bandwidth(); // width of each band
+xBand.step(); // distance between starts of adjacent bands
+
+// Point scale (replaces rangePoints)
+const xPoint = d3.scalePoint()
+    .domain(['A', 'B', 'C', 'D', 'E', 'F'])
+    .range([0, 960])
+    .padding(1);
+
+// Ordinal color scales
+const color10 = d3.scaleOrdinal(d3.schemeCategory10);
+const color20 = d3.scaleOrdinal(d3.schemeTableau10);
+
+// Custom ordinal color scale
+const colorOrdinal = d3.scaleOrdinal()
+    .domain(['apples', 'bananas', 'oranges'])
+    .range(['#ff0000', '#ffff00', '#ff8800']);
+
+// Quantile scale
+const quantile = d3.scaleQuantile()
+    .domain([0, 100])
+    .range(['low', 'medium', 'high']);
+
+// Quantize scale
+const quantize = d3.scaleQuantize()
+    .domain([0, 100])
+    .range(['low', 'medium', 'high']);
+
+// Threshold scale
+const threshold = d3.scaleThreshold()
+    .domain([0, 1])
+    .range(['red', 'white', 'green']);
+```
+
+### Axes rendering
+
+Create and render axes for visualizations. Note the new axis constructors.
+
+```javascript
+// Create axes with new constructors
+const xAxis = d3.axisBottom(x)
+    .ticks(10)
+    .tickFormat(d3.format(".0f"));
+
+const yAxis = d3.axisLeft(y)
+    .ticks(5, "s");
+
+// Other axis orientations
+const topAxis = d3.axisTop(x);
+const rightAxis = d3.axisRight(y);
+
+// Append axes to SVG
+const svg = d3.select("svg");
+
+const gx = svg.append("g")
+    .attr("class", "axis")
+    .attr("transform", `translate(0,${height - marginBottom})`)
+    .call(xAxis);
+
+const gy = svg.append("g")
+    .attr("class", "axis")
+    .attr("transform", `translate(${marginLeft},0)`)
+    .call(yAxis);
+
+// Update axis on transition
+gx.transition()
+    .duration(750)
+    .call(xAxis);
+
+// Custom axis styling
+const customAxis = d3.axisBottom(x)
+    .tickValues([1, 2, 3, 5, 8, 13, 21])
+    .tickFormat(d3.format(",.0f"))
+    .tickSize(10)
+    .tickPadding(5);
+
+// Inner and outer tick size
+const fullAxis = d3.axisBottom(x)
+    .tickSizeInner(-height)  // grid lines
+    .tickSizeOuter(0)
+    .tickPadding(10);
+```
+
+## Shape Generators
+
+### Lines and areas
+
+Generate path data for line and area charts.
+
+```javascript
+// Line generator (note: no svg namespace)
+const line = d3.line()
+    .x(d => x(d.date))
+    .y(d => y(d.value))
+    .curve(d3.curveMonotone); // smooth curve
+
+const data = [
+  {date: new Date(2023, 0, 1), value: 30},
+  {date: new Date(2023, 1, 1), value: 50},
+  {date: new Date(2023, 2, 1), value: 40},
+  {date: new Date(2023, 3, 1), value: 60}
+];
+
+// Apply to SVG path
+svg.append("path")
+    .datum(data)
+    .attr("class", "line")
+    .attr("d", line)
+    .style("fill", "none")
+    .style("stroke", "steelblue")
+    .style("stroke-width", "2px");
+
+// Area generator
+const area = d3.area()
+    .x(d => x(d.date))
+    .y0(height)
+    .y1(d => y(d.value))
+    .curve(d3.curveMonotone);
+
+svg.append("path")
+    .datum(data)
+    .attr("class", "area")
+    .attr("d", area)
+    .style("fill", "steelblue")
+    .style("opacity", 0.5);
+
+// Available curve types (v7)
+// d3.curveBasis, d3.curveBasisClosed, d3.curveBasisOpen
+// d3.curveBundle, d3.curveBumpX, d3.curveBumpY
+// d3.curveCardinal, d3.curveCardinalClosed, d3.curveCardinalOpen
+// d3.curveCatmullRom, d3.curveCatmullRomClosed, d3.curveCatmullRomOpen
+// d3.curveLinear, d3.curveLinearClosed
+// d3.curveMonotoneX, d3.curveMonotoneY
+// d3.curveNatural, d3.curveStep, d3.curveStepAfter, d3.curveStepBefore
+
+// Radial line
+const radialLine = d3.lineRadial()
+    .radius(d => d.radius)
+    .angle(d => d.angle);
+
+// Radial area
+const radialArea = d3.areaRadial()
+    .innerRadius(d => d.innerRadius)
+    .outerRadius(d => d.outerRadius)
+    .angle(d => d.angle);
+```
+
+### Arcs and pies
+
+Create pie charts, donut charts, and circular segments.
+
+```javascript
+// Pie layout computes angles
+const pie = d3.pie()
+    .value(d => d.value)
+    .sort(null); // don't sort
+
+const data = [
+  {name: "A", value: 30},
+  {name: "B", value: 50},
+  {name: "C", value: 20}
+];
+
+const arcs = pie(data);
+
+// Arc generator creates paths
+const arc = d3.arc()
+    .innerRadius(0)
+    .outerRadius(100);
+
+const donutArc = d3.arc()
+    .innerRadius(60)
+    .outerRadius(100);
+
+// Draw pie chart
+const g = svg.selectAll(".arc")
+    .data(arcs)
+  .join("g")
+    .attr("class", "arc");
+
+g.append("path")
+    .attr("d", arc)
+    .style("fill", (d, i) => d3.schemeCategory10[i])
+    .style("stroke", "white");
+
+// Add labels
+g.append("text")
+    .attr("transform", d => `translate(${arc.centroid(d)})`)
+    .attr("text-anchor", "middle")
+    .text(d => d.data.name);
+
+// Symbol generator for scatter plots
+const symbol = d3.symbol()
+    .type(d3.symbolCircle)
+    .size(64);
+
+// Available symbol types (expanded in v7)
+// d3.symbolCircle, d3.symbolCross, d3.symbolDiamond, d3.symbolDiamond2
+// d3.symbolSquare, d3.symbolSquare2, d3.symbolStar
+// d3.symbolTriangle, d3.symbolTriangle2, d3.symbolWye
+// d3.symbolAsterisk, d3.symbolPlus
+
+svg.selectAll("path")
+    .data(data)
+  .join("path")
+    .attr("d", symbol)
+    .attr("transform", d => `translate(${x(d.x)},${y(d.y)})`);
+```
+
+## Array Utilities
+
+### Statistical functions
+
+Compute summary statistics and data transformations.
+
+```javascript
+const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+// Basic statistics
+d3.min(numbers); // 1
+d3.max(numbers); // 10
+d3.extent(numbers); // [1, 10]
+d3.sum(numbers); // 55
+d3.mean(numbers); // 5.5
+d3.median(numbers); // 5.5
+d3.mode(numbers); // 1 (all values appear once)
+d3.variance(numbers); // variance
+d3.deviation(numbers); // standard deviation
+
+// With accessor functions
+const data = [
+  {name: "Alice", age: 30, salary: 50000},
+  {name: "Bob", age: 25, salary: 45000},
+  {name: "Carol", age: 35, salary: 60000}
+];
+
+d3.min(data, d => d.age); // 25
+d3.max(data, d => d.salary); // 60000
+d3.extent(data, d => d.age); // [25, 35]
+d3.mean(data, d => d.salary); // 51666.666...
+
+// Index variants (new in v6+)
+d3.minIndex(numbers); // 0
+d3.maxIndex(numbers); // 9
+d3.least(data, d => d.age); // {name: "Bob", age: 25, ...}
+d3.greatest(data, d => d.age); // {name: "Carol", age: 35, ...}
+
+// Quantiles
+d3.quantile([1, 2, 3, 4], 0.25); // 1.75
+d3.quantile([1, 2, 3, 4], 0.5); // 2.5
+d3.quantile([1, 2, 3, 4], 0.75); // 3.25
+
+// Full-precision sum (new in v6)
+d3.fsum([0.1, 0.2, 0.3]); // 0.6 (no floating point errors)
+
+// Cumulative sum
+d3.cumsum([1, 2, 3, 4]); // [1, 3, 6, 10]
+
+// Bisect for binary search
+const bisect = d3.bisector(d => d.date).left;
+const index = bisect(data, new Date(2023, 5, 15));
+```
+
+### Grouping and arrays
+
+Group, nest, and transform data arrays. Note that d3.nest() has been replaced with d3.group() and d3.rollup().
+
+```javascript
+// Group data by key (replaces d3.nest)
+const grouped = d3.group(data, d => d.category);
+// Returns: Map {"A" => [{...}, {...}], "B" => [{...}]}
+
+// Multiple grouping keys
+const multiGrouped = d3.group(data, d => d.category, d => d.subcategory);
+// Returns nested Map
+
+// Rollup (aggregate) - replaces nest().rollup()
+const summed = d3.rollup(data,
+  v => d3.sum(v, d => d.value),
+  d => d.category
+);
+// Returns: Map {"A" => 150, "B" => 200}
+
+// Array format of groups
+const groupedArray = d3.groups(data, d => d.category);
+// Returns: [["A", [{...}, {...}]], ["B", [{...}]]]
+
+// Array format of rollup
+const rolledArray = d3.rollups(data,
+  v => d3.sum(v, d => d.value),
+  d => d.category
+);
+// Returns: [["A", 150], ["B", 200]]
+
+// Index (unique values by key)
+const indexed = d3.index(data, d => d.id);
+// Returns: Map {1 => {...}, 2 => {...}}
+
+// Flat group (new in v7)
+const flatGrouped = d3.flatGroup(data, d => d.category, d => d.type);
+// Returns: [[key1, key2, values], ...]
+
+// Array utilities
+d3.range(10); // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+d3.range(1, 11); // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+d3.range(0, 1, 0.2); // [0, 0.2, 0.4, 0.6, 0.8]
+
+// Shuffle array (in-place, seeded randomness available)
+d3.shuffle([1, 2, 3, 4, 5]); // [3, 1, 5, 2, 4] (random)
+
+// Sort operations
+d3.sort(data, d => d.value); // returns sorted array
+d3.reverse([1, 2, 3]); // [3, 2, 1]
+
+// Permute array
+d3.permute(['a', 'b', 'c'], [2, 0, 1]); // ['c', 'a', 'b']
+
+// Zip arrays
+d3.zip([1, 2], ['a', 'b']); // [[1, 'a'], [2, 'b']]
+
+// Transpose matrix
+d3.transpose([[1, 2], [3, 4]]); // [[1, 3], [2, 4]]
+
+// Merge arrays (flatten)
+d3.merge([[1, 2], [3, 4]]); // [1, 2, 3, 4]
+
+// Cross product
+d3.cross([1, 2], ['a', 'b']); // [[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']]
+
+// Pairs (adjacent elements)
+d3.pairs([1, 2, 3, 4]); // [[1, 2], [2, 3], [3, 4]]
+```
+
+### Binning (histogram)
+
+Bin continuous data into histograms. Note: d3.layout.histogram() is now d3.bin().
+
+```javascript
+// Bin generator (replaces d3.layout.histogram)
+const bin = d3.bin()
+    .value(d => d.value)
+    .domain([0, 100])
+    .thresholds(10);
+
+const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const bins = bin(values);
+
+// Each bin has: x0, x1, length properties
+bins.forEach(b => {
+  console.log(b.x0, b.x1, b.length);
+  // b.x0: bin start
+  // b.x1: bin end
+  // b.length: count of values in bin
+  // b is an array of values
+});
+
+// Custom thresholds
+const customBin = d3.bin()
+    .thresholds([0, 2, 4, 6, 8, 10]);
+
+// Threshold generators
+const freedmanDiaconis = d3.bin().thresholds(d3.thresholdFreedmanDiaconis);
+const scott = d3.bin().thresholds(d3.thresholdScott);
+const sturges = d3.bin().thresholds(d3.thresholdSturges);
+```
+
+## Data Loading
+
+### Fetch CSV, JSON, TSV, and other formats
+
+Load external data files with built-in parsing. D3 v7 uses Promises instead of callbacks.
+
+```javascript
+// Load CSV file (Promise-based in v7)
+d3.csv("data.csv").then(data => {
+  // data is array of objects with string values
+  console.log(data);
+});
+
+// Load CSV with type conversion
+d3.csv("data.csv", d => ({
+  date: new Date(d.date),
+  value: +d.value,
+  category: d.category
+})).then(data => {
+  console.log(data);
+});
+
+// Auto-type conversion
+d3.csv("data.csv", d3.autoType).then(data => {
+  console.log(data); // numbers, dates, booleans auto-converted
+});
+
+// Load JSON
+d3.json("data.json").then(data => {
+  console.log(data);
+});
+
+// Load TSV (tab-separated)
+d3.tsv("data.tsv").then(data => {
+  console.log(data);
+});
+
+// Load text file
+d3.text("README.md").then(text => {
+  console.log(text);
+});
+
+// Load XML
+d3.xml("data.xml").then(xml => {
+  console.log(xml);
+});
+
+// Load HTML fragment
+d3.html("fragment.html").then(fragment => {
+  d3.select("body").node().appendChild(fragment);
+});
+
+// Load image
+d3.image("photo.jpg").then(img => {
+  d3.select("body").append(() => img);
+});
+
+// Load SVG
+d3.svg("diagram.svg").then(svg => {
+  d3.select("body").append(() => svg);
+});
+
+// DSV with custom delimiter
+d3.dsv("|", "data.psv").then(data => {
+  console.log(data);
+});
+
+// Parsing functions (without loading)
+const parsed = d3.csvParse("a,b,c\n1,2,3\n4,5,6");
+const formatted = d3.csvFormat([{a: 1, b: 2, c: 3}]);
+```
+
+## Transitions and Animation
+
+### Smooth animated transitions
+
+Animate changes to attributes, styles, and content over time. Events are now passed directly to listeners.
+
+```javascript
+// Basic transition
+d3.select("body")
+  .transition()
+    .duration(1000)
+    .style("background-color", "red");
+
+// Transition with delay and easing
+d3.selectAll("circle")
+  .transition()
+    .duration(750)
+    .delay((d, i) => i * 50)
+    .ease(d3.easeElastic)
+    .attr("r", 10);
+
+// Available easing functions (v7):
+// d3.easeLinear, d3.easePolyIn/Out/InOut, d3.easeQuadIn/Out/InOut
+// d3.easeCubicIn/Out/InOut, d3.easeSinIn/Out/InOut
+// d3.easeExpIn/Out/InOut, d3.easeCircleIn/Out/InOut
+// d3.easeElasticIn/Out/InOut, d3.easeBackIn/Out/InOut
+// d3.easeBounceIn/Out/InOut
+
+// Chained transitions
+d3.select("rect")
+  .transition()
+    .duration(500)
+    .attr("x", 100)
+  .transition()
+    .duration(500)
+    .attr("y", 100);
+
+// Named transitions for coordination
+const t = d3.transition()
+    .duration(1000)
+    .ease(d3.easeCubicInOut);
+
+d3.selectAll("circle")
+  .transition(t)
+    .attr("r", 20);
+
+d3.selectAll("rect")
+  .transition(t)
+    .attr("width", 50);
+
+// Transition with tween
+d3.select("text")
+  .transition()
+    .duration(1000)
+    .tween("text", function() {
+      const i = d3.interpolate(0, 100);
+      return function(t) {
+        this.textContent = Math.round(i(t));
+      };
+    });
+
+// Transition events (note: no more d3.event)
+d3.select("circle")
+  .transition()
+    .duration(750)
+    .attr("r", 10)
+    .on("start", function() { console.log("started"); })
+    .on("end", function() { console.log("ended"); });
+
+// End promises (new in v7)
+d3.select("circle")
+  .transition()
+    .duration(750)
+    .attr("r", 10)
+  .end()
+  .then(() => console.log("transition complete"));
+
+// Axis transition
+svg.select(".x-axis")
+  .transition()
+    .duration(750)
+    .call(xAxis);
+
+// Interrupt transition
+d3.select("circle").interrupt();
+```
+
+## Interactive Behaviors
+
+### Drag behavior
+
+Enable dragging of elements with mouse or touch. Events are passed directly to handlers.
+
+```javascript
+// Basic drag handler (no more d3.event global)
+const drag = d3.drag()
+    .on("start", dragStarted)
+    .on("drag", dragged)
+    .on("end", dragEnded);
+
+d3.selectAll("circle").call(drag);
+
+function dragStarted(event, d) {
+  d3.select(this).classed("active", true);
+}
+
+function dragged(event, d) {
+  d3.select(this)
+      .attr("cx", d.x = event.x)
+      .attr("cy", d.y = event.y);
+}
+
+function dragEnded(event, d) {
+  d3.select(this).classed("active", false);
+}
+
+// Drag with subject
+const dragWithSubject = d3.drag()
+    .subject(event => ({x: event.x, y: event.y}))
+    .on("drag", dragged);
+
+// Access drag event properties
+function dragged(event, d) {
+  console.log(event.x, event.y);
+  console.log(event.dx, event.dy);
+}
+```
+
+### Zoom and pan behavior
+
+Enable zooming and panning with mouse wheel, touch, or programmatic control.
+
+```javascript
+// Basic zoom behavior (no more d3.event global)
+const zoom = d3.zoom()
+    .scaleExtent([1, 10])
+    .on("zoom", zoomed);
+
+svg.call(zoom);
+
+function zoomed(event) {
+  g.attr("transform", event.transform);
+}
+
+// Access zoom state from event
+function zoomed(event) {
+  const {transform} = event;
+  const {x, y, k} = transform;
+  console.log("translate:", x, y, "scale:", k);
+}
+
+// Zoom with rescaled axes
+const zoom = d3.zoom()
+    .scaleExtent([1, 10])
+    .on("zoom", zoomed);
+
+function zoomed(event) {
+  const newX = event.transform.rescaleX(x);
+  const newY = event.transform.rescaleY(y);
+
+  svg.select(".x.axis").call(d3.axisBottom(newX));
+  svg.select(".y.axis").call(d3.axisLeft(newY));
+
+  svg.selectAll("circle")
+      .attr("cx", d => newX(d.x))
+      .attr("cy", d => newY(d.y));
+}
+
+svg.call(zoom);
+
+// Programmatic zoom
+svg.call(zoom.transform, d3.zoomIdentity.translate(100, 50).scale(2));
+
+// Reset zoom
+svg.transition()
+    .duration(750)
+    .call(zoom.transform, d3.zoomIdentity);
+
+// Zoom buttons
+d3.select("#zoom-in").on("click", () => {
+  svg.transition()
+      .duration(300)
+      .call(zoom.scaleBy, 1.5);
+});
+
+d3.select("#zoom-out").on("click", () => {
+  svg.transition()
+      .duration(300)
+      .call(zoom.scaleBy, 0.67);
+});
+
+d3.select("#reset").on("click", () => {
+  svg.transition()
+      .duration(300)
+      .call(zoom.transform, d3.zoomIdentity);
+});
+```
+
+### Brush behavior
+
+Create brushable regions for selecting data ranges.
+
+```javascript
+// 1D brush (for x-axis) - events passed directly
+const brush = d3.brushX()
+    .extent([[0, 0], [width, height]])
+    .on("brush end", brushed);
+
+svg.append("g")
+    .attr("class", "brush")
+    .call(brush);
+
+function brushed(event) {
+  if (!event.selection) return;
+  const [x0, x1] = event.selection.map(x.invert);
+
+  svg.selectAll("circle")
+      .classed("selected", d => x0 <= d.x && d.x <= x1);
+}
+
+// 2D brush
+const brush2d = d3.brush()
+    .extent([[0, 0], [width, height]])
+    .on("brush end", brushed2d);
+
+svg.append("g")
+    .attr("class", "brush")
+    .call(brush2d);
+
+function brushed2d(event) {
+  if (!event.selection) {
+    svg.selectAll("circle").classed("selected", false);
+    return;
+  }
+
+  const [[x0, y0], [x1, y1]] = event.selection;
+
+  svg.selectAll("circle")
+      .classed("selected", d =>
+        x0 <= x(d.x) && x(d.x) <= x1 &&
+        y0 <= y(d.y) && y(d.y) <= y1
+      );
+}
+
+// Y-axis brush
+const brushY = d3.brushY()
+    .extent([[0, 0], [width, height]])
+    .on("brush", brushed);
+
+// Programmatic brush movement
+svg.select(".brush").call(brush.move, [100, 200]);
+
+// Clear brush
+svg.select(".brush").call(brush.clear);
+```
+
+## Layouts
+
+### Force-directed graph layout
+
+Create force-directed node-link diagrams with physics simulation.
+
+```javascript
+// Define graph data
+const nodes = [
+  {id: "a"},
+  {id: "b"},
+  {id: "c"},
+  {id: "d"}
+];
+
+const links = [
+  {source: "a", target: "b"},
+  {source: "b", target: "c"},
+  {source: "c", target: "d"},
+  {source: "d", target: "a"}
+];
+
+// Create force simulation
+const simulation = d3.forceSimulation(nodes)
+    .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+    .force("charge", d3.forceManyBody().strength(-300))
+    .force("center", d3.forceCenter(width / 2, height / 2))
+    .force("collide", d3.forceCollide().radius(20))
+    .on("tick", ticked);
+
+// Create visual elements
+const link = svg.selectAll(".link")
+    .data(links)
+  .join("line")
+    .attr("class", "link");
+
+const node = svg.selectAll(".node")
+    .data(nodes)
+  .join("circle")
+    .attr("class", "node")
+    .attr("r", 20)
+    .call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended));
+
+// Update positions on tick
+function ticked() {
+  link
+      .attr("x1", d => d.source.x)
+      .attr("y1", d => d.source.y)
+      .attr("x2", d => d.target.x)
+      .attr("y2", d => d.target.y);
+
+  node
+      .attr("cx", d => d.x)
+      .attr("cy", d => d.y);
+}
+
+// Drag handlers for nodes
+function dragstarted(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
+
+function dragged(event, d) {
+  d.fx = event.x;
+  d.fy = event.y;
+}
+
+function dragended(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
+}
+
+// Control simulation
+simulation.restart();
+simulation.stop();
+simulation.alpha(0.3); // heat up
+```
+
+### Hierarchical layouts
+
+Create tree, cluster, treemap, partition, and pack layouts for hierarchical data.
+
+```javascript
+// Tree layout
+const tree = d3.tree()
+    .size([height, width]);
+
+const root = d3.hierarchy(data);
+tree(root);
+
+const nodes = root.descendants();
+const links = root.links();
+
+// Cluster layout (dendrogram)
+const cluster = d3.cluster()
+    .size([height, width]);
+
+// Treemap layout
+const treemap = d3.treemap()
+    .size([width, height])
+    .padding(4);
+
+const root = d3.hierarchy(data)
+    .sum(d => d.value)
+    .sort((a, b) => b.value - a.value);
+
+treemap(root);
+
+svg.selectAll("rect")
+    .data(root.leaves())
+  .join("rect")
+    .attr("x", d => d.x0)
+    .attr("y", d => d.y0)
+    .attr("width", d => d.x1 - d.x0)
+    .attr("height", d => d.y1 - d.y0);
+
+// Partition layout (sunburst, icicle)
+const partition = d3.partition()
+    .size([width, height]);
+
+// Pack layout (circle packing)
+const pack = d3.pack()
+    .size([width, height])
+    .padding(2);
+
+const root = d3.hierarchy(data)
+    .sum(d => d.value);
+
+pack(root);
+
+svg.selectAll("circle")
+    .data(root.descendants())
+  .join("circle")
+    .attr("cx", d => d.x)
+    .attr("cy", d => d.y)
+    .attr("r", d => d.r);
+```
+
+### Chord layout
+
+Create chord diagrams for matrix data.
+
+```javascript
+// Chord layout for matrix data
+const matrix = [
+  [11975, 5871, 8916, 2868],
+  [1951, 10048, 2060, 6171],
+  [8010, 16145, 8090, 8045],
+  [1013, 990, 940, 6907]
+];
+
+const chord = d3.chord()
+    .padAngle(0.05)
+    .sortSubgroups(d3.descending);
+
+const chords = chord(matrix);
+
+// Draw groups (outer arcs)
+const arc = d3.arc()
+    .innerRadius(200)
+    .outerRadius(220);
+
+const group = svg.selectAll(".group")
+    .data(chords.groups)
+  .join("g")
+    .attr("class", "group");
+
+group.append("path")
+    .attr("d", arc);
+
+// Draw chords
+const ribbon = d3.ribbon()
+    .radius(200);
+
+svg.selectAll(".chord")
+    .data(chords)
+  .join("path")
+    .attr("class", "chord")
+    .attr("d", ribbon);
+
+// Directed chord (new in v6)
+const directed = d3.chordDirected();
+
+// Transposed chord (new in v6)
+const transposed = d3.chordTranspose();
+
+// Ribbon arrow (new in v6)
+const ribbonArrow = d3.ribbonArrow()
+    .radius(200)
+    .headRadius(10);
+```
+
+### Stack layout
+
+Create stacked area or bar charts.
+
+```javascript
+// Stack layout for stacked area chart
+const stack = d3.stack()
+    .keys(["apples", "bananas", "oranges"])
+    .order(d3.stackOrderNone)
+    .offset(d3.stackOffsetNone);
+
+const series = stack(data);
+
+const area = d3.area()
+    .x(d => x(d.data.date))
+    .y0(d => y(d[0]))
+    .y1(d => y(d[1]));
+
+svg.selectAll(".layer")
+    .data(series)
+  .join("path")
+    .attr("class", "layer")
+    .attr("d", area)
+    .style("fill", (d, i) => color(i));
+
+// Stack order modes
+d3.stackOrderNone         // default order
+d3.stackOrderAscending    // smallest series on bottom
+d3.stackOrderDescending   // largest series on bottom
+d3.stackOrderInsideOut    // earlier series in middle
+d3.stackOrderReverse      // reverse order
+d3.stackOrderAppearance   // earliest series on bottom
+
+// Stack offset modes
+d3.stackOffsetNone        // zero baseline
+d3.stackOffsetExpand      // normalize to [0, 1]
+d3.stackOffsetDiverging   // positive above, negative below zero
+d3.stackOffsetSilhouette  // centered streamgraph
+d3.stackOffsetWiggle      // minimize wiggling
+```
+
+## Geographic Projections
+
+### Map projections and geographic paths
+
+Transform geographic coordinates and render GeoJSON features.
+
+```javascript
+// Mercator projection
+const projection = d3.geoMercator()
+    .scale(1000)
+    .center([0, 0])
+    .translate([width / 2, height / 2]);
+
+// Geographic path generator
+const path = d3.geoPath()
+    .projection(projection);
+
+// Load and draw GeoJSON (Promise-based)
+d3.json("world.json").then(world => {
+  svg.selectAll("path")
+      .data(world.features)
+    .join("path")
+      .attr("d", path)
+      .style("fill", "lightgray")
+      .style("stroke", "white");
+});
+
+// Other projections
+const albers = d3.geoAlbers();
+const albersUsa = d3.geoAlbersUsa();
+const azimuthalEqualArea = d3.geoAzimuthalEqualArea();
+const azimuthalEquidistant = d3.geoAzimuthalEquidistant();
+const conicEqualArea = d3.geoConicEqualArea();
+const conicConformal = d3.geoConicConformal();
+const equirectangular = d3.geoEquirectangular();
+const gnomonic = d3.geoGnomonic();
+const orthographic = d3.geoOrthographic();
+const stereographic = d3.geoStereographic();
+const transverseMercator = d3.geoTransverseMercator();
+const equalEarth = d3.geoEqualEarth(); // new in v5
+const naturalEarth1 = d3.geoNaturalEarth1(); // new in v5
+
+// Graticule (grid lines)
+const graticule = d3.geoGraticule();
+
+svg.append("path")
+    .datum(graticule())
+    .attr("class", "graticule")
+    .attr("d", path);
+
+// Geographic utilities
+const bounds = path.bounds(feature);
+const centroid = path.centroid(feature);
+const area = path.area(feature);
+
+// Rotate and clip projection
+projection.rotate([90, 0]);
+projection.clipAngle(90);
+
+// Fit projection to feature
+projection.fitSize([width, height], feature);
+projection.fitExtent([[20, 20], [width - 20, height - 20]], feature);
+```
+
+## Delaunay Triangulation and Voronoi Diagrams
+
+D3 v7 includes d3-delaunay (based on Delaunator), which replaces the old d3-voronoi.
+
+```javascript
+// Create Delaunay triangulation
+const points = [[0, 0], [100, 0], [50, 100]];
+const delaunay = d3.Delaunay.from(points);
+
+// From array of objects
+const data = [{x: 0, y: 0}, {x: 100, y: 0}, {x: 50, y: 100}];
+const delaunay = d3.Delaunay.from(data, d => d.x, d => d.y);
+
+// Find nearest point
+const index = delaunay.find(50, 25);
+
+// Get neighbors
+const neighbors = [...delaunay.neighbors(0)];
+
+// Render triangulation
+const path = delaunay.render();
+svg.append("path").attr("d", path);
+
+// Create Voronoi diagram
+const voronoi = delaunay.voronoi([0, 0, width, height]);
+
+// Render Voronoi cells
+const voronoiPath = voronoi.render();
+svg.append("path").attr("d", voronoiPath);
+
+// Render specific cell
+const cellPath = voronoi.renderCell(0);
+svg.append("path").attr("d", cellPath);
+
+// Get cell polygon
+const polygon = voronoi.cellPolygon(0);
+
+// Check if point is in cell
+const contains = voronoi.contains(0, 50, 25);
+```
+
+## Contours
+
+Generate contour polygons using marching squares (useful for density plots, heatmaps).
+
+```javascript
+// Contour generator
+const contours = d3.contours()
+    .size([width, height])
+    .smooth(true)
+    .thresholds(20);
+
+// Generate contours from grid of values
+const values = new Array(width * height);
+for (let i = 0; i < values.length; i++) {
+  values[i] = Math.random();
+}
+
+const contourData = contours(values);
+
+// Render contours
+svg.selectAll("path")
+    .data(contourData)
+  .join("path")
+    .attr("d", d3.geoPath())
+    .attr("fill", (d, i) => d3.interpolateYlGnBu(i / contourData.length));
+
+// Density contours
+const density = d3.contourDensity()
+    .x(d => d.x)
+    .y(d => d.y)
+    .size([width, height])
+    .bandwidth(20)
+    .thresholds(20);
+
+const densityData = density(points);
+
+svg.selectAll("path")
+    .data(densityData)
+  .join("path")
+    .attr("d", d3.geoPath())
+    .attr("fill", "none")
+    .attr("stroke", "steelblue");
+```
+
+## Time Formatting and Intervals
+
+### Date parsing and formatting
+
+Parse and format dates with flexible patterns.
+
+```javascript
+// Format dates
+const formatTime = d3.timeFormat("%Y-%m-%d");
+formatTime(new Date(2023, 0, 1)); // "2023-01-01"
+
+const formatMonth = d3.timeFormat("%B %Y");
+formatMonth(new Date(2023, 5, 15)); // "June 2023"
+
+// Parse dates
+const parseTime = d3.timeParse("%Y-%m-%d");
+parseTime("2023-01-01"); // Date object
+
+// ISO 8601 format
+const isoFormat = d3.isoFormat;
+const isoParse = d3.isoParse;
+isoFormat(new Date());
+isoParse("2023-01-01T12:00:00Z");
+
+// Format specifiers:
+// %Y - year with century (2023)
+// %y - year without century (23)
+// %m - month as number (01-12)
+// %B - full month name (January)
+// %b - abbreviated month name (Jan)
+// %d - day of month (01-31)
+// %e - day of month, space-padded ( 1-31)
+// %A - full weekday name (Monday)
+// %a - abbreviated weekday name (Mon)
+// %H - hour (00-23)
+// %I - hour (01-12)
+// %M - minute (00-59)
+// %S - second (00-59)
+// %L - milliseconds (000-999)
+// %p - AM or PM
+```
+
+### Time intervals
+
+Generate sequences of dates and perform date arithmetic.
+
+```javascript
+// Time intervals
+d3.timeSecond(new Date()); // round to second
+d3.timeMinute(new Date()); // round to minute
+d3.timeHour(new Date());   // round to hour
+d3.timeDay(new Date());    // round to day
+d3.timeWeek(new Date());   // round to week (Sunday)
+d3.timeMonth(new Date());  // round to month
+d3.timeYear(new Date());   // round to year
+
+// Weekday intervals
+d3.timeSunday, d3.timeMonday, d3.timeTuesday, d3.timeWednesday,
+d3.timeThursday, d3.timeFriday, d3.timeSaturday
+
+// Generate ranges
+const start = new Date(2023, 0, 1);
+const end = new Date(2023, 11, 31);
+
+d3.timeDays(start, end);   // array of all days
+d3.timeWeeks(start, end);  // array of all weeks
+d3.timeMonths(start, end); // array of all months
+
+// Skip intervals
+d3.timeDays(start, end, 7); // every 7 days
+
+// Offset dates
+d3.timeDay.offset(new Date(), 1);   // add 1 day
+d3.timeMonth.offset(new Date(), -1); // subtract 1 month
+
+// Count intervals
+d3.timeDay.count(start, end); // number of days between
+
+// UTC variants
+d3.utcDay(new Date());
+d3.utcDays(start, end);
+
+// Unix day (new in v7)
+d3.unixDay(new Date()); // UTC day, not month-aligned
+
+// Time ticks (for axes)
+const ticks = d3.timeTicks(start, end, 10);
+const ticksUtc = d3.utcTicks(start, end, 10);
+```
+
+## Complete Visualization Example
+
+### Interactive bar chart with transitions
+
+Full example demonstrating selections, scales, axes, transitions, and interactivity using D3 v7 APIs.
+
+```javascript
+// Data
+const data = [
+  {category: "A", value: 30},
+  {category: "B", value: 50},
+  {category: "C", value: 40},
+  {category: "D", value: 60},
+  {category: "E", value: 35}
+];
+
+// Dimensions
+const margin = {top: 20, right: 20, bottom: 30, left: 40};
+const width = 960 - margin.left - margin.right;
+const height = 500 - margin.top - margin.bottom;
+
+// Create SVG
+const svg = d3.select("#chart").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+// Scales (v7 API)
+const x = d3.scaleBand()
+    .domain(data.map(d => d.category))
+    .range([0, width])
+    .padding(0.1);
+
+const y = d3.scaleLinear()
+    .domain([0, d3.max(data, d => d.value)])
+    .nice()
+    .range([height, 0]);
+
+// Axes (v7 API)
+const xAxis = d3.axisBottom(x);
+const yAxis = d3.axisLeft(y);
+
+svg.append("g")
+    .attr("class", "x axis")
+    .attr("transform", `translate(0,${height})`)
+    .call(xAxis);
+
+svg.append("g")
+    .attr("class", "y axis")
+    .call(yAxis);
+
+// Bars using join (v7 API)
+const bars = svg.selectAll(".bar")
+    .data(data)
+  .join("rect")
+    .attr("class", "bar")
+    .attr("x", d => x(d.category))
+    .attr("y", height)
+    .attr("width", x.bandwidth())
+    .attr("height", 0)
+    .style("fill", "steelblue");
+
+// Animate bars on load
+bars.transition()
+    .duration(800)
+    .attr("y", d => y(d.value))
+    .attr("height", d => height - y(d.value));
+
+// Interactivity (events passed directly in v7)
+bars.on("mouseover", function(event, d) {
+      d3.select(this)
+        .transition()
+          .duration(200)
+          .style("fill", "orange");
+
+      // Show tooltip
+      svg.append("text")
+          .attr("class", "tooltip")
+          .attr("x", x(d.category) + x.bandwidth() / 2)
+          .attr("y", y(d.value) - 10)
+          .attr("text-anchor", "middle")
+          .text(d.value);
+    })
+    .on("mouseout", function(event, d) {
+      d3.select(this)
+        .transition()
+          .duration(200)
+          .style("fill", "steelblue");
+
+      svg.select(".tooltip").remove();
+    });
+
+// Update function for new data
+function update(newData) {
+  // Update scales
+  x.domain(newData.map(d => d.category));
+  y.domain([0, d3.max(newData, d => d.value)]).nice();
+
+  // Update axes
+  svg.select(".x.axis")
+      .transition()
+      .duration(750)
+      .call(xAxis);
+
+  svg.select(".y.axis")
+      .transition()
+      .duration(750)
+      .call(yAxis);
+
+  // Update bars using join
+  svg.selectAll(".bar")
+      .data(newData, d => d.category)
+    .join(
+      enter => enter.append("rect")
+          .attr("class", "bar")
+          .attr("x", d => x(d.category))
+          .attr("y", height)
+          .attr("width", x.bandwidth())
+          .attr("height", 0)
+          .style("fill", "steelblue")
+        .call(enter => enter.transition()
+          .duration(750)
+          .attr("y", d => y(d.value))
+          .attr("height", d => height - y(d.value))),
+      update => update
+        .call(update => update.transition()
+          .duration(750)
+          .attr("x", d => x(d.category))
+          .attr("width", x.bandwidth())
+          .attr("y", d => y(d.value))
+          .attr("height", d => height - y(d.value))),
+      exit => exit
+        .call(exit => exit.transition()
+          .duration(750)
+          .attr("height", 0)
+          .attr("y", height)
+          .remove())
+    );
+}
+```
+
+## Summary and Integration
+
+D3.js v7 is a powerful library for creating custom, data-driven visualizations using modern web standards. The library's declarative approach to data binding connects data to DOM elements through selections, enabling efficient updates through the join API (which simplifies the traditional enter-update-exit pattern). D3 v7 provides a comprehensive suite of tools including scales for data transformation, shape generators for SVG paths, layouts for complex arrangements like force-directed graphs and treemaps, geographic projections for maps, Delaunay triangulations and Voronoi diagrams for spatial analysis, contour generation for density plots, and smooth transitions for animation. Interactive behaviors like drag, zoom, and brush enable rich user interactions, with events now passed directly to handlers instead of using a global variable.
+
+Common use cases include interactive dashboards with dynamic charts, network graphs with force layouts, geographic maps with projections and zoom, time-series visualizations with brushing, hierarchical data displays like treemaps and dendrograms, density plots with contours, and custom scientific visualizations. D3 v7 can be integrated with modern frameworks like React, Vue, or Svelte by separating data operations from rendering, using D3 for scales, layouts, and calculations while letting frameworks handle DOM updates. The library ships as pure ES modules, making it easy to import only the modules you need for optimal bundle size. D3 v7's adherence to web standards and Promise-based APIs provides unlimited flexibility for creating any visualization you can imagine, from simple bar charts to complex interactive geographic applications.

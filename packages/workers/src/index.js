@@ -11,6 +11,7 @@ import { EmailQueue } from './durable-objects/EmailQueue.js';
 import { createCorsMiddleware } from './middleware/cors.js';
 import { securityHeaders } from './middleware/securityHeaders.js';
 import { requireAuth } from './middleware/auth.js';
+import { requireTrustedOrigin } from './middleware/csrf.js';
 
 // Route imports
 import { auth } from './auth/routes.js';
@@ -22,6 +23,7 @@ import { dbRoutes } from './routes/database.js';
 import { emailRoutes } from './routes/email.js';
 import { googleDriveRoutes } from './routes/google-drive.js';
 import { avatarRoutes } from './routes/avatars.js';
+import { adminRoutes } from './routes/admin.js';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc, EmailQueue };
@@ -113,6 +115,44 @@ app.get('/', c => c.text('Corates Workers API'));
 
 // Mount auth routes
 app.route('/api/auth', auth);
+
+// CSRF guard for stop-impersonation (cookie-authenticated POST)
+app.use('/api/admin/stop-impersonation', requireTrustedOrigin);
+
+// Stop impersonation route - separate from admin routes as it doesn't require admin role
+// (the impersonated user won't have admin role)
+app.post('/api/admin/stop-impersonation', async c => {
+  try {
+    const { createAuth } = await import('./auth/config.js');
+    const authInstance = createAuth(c.env, c.executionCtx);
+    const url = new URL(c.req.url);
+
+    // Create a request to Better Auth's stop impersonation endpoint
+    const authUrl = new URL('/api/auth/admin/stop-impersonating', url.origin);
+    const cookie = c.req.raw.headers.get('cookie');
+    const origin = c.req.raw.headers.get('origin');
+    const referer = c.req.raw.headers.get('referer');
+    const headers = new Headers();
+    if (cookie) headers.set('cookie', cookie);
+    if (origin) headers.set('origin', origin);
+    if (referer) headers.set('referer', referer);
+    headers.set('accept', 'application/json');
+    const authRequest = new Request(authUrl.toString(), {
+      method: 'POST',
+      headers,
+    });
+
+    // Let Better Auth handle the request (this properly sets cookies)
+    const response = await authInstance.handler(authRequest);
+    return response;
+  } catch (error) {
+    console.error('Error stopping impersonation:', error);
+    return c.json({ error: 'Failed to stop impersonation' }, 500);
+  }
+});
+
+// Mount admin routes
+app.route('/api/admin', adminRoutes);
 
 // Mount email routes
 app.route('/api/email', emailRoutes);
