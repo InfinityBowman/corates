@@ -10,6 +10,7 @@ import projectStore from '@primitives/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
+import { importFromGoogleDrive } from '@api/google-drive.js';
 import { useConfirmDialog } from '@components/zag/Dialog.jsx';
 import { Tabs } from '@components/zag/Tabs.jsx';
 import { BiRegularHome } from 'solid-icons/bi';
@@ -67,9 +68,11 @@ export default function ProjectView() {
     if (params.projectId) connect();
   });
 
-  // Store pending data from navigation state
-  const [pendingPdfs, setPendingPdfs] = createSignal(location.state?.pendingPdfs || null);
-  const [pendingRefs, setPendingRefs] = createSignal(location.state?.pendingRefs || null);
+  // Retrieve pending data from projectStore (stored during project creation)
+  const pendingData = projectStore.getPendingProjectData(params.projectId);
+  const [pendingPdfs, setPendingPdfs] = createSignal(pendingData?.pendingPdfs || null);
+  const [pendingRefs, setPendingRefs] = createSignal(pendingData?.pendingRefs || null);
+  const [pendingDriveFiles, setPendingDriveFiles] = createSignal(pendingData?.driveFiles || null);
 
   // Process pending PDFs from project creation
   createEffect(() => {
@@ -79,7 +82,6 @@ export default function ProjectView() {
 
     batch(() => {
       setPendingPdfs(null);
-      window.history.replaceState({}, '', window.location.pathname);
     });
 
     for (const pdf of pdfs) {
@@ -110,11 +112,41 @@ export default function ProjectView() {
 
     batch(() => {
       setPendingRefs(null);
-      window.history.replaceState({}, '', window.location.pathname);
     });
 
     for (const ref of refs) {
       createStudy(ref.title, ref.metadata?.abstract || '', ref.metadata || {});
+    }
+  });
+
+  // Process pending Google Drive files from project creation
+  createEffect(() => {
+    const state = connectionState();
+    const driveFiles = pendingDriveFiles();
+    if (!state.synced || !params.projectId || !Array.isArray(driveFiles) || driveFiles.length === 0)
+      return;
+
+    batch(() => {
+      setPendingDriveFiles(null);
+    });
+
+    for (const file of driveFiles) {
+      const title = file.name.replace(/\.pdf$/i, '');
+      const studyId = createStudy(title, '');
+      if (studyId && file.id) {
+        importFromGoogleDrive(file.id, params.projectId, studyId)
+          .then(result => {
+            addPdfToStudy(studyId, {
+              key: result.file.key,
+              fileName: result.file.fileName,
+              size: result.file.size,
+              uploadedBy: user()?.id,
+              uploadedAt: Date.now(),
+              source: 'google-drive',
+            });
+          })
+          .catch(err => console.error('Error importing Google Drive file:', err));
+      }
     }
   });
 

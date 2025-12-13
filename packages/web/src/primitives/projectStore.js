@@ -13,6 +13,10 @@ const PROJECT_LIST_CACHE_KEY = 'corates-project-list-cache';
 const PROJECT_LIST_CACHE_TIMESTAMP_KEY = 'corates-project-list-cache-timestamp';
 const PROJECT_LIST_CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
+// Temporary in-memory storage for pending uploads during project creation
+// This avoids passing non-serializable data through router state
+const pendingProjectData = new Map();
+
 function createProjectStore() {
   // Load cached project list from localStorage
   function loadCachedProjectList() {
@@ -400,6 +404,25 @@ function createProjectStore() {
     return fetchProjectList(userId, { force: true });
   }
 
+  /**
+   * Temporarily store pending project data during creation
+   * This avoids passing non-serializable data through router state
+   */
+  function setPendingProjectData(projectId, data) {
+    pendingProjectData.set(projectId, data);
+  }
+
+  /**
+   * Retrieve and clear pending project data
+   */
+  function getPendingProjectData(projectId) {
+    const data = pendingProjectData.get(projectId);
+    if (data) {
+      pendingProjectData.delete(projectId); // Clean up after retrieval
+    }
+    return data;
+  }
+
   return {
     // Raw store for reactive access
     store,
@@ -428,6 +451,10 @@ function createProjectStore() {
     updateProjectInList,
     removeProjectFromList,
     clearProjectList,
+
+    // Temporary storage for project creation
+    setPendingProjectData,
+    getPendingProjectData,
 
     // Setters - Project Data (Y.js)
     setActiveProject,
