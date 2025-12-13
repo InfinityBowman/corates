@@ -1,7 +1,7 @@
 import { createSignal, createRoot, createEffect } from 'solid-js';
 import { authClient, useSession } from '@api/auth-client.js';
 import projectStore from '@primitives/projectStore.js';
-import { API_BASE } from '@config/api.js';
+import { API_BASE, BASEPATH } from '@config/api.js';
 import { saveLastLoginMethod, LOGIN_METHODS } from '@lib/lastLoginMethod.js';
 
 // LocalStorage keys for offline caching
@@ -195,8 +195,11 @@ function createBetterAuthStore() {
   async function signinWithGoogle(callbackPath) {
     try {
       setAuthError(null);
-      // Build full callback URL using current origin
-      const callbackURL = `${window.location.origin}${callbackPath || '/dashboard'}`;
+      // Build full callback URL using current origin + basepath (if set)
+      // Normalize path to avoid double slashes when BASEPATH ends with /
+      const path = callbackPath || '/dashboard';
+      const base = (BASEPATH || '').replace(/\/$/, ''); // Remove trailing slash from basepath
+      const callbackURL = `${window.location.origin}${base}${path}`;
 
       // Save login method before redirect
       saveLastLoginMethod(LOGIN_METHODS.GOOGLE);
@@ -220,8 +223,11 @@ function createBetterAuthStore() {
   async function signinWithOrcid(callbackPath) {
     try {
       setAuthError(null);
-      // Build full callback URL using current origin
-      const callbackURL = `${window.location.origin}${callbackPath || '/dashboard'}`;
+      // Build full callback URL using current origin + basepath (if set)
+      // Normalize path to avoid double slashes when BASEPATH ends with /
+      const path = callbackPath || '/dashboard';
+      const base = (BASEPATH || '').replace(/\/$/, ''); // Remove trailing slash from basepath
+      const callbackURL = `${window.location.origin}${base}${path}`;
 
       // Save login method before redirect
       saveLastLoginMethod(LOGIN_METHODS.ORCID);
@@ -246,7 +252,11 @@ function createBetterAuthStore() {
   async function signinWithMagicLink(email, callbackPath) {
     try {
       setAuthError(null);
-      const callbackURL = `${window.location.origin}${callbackPath || '/dashboard'}`;
+      // Build full callback URL using current origin + basepath (if set)
+      // Normalize path to avoid double slashes when BASEPATH ends with /
+      const path = callbackPath || '/dashboard';
+      const base = (BASEPATH || '').replace(/\/$/, ''); // Remove trailing slash from basepath
+      const callbackURL = `${window.location.origin}${base}${path}`;
 
       const { data, error } = await authClient.signIn.magicLink({
         email,
@@ -368,9 +378,11 @@ function createBetterAuthStore() {
     try {
       setAuthError(null);
       // BetterAuth uses requestPasswordReset to send reset email
+      // Normalize path to avoid double slashes when BASEPATH ends with /
+      const base = (BASEPATH || '').replace(/\/$/, ''); // Remove trailing slash from basepath
       const { error } = await authClient.requestPasswordReset({
         email,
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}${base}/reset-password`,
       });
 
       if (error) {

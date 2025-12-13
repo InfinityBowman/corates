@@ -1,5 +1,17 @@
 import { createSignal, Show } from 'solid-js';
-import { FiBell, FiMoon, FiShield, FiKey, FiEye, FiEyeOff, FiLink, FiMail } from 'solid-icons/fi';
+import { A } from '@solidjs/router';
+import {
+  FiBell,
+  FiMoon,
+  FiShield,
+  FiKey,
+  FiEye,
+  FiEyeOff,
+  FiLink,
+  FiMail,
+  FiCreditCard,
+  FiChevronRight,
+} from 'solid-icons/fi';
 import { LANDING_URL } from '@config/api.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import Switch from '@components/zag/Switch.jsx';
@@ -66,6 +78,23 @@ export default function SettingsPage() {
   return (
     <div class='max-w-2xl mx-auto p-6'>
       <h1 class='text-2xl font-bold text-gray-900 mb-6'>Settings</h1>
+
+      {/* Billing Section */}
+      <A
+        href='/settings/billing'
+        class='block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 hover:border-blue-300 transition-colors'
+      >
+        <div class='px-6 py-4 flex items-center justify-between'>
+          <div class='flex items-center space-x-3'>
+            <FiCreditCard class='w-5 h-5 text-gray-600' />
+            <div>
+              <h2 class='text-lg font-medium text-gray-900'>Billing & Subscription</h2>
+              <p class='text-sm text-gray-500'>Manage your subscription and payment methods</p>
+            </div>
+          </div>
+          <FiChevronRight class='w-5 h-5 text-gray-400' />
+        </div>
+      </A>
 
       {/* Notifications Section */}
       <div class='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6'>

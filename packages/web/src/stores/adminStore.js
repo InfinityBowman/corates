@@ -41,17 +41,24 @@ async function checkImpersonationStatus() {
     const response = await fetch(`${API_BASE}/api/auth/get-session`, {
       credentials: 'include',
     });
-    if (response.ok) {
-      const data = await response.json();
-      if (data.session?.impersonatedBy) {
-        setIsImpersonating(true);
-        setImpersonatedBy(data.session.impersonatedBy);
-      } else {
-        setIsImpersonating(false);
-        setImpersonatedBy(null);
-      }
+    if (!response.ok) {
+      setIsImpersonating(false);
+      setImpersonatedBy(null);
+      return;
     }
+
+    const data = await response.json().catch(() => null);
+    if (data?.session?.impersonatedBy) {
+      setIsImpersonating(true);
+      setImpersonatedBy(data.session.impersonatedBy);
+      return;
+    }
+
+    setIsImpersonating(false);
+    setImpersonatedBy(null);
   } catch (err) {
+    setIsImpersonating(false);
+    setImpersonatedBy(null);
     console.error('[Admin] Error checking impersonation status:', err);
   }
 }
