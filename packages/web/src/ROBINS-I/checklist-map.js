@@ -105,25 +105,25 @@ export const DOMAIN_1A = {
   name: 'Domain 1: Bias Due to Confounding',
   subtitle: 'Variant A - Intention-to-Treat Effect (C4 = No)',
   questions: {
-    'd1a_1': {
+    d1a_1: {
       id: 'd1a_1',
       number: '1.1',
       text: 'Control for all important confounders?',
       responseType: 'WEAK_STRONG_NO',
     },
-    'd1a_2': {
+    d1a_2: {
       id: 'd1a_2',
       number: '1.2',
       text: 'Valid & reliable measurement of controlled confounders?',
       responseType: 'WEAK_STRONG_NO_NA',
     },
-    'd1a_3': {
+    d1a_3: {
       id: 'd1a_3',
       number: '1.3',
       text: 'Controlled for post-intervention variables?',
       responseType: 'WITH_NA',
     },
-    'd1a_4': {
+    d1a_4: {
       id: 'd1a_4',
       number: '1.4',
       text: 'Evidence of serious uncontrolled confounding?',
@@ -140,31 +140,31 @@ export const DOMAIN_1B = {
   name: 'Domain 1: Bias Due to Confounding',
   subtitle: 'Variant B - Per-Protocol Effect (C4 = Yes)',
   questions: {
-    'd1b_1': {
+    d1b_1: {
       id: 'd1b_1',
       number: '1.1',
       text: 'Appropriate method for time-varying confounding?',
       responseType: 'WITH_NI',
     },
-    'd1b_2': {
+    d1b_2: {
       id: 'd1b_2',
       number: '1.2',
       text: 'Controlled all important baseline & time-varying confounders?',
       responseType: 'WEAK_STRONG_NO_NA',
     },
-    'd1b_3': {
+    d1b_3: {
       id: 'd1b_3',
       number: '1.3',
       text: 'Valid & reliable measurement?',
       responseType: 'WEAK_STRONG_NO_NA',
     },
-    'd1b_4': {
+    d1b_4: {
       id: 'd1b_4',
       number: '1.4',
       text: 'Controlled post-intervention variables?',
       responseType: 'WITH_NA',
     },
-    'd1b_5': {
+    d1b_5: {
       id: 'd1b_5',
       number: '1.5',
       text: 'Evidence of serious uncontrolled confounding?',
@@ -180,31 +180,31 @@ export const DOMAIN_2 = {
   id: 'domain2',
   name: 'Domain 2: Bias in Classification of Interventions',
   questions: {
-    'd2_1': {
+    d2_1: {
       id: 'd2_1',
       number: '2.1',
       text: 'Distinguishable strategies at follow-up start?',
       responseType: 'WITH_NI',
     },
-    'd2_2': {
+    d2_2: {
       id: 'd2_2',
       number: '2.2',
       text: 'Outcomes occurred after strategies distinguishable?',
       responseType: 'WITH_NA',
     },
-    'd2_3': {
+    d2_3: {
       id: 'd2_3',
       number: '2.3',
       text: 'Analysis avoided classification problems?',
       responseType: 'WEAK_STRONG_YES_NA',
     },
-    'd2_4': {
+    d2_4: {
       id: 'd2_4',
       number: '2.4',
       text: 'Classification influenced by outcome knowledge?',
       responseType: 'WEAK_STRONG_YES',
     },
-    'd2_5': {
+    d2_5: {
       id: 'd2_5',
       number: '2.5',
       text: 'Other classification errors likely?',
@@ -223,13 +223,13 @@ export const DOMAIN_3 = {
     a: {
       name: 'A. Prevalent User Bias / Immortal Time',
       questions: {
-        'd3_1': {
+        d3_1: {
           id: 'd3_1',
           number: '3.1',
           text: 'Follow-up began at intervention start?',
           responseType: 'WEAK_STRONG_NO',
         },
-        'd3_2': {
+        d3_2: {
           id: 'd3_2',
           number: '3.2',
           text: 'Early outcome events excluded?',
@@ -240,19 +240,19 @@ export const DOMAIN_3 = {
     b: {
       name: 'B. Other Selection Bias',
       questions: {
-        'd3_3': {
+        d3_3: {
           id: 'd3_3',
           number: '3.3',
           text: 'Selection based on post-intervention characteristics?',
           responseType: 'WITH_NI',
         },
-        'd3_4': {
+        d3_4: {
           id: 'd3_4',
           number: '3.4',
           text: 'Associated with intervention?',
           responseType: 'WITH_NA',
         },
-        'd3_5': {
+        d3_5: {
           id: 'd3_5',
           number: '3.5',
           text: 'Influenced by outcome or cause of outcome?',
@@ -263,19 +263,19 @@ export const DOMAIN_3 = {
     c: {
       name: 'C. Analysis & Severity',
       questions: {
-        'd3_6': {
+        d3_6: {
           id: 'd3_6',
           number: '3.6',
           text: 'Analysis corrected selection bias?',
           responseType: 'WITH_NA',
         },
-        'd3_7': {
+        d3_7: {
           id: 'd3_7',
           number: '3.7',
           text: 'Sensitivity analyses showed minimal impact?',
           responseType: 'WITH_NA',
         },
-        'd3_8': {
+        d3_8: {
           id: 'd3_8',
           number: '3.8',
           text: 'Bias too severe for quantitative synthesis?',
@@ -292,68 +292,68 @@ export const DOMAIN_4 = {
   id: 'domain4',
   name: 'Domain 4: Bias Due to Missing Data',
   questions: {
-    'd4_1': {
+    d4_1: {
       id: 'd4_1',
       number: '4.1',
       text: 'Complete intervention data?',
       responseType: 'WITH_NI',
     },
-    'd4_2': {
+    d4_2: {
       id: 'd4_2',
       number: '4.2',
       text: 'Complete outcome data?',
       responseType: 'WITH_NI',
     },
-    'd4_3': {
+    d4_3: {
       id: 'd4_3',
       number: '4.3',
       text: 'Complete confounder data?',
       responseType: 'WITH_NI',
     },
-    'd4_4': {
+    d4_4: {
       id: 'd4_4',
       number: '4.4',
       text: 'Complete case analysis used?',
       responseType: 'WITH_NA',
     },
-    'd4_5': {
+    d4_5: {
       id: 'd4_5',
       number: '4.5',
       text: 'Missingness related to outcome?',
       responseType: 'WITH_NA',
     },
-    'd4_6': {
+    d4_6: {
       id: 'd4_6',
       number: '4.6',
       text: 'Explained by model variables?',
       responseType: 'WEAK_STRONG_NO_NA',
     },
-    'd4_7': {
+    d4_7: {
       id: 'd4_7',
       number: '4.7',
       text: 'Imputation used?',
       responseType: 'WITH_NA',
       note: 'Response options: NA / Y / PY / PN / NI',
     },
-    'd4_8': {
+    d4_8: {
       id: 'd4_8',
       number: '4.8',
       text: 'MAR/MCAR assumption reasonable?',
       responseType: 'WITH_NA',
     },
-    'd4_9': {
+    d4_9: {
       id: 'd4_9',
       number: '4.9',
       text: 'Imputation appropriate?',
       responseType: 'WEAK_STRONG_NO_NA',
     },
-    'd4_10': {
+    d4_10: {
       id: 'd4_10',
       number: '4.10',
       text: 'Alternative correction used?',
       responseType: 'WEAK_STRONG_NO_NA',
     },
-    'd4_11': {
+    d4_11: {
       id: 'd4_11',
       number: '4.11',
       text: 'Evidence result not biased?',
@@ -369,19 +369,19 @@ export const DOMAIN_5 = {
   id: 'domain5',
   name: 'Domain 5: Bias in Measurement of the Outcome',
   questions: {
-    'd5_1': {
+    d5_1: {
       id: 'd5_1',
       number: '5.1',
       text: 'Outcome measurement differed by group?',
       responseType: 'WITH_NI',
     },
-    'd5_2': {
+    d5_2: {
       id: 'd5_2',
       number: '5.2',
       text: 'Assessors aware of intervention?',
       responseType: 'WITH_NI',
     },
-    'd5_3': {
+    d5_3: {
       id: 'd5_3',
       number: '5.3',
       text: 'Assessment influenced by awareness?',
@@ -396,25 +396,25 @@ export const DOMAIN_6 = {
   id: 'domain6',
   name: 'Domain 6: Bias in Selection of the Reported Result',
   questions: {
-    'd6_1': {
+    d6_1: {
       id: 'd6_1',
       number: '6.1',
       text: 'Reported per pre-specified plan?',
       responseType: 'WITH_NI',
     },
-    'd6_2': {
+    d6_2: {
       id: 'd6_2',
       number: '6.2',
       text: 'Selected from multiple outcome measures?',
       responseType: 'WITH_NI',
     },
-    'd6_3': {
+    d6_3: {
       id: 'd6_3',
       number: '6.3',
       text: 'Selected from multiple analyses?',
       responseType: 'WITH_NI',
     },
-    'd6_4': {
+    d6_4: {
       id: 'd6_4',
       number: '6.4',
       text: 'Selected from multiple subgroups?',

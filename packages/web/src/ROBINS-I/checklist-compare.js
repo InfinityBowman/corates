@@ -3,11 +3,7 @@
  * Compares two reviewer checklists and helps create a finalized consensus version
  */
 
-import {
-  ROBINS_I_CHECKLIST,
-  getDomainQuestions,
-  getActiveDomainKeys,
-} from './checklist-map.js';
+import { ROBINS_I_CHECKLIST, getDomainQuestions, getActiveDomainKeys } from './checklist-map.js';
 
 /**
  * Get all section B question keys
@@ -274,9 +270,13 @@ function reconcileSection(section1, section2, selections, keys) {
     const selection = selections[key];
 
     if (!selection || selection === 'reviewer1') {
-      reconciled[key] = JSON.parse(JSON.stringify(section1?.[key] || { answer: null, comment: '' }));
+      reconciled[key] = JSON.parse(
+        JSON.stringify(section1?.[key] || { answer: null, comment: '' }),
+      );
     } else if (selection === 'reviewer2') {
-      reconciled[key] = JSON.parse(JSON.stringify(section2?.[key] || { answer: null, comment: '' }));
+      reconciled[key] = JSON.parse(
+        JSON.stringify(section2?.[key] || { answer: null, comment: '' }),
+      );
     } else if (typeof selection === 'object') {
       reconciled[key] = JSON.parse(JSON.stringify(selection));
     }

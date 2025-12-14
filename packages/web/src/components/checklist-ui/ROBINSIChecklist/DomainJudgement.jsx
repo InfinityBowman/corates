@@ -13,10 +13,9 @@ import { ROB_JUDGEMENTS, BIAS_DIRECTIONS, DOMAIN1_DIRECTIONS } from '@/ROBINS-I/
  * @param {boolean} [props.disabled] - Whether the selector is disabled
  */
 export function DomainJudgement(props) {
-  const directionOptions = () =>
-    props.isDomain1 ? DOMAIN1_DIRECTIONS : BIAS_DIRECTIONS;
+  const directionOptions = () => (props.isDomain1 ? DOMAIN1_DIRECTIONS : BIAS_DIRECTIONS);
 
-  const getJudgementColor = (judgement) => {
+  const getJudgementColor = judgement => {
     switch (judgement) {
       case 'Low':
         return 'bg-green-100 border-green-400 text-green-800';
@@ -32,34 +31,33 @@ export function DomainJudgement(props) {
   };
 
   return (
-    <div class="bg-gray-50 rounded-lg p-4 mt-4">
+    <div class='bg-gray-50 rounded-lg p-4 mt-4'>
       {/* Risk of bias judgement */}
-      <div class="mb-3">
-        <div class="text-sm font-medium text-gray-700 mb-2">
-          Risk of bias judgement
-        </div>
-        <div class="flex flex-wrap gap-2">
+      <div class='mb-3'>
+        <div class='text-sm font-medium text-gray-700 mb-2'>Risk of bias judgement</div>
+        <div class='flex flex-wrap gap-2'>
           <For each={ROB_JUDGEMENTS}>
-            {(judgement) => (
+            {judgement => (
               <label
                 class={`
                   inline-flex items-center justify-center px-3 py-1.5 rounded-md text-sm font-medium
                   cursor-pointer transition-colors border-2
                   ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                  ${props.judgement === judgement
-                    ? getJudgementColor(judgement)
+                  ${
+                    props.judgement === judgement ?
+                      getJudgementColor(judgement)
                     : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
                   }
                 `}
               >
                 <input
-                  type="radio"
+                  type='radio'
                   name={`judgement-${props.domainId || 'domain'}`}
                   value={judgement}
                   checked={props.judgement === judgement}
                   onChange={() => props.onJudgementChange(judgement)}
                   disabled={props.disabled}
-                  class="sr-only"
+                  class='sr-only'
                 />
                 {judgement}
               </label>
@@ -71,32 +69,33 @@ export function DomainJudgement(props) {
       {/* Direction of bias (optional) */}
       {props.showDirection && (
         <div>
-          <div class="text-sm font-medium text-gray-700 mb-2">
+          <div class='text-sm font-medium text-gray-700 mb-2'>
             Predicted direction of bias
-            <span class="text-gray-400 font-normal ml-1">(optional)</span>
+            <span class='text-gray-400 font-normal ml-1'>(optional)</span>
           </div>
-          <div class="flex flex-wrap gap-2">
+          <div class='flex flex-wrap gap-2'>
             <For each={directionOptions()}>
-              {(direction) => (
+              {direction => (
                 <label
                   class={`
                     inline-flex items-center justify-center px-2 py-1 rounded text-xs font-medium
                     cursor-pointer transition-colors border
                     ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                    ${props.direction === direction
-                      ? 'bg-blue-100 border-blue-400 text-blue-800'
+                    ${
+                      props.direction === direction ?
+                        'bg-blue-100 border-blue-400 text-blue-800'
                       : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
                     }
                   `}
                 >
                   <input
-                    type="radio"
+                    type='radio'
                     name={`direction-${props.domainId || 'domain'}`}
                     value={direction}
                     checked={props.direction === direction}
                     onChange={() => props.onDirectionChange?.(direction)}
                     disabled={props.disabled}
-                    class="sr-only"
+                    class='sr-only'
                   />
                   {direction}
                 </label>
@@ -105,10 +104,10 @@ export function DomainJudgement(props) {
             {/* Clear direction button */}
             {props.direction && (
               <button
-                type="button"
+                type='button'
                 onClick={() => props.onDirectionChange?.(null)}
                 disabled={props.disabled}
-                class="px-2 py-1 text-xs text-gray-400 hover:text-gray-600"
+                class='px-2 py-1 text-xs text-gray-400 hover:text-gray-600'
               >
                 Clear
               </button>
