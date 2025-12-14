@@ -16,6 +16,8 @@ export default function CompleteProfile() {
   const [step, setStep] = createSignal(1);
   const [firstName, setFirstName] = createSignal('');
   const [lastName, setLastName] = createSignal('');
+  const [hasEditedName, setHasEditedName] = createSignal(false);
+  const [hasAutofilledName, setHasAutofilledName] = createSignal(false);
   const [persona, setPersona] = createSignal('');
   const [error, setError] = createSignal('');
   const [loading, setLoading] = createSignal(false);
@@ -26,11 +28,22 @@ export default function CompleteProfile() {
   // Pre-fill from session user (OAuth can provide name). Only fill when fields are empty.
   createEffect(() => {
     const currentUser = user();
+
+    // If already completed onboarding, go to dashboard.
+    if (currentUser?.profileCompletedAt) {
+      navigate('/dashboard', { replace: true });
+      return;
+    }
+
+    // Once the user has edited either name field, never re-autofill.
+    if (hasEditedName() || hasAutofilledName()) return;
+
     if (!currentUser) {
       // Magic link users may not have a meaningful name yet; use the pending email as a placeholder.
       const pendingName = localStorage.getItem('pendingName');
       if (!firstName().trim() && !lastName().trim() && pendingName) {
         setFirstName(pendingName);
+        setHasAutofilledName(true);
       }
       return;
     }
@@ -44,6 +57,8 @@ export default function CompleteProfile() {
       (!currentUser?.name || String(currentUser.name).trim().toLowerCase() === 'user')
     ) {
       setFirstName(pendingName);
+      setHasAutofilledName(true);
+      return;
     }
 
     if (!firstName().trim() && !lastName().trim() && currentUser?.name) {
@@ -55,11 +70,8 @@ export default function CompleteProfile() {
         // If magic link created a placeholder name (e.g. the email), keep last name empty so user must provide it.
         setFirstName(nameParts[0]);
       }
-    }
 
-    // If already completed onboarding, go to dashboard.
-    if (currentUser?.profileCompletedAt) {
-      navigate('/dashboard', { replace: true });
+      setHasAutofilledName(true);
     }
   });
 
@@ -185,7 +197,10 @@ export default function CompleteProfile() {
                     autocapitalize='words'
                     spellcheck='false'
                     value={firstName()}
-                    onInput={e => setFirstName(e.target.value)}
+                    onInput={e => {
+                      setHasEditedName(true);
+                      setFirstName(e.target.value);
+                    }}
                     class='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
                     required
                     id='first-name-input'
@@ -205,7 +220,10 @@ export default function CompleteProfile() {
                     autocapitalize='words'
                     spellcheck='false'
                     value={lastName()}
-                    onInput={e => setLastName(e.target.value)}
+                    onInput={e => {
+                      setHasEditedName(true);
+                      setLastName(e.target.value);
+                    }}
                     class='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
                     required
                     id='last-name-input'
