@@ -1,4 +1,4 @@
-import { createSignal, onMount } from 'solid-js';
+import { createSignal, onCleanup, onMount } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { AuthLink } from './AuthButtons.jsx';
@@ -27,7 +27,32 @@ export default function SignUp() {
   // Number of social providers (update as you add more)
   const socialProviderCount = 2;
 
-  onMount(() => clearAuthError());
+  function resetSocialLoading() {
+    setGoogleLoading(false);
+    setOrcidLoading(false);
+  }
+
+  onMount(() => {
+    clearAuthError();
+    resetSocialLoading();
+
+    // If the user clicks OAuth and then uses browser Back,
+    // the page can be restored from bfcache with stale state.
+    const handleReturn = () => resetSocialLoading();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') resetSocialLoading();
+    };
+
+    window.addEventListener('pageshow', handleReturn);
+    window.addEventListener('focus', handleReturn);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    onCleanup(() => {
+      window.removeEventListener('pageshow', handleReturn);
+      window.removeEventListener('focus', handleReturn);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    });
+  });
 
   async function handleGoogleSignUp() {
     setGoogleLoading(true);
