@@ -28,7 +28,7 @@ export function OverallSection(props) {
     });
   }
 
-  const getJudgementColor = (judgement) => {
+  const getJudgementColor = judgement => {
     switch (judgement) {
       case 'Low (except confounding)':
         return 'bg-green-100 border-green-400 text-green-800';
@@ -43,7 +43,7 @@ export function OverallSection(props) {
     }
   };
 
-  const getScoreColor = (score) => {
+  const getScoreColor = score => {
     switch (score) {
       case 'Low':
         return 'text-green-600';
@@ -59,55 +59,53 @@ export function OverallSection(props) {
   };
 
   return (
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-      <div class="px-6 py-4 bg-gray-800 text-white">
-        <h3 class="font-semibold text-lg">Overall Risk of Bias</h3>
-        <p class="text-sm text-gray-300 mt-1">
-          Final assessment based on all domain judgements
-        </p>
+    <div class='bg-white rounded-lg shadow-md overflow-hidden'>
+      <div class='px-6 py-4 bg-gray-800 text-white'>
+        <h3 class='font-semibold text-lg'>Overall Risk of Bias</h3>
+        <p class='text-sm text-gray-300 mt-1'>Final assessment based on all domain judgements</p>
       </div>
 
-      <div class="px-6 py-5">
+      <div class='px-6 py-5'>
         {/* Calculated score hint */}
-        <div class="mb-4 p-3 bg-gray-50 rounded-lg">
-          <div class="text-sm text-gray-600">
-            <span class="font-medium">Calculated score: </span>
+        <div class='mb-4 p-3 bg-gray-50 rounded-lg'>
+          <div class='text-sm text-gray-600'>
+            <span class='font-medium'>Calculated score: </span>
             <span class={`font-semibold ${getScoreColor(calculatedScore())}`}>
               {calculatedScore()}
             </span>
           </div>
-          <p class="text-xs text-gray-400 mt-1">
-            Based on the highest risk of bias across all domains. You may override this judgement below.
+          <p class='text-xs text-gray-400 mt-1'>
+            Based on the highest risk of bias across all domains. You may override this judgement
+            below.
           </p>
         </div>
 
         {/* Overall risk of bias judgement */}
-        <div class="mb-5">
-          <div class="text-sm font-medium text-gray-700 mb-3">
-            Overall risk of bias judgement
-          </div>
-          <div class="flex flex-wrap gap-2">
+        <div class='mb-5'>
+          <div class='text-sm font-medium text-gray-700 mb-3'>Overall risk of bias judgement</div>
+          <div class='flex flex-wrap gap-2'>
             <For each={OVERALL_ROB_JUDGEMENTS}>
-              {(judgement) => (
+              {judgement => (
                 <label
                   class={`
                     inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium
                     cursor-pointer transition-colors border-2
                     ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                    ${props.overallState?.judgement === judgement
-                      ? getJudgementColor(judgement)
+                    ${
+                      props.overallState?.judgement === judgement ?
+                        getJudgementColor(judgement)
                       : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
                     }
                   `}
                 >
                   <input
-                    type="radio"
-                    name="overall-judgement"
+                    type='radio'
+                    name='overall-judgement'
                     value={judgement}
                     checked={props.overallState?.judgement === judgement}
                     onChange={() => handleJudgementChange(judgement)}
                     disabled={props.disabled}
-                    class="sr-only"
+                    class='sr-only'
                   />
                   {judgement}
                 </label>
@@ -118,32 +116,33 @@ export function OverallSection(props) {
 
         {/* Direction of bias */}
         <div>
-          <div class="text-sm font-medium text-gray-700 mb-3">
+          <div class='text-sm font-medium text-gray-700 mb-3'>
             Predicted direction of bias
-            <span class="text-gray-400 font-normal ml-1">(optional)</span>
+            <span class='text-gray-400 font-normal ml-1'>(optional)</span>
           </div>
-          <div class="flex flex-wrap gap-2">
+          <div class='flex flex-wrap gap-2'>
             <For each={BIAS_DIRECTIONS}>
-              {(direction) => (
+              {direction => (
                 <label
                   class={`
                     inline-flex items-center justify-center px-3 py-1.5 rounded text-sm font-medium
                     cursor-pointer transition-colors border
                     ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                    ${props.overallState?.direction === direction
-                      ? 'bg-blue-100 border-blue-400 text-blue-800'
+                    ${
+                      props.overallState?.direction === direction ?
+                        'bg-blue-100 border-blue-400 text-blue-800'
                       : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300'
                     }
                   `}
                 >
                   <input
-                    type="radio"
-                    name="overall-direction"
+                    type='radio'
+                    name='overall-direction'
                     value={direction}
                     checked={props.overallState?.direction === direction}
                     onChange={() => handleDirectionChange(direction)}
                     disabled={props.disabled}
-                    class="sr-only"
+                    class='sr-only'
                   />
                   {direction}
                 </label>
@@ -152,10 +151,10 @@ export function OverallSection(props) {
             {/* Clear button */}
             <Show when={props.overallState?.direction}>
               <button
-                type="button"
+                type='button'
                 onClick={() => handleDirectionChange(null)}
                 disabled={props.disabled}
-                class="px-3 py-1.5 text-sm text-gray-400 hover:text-gray-600"
+                class='px-3 py-1.5 text-sm text-gray-400 hover:text-gray-600'
               >
                 Clear
               </button>
