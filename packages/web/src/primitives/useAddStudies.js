@@ -102,16 +102,18 @@ export function useAddStudies(options = {}) {
           fileName: study.pdfFileName,
           data: study.pdfData,
           doi: study.doi,
-          metadata:
-            study.abstract ?
-              {
-                firstAuthor: study.firstAuthor,
-                publicationYear: study.publicationYear,
-                authors: study.authors,
-                journal: study.journal,
-                abstract: study.abstract,
-              }
-            : null,
+          metadata: {
+            firstAuthor: study.firstAuthor,
+            publicationYear: study.publicationYear,
+            authors: study.authors,
+            journal: study.journal,
+            doi: study.doi,
+            abstract: study.abstract,
+            pdfUrl: study.pdfUrl,
+            pdfSource: study.pdfSource,
+            pdfAccessible: study.pdfAccessible,
+            importSource: study.importSource,
+          },
         });
       }
       // If it has Google Drive info, treat as drive file
@@ -122,16 +124,18 @@ export function useAddStudies(options = {}) {
           importSource: 'google-drive',
           // Include metadata if available
           title: study.title,
-          metadata:
-            study.abstract ?
-              {
-                firstAuthor: study.firstAuthor,
-                publicationYear: study.publicationYear,
-                authors: study.authors,
-                journal: study.journal,
-                abstract: study.abstract,
-              }
-            : null,
+          metadata: {
+            firstAuthor: study.firstAuthor,
+            publicationYear: study.publicationYear,
+            authors: study.authors,
+            journal: study.journal,
+            doi: study.doi,
+            abstract: study.abstract,
+            pdfUrl: study.pdfUrl,
+            pdfSource: study.pdfSource,
+            pdfAccessible: study.pdfAccessible,
+            importSource: study.importSource,
+          },
         });
       }
       // Otherwise treat as reference (metadata only, may have pdfUrl)
@@ -743,6 +747,13 @@ export function useAddStudies(options = {}) {
           authors: ref.authors,
           journal: ref.journal,
           abstract: ref.abstract,
+          pmid: ref.pmid || null,
+          url: ref.url || null,
+          volume: ref.volume || null,
+          issue: ref.issue || null,
+          pages: ref.pages || null,
+          type: ref.type || null,
+          importSource: ref.importSource || 'reference-file',
         },
       });
     }
@@ -767,6 +778,13 @@ export function useAddStudies(options = {}) {
           authors: ref.authors,
           journal: ref.journal,
           abstract: ref.abstract,
+          pmid: ref.pmid || null,
+          url: ref.url || null,
+          volume: ref.volume || null,
+          issue: ref.issue || null,
+          pages: ref.pages || null,
+          type: ref.type || null,
+          importSource: ref.importSource || 'identifier-lookup',
         },
       });
     }

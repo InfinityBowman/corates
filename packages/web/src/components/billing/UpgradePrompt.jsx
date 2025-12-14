@@ -36,7 +36,7 @@ export default function UpgradePrompt(props) {
             <button
               type='button'
               class='mt-3 inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors'
-              onClick={props.onUpgrade}
+              onClick={() => props.onUpgrade()}
             >
               <FiZap class='w-4 h-4 mr-1' />
               Upgrade Now

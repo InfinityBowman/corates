@@ -584,6 +584,96 @@ describe('useAddStudies - Collect Mode Effect', () => {
     });
   });
 
+  it('should preserve PDF metadata even when abstract is missing', async () => {
+    const { extractPdfTitle, extractPdfDoi, readFileAsArrayBuffer } =
+      await import('@/lib/pdfUtils.js');
+
+    const { fetchFromDOI } = await import('@/lib/referenceLookup.js');
+
+    await createRoot(async d => {
+      dispose = d;
+
+      const onStudiesChange = vi.fn();
+      const hook = useAddStudies({
+        collectMode: true,
+        onStudiesChange,
+      });
+
+      // Regression: previously metadata was set to null if abstract was falsy
+      fetchFromDOI.mockResolvedValue({
+        firstAuthor: 'NoAbstractAuthor',
+        publicationYear: 2025,
+        abstract: null,
+      });
+
+      const mockArrayBuffer = createMockArrayBuffer('no-abstract');
+      readFileAsArrayBuffer.mockResolvedValue(mockArrayBuffer);
+      extractPdfTitle.mockResolvedValue('No Abstract Study');
+      extractPdfDoi.mockResolvedValue('10.9999/no-abstract');
+
+      await hook.handlePdfSelect([createMockPdfFile('no-abstract.pdf')]);
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      expect(onStudiesChange).toHaveBeenCalled();
+
+      const call = onStudiesChange.mock.calls[onStudiesChange.mock.calls.length - 1][0];
+      expect(call.pdfs.length).toBe(1);
+      expect(call.pdfs[0].title).toBe('No Abstract Study');
+      expect(call.pdfs[0].doi).toBe('10.9999/no-abstract');
+
+      // Critical assertions
+      expect(call.pdfs[0].metadata).toBeTruthy();
+      expect(call.pdfs[0].metadata.firstAuthor).toBe('NoAbstractAuthor');
+      expect(call.pdfs[0].metadata.publicationYear).toBe(2025);
+      expect(call.pdfs[0].metadata.doi).toBe('10.9999/no-abstract');
+      expect(call.pdfs[0].metadata.importSource).toBe('pdf');
+    });
+  });
+
+  it('should preserve lookup PDF availability metadata in collected refs', async () => {
+    const { fetchReferenceByIdentifier, parseIdentifiers } =
+      await import('@/lib/referenceLookup.js');
+
+    await createRoot(async d => {
+      dispose = d;
+
+      const onStudiesChange = vi.fn();
+      const hook = useAddStudies({
+        collectMode: true,
+        onStudiesChange,
+      });
+
+      parseIdentifiers.mockReturnValue(['10.1234/available']);
+      fetchReferenceByIdentifier.mockResolvedValue({
+        title: 'Lookup With PDF',
+        doi: '10.1234/available',
+        pdfAvailable: true,
+        pdfUrl: 'https://example.com/paper.pdf',
+        pdfSource: 'unpaywall',
+        pdfAccessible: true,
+        firstAuthor: 'LookupAuthor',
+        publicationYear: 2024,
+        journal: 'Test Journal',
+      });
+
+      hook.setIdentifierInput('10.1234/available');
+      await hook.handleLookup();
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      expect(onStudiesChange).toHaveBeenCalled();
+      const call = onStudiesChange.mock.calls[onStudiesChange.mock.calls.length - 1][0];
+
+      // Lookups are surfaced as refs for backward compatibility
+      expect(call.refs.length).toBe(1);
+      expect(call.refs[0].title).toBe('Lookup With PDF');
+      expect(call.refs[0].metadata.doi).toBe('10.1234/available');
+      expect(call.refs[0].metadata.pdfUrl).toBe('https://example.com/paper.pdf');
+      expect(call.refs[0].metadata.pdfSource).toBe('unpaywall');
+      expect(call.refs[0].metadata.pdfAccessible).toBe(true);
+      expect(call.refs[0].metadata.importSource).toBe('identifier-lookup');
+    });
+  });
+
   it('should not call onStudiesChange when not in collect mode', async () => {
     const { extractPdfTitle, extractPdfDoi, readFileAsArrayBuffer } =
       await import('@/lib/pdfUtils.js');
