@@ -1,25 +1,40 @@
 import * as zagSwitch from '@zag-js/switch';
 import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId } from 'solid-js';
+import { createMemo, createUniqueId, mergeProps } from 'solid-js';
 
 export default function Switch(props) {
-  const checked = () => props.checked;
-  const disabled = () => props.disabled;
-  const name = () => props.name;
-
-  const service = useMachine(zagSwitch.machine, {
-    id: createUniqueId(),
-    defaultChecked: () => checked(),
-    disabled: () => disabled(),
-    name: () => name(),
-    onCheckedChange(details) {
-      props.onChange?.(details.checked);
+  const merged = mergeProps(
+    {
+      defaultChecked: false,
     },
-  });
+    props,
+  );
+
+  const checked = () => merged.checked;
+  const defaultChecked = () => merged.defaultChecked;
+  const disabled = () => merged.disabled;
+  const name = () => merged.name;
+  const classValue = () => merged.class;
+
+  const service = useMachine(zagSwitch.machine, () => ({
+    id: createUniqueId(),
+    checked: checked(),
+    defaultChecked: defaultChecked(),
+    disabled: disabled(),
+    name: name(),
+    onCheckedChange(details) {
+      merged.onChange?.(details.checked);
+    },
+  }));
   const api = createMemo(() => zagSwitch.connect(service, normalizeProps));
 
   return (
-    <label {...api().getRootProps()} class='inline-flex items-center cursor-pointer'>
+    <label
+      {...api().getRootProps()}
+      class={`inline-flex items-center cursor-pointer ${disabled() ? 'cursor-not-allowed' : ''} ${
+        classValue() || ''
+      }`}
+    >
       <input {...api().getHiddenInputProps()} />
       <span
         {...api().getControlProps()}
