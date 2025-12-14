@@ -60,7 +60,7 @@ export default function Hero() {
                       <span class='w-3 h-3 rounded-full bg-green-400 inline-block' />
                     </div>
                     <div class='flex-1 mx-4'>
-                      <div class='bg-white border border-gray-300 rounded-md px-3 py-1 text-xs text-gray-500 truncate max-w-[200px] sm:max-w-[320px] mx-auto'>
+                      <div class='bg-white border border-gray-300 rounded-md px-3 py-1 text-xs text-gray-500 truncate max-w-50 sm:max-w-[320px] mx-auto'>
                         corates.org/dashboard
                       </div>
                     </div>
