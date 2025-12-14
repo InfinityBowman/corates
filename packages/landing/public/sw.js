@@ -1,69 +1,91 @@
 const CACHE_NAME = 'corates-landing-v1';
 
+const APP_SHELL_URL = '/app.html';
+
 const STATIC_ASSETS = [
   '/',
   '/about',
+  '/pricing',
   '/terms',
   '/privacy',
-  '/app.html',
+  APP_SHELL_URL,
   '/favicon.ico',
   '/icon.png',
   '/jacob.jpeg',
   '/brandy.jpg',
+  '/product.png',
 ];
+
+function stripRedirect(response) {
+  if (!response || !response.redirected) return response;
+  return response
+    .clone()
+    .blob()
+    .then(
+      body =>
+        new Response(body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+        }),
+    );
+}
 
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
-      // Cache static assets first
-      await cache.addAll(STATIC_ASSETS);
-
-      // Cache all built assets
-      try {
-        const manifestResponse = await fetch('/_build/assets/');
-        if (manifestResponse.ok) {
-          // Fetch the directory listing or use a known pattern
-          // Since we can't list directories, we'll extract from spa-shell and main pages
-          const pagesToScan = ['/', '/app.html', '/about', '/terms', '/privacy'];
-          const allAssets = new Set();
-
-          for (const page of pagesToScan) {
-            try {
-              const pageResponse = await fetch(page);
-              if (pageResponse.ok) {
-                const html = await pageResponse.text();
-                const matches = html.matchAll(
-                  /(?:src|href)=["']((?:\/_build)?\/assets\/[^"']+)["']/g,
-                );
-                for (const match of matches) {
-                  allAssets.add(match[1]);
-                }
-              }
-            } catch (err) {
-              console.warn('[SW] Failed to scan page:', page, err);
+      // Cache static routes/assets (best-effort, don't fail install on a single 404)
+      await Promise.all(
+        STATIC_ASSETS.map(async url => {
+          try {
+            const response = await fetch(url, { redirect: 'follow' });
+            if (response.ok) {
+              const responseToCache = await stripRedirect(response);
+              await cache.put(url, responseToCache);
+            } else {
+              console.warn('[SW] Static asset not ok:', url, response.status);
             }
+          } catch (err) {
+            console.warn('[SW] Static asset fetch failed:', url, err);
           }
+        }),
+      );
 
-          // Cache all discovered assets
-          const assetArray = Array.from(allAssets);
-          console.log('[SW] Caching', assetArray.length, 'build assets:', assetArray);
+      // Cache built assets by scanning HTML for /_build/... references
+      const pagesToScan = ['/', '/about', '/pricing', '/terms', '/privacy', APP_SHELL_URL];
+      const discovered = new Set();
 
-          for (const url of assetArray) {
-            try {
-              const response = await fetch(url);
-              if (response.ok) {
-                await cache.put(url, response);
-                console.log('[SW] Cached:', url);
-              } else {
-                console.warn('[SW] Failed to cache (not ok):', url, response.status);
-              }
-            } catch (err) {
-              console.warn('[SW] Failed to fetch:', url, err);
-            }
+      for (const page of pagesToScan) {
+        try {
+          const pageResponse = await fetch(page, { redirect: 'follow' });
+          if (!pageResponse.ok) continue;
+          const html = await pageResponse.text();
+
+          // Match SolidStart build assets (e.g. /_build/assets/xyz.js, /_build/xyz.css)
+          const matches = html.matchAll(/(?:src|href)=["'](\/build\/[^"']+)["']/g);
+          for (const match of matches) {
+            discovered.add(match[1]);
           }
+        } catch (err) {
+          console.warn('[SW] Failed to scan page:', page, err);
         }
-      } catch (error) {
-        console.error('[SW] Failed to cache build assets:', error);
+      }
+
+      const buildAssets = Array.from(discovered);
+      console.log('[SW] Caching', buildAssets.length, 'build assets');
+
+      for (const url of buildAssets) {
+        try {
+          const response = await fetch(url, { redirect: 'follow' });
+          if (!response.ok) {
+            console.warn('[SW] Build asset not ok:', url, response.status);
+            continue;
+          }
+          const responseToCache = await stripRedirect(response);
+          await cache.put(url, responseToCache);
+        } catch (err) {
+          console.warn('[SW] Build asset fetch failed:', url, err);
+        }
       }
     }),
   );
@@ -105,38 +127,50 @@ self.addEventListener('fetch', event => {
   // Always try network first for navigations so new deploys update without hard refresh.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request, { redirect: 'follow' })
-        .then(response => {
-          if (response.ok && request.url.startsWith(self.location.origin)) {
-            const responseToCache =
-              response.redirected ?
-                response
-                  .clone()
-                  .blob()
-                  .then(
-                    body =>
-                      new Response(body, {
-                        status: response.status,
-                        statusText: response.statusText,
-                        headers: response.headers,
-                      }),
-                  )
-              : Promise.resolve(response.clone());
+      (async () => {
+        const isSameOrigin = request.url.startsWith(self.location.origin);
 
+        try {
+          const response = await fetch(request, { redirect: 'follow' });
+
+          // If the server returns 404 for a navigation, serve the SPA shell.
+          // This matches the behavior in packages/landing/worker.js.
+          if (isSameOrigin && response.status === 404) {
+            const appShellResponse = await fetch(APP_SHELL_URL, { redirect: 'follow' });
+            if (appShellResponse.ok) {
+              const appShellToCache = await stripRedirect(appShellResponse);
+              event.waitUntil(
+                caches
+                  .open(CACHE_NAME)
+                  .then(cache => cache.put(APP_SHELL_URL, appShellToCache.clone())),
+              );
+              return appShellToCache;
+            }
+          }
+
+          // Cache successful HTML navigations for offline use
+          if (isSameOrigin && response.ok) {
             event.waitUntil(
-              responseToCache.then(finalResponse =>
+              stripRedirect(response.clone()).then(finalResponse =>
                 caches.open(CACHE_NAME).then(cache => {
                   cache.put(request, finalResponse);
                 }),
               ),
             );
           }
+
           return response;
-        })
-        .catch(async () => {
+        } catch {
           // Offline fallback for navigation requests
-          return (await caches.match('/app.html')) || (await caches.match('/'));
-        }),
+          const cached =
+            (await caches.match(request)) ||
+            (await caches.match(APP_SHELL_URL)) ||
+            (await caches.match('/'));
+
+          if (!cached) return new Response('Offline', { status: 503 });
+          return stripRedirect(cached);
+        }
+      })(),
     );
     return;
   }
