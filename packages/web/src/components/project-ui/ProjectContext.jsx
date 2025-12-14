@@ -4,7 +4,7 @@
  */
 
 import { createContext, useContext, createMemo } from 'solid-js';
-import projectStore from '@primitives/projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 
 const ProjectContext = createContext();

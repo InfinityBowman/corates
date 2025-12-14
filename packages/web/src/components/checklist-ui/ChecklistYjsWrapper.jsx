@@ -2,7 +2,7 @@ import { createSignal, createEffect, createMemo, Show } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import useProject from '@/primitives/useProject/index.js';
-import projectStore from '@primitives/projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 import { downloadPdf, uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf, removeCachedPdf } from '@primitives/pdfCache.js';
 import { showToast } from '@components/zag/Toast.jsx';

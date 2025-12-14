@@ -10,7 +10,7 @@ import { AiOutlineCloudUpload } from 'solid-icons/ai';
 import { FiChevronUp } from 'solid-icons/fi';
 import { Tabs } from '@components/zag/Tabs.jsx';
 import { showToast } from '@components/zag/Toast.jsx';
-import projectStore from '@primitives/projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 
 import { useAddStudies } from '@primitives/useAddStudies.js';
 import { AddStudiesProvider } from './add-studies/AddStudiesContext.jsx';

@@ -1,6 +1,6 @@
 import { For, Show, createMemo } from 'solid-js';
 import { AiFillCheckCircle } from 'solid-icons/ai';
-import projectStore from '@primitives/projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 import CompletedStudyCard from './completed/CompletedStudyCard.jsx';
 

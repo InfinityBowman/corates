@@ -3,12 +3,15 @@
  * Reads from projectStore directly to avoid prop drilling
  */
 
-import { uploadPdf, fetchPdfViaProxy } from '@api/pdf-api.js';
+import { uploadPdf, fetchPdfViaProxy, downloadPdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
 import { showToast } from '@components/zag/Toast.jsx';
 import { generateStudyName, getDefaultNamingConvention } from '@/lib/studyNaming.js';
-import projectStore from '@primitives/projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
+import { importFromGoogleDrive } from '@api/google-drive.js';
+import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
+import { fetchFromDOI } from '@/lib/referenceLookup.js';
 
 /**
  * @param {string} projectId - The project ID
@@ -57,6 +60,111 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
           if (studyId) {
             let pdfData = study.pdfData;
             let pdfFileName = study.pdfFileName;
+
+            // Google Drive: import into R2 and attach
+            if (!pdfData && study.googleDriveFileId) {
+              try {
+                const result = await importFromGoogleDrive(
+                  study.googleDriveFileId,
+                  projectId,
+                  studyId,
+                );
+                const importedFile = result?.file;
+                if (importedFile?.fileName) {
+                  addPdfToStudy(studyId, {
+                    key: importedFile.key,
+                    fileName: importedFile.fileName,
+                    size: importedFile.size,
+                    uploadedBy: user()?.id,
+                    uploadedAt: Date.now(),
+                    source: 'google-drive',
+                  });
+
+                  // Best-effort: mimic Upload PDFs behavior by extracting DOI/title and fetching metadata
+                  try {
+                    const arrayBuffer = await downloadPdf(
+                      projectId,
+                      studyId,
+                      importedFile.fileName,
+                    );
+                    cachePdf(projectId, studyId, importedFile.fileName, arrayBuffer).catch(err =>
+                      console.warn('Failed to cache Google Drive PDF:', err),
+                    );
+
+                    const [extractedTitle, extractedDoi] = await Promise.all([
+                      extractPdfTitle(arrayBuffer.slice(0)),
+                      extractPdfDoi(arrayBuffer.slice(0)),
+                    ]);
+
+                    const updates = {};
+                    const nextTitle = extractedTitle || study.title;
+                    if (nextTitle && nextTitle !== study.title) {
+                      updates.title = nextTitle;
+                    }
+                    if (extractedDoi && !study.doi) {
+                      updates.doi = extractedDoi;
+                    }
+
+                    if (extractedDoi) {
+                      try {
+                        const refData = await fetchFromDOI(extractedDoi);
+                        if (refData) {
+                          if (updates.doi === undefined) updates.doi = refData.doi || extractedDoi;
+                          if (refData.firstAuthor) updates.firstAuthor = refData.firstAuthor;
+                          if (refData.publicationYear)
+                            updates.publicationYear = refData.publicationYear;
+                          if (refData.authors) updates.authors = refData.authors;
+                          if (refData.journal) updates.journal = refData.journal;
+                          if (refData.abstract !== undefined) updates.abstract = refData.abstract;
+                          updates.importSource = 'pdf';
+                        }
+                      } catch (metaErr) {
+                        console.warn('Failed to fetch DOI metadata for Google Drive PDF:', metaErr);
+                      }
+                    }
+
+                    // Update study name after metadata extraction (to match naming convention behavior)
+                    const nameBasis = {
+                      title: updates.title || study.title,
+                      firstAuthor: updates.firstAuthor ?? study.firstAuthor,
+                      publicationYear: updates.publicationYear ?? study.publicationYear,
+                      authors: updates.authors ?? study.authors,
+                    };
+                    const updatedName = generateStudyName(nameBasis, namingConvention);
+                    if (updatedName) updates.name = updatedName;
+
+                    // Persist extracted metadata to the study
+                    if (Object.keys(updates).length > 0) {
+                      // Title is stored as name/metadata elsewhere; keep title in sync with name generation.
+                      // Only update known study fields.
+                      const safeUpdates = {
+                        name: updates.name,
+                        doi: updates.doi,
+                        firstAuthor: updates.firstAuthor,
+                        publicationYear: updates.publicationYear,
+                        authors: updates.authors,
+                        journal: updates.journal,
+                        abstract: updates.abstract,
+                        importSource: updates.importSource,
+                      };
+
+                      // Remove undefined to avoid overwriting existing values
+                      for (const key of Object.keys(safeUpdates)) {
+                        if (safeUpdates[key] === undefined) delete safeUpdates[key];
+                      }
+
+                      if (Object.keys(safeUpdates).length > 0) {
+                        updateStudy(studyId, safeUpdates);
+                      }
+                    }
+                  } catch (extractErr) {
+                    console.warn('Failed to extract metadata for Google Drive PDF:', extractErr);
+                  }
+                }
+              } catch (driveErr) {
+                console.error('Error importing PDF from Google Drive:', driveErr);
+              }
+            }
 
             // If no direct PDF data but we have a pdfUrl, check if it's accessible
             if (!pdfData && study.pdfUrl) {

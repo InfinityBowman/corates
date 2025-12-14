@@ -3,7 +3,7 @@
  */
 
 import * as Y from 'yjs';
-import { createChecklist as createAMSTAR2Answers } from '../../AMSTAR2/checklist.js';
+import { createChecklist as createAMSTAR2Answers } from '@/AMSTAR2/checklist.js';
 
 /**
  * Creates checklist operations

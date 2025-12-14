@@ -40,63 +40,6 @@ export async function disconnectGoogleDrive() {
 }
 
 /**
- * List PDF files from user's Google Drive
- * @param {Object} options
- * @param {string} [options.pageToken] - Token for pagination
- * @param {number} [options.pageSize] - Number of results (max 100)
- * @param {string} [options.query] - Search query to filter files
- * @returns {Promise<{files: Array, nextPageToken: string|null}>}
- */
-export async function listGoogleDriveFiles(options = {}) {
-  const params = new URLSearchParams();
-
-  if (options.pageToken) params.set('pageToken', options.pageToken);
-  if (options.pageSize) params.set('pageSize', String(options.pageSize));
-  if (options.query) params.set('query', options.query);
-
-  const url = `${API_BASE}/api/google-drive/files${params.toString() ? `?${params}` : ''}`;
-
-  const response = await fetch(url, {
-    method: 'GET',
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-
-    if (error.code === 'GOOGLE_NOT_CONNECTED') {
-      throw new Error('Google account not connected. Please connect your Google account first.');
-    }
-    if (error.code === 'GOOGLE_TOKEN_EXPIRED') {
-      throw new Error('Google session expired. Please reconnect your Google account.');
-    }
-
-    throw new Error(error.error || 'Failed to list Google Drive files');
-  }
-
-  return response.json();
-}
-
-/**
- * Get file metadata from Google Drive
- * @param {string} fileId - The Google Drive file ID
- * @returns {Promise<{file: Object}>}
- */
-export async function getGoogleDriveFile(fileId) {
-  const response = await fetch(`${API_BASE}/api/google-drive/files/${fileId}`, {
-    method: 'GET',
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to get file metadata');
-  }
-
-  return response.json();
-}
-
-/**
  * Import a PDF from Google Drive to a project study
  * @param {string} fileId - The Google Drive file ID
  * @param {string} projectId - The project to import into
@@ -124,6 +67,32 @@ export async function importFromGoogleDrive(fileId, projectId, studyId) {
     }
 
     throw new Error(error.error || 'Failed to import file from Google Drive');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get a short-lived Google access token suitable for the Google Picker API.
+ * @returns {Promise<{accessToken: string, expiresAt: string|null}>}
+ */
+export async function getGoogleDrivePickerToken() {
+  const response = await fetch(`${API_BASE}/api/google-drive/picker-token`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+
+    if (error.code === 'GOOGLE_NOT_CONNECTED') {
+      throw new Error('Google account not connected. Please connect your Google account first.');
+    }
+    if (error.code === 'GOOGLE_TOKEN_EXPIRED') {
+      throw new Error('Google session expired. Please reconnect your Google account.');
+    }
+
+    throw new Error(error.error || 'Failed to get Google picker token');
   }
 
   return response.json();
@@ -196,19 +165,4 @@ export function formatFileSize(bytes) {
   }
 
   return `${size.toFixed(1)} ${units[unitIndex]}`;
-}
-
-/**
- * Format date for display
- * @param {string} dateStr
- * @returns {string}
- */
-export function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
 }

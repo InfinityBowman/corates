@@ -1,6 +1,6 @@
 import { For, Show, createMemo, createSignal } from 'solid-js';
 import StudyCard from '../StudyCard.jsx';
-import projectStore from '@primitives/projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 

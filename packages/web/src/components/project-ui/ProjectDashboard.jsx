@@ -1,7 +1,7 @@
 import { createEffect, createSignal, onCleanup, For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import useNotifications from '@primitives/useNotifications.js';
-import projectStore from '@primitives/projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 import { useConfirmDialog } from '@components/zag/Dialog.jsx';
 import useProjectMemberHandlers from '@primitives/useProjectMemberHandlers.js';
 import { useBetterAuth } from '@api/better-auth-store.js';

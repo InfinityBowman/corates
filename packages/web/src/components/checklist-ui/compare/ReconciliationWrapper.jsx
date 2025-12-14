@@ -6,7 +6,7 @@
 import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import useProject from '@/primitives/useProject/index.js';
-import projectStore from '@primitives/projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 import { downloadPdf } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
 import ReconciliationWithPdf from './ReconciliationWithPdf.jsx';

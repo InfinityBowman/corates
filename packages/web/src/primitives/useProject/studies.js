@@ -4,7 +4,7 @@
 
 import * as Y from 'yjs';
 import { API_BASE } from '@config/api.js';
-import projectStore from '../projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 
 /**
  * Creates study operations

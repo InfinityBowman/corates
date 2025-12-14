@@ -22,6 +22,8 @@ export function createAuth(env, ctx) {
     socialProviders.google = {
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
+      // Required so Google issues a refresh token (needed for Drive access when access tokens expire)
+      accessType: 'offline',
       // Request Drive read-only access for PDF import
       scope: ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/drive.readonly'],
     };

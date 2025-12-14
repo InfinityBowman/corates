@@ -3,7 +3,7 @@
  * Handles syncing Y.Doc state to the project store
  */
 
-import projectStore from '../projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 
 /**
  * Creates sync utilities for syncing Y.Doc to store

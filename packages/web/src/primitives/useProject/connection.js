@@ -5,7 +5,7 @@
 
 import * as Y from 'yjs';
 import { getWsBaseUrl } from '@config/api.js';
-import projectStore from '../projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 
 const MAX_RECONNECT_ATTEMPTS = 10;
 const BASE_RECONNECT_DELAY = 1000; // Start with 1 second
