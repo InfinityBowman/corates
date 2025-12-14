@@ -2,9 +2,9 @@ import { Title, Meta, Link } from '@solidjs/meta';
 import Hero from '~/components/Hero';
 import Features from '~/components/Features';
 // import WhyChoose from '~/components/WhyChoose';
-// import TrustLogos from '~/components/TrustLogos';
+import TrustLogos from '~/components/TrustLogos';
 // import Stats from '~/components/Stats';
-// import FeatureShowcase from '~/components/FeatureShowcase';
+import FeatureShowcase from '~/components/FeatureShowcase';
 import HowItWorks from '~/components/HowItWorks';
 import SupportedTools from '~/components/SupportedTools';
 // import Testimonials from '~/components/Testimonials';
@@ -44,9 +44,9 @@ export default function Home() {
         <Navbar />
         <main>
           <Hero />
-          {/* <TrustLogos /> */}
+          <TrustLogos />
           {/* <Stats /> */}
-          {/* <FeatureShowcase /> */}
+          <FeatureShowcase />
           <Features />
           {/* <WhyChoose /> */}
           <HowItWorks />
