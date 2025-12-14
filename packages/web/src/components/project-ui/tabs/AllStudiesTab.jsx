@@ -5,7 +5,7 @@ import { CgFileDocument } from 'solid-icons/cg';
 import { FiTrash2 } from 'solid-icons/fi';
 import { FaBrandsGoogleDrive } from 'solid-icons/fa';
 import AddStudiesForm from '../AddStudiesForm.jsx';
-import GoogleDrivePickerModal from '../GoogleDrivePickerModal.jsx';
+import GoogleDrivePickerModal from '../google-drive/GoogleDrivePickerModal.jsx';
 import { showToast } from '@components/zag/Toast.jsx';
 import projectStore from '@/stores/projectStore.js';
 import { useProjectContext } from '../ProjectContext.jsx';

@@ -7,7 +7,7 @@ import { Dialog } from '@components/zag/Dialog.jsx';
 import { showToast } from '@components/zag/Toast.jsx';
 
 import { importFromGoogleDrive } from '@/api/google-drive.js';
-import GoogleDrivePickerLauncher from './google-drive/GoogleDrivePickerLauncher.jsx';
+import GoogleDrivePickerLauncher from './GoogleDrivePickerLauncher.jsx';
 
 /**
  * @param {Object} props

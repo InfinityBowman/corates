@@ -10,7 +10,7 @@ export const CHECKLIST_TYPES = {
 
 export const AMSTAR_CHECKLIST = {
   q1: {
-    info: 'Q1 info TBD',
+    info: 'To score Yes, appraisers should be confident that the 4 elements of PICO (population, intervention, control group and outcome) are described somewhere in the report.',
     text: '1. Did the research questions and inclusion criteria for the review include the components of PICO?',
     columns: [
       {
@@ -28,7 +28,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q2: {
-    info: 'Q2 info TBD',
+    info: 'The research questions and the review study methods should have been planned ahead of conducting the review. At a minimum this should be stated in the report (scores Partial Yes). To score Yes authors should demonstrate that they worked with a written protocol with independent verification (by a registry, publication of the protocol, or another independent body, e.g. research ethics board or research office) before the review was undertaken.',
     text: '2. Did the report of the review contain an explicit statement that the review methods were established prior to the conduct of the review and did the report justify any significant deviations from the protocol?',
     columns: [
       {
@@ -60,7 +60,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q3: {
-    info: 'Q3 info TBD',
+    info: 'Review authors should justify their choice of study designs. A Yes rating requires evidence that the selection was intentional (e.g., why RCTs alone were sufficient or why nonrandomized studies were needed to capture outcomes or harms), rather than arbitrary.',
     text: '3. Did the review authors explain their selection of the study designs for inclusion in the review?',
     columns: [
       {
@@ -78,7 +78,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q4: {
-    info: 'Q4 info TBD',
+    info: 'To score Yes, appraisers should be satisfied that all relevant aspects of the search have been addressed by review authors.',
     text: '4. Did the review authors use a comprehensive literature search strategy? ',
     columns: [
       {
@@ -106,7 +106,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q5: {
-    info: 'Q5 info TBD',
+    info: 'A Yes rating requires that study selection was conducted by at least two independent reviewers, with a clear consensus process for resolving disagreements. If one reviewer screened all studies, a second reviewer must have checked a representative sample and demonstrated strong agreement (e.g., κ ≥ 0.80).',
     text: '5. Did the review authors perform study selection in duplicate?',
     columns: [
       {
@@ -123,7 +123,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q6: {
-    info: 'Q6 info TBD',
+    info: 'A Yes rating requires that data extraction was performed by at least two independent reviewers, with a consensus process for resolving disagreements. If one reviewer extracted all data, a second reviewer must have checked a sample and demonstrated strong agreement (e.g., κ ≥ 0.80).',
     text: '6. Did the review authors perform data extraction in duplicate?',
     columns: [
       {
@@ -140,7 +140,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q7: {
-    info: 'Q7 info TBD',
+    info: 'A Yes rating requires a list of excluded studies with a clear justification for each exclusion. Exclusions should be based on eligibility criteria (e.g., population, intervention, comparator, outcomes), not risk of bias, which is assessed separately.',
     text: '7. Did the review authors provide a list of excluded studies and justify the exclusions?',
     columns: [
       {
@@ -160,7 +160,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q8: {
-    info: 'Q8 info TBD',
+    info: 'A Yes rating requires sufficiently detailed descriptions of the included studies (e.g., population, intervention, comparator, outcomes, design, and setting) to allow readers to judge PICO relevance, applicability to practice or policy, and sources of heterogeneity.',
     text: '8. Did the review authors describe the included studies in adequate detail?',
     columns: [
       {
@@ -189,7 +189,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q9: {
-    info: 'Q9 info TBD',
+    info: 'A Yes rating requires that review authors conducted a systematic, design-appropriate assessment of risk of bias for included studies, using a recognized or clearly justified tool that addresses key sources of bias relevant to the study designs.',
     text: '9. Did the review authors use a satisfactory technique for assessing the risk of bias (RoB) in individual studies that were included in the review?',
     subtitle: 'RCTs',
     columns: [
@@ -233,7 +233,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q10: {
-    info: 'Q10 info TBD',
+    info: 'A Yes rating requires that review authors reported the funding sources for the included studies, or clearly stated when funding information was not available.',
     text: '10. Did the review authors report on the sources of funding for the studies included in the review?',
     columns: [
       {
@@ -249,7 +249,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q11: {
-    info: 'Q11 info TBD',
+    info: 'A Yes rating requires that meta-analysis was clearly justified and conducted using appropriate statistical methods, including suitable effect models, assessment of heterogeneity, and, when both RCTs and nonrandomized studies are included, separate pooling by study design or clear justification for combined analyses.',
     text: '11. If meta-analysis was performed did the review authors use appropriate methods for statistical combination of results?',
     subtitle: 'RCTs',
     columns: [
@@ -284,7 +284,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q12: {
-    info: 'Q12 info TBD',
+    info: 'A Yes rating requires that review authors examined how risk of bias in included studies may affect the synthesis results, such as through sensitivity analyses, subgroup analyses, or narrative discussion when meta-analysis was not performed.',
     text: '12. If meta-analysis was performed, did the review authors assess the potential impact of RoB in individual studies on the results of the meta-analysis or other evidence synthesis?',
     columns: [
       {
@@ -301,7 +301,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q13: {
-    info: 'Q13 info TBD',
+    info: 'A Yes rating requires explicit discussion of how risk of bias may influence the review’s results/conclusions or the authors included only low risk of bias RCTs.',
     text: '13. Did the review authors account for RoB in individual studies when interpreting/ discussing the results of the review?',
     columns: [
       {
@@ -318,7 +318,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q14: {
-    info: 'Q14 info TBD',
+    info: 'A Yes rating requires that review authors examined and discussed sources of heterogeneity, such as differences in populations, interventions, outcomes, study design, or risk of bias, and considered how heterogeneity affects the interpretation of results and conclusions.',
     text: '14. Did the review authors provide a satisfactory explanation for, and discussion of, any heterogeneity observed in the results of the review?',
     columns: [
       {
@@ -335,7 +335,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q15: {
-    info: 'Q15 info TBD',
+    info: 'A Yes rating requires that review authors investigated potential publication (small-study) bias using appropriate methods (e.g., funnel plots, statistical tests, sensitivity analyses) and discussed how publication bias may affect the results, recognizing the limitations of these approaches.',
     text: '15. If they performed quantitative synthesis did the review authors carry out an adequate investigation of publication bias (small study bias) and discuss its likely impact on the results of the review?',
     columns: [
       {
@@ -351,7 +351,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q16: {
-    info: 'Q16 info TBD',
+    info: 'A Yes rating requires that the review authors reported potential conflicts of interest related to the conduct of the review, including funding sources for the review itself and any relevant financial or professional ties, or clearly stated that no conflicts were identified.',
     text: '16. Did the review authors report any potential sources of conflict of interest, including any funding they received for conducting the review?',
     options: ['Yes', 'Partial Yes', 'No'],
     columns: [
