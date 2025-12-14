@@ -95,16 +95,31 @@ export function FloatingPanel(props) {
     return { ...rp, style: { ...rp.style, ...extraStyle } };
   };
 
+  const cx = (...parts) => parts.filter(Boolean).join(' ');
+
+  const dragTriggerProps = () => {
+    const dp = api().getDragTriggerProps();
+    return { ...dp, class: cx(dp.class, 'shrink-0') };
+  };
+
+  const bodyProps = () => {
+    const bp = api().getBodyProps();
+    return {
+      ...bp,
+      class: cx(bp.class, 'flex-1 min-h-0 p-4 overflow-auto'),
+    };
+  };
+
   return (
     <Show when={api().open}>
       <Portal>
         <div {...api().getPositionerProps()}>
           <div
             {...contentProps()}
-            class='bg-white rounded-lg shadow-2xl border border-gray-200 relative'
+            class='bg-white rounded-lg shadow-2xl border border-gray-200 relative flex flex-col min-h-0'
           >
             {/* Header with drag handle */}
-            <div {...api().getDragTriggerProps()}>
+            <div {...dragTriggerProps()}>
               <div
                 {...api().getHeaderProps()}
                 class='flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200 cursor-move select-none'
@@ -156,9 +171,7 @@ export function FloatingPanel(props) {
             </div>
 
             {/* Body */}
-            <div {...api().getBodyProps()} class='p-4 overflow-auto'>
-              {props.children}
-            </div>
+            <div {...bodyProps()}>{props.children}</div>
 
             {/* Resize handles - merge Zag's styles with our size overrides */}
             <Show when={props.resizable ?? true}>

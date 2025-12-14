@@ -144,6 +144,14 @@ export default function TermsOfService() {
                 is at Customer's own risk.
               </p>
 
+              <p>
+                If Customer connects Google Drive, Customer authorizes CoRATES to access Customer's
+                Google Drive files on a read-only basis solely to enable Customer-selected import of
+                PDF documents into the Service. Any documents imported into the Service become User
+                Submissions and will be stored and processed as described in this Agreement and the
+                Privacy Policy.
+              </p>
+
               <h2 class='text-xl font-semibold text-gray-900 pt-6'>4. Payment Obligations</h2>
 
               <p>
