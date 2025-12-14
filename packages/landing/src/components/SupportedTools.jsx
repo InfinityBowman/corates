@@ -23,32 +23,28 @@ export default function SupportedTools() {
 
       <div class='grid grid-cols-2 md:grid-cols-3 gap-4'>
         <For each={tools}>
-          {tool => (
-            <div
-              class={`rounded-xl p-5 text-center border ${
-                tool.status === 'available' ?
-                  'bg-blue-600/10 border-blue-700/20'
-                : 'bg-gray-50 border-gray-200'
-              }`}
-            >
-              <p
-                class={`font-semibold mb-1 ${
-                  tool.status === 'available' ? 'text-blue-700' : 'text-gray-500'
+          {tool => {
+            const isAvailable = tool.status === 'available';
+            return (
+              <div
+                class={`rounded-xl p-5 text-center border ${
+                  isAvailable ? 'bg-blue-600/10 border-blue-700/20' : 'bg-gray-50 border-gray-200'
                 }`}
               >
-                {tool.name}
-              </p>
-              <p class='text-xs text-gray-500 mb-2'>{tool.description}</p>
-              {tool.status === 'available' ?
-                <span class='inline-block text-xs bg-blue-700 text-white px-2 py-0.5 rounded-full'>
-                  Available
+                <p class={`font-semibold mb-1 ${isAvailable ? 'text-blue-700' : 'text-gray-500'}`}>
+                  {tool.name}
+                </p>
+                <p class='text-xs text-gray-500 mb-2'>{tool.description}</p>
+                <span
+                  class={`inline-block text-xs px-2 py-0.5 rounded-full ${
+                    isAvailable ? 'bg-blue-700 text-white' : 'bg-gray-300 text-gray-600'
+                  }`}
+                >
+                  {isAvailable ? 'Available' : 'Coming Soon'}
                 </span>
-              : <span class='inline-block text-xs bg-gray-300 text-gray-600 px-2 py-0.5 rounded-full'>
-                  Coming Soon
-                </span>
-              }
-            </div>
-          )}
+              </div>
+            );
+          }}
         </For>
       </div>
     </section>
