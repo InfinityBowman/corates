@@ -75,6 +75,14 @@ async function getValidAccessToken(env, db, userId, tokens) {
     return tokens.accessToken;
   }
 
+  // If we don't have an expiry timestamp, we can't reliably determine whether the access token
+  // is still valid. In that case, return the stored access token rather than forcing a refresh.
+  // This avoids breaking Google Picker for older/partial account links that don't have refresh
+  // tokens or expiry information.
+  if (!expiresAt || Number.isNaN(new Date(expiresAt).getTime())) {
+    if (tokens.accessToken) return tokens.accessToken;
+  }
+
   // Token is expired or about to expire, refresh it
   if (!tokens.refreshToken) {
     throw new Error('No refresh token available. User needs to reconnect Google account.');
@@ -113,6 +121,39 @@ googleDriveRoutes.get('/status', async c => {
 });
 
 /**
+ * GET /api/google-drive/picker-token
+ * Returns a short-lived access token suitable for the Google Picker API.
+ * Note: This does NOT return refresh tokens.
+ */
+googleDriveRoutes.get('/picker-token', async c => {
+  const { user } = getAuth(c);
+  const db = createDb(c.env.DB);
+
+  const tokens = await getGoogleTokens(db, user.id);
+  if (!tokens?.accessToken) {
+    return c.json({ error: 'Google account not connected', code: 'GOOGLE_NOT_CONNECTED' }, 400);
+  }
+
+  try {
+    const accessToken = await getValidAccessToken(c.env, db, user.id, tokens);
+    // Re-fetch to pick up any refreshed expiry.
+    const updatedTokens = await getGoogleTokens(db, user.id);
+    const expiresAt = updatedTokens?.accessTokenExpiresAt;
+
+    return c.json({
+      accessToken,
+      expiresAt: expiresAt?.toISOString ? expiresAt.toISOString() : expiresAt || null,
+    });
+  } catch (error) {
+    console.error('Google Drive picker-token error:', error);
+    if (error.message.includes('reconnect')) {
+      return c.json({ error: error.message, code: 'GOOGLE_TOKEN_EXPIRED' }, 401);
+    }
+    return c.json({ error: 'Failed to get Google picker token' }, 500);
+  }
+});
+
+/**
  * DELETE /api/google-drive/disconnect
  * Disconnect Google account (remove OAuth tokens)
  */
@@ -134,217 +175,13 @@ googleDriveRoutes.delete('/disconnect', async c => {
 });
 
 /**
- * GET /api/google-drive/files
- * List PDF files from user's Google Drive
- * Query params:
- *   - pageToken: for pagination
- *   - pageSize: number of results (default 20, max 100)
- *   - query: search query to filter files
+ * (Legacy endpoints removed)
+ *
+ * Previously included:
+ * - GET /api/google-drive/files
+ * - GET /api/google-drive/files/:fileId
+ * - POST /api/google-drive/files/:fileId/download
  */
-googleDriveRoutes.get('/files', async c => {
-  const { user } = getAuth(c);
-  const db = createDb(c.env.DB);
-
-  // Get Google tokens
-  const tokens = await getGoogleTokens(db, user.id);
-
-  if (!tokens?.accessToken) {
-    return c.json(
-      {
-        error: 'Google account not connected',
-        code: 'GOOGLE_NOT_CONNECTED',
-      },
-      400,
-    );
-  }
-
-  try {
-    const accessToken = await getValidAccessToken(c.env, db, user.id, tokens);
-
-    // Build query parameters
-    const pageToken = c.req.query('pageToken');
-    const pageSize = Math.min(parseInt(c.req.query('pageSize') || '20', 10), 100);
-    const searchQuery = c.req.query('query');
-
-    // Build the Drive API query - only PDF files
-    let driveQuery = "mimeType='application/pdf' and trashed=false";
-
-    if (searchQuery) {
-      // Escape single quotes in the search query
-      const escapedQuery = searchQuery.replace(/'/g, "\\'");
-      driveQuery += ` and name contains '${escapedQuery}'`;
-    }
-
-    const params = new URLSearchParams({
-      q: driveQuery,
-      pageSize: String(pageSize),
-      fields:
-        'nextPageToken,files(id,name,mimeType,size,createdTime,modifiedTime,webViewLink,iconLink,thumbnailLink)',
-      orderBy: 'modifiedTime desc',
-    });
-
-    if (pageToken) {
-      params.set('pageToken', pageToken);
-    }
-
-    const response = await fetch(`https://www.googleapis.com/drive/v3/files?${params}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-
-      if (response.status === 401) {
-        return c.json(
-          {
-            error: 'Google token expired. Please reconnect your account.',
-            code: 'GOOGLE_TOKEN_EXPIRED',
-          },
-          401,
-        );
-      }
-
-      console.error('Google Drive API error:', error);
-      return c.json({ error: 'Failed to fetch files from Google Drive' }, 500);
-    }
-
-    const data = await response.json();
-
-    return c.json({
-      files: data.files || [],
-      nextPageToken: data.nextPageToken || null,
-    });
-  } catch (error) {
-    console.error('Google Drive files error:', error);
-
-    if (error.message.includes('reconnect')) {
-      return c.json({ error: error.message, code: 'GOOGLE_TOKEN_EXPIRED' }, 401);
-    }
-
-    return c.json({ error: 'Failed to fetch files from Google Drive' }, 500);
-  }
-});
-
-/**
- * GET /api/google-drive/files/:fileId
- * Get metadata for a specific file
- */
-googleDriveRoutes.get('/files/:fileId', async c => {
-  const { user } = getAuth(c);
-  const fileId = c.req.param('fileId');
-  const db = createDb(c.env.DB);
-
-  const tokens = await getGoogleTokens(db, user.id);
-
-  if (!tokens?.accessToken) {
-    return c.json({ error: 'Google account not connected', code: 'GOOGLE_NOT_CONNECTED' }, 400);
-  }
-
-  try {
-    const accessToken = await getValidAccessToken(c.env, db, user.id, tokens);
-
-    const response = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,size,createdTime,modifiedTime,webViewLink`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
-    );
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        return c.json({ error: 'File not found' }, 404);
-      }
-      return c.json({ error: 'Failed to fetch file metadata' }, 500);
-    }
-
-    const file = await response.json();
-    return c.json({ file });
-  } catch (error) {
-    console.error('Google Drive file metadata error:', error);
-    return c.json({ error: 'Failed to fetch file metadata' }, 500);
-  }
-});
-
-/**
- * POST /api/google-drive/files/:fileId/download
- * Download a file from Google Drive and return it
- * This streams the file content directly
- */
-googleDriveRoutes.post('/files/:fileId/download', async c => {
-  const { user } = getAuth(c);
-  const fileId = c.req.param('fileId');
-  const db = createDb(c.env.DB);
-
-  const tokens = await getGoogleTokens(db, user.id);
-
-  if (!tokens?.accessToken) {
-    return c.json({ error: 'Google account not connected', code: 'GOOGLE_NOT_CONNECTED' }, 400);
-  }
-
-  try {
-    const accessToken = await getValidAccessToken(c.env, db, user.id, tokens);
-
-    // First get file metadata to check size and type
-    const metaResponse = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,size`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
-    );
-
-    if (!metaResponse.ok) {
-      if (metaResponse.status === 404) {
-        return c.json({ error: 'File not found' }, 404);
-      }
-      return c.json({ error: 'Failed to fetch file' }, 500);
-    }
-
-    const fileMeta = await metaResponse.json();
-
-    // Verify it's a PDF
-    if (fileMeta.mimeType !== 'application/pdf') {
-      return c.json({ error: 'Only PDF files can be downloaded' }, 400);
-    }
-
-    // Check file size (limit to 50MB)
-    const maxSize = 50 * 1024 * 1024;
-    if (fileMeta.size && parseInt(fileMeta.size, 10) > maxSize) {
-      return c.json({ error: 'File too large. Maximum size is 50MB.' }, 400);
-    }
-
-    // Download the file content
-    const downloadResponse = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
-    );
-
-    if (!downloadResponse.ok) {
-      return c.json({ error: 'Failed to download file' }, 500);
-    }
-
-    // Return the file with appropriate headers
-    return new Response(downloadResponse.body, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${encodeURIComponent(fileMeta.name)}"`,
-        'Content-Length': fileMeta.size || '',
-      },
-    });
-  } catch (error) {
-    console.error('Google Drive download error:', error);
-    return c.json({ error: 'Failed to download file' }, 500);
-  }
-});
 
 /**
  * POST /api/google-drive/import

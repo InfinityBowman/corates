@@ -47,7 +47,7 @@ vi.mock('@primitives/useOnlineStatus.js', () => ({
   default: () => () => true,
 }));
 
-vi.mock('@primitives/projectStore.js', () => ({
+vi.mock('@/stores/projectStore.js', () => ({
   default: {
     clearProjectList: vi.fn(),
   },
@@ -295,7 +295,7 @@ describe('better-auth-store - Signout', () => {
     vi.clearAllMocks();
 
     authClient = (await import('@api/auth-client.js')).authClient;
-    projectStore = (await import('@primitives/projectStore.js')).default;
+    projectStore = (await import('@/stores/projectStore.js')).default;
 
     const { useBetterAuth } = await import('../better-auth-store.js');
     authStore = useBetterAuth();
@@ -533,7 +533,7 @@ describe('better-auth-store - Account Deletion', () => {
     localStorage.clear();
 
     authClient = (await import('@api/auth-client.js')).authClient;
-    projectStore = (await import('@primitives/projectStore.js')).default;
+    projectStore = (await import('@/stores/projectStore.js')).default;
     authClient.signOut.mockResolvedValue({ error: null });
 
     global.fetch = vi.fn();

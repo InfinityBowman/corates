@@ -7,7 +7,7 @@ import { FaBrandsGoogleDrive } from 'solid-icons/fa';
 import AddStudiesForm from '../AddStudiesForm.jsx';
 import GoogleDrivePickerModal from '../GoogleDrivePickerModal.jsx';
 import { showToast } from '@components/zag/Toast.jsx';
-import projectStore from '@primitives/projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 
 /**

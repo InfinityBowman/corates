@@ -5,7 +5,7 @@
 
 import { uploadPdf, deletePdf, getPdfUrl } from '@api/pdf-api.js';
 import { cachePdf, removeCachedPdf, getCachedPdf } from '@primitives/pdfCache.js';
-import projectStore from '@primitives/projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 
 /**

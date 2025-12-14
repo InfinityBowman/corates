@@ -1,7 +1,7 @@
 import { For, Show, createMemo } from 'solid-js';
 import { CgArrowsExchange } from 'solid-icons/cg';
 import ReconcileStudyCard from '../ReconcileStudyCard.jsx';
-import projectStore from '@primitives/projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 
 /**

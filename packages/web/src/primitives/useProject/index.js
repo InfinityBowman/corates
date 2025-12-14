@@ -7,7 +7,7 @@
 import { createEffect, onCleanup, createMemo } from 'solid-js';
 import * as Y from 'yjs';
 import { IndexeddbPersistence } from 'y-indexeddb';
-import projectStore from '../projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 import useOnlineStatus from '../useOnlineStatus.js';
 import { createConnectionManager } from './connection.js';
 import { createSyncManager } from './sync.js';

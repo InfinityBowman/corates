@@ -3,7 +3,7 @@ import { FiPlus, FiTrash2 } from 'solid-icons/fi';
 import ChartSection from '../ChartSection.jsx';
 import ReviewerAssignment from '../ReviewerAssignment.jsx';
 import ProjectSettings from '../ProjectSettings.jsx';
-import projectStore from '@primitives/projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 

@@ -6,7 +6,7 @@
 import { createSignal, createEffect, Show, onCleanup, batch } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import useProject from '@/primitives/useProject/index.js';
-import projectStore from '@primitives/projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';

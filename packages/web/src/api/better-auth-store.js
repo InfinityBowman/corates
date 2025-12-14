@@ -1,6 +1,6 @@
 import { createSignal, createRoot, createEffect } from 'solid-js';
 import { authClient, useSession } from '@api/auth-client.js';
-import projectStore from '@primitives/projectStore.js';
+import projectStore from '@/stores/projectStore.js';
 import { API_BASE, BASEPATH } from '@config/api.js';
 import { saveLastLoginMethod, LOGIN_METHODS } from '@lib/lastLoginMethod.js';
 

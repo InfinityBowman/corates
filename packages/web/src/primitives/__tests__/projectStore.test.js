@@ -15,7 +15,7 @@ let projectStore;
 describe('projectStore - Project Data Management', () => {
   beforeEach(async () => {
     vi.resetModules();
-    const module = await import('../projectStore.js');
+    const module = await import('../../stores/projectStore.js');
     projectStore = module.default;
   });
 
@@ -253,7 +253,7 @@ describe('projectStore - Project Data Management', () => {
 describe('projectStore - Connection State Management', () => {
   beforeEach(async () => {
     vi.resetModules();
-    const module = await import('../projectStore.js');
+    const module = await import('../../stores/projectStore.js');
     projectStore = module.default;
   });
 
@@ -319,7 +319,7 @@ describe('projectStore - Connection State Management', () => {
 describe('projectStore - Active Project', () => {
   beforeEach(async () => {
     vi.resetModules();
-    const module = await import('../projectStore.js');
+    const module = await import('../../stores/projectStore.js');
     projectStore = module.default;
   });
 
@@ -361,7 +361,7 @@ describe('projectStore - Project List (Dashboard)', () => {
   beforeEach(async () => {
     vi.resetModules();
     global.fetch = vi.fn();
-    const module = await import('../projectStore.js');
+    const module = await import('../../stores/projectStore.js');
     projectStore = module.default;
   });
 

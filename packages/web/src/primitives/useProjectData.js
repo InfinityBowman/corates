@@ -7,7 +7,7 @@
  * For write operations (createStudy, updateChecklist, etc.), use useProject instead.
  */
 
-import projectStore from './projectStore.js';
+import projectStore from '../stores/projectStore.js';
 import { useProject } from './useProject/index.js';
 
 /**

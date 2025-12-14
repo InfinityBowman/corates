@@ -22,7 +22,7 @@ vi.mock('y-indexeddb', () => ({
   }),
 }));
 
-vi.mock('../projectStore.js', () => ({
+vi.mock('@/stores/projectStore.js', () => ({
   default: {
     getConnectionState: vi.fn(() => ({
       connected: false,
@@ -101,7 +101,7 @@ describe('useProject - Study CRUD Operations', () => {
   let projectStore;
 
   beforeEach(async () => {
-    projectStore = (await import('../projectStore.js')).default;
+    projectStore = (await import('@/stores/projectStore.js')).default;
     vi.spyOn(global.crypto, 'randomUUID').mockReturnValue('study-uuid-123');
   });
 
@@ -236,7 +236,7 @@ describe('useProject - PDF Operations', () => {
   let projectStore;
 
   beforeEach(async () => {
-    projectStore = (await import('../projectStore.js')).default;
+    projectStore = (await import('../../stores/projectStore.js')).default;
     vi.spyOn(global.crypto, 'randomUUID').mockReturnValue('study-123');
   });
 
@@ -297,7 +297,7 @@ describe('useProject - Checklist Operations', () => {
   let projectStore;
 
   beforeEach(async () => {
-    projectStore = (await import('../projectStore.js')).default;
+    projectStore = (await import('@/stores/projectStore.js')).default;
     let callCount = 0;
     vi.spyOn(global.crypto, 'randomUUID').mockImplementation(() => {
       callCount++;
@@ -450,7 +450,7 @@ describe('useProject - Reconciliation Operations', () => {
   let projectStore;
 
   beforeEach(async () => {
-    projectStore = (await import('../projectStore.js')).default;
+    projectStore = (await import('../../stores/projectStore.js')).default;
     let callCount = 0;
     vi.spyOn(global.crypto, 'randomUUID').mockImplementation(() => `uuid-${callCount++}`);
   });
@@ -554,7 +554,7 @@ describe('useProject - Project Settings', () => {
   let projectStore;
 
   beforeEach(async () => {
-    projectStore = (await import('../projectStore.js')).default;
+    projectStore = (await import('../../stores/projectStore.js')).default;
     vi.spyOn(global.crypto, 'randomUUID').mockReturnValue('uuid-123');
   });
 
