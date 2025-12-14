@@ -5,6 +5,7 @@ import { onMount, Suspense } from 'solid-js';
 import './styles.css';
 
 import { checkSession } from '~/lib/auth';
+import DefaultSeo from '~/components/DefaultSeo';
 
 export default function App() {
   onMount(() => {
@@ -15,6 +16,7 @@ export default function App() {
     <Router
       root={props => (
         <MetaProvider>
+          <DefaultSeo />
           <Suspense>{props.children}</Suspense>
         </MetaProvider>
       )}
