@@ -88,7 +88,6 @@ export default function Pricing() {
   const pageUrl = `${config.appUrl}/pricing`;
   const title = 'Pricing - CoRATES';
   const description = 'Simple plans for evidence synthesis teams. Start free, upgrade anytime.';
-  const imageUrl = `${config.appUrl}/product.png`;
 
   const [billing, setBilling] = createSignal('monthly');
 
@@ -99,20 +98,11 @@ export default function Pricing() {
       <Title>{title}</Title>
       <Meta name='description' content={description} />
       <Link rel='canonical' href={pageUrl} />
-
-      <Meta property='og:type' content='website' />
-      <Meta property='og:site_name' content='CoRATES' />
       <Meta property='og:title' content={title} />
       <Meta property='og:description' content={description} />
       <Meta property='og:url' content={pageUrl} />
-      <Meta property='og:image' content={imageUrl} />
-
-      <Meta name='twitter:card' content='summary_large_image' />
       <Meta name='twitter:title' content={title} />
       <Meta name='twitter:description' content={description} />
-      <Meta name='twitter:image' content={imageUrl} />
-
-      <Meta name='robots' content='index,follow,max-image-preview:large' />
 
       <div class='min-h-screen bg-linear-to-b from-blue-50 to-white'>
         <Navbar />

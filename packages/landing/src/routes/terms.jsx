@@ -8,27 +8,17 @@ export default function TermsOfService() {
   const title = 'Terms of Service - CoRATES';
   const description =
     'Terms of Service for CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis';
-  const imageUrl = `${config.appUrl}/product.png`;
 
   return (
     <>
       <Title>{title}</Title>
       <Meta name='description' content={description} />
       <Link rel='canonical' href={pageUrl} />
-
-      <Meta property='og:type' content='website' />
-      <Meta property='og:site_name' content='CoRATES' />
       <Meta property='og:title' content={title} />
       <Meta property='og:description' content={description} />
       <Meta property='og:url' content={pageUrl} />
-      <Meta property='og:image' content={imageUrl} />
-
-      <Meta name='twitter:card' content='summary_large_image' />
       <Meta name='twitter:title' content={title} />
       <Meta name='twitter:description' content={description} />
-      <Meta name='twitter:image' content={imageUrl} />
-
-      <Meta name='robots' content='index,follow,max-image-preview:large' />
 
       <div class='min-h-screen flex flex-col'>
         <Navbar />
