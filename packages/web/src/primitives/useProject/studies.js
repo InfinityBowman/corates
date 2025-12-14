@@ -45,6 +45,16 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
     if (metadata.doi) studyYMap.set('doi', metadata.doi);
     if (metadata.abstract) studyYMap.set('abstract', metadata.abstract);
     if (metadata.importSource) studyYMap.set('importSource', metadata.importSource);
+    if (metadata.pdfUrl) studyYMap.set('pdfUrl', metadata.pdfUrl);
+    if (metadata.pdfSource) studyYMap.set('pdfSource', metadata.pdfSource);
+    if (metadata.pdfAccessible !== undefined)
+      studyYMap.set('pdfAccessible', Boolean(metadata.pdfAccessible));
+    if (metadata.pmid) studyYMap.set('pmid', metadata.pmid);
+    if (metadata.url) studyYMap.set('url', metadata.url);
+    if (metadata.volume) studyYMap.set('volume', metadata.volume);
+    if (metadata.issue) studyYMap.set('issue', metadata.issue);
+    if (metadata.pages) studyYMap.set('pages', metadata.pages);
+    if (metadata.type) studyYMap.set('type', metadata.type);
 
     studiesMap.set(studyId, studyYMap);
 
@@ -75,6 +85,17 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
     if (updates.journal !== undefined) studyYMap.set('journal', updates.journal);
     if (updates.doi !== undefined) studyYMap.set('doi', updates.doi);
     if (updates.abstract !== undefined) studyYMap.set('abstract', updates.abstract);
+    if (updates.importSource !== undefined) studyYMap.set('importSource', updates.importSource);
+    if (updates.pdfUrl !== undefined) studyYMap.set('pdfUrl', updates.pdfUrl);
+    if (updates.pdfSource !== undefined) studyYMap.set('pdfSource', updates.pdfSource);
+    if (updates.pdfAccessible !== undefined)
+      studyYMap.set('pdfAccessible', Boolean(updates.pdfAccessible));
+    if (updates.pmid !== undefined) studyYMap.set('pmid', updates.pmid);
+    if (updates.url !== undefined) studyYMap.set('url', updates.url);
+    if (updates.volume !== undefined) studyYMap.set('volume', updates.volume);
+    if (updates.issue !== undefined) studyYMap.set('issue', updates.issue);
+    if (updates.pages !== undefined) studyYMap.set('pages', updates.pages);
+    if (updates.type !== undefined) studyYMap.set('type', updates.type);
     // Reviewer assignment fields
     if (updates.reviewer1 !== undefined) studyYMap.set('reviewer1', updates.reviewer1);
     if (updates.reviewer2 !== undefined) studyYMap.set('reviewer2', updates.reviewer2);

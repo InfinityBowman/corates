@@ -15,7 +15,8 @@
     "db:migrate": "y | wrangler d1 migrations apply corates-db --local",
     "db:migrate:prod": "wrangler d1 migrations apply corates-db --remote",
     "db:setup:prod": "wrangler d1 execute corates-db-prod --remote --file=migrations/0001_init.sql",
-    "db:reset:prod": "./scripts/reset-db-prod.sh"
+    "db:reset:prod": "./scripts/reset-db-prod.sh",
+    "user:make-admin:prod": "node ./scripts/make-admin-prod.mjs"
   },
   "dependencies": {
     "@cloudflare/workers-types": "^4.20251213.0",
