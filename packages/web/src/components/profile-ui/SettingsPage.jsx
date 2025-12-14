@@ -22,8 +22,8 @@ export default function SettingsPage() {
   const { user, resetPassword } = useBetterAuth();
 
   // Notification settings
-  const [emailNotifications, setEmailNotifications] = createSignal(true);
-  const [projectUpdates, setProjectUpdates] = createSignal(true);
+  const [emailNotifications, setEmailNotifications] = createSignal(false);
+  const [projectUpdates, setProjectUpdates] = createSignal(false);
 
   // Appearance settings
   const [darkMode, setDarkMode] = createSignal(false);
@@ -138,7 +138,7 @@ export default function SettingsPage() {
               <p class='font-medium text-gray-900'>Dark Mode</p>
               <p class='text-sm text-gray-500'>Use dark theme across the application.</p>
             </div>
-            <Switch checked={darkMode()} onChange={setDarkMode} />
+            <Switch checked={darkMode()} onChange={setDarkMode} disabled />
           </div>
         </div>
       </div>
@@ -198,6 +198,9 @@ export default function SettingsPage() {
               <div>
                 <p class='font-medium text-gray-900'>Add Password</p>
                 <p class='text-sm text-gray-500'>Set a password to sign in without email links.</p>
+                <p class='text-sm text-gray-500'>
+                  A password is required for Two-Factor Authentication.
+                </p>
               </div>
               <button
                 onClick={async () => {
@@ -348,8 +351,8 @@ export default function SettingsPage() {
         <div class='p-6'>
           <div class='space-y-2 text-sm text-gray-600'>
             <p>
-              <span class='font-medium text-gray-900'>CoRATES</span> - Collaborative Review
-              Assessment Tool for Evidence Synthesis
+              <span class='font-medium text-gray-900'>CoRATES</span> - Collaborative Research
+              Appraisal Tool for Evidence Synthesis
             </p>
             <p>Version 1.0.0</p>
             <p class='pt-2'>
