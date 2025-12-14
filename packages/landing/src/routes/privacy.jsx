@@ -381,6 +381,53 @@ export default function PrivacyPolicy() {
                 provided that we will not share such data in a manner that could identify you.
               </p>
 
+              <h3 class='text-lg font-medium text-gray-900 pt-4'>Google OAuth and Google Drive</h3>
+
+              <p>
+                If you choose to sign in with Google or connect your Google account to use Google
+                Drive features, CoRATES will process certain information from your Google account to
+                provide the Services.
+              </p>
+
+              <ul class='list-disc list-outside ml-6 space-y-2 text-gray-600'>
+                <li>
+                  <strong>Scopes requested.</strong> When you connect Google, we request standard
+                  OpenID Connect scopes (openid, email, profile) and Google Drive read-only access
+                  (https://www.googleapis.com/auth/drive.readonly) to enable you to select and
+                  import PDF files from your Google Drive.
+                </li>
+                <li>
+                  <strong>Tokens stored.</strong> When you connect Google, we store OAuth tokens
+                  (such as access tokens and, when provided by Google, refresh tokens) associated
+                  with your account so we can maintain the connection and retrieve a short-lived
+                  access token when needed (for example, for the Google Picker experience or when an
+                  access token expires).
+                </li>
+                <li>
+                  <strong>What we do with Drive data.</strong> When you initiate an import, we use
+                  the Google Drive API to fetch file metadata (for example file name, MIME type and
+                  size) and download the contents of the specific file you selected. We then copy
+                  that PDF into CoRATES storage (Cloudflare R2) so it can be attached to your
+                  project/study within the Service. We may store the Google Drive file ID and file
+                  name as part of import metadata to support the import and auditing.
+                </li>
+                <li>
+                  <strong>Disconnecting Google.</strong> If you disconnect Google, we remove the
+                  stored Google account link and tokens used to access Google APIs. Disconnecting
+                  Google does not automatically delete PDFs you previously imported into CoRATES; to
+                  remove those, you must delete them from within the Service (or delete your
+                  account, where applicable).
+                </li>
+              </ul>
+
+              <p>
+                CoRATES's use of information received from Google APIs will comply with the Google
+                API Services User Data Policy, including the Limited Use requirements. In
+                particular, we use Google Drive data only to provide the user-requested
+                functionality (such as importing a selected PDF into your project) and do not use
+                Google Drive data for advertising.
+              </p>
+
               {/* Tracking Tools and Opt-Out */}
               <h2 id='tracking-tools' class='text-xl font-semibold text-gray-900 pt-6'>
                 Tracking Tools and Opt-Out
