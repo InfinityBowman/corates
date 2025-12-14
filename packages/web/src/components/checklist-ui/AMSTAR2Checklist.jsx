@@ -1,6 +1,9 @@
 import { createSignal, createEffect, Show, For } from 'solid-js';
 import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
 import { createChecklist as createAMSTAR2Checklist } from '@/AMSTAR2/checklist.js';
+import { FaSolidCircleInfo } from 'solid-icons/fa';
+import Tooltip from '@/components/zag/Tooltip.jsx';
+import FloatingPanel from '@/components/zag/FloatingPanel.jsx';
 
 export function Question1(props) {
   const state = () => props.checklistState().q1;
@@ -327,8 +330,11 @@ export function Question9(props) {
     }, 10);
   }
 
+  let containerRef;
+
   return (
-    <div class='bg-white rounded-lg shadow-md p-8 text-sm'>
+    <div class='bg-white rounded-lg shadow-md p-8 text-sm relative' ref={el => (containerRef = el)}>
+      <QuestionInfo question={question} containerRef={containerRef} />
       <div class='flex'>
         <h3 class='font-semibold text-gray-900'>{question.text}</h3>
         <CriticalButton state={stateA} onUpdate={onUpdateab} />
@@ -442,8 +448,11 @@ export function Question11(props) {
     }, 10);
   }
 
+  let containerRef;
+
   return (
-    <div class='bg-white rounded-lg shadow-md p-8 text-sm'>
+    <div class='bg-white rounded-lg shadow-md p-8 text-sm relative' ref={el => (containerRef = el)}>
+      <QuestionInfo question={question} containerRef={containerRef} />
       <div class='flex'>
         <h3 class='font-semibold text-gray-900'>{question.text}</h3>
         <CriticalButton state={stateA} onUpdate={onUpdateab} />
@@ -636,14 +645,61 @@ export function Question16(props) {
 }
 
 function StandardQuestion(props) {
+  let containerRef;
+
   return (
-    <div class='bg-white rounded-lg shadow-md p-7'>
+    <div class='bg-white rounded-lg shadow-md p-7 relative' ref={el => (containerRef = el)}>
+      <QuestionInfo question={props.question} containerRef={containerRef} />
       <div class='flex'>
         <h3 class='font-semibold text-sm text-gray-900 mb-1'>{props.question.text}</h3>
         <CriticalButton state={props.state} onUpdate={props.onUpdate} />
       </div>
       <StandardQuestionInternal columns={props.question.columns} {...props} />
     </div>
+  );
+}
+
+function QuestionInfo(props) {
+  const [showInfo, setShowInfo] = createSignal(false);
+  const [panelPos, setPanelPos] = createSignal({ x: 0, y: 0 });
+  let containerRef = () => props.containerRef;
+
+  function openInfoPanel() {
+    if (containerRef()) {
+      const btnRect = containerRef().getBoundingClientRect();
+      setPanelPos({
+        x: btnRect.left + 20,
+        y: btnRect.top - 20,
+      });
+    }
+    setShowInfo(true);
+  }
+
+  let question = () => props.question.text.split('.')[0] + '. Learn more';
+
+  return (
+    <>
+      <FloatingPanel
+        title={question()}
+        open={showInfo()}
+        onOpenChange={details => setShowInfo(details.open)}
+        position={panelPos()}
+        onPositionChange={pos => setPanelPos(pos.position)}
+        showMaximize={false}
+      >
+        {props.question.info}
+      </FloatingPanel>
+      <div class='absolute top-1.5 right-1.5'>
+        <Tooltip content={question()} placement='top' openDelay={200}>
+          <button
+            class='inline-flex items-center justify-center rounded-full p-1.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer'
+            onClick={openInfoPanel}
+          >
+            <FaSolidCircleInfo size={12} />
+          </button>
+        </Tooltip>
+      </div>
+    </>
   );
 }
 

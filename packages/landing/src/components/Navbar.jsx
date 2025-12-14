@@ -6,7 +6,10 @@ export default function Navbar() {
   const { isLoggedIn } = useAuth();
 
   return (
-    <nav class='bg-white border-b border-gray-100' aria-label='Primary'>
+    <nav
+      class='sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100'
+      aria-label='Primary'
+    >
       <div class='flex items-center justify-between max-w-6xl mx-auto px-6 py-4'>
         <div class='flex items-center gap-8'>
           <a

@@ -10,6 +10,7 @@ export const CHECKLIST_TYPES = {
 
 export const AMSTAR_CHECKLIST = {
   q1: {
+    info: 'Q1 info TBD',
     text: '1. Did the research questions and inclusion criteria for the review include the components of PICO?',
     columns: [
       {
@@ -27,6 +28,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q2: {
+    info: 'Q2 info TBD',
     text: '2. Did the report of the review contain an explicit statement that the review methods were established prior to the conduct of the review and did the report justify any significant deviations from the protocol?',
     columns: [
       {
@@ -58,6 +60,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q3: {
+    info: 'Q3 info TBD',
     text: '3. Did the review authors explain their selection of the study designs for inclusion in the review?',
     columns: [
       {
@@ -75,6 +78,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q4: {
+    info: 'Q4 info TBD',
     text: '4. Did the review authors use a comprehensive literature search strategy? ',
     columns: [
       {
@@ -102,6 +106,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q5: {
+    info: 'Q5 info TBD',
     text: '5. Did the review authors perform study selection in duplicate?',
     columns: [
       {
@@ -118,6 +123,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q6: {
+    info: 'Q6 info TBD',
     text: '6. Did the review authors perform data extraction in duplicate?',
     columns: [
       {
@@ -134,6 +140,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q7: {
+    info: 'Q7 info TBD',
     text: '7. Did the review authors provide a list of excluded studies and justify the exclusions?',
     columns: [
       {
@@ -153,6 +160,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q8: {
+    info: 'Q8 info TBD',
     text: '8. Did the review authors describe the included studies in adequate detail?',
     columns: [
       {
@@ -181,6 +189,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q9: {
+    info: 'Q9 info TBD',
     text: '9. Did the review authors use a satisfactory technique for assessing the risk of bias (RoB) in individual studies that were included in the review?',
     subtitle: 'RCTs',
     columns: [
@@ -224,6 +233,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q10: {
+    info: 'Q10 info TBD',
     text: '10. Did the review authors report on the sources of funding for the studies included in the review?',
     columns: [
       {
@@ -239,6 +249,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q11: {
+    info: 'Q11 info TBD',
     text: '11. If meta-analysis was performed did the review authors use appropriate methods for statistical combination of results?',
     subtitle: 'RCTs',
     columns: [
@@ -273,6 +284,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q12: {
+    info: 'Q12 info TBD',
     text: '12. If meta-analysis was performed, did the review authors assess the potential impact of RoB in individual studies on the results of the meta-analysis or other evidence synthesis?',
     columns: [
       {
@@ -289,6 +301,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q13: {
+    info: 'Q13 info TBD',
     text: '13. Did the review authors account for RoB in individual studies when interpreting/ discussing the results of the review?',
     columns: [
       {
@@ -305,6 +318,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q14: {
+    info: 'Q14 info TBD',
     text: '14. Did the review authors provide a satisfactory explanation for, and discussion of, any heterogeneity observed in the results of the review?',
     columns: [
       {
@@ -321,6 +335,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q15: {
+    info: 'Q15 info TBD',
     text: '15. If they performed quantitative synthesis did the review authors carry out an adequate investigation of publication bias (small study bias) and discuss its likely impact on the results of the review?',
     columns: [
       {
@@ -336,6 +351,7 @@ export const AMSTAR_CHECKLIST = {
     ],
   },
   q16: {
+    info: 'Q16 info TBD',
     text: '16. Did the review authors report any potential sources of conflict of interest, including any funding they received for conducting the review?',
     options: ['Yes', 'Partial Yes', 'No'],
     columns: [
