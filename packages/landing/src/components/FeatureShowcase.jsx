@@ -1,412 +1,371 @@
 import { For } from 'solid-js';
-import { AiOutlineCheckCircle } from 'solid-icons/ai';
+import { AiOutlineCheckCircle, AiOutlineCheck, AiOutlineMail, AiOutlineLink } from 'solid-icons/ai';
 import { HiOutlineDocumentText, HiOutlineShieldCheck } from 'solid-icons/hi';
 import { BsGraphUp } from 'solid-icons/bs';
 import { FiLock, FiKey, FiShield } from 'solid-icons/fi';
+import { BiRegularComment } from 'solid-icons/bi';
+
+// Reusable illustration components
+function IllustrationWrapper(props) {
+  return (
+    <div
+      class={`bg-linear-to-br ${props.gradient} rounded-xl border ${props.border} overflow-hidden p-8`}
+    >
+      <div class='relative aspect-4/3 flex items-center justify-center'>{props.children}</div>
+    </div>
+  );
+}
+
+function UserAvatar(props) {
+  return (
+    <div class={`absolute ${props.position}`}>
+      <div class='relative'>
+        <div
+          class={`w-12 h-12 rounded-full bg-linear-to-br ${props.gradient} flex items-center justify-center text-white font-bold shadow-lg`}
+        >
+          {props.letter}
+        </div>
+        <div
+          class={`absolute -bottom-1 -right-1 w-4 h-4 ${props.statusColor} rounded-full border-2 border-white ${props.pulse ? 'animate-pulse' : ''}`}
+        />
+      </div>
+    </div>
+  );
+}
+
+function FloatingBadge(props) {
+  return (
+    <div class={`absolute ${props.position}`}>
+      <div
+        class={`bg-white rounded-lg shadow-md px-3 py-2 flex items-center gap-2 border ${props.border}`}
+      >
+        {props.children}
+      </div>
+    </div>
+  );
+}
+
+function CheckBadge(props) {
+  return (
+    <div class={`absolute ${props.position}`}>
+      <div class='w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-md'>
+        <AiOutlineCheck class='w-4 h-4 text-white' />
+      </div>
+    </div>
+  );
+}
+
+function ChecklistItem(props) {
+  return (
+    <div class='flex items-center gap-2'>
+      <div
+        class={`w-4 h-4 rounded ${props.variant === 'warning' ? 'bg-yellow-500' : 'bg-green-500'} flex items-center justify-center`}
+      >
+        {props.variant === 'warning' ?
+          <span class='text-white text-xs font-bold'>!</span>
+        : <AiOutlineCheck class='w-3 h-3 text-white' />}
+      </div>
+      <div class='h-2 bg-gray-200 rounded flex-1' />
+    </div>
+  );
+}
 
 // Real-time Collaboration Illustration
 function CollaborationIllustration() {
   return (
-    <div class='bg-linear-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 overflow-hidden p-8'>
-      <div class='relative aspect-4/3 flex items-center justify-center'>
-        {/* Central document */}
-        <div class='absolute inset-0 flex items-center justify-center'>
-          <div class='bg-white rounded-lg shadow-lg p-6 w-48 border-2 border-blue-300'>
-            <div class='space-y-2'>
-              <div class='h-2 bg-gray-200 rounded w-full' />
-              <div class='h-2 bg-gray-200 rounded w-5/6' />
-              <div class='h-2 bg-blue-400 rounded w-4/6 animate-pulse' />
-              <div class='h-2 bg-gray-100 rounded w-full' />
-            </div>
-          </div>
-        </div>
-
-        {/* User avatars with activity indicators */}
-        <div class='absolute -top-2 -left-2'>
-          <div class='relative'>
-            <div class='w-12 h-12 rounded-full bg-linear-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg'>
-              A
-            </div>
-            <div class='absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white' />
-          </div>
-        </div>
-
-        <div class='absolute -top-2 -right-2'>
-          <div class='relative'>
-            <div class='w-12 h-12 rounded-full bg-linear-to-br from-pink-400 to-pink-600 flex items-center justify-center text-white font-bold shadow-lg'>
-              B
-            </div>
-            <div class='absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse' />
-          </div>
-        </div>
-
-        <div class='absolute -bottom-2 -left-2'>
-          <div class='relative'>
-            <div class='w-12 h-12 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold shadow-lg'>
-              C
-            </div>
-            <div class='absolute -bottom-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full border-2 border-white' />
-          </div>
-        </div>
-
-        {/* Activity indicators */}
-        <div class='absolute -right-4 top-1/4'>
-          <div class='bg-white rounded-lg shadow-md px-3 py-2 text-xs flex items-center gap-1.5 border border-green-200'>
-            <div class='w-2 h-2 bg-green-500 rounded-full animate-pulse' />
-            <span class='text-gray-700 font-medium'>Live</span>
-          </div>
-        </div>
-
-        <div class='absolute -left-4 bottom-1/4'>
-          <div class='bg-white rounded-lg shadow-md px-3 py-2 text-xs flex items-center gap-1.5'>
-            <AiOutlineCheckCircle class='w-3 h-3 text-blue-600' />
-            <span class='text-gray-700'>Updated</span>
+    <IllustrationWrapper gradient='from-blue-50 to-indigo-50' border='border-blue-200'>
+      {/* Central document */}
+      <div class='absolute inset-0 flex items-center justify-center'>
+        <div class='bg-white rounded-lg shadow-lg p-6 w-48 border-2 border-blue-300'>
+          <div class='space-y-2'>
+            <div class='h-2 bg-gray-200 rounded w-full' />
+            <div class='h-2 bg-gray-200 rounded w-5/6' />
+            <div class='h-2 bg-blue-400 rounded w-4/6 animate-pulse' />
+            <div class='h-2 bg-gray-100 rounded w-full' />
           </div>
         </div>
       </div>
-    </div>
+
+      {/* User avatars with activity indicators */}
+      <UserAvatar
+        position='-top-2 -left-2'
+        gradient='from-purple-400 to-purple-600'
+        letter='A'
+        statusColor='bg-green-500'
+      />
+      <UserAvatar
+        position='-top-2 -right-2'
+        gradient='from-pink-400 to-pink-600'
+        letter='B'
+        statusColor='bg-green-500'
+        pulse
+      />
+      <UserAvatar
+        position='-bottom-2 -left-2'
+        gradient='from-blue-400 to-blue-600'
+        letter='C'
+        statusColor='bg-yellow-500'
+      />
+
+      {/* Activity indicators */}
+      <FloatingBadge position='-right-4 top-1/4' border='border-green-200'>
+        <div class='w-2 h-2 bg-green-500 rounded-full animate-pulse' />
+        <span class='text-xs text-gray-700 font-medium'>Live</span>
+      </FloatingBadge>
+
+      <div class='absolute -left-4 bottom-1/4'>
+        <div class='bg-white rounded-lg shadow-md px-3 py-2 text-xs flex items-center gap-1.5'>
+          <AiOutlineCheckCircle class='w-3 h-3 text-blue-600' />
+          <span class='text-gray-700'>Updated</span>
+        </div>
+      </div>
+    </IllustrationWrapper>
   );
 }
 
 // Security Illustration
 function SecurityIllustration() {
   return (
-    <div class='bg-linear-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 overflow-hidden p-8'>
-      <div class='relative aspect-4/3 flex items-center justify-center'>
-        {/* Central shield */}
-        <div class='absolute inset-0 flex items-center justify-center'>
-          <div class='relative'>
-            <div class='w-32 h-36 bg-linear-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-xl'>
-              <HiOutlineShieldCheck class='w-16 h-16 text-white' />
-            </div>
-            <div class='absolute -inset-4 border-2 border-emerald-300 rounded-lg animate-pulse opacity-50' />
+    <IllustrationWrapper gradient='from-emerald-50 to-teal-50' border='border-emerald-200'>
+      {/* Central shield */}
+      <div class='absolute inset-0 flex items-center justify-center'>
+        <div class='relative'>
+          <div class='w-32 h-36 bg-linear-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-xl'>
+            <HiOutlineShieldCheck class='w-16 h-16 text-white' />
           </div>
-        </div>
-
-        {/* Auth method badges */}
-        <div class='absolute top-4 left-4'>
-          <div class='bg-white rounded-lg shadow-md px-3 py-2 flex items-center gap-2 border border-emerald-200'>
-            <FiKey class='w-4 h-4 text-emerald-600' />
-            <span class='text-xs font-medium text-gray-700'>OAuth</span>
-          </div>
-        </div>
-
-        <div class='absolute top-4 right-4'>
-          <div class='bg-white rounded-lg shadow-md px-3 py-2 flex items-center gap-2 border border-blue-200'>
-            <FiLock class='w-4 h-4 text-blue-600' />
-            <span class='text-xs font-medium text-gray-700'>2FA</span>
-          </div>
-        </div>
-
-        <div class='absolute bottom-6 left-6'>
-          <div class='bg-white rounded-lg shadow-md px-3 py-2 flex items-center gap-2 border border-purple-200'>
-            <svg class='w-4 h-4 text-purple-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path
-                stroke-linecap='round'
-                stroke-linejoin='round'
-                stroke-width='2'
-                d='M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'
-              />
-            </svg>
-            <span class='text-xs font-medium text-gray-700'>Passwordless</span>
-          </div>
-        </div>
-
-        <div class='absolute bottom-6 right-6'>
-          <div class='bg-white rounded-lg shadow-md px-3 py-2 flex items-center gap-2 border border-indigo-200'>
-            <FiShield class='w-4 h-4 text-indigo-600' />
-            <span class='text-xs font-medium text-gray-700'>SSO</span>
-          </div>
-        </div>
-
-        {/* Security checkmarks */}
-        <div class='absolute -right-2 top-1/3'>
-          <div class='w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-md'>
-            <svg class='w-4 h-4 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M5 13l4 4L19 7' />
-            </svg>
-          </div>
-        </div>
-
-        <div class='absolute -left-2 top-1/2'>
-          <div class='w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-md'>
-            <svg class='w-4 h-4 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M5 13l4 4L19 7' />
-            </svg>
-          </div>
+          <div class='absolute -inset-4 border-2 border-emerald-300 rounded-lg animate-pulse opacity-50' />
         </div>
       </div>
-    </div>
+
+      {/* Auth method badges */}
+      <FloatingBadge position='top-4 left-4' border='border-emerald-200'>
+        <FiKey class='w-4 h-4 text-emerald-600' />
+        <span class='text-xs font-medium text-gray-700'>OAuth</span>
+      </FloatingBadge>
+
+      <FloatingBadge position='top-4 right-4' border='border-blue-200'>
+        <FiLock class='w-4 h-4 text-blue-600' />
+        <span class='text-xs font-medium text-gray-700'>2FA</span>
+      </FloatingBadge>
+
+      <FloatingBadge position='bottom-6 left-6' border='border-purple-200'>
+        <AiOutlineMail class='w-4 h-4 text-purple-600' />
+        <span class='text-xs font-medium text-gray-700'>Passwordless</span>
+      </FloatingBadge>
+
+      <FloatingBadge position='bottom-6 right-6' border='border-indigo-200'>
+        <FiShield class='w-4 h-4 text-indigo-600' />
+        <span class='text-xs font-medium text-gray-700'>SSO</span>
+      </FloatingBadge>
+
+      {/* Security checkmarks */}
+      <CheckBadge position='-right-2 top-1/3' />
+      <CheckBadge position='-left-2 top-1/2' />
+    </IllustrationWrapper>
   );
 }
 
 // Automatic Scoring Illustration
 function ScoringIllustration() {
   return (
-    <div class='bg-linear-to-br from-sky-50 to-blue-100 rounded-xl border border-blue-200 overflow-hidden p-8'>
-      <div class='relative aspect-4/3 flex items-center justify-center'>
-        {/* Checklist card */}
-        <div class='bg-white rounded-lg shadow-lg p-4 w-56 border border-blue-200'>
-          {/* Header */}
-          <div class='flex items-center justify-between mb-3 pb-2 border-b border-gray-100'>
-            <span class='text-xs font-semibold text-gray-700'>AMSTAR-2</span>
-            <div class='bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded'>High</div>
-          </div>
-
-          {/* Checklist items */}
-          <div class='space-y-2'>
-            <div class='flex items-center gap-2'>
-              <div class='w-4 h-4 rounded bg-green-500 flex items-center justify-center'>
-                <svg class='w-3 h-3 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M5 13l4 4L19 7' />
-                </svg>
-              </div>
-              <div class='h-2 bg-gray-200 rounded flex-1' />
-            </div>
-            <div class='flex items-center gap-2'>
-              <div class='w-4 h-4 rounded bg-green-500 flex items-center justify-center'>
-                <svg class='w-3 h-3 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M5 13l4 4L19 7' />
-                </svg>
-              </div>
-              <div class='h-2 bg-gray-200 rounded flex-1' />
-            </div>
-            <div class='flex items-center gap-2'>
-              <div class='w-4 h-4 rounded bg-yellow-500 flex items-center justify-center'>
-                <span class='text-white text-xs font-bold'>!</span>
-              </div>
-              <div class='h-2 bg-gray-200 rounded flex-1' />
-            </div>
-            <div class='flex items-center gap-2'>
-              <div class='w-4 h-4 rounded bg-green-500 flex items-center justify-center'>
-                <svg class='w-3 h-3 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M5 13l4 4L19 7' />
-                </svg>
-              </div>
-              <div class='h-2 bg-gray-200 rounded flex-1' />
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          <div class='mt-3 pt-2 border-t border-gray-100'>
-            <div class='flex justify-between text-xs text-gray-500 mb-1'>
-              <span>Progress</span>
-              <span class='font-medium'>75%</span>
-            </div>
-            <div class='h-2 bg-gray-100 rounded-full overflow-hidden'>
-              <div class='h-full w-3/4 bg-linear-to-r from-amber-400 to-orange-500 rounded-full' />
-            </div>
-          </div>
+    <IllustrationWrapper gradient='from-sky-50 to-blue-100' border='border-blue-200'>
+      {/* Checklist card */}
+      <div class='bg-white rounded-lg shadow-lg p-4 w-56 border border-blue-200'>
+        {/* Header */}
+        <div class='flex items-center justify-between mb-3 pb-2 border-b border-gray-100'>
+          <span class='text-xs font-semibold text-gray-700'>AMSTAR-2</span>
+          <div class='bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded'>High</div>
         </div>
 
-        {/* Floating score badge */}
-        <div class='absolute -top-2 -right-2'>
-          <div class='bg-linear-to-br from-blue-500 to-sky-500 rounded-lg px-3 py-2 shadow-lg'>
-            <div class='text-white text-xs font-medium'>Score</div>
-            <div class='text-white text-xl font-bold'>14/16</div>
-          </div>
+        {/* Checklist items */}
+        <div class='space-y-2'>
+          <ChecklistItem />
+          <ChecklistItem />
+          <ChecklistItem variant='warning' />
+          <ChecklistItem />
         </div>
 
-        {/* Auto-calculate indicator */}
-        <div class='absolute -bottom-2 left-4'>
-          <div class='bg-white rounded-lg shadow-md px-3 py-2 flex items-center gap-2 border border-green-200'>
-            <div class='w-2 h-2 bg-green-500 rounded-full animate-pulse' />
-            <span class='text-xs font-medium text-gray-700'>Auto-calculated</span>
+        {/* Progress bar */}
+        <div class='mt-3 pt-2 border-t border-gray-100'>
+          <div class='flex justify-between text-xs text-gray-500 mb-1'>
+            <span>Progress</span>
+            <span class='font-medium'>75%</span>
+          </div>
+          <div class='h-2 bg-gray-100 rounded-full overflow-hidden'>
+            <div class='h-full w-3/4 bg-linear-to-r from-amber-400 to-orange-500 rounded-full' />
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Floating score badge */}
+      <div class='absolute -top-2 -right-2'>
+        <div class='bg-linear-to-br from-blue-500 to-sky-500 rounded-lg px-3 py-2 shadow-lg'>
+          <div class='text-white text-xs font-medium'>Score</div>
+          <div class='text-white text-xl font-bold'>14/16</div>
+        </div>
+      </div>
+
+      {/* Auto-calculate indicator */}
+      <FloatingBadge position='-bottom-2 left-4' border='border-green-200'>
+        <div class='w-2 h-2 bg-green-500 rounded-full animate-pulse' />
+        <span class='text-xs font-medium text-gray-700'>Auto-calculated</span>
+      </FloatingBadge>
+    </IllustrationWrapper>
   );
 }
 
 // PDF Annotation Illustration
 function PDFAnnotationIllustration() {
   return (
-    <div class='bg-linear-to-br from-rose-50 to-pink-50 rounded-xl border border-rose-200 overflow-hidden p-8'>
-      <div class='relative aspect-4/3 flex items-center justify-center'>
-        {/* PDF document */}
-        <div class='bg-white rounded-lg shadow-lg w-52 border border-gray-200 overflow-hidden'>
-          {/* PDF header bar */}
-          <div class='bg-gray-100 px-3 py-1.5 border-b border-gray-200 flex items-center gap-2'>
-            <HiOutlineDocumentText class='w-4 h-4 text-rose-500' />
-            <span class='text-xs text-gray-600 truncate'>study_2024.pdf</span>
-          </div>
-
-          {/* PDF content */}
-          <div class='p-3 space-y-2'>
-            <div class='h-2 bg-gray-200 rounded w-full' />
-            <div class='h-2 bg-gray-200 rounded w-5/6' />
-
-            {/* Highlighted text */}
-            <div class='relative'>
-              <div class='h-2 bg-yellow-300 rounded w-4/5' />
-              <div class='absolute -right-1 -top-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center shadow-sm'>
-                <span class='text-white text-xs font-bold'>1</span>
-              </div>
-            </div>
-
-            <div class='h-2 bg-gray-200 rounded w-full' />
-            <div class='h-2 bg-gray-200 rounded w-3/4' />
-
-            {/* Another highlight */}
-            <div class='relative'>
-              <div class='h-2 bg-blue-300 rounded w-2/3' />
-              <div class='absolute -right-1 -top-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center shadow-sm'>
-                <span class='text-white text-xs font-bold'>2</span>
-              </div>
-            </div>
-
-            <div class='h-2 bg-gray-200 rounded w-full' />
-            <div class='h-2 bg-gray-200 rounded w-4/6' />
-          </div>
+    <IllustrationWrapper gradient='from-rose-50 to-pink-50' border='border-rose-200'>
+      {/* PDF document */}
+      <div class='bg-white rounded-lg shadow-lg w-52 border border-gray-200 overflow-hidden'>
+        {/* PDF header bar */}
+        <div class='bg-gray-100 px-3 py-1.5 border-b border-gray-200 flex items-center gap-2'>
+          <HiOutlineDocumentText class='w-4 h-4 text-rose-500' />
+          <span class='text-xs text-gray-600 truncate'>study_2024.pdf</span>
         </div>
 
-        {/* Annotation comment bubble */}
-        <div class='absolute -top-2 -right-4'>
-          <div class='bg-white rounded-lg shadow-lg p-3 w-32 border border-rose-200'>
-            <div class='flex items-center gap-1.5 mb-1.5'>
-              <div class='w-5 h-5 rounded-full bg-linear-to-br from-rose-400 to-pink-500 flex items-center justify-center text-white text-xs font-bold'>
-                R
-              </div>
-              <span class='text-xs font-medium text-gray-700'>Note</span>
-            </div>
-            <p class='text-xs text-gray-500 leading-tight'>Key finding for Q7...</p>
-          </div>
-        </div>
+        {/* PDF content */}
+        <div class='p-3 space-y-2'>
+          <div class='h-2 bg-gray-200 rounded w-full' />
+          <div class='h-2 bg-gray-200 rounded w-5/6' />
 
-        {/* Link indicator */}
-        <div class='absolute -bottom-2 -left-2'>
-          <div class='bg-white rounded-lg shadow-md px-3 py-2 flex items-center gap-2 border border-rose-200'>
-            <svg class='w-4 h-4 text-rose-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path
-                stroke-linecap='round'
-                stroke-linejoin='round'
-                stroke-width='2'
-                d='M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1'
-              />
-            </svg>
-            <span class='text-xs font-medium text-gray-700'>Linked</span>
+          {/* Highlighted text */}
+          <div class='relative'>
+            <div class='h-2 bg-yellow-300 rounded w-4/5' />
+            <div class='absolute -right-1 -top-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center shadow-sm'>
+              <span class='text-white text-xs font-bold'>1</span>
+            </div>
           </div>
-        </div>
 
-        {/* Toolbar floating */}
-        <div class='absolute top-1/2 -left-4 transform -translate-y-1/2'>
-          <div class='bg-white rounded-lg shadow-md p-1.5 flex flex-col gap-1 border border-gray-200'>
-            <div class='w-6 h-6 bg-yellow-100 rounded flex items-center justify-center'>
-              <div class='w-3 h-3 bg-yellow-400 rounded-sm' />
+          <div class='h-2 bg-gray-200 rounded w-full' />
+          <div class='h-2 bg-gray-200 rounded w-3/4' />
+
+          {/* Another highlight */}
+          <div class='relative'>
+            <div class='h-2 bg-blue-300 rounded w-2/3' />
+            <div class='absolute -right-1 -top-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center shadow-sm'>
+              <span class='text-white text-xs font-bold'>2</span>
             </div>
-            <div class='w-6 h-6 bg-blue-100 rounded flex items-center justify-center'>
-              <div class='w-3 h-3 bg-blue-400 rounded-sm' />
+          </div>
+
+          <div class='h-2 bg-gray-200 rounded w-full' />
+          <div class='h-2 bg-gray-200 rounded w-4/6' />
+        </div>
+      </div>
+
+      {/* Annotation comment bubble */}
+      <div class='absolute -top-2 -right-4'>
+        <div class='bg-white rounded-lg shadow-lg p-3 w-32 border border-rose-200'>
+          <div class='flex items-center gap-1.5 mb-1.5'>
+            <div class='w-5 h-5 rounded-full bg-linear-to-br from-rose-400 to-pink-500 flex items-center justify-center text-white text-xs font-bold'>
+              R
             </div>
-            <div class='w-6 h-6 bg-rose-100 rounded flex items-center justify-center'>
-              <svg class='w-3 h-3 text-rose-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path
-                  stroke-linecap='round'
-                  stroke-linejoin='round'
-                  stroke-width='2'
-                  d='M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z'
-                />
-              </svg>
-            </div>
+            <span class='text-xs font-medium text-gray-700'>Note</span>
+          </div>
+          <p class='text-xs text-gray-500 leading-tight'>Key finding for Q7...</p>
+        </div>
+      </div>
+
+      {/* Link indicator */}
+      <FloatingBadge position='-bottom-2 -left-2' border='border-rose-200'>
+        <AiOutlineLink class='w-4 h-4 text-rose-500' />
+        <span class='text-xs font-medium text-gray-700'>Linked</span>
+      </FloatingBadge>
+
+      {/* Toolbar floating */}
+      <div class='absolute top-1/2 -left-4 transform -translate-y-1/2'>
+        <div class='bg-white rounded-lg shadow-md p-1.5 flex flex-col gap-1 border border-gray-200'>
+          <div class='w-6 h-6 bg-yellow-100 rounded flex items-center justify-center'>
+            <div class='w-3 h-3 bg-yellow-400 rounded-sm' />
+          </div>
+          <div class='w-6 h-6 bg-blue-100 rounded flex items-center justify-center'>
+            <div class='w-3 h-3 bg-blue-400 rounded-sm' />
+          </div>
+          <div class='w-6 h-6 bg-rose-100 rounded flex items-center justify-center'>
+            <BiRegularComment class='w-3 h-3 text-rose-500' />
           </div>
         </div>
       </div>
-    </div>
+    </IllustrationWrapper>
   );
 }
 
 // Data Visualizations Illustration
+const chartData = [
+  { label: 'D1', green: 60, yellow: 20, red: 20 },
+  { label: 'D2', green: 80, yellow: 20, red: 0 },
+  { label: 'D3', green: 40, yellow: 40, red: 20 },
+  { label: 'D4', green: 70, yellow: 30, red: 0 },
+  { label: 'D5', green: 50, yellow: 25, red: 25 },
+];
+
 function DataVisualizationIllustration() {
   return (
-    <div class='bg-linear-to-br from-violet-50 to-purple-50 rounded-xl border border-violet-200 overflow-hidden p-8'>
-      <div class='relative aspect-4/3 flex items-center justify-center'>
-        {/* Chart card */}
-        <div class='bg-white rounded-lg shadow-lg p-4 w-56 border border-violet-200'>
-          {/* Chart header */}
-          <div class='flex items-center justify-between mb-3'>
-            <span class='text-xs font-semibold text-gray-700'>Risk of Bias</span>
-            <BsGraphUp class='w-4 h-4 text-violet-500' />
-          </div>
-
-          {/* Stacked horizontal bar chart */}
-          <div class='space-y-2'>
-            <div class='flex items-center gap-2'>
-              <span class='text-xs text-gray-500 w-8'>D1</span>
-              <div class='flex-1 h-4 flex rounded overflow-hidden'>
-                <div class='bg-green-400' style={{ width: '60%' }} />
-                <div class='bg-yellow-400' style={{ width: '20%' }} />
-                <div class='bg-red-400' style={{ width: '20%' }} />
-              </div>
-            </div>
-            <div class='flex items-center gap-2'>
-              <span class='text-xs text-gray-500 w-8'>D2</span>
-              <div class='flex-1 h-4 flex rounded overflow-hidden'>
-                <div class='bg-green-400' style={{ width: '80%' }} />
-                <div class='bg-yellow-400' style={{ width: '20%' }} />
-              </div>
-            </div>
-            <div class='flex items-center gap-2'>
-              <span class='text-xs text-gray-500 w-8'>D3</span>
-              <div class='flex-1 h-4 flex rounded overflow-hidden'>
-                <div class='bg-green-400' style={{ width: '40%' }} />
-                <div class='bg-yellow-400' style={{ width: '40%' }} />
-                <div class='bg-red-400' style={{ width: '20%' }} />
-              </div>
-            </div>
-            <div class='flex items-center gap-2'>
-              <span class='text-xs text-gray-500 w-8'>D4</span>
-              <div class='flex-1 h-4 flex rounded overflow-hidden'>
-                <div class='bg-green-400' style={{ width: '70%' }} />
-                <div class='bg-yellow-400' style={{ width: '30%' }} />
-              </div>
-            </div>
-            <div class='flex items-center gap-2'>
-              <span class='text-xs text-gray-500 w-8'>D5</span>
-              <div class='flex-1 h-4 flex rounded overflow-hidden'>
-                <div class='bg-green-400' style={{ width: '50%' }} />
-                <div class='bg-yellow-400' style={{ width: '25%' }} />
-                <div class='bg-red-400' style={{ width: '25%' }} />
-              </div>
-            </div>
-          </div>
-
-          {/* Legend */}
-          <div class='flex items-center justify-center gap-3 mt-3 pt-2 border-t border-gray-100'>
-            <div class='flex items-center gap-1'>
-              <div class='w-2 h-2 bg-green-400 rounded-sm' />
-              <span class='text-xs text-gray-500'>Low</span>
-            </div>
-            <div class='flex items-center gap-1'>
-              <div class='w-2 h-2 bg-yellow-400 rounded-sm' />
-              <span class='text-xs text-gray-500'>Some</span>
-            </div>
-            <div class='flex items-center gap-1'>
-              <div class='w-2 h-2 bg-red-400 rounded-sm' />
-              <span class='text-xs text-gray-500'>High</span>
-            </div>
-          </div>
+    <IllustrationWrapper gradient='from-violet-50 to-purple-50' border='border-violet-200'>
+      {/* Chart card */}
+      <div class='bg-white rounded-lg shadow-lg p-4 w-56 border border-violet-200'>
+        {/* Chart header */}
+        <div class='flex items-center justify-between mb-3'>
+          <span class='text-xs font-semibold text-gray-700'>Risk of Bias</span>
+          <BsGraphUp class='w-4 h-4 text-violet-500' />
         </div>
 
-        {/* Export options floating */}
-        <div class='absolute -top-2 -right-2'>
-          <div class='bg-white rounded-lg shadow-md p-2 flex gap-1 border border-violet-200'>
-            <div class='w-8 h-7 bg-violet-100 rounded flex items-center justify-center'>
-              <span class='text-xs font-bold text-violet-600'>PNG</span>
-            </div>
-            <div class='w-8 h-7 bg-purple-100 rounded flex items-center justify-center'>
-              <span class='text-xs font-bold text-purple-600'>SVG</span>
-            </div>
-          </div>
+        {/* Stacked horizontal bar chart */}
+        <div class='space-y-2'>
+          <For each={chartData}>
+            {row => (
+              <div class='flex items-center gap-2'>
+                <span class='text-xs text-gray-500 w-8'>{row.label}</span>
+                <div class='flex-1 h-4 flex rounded overflow-hidden'>
+                  {row.green > 0 && <div class='bg-green-400' style={{ width: `${row.green}%` }} />}
+                  {row.yellow > 0 && (
+                    <div class='bg-yellow-400' style={{ width: `${row.yellow}%` }} />
+                  )}
+                  {row.red > 0 && <div class='bg-red-400' style={{ width: `${row.red}%` }} />}
+                </div>
+              </div>
+            )}
+          </For>
         </div>
 
-        {/* Publication ready badge */}
-        <div class='absolute -bottom-2 left-4'>
-          <div class='bg-linear-to-r from-sky-500 to-blue-500 rounded-lg px-3 py-1.5 shadow-lg'>
-            <span class='text-xs font-medium text-white'>Publication Ready</span>
+        {/* Legend */}
+        <div class='flex items-center justify-center gap-3 mt-3 pt-2 border-t border-gray-100'>
+          <div class='flex items-center gap-1'>
+            <div class='w-2 h-2 bg-green-400 rounded-sm' />
+            <span class='text-xs text-gray-500'>Low</span>
+          </div>
+          <div class='flex items-center gap-1'>
+            <div class='w-2 h-2 bg-yellow-400 rounded-sm' />
+            <span class='text-xs text-gray-500'>Some</span>
+          </div>
+          <div class='flex items-center gap-1'>
+            <div class='w-2 h-2 bg-red-400 rounded-sm' />
+            <span class='text-xs text-gray-500'>High</span>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Export options floating */}
+      <div class='absolute -top-2 -right-2'>
+        <div class='bg-white rounded-lg shadow-md p-2 flex gap-1 border border-violet-200'>
+          <div class='w-8 h-7 bg-violet-100 rounded flex items-center justify-center'>
+            <span class='text-xs font-bold text-violet-600'>PNG</span>
+          </div>
+          <div class='w-8 h-7 bg-purple-100 rounded flex items-center justify-center'>
+            <span class='text-xs font-bold text-purple-600'>SVG</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Publication ready badge */}
+      <div class='absolute -bottom-2 left-4'>
+        <div class='bg-linear-to-r from-sky-500 to-blue-500 rounded-lg px-3 py-1.5 shadow-lg'>
+          <span class='text-xs font-medium text-white'>Publication Ready</span>
+        </div>
+      </div>
+    </IllustrationWrapper>
   );
 }
 
@@ -423,19 +382,7 @@ function FeatureSection(props) {
           <For each={props.feature.bullets}>
             {bullet => (
               <li class='flex items-start gap-3'>
-                <svg
-                  class='w-5 h-5 text-blue-700 mt-0.5 shrink-0'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    stroke-linecap='round'
-                    stroke-linejoin='round'
-                    stroke-width='2'
-                    d='M5 13l4 4L19 7'
-                  />
-                </svg>
+                <AiOutlineCheck class='w-5 h-5 text-blue-700 mt-0.5 shrink-0' />
                 <span class='text-gray-700'>{bullet}</span>
               </li>
             )}
