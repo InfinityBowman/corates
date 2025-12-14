@@ -1,8 +1,8 @@
 import { For, Show, createMemo } from 'solid-js';
 import { AiFillCheckCircle } from 'solid-icons/ai';
 import projectStore from '@/stores/projectStore.js';
-import { useProjectContext } from '../ProjectContext.jsx';
-import CompletedStudyCard from './completed/CompletedStudyCard.jsx';
+import { useProjectContext } from '@project-ui/ProjectContext.jsx';
+import CompletedStudyCard from './CompletedStudyCard.jsx';
 
 export default function CompletedTab() {
   const { projectId, handlers } = useProjectContext();

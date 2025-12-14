@@ -32,7 +32,7 @@ import OverviewTab from './tabs/OverviewTab.jsx';
 import IncludedStudiesTab from './tabs/AllStudiesTab.jsx';
 import ToDoTab from './tabs/ToDoTab.jsx';
 import ReadyToReconcileTab from './tabs/ReadyToReconcileTab.jsx';
-import CompletedTab from './tabs/CompletedTab.jsx';
+import CompletedTab from './tabs/completed';
 
 export default function ProjectView() {
   const params = useParams();
