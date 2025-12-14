@@ -217,6 +217,18 @@ export function createAuth(env, ctx) {
           type: 'string',
           required: false,
         },
+        persona: {
+          type: 'string',
+          required: false,
+        },
+        profileCompletedAt: {
+          type: 'number',
+          required: false,
+        },
+        twoFactorEnabled: {
+          type: 'boolean',
+          required: false,
+        },
       },
     },
 

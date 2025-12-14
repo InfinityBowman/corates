@@ -26,7 +26,7 @@ export default function AuthLayout(props) {
       if (currentPath === '/complete-profile' || currentPath === '/reset-password') {
         return;
       }
-
+      console.log(currentUser);
       // If user hasn't completed profile setup, send to complete-profile
       // Otherwise send to dashboard
       if (!currentUser?.profileCompletedAt) {
