@@ -143,10 +143,10 @@ function SecurityIllustration() {
 // Automatic Scoring Illustration
 function ScoringIllustration() {
   return (
-    <div class='bg-linear-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 overflow-hidden p-8'>
+    <div class='bg-linear-to-br from-sky-50 to-blue-100 rounded-xl border border-blue-200 overflow-hidden p-8'>
       <div class='relative aspect-4/3 flex items-center justify-center'>
         {/* Checklist card */}
-        <div class='bg-white rounded-lg shadow-lg p-4 w-56 border border-amber-200'>
+        <div class='bg-white rounded-lg shadow-lg p-4 w-56 border border-blue-200'>
           {/* Header */}
           <div class='flex items-center justify-between mb-3 pb-2 border-b border-gray-100'>
             <span class='text-xs font-semibold text-gray-700'>AMSTAR-2</span>
@@ -201,7 +201,7 @@ function ScoringIllustration() {
 
         {/* Floating score badge */}
         <div class='absolute -top-2 -right-2'>
-          <div class='bg-linear-to-br from-amber-500 to-orange-500 rounded-lg px-3 py-2 shadow-lg'>
+          <div class='bg-linear-to-br from-blue-500 to-sky-500 rounded-lg px-3 py-2 shadow-lg'>
             <div class='text-white text-xs font-medium'>Score</div>
             <div class='text-white text-xl font-bold'>14/16</div>
           </div>
@@ -390,10 +390,10 @@ function DataVisualizationIllustration() {
         {/* Export options floating */}
         <div class='absolute -top-2 -right-2'>
           <div class='bg-white rounded-lg shadow-md p-2 flex gap-1 border border-violet-200'>
-            <div class='w-7 h-7 bg-violet-100 rounded flex items-center justify-center'>
+            <div class='w-8 h-7 bg-violet-100 rounded flex items-center justify-center'>
               <span class='text-xs font-bold text-violet-600'>PNG</span>
             </div>
-            <div class='w-7 h-7 bg-purple-100 rounded flex items-center justify-center'>
+            <div class='w-8 h-7 bg-purple-100 rounded flex items-center justify-center'>
               <span class='text-xs font-bold text-purple-600'>SVG</span>
             </div>
           </div>
@@ -401,7 +401,7 @@ function DataVisualizationIllustration() {
 
         {/* Publication ready badge */}
         <div class='absolute -bottom-2 left-4'>
-          <div class='bg-linear-to-r from-violet-500 to-purple-500 rounded-lg px-3 py-1.5 shadow-lg'>
+          <div class='bg-linear-to-r from-sky-500 to-blue-500 rounded-lg px-3 py-1.5 shadow-lg'>
             <span class='text-xs font-medium text-white'>Publication Ready</span>
           </div>
         </div>
