@@ -1,5 +1,5 @@
 import { Title, Meta, Link } from '@solidjs/meta';
-import { For, Show, createSignal } from 'solid-js';
+import { For, Show, createSignal, onMount } from 'solid-js';
 import { FiCheck } from 'solid-icons/fi';
 
 import Navbar from '~/components/Navbar';
@@ -77,8 +77,8 @@ function getPrice(plan, billing) {
   if (plan.monthlyAmount === null) return { amount: null, unit: '' };
 
   if (billing === 'yearly') {
-    const yearlyTotal = Math.round(plan.monthlyAmount * 12 * (1 - ANNUAL_DISCOUNT));
-    return { amount: yearlyTotal, unit: '/year' };
+    const monthlyEquivalent = Math.round(plan.monthlyAmount * (1 - ANNUAL_DISCOUNT));
+    return { amount: monthlyEquivalent, unit: '/month' };
   }
 
   return { amount: plan.monthlyAmount, unit: '/month' };
@@ -90,6 +90,12 @@ export default function Pricing() {
   const description = 'Simple plans for evidence synthesis teams. Start free, upgrade anytime.';
 
   const [billing, setBilling] = createSignal('monthly');
+  const [showIntroAnimation, setShowIntroAnimation] = createSignal(true);
+
+  onMount(() => {
+    const timer = setTimeout(() => setShowIntroAnimation(false), 1200);
+    return () => clearTimeout(timer);
+  });
 
   const plans = () => BASE_PLANS.map(plan => ({ ...plan, price: getPrice(plan, billing()) }));
 
@@ -145,11 +151,18 @@ export default function Pricing() {
 
           <div class='mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
             <For each={plans()}>
-              {plan => (
+              {(plan, index) => (
                 <div
-                  class={`relative rounded-xl border-2 p-6 flex flex-col ${
-                    plan.tier === 'pro' ? 'border-blue-200 bg-white' : 'border-gray-200 bg-white'
+                  class={`relative rounded-xl border-2 p-6 flex flex-col transition-colors duration-300 ${
+                    showIntroAnimation() ? 'animate-fade-in-up' : ''
+                  } ${
+                    plan.tier === 'pro' ?
+                      'border-blue-200 bg-white shadow-md'
+                    : 'border-gray-200 bg-white'
                   }`}
+                  style={
+                    showIntroAnimation() ? { 'animation-delay': `${index() * 0.1}s` } : undefined
+                  }
                 >
                   <Show when={plan.badge}>
                     <div class='absolute -top-3 left-1/2 -translate-x-1/2'>
@@ -169,13 +182,19 @@ export default function Pricing() {
                       when={plan.price.amount !== null}
                       fallback={<div class='text-2xl font-bold text-gray-900'>Custom</div>}
                     >
-                      <div class='flex items-baseline'>
-                        <span class='text-3xl font-bold text-gray-900'>${plan.price.amount}</span>
+                      <div class='flex items-baseline transition-all duration-300'>
+                        <span class='text-3xl font-bold text-gray-900 transition-all duration-300'>
+                          ${plan.price.amount}
+                        </span>
                         <span class='text-gray-500 ml-1'>{plan.price.unit}</span>
                       </div>
-                      <Show when={billing() === 'yearly' && plan.price.amount !== 0}>
-                        <p class='text-sm text-gray-500 mt-1'>Billed annually</p>
-                      </Show>
+                      <p class='text-sm text-gray-500 mt-1'>
+                        {plan.price.amount === 0 ?
+                          'Free'
+                        : billing() === 'yearly' ?
+                          'Billed yearly'
+                        : 'Billed monthly'}
+                      </p>
                     </Show>
                   </div>
 
@@ -193,9 +212,11 @@ export default function Pricing() {
                   <a
                     href={plan.cta.href()}
                     rel={plan.cta.relExternal ? 'external' : undefined}
-                    class={`w-full text-center py-2.5 px-4 rounded-lg font-medium text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${
-                      plan.tier === 'pro' ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : plan.tier === 'enterprise' ? 'bg-gray-900 text-white hover:bg-gray-800'
+                    class={`w-full text-center py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 active:scale-95 ${
+                      plan.tier === 'pro' ?
+                        'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md'
+                      : plan.tier === 'enterprise' ?
+                        'bg-gray-900 text-white hover:bg-gray-800 hover:shadow-md'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
