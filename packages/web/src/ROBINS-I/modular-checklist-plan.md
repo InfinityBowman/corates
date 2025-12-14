@@ -43,10 +43,10 @@ Create a central registry that maps checklist types to their components and util
 
 #### Files to Create
 
-| File | Purpose |
-|------|---------|
+| File                              | Purpose                                                 |
+| --------------------------------- | ------------------------------------------------------- |
 | `src/checklist-registry/index.js` | Central registry with type → component/scoring mappings |
-| `src/checklist-registry/types.js` | Type constants and metadata |
+| `src/checklist-registry/types.js` | Type constants and metadata                             |
 
 #### Registry Structure
 
@@ -57,17 +57,17 @@ export const CHECKLIST_REGISTRY = {
     name: 'AMSTAR 2',
     description: 'Systematic review quality assessment',
     component: lazy(() => import('@checklist-ui/AMSTAR2Checklist.jsx')),
-    createChecklist: (opts) => import('@/AMSTAR2/checklist.js').then(m => m.createChecklist(opts)),
-    scoreChecklist: (state) => import('@/AMSTAR2/checklist.js').then(m => m.scoreChecklist(state)),
-    getAnswers: (state) => import('@/AMSTAR2/checklist.js').then(m => m.getAnswers(state)),
+    createChecklist: opts => import('@/AMSTAR2/checklist.js').then(m => m.createChecklist(opts)),
+    scoreChecklist: state => import('@/AMSTAR2/checklist.js').then(m => m.scoreChecklist(state)),
+    getAnswers: state => import('@/AMSTAR2/checklist.js').then(m => m.getAnswers(state)),
   },
   ROBINS_I: {
     name: 'ROBINS-I V2',
     description: 'Non-randomized studies of interventions',
     component: lazy(() => import('@checklist-ui/ROBINSIChecklist/ROBINSIChecklist.jsx')),
-    createChecklist: (opts) => import('@/ROBINS-I/checklist.js').then(m => m.createChecklist(opts)),
-    scoreChecklist: (state) => import('@/ROBINS-I/checklist.js').then(m => m.scoreChecklist(state)),
-    getAnswers: (state) => import('@/ROBINS-I/checklist.js').then(m => m.getAnswers(state)),
+    createChecklist: opts => import('@/ROBINS-I/checklist.js').then(m => m.createChecklist(opts)),
+    scoreChecklist: state => import('@/ROBINS-I/checklist.js').then(m => m.scoreChecklist(state)),
+    getAnswers: state => import('@/ROBINS-I/checklist.js').then(m => m.getAnswers(state)),
   },
   // Future: ROBINS_E, ROB2, GRADE, etc.
 };
@@ -85,9 +85,9 @@ Create a type-aware wrapper that dynamically loads the correct checklist compone
 
 #### Files to Create/Modify
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/components/checklist-ui/GenericChecklist.jsx` | Create | Dynamic checklist component loader |
+| File                                               | Action | Purpose                                           |
+| -------------------------------------------------- | ------ | ------------------------------------------------- |
+| `src/components/checklist-ui/GenericChecklist.jsx` | Create | Dynamic checklist component loader                |
 | `src/components/checklist-ui/ChecklistWithPdf.jsx` | Modify | Accept `checklistType` prop, use GenericChecklist |
 
 #### GenericChecklist Component
@@ -102,17 +102,17 @@ export default function GenericChecklist(props) {
   // props.checklist - the checklist state
   // props.onUpdate - update callback
   // props.readOnly - read-only mode
-  
+
   const config = createMemo(() => getChecklistConfig(props.checklistType));
   const ChecklistComponent = createMemo(() => config().component);
-  
+
   return (
     <Suspense fallback={<div>Loading checklist...</div>}>
       <ChecklistComponent
         checklistState={props.checklist}
-        externalChecklist={props.checklist}  // AMSTAR2 uses this
+        externalChecklist={props.checklist} // AMSTAR2 uses this
         onUpdate={props.onUpdate}
-        onExternalUpdate={props.onUpdate}    // AMSTAR2 uses this
+        onExternalUpdate={props.onUpdate} // AMSTAR2 uses this
         readOnly={props.readOnly}
       />
     </Suspense>
@@ -130,7 +130,7 @@ import SplitScreenLayout from '@checklist-ui/SplitScreenLayout.jsx';
 
 export default function ChecklistWithPdf(props) {
   // NEW: props.checklistType - the type of checklist to render
-  
+
   return (
     <div class='h-full flex flex-col bg-blue-50'>
       <SplitScreenLayout ...>
@@ -153,12 +153,12 @@ export default function ChecklistWithPdf(props) {
 
 #### Files to Modify
 
-| File | Changes |
-|------|---------|
-| `LocalChecklistView.jsx` | Pass `checklistType` to `ChecklistWithPdf` |
+| File                      | Changes                                    |
+| ------------------------- | ------------------------------------------ |
+| `LocalChecklistView.jsx`  | Pass `checklistType` to `ChecklistWithPdf` |
 | `ChecklistYjsWrapper.jsx` | Pass `checklistType` to `ChecklistWithPdf` |
-| `useLocalChecklists.js` | Support creating different checklist types |
-| `ScoreTag.jsx` | Make scoring type-aware |
+| `useLocalChecklists.js`   | Support creating different checklist types |
+| `ScoreTag.jsx`            | Make scoring type-aware                    |
 
 #### LocalChecklistView Changes
 
@@ -197,7 +197,7 @@ async function createChecklist(name, type = 'AMSTAR2') {
   const config = getChecklistConfig(type);
   const id = `local-${crypto.randomUUID()}`;
   const now = Date.now();
-  
+
   // Use the type-specific template creator
   const template = await config.createChecklist({
     id,
@@ -205,17 +205,17 @@ async function createChecklist(name, type = 'AMSTAR2') {
     createdAt: now,
     reviewerName: '',
   });
-  
+
   const checklist = {
     ...template,
     id,
     name,
-    checklistType: type,  // Store the type!
+    checklistType: type, // Store the type!
     createdAt: now,
     updatedAt: now,
     isLocal: true,
   };
-  
+
   // ... save to IndexedDB
 }
 ```
@@ -226,11 +226,11 @@ async function createChecklist(name, type = 'AMSTAR2') {
 
 #### Files to Modify
 
-| File | Changes |
-|------|---------|
-| `ScoreTag.jsx` | Accept `checklistType`, use registry for scoring |
-| `LocalChecklistView.jsx` | Compute score using registry |
-| `ChecklistYjsWrapper.jsx` | Compute score using registry |
+| File                      | Changes                                          |
+| ------------------------- | ------------------------------------------------ |
+| `ScoreTag.jsx`            | Accept `checklistType`, use registry for scoring |
+| `LocalChecklistView.jsx`  | Compute score using registry                     |
+| `ChecklistYjsWrapper.jsx` | Compute score using registry                     |
 
 #### ScoreTag Enhancement
 
@@ -250,9 +250,9 @@ export async function computeScore(checklistType, checklistState) {
 
 Both AMSTAR2 and ROBINS-I need consistent prop interfaces. Currently:
 
-| Component | Props Used |
-|-----------|------------|
-| AMSTAR2Checklist | `externalChecklist`, `onExternalUpdate`, `readOnly` |
+| Component        | Props Used                                                 |
+| ---------------- | ---------------------------------------------------------- |
+| AMSTAR2Checklist | `externalChecklist`, `onExternalUpdate`, `readOnly`        |
 | ROBINSIChecklist | `checklistState`, `onUpdate`, `showComments`, `showLegend` |
 
 #### Option A: Adapter in GenericChecklist
@@ -283,6 +283,7 @@ const componentProps = createMemo(() => {
 #### Option B: Standardize All Components (Recommended Long-term)
 
 Update all checklist components to use the same prop names:
+
 - `checklistState` - the checklist data
 - `onUpdate(key, value)` - update callback
 - `readOnly` - disable edits
@@ -295,15 +296,15 @@ Allow users to select checklist type when creating.
 
 #### Files to Modify
 
-| File | Changes |
-|------|---------|
+| File                       | Changes                              |
+| -------------------------- | ------------------------------------ |
 | `CreateLocalChecklist.jsx` | Add checklist type selector dropdown |
 
 ```jsx
 // Add type selection
 <select value={checklistType()} onChange={e => setChecklistType(e.target.value)}>
-  <option value="AMSTAR2">AMSTAR 2 (Systematic Reviews)</option>
-  <option value="ROBINS_I">ROBINS-I V2 (Non-randomized Studies)</option>
+  <option value='AMSTAR2'>AMSTAR 2 (Systematic Reviews)</option>
+  <option value='ROBINS_I'>ROBINS-I V2 (Non-randomized Studies)</option>
 </select>
 ```
 
@@ -315,11 +316,11 @@ Ensure cloud projects store and respect checklist type.
 
 #### Files to Modify
 
-| File | Changes |
-|------|---------|
+| File                  | Changes                               |
+| --------------------- | ------------------------------------- |
 | `useProject/index.js` | Store `type` when creating checklists |
-| `projectStore.js` | Ensure type is preserved in state |
-| Project creation UI | Allow selecting checklist type |
+| `projectStore.js`     | Ensure type is preserved in state     |
+| Project creation UI   | Allow selecting checklist type        |
 
 ---
 
@@ -327,33 +328,35 @@ Ensure cloud projects store and respect checklist type.
 
 ### New Files to Create
 
-| Path | Purpose |
-|------|---------|
-| `src/checklist-registry/index.js` | Central type registry |
-| `src/checklist-registry/types.js` | Type constants |
+| Path                                               | Purpose                  |
+| -------------------------------------------------- | ------------------------ |
+| `src/checklist-registry/index.js`                  | Central type registry    |
+| `src/checklist-registry/types.js`                  | Type constants           |
 | `src/components/checklist-ui/GenericChecklist.jsx` | Dynamic checklist loader |
 
 ### Files to Modify
 
-| Path | Changes |
-|------|---------|
-| `ChecklistWithPdf.jsx` | Use GenericChecklist, accept type prop |
-| `LocalChecklistView.jsx` | Pass type, type-aware scoring |
-| `ChecklistYjsWrapper.jsx` | Pass type, type-aware scoring |
-| `useLocalChecklists.js` | Multi-type checklist creation |
-| `CreateLocalChecklist.jsx` | Type selector UI |
-| `ScoreTag.jsx` | Type-aware scoring display |
+| Path                       | Changes                                |
+| -------------------------- | -------------------------------------- |
+| `ChecklistWithPdf.jsx`     | Use GenericChecklist, accept type prop |
+| `LocalChecklistView.jsx`   | Pass type, type-aware scoring          |
+| `ChecklistYjsWrapper.jsx`  | Pass type, type-aware scoring          |
+| `useLocalChecklists.js`    | Multi-type checklist creation          |
+| `CreateLocalChecklist.jsx` | Type selector UI                       |
+| `ScoreTag.jsx`             | Type-aware scoring display             |
 
 ---
 
 ## Implementation Order
 
 ### Milestone 1: Registry Foundation
+
 - [ ] Create `checklist-registry/index.js`
 - [ ] Create `checklist-registry/types.js`
 - [ ] Create `GenericChecklist.jsx`
 
 ### Milestone 2: Local Checklists
+
 - [ ] Update `ChecklistWithPdf.jsx` to use GenericChecklist
 - [ ] Update `LocalChecklistView.jsx` to pass type
 - [ ] Update `useLocalChecklists.js` for multi-type creation
@@ -361,11 +364,13 @@ Ensure cloud projects store and respect checklist type.
 - [ ] Update `ScoreTag.jsx` for type-aware scoring
 
 ### Milestone 3: Cloud/Yjs Checklists
+
 - [ ] Update `ChecklistYjsWrapper.jsx` to pass type
 - [ ] Update project creation to select checklist type
 - [ ] Update `useProject` to store type
 
 ### Milestone 4: Polish
+
 - [ ] Normalize component prop interfaces
 - [ ] Add unit tests for registry
 - [ ] Update demo page to test both types
@@ -397,24 +402,29 @@ To add a new checklist type (e.g., ROBINS-E):
 ## Notes & Decisions
 
 ### Comparison/Reconciliation Scope
+
 - Comparisons are always between checklists of the **same type**
 - No cross-type comparison needed (e.g., never compare AMSTAR2 to ROBINS-I)
 - Reconciliation can be addressed later as a separate initiative
 - Each checklist type has its own `checklist-compare.js` for same-type comparisons
 
 ### Prop Interface Decision
+
 - **Recommendation**: Start with adapter approach (Option A), refactor to standardized props later
 - Allows incremental migration without breaking AMSTAR2
 
 ### Scoring Complexity
+
 - AMSTAR2: Single overall score (Critically Low → High)
 - ROBINS-I: Domain-level + overall (Low → Critical)
 - `ScoreTag` may need type-specific rendering
 
 ### Storage Schema
+
 - Local (IndexedDB): Add `checklistType` field to checklist objects
 - Cloud (Yjs): Add `type` field to checklist metadata in Durable Object
 
 ### Backwards Compatibility
+
 - Checklists without `checklistType` default to `'AMSTAR2'`
 - Existing local/cloud checklists continue working
