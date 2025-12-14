@@ -16,6 +16,7 @@ import SettingsPage from '@components/profile-ui/SettingsPage.jsx';
 import BillingPage from '@components/billing/BillingPage.jsx';
 import NotFoundPage from '@components/NotFoundPage.jsx';
 import { AdminDashboard } from '@components/admin-ui/index.js';
+import ROBINSIDemo from '@/components/checklist-ui/ROBINSIChecklist/ROBINSIDemo.jsx';
 import { BASEPATH } from '@config/api.js';
 
 export default function AppRoutes() {
@@ -34,6 +35,7 @@ export default function AppRoutes() {
       <Route path='/' component={Layout}>
         <Route path='/' component={Dashboard} />
         <Route path='/dashboard' component={Dashboard} />
+        <Route path='/demo/robins-i' component={ROBINSIDemo} />
         <Route path='/profile' component={ProfilePage} />
         <Route path='/settings' component={SettingsPage} />
         <Route path='/admin' component={AdminDashboard} />
