@@ -6,36 +6,74 @@ import { FaSolidSchool, FaSolidBriefcaseMedical, FaSolidFileLines } from 'solid-
 export default function WhoIsCoRATESFor() {
   const audiences = [
     {
-      icon: <AiOutlineUsergroupAdd class='w-6 h-6 text-blue-600' />,
+      icon: <AiOutlineUsergroupAdd class='w-6 h-6' />,
       title: 'Systematic review and evidence synthesis teams',
       description:
         'Appraise multiple studies in a structured, consistent way that supports rigorous, transparent, and well-documented review processes.',
+      color: 'blue',
     },
     {
-      icon: <IoSchoolOutline class='w-6 h-6 text-blue-600' />,
+      icon: <IoSchoolOutline class='w-6 h-6' />,
       title: 'Students learning to appraise research',
       description:
         'Learn study appraisal by using validated tools in a guided interface, with free single-study assessments for easy practice.',
+      color: 'emerald',
     },
     {
-      icon: <FaSolidSchool class='w-6 h-6 text-blue-600' />,
+      icon: <FaSolidSchool class='w-6 h-6' />,
       title: 'Faculty teaching research methods or appraisal',
       description:
         'Use structured appraisal activities to help students understand what makes different research designs rigorous by examining real published studies.',
+      color: 'violet',
     },
     {
-      icon: <FaSolidBriefcaseMedical class='w-6 h-6 text-blue-600' />,
+      icon: <FaSolidBriefcaseMedical class='w-6 h-6' />,
       title: 'Clinicians and practitioners',
       description:
         'Evaluate the quality of individual studies when deciding whether evidence should inform practice, policy, or program decisions.',
+      color: 'rose',
     },
     {
-      icon: <FaSolidFileLines class='w-6 h-6 text-blue-600' />,
+      icon: <FaSolidFileLines class='w-6 h-6' />,
       title: 'Anyone needing to appraise a single study',
       description:
         'CoRATES makes it easy to complete a one-off appraisal for free, including automatic study-level scoring.',
+      color: 'amber',
     },
   ];
+
+  const colorClasses = {
+    blue: {
+      bg: 'bg-blue-50',
+      border: 'border-blue-200',
+      icon: 'text-blue-600',
+      accent: 'bg-blue-500',
+    },
+    emerald: {
+      bg: 'bg-emerald-50',
+      border: 'border-emerald-200',
+      icon: 'text-emerald-600',
+      accent: 'bg-emerald-500',
+    },
+    violet: {
+      bg: 'bg-violet-50',
+      border: 'border-violet-200',
+      icon: 'text-violet-600',
+      accent: 'bg-violet-500',
+    },
+    rose: {
+      bg: 'bg-rose-50',
+      border: 'border-rose-200',
+      icon: 'text-rose-600',
+      accent: 'bg-rose-500',
+    },
+    amber: {
+      bg: 'bg-amber-50',
+      border: 'border-amber-200',
+      icon: 'text-amber-600',
+      accent: 'bg-amber-500',
+    },
+  };
 
   return (
     <section class='max-w-5xl mx-auto px-6 py-20'>
@@ -52,15 +90,20 @@ export default function WhoIsCoRATESFor() {
 
       <div class='grid md:grid-cols-2 lg:grid-cols-3 gap-6'>
         <For each={audiences}>
-          {audience => (
-            <div class='bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200'>
-              <div class='w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4'>
-                {audience.icon}
+          {audience => {
+            const colors = colorClasses[audience.color];
+            return (
+              <div class='bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 relative overflow-hidden group'>
+                <div
+                  class={`w-12 h-12 ${colors.bg} rounded-xl flex items-center justify-center mb-4 ${colors.icon}`}
+                >
+                  {audience.icon}
+                </div>
+                <h3 class='font-semibold text-gray-900 mb-2'>{audience.title}</h3>
+                <p class='text-sm text-gray-600 leading-relaxed'>{audience.description}</p>
               </div>
-              <h3 class='font-semibold text-gray-900 mb-2'>{audience.title}</h3>
-              <p class='text-sm text-gray-600 leading-relaxed'>{audience.description}</p>
-            </div>
-          )}
+            );
+          }}
         </For>
       </div>
     </section>

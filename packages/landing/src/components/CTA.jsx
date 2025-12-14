@@ -15,7 +15,7 @@ export default function CTA() {
         <a
           href={urls.signUp()}
           rel='external'
-          class='inline-flex items-center justify-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors'
+          class='inline-flex items-center justify-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-blue-100 transition-colors'
         >
           Get Started
           <FaSolidArrowRight class='w-5 h-5' />
