@@ -3,26 +3,22 @@ import { normalizeProps, useMachine } from '@zag-js/solid';
 import { createMemo, createUniqueId, Show } from 'solid-js';
 
 export function Tooltip(props) {
-  const placement = () => props.placement;
-  const openDelay = () => props.openDelay;
-  const closeDelay = () => props.closeDelay;
-  const children = () => props.children;
-  const content = () => props.content;
-
   const service = useMachine(tooltip.machine, () => ({
     id: createUniqueId(),
     positioning: {
-      placement: placement() || 'top',
+      placement: props.placement || 'top',
+      gutter: 8,
     },
-    openDelay: openDelay() ?? 100,
-    closeDelay: closeDelay() ?? 0,
+    openDelay: props.openDelay ?? 100,
+    closeDelay: props.closeDelay ?? 100,
+    interactive: props.interactive ?? false,
   }));
 
   const api = createMemo(() => tooltip.connect(service, normalizeProps));
 
   return (
     <>
-      <span {...api().getTriggerProps()}>{children()}</span>
+      <span {...api().getTriggerProps()}>{props.children}</span>
       <Show when={api().open}>
         <div {...api().getPositionerProps()}>
           <div {...api().getArrowProps()} class='[--arrow-size:8px] [--arrow-background:#111827]'>
@@ -30,9 +26,9 @@ export function Tooltip(props) {
           </div>
           <div
             {...api().getContentProps()}
-            class='px-2 py-1 bg-gray-900 text-white text-xs rounded shadow-lg max-w-xs'
+            class='px-2 py-1 bg-gray-900 text-white text-xs rounded shadow-lg max-w-xs pointer-events-none'
           >
-            {content()}
+            {props.content}
           </div>
         </div>
       </Show>

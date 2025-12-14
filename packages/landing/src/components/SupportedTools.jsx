@@ -17,7 +17,7 @@ export default function SupportedTools() {
       <div class='text-center mb-10'>
         <h2 class='text-2xl md:text-3xl font-bold text-gray-900 mb-4'>Supported Appraisal tools</h2>
         <p class='text-gray-600 max-w-xl mx-auto'>
-          Start with AMSTAR-2 today. More tools coming soon based on researcher demand.
+          Start with AMSTAR-2 today. More tools are on the way!
         </p>
       </div>
 

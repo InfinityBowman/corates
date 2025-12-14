@@ -1,9 +1,11 @@
 import { For } from 'solid-js';
 import { AiOutlineCheckCircle, AiOutlineCheck, AiOutlineMail, AiOutlineLink } from 'solid-icons/ai';
 import { HiOutlineDocumentText, HiOutlineShieldCheck } from 'solid-icons/hi';
-import { BsGraphUp } from 'solid-icons/bs';
+import { BsGraphUp, BsLightningChargeFill } from 'solid-icons/bs';
 import { FiLock, FiKey, FiShield } from 'solid-icons/fi';
 import { BiRegularComment } from 'solid-icons/bi';
+import { RiDeviceWifiOffLine } from 'solid-icons/ri';
+import { IoTimerOutline } from 'solid-icons/io';
 
 // Reusable illustration components
 function IllustrationWrapper(props) {
@@ -40,16 +42,6 @@ function FloatingBadge(props) {
         class={`bg-white rounded-lg shadow-md px-3 py-2 flex items-center gap-2 border ${props.border}`}
       >
         {props.children}
-      </div>
-    </div>
-  );
-}
-
-function CheckBadge(props) {
-  return (
-    <div class={`absolute ${props.position}`}>
-      <div class='w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-md'>
-        <AiOutlineCheck class='w-4 h-4 text-white' />
       </div>
     </div>
   );
@@ -157,10 +149,6 @@ function SecurityIllustration() {
         <FiShield class='w-4 h-4 text-indigo-600' />
         <span class='text-xs font-medium text-gray-700'>SSO</span>
       </FloatingBadge>
-
-      {/* Security checkmarks */}
-      <CheckBadge position='-right-2 top-1/3' />
-      <CheckBadge position='-left-2 top-1/2' />
     </IllustrationWrapper>
   );
 }
@@ -192,7 +180,7 @@ function ScoringIllustration() {
             <span class='font-medium'>75%</span>
           </div>
           <div class='h-2 bg-gray-100 rounded-full overflow-hidden'>
-            <div class='h-full w-3/4 bg-linear-to-r from-amber-400 to-orange-500 rounded-full' />
+            <div class='h-full w-3/4 bg-linear-to-r from-green-300 to-green-500 rounded-full' />
           </div>
         </div>
       </div>
@@ -200,15 +188,15 @@ function ScoringIllustration() {
       {/* Floating score badge */}
       <div class='absolute -top-2 -right-2'>
         <div class='bg-linear-to-br from-blue-500 to-sky-500 rounded-lg px-3 py-2 shadow-lg'>
-          <div class='text-white text-xs font-medium'>Score</div>
-          <div class='text-white text-xl font-bold'>14/16</div>
+          <div class='text-white text-xs font-medium'>Scoring</div>
+          <div class='text-white text-xl font-bold'>12/16</div>
         </div>
       </div>
 
       {/* Auto-calculate indicator */}
       <FloatingBadge position='-bottom-2 left-4' border='border-green-200'>
         <div class='w-2 h-2 bg-green-500 rounded-full animate-pulse' />
-        <span class='text-xs font-medium text-gray-700'>Auto-calculated</span>
+        <span class='text-xs font-medium text-gray-700'>Automatic Scoring</span>
       </FloatingBadge>
     </IllustrationWrapper>
   );
@@ -223,7 +211,7 @@ function PDFAnnotationIllustration() {
         {/* PDF header bar */}
         <div class='bg-gray-100 px-3 py-1.5 border-b border-gray-200 flex items-center gap-2'>
           <HiOutlineDocumentText class='w-4 h-4 text-rose-500' />
-          <span class='text-xs text-gray-600 truncate'>study_2024.pdf</span>
+          <span class='text-xs text-gray-600 truncate'>study_2025.pdf</span>
         </div>
 
         {/* PDF content */}
@@ -285,6 +273,57 @@ function PDFAnnotationIllustration() {
           </div>
           <div class='w-6 h-6 bg-rose-100 rounded flex items-center justify-center'>
             <BiRegularComment class='w-3 h-3 text-rose-500' />
+          </div>
+        </div>
+      </div>
+    </IllustrationWrapper>
+  );
+}
+
+// Speed & Productivity Illustration
+function SpeedIllustration() {
+  return (
+    <IllustrationWrapper gradient='from-amber-50 to-orange-50' border='border-amber-200'>
+      {/* Central speedometer */}
+      <div class='absolute inset-0 flex items-center justify-center'>
+        <div class='relative'>
+          <div class='w-36 h-36 rounded-full bg-white shadow-lg border-4 border-amber-200 flex items-center justify-center'>
+            <div class='text-center'>
+              <BsLightningChargeFill class='w-12 h-12 text-amber-500 mx-auto' />
+              <div class='text-xs text-gray-500 font-semibold mt-1'>Streamlined</div>
+            </div>
+          </div>
+          <div class='absolute -inset-2 border-2 border-amber-300 rounded-full animate-pulse opacity-40' />
+        </div>
+      </div>
+
+      {/* Time saved badges */}
+      <FloatingBadge position='-top-2 -left-2' border='border-green-200'>
+        <IoTimerOutline class='w-4 h-4 text-green-600' />
+        <span class='text-xs font-medium text-gray-700'>Save hours</span>
+      </FloatingBadge>
+
+      <FloatingBadge position='-top-2 -right-2' border='border-amber-200'>
+        <AiOutlineCheck class='w-4 h-4 text-amber-600' />
+        <span class='text-xs font-medium text-gray-700'>No busywork</span>
+      </FloatingBadge>
+
+      <FloatingBadge position='top-[40%] -right-2' border='border-blue-200'>
+        <RiDeviceWifiOffLine class='w-4 h-4 text-blue-600' />
+        <span class='text-xs font-medium text-gray-700'>Works offline</span>
+      </FloatingBadge>
+
+      {/* Productivity metrics */}
+      <div class='absolute -bottom-2 left-1/2 -translate-x-1/2'>
+        <div class='bg-white rounded-lg shadow-md px-4 py-2 border border-amber-200 flex items-center gap-3'>
+          <div class='text-center'>
+            <div class='text-lg font-bold text-amber-600'>Fewer</div>
+            <div class='text-xs text-gray-500'>Emails</div>
+          </div>
+          <div class='w-px h-8 bg-gray-200' />
+          <div class='text-center'>
+            <div class='text-lg font-bold text-green-600'>0</div>
+            <div class='text-xs text-gray-500'>Spreadsheets</div>
           </div>
         </div>
       </div>
@@ -402,7 +441,7 @@ export default function FeatureShowcase() {
       illustration: <CollaborationIllustration />,
       bullets: [
         'Independent ratings with blinded mode',
-        'Automatic inter-rater reliability calculation',
+        'Automatic inter-rater reliability calculation (coming soon)',
         'Built-in conflict resolution workflow',
       ],
     },
@@ -414,25 +453,25 @@ export default function FeatureShowcase() {
       bullets: [
         'OAuth, passwordless login, and SSO support',
         'Two-factor authentication (2FA) for enhanced security',
-        'Role-based access control and audit logging',
+        'Role-based access control and audit logging (coming soon)',
       ],
     },
     {
       title: 'Automatic Scoring',
       description:
-        'Eliminate manual calculation errors. Scores are computed instantly as you complete each checklist item.',
+        'Eliminate manual calculation errors. Complex scores are computed instantly as you complete appraisals.',
       illustration: <ScoringIllustration />,
-      bullets: ['AMSTAR-2 scoring built in', 'Visual summary charts', 'Export-ready reports'],
+      bullets: ['Appraisal scoring built in', 'Visual summary charts', 'Export-ready reports'],
     },
     {
-      title: 'PDF Annotation',
+      title: 'PDF Annotation (coming soon)',
       description:
-        'Annotate study PDFs directly alongside your checklist. Keep all evidence linked and organized.',
+        'Annotate study PDFs directly alongside your appraisals. Keep all evidence linked and organized.',
       illustration: <PDFAnnotationIllustration />,
       bullets: [
         'Highlight and comment on PDFs',
-        'Link annotations to checklist items',
-        'Centralized document storage',
+        'Link annotations to appraisal items',
+        'Import from reference managers, Google Drive, a DOI, upload files directly, or let CoRATES find them for you',
       ],
     },
     {
@@ -441,9 +480,21 @@ export default function FeatureShowcase() {
         'Generate publication-ready charts and graphs from your appraisal data with a single click.',
       illustration: <DataVisualizationIllustration />,
       bullets: [
-        'Interactive risk of bias summary plots',
+        'Interactive summary visualizations',
         'Customizable chart styles and formats',
         'Export to PNG, SVG, in color or black & white',
+      ],
+    },
+    {
+      title: 'Speed & Productivity',
+      description:
+        'Stop wrestling with spreadsheets and manual processes. CoRATES streamlines your workflow so you can focus on what matters.',
+      illustration: <SpeedIllustration />,
+      bullets: [
+        'Complete appraisals faster with guided workflows',
+        'All-in-one platform replaces scattered tools',
+        'Intuitive and blazing-fast interface',
+        'Continue working even without internet access',
       ],
     },
   ];

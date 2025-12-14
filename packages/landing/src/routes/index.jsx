@@ -1,8 +1,8 @@
 import { Title, Meta, Link } from '@solidjs/meta';
 import Hero from '~/components/Hero';
-import Features from '~/components/Features';
+// import Features from '~/components/Features';
 // import WhyChoose from '~/components/WhyChoose';
-import TrustLogos from '~/components/TrustLogos';
+// import TrustLogos from '~/components/TrustLogos';
 // import Stats from '~/components/Stats';
 import FeatureShowcase from '~/components/FeatureShowcase';
 import HowItWorks from '~/components/HowItWorks';
@@ -12,6 +12,7 @@ import Audience from '~/components/Audience';
 import CTA from '~/components/CTA';
 import Navbar from '~/components/Navbar';
 import Footer from '~/components/Footer';
+import EarlyAccessBanner from '~/components/EarlyAccessBanner';
 import { config } from '~/lib/config';
 
 export default function Home() {
@@ -32,12 +33,13 @@ export default function Home() {
       <Meta name='twitter:description' content={description} />
       <div class='min-h-screen bg-linear-to-b from-blue-50 to-white'>
         <Navbar />
+        <EarlyAccessBanner />
         <main>
           <Hero />
-          <TrustLogos />
+          {/* <TrustLogos /> */}
           {/* <Stats /> */}
           <FeatureShowcase />
-          <Features />
+          {/* <Features /> */}
           {/* <WhyChoose /> */}
           <HowItWorks />
           <Audience />
