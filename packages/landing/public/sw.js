@@ -1,4 +1,3 @@
-/* eslint-env serviceworker */
 const CACHE_NAME = 'corates-landing-v1';
 
 const STATIC_ASSETS = [
@@ -71,6 +70,12 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
+self.addEventListener('message', event => {
+  if (event?.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -95,8 +100,46 @@ self.addEventListener('fetch', event => {
   // Skip API requests
   if (url.hostname === 'api.corates.org') return;
 
-  // Check if this is a JS/CSS asset
-  const isAsset = url.pathname.match(/\.(js|css|woff2?|ttf)$/);
+  const isAsset = url.pathname.match(/\.(js|css|map|woff2?|woff|ttf|png|jpg|jpeg|webp|svg|ico)$/);
+
+  // Always try network first for navigations so new deploys update without hard refresh.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request, { redirect: 'follow' })
+        .then(response => {
+          if (response.ok && request.url.startsWith(self.location.origin)) {
+            const responseToCache =
+              response.redirected ?
+                response
+                  .clone()
+                  .blob()
+                  .then(
+                    body =>
+                      new Response(body, {
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: response.headers,
+                      }),
+                  )
+              : Promise.resolve(response.clone());
+
+            event.waitUntil(
+              responseToCache.then(finalResponse =>
+                caches.open(CACHE_NAME).then(cache => {
+                  cache.put(request, finalResponse);
+                }),
+              ),
+            );
+          }
+          return response;
+        })
+        .catch(async () => {
+          // Offline fallback for navigation requests
+          return (await caches.match('/app.html')) || (await caches.match('/'));
+        }),
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(request).then(cachedResponse => {
@@ -114,36 +157,37 @@ self.addEventListener('fetch', event => {
           });
         }
 
-        // Return cached response and update cache in background
-        event.waitUntil(
-          fetch(request, { redirect: 'follow' })
-            .then(response => {
-              if (response.ok) {
-                // For responses we want to cache, ensure we strip redirect flag
-                const responseToCache =
-                  response.redirected ?
-                    response
-                      .clone()
-                      .blob()
-                      .then(
-                        body =>
-                          new Response(body, {
-                            status: response.status,
-                            statusText: response.statusText,
-                            headers: response.headers,
-                          }),
-                      )
-                  : Promise.resolve(response.clone());
+        // For non-asset requests, do stale-while-revalidate.
+        if (!isAsset) {
+          event.waitUntil(
+            fetch(request, { redirect: 'follow' })
+              .then(response => {
+                if (response.ok && request.url.startsWith(self.location.origin)) {
+                  const responseToCache =
+                    response.redirected ?
+                      response
+                        .clone()
+                        .blob()
+                        .then(
+                          body =>
+                            new Response(body, {
+                              status: response.status,
+                              statusText: response.statusText,
+                              headers: response.headers,
+                            }),
+                        )
+                    : Promise.resolve(response.clone());
 
-                responseToCache.then(finalResponse => {
-                  caches.open(CACHE_NAME).then(cache => {
-                    cache.put(request, finalResponse);
-                  });
-                });
-              }
-            })
-            .catch(() => {}),
-        );
+                  return responseToCache.then(finalResponse =>
+                    caches.open(CACHE_NAME).then(cache => {
+                      cache.put(request, finalResponse);
+                    }),
+                  );
+                }
+              })
+              .catch(() => {}),
+          );
+        }
         return cachedResponse;
       }
 

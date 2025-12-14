@@ -24,16 +24,16 @@ export default function Navbar() {
             CoRATES
           </a>
           <a
-            href='/pricing'
-            class='hidden sm:inline-flex text-gray-600 hover:text-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 rounded'
-          >
-            Pricing
-          </a>
-          <a
             href='/about'
             class='hidden sm:inline-flex text-gray-600 hover:text-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 rounded'
           >
             About
+          </a>
+          <a
+            href='/pricing'
+            class='hidden sm:inline-flex text-gray-600 hover:text-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 rounded'
+          >
+            Pricing
           </a>
         </div>
         <div class='flex gap-3'>
