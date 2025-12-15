@@ -411,7 +411,7 @@ adminRoutes.delete('/users/:userId', async c => {
       db.delete(twoFactor).where(eq(twoFactor.userId, userId)),
       db.delete(session).where(eq(session.userId, userId)),
       db.delete(account).where(eq(account.userId, userId)),
-      db.delete(verification).where(like(verification.identifier, `%${userToDelete.email}%`)),
+      db.delete(verification).where(eq(verification.identifier, userToDelete.email)),
       db.delete(user).where(eq(user.id, userId)),
     ]);
 
