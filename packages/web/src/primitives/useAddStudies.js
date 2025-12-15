@@ -937,6 +937,202 @@ export function useAddStudies(options = {}) {
     clearDriveFiles();
   };
 
+  // ===================
+  // State Serialization (for persistence across OAuth redirects)
+  // ===================
+
+  /**
+   * Clone an ArrayBuffer safely (handles detached buffers)
+   * @param {ArrayBuffer} buffer
+   * @returns {ArrayBuffer|null}
+   */
+  const cloneArrayBuffer = buffer => {
+    if (!buffer || !(buffer instanceof ArrayBuffer)) return null;
+    try {
+      // Check if buffer is detached by trying to access byteLength
+      if (buffer.byteLength === 0 && buffer.maxByteLength === undefined) {
+        return null;
+      }
+      // Create a new ArrayBuffer copy
+      const copy = new ArrayBuffer(buffer.byteLength);
+      new Uint8Array(copy).set(new Uint8Array(buffer));
+      return copy;
+    } catch {
+      // Buffer is likely detached
+      return null;
+    }
+  };
+
+  /**
+   * Get all state in a serializable format for IndexedDB storage.
+   * File objects are converted to { name, type, size, data: ArrayBuffer }.
+   * @returns {Object}
+   */
+  const getSerializableState = () => {
+    // Serialize uploaded PDFs - convert File objects and clone ArrayBuffers
+    const serializedPdfs = uploadedPdfs.map(pdf => ({
+      id: pdf.id,
+      title: pdf.title,
+      extracting: pdf.extracting,
+      data: cloneArrayBuffer(pdf.data),
+      doi: pdf.doi,
+      metadata: pdf.metadata ? { ...pdf.metadata } : null,
+      matchedToRef: pdf.matchedToRef,
+      // Serialize File object
+      fileName: pdf.file?.name || null,
+      fileType: pdf.file?.type || null,
+      fileSize: pdf.file?.size || null,
+    }));
+
+    // Serialize ref PDF files
+    const serializedRefPdfs = refPdfFiles().map(pdf => ({
+      id: pdf.id,
+      fileName: pdf.fileName,
+      title: pdf.title,
+      data: cloneArrayBuffer(pdf.data),
+      doi: pdf.doi,
+      matched: pdf.matched,
+      matchedRefId: pdf.matchedRefId,
+      // Serialize File object
+      fileType: pdf.file?.type || null,
+      fileSize: pdf.file?.size || null,
+    }));
+
+    // Serialize imported refs - ensure plain objects only
+    const serializedImportedRefs = importedRefs().map(ref => ({
+      _id: ref._id,
+      title: ref.title,
+      doi: ref.doi,
+      firstAuthor: ref.firstAuthor,
+      publicationYear: ref.publicationYear,
+      authors: ref.authors ? [...ref.authors] : null,
+      journal: ref.journal,
+      abstract: ref.abstract,
+      pdfUrl: ref.pdfUrl,
+      pdfSource: ref.pdfSource,
+      pdfAccessible: ref.pdfAccessible,
+      pdfAvailable: ref.pdfAvailable,
+      pdfData: cloneArrayBuffer(ref.pdfData),
+      pdfFileName: ref.pdfFileName,
+    }));
+
+    // Serialize lookup refs - ensure plain objects and clone ArrayBuffers
+    const serializedLookupRefs = lookupRefs().map(ref => ({
+      _id: ref._id,
+      title: ref.title,
+      doi: ref.doi,
+      firstAuthor: ref.firstAuthor,
+      publicationYear: ref.publicationYear,
+      authors: ref.authors ? [...ref.authors] : null,
+      journal: ref.journal,
+      abstract: ref.abstract,
+      pdfUrl: ref.pdfUrl,
+      pdfSource: ref.pdfSource,
+      pdfAccessible: ref.pdfAccessible,
+      pdfAvailable: ref.pdfAvailable,
+      manualPdfData: cloneArrayBuffer(ref.manualPdfData),
+      manualPdfFileName: ref.manualPdfFileName,
+      matchedFromUpload: ref.matchedFromUpload,
+    }));
+
+    return {
+      // PDF state
+      uploadedPdfs: serializedPdfs,
+
+      // Reference import state
+      importedRefs: serializedImportedRefs,
+      selectedRefIds: Array.from(selectedRefIds()),
+      refFileName: refFileName(),
+      refPdfFiles: serializedRefPdfs,
+
+      // DOI/PMID lookup state
+      identifierInput: identifierInput(),
+      lookupRefs: serializedLookupRefs,
+      selectedLookupIds: Array.from(selectedLookupIds()),
+
+      // Google Drive state
+      selectedDriveFiles: selectedDriveFiles().map(f => ({ id: f.id, name: f.name })),
+    };
+  };
+
+  /**
+   * Restore state from a previously serialized state object.
+   * @param {Object} savedState - State object from getSerializableState()
+   */
+  const restoreState = savedState => {
+    if (!savedState) return;
+
+    // Restore uploaded PDFs - reconstruct minimal file-like objects
+    if (savedState.uploadedPdfs?.length > 0) {
+      const restoredPdfs = savedState.uploadedPdfs.map(pdf => ({
+        id: pdf.id,
+        title: pdf.title,
+        extracting: false, // Don't restore extracting state
+        data: pdf.data,
+        doi: pdf.doi,
+        metadata: pdf.metadata,
+        matchedToRef: pdf.matchedToRef,
+        // Create a minimal file-like object for display purposes
+        file:
+          pdf.fileName ?
+            {
+              name: pdf.fileName,
+              type: pdf.fileType || 'application/pdf',
+              size: pdf.fileSize || pdf.data?.byteLength || 0,
+            }
+          : null,
+      }));
+      setUploadedPdfs(restoredPdfs);
+    }
+
+    // Restore reference import state
+    if (savedState.importedRefs?.length > 0) {
+      setImportedRefs(savedState.importedRefs);
+    }
+    if (savedState.selectedRefIds?.length > 0) {
+      setSelectedRefIds(new Set(savedState.selectedRefIds));
+    }
+    if (savedState.refFileName) {
+      setRefFileName(savedState.refFileName);
+    }
+    if (savedState.refPdfFiles?.length > 0) {
+      const restoredRefPdfs = savedState.refPdfFiles.map(pdf => ({
+        id: pdf.id,
+        fileName: pdf.fileName,
+        title: pdf.title,
+        data: pdf.data,
+        doi: pdf.doi,
+        matched: pdf.matched,
+        matchedRefId: pdf.matchedRefId,
+        file:
+          pdf.fileName ?
+            {
+              name: pdf.fileName,
+              type: pdf.fileType || 'application/pdf',
+              size: pdf.fileSize || pdf.data?.byteLength || 0,
+            }
+          : null,
+      }));
+      setRefPdfFiles(restoredRefPdfs);
+    }
+
+    // Restore DOI/PMID lookup state
+    if (savedState.identifierInput) {
+      setIdentifierInput(savedState.identifierInput);
+    }
+    if (savedState.lookupRefs?.length > 0) {
+      setLookupRefs(savedState.lookupRefs);
+    }
+    if (savedState.selectedLookupIds?.length > 0) {
+      setSelectedLookupIds(new Set(savedState.selectedLookupIds));
+    }
+
+    // Restore Google Drive state
+    if (savedState.selectedDriveFiles?.length > 0) {
+      setSelectedDriveFiles(savedState.selectedDriveFiles);
+    }
+  };
+
   return {
     // PDF state & handlers
     uploadedPdfs,
@@ -989,5 +1185,9 @@ export function useAddStudies(options = {}) {
     // Submit helpers
     getStudiesToSubmit,
     clearAll,
+
+    // State persistence (for OAuth redirect recovery)
+    getSerializableState,
+    restoreState,
   };
 }
