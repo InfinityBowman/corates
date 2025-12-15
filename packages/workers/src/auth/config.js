@@ -134,6 +134,15 @@ export function createAuth(env, ctx) {
       },
     }),
 
+    // Enable account linking so users with the same email are merged
+    account: {
+      accountLinking: {
+        enabled: true,
+        // Trust Google since it verifies emails; ORCID may not always have verified emails
+        trustedProviders: ['google'],
+      },
+    },
+
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
