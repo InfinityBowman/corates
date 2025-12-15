@@ -17,6 +17,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import Switch from '@components/zag/Switch.jsx';
 import GoogleDriveSettings from './GoogleDriveSettings.jsx';
 import TwoFactorSetup from './TwoFactorSetup.jsx';
+import LinkedAccountsSection from './LinkedAccountsSection.jsx';
 
 export default function SettingsPage() {
   const { user, resetPassword } = useBetterAuth();
@@ -143,13 +144,19 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Connected Services Section */}
+      {/* Linked Accounts Section */}
+      <LinkedAccountsSection />
+
+      {/* Integrations Section (formerly Connected Services) */}
       <div class='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6'>
         <div class='px-6 py-4 border-b border-gray-200 bg-gray-50'>
           <div class='flex items-center space-x-2'>
             <FiLink class='w-5 h-5 text-gray-600' />
-            <h2 class='text-lg font-medium text-gray-900'>Connected Services</h2>
+            <h2 class='text-lg font-medium text-gray-900'>Integrations</h2>
           </div>
+          <p class='text-sm text-gray-500 mt-1'>
+            Connect third-party services to enhance your workflow
+          </p>
         </div>
         <div class='p-6'>
           <GoogleDriveSettings />
@@ -157,7 +164,10 @@ export default function SettingsPage() {
       </div>
 
       {/* Security Section */}
-      <div class='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6'>
+      <div
+        data-section='security'
+        class='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6'
+      >
         <div class='px-6 py-4 border-b border-gray-200 bg-gray-50'>
           <div class='flex items-center space-x-2'>
             <FiShield class='w-5 h-5 text-gray-600' />

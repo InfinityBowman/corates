@@ -16,6 +16,7 @@
     "db:migrate:prod": "wrangler d1 migrations apply corates-db --remote",
     "db:setup:prod": "wrangler d1 execute corates-db-prod --remote --file=migrations/0001_init.sql",
     "db:reset:prod": "./scripts/reset-db-prod.sh",
+    "user:make-admin:local": "node ./scripts/make-admin-local.mjs",
     "user:make-admin:prod": "node ./scripts/make-admin-prod.mjs"
   },
   "dependencies": {

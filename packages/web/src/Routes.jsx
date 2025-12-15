@@ -17,27 +17,32 @@ import BillingPage from '@components/billing/BillingPage.jsx';
 import NotFoundPage from '@components/NotFoundPage.jsx';
 import { AdminDashboard } from '@components/admin-ui/index.js';
 import { BASEPATH } from '@config/api.js';
+import AuthGuard from '@auth-ui/AuthGuard.jsx';
 
 export default function AppRoutes() {
   return (
     <Router base={BASEPATH}>
       {/* Auth routes */}
       <Route path='/' component={AuthLayout}>
-        <Route path='/signin' component={SignIn} />
-        <Route path='/signup' component={SignUp} />
-        <Route path='/check-email' component={CheckEmail} />
-        <Route path='/complete-profile' component={CompleteProfile} />
-        <Route path='/reset-password' component={ResetPassword} />
+        <Route path='/' component={AuthGuard}>
+          <Route path='/signin' component={SignIn} />
+          <Route path='/signup' component={SignUp} />
+          <Route path='/check-email' component={CheckEmail} />
+          <Route path='/complete-profile' component={CompleteProfile} />
+          <Route path='/reset-password' component={ResetPassword} />
+        </Route>
       </Route>
 
       {/* Main app routes */}
       <Route path='/' component={Layout}>
         <Route path='/' component={Dashboard} />
         <Route path='/dashboard' component={Dashboard} />
-        <Route path='/profile' component={ProfilePage} />
-        <Route path='/settings' component={SettingsPage} />
-        <Route path='/admin' component={AdminDashboard} />
-        <Route path='/settings/billing' component={BillingPage} />
+        <Route path='/' component={() => <AuthGuard redirect='dashboard' />}>
+          <Route path='/profile' component={ProfilePage} />
+          <Route path='/settings' component={SettingsPage} />
+          <Route path='/admin' component={AdminDashboard} />
+          <Route path='/settings/billing' component={BillingPage} />
+        </Route>
         <Route path='/checklist/*' component={LocalChecklistView} />
         <Route path='/checklist/:checklistId' component={LocalChecklistView} />
         <Route path='/projects/:projectId' component={ProjectView} />
