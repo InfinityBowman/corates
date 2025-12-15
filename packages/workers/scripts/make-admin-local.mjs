@@ -1,9 +1,9 @@
 /* global console, process */
 
-// run with
-// pnpm -s user:make-admin:prod -- --dry-run --email test@example.com
-// Run the below to make the user (default email) an admin for real:
-// pnpm -s user:make-admin:prod -- -y
+// Run with:
+// pnpm user:make-admin:local -- --email test@example.com
+// Or simply:
+// pnpm user:make-admin:local -- test@example.com
 
 import { spawnSync } from 'node:child_process';
 
@@ -14,7 +14,6 @@ dotenv.config();
 function parseArgs(argv) {
   const args = {
     email: null,
-    yes: false,
     dryRun: false,
   };
 
@@ -31,11 +30,6 @@ function parseArgs(argv) {
     if (token === '--email' || token === '-e') {
       args.email = argv[i + 1] || null;
       i++;
-      continue;
-    }
-
-    if (token === '--yes' || token === '-y') {
-      args.yes = true;
       continue;
     }
 
@@ -63,7 +57,6 @@ function normalizeEmail(email) {
 }
 
 function isValidEmail(email) {
-  // Intentionally simple validation; this is a guardrail, not a full RFC parser.
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
@@ -72,7 +65,7 @@ function sqlString(value) {
 }
 
 function runWranglerD1Execute({ command, json = true }) {
-  const args = ['wrangler', 'd1', 'execute', 'corates-db-prod', '--remote', '--env', 'production'];
+  const args = ['wrangler', 'd1', 'execute', 'corates-db', '--local'];
   if (json) args.push('--json');
   args.push('--command', command);
 
@@ -92,7 +85,6 @@ function runWranglerD1Execute({ command, json = true }) {
 }
 
 function extractRowsFromWranglerJson(stdout) {
-  // Wrangler can return an array (one entry per statement) or an object.
   let parsed;
   try {
     parsed = JSON.parse(stdout);
@@ -102,7 +94,6 @@ function extractRowsFromWranglerJson(stdout) {
 
   const statements = Array.isArray(parsed) ? parsed : [parsed];
 
-  // Collect rows from any statement that has a `results` array.
   const rows = [];
   for (const stmt of statements) {
     if (Array.isArray(stmt?.results)) {
@@ -115,19 +106,19 @@ function extractRowsFromWranglerJson(stdout) {
 
 function printUsage() {
   console.log(`Usage:
-  pnpm user:make-admin:prod -- --email someone@example.com --yes
+  pnpm user:make-admin:local -- --email someone@example.com
+  pnpm user:make-admin:local -- someone@example.com
 
 Options:
   --email, -e   Email address to promote
-  --yes, -y     Required. Confirms you intend to modify the production database.
   --dry-run     Prints the SQL that would run without executing it
 
 Alternative:
   - Set ADMIN_EMAIL in your .env file or as an environment variable.
 
 Notes:
-  - Uses Cloudflare Wrangler to update the remote D1 database (corates-db-prod).
-  - Requires you to be authenticated with Cloudflare and have access to the production DB.`);
+  - Uses Cloudflare Wrangler to update the LOCAL D1 database (corates-db).
+  - Make sure your local dev server has been run at least once to create the DB.`);
 }
 
 async function main() {
@@ -148,12 +139,6 @@ async function main() {
     process.exit(2);
   }
 
-  if (!args.yes && !args.dryRun) {
-    console.error('Refusing to modify production DB without --yes.');
-    printUsage();
-    process.exit(2);
-  }
-
   const selectSql = `SELECT id, email, role FROM user WHERE lower(email) = lower(${sqlString(
     email,
   )}) LIMIT 5;`;
@@ -170,6 +155,8 @@ async function main() {
     return;
   }
 
+  console.log(`Looking for user: ${email}`);
+
   const beforeJson = runWranglerD1Execute({ command: selectSql, json: true });
   const before = extractRowsFromWranglerJson(beforeJson);
 
@@ -178,7 +165,6 @@ async function main() {
     process.exit(1);
   }
 
-  // Guardrail: unique email should mean 1 row.
   if (before.rows.length > 1) {
     console.error(`Multiple users matched email ${email}; refusing to proceed.`);
     console.error('Result rows:', JSON.stringify(before.rows, null, 2));
@@ -191,12 +177,14 @@ async function main() {
     return;
   }
 
+  console.log(`Promoting ${email} from "${currentRole || 'user'}" to "admin"...`);
+
   runWranglerD1Execute({ command: updateSql, json: true });
 
   const afterJson = runWranglerD1Execute({ command: selectSql, json: true });
   const after = extractRowsFromWranglerJson(afterJson);
 
-  console.log('Updated user role in production DB:');
+  console.log('Updated user role in local DB:');
   console.log(JSON.stringify(after.rows?.[0] || null, null, 2));
 }
 

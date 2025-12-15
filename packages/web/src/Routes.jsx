@@ -17,11 +17,12 @@ import BillingPage from '@components/billing/BillingPage.jsx';
 import NotFoundPage from '@components/NotFoundPage.jsx';
 import { AdminDashboard } from '@components/admin-ui/index.js';
 import { BASEPATH } from '@config/api.js';
+import ProtectedGuard from '@/components/auth-ui/ProtectedGuard.jsx';
 
 export default function AppRoutes() {
   return (
     <Router base={BASEPATH}>
-      {/* Auth routes */}
+      {/* Auth routes - AuthLayout includes guest guard logic */}
       <Route path='/' component={AuthLayout}>
         <Route path='/signin' component={SignIn} />
         <Route path='/signup' component={SignUp} />
@@ -34,10 +35,13 @@ export default function AppRoutes() {
       <Route path='/' component={Layout}>
         <Route path='/' component={Dashboard} />
         <Route path='/dashboard' component={Dashboard} />
-        <Route path='/profile' component={ProfilePage} />
-        <Route path='/settings' component={SettingsPage} />
-        <Route path='/admin' component={AdminDashboard} />
-        <Route path='/settings/billing' component={BillingPage} />
+        {/* Protected routes - requires login */}
+        <Route path='/' component={ProtectedGuard}>
+          <Route path='/profile' component={ProfilePage} />
+          <Route path='/settings' component={SettingsPage} />
+          <Route path='/admin' component={AdminDashboard} />
+          <Route path='/settings/billing' component={BillingPage} />
+        </Route>
         <Route path='/checklist/*' component={LocalChecklistView} />
         <Route path='/checklist/:checklistId' component={LocalChecklistView} />
         <Route path='/projects/:projectId' component={ProjectView} />

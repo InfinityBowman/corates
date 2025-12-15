@@ -12,6 +12,7 @@ import {
   FiXCircle,
   FiCheckCircle,
   FiClock,
+  FiMail,
 } from 'solid-icons/fi';
 import {
   banUser,
@@ -22,6 +23,14 @@ import {
 } from '@/stores/adminStore.js';
 import Avatar from '@components/zag/Avatar.jsx';
 import Dialog from '@components/zag/Dialog.jsx';
+import Tooltip from '@components/zag/Tooltip.jsx';
+
+// Provider display info
+const PROVIDER_INFO = {
+  google: { name: 'Google', icon: '/logos/google.svg' },
+  orcid: { name: 'ORCID', icon: '/logos/orcid.svg' },
+  credential: { name: 'Email/Password', icon: null },
+};
 
 export default function UserTable(props) {
   const [actionMenuOpen, setActionMenuOpen] = createSignal(null);
@@ -137,6 +146,9 @@ export default function UserTable(props) {
                 Email
               </th>
               <th class='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                Providers
+              </th>
+              <th class='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
                 Status
               </th>
               <th class='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
@@ -152,7 +164,7 @@ export default function UserTable(props) {
               each={props.users}
               fallback={
                 <tr>
-                  <td colspan='5' class='px-6 py-12 text-center text-gray-500'>
+                  <td colspan='6' class='px-6 py-12 text-center text-gray-500'>
                     No users found
                   </td>
                 </tr>
@@ -182,6 +194,35 @@ export default function UserTable(props) {
                       <span class='text-sm text-gray-600'>{user.email}</span>
                       <Show when={user.emailVerified}>
                         <FiCheckCircle class='w-4 h-4 text-green-500' title='Email verified' />
+                      </Show>
+                    </div>
+                  </td>
+                  <td class='px-6 py-4'>
+                    <div class='flex items-center gap-1.5'>
+                      <For each={user.providers || []}>
+                        {provider => {
+                          const info = PROVIDER_INFO[provider];
+                          return (
+                            <Tooltip content={info?.name || provider}>
+                              <div class='w-5 h-5 flex items-center justify-center'>
+                                <Show
+                                  when={info?.icon}
+                                  fallback={<FiMail class='w-4 h-4 text-gray-500' />}
+                                >
+                                  <img
+                                    src={info?.icon}
+                                    alt={info?.name || provider}
+                                    title={info?.name || provider}
+                                    class='w-4 h-4'
+                                  />
+                                </Show>
+                              </div>
+                            </Tooltip>
+                          );
+                        }}
+                      </For>
+                      <Show when={!user.providers || user.providers.length === 0}>
+                        <span class='text-xs text-gray-400'>None</span>
                       </Show>
                     </div>
                   </td>

@@ -38,6 +38,7 @@ async function resetSchema() {
 
   await run('PRAGMA foreign_keys = ON');
 
+  await run('DROP TABLE IF EXISTS account');
   await run('DROP TABLE IF EXISTS project_members');
   await run('DROP TABLE IF EXISTS projects');
   await run('DROP TABLE IF EXISTS session');
@@ -60,6 +61,25 @@ async function resetSchema() {
       banned INTEGER DEFAULT 0,
       banReason TEXT,
       banExpires INTEGER
+    )
+  `);
+
+  await run(`
+    CREATE TABLE account (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL,
+      accountId TEXT NOT NULL,
+      providerId TEXT NOT NULL,
+      accessToken TEXT,
+      refreshToken TEXT,
+      accessTokenExpiresAt INTEGER,
+      refreshTokenExpiresAt INTEGER,
+      scope TEXT,
+      idToken TEXT,
+      password TEXT,
+      createdAt INTEGER DEFAULT (unixepoch()),
+      updatedAt INTEGER DEFAULT (unixepoch()),
+      FOREIGN KEY(userId) REFERENCES user(id) ON DELETE CASCADE
     )
   `);
 
