@@ -18,8 +18,8 @@ function formatOrcidId(id) {
   if (!id) return '';
   // If already formatted with hyphens, return as-is
   if (id.includes('-')) return id;
-  // Format as XXXX-XXXX-XXXX-XXXX
-  return id.replace(/(\d{4})(\d{4})(\d{4})(\d{4})/, '$1-$2-$3-$4');
+  // Format as XXXX-XXXX-XXXX-XXXX (last char can be X for checksum)
+  return id.replace(/(\d{4})(\d{4})(\d{4})(\d{3}[\dXx])/, '$1-$2-$3-$4');
 }
 
 export default function AccountProviderCard(props) {

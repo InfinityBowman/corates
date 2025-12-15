@@ -6,3 +6,4 @@ build
 coverage
 .output
 .vinxi
+package-lock.json
