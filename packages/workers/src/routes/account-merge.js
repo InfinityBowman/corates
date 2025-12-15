@@ -26,6 +26,7 @@ import {
 } from '../db/schema.js';
 import { eq, sql, like } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
+import { rateLimit } from '../middleware/rateLimit.js';
 import { createEmailService } from '../auth/email.js';
 import { getAccountMergeEmailHtml, getAccountMergeEmailText } from '../auth/emailTemplates.js';
 
@@ -128,6 +129,16 @@ accountMergeRoutes.post('/initiate', async c => {
 
   if (!emailResult.success) {
     console.error('[AccountMerge] Failed to send verification email:', emailResult.error);
+
+    // Roll back: delete the merge token that was just created
+    await db
+      .delete(verification)
+      .where(eq(verification.identifier, `merge:${currentUser.id}:${targetUser.id}`));
+
+    return c.json(
+      { error: 'Failed to send verification email. Please try again later.' },
+      502,
+    );
   }
 
   // In dev, log the code for testing
@@ -146,6 +157,14 @@ accountMergeRoutes.post('/initiate', async c => {
   });
 });
 
+// Rate limiter for merge verification attempts (5 attempts per 15 minutes per token)
+const mergeVerifyRateLimiter = rateLimit({
+  limit: 5,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  keyPrefix: 'merge-verify',
+  keyGenerator: c => c.get('mergeTokenKey') || 'unknown',
+});
+
 /**
  * POST /api/accounts/merge/verify
  *
@@ -159,6 +178,13 @@ accountMergeRoutes.post('/verify', async c => {
 
   if (!mergeToken || !code) {
     return c.json({ error: 'Merge token and code are required' }, 400);
+  }
+
+  // Apply rate limiting keyed by mergeToken
+  c.set('mergeTokenKey', mergeToken);
+  const rateLimitResult = await mergeVerifyRateLimiter(c, async () => {});
+  if (rateLimitResult) {
+    return rateLimitResult;
   }
 
   const db = createDb(c.env.DB);
