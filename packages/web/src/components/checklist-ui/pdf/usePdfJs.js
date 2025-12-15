@@ -214,6 +214,18 @@ export default function usePdfJs(options = {}) {
       }
     });
     currentRenderTasks.clear();
+    renderingPages.clear();
+    pendingRenders.clear();
+
+    // Destroy old PDF document to release resources
+    const oldDoc = pdfDoc();
+    if (oldDoc) {
+      try {
+        await oldDoc.destroy();
+      } catch {
+        // Ignore destroy errors
+      }
+    }
 
     try {
       // verbosity: 0 = ERRORS only (suppress warnings about malformed PDFs)
@@ -415,6 +427,26 @@ export default function usePdfJs(options = {}) {
       blobUrl = null;
     }
 
+    // Cancel any pending render tasks
+    currentRenderTasks.forEach(task => {
+      try {
+        task.cancel();
+      } catch {
+        // Ignore
+      }
+    });
+    currentRenderTasks.clear();
+    renderingPages.clear();
+    pendingRenders.clear();
+
+    // Destroy the PDF document to release resources
+    const doc = pdfDoc();
+    if (doc) {
+      doc.destroy().catch(() => {
+        // Ignore destroy errors
+      });
+    }
+
     // Clear all canvases
     pageCanvases().forEach(canvas => {
       if (canvas) {
@@ -437,6 +469,7 @@ export default function usePdfJs(options = {}) {
     setPageTextLayers([]);
     setError(null);
     pageRefs.clear();
+    renderedPages.clear();
 
     if (options.onPdfClear) {
       options.onPdfClear();
@@ -496,6 +529,7 @@ export default function usePdfJs(options = {}) {
 
   // Cleanup
   onCleanup(() => {
+    // Cancel all pending render tasks
     currentRenderTasks.forEach(task => {
       try {
         task.cancel();
@@ -504,6 +538,26 @@ export default function usePdfJs(options = {}) {
       }
     });
     currentRenderTasks.clear();
+    renderingPages.clear();
+    pendingRenders.clear();
+
+    // Destroy the PDF document to release resources and clean up internal canvases
+    const doc = pdfDoc();
+    if (doc) {
+      doc.destroy().catch(() => {
+        // Ignore destroy errors
+      });
+    }
+
+    // Clear all canvas refs
+    pageCanvases().forEach(canvas => {
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.width = 0;
+        canvas.height = 0;
+      }
+    });
 
     if (blobUrl) {
       URL.revokeObjectURL(blobUrl);
@@ -514,6 +568,9 @@ export default function usePdfJs(options = {}) {
     if (scrollContainerRef) {
       scrollContainerRef.removeEventListener('scroll', handleScroll);
     }
+
+    // Clear refs
+    pageRefs.clear();
   });
 
   return {
