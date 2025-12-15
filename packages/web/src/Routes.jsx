@@ -17,27 +17,26 @@ import BillingPage from '@components/billing/BillingPage.jsx';
 import NotFoundPage from '@components/NotFoundPage.jsx';
 import { AdminDashboard } from '@components/admin-ui/index.js';
 import { BASEPATH } from '@config/api.js';
-import AuthGuard from '@auth-ui/AuthGuard.jsx';
+import ProtectedGuard from '@auth-ui/AuthGuard.jsx';
 
 export default function AppRoutes() {
   return (
     <Router base={BASEPATH}>
-      {/* Auth routes */}
+      {/* Auth routes - AuthLayout includes guest guard logic */}
       <Route path='/' component={AuthLayout}>
-        <Route path='/' component={AuthGuard}>
-          <Route path='/signin' component={SignIn} />
-          <Route path='/signup' component={SignUp} />
-          <Route path='/check-email' component={CheckEmail} />
-          <Route path='/complete-profile' component={CompleteProfile} />
-          <Route path='/reset-password' component={ResetPassword} />
-        </Route>
+        <Route path='/signin' component={SignIn} />
+        <Route path='/signup' component={SignUp} />
+        <Route path='/check-email' component={CheckEmail} />
+        <Route path='/complete-profile' component={CompleteProfile} />
+        <Route path='/reset-password' component={ResetPassword} />
       </Route>
 
       {/* Main app routes */}
       <Route path='/' component={Layout}>
         <Route path='/' component={Dashboard} />
         <Route path='/dashboard' component={Dashboard} />
-        <Route path='/' component={() => <AuthGuard redirect='dashboard' />}>
+        {/* Protected routes - requires login */}
+        <Route path='/' component={ProtectedGuard}>
           <Route path='/profile' component={ProfilePage} />
           <Route path='/settings' component={SettingsPage} />
           <Route path='/admin' component={AdminDashboard} />

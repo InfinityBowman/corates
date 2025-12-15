@@ -1,13 +1,15 @@
 import { createEffect, Show, createSignal } from 'solid-js';
-import { useNavigate, useLocation } from '@solidjs/router';
+import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 
-export default function AuthGuard(props) {
-  const { isLoggedIn, authLoading, user } = useBetterAuth();
+/**
+ * ProtectedGuard - For authenticated pages (profile, settings, admin, etc.)
+ * Redirects guests to dashboard (or sign-in)
+ */
+export default function ProtectedGuard(props) {
+  const { isLoggedIn, authLoading } = useBetterAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // Track if this is the initial load vs a background refetch
   const [initialLoadComplete, setInitialLoadComplete] = createSignal(false);
 
   createEffect(() => {
@@ -16,42 +18,15 @@ export default function AuthGuard(props) {
     }
   });
 
-  // Redirect logged in users appropriately
+  // Redirect non-logged-in users to dashboard
   createEffect(() => {
-    if (!authLoading() && isLoggedIn()) {
-      const currentPath = location.pathname;
-      const currentUser = user();
-
-      // Don't redirect if on complete-profile or reset-password (allow setting password while logged in)
-      if (currentPath === '/complete-profile' || currentPath === '/reset-password') {
-        return;
-      }
-
-      // If user hasn't completed profile setup, send to complete-profile
-      // Otherwise send to dashboard
-      if (!currentUser?.profileCompletedAt) {
-        navigate('/complete-profile', { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+    if (!authLoading() && !isLoggedIn()) {
+      navigate('/dashboard', { replace: true });
     }
   });
 
-  // Show loading only on initial load, not on refetches
   const showLoading = () => !initialLoadComplete() && authLoading();
-
-  // Show content for:
-  // 1. Non-logged-in users (signup, signin, etc.)
-  // 2. Logged-in users on complete-profile or reset-password page
-  const showContent = () => {
-    if (!initialLoadComplete()) return false;
-    const currentPath = location.pathname;
-    if (currentPath === '/complete-profile' || currentPath === '/reset-password') return true;
-    if (props.redirect) {
-      navigate(`/${props.redirect}`, { replace: true });
-    }
-    return !isLoggedIn();
-  };
+  const showContent = () => initialLoadComplete() && isLoggedIn();
 
   return (
     <>
