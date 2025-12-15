@@ -11,60 +11,36 @@
  * 4. Register it in CHECKLIST_REGISTRY below
  */
 
-import { lazy } from 'solid-js';
 import { CHECKLIST_TYPES, DEFAULT_CHECKLIST_TYPE } from './types.js';
+import {
+  createChecklist as createAMSTAR2,
+  scoreChecklist as scoreAMSTAR2,
+  getAnswers as getAMSTAR2Answers,
+} from '@/AMSTAR2/checklist.js';
+import {
+  createChecklist as createROBINSI,
+  scoreChecklist as scoreROBINSI,
+} from '@/ROBINS-I/checklist.js';
 
 /**
  * Registry mapping checklist types to their implementations
  *
  * Each entry provides:
- * - component: Lazy-loaded SolidJS component
  * - createChecklist: Factory function to create new checklist state
  * - scoreChecklist: Scoring function for the checklist
  * - getAnswers: Function to extract answers from state (for comparison/export)
- * - propAdapter: Maps generic props to component-specific props
  */
 export const CHECKLIST_REGISTRY = {
   [CHECKLIST_TYPES.AMSTAR2]: {
-    component: lazy(() => import('@checklist-ui/AMSTAR2Checklist.jsx')),
-
-    async createChecklist(options) {
-      const { createChecklist } = await import('@/AMSTAR2/checklist.js');
-      return createChecklist(options);
-    },
-
-    async scoreChecklist(state) {
-      const { scoreChecklist } = await import('@/AMSTAR2/checklist.js');
-      return scoreChecklist(state);
-    },
-
-    async getAnswers(state) {
-      const { getAnswers } = await import('@/AMSTAR2/checklist.js');
-      return getAnswers ? getAnswers(state) : state;
-    },
+    createChecklist: createAMSTAR2,
+    scoreChecklist: scoreAMSTAR2,
+    getAnswers: getAMSTAR2Answers || (state => state),
   },
 
   [CHECKLIST_TYPES.ROBINS_I]: {
-    component: lazy(() =>
-      import('@checklist-ui/ROBINSIChecklist/ROBINSIChecklist.jsx').then(m => ({
-        default: m.ROBINSIChecklist,
-      })),
-    ),
-
-    async createChecklist(options) {
-      const { createChecklist } = await import('@/ROBINS-I/checklist.js');
-      return createChecklist(options);
-    },
-
-    async scoreChecklist(state) {
-      const { scoreChecklist } = await import('@/ROBINS-I/checklist.js');
-      return scoreChecklist(state);
-    },
-
-    async getAnswers(state) {
-      const { getAnswers } = await import('@/ROBINS-I/checklist.js');
-      return getAnswers ? getAnswers(state) : state;
-    },
+    createChecklist: createROBINSI,
+    scoreChecklist: scoreROBINSI,
+    getAnswers: state => state, // ROBINS-I doesn't have a separate getAnswers yet
   },
 };
 
@@ -86,11 +62,11 @@ export function getChecklistConfig(type) {
  * Create a new checklist of the specified type
  * @param {string} type - The checklist type
  * @param {Object} options - Options passed to createChecklist (name, id, etc.)
- * @returns {Promise<Object>} The new checklist state
+ * @returns {Object} The new checklist state
  */
-export async function createChecklistOfType(type, options) {
+export function createChecklistOfType(type, options) {
   const config = getChecklistConfig(type);
-  const checklist = await config.createChecklist(options);
+  const checklist = config.createChecklist(options);
   // Ensure the type is stored in the checklist
   return { ...checklist, checklistType: type };
 }
@@ -99,21 +75,11 @@ export async function createChecklistOfType(type, options) {
  * Score a checklist based on its type
  * @param {string} type - The checklist type
  * @param {Object} state - The checklist state
- * @returns {Promise<string>} The score/rating
+ * @returns {string} The score/rating
  */
-export async function scoreChecklistOfType(type, state) {
+export function scoreChecklistOfType(type, state) {
   const config = getChecklistConfig(type);
   return config.scoreChecklist(state);
-}
-
-/**
- * Get the component for a checklist type
- * @param {string} type - The checklist type
- * @returns {Component} The lazy-loaded component
- */
-export function getChecklistComponent(type) {
-  const config = getChecklistConfig(type);
-  return config.component;
 }
 
 /**

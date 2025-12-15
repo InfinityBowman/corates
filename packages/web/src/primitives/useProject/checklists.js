@@ -18,9 +18,9 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
    * @param {string} studyId - The study ID
    * @param {string} type - Checklist type (default: 'AMSTAR2')
    * @param {string|null} assignedTo - User ID to assign to
-   * @returns {Promise<string|null>} The checklist ID or null if failed
+   * @returns {string|null} The checklist ID or null if failed
    */
-  async function createChecklist(studyId, type = 'AMSTAR2', assignedTo = null) {
+  function createChecklist(studyId, type = 'AMSTAR2', assignedTo = null) {
     const ydoc = getYDoc();
     if (!ydoc || !isSynced()) return null;
 
@@ -40,48 +40,43 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
 
     // Get the default answers structure for this checklist type using the registry
     let answersData = {};
-    try {
-      const checklistTemplate = await createChecklistOfType(type, {
-        id: checklistId,
-        name: `${type} Checklist`,
-        createdAt: now,
-      });
+    const checklistTemplate = createChecklistOfType(type, {
+      id: checklistId,
+      name: `${type} Checklist`,
+      createdAt: now,
+    });
 
-      // Extract answers based on checklist type
-      if (type === CHECKLIST_TYPES.AMSTAR2) {
-        // AMSTAR2: Extract question answers (q1, q2, etc.)
-        Object.entries(checklistTemplate).forEach(([key, value]) => {
-          if (/^q\d+[a-z]*$/i.test(key)) {
-            answersData[key] = value;
-          }
-        });
-      } else if (type === CHECKLIST_TYPES.ROBINS_I) {
-        // ROBINS-I: Extract all domain and section data
-        const robinsKeys = [
-          'planning',
-          'sectionA',
-          'sectionB',
-          'sectionC',
-          'sectionD',
-          'confoundingEvaluation',
-          'domain1a',
-          'domain1b',
-          'domain2',
-          'domain3',
-          'domain4',
-          'domain5',
-          'domain6',
-          'overall',
-        ];
-        robinsKeys.forEach(key => {
-          if (checklistTemplate[key] !== undefined) {
-            answersData[key] = checklistTemplate[key];
-          }
-        });
-      }
-    } catch (err) {
-      console.error('Failed to create checklist template:', err);
-      return null;
+    // Extract answers based on checklist type
+    if (type === CHECKLIST_TYPES.AMSTAR2) {
+      // AMSTAR2: Extract question answers (q1, q2, etc.)
+      Object.entries(checklistTemplate).forEach(([key, value]) => {
+        if (/^q\d+[a-z]*$/i.test(key)) {
+          answersData[key] = value;
+        }
+      });
+    } else if (type === CHECKLIST_TYPES.ROBINS_I) {
+      // ROBINS-I: Extract all domain and section data
+      const robinsKeys = [
+        'planning',
+        'sectionA',
+        'sectionB',
+        'sectionC',
+        'sectionD',
+        'confoundingEvaluation',
+        'domain1a',
+        'domain1b',
+        'domain2',
+        'domain3',
+        'domain4',
+        'domain5',
+        'domain6',
+        'overall',
+      ];
+      robinsKeys.forEach(key => {
+        if (checklistTemplate[key] !== undefined) {
+          answersData[key] = checklistTemplate[key];
+        }
+      });
     }
 
     const checklistYMap = new Y.Map();
@@ -230,13 +225,13 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
   }
 
   /**
-   * Update a single answer in a checklist
+   * Update a single answer/section in a checklist
    * @param {string} studyId - The study ID
    * @param {string} checklistId - The checklist ID
-   * @param {string} questionKey - The question key (e.g., 'q1', 'q2a')
-   * @param {Object} answerData - The answer data { answers, critical }
+   * @param {string} key - The answer key (e.g., 'q1' for AMSTAR2, 'domain1a' for ROBINS-I)
+   * @param {Object} data - The answer data (structure depends on checklist type)
    */
-  function updateChecklistAnswer(studyId, checklistId, questionKey, answerData) {
+  function updateChecklistAnswer(studyId, checklistId, key, data) {
     const ydoc = getYDoc();
     if (!ydoc || !isSynced()) return;
 
@@ -256,11 +251,19 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
       checklistYMap.set('answers', answersMap);
     }
 
-    // Update the specific question's answer
-    const questionYMap = new Y.Map();
-    questionYMap.set('answers', answerData.answers);
-    questionYMap.set('critical', answerData.critical);
-    answersMap.set(questionKey, questionYMap);
+    const checklistType = checklistYMap.get('type');
+
+    // AMSTAR2: Store as nested Y.Map with answers and critical
+    if (checklistType === 'AMSTAR2' && data.answers !== undefined) {
+      const questionYMap = new Y.Map();
+      questionYMap.set('answers', data.answers);
+      questionYMap.set('critical', data.critical);
+      answersMap.set(key, questionYMap);
+    }
+    // ROBINS-I and other types: Store data directly
+    else {
+      answersMap.set(key, data);
+    }
 
     checklistYMap.set('updatedAt', Date.now());
   }

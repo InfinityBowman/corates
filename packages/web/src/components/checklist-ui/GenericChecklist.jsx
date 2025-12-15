@@ -1,38 +1,18 @@
 /**
  * GenericChecklist - Dynamic checklist component loader
  *
- * This component loads the appropriate checklist UI based on the checklist type,
+ * This component renders the appropriate checklist UI based on the checklist type,
  * adapting props to match each component's expected interface.
  */
 
-import { Suspense, createMemo, Show, lazy } from 'solid-js';
+import { createMemo, Show } from 'solid-js';
 import {
   getChecklistTypeFromState,
   DEFAULT_CHECKLIST_TYPE,
   CHECKLIST_TYPES,
 } from '@/checklist-registry';
-
-// Lazy load the checklist components
-const AMSTAR2Checklist = lazy(() => import('@checklist-ui/AMSTAR2Checklist.jsx'));
-const ROBINSIChecklist = lazy(() =>
-  import('@checklist-ui/ROBINSIChecklist/ROBINSIChecklist.jsx').then(m => ({
-    default: m.ROBINSIChecklist,
-  })),
-);
-
-/**
- * Loading fallback while checklist component is being loaded
- */
-function ChecklistLoading() {
-  return (
-    <div class='flex items-center justify-center h-64'>
-      <div class='text-center'>
-        <div class='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4' />
-        <p class='text-gray-500'>Loading checklist...</p>
-      </div>
-    </div>
-  );
-}
+import AMSTAR2Checklist from '@checklist-ui/AMSTAR2Checklist.jsx';
+import { ROBINSIChecklist } from '@checklist-ui/ROBINSIChecklist/index.js';
 
 /**
  * GenericChecklist Component
@@ -58,7 +38,7 @@ export default function GenericChecklist(props) {
   });
 
   return (
-    <Suspense fallback={<ChecklistLoading />}>
+    <>
       <Show when={checklistType() === CHECKLIST_TYPES.AMSTAR2}>
         <AMSTAR2Checklist
           externalChecklist={props.checklist}
@@ -75,6 +55,6 @@ export default function GenericChecklist(props) {
           readOnly={props.readOnly}
         />
       </Show>
-    </Suspense>
+    </>
   );
 }
