@@ -10,7 +10,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8787';
 /**
  * Initiate a merge request
  * @param {string} targetEmail - Email of the account to merge with
- * @returns {Promise<{ success: boolean, mergeToken: string, targetEmail: string, targetName: string, preview: object }>}
+ * @returns {Promise<{ success: boolean, mergeToken: string, targetEmail: string, preview: { currentProviders: string[] } }>}
  */
 export async function initiateMerge(targetEmail) {
   const response = await fetch(`${API_BASE}/api/accounts/merge/initiate`, {
@@ -33,7 +33,7 @@ export async function initiateMerge(targetEmail) {
  * Verify the code sent to the target email
  * @param {string} mergeToken - The merge token from initiate
  * @param {string} code - The 6-digit verification code
- * @returns {Promise<{ success: boolean, message: string }>}
+ * @returns {Promise<{ success: boolean, message: string, preview: { currentProviders: string[], targetProviders: string[] } }>}
  */
 export async function verifyMergeCode(mergeToken, code) {
   const response = await fetch(`${API_BASE}/api/accounts/merge/verify`, {

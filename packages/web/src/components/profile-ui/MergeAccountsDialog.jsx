@@ -67,7 +67,7 @@ export default function MergeAccountsDialog(props) {
     try {
       const result = await initiateMerge(email);
       setMergeToken(result.mergeToken);
-      setMergePreview(result.preview);
+      // Preview with targetProviders is deferred until after code verification
       setStep(STEPS.ENTER_CODE);
       showToast.success('Code Sent', `A verification code has been sent to ${email}`);
     } catch (err) {
@@ -92,7 +92,11 @@ export default function MergeAccountsDialog(props) {
     setError(null);
 
     try {
-      await verifyMergeCode(mergeToken(), code);
+      const result = await verifyMergeCode(mergeToken(), code);
+      // Preview with full provider info is returned after successful verification
+      if (result.preview) {
+        setMergePreview(result.preview);
+      }
       setStep(STEPS.CONFIRM);
     } catch (err) {
       setError(err.message);

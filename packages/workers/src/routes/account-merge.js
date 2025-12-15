@@ -38,6 +38,14 @@ accountMergeRoutes.use('*', requireAuth);
 // Tier priority for subscription merging
 const TIER_PRIORITY = { enterprise: 4, team: 3, pro: 2, free: 1 };
 
+// Rate limiter for merge initiate (3 attempts per 15 minutes per user+email)
+const mergeInitiateRateLimiter = rateLimit({
+  limit: 3,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  keyPrefix: 'merge-initiate',
+  keyGenerator: c => c.get('mergeInitiateKey') || 'unknown',
+});
+
 /**
  * Generate a 6-digit verification code
  */
@@ -70,6 +78,13 @@ accountMergeRoutes.post('/initiate', async c => {
 
   if (normalizedEmail === currentUser.email.toLowerCase()) {
     return c.json({ error: 'Cannot merge with your own account' }, 400);
+  }
+
+  // Apply rate limiting keyed by user ID + target email
+  c.set('mergeInitiateKey', `${currentUser.id}:${normalizedEmail}`);
+  const rateLimitResult = await mergeInitiateRateLimiter(c, async () => {});
+  if (rateLimitResult) {
+    return rateLimitResult;
   }
 
   const db = createDb(c.env.DB);
@@ -155,7 +170,7 @@ accountMergeRoutes.post('/initiate', async c => {
     targetEmail: targetUser.email,
     preview: {
       currentProviders: currentAccounts.map(a => a.providerId),
-      targetProviders: targetAccounts.map(a => a.providerId),
+      // targetProviders deferred until after code verification for security
     },
   });
 });
@@ -181,6 +196,15 @@ accountMergeRoutes.post('/verify', async c => {
 
   if (!mergeToken || !code) {
     return c.json({ error: 'Merge token and code are required' }, 400);
+  }
+
+  if (typeof mergeToken !== 'string' || typeof code !== 'string') {
+    return c.json({ error: 'Merge token and code must be strings' }, 400);
+  }
+
+  const trimmedCode = code.trim();
+  if (!trimmedCode) {
+    return c.json({ error: 'Code cannot be empty' }, 400);
   }
 
   // Apply rate limiting keyed by mergeToken
@@ -217,7 +241,7 @@ accountMergeRoutes.post('/verify', async c => {
   }
 
   // Verify code
-  if (mergeData.code !== code.trim()) {
+  if (mergeData.code !== trimmedCode) {
     return c.json({ error: 'Invalid verification code' }, 400);
   }
 
@@ -236,9 +260,25 @@ accountMergeRoutes.post('/verify', async c => {
     })
     .where(eq(verification.id, mergeRequest.id));
 
+  // Now that email ownership is verified, fetch and return provider info
+  const [currentAccounts, targetAccounts] = await Promise.all([
+    db
+      .select({ providerId: account.providerId })
+      .from(account)
+      .where(eq(account.userId, currentUser.id)),
+    db
+      .select({ providerId: account.providerId })
+      .from(account)
+      .where(eq(account.userId, mergeData.targetId)),
+  ]);
+
   return c.json({
     success: true,
     message: 'Code verified. You can now complete the merge.',
+    preview: {
+      currentProviders: currentAccounts.map(a => a.providerId),
+      targetProviders: targetAccounts.map(a => a.providerId),
+    },
   });
 });
 
