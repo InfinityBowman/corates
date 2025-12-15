@@ -297,6 +297,10 @@ accountMergeRoutes.post('/complete', async c => {
     return c.json({ error: 'Merge token is required' }, 400);
   }
 
+  if (typeof mergeToken !== 'string' || mergeToken.trim().length === 0) {
+    return c.json({ error: 'Merge token must be a non-empty string' }, 400);
+  }
+
   const db = createDb(c.env.DB);
 
   // Find the merge request
