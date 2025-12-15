@@ -31,31 +31,12 @@ When you need to find icons from `solid-icons`, use the `search_icons` MCP tool:
 
 ## Documentation Tool
 
-Use the `docs_list` and `docs_get_llms_txt` MCP tools to explore local documentation sources. Use this MCP for all Better-Auth, Drizzle, and Zag documentation.
+PLEASE USE THE CORATES MCP tools to explore local documentation sources. Use this MCP for all Better-Auth, Drizzle, and Zag documentation.
 
-## Zag.js Documentation
+## Zag.js
 
 When you need to implement UI components use zag.js
-When adding a new zag component, place zag components into components/zag/\* files.
-
-### Existing Zag Components
-
-The following Zag components already exist in `packages/web/src/components/zag/*` and should be reused:
-
-- `Avatar.jsx` - User avatar with image and fallback initials (supports `src`, `name`, `alt`, `onStatusChange`, `class` props)
-- `Checkbox.jsx` - Checkbox input with label
-- `Collapsible.jsx` - Expandable/collapsible content sections
-- `Dialog.jsx` - Modal dialogs
-- `FileUpload.jsx` - File upload with drag-and-drop
-- `FloatingPanel.jsx` - Draggable and resizable floating panel (supports `open`, `onOpenChange`, `title`, `defaultSize`, `defaultPosition`, `size`, `position`, `onSizeChange`, `onPositionChange`, `onStageChange`, `resizable`, `draggable`, `minSize`, `maxSize`, `lockAspectRatio`, `showControls`, `showResizeHandles` props)
-- `PasswordInput.jsx` - Password input with show/hide toggle (supports `label`, `password`, `onPasswordChange`, `autoComplete`, `inputClass` props)
-- `Splitter.jsx` - Resizable split panes
-- `Switch.jsx` - Toggle switch
-- `Tabs.jsx` - Tabbed content
-- `Toast.jsx` - Toast notifications (use via `useToast` from `@primitives/useToast.jsx`)
-- `Tooltip.jsx` - Tooltips with arrow support (supports `content`, `placement`, `openDelay`, `closeDelay` props)
-
-Always check for existing Zag components before creating new ones or using plain HTML inputs.
+Zag component exist in `packages/web/src/components/zag/*` and should be reused, see the README.md in that folder for a list of existing components.
 
 ## Additional References
 
