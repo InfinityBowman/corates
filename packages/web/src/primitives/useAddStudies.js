@@ -1073,13 +1073,14 @@ export function useAddStudies(options = {}) {
         metadata: pdf.metadata,
         matchedToRef: pdf.matchedToRef,
         // Create a minimal file-like object for display purposes
-        file: pdf.fileName ?
-          {
-            name: pdf.fileName,
-            type: pdf.fileType || 'application/pdf',
-            size: pdf.fileSize || pdf.data?.byteLength || 0,
-          }
-        : null,
+        file:
+          pdf.fileName ?
+            {
+              name: pdf.fileName,
+              type: pdf.fileType || 'application/pdf',
+              size: pdf.fileSize || pdf.data?.byteLength || 0,
+            }
+          : null,
       }));
       setUploadedPdfs(restoredPdfs);
     }
@@ -1103,13 +1104,14 @@ export function useAddStudies(options = {}) {
         doi: pdf.doi,
         matched: pdf.matched,
         matchedRefId: pdf.matchedRefId,
-        file: pdf.fileName ?
-          {
-            name: pdf.fileName,
-            type: pdf.fileType || 'application/pdf',
-            size: pdf.fileSize || pdf.data?.byteLength || 0,
-          }
-        : null,
+        file:
+          pdf.fileName ?
+            {
+              name: pdf.fileName,
+              type: pdf.fileType || 'application/pdf',
+              size: pdf.fileSize || pdf.data?.byteLength || 0,
+            }
+          : null,
       }));
       setRefPdfFiles(restoredRefPdfs);
     }
