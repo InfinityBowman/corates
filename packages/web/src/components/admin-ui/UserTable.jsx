@@ -209,7 +209,12 @@ export default function UserTable(props) {
                                   when={info?.icon}
                                   fallback={<FiMail class='w-4 h-4 text-gray-500' />}
                                 >
-                                  <img src={info.icon} alt={info.name} class='w-4 h-4' />
+                                  <img
+                                    src={info?.icon}
+                                    alt={info?.name || provider}
+                                    title={info?.name || provider}
+                                    class='w-4 h-4'
+                                  />
                                 </Show>
                               </div>
                             </Tooltip>
