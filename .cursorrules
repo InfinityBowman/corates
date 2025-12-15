@@ -1,6 +1,6 @@
-# Cursor Rules for CoRATES
+# GitHub Copilot Instructions
 
-This file contains instructions for Cursor AI to follow when generating code for this project. Please adhere to these guidelines to ensure consistency and maintainability across the codebase. This project is CoRATES (Collaborative Research Appraisal Tool for Evidence Synthesis), a SolidJS-based web application deployed on Cloudflare Workers.
+This file contains instructions for GitHub Copilot to follow when generating code for this project. Please adhere to these guidelines to ensure consistency and maintainability across the codebase. This project is CoRATES (Collaborative Research Appraisal Tool for Evidence Synthesis), a SolidJS-based web application deployed on Cloudflare Workers.
 
 ## Coding Standards
 
@@ -14,42 +14,21 @@ This file contains instructions for Cursor AI to follow when generating code for
 
 ## File Size Guidelines
 
-- **Keep files small, focused, and modular.** Aim for ~200-300 lines max per component file.
-- If a component exceeds ~300 lines, consider refactoring:
-  - Extract sub-components into a folder (e.g., `ComponentName/` with `index.jsx` and helper components)
+- **Keep files small, focused, and modular.** - If a file exceeds a high number of lines, consider refactoring:
+  - Extract sub-modules into a folder (e.g., `ComponentName/` with `index.jsx` and helper components)
   - Move complex logic into separate utility files or primitives
   - Split large forms into section components (see `add-studies/` folder pattern)
 - Each file should handle one coherent responsibility
 - Group related components in subdirectories with an `index.js` barrel export
 
-## Icon Search Tool
+## Documentation Tool
 
-When you need to find icons from `solid-icons`, use the `search_icons` MCP tool:
+PLEASE USE THE CORATES MCP tools to explore local documentation sources. Use this MCP for all Better-Auth, Drizzle, Icons, and Zag documentation.
 
-- Search by keyword (e.g., "arrow", "check", "user")
-- The tool returns icon names with their library prefix and import statement
-- Example: `import { FaArrowRight } from 'solid-icons/fa';`
+## Zag.js
 
-## Zag.js Documentation
-
-When you need to implement UI components, use zag.js. Reference the Zag.js documentation in `docs/zag/llms.txt` for component information, API details, and usage examples.
-
-### Existing Zag Components
-
-The following Zag components already exist in `packages/web/src/components/zag/` and should be reused:
-
-- `Checkbox.jsx` - Checkbox input with label
-- `Collapsible.jsx` - Expandable/collapsible content sections
-- `Dialog.jsx` - Modal dialogs
-- `FileUpload.jsx` - File upload with drag-and-drop
-- `PasswordInput.jsx` - Password input with show/hide toggle (supports `label`, `password`, `onPasswordChange`, `autoComplete`, `inputClass` props)
-- `Splitter.jsx` - Resizable split panes
-- `Switch.jsx` - Toggle switch
-- `Tabs.jsx` - Tabbed content
-- `Toast.jsx` - Toast notifications (use via `useToast` from `@primitives/useToast.jsx`)
-- `Tooltip.jsx` - Tooltips with arrow support (supports `content`, `placement`, `openDelay`, `closeDelay` props)
-
-Always check for existing Zag components before creating new ones or using plain HTML inputs.
+When you need to implement UI components use zag.js
+Zag component exist in `packages/web/src/components/zag/*` and should be reused, see the README.md in that folder for a list of existing components.
 
 ## Additional References
 
@@ -59,6 +38,7 @@ Always check for existing Zag components before creating new ones or using plain
 - See TESTING.md for testing guidelines and best practices, do NOT add tests unless asked.
 - Cloudflare Pages is not used in this project; only Cloudflare Workers is used for backend services and frontend deployments.
 - This project is split into multiple packages under the `packages/` directory. Each package may have its own dependencies and configurations. The landing/marketing site, the main app, and the backend services.
+- Use the Corates MCP for documentation.
 
 ## Database Migrations
 
@@ -71,14 +51,14 @@ Always check for existing Zag components before creating new ones or using plain
 ### State Architecture (Very Important)
 
 To keep the codebase maintainable and avoid prop drilling:
-- Do NOT prop-drill application state.
-- Shared or cross-feature state must live in external stores under packages/web/src/stores/ or relative to the component file.
-- Import stores directly where needed instead of passing values through multiple components.
-- Components should receive at most 1–5 props, and only for local configuration, not shared state.
-- If a component would need more than 5 props, move the shared data into:
-  - an external store
-  - a primitive
-  - or Solid context (when scoped to a feature)
+• Do NOT prop-drill application state.
+• Shared or cross-feature state must live in external stores under packages/web/src/stores/ or relative to the component file.
+• Import stores directly where needed instead of passing values through multiple components.
+• Components should receive at most 1–5 props, and only for local configuration, not shared state.
+• If a component would need more than 5 props, move the shared data into:
+• an external store
+• a primitive
+• or Solid context (when scoped to a feature)
 ALWAYS prefer the CLEANEST solution.
 
 ### Destructuring props
@@ -106,9 +86,10 @@ When you have complex state or state objects, use Solid's `createStore` for bett
 You may create reusable logic in "primitives" (hooks) that can be shared across components. This keeps components clean and focused on rendering.
 
 # Component Guidelines
+
 - Components should be lean and focused.
 - They should not implement business logic; move that into:
-  - stores
-  - utilities
-  - primitives
-- Never have a component act as a "God component" coordinating multiple large concerns.
+- stores
+- utilities
+- primitives
+- Never have a component act as a “God component” coordinating multiple large concerns.

@@ -6,11 +6,6 @@ export default function Hero() {
       <div class='max-w-7xl mx-auto px-4 sm:px-6 pt-8 md:pt-14 pb-0 flex flex-col items-center'>
         <div class='w-full max-w-4xl mb-2'>
           <div class='flex items-center justify-center gap-4 mb-6'>
-            {/* <img
-              src='/icon.png'
-              alt='CoRATES logo'
-              class='w-24 h-24 absolute left-60 rounded-md'
-            /> */}
             <h1 class='text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight text-center m-0'>
               <span class='text-blue-700'>Co</span>llaborative <span class='text-blue-700'>R</span>
               esearch <span class='text-blue-700'>A</span>ppraisal
@@ -55,12 +50,12 @@ export default function Hero() {
                   {/* Browser top bar */}
                   <div class='flex items-center px-2 py-1 sm:px-4 sm:py-2 border-b border-gray-200 bg-gray-100 rounded-t-xl'>
                     <div class='flex items-center gap-2'>
-                      <span class='w-3 h-3 rounded-full bg-red-400 inline-block' />
-                      <span class='w-3 h-3 rounded-full bg-yellow-400 inline-block' />
-                      <span class='w-3 h-3 rounded-full bg-green-400 inline-block' />
+                      <span class='sm:w-3 sm:h-3 w-2.5 h-2.5 rounded-full bg-red-400 inline-block' />
+                      <span class='sm:w-3 sm:h-3 w-2.5 h-2.5 rounded-full bg-yellow-400 inline-block' />
+                      <span class='sm:w-3 sm:h-3 w-2.5 h-2.5 rounded-full bg-green-400 inline-block' />
                     </div>
                     <div class='flex-1 mx-4'>
-                      <div class='bg-white border border-gray-300 rounded-md px-3 py-1 text-xs text-gray-500 truncate max-w-50 sm:max-w-[320px] mx-auto'>
+                      <div class='bg-white border border-gray-300 rounded-md px-1.5 py-0.5 sm:px-3 sm:py-1 text-2xs sm:text-xs text-gray-500 truncate max-w-50 sm:max-w-[320px] mx-auto'>
                         corates.org/dashboard
                       </div>
                     </div>
@@ -80,8 +75,8 @@ export default function Hero() {
         </div>
       </div>
       {/* Background decoration */}
-      <div class='absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[1000px] bg-linear-to-b from-blue-700/5 to-transparent rounded-full blur-3xl -z-10' />
-      <div class='absolute top-1/2 right-0 w-[500px] h-[500px] bg-linear-to-l from-blue-700/5 to-transparent rounded-full blur-3xl -z-10' />
+      <div class='absolute top-0 left-1/2 -translate-x-1/2 w-250 h-250 bg-linear-to-b from-blue-700/5 to-transparent rounded-full blur-3xl -z-10' />
+      <div class='absolute top-1/2 right-0 w-125 h-125 bg-linear-to-l from-blue-700/5 to-transparent rounded-full blur-3xl -z-10' />
     </section>
   );
 }
