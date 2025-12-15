@@ -5,14 +5,20 @@
  * adapting props to match each component's expected interface.
  */
 
-import { Suspense, createMemo } from 'solid-js';
-import { Dynamic } from 'solid-js/web';
+import { Suspense, createMemo, Show, lazy } from 'solid-js';
 import {
-  getChecklistConfig,
   getChecklistTypeFromState,
   DEFAULT_CHECKLIST_TYPE,
   CHECKLIST_TYPES,
 } from '@/checklist-registry';
+
+// Lazy load the checklist components
+const AMSTAR2Checklist = lazy(() => import('@checklist-ui/AMSTAR2Checklist.jsx'));
+const ROBINSIChecklist = lazy(() =>
+  import('@checklist-ui/ROBINSIChecklist/ROBINSIChecklist.jsx').then(m => ({
+    default: m.ROBINSIChecklist,
+  })),
+);
 
 /**
  * Loading fallback while checklist component is being loaded
@@ -51,29 +57,24 @@ export default function GenericChecklist(props) {
     return DEFAULT_CHECKLIST_TYPE;
   });
 
-  // Get the configuration for this checklist type
-  const config = createMemo(() => getChecklistConfig(checklistType()));
-
-  // Get the lazy-loaded component
-  const ChecklistComponent = createMemo(() => config().component);
-
   return (
     <Suspense fallback={<ChecklistLoading />}>
-      <Dynamic
-        component={ChecklistComponent()}
-        // AMSTAR2 props
-        externalChecklist={
-          checklistType() === CHECKLIST_TYPES.AMSTAR2 ? props.checklist : undefined
-        }
-        onExternalUpdate={checklistType() === CHECKLIST_TYPES.AMSTAR2 ? props.onUpdate : undefined}
-        // ROBINS-I props
-        checklistState={checklistType() === CHECKLIST_TYPES.ROBINS_I ? props.checklist : undefined}
-        onUpdate={checklistType() === CHECKLIST_TYPES.ROBINS_I ? props.onUpdate : undefined}
-        showComments={checklistType() === CHECKLIST_TYPES.ROBINS_I ? true : undefined}
-        showLegend={checklistType() === CHECKLIST_TYPES.ROBINS_I ? true : undefined}
-        // Common props
-        readOnly={props.readOnly}
-      />
+      <Show when={checklistType() === CHECKLIST_TYPES.AMSTAR2}>
+        <AMSTAR2Checklist
+          externalChecklist={props.checklist}
+          onExternalUpdate={props.onUpdate}
+          readOnly={props.readOnly}
+        />
+      </Show>
+      <Show when={checklistType() === CHECKLIST_TYPES.ROBINS_I}>
+        <ROBINSIChecklist
+          checklistState={props.checklist}
+          onUpdate={props.onUpdate}
+          showComments={true}
+          showLegend={true}
+          readOnly={props.readOnly}
+        />
+      </Show>
     </Suspense>
   );
 }
