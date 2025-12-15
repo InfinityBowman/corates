@@ -21,17 +21,9 @@ This file contains instructions for GitHub Copilot to follow when generating cod
 - Each file should handle one coherent responsibility
 - Group related components in subdirectories with an `index.js` barrel export
 
-## Icon Search Tool
-
-When you need to find icons from `solid-icons`, use the `search_icons` MCP tool:
-
-- Search by keyword (e.g., "arrow", "check", "user")
-- The tool returns icon names with their library prefix and import statement
-- Example: `import { FaArrowRight } from 'solid-icons/fa';`
-
 ## Documentation Tool
 
-PLEASE USE THE CORATES MCP tools to explore local documentation sources. Use this MCP for all Better-Auth, Drizzle, and Zag documentation.
+PLEASE USE THE CORATES MCP tools to explore local documentation sources. Use this MCP for all Better-Auth, Drizzle, Icons, and Zag documentation.
 
 ## Zag.js
 
@@ -95,9 +87,9 @@ You may create reusable logic in "primitives" (hooks) that can be shared across 
 
 # Component Guidelines
 
-    •	Components should be lean and focused.
-    •	They should not implement business logic; move that into:
-    •	stores
-    •	utilities
-    •	primitives
-    •	Never have a component act as a “God component” coordinating multiple large concerns.
+- Components should be lean and focused.
+- They should not implement business logic; move that into:
+- stores
+- utilities
+- primitives
+- Never have a component act as a “God component” coordinating multiple large concerns.
