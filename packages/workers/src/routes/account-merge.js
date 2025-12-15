@@ -135,10 +135,7 @@ accountMergeRoutes.post('/initiate', async c => {
       .delete(verification)
       .where(eq(verification.identifier, `merge:${currentUser.id}:${targetUser.id}`));
 
-    return c.json(
-      { error: 'Failed to send verification email. Please try again later.' },
-      502,
-    );
+    return c.json({ error: 'Failed to send verification email. Please try again later.' }, 502);
   }
 
   // In dev, log the code for testing
