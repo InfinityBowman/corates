@@ -1,6 +1,13 @@
-import { createSignal, Show } from 'solid-js';
+import { createSignal, Show, onMount } from 'solid-js';
 import { showToast } from '@components/zag/Toast.jsx';
 import AddStudiesForm from './AddStudiesForm.jsx';
+import {
+  saveFormState,
+  getFormState,
+  clearFormState,
+  getRestoreParamsFromUrl,
+  clearRestoreParamsFromUrl,
+} from '@lib/formStatePersistence.js';
 
 /**
  * Form for creating a new project with optional study imports
@@ -15,6 +22,7 @@ export default function CreateProjectForm(props) {
   const [projectName, setProjectName] = createSignal('');
   const [projectDescription, setProjectDescription] = createSignal('');
   const [isCreating, setIsCreating] = createSignal(false);
+  const [restoredState, setRestoredState] = createSignal(null);
 
   // Collected studies from AddStudiesForm (via collect mode)
   const [collectedStudies, setCollectedStudies] = createSignal({
@@ -22,6 +30,47 @@ export default function CreateProjectForm(props) {
     refs: [],
     lookups: [],
     driveFiles: [],
+  });
+
+  // Check for and restore state on mount (after OAuth redirect)
+  onMount(async () => {
+    const restoreParams = getRestoreParamsFromUrl();
+    if (restoreParams?.type === 'createProject') {
+      try {
+        const savedState = await getFormState('createProject');
+        if (savedState) {
+          // Restore project name and description
+          if (savedState.projectName) setProjectName(savedState.projectName);
+          if (savedState.projectDescription) setProjectDescription(savedState.projectDescription);
+
+          // Pass studies state to AddStudiesForm via restoredState
+          setRestoredState(savedState);
+
+          // Clean up
+          await clearFormState('createProject');
+        }
+      } catch (err) {
+        console.error('Failed to restore form state:', err);
+      }
+
+      // Clear the URL params
+      clearRestoreParamsFromUrl();
+    }
+  });
+
+  // Handler to save state before OAuth redirect
+  const handleSaveState = async state => {
+    await saveFormState('createProject', {
+      projectName: projectName(),
+      projectDescription: projectDescription(),
+      ...state,
+    });
+  };
+
+  // Get external state for AddStudiesForm to include when saving
+  const getExternalState = () => ({
+    projectName: projectName(),
+    projectDescription: projectDescription(),
   });
 
   const totalStudyCount = () => {
@@ -123,6 +172,10 @@ export default function CreateProjectForm(props) {
             collectMode
             alwaysExpanded
             hideTitle
+            formType='createProject'
+            initialState={restoredState()}
+            getExternalState={getExternalState}
+            onSaveState={handleSaveState}
             onStudiesChange={handleStudiesChange}
           />
         </div>

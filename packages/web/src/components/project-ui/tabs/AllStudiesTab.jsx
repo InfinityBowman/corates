@@ -1,4 +1,4 @@
-import { For, Show, createSignal } from 'solid-js';
+import { For, Show, createSignal, onMount } from 'solid-js';
 import { AiOutlineBook, AiOutlineFileSync } from 'solid-icons/ai';
 import { BiRegularEdit, BiRegularUpload } from 'solid-icons/bi';
 import { CgFileDocument } from 'solid-icons/cg';
@@ -9,6 +9,13 @@ import GoogleDrivePickerModal from '../google-drive/GoogleDrivePickerModal.jsx';
 import { showToast } from '@components/zag/Toast.jsx';
 import projectStore from '@/stores/projectStore.js';
 import { useProjectContext } from '../ProjectContext.jsx';
+import {
+  saveFormState,
+  getFormState,
+  clearFormState,
+  getRestoreParamsFromUrl,
+  clearRestoreParamsFromUrl,
+} from '@lib/formStatePersistence.js';
 
 /**
  * AllStudiesTab - Displays all studies in a project
@@ -19,6 +26,34 @@ export default function AllStudiesTab() {
   // Local UI state - managed here, not in parent
   const [showGoogleDriveModal, setShowGoogleDriveModal] = createSignal(false);
   const [googleDriveTargetStudyId, setGoogleDriveTargetStudyId] = createSignal(null);
+  const [restoredState, setRestoredState] = createSignal(null);
+
+  // Check for and restore state on mount (after OAuth redirect)
+  onMount(async () => {
+    const restoreParams = getRestoreParamsFromUrl();
+    if (restoreParams?.type === 'addStudies' && restoreParams.projectId === projectId) {
+      try {
+        const savedState = await getFormState('addStudies', projectId);
+        if (savedState) {
+          // Pass studies state to AddStudiesForm via restoredState
+          setRestoredState(savedState);
+
+          // Clean up
+          await clearFormState('addStudies', projectId);
+        }
+      } catch (err) {
+        console.error('Failed to restore form state:', err);
+      }
+
+      // Clear the URL params
+      clearRestoreParamsFromUrl();
+    }
+  });
+
+  // Handler to save state before OAuth redirect
+  const handleSaveState = async state => {
+    await saveFormState('addStudies', state, projectId);
+  };
 
   // Read from store directly
   const studies = () => projectStore.getStudies(projectId);
@@ -43,7 +78,13 @@ export default function AllStudiesTab() {
     <div class='space-y-4'>
       {/* Add Studies Section - Unified form with PDF upload, reference import, and DOI lookup */}
       <Show when={hasData()}>
-        <AddStudiesForm projectId={projectId} onAddStudies={handleAddStudies} />
+        <AddStudiesForm
+          projectId={projectId}
+          formType='addStudies'
+          initialState={restoredState()}
+          onSaveState={handleSaveState}
+          onAddStudies={handleAddStudies}
+        />
       </Show>
 
       <Show when={!hasData()} fallback={null}>
