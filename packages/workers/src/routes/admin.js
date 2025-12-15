@@ -5,7 +5,16 @@
 
 import { Hono } from 'hono';
 import { createDb } from '../db/client.js';
-import { user, session, projects, projectMembers } from '../db/schema.js';
+import {
+  user,
+  session,
+  projects,
+  projectMembers,
+  account,
+  verification,
+  twoFactor,
+  subscriptions,
+} from '../db/schema.js';
 import { eq, desc, sql, like, or, count } from 'drizzle-orm';
 import { requireAdmin } from '../middleware/requireAdmin.js';
 import { requireTrustedOrigin } from '../middleware/csrf.js';
@@ -118,8 +127,40 @@ adminRoutes.get('/users', async c => {
     // Get paginated results
     const users = await query.orderBy(desc(user.createdAt)).limit(limit).offset(offset);
 
+    // Fetch linked accounts for all users in the result set
+    const userIds = users.map(u => u.id);
+    let accountsMap = {};
+
+    if (userIds.length > 0) {
+      const accounts = await db
+        .select({
+          userId: account.userId,
+          providerId: account.providerId,
+        })
+        .from(account)
+        .where(
+          sql`${account.userId} IN (${sql.join(
+            userIds.map(id => sql`${id}`),
+            sql`, `,
+          )})`,
+        );
+
+      // Group accounts by userId
+      accountsMap = accounts.reduce((acc, a) => {
+        if (!acc[a.userId]) acc[a.userId] = [];
+        acc[a.userId].push(a.providerId);
+        return acc;
+      }, {});
+    }
+
+    // Merge providers into user objects
+    const usersWithProviders = users.map(u => ({
+      ...u,
+      providers: accountsMap[u.id] || [],
+    }));
+
     return c.json({
-      users,
+      users: usersWithProviders,
       pagination: {
         page,
         limit,
@@ -173,10 +214,23 @@ adminRoutes.get('/users/:userId', async c => {
       .where(eq(session.userId, userId))
       .orderBy(desc(session.createdAt));
 
+    // Get user's linked accounts
+    const linkedAccounts = await db
+      .select({
+        id: account.id,
+        providerId: account.providerId,
+        accountId: account.accountId,
+        createdAt: account.createdAt,
+      })
+      .from(account)
+      .where(eq(account.userId, userId))
+      .orderBy(desc(account.createdAt));
+
     return c.json({
       user: userData,
       projects: userProjects,
       sessions: userSessions,
+      accounts: linkedAccounts,
     });
   } catch (error) {
     console.error('Error fetching user details:', error);
@@ -200,18 +254,19 @@ adminRoutes.post('/users/:userId/ban', async c => {
       return c.json({ error: 'Cannot ban yourself' }, 400);
     }
 
-    await db
-      .update(user)
-      .set({
-        banned: true,
-        banReason: reason || 'Banned by administrator',
-        banExpires: expiresAt ? new Date(expiresAt) : null,
-        updatedAt: new Date(),
-      })
-      .where(eq(user.id, userId));
-
-    // Invalidate all user sessions
-    await db.delete(session).where(eq(session.userId, userId));
+    // Ban user and invalidate sessions atomically
+    await db.batch([
+      db
+        .update(user)
+        .set({
+          banned: true,
+          banReason: reason || 'Banned by administrator',
+          banExpires: expiresAt ? new Date(expiresAt) : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(user.id, userId)),
+      db.delete(session).where(eq(session.userId, userId)),
+    ]);
 
     return c.json({ success: true, message: 'User banned successfully' });
   } catch (error) {
@@ -338,11 +393,27 @@ adminRoutes.delete('/users/:userId', async c => {
       return c.json({ error: 'Cannot delete yourself' }, 400);
     }
 
-    // Delete in order (foreign keys)
-    await db.delete(projectMembers).where(eq(projectMembers.userId, userId));
-    await db.delete(projects).where(eq(projects.createdBy, userId));
-    await db.delete(session).where(eq(session.userId, userId));
-    await db.delete(user).where(eq(user.id, userId));
+    // Fetch user to get email for verification cleanup
+    const [userToDelete] = await db
+      .select({ email: user.email })
+      .from(user)
+      .where(eq(user.id, userId));
+    if (!userToDelete) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
+    // Delete all user data atomically using batch transaction
+    // Order matters for foreign key constraints
+    await db.batch([
+      db.delete(projectMembers).where(eq(projectMembers.userId, userId)),
+      db.delete(projects).where(eq(projects.createdBy, userId)),
+      db.delete(subscriptions).where(eq(subscriptions.userId, userId)),
+      db.delete(twoFactor).where(eq(twoFactor.userId, userId)),
+      db.delete(session).where(eq(session.userId, userId)),
+      db.delete(account).where(eq(account.userId, userId)),
+      db.delete(verification).where(eq(verification.identifier, userToDelete.email)),
+      db.delete(user).where(eq(user.id, userId)),
+    ]);
 
     return c.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {

@@ -66,7 +66,8 @@ CREATE TABLE account (
   scope TEXT,
   password TEXT, -- For email/password auth
   createdAt INTEGER DEFAULT (unixepoch()),
-  updatedAt INTEGER DEFAULT (unixepoch())
+  updatedAt INTEGER DEFAULT (unixepoch()),
+  unlinkedAt INTEGER DEFAULT NULL -- For soft-delete grace period on unlink
 );
 
 -- Better Auth verification table

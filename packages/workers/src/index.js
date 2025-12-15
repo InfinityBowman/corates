@@ -25,6 +25,7 @@ import { billingRoutes } from './routes/billing/index.js';
 import { googleDriveRoutes } from './routes/google-drive.js';
 import { avatarRoutes } from './routes/avatars.js';
 import { adminRoutes } from './routes/admin.js';
+import { accountMergeRoutes } from './routes/account-merge.js';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc, EmailQueue };
@@ -169,6 +170,9 @@ app.route('/api/users', userRoutes);
 
 // Mount avatar routes
 app.route('/api/users/avatar', avatarRoutes);
+
+// Mount account merge routes
+app.route('/api/accounts/merge', accountMergeRoutes);
 
 // Mount project routes (must be before members to avoid conflicts)
 app.route('/api/projects', projectRoutes);
