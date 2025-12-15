@@ -148,24 +148,16 @@ userRoutes.delete('/me', async c => {
   const userId = currentUser.id;
 
   try {
-    // Delete in order to respect foreign key constraints
-    // 1. Delete project memberships
-    await db.delete(projectMembers).where(eq(projectMembers.userId, userId));
-
-    // 2. Delete projects where user is the creator
-    await db.delete(projects).where(eq(projects.createdBy, userId));
-
-    // 3. Delete verifications
-    await db.delete(verification).where(eq(verification.identifier, currentUser.email));
-
-    // 4. Delete accounts (OAuth/password)
-    await db.delete(account).where(eq(account.userId, userId));
-
-    // 5. Delete sessions
-    await db.delete(session).where(eq(session.userId, userId));
-
-    // 6. Finally, delete the user
-    await db.delete(user).where(eq(user.id, userId));
+    // Delete all user data atomically using batch transaction
+    // Order matters for foreign key constraints
+    await db.batch([
+      db.delete(projectMembers).where(eq(projectMembers.userId, userId)),
+      db.delete(projects).where(eq(projects.createdBy, userId)),
+      db.delete(verification).where(eq(verification.identifier, currentUser.email)),
+      db.delete(account).where(eq(account.userId, userId)),
+      db.delete(session).where(eq(session.userId, userId)),
+      db.delete(user).where(eq(user.id, userId)),
+    ]);
 
     console.log(`Account deleted successfully for user: ${userId}`);
 

@@ -245,18 +245,19 @@ adminRoutes.post('/users/:userId/ban', async c => {
       return c.json({ error: 'Cannot ban yourself' }, 400);
     }
 
-    await db
-      .update(user)
-      .set({
-        banned: true,
-        banReason: reason || 'Banned by administrator',
-        banExpires: expiresAt ? new Date(expiresAt) : null,
-        updatedAt: new Date(),
-      })
-      .where(eq(user.id, userId));
-
-    // Invalidate all user sessions
-    await db.delete(session).where(eq(session.userId, userId));
+    // Ban user and invalidate sessions atomically
+    await db.batch([
+      db
+        .update(user)
+        .set({
+          banned: true,
+          banReason: reason || 'Banned by administrator',
+          banExpires: expiresAt ? new Date(expiresAt) : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(user.id, userId)),
+      db.delete(session).where(eq(session.userId, userId)),
+    ]);
 
     return c.json({ success: true, message: 'User banned successfully' });
   } catch (error) {
@@ -383,11 +384,14 @@ adminRoutes.delete('/users/:userId', async c => {
       return c.json({ error: 'Cannot delete yourself' }, 400);
     }
 
-    // Delete in order (foreign keys)
-    await db.delete(projectMembers).where(eq(projectMembers.userId, userId));
-    await db.delete(projects).where(eq(projects.createdBy, userId));
-    await db.delete(session).where(eq(session.userId, userId));
-    await db.delete(user).where(eq(user.id, userId));
+    // Delete all user data atomically using batch transaction
+    // Order matters for foreign key constraints
+    await db.batch([
+      db.delete(projectMembers).where(eq(projectMembers.userId, userId)),
+      db.delete(projects).where(eq(projects.createdBy, userId)),
+      db.delete(session).where(eq(session.userId, userId)),
+      db.delete(user).where(eq(user.id, userId)),
+    ]);
 
     return c.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {

@@ -1,6 +1,6 @@
 {
   "name": "@corates/mcp",
-  "version": "1.3.0",
+  "version": "2.0.0",
   "type": "module",
   "bin": {
     "corates-mcp": "./server.js"
@@ -8,10 +8,15 @@
   "scripts": {
     "start": "nohup node server.js > /dev/null 2>&1 & echo 'MCP server started in background'",
     "stop": "pkill -f 'node.*server.js' || echo 'No MCP server running'",
-    "scrape": "node scrape-icons.js"
+    "scrape": "node scrape-icons.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.24.3",
     "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }

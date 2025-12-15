@@ -93,6 +93,6 @@ export function parseOAuthError(params) {
   // Return null message for silent errors (user cancelled)
   return {
     code,
-    message: message ?? null,
+    message,
   };
 }
