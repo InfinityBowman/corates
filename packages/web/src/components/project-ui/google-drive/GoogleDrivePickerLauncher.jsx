@@ -14,6 +14,7 @@ import {
 } from '@/api/google-drive.js';
 import { GOOGLE_PICKER_API_KEY, GOOGLE_PICKER_APP_ID } from '@config/google.js';
 import { pickGooglePdfFiles } from '@lib/googlePicker.js';
+import { buildRestoreCallbackUrl } from '@lib/formStatePersistence.js';
 
 /**
  * @param {Object} props
@@ -23,6 +24,9 @@ import { pickGooglePdfFiles } from '@lib/googlePicker.js';
  * @param {() => void} [props.onBeforeOpenPicker] - Called right before opening Google Picker UI (useful to close wrapping dialogs)
  * @param {boolean} [props.disabled=false] - Disable picker button
  * @param {boolean} [props.busy=false] - Show spinner and disable picker button
+ * @param {'createProject' | 'addStudies'} [props.formType] - Form type for state persistence
+ * @param {string} [props.projectId] - Project ID (for addStudies form type)
+ * @param {() => Promise<void>} [props.onSaveFormState] - Called before OAuth redirect to save form state
  */
 export default function GoogleDrivePickerLauncher(props) {
   const [loading, setLoading] = createSignal(true);
@@ -47,10 +51,21 @@ export default function GoogleDrivePickerLauncher(props) {
     }
   };
 
-  const connect = async callbackUrl => {
+  const connect = async () => {
     setError(null);
     try {
-      await connectGoogleAccount(callbackUrl || window.location.href);
+      // Save form state before OAuth redirect if handler provided
+      if (props.onSaveFormState) {
+        await props.onSaveFormState();
+      }
+
+      // Build callback URL with restore params if form type is provided
+      let callbackUrl = window.location.href;
+      if (props.formType) {
+        callbackUrl = buildRestoreCallbackUrl(props.formType, props.projectId);
+      }
+
+      await connectGoogleAccount(callbackUrl);
     } catch (err) {
       console.error('Error connecting Google:', err);
       setError(err?.message || 'Failed to connect Google account');
@@ -66,7 +81,7 @@ export default function GoogleDrivePickerLauncher(props) {
     }
 
     if (!connected()) {
-      await connect(window.location.href);
+      await connect();
       return null;
     }
 
@@ -95,7 +110,7 @@ export default function GoogleDrivePickerLauncher(props) {
 
   const handleConnectGoogle = async () => {
     try {
-      await connect(window.location.href);
+      await connect();
     } catch {
       // primitive sets error
     }

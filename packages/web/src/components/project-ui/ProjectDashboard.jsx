@@ -7,10 +7,16 @@ import useProjectMemberHandlers from '@primitives/useProjectMemberHandlers.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import CreateProjectForm from './CreateProjectForm.jsx';
 import ProjectCard from './ProjectCard.jsx';
+import { getRestoreParamsFromUrl } from '@lib/formStatePersistence.js';
 
 export default function ProjectDashboard(props) {
   const navigate = useNavigate();
-  const [showCreateForm, setShowCreateForm] = createSignal(false);
+
+  // Check if we're returning from OAuth with state to restore
+  const restoreParams = getRestoreParamsFromUrl();
+  const shouldRestoreCreateProject = restoreParams?.type === 'createProject';
+
+  const [showCreateForm, setShowCreateForm] = createSignal(shouldRestoreCreateProject);
   const { isOnline } = useBetterAuth();
 
   const userId = () => props.userId;

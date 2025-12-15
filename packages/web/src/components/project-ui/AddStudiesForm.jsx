@@ -4,7 +4,7 @@
  * Can be used both during project creation and when adding studies to existing projects
  */
 
-import { createSignal, Show, onMount, onCleanup } from 'solid-js';
+import { createSignal, createEffect, Show, onMount, onCleanup } from 'solid-js';
 import { BiRegularPlus } from 'solid-icons/bi';
 import { AiOutlineCloudUpload } from 'solid-icons/ai';
 import { FiChevronUp } from 'solid-icons/fi';
@@ -26,6 +26,10 @@ import GoogleDriveSection from './add-studies/GoogleDriveSection.jsx';
  * @param {boolean} [props.alwaysExpanded] - If true, the form is always shown expanded (typically used with collectMode)
  * @param {boolean} [props.collectMode] - If true, hides submit button and calls onStudiesChange with raw data
  * @param {Function} [props.onStudiesChange] - Called with collected data in collectMode: ({ pdfs, refs, lookups, driveFiles }) => void
+ * @param {'createProject' | 'addStudies'} [props.formType] - Form type for OAuth state persistence
+ * @param {Object} [props.initialState] - Initial state to restore (from OAuth redirect)
+ * @param {() => Object} [props.getExternalState] - Gets additional state to save (e.g., project name/description)
+ * @param {(state: Object) => void} [props.onSaveState] - Called when state should be saved (before OAuth redirect)
  */
 export default function AddStudiesForm(props) {
   const [expanded, setExpanded] = createSignal(false);
@@ -39,6 +43,37 @@ export default function AddStudiesForm(props) {
     collectMode: () => props.collectMode,
     onStudiesChange: data => props.onStudiesChange?.(data),
   });
+
+  // Track if we've already restored state to avoid duplicate restores
+  let hasRestoredState = false;
+
+  // Restore state if initialState provided (after OAuth redirect)
+  // Use createEffect instead of onMount because initialState may be set asynchronously
+  createEffect(() => {
+    const initialState = props.initialState;
+    if (initialState?.studiesState && !hasRestoredState) {
+      hasRestoredState = true;
+      studies.restoreState(initialState.studiesState);
+      // If we have restored state, ensure the form is expanded
+      if (studies.hasAnyStudies()) {
+        setExpanded(true);
+        // Switch to Google Drive tab since that's where the user was
+        setActiveTab('drive');
+      }
+    }
+  });
+
+  // Handler to save form state before OAuth redirect
+  const handleSaveFormState = async () => {
+    const studiesState = studies.getSerializableState();
+    const externalState = props.getExternalState?.() || {};
+
+    // Call the parent's save handler with combined state
+    await props.onSaveState?.({
+      studiesState,
+      ...externalState,
+    });
+  };
 
   // Read from store if projectId provided, otherwise assume no existing studies
   const hasExistingStudies = () => {
@@ -215,7 +250,12 @@ export default function AddStudiesForm(props) {
             }))}
           />
 
-          <AddStudiesProvider studies={studies}>
+          <AddStudiesProvider
+            studies={studies}
+            formType={props.formType}
+            projectId={props.projectId}
+            onSaveFormState={handleSaveFormState}
+          >
             <div class='mt-4'>
               <Show when={activeTab() === 'pdfs'}>
                 <PdfUploadSection />

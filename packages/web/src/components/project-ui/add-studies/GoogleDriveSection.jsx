@@ -8,10 +8,11 @@ import { BiRegularTrash } from 'solid-icons/bi';
 import { FiFile } from 'solid-icons/fi';
 import { formatFileSize } from '@/api/google-drive.js';
 import GoogleDrivePickerLauncher from '../google-drive/GoogleDrivePickerLauncher.jsx';
-import { useStudiesContext } from './AddStudiesContext.jsx';
+import { useStudiesContext, useFormPersistenceContext } from './AddStudiesContext.jsx';
 
 export default function GoogleDriveSection() {
   const studies = useStudiesContext();
+  const { formType, projectId, onSaveFormState } = useFormPersistenceContext();
 
   const isFileSelected = fileId => {
     return studies.selectedDriveFiles().some(f => f.id === fileId);
@@ -66,6 +67,9 @@ export default function GoogleDriveSection() {
       <GoogleDrivePickerLauncher
         active={true}
         multiselect={true}
+        formType={formType}
+        projectId={projectId}
+        onSaveFormState={onSaveFormState}
         onPick={picked => {
           for (const file of picked) {
             if (!isFileSelected(file.id)) {
