@@ -293,7 +293,7 @@ accountMergeRoutes.post('/complete', async c => {
   const { user: currentUser } = getAuth(c);
   const { mergeToken } = await c.req.json();
 
-  if (!mergeToken) {
+  if (typeof mergeToken !== 'string' || !mergeToken.trim()) {
     return c.json({ error: 'Merge token is required' }, 400);
   }
 
