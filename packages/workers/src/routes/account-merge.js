@@ -367,8 +367,8 @@ accountMergeRoutes.post('/complete', async c => {
       const primaryPriority = TIER_PRIORITY[primarySub?.tier] || 0;
       const secondaryPriority = TIER_PRIORITY[secondarySub.tier] || 0;
 
-      if (secondaryPriority > primaryPriority && secondarySub.stripeCustomerId) {
-        // Secondary has better sub, move it
+      if (secondaryPriority > primaryPriority) {
+        // Secondary has better tier, move it to primary (handles gifts, manual upgrades, etc.)
         if (primarySub) {
           await db.delete(subscriptions).where(eq(subscriptions.id, primarySub.id));
         }
@@ -377,7 +377,7 @@ accountMergeRoutes.post('/complete', async c => {
           .set({ userId: primaryUserId, updatedAt: new Date() })
           .where(eq(subscriptions.id, secondarySub.id));
       } else {
-        // Keep primary's sub, delete secondary's
+        // Keep primary's sub (same or higher tier), delete secondary's
         await db.delete(subscriptions).where(eq(subscriptions.userId, secondaryUserId));
       }
     }
