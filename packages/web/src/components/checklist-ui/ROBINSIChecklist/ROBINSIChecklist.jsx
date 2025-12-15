@@ -30,24 +30,26 @@ export function ROBINSIChecklist(props) {
 
   const activeDomains = createMemo(() => getActiveDomainKeys(isPerProtocol()));
 
-  // Update handlers
+  // Update handlers - use object-style API like AMSTAR2: onUpdate({ key: value })
   function handleSectionBUpdate(newSectionB) {
-    props.onUpdate('sectionB', newSectionB);
+    props.onUpdate({ sectionB: newSectionB });
   }
 
   function handleSectionCToggle() {
-    props.onUpdate('sectionC', {
-      ...props.checklistState.sectionC,
-      isPerProtocol: !isPerProtocol(),
+    props.onUpdate({
+      sectionC: {
+        ...props.checklistState.sectionC,
+        isPerProtocol: !isPerProtocol(),
+      },
     });
   }
 
   function handleDomainUpdate(domainKey, newDomainState) {
-    props.onUpdate(domainKey, newDomainState);
+    props.onUpdate({ [domainKey]: newDomainState });
   }
 
   function handleOverallUpdate(newOverall) {
-    props.onUpdate('overall', newOverall);
+    props.onUpdate({ overall: newOverall });
   }
 
   function toggleDomainCollapse(domainKey) {
