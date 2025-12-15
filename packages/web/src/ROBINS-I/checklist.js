@@ -413,9 +413,11 @@ export function exportChecklistsToCSV(checklists) {
   });
 
   // CSV encode
-  const escape = val => `"${String(val).replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+  const csvEscape = val => `"${String(val).replace(/"/g, '""').replace(/\n/g, ' ')}"`;
   const csv =
-    headers.map(escape).join(',') + '\n' + rows.map(row => row.map(escape).join(',')).join('\n');
+    headers.map(csvEscape).join(',') +
+    '\n' +
+    rows.map(row => row.map(csvEscape).join(',')).join('\n');
 
   return csv;
 }
