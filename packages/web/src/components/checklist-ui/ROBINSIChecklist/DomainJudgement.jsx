@@ -1,9 +1,10 @@
-import { For } from 'solid-js';
+import { For, createUniqueId } from 'solid-js';
 import { ROB_JUDGEMENTS, BIAS_DIRECTIONS, DOMAIN1_DIRECTIONS } from '@/ROBINS-I/checklist-map.js';
 
 /**
  * Domain judgement selector with risk of bias level and optional direction
  * @param {Object} props
+ * @param {string} props.domainId - Unique domain identifier
  * @param {string} props.judgement - Current judgement value
  * @param {string} [props.direction] - Current direction value (if applicable)
  * @param {Function} props.onJudgementChange - Callback when judgement changes
@@ -13,6 +14,7 @@ import { ROB_JUDGEMENTS, BIAS_DIRECTIONS, DOMAIN1_DIRECTIONS } from '@/ROBINS-I/
  * @param {boolean} [props.disabled] - Whether the selector is disabled
  */
 export function DomainJudgement(props) {
+  const uniqueId = createUniqueId();
   const directionOptions = () => (props.isDomain1 ? DOMAIN1_DIRECTIONS : BIAS_DIRECTIONS);
 
   const getJudgementColor = judgement => {
@@ -52,7 +54,7 @@ export function DomainJudgement(props) {
               >
                 <input
                   type='radio'
-                  name={`judgement-${props.domainId || 'domain'}`}
+                  name={`judgement-${uniqueId}-${props.domainId || 'domain'}`}
                   value={judgement}
                   checked={props.judgement === judgement}
                   onChange={() => props.onJudgementChange(judgement)}
@@ -63,6 +65,17 @@ export function DomainJudgement(props) {
               </label>
             )}
           </For>
+          {/* Clear judgement button */}
+          {props.judgement && (
+            <button
+              type='button'
+              onClick={() => props.onJudgementChange(null)}
+              disabled={props.disabled}
+              class='px-2 py-1 text-xs text-gray-400 hover:text-gray-600'
+            >
+              Clear
+            </button>
+          )}
         </div>
       </div>
 
@@ -90,7 +103,7 @@ export function DomainJudgement(props) {
                 >
                   <input
                     type='radio'
-                    name={`direction-${props.domainId || 'domain'}`}
+                    name={`direction-${uniqueId}-${props.domainId || 'domain'}`}
                     value={direction}
                     checked={props.direction === direction}
                     onChange={() => props.onDirectionChange?.(direction)}

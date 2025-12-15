@@ -197,23 +197,16 @@ export default function ChecklistYjsWrapper() {
   // Handle partial updates from checklist components (AMSTAR2 or ROBINS-I)
   // Both use object-style API: onUpdate({ key: value })
   function handlePartialUpdate(patch) {
-    console.log('[ChecklistYjsWrapper] handlePartialUpdate called', {
-      patch,
-      isReadOnly: isReadOnly(),
-      checklistType: checklistType(),
-    });
     if (isReadOnly()) return;
     const type = checklistType();
 
     Object.entries(patch).forEach(([key, value]) => {
-      console.log('[ChecklistYjsWrapper] Processing key:', key, 'value:', value);
       // AMSTAR2: keys like q1, q2a, etc.
       if (type === 'AMSTAR2' && AMSTAR2_KEY_PATTERN.test(key)) {
         updateChecklistAnswer(params.studyId, params.checklistId, key, value);
       }
       // ROBINS-I: section and domain keys
       else if (type === 'ROBINS_I' && ROBINS_I_KEYS.has(key)) {
-        console.log('[ChecklistYjsWrapper] Calling updateChecklistAnswer for ROBINS_I');
         updateChecklistAnswer(params.studyId, params.checklistId, key, value);
       }
     });

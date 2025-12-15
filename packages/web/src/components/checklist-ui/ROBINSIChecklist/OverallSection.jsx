@@ -1,4 +1,4 @@
-import { For, Show } from 'solid-js';
+import { For, Show, createUniqueId } from 'solid-js';
 import { OVERALL_ROB_JUDGEMENTS, BIAS_DIRECTIONS } from '@/ROBINS-I/checklist-map.js';
 import { scoreChecklist } from '@/ROBINS-I/checklist.js';
 
@@ -11,6 +11,7 @@ import { scoreChecklist } from '@/ROBINS-I/checklist.js';
  * @param {boolean} [props.disabled] - Whether the section is disabled
  */
 export function OverallSection(props) {
+  const uniqueId = createUniqueId();
   // Calculated score based on domains
   const calculatedScore = () => scoreChecklist(props.checklistState);
 
@@ -100,7 +101,7 @@ export function OverallSection(props) {
                 >
                   <input
                     type='radio'
-                    name='overall-judgement'
+                    name={`overall-judgement-${uniqueId}`}
                     value={judgement}
                     checked={props.overallState?.judgement === judgement}
                     onChange={() => handleJudgementChange(judgement)}
@@ -111,6 +112,17 @@ export function OverallSection(props) {
                 </label>
               )}
             </For>
+            {/* Clear judgement button */}
+            <Show when={props.overallState?.judgement}>
+              <button
+                type='button'
+                onClick={() => handleJudgementChange(null)}
+                disabled={props.disabled}
+                class='px-3 py-1.5 text-sm text-gray-400 hover:text-gray-600'
+              >
+                Clear
+              </button>
+            </Show>
           </div>
         </div>
 
@@ -137,7 +149,7 @@ export function OverallSection(props) {
                 >
                   <input
                     type='radio'
-                    name='overall-direction'
+                    name={`overall-direction-${uniqueId}`}
                     value={direction}
                     checked={props.overallState?.direction === direction}
                     onChange={() => handleDirectionChange(direction)}

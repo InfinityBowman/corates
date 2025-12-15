@@ -1,4 +1,4 @@
-import { For, Show, createMemo } from 'solid-js';
+import { For, Show, createMemo, createUniqueId } from 'solid-js';
 import { SECTION_B, RESPONSE_LABELS } from '@/ROBINS-I/checklist-map.js';
 import { shouldStopAssessment } from '@/ROBINS-I/checklist.js';
 import { FiAlertCircle } from 'solid-icons/fi';
@@ -11,6 +11,7 @@ import { FiAlertCircle } from 'solid-icons/fi';
  * @param {boolean} [props.disabled] - Whether the section is disabled
  */
 export function SectionB(props) {
+  const uniqueId = createUniqueId();
   const stopAssessment = createMemo(() => shouldStopAssessment(props.sectionBState));
 
   function handleAnswerChange(questionKey, value) {
@@ -86,7 +87,7 @@ export function SectionB(props) {
                       >
                         <input
                           type='radio'
-                          name={`sectionB-${key}`}
+                          name={`sectionB-${uniqueId}-${key}`}
                           value={option}
                           checked={props.sectionBState?.[key]?.answer === option}
                           onChange={() => handleAnswerChange(key, option)}

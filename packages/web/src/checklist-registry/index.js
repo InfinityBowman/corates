@@ -20,6 +20,7 @@ import {
 import {
   createChecklist as createROBINSI,
   scoreChecklist as scoreROBINSI,
+  getAnswers as getROBINSIAnswers,
 } from '@/ROBINS-I/checklist.js';
 
 /**
@@ -40,7 +41,7 @@ export const CHECKLIST_REGISTRY = {
   [CHECKLIST_TYPES.ROBINS_I]: {
     createChecklist: createROBINSI,
     scoreChecklist: scoreROBINSI,
-    getAnswers: state => state, // ROBINS-I doesn't have a separate getAnswers yet
+    getAnswers: getROBINSIAnswers,
   },
 };
 

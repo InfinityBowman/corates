@@ -1,4 +1,4 @@
-import { For } from 'solid-js';
+import { For, createUniqueId } from 'solid-js';
 import { RESPONSE_LABELS, getResponseOptions } from '@/ROBINS-I/checklist-map.js';
 
 /**
@@ -11,6 +11,7 @@ import { RESPONSE_LABELS, getResponseOptions } from '@/ROBINS-I/checklist-map.js
  * @param {boolean} [props.showComment] - Whether to show comment field
  */
 export function SignallingQuestion(props) {
+  const uniqueId = createUniqueId();
   const options = () => getResponseOptions(props.question.responseType);
 
   function handleAnswerChange(value) {
@@ -57,7 +58,7 @@ export function SignallingQuestion(props) {
               >
                 <input
                   type='radio'
-                  name={`q-${props.question.id}`}
+                  name={`q-${uniqueId}-${props.question.id}`}
                   value={option}
                   checked={props.answer?.answer === option}
                   onChange={() => handleAnswerChange(option)}
