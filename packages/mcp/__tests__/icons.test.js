@@ -22,7 +22,7 @@ describe('icons tool', () => {
     expect(Object.keys(manifest).length).toBeGreaterThan(0);
 
     // Check structure - each key should have an array of icon names
-    for (const [lib, icons] of Object.entries(manifest)) {
+    for (const [_lib, icons] of Object.entries(manifest)) {
       expect(Array.isArray(icons)).toBe(true);
       expect(icons.length).toBeGreaterThan(0);
       expect(typeof icons[0]).toBe('string');

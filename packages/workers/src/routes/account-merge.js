@@ -102,7 +102,7 @@ accountMergeRoutes.post('/initiate', async c => {
   }
 
   // Get linked accounts for both users to show what will be merged
-  const [currentAccounts, targetAccounts] = await Promise.all([
+  const [currentAccounts, _targetAccounts] = await Promise.all([
     db
       .select({ providerId: account.providerId })
       .from(account)
