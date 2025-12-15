@@ -14,9 +14,8 @@ This file contains instructions for GitHub Copilot to follow when generating cod
 
 ## File Size Guidelines
 
-- **Keep files small, focused, and modular.** Aim for ~200-300 lines max per component file.
-- If a component exceeds ~300 lines, consider refactoring:
-  - Extract sub-components into a folder (e.g., `ComponentName/` with `index.jsx` and helper components)
+- **Keep files small, focused, and modular.** - If a file exceeds a high number of lines, consider refactoring:
+  - Extract sub-modules into a folder (e.g., `ComponentName/` with `index.jsx` and helper components)
   - Move complex logic into separate utility files or primitives
   - Split large forms into section components (see `add-studies/` folder pattern)
 - Each file should handle one coherent responsibility

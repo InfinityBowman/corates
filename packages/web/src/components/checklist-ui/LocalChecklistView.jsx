@@ -3,14 +3,15 @@
  * Loads checklist from IndexedDB and saves changes back automatically
  * Supports split-screen PDF viewing with persistent PDF storage
  * Shows create form when no checklistId is provided
+ * Supports multiple checklist types via the registry
  */
 
-import { createSignal, createEffect, Show, onCleanup } from 'solid-js';
+import { createSignal, createEffect, Show, onCleanup, createMemo } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import CreateLocalChecklist from '@checklist-ui/CreateLocalChecklist.jsx';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
-import { scoreChecklist } from '@/AMSTAR2/checklist.js';
+import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry';
 import { IoChevronBack } from 'solid-icons/io';
 import ScoreTag from '@/components/checklist-ui/ScoreTag.jsx';
 
@@ -140,12 +141,20 @@ export default function LocalChecklistView() {
     navigate('/dashboard');
   };
 
-  // Compute the current score based on checklist answers
-  const currentScore = () => {
-    const currChecklist = checklist();
-    if (!currChecklist) return null;
-    return scoreChecklist(currChecklist);
+  // Get the checklist type from the loaded checklist
+  const checklistType = () => {
+    const curr = checklist();
+    if (!curr) return null;
+    return getChecklistTypeFromState(curr);
   };
+
+  // Compute the current score based on checklist answers
+  const currentScore = createMemo(() => {
+    const curr = checklist();
+    const type = checklistType();
+    if (!curr || !type) return null;
+    return scoreChecklistOfType(type, curr);
+  });
 
   // Header content for the toolbar
   const headerContent = (
@@ -163,7 +172,7 @@ export default function LocalChecklistView() {
       <span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600'>
         Local Only
       </span>
-      <ScoreTag currentScore={currentScore()} />
+      <ScoreTag currentScore={currentScore()} checklistType={checklistType()} />
     </>
   );
 
@@ -193,6 +202,7 @@ export default function LocalChecklistView() {
         >
           <Show when={checklist()}>
             <ChecklistWithPdf
+              checklistType={checklistType()}
               checklist={checklist()}
               onUpdate={handleUpdate}
               headerContent={headerContent}

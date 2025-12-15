@@ -1,14 +1,15 @@
 /**
  * CreateLocalChecklist - Form to create a new local checklist
- * Allows setting a name and optionally uploading a PDF
+ * Allows setting a name, selecting checklist type, and optionally uploading a PDF
  */
 
-import { createSignal, Show } from 'solid-js';
+import { createSignal, Show, For } from 'solid-js';
 import { useNavigate, useSearchParams } from '@solidjs/router';
 import { FiFileText, FiX } from 'solid-icons/fi';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
 import { FileUpload } from '@components/zag/FileUpload.jsx';
 import { LANDING_URL } from '@config/api.js';
+import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
 
 export default function CreateLocalChecklist() {
   const navigate = useNavigate();
@@ -16,9 +17,12 @@ export default function CreateLocalChecklist() {
   const { createChecklist, savePdf } = useLocalChecklists();
 
   const [name, setName] = createSignal('');
+  const [checklistType, setChecklistType] = createSignal(DEFAULT_CHECKLIST_TYPE);
   const [pdfFile, setPdfFile] = createSignal(null);
   const [creating, setCreating] = createSignal(false);
   const [error, setError] = createSignal(null);
+
+  const typeOptions = getChecklistTypeOptions();
 
   const handleFilesChange = files => {
     const file = files[0];
@@ -45,7 +49,7 @@ export default function CreateLocalChecklist() {
 
     try {
       const checklistName = name().trim() || 'Untitled Checklist';
-      const checklist = await createChecklist(checklistName, 'AMSTAR2');
+      const checklist = await createChecklist(checklistName, checklistType());
 
       // If a PDF was uploaded, save it
       if (pdfFile()) {
@@ -80,10 +84,31 @@ export default function CreateLocalChecklist() {
         <div class='bg-white rounded-xl shadow-sm border border-gray-200 p-8'>
           <h1 class='text-2xl font-bold text-gray-900 mb-2'>Start an Appraisal</h1>
           <p class='text-gray-600 mb-6'>
-            Start a new AMSTAR-2 assessment. Your progress will be saved locally on this device.
+            Start a new quality assessment. Your progress will be saved locally on this device.
           </p>
 
           <form onSubmit={handleSubmit} class='space-y-6'>
+            {/* Checklist Type */}
+            <div>
+              <label for='checklist-type' class='block text-sm font-medium text-gray-700 mb-2'>
+                Assessment Type
+              </label>
+              <select
+                id='checklist-type'
+                value={checklistType()}
+                onChange={e => setChecklistType(e.target.value)}
+                class='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white'
+              >
+                <For each={typeOptions}>
+                  {option => (
+                    <option value={option.value}>
+                      {option.label} - {option.description}
+                    </option>
+                  )}
+                </For>
+              </select>
+            </div>
+
             {/* Checklist Name */}
             <div>
               <label for='checklist-name' class='block text-sm font-medium text-gray-700 mb-2'>

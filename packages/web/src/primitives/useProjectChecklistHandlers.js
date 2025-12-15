@@ -15,10 +15,10 @@ export default function useProjectChecklistHandlers(projectId, projectActions, c
   const navigate = useNavigate();
   const { createChecklist, updateChecklist, deleteChecklist } = projectActions;
 
-  const handleCreateChecklist = async (studyId, type, assigneeId) => {
+  const handleCreateChecklist = (studyId, type, assigneeId) => {
     try {
-      createChecklist(studyId, type, assigneeId);
-      return true;
+      const checklistId = createChecklist(studyId, type, assigneeId);
+      return !!checklistId;
     } catch (err) {
       console.error('Error adding checklist:', err);
       showToast.error('Addition Failed', 'Failed to add checklist');

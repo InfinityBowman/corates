@@ -1,13 +1,16 @@
 /**
- * ChecklistWithPdf - Wrapper that combines AMSTAR2Checklist with a PDF viewer
+ * ChecklistWithPdf - Wrapper that combines any checklist type with a PDF viewer
  * in a split-screen layout. Used by both local and project checklists.
+ *
+ * Supports multiple checklist types via the GenericChecklist component.
  */
 
-import AMSTAR2Checklist from '@checklist-ui/AMSTAR2Checklist.jsx';
+import GenericChecklist from '@checklist-ui/GenericChecklist.jsx';
 import PdfViewer from '@/components/checklist-ui/pdf/PdfViewer.jsx';
 import SplitScreenLayout from '@checklist-ui/SplitScreenLayout.jsx';
 
 export default function ChecklistWithPdf(props) {
+  // props.checklistType - the type of checklist ('AMSTAR2', 'ROBINS_I', etc.)
   // props.checklist - the checklist data
   // props.onUpdate - callback for checklist updates
   // props.headerContent - optional content to show in the header bar (left side)
@@ -26,10 +29,11 @@ export default function ChecklistWithPdf(props) {
         showSecondPanel={false}
         headerContent={props.headerContent}
       >
-        {/* First panel: Checklist */}
-        <AMSTAR2Checklist
-          externalChecklist={props.checklist}
-          onExternalUpdate={props.onUpdate}
+        {/* First panel: Checklist (type-aware) */}
+        <GenericChecklist
+          checklistType={props.checklistType}
+          checklist={props.checklist}
+          onUpdate={props.onUpdate}
           readOnly={props.readOnly}
         />
 

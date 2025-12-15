@@ -1,37 +1,74 @@
-import { Show } from 'solid-js';
+import { Show, createMemo } from 'solid-js';
 import { FaSolidCircleInfo } from 'solid-icons/fa';
 import { AMSTAR2_URL } from '@/config/api.js';
 import Tooltip from '@/components/zag/Tooltip.jsx';
+import { getChecklistMetadata, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
 
-const scoreStyle = score => {
-  switch (score) {
-    case 'High':
-      return 'bg-green-100 text-green-800';
-    case 'Moderate':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'Low':
-      return 'bg-orange-100 text-orange-800';
-    case 'Critically Low':
-      return 'bg-red-100 text-red-800';
-    default:
-      return 'bg-gray-100 text-gray-600';
+/**
+ * Get the style classes for a score based on checklist type
+ * @param {string} score - The score value
+ * @param {string} checklistType - The checklist type
+ * @returns {string} Tailwind classes for styling
+ */
+function getScoreStyle(score, checklistType) {
+  const metadata = getChecklistMetadata(checklistType);
+  const colorConfig = metadata.scoreColors?.[score];
+
+  if (colorConfig) {
+    return `${colorConfig.bg} ${colorConfig.text}`;
   }
-};
 
+  // Fallback for unknown scores
+  return 'bg-gray-100 text-gray-600';
+}
+
+/**
+ * Get the info URL for a checklist type
+ * @param {string} checklistType - The checklist type
+ * @returns {string} URL to the checklist guidance
+ */
+function getInfoUrl(checklistType) {
+  const metadata = getChecklistMetadata(checklistType);
+  return metadata.url || AMSTAR2_URL;
+}
+
+/**
+ * Get the tooltip content for the info button
+ * @param {string} checklistType - The checklist type
+ * @returns {string} Tooltip content
+ */
+function getTooltipContent(checklistType) {
+  const metadata = getChecklistMetadata(checklistType);
+  return `Open ${metadata.shortName || metadata.name} scoring guide`;
+}
+
+/**
+ * ScoreTag - Displays the current score for a checklist with type-aware styling
+ *
+ * @param {Object} props
+ * @param {string} props.currentScore - The current score value
+ * @param {string} [props.checklistType] - The checklist type (defaults to AMSTAR2)
+ */
 export default function ScoreTag(props) {
+  const checklistType = () => props.checklistType || DEFAULT_CHECKLIST_TYPE;
+
+  const styleClass = createMemo(() => getScoreStyle(props.currentScore, checklistType()));
+  const infoUrl = createMemo(() => getInfoUrl(checklistType()));
+  const tooltipContent = createMemo(() => getTooltipContent(checklistType()));
+
   return (
     <Show when={props.currentScore}>
       <span
-        class={`px-2.5 py-1 text-xs font-medium rounded-full inline-flex items-center gap-1 ${scoreStyle(props.currentScore)}`}
+        class={`px-2.5 py-1 text-xs font-medium rounded-full inline-flex items-center gap-1 ${styleClass()}`}
       >
         <span>Score: {props.currentScore}</span>
-        <Tooltip content='Open AMSTAR 2 scoring guide' placement='bottom' openDelay={200}>
+        <Tooltip content={tooltipContent()} placement='bottom' openDelay={200}>
           <a
-            href={AMSTAR2_URL}
+            href={infoUrl()}
             target='_blank'
             rel='noreferrer'
             class='inline-flex items-center justify-center rounded-full p-0.5 mt-0.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
-            aria-label='Open AMSTAR 2 guidance in a new tab'
+            aria-label={`Open ${getChecklistMetadata(checklistType()).name} guidance in a new tab`}
           >
             <FaSolidCircleInfo size={12} />
           </a>
