@@ -57,16 +57,22 @@ export async function saveFormState(type, data, projectId) {
     const record = {
       key,
       type,
-      projectId: projectId || null,
+      projectId: projectId ?? null,
       data,
       timestamp: Date.now(),
     };
 
-    const request = store.put(record);
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve();
+    store.put(record);
 
-    tx.oncomplete = () => db.close();
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+
+    tx.onerror = () => {
+      db.close();
+      reject(tx.error);
+    };
   });
 }
 
