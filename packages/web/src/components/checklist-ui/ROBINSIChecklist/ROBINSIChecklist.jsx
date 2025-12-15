@@ -14,8 +14,11 @@ import { ResponseLegend } from './SignallingQuestion.jsx';
  * @param {Function} props.onUpdate - Callback to update checklist state (key, value)
  * @param {boolean} [props.showComments] - Whether to show comment fields for each question
  * @param {boolean} [props.showLegend] - Whether to show the response legend
+ * @param {boolean} [props.readOnly] - Whether the checklist is read-only (disables all inputs)
  */
 export function ROBINSIChecklist(props) {
+  const isReadOnly = () => !!props.readOnly;
+
   // Track collapsed state for each domain
   const [collapsedDomains, setCollapsedDomains] = createSignal({});
 
@@ -71,22 +74,28 @@ export function ROBINSIChecklist(props) {
             </p>
           </div>
           <div class='flex items-center gap-4'>
-            <label class='flex items-center gap-2 cursor-pointer'>
+            <label
+              class={`flex items-center gap-2 ${isReadOnly() ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+            >
               <input
                 type='radio'
                 name='protocol-type'
                 checked={!isPerProtocol()}
-                onChange={() => isPerProtocol() && handleSectionCToggle()}
+                disabled={isReadOnly()}
+                onChange={() => !isReadOnly() && isPerProtocol() && handleSectionCToggle()}
                 class='text-blue-600'
               />
               <span class='text-sm'>No (ITT effect)</span>
             </label>
-            <label class='flex items-center gap-2 cursor-pointer'>
+            <label
+              class={`flex items-center gap-2 ${isReadOnly() ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+            >
               <input
                 type='radio'
                 name='protocol-type'
                 checked={isPerProtocol()}
-                onChange={() => !isPerProtocol() && handleSectionCToggle()}
+                disabled={isReadOnly()}
+                onChange={() => !isReadOnly() && !isPerProtocol() && handleSectionCToggle()}
                 class='text-blue-600'
               />
               <span class='text-sm'>Yes (Per-protocol effect)</span>
@@ -96,9 +105,13 @@ export function ROBINSIChecklist(props) {
       </div>
 
       {/* Section B: Proceed with assessment */}
-      <SectionB sectionBState={props.checklistState?.sectionB} onUpdate={handleSectionBUpdate} />
+      <SectionB
+        sectionBState={props.checklistState?.sectionB}
+        onUpdate={handleSectionBUpdate}
+        disabled={isReadOnly()}
+      />
 
-      {/* Domain sections - disabled if assessment should stop */}
+      {/* Domain sections - hidden entirely if assessment should stop */}
       <Show when={!stopAssessment()}>
         <div class='space-y-4'>
           <For each={activeDomains()}>
@@ -107,7 +120,7 @@ export function ROBINSIChecklist(props) {
                 domainKey={domainKey}
                 domainState={props.checklistState?.[domainKey]}
                 onUpdate={newState => handleDomainUpdate(domainKey, newState)}
-                disabled={stopAssessment()}
+                disabled={isReadOnly()}
                 showComments={props.showComments}
                 collapsed={collapsedDomains()[domainKey]}
                 onToggleCollapse={() => toggleDomainCollapse(domainKey)}
@@ -121,7 +134,7 @@ export function ROBINSIChecklist(props) {
           overallState={props.checklistState?.overall}
           checklistState={props.checklistState}
           onUpdate={handleOverallUpdate}
-          disabled={stopAssessment()}
+          disabled={isReadOnly()}
         />
       </Show>
 
