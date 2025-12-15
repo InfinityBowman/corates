@@ -65,8 +65,6 @@ export function parseOAuthError(params) {
   const error = params.get('error');
   if (!error) return null;
 
-  const _errorDescription = params.get('error_description');
-
   // Normalize error code to uppercase with underscores (our convention)
   let code = error.toUpperCase().replace(/-/g, '_');
 
