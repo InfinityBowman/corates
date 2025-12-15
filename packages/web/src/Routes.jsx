@@ -17,7 +17,7 @@ import BillingPage from '@components/billing/BillingPage.jsx';
 import NotFoundPage from '@components/NotFoundPage.jsx';
 import { AdminDashboard } from '@components/admin-ui/index.js';
 import { BASEPATH } from '@config/api.js';
-import ProtectedGuard from '@auth-ui/AuthGuard.jsx';
+import ProtectedGuard from '@/components/auth-ui/ProtectedGuard.jsx';
 
 export default function AppRoutes() {
   return (

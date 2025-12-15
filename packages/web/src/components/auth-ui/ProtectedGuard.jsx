@@ -4,7 +4,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 
 /**
  * ProtectedGuard - For authenticated pages (profile, settings, admin, etc.)
- * Redirects guests to dashboard (or sign-in)
+ * Redirects guests to dashboard
  */
 export default function ProtectedGuard(props) {
   const { isLoggedIn, authLoading } = useBetterAuth();
