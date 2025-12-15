@@ -32,7 +32,7 @@ When you need to find icons from `solid-icons`, use the `search_icons` MCP tool:
 ## Documentation Tool
 
 Use the `docs_list` and `docs_get_llms_txt` MCP tools to explore local documentation sources. Use this MCP for all Better-Auth, Drizzle, and Zag documentation.
-  
+
 ## Zag.js Documentation
 
 When you need to implement UI components use zag.js
