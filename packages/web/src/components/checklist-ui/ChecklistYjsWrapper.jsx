@@ -1,4 +1,4 @@
-import { createSignal, createEffect, createMemo, Show, createResource } from 'solid-js';
+import { createSignal, createEffect, createMemo, Show } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import useProject from '@/primitives/useProject/index.js';
@@ -175,12 +175,37 @@ export default function ChecklistYjsWrapper() {
     };
   });
 
-  // Handle partial updates from AMSTAR2Checklist
+  // Valid keys for each checklist type
+  const AMSTAR2_KEY_PATTERN = /^q\d+[a-z]*$/i;
+  const ROBINS_I_KEYS = new Set([
+    'planning',
+    'sectionA',
+    'sectionB',
+    'sectionC',
+    'sectionD',
+    'confoundingEvaluation',
+    'domain1a',
+    'domain1b',
+    'domain2',
+    'domain3',
+    'domain4',
+    'domain5',
+    'domain6',
+    'overall',
+  ]);
+
+  // Handle partial updates from checklist components (AMSTAR2 or ROBINS-I)
   function handlePartialUpdate(patch) {
     if (isReadOnly()) return;
-    // Filter to only update answer keys (q1, q2, etc.)
+    const type = checklistType();
+
     Object.entries(patch).forEach(([key, value]) => {
-      if (/^q\d+[a-z]*$/i.test(key)) {
+      // AMSTAR2: keys like q1, q2a, etc.
+      if (type === 'AMSTAR2' && AMSTAR2_KEY_PATTERN.test(key)) {
+        updateChecklistAnswer(params.studyId, params.checklistId, key, value);
+      }
+      // ROBINS-I: section and domain keys
+      else if (type === 'ROBINS_I' && ROBINS_I_KEYS.has(key)) {
         updateChecklistAnswer(params.studyId, params.checklistId, key, value);
       }
     });
@@ -211,14 +236,13 @@ export default function ChecklistYjsWrapper() {
     return 'AMSTAR2';
   });
 
-  // Compute the current score based on checklist answers (async via resource)
-  const [currentScore] = createResource(
-    () => ({ checklist: checklistForUI(), type: checklistType() }),
-    async ({ checklist, type }) => {
-      if (!checklist || !type) return null;
-      return scoreChecklistOfType(type, checklist);
-    },
-  );
+  // Compute the current score based on checklist answers
+  const currentScore = createMemo(() => {
+    const checklist = checklistForUI();
+    const type = checklistType();
+    if (!checklist || !type) return null;
+    return scoreChecklistOfType(type, checklist);
+  });
 
   // Header content for the split screen toolbar (left side)
   const headerContent = (

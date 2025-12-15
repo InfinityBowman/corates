@@ -6,7 +6,7 @@
  * Supports multiple checklist types via the registry
  */
 
-import { createSignal, createEffect, Show, onCleanup, createResource } from 'solid-js';
+import { createSignal, createEffect, Show, onCleanup, createMemo } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import CreateLocalChecklist from '@checklist-ui/CreateLocalChecklist.jsx';
@@ -148,14 +148,13 @@ export default function LocalChecklistView() {
     return getChecklistTypeFromState(curr);
   };
 
-  // Compute the current score based on checklist answers (async via resource)
-  const [currentScore] = createResource(
-    () => ({ checklist: checklist(), type: checklistType() }),
-    async ({ checklist: curr, type }) => {
-      if (!curr || !type) return null;
-      return scoreChecklistOfType(type, curr);
-    },
-  );
+  // Compute the current score based on checklist answers
+  const currentScore = createMemo(() => {
+    const curr = checklist();
+    const type = checklistType();
+    if (!curr || !type) return null;
+    return scoreChecklistOfType(type, curr);
+  });
 
   // Header content for the toolbar
   const headerContent = (

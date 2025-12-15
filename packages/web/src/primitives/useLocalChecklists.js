@@ -120,7 +120,7 @@ export function useLocalChecklists() {
     const id = `local-${crypto.randomUUID()}`;
 
     // Create the checklist template using the registry
-    const template = await createChecklistOfType(type, {
+    const template = createChecklistOfType(type, {
       id,
       name,
       createdAt: now,
