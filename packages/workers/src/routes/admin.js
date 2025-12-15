@@ -5,7 +5,7 @@
 
 import { Hono } from 'hono';
 import { createDb } from '../db/client.js';
-import { user, session, projects, projectMembers } from '../db/schema.js';
+import { user, session, projects, projectMembers, account } from '../db/schema.js';
 import { eq, desc, sql, like, or, count } from 'drizzle-orm';
 import { requireAdmin } from '../middleware/requireAdmin.js';
 import { requireTrustedOrigin } from '../middleware/csrf.js';
@@ -118,8 +118,40 @@ adminRoutes.get('/users', async c => {
     // Get paginated results
     const users = await query.orderBy(desc(user.createdAt)).limit(limit).offset(offset);
 
+    // Fetch linked accounts for all users in the result set
+    const userIds = users.map(u => u.id);
+    let accountsMap = {};
+
+    if (userIds.length > 0) {
+      const accounts = await db
+        .select({
+          userId: account.userId,
+          providerId: account.providerId,
+        })
+        .from(account)
+        .where(
+          sql`${account.userId} IN (${sql.join(
+            userIds.map(id => sql`${id}`),
+            sql`, `,
+          )})`,
+        );
+
+      // Group accounts by userId
+      accountsMap = accounts.reduce((acc, a) => {
+        if (!acc[a.userId]) acc[a.userId] = [];
+        acc[a.userId].push(a.providerId);
+        return acc;
+      }, {});
+    }
+
+    // Merge providers into user objects
+    const usersWithProviders = users.map(u => ({
+      ...u,
+      providers: accountsMap[u.id] || [],
+    }));
+
     return c.json({
-      users,
+      users: usersWithProviders,
       pagination: {
         page,
         limit,
@@ -173,10 +205,23 @@ adminRoutes.get('/users/:userId', async c => {
       .where(eq(session.userId, userId))
       .orderBy(desc(session.createdAt));
 
+    // Get user's linked accounts
+    const linkedAccounts = await db
+      .select({
+        id: account.id,
+        providerId: account.providerId,
+        accountId: account.accountId,
+        createdAt: account.createdAt,
+      })
+      .from(account)
+      .where(eq(account.userId, userId))
+      .orderBy(desc(account.createdAt));
+
     return c.json({
       user: userData,
       projects: userProjects,
       sessions: userSessions,
+      accounts: linkedAccounts,
     });
   } catch (error) {
     console.error('Error fetching user details:', error);

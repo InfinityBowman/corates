@@ -140,6 +140,10 @@ export function createAuth(env, ctx) {
         enabled: true,
         // Trust Google since it verifies emails; ORCID may not always have verified emails
         trustedProviders: ['google'],
+        // Allow linking accounts with different emails (user must be authenticated first)
+        allowDifferentEmails: true,
+        // Allow unlinking all OAuth accounts (user can still sign in with magic link if email is verified)
+        allowUnlinkingAll: true,
       },
     },
 

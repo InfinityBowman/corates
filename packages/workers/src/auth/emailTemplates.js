@@ -147,3 +147,48 @@ export function getMagicLinkEmailText({ magicLinkUrl, expiryMinutes = MAGIC_LINK
     The CoRATES Team
   `;
 }
+
+export function getAccountMergeEmailHtml({ code, expiryMinutes = 15 }) {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Account Merge Verification Code</title>
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #eff6ff;">
+      <div style="background: #2563eb; color: white; padding: 32px; text-align: center; border-radius: 12px 12px 0 0;">
+        <h1 style="margin: 0; font-size: 28px; font-weight: 700;">Account Merge Request</h1>
+      </div>
+      <div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb; border-top: none;">
+        <p style="font-size: 18px; margin-bottom: 20px; color: #1f2937;">Hi there,</p>
+        <p style="color: #4b5563;">Someone is trying to merge your CoRATES account with another account. If this was you, use this verification code:</p>
+        <div style="background: #f3f4f6; padding: 24px; border-radius: 12px; text-align: center; margin: 24px 0;">
+          <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #2563eb; font-family: monospace;">${code}</span>
+        </div>
+        <p style="color: #4b5563;">This code expires in ${expiryMinutes} minutes.</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
+        <p style="color: #6b7280; font-size: 14px;"><strong style="color: #374151;">Important:</strong> If you did not request this, you can safely ignore this email. Your account will not be affected.</p>
+        <p style="color: #6b7280; font-size: 14px;">Best regards,<br>The CoRATES Team</p>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+export function getAccountMergeEmailText({ code, expiryMinutes = 15 }) {
+  return `
+    Hi there,
+
+    Someone is trying to merge your CoRATES account with another account.
+
+    If this was you, use this verification code: ${code}
+
+    This code expires in ${expiryMinutes} minutes.
+
+    If you did not request this, you can safely ignore this email. Your account will not be affected.
+
+    Best regards,
+    The CoRATES Team
+  `;
+}

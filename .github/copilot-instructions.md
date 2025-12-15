@@ -31,12 +31,11 @@ When you need to find icons from `solid-icons`, use the `search_icons` MCP tool:
 
 ## Documentation Tool
 
-Use the `docs_list` and `docs_get_llms_txt` MCP tools to explore local documentation sources
+Use the `docs_list` and `docs_get_llms_txt` MCP tools to explore local documentation sources. Use this MCP for all Better-Auth documentation.
 
 ## Zag.js Documentation
 
 When you need to implement UI components use zag.js
-The Zag.js docs are located at /docs/zag
 When adding a new zag component, place zag components into components/zag/\* files.
 
 ### Existing Zag Components
@@ -66,6 +65,7 @@ Always check for existing Zag components before creating new ones or using plain
 - See TESTING.md for testing guidelines and best practices, do NOT add tests unless asked.
 - Cloudflare Pages is not used in this project; only Cloudflare Workers is used for backend services and frontend deployments.
 - This project is split into multiple packages under the `packages/` directory. Each package may have its own dependencies and configurations. The landing/marketing site, the main app, and the backend services.
+- Use the Corates MCP for documentation.
 
 ## Database Migrations
 
