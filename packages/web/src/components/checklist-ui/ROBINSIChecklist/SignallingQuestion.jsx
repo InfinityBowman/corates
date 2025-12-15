@@ -45,7 +45,7 @@ export function SignallingQuestion(props) {
             {option => (
               <label
                 class={`
-                  inline-flex items-center justify-center px-2 py-1 rounded text-xs font-medium
+                  relative inline-flex items-center justify-center px-2 py-1 rounded text-xs font-medium
                   cursor-pointer transition-colors border
                   ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}
                   ${

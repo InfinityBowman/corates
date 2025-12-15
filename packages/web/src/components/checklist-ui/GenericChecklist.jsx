@@ -38,7 +38,7 @@ export default function GenericChecklist(props) {
   });
 
   return (
-    <>
+    <div class='h-full'>
       <Show when={checklistType() === CHECKLIST_TYPES.AMSTAR2}>
         <AMSTAR2Checklist
           externalChecklist={props.checklist}
@@ -55,6 +55,6 @@ export default function GenericChecklist(props) {
           readOnly={props.readOnly}
         />
       </Show>
-    </>
+    </div>
   );
 }

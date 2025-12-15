@@ -1,6 +1,7 @@
 import { For, Show, createMemo } from 'solid-js';
 import { SECTION_B, RESPONSE_LABELS } from '@/ROBINS-I/checklist-map.js';
 import { shouldStopAssessment } from '@/ROBINS-I/checklist.js';
+import { FiAlertCircle } from 'solid-icons/fi';
 
 /**
  * Section B: Decide whether to proceed with risk-of-bias assessment
@@ -38,9 +39,9 @@ export function SectionB(props) {
   const responseOptions = ['Y', 'PY', 'PN', 'N'];
 
   return (
-    <div class='bg-white rounded-lg shadow-md overflow-hidden'>
+    <div class='bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden'>
       <div class='px-6 py-4 bg-gray-50 border-b border-gray-200'>
-        <h3 class='font-semibold text-gray-900'>
+        <h3 class='font-semibold text-gray-900 text-base'>
           Section B: Decide Whether to Proceed With Risk-of-Bias Assessment
         </h3>
         <p class='text-xs text-gray-500 mt-1'>
@@ -51,7 +52,7 @@ export function SectionB(props) {
       <div class='px-6 py-4'>
         <For each={Object.entries(SECTION_B)}>
           {([key, question]) => (
-            <div class='py-3 border-b border-gray-100 last:border-b-0'>
+            <div class='py-4 border-b border-gray-200 last:border-b-0'>
               <div class='flex flex-col gap-2'>
                 {/* Question text */}
                 <div class='text-sm text-gray-700'>
@@ -61,7 +62,7 @@ export function SectionB(props) {
 
                 {/* Info hint if present */}
                 <Show when={question.info}>
-                  <p class='text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded'>
+                  <p class='text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200'>
                     {question.info}
                   </p>
                 </Show>
@@ -72,13 +73,14 @@ export function SectionB(props) {
                     {option => (
                       <label
                         class={`
-                          inline-flex items-center justify-center px-3 py-1.5 rounded text-sm font-medium
-                          cursor-pointer transition-colors border
-                          ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                          inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium
+                          cursor-pointer transition-all duration-200 border-2
+                          ${props.disabled ? 'opacity-60 cursor-not-allowed' : 'hover:border-blue-300'}
+                          focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-400 focus-within:ring-offset-1
                           ${
                             props.sectionBState?.[key]?.answer === option ?
-                              'bg-blue-100 border-blue-400 text-blue-800'
-                            : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                              'bg-blue-50 border-blue-400 text-blue-800'
+                            : 'bg-white border-gray-200 text-gray-700 hover:bg-blue-50'
                           }
                         `}
                       >
@@ -89,7 +91,7 @@ export function SectionB(props) {
                           checked={props.sectionBState?.[key]?.answer === option}
                           onChange={() => handleAnswerChange(key, option)}
                           disabled={props.disabled}
-                          class='sr-only'
+                          class='hidden'
                         />
                         <span class='mr-1'>{option}</span>
                         <span class='text-xs opacity-70'>({RESPONSE_LABELS[option]})</span>
@@ -105,7 +107,7 @@ export function SectionB(props) {
                   value={props.sectionBState?.[key]?.comment || ''}
                   onInput={e => handleCommentChange(key, e.target.value)}
                   disabled={props.disabled}
-                  class='w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400'
+                  class='w-full pl-3 pr-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition disabled:bg-gray-50 disabled:text-gray-500'
                 />
               </div>
             </div>
@@ -114,15 +116,9 @@ export function SectionB(props) {
 
         {/* Stop assessment warning */}
         <Show when={stopAssessment()}>
-          <div class='mt-4 p-4 bg-red-50 border border-red-200 rounded-lg'>
+          <div class='mt-5 bg-red-50 border-2 border-red-200 rounded-lg p-4'>
             <div class='flex items-center gap-2'>
-              <svg class='w-5 h-5 text-red-500' fill='currentColor' viewBox='0 0 20 20'>
-                <path
-                  fill-rule='evenodd'
-                  d='M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z'
-                  clip-rule='evenodd'
-                />
-              </svg>
+              <FiAlertCircle class='w-5 h-5 text-red-600' />
               <span class='font-semibold text-red-800'>Assessment Stopped</span>
             </div>
             <p class='text-sm text-red-700 mt-2'>

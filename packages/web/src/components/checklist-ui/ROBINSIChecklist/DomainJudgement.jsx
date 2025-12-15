@@ -40,7 +40,7 @@ export function DomainJudgement(props) {
             {judgement => (
               <label
                 class={`
-                  inline-flex items-center justify-center px-3 py-1.5 rounded-md text-sm font-medium
+                  relative inline-flex items-center justify-center px-3 py-1.5 rounded-md text-sm font-medium
                   cursor-pointer transition-colors border-2
                   ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}
                   ${
@@ -78,7 +78,7 @@ export function DomainJudgement(props) {
               {direction => (
                 <label
                   class={`
-                    inline-flex items-center justify-center px-2 py-1 rounded text-xs font-medium
+                    relative inline-flex items-center justify-center px-2 py-1 rounded text-xs font-medium
                     cursor-pointer transition-colors border
                     ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}
                     ${
