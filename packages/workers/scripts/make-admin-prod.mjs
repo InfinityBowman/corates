@@ -7,9 +7,9 @@
 
 import { spawnSync } from 'node:child_process';
 
-// Optional: hardcode an email here if you prefer not to pass args.
-// You can also set ADMIN_EMAIL env var.
-const DEFAULT_EMAIL = 'jakebrake115@gmail.com';
+// Load environment variables from .env (or .dev.vars if renamed)
+import dotenv from 'dotenv';
+dotenv.config();
 
 function parseArgs(argv) {
   const args = {
@@ -123,7 +123,7 @@ Options:
   --dry-run     Prints the SQL that would run without executing it
 
 Alternative:
-  - Set ADMIN_EMAIL env var, or edit DEFAULT_EMAIL in this script.
+  - Set ADMIN_EMAIL in your .env file or as an environment variable.
 
 Notes:
   - Uses Cloudflare Wrangler to update the remote D1 database (corates-db-prod).
@@ -140,7 +140,7 @@ async function main() {
     process.exit(2);
   }
 
-  const email = normalizeEmail(args.email || process.env.ADMIN_EMAIL || DEFAULT_EMAIL);
+  const email = normalizeEmail(args.email || process.env.ADMIN_EMAIL);
 
   if (!email || !isValidEmail(email)) {
     console.error('A valid email is required.');
