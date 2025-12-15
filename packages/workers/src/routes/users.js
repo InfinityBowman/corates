@@ -5,7 +5,16 @@
 
 import { Hono } from 'hono';
 import { createDb } from '../db/client.js';
-import { projects, projectMembers, user, session, account, verification } from '../db/schema.js';
+import {
+  projects,
+  projectMembers,
+  user,
+  session,
+  account,
+  verification,
+  twoFactor,
+  subscriptions,
+} from '../db/schema.js';
 import { eq, desc, or, like, sql } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { searchRateLimit } from '../middleware/rateLimit.js';
@@ -153,9 +162,11 @@ userRoutes.delete('/me', async c => {
     await db.batch([
       db.delete(projectMembers).where(eq(projectMembers.userId, userId)),
       db.delete(projects).where(eq(projects.createdBy, userId)),
-      db.delete(verification).where(eq(verification.identifier, currentUser.email)),
-      db.delete(account).where(eq(account.userId, userId)),
+      db.delete(subscriptions).where(eq(subscriptions.userId, userId)),
+      db.delete(twoFactor).where(eq(twoFactor.userId, userId)),
       db.delete(session).where(eq(session.userId, userId)),
+      db.delete(account).where(eq(account.userId, userId)),
+      db.delete(verification).where(eq(verification.identifier, currentUser.email)),
       db.delete(user).where(eq(user.id, userId)),
     ]);
 

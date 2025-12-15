@@ -5,7 +5,16 @@
 
 import { Hono } from 'hono';
 import { createDb } from '../db/client.js';
-import { user, session, projects, projectMembers, account } from '../db/schema.js';
+import {
+  user,
+  session,
+  projects,
+  projectMembers,
+  account,
+  verification,
+  twoFactor,
+  subscriptions,
+} from '../db/schema.js';
 import { eq, desc, sql, like, or, count } from 'drizzle-orm';
 import { requireAdmin } from '../middleware/requireAdmin.js';
 import { requireTrustedOrigin } from '../middleware/csrf.js';
@@ -384,12 +393,25 @@ adminRoutes.delete('/users/:userId', async c => {
       return c.json({ error: 'Cannot delete yourself' }, 400);
     }
 
+    // Fetch user to get email for verification cleanup
+    const [userToDelete] = await db
+      .select({ email: user.email })
+      .from(user)
+      .where(eq(user.id, userId));
+    if (!userToDelete) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
     // Delete all user data atomically using batch transaction
     // Order matters for foreign key constraints
     await db.batch([
       db.delete(projectMembers).where(eq(projectMembers.userId, userId)),
       db.delete(projects).where(eq(projects.createdBy, userId)),
+      db.delete(subscriptions).where(eq(subscriptions.userId, userId)),
+      db.delete(twoFactor).where(eq(twoFactor.userId, userId)),
       db.delete(session).where(eq(session.userId, userId)),
+      db.delete(account).where(eq(account.userId, userId)),
+      db.delete(verification).where(like(verification.identifier, `%${userToDelete.email}%`)),
       db.delete(user).where(eq(user.id, userId)),
     ]);
 
