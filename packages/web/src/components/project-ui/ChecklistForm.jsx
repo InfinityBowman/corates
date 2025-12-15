@@ -3,15 +3,16 @@
  */
 
 import { createSignal, For } from 'solid-js';
-import { CHECKLIST_TYPES } from '@/AMSTAR2/checklist-map';
+import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
 
 export default function ChecklistForm(props) {
-  const [type, setType] = createSignal('AMSTAR2');
+  const [type, setType] = createSignal(DEFAULT_CHECKLIST_TYPE);
+  const typeOptions = getChecklistTypeOptions();
 
   const handleSubmit = () => {
     // Always assign to the current user
     props.onSubmit(type(), props.currentUserId);
-    setType('AMSTAR2');
+    setType(DEFAULT_CHECKLIST_TYPE);
   };
 
   return (
@@ -24,8 +25,12 @@ export default function ChecklistForm(props) {
             onChange={e => setType(e.target.value)}
             class='w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
           >
-            <For each={Object.keys(CHECKLIST_TYPES)}>
-              {checklistType => <option value={checklistType}>{checklistType}</option>}
+            <For each={typeOptions}>
+              {option => (
+                <option value={option.value}>
+                  {option.label} - {option.description}
+                </option>
+              )}
             </For>
           </select>
         </div>

@@ -1,4 +1,4 @@
-import { createSignal, createEffect, createMemo, Show } from 'solid-js';
+import { createSignal, createEffect, createMemo, Show, createResource } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import useProject from '@/primitives/useProject/index.js';
@@ -7,7 +7,7 @@ import { downloadPdf, uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf, removeCachedPdf } from '@primitives/pdfCache.js';
 import { showToast } from '@components/zag/Toast.jsx';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { scoreChecklist } from '@/AMSTAR2/checklist.js';
+import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry';
 import { IoChevronBack } from 'solid-icons/io';
 import ScoreTag from '@/components/checklist-ui/ScoreTag.jsx';
 
@@ -202,12 +202,23 @@ export default function ChecklistYjsWrapper() {
     }
   }
 
-  // Compute the current score based on checklist answers
-  const currentScore = createMemo(() => {
-    const checklist = checklistForUI();
-    if (!checklist) return null;
-    return scoreChecklist(checklist);
+  // Get the checklist type from metadata or detect from state
+  const checklistType = createMemo(() => {
+    const checklist = currentChecklist();
+    if (checklist?.type) return checklist.type;
+    const ui = checklistForUI();
+    if (ui) return getChecklistTypeFromState(ui);
+    return 'AMSTAR2';
   });
+
+  // Compute the current score based on checklist answers (async via resource)
+  const [currentScore] = createResource(
+    () => ({ checklist: checklistForUI(), type: checklistType() }),
+    async ({ checklist, type }) => {
+      if (!checklist || !type) return null;
+      return scoreChecklistOfType(type, checklist);
+    },
+  );
 
   // Header content for the split screen toolbar (left side)
   const headerContent = (
@@ -224,7 +235,7 @@ export default function ChecklistYjsWrapper() {
         </span>
       </div>
       <div class='ml-auto flex items-center gap-3'>
-        <ScoreTag currentScore={currentScore()} />
+        <ScoreTag currentScore={currentScore()} checklistType={checklistType()} />
         <Show
           when={!isReadOnly()}
           fallback={
@@ -272,6 +283,7 @@ export default function ChecklistYjsWrapper() {
         }
       >
         <ChecklistWithPdf
+          checklistType={checklistType()}
           checklist={checklistForUI()}
           onUpdate={handlePartialUpdate}
           headerContent={headerContent}

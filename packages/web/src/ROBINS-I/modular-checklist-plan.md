@@ -37,63 +37,6 @@ This document outlines the plan to integrate ROBINS-I (and future checklist form
 
 ## Implementation Plan
 
-### Phase 0: Reorganize AMSTAR2 Folder Structure
-
-Reorganize existing AMSTAR2 files to match the ROBINS-I pattern for consistency.
-
-#### Current AMSTAR2 Structure
-
-```
-src/
-├── AMSTAR2/
-│   ├── checklist.js
-│   ├── checklist-map.js
-│   ├── checklist-compare.js
-│   └── __tests__/
-└── components/checklist-ui/
-    └── AMSTAR2Checklist.jsx  (single 900+ line file)
-```
-
-#### Target AMSTAR2 Structure
-
-```
-src/
-├── AMSTAR2/
-│   ├── checklist.js
-│   ├── checklist-map.js
-│   ├── checklist-compare.js
-│   └── __tests__/
-└── components/checklist-ui/
-    └── AMSTAR2Checklist/
-        ├── index.js              (barrel export)
-        ├── AMSTAR2Checklist.jsx  (main component, slimmed down)
-        ├── Question.jsx          (reusable question component)
-        ├── StandardQuestion.jsx  (standard question layout)
-        ├── CriticalButton.jsx    (critical toggle button)
-        └── QuestionInfo.jsx      (info panel component)
-```
-
-#### Files to Create/Move
-
-| Action  | From                   | To                                      |
-| ------- | ---------------------- | --------------------------------------- |
-| Move    | `AMSTAR2Checklist.jsx` | `AMSTAR2Checklist/AMSTAR2Checklist.jsx` |
-| Create  | -                      | `AMSTAR2Checklist/index.js`             |
-| Extract | From main file         | `AMSTAR2Checklist/StandardQuestion.jsx` |
-| Extract | From main file         | `AMSTAR2Checklist/CriticalButton.jsx`   |
-| Extract | From main file         | `AMSTAR2Checklist/QuestionInfo.jsx`     |
-
-#### Import Updates Required
-
-All files importing `AMSTAR2Checklist.jsx` will need path updates:
-
-- `ChecklistWithPdf.jsx`
-- Any test files
-
-**Note**: This refactor can be done incrementally. The barrel export (`index.js`) ensures backwards compatibility.
-
----
-
 ### Phase 1: Checklist Type Registry
 
 Create a central registry that maps checklist types to their components and utilities.
