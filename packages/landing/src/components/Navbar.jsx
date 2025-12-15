@@ -38,7 +38,7 @@ export default function Navbar() {
               CoRATES
             </a>
             <For each={navLinks}>
-              {(link) => (
+              {link => (
                 <a
                   href={link.href}
                   class='hidden sm:inline-flex text-gray-600 hover:text-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 rounded'
@@ -109,7 +109,7 @@ function MobileMenu(props) {
   const { isLoggedIn } = useAuth();
 
   // Stagger delays for menu items (in ms)
-  const getDelay = (index) => `${50 + index * 50}ms`;
+  const getDelay = index => `${50 + index * 50}ms`;
 
   return (
     <Show when={props.isOpen()}>
