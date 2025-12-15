@@ -4,6 +4,16 @@
  */
 
 import { ROBINS_I_CHECKLIST, getDomainQuestions, getActiveDomainKeys } from './checklist-map.js';
+import { CHECKLIST_TYPES } from '@/checklist-registry/types.js';
+
+/**
+ * Deep clone a plain object/array via JSON serialization
+ * @param {*} value - Value to clone
+ * @returns {*} Deep cloned value
+ */
+function deepClone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
 
 /**
  * Get all section B question keys
@@ -209,16 +219,16 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
     reviewerName: metadata.reviewerName || 'Consensus',
     createdAt: metadata.createdAt || new Date().toISOString().split('T')[0],
     id: metadata.id || `reconciled-${Date.now()}`,
-    checklistType: 'ROBINS_I',
+    checklistType: CHECKLIST_TYPES.ROBINS_I,
     isReconciled: true,
     sourceChecklists: [checklist1.id, checklist2.id],
 
     // Copy structural elements from checklist1
-    planning: JSON.parse(JSON.stringify(checklist1.planning || {})),
-    sectionA: JSON.parse(JSON.stringify(checklist1.sectionA || {})),
-    sectionC: JSON.parse(JSON.stringify(checklist1.sectionC || {})),
-    sectionD: JSON.parse(JSON.stringify(checklist1.sectionD || {})),
-    confoundingEvaluation: JSON.parse(JSON.stringify(checklist1.confoundingEvaluation || {})),
+    planning: deepClone(checklist1.planning || {}),
+    sectionA: deepClone(checklist1.sectionA || {}),
+    sectionC: deepClone(checklist1.sectionC || {}),
+    sectionD: deepClone(checklist1.sectionD || {}),
+    confoundingEvaluation: deepClone(checklist1.confoundingEvaluation || {}),
   };
 
   // Reconcile Section B
@@ -243,7 +253,7 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
 
   // Copy inactive domain from checklist1 (for completeness)
   const inactiveDomain = isPerProtocol ? 'domain1a' : 'domain1b';
-  reconciled[inactiveDomain] = JSON.parse(JSON.stringify(checklist1[inactiveDomain] || {}));
+  reconciled[inactiveDomain] = deepClone(checklist1[inactiveDomain] || {});
 
   // Reconcile overall
   reconciled.overall = reconcileOverall(
@@ -303,15 +313,15 @@ function reconcileDomain(domainKey, domain1, domain2, selections) {
     const selection = selections.answers?.[qKey];
 
     if (!selection || selection === 'reviewer1') {
-      reconciledAnswers[qKey] = JSON.parse(
-        JSON.stringify(domain1?.answers?.[qKey] || { answer: null, comment: '' }),
+      reconciledAnswers[qKey] = deepClone(
+        domain1?.answers?.[qKey] || { answer: null, comment: '' },
       );
     } else if (selection === 'reviewer2') {
-      reconciledAnswers[qKey] = JSON.parse(
-        JSON.stringify(domain2?.answers?.[qKey] || { answer: null, comment: '' }),
+      reconciledAnswers[qKey] = deepClone(
+        domain2?.answers?.[qKey] || { answer: null, comment: '' },
       );
     } else if (typeof selection === 'object') {
-      reconciledAnswers[qKey] = JSON.parse(JSON.stringify(selection));
+      reconciledAnswers[qKey] = deepClone(selection);
     }
   }
 
