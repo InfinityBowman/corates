@@ -41,8 +41,14 @@ const TIER_PRIORITY = { enterprise: 4, team: 3, pro: 2, free: 1 };
 /**
  * Generate a 6-digit verification code
  */
+// function generateCode() {
+//   return Math.floor(100000 + Math.random() * 900000).toString();
+// }
+
 function generateCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  return (100000 + (array[0] % 900000)).toString();
 }
 
 /**
@@ -286,71 +292,25 @@ accountMergeRoutes.post('/complete', async c => {
   const secondaryUserId = mergeData.targetId;
 
   try {
-    // Perform the merge
-    // Note: D1 doesn't support transactions, so we do our best
-
-    // 1. Move OAuth accounts (skip duplicates by provider)
-    const [primaryAccounts, secondaryAccounts] = await Promise.all([
+    // Gather all data needed to build the batch
+    const [
+      primaryAccounts,
+      secondaryAccounts,
+      primaryMemberships,
+      secondaryMemberships,
+      primarySub,
+      secondarySub,
+    ] = await Promise.all([
       db
         .select({ providerId: account.providerId })
         .from(account)
         .where(eq(account.userId, primaryUserId)),
       db.select().from(account).where(eq(account.userId, secondaryUserId)),
-    ]);
-
-    const primaryProviders = new Set(primaryAccounts.map(a => a.providerId));
-    const accountsToMove = secondaryAccounts.filter(a => !primaryProviders.has(a.providerId));
-    const duplicateAccounts = secondaryAccounts.filter(a => primaryProviders.has(a.providerId));
-    const mergedProviders = [];
-
-    // Move non-duplicate accounts to primary user
-    for (const acc of accountsToMove) {
-      await db
-        .update(account)
-        .set({ userId: primaryUserId, updatedAt: new Date() })
-        .where(eq(account.id, acc.id));
-      mergedProviders.push(acc.providerId);
-    }
-
-    // Delete duplicate provider accounts from secondary (can't have two of same provider)
-    for (const acc of duplicateAccounts) {
-      await db.delete(account).where(eq(account.id, acc.id));
-    }
-
-    // 2. Update project ownership
-    await db
-      .update(projects)
-      .set({ createdBy: primaryUserId, updatedAt: new Date() })
-      .where(eq(projects.createdBy, secondaryUserId));
-
-    // 3. Update project memberships (delete duplicates)
-    const primaryMemberships = await db
-      .select({ projectId: projectMembers.projectId })
-      .from(projectMembers)
-      .where(eq(projectMembers.userId, primaryUserId));
-
-    const primaryMemberProjects = new Set(primaryMemberships.map(m => m.projectId));
-
-    const secondaryMemberships = await db
-      .select()
-      .from(projectMembers)
-      .where(eq(projectMembers.userId, secondaryUserId));
-
-    for (const mem of secondaryMemberships) {
-      if (primaryMemberProjects.has(mem.projectId)) {
-        // Already a member, delete duplicate
-        await db.delete(projectMembers).where(eq(projectMembers.id, mem.id));
-      } else {
-        // Move membership
-        await db
-          .update(projectMembers)
-          .set({ userId: primaryUserId })
-          .where(eq(projectMembers.id, mem.id));
-      }
-    }
-
-    // 4. Merge subscriptions (keep best tier)
-    const [primarySub, secondarySub] = await Promise.all([
+      db
+        .select({ projectId: projectMembers.projectId })
+        .from(projectMembers)
+        .where(eq(projectMembers.userId, primaryUserId)),
+      db.select().from(projectMembers).where(eq(projectMembers.userId, secondaryUserId)),
       db
         .select()
         .from(subscriptions)
@@ -363,36 +323,110 @@ accountMergeRoutes.post('/complete', async c => {
         .then(rows => rows[0]),
     ]);
 
+    // Prepare account operations
+    const primaryProviders = new Set(primaryAccounts.map(a => a.providerId));
+    const accountsToMove = secondaryAccounts.filter(a => !primaryProviders.has(a.providerId));
+    const duplicateAccounts = secondaryAccounts.filter(a => primaryProviders.has(a.providerId));
+    const mergedProviders = accountsToMove.map(a => a.providerId);
+
+    // Prepare membership operations
+    const primaryMemberProjects = new Set(primaryMemberships.map(m => m.projectId));
+    const membershipsToDelete = secondaryMemberships.filter(m =>
+      primaryMemberProjects.has(m.projectId),
+    );
+    const membershipsToMove = secondaryMemberships.filter(
+      m => !primaryMemberProjects.has(m.projectId),
+    );
+
+    // Prepare subscription operations
+    let deleteOldPrimarySub = false;
+    let moveSecondarySub = false;
+    let deleteSecondarySub = false;
+
     if (secondarySub) {
       const primaryPriority = TIER_PRIORITY[primarySub?.tier] || 0;
       const secondaryPriority = TIER_PRIORITY[secondarySub.tier] || 0;
 
       if (secondaryPriority > primaryPriority) {
-        // Secondary has better tier, move it to primary (handles gifts, manual upgrades, etc.)
-        if (primarySub) {
-          await db.delete(subscriptions).where(eq(subscriptions.id, primarySub.id));
-        }
-        await db
-          .update(subscriptions)
-          .set({ userId: primaryUserId, updatedAt: new Date() })
-          .where(eq(subscriptions.id, secondarySub.id));
+        if (primarySub) deleteOldPrimarySub = true;
+        moveSecondarySub = true;
       } else {
-        // Keep primary's sub (same or higher tier), delete secondary's
-        await db.delete(subscriptions).where(eq(subscriptions.userId, secondaryUserId));
+        deleteSecondarySub = true;
       }
     }
 
-    // 5. Update media files
-    await db
-      .update(mediaFiles)
-      .set({ uploadedBy: primaryUserId })
-      .where(eq(mediaFiles.uploadedBy, secondaryUserId));
+    // Build batch of all operations - executed as a transaction (all-or-nothing)
+    const batchOps = [];
+    const now = new Date();
 
-    // 6. Delete secondary user (sessions, etc. will cascade)
-    await db.delete(user).where(eq(user.id, secondaryUserId));
+    // 1. Move non-duplicate OAuth accounts to primary user
+    for (const acc of accountsToMove) {
+      batchOps.push(
+        db
+          .update(account)
+          .set({ userId: primaryUserId, updatedAt: now })
+          .where(eq(account.id, acc.id)),
+      );
+    }
 
-    // 7. Clean up merge request
-    await db.delete(verification).where(eq(verification.id, mergeRequest.id));
+    // 2. Delete duplicate provider accounts from secondary
+    for (const acc of duplicateAccounts) {
+      batchOps.push(db.delete(account).where(eq(account.id, acc.id)));
+    }
+
+    // 3. Update project ownership
+    batchOps.push(
+      db
+        .update(projects)
+        .set({ createdBy: primaryUserId, updatedAt: now })
+        .where(eq(projects.createdBy, secondaryUserId)),
+    );
+
+    // 4. Handle project memberships
+    for (const mem of membershipsToDelete) {
+      batchOps.push(db.delete(projectMembers).where(eq(projectMembers.id, mem.id)));
+    }
+    for (const mem of membershipsToMove) {
+      batchOps.push(
+        db
+          .update(projectMembers)
+          .set({ userId: primaryUserId })
+          .where(eq(projectMembers.id, mem.id)),
+      );
+    }
+
+    // 5. Handle subscriptions
+    if (deleteOldPrimarySub) {
+      batchOps.push(db.delete(subscriptions).where(eq(subscriptions.id, primarySub.id)));
+    }
+    if (moveSecondarySub) {
+      batchOps.push(
+        db
+          .update(subscriptions)
+          .set({ userId: primaryUserId, updatedAt: now })
+          .where(eq(subscriptions.id, secondarySub.id)),
+      );
+    }
+    if (deleteSecondarySub) {
+      batchOps.push(db.delete(subscriptions).where(eq(subscriptions.userId, secondaryUserId)));
+    }
+
+    // 6. Update media files ownership
+    batchOps.push(
+      db
+        .update(mediaFiles)
+        .set({ uploadedBy: primaryUserId })
+        .where(eq(mediaFiles.uploadedBy, secondaryUserId)),
+    );
+
+    // 7. Delete secondary user (sessions, etc. will cascade)
+    batchOps.push(db.delete(user).where(eq(user.id, secondaryUserId)));
+
+    // 8. Clean up merge request
+    batchOps.push(db.delete(verification).where(eq(verification.id, mergeRequest.id)));
+
+    // Execute all operations as a single atomic batch transaction
+    await db.batch(batchOps);
 
     return c.json({
       success: true,
