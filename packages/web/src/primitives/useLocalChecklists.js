@@ -1,10 +1,11 @@
 /**
  * useLocalChecklists hook - Manages local-only checklists stored in IndexedDB
  * These checklists exist only on the device and don't require authentication
+ * Supports multiple checklist types via the checklist registry
  */
 
 import { createSignal, createEffect } from 'solid-js';
-import { createChecklist as createAMSTAR2Template } from '@/AMSTAR2/checklist.js';
+import { createChecklistOfType, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
 
 const DB_NAME = 'corates-local-checklists';
 const DB_VERSION = 2; // Bumped for PDF store
@@ -112,26 +113,25 @@ export function useLocalChecklists() {
   }
 
   // Create a new local checklist
-  async function createChecklist(name = 'Untitled Checklist', type = 'AMSTAR2') {
+  async function createChecklist(name = 'Untitled Checklist', type = DEFAULT_CHECKLIST_TYPE) {
     const db = await getDb();
 
     const now = Date.now();
     const id = `local-${crypto.randomUUID()}`;
 
-    // Create the AMSTAR2 template with all questions
-    const template = createAMSTAR2Template({
+    // Create the checklist template using the registry
+    const template = await createChecklistOfType(type, {
       id,
       name,
       createdAt: now,
       reviewerName: '',
-      reviewDate: '',
     });
 
     const checklist = {
       ...template,
       id,
       name,
-      type,
+      checklistType: type,
       createdAt: now,
       updatedAt: now,
       isLocal: true,

@@ -3,7 +3,7 @@
  */
 
 import * as Y from 'yjs';
-import { createChecklist as createAMSTAR2Answers } from '@/AMSTAR2/checklist.js';
+import { createChecklistOfType, CHECKLIST_TYPES } from '@/checklist-registry';
 
 /**
  * Creates checklist operations
@@ -18,9 +18,9 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
    * @param {string} studyId - The study ID
    * @param {string} type - Checklist type (default: 'AMSTAR2')
    * @param {string|null} assignedTo - User ID to assign to
-   * @returns {string|null} The checklist ID or null if failed
+   * @returns {Promise<string|null>} The checklist ID or null if failed
    */
-  function createChecklist(studyId, type = 'AMSTAR2', assignedTo = null) {
+  async function createChecklist(studyId, type = 'AMSTAR2', assignedTo = null) {
     const ydoc = getYDoc();
     if (!ydoc || !isSynced()) return null;
 
@@ -38,20 +38,50 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
     const checklistId = crypto.randomUUID();
     const now = Date.now();
 
-    // Get the default answers structure for this checklist type
+    // Get the default answers structure for this checklist type using the registry
     let answersData = {};
-    if (type === 'AMSTAR2') {
-      const amstar2 = createAMSTAR2Answers({
+    try {
+      const checklistTemplate = await createChecklistOfType(type, {
         id: checklistId,
         name: `${type} Checklist`,
         createdAt: now,
       });
-      // Extract only the question answers (q1, q2, etc.)
-      Object.entries(amstar2).forEach(([key, value]) => {
-        if (/^q\d+[a-z]*$/i.test(key)) {
-          answersData[key] = value;
-        }
-      });
+
+      // Extract answers based on checklist type
+      if (type === CHECKLIST_TYPES.AMSTAR2) {
+        // AMSTAR2: Extract question answers (q1, q2, etc.)
+        Object.entries(checklistTemplate).forEach(([key, value]) => {
+          if (/^q\d+[a-z]*$/i.test(key)) {
+            answersData[key] = value;
+          }
+        });
+      } else if (type === CHECKLIST_TYPES.ROBINS_I) {
+        // ROBINS-I: Extract all domain and section data
+        const robinsKeys = [
+          'planning',
+          'sectionA',
+          'sectionB',
+          'sectionC',
+          'sectionD',
+          'confoundingEvaluation',
+          'domain1a',
+          'domain1b',
+          'domain2',
+          'domain3',
+          'domain4',
+          'domain5',
+          'domain6',
+          'overall',
+        ];
+        robinsKeys.forEach(key => {
+          if (checklistTemplate[key] !== undefined) {
+            answersData[key] = checklistTemplate[key];
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Failed to create checklist template:', err);
+      return null;
     }
 
     const checklistYMap = new Y.Map();
@@ -63,14 +93,24 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
     checklistYMap.set('createdAt', now);
     checklistYMap.set('updatedAt', now);
 
-    // Store answers as a Y.Map with each question as a nested Y.Map
+    // Store answers as a Y.Map
     const answersYMap = new Y.Map();
-    Object.entries(answersData).forEach(([questionKey, questionData]) => {
-      const questionYMap = new Y.Map();
-      questionYMap.set('answers', questionData.answers);
-      questionYMap.set('critical', questionData.critical);
-      answersYMap.set(questionKey, questionYMap);
-    });
+
+    if (type === CHECKLIST_TYPES.AMSTAR2) {
+      // AMSTAR2: Store each question as a nested Y.Map with answers and critical
+      Object.entries(answersData).forEach(([questionKey, questionData]) => {
+        const questionYMap = new Y.Map();
+        questionYMap.set('answers', questionData.answers);
+        questionYMap.set('critical', questionData.critical);
+        answersYMap.set(questionKey, questionYMap);
+      });
+    } else {
+      // Other types: Store data directly (will be serialized as JSON)
+      Object.entries(answersData).forEach(([key, value]) => {
+        answersYMap.set(key, value);
+      });
+    }
+
     checklistYMap.set('answers', answersYMap);
 
     checklistsMap.set(checklistId, checklistYMap);
