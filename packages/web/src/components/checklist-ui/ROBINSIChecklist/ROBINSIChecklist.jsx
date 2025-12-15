@@ -58,96 +58,97 @@ export function ROBINSIChecklist(props) {
   }
 
   return (
-    <div class='space-y-6'>
-      {/* Response Legend */}
-      <Show when={props.showLegend !== false}>
-        <ResponseLegend />
-      </Show>
+    <div class='bg-blue-50'>
+      <div class='container mx-auto px-4 py-6 max-w-5xl space-y-4'>
+        {/* Response Legend */}
+        <Show when={props.showLegend !== false}>
+          <ResponseLegend />
+        </Show>
 
-      {/* Protocol Type Toggle (C4) */}
-      <div class='bg-white rounded-lg shadow-md p-4'>
-        <div class='flex items-center justify-between'>
-          <div>
-            <h4 class='font-medium text-gray-900'>Target Trial Effect Type</h4>
-            <p class='text-sm text-gray-500 mt-1'>
-              Did the analysis account for switches or deviations during follow-up?
-            </p>
-          </div>
-          <div class='flex items-center gap-4'>
-            <label
-              class={`flex items-center gap-2 ${isReadOnly() ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
-            >
-              <input
-                type='radio'
-                name='protocol-type'
-                checked={!isPerProtocol()}
-                disabled={isReadOnly()}
-                onChange={() => !isReadOnly() && isPerProtocol() && handleSectionCToggle()}
-                class='text-blue-600'
-              />
-              <span class='text-sm'>No (ITT effect)</span>
-            </label>
-            <label
-              class={`flex items-center gap-2 ${isReadOnly() ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
-            >
-              <input
-                type='radio'
-                name='protocol-type'
-                checked={isPerProtocol()}
-                disabled={isReadOnly()}
-                onChange={() => !isReadOnly() && !isPerProtocol() && handleSectionCToggle()}
-                class='text-blue-600'
-              />
-              <span class='text-sm'>Yes (Per-protocol effect)</span>
-            </label>
+        {/* Protocol Type Toggle (C4) */}
+        <div class='bg-white rounded-lg shadow-md p-4'>
+          <div class='flex items-center justify-between'>
+            <div>
+              <h4 class='font-medium text-gray-900'>Target Trial Effect Type</h4>
+              <p class='text-sm text-gray-500 mt-1'>
+                Did the analysis account for switches or deviations during follow-up?
+              </p>
+            </div>
+            <div class='flex items-center gap-4'>
+              <label
+                class={`flex items-center gap-2 ${isReadOnly() ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+              >
+                <input
+                  type='radio'
+                  name='protocol-type'
+                  checked={!isPerProtocol()}
+                  disabled={isReadOnly()}
+                  onChange={() => !isReadOnly() && isPerProtocol() && handleSectionCToggle()}
+                  class='text-blue-600'
+                />
+                <span class='text-sm'>No (ITT effect)</span>
+              </label>
+              <label
+                class={`flex items-center gap-2 ${isReadOnly() ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+              >
+                <input
+                  type='radio'
+                  name='protocol-type'
+                  checked={isPerProtocol()}
+                  disabled={isReadOnly()}
+                  onChange={() => !isReadOnly() && !isPerProtocol() && handleSectionCToggle()}
+                  class='text-blue-600'
+                />
+                <span class='text-sm'>Yes (Per-protocol effect)</span>
+              </label>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Section B: Proceed with assessment */}
-      <SectionB
-        sectionBState={props.checklistState?.sectionB}
-        onUpdate={handleSectionBUpdate}
-        disabled={isReadOnly()}
-      />
-
-      {/* Domain sections - hidden entirely if assessment should stop */}
-      <Show when={!stopAssessment()}>
-        <div class='space-y-4'>
-          <For each={activeDomains()}>
-            {domainKey => (
-              <DomainSection
-                domainKey={domainKey}
-                domainState={props.checklistState?.[domainKey]}
-                onUpdate={newState => handleDomainUpdate(domainKey, newState)}
-                disabled={isReadOnly()}
-                showComments={props.showComments}
-                collapsed={collapsedDomains()[domainKey]}
-                onToggleCollapse={() => toggleDomainCollapse(domainKey)}
-              />
-            )}
-          </For>
-        </div>
-
-        {/* Overall Section */}
-        <OverallSection
-          overallState={props.checklistState?.overall}
-          checklistState={props.checklistState}
-          onUpdate={handleOverallUpdate}
+        {/* Section B: Proceed with assessment */}
+        <SectionB
+          sectionBState={props.checklistState?.sectionB}
+          onUpdate={handleSectionBUpdate}
           disabled={isReadOnly()}
         />
-      </Show>
 
-      {/* Critical risk message when stopped */}
-      <Show when={stopAssessment()}>
-        <div class='bg-red-50 border-2 border-red-200 rounded-lg p-6 text-center'>
-          <div class='text-red-800 font-semibold text-lg mb-2'>Critical Risk of Bias</div>
-          <p class='text-red-600 text-sm'>
-            Based on Section B responses, this result has been classified as Critical risk of bias.
-            Domain assessment is not required.
-          </p>
-        </div>
-      </Show>
+        {/* Domain sections - hidden entirely if assessment should stop */}
+        <Show when={!stopAssessment()}>
+          <div class='space-y-4'>
+            <For each={activeDomains()}>
+              {domainKey => (
+                <DomainSection
+                  domainKey={domainKey}
+                  domainState={props.checklistState?.[domainKey]}
+                  onUpdate={newState => handleDomainUpdate(domainKey, newState)}
+                  disabled={isReadOnly()}
+                  showComments={props.showComments}
+                  collapsed={collapsedDomains()[domainKey]}
+                  onToggleCollapse={() => toggleDomainCollapse(domainKey)}
+                />
+              )}
+            </For>
+          </div>
+
+          <OverallSection
+            overallState={props.checklistState?.overall}
+            checklistState={props.checklistState}
+            onUpdate={handleOverallUpdate}
+            disabled={isReadOnly()}
+          />
+        </Show>
+
+        {/* Critical risk message when stopped */}
+        <Show when={stopAssessment()}>
+          <div class='bg-red-50 border-2 border-red-200 rounded-lg p-6 text-center'>
+            <div class='text-red-800 font-semibold text-lg mb-2'>Critical Risk of Bias</div>
+            <p class='text-red-600 text-sm'>
+              Based on Section B responses, this result has been classified as Critical risk of
+              bias. Domain assessment is not required.
+            </p>
+          </div>
+        </Show>
+      </div>
     </div>
   );
 }
