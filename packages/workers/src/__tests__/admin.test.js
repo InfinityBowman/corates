@@ -38,6 +38,9 @@ async function resetSchema() {
 
   await run('PRAGMA foreign_keys = ON');
 
+  await run('DROP TABLE IF EXISTS subscriptions');
+  await run('DROP TABLE IF EXISTS twoFactor');
+  await run('DROP TABLE IF EXISTS verification');
   await run('DROP TABLE IF EXISTS account');
   await run('DROP TABLE IF EXISTS project_members');
   await run('DROP TABLE IF EXISTS projects');
@@ -120,6 +123,47 @@ async function resetSchema() {
       impersonatedBy TEXT,
       FOREIGN KEY(userId) REFERENCES user(id) ON DELETE CASCADE,
       FOREIGN KEY(impersonatedBy) REFERENCES user(id) ON DELETE SET NULL
+    )
+  `);
+
+  await run(`
+    CREATE TABLE verification (
+      id TEXT PRIMARY KEY,
+      identifier TEXT NOT NULL,
+      value TEXT NOT NULL,
+      expiresAt INTEGER NOT NULL,
+      createdAt INTEGER DEFAULT (unixepoch()),
+      updatedAt INTEGER DEFAULT (unixepoch())
+    )
+  `);
+
+  await run(`
+    CREATE TABLE twoFactor (
+      id TEXT PRIMARY KEY,
+      secret TEXT NOT NULL,
+      backupCodes TEXT NOT NULL,
+      userId TEXT NOT NULL,
+      createdAt INTEGER DEFAULT (unixepoch()),
+      updatedAt INTEGER DEFAULT (unixepoch()),
+      FOREIGN KEY(userId) REFERENCES user(id) ON DELETE CASCADE
+    )
+  `);
+
+  await run(`
+    CREATE TABLE subscriptions (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL,
+      stripeCustomerId TEXT UNIQUE,
+      stripeSubscriptionId TEXT UNIQUE,
+      tier TEXT NOT NULL DEFAULT 'free',
+      status TEXT NOT NULL DEFAULT 'active',
+      currentPeriodStart INTEGER,
+      currentPeriodEnd INTEGER,
+      cancelAtPeriodEnd INTEGER DEFAULT 0,
+      createdAt INTEGER DEFAULT (unixepoch()),
+      updatedAt INTEGER DEFAULT (unixepoch()),
+      UNIQUE(userId),
+      FOREIGN KEY(userId) REFERENCES user(id) ON DELETE CASCADE
     )
   `);
 }
