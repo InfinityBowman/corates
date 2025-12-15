@@ -73,6 +73,11 @@ export async function saveFormState(type, data, projectId) {
       db.close();
       reject(tx.error);
     };
+
+    tx.onabort = () => {
+      db.close();
+      reject(tx.error);
+    };
   });
 }
 
@@ -90,24 +95,39 @@ export async function getFormState(type, projectId) {
     const tx = db.transaction(STORE_NAME, 'readonly');
     const store = tx.objectStore(STORE_NAME);
 
+    let result = null;
+
     const request = store.get(key);
-    request.onerror = () => reject(request.error);
+    request.onerror = () => {
+      tx.abort();
+    };
     request.onsuccess = () => {
       const record = request.result;
 
-      // Return null if not found or expired
-      if (!record) {
-        resolve(null);
-      } else if (Date.now() - record.timestamp > MAX_AGE_MS) {
-        // Clean up expired entry
-        clearFormState(type, projectId).catch(() => {});
-        resolve(null);
+      if (!record || Date.now() - record.timestamp > MAX_AGE_MS) {
+        if (record) {
+          clearFormState(type, projectId).catch(() => {});
+        }
+        result = null;
       } else {
-        resolve(record.data);
+        result = record.data;
       }
     };
 
-    tx.oncomplete = () => db.close();
+    tx.oncomplete = () => {
+      db.close();
+      resolve(result);
+    };
+
+    tx.onerror = () => {
+      db.close();
+      reject(tx.error);
+    };
+
+    tx.onabort = () => {
+      db.close();
+      reject(tx.error);
+    };
   });
 }
 
@@ -125,11 +145,22 @@ export async function clearFormState(type, projectId) {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
 
-    const request = store.delete(key);
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve();
+    store.delete(key);
 
-    tx.oncomplete = () => db.close();
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+
+    tx.onerror = () => {
+      db.close();
+      reject(tx.error);
+    };
+
+    tx.onabort = () => {
+      db.close();
+      reject(tx.error);
+    };
   });
 }
 
@@ -205,10 +236,13 @@ export async function cleanupExpiredStates() {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
 
-    const request = store.openCursor();
     const now = Date.now();
+    const request = store.openCursor();
 
-    request.onerror = () => reject(request.error);
+    request.onerror = () => {
+      tx.abort();
+    };
+
     request.onsuccess = event => {
       const cursor = event.target.result;
       if (cursor) {
@@ -223,6 +257,16 @@ export async function cleanupExpiredStates() {
     tx.oncomplete = () => {
       db.close();
       resolve();
+    };
+
+    tx.onerror = () => {
+      db.close();
+      reject(tx.error);
+    };
+
+    tx.onabort = () => {
+      db.close();
+      reject(tx.error);
     };
   });
 }
