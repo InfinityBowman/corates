@@ -1,4 +1,5 @@
 import { urls } from '~/lib/config';
+import PrefetchLink from '~/components/PrefetchLink';
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -9,9 +10,9 @@ export default function Footer() {
         <div class='grid md:grid-cols-4 gap-8 mb-8'>
           {/* Brand */}
           <div class='md:col-span-1'>
-            <a href='/' class='text-xl font-bold text-blue-700'>
+            <PrefetchLink href='/' class='text-xl font-bold text-blue-700'>
               CoRATES
-            </a>
+            </PrefetchLink>
             <p class='text-sm text-gray-500 mt-2'>
               Collaborative Research Appraisal Tool for Evidence Synthesis
             </p>
@@ -22,14 +23,20 @@ export default function Footer() {
             <h4 class='font-semibold text-gray-900 mb-3'>Product</h4>
             <ul class='space-y-2 text-sm'>
               <li>
-                <a href='/pricing' class='text-gray-500 hover:text-gray-700 transition-colors'>
+                <PrefetchLink
+                  href='/pricing'
+                  class='text-gray-500 hover:text-gray-700 transition-colors'
+                >
                   Pricing
-                </a>
+                </PrefetchLink>
               </li>
               <li>
-                <a href='/#features' class='text-gray-500 hover:text-gray-700 transition-colors'>
+                <PrefetchLink
+                  href='/#features'
+                  class='text-gray-500 hover:text-gray-700 transition-colors'
+                >
                   Features
-                </a>
+                </PrefetchLink>
               </li>
               <li>
                 <a
@@ -48,14 +55,20 @@ export default function Footer() {
             <h4 class='font-semibold text-gray-900 mb-3'>Company</h4>
             <ul class='space-y-2 text-sm'>
               <li>
-                <a href='/about' class='text-gray-500 hover:text-gray-700 transition-colors'>
+                <PrefetchLink
+                  href='/about'
+                  class='text-gray-500 hover:text-gray-700 transition-colors'
+                >
                   About
-                </a>
+                </PrefetchLink>
               </li>
               <li>
-                <a href='/contact' class='text-gray-500 hover:text-gray-700 transition-colors'>
+                <PrefetchLink
+                  href='/contact'
+                  class='text-gray-500 hover:text-gray-700 transition-colors'
+                >
                   Contact
-                </a>
+                </PrefetchLink>
               </li>
             </ul>
           </div>
@@ -65,14 +78,28 @@ export default function Footer() {
             <h4 class='font-semibold text-gray-900 mb-3'>Legal</h4>
             <ul class='space-y-2 text-sm'>
               <li>
-                <a href='/privacy' class='text-gray-500 hover:text-gray-700 transition-colors'>
+                <PrefetchLink
+                  href='/privacy'
+                  class='text-gray-500 hover:text-gray-700 transition-colors'
+                >
                   Privacy Policy
-                </a>
+                </PrefetchLink>
               </li>
               <li>
-                <a href='/terms' class='text-gray-500 hover:text-gray-700 transition-colors'>
+                <PrefetchLink
+                  href='/terms'
+                  class='text-gray-500 hover:text-gray-700 transition-colors'
+                >
                   Terms of Service
-                </a>
+                </PrefetchLink>
+              </li>
+              <li>
+                <PrefetchLink
+                  href='/security'
+                  class='text-gray-500 hover:text-gray-700 transition-colors'
+                >
+                  Security
+                </PrefetchLink>
               </li>
             </ul>
           </div>

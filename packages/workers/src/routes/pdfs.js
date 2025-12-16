@@ -51,6 +51,15 @@ async function verifyProjectMembership(c, next) {
 // Apply membership middleware to all routes
 pdfRoutes.use('*', verifyProjectMembership);
 
+function isValidFileName(fileName) {
+  if (!fileName) return false;
+  if (fileName.length > 200) return false;
+  if (/[\\/]/.test(fileName)) return false;
+  if (/\p{C}/u.test(fileName)) return false;
+  if (fileName.includes('"')) return false;
+  return true;
+}
+
 /**
  * GET /api/projects/:projectId/studies/:studyId/pdfs
  * List PDFs for a study
@@ -86,6 +95,12 @@ pdfRoutes.post('/', async c => {
   const { user } = getAuth(c);
   const projectId = c.get('projectId');
   const studyId = c.get('studyId');
+  const memberRole = c.get('memberRole');
+
+  // Enforce read-only access for viewers
+  if (memberRole === 'viewer') {
+    return c.json(createErrorResponse(ERROR_CODES.AUTH_FORBIDDEN, 'Insufficient permissions'), 403);
+  }
 
   // Check Content-Length header first for early rejection
   const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
@@ -152,6 +167,16 @@ pdfRoutes.post('/', async c => {
       );
     }
 
+    if (!isValidFileName(fileName)) {
+      return c.json(
+        createErrorResponse(
+          ERROR_CODES.MISSING_FIELD,
+          'Invalid file name. Avoid quotes, slashes, control characters, and very long names.',
+        ),
+        400,
+      );
+    }
+
     // Validate it's a PDF (check magic bytes)
     const header = new Uint8Array(pdfData.slice(0, 5));
     const pdfMagic = [0x25, 0x50, 0x44, 0x46, 0x2d]; // %PDF-
@@ -205,6 +230,10 @@ pdfRoutes.get('/:fileName', async c => {
     return c.json(createErrorResponse(ERROR_CODES.MISSING_FIELD, 'Missing file name'), 400);
   }
 
+  if (!isValidFileName(fileName)) {
+    return c.json(createErrorResponse(ERROR_CODES.MISSING_FIELD, 'Invalid file name'), 400);
+  }
+
   const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
 
   try {
@@ -217,7 +246,9 @@ pdfRoutes.get('/:fileName', async c => {
     return new Response(object.body, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="${fileName}"`,
+        'Content-Disposition': `inline; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(
+          fileName,
+        )}`,
         'Cache-Control': 'private, max-age=3600',
       },
     });
@@ -245,6 +276,10 @@ pdfRoutes.delete('/:fileName', async c => {
 
   if (!fileName) {
     return c.json(createErrorResponse(ERROR_CODES.MISSING_FIELD, 'Missing file name'), 400);
+  }
+
+  if (!isValidFileName(fileName)) {
+    return c.json(createErrorResponse(ERROR_CODES.MISSING_FIELD, 'Invalid file name'), 400);
   }
 
   const key = `projects/${projectId}/studies/${studyId}/${fileName}`;

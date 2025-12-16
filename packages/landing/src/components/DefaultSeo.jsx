@@ -2,7 +2,7 @@ import { Meta } from '@solidjs/meta';
 import { config } from '~/lib/config';
 
 export default function DefaultSeo() {
-  const imageUrl = `${config.appUrl}/product.png`;
+  const imageUrl = `${config.appUrl}/product.webp`;
 
   return (
     <>
