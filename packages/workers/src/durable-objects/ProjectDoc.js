@@ -382,10 +382,7 @@ export class ProjectDoc {
       encoding.writeVarUint(awarenessEncoder, messageAwareness);
       encoding.writeVarUint8Array(
         awarenessEncoder,
-        awarenessProtocol.encodeAwarenessUpdate(
-          this.awareness,
-          Array.from(awarenessStates.keys()),
-        ),
+        awarenessProtocol.encodeAwarenessUpdate(this.awareness, Array.from(awarenessStates.keys())),
       );
       server.send(encoding.toUint8Array(awarenessEncoder));
     }
@@ -394,9 +391,9 @@ export class ProjectDoc {
       try {
         // Handle binary messages (y-websocket protocol)
         const data =
-          event.data instanceof ArrayBuffer
-            ? new Uint8Array(event.data)
-            : new Uint8Array(await event.data.arrayBuffer());
+          event.data instanceof ArrayBuffer ?
+            new Uint8Array(event.data)
+          : new Uint8Array(await event.data.arrayBuffer());
 
         const decoder = decoding.createDecoder(data);
         const messageType = decoding.readVarUint(decoder);
