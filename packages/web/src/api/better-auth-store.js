@@ -151,6 +151,14 @@ function createBetterAuthStore() {
       if (currentUser && cachedAvatarUrl()) {
         return { ...currentUser, image: cachedAvatarUrl() };
       }
+      // During loading, use cached data to prevent avatar flash
+      if (!currentUser && authLoading()) {
+        const cached = cachedUser();
+        if (cached && cachedAvatarUrl()) {
+          return { ...cached, image: cachedAvatarUrl() };
+        }
+        return cached;
+      }
       return currentUser;
     }
     // When offline, return cached user with cached avatar

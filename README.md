@@ -36,8 +36,6 @@ CoRATES uses a CRDT-based sync layer backed by per-project Durable Objects:
 - **Local-first** - Clients persist data to IndexedDB and sync when connected
 - **Conflict-free** - Yjs CRDTs ensure all changes merge automatically
 
-See [architecture-goals.md](./architecture-goals.md) for detailed architecture documentation.
-
 ## License
 
 GNU GPLv3 - see [LICENSE](./LICENSE) for details.

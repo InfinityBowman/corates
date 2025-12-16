@@ -4,7 +4,6 @@
 
 - [Git](https://git-scm.com/downloads)
 - [Node](https://nodejs.org/en/download)
-- [Caddy](https://caddyserver.com/download)
 - [pnpm](https://pnpm.io/installation)
 
 ## Quick Start
@@ -32,14 +31,12 @@
 pnpm i
 
 # Start the frontend
-pnpm dev
+pnpm dev:front
 
 # Start the Cloudflare services
 pnpm dev:workers
 
 # All done!
-
-
 ```
 
 ## MCP
@@ -51,6 +48,7 @@ To set this up do:
 cd packages/mcp
 pnpm run scrape:all
 # Ensure you have the .vscode folder with the mcp.json
+# in VS CODE
 # Press cmd + shift + p
 # Type MCP: List Servers
 # Find 'corates' and start it
@@ -59,16 +57,13 @@ pnpm run scrape:all
 
 ## Tips
 
-Clear worker storage
-
 ```bash
-cd packages/workers
+# Clear worker storage
 pnpm clear-workers
-pnpm db:migrate
-# db migrate may prompt for confirmation
-
 
 # See worker logs
-cd packages/workers
-pnpm wrangler tail corates-workers-prod
+pnpm logs
+
+# See architecture docs
+pnpm run docs
 ```
