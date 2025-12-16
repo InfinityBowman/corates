@@ -19,6 +19,8 @@ export function useNotifications(userId, options = {}) {
   let ws = null;
   let reconnectTimeout = null;
   let pingInterval = null;
+  let reconnectAttempts = 0;
+  const MAX_RECONNECT_DELAY = 60000; // 1 minute max
 
   function connect() {
     if (ws || !userId) return;
@@ -32,6 +34,7 @@ export function useNotifications(userId, options = {}) {
 
     ws.onopen = () => {
       setConnected(true);
+      reconnectAttempts = 0; // Reset on successful connection
       // Start keepalive ping
       pingInterval = setInterval(() => {
         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -62,15 +65,20 @@ export function useNotifications(userId, options = {}) {
     ws.onclose = () => {
       setConnected(false);
       cleanup();
-      // Attempt to reconnect after 5 seconds
+      ws = null; // Clear the reference so connect() can run again
+
+      // Exponential backoff: 5s, 10s, 20s, 40s... up to MAX_RECONNECT_DELAY
+      const delay = Math.min(5000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+      reconnectAttempts++;
+
       reconnectTimeout = setTimeout(() => {
         connect();
-      }, 5000);
+      }, delay);
     };
 
     ws.onerror = err => {
       console.error('Notification WebSocket error:', err);
-      setConnected(false);
+      // Don't set connected false here - onclose will fire next and handle cleanup
     };
   }
 

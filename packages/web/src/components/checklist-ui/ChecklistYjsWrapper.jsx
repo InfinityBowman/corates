@@ -22,7 +22,6 @@ export default function ChecklistYjsWrapper() {
 
   // Use full hook for write operations
   const {
-    error,
     updateChecklistAnswer,
     updateChecklist,
     getChecklistData,
@@ -286,12 +285,6 @@ export default function ChecklistYjsWrapper() {
 
   return (
     <>
-      <Show when={error()}>
-        <div class='bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 m-4'>
-          Error: {error()}
-        </div>
-      </Show>
-
       <Show
         when={checklistForUI()}
         fallback={

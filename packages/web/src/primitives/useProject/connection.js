@@ -20,6 +20,8 @@ export function createConnectionManager(projectId, ydoc, options) {
   const { onSync, isLocalProject } = options;
 
   let provider = null;
+  let lastErrorLog = 0;
+  const ERROR_LOG_THROTTLE = 5000; // Only log errors every 5 seconds
 
   function connect() {
     if (!ydoc || isLocalProject()) return;
@@ -59,7 +61,12 @@ export function createConnectionManager(projectId, ydoc, options) {
     });
 
     provider.on('connection-error', event => {
-      console.error('WebSocket connection error:', event);
+      // Throttle error logs to prevent console spam on Safari
+      const now = Date.now();
+      if (now - lastErrorLog > ERROR_LOG_THROTTLE) {
+        console.error('WebSocket connection error:', event);
+        lastErrorLog = now;
+      }
       projectStore.setConnectionState(projectId, {
         error: 'Connection error',
         connected: false,
