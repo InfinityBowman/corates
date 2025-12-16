@@ -124,6 +124,7 @@ export const SECTION_A = {
     text: 'Specify the numerical result being assessed',
     placeholder: 'e.g., OR = 1.5 (95% CI: 1.2-1.9)',
     type: 'textarea',
+    stateKey: 'numericalResult',
   },
   a2: {
     id: 'a2',
@@ -132,6 +133,7 @@ export const SECTION_A = {
     optional: true,
     placeholder: 'e.g., Table 3, primary outcome analysis',
     type: 'textarea',
+    stateKey: 'furtherDetails',
   },
   a3: {
     id: 'a3',
@@ -139,6 +141,7 @@ export const SECTION_A = {
     text: 'Specify the outcome to which this result relates',
     placeholder: 'e.g., All-cause mortality at 12 months',
     type: 'textarea',
+    stateKey: 'outcome',
   },
 };
 

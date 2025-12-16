@@ -123,7 +123,7 @@ export function JudgementBadge(props) {
         return 'bg-green-100 text-green-800';
       case 'Low (except for concerns about uncontrolled confounding)':
       case 'Low (except confounding)':
-        return 'bg-teal-100 text-teal-800';
+        return 'bg-green-100 text-green-800';
       case 'Moderate':
         return 'bg-yellow-100 text-yellow-800';
       case 'Serious':
