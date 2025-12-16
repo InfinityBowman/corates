@@ -147,11 +147,12 @@ export async function fetchFromDOI(doi) {
     throw new Error('Invalid DOI');
   }
 
-  const response = await fetch(`https://api.crossref.org/works/${encodeURIComponent(cleanDoi)}`, {
+  // Use mailto parameter for polite pool instead of User-Agent header
+  // Safari blocks/modifies User-Agent on CORS requests, causing 503 errors from CrossRef
+  const url = `https://api.crossref.org/works/${encodeURIComponent(cleanDoi)}?mailto=support@corates.org`;
+  const response = await fetch(url, {
     headers: {
       Accept: 'application/json',
-      // Polite pool - include email for better rate limits
-      'User-Agent': 'CoRATES/1.0 (https://corates.org; mailto:support@corates.org)',
     },
   });
 
