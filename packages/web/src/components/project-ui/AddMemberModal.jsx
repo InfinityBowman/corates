@@ -1,7 +1,7 @@
 import { createSignal, For, Show, createEffect, onCleanup } from 'solid-js';
 import { API_BASE } from '@config/api.js';
 import { FiX } from 'solid-icons/fi';
-import { Select } from '@corates/ui';
+import { Select, Avatar } from '@corates/ui';
 
 /**
  * Modal for searching and adding members to a project
@@ -175,11 +175,12 @@ export default function AddMemberModal(props) {
                         onClick={() => handleSelectUser(user)}
                         class='w-full px-4 py-3 text-left hover:bg-blue-50 flex items-center gap-3 transition-colors'
                       >
-                        <div class='w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium shrink-0'>
-                          {(user.displayName || user.name || user.email || '?')
-                            .charAt(0)
-                            .toUpperCase()}
-                        </div>
+                        <Avatar
+                          src={user.image}
+                          name={user.displayName || user.name || user.email}
+                          class='w-8 h-8 rounded-full shrink-0'
+                          fallbackClass='flex items-center justify-center w-full h-full bg-blue-600 text-white text-sm font-medium'
+                        />
                         <div class='min-w-0'>
                           <p class='text-gray-900 font-medium truncate'>
                             {user.displayName || user.name || 'Unknown'}
@@ -216,16 +217,12 @@ export default function AddMemberModal(props) {
             <Show when={selectedUser()}>
               <div class='bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between'>
                 <div class='flex items-center gap-3'>
-                  <div class='w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium'>
-                    {(
-                      selectedUser().displayName ||
-                      selectedUser().name ||
-                      selectedUser().email ||
-                      '?'
-                    )
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
+                  <Avatar
+                    src={selectedUser().image}
+                    name={selectedUser().displayName || selectedUser().name || selectedUser().email}
+                    class='w-10 h-10 rounded-full'
+                    fallbackClass='flex items-center justify-center w-full h-full bg-blue-600 text-white font-medium'
+                  />
                   <div>
                     <p class='text-gray-900 font-medium'>
                       {selectedUser().displayName || selectedUser().name || 'Unknown'}
