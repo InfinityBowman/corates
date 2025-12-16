@@ -50,5 +50,10 @@
   "engines": {
     "node": ">=24.0.0",
     "pnpm": ">=10.0.0"
+  },
+  "dependencies": {
+    "@zag-js/clipboard": "^1.31.1",
+    "@zag-js/combobox": "^1.31.1",
+    "@zag-js/tour": "^1.31.1"
   }
 }

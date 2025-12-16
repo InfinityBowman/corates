@@ -1,6 +1,7 @@
 import { createSignal, For, Show, createEffect, onCleanup } from 'solid-js';
 import { API_BASE } from '@config/api.js';
 import { FiX } from 'solid-icons/fi';
+import Select from '@components/zag/Select.jsx';
 
 /**
  * Modal for searching and adding members to a project
@@ -246,19 +247,19 @@ export default function AddMemberModal(props) {
 
             {/* Role Selection */}
             <Show when={selectedUser()}>
-              <div>
-                <label class='block text-sm font-medium text-gray-700 mb-1'>Role</label>
-                <select
-                  value={selectedRole()}
-                  onChange={e => setSelectedRole(e.target.value)}
-                  class='w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-                >
-                  <option value='viewer'>Viewer - Can view only</option>
-                  <option value='member'>Member - Can edit checklists</option>
-                  <option value='collaborator'>Collaborator - Can edit project</option>
-                  <option value='owner'>Owner - Full access</option>
-                </select>
-              </div>
+              <Select
+                label='Role'
+                items={[
+                  { label: 'Viewer - Can view only', value: 'viewer' },
+                  { label: 'Member - Can edit checklists', value: 'member' },
+                  { label: 'Collaborator - Can edit project', value: 'collaborator' },
+                  { label: 'Owner - Full access', value: 'owner' },
+                ]}
+                value={selectedRole()}
+                onChange={setSelectedRole}
+                placeholder='Select a role'
+                inDialog={true}
+              />
             </Show>
 
             {/* Error Message */}
