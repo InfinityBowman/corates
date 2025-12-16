@@ -183,20 +183,7 @@ self.addEventListener('fetch', event => {
       .then(response => {
         // Cache successful responses for same-origin requests
         if (response.ok && request.url.startsWith(self.location.origin)) {
-          const responseToCache =
-            response.redirected ?
-              response
-                .clone()
-                .blob()
-                .then(
-                  body =>
-                    new Response(body, {
-                      status: response.status,
-                      statusText: response.statusText,
-                      headers: response.headers,
-                    }),
-                )
-            : Promise.resolve(response.clone());
+          const responseToCache = Promise.resolve(stripRedirect(response.clone()));
 
           responseToCache.then(finalResponse => {
             caches.open(CACHE_NAME).then(cache => {
@@ -213,7 +200,7 @@ self.addEventListener('fetch', event => {
 
         // Return offline fallback for navigation requests
         if (request.mode === 'navigate') {
-          return caches.match('/app.html') || caches.match('/');
+          return (await caches.match('/app.html')) || (await caches.match('/'));
         }
         // For failed asset requests, return a meaningful error
         if (isAsset) {
