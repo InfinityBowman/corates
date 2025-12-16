@@ -2,6 +2,7 @@ import { Show, For, createSignal } from 'solid-js';
 import { FiMenu, FiX } from 'solid-icons/fi';
 import { urls } from '~/lib/config';
 import { useAuth } from '~/lib/auth';
+import PrefetchLink from '~/components/PrefetchLink';
 
 export default function Navbar() {
   const { isLoggedIn, user } = useAuth();
@@ -21,9 +22,9 @@ export default function Navbar() {
         class='sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100'
         aria-label='Primary'
       >
-        <div class='flex items-center justify-between max-w-6xl mx-auto px-6 py-4'>
+        <div class='flex items-center justify-between w-full mx-auto px-6 py-4'>
           <div class='flex items-center gap-8'>
-            <a
+            <PrefetchLink
               href='/'
               class='inline-flex items-center gap-2 text-xl font-bold text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 rounded'
             >
@@ -36,15 +37,15 @@ export default function Navbar() {
                 height='24'
               />
               CoRATES
-            </a>
+            </PrefetchLink>
             <For each={navLinks}>
               {link => (
-                <a
+                <PrefetchLink
                   href={link.href}
                   class='hidden sm:inline-flex text-gray-600 hover:text-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 rounded'
                 >
                   {link.label}
-                </a>
+                </PrefetchLink>
               )}
             </For>
           </div>
@@ -133,14 +134,14 @@ function MobileMenu(props) {
         <div class='px-6 py-6 space-y-1'>
           <For each={props.navLinks}>
             {(link, index) => (
-              <a
+              <PrefetchLink
                 href={link.href}
                 class='block text-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 py-3 px-3 -mx-3 rounded-lg transition-colors animate-stagger-item'
                 style={{ 'animation-delay': getDelay(index()) }}
                 onClick={() => props.onClose()}
               >
                 {link.label}
-              </a>
+              </PrefetchLink>
             )}
           </For>
           <div
