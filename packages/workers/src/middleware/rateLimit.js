@@ -146,6 +146,13 @@ export const searchRateLimit = rateLimit({
   keyPrefix: 'search',
 });
 
+// Rate limit for contact form (stricter to prevent spam)
+export const contactRateLimit = rateLimit({
+  limit: 5,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  keyPrefix: 'contact',
+});
+
 // General API rate limit
 export const apiRateLimit = rateLimit({
   limit: 100,
