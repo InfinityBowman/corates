@@ -3,12 +3,20 @@ export default {
     // Try to get the static asset
     const asset = await env.ASSETS.fetch(request);
 
-    // If asset found (not 404), return it
-    if (asset.status !== 404) {
+    // If asset found (not 404) and it is not an HTML page, return it.
+    // Some hosting setups can return an HTML error or index page with 200 status
+    // for missing assets; treat those as missing so the SPA shell fallback works.
+    const assetContentType = (
+      asset.headers.get('Content-Type') ||
+      asset.headers.get('content-type') ||
+      ''
+    ).toLowerCase();
+
+    if (asset.status !== 404 && !assetContentType.includes('html')) {
       return asset;
     }
 
-    // For 404s, serve app.html (the web app SPA shell)
+    // For 404s or HTML responses (missing asset fallback), serve app.html (the web app SPA shell)
     const appHtmlUrl = new URL('/app.html', request.url);
     const appHtml = await env.ASSETS.fetch(appHtmlUrl);
 
