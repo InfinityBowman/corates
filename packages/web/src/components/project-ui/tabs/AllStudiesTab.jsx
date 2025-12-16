@@ -2,10 +2,11 @@ import { For, Show, createSignal, onMount } from 'solid-js';
 import { AiOutlineBook, AiOutlineFileSync } from 'solid-icons/ai';
 import { BiRegularEdit, BiRegularUpload } from 'solid-icons/bi';
 import { CgFileDocument } from 'solid-icons/cg';
-import { FiTrash2 } from 'solid-icons/fi';
+import { FiTrash2, FiSettings } from 'solid-icons/fi';
 import { FaBrandsGoogleDrive } from 'solid-icons/fa';
 import AddStudiesForm from '../AddStudiesForm.jsx';
 import GoogleDrivePickerModal from '../google-drive/GoogleDrivePickerModal.jsx';
+import EditStudyModal from '../EditStudyModal.jsx';
 import { showToast } from '@components/zag/Toast.jsx';
 import projectStore from '@/stores/projectStore.js';
 import { useProjectContext } from '../ProjectContext.jsx';
@@ -27,6 +28,8 @@ export default function AllStudiesTab() {
   const [showGoogleDriveModal, setShowGoogleDriveModal] = createSignal(false);
   const [googleDriveTargetStudyId, setGoogleDriveTargetStudyId] = createSignal(null);
   const [restoredState, setRestoredState] = createSignal(null);
+  const [showEditModal, setShowEditModal] = createSignal(false);
+  const [editingStudy, setEditingStudy] = createSignal(null);
 
   // Check for and restore state on mount (after OAuth redirect)
   onMount(async () => {
@@ -74,6 +77,19 @@ export default function AllStudiesTab() {
     const studyId = googleDriveTargetStudyId();
     handlers.pdfHandlers.handleGoogleDriveImportSuccess(studyId, file);
   };
+
+  const handleOpenEditModal = study => {
+    setEditingStudy(study);
+    setShowEditModal(true);
+  };
+
+  const handleCloseEditModal = open => {
+    if (!open) {
+      setShowEditModal(false);
+      setEditingStudy(null);
+    }
+  };
+
   return (
     <div class='space-y-4'>
       {/* Add Studies Section - Unified form with PDF upload, reference import, and DOI lookup */}
@@ -344,6 +360,14 @@ export default function AllStudiesTab() {
                         <FaBrandsGoogleDrive class='w-3.5 h-3.5' />
                       </button>
                     </Show>
+                    {/* Edit button */}
+                    <button
+                      onClick={() => handleOpenEditModal(study)}
+                      class='p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors'
+                      title='Edit study metadata and reviewers'
+                    >
+                      <FiSettings class='w-4 h-4' />
+                    </button>
                     {/* Delete button */}
                     <button
                       onClick={() => handlers.studyHandlers.handleDeleteStudy(study.id)}
@@ -370,6 +394,15 @@ export default function AllStudiesTab() {
         projectId={projectId}
         studyId={googleDriveTargetStudyId()}
         onImportSuccess={handleGoogleDriveImportSuccess}
+      />
+
+      {/* Edit Study Modal */}
+      <EditStudyModal
+        open={showEditModal()}
+        onOpenChange={handleCloseEditModal}
+        study={editingStudy()}
+        projectId={projectId}
+        onUpdateStudy={handlers.studyHandlers.handleUpdateStudy}
       />
     </div>
   );
