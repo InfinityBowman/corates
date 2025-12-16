@@ -79,9 +79,9 @@ export default function Security() {
                     <div>
                       <h2 class='text-lg font-semibold text-gray-900 mb-2'>Abuse Prevention</h2>
                       <p class='text-gray-600'>
-                        We apply rate limiting to sensitive endpoints (such as sign-in, registration,
-                        password resets, and email flows) to reduce brute-force attempts and automated
-                        abuse.
+                        We apply rate limiting to sensitive endpoints (such as sign-in,
+                        registration, password resets, and email flows) to reduce brute-force
+                        attempts and automated abuse.
                       </p>
                     </div>
                   </div>
