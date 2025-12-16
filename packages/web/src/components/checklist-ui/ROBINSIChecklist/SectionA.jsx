@@ -29,7 +29,7 @@ export function SectionA(props) {
 
       <div class='px-6 py-4 space-y-4'>
         <For each={Object.entries(SECTION_A)}>
-          {([key, field]) => {
+          {([_key, field]) => {
             const value = () => props.sectionAState?.[field.stateKey] || '';
 
             return (
