@@ -21,7 +21,7 @@ import {
   revokeUserSessions,
   deleteUser,
 } from '@/stores/adminStore.js';
-import { Avatar, ConfirmDialog as Dialog, Tooltip } from '@corates/ui';
+import { Avatar, Dialog, Tooltip } from '@corates/ui';
 
 // Provider display info
 const PROVIDER_INFO = {
