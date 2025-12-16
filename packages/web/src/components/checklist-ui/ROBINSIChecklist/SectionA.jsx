@@ -9,15 +9,7 @@ import { SECTION_A } from '@/ROBINS-I/checklist-map.js';
  * @param {boolean} [props.disabled] - Whether the section is disabled
  */
 export function SectionA(props) {
-  // Map field keys to state keys
-  const fieldToStateKey = {
-    a1: 'numericalResult',
-    a2: 'furtherDetails',
-    a3: 'outcome',
-  };
-
-  function handleFieldChange(fieldKey, value) {
-    const stateKey = fieldToStateKey[fieldKey];
+  function handleFieldChange(stateKey, value) {
     props.onUpdate({
       ...props.sectionAState,
       [stateKey]: value,
@@ -38,8 +30,7 @@ export function SectionA(props) {
       <div class='px-6 py-4 space-y-4'>
         <For each={Object.entries(SECTION_A)}>
           {([key, field]) => {
-            const stateKey = fieldToStateKey[key];
-            const value = () => props.sectionAState?.[stateKey] || '';
+            const value = () => props.sectionAState?.[field.stateKey] || '';
 
             return (
               <div class='space-y-2'>
@@ -55,7 +46,7 @@ export function SectionA(props) {
                     value={value()}
                     disabled={props.disabled}
                     placeholder={field.placeholder}
-                    onInput={e => handleFieldChange(key, e.currentTarget.value)}
+                    onInput={e => handleFieldChange(field.stateKey, e.currentTarget.value)}
                     rows={3}
                     class={`
                       mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm
