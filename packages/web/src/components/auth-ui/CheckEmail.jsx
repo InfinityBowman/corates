@@ -34,11 +34,7 @@ export default function CheckEmail() {
       }
 
       const currentUser = user();
-      console.log('[CheckEmail] Checking verification:', {
-        isAuthenticated: isAuthenticated(),
-        emailVerified: currentUser?.emailVerified,
-        profileCompletedAt: currentUser?.profileCompletedAt,
-      });
+
 
       if (isAuthenticated() && currentUser?.emailVerified) {
         if (checkInterval()) {
@@ -54,10 +50,8 @@ export default function CheckEmail() {
           // Redirect to complete-profile if user hasn't completed setup yet
           // Otherwise go to dashboard
           if (!isProfileComplete) {
-            console.log('[CheckEmail] Redirecting to complete-profile');
             navigate('/complete-profile', { replace: true });
           } else {
-            console.log('[CheckEmail] Redirecting to dashboard');
             navigate('/dashboard', { replace: true });
           }
         }, REDIRECT_DELAY_MS);

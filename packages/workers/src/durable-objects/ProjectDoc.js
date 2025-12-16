@@ -1,5 +1,13 @@
 import * as Y from 'yjs';
+import * as syncProtocol from 'y-protocols/sync';
+import * as awarenessProtocol from 'y-protocols/awareness';
+import * as encoding from 'lib0/encoding';
+import * as decoding from 'lib0/decoding';
 import { verifyAuth } from '../auth/config.js';
+
+// y-websocket message types
+const messageSync = 0;
+const messageAwareness = 1;
 
 /**
  * ProjectDoc Durable Object
@@ -21,10 +29,10 @@ export class ProjectDoc {
   constructor(state, env) {
     this.state = state;
     this.env = env;
-    this.sessions = new Set();
+    // Map<WebSocket, { user, awarenessClientId }>
+    this.sessions = new Map();
     this.doc = null;
-    // this.saveTimeout = null;
-    // this.pendingSave = false;
+    this.awareness = null;
   }
 
   async fetch(request) {
@@ -33,16 +41,7 @@ export class ProjectDoc {
     // Note: CORS headers are added by the main worker (index.js) when wrapping responses
     // Do NOT add them here to avoid duplicate headers
 
-    // Debug: log upgrade header
     const upgradeHeader = request.headers.get('Upgrade');
-    console.log(
-      'ProjectDoc fetch - Upgrade header:',
-      upgradeHeader,
-      'Method:',
-      request.method,
-      'Path:',
-      url.pathname,
-    );
 
     // Check for internal requests (from worker routes)
     const isInternalRequest = request.headers.get('X-Internal-Request') === 'true';
@@ -134,9 +133,7 @@ export class ProjectDoc {
         }
       }
 
-      // Broadcast update to connected clients
-      const update = Y.encodeStateAsUpdate(this.doc);
-      this.broadcast(JSON.stringify({ type: 'update', update: Array.from(update) }));
+      // Updates are automatically broadcast via Y.doc update listener
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { 'Content-Type': 'application/json' },
@@ -193,9 +190,7 @@ export class ProjectDoc {
         membersMap.delete(member.userId);
       }
 
-      // Broadcast update to connected clients
-      const update = Y.encodeStateAsUpdate(this.doc);
-      this.broadcast(JSON.stringify({ type: 'update', update: Array.from(update) }));
+      // Updates are automatically broadcast via Y.doc update listener
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { 'Content-Type': 'application/json' },
@@ -256,9 +251,7 @@ export class ProjectDoc {
       // Update study's updatedAt
       studyYMap.set('updatedAt', Date.now());
 
-      // Broadcast update to connected clients
-      const update = Y.encodeStateAsUpdate(this.doc);
-      this.broadcast(JSON.stringify({ type: 'update', update: Array.from(update) }));
+      // Updates are automatically broadcast via Y.doc update listener
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { 'Content-Type': 'application/json' },
@@ -275,6 +268,7 @@ export class ProjectDoc {
   async initializeDoc() {
     if (!this.doc) {
       this.doc = new Y.Doc();
+      this.awareness = new awarenessProtocol.Awareness(this.doc);
 
       // Load persisted state if exists
       const persistedState = await this.state.storage.get('yjs-state');
@@ -284,31 +278,49 @@ export class ProjectDoc {
 
       // Persist the FULL document state on every update
       // This ensures we don't lose data when the DO restarts
-      this.doc.on('update', async () => {
+      this.doc.on('update', async (update, origin) => {
         // Encode the full document state, not just the incremental update
         const fullState = Y.encodeStateAsUpdate(this.doc);
         await this.state.storage.put('yjs-state', Array.from(fullState));
+
+        // Broadcast update to all connected clients (except origin)
+        const encoder = encoding.createEncoder();
+        encoding.writeVarUint(encoder, messageSync);
+        syncProtocol.writeUpdate(encoder, update);
+        const message = encoding.toUint8Array(encoder);
+        this.broadcastBinary(message, origin);
+      });
+
+      // Broadcast awareness updates to all clients
+      this.awareness.on('update', ({ added, updated, removed }, origin) => {
+        const changedClients = added.concat(updated, removed);
+        if (changedClients.length > 0) {
+          const encoder = encoding.createEncoder();
+          encoding.writeVarUint(encoder, messageAwareness);
+          encoding.writeVarUint8Array(
+            encoder,
+            awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients),
+          );
+          const message = encoding.toUint8Array(encoder);
+          this.broadcastBinary(message, origin);
+        }
       });
     }
   }
 
   async handleWebSocket(request) {
-    console.log('handleWebSocket called, ENVIRONMENT:', this.env.ENVIRONMENT);
-
     let user = null;
 
     // Authenticate via cookies (standard HTTP cookie auth)
     try {
       const authResult = await verifyAuth(request, this.env);
       user = authResult.user;
-      console.log('WebSocket auth result:', user ? `User ${user.id}` : 'No user');
     } catch (err) {
       console.error('WebSocket auth error:', err);
     }
 
     // Require authentication
     if (!user) {
-      console.log('WebSocket auth failed - no user');
       return new Response('Authentication required', { status: 401 });
     }
 
@@ -316,8 +328,7 @@ export class ProjectDoc {
     // Extract projectId from URL: /api/project/:projectId/...
     const url = new URL(request.url);
     const pathParts = url.pathname.split('/');
-    const projectId = pathParts[3]; // /api/project/{projectId}/...
-    console.log(`Verifying membership for user ${user.id} in project ${projectId}`);
+    const _projectId = pathParts[3]; // /api/project/{projectId}/... (unused but kept for reference)
 
     // Check if user is in the members map
     await this.initializeDoc();
@@ -325,7 +336,6 @@ export class ProjectDoc {
     const isMember = membersMap.has(user.id);
 
     if (!isMember) {
-      console.log(`User ${user.id} is not a member of project ${projectId}`);
       // Use 1008 (Policy Violation) close code so client can detect membership issue
       return new Response('Not a project member', {
         status: 403,
@@ -333,94 +343,81 @@ export class ProjectDoc {
       });
     }
 
-    console.log(`User ${user.id} verified as member of project ${projectId}`);
     const webSocketPair = new WebSocketPair();
     const [client, server] = Object.values(webSocketPair);
 
     server.accept();
-    server.user = user;
-    this.sessions.add(server);
+    // Store session with user info, awarenessClientId will be set when client sends awareness
+    this.sessions.set(server, { user, awarenessClientId: null });
 
-    // Send current full state to new client
-    const currentState = Y.encodeStateAsUpdate(this.doc);
-    console.log(`Sending full state to user ${user.id}, state size: ${currentState.length} bytes`);
-
-    // Log current document contents for debugging
-    const reviewsMap = this.doc.getMap('reviews');
-    console.log(`Document has ${reviewsMap.size} studies and ${membersMap.size} members`);
-
-    server.send(JSON.stringify({ type: 'sync', update: Array.from(currentState) }));
-
-    // If user joined broadcast presence message
-    if (user) {
-      this.broadcast(
-        JSON.stringify({ type: 'user-joined', user: { id: user.id, username: user.username } }),
-        server,
-      );
-    }
+    // Note: We do NOT proactively send sync step 1 here.
+    // The y-websocket client will send sync step 1 on connect,
+    // and we respond via the message handler below.
 
     server.addEventListener('message', async event => {
       try {
-        const data = JSON.parse(event.data);
-
-        if (data.type === 'auth' && data.token) {
-          const authRequest = new Request(request.url, {
-            headers: {
-              ...request.headers,
-              Authorization: `Bearer ${data.token}`,
-            },
-          });
-
-          const { user: authUser } = await verifyAuth(authRequest, this.env);
-          if (!authUser) {
-            server.send(JSON.stringify({ type: 'error', message: 'Authentication failed' }));
-            server.close();
-            return;
-          }
-
-          server.user = authUser;
-          server.send(JSON.stringify({ type: 'auth', success: true, user: authUser }));
-          this.broadcast(
-            JSON.stringify({
-              type: 'user-joined',
-              user: { id: authUser.id, username: authUser.username },
-            }),
-            server,
-          );
+        // Handle binary messages (y-websocket protocol)
+        let data;
+        if (event.data instanceof ArrayBuffer) {
+          data = new Uint8Array(event.data);
+        } else if (event.data instanceof Blob) {
+          data = new Uint8Array(await event.data.arrayBuffer());
+        } else {
+          // String data - shouldn't happen with y-websocket binary protocol
+          console.warn('Received unexpected string WebSocket message');
           return;
         }
 
-        // Require authentication for updates if auth is required (we allow development unauth'd if necessary)
-        if (data.type === 'update') {
-          const update = new Uint8Array(data.update);
-          Y.applyUpdate(this.doc, update);
+        const decoder = decoding.createDecoder(data);
+        const messageType = decoding.readVarUint(decoder);
 
-          // Broadcast to others
-          this.broadcast(
-            JSON.stringify({
-              type: 'update',
-              update: Array.from(update),
-              user: server.user ? { id: server.user.id, username: server.user.username } : null,
-            }),
-            server,
-          );
+        switch (messageType) {
+          case messageSync: {
+            const encoder = encoding.createEncoder();
+            encoding.writeVarUint(encoder, messageSync);
+            syncProtocol.readSyncMessage(decoder, encoder, this.doc, server);
+            // If there's a response to send (sync step 2 or update acknowledgment)
+            if (encoding.length(encoder) > 1) {
+              server.send(encoding.toUint8Array(encoder));
+            }
+            break;
+          }
+          case messageAwareness: {
+            const awarenessUpdate = decoding.readVarUint8Array(decoder);
+            awarenessProtocol.applyAwarenessUpdate(this.awareness, awarenessUpdate, server);
+
+            // Extract and store the client's awareness ID from the update
+            // The first client ID in the update is typically the sender's ID
+            const awarenessDecoder = decoding.createDecoder(awarenessUpdate);
+            const len = decoding.readVarUint(awarenessDecoder);
+            if (len > 0) {
+              const clientId = decoding.readVarUint(awarenessDecoder);
+              const session = this.sessions.get(server);
+              if (session && session.awarenessClientId === null) {
+                session.awarenessClientId = clientId;
+              }
+            }
+            break;
+          }
+          default:
+            console.warn('Unknown message type:', messageType);
         }
       } catch (error) {
         console.error('WebSocket message error (ProjectDoc):', error);
-        server.send(JSON.stringify({ type: 'error', message: 'Invalid message format' }));
       }
     });
 
     server.addEventListener('close', () => {
-      this.sessions.delete(server);
-      if (server.user) {
-        this.broadcast(
-          JSON.stringify({
-            type: 'user-left',
-            user: { id: server.user.id, username: server.user.username },
-          }),
+      // Remove awareness state for this client using their stored clientID
+      const session = this.sessions.get(server);
+      if (session && session.awarenessClientId != null) {
+        awarenessProtocol.removeAwarenessStates(
+          this.awareness,
+          [session.awarenessClientId],
+          server,
         );
       }
+      this.sessions.delete(server);
     });
 
     return new Response(null, { status: 101, webSocket: client });
@@ -513,10 +510,13 @@ export class ProjectDoc {
     });
   }
 
-  broadcast(message, exclude = null) {
-    this.sessions.forEach(session => {
-      if (session !== exclude && session.readyState === 1) {
-        session.send(message);
+  /**
+   * Broadcast binary message to all connected clients
+   */
+  broadcastBinary(message, exclude = null) {
+    this.sessions.forEach((sessionData, ws) => {
+      if (ws !== exclude && ws.readyState === 1) {
+        ws.send(message);
       }
     });
   }
