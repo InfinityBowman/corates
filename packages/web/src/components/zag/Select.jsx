@@ -27,27 +27,43 @@ export default function Select(props) {
   const disabledValues = () => props.disabledValues || [];
   const inDialog = () => props.inDialog || false;
 
+  // Helper to check if a value is disabled
+  const isValueDisabled = val => {
+    const item = items().find(i => i.value === val);
+    return item?.disabled || disabledValues().includes(val);
+  };
+
   const collection = createMemo(() =>
     select.collection({
       items: items(),
       itemToString: item => item.label,
       itemToValue: item => item.value,
-      itemToDisabled: item => item.disabled || disabledValues().includes(item.value),
     }),
   );
 
-  const service = useMachine(select.machine, () => ({
-    id: createUniqueId(),
-    collection: collection(),
-    value: value() ? [value()] : [],
-    disabled: disabled(),
-    name: props.name,
-    invalid: props.invalid,
-    onValueChange(details) {
-      const newValue = details.value[0] || '';
-      props.onChange?.(newValue);
-    },
-  }));
+  const service = useMachine(select.machine, () => {
+    // Capture disabledValues here so it's tracked as a dependency
+    const currentDisabledValues = disabledValues();
+    const currentItems = items();
+
+    return {
+      id: createUniqueId(),
+      collection: collection(),
+      value: value() ? [value()] : [],
+      disabled: disabled(),
+      name: props.name,
+      invalid: props.invalid,
+      onValueChange(details) {
+        const newValue = details.value[0] || '';
+        // Prevent selecting disabled values
+        const item = currentItems.find(i => i.value === newValue);
+        if (item?.disabled || currentDisabledValues.includes(newValue)) {
+          return;
+        }
+        props.onChange?.(newValue);
+      },
+    };
+  });
 
   const api = createMemo(() => select.connect(service, normalizeProps));
 
@@ -57,6 +73,33 @@ export default function Select(props) {
     const item = items().find(i => i.value === v);
     return item?.label || null;
   });
+
+  // Render the list of items
+  const renderList = () => (
+    <ul
+      {...api().getContentProps()}
+      class='bg-white border border-gray-200 rounded-md shadow-lg py-1 max-h-60 overflow-auto focus:outline-none'
+    >
+      <For each={items()}>
+        {item => (
+          <li
+            {...api().getItemProps({ item })}
+            class={`
+              px-3 py-2 cursor-pointer flex items-center justify-between whitespace-nowrap
+              hover:bg-gray-100 data-highlighted:bg-blue-50
+              ${isValueDisabled(item.value) ? 'text-gray-400 cursor-not-allowed hover:bg-transparent' : 'text-gray-900'}
+            `}
+            data-disabled={isValueDisabled(item.value) || undefined}
+          >
+            <span {...api().getItemTextProps({ item })}>{item.label}</span>
+            <Show when={api().value.includes(item.value)}>
+              <BiRegularCheck class='w-5 h-5 text-blue-600' />
+            </Show>
+          </li>
+        )}
+      </For>
+    </ul>
+  );
 
   return (
     <div {...api().getRootProps()} class='relative'>
@@ -93,66 +136,17 @@ export default function Select(props) {
         when={inDialog()}
         fallback={
           <Portal>
-            <div {...api().getPositionerProps()} class='z-100'>
-              <ul
-                {...api().getContentProps()}
-                class='bg-white border border-gray-200 rounded-md shadow-lg py-1 max-h-60 overflow-auto focus:outline-none'
-              >
-                <For each={items()}>
-                  {item => {
-                    const itemDisabled = () =>
-                      item.disabled || disabledValues().includes(item.value);
-                    return (
-                      <li
-                        {...api().getItemProps({ item })}
-                        class={`
-                          px-3 py-2 cursor-pointer flex items-center justify-between
-                          hover:bg-gray-100 data-highlighted:bg-blue-50
-                          ${itemDisabled() ? 'text-gray-400 cursor-not-allowed hover:bg-transparent' : 'text-gray-900'}
-                        `}
-                      >
-                        <span {...api().getItemTextProps({ item })}>{item.label}</span>
-                        <Show when={api().value.includes(item.value)}>
-                          <BiRegularCheck class='w-5 h-5 text-blue-600' />
-                        </Show>
-                      </li>
-                    );
-                  }}
-                </For>
-              </ul>
+            <div {...api().getPositionerProps()}>
+              {renderList()}
             </div>
           </Portal>
         }
       >
         <div
           {...api().getPositionerProps()}
-          style={{ position: 'absolute', top: '100%', left: 0, right: 0, 'z-index': 100 }}
+          style={{ position: 'absolute', top: '100%', left: 0, right: 0 }}
         >
-          <ul
-            {...api().getContentProps()}
-            class='bg-white border border-gray-200 rounded-md shadow-lg py-1 max-h-60 overflow-auto focus:outline-none'
-          >
-            <For each={items()}>
-              {item => {
-                const itemDisabled = () => item.disabled || disabledValues().includes(item.value);
-                return (
-                  <li
-                    {...api().getItemProps({ item })}
-                    class={`
-                      px-3 py-2 cursor-pointer flex items-center justify-between whitespace-nowrap
-                      hover:bg-gray-100 data-highlighted:bg-blue-50
-                      ${itemDisabled() ? 'text-gray-400 cursor-not-allowed hover:bg-transparent' : 'text-gray-900'}
-                    `}
-                  >
-                    <span {...api().getItemTextProps({ item })}>{item.label}</span>
-                    <Show when={api().value.includes(item.value)}>
-                      <BiRegularCheck class='w-5 h-5 text-blue-600' />
-                    </Show>
-                  </li>
-                );
-              }}
-            </For>
-          </ul>
+          {renderList()}
         </div>
       </Show>
     </div>
