@@ -1,6 +1,7 @@
 import { createSignal, createEffect, onCleanup, createContext, useContext } from 'solid-js';
 import * as Y from 'yjs';
 import { yToPlain, applyObjectToYMap } from '../lib/yjsUtils.js';
+import useOnlineStatus from '@primitives/useOnlineStatus.js';
 
 // Context for sharing the user's project connections across the app
 const UserProjectsContext = createContext();
@@ -14,6 +15,7 @@ export default function UserYjsProvider(props) {
   const [userProjects, setUserProjects] = createSignal([]);
   const [projectConnections, setProjectConnections] = createSignal({});
   const [projectData, setProjectData] = createSignal({});
+  const isOnline = useOnlineStatus();
 
   // Store WebSocket connections and Y.Docs for each project
   let connections = {};
@@ -49,7 +51,7 @@ export default function UserYjsProvider(props) {
     if (connections[projectId]) return; // Already connected
 
     // Don't attempt connection when offline
-    if (!navigator.onLine) {
+    if (!isOnline()) {
       return;
     }
 
@@ -148,6 +150,18 @@ export default function UserYjsProvider(props) {
 
   createEffect(() => {
     fetchUserProjects();
+  });
+
+  // Reconnect to projects when coming back online
+  createEffect(() => {
+    if (isOnline()) {
+      const projects = userProjects();
+      for (const project of projects) {
+        if (!connections[project.id]?.connected) {
+          connectToProject(project.id);
+        }
+      }
+    }
   });
 
   onCleanup(() => {
