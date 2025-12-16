@@ -61,12 +61,19 @@ export default function Hero() {
                     </div>
                   </div>
                   <div class='flex-1 flex items-center justify-center bg-white rounded-b-xl overflow-hidden'>
-                    <img
-                      src='/product.png'
-                      alt='CoRATES product screenshot'
-                      class='w-full h-full object-cover'
-                      style={{ display: 'block' }}
-                    />
+                    <picture>
+                      <source srcset='/product.webp' type='image/webp' />
+                      <img
+                        src='/product.png'
+                        alt='CoRATES product screenshot'
+                        class='w-full h-full object-cover'
+                        width='2524'
+                        height='1770'
+                        fetchpriority='high'
+                        decoding='async'
+                        style={{ display: 'block' }}
+                      />
+                    </picture>
                   </div>
                 </div>
               </div>

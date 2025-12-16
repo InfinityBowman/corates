@@ -12,7 +12,10 @@
   <url>
     <loc>https://corates.org/terms</loc>
   </url>
-    <url>
+  <url>
     <loc>https://corates.org/contact</loc>
+  </url>
+  <url>
+    <loc>https://corates.org/security</loc>
   </url>
 </urlset>
