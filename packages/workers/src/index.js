@@ -26,6 +26,7 @@ import { googleDriveRoutes } from './routes/google-drive.js';
 import { avatarRoutes } from './routes/avatars.js';
 import { adminRoutes } from './routes/admin.js';
 import { accountMergeRoutes } from './routes/account-merge.js';
+import { contactRoutes } from './routes/contact.js';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc, EmailQueue };
@@ -158,6 +159,9 @@ app.route('/api/admin', adminRoutes);
 
 // Mount email routes
 app.route('/api/email', emailRoutes);
+
+// Mount contact form route (public)
+app.route('/api/contact', contactRoutes);
 
 // Mount billing routes
 app.route('/api/billing', billingRoutes);

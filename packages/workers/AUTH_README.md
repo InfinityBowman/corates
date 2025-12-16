@@ -101,10 +101,10 @@ The authentication system uses these tables (managed by BetterAuth):
 
 ### Email
 
-| Variable         | Description                      |
-| ---------------- | -------------------------------- |
-| `RESEND_API_KEY` | API key for Resend email service |
-| `EMAIL_FROM`     | From address for auth emails     |
+| Variable                | Description                             |
+| ----------------------- | --------------------------------------- |
+| `POSTMARK_SERVER_TOKEN` | Server token for Postmark email service |
+| `EMAIL_FROM`            | From address for auth emails            |
 
 ### Google OAuth
 
