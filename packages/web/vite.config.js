@@ -80,7 +80,7 @@ export default defineConfig({
     // }),
   ],
   build: {
-    target: 'esnext',
+    target: ['es2020', 'safari14'],
   },
   test: {
     environment: 'jsdom',
