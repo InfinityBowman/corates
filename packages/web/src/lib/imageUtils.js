@@ -22,6 +22,11 @@ export function compressImageBlob(blob, options = {}) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
+    if (!ctx) {
+      reject(new Error('Failed to get canvas context'));
+      return;
+    }
+
     img.onload = () => {
       // Calculate new dimensions (maintain aspect ratio, fit within max size)
       let { width, height } = img;
