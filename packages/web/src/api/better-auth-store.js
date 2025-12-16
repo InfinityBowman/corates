@@ -7,6 +7,7 @@ import {
   fetchAndCacheAvatar,
   getCachedAvatar,
   clearAvatarCache,
+  pruneExpiredAvatars,
 } from '@/primitives/avatarCache.js';
 
 // LocalStorage keys for offline caching
@@ -96,6 +97,9 @@ function createBetterAuthStore() {
       if (dataUrl) setCachedAvatarUrl(dataUrl);
     });
   }
+
+  // Prune expired avatar cache entries on startup
+  pruneExpiredAvatars();
 
   // Cache user data when session is successfully fetched (only when online)
   // Wrap in createRoot to properly dispose of the effect

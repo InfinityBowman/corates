@@ -4,69 +4,13 @@ import { FiCamera } from 'solid-icons/fi';
 import { showToast } from '@corates/ui';
 import { LANDING_URL, API_BASE } from '@config/api.js';
 import { ROLES, getRoleLabel } from '@components/auth-ui/RoleSelector.jsx';
+import { compressImageFile } from '@lib/imageUtils.js';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
 // Avatar compression settings
 const AVATAR_MAX_SIZE = 256; // Max width/height in pixels
 const AVATAR_QUALITY = 0.85; // JPEG quality (0-1)
-
-/**
- * Compress and resize an image file for avatar use
- * Returns a new File object with the compressed image
- */
-async function compressImage(file) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    img.onload = () => {
-      // Calculate new dimensions (maintain aspect ratio, fit within max size)
-      let { width, height } = img;
-
-      if (width > height) {
-        if (width > AVATAR_MAX_SIZE) {
-          height = Math.round((height * AVATAR_MAX_SIZE) / width);
-          width = AVATAR_MAX_SIZE;
-        }
-      } else {
-        if (height > AVATAR_MAX_SIZE) {
-          width = Math.round((width * AVATAR_MAX_SIZE) / height);
-          height = AVATAR_MAX_SIZE;
-        }
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-
-      // Draw and compress
-      ctx.drawImage(img, 0, 0, width, height);
-
-      canvas.toBlob(
-        blob => {
-          if (blob) {
-            // Create a new File from the blob
-            const compressedFile = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
-              type: 'image/jpeg',
-              lastModified: Date.now(),
-            });
-            resolve(compressedFile);
-          } else {
-            reject(new Error('Failed to compress image'));
-          }
-        },
-        'image/jpeg',
-        AVATAR_QUALITY,
-      );
-    };
-
-    img.onerror = () => reject(new Error('Failed to load image'));
-
-    // Load the image from file
-    img.src = URL.createObjectURL(file);
-  });
-}
 
 /**
  * Sync profile changes to all projects the user is a member of
@@ -205,7 +149,10 @@ export default function ProfilePage() {
 
     try {
       // Compress the image before upload
-      const compressedFile = await compressImage(file);
+      const compressedFile = await compressImageFile(file, {
+        maxSize: AVATAR_MAX_SIZE,
+        quality: AVATAR_QUALITY,
+      });
       console.log(
         `Image compressed: ${(file.size / 1024).toFixed(1)}KB -> ${(compressedFile.size / 1024).toFixed(1)}KB`,
       );
