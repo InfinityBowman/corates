@@ -175,6 +175,7 @@ export function useProject(projectId) {
     deleteStudy: (...args) => studyOps?.deleteStudy(...args),
     updateProjectSettings: (...args) => studyOps?.updateProjectSettings(...args),
     renameProject: (...args) => studyOps?.renameProject(...args),
+    updateDescription: (...args) => studyOps?.updateDescription(...args),
 
     // Checklist operations
     createChecklist: (...args) => checklistOps?.createChecklist(...args),

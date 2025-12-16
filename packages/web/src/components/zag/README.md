@@ -6,6 +6,7 @@ Here are the existing components and a summary of them:
 - `Checkbox.jsx` - Checkbox input with label
 - `Collapsible.jsx` - Expandable/collapsible content sections
 - `Dialog.jsx` - Modal dialogs
+- `Editable.jsx` - Inline editable single-line text (supports `value`, `defaultValue`, `placeholder`, `onChange`, `onSubmit`, `onCancel`, `disabled`, `readOnly`, `autoResize`, `activationMode`, `submitMode`, `selectOnFocus`, `maxLength`, `showControls`, `label`, `class`, `inputClass`, `previewClass` props). Best for titles/names - use manual textarea for multi-line content.
 - `FileUpload.jsx` - File upload with drag-and-drop
 - `FloatingPanel.jsx` - Draggable and resizable floating panel (supports `open`, `onOpenChange`, `title`, `defaultSize`, `defaultPosition`, `size`, `position`, `onSizeChange`, `onPositionChange`, `onStageChange`, `resizable`, `draggable`, `minSize`, `maxSize`, `lockAspectRatio`, `showControls`, `showResizeHandles` props)
 - `PasswordInput.jsx` - Password input with show/hide toggle (supports `label`, `password`, `onPasswordChange`, `autoComplete`, `inputClass` props)
