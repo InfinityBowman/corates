@@ -73,6 +73,9 @@ export function ROBINSIChecklist(props) {
   return (
     <div class='bg-blue-50'>
       <div class='container mx-auto px-4 py-6 max-w-5xl space-y-4'>
+        <div class='font-semibold text-lg text-gray-900 text-left sm:text-center mb-6'>
+          {props.checklistState.name || 'ROBINS-I Checklist'}
+        </div>
         {/* Response Legend */}
         <Show when={props.showLegend !== false}>
           <ResponseLegend />
