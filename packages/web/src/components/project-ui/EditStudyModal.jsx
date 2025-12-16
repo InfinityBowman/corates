@@ -18,6 +18,7 @@ import projectStore from '@/stores/projectStore.js';
  */
 export default function EditStudyModal(props) {
   const [name, setName] = createSignal('');
+  const [originalTitle, setOriginalTitle] = createSignal('');
   const [firstAuthor, setFirstAuthor] = createSignal('');
   const [publicationYear, setPublicationYear] = createSignal('');
   const [journal, setJournal] = createSignal('');
@@ -48,6 +49,8 @@ export default function EditStudyModal(props) {
     const study = props.study;
     if (study && props.open) {
       setName(study.name || '');
+      // Lazy migration: use name as fallback if originalTitle doesn't exist
+      setOriginalTitle(study.originalTitle || study.name || '');
       setFirstAuthor(study.firstAuthor || '');
       setPublicationYear(study.publicationYear?.toString() || '');
       setJournal(study.journal || '');
@@ -79,6 +82,7 @@ export default function EditStudyModal(props) {
 
       const updates = {
         name: name().trim() || props.study.name,
+        originalTitle: originalTitle().trim() || undefined,
         firstAuthor: firstAuthor().trim() || undefined,
         publicationYear: parsedPublicationYear,
         journal: journal().trim() || undefined,
@@ -101,16 +105,18 @@ export default function EditStudyModal(props) {
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange} title='Edit Study' size='lg'>
       <div class='space-y-4'>
-        {/* Study Name */}
+        {/* Display Name */}
         <div>
-          <label class='block text-sm font-medium text-gray-700 mb-1'>Study Name</label>
-          <input
-            type='text'
-            value={name()}
-            onInput={e => setName(e.target.value)}
-            class='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
-            placeholder='Enter study name'
-          />
+          <label class='block text-sm font-medium text-gray-700 mb-1'>Display Name</label>
+          <div class='flex gap-2'>
+            <input
+              type='text'
+              value={name()}
+              onInput={e => setName(e.target.value)}
+              class='flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+              placeholder='Enter display name'
+            />
+          </div>
         </div>
 
         {/* Citation Information - Collapsible */}
@@ -129,6 +135,21 @@ export default function EditStudyModal(props) {
             )}
           >
             <div class='space-y-4 pt-2'>
+              {/* Original Title */}
+              <div>
+                <label class='block text-sm font-medium text-gray-700 mb-1'>Article Title</label>
+                <textarea
+                  value={originalTitle()}
+                  onInput={e => setOriginalTitle(e.target.value)}
+                  class='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+                  placeholder='Full original title as imported'
+                  rows={1}
+                />
+                <p class='mt-1 text-xs text-gray-500'>
+                  The full title as imported. Used for generating display names.
+                </p>
+              </div>
+
               <div class='grid grid-cols-2 gap-4'>
                 <div>
                   <label class='block text-sm font-medium text-gray-700 mb-1'>First Author</label>

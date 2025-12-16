@@ -61,6 +61,7 @@ function buildStudyFromYMap(studyId, studyData, studyYMap) {
     name: studyData.name || '',
     description: studyData.description || '',
     // Reference metadata fields
+    originalTitle: studyData.originalTitle || null,
     firstAuthor: studyData.firstAuthor || null,
     publicationYear: studyData.publicationYear || null,
     authors: studyData.authors || null,

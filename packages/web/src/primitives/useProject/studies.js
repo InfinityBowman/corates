@@ -38,6 +38,7 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
     studyYMap.set('checklists', new Y.Map());
 
     // Set optional reference metadata fields
+    if (metadata.originalTitle) studyYMap.set('originalTitle', metadata.originalTitle);
     if (metadata.firstAuthor) studyYMap.set('firstAuthor', metadata.firstAuthor);
     if (metadata.publicationYear) studyYMap.set('publicationYear', metadata.publicationYear);
     if (metadata.authors) studyYMap.set('authors', metadata.authors);
@@ -78,6 +79,7 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
     if (updates.name !== undefined) studyYMap.set('name', updates.name);
     if (updates.description !== undefined) studyYMap.set('description', updates.description);
     // Reference metadata fields
+    if (updates.originalTitle !== undefined) studyYMap.set('originalTitle', updates.originalTitle);
     if (updates.firstAuthor !== undefined) studyYMap.set('firstAuthor', updates.firstAuthor);
     if (updates.publicationYear !== undefined)
       studyYMap.set('publicationYear', updates.publicationYear);
