@@ -136,9 +136,7 @@ export default function Select(props) {
         when={inDialog()}
         fallback={
           <Portal>
-            <div {...api().getPositionerProps()}>
-              {renderList()}
-            </div>
+            <div {...api().getPositionerProps()}>{renderList()}</div>
           </Portal>
         }
       >
