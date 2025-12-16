@@ -28,7 +28,8 @@
     "deps:update": "pnpm -r up",
     "deps:update:latest": "pnpm -r up --latest",
     "user:make-admin:prod": "pnpm --filter @corates/workers run user:make-admin:prod",
-    "user:make-admin:local": "pnpm --filter @corates/workers run user:make-admin:local"
+    "user:make-admin:local": "pnpm --filter @corates/workers run user:make-admin:local",
+    "loc": "bash ./scripts/loc-report.sh"
   },
   "keywords": [
     "cloudflare",
