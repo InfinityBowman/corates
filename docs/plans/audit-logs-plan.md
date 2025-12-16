@@ -5,6 +5,7 @@
 Corates currently has **no audit logging** - only scattered console logs. This plan outlines adding a comprehensive audit logging system to track user actions, admin operations, and system events.
 
 **Tech Stack Context:**
+
 - Backend: Hono.js on Cloudflare Workers
 - Database: Cloudflare D1 (SQLite) with Drizzle ORM
 - Auth: Better Auth v1.4.5
@@ -19,7 +20,9 @@ Add a new `audit_logs` table to `packages/workers/src/db/schema.js`:
 ```javascript
 export const auditLogs = sqliteTable('audit_logs', {
   id: text('id').primaryKey(),
-  timestamp: integer('timestamp').notNull().default(sql`(unixepoch())`),
+  timestamp: integer('timestamp')
+    .notNull()
+    .default(sql`(unixepoch())`),
   actorId: text('actor_id').references(() => user.id, { onDelete: 'set null' }),
   actorType: text('actor_type').notNull(), // 'user', 'admin', 'system', 'webhook'
   action: text('action').notNull(), // 'user.created', 'project.deleted', etc.
@@ -67,47 +70,47 @@ CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
 
 ### Critical Priority (Implement First)
 
-| Category | Action | Data to Capture |
-|----------|--------|-----------------|
-| **Admin Actions** | `admin.user_banned` | Target user ID, reason |
-| **Admin Actions** | `admin.user_unbanned` | Target user ID |
-| **Admin Actions** | `admin.impersonation_started` | Target user ID |
-| **Admin Actions** | `admin.impersonation_stopped` | Target user ID, duration |
-| **Admin Actions** | `admin.session_revoked` | Target user ID, session count |
-| **Admin Actions** | `admin.user_deleted` | Target user email (anonymized) |
-| **Authentication** | `auth.login` | IP, user agent, method (password/magic-link/oauth) |
-| **Authentication** | `auth.logout` | Session ID |
-| **Authentication** | `auth.login_failed` | Email attempted, reason |
-| **Authentication** | `auth.magic_link_sent` | Email |
-| **Authentication** | `auth.password_reset` | Email |
+| Category           | Action                        | Data to Capture                                    |
+| ------------------ | ----------------------------- | -------------------------------------------------- |
+| **Admin Actions**  | `admin.user_banned`           | Target user ID, reason                             |
+| **Admin Actions**  | `admin.user_unbanned`         | Target user ID                                     |
+| **Admin Actions**  | `admin.impersonation_started` | Target user ID                                     |
+| **Admin Actions**  | `admin.impersonation_stopped` | Target user ID, duration                           |
+| **Admin Actions**  | `admin.session_revoked`       | Target user ID, session count                      |
+| **Admin Actions**  | `admin.user_deleted`          | Target user email (anonymized)                     |
+| **Authentication** | `auth.login`                  | IP, user agent, method (password/magic-link/oauth) |
+| **Authentication** | `auth.logout`                 | Session ID                                         |
+| **Authentication** | `auth.login_failed`           | Email attempted, reason                            |
+| **Authentication** | `auth.magic_link_sent`        | Email                                              |
+| **Authentication** | `auth.password_reset`         | Email                                              |
 
 ### High Priority
 
-| Category | Action | Data to Capture |
-|----------|--------|-----------------|
-| **2FA** | `auth.2fa_enabled` | Method (totp) |
-| **2FA** | `auth.2fa_disabled` | — |
-| **2FA** | `auth.2fa_verified` | — |
-| **User Lifecycle** | `user.created` | Email, signup method |
-| **User Lifecycle** | `user.updated` | Changed fields (name, persona, etc.) |
-| **User Lifecycle** | `user.deleted` | Self-deletion |
-| **Billing** | `subscription.created` | Plan, Stripe subscription ID |
-| **Billing** | `subscription.updated` | Old plan → new plan |
-| **Billing** | `subscription.cancelled` | Plan, reason |
+| Category           | Action                   | Data to Capture                      |
+| ------------------ | ------------------------ | ------------------------------------ |
+| **2FA**            | `auth.2fa_enabled`       | Method (totp)                        |
+| **2FA**            | `auth.2fa_disabled`      | —                                    |
+| **2FA**            | `auth.2fa_verified`      | —                                    |
+| **User Lifecycle** | `user.created`           | Email, signup method                 |
+| **User Lifecycle** | `user.updated`           | Changed fields (name, persona, etc.) |
+| **User Lifecycle** | `user.deleted`           | Self-deletion                        |
+| **Billing**        | `subscription.created`   | Plan, Stripe subscription ID         |
+| **Billing**        | `subscription.updated`   | Old plan → new plan                  |
+| **Billing**        | `subscription.cancelled` | Plan, reason                         |
 
 ### Medium Priority
 
-| Category | Action | Data to Capture |
-|----------|--------|-----------------|
-| **Projects** | `project.created` | Title |
-| **Projects** | `project.updated` | Changed fields |
-| **Projects** | `project.deleted` | Title |
-| **Members** | `member.added` | Project ID, user ID, role |
-| **Members** | `member.removed` | Project ID, user ID |
-| **Members** | `member.role_changed` | Old role → new role |
-| **Data** | `pdf.uploaded` | Filename, size |
-| **Data** | `pdf.deleted` | Filename |
-| **Data** | `gdrive.imported` | File count |
+| Category     | Action                | Data to Capture           |
+| ------------ | --------------------- | ------------------------- |
+| **Projects** | `project.created`     | Title                     |
+| **Projects** | `project.updated`     | Changed fields            |
+| **Projects** | `project.deleted`     | Title                     |
+| **Members**  | `member.added`        | Project ID, user ID, role |
+| **Members**  | `member.removed`      | Project ID, user ID       |
+| **Members**  | `member.role_changed` | Old role → new role       |
+| **Data**     | `pdf.uploaded`        | Filename, size            |
+| **Data**     | `pdf.deleted`         | Filename                  |
+| **Data**     | `gdrive.imported`     | File count                |
 
 ---
 
@@ -151,26 +154,26 @@ CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
 
 ### New Files
 
-| File | Purpose |
-|------|---------|
-| `packages/workers/src/services/auditLogger.js` | Core audit logging service |
-| `packages/workers/src/middleware/audit.js` | Middleware to inject logger into context |
-| `packages/workers/src/routes/audit.js` | Admin API to query audit logs |
-| `packages/workers/migrations/0002_audit_logs.sql` | Database migration |
+| File                                              | Purpose                                  |
+| ------------------------------------------------- | ---------------------------------------- |
+| `packages/workers/src/services/auditLogger.js`    | Core audit logging service               |
+| `packages/workers/src/middleware/audit.js`        | Middleware to inject logger into context |
+| `packages/workers/src/routes/audit.js`            | Admin API to query audit logs            |
+| `packages/workers/migrations/0002_audit_logs.sql` | Database migration                       |
 
 ### Files to Modify
 
-| File | Changes |
-|------|---------|
-| `packages/workers/src/db/schema.js` | Add `auditLogs` table definition |
-| `packages/workers/src/index.js` | Mount audit middleware and routes |
-| `packages/workers/src/routes/admin.js` | Add audit calls to ban/impersonate/delete |
-| `packages/workers/src/routes/projects.js` | Add audit calls to CRUD operations |
-| `packages/workers/src/routes/members.js` | Add audit calls to member changes |
-| `packages/workers/src/routes/users.js` | Add audit calls to user deletion |
-| `packages/workers/src/auth/config.js` | Add Better Auth hooks for auth events |
-| `packages/workers/src/routes/billing.js` | Add audit calls to subscription events |
-| `packages/workers/src/routes/pdfs.js` | Add audit calls to upload/delete |
+| File                                      | Changes                                   |
+| ----------------------------------------- | ----------------------------------------- |
+| `packages/workers/src/db/schema.js`       | Add `auditLogs` table definition          |
+| `packages/workers/src/index.js`           | Mount audit middleware and routes         |
+| `packages/workers/src/routes/admin.js`    | Add audit calls to ban/impersonate/delete |
+| `packages/workers/src/routes/projects.js` | Add audit calls to CRUD operations        |
+| `packages/workers/src/routes/members.js`  | Add audit calls to member changes         |
+| `packages/workers/src/routes/users.js`    | Add audit calls to user deletion          |
+| `packages/workers/src/auth/config.js`     | Add Better Auth hooks for auth events     |
+| `packages/workers/src/routes/billing.js`  | Add audit calls to subscription events    |
+| `packages/workers/src/routes/pdfs.js`     | Add audit calls to upload/delete          |
 
 ---
 
@@ -184,14 +187,23 @@ import { auditLogs } from '../db/schema.js';
 
 export function createAuditLogger(db, executionCtx, request) {
   const requestId = crypto.randomUUID();
-  const ipAddress = request.headers.get('CF-Connecting-IP') ||
-                    request.headers.get('X-Forwarded-For');
+  const ipAddress = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For');
   const userAgent = request.headers.get('User-Agent');
 
   return {
     requestId,
 
-    log: ({ action, actorId, actorType = 'user', resourceType, resourceId, changes, status = 'success', errorMessage, metadata }) => {
+    log: ({
+      action,
+      actorId,
+      actorType = 'user',
+      resourceType,
+      resourceId,
+      changes,
+      status = 'success',
+      errorMessage,
+      metadata,
+    }) => {
       const entry = {
         id: crypto.randomUUID(),
         timestamp: Math.floor(Date.now() / 1000),
@@ -211,9 +223,13 @@ export function createAuditLogger(db, executionCtx, request) {
 
       // Use waitUntil to write asynchronously without blocking response
       executionCtx.waitUntil(
-        db.insert(auditLogs).values(entry).run().catch(err => {
-          console.error('[AuditLog] Failed to write:', err);
-        })
+        db
+          .insert(auditLogs)
+          .values(entry)
+          .run()
+          .catch(err => {
+            console.error('[AuditLog] Failed to write:', err);
+          }),
       );
     },
 
@@ -268,8 +284,8 @@ Add hooks to `packages/workers/src/auth/config.js`:
 hooks: {
   after: [
     {
-      matcher: (ctx) => true,
-      handler: async (ctx) => {
+      matcher: ctx => true,
+      handler: async ctx => {
         const audit = ctx.context.audit;
         if (!audit) return;
 
@@ -279,14 +295,14 @@ hooks: {
         // Sign in events
         if (path === '/sign-in/email' && ctx.context.returned?.user) {
           audit.logAuth('login', ctx.context.returned.user.id, {
-            metadata: { method: 'password' }
+            metadata: { method: 'password' },
           });
         }
 
         // Magic link sent
         if (path === '/sign-in/magic-link') {
           audit.logAuth('magic_link_sent', null, {
-            metadata: { email: ctx.body?.email }
+            metadata: { email: ctx.body?.email },
           });
         }
 
@@ -297,7 +313,7 @@ hooks: {
             actorId: ctx.context.returned.user.id,
             resourceType: 'user',
             resourceId: ctx.context.returned.user.id,
-            metadata: { method: 'email' }
+            metadata: { method: 'email' },
           });
         }
 
@@ -305,9 +321,9 @@ hooks: {
         if (path.includes('/two-factor')) {
           // Log 2FA enable/disable/verify
         }
-      }
-    }
-  ]
+      },
+    },
+  ];
 }
 ```
 
@@ -317,25 +333,25 @@ hooks: {
 
 ### Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `GET /api/admin/audit-logs` | GET | List logs with filters & pagination |
-| `GET /api/admin/audit-logs/:id` | GET | Get single log entry |
-| `GET /api/admin/audit-logs/export` | GET | Export as CSV |
+| Endpoint                           | Method | Description                         |
+| ---------------------------------- | ------ | ----------------------------------- |
+| `GET /api/admin/audit-logs`        | GET    | List logs with filters & pagination |
+| `GET /api/admin/audit-logs/:id`    | GET    | Get single log entry                |
+| `GET /api/admin/audit-logs/export` | GET    | Export as CSV                       |
 
 ### Query Parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `actorId` | string | Filter by actor user ID |
-| `action` | string | Filter by action (supports prefix: `admin.*`) |
-| `resourceType` | string | Filter by resource type |
-| `resourceId` | string | Filter by resource ID |
-| `status` | string | Filter by status (success/failure/denied) |
-| `startDate` | integer | Unix timestamp, logs after this time |
-| `endDate` | integer | Unix timestamp, logs before this time |
-| `limit` | integer | Results per page (default: 50, max: 100) |
-| `offset` | integer | Pagination offset |
+| Parameter      | Type    | Description                                   |
+| -------------- | ------- | --------------------------------------------- |
+| `actorId`      | string  | Filter by actor user ID                       |
+| `action`       | string  | Filter by action (supports prefix: `admin.*`) |
+| `resourceType` | string  | Filter by resource type                       |
+| `resourceId`   | string  | Filter by resource ID                         |
+| `status`       | string  | Filter by status (success/failure/denied)     |
+| `startDate`    | integer | Unix timestamp, logs after this time          |
+| `endDate`      | integer | Unix timestamp, logs before this time         |
+| `limit`        | integer | Results per page (default: 50, max: 100)      |
+| `offset`       | integer | Pagination offset                             |
 
 ### Route Implementation
 
@@ -350,9 +366,19 @@ const app = new Hono();
 
 app.use('/*', requireAdmin);
 
-app.get('/', async (c) => {
+app.get('/', async c => {
   const db = drizzle(c.env.DB);
-  const { actorId, action, resourceType, resourceId, status, startDate, endDate, limit = 50, offset = 0 } = c.req.query();
+  const {
+    actorId,
+    action,
+    resourceType,
+    resourceId,
+    status,
+    startDate,
+    endDate,
+    limit = 50,
+    offset = 0,
+  } = c.req.query();
 
   const conditions = [];
   if (actorId) conditions.push(eq(auditLogs.actorId, actorId));
@@ -385,7 +411,7 @@ export default app;
 
 ```javascript
 // In admin.js - ban user
-app.post('/:userId/ban', async (c) => {
+app.post('/:userId/ban', async c => {
   const { userId } = c.req.param();
   const session = c.get('session');
   const audit = c.get('audit');
@@ -400,7 +426,7 @@ app.post('/:userId/ban', async (c) => {
     actorType: 'admin',
     resourceType: 'user',
     resourceId: userId,
-    metadata: { reason: c.req.json().reason }
+    metadata: { reason: c.req.json().reason },
   });
 
   return c.json({ success: true });
@@ -409,7 +435,7 @@ app.post('/:userId/ban', async (c) => {
 
 ```javascript
 // In projects.js - delete project
-app.delete('/:id', async (c) => {
+app.delete('/:id', async c => {
   const { id } = c.req.param();
   const session = c.get('session');
   const audit = c.get('audit');
@@ -423,7 +449,7 @@ app.delete('/:id', async (c) => {
     actorId: session.user.id,
     resourceType: 'project',
     resourceId: id,
-    changes: { before: { title: project.title } }
+    changes: { before: { title: project.title } },
   });
 
   return c.json({ success: true });
@@ -439,8 +465,8 @@ Add scheduled cleanup to `wrangler.jsonc`:
 ```jsonc
 {
   "triggers": {
-    "crons": ["0 3 * * *"] // Run daily at 3 AM UTC
-  }
+    "crons": ["0 3 * * *"], // Run daily at 3 AM UTC
+  },
 }
 ```
 
@@ -454,15 +480,12 @@ export default {
   async scheduled(event, env, ctx) {
     const db = drizzle(env.DB);
     const retentionDays = 90;
-    const cutoff = Math.floor(Date.now() / 1000) - (retentionDays * 24 * 60 * 60);
+    const cutoff = Math.floor(Date.now() / 1000) - retentionDays * 24 * 60 * 60;
 
-    const result = await db
-      .delete(auditLogs)
-      .where(lt(auditLogs.timestamp, cutoff))
-      .run();
+    const result = await db.delete(auditLogs).where(lt(auditLogs.timestamp, cutoff)).run();
 
     console.log(`[AuditCleanup] Deleted ${result.changes} logs older than ${retentionDays} days`);
-  }
+  },
 };
 ```
 
@@ -481,6 +504,7 @@ export default {
 ## 11. Implementation Order
 
 ### Phase 1: Foundation
+
 1. [ ] Create migration file `0002_audit_logs.sql`
 2. [ ] Add `auditLogs` table to `schema.js`
 3. [ ] Run migration
@@ -489,21 +513,25 @@ export default {
 6. [ ] Mount middleware in `index.js`
 
 ### Phase 2: Critical Events
+
 7. [ ] Add audit logging to admin routes (ban, unban, impersonate, delete)
 8. [ ] Add Better Auth hooks for login/logout events
 9. [ ] Add audit logging to user deletion
 
 ### Phase 3: High Priority Events
+
 10. [ ] Add audit logging to 2FA events
 11. [ ] Add audit logging to billing/subscription events
 12. [ ] Add audit logging to user profile updates
 
 ### Phase 4: Medium Priority Events
+
 13. [ ] Add audit logging to project CRUD
 14. [ ] Add audit logging to member management
 15. [ ] Add audit logging to PDF upload/delete
 
 ### Phase 5: Admin UI & Maintenance
+
 16. [ ] Create audit logs query API (`/api/admin/audit-logs`)
 17. [ ] Add export endpoint
 18. [ ] Implement scheduled cleanup job

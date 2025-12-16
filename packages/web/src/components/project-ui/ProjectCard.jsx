@@ -35,21 +35,24 @@ export default function ProjectCard(props) {
   const project = () => props.project;
 
   return (
-    <div class='bg-white border border-gray-200 rounded-lg shadow-sm p-6 hover:shadow-md hover:border-gray-300 transition-all duration-200 group'>
-      <div class='mb-4'>
-        <h3 class='text-lg font-semibold text-gray-900 mb-2'>{project().name}</h3>
-        <Show when={project().description}>
-          <p class='text-gray-500 text-sm line-clamp-3'>{project().description}</p>
-        </Show>
+    <div class='bg-white border border-gray-200 rounded-lg shadow-sm p-6 hover:shadow-md hover:border-gray-300 transition-all duration-200 group flex flex-col h-full'>
+      {/* Header section with fixed structure */}
+      <div class='flex-1 min-h-0'>
+        <h3 class='text-lg font-semibold text-gray-900 mb-1 line-clamp-2'>{project().name}</h3>
+        <p class='text-gray-500 text-sm line-clamp-2 min-h-10'>
+          {project().description || 'No description'}
+        </p>
       </div>
 
-      <div class='flex items-center justify-between text-xs text-gray-500 mb-4'>
+      {/* Metadata row */}
+      <div class='flex items-center justify-between text-xs text-gray-500 mt-3 mb-3'>
         <span class='inline-flex items-center px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-800 capitalize'>
           {project().role}
         </span>
         <span>{formatDate(project().createdAt)}</span>
       </div>
 
+      {/* Action buttons */}
       <div class='flex gap-2'>
         <button
           onClick={() => props.onOpen?.(project().id)}

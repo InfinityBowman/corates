@@ -38,6 +38,7 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
     studyYMap.set('checklists', new Y.Map());
 
     // Set optional reference metadata fields
+    if (metadata.originalTitle) studyYMap.set('originalTitle', metadata.originalTitle);
     if (metadata.firstAuthor) studyYMap.set('firstAuthor', metadata.firstAuthor);
     if (metadata.publicationYear) studyYMap.set('publicationYear', metadata.publicationYear);
     if (metadata.authors) studyYMap.set('authors', metadata.authors);
@@ -78,6 +79,7 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
     if (updates.name !== undefined) studyYMap.set('name', updates.name);
     if (updates.description !== undefined) studyYMap.set('description', updates.description);
     // Reference metadata fields
+    if (updates.originalTitle !== undefined) studyYMap.set('originalTitle', updates.originalTitle);
     if (updates.firstAuthor !== undefined) studyYMap.set('firstAuthor', updates.firstAuthor);
     if (updates.publicationYear !== undefined)
       studyYMap.set('publicationYear', updates.publicationYear);
@@ -179,11 +181,59 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
     return trimmed;
   }
 
+  /**
+   * Update project description (owner/collaborator only server-side)
+   * @param {string} newDescription - New project description (can be empty string to clear)
+   * @returns {Promise<string>} The new description
+   */
+  async function updateDescription(newDescription) {
+    const trimmed = (newDescription || '').trim();
+
+    const response = await fetch(`${API_BASE}/api/projects/${projectId}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description: trimmed || null }),
+    });
+
+    if (!response.ok) {
+      let message = 'Failed to update description';
+      try {
+        const errorBody = await response.json();
+        message = errorBody?.error || message;
+      } catch (_err) {
+        // ignore
+      }
+      throw new Error(message);
+    }
+
+    const now = Date.now();
+    const ydoc = getYDoc();
+
+    if (ydoc && isSynced()) {
+      const metaMap = ydoc.getMap('meta');
+      metaMap.set('description', trimmed || null);
+      metaMap.set('updatedAt', now);
+    }
+
+    const existingMeta = projectStore.getMeta(projectId) || {};
+    projectStore.setProjectData(projectId, {
+      meta: { ...existingMeta, description: trimmed || null, updatedAt: now },
+    });
+    projectStore.updateProjectInList(projectId, {
+      description: trimmed || null,
+      updatedAt: new Date(now),
+    });
+
+    return trimmed;
+  }
+
   return {
     createStudy,
     updateStudy,
     deleteStudy,
     updateProjectSettings,
     renameProject,
+    updateDescription,
   };
 }
