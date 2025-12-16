@@ -1,4 +1,4 @@
-import { For, createUniqueId } from 'solid-js';
+import { For } from 'solid-js';
 import { ROB_JUDGEMENTS, BIAS_DIRECTIONS, DOMAIN1_DIRECTIONS } from '@/ROBINS-I/checklist-map.js';
 
 /**
@@ -14,12 +14,13 @@ import { ROB_JUDGEMENTS, BIAS_DIRECTIONS, DOMAIN1_DIRECTIONS } from '@/ROBINS-I/
  * @param {boolean} [props.disabled] - Whether the selector is disabled
  */
 export function DomainJudgement(props) {
-  const uniqueId = createUniqueId();
   const directionOptions = () => (props.isDomain1 ? DOMAIN1_DIRECTIONS : BIAS_DIRECTIONS);
 
   const getJudgementColor = judgement => {
     switch (judgement) {
       case 'Low':
+        return 'bg-green-100 border-green-400 text-green-800';
+      case 'Low (except for concerns about uncontrolled confounding)':
         return 'bg-green-100 border-green-400 text-green-800';
       case 'Moderate':
         return 'bg-yellow-100 border-yellow-400 text-yellow-800';
@@ -39,43 +40,33 @@ export function DomainJudgement(props) {
         <div class='text-sm font-medium text-gray-700 mb-2'>Risk of bias judgement</div>
         <div class='flex flex-wrap gap-2'>
           <For each={ROB_JUDGEMENTS}>
-            {judgement => (
-              <label
-                class={`
-                  relative inline-flex items-center justify-center px-3 py-1.5 rounded-md text-sm font-medium
-                  cursor-pointer transition-colors border-2
-                  ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                  ${
-                    props.judgement === judgement ?
-                      getJudgementColor(judgement)
-                    : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
-                  }
-                `}
-              >
-                <input
-                  type='radio'
-                  name={`judgement-${uniqueId}-${props.domainId || 'domain'}`}
-                  value={judgement}
-                  checked={props.judgement === judgement}
-                  onChange={() => props.onJudgementChange(judgement)}
+            {judgement => {
+              const isSelected = () => props.judgement === judgement;
+              return (
+                <button
+                  type='button'
+                  onClick={() => {
+                    if (props.disabled) return;
+                    // Toggle: deselect if already selected, otherwise select
+                    props.onJudgementChange(isSelected() ? null : judgement);
+                  }}
                   disabled={props.disabled}
-                  class='sr-only'
-                />
-                {judgement}
-              </label>
-            )}
+                  class={`
+                    inline-flex items-center justify-center px-3 py-1.5 rounded-md text-sm font-medium
+                    transition-colors border-2
+                    ${props.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                    ${
+                      isSelected() ?
+                        getJudgementColor(judgement)
+                      : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                    }
+                  `}
+                >
+                  {judgement}
+                </button>
+              );
+            }}
           </For>
-          {/* Clear judgement button */}
-          {props.judgement && (
-            <button
-              type='button'
-              onClick={() => props.onJudgementChange(null)}
-              disabled={props.disabled}
-              class='px-2 py-1 text-xs text-gray-400 hover:text-gray-600'
-            >
-              Clear
-            </button>
-          )}
         </div>
       </div>
 
@@ -88,43 +79,33 @@ export function DomainJudgement(props) {
           </div>
           <div class='flex flex-wrap gap-2'>
             <For each={directionOptions()}>
-              {direction => (
-                <label
-                  class={`
-                    relative inline-flex items-center justify-center px-2 py-1 rounded text-xs font-medium
-                    cursor-pointer transition-colors border
-                    ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                    ${
-                      props.direction === direction ?
-                        'bg-blue-100 border-blue-400 text-blue-800'
-                      : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
-                    }
-                  `}
-                >
-                  <input
-                    type='radio'
-                    name={`direction-${uniqueId}-${props.domainId || 'domain'}`}
-                    value={direction}
-                    checked={props.direction === direction}
-                    onChange={() => props.onDirectionChange?.(direction)}
+              {direction => {
+                const isSelected = () => props.direction === direction;
+                return (
+                  <button
+                    type='button'
+                    onClick={() => {
+                      if (props.disabled) return;
+                      // Toggle: deselect if already selected, otherwise select
+                      props.onDirectionChange?.(isSelected() ? null : direction);
+                    }}
                     disabled={props.disabled}
-                    class='sr-only'
-                  />
-                  {direction}
-                </label>
-              )}
+                    class={`
+                      inline-flex items-center justify-center px-2 py-1 rounded text-xs font-medium
+                      transition-colors border
+                      ${props.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                      ${
+                        isSelected() ?
+                          'bg-blue-100 border-blue-400 text-blue-800'
+                        : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+                      }
+                    `}
+                  >
+                    {direction}
+                  </button>
+                );
+              }}
             </For>
-            {/* Clear direction button */}
-            {props.direction && (
-              <button
-                type='button'
-                onClick={() => props.onDirectionChange?.(null)}
-                disabled={props.disabled}
-                class='px-2 py-1 text-xs text-gray-400 hover:text-gray-600'
-              >
-                Clear
-              </button>
-            )}
           </div>
         </div>
       )}
@@ -139,8 +120,10 @@ export function JudgementBadge(props) {
   const getColor = () => {
     switch (props.judgement) {
       case 'Low':
-      case 'Low (except confounding)':
         return 'bg-green-100 text-green-800';
+      case 'Low (except for concerns about uncontrolled confounding)':
+      case 'Low (except confounding)':
+        return 'bg-teal-100 text-teal-800';
       case 'Moderate':
         return 'bg-yellow-100 text-yellow-800';
       case 'Serious':

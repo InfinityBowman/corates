@@ -67,24 +67,78 @@ export const INFORMATION_SOURCES = [
   'Journal article(s)',
   'Study protocol',
   'Statistical analysis plan (SAP)',
-  'Non-commercial registry record (e.g. ClinicalTrials.gov)',
-  'Company-owned registry record',
+  'Non-commercial registry record (e.g. ClinicalTrials.gov record)',
+  'Company-owned registry record (e.g. GSK Clinical Study Register record)',
   'Grey literature (e.g. unpublished thesis)',
   'Conference abstract(s)',
-  'Regulatory document (e.g. CSR, approval package)',
+  'Regulatory document (e.g. Clinical Study Report, Drug Approval Package)',
   'Individual participant data',
   'Research ethics application',
-  'Grant database summary (e.g. NIH RePORTER)',
+  'Grant database summary (e.g. NIH RePORTER, Research Councils UK Gateway to Research)',
   'Personal communication with investigator',
   'Personal communication with sponsor',
-  'Other',
 ];
+
+// Section D: Information sources
+export const SECTION_D = {
+  title: 'Part D: Information Sources',
+  description:
+    'Which of the following sources have you obtained to help you inform your risk of bias judgements (tick as many as apply)?',
+  otherField: {
+    id: 'otherSpecify',
+    label: 'Please specify any additional sources not listed above',
+    placeholder: 'e.g., Additional data sources, correspondence, supplementary materials...',
+    type: 'textarea',
+    stateKey: 'otherSpecify',
+  },
+};
 
 // Checklist type definition
 export const CHECKLIST_TYPES = {
   ROBINS_I: {
     name: 'ROBINS-I V2',
     description: 'Risk Of Bias In Non-randomized Studies – of Interventions (Version 2)',
+  },
+};
+
+// Planning Stage: List confounding factors
+export const PLANNING_SECTION = {
+  title: 'The ROBINS-I V2 Tool',
+  subtitle: 'At planning stage: list confounding factors',
+  p1: {
+    id: 'p1',
+    label: 'P1',
+    text: 'List the important confounding factors relevant to all or most studies on this topic. Specify whether these are particular to specific intervention-outcome combinations.',
+    placeholder:
+      'e.g., Age, baseline disease severity, comorbidities, concomitant medications, socioeconomic status...',
+    type: 'textarea',
+    stateKey: 'confoundingFactors',
+  },
+};
+
+// Section A: Specify the result being assessed for risk of bias
+export const SECTION_A = {
+  a1: {
+    id: 'a1',
+    label: 'A1',
+    text: 'Specify the numerical result being assessed',
+    placeholder: 'e.g., OR = 1.5 (95% CI: 1.2-1.9)',
+    type: 'textarea',
+  },
+  a2: {
+    id: 'a2',
+    label: 'A2',
+    text: 'Provide further details about this result (for example, location in the study report, reason it was chosen)',
+    optional: true,
+    placeholder: 'e.g., Table 3, primary outcome analysis',
+    type: 'textarea',
+  },
+  a3: {
+    id: 'a3',
+    label: 'A3',
+    text: 'Specify the outcome to which this result relates',
+    placeholder: 'e.g., All-cause mortality at 12 months',
+    type: 'textarea',
   },
 };
 
@@ -106,6 +160,47 @@ export const SECTION_B = {
     text: 'Was the method of measuring the outcome inappropriate?',
     responseType: 'STANDARD',
     info: "If the answer to B3 is 'Yes' or 'Probably yes', the result should be considered to be at 'Critical risk of bias' and no further assessment is required.",
+  },
+};
+
+// Section C: Specify the (hypothetical) target randomized trial specific to the study
+export const SECTION_C = {
+  description:
+    "The target randomized trial is either explicitly described by the primary study investigators or implied by the study's design and analysis.",
+  c1: {
+    id: 'c1',
+    label: 'C1',
+    text: 'Specify the participants and eligibility criteria',
+    placeholder: 'e.g., Adults aged 18+ with type 2 diabetes, no prior cardiovascular disease',
+    type: 'textarea',
+    stateKey: 'participants',
+  },
+  c2: {
+    id: 'c2',
+    label: 'C2',
+    text: 'Specify the intervention strategy',
+    placeholder: 'e.g., Initiation of metformin 500mg twice daily',
+    type: 'textarea',
+    stateKey: 'interventionStrategy',
+  },
+  c3: {
+    id: 'c3',
+    label: 'C3',
+    text: 'Specify the comparator strategy',
+    placeholder: 'e.g., Initiation of sulfonylurea therapy',
+    type: 'textarea',
+    stateKey: 'comparatorStrategy',
+  },
+  c4: {
+    id: 'c4',
+    label: 'C4',
+    text: 'Did the analysis account for switches during follow-up between the intervention strategies being compared, or for other protocol deviations during follow-up?',
+    type: 'radio',
+    stateKey: 'isPerProtocol',
+    options: [
+      { value: false, label: 'No (the analysis is estimating the intention-to-treat effect)' },
+      { value: true, label: 'Yes (the analysis is estimating the per-protocol effect)' },
+    ],
   },
 };
 
