@@ -1,7 +1,11 @@
 import { createSignal, For, Show, createMemo } from 'solid-js';
 import { getActiveDomainKeys } from '@/ROBINS-I/checklist-map.js';
 import { shouldStopAssessment } from '@/ROBINS-I/checklist.js';
+import { PlanningSection } from './PlanningSection.jsx';
+import { SectionA } from './SectionA.jsx';
 import { SectionB } from './SectionB.jsx';
+import { SectionC } from './SectionC.jsx';
+import { SectionD } from './SectionD.jsx';
 import { DomainSection } from './DomainSection.jsx';
 import { OverallSection } from './OverallSection.jsx';
 import { ResponseLegend } from './SignallingQuestion.jsx';
@@ -31,17 +35,24 @@ export function ROBINSIChecklist(props) {
   const activeDomains = createMemo(() => getActiveDomainKeys(isPerProtocol()));
 
   // Update handlers - use object-style API like AMSTAR2: onUpdate({ key: value })
+  function handlePlanningUpdate(newPlanning) {
+    props.onUpdate({ planning: newPlanning });
+  }
+
+  function handleSectionAUpdate(newSectionA) {
+    props.onUpdate({ sectionA: newSectionA });
+  }
+
   function handleSectionBUpdate(newSectionB) {
     props.onUpdate({ sectionB: newSectionB });
   }
 
-  function handleSectionCToggle() {
-    props.onUpdate({
-      sectionC: {
-        ...props.checklistState.sectionC,
-        isPerProtocol: !isPerProtocol(),
-      },
-    });
+  function handleSectionCUpdate(newSectionC) {
+    props.onUpdate({ sectionC: newSectionC });
+  }
+
+  function handleSectionDUpdate(newSectionD) {
+    props.onUpdate({ sectionD: newSectionD });
   }
 
   function handleDomainUpdate(domainKey, newDomainState) {
@@ -67,50 +78,45 @@ export function ROBINSIChecklist(props) {
           <ResponseLegend />
         </Show>
 
-        {/* Protocol Type Toggle (C4) */}
-        <div class='bg-white rounded-lg shadow-md p-4'>
-          <div class='flex items-center justify-between'>
-            <div>
-              <h4 class='font-medium text-gray-900'>Target Trial Effect Type</h4>
-              <p class='text-sm text-gray-500 mt-1'>
-                Did the analysis account for switches or deviations during follow-up?
-              </p>
-            </div>
-            <div class='flex items-center gap-4'>
-              <label
-                class={`flex items-center gap-2 ${isReadOnly() ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
-              >
-                <input
-                  type='radio'
-                  name='protocol-type'
-                  checked={!isPerProtocol()}
-                  disabled={isReadOnly()}
-                  onChange={() => !isReadOnly() && isPerProtocol() && handleSectionCToggle()}
-                  class='text-blue-600'
-                />
-                <span class='text-sm'>No (ITT effect)</span>
-              </label>
-              <label
-                class={`flex items-center gap-2 ${isReadOnly() ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
-              >
-                <input
-                  type='radio'
-                  name='protocol-type'
-                  checked={isPerProtocol()}
-                  disabled={isReadOnly()}
-                  onChange={() => !isReadOnly() && !isPerProtocol() && handleSectionCToggle()}
-                  class='text-blue-600'
-                />
-                <span class='text-sm'>Yes (Per-protocol effect)</span>
-              </label>
-            </div>
-          </div>
+        {/* Planning Stage: Confounding factors */}
+        <PlanningSection
+          planningState={props.checklistState?.planning}
+          onUpdate={handlePlanningUpdate}
+          disabled={isReadOnly()}
+        />
+
+        {/* Preliminary Considerations Header */}
+        <div class='bg-blue-100 border border-blue-200 rounded-lg px-6 py-4'>
+          <h2 class='font-semibold text-blue-900 text-lg'>
+            For Each Study Result: Preliminary Considerations (Parts A to D)
+          </h2>
         </div>
+
+        {/* Section A: Specify the result being assessed */}
+        <SectionA
+          sectionAState={props.checklistState?.sectionA}
+          onUpdate={handleSectionAUpdate}
+          disabled={isReadOnly()}
+        />
 
         {/* Section B: Proceed with assessment */}
         <SectionB
           sectionBState={props.checklistState?.sectionB}
           onUpdate={handleSectionBUpdate}
+          disabled={isReadOnly()}
+        />
+
+        {/* Section C: Target randomized trial */}
+        <SectionC
+          sectionCState={props.checklistState?.sectionC}
+          onUpdate={handleSectionCUpdate}
+          disabled={isReadOnly()}
+        />
+
+        {/* Section D: Information sources */}
+        <SectionD
+          sectionDState={props.checklistState?.sectionD}
+          onUpdate={handleSectionDUpdate}
           disabled={isReadOnly()}
         />
 
