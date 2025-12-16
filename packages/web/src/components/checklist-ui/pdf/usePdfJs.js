@@ -41,6 +41,7 @@ export default function usePdfJs(options = {}) {
   let resizeObserver = null;
   let userCleared = false; // Track if user explicitly cleared the PDF
   let pageRefs = new Map(); // Store refs to page containers for scroll detection
+  let loadingSourceId = null; // Track currently loading source to prevent duplicate loads
 
   // Initialize PDF.js on mount
   onMount(async () => {
@@ -199,6 +200,15 @@ export default function usePdfJs(options = {}) {
   async function loadPdf(source) {
     if (!pdfjsLib) return;
 
+    // Generate a unique ID for this source to prevent duplicate loads
+    const sourceId = source.data ? source.data.byteLength : JSON.stringify(source);
+
+    // Skip if we're already loading this exact source
+    if (loadingSourceId === sourceId) {
+      return;
+    }
+    loadingSourceId = sourceId;
+
     setLoading(true);
     setError(null);
 
@@ -228,8 +238,15 @@ export default function usePdfJs(options = {}) {
     }
 
     try {
+      // Clone the ArrayBuffer before passing to PDF.js since it transfers ownership
+      // to the web worker, which detaches the original buffer
+      let loadSource = source;
+      if (source.data && source.data instanceof ArrayBuffer && source.data.byteLength > 0) {
+        loadSource = { ...source, data: source.data.slice(0) };
+      }
+
       // verbosity: 0 = ERRORS only (suppress warnings about malformed PDFs)
-      const loadingTask = pdfjsLib.getDocument({ ...source, verbosity: 0 });
+      const loadingTask = pdfjsLib.getDocument({ ...loadSource, verbosity: 0 });
       const pdf = await loadingTask.promise;
       setPdfDoc(pdf);
       setTotalPages(pdf.numPages);
@@ -245,6 +262,7 @@ export default function usePdfJs(options = {}) {
       setPdfDoc(null);
     } finally {
       setLoading(false);
+      loadingSourceId = null;
     }
   }
 
@@ -404,10 +422,12 @@ export default function usePdfJs(options = {}) {
     try {
       const arrayBuffer = await file.arrayBuffer();
       setFileName(file.name);
-      setPdfSource({ data: arrayBuffer });
+      // Clone the buffer for internal use since PDF.js will detach it
+      setPdfSource({ data: arrayBuffer.slice(0) });
 
       if (options.onPdfChange) {
-        options.onPdfChange(arrayBuffer, file.name);
+        // Clone again for the callback so parent has a usable copy
+        options.onPdfChange(arrayBuffer.slice(0), file.name);
       }
     } catch (err) {
       console.error('Error reading PDF file:', err);
