@@ -21,7 +21,7 @@ export default function Contact() {
     const subject = formData.get('subject');
     const message = formData.get('message');
 
-    const mailtoLink = `mailto:jakebrake115@gmail.com?subject=${encodeURIComponent(subject || 'CoRATES Inquiry')}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`)}`;
+    const mailtoLink = `mailto:contact@corates.org?subject=${encodeURIComponent(subject || 'CoRATES Inquiry')}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`)}`;
     window.location.href = mailtoLink;
     setFormState('sent');
   };
@@ -81,12 +81,6 @@ export default function Contact() {
                         Your feedback helps us improve CoRATES for everyone.
                       </p>
                     </div>
-                  </div>
-
-                  <div class='text-gray-500'>
-                    Please understand we are still working on adding an FAQ and getting an official
-                    business email. Don't worry, your messages will still reach us at
-                    jakebrake115@gmail.com.
                   </div>
                 </div>
 
