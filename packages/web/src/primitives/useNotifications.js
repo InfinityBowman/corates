@@ -22,8 +22,18 @@ export function useNotifications(userId, options = {}) {
   let reconnectAttempts = 0;
   const MAX_RECONNECT_DELAY = 60000; // 1 minute max
 
+  // Track whether we should be connected (user intent)
+  let shouldConnect = false;
+
   function connect() {
     if (ws || !userId) return;
+
+    // Don't attempt connection when offline
+    if (!navigator.onLine) {
+      return;
+    }
+
+    shouldConnect = true;
 
     // Build WebSocket URL
     const wsProtocol = API_BASE.startsWith('https') ? 'wss' : 'ws';
@@ -67,17 +77,23 @@ export function useNotifications(userId, options = {}) {
       cleanup();
       ws = null; // Clear the reference so connect() can run again
 
-      // Exponential backoff: 5s, 10s, 20s, 40s... up to MAX_RECONNECT_DELAY
-      const delay = Math.min(5000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
-      reconnectAttempts++;
+      // Only attempt reconnection if we should be connected and are online
+      if (shouldConnect && navigator.onLine) {
+        // Exponential backoff: 5s, 10s, 20s, 40s... up to MAX_RECONNECT_DELAY
+        const delay = Math.min(5000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+        reconnectAttempts++;
 
-      reconnectTimeout = setTimeout(() => {
-        connect();
-      }, delay);
+        reconnectTimeout = setTimeout(() => {
+          connect();
+        }, delay);
+      }
     };
 
-    ws.onerror = err => {
-      console.error('Notification WebSocket error:', err);
+    ws.onerror = () => {
+      // Suppress error logging when offline to prevent console spam
+      if (navigator.onLine) {
+        console.error('Notification WebSocket error');
+      }
       // Don't set connected false here - onclose will fire next and handle cleanup
     };
   }
@@ -89,7 +105,31 @@ export function useNotifications(userId, options = {}) {
     }
   }
 
+  // Handle online/offline events
+  function handleOnline() {
+    // When we come back online and should be connected, attempt reconnection
+    if (shouldConnect && !ws) {
+      reconnectAttempts = 0; // Reset backoff when coming online
+      connect();
+    }
+  }
+
+  function handleOffline() {
+    // Cancel any pending reconnection attempts when going offline
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+      reconnectTimeout = null;
+    }
+  }
+
+  // Set up online/offline listeners
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+  }
+
   function disconnect() {
+    shouldConnect = false;
     if (reconnectTimeout) {
       clearTimeout(reconnectTimeout);
       reconnectTimeout = null;
@@ -113,6 +153,10 @@ export function useNotifications(userId, options = {}) {
   // Cleanup on unmount
   onCleanup(() => {
     disconnect();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    }
   });
 
   return {

@@ -23,15 +23,22 @@ export function Avatar(props) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
+  const fallbackClass = () =>
+    props.fallbackClass ||
+    'flex items-center justify-center w-full h-full bg-gray-200 text-gray-700 font-medium';
+
   return (
-    <div {...api().getRootProps()} class={props.class}>
-      <span
-        {...api().getFallbackProps()}
-        class='flex items-center justify-center w-full h-full bg-gray-200 text-gray-700 font-medium'
-      >
+    <div {...api().getRootProps()} class={`overflow-hidden ${props.class || ''}`}>
+      <span {...api().getFallbackProps()} class={fallbackClass()}>
         {getInitials()}
       </span>
-      <img alt={alt()} src={src()} {...api().getImageProps()} class='w-full h-full object-cover' />
+      <img
+        alt={alt()}
+        src={src()}
+        referrerPolicy='no-referrer'
+        {...api().getImageProps()}
+        class='w-full h-full object-cover'
+      />
     </div>
   );
 }
