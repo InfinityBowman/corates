@@ -6,6 +6,7 @@ import ProjectSettings from '../ProjectSettings.jsx';
 import projectStore from '@/stores/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
+import { Avatar } from '@corates/ui';
 
 /**
  * OverviewTab - Project overview with stats, settings, and members
@@ -108,23 +109,12 @@ export default function OverviewTab(props) {
                     return (
                       <div class='p-4 flex items-center justify-between'>
                         <div class='flex items-center gap-3'>
-                          <Show
-                            when={member.image}
-                            fallback={
-                              <div class='w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium'>
-                                {(member.displayName || member.name || member.email || '?')
-                                  .charAt(0)
-                                  .toUpperCase()}
-                              </div>
-                            }
-                          >
-                            <img
-                              src={member.image}
-                              alt={member.displayName || member.name || 'User'}
-                              class='w-10 h-10 rounded-full object-cover'
-                              referrerPolicy='no-referrer'
-                            />
-                          </Show>
+                          <Avatar
+                            src={member.image}
+                            name={member.displayName || member.name || member.email}
+                            class='w-10 h-10 rounded-full overflow-hidden'
+                            fallbackClass='flex items-center justify-center w-full h-full bg-blue-600 text-white font-medium'
+                          />
                           <div>
                             <p class='text-gray-900 font-medium'>
                               {member.displayName || member.name || 'Unknown'}

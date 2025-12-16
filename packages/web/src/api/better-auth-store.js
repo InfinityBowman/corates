@@ -3,6 +3,11 @@ import { authClient, useSession } from '@api/auth-client.js';
 import projectStore from '@/stores/projectStore.js';
 import { API_BASE, BASEPATH } from '@config/api.js';
 import { saveLastLoginMethod, LOGIN_METHODS } from '@lib/lastLoginMethod.js';
+import {
+  fetchAndCacheAvatar,
+  getCachedAvatar,
+  clearAvatarCache,
+} from '@/primitives/avatarCache.js';
 
 // LocalStorage keys for offline caching
 const AUTH_CACHE_KEY = 'corates-auth-cache';
@@ -82,6 +87,16 @@ function createBetterAuthStore() {
   const cachedAuth = loadCachedAuth();
   const [cachedUser, setCachedUser] = createSignal(cachedAuth);
 
+  // Cached avatar data URL for offline use
+  const [cachedAvatarUrl, setCachedAvatarUrl] = createSignal(null);
+
+  // Load cached avatar on init (async)
+  if (cachedAuth?.id) {
+    getCachedAvatar(cachedAuth.id).then(dataUrl => {
+      if (dataUrl) setCachedAvatarUrl(dataUrl);
+    });
+  }
+
   // Cache user data when session is successfully fetched (only when online)
   // Wrap in createRoot to properly dispose of the effect
   createRoot(() => {
@@ -92,6 +107,13 @@ function createBetterAuthStore() {
           // Cache when we have a user and we're online
           saveCachedAuth(sessionData.user);
           setCachedUser(sessionData.user);
+
+          // Cache the avatar image for offline use
+          if (sessionData.user.image && sessionData.user.id) {
+            fetchAndCacheAvatar(sessionData.user.id, sessionData.user.image).then(dataUrl => {
+              if (dataUrl) setCachedAvatarUrl(dataUrl);
+            });
+          }
         } else if (!authLoading()) {
           // Clear cache when logged out (only after loading completes to avoid clearing on initial load)
           saveCachedAuth(null);
@@ -120,10 +142,19 @@ function createBetterAuthStore() {
 
   const user = () => {
     if (isOnline()) {
-      return sessionUser();
+      const currentUser = sessionUser();
+      // When online, prefer cached avatar data URL (works offline, faster loading)
+      if (currentUser && cachedAvatarUrl()) {
+        return { ...currentUser, image: cachedAvatarUrl() };
+      }
+      return currentUser;
     }
-    // When offline, return cached user
-    return cachedUser();
+    // When offline, return cached user with cached avatar
+    const cached = cachedUser();
+    if (cached && cachedAvatarUrl()) {
+      return { ...cached, image: cachedAvatarUrl() };
+    }
+    return cached;
   };
 
   // Error state for auth operations
@@ -326,6 +357,10 @@ function createBetterAuthStore() {
       // Clear cached auth data
       saveCachedAuth(null);
       setCachedUser(null);
+      setCachedAvatarUrl(null);
+
+      // Clear cached avatar from IndexedDB
+      clearAvatarCache();
 
       // Clear cached project data on logout
       projectStore.clearProjectList();
@@ -612,6 +647,8 @@ function createBetterAuthStore() {
       localStorage.removeItem('pendingEmail');
       saveCachedAuth(null);
       setCachedUser(null);
+      setCachedAvatarUrl(null);
+      clearAvatarCache();
 
       // Sign out after successful deletion
       await authClient.signOut();
