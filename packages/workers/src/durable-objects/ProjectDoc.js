@@ -440,7 +440,7 @@ export class ProjectDoc {
     server.addEventListener('close', () => {
       // Remove awareness state for this client using their stored clientID
       const session = this.sessions.get(server);
-      if (session?.awarenessClientId !== null) {
+      if (session && session.awarenessClientId != null) {
         awarenessProtocol.removeAwarenessStates(
           this.awareness,
           [session.awarenessClientId],
