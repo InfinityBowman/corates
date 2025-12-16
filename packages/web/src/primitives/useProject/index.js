@@ -117,7 +117,7 @@ export function useProject(projectId) {
   // Disconnect from WebSocket
   function disconnect() {
     if (connectionManager) {
-      connectionManager.disconnect();
+      connectionManager.destroy(); // Use destroy to clean up event listeners
       connectionManager = null;
     }
     if (indexeddbProvider) {
