@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useLocalChecklists } from '@primitives/useLocalChecklists.js';
 import projectStore from '@/stores/projectStore.js';
-import { useConfirmDialog } from '@components/zag/Dialog.jsx';
+import { useConfirmDialog } from '@corates/ui';
 import { AiOutlineFolder } from 'solid-icons/ai';
 import { AiOutlineCloud } from 'solid-icons/ai';
 import { HiOutlineDocumentCheck } from 'solid-icons/hi';

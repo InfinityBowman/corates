@@ -8,8 +8,7 @@ import { createSignal, createEffect, Show, onMount, onCleanup } from 'solid-js';
 import { BiRegularPlus } from 'solid-icons/bi';
 import { AiOutlineCloudUpload } from 'solid-icons/ai';
 import { FiChevronUp } from 'solid-icons/fi';
-import { Tabs } from '@components/zag/Tabs.jsx';
-import { showToast } from '@components/zag/Toast.jsx';
+import { Tabs, showToast } from '@corates/ui';
 import projectStore from '@/stores/projectStore.js';
 
 import { useAddStudies } from '@primitives/useAddStudies.js';

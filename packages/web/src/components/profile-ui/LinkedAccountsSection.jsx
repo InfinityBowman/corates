@@ -14,8 +14,7 @@ import { createSignal, createResource, createMemo, For, Show, onMount } from 'so
 import { FiLink, FiMail, FiInfo, FiAlertCircle } from 'solid-icons/fi';
 import { authClient } from '@api/auth-client.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { showToast } from '@components/zag/Toast.jsx';
-import { Dialog } from '@components/zag/Dialog.jsx';
+import { showToast, Dialog } from '@corates/ui';
 import AccountProviderCard from './AccountProviderCard.jsx';
 import MergeAccountsDialog from './MergeAccountsDialog.jsx';
 import { parseOAuthError, getLinkErrorMessage } from '@lib/account-linking-errors.js';

@@ -1,7 +1,7 @@
 import { createSignal, For, Show, createEffect, onCleanup } from 'solid-js';
 import { API_BASE } from '@config/api.js';
 import { FiX } from 'solid-icons/fi';
-import Select from '@components/zag/Select.jsx';
+import { Select } from '@corates/ui';
 
 /**
  * Modal for searching and adding members to a project

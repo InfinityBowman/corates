@@ -1,8 +1,5 @@
 import { createSignal, createEffect, createMemo, Show } from 'solid-js';
-import { Dialog } from '@components/zag/Dialog.jsx';
-import { showToast } from '@components/zag/Toast.jsx';
-import Select from '@components/zag/Select.jsx';
-import Collapsible from '@components/zag/Collapsible.jsx';
+import { Dialog, showToast, Select, Collapsible } from '@corates/ui';
 import { BiRegularUser, BiRegularChevronDown } from 'solid-icons/bi';
 import projectStore from '@/stores/projectStore.js';
 

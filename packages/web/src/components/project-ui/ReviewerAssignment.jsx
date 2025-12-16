@@ -5,7 +5,7 @@
 
 import { createSignal, createMemo, For, Show } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { showToast } from '@components/zag/Toast.jsx';
+import { showToast } from '@corates/ui';
 import {
   BiRegularShuffle,
   BiRegularCheck,

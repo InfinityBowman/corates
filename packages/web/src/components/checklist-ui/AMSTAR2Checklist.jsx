@@ -2,8 +2,7 @@ import { createSignal, createEffect, Show, For } from 'solid-js';
 import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
 import { createChecklist as createAMSTAR2Checklist } from '@/AMSTAR2/checklist.js';
 import { FaSolidCircleInfo } from 'solid-icons/fa';
-import Tooltip from '@/components/zag/Tooltip.jsx';
-import FloatingPanel from '@/components/zag/FloatingPanel.jsx';
+import { Tooltip, FloatingPanel } from '@corates/ui';
 
 export function Question1(props) {
   const state = () => props.checklistState().q1;

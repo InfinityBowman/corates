@@ -10,7 +10,7 @@ import {
   BiRegularChevronRight,
   BiRegularExpandHorizontal,
 } from 'solid-icons/bi';
-import { useConfirmDialog } from '@components/zag/Dialog.jsx';
+import { useConfirmDialog } from '@corates/ui';
 
 export default function PdfToolbar(props) {
   // props.readOnly - If true, hides upload/change/clear buttons

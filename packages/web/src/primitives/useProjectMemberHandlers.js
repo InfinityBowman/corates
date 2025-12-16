@@ -5,7 +5,7 @@
 
 import { useNavigate } from '@solidjs/router';
 import { API_BASE } from '@config/api.js';
-import { showToast } from '@components/zag/Toast.jsx';
+import { showToast } from '@corates/ui';
 import projectStore from '@/stores/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 

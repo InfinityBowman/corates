@@ -1,5 +1,5 @@
 import { createSignal, Show, onMount } from 'solid-js';
-import { showToast } from '@components/zag/Toast.jsx';
+import { showToast } from '@corates/ui';
 import AddStudiesForm from './AddStudiesForm.jsx';
 import {
   saveFormState,

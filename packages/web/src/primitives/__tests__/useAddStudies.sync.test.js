@@ -13,7 +13,7 @@ import { createRoot, createSignal } from 'solid-js';
 import { useAddStudies } from '../useAddStudies';
 
 // Mock dependencies
-vi.mock('@components/zag/Toast.jsx', () => ({
+vi.mock('@corates/ui', () => ({
   showToast: {
     success: vi.fn(),
     warning: vi.fn(),

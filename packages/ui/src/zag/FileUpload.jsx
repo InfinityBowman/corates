@@ -3,7 +3,7 @@ import { normalizeProps, useMachine } from '@zag-js/solid';
 import { createUniqueId, createMemo, Index, Show, mergeProps } from 'solid-js';
 import { BiRegularCloudUpload, BiRegularTrash } from 'solid-icons/bi';
 import { CgFileDocument } from 'solid-icons/cg';
-import { useWindowDrag } from '@primitives/useWindowDrag.js';
+import { useWindowDrag } from '../primitives/useWindowDrag.js';
 
 /**
  * Recursively read all files from a directory entry
@@ -201,114 +201,85 @@ export function FileUpload(props) {
         });
       }
 
+      // Call the callback with filtered files
       if (filteredFiles.length > 0) {
-        // Directly call the callback since we're bypassing Zag's internal handling
         merged.onFilesChange?.(filteredFiles);
         merged.onFileAccept?.({ files: filteredFiles });
       }
-    } catch (error) {
-      console.error('Error processing dropped files:', error);
+    } catch (err) {
+      // Fall back to normal handling if directory reading fails
+      console.error('Error reading dropped items:', err);
     }
   };
 
-  // Create enhanced dropzone props that add our directory handler
-  const getEnhancedDropzoneProps = () => {
-    const zagProps = api().getDropzoneProps();
-
-    // Always use our custom handler for drops to support directories
-    return {
-      ...zagProps,
-      onDrop: handleDrop,
-      onDragOver: e => {
-        e.preventDefault();
-        zagProps.onDragOver?.(e);
-      },
-    };
+  // Format file size for display
+  const formatFileSize = bytes => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
   return (
     <div {...api().getRootProps()} class={classValue()}>
-      <Show
-        when={!compact()}
-        fallback={
-          // Compact mode - minimal dropzone
-          <div
-            {...getEnhancedDropzoneProps()}
-            class={`border-2 border-dashed rounded-lg py-8 px-4 text-center cursor-pointer transition-all duration-200 ${
-              api().isDragging ? 'border-blue-500 bg-blue-50 scale-[1.02]'
-              : isHighlighted() ?
-                'border-blue-400 bg-blue-50/50 scale-[1.01] ring-4 ring-blue-100 animate-pulse'
-              : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-            } ${dropzoneClass() || ''}`}
-          >
-            <input {...api().getHiddenInputProps()} />
-            <BiRegularCloudUpload
-              class={`w-8 h-8 mx-auto mb-2 transition-all duration-200 ${
-                isHighlighted() ? 'text-blue-500 scale-110' : 'text-gray-400'
-              }`}
-            />
-            <p class='text-sm text-gray-600'>
-              <span class='font-medium text-blue-600'>
-                {isHighlighted() ? 'Drop files here' : 'Click to upload'}
-              </span>
-              {!isHighlighted() && ' or drag and drop'}
-            </p>
+      <div
+        {...api().getDropzoneProps()}
+        onDrop={handleDrop}
+        class={`
+          border-2 border-dashed rounded-lg transition-all duration-200
+          ${isHighlighted() ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+          ${compact() ? 'p-4' : 'p-8'}
+          ${dropzoneClass() || ''}
+        `}
+      >
+        <input {...api().getHiddenInputProps()} />
+        <div class='flex flex-col items-center justify-center gap-2 text-center'>
+          <BiRegularCloudUpload
+            class={`text-gray-400 ${compact() ? 'w-8 h-8' : 'w-12 h-12'} ${isHighlighted() ? 'text-blue-500' : ''}`}
+          />
+          <div class={compact() ? 'text-sm' : ''}>
+            <p class='font-medium text-gray-700'>{merged.dropzoneText}</p>
             <Show when={helpText()}>
               <p class='text-xs text-gray-500 mt-1'>{helpText()}</p>
             </Show>
           </div>
-        }
-      >
-        {/* Standard mode - full dropzone with icon */}
-        <div
-          {...getEnhancedDropzoneProps()}
-          class={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200 ${
-            api().isDragging ? 'border-blue-500 bg-blue-50 scale-[1.02]'
-            : isHighlighted() ?
-              'border-blue-400 bg-blue-50/50 scale-[1.01] ring-4 ring-blue-100 animate-pulse'
-            : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-          } ${dropzoneClass() || ''}`}
-        >
-          <input {...api().getHiddenInputProps()} />
-          <BiRegularCloudUpload
-            class={`w-10 h-10 mx-auto mb-2 transition-all duration-200 ${
-              isHighlighted() ? 'text-blue-500 scale-110' : 'text-gray-400'
-            }`}
-          />
-          <p class='text-sm text-gray-600'>
-            <span class='font-medium text-blue-600'>
-              {isHighlighted() ? 'Drop files here' : 'Click to upload'}
-            </span>
-            {!isHighlighted() && ' or drag and drop'}
-          </p>
-          <Show when={helpText()}>
-            <p class='text-xs text-gray-500 mt-1'>{helpText()}</p>
-          </Show>
+          <span class='text-gray-400 text-sm'>or</span>
+          <button
+            {...api().getTriggerProps()}
+            class={`
+              px-4 py-2 bg-white border border-gray-300 rounded-lg
+              text-gray-700 font-medium hover:bg-gray-50
+              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+              transition-colors
+              ${compact() ? 'text-sm px-3 py-1.5' : ''}
+            `}
+          >
+            {merged.buttonText}
+          </button>
         </div>
-      </Show>
+      </div>
 
-      {/* File list */}
       <Show when={showFileList() && api().acceptedFiles.length > 0}>
-        <ul {...api().getItemGroupProps()} class='mt-4 space-y-2'>
+        <ul class='mt-4 space-y-2'>
           <Index each={api().acceptedFiles}>
             {file => (
               <li
                 {...api().getItemProps({ file: file() })}
                 class='flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200'
               >
-                <CgFileDocument class='w-5 h-5 text-red-500 shrink-0' />
+                <CgFileDocument class='w-8 h-8 text-gray-400 shrink-0' />
                 <div class='flex-1 min-w-0'>
-                  <div
+                  <p
                     {...api().getItemNameProps({ file: file() })}
                     class='text-sm font-medium text-gray-900 truncate'
                   >
                     {file().name}
-                  </div>
-                  <p class='text-xs text-gray-500'>{(file().size / 1024 / 1024).toFixed(2)} MB</p>
+                  </p>
+                  <p class='text-xs text-gray-500'>{formatFileSize(file().size)}</p>
                 </div>
                 <button
                   {...api().getItemDeleteTriggerProps({ file: file() })}
                   class='p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors'
+                  title='Remove file'
                 >
                   <BiRegularTrash class='w-4 h-4' />
                 </button>
@@ -320,3 +291,5 @@ export function FileUpload(props) {
     </div>
   );
 }
+
+export default FileUpload;
