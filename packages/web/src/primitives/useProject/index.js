@@ -148,7 +148,6 @@ export function useProject(projectId) {
   // Reconnect when coming back online
   createEffect(() => {
     if (isOnline() && connectionManager?.getShouldReconnect() && !connected() && !connecting()) {
-      console.log('Network is back online. Attempting to reconnect...');
       connectionManager.setShouldReconnect(false);
       connectionManager.reconnect();
     }

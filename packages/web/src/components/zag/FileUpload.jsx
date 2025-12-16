@@ -176,7 +176,6 @@ export function FileUpload(props) {
 
     try {
       const allFiles = await getFilesFromDrop(e.dataTransfer);
-      console.log('Directory drop: found', allFiles.length, 'files');
 
       if (allFiles.length === 0) return;
 
@@ -201,8 +200,6 @@ export function FileUpload(props) {
           });
         });
       }
-
-      console.log('After filtering:', filteredFiles.length, 'files match accept criteria');
 
       if (filteredFiles.length > 0) {
         // Directly call the callback since we're bypassing Zag's internal handling
