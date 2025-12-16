@@ -51,6 +51,7 @@ Zag component exist in `packages/web/src/components/zag/*` and should be reused,
 ### State Architecture (Very Important)
 
 To keep the codebase maintainable and avoid prop drilling:
+
 - Do NOT prop-drill application state.
 - Shared or cross-feature state must live in external stores under packages/web/src/stores/ or relative to the component file.
 - Import stores directly where needed instead of passing values through multiple components.
@@ -59,7 +60,7 @@ To keep the codebase maintainable and avoid prop drilling:
 - an external store
 - a primitive
 - or Solid context (when scoped to a feature)
-ALWAYS prefer the CLEANEST solution.
+  ALWAYS prefer the CLEANEST solution.
 
 ### Destructuring props
 
