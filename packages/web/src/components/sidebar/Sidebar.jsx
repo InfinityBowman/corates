@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useLocalChecklists } from '@primitives/useLocalChecklists.js';
 import projectStore from '@/stores/projectStore.js';
-import { useConfirmDialog } from '@components/zag/Dialog.jsx';
+import { useConfirmDialog } from '@corates/ui';
 import { AiOutlineFolder } from 'solid-icons/ai';
 import { AiOutlineCloud } from 'solid-icons/ai';
 import { HiOutlineDocumentCheck } from 'solid-icons/hi';
@@ -22,8 +22,9 @@ export default function Sidebar(props) {
 
   const currentUserId = () => user()?.id;
 
-  // Track expanded projects
+  // Track expanded projects and studies
   const [expandedProjects, setExpandedProjects] = createSignal({});
+  const [expandedStudies, setExpandedStudies] = createSignal({});
 
   // Read cloud projects from the store (same data as dashboard)
   const cloudProjects = () => projectStore.getProjectList();
@@ -47,6 +48,15 @@ export default function Sidebar(props) {
       [projectId]: !prev[projectId],
     }));
   };
+
+  const toggleStudy = studyId => {
+    setExpandedStudies(prev => ({
+      ...prev,
+      [studyId]: !prev[studyId],
+    }));
+  };
+
+  const isStudyExpanded = studyId => expandedStudies()[studyId] || false;
 
   const isCurrentPath = path => location.pathname === path;
 
@@ -138,6 +148,8 @@ export default function Sidebar(props) {
                       onToggle={() => toggleProject(project.id)}
                       userId={currentUserId()}
                       currentPath={location.pathname}
+                      isStudyExpanded={isStudyExpanded}
+                      onToggleStudy={toggleStudy}
                     />
                   )}
                 </For>

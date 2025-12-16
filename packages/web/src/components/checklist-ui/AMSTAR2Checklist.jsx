@@ -2,8 +2,7 @@ import { createSignal, createEffect, Show, For } from 'solid-js';
 import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
 import { createChecklist as createAMSTAR2Checklist } from '@/AMSTAR2/checklist.js';
 import { FaSolidCircleInfo } from 'solid-icons/fa';
-import Tooltip from '@/components/zag/Tooltip.jsx';
-import FloatingPanel from '@/components/zag/FloatingPanel.jsx';
+import { Tooltip, FloatingPanel } from '@corates/ui';
 
 export function Question1(props) {
   const state = () => props.checklistState().q1;
@@ -821,10 +820,8 @@ export default function AMSTAR2Checklist(props = {}) {
     <div class='bg-blue-50'>
       <div class='container mx-auto px-4 py-6 max-w-5xl'>
         <Show when={currentChecklist()} fallback={<div>Loading...</div>}>
-          <div class='mb-6'>
-            <div class='font-semibold text-lg text-gray-900 text-left sm:text-center mb-2'>
-              {currentChecklist().name || 'AMSTAR 2 Checklist'}
-            </div>
+          <div class='font-semibold text-lg text-gray-900 text-left sm:text-center mb-6'>
+            {currentChecklist().name || 'AMSTAR 2 Checklist'}
           </div>
           <fieldset disabled={!!props.readOnly} class={props.readOnly ? 'opacity-90' : ''}>
             <div class='space-y-6'>

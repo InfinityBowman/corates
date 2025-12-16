@@ -43,19 +43,13 @@ export function Clipboard(props) {
           <Show when={showInput()}>
             <input
               {...api().getInputProps()}
-              class='flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50
-                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              class='flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
               readOnly
             />
           </Show>
           <button
             {...api().getTriggerProps()}
-            class={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-              ${
-                api().copied ?
-                  'bg-green-100 text-green-700 hover:bg-green-200'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+            class={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${api().copied ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
           >
             <Show when={api().copied} fallback={<FiCopy class='w-4 h-4' />}>
               <FiCheck class='w-4 h-4' />

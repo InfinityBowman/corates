@@ -8,8 +8,7 @@ import { For, Show } from 'solid-js';
 import { AiOutlineFileText } from 'solid-icons/ai';
 import { CgFileDocument } from 'solid-icons/cg';
 import { BiRegularLinkAlt } from 'solid-icons/bi';
-import { FileUpload } from '@components/zag/FileUpload.jsx';
-import { Checkbox } from '@components/zag/Checkbox.jsx';
+import { FileUpload, Checkbox } from '@corates/ui';
 import {
   getRefDisplayName,
   SUPPORTED_FORMATS,

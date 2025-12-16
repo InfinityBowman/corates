@@ -3,8 +3,7 @@
  */
 
 import { createSignal } from 'solid-js';
-import { Dialog } from '@components/zag/Dialog.jsx';
-import { showToast } from '@components/zag/Toast.jsx';
+import { Dialog, showToast } from '@corates/ui';
 
 import { importFromGoogleDrive } from '@/api/google-drive.js';
 import GoogleDrivePickerLauncher from './GoogleDrivePickerLauncher.jsx';

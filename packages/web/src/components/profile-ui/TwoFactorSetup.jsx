@@ -1,10 +1,7 @@
 import { createSignal, Show, onMount, For } from 'solid-js';
 import { FiShield, FiX, FiCopy, FiSmartphone, FiLock, FiInfo, FiHelpCircle } from 'solid-icons/fi';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import Tooltip from '@components/zag/Tooltip.jsx';
-import PasswordInput from '@components/zag/PasswordInput.jsx';
-import { showToast } from '@components/zag/Toast.jsx';
-import QRCode from '@components/zag/QRCode.jsx';
+import { Tooltip, PasswordInput, showToast, QRCode } from '@corates/ui';
 
 export default function TwoFactorSetup() {
   const { user, enableTwoFactor, verifyTwoFactorSetup, disableTwoFactor, getTwoFactorStatus } =

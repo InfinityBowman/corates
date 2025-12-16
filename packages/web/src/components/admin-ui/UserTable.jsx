@@ -21,9 +21,7 @@ import {
   revokeUserSessions,
   deleteUser,
 } from '@/stores/adminStore.js';
-import Avatar from '@components/zag/Avatar.jsx';
-import Dialog from '@components/zag/Dialog.jsx';
-import Tooltip from '@components/zag/Tooltip.jsx';
+import { Avatar, Dialog, Tooltip } from '@corates/ui';
 
 // Provider display info
 const PROVIDER_INFO = {

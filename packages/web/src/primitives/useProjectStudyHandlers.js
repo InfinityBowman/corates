@@ -5,7 +5,7 @@
 
 import { uploadPdf, fetchPdfViaProxy, downloadPdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
-import { showToast } from '@components/zag/Toast.jsx';
+import { showToast } from '@corates/ui';
 import { generateStudyName, getDefaultNamingConvention } from '@/lib/studyNaming.js';
 import projectStore from '@/stores/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';

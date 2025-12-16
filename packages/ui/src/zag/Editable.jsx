@@ -102,58 +102,52 @@ export default function Editable(props) {
           <input
             {...api().getInputProps()}
             class={`
-              px-1 py-0.5 border border-gray-300 rounded text-gray-900
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-              placeholder:text-gray-400 placeholder:italic
-              disabled:bg-gray-100 disabled:cursor-not-allowed
-              ${!api().editing ? 'hidden' : ''}
+              px-2 py-1 border border-transparent rounded
+              focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500
               ${inputClass() || ''}
             `}
           />
           <span
             {...api().getPreviewProps()}
             class={`
-              inline-block px-1 py-0.5 rounded
-              ${api().empty ? 'text-gray-400 italic' : ''}
-              ${!disabled() && !readOnly() ? 'cursor-pointer hover:bg-gray-100' : ''}
-              ${api().editing ? 'hidden' : ''}
+              px-2 py-1 rounded cursor-pointer
+              hover:bg-gray-100 transition-colors
+              ${!api().value ? 'text-gray-400' : ''}
               ${previewClass() || ''}
             `}
-          />
+          >
+            {api().value || placeholder()}
+          </span>
         </div>
 
-        {/* Controls - only shown if showControls is true */}
-        <Show when={showControls() && !disabled() && !readOnly()}>
-          <Show
-            when={api().editing}
-            fallback={
-              <button
-                {...api().getEditTriggerProps()}
-                class='inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-500 hover:text-blue-700 hover:bg-blue-50 rounded opacity-0 group-hover:opacity-100 transition-opacity'
-                aria-label='Edit'
-              >
-                <FiEdit2 class='w-3 h-3' />
-                Edit
-              </button>
-            }
-          >
-            <div class='flex items-center gap-1'>
+        {/* External controls for edit mode */}
+        <Show when={showControls()}>
+          <div class='flex items-center gap-1'>
+            <Show
+              when={api().editing}
+              fallback={
+                <button
+                  {...api().getEditTriggerProps()}
+                  class='p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100'
+                >
+                  <FiEdit2 class='w-4 h-4' />
+                </button>
+              }
+            >
               <button
                 {...api().getSubmitTriggerProps()}
-                class='inline-flex items-center gap-1 px-2 py-1 text-sm font-medium bg-blue-600 text-white rounded hover:bg-blue-700'
+                class='p-1 text-green-500 hover:text-green-600 rounded hover:bg-green-50 transition-colors'
               >
                 <FiCheck class='w-4 h-4' />
-                Save
               </button>
               <button
                 {...api().getCancelTriggerProps()}
-                class='inline-flex items-center gap-1 px-2 py-1 text-sm font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200'
+                class='p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100 transition-colors'
               >
                 <FiX class='w-4 h-4' />
-                Cancel
               </button>
-            </div>
-          </Show>
+            </Show>
+          </div>
         </Show>
       </div>
     </div>

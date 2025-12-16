@@ -90,9 +90,7 @@ export function Combobox(props) {
             {item => (
               <li
                 {...api().getItemProps({ item })}
-                class='flex items-center justify-between px-3 py-2 text-sm cursor-pointer transition-colors
-                  text-gray-700 hover:bg-gray-50 data-highlighted:bg-gray-50
-                  data-disabled:opacity-50 data-disabled:cursor-not-allowed'
+                class='flex items-center justify-between px-3 py-2 text-sm cursor-pointer transition-colors text-gray-700 hover:bg-gray-50 data-highlighted:bg-gray-50 data-disabled:opacity-50 data-disabled:cursor-not-allowed'
               >
                 <span {...api().getItemTextProps({ item })}>{item.label}</span>
                 <Show when={api().getItemState({ item }).selected}>
@@ -115,15 +113,12 @@ export function Combobox(props) {
       </Show>
       <div
         {...api().getControlProps()}
-        class='relative flex items-center border border-gray-300 rounded-lg bg-white
-          data-focus:border-blue-500 data-focus:ring-1 data-focus:ring-blue-500
-          data-invalid:border-red-500 data-disabled:bg-gray-100 data-disabled:cursor-not-allowed'
+        class='relative flex items-center border border-gray-300 rounded-lg bg-white data-focus:border-blue-500 data-focus:ring-1 data-focus:ring-blue-500 data-invalid:border-red-500 data-disabled:bg-gray-100 data-disabled:cursor-not-allowed'
       >
         <input
           {...api().getInputProps()}
           placeholder={local.placeholder}
-          class={`flex-1 px-3 py-2 bg-transparent outline-none text-sm placeholder:text-gray-400
-            disabled:cursor-not-allowed ${local.inputClass || ''}`}
+          class={`flex-1 px-3 py-2 bg-transparent outline-none text-sm placeholder:text-gray-400 disabled:cursor-not-allowed ${local.inputClass || ''}`}
         />
         <Show when={api().hasSelectedItems}>
           <button
@@ -135,8 +130,7 @@ export function Combobox(props) {
         </Show>
         <button
           {...api().getTriggerProps()}
-          class='px-2 py-2 text-gray-400 hover:text-gray-600 transition-colors
-            data-disabled:opacity-50 data-disabled:cursor-not-allowed'
+          class='px-2 py-2 text-gray-400 hover:text-gray-600 transition-colors data-disabled:opacity-50 data-disabled:cursor-not-allowed'
         >
           <FiChevronDown class='w-4 h-4 transition-transform data-[state=open]:rotate-180' />
         </button>

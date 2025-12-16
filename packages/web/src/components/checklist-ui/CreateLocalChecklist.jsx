@@ -7,7 +7,7 @@ import { createSignal, Show, For } from 'solid-js';
 import { useNavigate, useSearchParams } from '@solidjs/router';
 import { FiFileText, FiX } from 'solid-icons/fi';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
-import { FileUpload } from '@components/zag/FileUpload.jsx';
+import { FileUpload } from '@corates/ui';
 import { LANDING_URL } from '@config/api.js';
 import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
 

@@ -4,7 +4,7 @@
 
 import { createSignal, onMount, Show } from 'solid-js';
 import { FiX } from 'solid-icons/fi';
-import { showToast } from '@components/zag/Toast.jsx';
+import { showToast } from '@corates/ui';
 import {
   getGoogleDriveStatus,
   disconnectGoogleDrive,
