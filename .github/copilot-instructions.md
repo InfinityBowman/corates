@@ -21,6 +21,12 @@ This file contains instructions for GitHub Copilot to follow when generating cod
 - Each file should handle one coherent responsibility
 - Group related components in subdirectories with an `index.js` barrel export
 
+## Libraries
+
+Use Zod for schema and input validation.
+Use Drizzle ORM for database interactions and migrations.
+Use Better-Auth for authentication and user management.
+
 ## Documentation Tool
 
 PLEASE USE THE CORATES MCP tools to explore local documentation sources. Use this MCP for all Better-Auth, Drizzle, Icons, and Zag documentation.
