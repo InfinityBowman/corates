@@ -27,9 +27,7 @@ export default function Security() {
         <main class='flex-1 py-16'>
           <div class='max-w-3xl mx-auto px-6'>
             <h1 class='text-4xl font-bold text-gray-900 mb-2'>Security</h1>
-            <p class='text-gray-500 mb-8'>
-              How we protect your research data
-            </p>
+            <p class='text-gray-500 mb-8'>How we protect your research data</p>
 
             <div class='text-gray-700 leading-relaxed space-y-8'>
               <p>
@@ -65,8 +63,8 @@ export default function Security() {
                       <h2 class='text-lg font-semibold text-gray-900 mb-2'>Authentication</h2>
                       <p class='text-gray-600'>
                         We support multiple secure authentication methods including OAuth (Google,
-                        ORCID), passwordless login via email, and two-factor authentication (2FA) for
-                        enhanced account security.
+                        ORCID), passwordless login via email, and two-factor authentication (2FA)
+                        for enhanced account security.
                       </p>
                     </div>
                   </div>
@@ -97,8 +95,8 @@ export default function Security() {
                       <h2 class='text-lg font-semibold text-gray-900 mb-2'>Access Control</h2>
                       <p class='text-gray-600'>
                         Project-level access controls ensure that only authorized team members can
-                        view and edit your research data. You control who has access to your projects
-                        and can revoke access at any time.
+                        view and edit your research data. You control who has access to your
+                        projects and can revoke access at any time.
                       </p>
                     </div>
                   </div>
@@ -112,9 +110,7 @@ export default function Security() {
                     <FiAlertCircle class='w-5 h-5 text-amber-600' />
                   </div>
                   <div>
-                    <h2 class='text-xl font-semibold text-gray-900 mb-3'>
-                      Responsible Disclosure
-                    </h2>
+                    <h2 class='text-xl font-semibold text-gray-900 mb-3'>Responsible Disclosure</h2>
                     <p class='text-gray-600 mb-4'>
                       We take security vulnerabilities seriously. If you believe you have found a
                       security vulnerability in CoRATES, we encourage you to report it to us
