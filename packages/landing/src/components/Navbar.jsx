@@ -4,7 +4,7 @@ import { urls } from '~/lib/config';
 import { useAuth } from '~/lib/auth';
 
 export default function Navbar() {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = createSignal(false);
 
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen());
@@ -70,13 +70,18 @@ export default function Navbar() {
                 </>
               }
             >
-              <a
-                href={urls.dashboard()}
-                rel='external'
-                class='hidden sm:inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2'
-              >
-                Open App
-              </a>
+              <>
+                <span class='hidden sm:inline-flex'>
+                  Welcome back, {user()?.name || 'User'}!&nbsp;
+                </span>
+                <a
+                  href={urls.dashboard()}
+                  rel='external'
+                  class='hidden sm:inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2'
+                >
+                  My Dashboard
+                </a>
+              </>
             </Show>
 
             {/* Mobile Menu Button */}
@@ -168,7 +173,7 @@ function MobileMenu(props) {
                 rel='external'
                 class='block w-full text-center px-4 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium'
               >
-                Open App
+                My Dashboard
               </a>
             </Show>
           </div>

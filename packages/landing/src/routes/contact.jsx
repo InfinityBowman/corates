@@ -1,6 +1,6 @@
 import { Title, Meta, Link } from '@solidjs/meta';
 import { createSignal } from 'solid-js';
-import { FiMail, FiSend, FiUser, FiMessageSquare } from 'solid-icons/fi';
+import { FiMail, FiSend, FiUser, FiMessageSquare, FiLoader, FiAlertCircle } from 'solid-icons/fi';
 import Navbar from '~/components/Navbar';
 import Footer from '~/components/Footer';
 import { config } from '~/lib/config';
@@ -11,19 +11,41 @@ export default function Contact() {
   const description =
     'Get in touch with the CoRATES team. We would love to hear from you about questions, feedback, or partnership opportunities.';
 
-  const [formState, setFormState] = createSignal('idle');
+  const [formState, setFormState] = createSignal('idle'); // idle, sending, sent, error
+  const [errorMessage, setErrorMessage] = createSignal('');
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const name = formData.get('name');
-    const email = formData.get('email');
-    const subject = formData.get('subject');
-    const message = formData.get('message');
+    setFormState('sending');
+    setErrorMessage('');
 
-    const mailtoLink = `mailto:contact@corates.org?subject=${encodeURIComponent(subject || 'CoRATES Inquiry')}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`)}`;
-    window.location.href = mailtoLink;
-    setFormState('sent');
+    const formData = new FormData(e.target);
+    const data = {
+      name: formData.get('name'),
+      email: formData.get('email'),
+      subject: formData.get('subject'),
+      message: formData.get('message'),
+    };
+
+    try {
+      const response = await fetch(`${config.apiUrl}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.error || 'Failed to send message');
+      }
+
+      setFormState('sent');
+      e.target.reset();
+    } catch (err) {
+      console.error('Contact form error:', err);
+      setErrorMessage(err.message || 'Something went wrong. Please try again.');
+      setFormState('error');
+    }
   };
 
   return (
@@ -154,17 +176,32 @@ export default function Contact() {
 
                   <button
                     type='submit'
-                    class='w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2'
+                    disabled={formState() === 'sending'}
+                    class='w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
                   >
-                    <FiSend class='w-5 h-5' />
-                    Send Message
+                    {formState() === 'sending' ?
+                      <>
+                        <FiLoader class='w-5 h-5 animate-spin' />
+                        Sending...
+                      </>
+                    : <>
+                        <FiSend class='w-5 h-5' />
+                        Send Message
+                      </>
+                    }
                   </button>
 
                   {formState() === 'sent' && (
                     <p class='text-center text-green-600 text-sm'>
-                      Your email client should open shortly. If it does not, please email us
-                      directly at jakebrake115@gmail.com
+                      Your message has been sent successfully. We will get back to you soon!
                     </p>
+                  )}
+
+                  {formState() === 'error' && (
+                    <div class='flex items-center justify-center gap-2 text-red-600 text-sm'>
+                      <FiAlertCircle class='w-4 h-4' />
+                      <p>{errorMessage()}</p>
+                    </div>
                   )}
                 </form>
               </div>

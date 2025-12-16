@@ -1,4 +1,6 @@
-const CACHE_NAME = 'corates-landing-v1';
+// CACHE_VERSION is replaced at build time - change this value to bust cache
+const CACHE_VERSION = '__BUILD_TIME__';
+const CACHE_NAME = `corates-landing-${CACHE_VERSION}`;
 
 const APP_SHELL_URL = '/app.html';
 

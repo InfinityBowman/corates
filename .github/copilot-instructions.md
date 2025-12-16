@@ -21,6 +21,12 @@ This file contains instructions for GitHub Copilot to follow when generating cod
 - Each file should handle one coherent responsibility
 - Group related components in subdirectories with an `index.js` barrel export
 
+## Libraries
+
+Use Zod for schema and input validation.
+Use Drizzle ORM for database interactions and migrations.
+Use Better-Auth for authentication and user management.
+
 ## Documentation Tool
 
 PLEASE USE THE CORATES MCP tools to explore local documentation sources. Use this MCP for all Better-Auth, Drizzle, Icons, and Zag documentation.
@@ -51,6 +57,7 @@ Zag component exist in `packages/web/src/components/zag/*` and should be reused,
 ### State Architecture (Very Important)
 
 To keep the codebase maintainable and avoid prop drilling:
+
 - Do NOT prop-drill application state.
 - Shared or cross-feature state must live in external stores under packages/web/src/stores/ or relative to the component file.
 - Import stores directly where needed instead of passing values through multiple components.
@@ -59,7 +66,7 @@ To keep the codebase maintainable and avoid prop drilling:
 - an external store
 - a primitive
 - or Solid context (when scoped to a feature)
-ALWAYS prefer the CLEANEST solution.
+  ALWAYS prefer the CLEANEST solution.
 
 ### Destructuring props
 

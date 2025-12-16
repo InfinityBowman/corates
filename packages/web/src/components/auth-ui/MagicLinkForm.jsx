@@ -4,10 +4,15 @@ import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton } from './AuthButtons.jsx';
 import { FiMail } from 'solid-icons/fi';
 
+const RESEND_COOLDOWN_MS = 30000; // 30 seconds between resends
+
 export default function MagicLinkForm(props) {
   const [email, setEmail] = createSignal(props.initialEmail || '');
   const [loading, setLoading] = createSignal(false);
   const [sent, setSent] = createSignal(false);
+  const [resending, setResending] = createSignal(false);
+  const [resent, setResent] = createSignal(false);
+  const [canResend, setCanResend] = createSignal(false);
   const [error, setError] = createSignal('');
   const { signinWithMagicLink, authError } = useBetterAuth();
 
@@ -31,6 +36,9 @@ export default function MagicLinkForm(props) {
       localStorage.setItem('pendingName', email());
       await signinWithMagicLink(email(), props.callbackPath || '/complete-profile');
       setSent(true);
+      setCanResend(false);
+      // Allow resending after cooldown
+      setTimeout(() => setCanResend(true), RESEND_COOLDOWN_MS);
     } catch (err) {
       console.error('Magic link error:', err);
       const msg = err.message?.toLowerCase() || '';
@@ -51,6 +59,38 @@ export default function MagicLinkForm(props) {
     setSent(false);
     setEmail('');
     setError('');
+    setResent(false);
+    setCanResend(false);
+  }
+
+  async function handleResend() {
+    if (!canResend() || resending()) return;
+
+    setResending(true);
+    setError('');
+
+    try {
+      await signinWithMagicLink(email(), props.callbackPath || '/complete-profile');
+      setResent(true);
+      setCanResend(false);
+      // Allow resending again after cooldown
+      setTimeout(() => {
+        setCanResend(true);
+        setResent(false);
+      }, RESEND_COOLDOWN_MS);
+    } catch (err) {
+      console.error('Resend magic link error:', err);
+      const msg = err.message?.toLowerCase() || '';
+
+      if (msg.includes('too many requests') || msg.includes('rate limit')) {
+        setError('Too many requests. Please try again in a few minutes.');
+      } else {
+        setError('Failed to resend link. Please try again.');
+      }
+      setCanResend(true);
+    } finally {
+      setResending(false);
+    }
   }
 
   return (
@@ -68,13 +108,40 @@ export default function MagicLinkForm(props) {
           <p class='text-gray-500 text-xs mb-4'>
             Click the link in the email to sign in. The link expires in 10 minutes.
           </p>
-          <button
-            type='button'
-            onClick={handleReset}
-            class='text-blue-600 hover:text-blue-700 text-sm font-medium'
-          >
-            Use a different email
-          </button>
+
+          <ErrorMessage displayError={error} />
+
+          <Show when={resent()}>
+            <div class='p-3 text-green-600 text-xs sm:text-sm bg-green-50 border border-green-200 rounded-lg mb-4'>
+              Email sent successfully!
+            </div>
+          </Show>
+
+          <div class='flex flex-col gap-2'>
+            <button
+              type='button'
+              onClick={handleResend}
+              disabled={!canResend() || resending()}
+              class={`text-sm font-medium transition ${
+                canResend() && !resending() ?
+                  'text-blue-600 hover:text-blue-700 cursor-pointer'
+                : 'text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              {resending() ?
+                'Sending...'
+              : canResend() ?
+                "Didn't receive it? Try again"
+              : 'Try again in 30s'}
+            </button>
+            <button
+              type='button'
+              onClick={handleReset}
+              class='text-gray-500 hover:text-gray-700 text-sm font-medium'
+            >
+              Use a different email
+            </button>
+          </div>
         </div>
       </Show>
 
