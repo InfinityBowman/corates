@@ -35,7 +35,6 @@ export default function CheckEmail() {
 
       const currentUser = user();
 
-
       if (isAuthenticated() && currentUser?.emailVerified) {
         if (checkInterval()) {
           clearInterval(checkInterval());

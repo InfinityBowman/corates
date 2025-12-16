@@ -1,6 +1,7 @@
 {
   "name": "CoRATES",
   "short_name": "CoRATES",
+  "start_url": "/",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",

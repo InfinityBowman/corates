@@ -102,6 +102,9 @@ importers:
       '@zag-js/qr-code':
         specifier: ^1.31.1
         version: 1.31.1
+      '@zag-js/select':
+        specifier: ^1.31.1
+        version: 1.31.1
       '@zag-js/solid':
         specifier: ^1.31.1
         version: 1.31.1(solid-js@1.9.10)
@@ -3102,6 +3105,12 @@ packages:
         integrity: sha512-eCC5G6bBZUwF8z2XULQXUNRxqte9I2Sv+WJ2brycPn1a68uYD76RzFBmLQ2er95VbshUdeo8nRuX8MooAFuYzg==,
       }
 
+  '@zag-js/collection@1.31.1':
+    resolution:
+      {
+        integrity: sha512-ecpfyfCj8Y0/GUPuHYsLxexIrx10VuR3Wd0H+lamcki3lYgQxZrpLRFMwgTqmI/m7t3zhm5QeEvMUJ1H14YMLA==,
+      }
+
   '@zag-js/core@1.31.1':
     resolution:
       {
@@ -3202,6 +3211,12 @@ packages:
     resolution:
       {
         integrity: sha512-gVVJuFKaCjo652RmajYmkjXKgjJWLQ5ZhZLTaLUKWM1mAarvlqnLui8jrHEHLxqpfsjQylfdhJKkWmyF8NAgTA==,
+      }
+
+  '@zag-js/select@1.31.1':
+    resolution:
+      {
+        integrity: sha512-vKWb8BiRY83Y3HkDNnimf6cr1yvzJh1HwZlzXFz0y47zEvlikQaf+r96obR78RgTtMjNTTV15tTXdc1/WFoYkw==,
       }
 
   '@zag-js/solid@1.31.1':
@@ -10409,6 +10424,10 @@ snapshots:
       '@zag-js/types': 1.31.1
       '@zag-js/utils': 1.31.1
 
+  '@zag-js/collection@1.31.1':
+    dependencies:
+      '@zag-js/utils': 1.31.1
+
   '@zag-js/core@1.31.1':
     dependencies:
       '@zag-js/dom-query': 1.31.1
@@ -10515,6 +10534,17 @@ snapshots:
   '@zag-js/remove-scroll@1.31.1':
     dependencies:
       '@zag-js/dom-query': 1.31.1
+
+  '@zag-js/select@1.31.1':
+    dependencies:
+      '@zag-js/anatomy': 1.31.1
+      '@zag-js/collection': 1.31.1
+      '@zag-js/core': 1.31.1
+      '@zag-js/dismissable': 1.31.1
+      '@zag-js/dom-query': 1.31.1
+      '@zag-js/popper': 1.31.1
+      '@zag-js/types': 1.31.1
+      '@zag-js/utils': 1.31.1
 
   '@zag-js/solid@1.31.1(solid-js@1.9.10)':
     dependencies:
