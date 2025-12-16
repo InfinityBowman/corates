@@ -34,7 +34,37 @@ export default function Collapsible(props) {
   return (
     <div {...api().getRootProps()}>
       {trigger()?.(api())}
-      <div {...api().getContentProps()}>{children()}</div>
+      <div {...api().getContentProps()} class='collapsible-content overflow-hidden'>
+        {children()}
+      </div>
+      <style>{`
+        .collapsible-content[data-state="open"] {
+          animation: collapsible-slideDown 200ms ease-out;
+        }
+        .collapsible-content[data-state="closed"] {
+          animation: collapsible-slideUp 200ms ease-out;
+        }
+        @keyframes collapsible-slideDown {
+          from {
+            opacity: 0;
+            height: 0;
+          }
+          to {
+            opacity: 1;
+            height: var(--height);
+          }
+        }
+        @keyframes collapsible-slideUp {
+          from {
+            opacity: 1;
+            height: var(--height);
+          }
+          to {
+            opacity: 0;
+            height: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 }
