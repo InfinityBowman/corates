@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vinxi dev --port 3010",
     "dev:prod": "pnpm run build:prod && pnpm --filter @corates/web build && wrangler dev --port 3010",
-    "build": "vinxi build --mode production",
-    "build:prod": "vinxi build --mode production",
+    "build": "vinxi build --mode production && node scripts/version-sw.js",
+    "build:prod": "pnpm run build",
     "preview": "npx serve .output/public",
     "deploy": "pnpm run build:prod && pnpm --filter @corates/web build && wrangler deploy"
   },
