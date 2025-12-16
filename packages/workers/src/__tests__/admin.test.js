@@ -6,6 +6,20 @@
  */
 
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Mock postmark to avoid loading runtime code that may include unhandled syntax
+// in the test environment. Tests only need to assert email usage paths, not the
+// real Postmark client implementation.
+vi.mock('postmark', () => {
+  return {
+    Client: class {
+      constructor() {}
+      sendEmail() {
+        return Promise.resolve({ Message: 'mock' });
+      }
+    },
+  };
+});
 import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 
