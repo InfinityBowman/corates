@@ -41,16 +41,7 @@ export class ProjectDoc {
     // Note: CORS headers are added by the main worker (index.js) when wrapping responses
     // Do NOT add them here to avoid duplicate headers
 
-    // Debug: log upgrade header
     const upgradeHeader = request.headers.get('Upgrade');
-    console.log(
-      'ProjectDoc fetch - Upgrade header:',
-      upgradeHeader,
-      'Method:',
-      request.method,
-      'Path:',
-      url.pathname,
-    );
 
     // Check for internal requests (from worker routes)
     const isInternalRequest = request.headers.get('X-Internal-Request') === 'true';
@@ -318,22 +309,18 @@ export class ProjectDoc {
   }
 
   async handleWebSocket(request) {
-    console.log('handleWebSocket called, ENVIRONMENT:', this.env.ENVIRONMENT);
-
     let user = null;
 
     // Authenticate via cookies (standard HTTP cookie auth)
     try {
       const authResult = await verifyAuth(request, this.env);
       user = authResult.user;
-      console.log('WebSocket auth result:', user ? `User ${user.id}` : 'No user');
     } catch (err) {
       console.error('WebSocket auth error:', err);
     }
 
     // Require authentication
     if (!user) {
-      console.log('WebSocket auth failed - no user');
       return new Response('Authentication required', { status: 401 });
     }
 
@@ -341,8 +328,7 @@ export class ProjectDoc {
     // Extract projectId from URL: /api/project/:projectId/...
     const url = new URL(request.url);
     const pathParts = url.pathname.split('/');
-    const projectId = pathParts[3]; // /api/project/{projectId}/...
-    console.log(`Verifying membership for user ${user.id} in project ${projectId}`);
+    const _projectId = pathParts[3]; // /api/project/{projectId}/... (unused but kept for reference)
 
     // Check if user is in the members map
     await this.initializeDoc();
@@ -350,7 +336,6 @@ export class ProjectDoc {
     const isMember = membersMap.has(user.id);
 
     if (!isMember) {
-      console.log(`User ${user.id} is not a member of project ${projectId}`);
       // Use 1008 (Policy Violation) close code so client can detect membership issue
       return new Response('Not a project member', {
         status: 403,
@@ -358,17 +343,12 @@ export class ProjectDoc {
       });
     }
 
-    console.log(`User ${user.id} verified as member of project ${projectId}`);
     const webSocketPair = new WebSocketPair();
     const [client, server] = Object.values(webSocketPair);
 
     server.accept();
     // Store session with user info, awarenessClientId will be set when client sends awareness
     this.sessions.set(server, { user, awarenessClientId: null });
-
-    // Log current document contents for debugging
-    const reviewsMap = this.doc.getMap('reviews');
-    console.log(`Document has ${reviewsMap.size} studies and ${membersMap.size} members`);
 
     // Note: We do NOT proactively send sync step 1 here.
     // The y-websocket client will send sync step 1 on connect,
@@ -391,21 +371,11 @@ export class ProjectDoc {
         const decoder = decoding.createDecoder(data);
         const messageType = decoding.readVarUint(decoder);
 
-        console.log(`Received message type: ${messageType}, data length: ${data.length}`);
-
         switch (messageType) {
           case messageSync: {
             const encoder = encoding.createEncoder();
             encoding.writeVarUint(encoder, messageSync);
-            const syncMessageType = syncProtocol.readSyncMessage(
-              decoder,
-              encoder,
-              this.doc,
-              server,
-            );
-            console.log(
-              `Sync message type: ${syncMessageType}, response length: ${encoding.length(encoder)}`,
-            );
+            syncProtocol.readSyncMessage(decoder, encoder, this.doc, server);
             // If there's a response to send (sync step 2 or update acknowledgment)
             if (encoding.length(encoder) > 1) {
               server.send(encoding.toUint8Array(encoder));
