@@ -63,10 +63,24 @@ export default function EditStudyModal(props) {
 
     setSaving(true);
     try {
+      // Validate publication year before passing to the update API.
+      // Only accept a finite integer within a reasonable range; otherwise leave undefined.
+      let parsedPublicationYear;
+      if (publicationYear()) {
+        const raw = publicationYear().toString().trim();
+        const num = Number(raw);
+        if (Number.isFinite(num)) {
+          const trunc = Math.trunc(num);
+          if (Number.isInteger(trunc) && trunc >= 1900 && trunc <= 2100) {
+            parsedPublicationYear = trunc;
+          }
+        }
+      }
+
       const updates = {
         name: name().trim() || props.study.name,
         firstAuthor: firstAuthor().trim() || undefined,
-        publicationYear: publicationYear() ? parseInt(publicationYear(), 10) : undefined,
+        publicationYear: parsedPublicationYear,
         journal: journal().trim() || undefined,
         doi: doi().trim() || undefined,
         abstract: abstract().trim() || undefined,
@@ -138,6 +152,8 @@ export default function EditStudyModal(props) {
                     placeholder='e.g., 2024'
                     min='1900'
                     max='2100'
+                    step='1'
+                    inputMode='numeric'
                   />
                 </div>
               </div>
