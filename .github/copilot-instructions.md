@@ -2,6 +2,12 @@
 
 This file contains instructions for GitHub Copilot to follow when generating code for this project. Please adhere to these guidelines to ensure consistency and maintainability across the codebase. This project is CoRATES (Collaborative Research Appraisal Tool for Evidence Synthesis), a SolidJS-based web application deployed on Cloudflare Workers.
 
+the /web package contains the frontend application built with SolidJS.
+the /workers package contains backend services, including API endpoints and database migrations.
+the /landing package contains the marketing and landing site.
+
+The web package is copied into the landing package during the build process for deployment and all deployed as a single site on a single worker.
+
 ## Coding Standards
 
 - Do not use emojis in code, comments, documentation, or commit messages.
