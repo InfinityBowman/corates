@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, Show } from 'solid-js';
+import { createMemo, For, Show } from 'solid-js';
 import { VsBook } from 'solid-icons/vs';
 import { FiChevronRight } from 'solid-icons/fi';
 import { Collapsible } from '@corates/ui';
@@ -6,9 +6,16 @@ import ChecklistTreeItem from './ChecklistTreeItem.jsx';
 
 /**
  * Study tree item with expandable checklists
+ * @param {Object} props
+ * @param {Object} props.study - The study data
+ * @param {string} props.projectId - The project ID
+ * @param {string} props.userId - Current user ID for filtering
+ * @param {string} props.currentPath - Current route path
+ * @param {boolean} props.isExpanded - Whether the study is expanded (controlled)
+ * @param {Function} props.onToggle - Callback to toggle expanded state
  */
 export default function StudyTreeItem(props) {
-  const [isExpanded, setIsExpanded] = createSignal(false);
+  const isExpanded = () => props.isExpanded || false;
 
   const assignedChecklists = createMemo(() => {
     const list = props.study.checklists || [];
@@ -19,7 +26,11 @@ export default function StudyTreeItem(props) {
   return (
     <Collapsible
       open={isExpanded()}
-      onOpenChange={setIsExpanded}
+      onOpenChange={open => {
+        if (open !== isExpanded()) {
+          props.onToggle?.();
+        }
+      }}
       trigger={api => (
         <div class='flex items-center group rounded transition-colors text-gray-600 hover:bg-gray-50'>
           <button

@@ -81,6 +81,8 @@ export default function ProjectTreeItem(props) {
                       projectId={projectId}
                       userId={props.userId}
                       currentPath={props.currentPath}
+                      isExpanded={props.isStudyExpanded?.(study.id)}
+                      onToggle={() => props.onToggleStudy?.(study.id)}
                     />
                   )}
                 </For>
