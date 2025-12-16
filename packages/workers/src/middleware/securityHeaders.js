@@ -11,6 +11,16 @@ export function securityHeaders() {
   return async (c, next) => {
     await next();
 
+    // Enforce HTTPS for future requests (only meaningful over HTTPS)
+    try {
+      const url = new URL(c.req.url);
+      if (url.protocol === 'https:') {
+        c.header('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
+      }
+    } catch {
+      // Ignore invalid URLs
+    }
+
     // Prevent clickjacking attacks
     c.header('X-Frame-Options', 'DENY');
 
