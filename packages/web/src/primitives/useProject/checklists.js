@@ -343,14 +343,7 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
    * @param {Object} data - The answer data (structure depends on checklist type)
    */
   function updateChecklistAnswer(studyId, checklistId, key, data) {
-    console.log('[checklists.js] updateChecklistAnswer called', {
-      studyId,
-      checklistId,
-      key,
-      data,
-    });
     const ydoc = getYDoc();
-    console.log('[checklists.js] ydoc:', !!ydoc, 'isSynced:', isSynced());
     if (!ydoc || !isSynced()) return;
 
     const studiesMap = ydoc.getMap('reviews');
