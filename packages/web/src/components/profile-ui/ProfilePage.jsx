@@ -106,7 +106,7 @@ export default function ProfilePage() {
   const [optimisticImage, setOptimisticImage] = createSignal(null);
   let fileInputRef;
 
-  // Get avatar URL - use optimistic image if available, otherwise user's image
+  // Get avatar URL - use optimistic image if available, otherwise user's image (which includes cached)
   const avatarUrl = () => optimisticImage() || user()?.image || null;
 
   // Parse name into first/last

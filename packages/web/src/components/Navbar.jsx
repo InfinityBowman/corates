@@ -1,9 +1,10 @@
 import { Show, createEffect, createSignal, onMount, onCleanup } from 'solid-js';
 import { A, useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { FiMenu, FiWifiOff } from 'solid-icons/fi';
+import { FiMenu, FiWifiOff, FiChevronDown } from 'solid-icons/fi';
 import { LANDING_URL } from '@config/api.js';
 import useOnlineStatus from '@primitives/useOnlineStatus.js';
+import { Avatar } from '@corates/ui';
 
 export default function Navbar(props) {
   const { user, signout, authLoading } = useBetterAuth();
@@ -117,37 +118,17 @@ export default function Navbar(props) {
               onClick={() => setShowUserMenu(!showUserMenu())}
               class='flex items-center space-x-2 h-9 hover:bg-blue-600 px-2 rounded transition font-medium'
             >
-              <Show
-                when={user()?.image}
-                fallback={
-                  <div class='w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-white text-xs font-medium'>
-                    {user()?.name?.charAt(0).toUpperCase() ||
-                      storedName?.charAt(0).toUpperCase() ||
-                      'U'}
-                  </div>
-                }
-              >
-                <img
-                  src={user().image}
-                  alt={user()?.name || 'User'}
-                  class='w-6 h-6 rounded-full object-cover'
-                  referrerPolicy='no-referrer'
-                />
-              </Show>
+              <Avatar
+                src={user()?.image}
+                name={user()?.name || storedName}
+                class='w-6 h-6 rounded-full overflow-hidden'
+                fallbackClass='flex items-center justify-center w-full h-full bg-white/20 text-white text-xs font-medium'
+              />
               <span class='hidden sm:block'>{user()?.name || storedName || 'Loading...'}</span>
-              <svg
+              <FiChevronDown
                 class={`w-3 h-3 transition-transform ${showUserMenu() ? 'rotate-180' : ''}`}
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  stroke-linecap='round'
-                  stroke-linejoin='round'
-                  stroke-width='2'
-                  d='M19 9l-7 7-7-7'
-                />
-              </svg>
+                aria-hidden='true'
+              />
             </button>
 
             <Show when={showUserMenu()}>
