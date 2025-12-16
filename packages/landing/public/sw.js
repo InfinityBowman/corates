@@ -177,98 +177,49 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Network-first strategy: always try network, fall back to cache if offline
   event.respondWith(
-    caches.match(request).then(cachedResponse => {
-      if (cachedResponse) {
-        // For navigation requests, we cannot use a redirected response directly
-        // We need to create a new response without the redirect flag
-        if (request.mode === 'navigate' && cachedResponse.redirected) {
-          // Create a new response from the cached redirected response body
-          return cachedResponse.blob().then(body => {
-            return new Response(body, {
-              status: cachedResponse.status,
-              statusText: cachedResponse.statusText,
-              headers: cachedResponse.headers,
+    fetch(request, { redirect: 'follow' })
+      .then(response => {
+        // Cache successful responses for same-origin requests
+        if (response.ok && request.url.startsWith(self.location.origin)) {
+          const responseToCache =
+            response.redirected ?
+              response
+                .clone()
+                .blob()
+                .then(
+                  body =>
+                    new Response(body, {
+                      status: response.status,
+                      statusText: response.statusText,
+                      headers: response.headers,
+                    }),
+                )
+            : Promise.resolve(response.clone());
+
+          responseToCache.then(finalResponse => {
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(request, finalResponse);
             });
           });
         }
+        return response;
+      })
+      .catch(async () => {
+        // Network failed, try cache
+        const cachedResponse = await caches.match(request);
+        if (cachedResponse) return cachedResponse;
 
-        // For non-asset requests, do stale-while-revalidate.
-        if (!isAsset) {
-          event.waitUntil(
-            fetch(request, { redirect: 'follow' })
-              .then(response => {
-                if (response.ok && request.url.startsWith(self.location.origin)) {
-                  const responseToCache =
-                    response.redirected ?
-                      response
-                        .clone()
-                        .blob()
-                        .then(
-                          body =>
-                            new Response(body, {
-                              status: response.status,
-                              statusText: response.statusText,
-                              headers: response.headers,
-                            }),
-                        )
-                    : Promise.resolve(response.clone());
-
-                  return responseToCache.then(finalResponse =>
-                    caches.open(CACHE_NAME).then(cache => {
-                      cache.put(request, finalResponse);
-                    }),
-                  );
-                }
-              })
-              .catch(() => {}),
-          );
+        // Return offline fallback for navigation requests
+        if (request.mode === 'navigate') {
+          return caches.match('/app.html') || caches.match('/');
         }
-        return cachedResponse;
-      }
-
-      // Not in cache, fetch from network
-      return fetch(request, { redirect: 'follow' })
-        .then(response => {
-          // Cache successful responses for same-origin requests
-          // Always cache JS/CSS assets and other same-origin requests
-          if (response.ok && request.url.startsWith(self.location.origin)) {
-            // For responses we want to cache, ensure we strip redirect flag
-            const responseToCache =
-              response.redirected ?
-                response
-                  .clone()
-                  .blob()
-                  .then(
-                    body =>
-                      new Response(body, {
-                        status: response.status,
-                        statusText: response.statusText,
-                        headers: response.headers,
-                      }),
-                  )
-              : Promise.resolve(response.clone());
-
-            responseToCache.then(finalResponse => {
-              caches.open(CACHE_NAME).then(cache => {
-                cache.put(request, finalResponse);
-              });
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // Return offline fallback for navigation requests
-          if (request.mode === 'navigate') {
-            // Serve cached app.html (SPA shell) for unknown routes
-            return caches.match('/app.html') || caches.match('/');
-          }
-          // For failed asset requests, return a meaningful error
-          if (isAsset) {
-            return new Response('', { status: 404, statusText: 'Asset not cached' });
-          }
-          return new Response('Offline', { status: 503 });
-        });
-    }),
+        // For failed asset requests, return a meaningful error
+        if (isAsset) {
+          return new Response('', { status: 404, statusText: 'Asset not cached' });
+        }
+        return new Response('Offline', { status: 503 });
+      }),
   );
 });
