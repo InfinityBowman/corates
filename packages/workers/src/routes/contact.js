@@ -5,8 +5,39 @@
 
 import { Hono } from 'hono';
 import { Client as PostmarkClient } from 'postmark';
+import { z } from 'zod';
+import { contactRateLimit } from '../middleware/rateLimit.js';
 
 const contact = new Hono();
+
+// Apply rate limiting to contact endpoints
+contact.use('*', contactRateLimit);
+
+// Contact form validation schema
+const contactSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Name is required')
+    .max(100, 'Name must be 100 characters or less'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .max(254, 'Email must be 254 characters or less')
+    .email('Invalid email address'),
+  subject: z
+    .string()
+    .trim()
+    .max(150, 'Subject must be 150 characters or less')
+    .optional()
+    .default(''),
+  message: z
+    .string()
+    .trim()
+    .min(1, 'Message is required')
+    .max(2000, 'Message must be 2000 characters or less'),
+});
 
 /**
  * POST /contact
@@ -23,18 +54,14 @@ contact.post('/', async c => {
     return c.json({ error: 'Invalid JSON body' }, 400);
   }
 
-  const { name, email, subject, message } = body;
-
-  // Validate required fields
-  if (!name || !email || !message) {
-    return c.json({ error: 'Name, email, and message are required' }, 400);
+  // Validate with Zod
+  const result = contactSchema.safeParse(body);
+  if (!result.success) {
+    const firstError = result.error.errors[0]?.message || 'Invalid input';
+    return c.json({ error: firstError }, 400);
   }
 
-  // Basic email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return c.json({ error: 'Invalid email address' }, 400);
-  }
+  const { name, email, subject, message } = result.data;
 
   // Check for Postmark token
   if (!env.POSTMARK_SERVER_TOKEN) {
