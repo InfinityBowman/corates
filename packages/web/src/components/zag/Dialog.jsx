@@ -53,15 +53,15 @@ export function Dialog(props) {
           {...api().getBackdropProps()}
           class='fixed inset-0 bg-black/50 z-50 transition-opacity'
         />
-        {/* Positioner */}
+        {/* Positioner - scrollable container */}
         <div
           {...api().getPositionerProps()}
-          class='fixed inset-0 z-50 flex items-center justify-center p-4'
+          class='fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto'
         >
           {/* Content */}
           <div
             {...api().getContentProps()}
-            class={`bg-white rounded-lg shadow-xl w-full overflow-hidden ${getSizeClass()}`}
+            class={`bg-white rounded-lg shadow-xl w-full my-auto ${getSizeClass()}`}
           >
             {/* Header */}
             <div class='flex items-center justify-between p-4 border-b border-gray-200'>

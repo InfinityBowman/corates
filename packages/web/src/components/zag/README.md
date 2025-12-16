@@ -9,6 +9,7 @@ Here are the existing components and a summary of them:
 - `FileUpload.jsx` - File upload with drag-and-drop
 - `FloatingPanel.jsx` - Draggable and resizable floating panel (supports `open`, `onOpenChange`, `title`, `defaultSize`, `defaultPosition`, `size`, `position`, `onSizeChange`, `onPositionChange`, `onStageChange`, `resizable`, `draggable`, `minSize`, `maxSize`, `lockAspectRatio`, `showControls`, `showResizeHandles` props)
 - `PasswordInput.jsx` - Password input with show/hide toggle (supports `label`, `password`, `onPasswordChange`, `autoComplete`, `inputClass` props)
+- `Select.jsx` - Custom dropdown select (supports `items`, `value`, `onChange`, `label`, `placeholder`, `disabled`, `name`, `invalid`, `disabledValues`, `inDialog` props - set `inDialog` to true when used inside a Dialog)
 - `Splitter.jsx` - Resizable split panes
 - `Switch.jsx` - Toggle switch
 - `Tabs.jsx` - Tabbed content

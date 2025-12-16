@@ -26,6 +26,7 @@ This file contains instructions for GitHub Copilot to follow when generating cod
 Use Zod for schema and input validation.
 Use Drizzle ORM for database interactions and migrations.
 Use Better-Auth for authentication and user management.
+Use Zag.js for UI components and design system.
 
 ## Documentation Tool
 
@@ -33,8 +34,7 @@ PLEASE USE THE CORATES MCP tools to explore local documentation sources. Use thi
 
 ## Zag.js
 
-When you need to implement UI components use zag.js
-Zag component exist in `packages/web/src/components/zag/*` and should be reused, see the README.md in that folder for a list of existing components.
+Zag component exist in `packages/web/src/components/zag/*` and should be reused, see the README.md in that folder for a list of existing components. BE SURE TO CHECK THAT LIST AND REFERENCE EXISTING COMPONENTS AS WELL AS THE DOCS MCP BEFORE ADDING NEW COMPONENTS AND WHEN DEBUGGING.
 
 ## Additional References
 
