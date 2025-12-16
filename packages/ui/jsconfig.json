@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@zag/*": ["src/zag/*"]
+    }
+  },
+  "exclude": ["node_modules"]
+}

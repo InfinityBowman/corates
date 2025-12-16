@@ -14,7 +14,7 @@ import {
 } from 'solid-icons/fi';
 import { LANDING_URL } from '@config/api.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import Switch from '@components/zag/Switch.jsx';
+import { Switch } from '@corates/ui';
 import GoogleDriveSettings from './GoogleDriveSettings.jsx';
 import TwoFactorSetup from './TwoFactorSetup.jsx';
 import LinkedAccountsSection from './LinkedAccountsSection.jsx';

@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@source '../node_modules/@corates/ui/src/**/*.{js,jsx}';
 
 @theme {
   --text-2xs: 0.625rem; /* 10px */

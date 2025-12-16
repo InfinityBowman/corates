@@ -7,7 +7,7 @@
 
 import { Show, createMemo } from 'solid-js';
 import { FiMail, FiTrash2, FiCheck, FiExternalLink } from 'solid-icons/fi';
-import Tooltip from '@components/zag/Tooltip.jsx';
+import { Tooltip } from '@corates/ui';
 
 /**
  * Format ORCID ID for display (add hyphens if not present)

@@ -26,3 +26,5 @@ export function Splitter() {
     </div>
   );
 }
+
+export default Splitter;

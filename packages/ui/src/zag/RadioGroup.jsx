@@ -48,16 +48,10 @@ export function RadioGroup(props) {
                 />
                 <div
                   {...api().getItemControlProps({ value: item.value, disabled: item.disabled })}
-                  class='w-4 h-4 rounded-full border-2 border-gray-300 transition-colors
-                    data-[state=checked]:border-blue-500 data-[state=checked]:bg-blue-500
-                    group-hover:border-gray-400 data-[state=checked]:group-hover:border-blue-600
-                    data-focus:ring-2 data-focus:ring-blue-500 data-focus:ring-offset-2
-                    data-disabled:opacity-50 data-disabled:cursor-not-allowed
-                    flex items-center justify-center'
+                  class='w-4 h-4 rounded-full border-2 border-gray-300 transition-colors data-[state=checked]:border-blue-500 data-[state=checked]:bg-blue-500 group-hover:border-gray-400 data-[state=checked]:group-hover:border-blue-600 data-focus:ring-2 data-focus:ring-blue-500 data-focus:ring-offset-2 data-disabled:opacity-50 data-disabled:cursor-not-allowed flex items-center justify-center'
                 >
                   <div
-                    class='w-1.5 h-1.5 rounded-full bg-white scale-0 transition-transform
-                      data-[state=checked]:scale-100'
+                    class='w-1.5 h-1.5 rounded-full bg-white scale-0 transition-transform data-[state=checked]:scale-100'
                     data-state={api().value === item.value ? 'checked' : 'unchecked'}
                   />
                 </div>

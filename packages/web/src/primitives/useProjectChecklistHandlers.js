@@ -4,7 +4,7 @@
  */
 
 import { useNavigate } from '@solidjs/router';
-import { showToast } from '@components/zag/Toast.jsx';
+import { showToast } from '@corates/ui';
 
 /**
  * @param {string} projectId - The project ID

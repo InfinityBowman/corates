@@ -1,6 +1,6 @@
 import { For, createMemo } from 'solid-js';
 import { FaSolidArrowRotateLeft } from 'solid-icons/fa';
-import Tooltip from '@/components/zag/Tooltip.jsx';
+import { Tooltip } from '@corates/ui';
 import { hasQuestionAnswer, getQuestionPillStyle, getQuestionTooltip } from './navbar-utils.js';
 
 /**

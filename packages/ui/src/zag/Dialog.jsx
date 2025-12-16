@@ -1,7 +1,7 @@
 import * as dialog from '@zag-js/dialog';
 import { Portal } from 'solid-js/web';
 import { useMachine, normalizeProps } from '@zag-js/solid';
-import { createMemo, createUniqueId, Show, createSignal } from 'solid-js';
+import { createMemo, createSignal, createUniqueId, Show } from 'solid-js';
 import { FiAlertTriangle, FiX } from 'solid-icons/fi';
 
 /**
@@ -105,7 +105,7 @@ export function Dialog(props) {
  * - variant: 'danger' | 'warning' | 'info' - Visual variant (default: 'danger')
  * - loading: boolean - Whether confirm action is in progress
  */
-export default function ConfirmDialog(props) {
+export function ConfirmDialog(props) {
   const open = () => props.open;
   const loading = () => props.loading;
   const variant = () => props.variant || 'danger';
@@ -201,27 +201,27 @@ export default function ConfirmDialog(props) {
                 <button
                   {...api().getCloseTriggerProps()}
                   disabled={loading()}
-                  class='shrink-0 p-1 text-gray-400 hover:text-gray-500 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                  class='shrink-0 p-1 text-gray-400 hover:text-gray-500 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50'
                 >
                   <FiX class='w-5 h-5' />
                 </button>
               </div>
             </div>
-            {/* Actions */}
+            {/* Footer */}
             <div class='px-6 py-4 bg-gray-50 flex justify-end gap-3'>
               <button
                 onClick={handleCancel}
                 disabled={loading()}
-                class='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                class='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50'
               >
                 {cancelText() || 'Cancel'}
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={loading()}
-                class={`px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getVariantStyles().button}`}
+                class={`px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 ${getVariantStyles().button}`}
               >
-                {loading() ? 'Please wait...' : confirmText() || 'Confirm'}
+                {loading() ? 'Loading...' : confirmText() || 'Confirm'}
               </button>
             </div>
           </div>
@@ -319,3 +319,5 @@ export function useConfirmDialog() {
     }),
   };
 }
+
+export default ConfirmDialog;
