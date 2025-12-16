@@ -29,7 +29,8 @@ export class ProjectDoc {
   constructor(state, env) {
     this.state = state;
     this.env = env;
-    this.sessions = new Set();
+    // Map<WebSocket, { user, awarenessClientId }>
+    this.sessions = new Map();
     this.doc = null;
     this.awareness = null;
   }
@@ -362,47 +363,49 @@ export class ProjectDoc {
     const [client, server] = Object.values(webSocketPair);
 
     server.accept();
-    server.user = user;
-    this.sessions.add(server);
+    // Store session with user info, awarenessClientId will be set when client sends awareness
+    this.sessions.set(server, { user, awarenessClientId: null });
 
     // Log current document contents for debugging
     const reviewsMap = this.doc.getMap('reviews');
     console.log(`Document has ${reviewsMap.size} studies and ${membersMap.size} members`);
 
-    // Send sync step 1 (state vector) to initiate sync protocol
-    const syncEncoder = encoding.createEncoder();
-    encoding.writeVarUint(syncEncoder, messageSync);
-    syncProtocol.writeSyncStep1(syncEncoder, this.doc);
-    server.send(encoding.toUint8Array(syncEncoder));
-
-    // Send current awareness state to new client
-    const awarenessStates = this.awareness.getStates();
-    if (awarenessStates.size > 0) {
-      const awarenessEncoder = encoding.createEncoder();
-      encoding.writeVarUint(awarenessEncoder, messageAwareness);
-      encoding.writeVarUint8Array(
-        awarenessEncoder,
-        awarenessProtocol.encodeAwarenessUpdate(this.awareness, Array.from(awarenessStates.keys())),
-      );
-      server.send(encoding.toUint8Array(awarenessEncoder));
-    }
+    // Note: We do NOT proactively send sync step 1 here.
+    // The y-websocket client will send sync step 1 on connect,
+    // and we respond via the message handler below.
 
     server.addEventListener('message', async event => {
       try {
         // Handle binary messages (y-websocket protocol)
-        const data =
-          event.data instanceof ArrayBuffer ?
-            new Uint8Array(event.data)
-          : new Uint8Array(await event.data.arrayBuffer());
+        let data;
+        if (event.data instanceof ArrayBuffer) {
+          data = new Uint8Array(event.data);
+        } else if (event.data instanceof Blob) {
+          data = new Uint8Array(await event.data.arrayBuffer());
+        } else {
+          // String data - shouldn't happen with y-websocket binary protocol
+          console.warn('Received unexpected string WebSocket message');
+          return;
+        }
 
         const decoder = decoding.createDecoder(data);
         const messageType = decoding.readVarUint(decoder);
+
+        console.log(`Received message type: ${messageType}, data length: ${data.length}`);
 
         switch (messageType) {
           case messageSync: {
             const encoder = encoding.createEncoder();
             encoding.writeVarUint(encoder, messageSync);
-            syncProtocol.readSyncMessage(decoder, encoder, this.doc, server);
+            const syncMessageType = syncProtocol.readSyncMessage(
+              decoder,
+              encoder,
+              this.doc,
+              server,
+            );
+            console.log(
+              `Sync message type: ${syncMessageType}, response length: ${encoding.length(encoder)}`,
+            );
             // If there's a response to send (sync step 2 or update acknowledgment)
             if (encoding.length(encoder) > 1) {
               server.send(encoding.toUint8Array(encoder));
@@ -410,11 +413,20 @@ export class ProjectDoc {
             break;
           }
           case messageAwareness: {
-            awarenessProtocol.applyAwarenessUpdate(
-              this.awareness,
-              decoding.readVarUint8Array(decoder),
-              server,
-            );
+            const awarenessUpdate = decoding.readVarUint8Array(decoder);
+            awarenessProtocol.applyAwarenessUpdate(this.awareness, awarenessUpdate, server);
+
+            // Extract and store the client's awareness ID from the update
+            // The first client ID in the update is typically the sender's ID
+            const awarenessDecoder = decoding.createDecoder(awarenessUpdate);
+            const len = decoding.readVarUint(awarenessDecoder);
+            if (len > 0) {
+              const clientId = decoding.readVarUint(awarenessDecoder);
+              const session = this.sessions.get(server);
+              if (session && session.awarenessClientId === null) {
+                session.awarenessClientId = clientId;
+              }
+            }
             break;
           }
           default:
@@ -426,8 +438,15 @@ export class ProjectDoc {
     });
 
     server.addEventListener('close', () => {
-      // Remove awareness state for this client
-      awarenessProtocol.removeAwarenessStates(this.awareness, [this.doc.clientID], server);
+      // Remove awareness state for this client using their stored clientID
+      const session = this.sessions.get(server);
+      if (session?.awarenessClientId !== null) {
+        awarenessProtocol.removeAwarenessStates(
+          this.awareness,
+          [session.awarenessClientId],
+          server,
+        );
+      }
       this.sessions.delete(server);
     });
 
@@ -525,9 +544,9 @@ export class ProjectDoc {
    * Broadcast binary message to all connected clients
    */
   broadcastBinary(message, exclude = null) {
-    this.sessions.forEach(session => {
-      if (session !== exclude && session.readyState === 1) {
-        session.send(message);
+    this.sessions.forEach((sessionData, ws) => {
+      if (ws !== exclude && ws.readyState === 1) {
+        ws.send(message);
       }
     });
   }
