@@ -17,6 +17,7 @@ The web package is copied into the landing package during the build process for 
 - Use aliases for imports when appropriate to improve readability.
 - Use responsive design principles for UI components.
 - Prefer using config files rather than hardcoding values.
+- Place plans in the docs/plans/ directory.
 
 ## File Size Guidelines
 

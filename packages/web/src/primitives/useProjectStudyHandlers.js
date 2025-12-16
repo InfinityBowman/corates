@@ -39,7 +39,11 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
     try {
       for (const study of studiesToAdd) {
         try {
+          // Preserve the original title before any naming convention transformations
+          const originalTitle = study.title || study.name || 'Untitled Study';
+
           const metadata = {
+            originalTitle,
             firstAuthor: study.firstAuthor,
             publicationYear: study.publicationYear,
             authors: study.authors,
@@ -99,7 +103,7 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
                     const updates = {};
                     const nextTitle = extractedTitle || study.title;
                     if (nextTitle && nextTitle !== study.title) {
-                      updates.title = nextTitle;
+                      updates.originalTitle = nextTitle;
                     }
                     if (extractedDoi && !study.doi) {
                       updates.doi = extractedDoi;
@@ -125,7 +129,7 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
 
                     // Update study name after metadata extraction (to match naming convention behavior)
                     const nameBasis = {
-                      title: updates.title || study.title,
+                      title: updates.originalTitle || study.title,
                       firstAuthor: updates.firstAuthor ?? study.firstAuthor,
                       publicationYear: updates.publicationYear ?? study.publicationYear,
                       authors: updates.authors ?? study.authors,
@@ -135,10 +139,10 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
 
                     // Persist extracted metadata to the study
                     if (Object.keys(updates).length > 0) {
-                      // Title is stored as name/metadata elsewhere; keep title in sync with name generation.
                       // Only update known study fields.
                       const safeUpdates = {
                         name: updates.name,
+                        originalTitle: updates.originalTitle,
                         doi: updates.doi,
                         firstAuthor: updates.firstAuthor,
                         publicationYear: updates.publicationYear,
@@ -240,10 +244,14 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
 
     for (const ref of references) {
       try {
+        // Preserve the original title before any naming convention transformations
+        const originalTitle = ref.title || 'Untitled Study';
+
         // Generate study name based on naming convention
         const studyName = generateStudyName(ref, namingConvention);
 
         createStudy(studyName, ref.abstract || '', {
+          originalTitle,
           firstAuthor: ref.firstAuthor,
           publicationYear: ref.publicationYear,
           authors: ref.authors,
@@ -301,10 +309,10 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
     let successCount = 0;
     for (const study of currentStudies) {
       try {
-        // Generate new name based on study metadata
+        // Generate new name based on preserved originalTitle and study metadata
         const newName = generateStudyName(
           {
-            title: study.name,
+            title: study.originalTitle,
             firstAuthor: study.firstAuthor,
             publicationYear: study.publicationYear,
             authors: study.authors,
@@ -312,7 +320,7 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
           namingConvention,
         );
 
-        // Only update if the name would change
+        // Update name if it would change
         if (newName && newName !== study.name) {
           updateStudy(study.id, { name: newName });
           successCount++;
@@ -322,10 +330,19 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
       }
     }
 
+    // Count studies without originalTitle
+    const skippedCount = currentStudies.filter(s => !s.originalTitle).length;
+
     if (successCount > 0) {
-      showToast.success(
-        'Studies Renamed',
-        `Successfully renamed ${successCount} ${successCount === 1 ? 'study' : 'studies'}.`,
+      let message = `Successfully renamed ${successCount} ${successCount === 1 ? 'study' : 'studies'}.`;
+      if (skippedCount > 0) {
+        message += ` ${skippedCount} ${skippedCount === 1 ? 'study was' : 'studies were'} skipped (no original title).`;
+      }
+      showToast.success('Studies Renamed', message);
+    } else if (skippedCount > 0) {
+      showToast.info(
+        'No Changes',
+        `${skippedCount} ${skippedCount === 1 ? 'study has' : 'studies have'} no set title. Edit studies to set their  titles first.`,
       );
     } else {
       showToast.info('No Changes', 'All studies already match the naming convention.');
