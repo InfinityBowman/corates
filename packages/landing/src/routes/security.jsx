@@ -28,6 +28,7 @@ export default function Security() {
           <div class='max-w-3xl mx-auto px-6'>
             <h1 class='text-4xl font-bold text-gray-900 mb-2'>Security</h1>
             <p class='text-gray-500 mb-8'>How we protect your research data</p>
+            <p class='text-gray-500 mb-8'>How we protect your research data</p>
 
             <div class='text-gray-700 leading-relaxed space-y-8'>
               <p>
