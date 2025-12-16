@@ -18,14 +18,10 @@
 2. **Start the Application**
 
 ```bash
-# IMPORTANT - real urls and https is used in development
-# to make this work, your dns file will be edited by the pnpm dev script
-# See scripts/swap-dns.js
-# This is reversable by running `pnpm prod:dns`
-
 # Copy environments
-# copy .dev.vars.example into .dev.vars (in packages/workers)
+# copy .env.example into .env (in packages/workers)
 # copy .env.example into .env (in packages/web)
+# copy .env.example into .env (in packages/landing)
 
 # Install packages
 pnpm i
@@ -45,9 +41,8 @@ This project utilizes a custom MCP server to provide agents with context
 To set this up do:
 
 ```bash
-cd packages/mcp
-pnpm run scrape:all
-# Ensure you have the .vscode folder with the mcp.json
+pnpm run initialize-mcp
+
 # in VS CODE
 # Press cmd + shift + p
 # Type MCP: List Servers
@@ -66,4 +61,19 @@ pnpm logs
 
 # See architecture docs
 pnpm run docs
+
+# Check lines of code
+pnpm loc
+
+# Test
+pnpm test
+
+# Lint
+pnpm lint
+
+# Format
+pnpm format
+
+# Make an email admin
+pnpm user:make-admin:local -- test@example.com
 ```
