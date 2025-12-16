@@ -23,8 +23,40 @@ export function createConnectionManager(projectId, ydoc, options) {
   let lastErrorLog = 0;
   const ERROR_LOG_THROTTLE = 5000; // Only log errors every 5 seconds
 
+  // Track if we intend to be connected (for online/offline handling)
+  let shouldBeConnected = false;
+
+  // Handle online/offline events
+  function handleOnline() {
+    // When coming back online, reconnect if we should be connected
+    if (shouldBeConnected && provider && !provider.wsconnected) {
+      provider.connect();
+    }
+  }
+
+  function handleOffline() {
+    // Pause reconnection attempts when offline
+    if (provider) {
+      provider.shouldConnect = false;
+    }
+  }
+
+  // Set up listeners
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+  }
+
   function connect() {
     if (!ydoc || isLocalProject()) return;
+
+    // Don't attempt connection when offline
+    if (!navigator.onLine) {
+      shouldBeConnected = true; // Remember we want to be connected when online
+      return;
+    }
+
+    shouldBeConnected = true;
 
     const wsUrl = `${getWsBaseUrl()}/api/project`;
 
@@ -57,14 +89,25 @@ export function createConnectionManager(projectId, ydoc, options) {
         });
         // Prevent auto-reconnect for membership issues
         provider.shouldConnect = false;
+        shouldBeConnected = false;
+      }
+
+      // When offline, don't let the provider try to reconnect
+      if (!navigator.onLine) {
+        provider.shouldConnect = false;
       }
     });
 
-    provider.on('connection-error', event => {
-      // Throttle error logs to prevent console spam on Safari
+    provider.on('connection-error', () => {
+      // Suppress error logging when offline to prevent console spam
+      if (!navigator.onLine) {
+        return;
+      }
+
+      // Throttle error logs to prevent console spam
       const now = Date.now();
       if (now - lastErrorLog > ERROR_LOG_THROTTLE) {
-        console.error('WebSocket connection error:', event);
+        console.error('WebSocket connection error');
         lastErrorLog = now;
       }
       projectStore.setConnectionState(projectId, {
@@ -76,6 +119,7 @@ export function createConnectionManager(projectId, ydoc, options) {
   }
 
   function disconnect() {
+    shouldBeConnected = false;
     if (provider) {
       provider.destroy();
       provider = null;
@@ -86,7 +130,18 @@ export function createConnectionManager(projectId, ydoc, options) {
     });
   }
 
+  function destroy() {
+    disconnect();
+    // Clean up event listeners
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    }
+  }
+
   function reconnect() {
+    if (!navigator.onLine) return; // Don't reconnect when offline
+
     if (provider) {
       provider.disconnect();
       provider.connect();
@@ -112,11 +167,13 @@ export function createConnectionManager(projectId, ydoc, options) {
     if (provider) {
       provider.shouldConnect = value;
     }
+    shouldBeConnected = value;
   }
 
   return {
     connect,
     disconnect,
+    destroy,
     reconnect,
     getAwareness,
     getProvider,

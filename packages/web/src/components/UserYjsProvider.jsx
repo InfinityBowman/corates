@@ -48,6 +48,11 @@ export default function UserYjsProvider(props) {
   async function connectToProject(projectId) {
     if (connections[projectId]) return; // Already connected
 
+    // Don't attempt connection when offline
+    if (!navigator.onLine) {
+      return;
+    }
+
     try {
       const ydoc = new Y.Doc();
       const wsUrl = props.apiBase.replace('http', 'ws') + `/api/project/${projectId}`;
@@ -88,8 +93,11 @@ export default function UserYjsProvider(props) {
         }
       };
 
-      ws.onerror = err => {
-        console.error(`Project ${projectId} WebSocket error:`, err);
+      ws.onerror = () => {
+        // Suppress error logging when offline to prevent console spam
+        if (navigator.onLine) {
+          console.error(`Project ${projectId} WebSocket error`);
+        }
         if (connections[projectId]) {
           connections[projectId].connected = false;
           setProjectConnections({ ...connections });
