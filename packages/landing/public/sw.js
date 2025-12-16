@@ -64,7 +64,7 @@ self.addEventListener('install', event => {
           const html = await pageResponse.text();
 
           // Match SolidStart build assets (e.g. /_build/assets/xyz.js, /_build/xyz.css)
-          const matches = html.matchAll(/(?:src|href)=["'](\/build\/[^"']+)["']/g);
+          const matches = html.matchAll(/(?:src|href)=["'](\/_build\/[^"']+)["']/g);
           for (const match of matches) {
             discovered.add(match[1]);
           }
@@ -83,6 +83,14 @@ self.addEventListener('install', event => {
             console.warn('[SW] Build asset not ok:', url, response.status);
             continue;
           }
+
+          // Skip caching assets that are actually HTML (some hosts return index/login pages with 200)
+          const contentType = (response.headers.get('content-type') || '').toLowerCase();
+          if (contentType.includes('html')) {
+            console.warn('[SW] Build asset looked like HTML; skipping:', url);
+            continue;
+          }
+
           const responseToCache = await stripRedirect(response);
           await cache.put(url, responseToCache);
         } catch (err) {
@@ -181,8 +189,21 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     fetch(request, { redirect: 'follow' })
       .then(response => {
-        // Cache successful responses for same-origin requests
-        if (response.ok && request.url.startsWith(self.location.origin)) {
+        const contentType = (response.headers.get('content-type') || '').toLowerCase();
+
+        // If this was an asset request but server returned HTML, treat as a failure so we
+        // fall through to the cache or a 404 instead of serving HTML with wrong MIME.
+        if (isAsset && contentType.includes('html')) {
+          console.warn('[SW] Asset request returned HTML; treating as failure:', request.url);
+          throw new Error('Asset returned HTML');
+        }
+
+        // Cache successful (non-HTML) responses for same-origin requests
+        if (
+          response.ok &&
+          request.url.startsWith(self.location.origin) &&
+          !contentType.includes('html')
+        ) {
           const responseToCache = Promise.resolve(stripRedirect(response.clone()));
 
           responseToCache.then(finalResponse => {
