@@ -1,9 +1,9 @@
 /**
  * Email service for BetterAuth
- * Uses Resend SDK for Cloudflare Workers
+ * Uses Postmark for Cloudflare Workers
  */
 
-import { Resend } from 'resend';
+import { Client as PostmarkClient } from 'postmark';
 import {
   getVerificationEmailHtml,
   getVerificationEmailText,
@@ -21,11 +21,11 @@ import {
 export function createEmailService(env) {
   const isProduction = env.ENVIRONMENT === 'production';
 
-  // Initialize Resend client if API key is available
-  const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
+  // Initialize Postmark client if API key is available
+  const postmark = env.POSTMARK_SERVER_TOKEN ? new PostmarkClient(env.POSTMARK_SERVER_TOKEN) : null;
 
   /**
-   * Send email using Resend
+   * Send email using Postmark
    */
   async function sendEmail({ to, subject, html, text }) {
     if (env.SEND_EMAILS_IN_DEV !== 'true' && !isProduction) {
@@ -33,26 +33,27 @@ export function createEmailService(env) {
       return { success: true, id: 'dev-id' };
     }
 
-    if (!resend) {
-      console.log('[Email] No RESEND_API_KEY configured, skipping email');
+    if (!postmark) {
+      console.log('[Email] No POSTMARK_SERVER_TOKEN configured, skipping email');
       return { success: false, error: 'No email provider configured' };
     }
 
     try {
-      const { data, error } = await resend.emails.send({
-        from: `CoRATES <${env.EMAIL_FROM || 'noreply@corates.org'}>`,
-        to: [to],
-        subject,
-        html,
-        text,
+      const response = await postmark.sendEmail({
+        From: `CoRATES <${env.EMAIL_FROM || 'noreply@corates.org'}>`,
+        To: to,
+        Subject: subject,
+        HtmlBody: html,
+        TextBody: text,
+        MessageStream: 'outbound',
       });
 
-      if (error) {
-        console.error('[Email] Resend API error:', JSON.stringify(error));
-        return { success: false, error: error.message };
+      if (response.ErrorCode !== 0) {
+        console.error('[Email] Postmark API error:', JSON.stringify(response));
+        return { success: false, error: response.Message };
       }
 
-      return { success: true, id: data?.id };
+      return { success: true, id: response.MessageID };
     } catch (err) {
       console.error('[Email] Exception during send:', err.message, err.stack);
       return { success: false, error: err.message };
