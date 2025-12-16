@@ -1,4 +1,4 @@
-import { For, Show, createUniqueId } from 'solid-js';
+import { For } from 'solid-js';
 import { OVERALL_ROB_JUDGEMENTS, BIAS_DIRECTIONS } from '@/ROBINS-I/checklist-map.js';
 import { scoreChecklist } from '@/ROBINS-I/checklist.js';
 
@@ -11,7 +11,6 @@ import { scoreChecklist } from '@/ROBINS-I/checklist.js';
  * @param {boolean} [props.disabled] - Whether the section is disabled
  */
 export function OverallSection(props) {
-  const uniqueId = createUniqueId();
   // Calculated score based on domains
   const calculatedScore = () => scoreChecklist(props.checklistState);
 
@@ -31,12 +30,16 @@ export function OverallSection(props) {
 
   const getJudgementColor = judgement => {
     switch (judgement) {
+      case 'Low risk of bias except for concerns about uncontrolled confounding':
       case 'Low (except confounding)':
         return 'bg-green-100 border-green-400 text-green-800';
+      case 'Moderate risk':
       case 'Moderate':
         return 'bg-yellow-100 border-yellow-400 text-yellow-800';
+      case 'Serious risk':
       case 'Serious':
         return 'bg-orange-100 border-orange-400 text-orange-800';
+      case 'Critical risk':
       case 'Critical':
         return 'bg-red-100 border-red-400 text-red-800';
       default:
@@ -86,43 +89,33 @@ export function OverallSection(props) {
           <div class='text-sm font-medium text-gray-700 mb-3'>Overall risk of bias judgement</div>
           <div class='flex flex-wrap gap-2'>
             <For each={OVERALL_ROB_JUDGEMENTS}>
-              {judgement => (
-                <label
-                  class={`
-                    relative inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium
-                    cursor-pointer transition-colors border-2
-                    ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                    ${
-                      props.overallState?.judgement === judgement ?
-                        getJudgementColor(judgement)
-                      : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
-                    }
-                  `}
-                >
-                  <input
-                    type='radio'
-                    name={`overall-judgement-${uniqueId}`}
-                    value={judgement}
-                    checked={props.overallState?.judgement === judgement}
-                    onChange={() => handleJudgementChange(judgement)}
+              {judgement => {
+                const isSelected = () => props.overallState?.judgement === judgement;
+                return (
+                  <button
+                    type='button'
+                    onClick={() => {
+                      if (props.disabled) return;
+                      // Toggle: deselect if already selected, otherwise select
+                      handleJudgementChange(isSelected() ? null : judgement);
+                    }}
                     disabled={props.disabled}
-                    class='sr-only'
-                  />
-                  {judgement}
-                </label>
-              )}
+                    class={`
+                      inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium
+                      transition-colors border-2
+                      ${props.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                      ${
+                        isSelected() ?
+                          getJudgementColor(judgement)
+                        : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                      }
+                    `}
+                  >
+                    {judgement}
+                  </button>
+                );
+              }}
             </For>
-            {/* Clear judgement button */}
-            <Show when={props.overallState?.judgement}>
-              <button
-                type='button'
-                onClick={() => handleJudgementChange(null)}
-                disabled={props.disabled}
-                class='px-3 py-1.5 text-sm text-gray-400 hover:text-gray-600'
-              >
-                Clear
-              </button>
-            </Show>
           </div>
         </div>
 
@@ -134,43 +127,33 @@ export function OverallSection(props) {
           </div>
           <div class='flex flex-wrap gap-2'>
             <For each={BIAS_DIRECTIONS}>
-              {direction => (
-                <label
-                  class={`
-                    relative inline-flex items-center justify-center px-3 py-1.5 rounded text-sm font-medium
-                    cursor-pointer transition-colors border
-                    ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                    ${
-                      props.overallState?.direction === direction ?
-                        'bg-blue-100 border-blue-400 text-blue-800'
-                      : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300'
-                    }
-                  `}
-                >
-                  <input
-                    type='radio'
-                    name={`overall-direction-${uniqueId}`}
-                    value={direction}
-                    checked={props.overallState?.direction === direction}
-                    onChange={() => handleDirectionChange(direction)}
+              {direction => {
+                const isSelected = () => props.overallState?.direction === direction;
+                return (
+                  <button
+                    type='button'
+                    onClick={() => {
+                      if (props.disabled) return;
+                      // Toggle: deselect if already selected, otherwise select
+                      handleDirectionChange(isSelected() ? null : direction);
+                    }}
                     disabled={props.disabled}
-                    class='sr-only'
-                  />
-                  {direction}
-                </label>
-              )}
+                    class={`
+                      inline-flex items-center justify-center px-3 py-1.5 rounded text-sm font-medium
+                      transition-colors border
+                      ${props.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                      ${
+                        isSelected() ?
+                          'bg-blue-100 border-blue-400 text-blue-800'
+                        : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300'
+                      }
+                    `}
+                  >
+                    {direction}
+                  </button>
+                );
+              }}
             </For>
-            {/* Clear button */}
-            <Show when={props.overallState?.direction}>
-              <button
-                type='button'
-                onClick={() => handleDirectionChange(null)}
-                disabled={props.disabled}
-                class='px-3 py-1.5 text-sm text-gray-400 hover:text-gray-600'
-              >
-                Clear
-              </button>
-            </Show>
           </div>
         </div>
       </div>
