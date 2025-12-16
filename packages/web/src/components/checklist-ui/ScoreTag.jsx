@@ -1,7 +1,7 @@
 import { Show, createMemo } from 'solid-js';
 import { FaSolidCircleInfo } from 'solid-icons/fa';
 import { AMSTAR2_URL } from '@/config/api.js';
-import Tooltip from '@/components/zag/Tooltip.jsx';
+import { Tooltip } from '@corates/ui';
 import { getChecklistMetadata, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
 
 /**

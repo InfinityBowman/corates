@@ -4,7 +4,7 @@
 
 import { Show } from 'solid-js';
 import { HiOutlineDocument } from 'solid-icons/hi';
-import { FileUpload } from '@components/zag/FileUpload.jsx';
+import { FileUpload } from '@corates/ui';
 
 function LoadingSpinner() {
   return <div class='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600' />;

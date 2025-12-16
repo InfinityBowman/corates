@@ -5,8 +5,7 @@
 
 import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from 'solid-icons/ai';
-import { showToast } from '@components/zag/Toast.jsx';
-import { useConfirmDialog } from '@components/zag/Dialog.jsx';
+import { showToast, useConfirmDialog } from '@corates/ui';
 import {
   compareChecklists,
   getReconciliationSummary,

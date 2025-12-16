@@ -1,7 +1,7 @@
 import { createSignal, onMount } from 'solid-js';
 import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/sidebar/Sidebar.jsx';
-import { Toaster } from '@components/zag/Toast.jsx';
+import { Toaster } from '@corates/ui';
 import { ImpersonationBanner } from '@components/admin-ui/index.js';
 import { isImpersonating } from '@/stores/adminStore.js';
 

@@ -7,7 +7,7 @@ import { For, Show } from 'solid-js';
 import { BiRegularTrash } from 'solid-icons/bi';
 import { CgFileDocument } from 'solid-icons/cg';
 import { FiLink } from 'solid-icons/fi';
-import { FileUpload } from '@components/zag/FileUpload.jsx';
+import { FileUpload } from '@corates/ui';
 import { useStudiesContext } from './AddStudiesContext.jsx';
 
 export default function PdfUploadSection() {

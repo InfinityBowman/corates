@@ -1,0 +1,7 @@
+// @corates/ui - Shared UI Components
+
+// Re-export all Zag components
+export * from './zag/index.js';
+
+// Re-export primitives
+export { useWindowDrag } from './primitives/useWindowDrag.js';

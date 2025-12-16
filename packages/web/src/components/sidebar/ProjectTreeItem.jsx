@@ -1,7 +1,7 @@
 import { Show, For } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useProjectData } from '@primitives/useProjectData.js';
-import Collapsible from '@components/zag/Collapsible.jsx';
+import { Collapsible } from '@corates/ui';
 import { AiOutlineFolder, AiOutlineFolderOpen } from 'solid-icons/ai';
 import { FiChevronRight } from 'solid-icons/fi';
 import StudyTreeItem from './StudyTreeItem.jsx';

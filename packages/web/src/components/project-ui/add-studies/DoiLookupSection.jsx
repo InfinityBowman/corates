@@ -13,10 +13,8 @@ import {
   BiRegularUpload,
 } from 'solid-icons/bi';
 import { FiFile, FiFileText, FiAlertCircle, FiCheck, FiDownload } from 'solid-icons/fi';
-import { Checkbox } from '@components/zag/Checkbox.jsx';
-import { Tooltip } from '@components/zag/Tooltip.jsx';
+import { Checkbox, Tooltip, showToast } from '@corates/ui';
 import { getRefDisplayName } from '@/lib/referenceParser.js';
-import { showToast } from '@components/zag/Toast.jsx';
 import { useStudiesContext } from './AddStudiesContext.jsx';
 
 export default function DoiLookupSection() {

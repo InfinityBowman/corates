@@ -5,7 +5,7 @@
 
 import { createSignal, createMemo, createEffect } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { showToast } from '@components/zag/Toast.jsx';
+import { showToast } from '@corates/ui';
 import {
   extractPdfTitle,
   extractPdfDoi,

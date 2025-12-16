@@ -1,7 +1,7 @@
 import { createSignal, Show, For } from 'solid-js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { FiCamera } from 'solid-icons/fi';
-import { showToast } from '@components/zag/Toast.jsx';
+import { showToast } from '@corates/ui';
 import { LANDING_URL, API_BASE } from '@config/api.js';
 import { ROLES, getRoleLabel } from '@components/auth-ui/RoleSelector.jsx';
 
