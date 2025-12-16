@@ -32,14 +32,16 @@ export default function useOnlineStatus() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-        await fetch('/api/health', {
-          method: 'HEAD',
-          signal: controller.signal,
-          cache: 'no-store',
-        });
-
-        clearTimeout(timeoutId);
-        return true;
+        try {
+          await fetch('/api/health', {
+            method: 'HEAD',
+            signal: controller.signal,
+            cache: 'no-store',
+          });
+          return true;
+        } finally {
+          clearTimeout(timeoutId);
+        }
       } catch {
         return false;
       }
