@@ -86,7 +86,9 @@ export async function compressImageFile(file, options = {}) {
   const compressedBlob = await compressImageBlob(file, options);
 
   // Create a new File from the blob
-  return new File([compressedBlob], file.name.replace(/\.[^.]+$/, '.jpg'), {
+  const baseName = file.name.replace(/\.[^.]+$/, '');
+  const newName = baseName ? `${baseName}.jpg` : 'image.jpg';
+  return new File([compressedBlob], newName, {
     type: 'image/jpeg',
     lastModified: Date.now(),
   });
