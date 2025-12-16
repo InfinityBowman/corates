@@ -1,5 +1,13 @@
 import * as Y from 'yjs';
+import * as syncProtocol from 'y-protocols/sync';
+import * as awarenessProtocol from 'y-protocols/awareness';
+import * as encoding from 'lib0/encoding';
+import * as decoding from 'lib0/decoding';
 import { verifyAuth } from '../auth/config.js';
+
+// y-websocket message types
+const messageSync = 0;
+const messageAwareness = 1;
 
 /**
  * ProjectDoc Durable Object
@@ -23,8 +31,7 @@ export class ProjectDoc {
     this.env = env;
     this.sessions = new Set();
     this.doc = null;
-    // this.saveTimeout = null;
-    // this.pendingSave = false;
+    this.awareness = null;
   }
 
   async fetch(request) {
@@ -134,9 +141,7 @@ export class ProjectDoc {
         }
       }
 
-      // Broadcast update to connected clients
-      const update = Y.encodeStateAsUpdate(this.doc);
-      this.broadcast(JSON.stringify({ type: 'update', update: Array.from(update) }));
+      // Updates are automatically broadcast via Y.doc update listener
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { 'Content-Type': 'application/json' },
@@ -193,9 +198,7 @@ export class ProjectDoc {
         membersMap.delete(member.userId);
       }
 
-      // Broadcast update to connected clients
-      const update = Y.encodeStateAsUpdate(this.doc);
-      this.broadcast(JSON.stringify({ type: 'update', update: Array.from(update) }));
+      // Updates are automatically broadcast via Y.doc update listener
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { 'Content-Type': 'application/json' },
@@ -256,9 +259,7 @@ export class ProjectDoc {
       // Update study's updatedAt
       studyYMap.set('updatedAt', Date.now());
 
-      // Broadcast update to connected clients
-      const update = Y.encodeStateAsUpdate(this.doc);
-      this.broadcast(JSON.stringify({ type: 'update', update: Array.from(update) }));
+      // Updates are automatically broadcast via Y.doc update listener
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { 'Content-Type': 'application/json' },
@@ -275,6 +276,7 @@ export class ProjectDoc {
   async initializeDoc() {
     if (!this.doc) {
       this.doc = new Y.Doc();
+      this.awareness = new awarenessProtocol.Awareness(this.doc);
 
       // Load persisted state if exists
       const persistedState = await this.state.storage.get('yjs-state');
@@ -284,10 +286,32 @@ export class ProjectDoc {
 
       // Persist the FULL document state on every update
       // This ensures we don't lose data when the DO restarts
-      this.doc.on('update', async () => {
+      this.doc.on('update', async (update, origin) => {
         // Encode the full document state, not just the incremental update
         const fullState = Y.encodeStateAsUpdate(this.doc);
         await this.state.storage.put('yjs-state', Array.from(fullState));
+
+        // Broadcast update to all connected clients (except origin)
+        const encoder = encoding.createEncoder();
+        encoding.writeVarUint(encoder, messageSync);
+        syncProtocol.writeUpdate(encoder, update);
+        const message = encoding.toUint8Array(encoder);
+        this.broadcastBinary(message, origin);
+      });
+
+      // Broadcast awareness updates to all clients
+      this.awareness.on('update', ({ added, updated, removed }, origin) => {
+        const changedClients = added.concat(updated, removed);
+        if (changedClients.length > 0) {
+          const encoder = encoding.createEncoder();
+          encoding.writeVarUint(encoder, messageAwareness);
+          encoding.writeVarUint8Array(
+            encoder,
+            awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients),
+          );
+          const message = encoding.toUint8Array(encoder);
+          this.broadcastBinary(message, origin);
+        }
       });
     }
   }
@@ -341,86 +365,73 @@ export class ProjectDoc {
     server.user = user;
     this.sessions.add(server);
 
-    // Send current full state to new client
-    const currentState = Y.encodeStateAsUpdate(this.doc);
-    console.log(`Sending full state to user ${user.id}, state size: ${currentState.length} bytes`);
-
     // Log current document contents for debugging
     const reviewsMap = this.doc.getMap('reviews');
     console.log(`Document has ${reviewsMap.size} studies and ${membersMap.size} members`);
 
-    server.send(JSON.stringify({ type: 'sync', update: Array.from(currentState) }));
+    // Send sync step 1 (state vector) to initiate sync protocol
+    const syncEncoder = encoding.createEncoder();
+    encoding.writeVarUint(syncEncoder, messageSync);
+    syncProtocol.writeSyncStep1(syncEncoder, this.doc);
+    server.send(encoding.toUint8Array(syncEncoder));
 
-    // If user joined broadcast presence message
-    if (user) {
-      this.broadcast(
-        JSON.stringify({ type: 'user-joined', user: { id: user.id, username: user.username } }),
-        server,
+    // Send current awareness state to new client
+    const awarenessStates = this.awareness.getStates();
+    if (awarenessStates.size > 0) {
+      const awarenessEncoder = encoding.createEncoder();
+      encoding.writeVarUint(awarenessEncoder, messageAwareness);
+      encoding.writeVarUint8Array(
+        awarenessEncoder,
+        awarenessProtocol.encodeAwarenessUpdate(
+          this.awareness,
+          Array.from(awarenessStates.keys()),
+        ),
       );
+      server.send(encoding.toUint8Array(awarenessEncoder));
     }
 
     server.addEventListener('message', async event => {
       try {
-        const data = JSON.parse(event.data);
+        // Handle binary messages (y-websocket protocol)
+        const data =
+          event.data instanceof ArrayBuffer
+            ? new Uint8Array(event.data)
+            : new Uint8Array(await event.data.arrayBuffer());
 
-        if (data.type === 'auth' && data.token) {
-          const authRequest = new Request(request.url, {
-            headers: {
-              ...request.headers,
-              Authorization: `Bearer ${data.token}`,
-            },
-          });
+        const decoder = decoding.createDecoder(data);
+        const messageType = decoding.readVarUint(decoder);
 
-          const { user: authUser } = await verifyAuth(authRequest, this.env);
-          if (!authUser) {
-            server.send(JSON.stringify({ type: 'error', message: 'Authentication failed' }));
-            server.close();
-            return;
+        switch (messageType) {
+          case messageSync: {
+            const encoder = encoding.createEncoder();
+            encoding.writeVarUint(encoder, messageSync);
+            syncProtocol.readSyncMessage(decoder, encoder, this.doc, server);
+            // If there's a response to send (sync step 2 or update acknowledgment)
+            if (encoding.length(encoder) > 1) {
+              server.send(encoding.toUint8Array(encoder));
+            }
+            break;
           }
-
-          server.user = authUser;
-          server.send(JSON.stringify({ type: 'auth', success: true, user: authUser }));
-          this.broadcast(
-            JSON.stringify({
-              type: 'user-joined',
-              user: { id: authUser.id, username: authUser.username },
-            }),
-            server,
-          );
-          return;
-        }
-
-        // Require authentication for updates if auth is required (we allow development unauth'd if necessary)
-        if (data.type === 'update') {
-          const update = new Uint8Array(data.update);
-          Y.applyUpdate(this.doc, update);
-
-          // Broadcast to others
-          this.broadcast(
-            JSON.stringify({
-              type: 'update',
-              update: Array.from(update),
-              user: server.user ? { id: server.user.id, username: server.user.username } : null,
-            }),
-            server,
-          );
+          case messageAwareness: {
+            awarenessProtocol.applyAwarenessUpdate(
+              this.awareness,
+              decoding.readVarUint8Array(decoder),
+              server,
+            );
+            break;
+          }
+          default:
+            console.warn('Unknown message type:', messageType);
         }
       } catch (error) {
         console.error('WebSocket message error (ProjectDoc):', error);
-        server.send(JSON.stringify({ type: 'error', message: 'Invalid message format' }));
       }
     });
 
     server.addEventListener('close', () => {
+      // Remove awareness state for this client
+      awarenessProtocol.removeAwarenessStates(this.awareness, [this.doc.clientID], server);
       this.sessions.delete(server);
-      if (server.user) {
-        this.broadcast(
-          JSON.stringify({
-            type: 'user-left',
-            user: { id: server.user.id, username: server.user.username },
-          }),
-        );
-      }
     });
 
     return new Response(null, { status: 101, webSocket: client });
@@ -513,7 +524,10 @@ export class ProjectDoc {
     });
   }
 
-  broadcast(message, exclude = null) {
+  /**
+   * Broadcast binary message to all connected clients
+   */
+  broadcastBinary(message, exclude = null) {
     this.sessions.forEach(session => {
       if (session !== exclude && session.readyState === 1) {
         session.send(message);

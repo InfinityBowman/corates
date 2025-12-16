@@ -104,7 +104,6 @@ export function useProject(projectId) {
     // Create and connect WebSocket manager
     connectionManager = createConnectionManager(projectId, ydoc, {
       onSync: () => syncManager.syncFromYDoc(),
-      isOnline,
       isLocalProject,
     });
     connectionManager.connect();
