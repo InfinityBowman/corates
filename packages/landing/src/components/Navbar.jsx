@@ -29,8 +29,8 @@ export default function Navbar() {
               class='inline-flex items-center gap-2 text-xl font-bold text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 rounded'
             >
               <img
-                src='/icon.png'
-                alt=''
+                src='/CoRATES.svg'
+                alt='CoRATES Logo'
                 aria-hidden='true'
                 class='h-6 w-6 rounded-sm'
                 width='24'
