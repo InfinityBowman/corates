@@ -4,6 +4,7 @@
   "private": true,
   "description": "Cloudflare Workers with Durable Objects",
   "main": "src/index.js",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --env production",

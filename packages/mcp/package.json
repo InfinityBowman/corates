@@ -2,6 +2,7 @@
   "name": "@corates/mcp",
   "version": "2.0.0",
   "type": "module",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "bin": {
     "corates-mcp": "./server.js"
   },

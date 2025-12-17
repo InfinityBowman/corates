@@ -4,6 +4,7 @@
   "private": true,
   "description": "SolidJS frontend for Corates",
   "type": "module",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "scripts": {
     "dev": "vite",
     "build": "vite build --mode production && node scripts/copy-to-landing.js",

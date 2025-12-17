@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "scripts": {
     "dev": "vinxi dev --port 3010",
     "dev:prod": "pnpm run build:prod && pnpm --filter @corates/web build && wrangler dev --port 3010",
