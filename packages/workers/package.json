@@ -18,7 +18,9 @@
     "db:setup:prod": "wrangler d1 execute corates-db-prod --remote --file=migrations/0001_init.sql",
     "db:reset:prod": "./scripts/reset-db-prod.sh",
     "user:make-admin:local": "node ./scripts/make-admin-local.mjs",
-    "user:make-admin:prod": "node ./scripts/make-admin-prod.mjs"
+    "user:make-admin:prod": "node ./scripts/make-admin-prod.mjs",
+    "openapi:generate": "node ./scripts/generate-openapi.mjs",
+    "openapi:serve": "node ./scripts/serve-docs.mjs"
   },
   "dependencies": {
     "@cloudflare/workers-types": "^4.20251213.0",
@@ -35,6 +37,7 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.10.15",
     "vitest": "^3.2.0",
-    "wrangler": "^4.54.0"
+    "wrangler": "^4.54.0",
+    "yaml": "^2.8.2"
   }
 }

@@ -4,6 +4,10 @@
 
 CoRATES is a web application designed to streamline AMSTAR-2 quality assessments for systematic studies. Built for researchers conducting evidence synthesis, it enables real-time collaboration, offline support, and seamless PDF annotation.
 
+## Getting Started
+
+> See the detailed [Contributing Guide](CONTRIBUTING.md) for step-by-step setup instructions.
+
 ## Features
 
 - **AMSTAR-2 Checklists** - Complete implementation of the AMSTAR-2 assessment tool with all 16 items and detailed signaling questions
@@ -21,13 +25,6 @@ CoRATES is a web application designed to streamline AMSTAR-2 quality assessments
 - **Sync**: Yjs (CRDT), y-indexeddb for local persistence
 - **Auth**: BetterAuth
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js >= 24.0.0
-- pnpm >= 10.0.0
-
 ## Architecture
 
 CoRATES uses a CRDT-based sync layer backed by per-project Durable Objects:
@@ -38,7 +35,7 @@ CoRATES uses a CRDT-based sync layer backed by per-project Durable Objects:
 
 ## License
 
-GNU GPLv3 - see [LICENSE](./LICENSE) for details.
+PolyForm Noncommercial License 1.0.0 - see [LICENSE](./LICENSE) for details.
 
 ## Author
 

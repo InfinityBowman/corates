@@ -116,6 +116,13 @@ app.get('/healthz', c => c.text('OK'));
 // Root endpoint
 app.get('/', c => c.text('Corates Workers API'));
 
+// API Documentation (development only)
+app.get('/docs', async c => {
+  if (c.env.ENVIRONMENT === 'production') return c.text('Not Found', 404);
+  const { getDocsHtml } = await import('./docs.js');
+  return c.html(await getDocsHtml(c.env));
+});
+
 // Mount auth routes
 app.route('/api/auth', auth);
 

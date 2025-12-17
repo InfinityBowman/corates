@@ -45,3 +45,6 @@ packages/workers/.dev.vars
 config/secrets.json
 .secrets/
 secrets.txt
+
+# Generated files
+openapi.json

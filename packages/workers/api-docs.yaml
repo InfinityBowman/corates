@@ -1,0 +1,561 @@
+# API Documentation Overrides
+# This file provides descriptions, examples, and schema definitions
+# that get merged with auto-detected endpoints when generating openapi.json
+#
+# Run: pnpm run openapi:generate
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Projects
+    description: Project management operations
+  - name: Members
+    description: Project membership management
+  - name: Users
+    description: User operations and profile management
+  - name: Billing
+    description: Subscription and payment operations
+  - name: Admin
+    description: Administrative operations (requires admin role)
+  - name: Contact
+    description: Public contact form
+  - name: PDFs
+    description: PDF storage for project studies
+
+paths:
+  # === Health ===
+  /health:
+    get:
+      summary: Health check with dependency status
+      description: Returns health status of all services including D1 database, R2 storage, and Durable Objects
+      tags: [Health]
+      public: true
+      responses:
+        200:
+          description: All services healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+        503:
+          description: One or more services degraded
+
+  /healthz:
+    get:
+      summary: Simple liveness probe
+      description: Lightweight endpoint for load balancer health checks
+      tags: [Health]
+      public: true
+      responses:
+        200:
+          description: Service is alive
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+
+  # === Projects ===
+  /api/projects:
+    post:
+      summary: Create a new project
+      description: Creates a project and adds the authenticated user as owner
+      tags: [Projects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProject'
+      responses:
+        201:
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+  /api/projects/{id}:
+    get:
+      summary: Get project by ID
+      description: Returns project details if the authenticated user is a member
+      tags: [Projects]
+      responses:
+        200:
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        404:
+          description: Project not found or user is not a member
+
+    put:
+      summary: Update project
+      description: Update project name and description. Requires owner or collaborator role.
+      tags: [Projects]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProject'
+
+    delete:
+      summary: Delete project
+      description: Permanently delete a project. Owner only.
+      tags: [Projects]
+      responses:
+        200:
+          description: Project deleted
+        403:
+          description: Only project owners can delete projects
+
+  # === Members ===
+  /api/projects/{projectId}/members:
+    get:
+      summary: List project members
+      description: Returns all members of a project with their roles and user info
+      tags: [Members]
+      responses:
+        200:
+          description: List of project members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectMember'
+
+    post:
+      summary: Add a member to project
+      description: Invite a user to the project by userId or email. Owner only.
+      tags: [Members]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMember'
+      responses:
+        201:
+          description: Member added successfully
+        409:
+          description: User is already a member
+
+  /api/projects/{projectId}/members/{userId}:
+    put:
+      summary: Update member role
+      description: Change a member's role (owner, collaborator, member, viewer). Owner only.
+      tags: [Members]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberRole'
+      responses:
+        200:
+          description: Role updated
+        400:
+          description: Cannot remove last owner
+
+    delete:
+      summary: Remove member from project
+      description: Remove a member from the project. Owner can remove anyone, users can remove themselves.
+      tags: [Members]
+      responses:
+        200:
+          description: Member removed
+        400:
+          description: Cannot remove last owner
+
+  # === Users ===
+  /api/users/search:
+    get:
+      summary: Search users
+      description: Search for users by name or email. Results exclude the current user.
+      tags: [Users]
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query (min 2 characters)
+          schema:
+            type: string
+            minLength: 2
+        - name: projectId
+          in: query
+          description: Exclude users already in this project
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: Max results (default 10, max 20)
+          schema:
+            type: integer
+            default: 10
+            maximum: 20
+      responses:
+        200:
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSearchResult'
+
+  /api/users/{userId}/projects:
+    get:
+      summary: Get user's projects
+      description: Returns all projects the user is a member of. Users can only access their own projects.
+      tags: [Users]
+      responses:
+        200:
+          description: List of projects
+        403:
+          description: Cannot access other users' projects
+
+  /api/users/me:
+    delete:
+      summary: Delete account
+      description: Permanently delete the current user's account and all associated data
+      tags: [Users]
+      responses:
+        200:
+          description: Account deleted successfully
+
+  /api/users/sync-profile:
+    post:
+      summary: Sync profile to projects
+      description: Propagates profile changes (name, image) to all project memberships
+      tags: [Users]
+      responses:
+        200:
+          description: Profile synced
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  synced:
+                    type: integer
+                  total:
+                    type: integer
+
+  # === Billing ===
+  /api/billing/subscription:
+    get:
+      summary: Get current subscription
+      description: Returns the authenticated user's subscription tier and status
+      tags: [Billing]
+      responses:
+        200:
+          description: Subscription details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+
+  /api/billing/plans:
+    get:
+      summary: Get available plans
+      description: Returns all subscription plans with pricing and features
+      tags: [Billing]
+      public: true
+      responses:
+        200:
+          description: Available plans
+
+  /api/billing/checkout:
+    post:
+      summary: Create checkout session
+      description: Creates a Stripe Checkout session for subscription upgrade
+      tags: [Billing]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tier]
+              properties:
+                tier:
+                  type: string
+                  enum: [pro, team, enterprise]
+                interval:
+                  type: string
+                  enum: [monthly, yearly]
+                  default: monthly
+      responses:
+        200:
+          description: Checkout session URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+
+  /api/billing/portal:
+    post:
+      summary: Create billing portal session
+      description: Creates a Stripe Customer Portal session for subscription management
+      tags: [Billing]
+      responses:
+        200:
+          description: Portal session URL
+
+  /api/billing/webhook:
+    post:
+      summary: Stripe webhook
+      description: Handles Stripe webhook events for subscription updates
+      tags: [Billing]
+      public: true
+
+  # === Contact ===
+  /api/contact:
+    post:
+      summary: Submit contact form
+      description: Public endpoint for contact form submissions
+      tags: [Contact]
+      public: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactForm'
+      responses:
+        200:
+          description: Message sent successfully
+        400:
+          description: Validation error
+        429:
+          description: Rate limit exceeded
+
+  # === PDFs ===
+  /api/projects/{projectId}/studies/{studyId}/pdfs:
+    get:
+      summary: List study PDFs
+      description: Returns all PDFs attached to a study
+      tags: [PDFs]
+
+    post:
+      summary: Upload PDF
+      description: Upload a PDF file to a study
+      tags: [PDFs]
+
+  /api/projects/{projectId}/studies/{studyId}/pdfs/{pdfId}:
+    get:
+      summary: Download PDF
+      description: Download a specific PDF file
+      tags: [PDFs]
+
+    delete:
+      summary: Delete PDF
+      description: Delete a PDF from the study
+      tags: [PDFs]
+
+  # === PDF Proxy ===
+  /api/pdf-proxy:
+    post:
+      summary: Proxy external PDF
+      description: Fetches an external PDF URL to avoid CORS issues. Detects auth-required PDFs.
+      tags: [PDFs]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  format: uri
+      responses:
+        200:
+          description: PDF binary data
+          content:
+            application/pdf: {}
+        403:
+          description: PDF requires authentication
+
+# Reusable schemas
+components:
+  schemas:
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded]
+        timestamp:
+          type: string
+          format: date-time
+        services:
+          type: object
+          properties:
+            database:
+              type: object
+              properties:
+                status:
+                  type: string
+                type:
+                  type: string
+            storage:
+              type: object
+            durableObjects:
+              type: object
+
+    CreateProject:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 2000
+
+    UpdateProject:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 2000
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [owner, collaborator, member, viewer]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+
+    ProjectMember:
+      type: object
+      properties:
+        userId:
+          type: string
+        role:
+          type: string
+          enum: [owner, collaborator, member, viewer]
+        joinedAt:
+          type: string
+          format: date-time
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        image:
+          type: string
+          format: uri
+
+    AddMember:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: User ID (provide either userId or email)
+        email:
+          type: string
+          format: email
+          description: User email (provide either userId or email)
+        role:
+          type: string
+          enum: [owner, collaborator, member, viewer]
+          default: member
+
+    UpdateMemberRole:
+      type: object
+      required: [role]
+      properties:
+        role:
+          type: string
+          enum: [owner, collaborator, member, viewer]
+
+    UserSearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        displayName:
+          type: string
+        username:
+          type: string
+        image:
+          type: string
+          format: uri
+        email:
+          type: string
+          description: Partially masked for privacy unless search matches email
+
+    Subscription:
+      type: object
+      properties:
+        tier:
+          type: string
+          enum: [free, pro, team, enterprise]
+        status:
+          type: string
+          enum: [active, canceled, past_due, trialing]
+        tierInfo:
+          type: object
+        stripeSubscriptionId:
+          type: string
+          nullable: true
+        currentPeriodEnd:
+          type: string
+          format: date-time
+          nullable: true
+        cancelAtPeriodEnd:
+          type: boolean
+
+    ContactForm:
+      type: object
+      required: [name, email, message]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        subject:
+          type: string
+          maxLength: 150
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000

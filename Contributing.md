@@ -4,7 +4,7 @@
 
 - [Git](https://git-scm.com/downloads)
 - [Node](https://nodejs.org/en/download)
-- [pnpm](https://pnpm.io/installation)
+- [pnpm](https://pnpm.io/installation) If you have Node installed I recommend: `npm install -g pnpm`
 
 ## Quick Start
 
@@ -35,9 +35,20 @@ pnpm dev:workers
 # All done!
 ```
 
+## API Documentation
+
+**Important:** For secured endpoints, you must first sign in via the frontend UI (http://localhost:5173).  
+Once signed in, the API documentation endpoints will behave as if the requests are coming from your logged-in user.
+
+Run the following command to generate the OpenAPI docs:
+
+```bash
+pnpm openapi
+```
+
 ## MCP
 
-This project utilizes a custom MCP server to provide agents with context
+This project utilizes a custom MCP server to provide agents with context  
 To set this up do:
 
 ```bash
@@ -53,6 +64,9 @@ pnpm run initialize-mcp
 ## Tips
 
 ```bash
+
+# Useful scripts for the respective packages are in /scripts
+
 # Clear worker storage
 pnpm clear-workers
 
