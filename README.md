@@ -4,7 +4,7 @@
 
 CoRATES is a web application designed to streamline the entire quality and risk-of-bias appraisal process with intuitive workflows, real-time collaboration, and automation, creating greater transparency and efficiency at every step. Built for researchers conducting evidence synthesis, it enables real-time collaboration, offline support, and PDF annotation.
 
-![Website preview](https://image.thum.io/get/https://corates.org)
+![Home Page](./docs/assets/marketing.png)
 
 ## Getting Started
 
