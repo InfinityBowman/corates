@@ -7,6 +7,18 @@
   --text-4xs: 0.375rem; /* 6px */
 
   --breakpoint-xs: 30rem; /* 480px */
+
+  /* Brand color scale */
+  --color-brand-50: #f4f7ff;
+  --color-brand-100: #e6ecff;
+  --color-brand-200: #cdd9ff;
+  --color-brand-300: #aabaff;
+  --color-brand-400: #7f93ff;
+  --color-brand-500: #5a6bff; /* brand anchor */
+  --color-brand-600: #4756e6;
+  --color-brand-700: #3b46bf;
+  --color-brand-800: #313a99;
+  --color-brand-900: #2a327a;
 }
 
 /* scrollbar for sidebar */
