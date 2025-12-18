@@ -16,6 +16,7 @@ import { createMemo, createUniqueId, Show, For, splitProps, mergeProps } from 's
  * - placement: Placement - Menu placement (default: 'bottom-start')
  * - closeOnSelect: boolean - Close menu on selection (default: true)
  * - inDialog: boolean - Set to true when used inside a Dialog
+ * - hideIndicator: boolean - Hide the dropdown indicator chevron
  * - class: string - Additional class for content
  *
  * MenuItem:
@@ -28,7 +29,13 @@ import { createMemo, createUniqueId, Show, For, splitProps, mergeProps } from 's
  * - groupLabel?: string - Render as group label
  */
 export function Menu(props) {
-  const [local, machineProps] = splitProps(props, ['trigger', 'items', 'inDialog', 'class']);
+  const [local, machineProps] = splitProps(props, [
+    'trigger',
+    'items',
+    'inDialog',
+    'hideIndicator',
+    'class',
+  ]);
 
   const context = mergeProps(machineProps, {
     id: createUniqueId(),
@@ -87,21 +94,26 @@ export function Menu(props) {
 
   return (
     <>
-      <button {...api().getTriggerProps()} class='inline-flex items-center gap-1'>
+      <button
+        {...api().getTriggerProps()}
+        class='inline-flex items-center gap-1 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors'
+      >
         {local.trigger}
-        <span
-          {...api().getIndicatorProps()}
-          class='transition-transform data-[state=open]:rotate-180'
-        >
-          <svg class='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-            <path
-              stroke-linecap='round'
-              stroke-linejoin='round'
-              stroke-width='2'
-              d='M19 9l-7 7-7-7'
-            />
-          </svg>
-        </span>
+        <Show when={!local.hideIndicator}>
+          <span
+            {...api().getIndicatorProps()}
+            class='transition-transform data-[state=open]:rotate-180'
+          >
+            <svg class='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+              <path
+                stroke-linecap='round'
+                stroke-linejoin='round'
+                stroke-width='2'
+                d='M19 9l-7 7-7-7'
+              />
+            </svg>
+          </span>
+        </Show>
       </button>
       <Show when={api().open}>
         <Show when={!local.inDialog} fallback={content()}>

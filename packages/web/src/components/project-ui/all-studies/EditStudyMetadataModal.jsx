@@ -1,19 +1,26 @@
-import { createSignal, createEffect, createMemo, Show } from 'solid-js';
-import { Dialog, showToast, Select, Collapsible } from '@corates/ui';
-import { BiRegularUser, BiRegularChevronDown } from 'solid-icons/bi';
-import projectStore from '@/stores/projectStore.js';
-
 /**
- * EditStudyModal - Modal for editing study metadata and reviewer assignments
+ * EditStudyMetadataModal - Modal for editing study citation metadata
  *
- * @param {Object} props
- * @param {boolean} props.open - Whether the modal is open
- * @param {Function} props.onOpenChange - Callback when open state changes
- * @param {Object} props.study - The study to edit
- * @param {string} props.projectId - The project ID
- * @param {Function} props.onUpdateStudy - Callback to update the study
+ * Fields:
+ * - Display Name
+ * - Article Title
+ * - First Author
+ * - Publication Year
+ * - Journal
+ * - DOI
+ * - Abstract
  */
-export default function EditStudyModal(props) {
+
+import { createSignal, createEffect } from 'solid-js';
+import { Dialog, showToast, Collapsible } from '@corates/ui';
+import { BiRegularChevronDown } from 'solid-icons/bi';
+
+export default function EditStudyMetadataModal(props) {
+  // props.open: boolean
+  // props.onOpenChange: (open: boolean) => void
+  // props.study: Study object
+  // props.onSave: (studyId, updates) => Promise<void>
+
   const [name, setName] = createSignal('');
   const [originalTitle, setOriginalTitle] = createSignal('');
   const [firstAuthor, setFirstAuthor] = createSignal('');
@@ -21,40 +28,19 @@ export default function EditStudyModal(props) {
   const [journal, setJournal] = createSignal('');
   const [doi, setDoi] = createSignal('');
   const [abstract, setAbstract] = createSignal('');
-  const [reviewer1, setReviewer1] = createSignal('');
-  const [reviewer2, setReviewer2] = createSignal('');
   const [saving, setSaving] = createSignal(false);
-
-  const members = () => projectStore.getMembers(props.projectId) || [];
-
-  // Convert members to Select items format
-  const memberItems = createMemo(() => {
-    const getMemberName = member =>
-      member?.displayName || member?.name || member?.email || 'Unknown';
-
-    return [
-      { label: 'Unassigned', value: '' },
-      ...members().map(m => ({
-        label: getMemberName(m),
-        value: m.userId,
-      })),
-    ];
-  });
 
   // Reset form when study changes or modal opens
   createEffect(() => {
     const study = props.study;
     if (study && props.open) {
       setName(study.name || '');
-      // Lazy migration: use name as fallback if originalTitle doesn't exist
       setOriginalTitle(study.originalTitle || study.name || '');
       setFirstAuthor(study.firstAuthor || '');
       setPublicationYear(study.publicationYear?.toString() || '');
       setJournal(study.journal || '');
       setDoi(study.doi || '');
       setAbstract(study.abstract || '');
-      setReviewer1(study.reviewer1 || '');
-      setReviewer2(study.reviewer2 || '');
     }
   });
 
@@ -63,8 +49,7 @@ export default function EditStudyModal(props) {
 
     setSaving(true);
     try {
-      // Validate publication year before passing to the update API.
-      // Only accept a finite integer within a reasonable range; otherwise leave undefined.
+      // Validate publication year
       let parsedPublicationYear;
       if (publicationYear()) {
         const raw = publicationYear().toString().trim();
@@ -85,11 +70,9 @@ export default function EditStudyModal(props) {
         journal: journal().trim() || undefined,
         doi: doi().trim() || undefined,
         abstract: abstract().trim() || undefined,
-        reviewer1: reviewer1() || null,
-        reviewer2: reviewer2() || null,
       };
 
-      await props.onUpdateStudy(props.study.id, updates);
+      await props.onSave?.(props.study.id, updates);
       props.onOpenChange(false);
     } catch (err) {
       console.error('Error updating study:', err);
@@ -100,25 +83,32 @@ export default function EditStudyModal(props) {
   };
 
   return (
-    <Dialog open={props.open} onOpenChange={props.onOpenChange} title='Edit Study' size='lg'>
+    <Dialog
+      open={props.open}
+      onOpenChange={props.onOpenChange}
+      title='Edit Study Metadata'
+      size='lg'
+    >
       <div class='space-y-4'>
         {/* Display Name */}
         <div>
           <label class='block text-sm font-medium text-gray-700 mb-1'>Display Name</label>
-          <div class='flex gap-2'>
-            <input
-              type='text'
-              value={name()}
-              onInput={e => setName(e.target.value)}
-              class='flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
-              placeholder='Enter display name'
-            />
-          </div>
+          <input
+            type='text'
+            value={name()}
+            onInput={e => setName(e.target.value)}
+            class='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+            placeholder='Enter display name'
+          />
+          <p class='mt-1 text-xs text-gray-500'>
+            Short name shown in lists. Leave blank to auto-generate from author and year.
+          </p>
         </div>
 
         {/* Citation Information - Collapsible */}
         <div class='border-t border-gray-200 pt-4'>
           <Collapsible
+            defaultOpen={true}
             trigger={api => (
               <button
                 {...api.getTriggerProps()}
@@ -132,7 +122,7 @@ export default function EditStudyModal(props) {
             )}
           >
             <div class='space-y-4 pt-2'>
-              {/* Original Title */}
+              {/* Article Title */}
               <div>
                 <label class='block text-sm font-medium text-gray-700 mb-1'>Article Title</label>
                 <textarea
@@ -140,11 +130,8 @@ export default function EditStudyModal(props) {
                   onInput={e => setOriginalTitle(e.target.value)}
                   class='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
                   placeholder='Full original title as imported'
-                  rows={1}
+                  rows={2}
                 />
-                <p class='mt-1 text-xs text-gray-500'>
-                  The full title as imported. Used for generating display names.
-                </p>
               </div>
 
               <div class='grid grid-cols-2 gap-4'>
@@ -208,44 +195,11 @@ export default function EditStudyModal(props) {
                   onInput={e => setAbstract(e.target.value)}
                   class='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
                   placeholder='Enter abstract...'
-                  rows={2}
+                  rows={3}
                 />
               </div>
             </div>
           </Collapsible>
-        </div>
-
-        {/* Reviewer Assignments */}
-        <div class='border-t border-gray-200 pt-4'>
-          <h3 class='text-sm font-medium text-gray-900 mb-3 flex items-center gap-2'>
-            <BiRegularUser class='w-4 h-4' />
-            Reviewer Assignments
-          </h3>
-          <div class='grid grid-cols-2 gap-4'>
-            <Select
-              label='Reviewer 1'
-              items={memberItems()}
-              value={reviewer1()}
-              onChange={setReviewer1}
-              placeholder='Unassigned'
-              disabledValues={reviewer2() ? [reviewer2()] : []}
-              inDialog
-            />
-            <Select
-              label='Reviewer 2'
-              items={memberItems()}
-              value={reviewer2()}
-              onChange={setReviewer2}
-              placeholder='Unassigned'
-              disabledValues={reviewer1() ? [reviewer1()] : []}
-              inDialog
-            />
-          </div>
-          <Show when={members().length === 0}>
-            <p class='text-sm text-gray-500 mt-2'>
-              No team members available. Add members to the project first.
-            </p>
-          </Show>
         </div>
 
         {/* Actions */}

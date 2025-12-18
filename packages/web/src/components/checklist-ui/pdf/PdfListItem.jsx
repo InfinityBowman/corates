@@ -45,7 +45,7 @@ export default function PdfListItem(props) {
     // Only show tag options that make sense
     if (props.pdf.tag !== 'primary') {
       items.push({
-        id: 'set-primary',
+        value: 'set-primary',
         label:
           props.hasPrimary && props.pdf.tag !== 'primary' ?
             'Set as Primary (replaces current)'
@@ -55,7 +55,7 @@ export default function PdfListItem(props) {
 
     if (props.pdf.tag !== 'protocol') {
       items.push({
-        id: 'set-protocol',
+        value: 'set-protocol',
         label:
           props.hasProtocol && props.pdf.tag !== 'protocol' ?
             'Set as Protocol (replaces current)'
@@ -65,7 +65,7 @@ export default function PdfListItem(props) {
 
     if (props.pdf.tag !== 'secondary') {
       items.push({
-        id: 'set-secondary',
+        value: 'set-secondary',
         label: 'Set as Secondary',
       });
     }
@@ -73,12 +73,12 @@ export default function PdfListItem(props) {
     return items;
   };
 
-  const handleTagMenuSelect = itemId => {
-    if (itemId === 'set-primary') {
+  const handleTagMenuSelect = details => {
+    if (details.value === 'set-primary') {
       props.onTagChange?.(props.pdf.id, 'primary');
-    } else if (itemId === 'set-protocol') {
+    } else if (details.value === 'set-protocol') {
       props.onTagChange?.(props.pdf.id, 'protocol');
-    } else if (itemId === 'set-secondary') {
+    } else if (details.value === 'set-secondary') {
       props.onTagChange?.(props.pdf.id, 'secondary');
     }
   };
@@ -133,10 +133,11 @@ export default function PdfListItem(props) {
           {/* Tag change menu (if not read-only) */}
           <Show when={!props.readOnly && tagMenuItems().length > 0}>
             <Menu
+              trigger={<span class='text-xs'>Tag</span>}
               items={tagMenuItems()}
               onSelect={handleTagMenuSelect}
-              triggerClass='p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors text-xs'
-              triggerLabel='Change tag'
+              placement='bottom-end'
+              hideIndicator
             />
           </Show>
 
