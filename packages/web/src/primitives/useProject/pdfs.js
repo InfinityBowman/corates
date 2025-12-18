@@ -59,14 +59,19 @@ export function createPdfOperations(projectId, getYDoc, isSynced) {
    * @param {Object} pdfInfo - PDF metadata { key, fileName, size, uploadedBy, uploadedAt, title?, firstAuthor?, publicationYear?, journal?, doi? }
    * @param {string} [tag='secondary'] - PDF tag: 'primary' | 'protocol' | 'secondary'
    * @returns {string} The generated PDF ID
+   * @throws {Error} If YDoc is not ready or study doesn't exist
    */
   function addPdfToStudy(studyId, pdfInfo, tag = 'secondary') {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return null;
+    if (!ydoc || !isSynced()) {
+      throw new Error('YDoc not ready');
+    }
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
-    if (!studyYMap) return null;
+    if (!studyYMap) {
+      throw new Error('Study not found');
+    }
 
     const pdfsMap = getPdfsMap(studyId, true);
 

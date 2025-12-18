@@ -140,19 +140,20 @@ export default function ChecklistYjsWrapper() {
 
   // Handle PDF change (upload new PDF)
   const handlePdfChange = async (data, fileName) => {
+    let uploadResult = null;
     try {
       // Determine tag: if no PDFs exist, set as primary
       const hasPdfs = studyPdfs().length > 0;
       const tag = hasPdfs ? 'secondary' : 'primary';
 
-      const result = await uploadPdf(params.projectId, params.studyId, data, fileName);
+      uploadResult = await uploadPdf(params.projectId, params.studyId, data, fileName);
       // Update Y.js with PDF metadata
       const pdfId = addPdfToStudy(
         params.studyId,
         {
-          key: result.key,
-          fileName: result.fileName,
-          size: result.size,
+          key: uploadResult.key,
+          fileName: uploadResult.fileName,
+          size: uploadResult.size,
           uploadedBy: user()?.id,
           uploadedAt: Date.now(),
         },
@@ -166,6 +167,12 @@ export default function ChecklistYjsWrapper() {
       cachePdf(params.projectId, params.studyId, fileName, data);
     } catch (err) {
       console.error('Failed to upload PDF:', err);
+      // Clean up uploaded file if metadata save failed
+      if (uploadResult?.fileName) {
+        deletePdf(params.projectId, params.studyId, uploadResult.fileName).catch(cleanupErr =>
+          console.warn('Failed to clean up orphaned PDF:', cleanupErr),
+        );
+      }
       showToast.error('Upload Failed', 'Failed to upload PDF');
     }
   };

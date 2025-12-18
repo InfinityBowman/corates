@@ -90,25 +90,26 @@ export default function useProjectPdfHandlers(projectId, projectActions) {
    * @returns {Promise<string>} The new PDF ID
    */
   const handleUploadPdf = async (studyId, file, tag = 'secondary') => {
+    let uploadResult = null;
     try {
       // Determine tag: if this is the first PDF, auto-set as primary
       const study = studies().find(s => s.id === studyId);
       const hasPdfs = study?.pdfs?.length > 0;
       const effectiveTag = !hasPdfs ? 'primary' : tag;
 
-      const result = await uploadPdf(projectId, studyId, file, file.name);
+      uploadResult = await uploadPdf(projectId, studyId, file, file.name);
 
       const arrayBuffer = await file.arrayBuffer();
-      cachePdf(projectId, studyId, result.fileName, arrayBuffer).catch(err =>
+      cachePdf(projectId, studyId, uploadResult.fileName, arrayBuffer).catch(err =>
         console.warn('Failed to cache PDF:', err),
       );
 
       const pdfId = addPdfToStudy(
         studyId,
         {
-          key: result.key,
-          fileName: result.fileName,
-          size: result.size,
+          key: uploadResult.key,
+          fileName: uploadResult.fileName,
+          size: uploadResult.size,
           uploadedBy: user()?.id,
           uploadedAt: Date.now(),
         },
@@ -118,6 +119,12 @@ export default function useProjectPdfHandlers(projectId, projectActions) {
       return pdfId;
     } catch (err) {
       console.error('Error uploading PDF:', err);
+      // Clean up the uploaded file if metadata save failed
+      if (uploadResult?.fileName) {
+        deletePdf(projectId, studyId, uploadResult.fileName).catch(cleanupErr =>
+          console.warn('Failed to clean up orphaned PDF:', cleanupErr),
+        );
+      }
       throw err;
     }
   };
@@ -173,18 +180,27 @@ export default function useProjectPdfHandlers(projectId, projectActions) {
     const hasPdfs = study?.pdfs?.length > 0;
     const effectiveTag = !hasPdfs ? 'primary' : tag;
 
-    addPdfToStudy(
-      studyId,
-      {
-        key: file.key,
-        fileName: file.fileName,
-        size: file.size,
-        uploadedBy: user()?.id,
-        uploadedAt: Date.now(),
-        source: 'google-drive',
-      },
-      effectiveTag,
-    );
+    try {
+      addPdfToStudy(
+        studyId,
+        {
+          key: file.key,
+          fileName: file.fileName,
+          size: file.size,
+          uploadedBy: user()?.id,
+          uploadedAt: Date.now(),
+          source: 'google-drive',
+        },
+        effectiveTag,
+      );
+    } catch (err) {
+      console.error('Failed to add PDF metadata:', err);
+      // Clean up the imported file since metadata save failed
+      deletePdf(projectId, studyId, file.fileName).catch(cleanupErr =>
+        console.warn('Failed to clean up orphaned PDF:', cleanupErr),
+      );
+      throw err;
+    }
   };
 
   return {

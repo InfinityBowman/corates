@@ -3,7 +3,7 @@
  * Reads from projectStore directly to avoid prop drilling
  */
 
-import { uploadPdf, fetchPdfViaProxy, downloadPdf } from '@api/pdf-api.js';
+import { uploadPdf, fetchPdfViaProxy, downloadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
 import { showToast } from '@corates/ui';
 import { generateStudyName, getDefaultNamingConvention } from '@/lib/studyNaming.js';
@@ -75,14 +75,21 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
                 );
                 const importedFile = result?.file;
                 if (importedFile?.fileName) {
-                  addPdfToStudy(studyId, {
-                    key: importedFile.key,
-                    fileName: importedFile.fileName,
-                    size: importedFile.size,
-                    uploadedBy: user()?.id,
-                    uploadedAt: Date.now(),
-                    source: 'google-drive',
-                  });
+                  try {
+                    addPdfToStudy(studyId, {
+                      key: importedFile.key,
+                      fileName: importedFile.fileName,
+                      size: importedFile.size,
+                      uploadedBy: user()?.id,
+                      uploadedAt: Date.now(),
+                      source: 'google-drive',
+                    });
+                  } catch (metaErr) {
+                    console.error('Failed to add PDF metadata:', metaErr);
+                    // Clean up orphaned file
+                    deletePdf(projectId, studyId, importedFile.fileName).catch(console.warn);
+                    throw metaErr;
+                  }
 
                   // Best-effort: mimic Upload PDFs behavior by extracting DOI/title and fetching metadata
                   try {
@@ -203,13 +210,19 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
                 cachePdf(projectId, studyId, result.fileName, pdfData).catch(err =>
                   console.warn('Failed to cache PDF:', err),
                 );
-                addPdfToStudy(studyId, {
-                  key: result.key,
-                  fileName: result.fileName,
-                  size: result.size,
-                  uploadedBy: user()?.id,
-                  uploadedAt: Date.now(),
-                });
+                try {
+                  addPdfToStudy(studyId, {
+                    key: result.key,
+                    fileName: result.fileName,
+                    size: result.size,
+                    uploadedBy: user()?.id,
+                    uploadedAt: Date.now(),
+                  });
+                } catch (metaErr) {
+                  console.error('Failed to add PDF metadata:', metaErr);
+                  // Clean up orphaned file
+                  deletePdf(projectId, studyId, result.fileName).catch(console.warn);
+                }
               } catch (uploadErr) {
                 console.error('Error uploading PDF:', uploadErr);
               }

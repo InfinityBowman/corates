@@ -44,7 +44,7 @@ export default function EditPdfMetadataModal(props) {
     setSaving(true);
     try {
       // Validate publication year
-      let parsedPublicationYear;
+      let parsedPublicationYear = 0;
       if (publicationYear()) {
         const raw = publicationYear().toString().trim();
         const num = Number(raw);
@@ -64,7 +64,7 @@ export default function EditPdfMetadataModal(props) {
         doi: doi().trim() || undefined,
       };
 
-      props.onSave?.(props.studyId, props.pdf.id, metadata);
+      await props.onSave?.(props.studyId, props.pdf.id, metadata);
       showToast.success('PDF Updated', 'Citation metadata saved.');
       props.onOpenChange(false);
     } catch (err) {
