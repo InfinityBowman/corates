@@ -97,7 +97,6 @@ export default function ChecklistsDashboard(props) {
                 </div>
 
                 <div class='mb-4'>
-                  {/* <h3 class='text-lg font-semibold text-gray-900 mb-2 pr-12'>{checklist.name}</h3> */}
                   <Editable
                     activationMode='click'
                     variant='heading'
