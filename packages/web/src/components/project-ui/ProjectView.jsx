@@ -27,11 +27,11 @@ import useProjectMemberHandlers from '@primitives/useProjectMemberHandlers.js';
 import { ProjectProvider } from './ProjectContext.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
 import ProjectHeader from './ProjectHeader.jsx';
-import OverviewTab from './tabs/OverviewTab.jsx';
-import IncludedStudiesTab from './all-studies/AllStudiesTab.jsx';
-import ToDoTab from './tabs/ToDoTab.jsx';
-import ReadyToReconcileTab from './tabs/ReadyToReconcileTab.jsx';
-import CompletedTab from './tabs/completed';
+import { OverviewTab } from './overview-tab';
+import { AllStudiesTab } from './all-studies-tab';
+import { ToDoTab } from './todo-tab';
+import { ReconcileTab } from './reconcile-tab';
+import { CompletedTab } from './completed-tab';
 
 export default function ProjectView() {
   const params = useParams();
@@ -257,7 +257,7 @@ export default function ProjectView() {
               </Show>
 
               <Show when={tabValue === 'all-studies'}>
-                <IncludedStudiesTab />
+                <AllStudiesTab />
               </Show>
 
               <Show when={tabValue === 'todo'}>
@@ -265,7 +265,7 @@ export default function ProjectView() {
               </Show>
 
               <Show when={tabValue === 'ready-to-reconcile'}>
-                <ReadyToReconcileTab />
+                <ReconcileTab />
               </Show>
 
               <Show when={tabValue === 'completed'}>

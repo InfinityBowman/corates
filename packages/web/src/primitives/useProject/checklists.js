@@ -444,6 +444,12 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
       answersMap.set(key, data);
     }
 
+    // Auto-transition status from 'pending' to 'in-progress' on first edit
+    const currentStatus = checklistYMap.get('status');
+    if (currentStatus === 'pending') {
+      checklistYMap.set('status', 'in-progress');
+    }
+
     checklistYMap.set('updatedAt', Date.now());
   }
 

@@ -5,10 +5,10 @@ import projectStore from '@/stores/projectStore.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 
 /**
- * ReadyToReconcileTab - Shows studies ready for reconciliation
+ * ReconcileTab - Shows studies ready for reconciliation
  * Uses ProjectContext for projectId, handlers, and helpers
  */
-export default function ReadyToReconcileTab() {
+export default function ReconcileTab() {
   const { projectId, handlers, getAssigneeName } = useProjectContext();
   const { checklistHandlers, pdfHandlers } = handlers;
 

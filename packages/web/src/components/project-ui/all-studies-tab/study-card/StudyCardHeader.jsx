@@ -124,7 +124,7 @@ export default function StudyCardHeader(props) {
           value={studyName()}
           onSubmit={handleNameChange}
           showEditIcon={true}
-          class='text-gray-900 font-medium'
+          class='text-gray-900 font-medium -ml-2'
         />
         <Show when={citationLine()}>
           <p class='text-xs text-gray-500 truncate select-text cursor-text w-fit' data-selectable>
