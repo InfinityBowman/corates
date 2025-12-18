@@ -1,12 +1,13 @@
 import { Show, createMemo, createSignal } from 'solid-js';
 import { FiChevronLeft, FiEdit2, FiCheck, FiX } from 'solid-icons/fi';
 import { useProjectContext } from './ProjectContext.jsx';
-import { Editable } from '@corates/ui';
+import { Editable, showToast } from '@corates/ui';
 
 export default function ProjectHeader(props) {
   const { userRole } = useProjectContext();
   const [isEditingDescription, setIsEditingDescription] = createSignal(false);
   const [descriptionDraft, setDescriptionDraft] = createSignal('');
+  const [isSaving, setIsSaving] = createSignal(false);
 
   const canEdit = createMemo(() => {
     const role = userRole();
@@ -24,12 +25,27 @@ export default function ProjectHeader(props) {
     setIsEditingDescription(true);
   };
 
-  const saveDescription = () => {
+  const saveDescription = async () => {
     const newDesc = descriptionDraft().trim();
-    if (newDesc !== props.description) {
-      props.onDescriptionChange?.(newDesc);
+    if (newDesc === props.description) {
+      setIsEditingDescription(false);
+      return;
     }
-    setIsEditingDescription(false);
+
+    setIsSaving(true);
+    try {
+      await props.onUpdateDescription?.(newDesc);
+      setIsEditingDescription(false);
+    } catch (error) {
+      console.error('Failed to update description:', error);
+      showToast({
+        title: 'Failed to update description',
+        description: error.message || 'Please try again',
+        type: 'error',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const cancelEditingDescription = () => {
@@ -88,21 +104,24 @@ export default function ProjectHeader(props) {
             <textarea
               value={descriptionDraft()}
               onInput={e => setDescriptionDraft(e.target.value)}
-              class='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none'
+              class='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-100 disabled:cursor-not-allowed'
               rows={3}
               placeholder='Add a project description...'
+              disabled={isSaving()}
             />
             <div class='flex gap-2'>
               <button
                 onClick={saveDescription}
-                class='inline-flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm'
+                disabled={isSaving()}
+                class='inline-flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed'
               >
                 <FiCheck class='w-4 h-4' />
-                Save
+                {isSaving() ? 'Saving...' : 'Save'}
               </button>
               <button
                 onClick={cancelEditingDescription}
-                class='inline-flex items-center gap-1 px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm'
+                disabled={isSaving()}
+                class='inline-flex items-center gap-1 px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed'
               >
                 <FiX class='w-4 h-4' />
                 Cancel

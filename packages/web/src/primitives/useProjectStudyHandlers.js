@@ -6,7 +6,6 @@
 import { uploadPdf, fetchPdfViaProxy, downloadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
 import { showToast } from '@corates/ui';
-import projectStore from '@/stores/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { importFromGoogleDrive } from '@api/google-drive.js';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
@@ -19,9 +18,6 @@ import { fetchFromDOI } from '@/lib/referenceLookup.js';
  */
 export default function useProjectStudyHandlers(projectId, projectActions, confirmDialog) {
   const { user } = useBetterAuth();
-
-  // Read from store directly
-  const studies = () => projectStore.getStudies(projectId);
 
   const { createStudy, updateStudy, deleteStudy, addPdfToStudy } = projectActions;
 
@@ -221,6 +217,7 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
                   console.error('Failed to add PDF metadata:', metaErr);
                   // Clean up orphaned file
                   deletePdf(projectId, studyId, result.fileName).catch(console.warn);
+                  throw metaErr;
                 }
               } catch (uploadErr) {
                 console.error('Error uploading PDF:', uploadErr);

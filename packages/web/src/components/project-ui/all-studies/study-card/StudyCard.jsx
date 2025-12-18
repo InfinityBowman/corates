@@ -2,7 +2,7 @@
  * StudyCard - Expandable study card with header and PDF section
  *
  * Combines:
- * - StudyCardHeader (always visible)
+ * - StudyCardHeader (always visible, clickable to toggle)
  * - StudyPdfSection (visible when expanded)
  */
 
@@ -35,14 +35,15 @@ export default function StudyCard(props) {
       <Collapsible
         open={expanded()}
         onOpenChange={open => {
+          // Only toggle if the state is actually different
           if (open !== expanded()) {
             props.onToggleExpanded?.();
           }
         }}
-        trigger={api => (
+        trigger={() => (
           <StudyCardHeader
             study={study()}
-            expanded={api.open}
+            expanded={expanded()}
             onToggle={() => props.onToggleExpanded?.()}
             onUpdateStudy={props.onUpdateStudy}
             onAssignReviewers={() => props.onAssignReviewers?.(study())}
