@@ -154,6 +154,7 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
                         journal: updates.journal,
                         abstract: updates.abstract,
                         importSource: updates.importSource,
+                        fileName: updates.fileName,
                       };
 
                       // Remove undefined to avoid overwriting existing values
