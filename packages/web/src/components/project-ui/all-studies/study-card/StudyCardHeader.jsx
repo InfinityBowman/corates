@@ -119,7 +119,8 @@ export default function StudyCardHeader(props) {
 
       {/* Study info - editable name */}
       <div class='min-w-0 flex-1'>
-""        <Editable
+        ""{' '}
+        <Editable
           activationMode='click'
           value={studyName()}
           onSubmit={handleNameChange}
