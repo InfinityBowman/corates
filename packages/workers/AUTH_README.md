@@ -127,47 +127,47 @@ The authentication system uses these tables (managed by Better Auth with Drizzle
 
 ### Session Table
 
-| Column           | Type      | Description                          |
-| ---------------- | --------- | ------------------------------------ |
-| `id`             | text      | Primary key                          |
-| `token`          | text      | Session token (unique)               |
-| `expiresAt`      | timestamp | When session expires                 |
-| `userId`         | text      | Foreign key to user                  |
-| `ipAddress`      | text      | Client IP address                    |
-| `userAgent`      | text      | Client user agent                    |
-| `impersonatedBy` | text      | Admin user ID if being impersonated  |
+| Column           | Type      | Description                         |
+| ---------------- | --------- | ----------------------------------- |
+| `id`             | text      | Primary key                         |
+| `token`          | text      | Session token (unique)              |
+| `expiresAt`      | timestamp | When session expires                |
+| `userId`         | text      | Foreign key to user                 |
+| `ipAddress`      | text      | Client IP address                   |
+| `userAgent`      | text      | Client user agent                   |
+| `impersonatedBy` | text      | Admin user ID if being impersonated |
 
 ### Account Table
 
-| Column                  | Type      | Description                             |
-| ----------------------- | --------- | --------------------------------------- |
-| `id`                    | text      | Primary key                             |
-| `accountId`             | text      | OAuth provider account ID               |
-| `providerId`            | text      | Provider name ('google', 'orcid', etc.) |
-| `userId`                | text      | Foreign key to user                     |
-| `accessToken`           | text      | OAuth access token                      |
-| `refreshToken`          | text      | OAuth refresh token                     |
-| `accessTokenExpiresAt`  | timestamp | Token expiry                            |
-| `scope`                 | text      | OAuth scopes granted                    |
-| `password`              | text      | Hashed password (for email auth)        |
+| Column                 | Type      | Description                             |
+| ---------------------- | --------- | --------------------------------------- |
+| `id`                   | text      | Primary key                             |
+| `accountId`            | text      | OAuth provider account ID               |
+| `providerId`           | text      | Provider name ('google', 'orcid', etc.) |
+| `userId`               | text      | Foreign key to user                     |
+| `accessToken`          | text      | OAuth access token                      |
+| `refreshToken`         | text      | OAuth refresh token                     |
+| `accessTokenExpiresAt` | timestamp | Token expiry                            |
+| `scope`                | text      | OAuth scopes granted                    |
+| `password`             | text      | Hashed password (for email auth)        |
 
 ### Verification Table
 
-| Column       | Type      | Description                       |
-| ------------ | --------- | --------------------------------- |
-| `id`         | text      | Primary key                       |
-| `identifier` | text      | Email address                     |
-| `value`      | text      | Verification token                |
-| `expiresAt`  | timestamp | When token expires                |
+| Column       | Type      | Description        |
+| ------------ | --------- | ------------------ |
+| `id`         | text      | Primary key        |
+| `identifier` | text      | Email address      |
+| `value`      | text      | Verification token |
+| `expiresAt`  | timestamp | When token expires |
 
 ### Two-Factor Table
 
-| Column        | Type | Description                      |
-| ------------- | ---- | -------------------------------- |
-| `id`          | text | Primary key                      |
-| `userId`      | text | Foreign key to user              |
-| `secret`      | text | TOTP secret                      |
-| `backupCodes` | text | JSON array of backup codes       |
+| Column        | Type | Description                |
+| ------------- | ---- | -------------------------- |
+| `id`          | text | Primary key                |
+| `userId`      | text | Foreign key to user        |
+| `secret`      | text | TOTP secret                |
+| `backupCodes` | text | JSON array of backup codes |
 
 ## Environment Variables
 
@@ -179,11 +179,11 @@ The authentication system uses these tables (managed by Better Auth with Drizzle
 
 ### Optional - Configuration
 
-| Variable        | Description                                                   |
-| --------------- | ------------------------------------------------------------- |
+| Variable        | Description                                                    |
+| --------------- | -------------------------------------------------------------- |
 | `AUTH_BASE_URL` | Base URL for auth callbacks (default: `http://localhost:8787`) |
-| `COOKIE_DOMAIN` | Domain for cookies (e.g., `.corates.org` for cross-subdomain) |
-| `ENVIRONMENT`   | `development` or `production`                                 |
+| `COOKIE_DOMAIN` | Domain for cookies (e.g., `.corates.org` for cross-subdomain)  |
+| `ENVIRONMENT`   | `development` or `production`                                  |
 
 ### Optional - Email (Postmark)
 
@@ -206,15 +206,15 @@ Used for Google Drive integration:
 
 Used for academic researcher authentication:
 
-| Variable              | Description                 |
-| --------------------- | --------------------------- |
-| `ORCID_CLIENT_ID`     | ORCID OAuth Client ID       |
-| `ORCID_CLIENT_SECRET` | ORCID OAuth Client Secret   |
+| Variable              | Description               |
+| --------------------- | ------------------------- |
+| `ORCID_CLIENT_ID`     | ORCID OAuth Client ID     |
+| `ORCID_CLIENT_SECRET` | ORCID OAuth Client Secret |
 
 ### Optional - Magic Links
 
-| Variable                  | Description                           |
-| ------------------------- | ------------------------------------- |
+| Variable                    | Description                          |
+| --------------------------- | ------------------------------------ |
 | `MAGIC_LINK_EXPIRY_MINUTES` | Magic link expiry time (default: 15) |
 
 ## Google OAuth Setup

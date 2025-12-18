@@ -14,10 +14,10 @@ export const NAMING_CONVENTIONS = [
     example: 'Effects of Exercise on Sleep',
   },
   {
-    id: 'title',
-    label: 'Full Title',
-    description: 'Use the complete study title',
-    example: 'Effects of Exercise on Sleep Quality: A Systematic Review and Meta-Analysis',
+    id: 'fileName',
+    label: 'Filename',
+    description: 'Original PDF file name',
+    example: 'study_document.pdf',
   },
   {
     id: 'lastNameYear',
@@ -30,6 +30,12 @@ export const NAMING_CONVENTIONS = [
     label: 'Last Name (Year) - Short Title',
     description: 'First author, year, and abbreviated title',
     example: 'Smith (2023) - Effects of Exercise',
+  },
+  {
+    id: 'title',
+    label: 'Full Title',
+    description: 'Use the complete study title',
+    example: 'Effects of Exercise on Sleep Quality: A Systematic Review and Meta-Analysis',
   },
 ];
 
@@ -120,7 +126,7 @@ function truncateTitle(title, maxLength = 30) {
  * @returns {string} The generated study name
  */
 export function generateStudyName(studyData, convention = 'title') {
-  const { title, firstAuthor, publicationYear, authors } = studyData;
+  const { title, firstAuthor, publicationYear, authors, fileName } = studyData;
 
   // Fall back to title if we don't have the required metadata
   const hasAuthorInfo = firstAuthor || authors;
@@ -153,6 +159,10 @@ export function generateStudyName(studyData, convention = 'title') {
         name += ` - ${shortTitle}`;
       }
       return name || title || 'Untitled Study';
+    }
+
+    case 'fileName': {
+      return fileName || 'Untitled Study';
     }
 
     case 'title':

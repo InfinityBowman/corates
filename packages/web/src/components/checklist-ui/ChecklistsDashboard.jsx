@@ -2,14 +2,16 @@ import { For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
 import { useConfirmDialog } from '@corates/ui';
+import { getChecklistMetadata } from '@/checklist-registry';
 import { FiTrash2 } from 'solid-icons/fi';
+import { Editable } from '@corates/ui';
 
 export default function ChecklistsDashboard(props) {
   const navigate = useNavigate();
 
   const isLoggedIn = () => props.isLoggedIn ?? false;
 
-  const { checklists, loading, deleteChecklist } = useLocalChecklists();
+  const { checklists, loading, deleteChecklist, updateChecklist } = useLocalChecklists();
 
   // Confirm dialog for delete actions
   const confirmDialog = useConfirmDialog();
@@ -95,8 +97,17 @@ export default function ChecklistsDashboard(props) {
                 </div>
 
                 <div class='mb-4'>
-                  <h3 class='text-lg font-semibold text-gray-900 mb-2 pr-12'>{checklist.name}</h3>
-                  <p class='text-gray-500 text-sm'>AMSTAR2 Checklist</p>
+                  <Editable
+                    activationMode='click'
+                    variant='heading'
+                    class='text-lg font-semibold text-gray-900'
+                    value={checklist.name}
+                    showEditIcon={true}
+                    onSubmit={newName => updateChecklist(checklist.id, { name: newName })}
+                  />
+                  <p class='text-gray-500 text-sm'>
+                    {getChecklistMetadata(checklist.checklistType).name}
+                  </p>
                 </div>
 
                 <div class='flex items-center justify-between text-xs text-gray-500 mb-4'>

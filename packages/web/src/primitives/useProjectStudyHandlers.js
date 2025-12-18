@@ -108,6 +108,9 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
                     if (extractedDoi && !study.doi) {
                       updates.doi = extractedDoi;
                     }
+                    if (importedFile.fileName) {
+                      updates.fileName = importedFile.fileName;
+                    }
 
                     if (extractedDoi) {
                       try {
@@ -133,6 +136,7 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
                       firstAuthor: updates.firstAuthor ?? study.firstAuthor,
                       publicationYear: updates.publicationYear ?? study.publicationYear,
                       authors: updates.authors ?? study.authors,
+                      fileName: updates.fileName ?? study.fileName,
                     };
                     const updatedName = generateStudyName(nameBasis, namingConvention);
                     if (updatedName) updates.name = updatedName;
@@ -150,6 +154,7 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
                         journal: updates.journal,
                         abstract: updates.abstract,
                         importSource: updates.importSource,
+                        fileName: updates.fileName,
                       };
 
                       // Remove undefined to avoid overwriting existing values
@@ -316,6 +321,7 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
             firstAuthor: study.firstAuthor,
             publicationYear: study.publicationYear,
             authors: study.authors,
+            fileName: study.fileName,
           },
           namingConvention,
         );
