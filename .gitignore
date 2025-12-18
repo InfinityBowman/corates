@@ -48,3 +48,6 @@ secrets.txt
 
 # Generated files
 openapi.json
+
+# Temp files
+/docs/plans/*
