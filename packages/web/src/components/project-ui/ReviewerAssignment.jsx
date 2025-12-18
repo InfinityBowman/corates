@@ -5,14 +5,8 @@
 
 import { createSignal, createMemo, For, Show } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { showToast } from '@corates/ui';
-import {
-  BiRegularShuffle,
-  BiRegularCheck,
-  BiRegularX,
-  BiRegularChevronDown,
-  BiRegularChevronUp,
-} from 'solid-icons/bi';
+import { showToast, Collapsible } from '@corates/ui';
+import { BiRegularShuffle, BiRegularCheck, BiRegularX, BiRegularChevronRight } from 'solid-icons/bi';
 import { FiUsers } from 'solid-icons/fi';
 
 /**
@@ -427,22 +421,27 @@ export default function ReviewerAssignment(props) {
 
   return (
     <div class='bg-white border border-gray-200 rounded-lg overflow-hidden'>
-      {/* Trigger Button */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded())}
-        class='w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'
+      <Collapsible
+        open={isExpanded()}
+        onOpenChange={setIsExpanded}
+        trigger={api => (
+          <div
+            {...api.getTriggerProps()}
+            class='w-full flex items-center gap-3 px-4 py-3 cursor-pointer select-none'
+          >
+            {/* Chevron indicator */}
+            <div class='shrink-0'>
+              <BiRegularChevronRight
+                class={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isExpanded() ? 'rotate-90' : ''}`}
+              />
+            </div>
+            <div class='flex items-center gap-2'>
+              <FiUsers class='w-4 h-4 text-blue-600' />
+              <span class='text-sm font-medium text-gray-900'>Assign Reviewers to Studies</span>
+            </div>
+          </div>
+        )}
       >
-        <div class='flex items-center gap-2'>
-          <FiUsers class='w-4 h-4 text-blue-600' />
-          <span class='text-sm font-medium text-gray-900'>Assign Reviewers to Studies</span>
-        </div>
-        <Show when={isExpanded()} fallback={<BiRegularChevronDown class='w-5 h-5 text-gray-400' />}>
-          <BiRegularChevronUp class='w-5 h-5 text-gray-400' />
-        </Show>
-      </button>
-
-      {/* Expandable Content */}
-      <Show when={isExpanded()}>
         <div class='px-4 pb-4 border-t border-gray-200'>
           <Show
             when={members().length >= 2}
@@ -585,7 +584,7 @@ export default function ReviewerAssignment(props) {
             </Show>
           </Show>
         </div>
-      </Show>
+      </Collapsible>
     </div>
   );
 }

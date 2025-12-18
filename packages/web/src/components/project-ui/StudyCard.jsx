@@ -17,6 +17,7 @@
  * @param {boolean} [props.creatingChecklist] - Loading state for checklist creation
  * @param {function(type: string, assigneeId: string|number)} props.onAddChecklist - Creates a new checklist for a study
  * @param {function(Object): void} [props.onViewPdf] - Called to open/view a PDF (passed a PDF object from study.pdfs)
+ * @param {function(Object): void} [props.onDownloadPdf] - Called to download a PDF (passed a PDF object from study.pdfs)
  * @param {function(): void} [props.onToggleChecklistForm] - Toggles visibility for the checklist creation form
  * @param {function(checklistId: string|number): void} [props.onOpenChecklist] - Open a specific checklist for editing/review
  * @param {function(checklistId: string|number, updates: Object): void} [props.onUpdateChecklist] - Update checklist metadata
@@ -25,24 +26,40 @@
  *
  * Behavior
  * - Renders a card header with the study title and optional citation line
- * - Shows a View / Add / Change PDF button depending on whether PDFs exist
+ * - Shows a collapsible PDF section with all PDFs (read-only, view/download only)
  * - Allows creating new checklists via an `Add Checklist` button and `ChecklistForm`
  * - Renders existing checklists using `ChecklistRow` and forwards checklist actions
  */
 
-import { For, Show } from 'solid-js';
-import { CgFileDocument } from 'solid-icons/cg';
+import { For, Show, createSignal, createMemo } from 'solid-js';
+import { BiRegularChevronRight } from 'solid-icons/bi';
+import { Collapsible } from '@corates/ui';
 import ChecklistForm from './ChecklistForm.jsx';
 import ChecklistRow from './ChecklistRow.jsx';
+import PdfListItem from '@/components/checklist-ui/pdf/PdfListItem.jsx';
 
 export default function StudyCard(props) {
+  const [pdfSectionOpen, setPdfSectionOpen] = createSignal(false);
+
   const handleCreateChecklist = (type, assigneeId) => {
     props.onAddChecklist(type, assigneeId);
   };
 
   // Check if study has PDFs
   const hasPdfs = () => props.study.pdfs && props.study.pdfs.length > 0;
-  const firstPdf = () => (hasPdfs() ? props.study.pdfs[0] : null);
+  const pdfCount = () => props.study.pdfs?.length || 0;
+
+  // Sort PDFs: primary first, then protocol, then secondary by uploadedAt desc
+  const sortedPdfs = createMemo(() => {
+    if (!hasPdfs()) return [];
+    return [...props.study.pdfs].sort((a, b) => {
+      const tagOrder = { primary: 0, protocol: 1, secondary: 2 };
+      const tagA = tagOrder[a.tag] ?? 2;
+      const tagB = tagOrder[b.tag] ?? 2;
+      if (tagA !== tagB) return tagA - tagB;
+      return (b.uploadedAt || 0) - (a.uploadedAt || 0);
+    });
+  });
 
   return (
     <div class='bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden'>
@@ -66,16 +83,6 @@ export default function StudyCard(props) {
             </Show>
           </div>
           <div class='flex items-center gap-2'>
-            <Show when={hasPdfs()}>
-              <button
-                onClick={() => props.onViewPdf?.(firstPdf())}
-                class='inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors gap-1.5'
-                title='View PDF'
-              >
-                <CgFileDocument class='w-4 h-4' />
-                View PDF
-              </button>
-            </Show>
             <Show when={!props.hideAddChecklist}>
               <button
                 onClick={() => props.onToggleChecklistForm()}
@@ -87,6 +94,37 @@ export default function StudyCard(props) {
           </div>
         </div>
       </div>
+
+      {/* Collapsible PDF Section */}
+      <Show when={hasPdfs()}>
+        <div class='border-b border-gray-200'>
+          <Collapsible
+            open={pdfSectionOpen()}
+            onOpenChange={setPdfSectionOpen}
+            trigger={() => (
+              <div class='flex items-center gap-2 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors'>
+                <BiRegularChevronRight
+                  class={`w-4 h-4 text-gray-400 transition-transform duration-200 ${pdfSectionOpen() ? 'rotate-90' : ''}`}
+                />
+                <span class='text-sm font-medium text-gray-700'>PDFs ({pdfCount()})</span>
+              </div>
+            )}
+          >
+            <div class='px-4 pb-4 space-y-2'>
+              <For each={sortedPdfs()}>
+                {pdf => (
+                  <PdfListItem
+                    pdf={pdf}
+                    onView={() => props.onViewPdf?.(pdf)}
+                    onDownload={() => props.onDownloadPdf?.(pdf)}
+                    readOnly={true}
+                  />
+                )}
+              </For>
+            </div>
+          </Collapsible>
+        </div>
+      </Show>
 
       {/* Add Checklist Form */}
       <Show when={props.showChecklistForm}>

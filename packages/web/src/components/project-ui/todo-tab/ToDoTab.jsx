@@ -1,15 +1,15 @@
 import { For, Show, createMemo, createSignal } from 'solid-js';
-import StudyCard from '../StudyCard.jsx';
+import TodoStudyRow from './TodoStudyRow.jsx';
 import projectStore from '@/stores/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 
 /**
- * ToDoTab - Shows studies assigned to the current user
+ * ToDoTab - Shows studies assigned to the current user in compact rows
  * Uses ProjectContext for projectId, handlers, and helpers
  */
 export default function ToDoTab() {
-  const { projectId, handlers, getAssigneeName } = useProjectContext();
+  const { projectId, handlers } = useProjectContext();
   const { checklistHandlers, pdfHandlers } = handlers;
   const { user } = useBetterAuth();
 
@@ -50,7 +50,7 @@ export default function ToDoTab() {
   };
 
   return (
-    <div class='space-y-6'>
+    <div class='space-y-2'>
       {/* Studies List */}
       <Show
         when={myStudies().length > 0}
@@ -62,36 +62,28 @@ export default function ToDoTab() {
           </Show>
         }
       >
-        <div class='space-y-4'>
-          <For each={myStudies()}>
-            {study => (
-              <StudyCard
-                study={study}
-                members={members()}
-                currentUserId={currentUserId()}
-                showChecklistForm={showChecklistForm() === study.id}
-                onToggleChecklistForm={() =>
-                  setShowChecklistForm(prev => (prev === study.id ? null : study.id))
-                }
-                onAddChecklist={(type, assigneeId) =>
-                  handleCreateChecklist(study.id, type, assigneeId)
-                }
-                onOpenChecklist={checklistId =>
-                  checklistHandlers.openChecklist(study.id, checklistId)
-                }
-                onViewPdf={pdf => pdfHandlers.handleViewPdf(study.id, pdf)}
-                onUpdateChecklist={(checklistId, updates) =>
-                  checklistHandlers.handleUpdateChecklist(study.id, checklistId, updates)
-                }
-                onDeleteChecklist={checklistId =>
-                  checklistHandlers.handleDeleteChecklist(study.id, checklistId)
-                }
-                getAssigneeName={getAssigneeName}
-                creatingChecklist={creatingChecklist()}
-              />
-            )}
-          </For>
-        </div>
+        <For each={myStudies()}>
+          {study => (
+            <TodoStudyRow
+              study={study}
+              members={members()}
+              currentUserId={currentUserId()}
+              showChecklistForm={showChecklistForm() === study.id}
+              onToggleChecklistForm={() =>
+                setShowChecklistForm(prev => (prev === study.id ? null : study.id))
+              }
+              onAddChecklist={(type, assigneeId) =>
+                handleCreateChecklist(study.id, type, assigneeId)
+              }
+              onOpenChecklist={checklistId =>
+                checklistHandlers.openChecklist(study.id, checklistId)
+              }
+              onViewPdf={pdf => pdfHandlers.handleViewPdf(study.id, pdf)}
+              onDownloadPdf={pdf => pdfHandlers.handleDownloadPdf(study.id, pdf)}
+              creatingChecklist={creatingChecklist()}
+            />
+          )}
+        </For>
       </Show>
     </div>
   );

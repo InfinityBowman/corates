@@ -83,12 +83,11 @@ export default function ProjectHeader(props) {
         <div class='flex items-center gap-2 flex-1 min-w-0'>
           <Editable
             activationMode='click'
-            variant='heading'
             value={name()}
             onSubmit={handleNameChange}
             showEditIcon={canEdit()}
             readOnly={!canEdit()}
-            class='text-2xl font-bold text-gray-900'
+            class='text-2xl font-bold text-gray-900 -ml-2'
           />
         </div>
         <Show when={userRole()}>

@@ -5,7 +5,7 @@ export interface EditableProps {
   value?: string;
   onSubmit?: (_value: string) => void;
   activationMode?: 'focus' | 'dblclick' | 'click' | 'none';
-  variant?: 'default' | 'heading';
+  variant?: 'default' | 'heading' | 'inline' | 'field';
   showEditIcon?: boolean;
   readOnly?: boolean;
   class?: string;
