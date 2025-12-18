@@ -95,7 +95,6 @@ export default function ChecklistsDashboard(props) {
                     Local
                   </span>
                 </div>
-
                 <div class='mb-4'>
                   <Editable
                     activationMode='click'

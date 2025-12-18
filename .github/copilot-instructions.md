@@ -8,6 +8,8 @@ the /landing package contains the marketing and landing site.
 
 The web package is copied into the landing package during the build process for deployment and all deployed as a single site on a single worker.
 
+Do not worry about migrations either client side or backend unless specifically instructed to do so in the prompt. This project is not in production and has no users.
+
 ## Coding Standards
 
 - Do not use emojis in code, comments, documentation, or commit messages.

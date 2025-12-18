@@ -1,8 +1,14 @@
 /**
  * PDF operations for useProject
+ *
+ * PDF Tags:
+ * - 'primary': The main publication/article (only one per study)
+ * - 'protocol': Study protocol document (only one per study)
+ * - 'secondary': Additional supplementary PDFs (default)
  */
 
 import * as Y from 'yjs';
+import { nanoid } from 'nanoid';
 
 /**
  * Creates PDF operations
@@ -13,41 +19,83 @@ import * as Y from 'yjs';
  */
 export function createPdfOperations(projectId, getYDoc, isSynced) {
   /**
-   * Add PDF metadata to a study (called after successful upload to R2)
-   * @param {string} studyId - The study ID
-   * @param {Object} pdfInfo - PDF metadata { key, fileName, size, uploadedBy, uploadedAt }
+   * Get the pdfs Y.Map for a study, creating it if needed
+   * @private
    */
-  function addPdfToStudy(studyId, pdfInfo) {
+  function getPdfsMap(studyId, create = false) {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return;
+    if (!ydoc || !isSynced()) return null;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
-    if (!studyYMap) return;
+    if (!studyYMap) return null;
 
     let pdfsMap = studyYMap.get('pdfs');
-    if (!pdfsMap) {
+    if (!pdfsMap && create) {
       pdfsMap = new Y.Map();
       studyYMap.set('pdfs', pdfsMap);
     }
+    return pdfsMap;
+  }
 
+  /**
+   * Clear a specific tag from all PDFs in a study (used to ensure only one primary/protocol)
+   * @private
+   */
+  function clearTag(studyId, tag) {
+    const pdfsMap = getPdfsMap(studyId);
+    if (!pdfsMap) return;
+
+    for (const [_pdfId, pdfYMap] of pdfsMap.entries()) {
+      if (pdfYMap.get('tag') === tag) {
+        pdfYMap.set('tag', 'secondary');
+      }
+    }
+  }
+
+  /**
+   * Add PDF metadata to a study (called after successful upload to R2)
+   * @param {string} studyId - The study ID
+   * @param {Object} pdfInfo - PDF metadata { key, fileName, size, uploadedBy, uploadedAt }
+   * @param {string} [tag='secondary'] - PDF tag: 'primary' | 'protocol' | 'secondary'
+   * @returns {string} The generated PDF ID
+   */
+  function addPdfToStudy(studyId, pdfInfo, tag = 'secondary') {
+    const ydoc = getYDoc();
+    if (!ydoc || !isSynced()) return null;
+
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
+    if (!studyYMap) return null;
+
+    const pdfsMap = getPdfsMap(studyId, true);
+
+    // If setting as primary or protocol, clear existing tag first
+    if (tag === 'primary' || tag === 'protocol') {
+      clearTag(studyId, tag);
+    }
+
+    const pdfId = nanoid();
     const pdfYMap = new Y.Map();
+    pdfYMap.set('id', pdfId);
     pdfYMap.set('key', pdfInfo.key);
     pdfYMap.set('fileName', pdfInfo.fileName);
     pdfYMap.set('size', pdfInfo.size);
     pdfYMap.set('uploadedBy', pdfInfo.uploadedBy);
     pdfYMap.set('uploadedAt', pdfInfo.uploadedAt || Date.now());
-    pdfsMap.set(pdfInfo.fileName, pdfYMap);
+    pdfYMap.set('tag', tag);
+    pdfsMap.set(pdfId, pdfYMap);
 
     studyYMap.set('updatedAt', Date.now());
+    return pdfId;
   }
 
   /**
-   * Remove PDF metadata from a study (called after successful delete from R2)
+   * Remove PDF metadata from a study by PDF ID
    * @param {string} studyId - The study ID
-   * @param {string} fileName - The PDF file name
+   * @param {string} pdfId - The PDF ID
    */
-  function removePdfFromStudy(studyId, fileName) {
+  function removePdfFromStudy(studyId, pdfId) {
     const ydoc = getYDoc();
     if (!ydoc || !isSynced()) return;
 
@@ -57,14 +105,83 @@ export function createPdfOperations(projectId, getYDoc, isSynced) {
 
     const pdfsMap = studyYMap.get('pdfs');
     if (pdfsMap) {
-      pdfsMap.delete(fileName);
+      pdfsMap.delete(pdfId);
     }
 
     studyYMap.set('updatedAt', Date.now());
   }
 
+  /**
+   * Remove PDF metadata from a study by file name (for backward compatibility)
+   * @param {string} studyId - The study ID
+   * @param {string} fileName - The PDF file name
+   */
+  function removePdfByFileName(studyId, fileName) {
+    const pdfsMap = getPdfsMap(studyId);
+    if (!pdfsMap) return;
+
+    for (const [pdfId, pdfYMap] of pdfsMap.entries()) {
+      if (pdfYMap.get('fileName') === fileName) {
+        removePdfFromStudy(studyId, pdfId);
+        return;
+      }
+    }
+  }
+
+  /**
+   * Update PDF tag
+   * @param {string} studyId - The study ID
+   * @param {string} pdfId - The PDF ID
+   * @param {string} tag - New tag: 'primary' | 'protocol' | 'secondary'
+   */
+  function updatePdfTag(studyId, pdfId, tag) {
+    const ydoc = getYDoc();
+    if (!ydoc || !isSynced()) return;
+
+    const pdfsMap = getPdfsMap(studyId);
+    if (!pdfsMap) return;
+
+    const pdfYMap = pdfsMap.get(pdfId);
+    if (!pdfYMap) return;
+
+    // If setting as primary or protocol, clear existing tag first
+    if (tag === 'primary' || tag === 'protocol') {
+      clearTag(studyId, tag);
+    }
+
+    pdfYMap.set('tag', tag);
+
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
+    if (studyYMap) {
+      studyYMap.set('updatedAt', Date.now());
+    }
+  }
+
+  /**
+   * Set a PDF as primary (convenience method)
+   * @param {string} studyId - The study ID
+   * @param {string} pdfId - The PDF ID
+   */
+  function setPdfAsPrimary(studyId, pdfId) {
+    updatePdfTag(studyId, pdfId, 'primary');
+  }
+
+  /**
+   * Set a PDF as protocol (convenience method)
+   * @param {string} studyId - The study ID
+   * @param {string} pdfId - The PDF ID
+   */
+  function setPdfAsProtocol(studyId, pdfId) {
+    updatePdfTag(studyId, pdfId, 'protocol');
+  }
+
   return {
     addPdfToStudy,
     removePdfFromStudy,
+    removePdfByFileName,
+    updatePdfTag,
+    setPdfAsPrimary,
+    setPdfAsProtocol,
   };
 }

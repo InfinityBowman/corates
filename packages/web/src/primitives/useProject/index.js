@@ -188,6 +188,10 @@ export function useProject(projectId) {
     // PDF operations
     addPdfToStudy: (...args) => pdfOps?.addPdfToStudy(...args),
     removePdfFromStudy: (...args) => pdfOps?.removePdfFromStudy(...args),
+    removePdfByFileName: (...args) => pdfOps?.removePdfByFileName(...args),
+    updatePdfTag: (...args) => pdfOps?.updatePdfTag(...args),
+    setPdfAsPrimary: (...args) => pdfOps?.setPdfAsPrimary(...args),
+    setPdfAsProtocol: (...args) => pdfOps?.setPdfAsProtocol(...args),
 
     // Reconciliation operations
     saveReconciliationProgress: (...args) => reconciliationOps?.saveReconciliationProgress(...args),

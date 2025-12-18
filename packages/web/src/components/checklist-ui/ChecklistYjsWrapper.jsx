@@ -10,6 +10,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry';
 import { IoChevronBack } from 'solid-icons/io';
 import ScoreTag from '@/components/checklist-ui/ScoreTag.jsx';
+import { PdfSelector } from '@checklist-ui/pdf/index.js';
 
 export default function ChecklistYjsWrapper() {
   const params = useParams();
@@ -19,6 +20,7 @@ export default function ChecklistYjsWrapper() {
   const [pdfData, setPdfData] = createSignal(null);
   const [pdfFileName, setPdfFileName] = createSignal(null);
   const [pdfLoading, setPdfLoading] = createSignal(false);
+  const [selectedPdfId, setSelectedPdfId] = createSignal(null);
 
   // Use full hook for write operations
   const {
@@ -45,24 +47,55 @@ export default function ChecklistYjsWrapper() {
 
   const isReadOnly = () => currentChecklist()?.isReconciled === true;
 
-  // Get the first PDF from the study (if any)
-  const studyPdf = createMemo(() => {
+  // Get all PDFs from the study
+  const studyPdfs = createMemo(() => {
     const study = currentStudy();
-    if (!study || !study.pdfs || study.pdfs.length === 0) return null;
-    return study.pdfs[0]; // Use the first PDF
+    return study?.pdfs || [];
+  });
+
+  // Get the primary PDF or first PDF as default selection
+  const defaultPdf = createMemo(() => {
+    const pdfs = studyPdfs();
+    if (!pdfs.length) return null;
+    // Prefer primary, then first available
+    return pdfs.find(p => p.tag === 'primary') || pdfs[0];
+  });
+
+  // The currently selected PDF (or default)
+  const currentPdf = createMemo(() => {
+    const pdfs = studyPdfs();
+    const selected = selectedPdfId();
+    if (selected) {
+      return pdfs.find(p => p.id === selected) || defaultPdf();
+    }
+    return defaultPdf();
   });
 
   // Track which PDF we've attempted to load (to prevent infinite retries)
   const [attemptedPdfFile, setAttemptedPdfFile] = createSignal(null);
 
-  // Load PDF when study has one - try cache first, then cloud
+  // Auto-select primary PDF when study loads
   createEffect(() => {
-    const pdf = studyPdf();
+    const pdf = defaultPdf();
+    if (pdf && !selectedPdfId()) {
+      setSelectedPdfId(pdf.id);
+    }
+  });
+
+  // Load PDF when selection changes - try cache first, then cloud
+  createEffect(() => {
+    const pdf = currentPdf();
     const fileName = pdf?.fileName;
 
-    // Skip if no PDF, already loaded, currently loading, or already attempted this file
-    if (!fileName || pdfData() || pdfLoading() || attemptedPdfFile() === fileName) {
+    // Skip if no PDF, already loaded this file, or currently loading
+    if (!fileName || attemptedPdfFile() === fileName || pdfLoading()) {
       return;
+    }
+
+    // Clear previous PDF data when switching
+    if (attemptedPdfFile() && attemptedPdfFile() !== fileName) {
+      setPdfData(null);
+      setPdfFileName(null);
     }
 
     setAttemptedPdfFile(fileName);
@@ -98,36 +131,37 @@ export default function ChecklistYjsWrapper() {
       });
   });
 
+  // Handle PDF selection change
+  const handlePdfSelect = pdfId => {
+    setSelectedPdfId(pdfId);
+    // Reset attempted file to trigger reload
+    setAttemptedPdfFile(null);
+  };
+
   // Handle PDF change (upload new PDF)
   const handlePdfChange = async (data, fileName) => {
     try {
-      // Remove any existing PDFs first
-      const study = currentStudy();
-      if (study?.pdfs?.length > 0) {
-        for (const existingPdf of study.pdfs) {
-          try {
-            await deletePdf(params.projectId, params.studyId, existingPdf.fileName);
-            removePdfFromStudy(params.studyId, existingPdf.fileName);
-            // Also remove from cache
-            removeCachedPdf(params.projectId, params.studyId, existingPdf.fileName);
-          } catch (deleteErr) {
-            console.warn('Failed to delete old PDF:', deleteErr);
-            // Continue anyway - the new PDF will still be uploaded
-          }
-        }
-      }
+      // Determine tag: if no PDFs exist, set as primary
+      const hasPdfs = studyPdfs().length > 0;
+      const tag = hasPdfs ? 'secondary' : 'primary';
 
       const result = await uploadPdf(params.projectId, params.studyId, data, fileName);
       // Update Y.js with PDF metadata
-      addPdfToStudy(params.studyId, {
-        key: result.key,
-        fileName: result.fileName,
-        size: result.size,
-        uploadedBy: user()?.id,
-        uploadedAt: Date.now(),
-      });
+      const pdfId = addPdfToStudy(
+        params.studyId,
+        {
+          key: result.key,
+          fileName: result.fileName,
+          size: result.size,
+          uploadedBy: user()?.id,
+          uploadedAt: Date.now(),
+        },
+        tag,
+      );
+
       setPdfData(data);
       setPdfFileName(fileName);
+      setSelectedPdfId(pdfId);
       // Cache the uploaded PDF locally
       cachePdf(params.projectId, params.studyId, fileName, data);
     } catch (err) {
@@ -136,19 +170,21 @@ export default function ChecklistYjsWrapper() {
     }
   };
 
-  // Handle PDF clear (delete PDF)
+  // Handle PDF clear (delete current PDF)
   const handlePdfClear = async () => {
-    const fileName = pdfFileName();
-    if (!fileName) return;
+    const pdf = currentPdf();
+    if (!pdf) return;
 
     try {
-      await deletePdf(params.projectId, params.studyId, fileName);
+      await deletePdf(params.projectId, params.studyId, pdf.fileName);
       // Update Y.js to remove PDF metadata
-      removePdfFromStudy(params.studyId, fileName);
+      removePdfFromStudy(params.studyId, pdf.id);
       // Remove from cache
-      removeCachedPdf(params.projectId, params.studyId, fileName);
+      removeCachedPdf(params.projectId, params.studyId, pdf.fileName);
       setPdfData(null);
       setPdfFileName(null);
+      setSelectedPdfId(null);
+      setAttemptedPdfFile(null);
     } catch (err) {
       console.error('Failed to delete PDF:', err);
       showToast.error('Delete Failed', 'Failed to delete PDF');
@@ -258,6 +294,14 @@ export default function ChecklistYjsWrapper() {
           {currentChecklist()?.type || 'AMSTAR2'} Checklist
         </span>
       </div>
+      {/* PDF Selector - only shown when multiple PDFs exist */}
+      <Show when={studyPdfs().length > 1}>
+        <PdfSelector
+          pdfs={studyPdfs()}
+          selectedPdfId={selectedPdfId()}
+          onSelect={handlePdfSelect}
+        />
+      </Show>
       <div class='ml-auto flex items-center gap-3'>
         <ScoreTag currentScore={currentScore()} checklistType={checklistType()} />
         <Show
