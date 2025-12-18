@@ -27,6 +27,7 @@ import useProjectMemberHandlers from '@primitives/useProjectMemberHandlers.js';
 import { ProjectProvider } from './ProjectContext.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
 import ProjectHeader from './ProjectHeader.jsx';
+import PdfPreviewPanel from './PdfPreviewPanel.jsx';
 import { OverviewTab } from './overview-tab';
 import { AllStudiesTab } from './all-studies-tab';
 import { ToDoTab } from './todo-tab';
@@ -290,6 +291,8 @@ export default function ProjectView() {
         onClose={() => setShowAddMemberModal(false)}
         projectId={params.projectId}
       />
+
+      <PdfPreviewPanel />
 
       <confirmDialog.ConfirmDialogComponent />
     </div>

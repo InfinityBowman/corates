@@ -81,7 +81,45 @@ export default function usePdfJs(options = {}) {
     scrollContainerRef = ref;
     if (ref) {
       ref.addEventListener('scroll', handleScroll);
+      ref.addEventListener('wheel', handleWheel, { passive: false });
+      // Safari-specific gesture events for pinch-to-zoom
+      ref.addEventListener('gesturestart', handleGestureStart);
+      ref.addEventListener('gesturechange', handleGestureChange);
+      ref.addEventListener('gestureend', handleGestureEnd);
     }
+  }
+
+  // Track scale at gesture start for Safari
+  let gestureStartScale = 1.0;
+
+  function handleGestureStart(e) {
+    e.preventDefault();
+    gestureStartScale = scale();
+  }
+
+  function handleGestureChange(e) {
+    e.preventDefault();
+    // e.scale is relative to gesture start (1.0 = no change)
+    const newScale = Math.min(Math.max(gestureStartScale * e.scale, 0.5), 3.0);
+    setScale(newScale);
+  }
+
+  function handleGestureEnd(e) {
+    e.preventDefault();
+  }
+
+  // Handle pinch-to-zoom via wheel event with ctrlKey (trackpad gesture - Chrome/Firefox)
+  function handleWheel(e) {
+    // Only handle pinch-to-zoom (ctrlKey is set for trackpad pinch gestures)
+    if (!e.ctrlKey) return;
+
+    e.preventDefault();
+
+    // Use deltaY directly for smooth, proportional zooming
+    // Smaller divisor = more sensitive, larger = less sensitive
+    const zoomDelta = -e.deltaY * 0.01;
+    const newScale = Math.min(Math.max(scale() + zoomDelta, 0.5), 3.0);
+    setScale(newScale);
   }
 
   // Handle scroll to update current page indicator
@@ -625,6 +663,10 @@ export default function usePdfJs(options = {}) {
     }
     if (scrollContainerRef) {
       scrollContainerRef.removeEventListener('scroll', handleScroll);
+      scrollContainerRef.removeEventListener('wheel', handleWheel);
+      scrollContainerRef.removeEventListener('gesturestart', handleGestureStart);
+      scrollContainerRef.removeEventListener('gesturechange', handleGestureChange);
+      scrollContainerRef.removeEventListener('gestureend', handleGestureEnd);
     }
 
     // Clear refs
