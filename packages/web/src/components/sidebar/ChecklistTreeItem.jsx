@@ -1,6 +1,7 @@
 import { HiOutlineDocumentCheck } from 'solid-icons/hi';
 import { useNavigate } from '@solidjs/router';
 import { Show } from 'solid-js';
+import { getChecklistMetadata } from '@/checklist-registry';
 
 /**
  * Checklist tree item (leaf node)
@@ -20,7 +21,9 @@ export default function ChecklistTreeItem(props) {
       `}
     >
       <HiOutlineDocumentCheck class='w-3 h-3 shrink-0' />
-      <span class='text-2xs font-medium truncate'>{props.checklist.type || 'Checklist'}</span>
+      <span class='text-2xs font-medium truncate'>
+        {getChecklistMetadata(props.checklist.type).name}
+      </span>
       <Show when={props.checklist.status}>
         <span
           class={`text-3xs px-1 py-0.5 rounded ${

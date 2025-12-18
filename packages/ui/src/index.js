@@ -5,3 +5,6 @@ export * from './zag/index.js';
 
 // Re-export primitives
 export { useWindowDrag } from './primitives/useWindowDrag.js';
+
+// Re-export utilities
+export { cn } from './lib/cn.js';

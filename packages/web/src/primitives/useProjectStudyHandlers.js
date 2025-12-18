@@ -133,6 +133,7 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
                       firstAuthor: updates.firstAuthor ?? study.firstAuthor,
                       publicationYear: updates.publicationYear ?? study.publicationYear,
                       authors: updates.authors ?? study.authors,
+                      filename: updates.filename ?? study.filename,
                     };
                     const updatedName = generateStudyName(nameBasis, namingConvention);
                     if (updatedName) updates.name = updatedName;
@@ -316,6 +317,7 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
             firstAuthor: study.firstAuthor,
             publicationYear: study.publicationYear,
             authors: study.authors,
+            filename: study.filename,
           },
           namingConvention,
         );
