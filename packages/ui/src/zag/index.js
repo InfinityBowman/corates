@@ -8,6 +8,7 @@ export { Clipboard, CopyButton } from './Clipboard.jsx';
 export { default as Collapsible } from './Collapsible.jsx';
 export { Combobox } from './Combobox.jsx';
 export { Dialog, ConfirmDialog, useConfirmDialog } from './Dialog.jsx';
+export { Drawer } from './Drawer.jsx';
 export { default as Editable } from './Editable.jsx';
 export { FileUpload } from './FileUpload.jsx';
 export { FloatingPanel } from './FloatingPanel.jsx';

@@ -11,6 +11,7 @@
 import { uploadPdf, deletePdf, downloadPdf, getPdfUrl } from '@api/pdf-api.js';
 import { cachePdf, removeCachedPdf, getCachedPdf } from '@primitives/pdfCache.js';
 import projectStore from '@/stores/projectStore.js';
+import pdfPreviewStore from '@/stores/pdfPreviewStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 
 /**
@@ -33,22 +34,30 @@ export default function useProjectPdfHandlers(projectId, projectActions) {
   } = projectActions;
 
   /**
-   * View a PDF (opens in new tab)
+   * View a PDF (opens in slide-in drawer panel)
    */
   const handleViewPdf = async (studyId, pdf) => {
     if (!pdf || !pdf.fileName) return;
 
-    const cachedData = await getCachedPdf(projectId, studyId, pdf.fileName);
-    if (cachedData) {
-      const blob = new Blob([cachedData], { type: 'application/pdf' });
-      const blobUrl = URL.createObjectURL(blob);
-      window.open(blobUrl, '_blank');
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-      return;
-    }
+    // Open the preview panel immediately
+    pdfPreviewStore.openPreview(projectId, studyId, pdf);
 
-    const url = getPdfUrl(projectId, studyId, pdf.fileName);
-    window.open(url, '_blank');
+    try {
+      // Try cache first
+      let data = await getCachedPdf(projectId, studyId, pdf.fileName);
+
+      if (!data) {
+        // Fetch from server
+        data = await downloadPdf(projectId, studyId, pdf.fileName);
+        // Cache for future use
+        await cachePdf(projectId, studyId, pdf.fileName, data).catch(console.warn);
+      }
+
+      pdfPreviewStore.setData(data);
+    } catch (err) {
+      console.error('Error loading PDF:', err);
+      pdfPreviewStore.setError(err.message || 'Failed to load PDF');
+    }
   };
 
   /**
