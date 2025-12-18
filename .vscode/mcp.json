@@ -5,9 +5,9 @@
       "command": "node",
       "args": ["${workspaceFolder}/packages/mcp/server.js"]
     },
-    "stripe": {
-      "type": "http",
-      "url": "https://mcp.stripe.com"
-    }
+    // "stripe": {
+    //   "type": "http",
+    //   "url": "https://mcp.stripe.com"
+    // }
   }
 }

@@ -13,17 +13,15 @@ import { createMemo, createUniqueId } from 'solid-js';
  * @param {JSX.Element} props.children - The content to show/hide
  */
 export default function Collapsible(props) {
-  const open = () => props.open;
-  const defaultOpen = () => props.defaultOpen;
-  const disabled = () => props.disabled;
-  const trigger = () => props.trigger;
-  const children = () => props.children;
-
   const service = useMachine(collapsible.machine, () => ({
     id: createUniqueId(),
-    open: open(),
-    defaultOpen: defaultOpen(),
-    disabled: disabled(),
+    get open() {
+      return props.open;
+    },
+    defaultOpen: props.defaultOpen,
+    get disabled() {
+      return props.disabled;
+    },
     onOpenChange(details) {
       props.onOpenChange?.(details.open);
     },
@@ -33,34 +31,30 @@ export default function Collapsible(props) {
 
   return (
     <div {...api().getRootProps()}>
-      {trigger()?.(api())}
+      {props.trigger?.(api())}
       <div {...api().getContentProps()} class='collapsible-content overflow-hidden'>
-        {children()}
+        {props.children}
       </div>
       <style>{`
         .collapsible-content[data-state="open"] {
-          animation: collapsible-slideDown 200ms ease-out;
+          animation: collapsible-slideDown 150ms ease-out;
         }
         .collapsible-content[data-state="closed"] {
-          animation: collapsible-slideUp 200ms ease-out;
+          animation: collapsible-slideUp 150ms ease-out;
         }
         @keyframes collapsible-slideDown {
           from {
-            opacity: 0;
             height: 0;
           }
           to {
-            opacity: 1;
             height: var(--height);
           }
         }
         @keyframes collapsible-slideUp {
           from {
-            opacity: 1;
             height: var(--height);
           }
           to {
-            opacity: 0;
             height: 0;
           }
         }

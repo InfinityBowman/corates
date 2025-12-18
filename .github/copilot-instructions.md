@@ -33,7 +33,7 @@ Do not worry about migrations either client side or backend unless specifically 
 
 ## Libraries
 
-Use Zod for schema and input validation.
+Use Zod for schema and input validation (backend).
 Use Drizzle ORM for database interactions and migrations.
 Use Better-Auth for authentication and user management.
 Use Zag.js for UI components and design system.

@@ -184,6 +184,7 @@ export function useProject(projectId) {
     getChecklistAnswersMap: (...args) => checklistOps?.getChecklistAnswersMap(...args),
     getChecklistData: (...args) => checklistOps?.getChecklistData(...args),
     updateChecklistAnswer: (...args) => checklistOps?.updateChecklistAnswer(...args),
+    getQuestionNote: (...args) => checklistOps?.getQuestionNote(...args),
 
     // PDF operations
     addPdfToStudy: (...args) => pdfOps?.addPdfToStudy(...args),
@@ -197,6 +198,7 @@ export function useProject(projectId) {
     // Reconciliation operations
     saveReconciliationProgress: (...args) => reconciliationOps?.saveReconciliationProgress(...args),
     getReconciliationProgress: (...args) => reconciliationOps?.getReconciliationProgress(...args),
+    getReconciliationNote: (...args) => reconciliationOps?.getReconciliationNote(...args),
     clearReconciliationProgress: (...args) =>
       reconciliationOps?.clearReconciliationProgress(...args),
 

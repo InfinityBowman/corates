@@ -3,6 +3,7 @@ import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
 import { createChecklist as createAMSTAR2Checklist } from '@/AMSTAR2/checklist.js';
 import { FaSolidCircleInfo } from 'solid-icons/fa';
 import { Tooltip, FloatingPanel } from '@corates/ui';
+import NoteEditor from '@checklist-ui/common/NoteEditor.jsx';
 
 export function Question1(props) {
   const state = () => props.checklistState().q1;
@@ -329,6 +330,12 @@ export function Question9(props) {
     }, 10);
   }
 
+  // Get Y.Text for the note (q9 is parent key for q9a/q9b)
+  const noteYText = () => {
+    if (!props.getQuestionNote) return null;
+    return props.getQuestionNote('q9');
+  };
+
   let containerRef;
 
   return (
@@ -352,6 +359,9 @@ export function Question9(props) {
         columns={question.columns2}
         handleChange={handleChangeB}
       />
+      <Show when={props.getQuestionNote}>
+        <NoteEditor yText={noteYText()} readOnly={props.readOnly} collapsed={true} />
+      </Show>
     </div>
   );
 }
@@ -447,6 +457,12 @@ export function Question11(props) {
     }, 10);
   }
 
+  // Get Y.Text for the note (q11 is parent key for q11a/q11b)
+  const noteYText = () => {
+    if (!props.getQuestionNote) return null;
+    return props.getQuestionNote('q11');
+  };
+
   let containerRef;
 
   return (
@@ -473,6 +489,9 @@ export function Question11(props) {
         handleChange={handleChangeB}
         width='w-48'
       />
+      <Show when={props.getQuestionNote}>
+        <NoteEditor yText={noteYText()} readOnly={props.readOnly} collapsed={true} />
+      </Show>
     </div>
   );
 }
@@ -646,14 +665,31 @@ export function Question16(props) {
 function StandardQuestion(props) {
   let containerRef;
 
+  // Get the question key from the question text (e.g., "1. Did..." -> "q1")
+  const questionKey = () => {
+    const text = props.question?.text || '';
+    const match = text.match(/^(\d+[a-z]?)\./);
+    return match ? `q${match[1]}` : null;
+  };
+
+  // Get Y.Text for the note if getQuestionNote is available
+  const noteYText = () => {
+    const key = questionKey();
+    if (!key || !props.getQuestionNote) return null;
+    return props.getQuestionNote(key);
+  };
+
   return (
-    <div class='bg-white rounded-lg shadow-md p-7 relative' ref={el => (containerRef = el)}>
+    <div class='bg-white rounded-lg shadow-md p-7 pb-3 relative' ref={el => (containerRef = el)}>
       <QuestionInfo question={props.question} containerRef={containerRef} />
       <div class='flex'>
         <h3 class='font-semibold text-sm text-gray-900 mb-1'>{props.question.text}</h3>
         <CriticalButton state={props.state} onUpdate={props.onUpdate} />
       </div>
       <StandardQuestionInternal columns={props.question.columns} {...props} />
+      <Show when={props.getQuestionNote}>
+        <NoteEditor yText={noteYText()} readOnly={props.readOnly} collapsed={true} />
+      </Show>
     </div>
   );
 }
@@ -828,68 +864,100 @@ export default function AMSTAR2Checklist(props = {}) {
               <Question1
                 onUpdate={newQ1 => handleChecklistChange({ q1: newQ1 })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
               <Question2
                 onUpdate={newQ2 => handleChecklistChange({ q2: newQ2 })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
               <Question3
                 onUpdate={newQ3 => handleChecklistChange({ q3: newQ3 })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
               <Question4
                 onUpdate={newQ4 => handleChecklistChange({ q4: newQ4 })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
               <Question5
                 onUpdate={newQ5 => handleChecklistChange({ q5: newQ5 })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
               <Question6
                 onUpdate={newQ6 => handleChecklistChange({ q6: newQ6 })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
               <Question7
                 onUpdate={newQ7 => handleChecklistChange({ q7: newQ7 })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
               <Question8
                 onUpdate={newQ8 => handleChecklistChange({ q8: newQ8 })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
               <Question9
                 onUpdatea={newQ9a => handleChecklistChange({ q9a: newQ9a })}
                 onUpdateb={newQ9b => handleChecklistChange({ q9b: newQ9b })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
               <Question10
                 onUpdate={newQ10 => handleChecklistChange({ q10: newQ10 })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
               <Question11
                 onUpdatea={newQ11a => handleChecklistChange({ q11a: newQ11a })}
                 onUpdateb={newQ11b => handleChecklistChange({ q11b: newQ11b })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
               <Question12
                 onUpdate={newQ12 => handleChecklistChange({ q12: newQ12 })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
               <Question13
                 onUpdate={newQ13 => handleChecklistChange({ q13: newQ13 })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
               <Question14
                 onUpdate={newQ14 => handleChecklistChange({ q14: newQ14 })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
               <Question15
                 onUpdate={newQ15 => handleChecklistChange({ q15: newQ15 })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
               <Question16
                 onUpdate={newQ16 => handleChecklistChange({ q16: newQ16 })}
                 checklistState={currentChecklist}
+                getQuestionNote={props.getQuestionNote}
+                readOnly={props.readOnly}
               />
             </div>
           </fieldset>

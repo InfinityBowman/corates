@@ -24,6 +24,7 @@ import { ROBINSIChecklist } from '@checklist-ui/ROBINSIChecklist/index.js';
  * @param {Object} props.checklist - The checklist state data
  * @param {Function} props.onUpdate - Callback for checklist updates
  * @param {boolean} [props.readOnly] - Whether the checklist is read-only
+ * @param {Function} [props.getQuestionNote] - Function to get Y.Text for a question note
  */
 export default function GenericChecklist(props) {
   // Determine the checklist type from props or state
@@ -44,6 +45,7 @@ export default function GenericChecklist(props) {
           externalChecklist={props.checklist}
           onExternalUpdate={props.onUpdate}
           readOnly={props.readOnly}
+          getQuestionNote={props.getQuestionNote}
         />
       </Show>
       <Show when={checklistType() === CHECKLIST_TYPES.ROBINS_I}>

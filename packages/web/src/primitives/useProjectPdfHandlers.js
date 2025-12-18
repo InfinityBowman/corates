@@ -8,7 +8,7 @@
  * - secondary: Additional supplementary PDFs (default)
  */
 
-import { uploadPdf, deletePdf, downloadPdf, getPdfUrl } from '@api/pdf-api.js';
+import { uploadPdf, deletePdf, downloadPdf } from '@api/pdf-api.js';
 import { cachePdf, removeCachedPdf, getCachedPdf } from '@primitives/pdfCache.js';
 import projectStore from '@/stores/projectStore.js';
 import pdfPreviewStore from '@/stores/pdfPreviewStore.js';
