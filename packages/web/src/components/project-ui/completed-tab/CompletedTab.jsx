@@ -11,7 +11,18 @@ export default function CompletedTab() {
   const studies = () => projectStore.getStudies(projectId);
 
   const completedStudies = createMemo(() => {
-    return studies().filter(study => (study.checklists || []).some(c => c.isReconciled));
+    return studies().filter(study => {
+      const checklists = study.checklists || [];
+
+      // Single reviewer: completed checklist goes directly to completed
+      const isSingleReviewer = study.reviewer1 && !study.reviewer2;
+      if (isSingleReviewer) {
+        return checklists.some(c => c.status === 'completed');
+      }
+
+      // Dual reviewer: only show when reconciled
+      return checklists.some(c => c.isReconciled);
+    });
   });
 
   return (

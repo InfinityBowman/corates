@@ -1,4 +1,4 @@
-import { Show, createMemo, createSignal, createEffect } from 'solid-js';
+import { Show, createMemo, createSignal } from 'solid-js';
 import { FiChevronLeft, FiEdit2, FiCheck, FiX } from 'solid-icons/fi';
 import { useProjectContext } from './ProjectContext.jsx';
 import { Editable, showToast } from '@corates/ui';
@@ -66,10 +66,6 @@ export default function ProjectHeader(props) {
   const cancelEditingDescription = () => {
     setIsEditingDescription(false);
   };
-
-  createEffect(() => {
-    console.log(name());
-  });
 
   return (
     <div class='mb-8'>

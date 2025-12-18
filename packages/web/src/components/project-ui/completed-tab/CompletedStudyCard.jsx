@@ -1,5 +1,7 @@
 /**
- * CompletedStudyCard - Displays a study with its reconciled/consensus checklists
+ * CompletedStudyCard - Displays a study with its completed/reconciled checklists
+ * For single-reviewer studies: shows completed checklists
+ * For dual-reviewer studies: shows reconciled checklists
  */
 
 import { For, Show, createMemo } from 'solid-js';
@@ -10,8 +12,18 @@ export default function CompletedStudyCard(props) {
   const hasPdfs = () => props.study?.pdfs && props.study.pdfs.length > 0;
   const firstPdf = () => (hasPdfs() ? props.study.pdfs[0] : null);
 
-  const reconciledChecklists = createMemo(() => {
-    return (props.study?.checklists || []).filter(c => c.isReconciled);
+  // Check if single reviewer study
+  const isSingleReviewer = () => props.study?.reviewer1 && !props.study?.reviewer2;
+
+  // Get displayable checklists based on reviewer mode
+  const displayChecklists = createMemo(() => {
+    const checklists = props.study?.checklists || [];
+    if (isSingleReviewer()) {
+      // Single reviewer: show completed checklists
+      return checklists.filter(c => c.status === 'completed');
+    }
+    // Dual reviewer: show reconciled checklists
+    return checklists.filter(c => c.isReconciled);
   });
 
   return (
@@ -48,11 +60,11 @@ export default function CompletedStudyCard(props) {
       </div>
 
       <Show
-        when={reconciledChecklists().length > 0}
-        fallback={<div class='p-4 text-center text-gray-400 text-sm'>No reconciled checklists</div>}
+        when={displayChecklists().length > 0}
+        fallback={<div class='p-4 text-center text-gray-400 text-sm'>No completed checklists</div>}
       >
         <div class='divide-y divide-gray-200'>
-          <For each={reconciledChecklists()}>
+          <For each={displayChecklists()}>
             {checklist => (
               <CompletedChecklistRow
                 checklist={checklist}

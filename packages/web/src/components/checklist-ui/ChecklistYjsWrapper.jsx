@@ -5,7 +5,7 @@ import useProject from '@/primitives/useProject/index.js';
 import projectStore from '@/stores/projectStore.js';
 import { downloadPdf, uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf, removeCachedPdf } from '@primitives/pdfCache.js';
-import { showToast } from '@corates/ui';
+import { showToast, useConfirmDialog } from '@corates/ui';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry';
 import { IoChevronBack } from 'solid-icons/io';
@@ -16,6 +16,7 @@ export default function ChecklistYjsWrapper() {
   const params = useParams();
   const navigate = useNavigate();
   const { user } = useBetterAuth();
+  const confirmDialog = useConfirmDialog();
 
   const [pdfData, setPdfData] = createSignal(null);
   const [pdfFileName, setPdfFileName] = createSignal(null);
@@ -45,7 +46,8 @@ export default function ChecklistYjsWrapper() {
     return study.checklists?.find(c => c.id === params.checklistId);
   });
 
-  const isReadOnly = () => currentChecklist()?.isReconciled === true;
+  const isReadOnly = () =>
+    currentChecklist()?.isReconciled === true || currentChecklist()?.status === 'completed';
 
   // Get all PDFs from the study
   const studyPdfs = createMemo(() => {
@@ -255,19 +257,34 @@ export default function ChecklistYjsWrapper() {
   }
 
   // Toggle checklist completion status
-  function handleToggleComplete() {
+  async function handleToggleComplete() {
     if (isReadOnly()) return;
     const checklist = currentChecklist();
     if (!checklist) return;
 
-    const newStatus = checklist.status === 'completed' ? 'in-progress' : 'completed';
-    updateChecklist(params.studyId, params.checklistId, { status: newStatus });
-
-    if (newStatus === 'completed') {
-      showToast.success('Checklist Completed', 'This checklist has been marked as completed');
-    } else {
-      showToast.info('Status Updated', 'Checklist marked as in-progress');
+    // If already completed, don't allow toggle back (checklist is locked)
+    if (checklist.status === 'completed') {
+      showToast.info('Checklist Locked', 'Completed checklists cannot be edited.');
+      return;
     }
+
+    // Show confirmation dialog before marking complete
+    const confirmed = await confirmDialog.open({
+      title: 'Mark Checklist as Complete?',
+      description:
+        'Once marked complete, this checklist will be locked and cannot be edited. Are you sure you want to proceed?',
+      confirmText: 'Mark Complete',
+      cancelText: 'Cancel',
+      variant: 'warning',
+    });
+
+    if (!confirmed) return;
+
+    updateChecklist(params.studyId, params.checklistId, { status: 'completed' });
+    showToast.success(
+      'Checklist Completed',
+      'This checklist has been marked as completed and is now locked.',
+    );
   }
 
   // Get the checklist type from metadata or detect from state
@@ -287,11 +304,22 @@ export default function ChecklistYjsWrapper() {
     return scoreChecklistOfType(type, checklist);
   });
 
+  // Determine back button navigation based on checklist status
+  const getBackTab = () => {
+    const checklist = currentChecklist();
+    const study = currentStudy();
+    if (!checklist || checklist.status !== 'completed') return 'todo';
+    // Completed checklist: navigate to appropriate tab
+    const isSingleReviewer = study?.reviewer1 && !study?.reviewer2;
+    return isSingleReviewer ? 'completed' : 'reconcile';
+  };
+
   // Header content for the split screen toolbar (left side)
   const headerContent = (
     <>
+      <confirmDialog.ConfirmDialogComponent />
       <button
-        onClick={() => navigate(`/projects/${params.projectId}?tab=todo`)}
+        onClick={() => navigate(`/projects/${params.projectId}?tab=${getBackTab()}`)}
         class='text-gray-400 hover:text-gray-700 transition-colors'
       >
         <IoChevronBack size={20} />
@@ -314,8 +342,14 @@ export default function ChecklistYjsWrapper() {
         <Show
           when={!isReadOnly()}
           fallback={
-            <span class='px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-700'>
-              Read-only
+            <span
+              class={`px-3 py-1.5 text-sm font-medium rounded-lg ${
+                currentChecklist()?.status === 'completed' ?
+                  'bg-green-100 text-green-700'
+                : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              {currentChecklist()?.status === 'completed' ? 'Completed' : 'Read-only'}
             </span>
           }
         >
