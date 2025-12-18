@@ -44,26 +44,55 @@ export default function ReconciliationWrapper() {
   const [pdfData, setPdfData] = createSignal(null);
   const [pdfFileName, setPdfFileName] = createSignal(null);
   const [pdfLoading, setPdfLoading] = createSignal(false);
+  const [selectedPdfId, setSelectedPdfId] = createSignal(null);
 
-  // Get study PDF info
-  const studyPdf = createMemo(() => {
+  // Get all PDFs from the study
+  const studyPdfs = createMemo(() => {
     const study = currentStudy();
-    if (!study || !study.pdfs || study.pdfs.length === 0) return null;
-    return study.pdfs[0]; // Use the first PDF
+    return study?.pdfs || [];
+  });
+
+  // Get the primary PDF or first PDF as default selection
+  const defaultPdf = createMemo(() => {
+    const pdfs = studyPdfs();
+    if (!pdfs.length) return null;
+    // Prefer primary, then first available
+    return pdfs.find(p => p.tag === 'primary') || pdfs[0];
+  });
+
+  // The currently selected PDF (or default)
+  const currentPdf = createMemo(() => {
+    const pdfs = studyPdfs();
+    const selected = selectedPdfId();
+    if (selected) {
+      return pdfs.find(p => p.id === selected) || defaultPdf();
+    }
+    return defaultPdf();
   });
 
   // Track which PDF we've attempted to load (to prevent infinite retries)
   const [attemptedPdfFile, setAttemptedPdfFile] = createSignal(null);
 
-  // Load PDF when study has one - try cache first, then cloud
+  // Auto-select primary PDF when study loads
   createEffect(() => {
-    const pdf = studyPdf();
+    const pdf = defaultPdf();
+    if (pdf && !selectedPdfId()) {
+      setSelectedPdfId(pdf.id);
+    }
+  });
+
+  // Load PDF when selection changes - try cache first, then cloud
+  createEffect(() => {
+    const pdf = currentPdf();
     const fileName = pdf?.fileName;
 
-    // Skip if no PDF, already loaded, currently loading, or already attempted this file
-    if (!fileName || pdfData() || pdfLoading() || attemptedPdfFile() === fileName) {
+    // Skip if no PDF, already loaded this file, or currently loading
+    if (!fileName || attemptedPdfFile() === fileName || pdfLoading()) {
       return;
     }
+
+    // Don't clear previous PDF - keep it visible until new one loads
+    // This prevents flashing empty state during transitions
 
     setAttemptedPdfFile(fileName);
     setPdfLoading(true);
@@ -97,6 +126,13 @@ export default function ReconciliationWrapper() {
         setPdfLoading(false);
       });
   });
+
+  // Handle PDF selection change
+  const handlePdfSelect = pdfId => {
+    setSelectedPdfId(pdfId);
+    // Reset attempted file to trigger reload
+    setAttemptedPdfFile(null);
+  };
 
   // Get checklist metadata from store
   const checklist1Meta = createMemo(() => {
@@ -273,6 +309,9 @@ export default function ReconciliationWrapper() {
           pdfData={pdfData()}
           pdfFileName={pdfFileName()}
           pdfLoading={pdfLoading()}
+          pdfs={studyPdfs()}
+          selectedPdfId={selectedPdfId()}
+          onPdfSelect={handlePdfSelect}
         />
       </Show>
     </Show>

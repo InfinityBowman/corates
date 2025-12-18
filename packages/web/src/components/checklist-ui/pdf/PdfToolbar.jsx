@@ -11,9 +11,11 @@ import {
   BiRegularExpandHorizontal,
 } from 'solid-icons/bi';
 import { useConfirmDialog } from '@corates/ui';
+import PdfSelector from './PdfSelector.jsx';
 
 export default function PdfToolbar(props) {
   // props.readOnly - If true, hides upload/change/clear buttons
+  // props.allowDelete - If true, shows delete button (only applies when !readOnly)
   // props.libReady - Whether PDF.js is ready
   // props.pdfDoc - The loaded PDF document
   // props.fileName - Current file name
@@ -32,6 +34,9 @@ export default function PdfToolbar(props) {
   // props.onFitToWidth - Handler for fit to width
   // props.fileInputRef - Ref setter for hidden file input
   // props.onFileUpload - Handler for file upload
+  // props.pdfs - Array of PDFs for multi-PDF selection
+  // props.selectedPdfId - Currently selected PDF ID
+  // props.onPdfSelect - Handler for PDF selection change
 
   // Local state for page input
   const [pageInput, setPageInput] = createSignal('');
@@ -84,31 +89,42 @@ export default function PdfToolbar(props) {
           </button>
         </Show>
 
-        {/* Show file name if PDF is loaded */}
-        <Show when={props.fileName}>
+        {/* PDF Selector - for switching between multiple PDFs */}
+        <Show when={props.pdfs?.length > 1}>
+          <PdfSelector
+            pdfs={props.pdfs}
+            selectedPdfId={props.selectedPdfId}
+            onSelect={props.onPdfSelect}
+          />
+        </Show>
+
+        {/* Show file name if PDF is loaded (only when not using multi-PDF selector) */}
+        <Show when={props.fileName && !(props.pdfs?.length > 1)}>
           <span class='text-sm text-gray-600 truncate max-w-40' title={props.fileName}>
             {props.fileName}
           </span>
-          <Show when={!props.readOnly}>
-            <button
-              onClick={async () => {
-                const didConfirm = await confirmRemovePdf.open({
-                  title: 'Remove PDF?',
-                  description:
-                    'This will remove the currently loaded PDF from this checklist. You can upload it again later.',
-                  confirmText: 'Remove',
-                  cancelText: 'Cancel',
-                  variant: 'danger',
-                });
+        </Show>
 
-                if (didConfirm) props.onClearPdf?.();
-              }}
-              class='p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors shrink-0'
-              title='Clear PDF'
-            >
-              <AiOutlineClose class='w-4 h-4' />
-            </button>
-          </Show>
+        {/* Delete button - only for local checklists */}
+        <Show when={props.fileName && !props.readOnly && props.allowDelete}>
+          <button
+            onClick={async () => {
+              const didConfirm = await confirmRemovePdf.open({
+                title: 'Remove PDF?',
+                description:
+                  'This will remove the currently loaded PDF from this checklist. You can upload it again later.',
+                confirmText: 'Remove',
+                cancelText: 'Cancel',
+                variant: 'danger',
+              });
+
+              if (didConfirm) props.onClearPdf?.();
+            }}
+            class='p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors shrink-0'
+            title='Clear PDF'
+          >
+            <AiOutlineClose class='w-4 h-4' />
+          </button>
         </Show>
       </div>
 
