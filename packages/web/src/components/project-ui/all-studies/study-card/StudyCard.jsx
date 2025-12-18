@@ -15,7 +15,7 @@ export default function StudyCard(props) {
   // props.expanded: boolean - controlled expanded state
   // props.onToggleExpanded: () => void - toggle callback
   // props.getAssigneeName: (userId) => string
-  // props.onEditMetadata: (study) => void
+  // props.onUpdateStudy: (studyId, updates) => void
   // props.onAssignReviewers: (study) => void
   // props.onDeleteStudy: (studyId) => void
   // props.onViewPdf: (studyId, pdf) => void
@@ -44,6 +44,7 @@ export default function StudyCard(props) {
             study={study()}
             expanded={api.open}
             onToggle={() => props.onToggleExpanded?.()}
+            onUpdateStudy={props.onUpdateStudy}
             onAssignReviewers={() => props.onAssignReviewers?.(study())}
             onDelete={() => props.onDeleteStudy?.(study().id)}
             getAssigneeName={props.getAssigneeName}

@@ -7,7 +7,6 @@ import { AiOutlineBook } from 'solid-icons/ai';
 import AddStudiesForm from '../AddStudiesForm.jsx';
 import GoogleDrivePickerModal from '../google-drive/GoogleDrivePickerModal.jsx';
 import { StudyCard } from './study-card/index.js';
-import EditStudyMetadataModal from './EditStudyMetadataModal.jsx';
 import EditPdfMetadataModal from './EditPdfMetadataModal.jsx';
 import AssignReviewersModal from './AssignReviewersModal.jsx';
 import projectStore from '@/stores/projectStore.js';
@@ -32,7 +31,6 @@ export default function AllStudiesTab() {
   const [expandedStudies, setExpandedStudies] = createSignal(new Set());
 
   // Modal state
-  const [showMetadataModal, setShowMetadataModal] = createSignal(false);
   const [showReviewersModal, setShowReviewersModal] = createSignal(false);
   const [showPdfMetadataModal, setShowPdfMetadataModal] = createSignal(false);
   const [editingStudy, setEditingStudy] = createSignal(null);
@@ -83,21 +81,9 @@ export default function AllStudiesTab() {
   };
 
   // Modal handlers
-  const handleOpenMetadataModal = study => {
-    setEditingStudy(study);
-    setShowMetadataModal(true);
-  };
-
   const handleOpenReviewersModal = study => {
     setEditingStudy(study);
     setShowReviewersModal(true);
-  };
-
-  const handleCloseMetadataModal = open => {
-    if (!open) {
-      setShowMetadataModal(false);
-      setEditingStudy(null);
-    }
   };
 
   const handleCloseReviewersModal = open => {
@@ -208,7 +194,7 @@ export default function AllStudiesTab() {
                 expanded={isStudyExpanded(study.id)}
                 onToggleExpanded={() => toggleStudyExpanded(study.id)}
                 getAssigneeName={getAssigneeName}
-                onEditMetadata={handleOpenMetadataModal}
+                onUpdateStudy={handlers.studyHandlers.handleUpdateStudy}
                 onAssignReviewers={handleOpenReviewersModal}
                 onDeleteStudy={handlers.studyHandlers.handleDeleteStudy}
                 onViewPdf={handleViewPdf}
@@ -234,14 +220,6 @@ export default function AllStudiesTab() {
         projectId={projectId}
         studyId={googleDriveTargetStudyId()}
         onImportSuccess={handleGoogleDriveImportSuccess}
-      />
-
-      {/* Edit Metadata Modal */}
-      <EditStudyMetadataModal
-        open={showMetadataModal()}
-        onOpenChange={handleCloseMetadataModal}
-        study={editingStudy()}
-        onSave={handlers.studyHandlers.handleUpdateStudy}
       />
 
       {/* Assign Reviewers Modal */}

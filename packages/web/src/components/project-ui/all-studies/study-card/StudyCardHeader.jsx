@@ -3,7 +3,7 @@
  *
  * Displays:
  * - Expand/collapse toggle (chevron)
- * - Study name (derived from primary PDF or first PDF metadata)
+ * - Study name (editable)
  * - Citation info (author, year, journal from primary PDF)
  * - Reviewer badges
  * - Actions menu
@@ -12,7 +12,7 @@
 import { Show, For } from 'solid-js';
 import { BiRegularChevronRight } from 'solid-icons/bi';
 import { FiUsers, FiTrash2, FiMoreVertical } from 'solid-icons/fi';
-import { Menu } from '@corates/ui';
+import { Menu, Editable } from '@corates/ui';
 
 export default function StudyCardHeader(props) {
   // props.study: Study object with pdfs array
@@ -20,6 +20,7 @@ export default function StudyCardHeader(props) {
   // props.onToggle: () => void
   // props.onAssignReviewers: () => void
   // props.onDelete: () => void
+  // props.onUpdateStudy: (studyId, updates) => void
   // props.getAssigneeName: (userId) => string
 
   const study = () => props.study;
@@ -40,30 +41,14 @@ export default function StudyCardHeader(props) {
 
   const hasReviewers = () => study().reviewer1 || study().reviewer2;
 
-  // Display name: derived from primary PDF metadata or fall back to study name
-  const displayName = () => {
-    const pdf = primaryPdf();
-    // Try PDF metadata first
-    if (pdf?.firstAuthor && pdf?.publicationYear) {
-      return `${pdf.firstAuthor} (${pdf.publicationYear})`;
+  // Study name - directly use study.name (editable by user)
+  const studyName = () => study().name || 'Untitled Study';
+
+  // Handle study name update
+  const handleNameChange = newName => {
+    if (newName && newName.trim() && newName !== study().name) {
+      props.onUpdateStudy?.(study().id, { name: newName.trim() });
     }
-    if (pdf?.firstAuthor) return pdf.firstAuthor;
-    if (pdf?.title) {
-      // Truncate long titles
-      return pdf.title.length > 50 ? pdf.title.slice(0, 50) + '...' : pdf.title;
-    }
-    // Fall back to legacy study-level metadata
-    if (study().name) return study().name;
-    if (study().firstAuthor && study().publicationYear) {
-      return `${study().firstAuthor} (${study().publicationYear})`;
-    }
-    if (study().firstAuthor) return study().firstAuthor;
-    // Last resort: use filename
-    if (pdf?.fileName) {
-      const name = pdf.fileName.replace(/\.pdf$/i, '');
-      return name.length > 40 ? name.slice(0, 40) + '...' : name;
-    }
-    return 'Untitled Study';
   };
 
   // Citation line: author, year, journal from primary PDF
@@ -108,26 +93,30 @@ export default function StudyCardHeader(props) {
 
   return (
     <div class='flex items-center gap-3 px-4 py-3'>
-      {/* Clickable area for expand/collapse */}
+      {/* Expand/collapse chevron */}
       <button
         type='button'
         onClick={() => props.onToggle?.()}
-        class='flex items-center gap-3 flex-1 min-w-0 text-left'
+        class='shrink-0 p-1 -ml-1 hover:bg-gray-100 rounded transition-colors'
       >
-        {/* Expand/collapse chevron */}
         <BiRegularChevronRight
-          class={`w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200 ${props.expanded ? 'rotate-90' : ''}`}
+          class={`w-5 h-5 text-gray-400 transition-transform duration-200 ${props.expanded ? 'rotate-90' : ''}`}
         />
-
-        {/* Study info */}
-        <div class='min-w-0'>
-          <p class='text-gray-900 font-medium truncate'>{displayName()}</p>
-          <Show when={citationLine()}>
-            <p class='text-xs text-gray-500 truncate'>{citationLine()}</p>
-          </Show>
-        </div>
       </button>
 
+      {/* Study info - editable name */}
+      <div class='min-w-0 flex-1'>
+        <Editable
+          activationMode='click'
+          value={studyName()}
+          onSubmit={handleNameChange}
+          showEditIcon={true}
+          class='text-gray-900 font-medium'
+        />
+        <Show when={citationLine()}>
+          <p class='text-xs text-gray-500 truncate'>{citationLine()}</p>
+        </Show>
+      </div>
       {/* Reviewer badges */}
       <Show when={hasReviewers()}>
         <div class='flex flex-wrap gap-1 shrink-0'>
