@@ -149,7 +149,7 @@ export default function AllStudiesTab() {
   };
 
   return (
-    <div class='space-y-4'>
+    <div>
       {/* Add Studies Section */}
       <Show when={hasData()}>
         <AddStudiesForm
@@ -168,7 +168,7 @@ export default function AllStudiesTab() {
       </Show>
 
       {/* Study count */}
-      <div class='flex items-center justify-between'>
+      <div class='flex items-center justify-between mb-2'>
         <p class='text-sm text-gray-500'>
           {studies().length} {studies().length === 1 ? 'study' : 'studies'} in this project
         </p>
