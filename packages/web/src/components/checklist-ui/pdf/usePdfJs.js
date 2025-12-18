@@ -81,7 +81,22 @@ export default function usePdfJs(options = {}) {
     scrollContainerRef = ref;
     if (ref) {
       ref.addEventListener('scroll', handleScroll);
+      ref.addEventListener('wheel', handleWheel, { passive: false });
     }
+  }
+
+  // Handle pinch-to-zoom via wheel event with ctrlKey (trackpad gesture)
+  function handleWheel(e) {
+    // Only handle pinch-to-zoom (ctrlKey is set for trackpad pinch gestures)
+    if (!e.ctrlKey) return;
+
+    e.preventDefault();
+
+    // Use deltaY directly for smooth, proportional zooming
+    // Smaller divisor = more sensitive, larger = less sensitive
+    const zoomDelta = -e.deltaY * 0.01;
+    const newScale = Math.min(Math.max(scale() + zoomDelta, 0.5), 3.0);
+    setScale(newScale);
   }
 
   // Handle scroll to update current page indicator
@@ -625,6 +640,7 @@ export default function usePdfJs(options = {}) {
     }
     if (scrollContainerRef) {
       scrollContainerRef.removeEventListener('scroll', handleScroll);
+      scrollContainerRef.removeEventListener('wheel', handleWheel);
     }
 
     // Clear refs
