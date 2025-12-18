@@ -20,6 +20,7 @@ Do not worry about migrations either client side or backend unless specifically 
 - Use responsive design principles for UI components.
 - Prefer using config files rather than hardcoding values.
 - Place plans in the docs/plans/ directory.
+- Ensure browser compatibility for all frontend code (Safari is usually problematic).
 
 ## File Size Guidelines
 
