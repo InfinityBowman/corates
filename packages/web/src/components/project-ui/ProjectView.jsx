@@ -242,8 +242,8 @@ export default function ProjectView() {
         onAddMember={() => setShowAddMemberModal(true)}
       >
         <ProjectHeader
-          name={meta()?.name}
-          description={meta()?.description}
+          name={() => meta()?.name}
+          description={() => meta()?.description}
           onRename={projectActions.renameProject}
           onUpdateDescription={projectActions.updateDescription}
           onBack={() => navigate('/dashboard')}

@@ -1,6 +1,6 @@
 import * as editable from '@zag-js/editable';
 import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, Show, mergeProps } from 'solid-js';
+import { createMemo, createUniqueId, Show, mergeProps, createEffect, on } from 'solid-js';
 import { FiCheck, FiX, FiEdit2 } from 'solid-icons/fi';
 import { cn } from '../lib/cn.js';
 
@@ -105,9 +105,8 @@ export default function Editable(props) {
 
   const service = useMachine(editable.machine, () => ({
     id,
-    // Use defaultValue for initial value - Zag manages internal editing state
-    // The value prop is used to sync from parent when it changes externally
-    defaultValue: value() ?? defaultValue(),
+    // Always use defaultValue - Zag manages internal editing state
+    defaultValue: value() ?? defaultValue() ?? '',
     placeholder: placeholder(),
     disabled: disabled(),
     readOnly: readOnly(),
@@ -128,6 +127,16 @@ export default function Editable(props) {
   }));
 
   const api = createMemo(() => editable.connect(service, normalizeProps));
+
+  // Sync external value changes ONLY when not editing
+  // This handles cases like the parent updating value after a successful save
+  createEffect(
+    on(value, newValue => {
+      if (newValue !== undefined && newValue !== api().value && !api().editing) {
+        api().setValue(newValue);
+      }
+    }),
+  );
 
   return (
     <div {...api().getRootProps()} class={cn('group inline-block', classValue())}>

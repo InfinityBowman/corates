@@ -1,4 +1,4 @@
-import { Show, createMemo, createSignal } from 'solid-js';
+import { Show, createMemo, createSignal, createEffect } from 'solid-js';
 import { FiChevronLeft, FiEdit2, FiCheck, FiX } from 'solid-icons/fi';
 import { useProjectContext } from './ProjectContext.jsx';
 import { Editable, showToast } from '@corates/ui';
@@ -9,25 +9,40 @@ export default function ProjectHeader(props) {
   const [descriptionDraft, setDescriptionDraft] = createSignal('');
   const [isSaving, setIsSaving] = createSignal(false);
 
+  // Resolve props that may be getters or values
+  const name = () => (typeof props.name === 'function' ? props.name() : props.name);
+  const description = () =>
+    typeof props.description === 'function' ? props.description() : props.description;
+
   const canEdit = createMemo(() => {
     const role = userRole();
     return role === 'owner' || role === 'collaborator';
   });
 
-  const handleNameChange = newName => {
-    if (newName && newName.trim() && newName !== props.name) {
-      props.onRename?.(newName.trim());
+  const handleNameChange = async newName => {
+    if (newName && newName.trim() && newName !== name()) {
+      try {
+        await props.onRename?.(newName.trim());
+      } catch (error) {
+        console.error('Failed to rename project:', error);
+        showToast({
+          title: 'Failed to rename project',
+          description: error.message || 'Please try again',
+          type: 'error',
+        });
+      }
     }
   };
 
   const startEditingDescription = () => {
-    setDescriptionDraft(props.description || '');
+    setDescriptionDraft(description() || '');
     setIsEditingDescription(true);
   };
 
   const saveDescription = async () => {
     const newDesc = descriptionDraft().trim();
-    if (newDesc === props.description) {
+    const currentDesc = description() || '';
+    if (newDesc === currentDesc) {
       setIsEditingDescription(false);
       return;
     }
@@ -52,6 +67,10 @@ export default function ProjectHeader(props) {
     setIsEditingDescription(false);
   };
 
+  createEffect(() => {
+    console.log(name());
+  });
+
   return (
     <div class='mb-8'>
       <div class='flex items-center gap-4 mb-2'>
@@ -63,9 +82,9 @@ export default function ProjectHeader(props) {
         </button>
         <div class='flex items-center gap-2 flex-1 min-w-0'>
           <Editable
-            activationMode='dblclick'
+            activationMode='click'
             variant='heading'
-            value={props.name || 'Untitled Project'}
+            value={name()}
             onSubmit={handleNameChange}
             showEditIcon={canEdit()}
             readOnly={!canEdit()}
@@ -86,7 +105,7 @@ export default function ProjectHeader(props) {
           fallback={
             <div class='flex items-start gap-2 group'>
               <p class='text-gray-500 flex-1'>
-                {props.description || <span class='italic text-gray-400'>No description</span>}
+                {description() || <span class='italic text-gray-400'>No description</span>}
               </p>
               <Show when={canEdit()}>
                 <button
