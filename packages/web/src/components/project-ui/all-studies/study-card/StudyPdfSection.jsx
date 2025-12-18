@@ -19,6 +19,7 @@ export default function StudyPdfSection(props) {
   // props.onUploadPdf: (studyId, file) => Promise<void>
   // props.onDeletePdf: (studyId, pdf) => void
   // props.onTagChange: (studyId, pdfId, newTag) => void
+  // props.onEditPdfMetadata: (studyId, pdf) => void
   // props.onOpenGoogleDrive: (studyId) => void
   // props.readOnly: boolean
 
@@ -79,6 +80,10 @@ export default function StudyPdfSection(props) {
 
   const handleTagChange = (pdfId, newTag) => {
     props.onTagChange?.(study().id, pdfId, newTag);
+  };
+
+  const handleEditMetadata = pdf => {
+    props.onEditPdfMetadata?.(study().id, pdf);
   };
 
   return (
@@ -156,6 +161,7 @@ export default function StudyPdfSection(props) {
                   onDownload={handleDownload}
                   onDelete={handleDelete}
                   onTagChange={handleTagChange}
+                  onEditMetadata={handleEditMetadata}
                   readOnly={props.readOnly}
                   hasPrimary={hasPrimary() && pdf.tag !== 'primary'}
                   hasProtocol={hasProtocol() && pdf.tag !== 'protocol'}

@@ -10,17 +10,18 @@
  */
 
 import { Show, createSignal } from 'solid-js';
-import { FiTrash2, FiEye, FiDownload } from 'solid-icons/fi';
+import { FiTrash2, FiEye, FiDownload, FiEdit2 } from 'solid-icons/fi';
 import { CgFileDocument } from 'solid-icons/cg';
 import { Menu, Dialog } from '@corates/ui';
 import PdfTagBadge from './PdfTagBadge.jsx';
 
 export default function PdfListItem(props) {
-  // props.pdf: { id, fileName, key, size, uploadedAt, tag }
+  // props.pdf: { id, fileName, key, size, uploadedAt, tag, title?, firstAuthor?, publicationYear?, ... }
   // props.onView: (pdf) => void
   // props.onDownload: (pdf) => void
   // props.onDelete: (pdf) => void
   // props.onTagChange: (pdfId, newTag) => void
+  // props.onEditMetadata: (pdf) => void - new: open edit metadata modal
   // props.readOnly: boolean
   // props.hasPrimary: boolean - whether another PDF already has primary tag
   // props.hasProtocol: boolean - whether another PDF already has protocol tag
@@ -129,6 +130,18 @@ export default function PdfListItem(props) {
           >
             <FiDownload class='w-4 h-4' />
           </button>
+
+          {/* Edit metadata button (if not read-only) */}
+          <Show when={!props.readOnly}>
+            <button
+              type='button'
+              onClick={() => props.onEditMetadata?.(props.pdf)}
+              class='p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'
+              title='Edit Metadata'
+            >
+              <FiEdit2 class='w-4 h-4' />
+            </button>
+          </Show>
 
           {/* Tag change menu (if not read-only) */}
           <Show when={!props.readOnly && tagMenuItems().length > 0}>

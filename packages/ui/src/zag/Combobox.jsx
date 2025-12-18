@@ -1,15 +1,7 @@
 import * as combobox from '@zag-js/combobox';
 import { Portal } from 'solid-js/web';
 import { normalizeProps, useMachine } from '@zag-js/solid';
-import {
-  createMemo,
-  createSignal,
-  createUniqueId,
-  For,
-  Show,
-  splitProps,
-  mergeProps,
-} from 'solid-js';
+import { createMemo, createSignal, createUniqueId, For, Show, splitProps } from 'solid-js';
 import { FiChevronDown, FiX, FiCheck } from 'solid-icons/fi';
 
 /**
@@ -57,7 +49,8 @@ export function Combobox(props) {
     }),
   );
 
-  const context = mergeProps(machineProps, {
+  const service = useMachine(combobox.machine, () => ({
+    ...machineProps,
     id: createUniqueId(),
     openOnClick: true,
     get collection() {
@@ -73,9 +66,7 @@ export function Combobox(props) {
       );
       setOptions(filtered.length > 0 ? filtered : items);
     },
-  });
-
-  const service = useMachine(combobox.machine, context);
+  }));
 
   const api = createMemo(() => combobox.connect(service, normalizeProps));
 

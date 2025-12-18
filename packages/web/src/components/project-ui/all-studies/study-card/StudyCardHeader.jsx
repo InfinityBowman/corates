@@ -3,27 +3,32 @@
  *
  * Displays:
  * - Expand/collapse toggle (chevron)
- * - Study name (display name or "Author (Year)")
- * - Citation info (author, year, journal)
+ * - Study name (derived from primary PDF or first PDF metadata)
+ * - Citation info (author, year, journal from primary PDF)
  * - Reviewer badges
  * - Actions menu
  */
 
 import { Show, For } from 'solid-js';
 import { BiRegularChevronRight } from 'solid-icons/bi';
-import { FiSettings, FiUsers, FiTrash2, FiMoreVertical } from 'solid-icons/fi';
+import { FiUsers, FiTrash2, FiMoreVertical } from 'solid-icons/fi';
 import { Menu } from '@corates/ui';
 
 export default function StudyCardHeader(props) {
-  // props.study: Study object
+  // props.study: Study object with pdfs array
   // props.expanded: boolean
   // props.onToggle: () => void
-  // props.onEditMetadata: () => void
   // props.onAssignReviewers: () => void
   // props.onDelete: () => void
   // props.getAssigneeName: (userId) => string
 
   const study = () => props.study;
+
+  // Get primary PDF metadata (or first PDF if no primary)
+  const primaryPdf = () => {
+    const pdfs = study().pdfs || [];
+    return pdfs.find(p => p.tag === 'primary') || pdfs[0];
+  };
 
   // Get assigned reviewers
   const assignedReviewers = () => {
@@ -35,31 +40,47 @@ export default function StudyCardHeader(props) {
 
   const hasReviewers = () => study().reviewer1 || study().reviewer2;
 
-  // Display name: use study.name or fall back to "Author (Year)"
+  // Display name: derived from primary PDF metadata or fall back to study name
   const displayName = () => {
+    const pdf = primaryPdf();
+    // Try PDF metadata first
+    if (pdf?.firstAuthor && pdf?.publicationYear) {
+      return `${pdf.firstAuthor} (${pdf.publicationYear})`;
+    }
+    if (pdf?.firstAuthor) return pdf.firstAuthor;
+    if (pdf?.title) {
+      // Truncate long titles
+      return pdf.title.length > 50 ? pdf.title.slice(0, 50) + '...' : pdf.title;
+    }
+    // Fall back to legacy study-level metadata
     if (study().name) return study().name;
     if (study().firstAuthor && study().publicationYear) {
       return `${study().firstAuthor} (${study().publicationYear})`;
     }
     if (study().firstAuthor) return study().firstAuthor;
+    // Last resort: use filename
+    if (pdf?.fileName) {
+      const name = pdf.fileName.replace(/\.pdf$/i, '');
+      return name.length > 40 ? name.slice(0, 40) + '...' : name;
+    }
     return 'Untitled Study';
   };
 
-  // Citation line: author, year, journal
+  // Citation line: author, year, journal from primary PDF
   const citationLine = () => {
+    const pdf = primaryPdf();
     const parts = [];
-    if (study().firstAuthor) parts.push(study().firstAuthor);
-    if (study().publicationYear) parts.push(`(${study().publicationYear})`);
-    if (study().journal) parts.push(`- ${study().journal}`);
+    // Prefer PDF-level metadata
+    const author = pdf?.firstAuthor || study().firstAuthor;
+    const year = pdf?.publicationYear || study().publicationYear;
+    const journal = pdf?.journal || study().journal;
+    if (author) parts.push(author);
+    if (year) parts.push(`(${year})`);
+    if (journal) parts.push(`- ${journal}`);
     return parts.join(' ');
   };
 
   const menuItems = [
-    {
-      value: 'edit-metadata',
-      label: 'Edit Metadata',
-      icon: <FiSettings class='w-4 h-4' />,
-    },
     {
       value: 'assign-reviewers',
       label: 'Assign Reviewers',
@@ -76,9 +97,6 @@ export default function StudyCardHeader(props) {
 
   const handleMenuSelect = details => {
     switch (details.value) {
-      case 'edit-metadata':
-        props.onEditMetadata?.();
-        break;
       case 'assign-reviewers':
         props.onAssignReviewers?.();
         break;

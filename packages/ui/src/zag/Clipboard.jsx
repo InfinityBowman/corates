@@ -1,6 +1,6 @@
 import * as clipboard from '@zag-js/clipboard';
 import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, Show, splitProps, mergeProps } from 'solid-js';
+import { createMemo, createUniqueId, Show, splitProps } from 'solid-js';
 import { FiCopy, FiCheck } from 'solid-icons/fi';
 
 /**
@@ -20,12 +20,11 @@ import { FiCopy, FiCheck } from 'solid-icons/fi';
 export function Clipboard(props) {
   const [local, machineProps] = splitProps(props, ['label', 'showInput', 'children', 'class']);
 
-  const context = mergeProps(machineProps, {
+  const service = useMachine(clipboard.machine, () => ({
+    ...machineProps,
     id: createUniqueId(),
     timeout: 3000,
-  });
-
-  const service = useMachine(clipboard.machine, context);
+  }));
 
   const api = createMemo(() => clipboard.connect(service, normalizeProps));
 
@@ -88,12 +87,11 @@ export function CopyButton(props) {
     'class',
   ]);
 
-  const context = mergeProps(machineProps, {
+  const service = useMachine(clipboard.machine, () => ({
+    ...machineProps,
     id: createUniqueId(),
     timeout: 3000,
-  });
-
-  const service = useMachine(clipboard.machine, context);
+  }));
 
   const api = createMemo(() => clipboard.connect(service, normalizeProps));
 

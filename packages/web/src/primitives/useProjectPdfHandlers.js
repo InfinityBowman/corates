@@ -23,8 +23,14 @@ export default function useProjectPdfHandlers(projectId, projectActions) {
   // Read from store directly
   const studies = () => projectStore.getStudies(projectId);
 
-  const { addPdfToStudy, removePdfFromStudy, updatePdfTag, setPdfAsPrimary, setPdfAsProtocol } =
-    projectActions;
+  const {
+    addPdfToStudy,
+    removePdfFromStudy,
+    updatePdfTag,
+    updatePdfMetadata,
+    setPdfAsPrimary,
+    setPdfAsProtocol,
+  } = projectActions;
 
   /**
    * View a PDF (opens in new tab)
@@ -147,6 +153,16 @@ export default function useProjectPdfHandlers(projectId, projectActions) {
   };
 
   /**
+   * Update PDF citation metadata
+   * @param {string} studyId - The study ID
+   * @param {string} pdfId - The PDF ID
+   * @param {Object} metadata - Citation metadata { title?, firstAuthor?, publicationYear?, journal?, doi?, abstract? }
+   */
+  const handleUpdatePdfMetadata = (studyId, pdfId, metadata) => {
+    updatePdfMetadata(studyId, pdfId, metadata);
+  };
+
+  /**
    * Handle Google Drive import success
    */
   const handleGoogleDriveImportSuccess = (studyId, file, tag = 'secondary') => {
@@ -177,6 +193,7 @@ export default function useProjectPdfHandlers(projectId, projectActions) {
     handleUploadPdf,
     handleDeletePdf,
     handleTagChange,
+    handleUpdatePdfMetadata,
     handleGoogleDriveImportSuccess,
     // Convenience methods
     setPdfAsPrimary: (studyId, pdfId) => setPdfAsPrimary(studyId, pdfId),

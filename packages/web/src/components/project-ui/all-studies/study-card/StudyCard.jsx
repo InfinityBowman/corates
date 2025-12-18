@@ -23,6 +23,7 @@ export default function StudyCard(props) {
   // props.onUploadPdf: (studyId, file) => Promise<void>
   // props.onDeletePdf: (studyId, pdf) => void
   // props.onTagChange: (studyId, pdfId, newTag) => void
+  // props.onEditPdfMetadata: (studyId, pdf) => void
   // props.onOpenGoogleDrive: (studyId) => void
   // props.readOnly: boolean
 
@@ -43,7 +44,6 @@ export default function StudyCard(props) {
             study={study()}
             expanded={api.open}
             onToggle={() => props.onToggleExpanded?.()}
-            onEditMetadata={() => props.onEditMetadata?.(study())}
             onAssignReviewers={() => props.onAssignReviewers?.(study())}
             onDelete={() => props.onDeleteStudy?.(study().id)}
             getAssigneeName={props.getAssigneeName}
@@ -58,6 +58,7 @@ export default function StudyCard(props) {
             onUploadPdf={props.onUploadPdf}
             onDeletePdf={props.onDeletePdf}
             onTagChange={props.onTagChange}
+            onEditPdfMetadata={props.onEditPdfMetadata}
             onOpenGoogleDrive={props.onOpenGoogleDrive}
             readOnly={props.readOnly}
           />

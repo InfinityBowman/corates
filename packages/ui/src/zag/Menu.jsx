@@ -1,7 +1,7 @@
 import * as menu from '@zag-js/menu';
 import { Portal } from 'solid-js/web';
 import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, Show, For, splitProps, mergeProps } from 'solid-js';
+import { createMemo, createUniqueId, Show, For, splitProps } from 'solid-js';
 
 /**
  * Menu - Dropdown menu for actions
@@ -34,16 +34,16 @@ export function Menu(props) {
     'items',
     'inDialog',
     'hideIndicator',
+    'placement',
     'class',
   ]);
 
-  const context = mergeProps(machineProps, {
+  const service = useMachine(menu.machine, () => ({
+    ...machineProps,
     id: createUniqueId(),
     closeOnSelect: true,
-    positioning: { placement: 'bottom-start' },
-  });
-
-  const service = useMachine(menu.machine, context);
+    positioning: { placement: local.placement || 'bottom-start' },
+  }));
 
   const api = createMemo(() => menu.connect(service, normalizeProps));
 

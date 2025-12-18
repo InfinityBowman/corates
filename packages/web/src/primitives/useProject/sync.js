@@ -118,6 +118,12 @@ function buildStudyFromYMap(studyId, studyData, studyYMap) {
         uploadedBy: pdfData.uploadedBy,
         uploadedAt: pdfData.uploadedAt,
         tag: pdfData.tag || 'secondary',
+        // Citation metadata
+        title: pdfData.title || null,
+        firstAuthor: pdfData.firstAuthor || null,
+        publicationYear: pdfData.publicationYear || null,
+        journal: pdfData.journal || null,
+        doi: pdfData.doi || null,
       });
     }
   }

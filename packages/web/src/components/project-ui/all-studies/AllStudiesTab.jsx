@@ -8,6 +8,7 @@ import AddStudiesForm from '../AddStudiesForm.jsx';
 import GoogleDrivePickerModal from '../google-drive/GoogleDrivePickerModal.jsx';
 import { StudyCard } from './study-card/index.js';
 import EditStudyMetadataModal from './EditStudyMetadataModal.jsx';
+import EditPdfMetadataModal from './EditPdfMetadataModal.jsx';
 import AssignReviewersModal from './AssignReviewersModal.jsx';
 import projectStore from '@/stores/projectStore.js';
 import { useProjectContext } from '../ProjectContext.jsx';
@@ -33,7 +34,10 @@ export default function AllStudiesTab() {
   // Modal state
   const [showMetadataModal, setShowMetadataModal] = createSignal(false);
   const [showReviewersModal, setShowReviewersModal] = createSignal(false);
+  const [showPdfMetadataModal, setShowPdfMetadataModal] = createSignal(false);
   const [editingStudy, setEditingStudy] = createSignal(null);
+  const [editingPdf, setEditingPdf] = createSignal(null);
+  const [editingPdfStudyId, setEditingPdfStudyId] = createSignal(null);
 
   // Check for and restore state on mount (after OAuth redirect)
   onMount(async () => {
@@ -101,6 +105,25 @@ export default function AllStudiesTab() {
       setShowReviewersModal(false);
       setEditingStudy(null);
     }
+  };
+
+  // PDF metadata modal handlers
+  const handleOpenPdfMetadataModal = (studyId, pdf) => {
+    setEditingPdfStudyId(studyId);
+    setEditingPdf(pdf);
+    setShowPdfMetadataModal(true);
+  };
+
+  const handleClosePdfMetadataModal = open => {
+    if (!open) {
+      setShowPdfMetadataModal(false);
+      setEditingPdf(null);
+      setEditingPdfStudyId(null);
+    }
+  };
+
+  const handleSavePdfMetadata = (studyId, pdfId, metadata) => {
+    handlers.pdfHandlers.handleUpdatePdfMetadata?.(studyId, pdfId, metadata);
   };
 
   // PDF handlers
@@ -193,6 +216,7 @@ export default function AllStudiesTab() {
                 onUploadPdf={handleUploadPdf}
                 onDeletePdf={handleDeletePdf}
                 onTagChange={handleTagChange}
+                onEditPdfMetadata={handleOpenPdfMetadataModal}
                 onOpenGoogleDrive={handleOpenGoogleDrive}
               />
             )}
@@ -227,6 +251,15 @@ export default function AllStudiesTab() {
         study={editingStudy()}
         projectId={projectId}
         onSave={handlers.studyHandlers.handleUpdateStudy}
+      />
+
+      {/* Edit PDF Metadata Modal */}
+      <EditPdfMetadataModal
+        open={showPdfMetadataModal()}
+        onOpenChange={handleClosePdfMetadataModal}
+        pdf={editingPdf()}
+        studyId={editingPdfStudyId()}
+        onSave={handleSavePdfMetadata}
       />
     </div>
   );

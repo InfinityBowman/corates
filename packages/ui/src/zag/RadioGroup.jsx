@@ -1,6 +1,6 @@
 import * as radio from '@zag-js/radio-group';
 import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, For, splitProps, mergeProps } from 'solid-js';
+import { createMemo, createUniqueId, For, splitProps } from 'solid-js';
 
 /**
  * RadioGroup - Radio button group for single selection
@@ -17,18 +17,17 @@ import { createMemo, createUniqueId, For, splitProps, mergeProps } from 'solid-j
  * - class: string - Additional class for root element
  */
 export function RadioGroup(props) {
-  const [local, machineProps] = splitProps(props, ['items', 'label', 'class']);
+  const [local, machineProps] = splitProps(props, ['items', 'label', 'class', 'orientation']);
 
-  const context = mergeProps(machineProps, {
+  const service = useMachine(radio.machine, () => ({
+    ...machineProps,
     id: createUniqueId(),
-    orientation: 'vertical',
-  });
-
-  const service = useMachine(radio.machine, context);
+    orientation: local.orientation || 'vertical',
+  }));
 
   const api = createMemo(() => radio.connect(service, normalizeProps));
 
-  const isVertical = () => context.orientation === 'vertical';
+  const isVertical = () => (local.orientation || 'vertical') === 'vertical';
 
   return (
     <div {...api().getRootProps()} class={local.class || ''}>

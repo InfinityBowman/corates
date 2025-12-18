@@ -1,6 +1,6 @@
 import * as accordion from '@zag-js/accordion';
 import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, For, splitProps, mergeProps } from 'solid-js';
+import { createMemo, createUniqueId, For, splitProps } from 'solid-js';
 
 /**
  * Accordion - Vertically stacked expandable sections
@@ -19,9 +19,11 @@ import { createMemo, createUniqueId, For, splitProps, mergeProps } from 'solid-j
 export function Accordion(props) {
   const [local, machineProps] = splitProps(props, ['items', 'class']);
 
-  const context = mergeProps(machineProps, { id: createUniqueId(), collapsible: true });
-
-  const service = useMachine(accordion.machine, context);
+  const service = useMachine(accordion.machine, () => ({
+    ...machineProps,
+    id: createUniqueId(),
+    collapsible: true,
+  }));
 
   const api = createMemo(() => accordion.connect(service, normalizeProps));
 

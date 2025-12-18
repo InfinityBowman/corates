@@ -56,7 +56,7 @@ export function createPdfOperations(projectId, getYDoc, isSynced) {
   /**
    * Add PDF metadata to a study (called after successful upload to R2)
    * @param {string} studyId - The study ID
-   * @param {Object} pdfInfo - PDF metadata { key, fileName, size, uploadedBy, uploadedAt }
+   * @param {Object} pdfInfo - PDF metadata { key, fileName, size, uploadedBy, uploadedAt, title?, firstAuthor?, publicationYear?, journal?, doi? }
    * @param {string} [tag='secondary'] - PDF tag: 'primary' | 'protocol' | 'secondary'
    * @returns {string} The generated PDF ID
    */
@@ -84,6 +84,14 @@ export function createPdfOperations(projectId, getYDoc, isSynced) {
     pdfYMap.set('uploadedBy', pdfInfo.uploadedBy);
     pdfYMap.set('uploadedAt', pdfInfo.uploadedAt || Date.now());
     pdfYMap.set('tag', tag);
+
+    // Citation metadata (optional, can be added later via updatePdfMetadata)
+    if (pdfInfo.title) pdfYMap.set('title', pdfInfo.title);
+    if (pdfInfo.firstAuthor) pdfYMap.set('firstAuthor', pdfInfo.firstAuthor);
+    if (pdfInfo.publicationYear) pdfYMap.set('publicationYear', pdfInfo.publicationYear);
+    if (pdfInfo.journal) pdfYMap.set('journal', pdfInfo.journal);
+    if (pdfInfo.doi) pdfYMap.set('doi', pdfInfo.doi);
+
     pdfsMap.set(pdfId, pdfYMap);
 
     studyYMap.set('updatedAt', Date.now());
@@ -159,6 +167,41 @@ export function createPdfOperations(projectId, getYDoc, isSynced) {
   }
 
   /**
+   * Update PDF citation metadata
+   * @param {string} studyId - The study ID
+   * @param {string} pdfId - The PDF ID
+   * @param {Object} metadata - Citation metadata { title?, firstAuthor?, publicationYear?, journal?, doi? }
+   */
+  function updatePdfMetadata(studyId, pdfId, metadata) {
+    const ydoc = getYDoc();
+    if (!ydoc || !isSynced()) return;
+
+    const pdfsMap = getPdfsMap(studyId);
+    if (!pdfsMap) return;
+
+    const pdfYMap = pdfsMap.get(pdfId);
+    if (!pdfYMap) return;
+
+    // Update each metadata field
+    const fields = ['title', 'firstAuthor', 'publicationYear', 'journal', 'doi'];
+    for (const field of fields) {
+      if (field in metadata) {
+        if (metadata[field] !== undefined && metadata[field] !== null && metadata[field] !== '') {
+          pdfYMap.set(field, metadata[field]);
+        } else {
+          pdfYMap.delete(field);
+        }
+      }
+    }
+
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
+    if (studyYMap) {
+      studyYMap.set('updatedAt', Date.now());
+    }
+  }
+
+  /**
    * Set a PDF as primary (convenience method)
    * @param {string} studyId - The study ID
    * @param {string} pdfId - The PDF ID
@@ -181,6 +224,7 @@ export function createPdfOperations(projectId, getYDoc, isSynced) {
     removePdfFromStudy,
     removePdfByFileName,
     updatePdfTag,
+    updatePdfMetadata,
     setPdfAsPrimary,
     setPdfAsProtocol,
   };
