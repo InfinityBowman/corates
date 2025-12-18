@@ -222,7 +222,7 @@ export default function ReconciliationWrapper() {
 
   // Handle cancel
   function handleCancel() {
-    navigate(`/projects/${params.projectId}?tab=ready-to-reconcile`);
+    navigate(`/projects/${params.projectId}?tab=reconcile`);
   }
 
   // Connect on mount

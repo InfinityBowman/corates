@@ -1,21 +1,25 @@
 /**
  * ReconcileStudyCard - Displays a study card specifically for the Ready to Reconcile tab
- * Automatically compares the two completed checklists without requiring selection
+ * Shows status tag for waiting/ready state and enables reconciliation when both reviewers complete
  */
 
 import { Show } from 'solid-js';
 import { CgFileDocument } from 'solid-icons/cg';
 import { BsFileDiff } from 'solid-icons/bs';
+import ReconcileStatusTag from './reconcile-tab/ReconcileStatusTag.jsx';
 
 export default function ReconcileStudyCard(props) {
   // Check if study has PDFs
   const hasPdfs = () => props.study.pdfs && props.study.pdfs.length > 0;
   const firstPdf = () => (hasPdfs() ? props.study.pdfs[0] : null);
 
-  // Get the two completed checklists (guaranteed to be exactly 2)
+  // Get the completed checklists
   const completedChecklists = () => {
     return (props.study.checklists || []).filter(c => c.status === 'completed');
   };
+
+  // Check if ready for reconciliation (both checklists completed)
+  const isReady = () => completedChecklists().length === 2;
 
   // Start reconciliation - directly compare the two completed checklists
   const startReconciliation = () => {
@@ -66,18 +70,28 @@ export default function ReconcileStudyCard(props) {
 
       {/* Reviewers and Action */}
       <div class='px-4 py-3 flex items-center justify-between gap-3 bg-gray-50'>
-        <div class='flex items-center gap-2 text-sm text-gray-700'>
-          <Show when={completedChecklists()[0]}>
-            {checklist => <span>{getReviewerName(checklist())}</span>}
-          </Show>
-          <span class='text-gray-400'>vs</span>
-          <Show when={completedChecklists()[1]}>
-            {checklist => <span>{getReviewerName(checklist())}</span>}
+        <div class='flex items-center gap-3'>
+          <ReconcileStatusTag study={props.study} getAssigneeName={props.getAssigneeName} />
+          <Show when={isReady()}>
+            <div class='flex items-center gap-2 text-sm text-gray-700'>
+              <Show when={completedChecklists()[0]}>
+                {checklist => <span>{getReviewerName(checklist())}</span>}
+              </Show>
+              <span class='text-gray-400'>vs</span>
+              <Show when={completedChecklists()[1]}>
+                {checklist => <span>{getReviewerName(checklist())}</span>}
+              </Show>
+            </div>
           </Show>
         </div>
         <button
           onClick={startReconciliation}
-          class='px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700'
+          disabled={!isReady()}
+          class={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
+            isReady() ?
+              'bg-blue-600 text-white hover:bg-blue-700'
+            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+          }`}
         >
           <BsFileDiff class='w-4 h-4' />
           Reconcile

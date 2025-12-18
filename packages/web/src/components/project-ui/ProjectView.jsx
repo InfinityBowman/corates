@@ -180,15 +180,24 @@ export default function ProjectView() {
   const getToDoCount = () => {
     const userId = user()?.id;
     if (!userId) return 0;
-    return studies().filter(study => study.reviewer1 === userId || study.reviewer2 === userId)
-      .length;
+    // Count studies where user is a reviewer and has non-completed checklists to work on
+    return studies().filter(study => {
+      if (study.reviewer1 !== userId && study.reviewer2 !== userId) return false;
+      const checklists = study.checklists || [];
+      const userChecklists = checklists.filter(c => c.assignedTo === userId);
+      // Show if user has no checklist yet OR has a non-completed checklist
+      return userChecklists.length === 0 || userChecklists.some(c => c.status !== 'completed');
+    }).length;
   };
 
-  const getReadyToReconcileCount = () => {
+  const getReconcileCount = () => {
+    // Count dual-reviewer studies with at least 1 completed checklist (not reconciled yet)
     return studies().filter(study => {
+      if (!study.reviewer1 || !study.reviewer2) return false;
       const checklists = study.checklists || [];
+      if (checklists.some(c => c.isReconciled)) return false;
       const completedChecklists = checklists.filter(c => c.status === 'completed');
-      return completedChecklists.length === 2;
+      return completedChecklists.length >= 1 && completedChecklists.length <= 2;
     }).length;
   };
 
@@ -207,10 +216,10 @@ export default function ProjectView() {
       getCount: getToDoCount,
     },
     {
-      value: 'ready-to-reconcile',
-      label: 'Ready to Reconcile',
+      value: 'reconcile',
+      label: 'Reconcile',
       icon: <CgArrowsExchange class='w-4 h-4' />,
-      getCount: getReadyToReconcileCount,
+      getCount: getReconcileCount,
     },
     {
       value: 'completed',
@@ -264,7 +273,7 @@ export default function ProjectView() {
                 <ToDoTab />
               </Show>
 
-              <Show when={tabValue === 'ready-to-reconcile'}>
+              <Show when={tabValue === 'reconcile'}>
                 <ReconcileTab />
               </Show>
 

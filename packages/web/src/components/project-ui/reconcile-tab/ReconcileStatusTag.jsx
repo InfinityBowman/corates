@@ -1,0 +1,44 @@
+import { Show } from 'solid-js';
+
+/**
+ * ReconcileStatusTag - Shows "Waiting for {Reviewer}" or "Ready" status
+ *
+ * @param {Object} props
+ * @param {Object} props.study - The study object with checklists, reviewer1, reviewer2
+ * @param {Function} props.getAssigneeName - Function to get reviewer name from ID
+ */
+export default function ReconcileStatusTag(props) {
+  const completedChecklists = () =>
+    (props.study.checklists || []).filter(c => c.status === 'completed');
+
+  const isReady = () => completedChecklists().length === 2;
+
+  const waitingForReviewer = () => {
+    if (isReady()) return null;
+
+    const completed = completedChecklists();
+    if (completed.length !== 1) return null;
+
+    const completedReviewerId = completed[0].assignedTo;
+    // Find the other reviewer
+    const waitingReviewerId =
+      completedReviewerId === props.study.reviewer1 ? props.study.reviewer2 : props.study.reviewer1;
+
+    return props.getAssigneeName(waitingReviewerId);
+  };
+
+  return (
+    <Show
+      when={isReady()}
+      fallback={
+        <span class='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800'>
+          Waiting for {waitingForReviewer()}
+        </span>
+      }
+    >
+      <span class='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800'>
+        Ready
+      </span>
+    </Show>
+  );
+}
