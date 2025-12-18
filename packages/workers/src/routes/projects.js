@@ -196,26 +196,19 @@ projectRoutes.put('/:id', validateRequest(projectSchemas.update), async c => {
 
     const now = new Date();
 
-    await db
-      .update(projects)
-      .set({
-        name: name || undefined,
-        description: description,
-        updatedAt: now,
-      })
-      .where(eq(projects.id, projectId));
+    // Only update fields that are provided
+    const updateData = { updatedAt: now };
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
 
-    // Sync updated meta to DO
-    await syncProjectToDO(
-      c.env,
-      projectId,
-      {
-        name: name || undefined,
-        description: description,
-        updatedAt: now.getTime(),
-      },
-      null,
-    );
+    await db.update(projects).set(updateData).where(eq(projects.id, projectId));
+
+    // Sync updated meta to DO (only include provided fields)
+    const metaUpdate = { updatedAt: now.getTime() };
+    if (name !== undefined) metaUpdate.name = name;
+    if (description !== undefined) metaUpdate.description = description;
+
+    await syncProjectToDO(c.env, projectId, metaUpdate, null);
 
     return c.json({ success: true, projectId });
   } catch (error) {

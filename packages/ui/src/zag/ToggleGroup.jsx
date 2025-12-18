@@ -1,6 +1,6 @@
 import * as toggle from '@zag-js/toggle-group';
 import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, For, splitProps, mergeProps } from 'solid-js';
+import { createMemo, createUniqueId, For, splitProps } from 'solid-js';
 
 /**
  * ToggleGroup - Group of toggle buttons
@@ -22,15 +22,14 @@ import { createMemo, createUniqueId, For, splitProps, mergeProps } from 'solid-j
 export function ToggleGroup(props) {
   const [local, machineProps] = splitProps(props, ['items', 'size', 'class']);
 
-  const context = mergeProps(machineProps, {
+  const service = useMachine(toggle.machine, () => ({
     id: createUniqueId(),
     orientation: 'horizontal',
     loop: true,
     rovingFocus: true,
     deselectable: true,
-  });
-
-  const service = useMachine(toggle.machine, context);
+    ...machineProps,
+  }));
 
   const api = createMemo(() => toggle.connect(service, normalizeProps));
 
@@ -45,7 +44,7 @@ export function ToggleGroup(props) {
     }
   };
 
-  const isVertical = () => context.orientation === 'vertical';
+  const isVertical = () => api().orientation === 'vertical';
 
   return (
     <div

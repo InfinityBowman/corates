@@ -5,8 +5,12 @@
   "description": "Shared UI components for Corates built with Zag.js and SolidJS",
   "type": "module",
   "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "exports": {
-    ".": "./src/index.js",
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    },
     "./zag": "./src/zag/index.js",
     "./zag/*": "./src/zag/*.jsx"
   },

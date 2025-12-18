@@ -44,7 +44,7 @@ export const projectSchemas = {
       .string()
       .max(2000, 'Description must be 2000 characters or less')
       .optional()
-      .transform(val => val?.trim() || null),
+      .transform(val => (val === undefined ? undefined : val?.trim() || null)),
   }),
 };
 

@@ -8,7 +8,7 @@ import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import useProject from '@/primitives/useProject/index.js';
 import projectStore from '@/stores/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { uploadPdf } from '@api/pdf-api.js';
+import { uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
 import { importFromGoogleDrive } from '@api/google-drive.js';
 import { useConfirmDialog, Tabs } from '@corates/ui';
@@ -28,7 +28,7 @@ import { ProjectProvider } from './ProjectContext.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
 import ProjectHeader from './ProjectHeader.jsx';
 import OverviewTab from './tabs/OverviewTab.jsx';
-import IncludedStudiesTab from './tabs/AllStudiesTab.jsx';
+import IncludedStudiesTab from './all-studies/AllStudiesTab.jsx';
 import ToDoTab from './tabs/ToDoTab.jsx';
 import ReadyToReconcileTab from './tabs/ReadyToReconcileTab.jsx';
 import CompletedTab from './tabs/completed';
@@ -97,13 +97,19 @@ export default function ProjectView() {
         uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName)
           .then(result => {
             cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(console.warn);
-            addPdfToStudy(studyId, {
-              key: result.key,
-              fileName: result.fileName,
-              size: result.size,
-              uploadedBy: user()?.id,
-              uploadedAt: Date.now(),
-            });
+            try {
+              addPdfToStudy(studyId, {
+                key: result.key,
+                fileName: result.fileName,
+                size: result.size,
+                uploadedBy: user()?.id,
+                uploadedAt: Date.now(),
+              });
+            } catch (metaErr) {
+              console.error('Failed to add PDF metadata:', metaErr);
+              // Clean up orphaned file
+              deletePdf(params.projectId, studyId, result.fileName).catch(console.warn);
+            }
           })
           .catch(err => console.error('Error uploading PDF for new study:', err));
       }
@@ -148,14 +154,20 @@ export default function ProjectView() {
       if (studyId && file.id) {
         importFromGoogleDrive(file.id, params.projectId, studyId)
           .then(result => {
-            addPdfToStudy(studyId, {
-              key: result.file.key,
-              fileName: result.file.fileName,
-              size: result.file.size,
-              uploadedBy: user()?.id,
-              uploadedAt: Date.now(),
-              source: 'google-drive',
-            });
+            try {
+              addPdfToStudy(studyId, {
+                key: result.file.key,
+                fileName: result.file.fileName,
+                size: result.file.size,
+                uploadedBy: user()?.id,
+                uploadedAt: Date.now(),
+                source: 'google-drive',
+              });
+            } catch (metaErr) {
+              console.error('Failed to add PDF metadata:', metaErr);
+              // Clean up orphaned file
+              deletePdf(params.projectId, studyId, result.file.fileName).catch(console.warn);
+            }
           })
           .catch(err => console.error('Error importing Google Drive file:', err));
       }
@@ -230,8 +242,8 @@ export default function ProjectView() {
         onAddMember={() => setShowAddMemberModal(true)}
       >
         <ProjectHeader
-          name={meta()?.name}
-          description={meta()?.description}
+          name={() => meta()?.name}
+          description={() => meta()?.description}
           onRename={projectActions.renameProject}
           onUpdateDescription={projectActions.updateDescription}
           onBack={() => navigate('/dashboard')}

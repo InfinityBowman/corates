@@ -108,14 +108,22 @@ function buildStudyFromYMap(studyId, studyData, studyYMap) {
   // Get PDFs from nested Y.Map
   const pdfsMap = studyYMap.get ? studyYMap.get('pdfs') : null;
   if (pdfsMap && typeof pdfsMap.entries === 'function') {
-    for (const [fileName, pdfYMap] of pdfsMap.entries()) {
+    for (const [pdfId, pdfYMap] of pdfsMap.entries()) {
       const pdfData = pdfYMap.toJSON ? pdfYMap.toJSON() : pdfYMap;
       study.pdfs.push({
-        fileName,
+        id: pdfData.id || pdfId,
+        fileName: pdfData.fileName || pdfId, // fallback for old structure where pdfId was fileName
         key: pdfData.key,
         size: pdfData.size,
         uploadedBy: pdfData.uploadedBy,
         uploadedAt: pdfData.uploadedAt,
+        tag: pdfData.tag || 'secondary',
+        // Citation metadata
+        title: pdfData.title || null,
+        firstAuthor: pdfData.firstAuthor || null,
+        publicationYear: pdfData.publicationYear || null,
+        journal: pdfData.journal || null,
+        doi: pdfData.doi || null,
       });
     }
   }

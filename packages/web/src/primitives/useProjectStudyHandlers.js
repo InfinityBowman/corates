@@ -3,11 +3,9 @@
  * Reads from projectStore directly to avoid prop drilling
  */
 
-import { uploadPdf, fetchPdfViaProxy, downloadPdf } from '@api/pdf-api.js';
+import { uploadPdf, fetchPdfViaProxy, downloadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
 import { showToast } from '@corates/ui';
-import { generateStudyName, getDefaultNamingConvention } from '@/lib/studyNaming.js';
-import projectStore from '@/stores/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { importFromGoogleDrive } from '@api/google-drive.js';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
@@ -21,26 +19,28 @@ import { fetchFromDOI } from '@/lib/referenceLookup.js';
 export default function useProjectStudyHandlers(projectId, projectActions, confirmDialog) {
   const { user } = useBetterAuth();
 
-  // Read from store directly
-  const studies = () => projectStore.getStudies(projectId);
-  const meta = () => projectStore.getMeta(projectId);
-
   const { createStudy, updateStudy, deleteStudy, addPdfToStudy } = projectActions;
 
-  // Get the naming convention from project meta
-  const getNamingConvention = () => meta()?.studyNamingConvention || getDefaultNamingConvention();
+  /**
+   * Helper to get study name from PDF filename
+   * @param {string} pdfFileName - The PDF filename
+   * @returns {string} Study name (filename without .pdf extension)
+   */
+  const getStudyNameFromFilename = pdfFileName => {
+    if (!pdfFileName) return 'Untitled Study';
+    return pdfFileName.replace(/\.pdf$/i, '');
+  };
 
   // Unified handler for adding studies from AddStudiesForm
   const handleAddStudies = async studiesToAdd => {
     let successCount = 0;
     let manualPdfCount = 0;
-    const namingConvention = getNamingConvention();
 
     try {
       for (const study of studiesToAdd) {
         try {
-          // Preserve the original title before any naming convention transformations
-          const originalTitle = study.title || study.name || 'Untitled Study';
+          // Store metadata (title, authors, etc.) but use filename for study name
+          const originalTitle = study.title || study.name || null;
 
           const metadata = {
             originalTitle,
@@ -55,8 +55,8 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
             pdfSource: study.pdfSource,
           };
 
-          // Generate study name based on naming convention
-          const studyName = generateStudyName(study, namingConvention);
+          // Study name = PDF filename (without .pdf extension)
+          const studyName = getStudyNameFromFilename(study.pdfFileName);
 
           const studyId = createStudy(studyName, study.abstract || '', metadata);
 
@@ -75,14 +75,25 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
                 );
                 const importedFile = result?.file;
                 if (importedFile?.fileName) {
-                  addPdfToStudy(studyId, {
-                    key: importedFile.key,
-                    fileName: importedFile.fileName,
-                    size: importedFile.size,
-                    uploadedBy: user()?.id,
-                    uploadedAt: Date.now(),
-                    source: 'google-drive',
-                  });
+                  try {
+                    addPdfToStudy(
+                      studyId,
+                      {
+                        key: importedFile.key,
+                        fileName: importedFile.fileName,
+                        size: importedFile.size,
+                        uploadedBy: user()?.id,
+                        uploadedAt: Date.now(),
+                        source: 'google-drive',
+                      },
+                      'primary',
+                    );
+                  } catch (metaErr) {
+                    console.error('Failed to add PDF metadata:', metaErr);
+                    // Clean up orphaned file
+                    deletePdf(projectId, studyId, importedFile.fileName).catch(console.warn);
+                    throw metaErr;
+                  }
 
                   // Best-effort: mimic Upload PDFs behavior by extracting DOI/title and fetching metadata
                   try {
@@ -130,22 +141,10 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
                       }
                     }
 
-                    // Update study name after metadata extraction (to match naming convention behavior)
-                    const nameBasis = {
-                      title: updates.originalTitle || study.title,
-                      firstAuthor: updates.firstAuthor ?? study.firstAuthor,
-                      publicationYear: updates.publicationYear ?? study.publicationYear,
-                      authors: updates.authors ?? study.authors,
-                      fileName: updates.fileName ?? study.fileName,
-                    };
-                    const updatedName = generateStudyName(nameBasis, namingConvention);
-                    if (updatedName) updates.name = updatedName;
-
-                    // Persist extracted metadata to the study
+                    // Persist extracted metadata to the study (name stays as PDF filename)
                     if (Object.keys(updates).length > 0) {
-                      // Only update known study fields.
+                      // Only update known study fields (not name - it stays as filename)
                       const safeUpdates = {
-                        name: updates.name,
                         originalTitle: updates.originalTitle,
                         doi: updates.doi,
                         firstAuthor: updates.firstAuthor,
@@ -154,7 +153,6 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
                         journal: updates.journal,
                         abstract: updates.abstract,
                         importSource: updates.importSource,
-                        fileName: updates.fileName,
                       };
 
                       // Remove undefined to avoid overwriting existing values
@@ -203,13 +201,24 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
                 cachePdf(projectId, studyId, result.fileName, pdfData).catch(err =>
                   console.warn('Failed to cache PDF:', err),
                 );
-                addPdfToStudy(studyId, {
-                  key: result.key,
-                  fileName: result.fileName,
-                  size: result.size,
-                  uploadedBy: user()?.id,
-                  uploadedAt: Date.now(),
-                });
+                try {
+                  addPdfToStudy(
+                    studyId,
+                    {
+                      key: result.key,
+                      fileName: result.fileName,
+                      size: result.size,
+                      uploadedBy: user()?.id,
+                      uploadedAt: Date.now(),
+                    },
+                    'primary',
+                  );
+                } catch (metaErr) {
+                  console.error('Failed to add PDF metadata:', metaErr);
+                  // Clean up orphaned file
+                  deletePdf(projectId, studyId, result.fileName).catch(console.warn);
+                  throw metaErr;
+                }
               } catch (uploadErr) {
                 console.error('Error uploading PDF:', uploadErr);
               }
@@ -243,20 +252,20 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
   };
 
   // Handle importing references from Zotero/EndNote files
+  // Note: Studies require a PDF, so references need PDFs attached
   const handleImportReferences = references => {
     let successCount = 0;
-    const namingConvention = getNamingConvention();
 
     for (const ref of references) {
       try {
-        // Preserve the original title before any naming convention transformations
-        const originalTitle = ref.title || 'Untitled Study';
-
-        // Generate study name based on naming convention
-        const studyName = generateStudyName(ref, namingConvention);
+        // Use PDF filename if available, otherwise use title temporarily
+        const studyName =
+          ref.pdfFileName ?
+            getStudyNameFromFilename(ref.pdfFileName)
+          : ref.title || 'Untitled Study';
 
         createStudy(studyName, ref.abstract || '', {
-          originalTitle,
+          originalTitle: ref.title || null,
           firstAuthor: ref.firstAuthor,
           publicationYear: ref.publicationYear,
           authors: ref.authors,
@@ -306,60 +315,10 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
     }
   };
 
-  // Apply naming convention to all existing studies
-  const handleApplyNamingToAll = async namingConvention => {
-    const currentStudies = studies() || [];
-    if (currentStudies.length === 0) return;
-
-    let successCount = 0;
-    for (const study of currentStudies) {
-      try {
-        // Generate new name based on preserved originalTitle and study metadata
-        const newName = generateStudyName(
-          {
-            title: study.originalTitle,
-            firstAuthor: study.firstAuthor,
-            publicationYear: study.publicationYear,
-            authors: study.authors,
-            fileName: study.fileName,
-          },
-          namingConvention,
-        );
-
-        // Update name if it would change
-        if (newName && newName !== study.name) {
-          updateStudy(study.id, { name: newName });
-          successCount++;
-        }
-      } catch (err) {
-        console.error('Error renaming study:', err);
-      }
-    }
-
-    // Count studies without originalTitle
-    const skippedCount = currentStudies.filter(s => !s.originalTitle).length;
-
-    if (successCount > 0) {
-      let message = `Successfully renamed ${successCount} ${successCount === 1 ? 'study' : 'studies'}.`;
-      if (skippedCount > 0) {
-        message += ` ${skippedCount} ${skippedCount === 1 ? 'study was' : 'studies were'} skipped (no original title).`;
-      }
-      showToast.success('Studies Renamed', message);
-    } else if (skippedCount > 0) {
-      showToast.info(
-        'No Changes',
-        `${skippedCount} ${skippedCount === 1 ? 'study has' : 'studies have'} no set title. Edit studies to set their  titles first.`,
-      );
-    } else {
-      showToast.info('No Changes', 'All studies already match the naming convention.');
-    }
-  };
-
   return {
     handleAddStudies,
     handleImportReferences,
     handleUpdateStudy,
     handleDeleteStudy,
-    handleApplyNamingToAll,
   };
 }

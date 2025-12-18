@@ -7,7 +7,6 @@ import {
   For,
   Show,
   splitProps,
-  mergeProps,
   createContext,
   useContext,
 } from 'solid-js';
@@ -57,14 +56,13 @@ export function useTour() {
 export function TourProvider(props) {
   const [local, machineProps] = splitProps(props, ['children']);
 
-  const context = mergeProps(machineProps, {
+  const service = useMachine(tour.machine, () => ({
     id: createUniqueId(),
     closeOnInteractOutside: true,
     closeOnEscape: true,
     keyboardNavigation: true,
-  });
-
-  const service = useMachine(tour.machine, context);
+    ...machineProps,
+  }));
 
   const api = createMemo(() => tour.connect(service, normalizeProps));
 

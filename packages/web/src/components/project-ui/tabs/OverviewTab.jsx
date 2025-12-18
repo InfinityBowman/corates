@@ -2,7 +2,6 @@ import { For, Show } from 'solid-js';
 import { FiPlus, FiTrash2 } from 'solid-icons/fi';
 import ChartSection from '../ChartSection.jsx';
 import ReviewerAssignment from '../ReviewerAssignment.jsx';
-import ProjectSettings from '../ProjectSettings.jsx';
 import projectStore from '@/stores/projectStore.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
@@ -16,12 +15,11 @@ import { Avatar } from '@corates/ui';
  */
 export default function OverviewTab(props) {
   const { user } = useBetterAuth();
-  const { projectId, handlers, projectActions, isOwner } = useProjectContext();
+  const { projectId, handlers, isOwner, projectActions } = useProjectContext();
 
   // Read from store directly
   const studies = () => projectStore.getStudies(projectId);
   const members = () => projectStore.getMembers(projectId);
-  const meta = () => projectStore.getMeta(projectId);
   const currentUserId = () => user()?.id;
 
   // Calculate additional stats
@@ -61,15 +59,6 @@ export default function OverviewTab(props) {
       <div class='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8'>
         {/* Left Column */}
         <div class='space-y-6'>
-          {/* Project Settings */}
-          <ProjectSettings
-            meta={meta}
-            studies={studies}
-            onUpdateSettings={projectActions.updateProjectSettings}
-            onApplyNamingToAll={handlers.studyHandlers.handleApplyNamingToAll}
-            isOwner={isOwner()}
-          />
-
           {/* Reviewer Assignment Section */}
           <Show when={isOwner() && studies().length > 0}>
             <ReviewerAssignment

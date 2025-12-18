@@ -221,6 +221,48 @@ function createProjectStore() {
     return study.checklists.find(c => c.id === checklistId) || null;
   }
 
+  // ============ PDF Selectors ============
+
+  /**
+   * Get all PDFs for a study
+   */
+  function getStudyPdfs(projectId, studyId) {
+    const study = getStudy(projectId, studyId);
+    return study?.pdfs || [];
+  }
+
+  /**
+   * Get primary PDF for a study
+   */
+  function getPrimaryPdf(projectId, studyId) {
+    const pdfs = getStudyPdfs(projectId, studyId);
+    return pdfs.find(pdf => pdf.tag === 'primary') || null;
+  }
+
+  /**
+   * Get protocol PDF for a study
+   */
+  function getProtocolPdf(projectId, studyId) {
+    const pdfs = getStudyPdfs(projectId, studyId);
+    return pdfs.find(pdf => pdf.tag === 'protocol') || null;
+  }
+
+  /**
+   * Get secondary PDFs for a study
+   */
+  function getSecondaryPdfs(projectId, studyId) {
+    const pdfs = getStudyPdfs(projectId, studyId);
+    return pdfs.filter(pdf => pdf.tag === 'secondary' || !pdf.tag);
+  }
+
+  /**
+   * Get a specific PDF by ID
+   */
+  function getPdf(projectId, studyId, pdfId) {
+    const pdfs = getStudyPdfs(projectId, studyId);
+    return pdfs.find(pdf => pdf.id === pdfId) || null;
+  }
+
   // ============ Project List (Dashboard) ============
 
   /**
@@ -437,6 +479,13 @@ function createProjectStore() {
     getMeta,
     getStudy,
     getChecklist,
+
+    // Getters - PDF Data
+    getStudyPdfs,
+    getPrimaryPdf,
+    getProtocolPdf,
+    getSecondaryPdfs,
+    getPdf,
 
     // Getters - Project List (Dashboard)
     getProjectList,

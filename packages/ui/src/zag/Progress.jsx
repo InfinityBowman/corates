@@ -1,6 +1,6 @@
 import * as progress from '@zag-js/progress';
 import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, Show, splitProps, mergeProps } from 'solid-js';
+import { createMemo, createUniqueId, Show, splitProps } from 'solid-js';
 
 /**
  * Progress - Linear progress bar
@@ -26,13 +26,12 @@ export function Progress(props) {
     'class',
   ]);
 
-  const context = mergeProps(machineProps, {
+  const service = useMachine(progress.machine, () => ({
     id: createUniqueId(),
     min: 0,
     max: 100,
-  });
-
-  const service = useMachine(progress.machine, context);
+    ...machineProps,
+  }));
 
   const api = createMemo(() => progress.connect(service, normalizeProps));
 
