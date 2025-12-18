@@ -23,12 +23,12 @@ export function ToggleGroup(props) {
   const [local, machineProps] = splitProps(props, ['items', 'size', 'class']);
 
   const service = useMachine(toggle.machine, () => ({
-    ...machineProps,
     id: createUniqueId(),
     orientation: 'horizontal',
     loop: true,
     rovingFocus: true,
     deselectable: true,
+    ...machineProps,
   }));
 
   const api = createMemo(() => toggle.connect(service, normalizeProps));

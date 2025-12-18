@@ -20,9 +20,9 @@ export function Accordion(props) {
   const [local, machineProps] = splitProps(props, ['items', 'class']);
 
   const service = useMachine(accordion.machine, () => ({
-    ...machineProps,
     id: createUniqueId(),
     collapsible: true,
+    ...machineProps,
   }));
 
   const api = createMemo(() => accordion.connect(service, normalizeProps));

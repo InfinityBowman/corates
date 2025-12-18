@@ -21,9 +21,9 @@ export function Clipboard(props) {
   const [local, machineProps] = splitProps(props, ['label', 'showInput', 'children', 'class']);
 
   const service = useMachine(clipboard.machine, () => ({
-    ...machineProps,
     id: createUniqueId(),
     timeout: 3000,
+    ...machineProps,
   }));
 
   const api = createMemo(() => clipboard.connect(service, normalizeProps));
@@ -88,9 +88,9 @@ export function CopyButton(props) {
   ]);
 
   const service = useMachine(clipboard.machine, () => ({
-    ...machineProps,
     id: createUniqueId(),
     timeout: 3000,
+    ...machineProps,
   }));
 
   const api = createMemo(() => clipboard.connect(service, normalizeProps));

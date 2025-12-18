@@ -57,11 +57,11 @@ export function TourProvider(props) {
   const [local, machineProps] = splitProps(props, ['children']);
 
   const service = useMachine(tour.machine, () => ({
-    ...machineProps,
     id: createUniqueId(),
     closeOnInteractOutside: true,
     closeOnEscape: true,
     keyboardNavigation: true,
+    ...machineProps,
   }));
 
   const api = createMemo(() => tour.connect(service, normalizeProps));

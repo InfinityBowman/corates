@@ -27,10 +27,10 @@ export function Progress(props) {
   ]);
 
   const service = useMachine(progress.machine, () => ({
-    ...machineProps,
     id: createUniqueId(),
     min: 0,
     max: 100,
+    ...machineProps,
   }));
 
   const api = createMemo(() => progress.connect(service, normalizeProps));

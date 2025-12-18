@@ -39,10 +39,10 @@ export function Menu(props) {
   ]);
 
   const service = useMachine(menu.machine, () => ({
-    ...machineProps,
     id: createUniqueId(),
     closeOnSelect: true,
     positioning: { placement: local.placement || 'bottom-start' },
+    ...machineProps,
   }));
 
   const api = createMemo(() => menu.connect(service, normalizeProps));

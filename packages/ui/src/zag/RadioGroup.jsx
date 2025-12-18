@@ -17,17 +17,17 @@ import { createMemo, createUniqueId, For, splitProps } from 'solid-js';
  * - class: string - Additional class for root element
  */
 export function RadioGroup(props) {
-  const [local, machineProps] = splitProps(props, ['items', 'label', 'class', 'orientation']);
+  const [local, machineProps] = splitProps(props, ['items', 'label', 'class']);
 
   const service = useMachine(radio.machine, () => ({
-    ...machineProps,
     id: createUniqueId(),
-    orientation: local.orientation || 'vertical',
+    orientation: 'vertical',
+    ...machineProps,
   }));
 
   const api = createMemo(() => radio.connect(service, normalizeProps));
 
-  const isVertical = () => (local.orientation || 'vertical') === 'vertical';
+  const isVertical = () => api().orientation === 'vertical';
 
   return (
     <div {...api().getRootProps()} class={local.class || ''}>

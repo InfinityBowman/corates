@@ -50,9 +50,9 @@ export function Combobox(props) {
   );
 
   const service = useMachine(combobox.machine, () => ({
-    ...machineProps,
     id: createUniqueId(),
     openOnClick: true,
+    ...machineProps,
     get collection() {
       return collection();
     },
