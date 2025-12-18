@@ -6,7 +6,12 @@
 import { createSignal, createMemo, For, Show } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { showToast, Collapsible } from '@corates/ui';
-import { BiRegularShuffle, BiRegularCheck, BiRegularX, BiRegularChevronRight } from 'solid-icons/bi';
+import {
+  BiRegularShuffle,
+  BiRegularCheck,
+  BiRegularX,
+  BiRegularChevronRight,
+} from 'solid-icons/bi';
 import { FiUsers } from 'solid-icons/fi';
 
 /**
