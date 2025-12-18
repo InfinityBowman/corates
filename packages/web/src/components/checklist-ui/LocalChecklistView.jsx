@@ -210,6 +210,7 @@ export default function LocalChecklistView() {
               pdfFileName={pdfFileName()}
               onPdfChange={handlePdfChange}
               onPdfClear={handlePdfClear}
+              allowDelete={true}
             />
           </Show>
         </Show>

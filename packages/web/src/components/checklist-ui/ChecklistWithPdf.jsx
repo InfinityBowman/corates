@@ -19,6 +19,10 @@ export default function ChecklistWithPdf(props) {
   // props.onPdfChange - callback when PDF changes: (data, fileName) => void
   // props.onPdfClear - callback when PDF is cleared
   // props.readOnly - if true, disables checklist updates and PDF uploads
+  // props.allowDelete - if true, shows PDF delete button (only applies when !readOnly)
+  // props.pdfs - array of PDFs for multi-PDF selection
+  // props.selectedPdfId - currently selected PDF ID
+  // props.onPdfSelect - handler for PDF selection change
 
   return (
     <div class='h-full flex flex-col bg-blue-50'>
@@ -44,6 +48,10 @@ export default function ChecklistWithPdf(props) {
           onPdfChange={props.onPdfChange}
           onPdfClear={props.onPdfClear}
           readOnly={props.readOnly}
+          allowDelete={props.allowDelete}
+          pdfs={props.pdfs}
+          selectedPdfId={props.selectedPdfId}
+          onPdfSelect={props.onPdfSelect}
         />
       </SplitScreenLayout>
     </div>

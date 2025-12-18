@@ -4,13 +4,12 @@ import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import useProject from '@/primitives/useProject/index.js';
 import projectStore from '@/stores/projectStore.js';
 import { downloadPdf, uploadPdf, deletePdf } from '@api/pdf-api.js';
-import { getCachedPdf, cachePdf, removeCachedPdf } from '@primitives/pdfCache.js';
+import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
 import { showToast, useConfirmDialog } from '@corates/ui';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry';
 import { IoChevronBack } from 'solid-icons/io';
 import ScoreTag from '@/components/checklist-ui/ScoreTag.jsx';
-import { PdfSelector } from '@checklist-ui/pdf/index.js';
 
 export default function ChecklistYjsWrapper() {
   const params = useParams();
@@ -24,13 +23,9 @@ export default function ChecklistYjsWrapper() {
   const [selectedPdfId, setSelectedPdfId] = createSignal(null);
 
   // Use full hook for write operations
-  const {
-    updateChecklistAnswer,
-    updateChecklist,
-    getChecklistData,
-    addPdfToStudy,
-    removePdfFromStudy,
-  } = useProject(params.projectId);
+  const { updateChecklistAnswer, updateChecklist, getChecklistData, addPdfToStudy } = useProject(
+    params.projectId,
+  );
 
   // Read data directly from store for faster reactivity
   const connectionState = () => projectStore.getConnectionState(params.projectId);
@@ -88,17 +83,15 @@ export default function ChecklistYjsWrapper() {
   createEffect(() => {
     const pdf = currentPdf();
     const fileName = pdf?.fileName;
+    selectedPdfId(); // Explicitly track selection changes
 
     // Skip if no PDF, already loaded this file, or currently loading
     if (!fileName || attemptedPdfFile() === fileName || pdfLoading()) {
       return;
     }
 
-    // Clear previous PDF data when switching
-    if (attemptedPdfFile() && attemptedPdfFile() !== fileName) {
-      setPdfData(null);
-      setPdfFileName(null);
-    }
+    // Don't clear previous PDF - keep it visible until new one loads
+    // This prevents flashing empty state during transitions
 
     setAttemptedPdfFile(fileName);
     setPdfLoading(true);
@@ -176,27 +169,6 @@ export default function ChecklistYjsWrapper() {
         );
       }
       showToast.error('Upload Failed', 'Failed to upload PDF');
-    }
-  };
-
-  // Handle PDF clear (delete current PDF)
-  const handlePdfClear = async () => {
-    const pdf = currentPdf();
-    if (!pdf) return;
-
-    try {
-      await deletePdf(params.projectId, params.studyId, pdf.fileName);
-      // Update Y.js to remove PDF metadata
-      removePdfFromStudy(params.studyId, pdf.id);
-      // Remove from cache
-      removeCachedPdf(params.projectId, params.studyId, pdf.fileName);
-      setPdfData(null);
-      setPdfFileName(null);
-      setSelectedPdfId(null);
-      setAttemptedPdfFile(null);
-    } catch (err) {
-      console.error('Failed to delete PDF:', err);
-      showToast.error('Delete Failed', 'Failed to delete PDF');
     }
   };
 
@@ -329,14 +301,6 @@ export default function ChecklistYjsWrapper() {
           {currentChecklist()?.type || 'AMSTAR2'} Checklist
         </span>
       </div>
-      {/* PDF Selector - only shown when multiple PDFs exist */}
-      <Show when={studyPdfs().length > 1}>
-        <PdfSelector
-          pdfs={studyPdfs()}
-          selectedPdfId={selectedPdfId()}
-          onSelect={handlePdfSelect}
-        />
-      </Show>
       <div class='ml-auto flex items-center gap-3'>
         <ScoreTag currentScore={currentScore()} checklistType={checklistType()} />
         <Show
@@ -393,8 +357,11 @@ export default function ChecklistYjsWrapper() {
           pdfData={pdfData()}
           pdfFileName={pdfFileName()}
           onPdfChange={handlePdfChange}
-          onPdfClear={handlePdfClear}
           readOnly={isReadOnly()}
+          allowDelete={false}
+          pdfs={studyPdfs()}
+          selectedPdfId={selectedPdfId()}
+          onPdfSelect={handlePdfSelect}
         />
       </Show>
     </>

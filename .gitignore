@@ -50,4 +50,4 @@ secrets.txt
 openapi.json
 
 # Temp files
-/docs/plans/*
+/docs/plans*

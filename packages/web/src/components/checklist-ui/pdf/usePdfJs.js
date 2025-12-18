@@ -30,6 +30,7 @@ export default function usePdfJs(options = {}) {
   const [rendering, setRendering] = createSignal(false);
   const [pageCanvases, setPageCanvases] = createSignal([]);
   const [pageTextLayers, setPageTextLayers] = createSignal([]);
+  const [docId, setDocId] = createSignal(0); // Increments on each new PDF to force DOM recreation
 
   let currentRenderTasks = new Map(); // Track render tasks per page
   let renderingPages = new Set(); // Track which pages are currently rendering
@@ -125,19 +126,35 @@ export default function usePdfJs(options = {}) {
     fileInputRef = ref;
   }
 
+  // Track currently loaded filename to detect when props change to a different PDF
+  const [loadedPdfName, setLoadedPdfName] = createSignal(null);
+
   // Load saved PDF data when provided via props
+  // NOTE: We intentionally do NOT clear state when props become null.
+  // This allows the old PDF to stay visible during transitions while the new one loads.
+  // Clearing is only done via explicit clearPdf() call (e.g., for local checklist deletion).
   createEffect(() => {
     const ready = libReady();
     const savedData = options.pdfData?.();
     const savedName = options.pdfFileName?.();
 
-    // Don't reload from props if user explicitly cleared the PDF
-    if (ready && savedData && !pdfSource() && !userCleared) {
-      // Clone the ArrayBuffer to avoid detached buffer issues
-      const clonedData = savedData.slice(0);
-      setFileName(savedName || 'document.pdf');
-      setPdfSource({ data: clonedData });
+    // Only proceed if we have data and a name
+    if (!ready || !savedData || !savedName) return;
+
+    // Skip if we've already loaded this exact file
+    if (loadedPdfName() === savedName) return;
+
+    // If user cleared but now we have a DIFFERENT file, accept it
+    // (This handles the case where parent sends new data after clear)
+    if (userCleared) {
+      userCleared = false;
     }
+
+    // Load the new PDF (old one stays visible until this completes)
+    const clonedData = savedData.slice(0);
+    setLoadedPdfName(savedName);
+    setFileName(savedName);
+    setPdfSource({ data: clonedData });
   });
 
   // Load PDF when source changes and library is ready
@@ -170,6 +187,8 @@ export default function usePdfJs(options = {}) {
     const doc = pdfDoc();
     const canvases = pageCanvases();
     const currentScale = scale();
+    // Track docId to re-run this effect when PDF changes
+    docId();
 
     if (!doc) {
       renderedPages.clear();
@@ -188,12 +207,16 @@ export default function usePdfJs(options = {}) {
       // Mark pages as being rendered to avoid duplicate renders
       pagesToRender.forEach(p => renderedPages.add(p));
 
-      // Render the new pages sequentially
-      (async () => {
+      // Capture scale for async callback
+      const capturedScale = currentScale;
+
+      // Use queueMicrotask to ensure DOM is fully updated before rendering
+      // renderPage already checks pdfDoc() and canvas validity
+      queueMicrotask(async () => {
         for (const pageNum of pagesToRender) {
-          await renderPage(pageNum, currentScale);
+          await renderPage(pageNum, capturedScale);
         }
-      })();
+      });
     }
   });
 
@@ -248,6 +271,20 @@ export default function usePdfJs(options = {}) {
       // verbosity: 0 = ERRORS only (suppress warnings about malformed PDFs)
       const loadingTask = pdfjsLib.getDocument({ ...loadSource, verbosity: 0 });
       const pdf = await loadingTask.promise;
+
+      // Clear any existing canvases visually before setting new doc
+      // This prevents showing stale content from previous PDF
+      const existingCanvases = pageCanvases();
+      existingCanvases.forEach(canvas => {
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      });
+
+      // Increment docId to force DOM recreation of canvas elements
+      setDocId(id => id + 1);
+
       setPdfDoc(pdf);
       setTotalPages(pdf.numPages);
       setCurrentPage(1);
@@ -479,6 +516,7 @@ export default function usePdfJs(options = {}) {
 
     // Mark as user-cleared to prevent auto-reload from props
     userCleared = true;
+    setLoadedPdfName(null); // Reset so a re-selection of the same file can reload
 
     setPdfDoc(null);
     setPdfSource(null);
@@ -605,6 +643,7 @@ export default function usePdfJs(options = {}) {
     libReady,
     rendering,
     pageCanvases,
+    docId, // Used to key page elements for DOM recreation on PDF switch
 
     // Ref setters
     setPageCanvasRef,

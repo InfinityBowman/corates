@@ -23,6 +23,9 @@ export default function ReconciliationWithPdf(props) {
   // props.pdfData - ArrayBuffer of the study PDF (optional)
   // props.pdfFileName - Name of the PDF file (optional)
   // props.pdfLoading - Whether PDF is still loading
+  // props.pdfs - Array of PDFs for multi-PDF selection
+  // props.selectedPdfId - Currently selected PDF ID
+  // props.onPdfSelect - Handler for PDF selection change
 
   // Layout state
   const [showPdf, setShowPdf] = createSignal(true);
@@ -194,7 +197,14 @@ export default function ReconciliationWithPdf(props) {
                 </div>
               }
             >
-              <PdfViewer pdfData={props.pdfData} pdfFileName={props.pdfFileName} readOnly={true} />
+              <PdfViewer
+                pdfData={props.pdfData}
+                pdfFileName={props.pdfFileName}
+                readOnly={true}
+                pdfs={props.pdfs}
+                selectedPdfId={props.selectedPdfId}
+                onPdfSelect={props.onPdfSelect}
+              />
             </Show>
           </div>
         </Show>

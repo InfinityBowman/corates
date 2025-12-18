@@ -9,7 +9,7 @@
  * - PdfEmptyState: Loading, error, and empty states
  */
 
-import { Show, Index } from 'solid-js';
+import { Show, For } from 'solid-js';
 import usePdfJs from './usePdfJs.js';
 import PdfToolbar from './PdfToolbar.jsx';
 import PdfEmptyState from './PdfEmptyState.jsx';
@@ -20,6 +20,10 @@ export default function PdfViewer(props) {
   // props.onPdfChange - Callback when PDF changes: (data: ArrayBuffer, fileName: string) => void
   // props.onPdfClear - Callback when PDF is cleared: () => void
   // props.readOnly - If true, hides upload/change/clear buttons (view only mode)
+  // props.allowDelete - If true, shows delete button (only applies when !readOnly)
+  // props.pdfs - Array of PDFs for multi-PDF selection
+  // props.selectedPdfId - Currently selected PDF ID
+  // props.onPdfSelect - Handler for PDF selection change
 
   // Use the PDF.js primitive
   const pdf = usePdfJs({
@@ -42,6 +46,7 @@ export default function PdfViewer(props) {
     <div class='flex flex-col h-full bg-gray-100' ref={setContainerRef}>
       <PdfToolbar
         readOnly={props.readOnly}
+        allowDelete={props.allowDelete}
         libReady={pdf.libReady()}
         pdfDoc={pdf.pdfDoc()}
         fileName={pdf.fileName()}
@@ -60,6 +65,9 @@ export default function PdfViewer(props) {
         onFitToWidth={pdf.fitToWidth}
         fileInputRef={setFileInputRef}
         onFileUpload={pdf.handleFileUpload}
+        pdfs={props.pdfs}
+        selectedPdfId={props.selectedPdfId}
+        onPdfSelect={props.onPdfSelect}
       />
 
       {/* PDF Content - Scrollable container for all pages */}
@@ -76,9 +84,12 @@ export default function PdfViewer(props) {
         {/* PDF Pages - Render all pages in a continuous scroll */}
         <Show when={pdf.libReady() && !pdf.loading() && !pdf.error() && pdf.pdfDoc()}>
           <div class='flex flex-col items-center gap-8 min-w-fit pt-2'>
-            <Index each={Array(pdf.totalPages())}>
-              {(_, index) => {
-                const pageNum = index + 1;
+            {/* Use For with docId-based keys to force DOM recreation when PDF changes */}
+            <For
+              each={Array.from({ length: pdf.totalPages() }, (_, i) => `${pdf.docId()}-${i + 1}`)}
+            >
+              {key => {
+                const pageNum = parseInt(key.split('-')[1], 10);
                 return (
                   <div ref={el => pdf.setPageRef(pageNum, el)} class='relative'>
                     {/* Page number label */}
@@ -96,7 +107,7 @@ export default function PdfViewer(props) {
                   </div>
                 );
               }}
-            </Index>
+            </For>
           </div>
         </Show>
       </div>
