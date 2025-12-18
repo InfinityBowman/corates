@@ -14,7 +14,7 @@ export const NAMING_CONVENTIONS = [
     example: 'Effects of Exercise on Sleep',
   },
   {
-    id: 'filename',
+    id: 'fileName',
     label: 'Filename',
     description: 'Original PDF file name',
     example: 'study_document.pdf',
@@ -126,7 +126,7 @@ function truncateTitle(title, maxLength = 30) {
  * @returns {string} The generated study name
  */
 export function generateStudyName(studyData, convention = 'title') {
-  const { title, firstAuthor, publicationYear, authors, filename } = studyData;
+  const { title, firstAuthor, publicationYear, authors, fileName } = studyData;
 
   // Fall back to title if we don't have the required metadata
   const hasAuthorInfo = firstAuthor || authors;
@@ -161,8 +161,8 @@ export function generateStudyName(studyData, convention = 'title') {
       return name || title || 'Untitled Study';
     }
 
-    case 'filename': {
-      return filename || 'Untitled Study';
+    case 'fileName': {
+      return fileName || 'Untitled Study';
     }
 
     case 'title':

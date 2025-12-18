@@ -108,6 +108,9 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
                     if (extractedDoi && !study.doi) {
                       updates.doi = extractedDoi;
                     }
+                    if (importedFile.fileName) {
+                      updates.fileName = importedFile.fileName;
+                    }
 
                     if (extractedDoi) {
                       try {
@@ -133,7 +136,7 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
                       firstAuthor: updates.firstAuthor ?? study.firstAuthor,
                       publicationYear: updates.publicationYear ?? study.publicationYear,
                       authors: updates.authors ?? study.authors,
-                      filename: updates.filename ?? study.filename,
+                      fileName: updates.fileName ?? study.fileName,
                     };
                     const updatedName = generateStudyName(nameBasis, namingConvention);
                     if (updatedName) updates.name = updatedName;
@@ -317,7 +320,7 @@ export default function useProjectStudyHandlers(projectId, projectActions, confi
             firstAuthor: study.firstAuthor,
             publicationYear: study.publicationYear,
             authors: study.authors,
-            filename: study.filename,
+            fileName: study.fileName,
           },
           namingConvention,
         );
