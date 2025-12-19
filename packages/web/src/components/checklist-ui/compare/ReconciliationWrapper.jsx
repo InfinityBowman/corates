@@ -7,6 +7,7 @@ import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import useProject from '@/primitives/useProject/index.js';
 import projectStore from '@/stores/projectStore.js';
+import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import { downloadPdf } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
 import { showToast } from '@corates/ui';
@@ -37,13 +38,6 @@ export default function ReconciliationWrapper() {
   const connectionState = () => projectStore.getConnectionState(params.projectId);
 
   // Watch for access-denied errors and redirect to dashboard
-  const ACCESS_DENIED_ERRORS = [
-    'This project has been deleted',
-    'You have been removed from this project',
-    'You are not a member of this project',
-    'Unable to connect to project. It may have been deleted or you may not have access.',
-  ];
-
   createEffect(() => {
     const state = connectionState();
     if (state.error && ACCESS_DENIED_ERRORS.includes(state.error)) {
