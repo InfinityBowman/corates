@@ -6,8 +6,6 @@
 import { createAuth } from '../auth/config.js';
 import { isAdminUser } from '../auth/admin.js';
 
-
-
 /**
  * Middleware that requires admin privileges
  * Returns 403 if not an admin
@@ -38,4 +36,4 @@ export async function requireAdmin(c, next) {
   }
 }
 
-export {isAdminUser as isAdmin} from '../auth/admin.js';
+export { isAdminUser as isAdmin } from '../auth/admin.js';

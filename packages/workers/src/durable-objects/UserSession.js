@@ -40,10 +40,13 @@ export class UserSession {
       // Verify authentication for all requests
       const { user } = await verifyAuth(request, this.env);
       if (!user) {
-        return Response.json({ error: 'Authentication required' }, {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return Response.json(
+          { error: 'Authentication required' },
+          {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          },
+        );
       }
 
       // Extract the userId from the URL path
@@ -52,10 +55,13 @@ export class UserSession {
 
       // Ensure user can only access their own session
       if (!sessionUserId || sessionUserId !== user.id) {
-        return Response.json({ error: 'Access denied' }, {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return Response.json(
+          { error: 'Access denied' },
+          {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          },
+        );
       }
 
       request.user = user;
@@ -80,16 +86,22 @@ export class UserSession {
         return await this.deleteSession(corsHeaders);
       }
 
-      return Response.json({ error: 'Method not allowed' }, {
-        status: 405,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { error: 'Method not allowed' },
+        {
+          status: 405,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
     } catch (error) {
       console.error('UserSession error:', error);
-      return Response.json({ error: 'Internal Server Error' }, {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { error: 'Internal Server Error' },
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
     }
   }
 
@@ -114,10 +126,13 @@ export class UserSession {
       });
     } catch (error) {
       console.error('Get session error:', error);
-      return Response.json({ error: 'Failed to retrieve session' }, {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { error: 'Failed to retrieve session' },
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
     }
   }
 
@@ -143,10 +158,13 @@ export class UserSession {
       });
     } catch (error) {
       console.error('Create session error:', error);
-      return Response.json({ error: 'Failed to create session' }, {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { error: 'Failed to create session' },
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
     }
   }
 
@@ -156,10 +174,13 @@ export class UserSession {
       const sessionData = await this.state.storage.get('session');
 
       if (!sessionData) {
-        return Response.json({ error: 'Session not found' }, {
-          status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return Response.json(
+          { error: 'Session not found' },
+          {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          },
+        );
       }
 
       const updatedSession = {
@@ -175,10 +196,13 @@ export class UserSession {
       });
     } catch (error) {
       console.error('Update session error:', error);
-      return Response.json({ error: 'Failed to update session' }, {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { error: 'Failed to update session' },
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
     }
   }
 
@@ -186,15 +210,21 @@ export class UserSession {
     try {
       await this.state.storage.deleteAll();
 
-      return Response.json({ success: true }, {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { success: true },
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
     } catch (error) {
       console.error('Delete session error:', error);
-      return Response.json({ error: 'Failed to delete session' }, {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { error: 'Failed to delete session' },
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
     }
   }
 
@@ -288,15 +318,21 @@ export class UserSession {
         await this.state.storage.put('pendingNotifications', pending);
       }
 
-      return Response.json({ success: true, delivered }, {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { success: true, delivered },
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
     } catch (error) {
       console.error('Notification error:', error);
-      return Response.json({ error: 'Failed to send notification' }, {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { error: 'Failed to send notification' },
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
     }
   }
 
