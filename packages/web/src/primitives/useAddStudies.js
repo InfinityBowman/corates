@@ -11,6 +11,7 @@ import {
   extractPdfDoi,
   normalizeTitle,
   readFileAsArrayBuffer,
+  withTimeout,
 } from '@/lib/pdfUtils.js';
 import { parseReferenceFile, separateFileTypes } from '@/lib/referenceParser.js';
 import {
@@ -19,6 +20,9 @@ import {
   checkPdfAvailability,
   fetchFromDOI,
 } from '@/lib/referenceLookup.js';
+
+// Timeout for fetching DOI metadata from CrossRef
+const DOI_FETCH_TIMEOUT = 10000; // 10 seconds
 
 /**
  * @param {Object} options
@@ -178,61 +182,132 @@ export function useAddStudies(options = {}) {
       extracting: true,
       data: null,
       doi: null,
+      error: null, // Error message if extraction failed
+      metadataLoading: false, // True while fetching DOI metadata
     }));
 
     setUploadedPdfs(produce(pdfs => pdfs.push(...newPdfs)));
 
     for (const pdf of newPdfs) {
+      let arrayBuffer = null;
+      let title = null;
+      let doi = null;
+      let extractionError = null;
+
+      // Step 1: Read the file
       try {
-        const arrayBuffer = await readFileAsArrayBuffer(pdf.file);
-        const [title, doi] = await Promise.all([
-          extractPdfTitle(arrayBuffer.slice(0)),
-          extractPdfDoi(arrayBuffer.slice(0)),
-        ]);
-
-        // If DOI was extracted, fetch author/year metadata
-        let metadata = null;
-        if (doi) {
-          try {
-            const refData = await fetchFromDOI(doi);
-            if (refData) {
-              metadata = {
-                firstAuthor: refData.firstAuthor || null,
-                publicationYear: refData.publicationYear || null,
-                authors: refData.authors || null,
-                journal: refData.journal || null,
-                abstract: refData.abstract || null,
-              };
-            }
-          } catch (err) {
-            console.warn('Could not fetch metadata for DOI:', doi, err);
-          }
-        }
-
-        setUploadedPdfs(p => p.id === pdf.id, {
-          title: title || pdf.file.name.replace(/\.pdf$/i, ''),
-          extracting: false,
-          data: arrayBuffer,
-          doi: doi || null,
-          metadata: metadata,
-        });
+        arrayBuffer = await readFileAsArrayBuffer(pdf.file);
       } catch (error) {
-        console.error('Error extracting PDF metadata:', error);
-        let fileData = null;
-        try {
-          fileData = await readFileAsArrayBuffer(pdf.file);
-        } catch (e) {
-          console.error('Error reading PDF file:', e);
-        }
+        console.error('Error reading PDF file:', pdf.file.name, error);
         setUploadedPdfs(p => p.id === pdf.id, {
           title: pdf.file.name.replace(/\.pdf$/i, ''),
           extracting: false,
-          data: fileData,
-          doi: null,
-          metadata: null,
+          data: null,
+          error: 'Failed to read file',
         });
+        continue;
+      }
+
+      // Step 2: Extract title and DOI (with timeout handling)
+      try {
+        [title, doi] = await Promise.all([
+          extractPdfTitle(arrayBuffer.slice(0)).catch(err => {
+            console.warn('Title extraction failed:', pdf.file.name, err.message);
+            return null;
+          }),
+          extractPdfDoi(arrayBuffer.slice(0)).catch(err => {
+            console.warn('DOI extraction failed:', pdf.file.name, err.message);
+            return null;
+          }),
+        ]);
+      } catch (error) {
+        console.error('Error extracting PDF metadata:', pdf.file.name, error);
+        extractionError =
+          error.message?.includes('timed out') ?
+            'Extraction timed out'
+          : 'Failed to extract metadata';
+      }
+
+      // Step 3: Update PDF with extraction results (show immediately)
+      setUploadedPdfs(p => p.id === pdf.id, {
+        title: title || pdf.file.name.replace(/\.pdf$/i, ''),
+        extracting: false,
+        data: arrayBuffer,
+        doi: doi || null,
+        error: extractionError,
+        metadataLoading: !!doi, // Show loading if we have a DOI to fetch
+      });
+
+      // Step 4: Fetch DOI metadata in background (non-blocking)
+      if (doi) {
+        withTimeout(fetchFromDOI(doi), DOI_FETCH_TIMEOUT, 'DOI metadata fetch')
+          .then(refData => {
+            if (refData) {
+              setUploadedPdfs(p => p.id === pdf.id, {
+                metadata: {
+                  firstAuthor: refData.firstAuthor || null,
+                  publicationYear: refData.publicationYear || null,
+                  authors: refData.authors || null,
+                  journal: refData.journal || null,
+                  abstract: refData.abstract || null,
+                },
+                metadataLoading: false,
+              });
+            } else {
+              setUploadedPdfs(p => p.id === pdf.id, { metadataLoading: false });
+            }
+          })
+          .catch(err => {
+            console.warn('Could not fetch metadata for DOI:', doi, err.message);
+            setUploadedPdfs(p => p.id === pdf.id, { metadataLoading: false });
+          });
       }
     }
+  };
+
+  /**
+   * Retry extraction for a PDF that failed
+   */
+  const retryPdfExtraction = async id => {
+    const pdf = uploadedPdfs.find(p => p.id === id);
+    if (!pdf || !pdf.file) return;
+
+    // Reset state for retry
+    setUploadedPdfs(p => p.id === id, {
+      extracting: true,
+      error: null,
+      title: null,
+      doi: null,
+      metadata: null,
+      metadataLoading: false,
+    });
+
+    // Re-run extraction
+    await handlePdfSelect([pdf.file]);
+    // Remove the duplicate entry that handlePdfSelect creates
+    setUploadedPdfs(
+      produce(pdfs => {
+        // Find the new duplicate (same file, different id)
+        const dupeIdx = pdfs.findIndex(p => p.id !== id && p.file === pdf.file);
+        if (dupeIdx !== -1) {
+          // Copy data from duplicate to original
+          const dupe = pdfs[dupeIdx];
+          const origIdx = pdfs.findIndex(p => p.id === id);
+          if (origIdx !== -1) {
+            Object.assign(pdfs[origIdx], {
+              title: dupe.title,
+              extracting: dupe.extracting,
+              data: dupe.data,
+              doi: dupe.doi,
+              error: dupe.error,
+              metadata: dupe.metadata,
+              metadataLoading: dupe.metadataLoading,
+            });
+          }
+          pdfs.splice(dupeIdx, 1);
+        }
+      }),
+    );
   };
 
   const removePdf = id => {
@@ -1139,6 +1214,7 @@ export function useAddStudies(options = {}) {
     handlePdfSelect,
     removePdf,
     updatePdfTitle,
+    retryPdfExtraction,
 
     // Reference import state & handlers
     importedRefs,
