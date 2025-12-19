@@ -28,7 +28,7 @@ export default function ReconciliationWrapper() {
     updateChecklist,
     getChecklistData,
     getReconciliationProgress,
-    getReconciliationNote,
+    getQuestionNote,
     saveReconciliationProgress,
     clearReconciliationProgress,
     connect,
@@ -197,21 +197,150 @@ export default function ReconciliationWrapper() {
     return result;
   });
 
-  // Get saved reconciliation progress
-  const savedProgress = createMemo(() => {
-    // Make sure we're synced before trying to read progress
-    if (!connectionState().synced) return null;
+  // State for reconciled checklist
+  const [reconciledChecklistId, setReconciledChecklistId] = createSignal(null);
+  const [reconciledChecklistLoading, setReconciledChecklistLoading] = createSignal(false);
+  const [hasCheckedForReconciled, setHasCheckedForReconciled] = createSignal(false);
 
-    // Only return progress if it matches the current checklists being reconciled
-    const progress = getReconciliationProgress(params.studyId);
-    if (!progress) return null;
-    if (
-      progress.checklist1Id === params.checklist1Id &&
-      progress.checklist2Id === params.checklist2Id
-    ) {
-      return progress;
+  // Get or create reconciled checklist (with race condition prevention)
+  createEffect(() => {
+    const state = connectionState();
+    if (!state.synced || reconciledChecklistId() || hasCheckedForReconciled()) return;
+
+    setHasCheckedForReconciled(true);
+    setReconciledChecklistLoading(true);
+
+    const study = currentStudy();
+    if (!study) {
+      setReconciledChecklistLoading(false);
+      setHasCheckedForReconciled(false); // Allow retry
+      return;
     }
-    return null;
+
+    // First, check if one already exists in reconciliation progress
+    const progress = getReconciliationProgress(params.studyId);
+    if (
+      progress &&
+      progress.checklist1Id === params.checklist1Id &&
+      progress.checklist2Id === params.checklist2Id &&
+      progress.reconciledChecklistId
+    ) {
+      // Verify it still exists in study checklists
+      const existingChecklist = study.checklists?.find(
+        c => c.id === progress.reconciledChecklistId && c.isReconciled,
+      );
+      if (existingChecklist) {
+        setReconciledChecklistId(progress.reconciledChecklistId);
+        setReconciledChecklistLoading(false);
+        return;
+      }
+    }
+
+    // Check if one exists in study checklists (another client may have created it)
+    const existingReconciled = study.checklists?.find(
+      c => c.isReconciled && c.status !== 'completed',
+    );
+    if (existingReconciled) {
+      // Found existing - save reference in progress and use it
+      saveReconciliationProgress(params.studyId, {
+        checklist1Id: params.checklist1Id,
+        checklist2Id: params.checklist2Id,
+        reconciledChecklistId: existingReconciled.id,
+      });
+      setReconciledChecklistId(existingReconciled.id);
+      setReconciledChecklistLoading(false);
+      return;
+    }
+
+    // Need to create one - detect checklist type from checklist1
+    const checklist1 = checklist1Meta();
+    const checklistType = checklist1?.type || 'AMSTAR2';
+
+    // Create the reconciled checklist
+    const newChecklistId = createProjectChecklist(params.studyId, checklistType, null);
+    if (!newChecklistId) {
+      setError('Failed to create reconciled checklist');
+      setReconciledChecklistLoading(false);
+      return;
+    }
+
+    // Mark it as reconciled and in_progress
+    updateChecklist(params.studyId, newChecklistId, {
+      isReconciled: true,
+      status: 'in_progress',
+      title: 'Reconciled Checklist',
+    });
+
+    // Save reference in reconciliation progress
+    saveReconciliationProgress(params.studyId, {
+      checklist1Id: params.checklist1Id,
+      checklist2Id: params.checklist2Id,
+      reconciledChecklistId: newChecklistId,
+    });
+
+    // Set the ID - if another client created one, the store will update reactively
+    // and we'll see it in the next effect run
+    setReconciledChecklistId(newChecklistId);
+    setReconciledChecklistLoading(false);
+  });
+
+  // Watch for race condition: if another client created a reconciled checklist,
+  // use the one created first (check happens reactively via store updates)
+  createEffect(() => {
+    if (!connectionState().synced || !reconciledChecklistId() || reconciledChecklistLoading())
+      return;
+
+    const study = currentStudy();
+    const currentId = reconciledChecklistId();
+    if (!study || !currentId) return;
+
+    // Check if there's another reconciled checklist (another client may have created one)
+    const allReconciled =
+      study.checklists?.filter(c => c.isReconciled && c.status !== 'completed') || [];
+
+    if (allReconciled.length > 1) {
+      // Multiple reconciled checklists exist - use the one created first
+      allReconciled.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+      const firstCreated = allReconciled[0];
+
+      if (firstCreated.id !== currentId) {
+        // Another one was created first - use it instead
+        saveReconciliationProgress(params.studyId, {
+          checklist1Id: params.checklist1Id,
+          checklist2Id: params.checklist2Id,
+          reconciledChecklistId: firstCreated.id,
+        });
+        setReconciledChecklistId(firstCreated.id);
+      }
+    }
+  });
+
+  // Get reconciled checklist metadata
+  const reconciledChecklistMeta = createMemo(() => {
+    const study = currentStudy();
+    const id = reconciledChecklistId();
+    if (!study || !id) return null;
+    return study.checklists?.find(c => c.id === id);
+  });
+
+  // Get reconciled checklist data
+  const reconciledChecklistData = createMemo(() => {
+    const id = reconciledChecklistId();
+    if (!id) return null;
+
+    const data = getChecklistData(params.studyId, id);
+    if (!data) return null;
+
+    // Flatten answers into the checklist object (expected format)
+    const result = {
+      id,
+      name: 'Reconciled Checklist',
+      reviewerName: 'Consensus',
+      createdAt: reconciledChecklistMeta()?.createdAt || Date.now(),
+      ...data.answers,
+    };
+
+    return result;
   });
 
   // Get reviewer name from userId
@@ -221,40 +350,19 @@ export default function ReconciliationWrapper() {
     return member?.displayName || member?.name || member?.email || 'Unknown';
   }
 
-  // Handle saving reconciliation progress
-  function handleSaveProgress(progressData) {
-    saveReconciliationProgress(params.studyId, {
-      checklist1Id: params.checklist1Id,
-      checklist2Id: params.checklist2Id,
-      currentPage: progressData.currentPage,
-      viewMode: progressData.viewMode,
-      finalAnswers: progressData.finalAnswers,
-    });
-  }
-
   // Handle saving the reconciled checklist
-  async function handleSaveReconciled(reconciledChecklist) {
+  async function handleSaveReconciled(reconciledName) {
     try {
-      // Create a new checklist in the study
-      const newChecklistId = createProjectChecklist(params.studyId, 'AMSTAR2', null);
-
-      if (!newChecklistId) {
-        throw new Error('Failed to create reconciled checklist');
+      const id = reconciledChecklistId();
+      if (!id) {
+        throw new Error('No reconciled checklist found');
       }
 
-      // Update each question's answer
-      const questionKeys = Object.keys(reconciledChecklist).filter(k => /^q\d+[a-z]*$/i.test(k));
-
-      for (const key of questionKeys) {
-        updateChecklistAnswer(params.studyId, newChecklistId, key, reconciledChecklist[key]);
-      }
-
-      // Mark it as a reconciled/consensus checklist so it appears in the Completed tab
-      updateChecklist(params.studyId, newChecklistId, {
+      // Mark the reconciled checklist as completed
+      updateChecklist(params.studyId, id, {
         status: 'completed',
-        title: 'Reconciled Checklist',
+        title: reconciledName || 'Reconciled Checklist',
         isReconciled: true,
-        assignedTo: null,
       });
 
       // Clear the reconciliation progress since we've completed it
@@ -299,12 +407,22 @@ export default function ReconciliationWrapper() {
       }
     >
       <Show
-        when={connectionState().synced && checklist1Data() && checklist2Data()}
+        when={
+          connectionState().synced &&
+          checklist1Data() &&
+          checklist2Data() &&
+          !reconciledChecklistLoading() &&
+          reconciledChecklistId()
+        }
         fallback={
           <div class='flex min-h-screen items-center justify-center bg-blue-50'>
             <div class='text-center'>
               <div class='mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent' />
-              <p class='text-gray-600'>Loading checklists...</p>
+              <p class='text-gray-600'>
+                {reconciledChecklistLoading() ?
+                  'Setting up reconciliation...'
+                : 'Loading checklists...'}
+              </p>
             </div>
           </div>
         }
@@ -312,10 +430,10 @@ export default function ReconciliationWrapper() {
         <ReconciliationWithPdf
           checklist1={checklist1Data()}
           checklist2={checklist2Data()}
+          reconciledChecklist={reconciledChecklistData()}
+          reconciledChecklistId={reconciledChecklistId()}
           reviewer1Name={getReviewerName(checklist1Meta()?.assignedTo)}
           reviewer2Name={getReviewerName(checklist2Meta()?.assignedTo)}
-          savedProgress={savedProgress()}
-          onSaveProgress={handleSaveProgress}
           onSaveReconciled={handleSaveReconciled}
           onCancel={handleCancel}
           pdfData={pdfData()}
@@ -324,7 +442,14 @@ export default function ReconciliationWrapper() {
           pdfs={studyPdfs()}
           selectedPdfId={selectedPdfId()}
           onPdfSelect={handlePdfSelect}
-          getReconciliationNote={questionKey => getReconciliationNote(params.studyId, questionKey)}
+          getQuestionNote={questionKey =>
+            getQuestionNote(params.studyId, reconciledChecklistId(), questionKey)
+          }
+          updateChecklistAnswer={(questionKey, questionData) => {
+            const id = reconciledChecklistId();
+            if (!id) return;
+            updateChecklistAnswer(params.studyId, id, questionKey, questionData);
+          }}
         />
       </Show>
     </Show>

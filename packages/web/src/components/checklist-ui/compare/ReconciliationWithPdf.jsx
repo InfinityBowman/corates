@@ -14,9 +14,9 @@ import SplitPanelControls from '@/components/checklist-ui/SplitPanelControls.jsx
 export default function ReconciliationWithPdf(props) {
   // props.checklist1 - First reviewer's checklist data
   // props.checklist2 - Second reviewer's checklist data
-  // props.onSaveReconciled - Callback when reconciled checklist is saved
-  // props.onSaveProgress - Callback to save progress for resuming later
-  // props.savedProgress - Previously saved progress (if resuming)
+  // props.reconciledChecklist - The reconciled checklist data (third checklist both reviewers edit)
+  // props.reconciledChecklistId - ID of the reconciled checklist
+  // props.onSaveReconciled - Callback when reconciled checklist is saved (receives reconciledName)
   // props.onCancel - Callback to cancel and go back
   // props.reviewer1Name - Display name for first reviewer
   // props.reviewer2Name - Display name for second reviewer
@@ -26,7 +26,8 @@ export default function ReconciliationWithPdf(props) {
   // props.pdfs - Array of PDFs for multi-PDF selection
   // props.selectedPdfId - Currently selected PDF ID
   // props.onPdfSelect - Handler for PDF selection change
-  // props.getReconciliationNote - Function to get Y.Text for a reconciliation note (questionKey => Y.Text)
+  // props.getQuestionNote - Function to get Y.Text for a question note (questionKey => Y.Text)
+  // props.updateChecklistAnswer - Function to update a question answer (questionKey, questionData)
 
   // Layout state
   const [showPdf, setShowPdf] = createSignal(true);
@@ -159,14 +160,17 @@ export default function ReconciliationWithPdf(props) {
           <ChecklistReconciliation
             checklist1={props.checklist1}
             checklist2={props.checklist2}
+            reconciledChecklist={props.reconciledChecklist}
+            reconciledChecklistId={props.reconciledChecklistId}
             reviewer1Name={props.reviewer1Name}
             reviewer2Name={props.reviewer2Name}
-            savedProgress={props.savedProgress}
-            onSaveProgress={props.onSaveProgress}
             onSaveReconciled={props.onSaveReconciled}
             onCancel={props.onCancel}
             setNavbarStore={setNavbarStore}
-            getReconciliationNote={props.getReconciliationNote}
+            getQuestionNote={props.getQuestionNote}
+            updateChecklistAnswer={(questionKey, questionData) =>
+              props.updateChecklistAnswer?.(questionKey, questionData)
+            }
           />
         </div>
 

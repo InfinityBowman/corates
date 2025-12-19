@@ -19,23 +19,15 @@ import SummaryView from './SummaryView.jsx';
 export default function ChecklistReconciliation(props) {
   // props.checklist1 - First reviewer's checklist data
   // props.checklist2 - Second reviewer's checklist data
-  // props.onSaveReconciled - Callback when reconciled checklist is saved
-  // props.onSaveProgress - Callback to save progress for resuming later
-  // props.savedProgress - Previously saved progress (if resuming)
+  // props.reconciledChecklist - The reconciled checklist data (read from Yjs, reactive)
+  // props.reconciledChecklistId - ID of the reconciled checklist
+  // props.onSaveReconciled - Callback when reconciled checklist is saved (receives reconciledName)
   // props.onCancel - Callback to cancel and go back
   // props.reviewer1Name - Display name for first reviewer
   // props.reviewer2Name - Display name for second reviewer
   // props.setNavbarStore - Store setter for navbar state (deep reactivity)
-  // props.getReconciliationNote - Function to get Y.Text for final reconciliation note (questionKey => Y.Text)
-
-  // Track if we've initialized from saved progress
-  const [initialized, setInitialized] = createSignal(false);
-
-  // Current page index
-  const [currentPage, setCurrentPage] = createSignal(0);
-
-  // Final answers for each question (the reconciled/merged answers)
-  const [finalAnswers, setFinalAnswers] = createSignal({});
+  // props.getQuestionNote - Function to get Y.Text for a question note (questionKey => Y.Text)
+  // props.updateChecklistAnswer - Function to update a question answer in the reconciled checklist
 
   // Reconciled checklist metadata
   const [reconciledName, setReconciledName] = createSignal('Reconciled Checklist');
@@ -43,8 +35,53 @@ export default function ChecklistReconciliation(props) {
 
   const confirmDialog = useConfirmDialog();
 
-  // View mode: 'questions' or 'summary'
+  // Navigation state in localStorage (not synced across clients)
+  const getStorageKey = () => {
+    if (!props.checklist1?.id || !props.checklist2?.id) return null;
+    return `reconciliation-nav-${props.checklist1.id}-${props.checklist2.id}`;
+  };
+
+  // Save navigation state to localStorage
+  const saveNavigationState = (page, mode) => {
+    const key = getStorageKey();
+    if (!key) return;
+    try {
+      localStorage.setItem(key, JSON.stringify({ currentPage: page, viewMode: mode }));
+    } catch (e) {
+      console.error('Failed to save navigation state:', e);
+    }
+  };
+
+  // Load initial navigation state from localStorage (in tracked scope)
+  const [currentPage, setCurrentPage] = createSignal(0);
   const [viewMode, setViewMode] = createSignal('questions');
+
+  // Initialize navigation state from localStorage
+  createEffect(() => {
+    // Only run once when checklists are available
+    if (!props.checklist1?.id || !props.checklist2?.id) return;
+
+    const key = getStorageKey();
+    if (!key) return;
+
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setCurrentPage(parsed.currentPage ?? 0);
+        setViewMode(parsed.viewMode ?? 'questions');
+      }
+    } catch (e) {
+      console.error('Failed to load navigation state:', e);
+    }
+  });
+
+  // Save navigation state when it changes
+  createEffect(() => {
+    const page = currentPage();
+    const mode = viewMode();
+    saveNavigationState(page, mode);
+  });
 
   // All question keys in order
   const questionKeys = getQuestionKeys();
@@ -73,6 +110,38 @@ export default function ChecklistReconciliation(props) {
       map[item.key] = item;
     }
     return map;
+  });
+
+  // Get finalAnswers from reconciled checklist (reactive to Yjs changes)
+  const finalAnswers = createMemo(() => {
+    const reconciled = props.reconciledChecklist;
+    if (!reconciled) return {};
+    // Extract question answers (q1, q2, etc.) from reconciled checklist
+    // Handle multi-part questions (q9, q11) by nesting q9a/q9b under q9
+    const answers = {};
+    for (const key of questionKeys) {
+      if (isMultiPartQuestion(key)) {
+        // For multi-part questions, nest the parts under the parent key
+        const dataKeys = getDataKeysForQuestion(key);
+        const parts = {};
+        let hasAnyPart = false;
+        for (const dk of dataKeys) {
+          if (reconciled[dk]) {
+            parts[dk] = reconciled[dk];
+            hasAnyPart = true;
+          }
+        }
+        if (hasAnyPart) {
+          answers[key] = parts;
+        }
+      } else {
+        // Regular question
+        if (reconciled[key]) {
+          answers[key] = reconciled[key];
+        }
+      }
+    }
+    return answers;
   });
 
   // Expose navbar props for external rendering via store
@@ -126,59 +195,50 @@ export default function ChecklistReconciliation(props) {
     return '';
   };
 
-  // Initialize final answers from saved progress or auto-fill agreements
-  createEffect(() => {
-    if (!props.checklist1 || initialized()) return;
+  // No initialization needed - finalAnswers come from reconciled checklist (reactive to Yjs)
 
-    // If we have saved progress with actual answers, use it
-    if (
-      props.savedProgress?.finalAnswers &&
-      Object.keys(props.savedProgress.finalAnswers).length > 0
-    ) {
-      setFinalAnswers(props.savedProgress.finalAnswers);
-      setCurrentPage(props.savedProgress.currentPage || 0);
-      setViewMode(props.savedProgress.viewMode || 'questions');
-      setInitialized(true);
-      return;
+  // Get current question's final answer from reconciled checklist
+  const currentFinalAnswer = () => {
+    const reconciled = props.reconciledChecklist;
+    if (!reconciled) return null;
+    const key = currentQuestionKey();
+
+    // Handle multi-part questions (q9, q11) - data is stored as q9a/q9b
+    if (isMultiPartQuestion(key)) {
+      const dataKeys = getDataKeysForQuestion(key);
+      const parts = {};
+      let hasAnyPart = false;
+      for (const dk of dataKeys) {
+        if (reconciled[dk]) {
+          parts[dk] = reconciled[dk];
+          hasAnyPart = true;
+        }
+      }
+      return hasAnyPart ? parts : null;
     }
 
-    // Initialize with empty answers - all questions require manual reconciliation
-    const comp = comparison();
-    if (!comp) {
-      setInitialized(true);
-      return;
-    }
+    // Regular question
+    return reconciled[key] || null;
+  };
 
-    // Start with empty final answers - user must manually reconcile everything
-    setFinalAnswers({});
-    setInitialized(true);
-  });
-
-  // Save progress whenever state changes (debounced via effect)
-  createEffect(() => {
-    // Skip if not initialized or no save function
-    if (!initialized() || !props.onSaveProgress) return;
-
-    // Capture current state
-    const progress = {
-      currentPage: currentPage(),
-      viewMode: viewMode(),
-      finalAnswers: finalAnswers(),
-    };
-
-    // Save progress
-    props.onSaveProgress(progress);
-  });
-
-  // Get current question's final answer
-  const currentFinalAnswer = () => finalAnswers()[currentQuestionKey()];
-
-  // Update final answer for current question
+  // Update final answer for current question - write directly to Yjs via updateChecklistAnswer
   function handleFinalChange(newAnswer) {
-    setFinalAnswers(prev => ({
-      ...prev,
-      [currentQuestionKey()]: newAnswer,
-    }));
+    if (!props.updateChecklistAnswer) return;
+    const key = currentQuestionKey();
+
+    // Handle multi-part questions (q9, q11) - newAnswer is { q9a: {...}, q9b: {...} }
+    if (isMultiPartQuestion(key)) {
+      const dataKeys = getDataKeysForQuestion(key);
+      for (const dk of dataKeys) {
+        if (newAnswer[dk]) {
+          props.updateChecklistAnswer(dk, newAnswer[dk]);
+        }
+      }
+    } else {
+      // Regular question - newAnswer is the question data directly
+      props.updateChecklistAnswer(key, newAnswer);
+    }
+    // Note: No need to update local state - Yjs will sync and reconciledChecklist will update reactively
   }
 
   // Navigation
@@ -188,13 +248,12 @@ export default function ChecklistReconciliation(props) {
     const currentFinal = finalAnswers()[key];
 
     // If no final answer set yet, use reviewer1's answer as default
-    if (!currentFinal && props.checklist1) {
+    if (!currentFinal && props.checklist1 && props.updateChecklistAnswer) {
       const defaultAnswer = getReviewerAnswers(props.checklist1, key);
       if (defaultAnswer) {
-        setFinalAnswers(prev => ({
-          ...prev,
-          [key]: JSON.parse(JSON.stringify(defaultAnswer)),
-        }));
+        // Write directly to Yjs via updateChecklistAnswer
+        // handleFinalChange will handle multi-part questions correctly
+        handleFinalChange(JSON.parse(JSON.stringify(defaultAnswer)));
       }
     }
 
@@ -222,9 +281,33 @@ export default function ChecklistReconciliation(props) {
   }
 
   // Reset all reconciliation answers
-  function handleReset() {
-    // Clear all answers - everything goes back to unresolved
-    setFinalAnswers({});
+  async function handleReset() {
+    if (!props.updateChecklistAnswer) return;
+
+    // Get default empty structure from createChecklist
+    const { createChecklist } = await import('@/AMSTAR2/checklist.js');
+    const defaultChecklist = createChecklist({
+      name: 'temp',
+      id: 'temp',
+    });
+
+    // Clear all answers in the reconciled checklist by setting to default empty structure
+    for (const key of questionKeys) {
+      if (isMultiPartQuestion(key)) {
+        // For multi-part questions, reset each part
+        const dataKeys = getDataKeysForQuestion(key);
+        for (const dk of dataKeys) {
+          if (defaultChecklist[dk]) {
+            props.updateChecklistAnswer(dk, defaultChecklist[dk]);
+          }
+        }
+      } else {
+        if (defaultChecklist[key]) {
+          props.updateChecklistAnswer(key, defaultChecklist[key]);
+        }
+      }
+    }
+
     setCurrentPage(0);
     setViewMode('questions');
     showToast.info('Reconciliation Reset', 'All reconciliations have been cleared.');
@@ -279,7 +362,7 @@ export default function ChecklistReconciliation(props) {
     const confirmed = await confirmDialog.open({
       title: 'Finish reconciliation?',
       description:
-        'This will save a final reconciled checklist and end this reconciliation. You will no longer be able to edit these reconciliation answers afterwards.',
+        'This will mark the reconciled checklist as completed and end this reconciliation. You will no longer be able to edit these reconciliation answers afterwards.',
       confirmText: 'Finish',
       cancelText: 'Cancel',
       variant: 'warning',
@@ -289,36 +372,8 @@ export default function ChecklistReconciliation(props) {
 
     setSaving(true);
     try {
-      // Build the reconciled checklist object - flatten multi-part questions
-      const finals = finalAnswers();
-      const flattenedAnswers = {};
-      for (const key of questionKeys) {
-        if (isMultiPartQuestion(key)) {
-          // Flatten q9 -> q9a, q9b or q11 -> q11a, q11b
-          const dataKeys = getDataKeysForQuestion(key);
-          for (const dk of dataKeys) {
-            if (finals[key]?.[dk]) {
-              flattenedAnswers[dk] = finals[key][dk];
-            }
-          }
-        } else {
-          if (finals[key]) {
-            flattenedAnswers[key] = finals[key];
-          }
-        }
-      }
-
-      const reconciled = {
-        name: reconciledName(),
-        reviewerName: 'Consensus',
-        createdAt: new Date().toISOString().split('T')[0],
-        id: `reconciled-${Date.now()}`,
-        isReconciled: true,
-        sourceChecklists: [props.checklist1?.id, props.checklist2?.id],
-        ...flattenedAnswers,
-      };
-
-      await props.onSaveReconciled?.(reconciled);
+      // Just pass the name - the checklist already exists and has all the answers
+      await props.onSaveReconciled?.(reconciledName());
     } catch (err) {
       console.error('Error saving reconciled checklist:', err);
       showToast.error('Save Failed', 'Failed to save reconciled checklist. Please try again.');
@@ -349,7 +404,7 @@ export default function ChecklistReconciliation(props) {
               isMultiPart={isMultiPartQuestion(currentQuestionKey())}
               reviewer1Note={getReviewerNote(props.checklist1, currentQuestionKey())}
               reviewer2Note={getReviewerNote(props.checklist2, currentQuestionKey())}
-              finalNoteYText={props.getReconciliationNote?.(currentQuestionKey())}
+              finalNoteYText={props.getQuestionNote?.(currentQuestionKey())}
             />
 
             {/* Navigation Buttons */}
