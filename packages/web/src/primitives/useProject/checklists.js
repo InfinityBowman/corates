@@ -305,10 +305,13 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
             const answersNestedYMap = sectionYMap.get('answers');
             if (answersNestedYMap instanceof Y.Map) {
               for (const [qKey, questionYMap] of answersNestedYMap.entries()) {
-                sectionData.answers[qKey] = questionYMap instanceof Y.Map ? {
-                    answer: questionYMap.get('answer') ?? null,
-                    comment: questionYMap.get('comment') ?? '',
-                  } : questionYMap;
+                sectionData.answers[qKey] =
+                  questionYMap instanceof Y.Map ?
+                    {
+                      answer: questionYMap.get('answer') ?? null,
+                      comment: questionYMap.get('comment') ?? '',
+                    }
+                  : questionYMap;
               }
             }
             answers[key] = sectionData;
@@ -325,10 +328,13 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
           } else if (key === 'sectionB') {
             const sectionData = {};
             for (const [subKey, subValue] of sectionYMap.entries()) {
-              sectionData[subKey] = subValue instanceof Y.Map ? {
-                  answer: subValue.get('answer') ?? null,
-                  comment: subValue.get('comment') ?? '',
-                } : subValue;
+              sectionData[subKey] =
+                subValue instanceof Y.Map ?
+                  {
+                    answer: subValue.get('answer') ?? null,
+                    comment: subValue.get('comment') ?? '',
+                  }
+                : subValue;
             }
             answers[key] = sectionData;
           } else {
