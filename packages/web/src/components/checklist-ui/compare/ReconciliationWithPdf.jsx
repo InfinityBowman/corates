@@ -61,7 +61,10 @@ export default function ReconciliationWithPdf(props) {
       const rect = containerRef.getBoundingClientRect();
       let ratio;
 
-      ratio = layout() === 'vertical' ? ((event.clientX - rect.left) / rect.width) * 100 : ((event.clientY - rect.top) / rect.height) * 100;
+      ratio =
+        layout() === 'vertical' ?
+          ((event.clientX - rect.left) / rect.width) * 100
+        : ((event.clientY - rect.top) / rect.height) * 100;
 
       // Clamp between 30% and 80%
       ratio = Math.max(30, Math.min(80, ratio));
