@@ -37,9 +37,9 @@ function exportChart(svgElement, filename, format, transparent = false) {
     const link = document.createElement('a');
     link.href = url;
     link.download = `${filename}.svg`;
-    document.body.appendChild(link);
+    document.body.append(link);
     link.click();
-    document.body.removeChild(link);
+    link.remove();
     URL.revokeObjectURL(url);
   } else if (format === 'png') {
     // Convert to PNG using canvas
@@ -74,9 +74,9 @@ function exportChart(svgElement, filename, format, transparent = false) {
         const link = document.createElement('a');
         link.href = url;
         link.download = `${filename}.png`;
-        document.body.appendChild(link);
+        document.body.append(link);
         link.click();
-        document.body.removeChild(link);
+        link.remove();
         URL.revokeObjectURL(url);
       }, 'image/png');
     };
@@ -184,13 +184,10 @@ export default function ChartSection(props) {
     // Only reset if the data structure changed (different ids)
     const currentIds = customLabels.map(l => l.id).join(',');
     const newIds = raw.map(d => d.id).join(',');
-    if (currentIds !== newIds) {
-      setCustomLabels(raw.map(d => ({ id: d.id, label: d.label })));
-    } else {
+    if (currentIds === newIds) {
       // Update labels for existing items if the underlying data changed (e.g., assignee changed)
       // Only update if the user hasn't customized the label
-      for (let i = 0; i < raw.length; i++) {
-        const rawItem = raw[i];
+      for (const [i, rawItem] of raw.entries()) {
         const customItem = customLabels[i];
         // If the custom label matches what was auto-generated before, update it
         // We detect this by checking if it follows the "studyName - reviewerName" pattern
@@ -202,6 +199,8 @@ export default function ChartSection(props) {
           }
         }
       }
+    } else {
+      setCustomLabels(raw.map(d => ({ id: d.id, label: d.label })));
     }
   });
 

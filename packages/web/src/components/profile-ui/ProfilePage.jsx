@@ -6,7 +6,7 @@ import { LANDING_URL, API_BASE } from '@config/api.js';
 import { ROLES, getRoleLabel } from '@components/auth-ui/RoleSelector.jsx';
 import { compressImageFile } from '@lib/imageUtils.js';
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 
 // Avatar compression settings
 const AVATAR_MAX_SIZE = 256; // Max width/height in pixels
@@ -137,7 +137,7 @@ export default function ProfilePage() {
     if (!file) return;
 
     // Validate file type
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (!ALLOWED_TYPES.has(file.type)) {
       showToast.error('Invalid File', 'Please select a JPEG, PNG, GIF, or WebP image.');
       return;
     }

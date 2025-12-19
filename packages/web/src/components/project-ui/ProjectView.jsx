@@ -90,7 +90,7 @@ export default function ProjectView() {
       // Use metadata if available (from merged ref/lookup data)
       const abstract = pdf.metadata?.abstract || '';
       const metadata = {
-        ...(pdf.metadata || {}),
+        ...pdf.metadata,
         doi: pdf.doi ?? pdf.metadata?.doi ?? null,
         importSource: pdf.metadata?.importSource || 'pdf',
       };
@@ -150,7 +150,7 @@ export default function ProjectView() {
       const title = file.title || file.name.replace(/\\.pdf$/i, '');
       const abstract = file.metadata?.abstract || '';
       const metadata = {
-        ...(file.metadata || {}),
+        ...file.metadata,
         importSource: file.metadata?.importSource || file.importSource || 'google-drive',
       };
       const studyId = projectActionsStore.study.create(title, abstract, metadata);
@@ -198,7 +198,7 @@ export default function ProjectView() {
       const checklists = study.checklists || [];
       if (checklists.some(c => c.isReconciled)) return false;
       const completedChecklists = checklists.filter(c => c.status === 'completed');
-      return completedChecklists.length >= 1 && completedChecklists.length <= 2;
+      return completedChecklists.length > 0 && completedChecklists.length <= 2;
     }).length;
   };
 

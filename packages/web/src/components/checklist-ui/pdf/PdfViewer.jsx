@@ -89,7 +89,7 @@ export default function PdfViewer(props) {
               each={Array.from({ length: pdf.totalPages() }, (_, i) => `${pdf.docId()}-${i + 1}`)}
             >
               {key => {
-                const pageNum = parseInt(key.split('-')[1], 10);
+                const pageNum = Number.parseInt(key.split('-')[1], 10);
                 return (
                   <div ref={el => pdf.setPageRef(pageNum, el)} class='relative'>
                     {/* Page number label */}

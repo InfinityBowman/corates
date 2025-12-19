@@ -47,7 +47,7 @@ export default function PdfToolbar(props) {
   // Handle page input submission
   function handlePageSubmit(e) {
     e.preventDefault();
-    const pageNum = parseInt(pageInput(), 10);
+    const pageNum = Number.parseInt(pageInput(), 10);
     if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= props.totalPages) {
       props.onGoToPage?.(pageNum);
     }
@@ -58,7 +58,7 @@ export default function PdfToolbar(props) {
   // Handle zoom input submission
   function handleZoomSubmit(e) {
     e.preventDefault();
-    const zoomPercent = parseInt(zoomInput(), 10);
+    const zoomPercent = Number.parseInt(zoomInput(), 10);
     if (!isNaN(zoomPercent) && zoomPercent >= 50 && zoomPercent <= 300) {
       props.onSetScale?.(zoomPercent / 100);
     }
@@ -184,7 +184,7 @@ export default function PdfToolbar(props) {
           </form>
           <button
             onClick={() => props.onZoomIn?.()}
-            disabled={props.scale >= 3.0}
+            disabled={props.scale >= 3}
             class='rounded p-1.5 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'
             title='Zoom in'
           >

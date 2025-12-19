@@ -12,13 +12,13 @@ import MultiPartQuestionPage from './MultiPartQuestionPage.jsx';
  */
 function getFinalAnswerFromAnswers(answers, questionKey) {
   if (!Array.isArray(answers) || answers.length === 0) return null;
-  const lastCol = answers[answers.length - 1];
+  const lastCol = answers.at(-1);
   if (!Array.isArray(lastCol)) return null;
-  const idx = lastCol.findIndex(v => v === true);
+  const idx = lastCol.indexOf(true);
   if (idx === -1) return null;
 
   const question = AMSTAR_CHECKLIST[questionKey];
-  const lastColumn = question?.columns?.[question.columns.length - 1];
+  const lastColumn = question?.columns?.at(-1);
   return lastColumn?.options?.[idx] || null;
 }
 
@@ -112,7 +112,7 @@ function SingleQuestionPage(props) {
     const current = localFinal();
     if (!current) return;
 
-    const newAnswers = current.answers.map(arr => [...arr]);
+    const newAnswers = current.answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !newAnswers[colIdx][optIdx];
 
     const newFinal = { ...current, answers: newAnswers };
@@ -126,7 +126,7 @@ function SingleQuestionPage(props) {
     const current = localFinal();
     if (!current) return;
 
-    const newAnswers = current.answers.map(arr => [...arr]);
+    const newAnswers = current.answers.map(array => [...array]);
     // Set all options in this column to false, then set selected to true
     newAnswers[colIdx] = newAnswers[colIdx].map(() => false);
     newAnswers[colIdx][optIdx] = true;

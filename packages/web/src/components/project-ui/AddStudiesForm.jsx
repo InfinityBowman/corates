@@ -115,7 +115,7 @@ export default function AddStudiesForm(props) {
       if (hasExistingStudies() && !isExpanded() && isDraggingOver()) {
         e.preventDefault();
         setIsDraggingOver(false);
-        const files = Array.from(e.dataTransfer?.files || []);
+        const files = [...e.dataTransfer?.files || []];
         if (files.length > 0) {
           handleExpand();
           await handlePdfSelect(files);

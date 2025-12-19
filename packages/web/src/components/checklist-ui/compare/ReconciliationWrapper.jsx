@@ -67,7 +67,7 @@ export default function ReconciliationWrapper() {
   // Get the primary PDF or first PDF as default selection
   const defaultPdf = createMemo(() => {
     const pdfs = studyPdfs();
-    if (!pdfs.length) return null;
+    if (pdfs.length === 0) return null;
     // Prefer primary, then first available
     return pdfs.find(p => p.tag === 'primary') || pdfs[0];
   });

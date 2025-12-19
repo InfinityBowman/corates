@@ -110,7 +110,7 @@ export default function ReviewerAssignment(props) {
 
   // Update percentage for a reviewer in pool
   const updatePool1Percent = (userId, percent) => {
-    const val = Math.max(0, Math.min(100, parseInt(percent) || 0));
+    const val = Math.max(0, Math.min(100, Number.parseInt(percent) || 0));
     setReviewer1Pool(
       produce(pool => {
         const item = pool.find(r => r.userId === userId);
@@ -121,7 +121,7 @@ export default function ReviewerAssignment(props) {
   };
 
   const updatePool2Percent = (userId, percent) => {
-    const val = Math.max(0, Math.min(100, parseInt(percent) || 0));
+    const val = Math.max(0, Math.min(100, Number.parseInt(percent) || 0));
     setReviewer2Pool(
       produce(pool => {
         const item = pool.find(r => r.userId === userId);
@@ -138,9 +138,9 @@ export default function ReviewerAssignment(props) {
     const remainder = 100 - each * reviewer1Pool.length;
     setReviewer1Pool(
       produce(pool => {
-        pool.forEach((r, i) => {
+        for (const [i, r] of pool.entries()) {
           r.percent = each + (i < remainder ? 1 : 0);
-        });
+        }
       }),
     );
     setShowPreview(false);
@@ -152,9 +152,9 @@ export default function ReviewerAssignment(props) {
     const remainder = 100 - each * reviewer2Pool.length;
     setReviewer2Pool(
       produce(pool => {
-        pool.forEach((r, i) => {
+        for (const [i, r] of pool.entries()) {
           r.percent = each + (i < remainder ? 1 : 0);
-        });
+        }
       }),
     );
     setShowPreview(false);
@@ -196,7 +196,7 @@ export default function ReviewerAssignment(props) {
 
     // For pool 1, calculate study counts
     let remaining1 = totalStudies;
-    reviewer1Pool.forEach((r, i) => {
+    for (const [i, r] of reviewer1Pool.entries()) {
       const count =
         i === reviewer1Pool.length - 1 ?
           remaining1 // Last one gets remainder to ensure exact total
@@ -205,18 +205,18 @@ export default function ReviewerAssignment(props) {
       for (let j = 0; j < count; j++) {
         pool1Assignments.push(r.userId);
       }
-    });
+    }
 
     // For pool 2, calculate study counts
     let remaining2 = totalStudies;
-    reviewer2Pool.forEach((r, i) => {
+    for (const [i, r] of reviewer2Pool.entries()) {
       const count =
         i === reviewer2Pool.length - 1 ? remaining2 : Math.round((r.percent / 100) * totalStudies);
       remaining2 -= count;
       for (let j = 0; j < count; j++) {
         pool2Assignments.push(r.userId);
       }
-    });
+    }
 
     // Shuffle both pools
     const shuffled1 = shuffleArray(pool1Assignments);

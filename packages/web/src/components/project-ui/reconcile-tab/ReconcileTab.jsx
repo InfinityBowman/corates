@@ -36,7 +36,7 @@ export default function ReconcileTab() {
       const completedChecklists = checklists.filter(c => c.status === 'completed');
 
       // Show if 1 or 2 checklists are completed
-      return completedChecklists.length >= 1 && completedChecklists.length <= 2;
+      return completedChecklists.length > 0 && completedChecklists.length <= 2;
     });
   });
 

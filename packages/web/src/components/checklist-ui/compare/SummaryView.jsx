@@ -80,7 +80,7 @@ export default function SummaryView(props) {
                   if (!final()[dk]) return 'Not set';
                   const lastCol = final()[dk].answers?.[final()[dk].answers.length - 1];
                   if (!lastCol) return 'Not set';
-                  const idx = lastCol.findIndex(v => v === true);
+                  const idx = lastCol.indexOf(true);
                   if (idx === -1) return 'Not set';
                   partAnswers.push(['Yes', 'PY', 'No', 'No MA'][idx] || '?');
                 }
@@ -89,7 +89,7 @@ export default function SummaryView(props) {
 
               const lastCol = final().answers?.[final().answers.length - 1];
               if (!lastCol) return 'Not set';
-              const idx = lastCol.findIndex(v => v === true);
+              const idx = lastCol.indexOf(true);
               if (idx === -1) return 'Not set';
               return ['Yes', 'Partial Yes', 'No', 'No MA'][idx] || 'Selected';
             };

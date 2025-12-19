@@ -382,7 +382,7 @@ export default function TwoFactorSetup() {
                   pattern='[0-9]*'
                   maxLength='6'
                   value={verificationCode()}
-                  onInput={e => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                  onInput={e => setVerificationCode(e.target.value.replaceAll(/\D/g, ''))}
                   class='w-full rounded-md border border-gray-300 px-3 py-2 text-center font-mono text-lg tracking-widest shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none'
                   placeholder='000000'
                   disabled={loading()}
