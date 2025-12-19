@@ -5,10 +5,7 @@
 
 import { z } from 'zod/v4';
 import { PROJECT_ROLES } from './constants.js';
-import {
-  createValidationError,
-  createMultiFieldValidationError,
-} from '@corates/shared';
+import { createValidationError, createMultiFieldValidationError } from '@corates/shared';
 
 /**
  * Common field validators
