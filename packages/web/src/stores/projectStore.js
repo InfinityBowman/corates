@@ -11,6 +11,7 @@ import { API_BASE } from '@config/api.js';
 // LocalStorage keys for offline caching
 const PROJECT_LIST_CACHE_KEY = 'corates-project-list-cache';
 const PROJECT_LIST_CACHE_TIMESTAMP_KEY = 'corates-project-list-cache-timestamp';
+const PROJECT_LIST_CACHE_USER_ID_KEY = 'corates-project-list-cache-user-id';
 const PROJECT_LIST_CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 // Temporary in-memory storage for pending uploads during project creation
@@ -28,6 +29,7 @@ function createProjectStore() {
     try {
       const cached = localStorage.getItem(PROJECT_LIST_CACHE_KEY);
       const timestamp = localStorage.getItem(PROJECT_LIST_CACHE_TIMESTAMP_KEY);
+      const cachedUserId = localStorage.getItem(PROJECT_LIST_CACHE_USER_ID_KEY);
       if (!cached || !timestamp) return null;
 
       const age = Date.now() - parseInt(timestamp, 10);
@@ -35,10 +37,11 @@ function createProjectStore() {
         // Cache expired, clear it
         localStorage.removeItem(PROJECT_LIST_CACHE_KEY);
         localStorage.removeItem(PROJECT_LIST_CACHE_TIMESTAMP_KEY);
+        localStorage.removeItem(PROJECT_LIST_CACHE_USER_ID_KEY);
         return null;
       }
 
-      return JSON.parse(cached);
+      return { projects: JSON.parse(cached), userId: cachedUserId };
     } catch (err) {
       console.error('Error loading cached project list:', err);
       return null;
@@ -46,15 +49,17 @@ function createProjectStore() {
   }
 
   // Save project list to localStorage
-  function saveCachedProjectList(projects) {
+  function saveCachedProjectList(projects, userId) {
     if (typeof window === 'undefined') return;
     try {
-      if (projects && Array.isArray(projects)) {
+      if (projects && Array.isArray(projects) && userId) {
         localStorage.setItem(PROJECT_LIST_CACHE_KEY, JSON.stringify(projects));
         localStorage.setItem(PROJECT_LIST_CACHE_TIMESTAMP_KEY, Date.now().toString());
+        localStorage.setItem(PROJECT_LIST_CACHE_USER_ID_KEY, userId);
       } else {
         localStorage.removeItem(PROJECT_LIST_CACHE_KEY);
         localStorage.removeItem(PROJECT_LIST_CACHE_TIMESTAMP_KEY);
+        localStorage.removeItem(PROJECT_LIST_CACHE_USER_ID_KEY);
       }
     } catch (err) {
       console.error('Error saving cached project list:', err);
@@ -62,20 +67,22 @@ function createProjectStore() {
   }
 
   // Initialize with cached data if available
-  const cachedProjectList = loadCachedProjectList();
+  const cachedData = loadCachedProjectList();
   const initialProjectList =
-    cachedProjectList ?
+    cachedData?.projects ?
       {
-        items: cachedProjectList,
-        loaded: true, // Mark as loaded so we show cached data immediately
+        items: cachedData.projects,
+        loaded: false, // Don't mark as loaded - we'll check userId and fetch if needed
         loading: false,
         error: null,
+        cachedUserId: cachedData.userId, // Track which user this cache belongs to
       }
     : {
         items: [],
         loaded: false,
         loading: false,
         error: null,
+        cachedUserId: null,
       };
 
   const [store, setStore] = createStore({
@@ -299,8 +306,8 @@ function createProjectStore() {
         s.projectList.items.push(project);
       }),
     );
-    // Update cache
-    saveCachedProjectList(store.projectList.items);
+    // Update cache (preserve userId)
+    saveCachedProjectList(store.projectList.items, store.projectList.cachedUserId);
   }
 
   /**
@@ -315,8 +322,8 @@ function createProjectStore() {
         }
       }),
     );
-    // Update cache
-    saveCachedProjectList(store.projectList.items);
+    // Update cache (preserve userId)
+    saveCachedProjectList(store.projectList.items, store.projectList.cachedUserId);
   }
 
   /**
@@ -328,8 +335,8 @@ function createProjectStore() {
         s.projectList.items = s.projectList.items.filter(p => p.id !== projectId);
       }),
     );
-    // Update cache
-    saveCachedProjectList(store.projectList.items);
+    // Update cache (preserve userId)
+    saveCachedProjectList(store.projectList.items, store.projectList.cachedUserId);
   }
 
   /**
@@ -341,9 +348,10 @@ function createProjectStore() {
       loaded: false,
       loading: false,
       error: null,
+      cachedUserId: null,
     });
     // Clear cached data
-    saveCachedProjectList(null);
+    saveCachedProjectList(null, null);
   }
 
   /**
@@ -361,8 +369,21 @@ function createProjectStore() {
   async function fetchProjectList(userId, options = {}) {
     const { force = false } = options;
 
-    // Skip if already loaded (unless forcing refresh)
-    if (!force && store.projectList.loaded) {
+    // Check if cached data belongs to a different user - if so, force refresh and clear cache
+    const cachedUserId = store.projectList.cachedUserId;
+    const shouldForceRefresh = force || (cachedUserId && cachedUserId !== userId);
+
+    // If userId changed, clear the cached items
+    if (cachedUserId && cachedUserId !== userId) {
+      setStore('projectList', {
+        items: [],
+        loaded: false,
+        cachedUserId: null,
+      });
+    }
+
+    // Skip if already loaded and userId matches (unless forcing refresh)
+    if (!shouldForceRefresh && store.projectList.loaded && cachedUserId === userId) {
       return store.projectList.items;
     }
 
@@ -375,18 +396,19 @@ function createProjectStore() {
       return [];
     }
 
-    // Check if we're offline - if so, try to use cached data
+    // Check if we're offline - if so, try to use cached data (only if it's for the same user)
     const isOnline = navigator.onLine;
     if (!isOnline) {
       const cached = loadCachedProjectList();
-      if (cached) {
+      if (cached?.projects && cached.userId === userId) {
         setStore('projectList', {
-          items: cached,
+          items: cached.projects,
           loaded: true,
           loading: false,
           error: null,
+          cachedUserId: userId,
         });
-        return cached;
+        return cached.projects;
       }
       // No cached data available offline
       setStore('projectList', {
@@ -430,25 +452,27 @@ function createProjectStore() {
         loaded: true,
         loading: false,
         error: null,
+        cachedUserId: userId,
       });
 
       // Save to cache for offline access
-      saveCachedProjectList(projects);
+      saveCachedProjectList(projects, userId);
 
       return projects;
     } catch (err) {
       console.error('Error fetching projects:', err);
 
-      // If fetch failed, try to use cached data as fallback
+      // If fetch failed, try to use cached data as fallback (only if it's for the same user)
       const cached = loadCachedProjectList();
-      if (cached) {
+      if (cached?.projects && cached.userId === userId) {
         setStore('projectList', {
-          items: cached,
+          items: cached.projects,
           loaded: true,
           loading: false,
           error: 'Using cached data - connection error',
+          cachedUserId: userId,
         });
-        return cached;
+        return cached.projects;
       }
 
       setStore('projectList', {

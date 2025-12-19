@@ -90,6 +90,9 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
 
     // Store answers as a Y.Map
     const answersYMap = new Y.Map();
+    // Add answersYMap to checklistYMap early so it's part of the document structure
+    // This prevents Yjs errors when accessing the map
+    checklistYMap.set('answers', answersYMap);
 
     if (type === CHECKLIST_TYPES.AMSTAR2) {
       // AMSTAR2: Store each question as a nested Y.Map with answers, critical, and note
@@ -97,6 +100,9 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
       // at the parent level (q9, q11)
       const multiPartParents = ['q9', 'q11'];
       const subQuestionPattern = /^(q9|q11)[a-z]$/;
+
+      // Track which keys we've added to avoid checking with .has() before map is in document
+      const addedKeys = new Set();
 
       Object.entries(answersData).forEach(([questionKey, questionData]) => {
         const questionYMap = new Y.Map();
@@ -110,12 +116,13 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
         }
 
         answersYMap.set(questionKey, questionYMap);
+        addedKeys.add(questionKey);
       });
 
       // Add note entries for multi-part parent questions (q9, q11)
       // These don't have answer data but need a note
       multiPartParents.forEach(parentKey => {
-        if (!answersYMap.has(parentKey)) {
+        if (!addedKeys.has(parentKey)) {
           const parentYMap = new Y.Map();
           parentYMap.set('note', new Y.Text());
           answersYMap.set(parentKey, parentYMap);
@@ -180,8 +187,6 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
         answersYMap.set(key, value);
       });
     }
-
-    checklistYMap.set('answers', answersYMap);
 
     checklistsMap.set(checklistId, checklistYMap);
 
