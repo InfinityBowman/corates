@@ -30,7 +30,7 @@ export function createChecklist({
   }
 
   let d = new Date(createdAt);
-  if (isNaN(d)) d = Date.now();
+  if (Number.isNaN(d)) d = Date.now();
   // Pad month and day
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
@@ -302,9 +302,9 @@ export function exportChecklistsToCSV(checklists) {
   }
 
   // CSV encode
-  const escape = val => `"${String(val).replaceAll('"', '""').replaceAll('\n', ' ')}"`;
+  const escapeCsv = val => `"${String(val).replaceAll('"', '""').replaceAll('\n', ' ')}"`;
   const csv =
-    headers.map(escape).join(',') + '\n' + rows.map(row => row.map(escape).join(',')).join('\n');
+    headers.map(escapeCsv).join(',') + '\n' + rows.map(row => row.map(escapeCsv).join(',')).join('\n');
   return csv;
 }
 
