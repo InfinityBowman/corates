@@ -68,71 +68,9 @@ export const EMAIL_RETRY_CONFIG = {
 };
 
 /**
- * Error codes for API responses
+ * Note: Error codes have been moved to @corates/shared package
+ * Use createDomainError() and error constants from @corates/shared instead
  */
-export const ERROR_CODES = {
-  // Authentication errors (1xxx)
-  AUTH_REQUIRED: { code: 1001, message: 'Authentication required' },
-  AUTH_INVALID: { code: 1002, message: 'Invalid credentials' },
-  AUTH_EXPIRED: { code: 1003, message: 'Session expired' },
-  AUTH_FORBIDDEN: { code: 1004, message: 'Access denied' },
-
-  // Validation errors (2xxx)
-  VALIDATION_FAILED: { code: 2001, message: 'Validation failed' },
-  INVALID_INPUT: { code: 2002, message: 'Invalid input' },
-  MISSING_FIELD: { code: 2003, message: 'Required field missing' },
-
-  // Resource errors (3xxx)
-  NOT_FOUND: { code: 3001, message: 'Resource not found' },
-  ALREADY_EXISTS: { code: 3002, message: 'Resource already exists' },
-  CONFLICT: { code: 3003, message: 'Resource conflict' },
-
-  // Project errors (4xxx)
-  PROJECT_NOT_FOUND: { code: 4001, message: 'Project not found' },
-  PROJECT_ACCESS_DENIED: { code: 4002, message: 'Project access denied' },
-  PROJECT_MEMBER_EXISTS: { code: 4003, message: 'User is already a member' },
-  PROJECT_LAST_OWNER: { code: 4004, message: 'Cannot remove the last owner' },
-  INVALID_ROLE: { code: 4005, message: 'Invalid role specified' },
-
-  // File errors (5xxx)
-  FILE_TOO_LARGE: { code: 5001, message: 'File exceeds size limit' },
-  FILE_INVALID_TYPE: { code: 5002, message: 'Invalid file type' },
-  FILE_NOT_FOUND: { code: 5003, message: 'File not found' },
-  FILE_UPLOAD_FAILED: { code: 5004, message: 'File upload failed' },
-  FILE_ALREADY_EXISTS: { code: 5005, message: 'File already exists' },
-
-  // Database errors (6xxx)
-  DB_ERROR: { code: 6001, message: 'Database error' },
-  DB_TRANSACTION_FAILED: { code: 6002, message: 'Transaction failed' },
-
-  // Email errors (7xxx)
-  EMAIL_SEND_FAILED: { code: 7001, message: 'Failed to send email' },
-  EMAIL_INVALID: { code: 7002, message: 'Invalid email address' },
-
-  // Rate limiting (8xxx)
-  RATE_LIMITED: { code: 8001, message: 'Too many requests' },
-
-  // Server errors (9xxx)
-  INTERNAL_ERROR: { code: 9001, message: 'Internal server error' },
-  SERVICE_UNAVAILABLE: { code: 9002, message: 'Service temporarily unavailable' },
-};
-
-/**
- * Helper to create an error response object
- * @param {Object} errorDef - Error definition from ERROR_CODES
- * @param {string} [details] - Additional details about the error
- * @returns {Object} Error response object
- */
-export function createErrorResponse(errorDef, details = null) {
-  const response = {
-    error: errorDef.message,
-    code: errorDef.code,
-  };
-  if (details) {
-    response.details = details;
-  }
-  return response;
-}
 
 /**
  * Check if a role is valid

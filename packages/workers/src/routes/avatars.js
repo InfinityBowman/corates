@@ -7,7 +7,7 @@
 
 import { Hono } from 'hono';
 import { requireAuth, getAuth } from '../middleware/auth.js';
-import { createErrorResponse, ERROR_CODES } from '../config/constants.js';
+import { createDomainError, FILE_ERRORS, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { createDb } from '../db/client.js';
 import { projectMembers } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
@@ -74,13 +74,12 @@ avatarRoutes.post('/', async c => {
   // Check Content-Length header first for early rejection
   const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
   if (contentLength > MAX_AVATAR_SIZE) {
-    return c.json(
-      createErrorResponse(
-        ERROR_CODES.FILE_TOO_LARGE,
-        `Avatar size exceeds limit of ${MAX_AVATAR_SIZE / (1024 * 1024)}MB`,
-      ),
-      413,
+    const error = createDomainError(
+      FILE_ERRORS.TOO_LARGE,
+      { fileSize: contentLength, maxSize: MAX_AVATAR_SIZE },
+      `Avatar size exceeds limit of ${MAX_AVATAR_SIZE / (1024 * 1024)}MB`,
     );
+    return c.json(error, error.statusCode);
   }
 
   try {
@@ -92,29 +91,32 @@ avatarRoutes.post('/', async c => {
       const file = formData.get('avatar');
 
       if (!file || !(file instanceof File)) {
-        return c.json(createErrorResponse(ERROR_CODES.VALIDATION, 'No avatar file provided'), 400);
+        const error = createDomainError(
+          VALIDATION_ERRORS.FIELD_REQUIRED,
+          { field: 'avatar' },
+          'No avatar file provided',
+        );
+        return c.json(error, error.statusCode);
       }
 
       // Validate file type
       if (!ALLOWED_TYPES.includes(file.type)) {
-        return c.json(
-          createErrorResponse(
-            ERROR_CODES.VALIDATION,
-            'Invalid file type. Allowed: JPEG, PNG, GIF, WebP',
-          ),
-          400,
+        const error = createDomainError(
+          FILE_ERRORS.INVALID_TYPE,
+          { fileType: file.type, allowedTypes: ALLOWED_TYPES },
+          'Invalid file type. Allowed: JPEG, PNG, GIF, WebP',
         );
+        return c.json(error, error.statusCode);
       }
 
       // Validate file size (double-check after parsing)
       if (file.size > MAX_AVATAR_SIZE) {
-        return c.json(
-          createErrorResponse(
-            ERROR_CODES.FILE_TOO_LARGE,
-            `Avatar size exceeds limit of ${MAX_AVATAR_SIZE / (1024 * 1024)}MB`,
-          ),
-          413,
+        const error = createDomainError(
+          FILE_ERRORS.TOO_LARGE,
+          { fileSize: file.size, maxSize: MAX_AVATAR_SIZE },
+          `Avatar size exceeds limit of ${MAX_AVATAR_SIZE / (1024 * 1024)}MB`,
         );
+        return c.json(error, error.statusCode);
       }
 
       // Generate unique filename with extension
@@ -162,10 +164,19 @@ avatarRoutes.post('/', async c => {
       });
     }
 
-    return c.json(createErrorResponse(ERROR_CODES.VALIDATION, 'Invalid content type'), 400);
+    const error = createDomainError(
+      VALIDATION_ERRORS.FIELD_INVALID_FORMAT,
+      { field: 'Content-Type' },
+      'Invalid content type',
+    );
+    return c.json(error, error.statusCode);
   } catch (error) {
     console.error('Avatar upload error:', error);
-    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'upload_avatar',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -201,7 +212,11 @@ avatarRoutes.get('/:userId', async c => {
     return new Response(object.body, { headers });
   } catch (error) {
     console.error('Avatar fetch error:', error);
-    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'fetch_avatar',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -223,7 +238,11 @@ avatarRoutes.delete('/', async c => {
     return c.json({ success: true, message: 'Avatar deleted' });
   } catch (error) {
     console.error('Avatar delete error:', error);
-    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'delete_avatar',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 

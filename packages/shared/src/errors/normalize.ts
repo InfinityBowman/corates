@@ -82,7 +82,15 @@ export function normalizeError(error: unknown): TransportError | DomainError {
   }
 
   // Response objects should never reach normalizeError - use parseApiError instead
-  if (error instanceof Response) {
+  // Check for Response-like objects (has ok, status, json properties)
+  if (
+    error &&
+    typeof error === 'object' &&
+    'ok' in error &&
+    'status' in error &&
+    'json' in error &&
+    typeof (error as { json: unknown }).json === 'function'
+  ) {
     console.error(
       'Programmer error: Response object passed to normalizeError. Use parseApiError instead.',
     );

@@ -24,7 +24,7 @@ describe('validateBody', () => {
     expect(result.data.name).toBe('Test Project');
   });
 
-  it('should return error for invalid data', () => {
+  it('should return domain error for invalid data', () => {
     const schema = projectSchemas.create;
     const data = { name: '' }; // Empty name should fail
 
@@ -32,18 +32,20 @@ describe('validateBody', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toBeDefined();
-    expect(result.error.message).toBe('Validation failed');
-    expect(result.error.errors).toBeInstanceOf(Array);
+    expect(result.error.code).toBeDefined();
+    expect(result.error.message).toBeDefined();
+    expect(result.error.statusCode).toBe(400);
   });
 
-  it('should format error messages with field paths', () => {
+  it('should return validation error with field details', () => {
     const schema = projectSchemas.create;
     const data = { name: '' };
 
     const result = validateBody(schema, data);
 
-    expect(result.error.errors[0]).toHaveProperty('field');
-    expect(result.error.errors[0]).toHaveProperty('message');
+    expect(result.error.code).toMatch(/^VALIDATION_/);
+    expect(result.error.details).toBeDefined();
+    expect(result.error.details.field).toBe('name');
   });
 });
 
@@ -70,7 +72,9 @@ describe('projectSchemas', () => {
       const result = validateBody(projectSchemas.create, data);
 
       expect(result.success).toBe(false);
-      expect(result.error.errors[0].message).toContain('required');
+      expect(result.error.code).toMatch(/^VALIDATION_/);
+      // Empty string after trimming triggers "too short" validation
+      expect(result.error.code).toBe('VALIDATION_FIELD_TOO_SHORT');
     });
 
     it('should reject project name > 255 characters', () => {
@@ -78,7 +82,8 @@ describe('projectSchemas', () => {
       const result = validateBody(projectSchemas.create, data);
 
       expect(result.success).toBe(false);
-      expect(result.error.errors[0].message).toContain('255');
+      expect(result.error.code).toBe('VALIDATION_FIELD_TOO_LONG');
+      expect(result.error.details.field).toBe('name');
     });
 
     it('should reject description > 2000 characters', () => {
@@ -160,7 +165,9 @@ describe('memberSchemas', () => {
       const result = validateBody(memberSchemas.add, data);
 
       expect(result.success).toBe(false);
-      expect(result.error.errors[0].message).toContain('userId or email');
+      expect(result.error.code).toMatch(/^VALIDATION_/);
+      // refine() errors map to VALIDATION_FAILED
+      expect(result.error.code).toBe('VALIDATION_FAILED');
     });
 
     it('should reject invalid email', () => {
@@ -270,7 +277,9 @@ describe('emailSchemas', () => {
       const result = validateBody(emailSchemas.queue, data);
 
       expect(result.success).toBe(false);
-      expect(result.error.errors[0].message).toContain('html or text');
+      expect(result.error.code).toMatch(/^VALIDATION_/);
+      // refine() errors map to VALIDATION_FAILED
+      expect(result.error.code).toBe('VALIDATION_FAILED');
     });
 
     it('should reject invalid email address', () => {

@@ -9,7 +9,14 @@ import { projectMembers, user, projects } from '../db/schema.js';
 import { eq, and, count } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { memberSchemas, validateRequest } from '../config/validation.js';
-import { createErrorResponse, ERROR_CODES } from '../config/constants.js';
+import {
+  createDomainError,
+  PROJECT_ERRORS,
+  AUTH_ERRORS,
+  SYSTEM_ERRORS,
+  USER_ERRORS,
+  VALIDATION_ERRORS,
+} from '@corates/shared';
 
 const memberRoutes = new Hono();
 
@@ -47,7 +54,12 @@ async function projectMembershipMiddleware(c, next) {
   const projectId = c.req.param('projectId');
 
   if (!projectId) {
-    return c.json(createErrorResponse(ERROR_CODES.MISSING_FIELD, 'Project ID required'), 400);
+    const error = createDomainError(
+      VALIDATION_ERRORS.FIELD_REQUIRED,
+      { field: 'projectId' },
+      'Project ID required',
+    );
+    return c.json(error, error.statusCode);
   }
 
   const db = createDb(c.env.DB);
@@ -60,7 +72,8 @@ async function projectMembershipMiddleware(c, next) {
     .get();
 
   if (!membership) {
-    return c.json(createErrorResponse(ERROR_CODES.PROJECT_ACCESS_DENIED), 404);
+    const error = createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId });
+    return c.json(error, error.statusCode);
   }
 
   c.set('projectId', projectId);
@@ -101,7 +114,11 @@ memberRoutes.get('/', async c => {
     return c.json(results);
   } catch (error) {
     console.error('Error listing members:', error);
-    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'list_members',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -114,10 +131,12 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
   const projectId = c.get('projectId');
 
   if (!isOwner) {
-    return c.json(
-      createErrorResponse(ERROR_CODES.AUTH_FORBIDDEN, 'Only project owners can add members'),
-      403,
+    const error = createDomainError(
+      AUTH_ERRORS.FORBIDDEN,
+      { reason: 'add_member' },
+      'Only project owners can add members',
     );
+    return c.json(error, error.statusCode);
   }
 
   const db = createDb(c.env.DB);
@@ -155,7 +174,8 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
     }
 
     if (!userToAdd) {
-      return c.json(createErrorResponse(ERROR_CODES.NOT_FOUND, 'User not found'), 404);
+      const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId, email });
+      return c.json(error, error.statusCode);
     }
 
     // Check if already a member
@@ -166,7 +186,11 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
       .get();
 
     if (existingMember) {
-      return c.json(createErrorResponse(ERROR_CODES.PROJECT_MEMBER_EXISTS), 409);
+      const error = createDomainError(PROJECT_ERRORS.MEMBER_ALREADY_EXISTS, {
+        projectId,
+        userId: userToAdd.id,
+      });
+      return c.json(error, error.statusCode);
     }
 
     const now = new Date();
@@ -232,7 +256,11 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
     );
   } catch (error) {
     console.error('Error adding member:', error);
-    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'add_member',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -246,13 +274,12 @@ memberRoutes.put('/:userId', validateRequest(memberSchemas.updateRole), async c 
   const memberId = c.req.param('userId');
 
   if (!isOwner) {
-    return c.json(
-      createErrorResponse(
-        ERROR_CODES.AUTH_FORBIDDEN,
-        'Only project owners can update member roles',
-      ),
-      403,
+    const error = createDomainError(
+      AUTH_ERRORS.FORBIDDEN,
+      { reason: 'update_member_role' },
+      'Only project owners can update member roles',
     );
+    return c.json(error, error.statusCode);
   }
 
   const db = createDb(c.env.DB);
@@ -274,10 +301,12 @@ memberRoutes.put('/:userId', validateRequest(memberSchemas.updateRole), async c 
         .get();
 
       if (targetMember?.role === 'owner' && ownerCountResult?.count <= 1) {
-        return c.json(
-          createErrorResponse(ERROR_CODES.PROJECT_LAST_OWNER, 'Assign another owner first'),
-          400,
+        const error = createDomainError(
+          PROJECT_ERRORS.LAST_OWNER,
+          { projectId },
+          'Assign another owner first',
         );
+        return c.json(error, error.statusCode);
       }
     }
 
@@ -295,7 +324,11 @@ memberRoutes.put('/:userId', validateRequest(memberSchemas.updateRole), async c 
     return c.json({ success: true, userId: memberId, role });
   } catch (error) {
     console.error('Error updating member role:', error);
-    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'update_member_role',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -312,10 +345,12 @@ memberRoutes.delete('/:userId', async c => {
   const isSelfRemoval = memberId === authUser.id;
 
   if (!isOwner && !isSelfRemoval) {
-    return c.json(
-      createErrorResponse(ERROR_CODES.AUTH_FORBIDDEN, 'Only project owners can remove members'),
-      403,
+    const error = createDomainError(
+      AUTH_ERRORS.FORBIDDEN,
+      { reason: 'remove_member' },
+      'Only project owners can remove members',
     );
+    return c.json(error, error.statusCode);
   }
 
   const db = createDb(c.env.DB);
@@ -329,7 +364,12 @@ memberRoutes.delete('/:userId', async c => {
       .get();
 
     if (!targetMember) {
-      return c.json(createErrorResponse(ERROR_CODES.NOT_FOUND, 'Member not found'), 404);
+      const error = createDomainError(
+        PROJECT_ERRORS.NOT_FOUND,
+        { projectId, userId: memberId },
+        'Member not found',
+      );
+      return c.json(error, error.statusCode);
     }
 
     // Prevent removing the last owner
@@ -341,13 +381,12 @@ memberRoutes.delete('/:userId', async c => {
         .get();
 
       if (ownerCountResult?.count <= 1) {
-        return c.json(
-          createErrorResponse(
-            ERROR_CODES.PROJECT_LAST_OWNER,
-            'Assign another owner first or delete the project',
-          ),
-          400,
+        const error = createDomainError(
+          PROJECT_ERRORS.LAST_OWNER,
+          { projectId },
+          'Assign another owner first or delete the project',
         );
+        return c.json(error, error.statusCode);
       }
     }
 
@@ -393,7 +432,11 @@ memberRoutes.delete('/:userId', async c => {
     return c.json({ success: true, removed: memberId });
   } catch (error) {
     console.error('Error removing member:', error);
-    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'remove_member',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 

@@ -49,7 +49,8 @@ export function createValidationError(
   value?: unknown,
   constraint?: string,
 ): DomainError {
-  const errorDef = VALIDATION_ERRORS[errorCode as keyof typeof VALIDATION_ERRORS];
+  // Find error definition by matching code value (not key)
+  const errorDef = Object.values(VALIDATION_ERRORS).find(e => e.code === errorCode);
   if (!errorDef) {
     throw new Error(`Invalid validation error code: ${errorCode}`);
   }
