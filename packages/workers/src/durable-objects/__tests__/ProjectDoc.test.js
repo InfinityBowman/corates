@@ -86,12 +86,7 @@ function simulateSyncProtocol(serverDoc, clientDoc) {
 
     const clientResponseEncoder = encoding.createEncoder();
     encoding.writeVarUint(clientResponseEncoder, messageSync);
-    syncProtocol.readSyncMessage(
-      clientResponseDecoder,
-      clientResponseEncoder,
-      clientDoc,
-      null,
-    );
+    syncProtocol.readSyncMessage(clientResponseDecoder, clientResponseEncoder, clientDoc, null);
   }
 
   return { responseLength };
