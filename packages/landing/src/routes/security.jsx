@@ -21,15 +21,15 @@ export default function Security() {
       <Meta name='twitter:title' content={title} />
       <Meta name='twitter:description' content={description} />
 
-      <div class='min-h-screen flex flex-col'>
+      <div class='flex min-h-screen flex-col'>
         <Navbar />
 
         <main class='flex-1 py-16'>
-          <div class='max-w-3xl mx-auto px-6'>
-            <h1 class='text-4xl font-bold text-gray-900 mb-2'>Security</h1>
-            <p class='text-gray-500 mb-8'>How we protect your research data</p>
+          <div class='mx-auto max-w-3xl px-6'>
+            <h1 class='mb-2 text-4xl font-bold text-gray-900'>Security</h1>
+            <p class='mb-8 text-gray-500'>How we protect your research data</p>
 
-            <div class='text-gray-700 leading-relaxed space-y-8'>
+            <div class='space-y-8 leading-relaxed text-gray-700'>
               <p>
                 At CoRATES, we understand that your research data is valuable and sensitive. We are
                 committed to implementing robust security measures to protect your information and
@@ -38,13 +38,13 @@ export default function Security() {
 
               {/* Security Features */}
               <div class='grid gap-6'>
-                <div class='bg-gray-50 rounded-lg p-6'>
+                <div class='rounded-lg bg-gray-50 p-6'>
                   <div class='flex items-start gap-4'>
-                    <div class='shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center'>
-                      <FiLock class='w-5 h-5 text-blue-600' />
+                    <div class='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                      <FiLock class='h-5 w-5 text-blue-600' />
                     </div>
                     <div>
-                      <h2 class='text-lg font-semibold text-gray-900 mb-2'>Encryption</h2>
+                      <h2 class='mb-2 text-lg font-semibold text-gray-900'>Encryption</h2>
                       <p class='text-gray-600'>
                         All data transmitted between your browser and our servers is encrypted using
                         TLS (Transport Layer Security). Data at rest, including uploaded PDFs and
@@ -55,13 +55,13 @@ export default function Security() {
                   </div>
                 </div>
 
-                <div class='bg-gray-50 rounded-lg p-6'>
+                <div class='rounded-lg bg-gray-50 p-6'>
                   <div class='flex items-start gap-4'>
-                    <div class='shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center'>
-                      <FiShield class='w-5 h-5 text-blue-600' />
+                    <div class='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                      <FiShield class='h-5 w-5 text-blue-600' />
                     </div>
                     <div>
-                      <h2 class='text-lg font-semibold text-gray-900 mb-2'>Authentication</h2>
+                      <h2 class='mb-2 text-lg font-semibold text-gray-900'>Authentication</h2>
                       <p class='text-gray-600'>
                         We support multiple secure authentication methods including OAuth (Google,
                         ORCID), passwordless login via email, and two-factor authentication (2FA)
@@ -70,13 +70,13 @@ export default function Security() {
                     </div>
                   </div>
                 </div>
-                <div class='bg-gray-50 rounded-lg p-6'>
+                <div class='rounded-lg bg-gray-50 p-6'>
                   <div class='flex items-start gap-4'>
-                    <div class='shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center'>
-                      <FiAlertCircle class='w-5 h-5 text-blue-600' />
+                    <div class='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                      <FiAlertCircle class='h-5 w-5 text-blue-600' />
                     </div>
                     <div>
-                      <h2 class='text-lg font-semibold text-gray-900 mb-2'>Abuse Prevention</h2>
+                      <h2 class='mb-2 text-lg font-semibold text-gray-900'>Abuse Prevention</h2>
                       <p class='text-gray-600'>
                         We apply rate limiting to sensitive endpoints (such as sign-in,
                         registration, password resets, and email flows) to reduce brute-force
@@ -86,13 +86,13 @@ export default function Security() {
                   </div>
                 </div>
 
-                <div class='bg-gray-50 rounded-lg p-6'>
+                <div class='rounded-lg bg-gray-50 p-6'>
                   <div class='flex items-start gap-4'>
-                    <div class='shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center'>
-                      <FiServer class='w-5 h-5 text-blue-600' />
+                    <div class='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                      <FiServer class='h-5 w-5 text-blue-600' />
                     </div>
                     <div>
-                      <h2 class='text-lg font-semibold text-gray-900 mb-2'>Infrastructure</h2>
+                      <h2 class='mb-2 text-lg font-semibold text-gray-900'>Infrastructure</h2>
                       <p class='text-gray-600'>
                         CoRATES is hosted on Cloudflare's global network, providing enterprise-grade
                         security, DDoS protection, and a Web Application Firewall (WAF) to protect
@@ -102,13 +102,13 @@ export default function Security() {
                   </div>
                 </div>
 
-                <div class='bg-gray-50 rounded-lg p-6'>
+                <div class='rounded-lg bg-gray-50 p-6'>
                   <div class='flex items-start gap-4'>
-                    <div class='shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center'>
-                      <FiUsers class='w-5 h-5 text-blue-600' />
+                    <div class='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                      <FiUsers class='h-5 w-5 text-blue-600' />
                     </div>
                     <div>
-                      <h2 class='text-lg font-semibold text-gray-900 mb-2'>Access Control</h2>
+                      <h2 class='mb-2 text-lg font-semibold text-gray-900'>Access Control</h2>
                       <p class='text-gray-600'>
                         Project-level access controls ensure that only authorized team members can
                         view and edit your research data. You control who has access to your
@@ -124,28 +124,28 @@ export default function Security() {
               {/* Responsible Disclosure */}
               <div class='border-t border-gray-200 pt-8'>
                 <div class='flex items-start gap-4'>
-                  <div class='shrink-0 w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center'>
-                    <FiAlertCircle class='w-5 h-5 text-amber-600' />
+                  <div class='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100'>
+                    <FiAlertCircle class='h-5 w-5 text-amber-600' />
                   </div>
                   <div>
-                    <h2 class='text-xl font-semibold text-gray-900 mb-3'>Responsible Disclosure</h2>
-                    <p class='text-gray-600 mb-4'>
+                    <h2 class='mb-3 text-xl font-semibold text-gray-900'>Responsible Disclosure</h2>
+                    <p class='mb-4 text-gray-600'>
                       We take security vulnerabilities seriously. If you believe you have found a
                       security vulnerability in CoRATES, we encourage you to report it to us
                       responsibly. We will not pursue legal action against researchers who report
                       vulnerabilities responsibly and in good faith.
                     </p>
-                    <p class='text-gray-600 mb-4'>
+                    <p class='mb-4 text-gray-600'>
                       Please send details of the vulnerability to{' '}
                       <a
                         href='mailto:contact@corates.org'
-                        class='text-blue-600 hover:text-blue-700 font-medium'
+                        class='font-medium text-blue-600 hover:text-blue-700'
                       >
                         contact@corates.org
                       </a>
                       . Include as much information as possible, such as:
                     </p>
-                    <ul class='list-disc list-outside ml-6 space-y-1 text-gray-600 mb-4'>
+                    <ul class='mb-4 ml-6 list-outside list-disc space-y-1 text-gray-600'>
                       <li>A description of the vulnerability</li>
                       <li>Steps to reproduce the issue</li>
                       <li>Potential impact of the vulnerability</li>
@@ -164,17 +164,17 @@ export default function Security() {
               {/* Contact */}
               <div class='border-t border-gray-200 pt-8'>
                 <div class='flex items-start gap-4'>
-                  <div class='shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center'>
-                    <FiMail class='w-5 h-5 text-blue-600' />
+                  <div class='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                    <FiMail class='h-5 w-5 text-blue-600' />
                   </div>
                   <div>
-                    <h2 class='text-xl font-semibold text-gray-900 mb-3'>Security Questions</h2>
+                    <h2 class='mb-3 text-xl font-semibold text-gray-900'>Security Questions</h2>
                     <p class='text-gray-600'>
                       If you have any questions about our security practices or would like more
                       information, please contact us at{' '}
                       <a
                         href='mailto:contact@corates.org'
-                        class='text-blue-600 hover:text-blue-700 font-medium'
+                        class='font-medium text-blue-600 hover:text-blue-700'
                       >
                         contact@corates.org
                       </a>

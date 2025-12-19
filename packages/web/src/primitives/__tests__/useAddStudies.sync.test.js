@@ -32,7 +32,7 @@ vi.mock('@/lib/pdfUtils.js', () => ({
       .replace(/[^a-z0-9]/g, '');
   },
   readFileAsArrayBuffer: vi.fn(),
-  withTimeout: (promise, ms, operationName) => promise, // Pass through the promise without timeout in tests
+  withTimeout: (promise, _ms, _operationName) => promise, // Pass through the promise without timeout in tests
 }));
 
 vi.mock('@/lib/referenceParser.js', () => ({

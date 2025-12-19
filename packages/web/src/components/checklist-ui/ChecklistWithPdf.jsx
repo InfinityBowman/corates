@@ -26,7 +26,7 @@ export default function ChecklistWithPdf(props) {
   // props.getQuestionNote - function to get Y.Text for a question note
 
   return (
-    <div class='h-full flex flex-col bg-blue-50'>
+    <div class='flex h-full flex-col bg-blue-50'>
       {/* Split screen with checklist and PDF */}
       <SplitScreenLayout
         defaultLayout='vertical'

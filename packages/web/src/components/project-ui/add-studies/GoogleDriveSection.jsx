@@ -36,26 +36,26 @@ export default function GoogleDriveSection() {
             <button
               type='button'
               onClick={() => studies.clearDriveFiles()}
-              class='text-xs text-gray-500 hover:text-red-600 transition-colors'
+              class='text-xs text-gray-500 transition-colors hover:text-red-600'
             >
               Clear all
             </button>
           </div>
-          <div class='space-y-2 max-h-40 overflow-y-auto'>
+          <div class='max-h-40 space-y-2 overflow-y-auto'>
             <For each={studies.selectedDriveFiles()}>
               {file => (
-                <div class='flex items-center gap-3 p-2 bg-blue-50 rounded-lg border border-blue-200'>
-                  <FiFile class='w-4 h-4 text-red-500 shrink-0' />
-                  <div class='flex-1 min-w-0'>
-                    <p class='text-sm font-medium text-gray-900 truncate'>{file.name}</p>
+                <div class='flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-2'>
+                  <FiFile class='h-4 w-4 shrink-0 text-red-500' />
+                  <div class='min-w-0 flex-1'>
+                    <p class='truncate text-sm font-medium text-gray-900'>{file.name}</p>
                     <p class='text-xs text-gray-500'>{formatFileSize(file.size)}</p>
                   </div>
                   <button
                     type='button'
                     onClick={() => studies.removeDriveFile(file.id)}
-                    class='p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors'
+                    class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500'
                   >
-                    <BiRegularTrash class='w-4 h-4' />
+                    <BiRegularTrash class='h-4 w-4' />
                   </button>
                 </div>
               )}

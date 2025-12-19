@@ -21,19 +21,19 @@ export default function LastLoginHint() {
   const getIcon = () => {
     switch (lastMethod()) {
       case LOGIN_METHODS.GOOGLE:
-        return <AiOutlineGoogle class='w-4 h-4' />;
+        return <AiOutlineGoogle class='h-4 w-4' />;
       case LOGIN_METHODS.ORCID:
-        return <FaBrandsOrcid class='w-4 h-4' />;
+        return <FaBrandsOrcid class='h-4 w-4' />;
       case LOGIN_METHODS.MAGIC_LINK:
-        return <FiMail class='w-4 h-4' />;
+        return <FiMail class='h-4 w-4' />;
       default:
-        return <FiLock class='w-4 h-4' />;
+        return <FiLock class='h-4 w-4' />;
     }
   };
 
   return (
     <Show when={lastMethod()}>
-      <div class='flex items-center justify-center gap-2 text-xs text-gray-500 bg-gray-50 rounded-lg py-2 px-3'>
+      <div class='flex items-center justify-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500'>
         <span class='text-gray-400'>{getIcon()}</span>
         <span>You last signed in with {LOGIN_METHOD_LABELS[lastMethod()]}</span>
       </div>

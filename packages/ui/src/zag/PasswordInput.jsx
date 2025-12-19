@@ -29,7 +29,7 @@ export default function PasswordInput(props) {
     <div {...api().getRootProps()} class={classValue()}>
       <label
         {...api().getLabelProps()}
-        class='block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2'
+        class='mb-1 block text-xs font-semibold text-gray-700 sm:mb-2 sm:text-sm'
       >
         {label() || 'Password'}
       </label>
@@ -42,7 +42,7 @@ export default function PasswordInput(props) {
         />
         <button
           {...api().getVisibilityTriggerProps()}
-          class='absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-gray-400'
+          class='absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 sm:right-4'
         >
           <span {...api().getIndicatorProps()}>
             <Show when={api().visible} fallback={<FiEyeOff size={computedIconSize() - 2} />}>

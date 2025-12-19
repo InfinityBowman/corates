@@ -71,13 +71,13 @@ export default function StudyCardHeader(props) {
     {
       value: 'assign-reviewers',
       label: 'Assign Reviewers',
-      icon: <FiUsers class='w-4 h-4' />,
+      icon: <FiUsers class='h-4 w-4' />,
     },
     { separator: true },
     {
       value: 'delete',
       label: 'Delete Study',
-      icon: <FiTrash2 class='w-4 h-4' />,
+      icon: <FiTrash2 class='h-4 w-4' />,
       destructive: true,
     },
   ];
@@ -107,13 +107,13 @@ export default function StudyCardHeader(props) {
 
   return (
     <div
-      class='flex items-center gap-3 px-4 py-3 cursor-pointer select-none'
+      class='flex cursor-pointer items-center gap-3 px-4 py-3 select-none'
       onClick={handleHeaderClick}
     >
       {/* Expand/collapse chevron */}
-      <div class='shrink-0 p-1 -ml-1'>
+      <div class='-ml-1 shrink-0 p-1'>
         <BiRegularChevronRight
-          class={`w-5 h-5 text-gray-400 transition-transform duration-200 ${props.expanded ? 'rotate-90' : ''}`}
+          class={`h-5 w-5 text-gray-400 transition-transform duration-200 ${props.expanded ? 'rotate-90' : ''}`}
         />
       </div>
 
@@ -124,20 +124,20 @@ export default function StudyCardHeader(props) {
           value={studyName()}
           onSubmit={handleNameChange}
           showEditIcon={true}
-          class='text-gray-900 font-medium -ml-2'
+          class='-ml-2 font-medium text-gray-900'
         />
         <Show when={citationLine()}>
-          <p class='text-xs text-gray-500 truncate select-text cursor-text w-fit' data-selectable>
+          <p class='w-fit cursor-text truncate text-xs text-gray-500 select-text' data-selectable>
             {citationLine()}
           </p>
         </Show>
       </div>
       {/* Reviewer badges */}
       <Show when={hasReviewers()}>
-        <div class='flex flex-wrap gap-1 shrink-0 cursor-default' data-selectable>
+        <div class='flex shrink-0 cursor-default flex-wrap gap-1' data-selectable>
           <For each={assignedReviewers()}>
             {name => (
-              <span class='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 select-text cursor-text'>
+              <span class='inline-flex cursor-text items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 select-text'>
                 {name}
               </span>
             )}
@@ -145,12 +145,12 @@ export default function StudyCardHeader(props) {
         </div>
       </Show>
       <Show when={!hasReviewers()}>
-        <span class='text-xs text-gray-400 italic shrink-0'>No reviewers</span>
+        <span class='shrink-0 text-xs text-gray-400 italic'>No reviewers</span>
       </Show>
 
       {/* Actions menu - using Menu component with custom trigger (no indicator) */}
       <Menu
-        trigger={<FiMoreVertical class='w-4 h-4' />}
+        trigger={<FiMoreVertical class='h-4 w-4' />}
         items={menuItems}
         onSelect={handleMenuSelect}
         placement='bottom-end'

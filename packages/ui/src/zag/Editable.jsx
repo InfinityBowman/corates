@@ -141,7 +141,7 @@ export default function Editable(props) {
   return (
     <div {...api().getRootProps()} class={cn('group inline-block', classValue())}>
       <Show when={label()}>
-        <label {...api().getLabelProps()} class='block text-sm font-medium text-gray-700 mb-1'>
+        <label {...api().getLabelProps()} class='mb-1 block text-sm font-medium text-gray-700'>
           {label()}
         </label>
       </Show>
@@ -151,7 +151,7 @@ export default function Editable(props) {
           {...api().getAreaProps()}
           class={cn(
             variantStyles().area,
-            disabled() && 'opacity-50 cursor-not-allowed',
+            disabled() && 'cursor-not-allowed opacity-50',
             areaClass(),
           )}
         >
@@ -172,23 +172,23 @@ export default function Editable(props) {
               fallback={
                 <button
                   {...api().getEditTriggerProps()}
-                  class='p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100'
+                  class='rounded p-1 text-gray-400 opacity-0 transition-colors group-hover:opacity-100 hover:bg-gray-100 hover:text-gray-600'
                 >
-                  <FiEdit2 class='w-4 h-4' />
+                  <FiEdit2 class='h-4 w-4' />
                 </button>
               }
             >
               <button
                 {...api().getSubmitTriggerProps()}
-                class='p-1 text-green-500 hover:text-green-600 rounded hover:bg-green-50 transition-colors'
+                class='rounded p-1 text-green-500 transition-colors hover:bg-green-50 hover:text-green-600'
               >
-                <FiCheck class='w-4 h-4' />
+                <FiCheck class='h-4 w-4' />
               </button>
               <button
                 {...api().getCancelTriggerProps()}
-                class='p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100 transition-colors'
+                class='rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
               >
-                <FiX class='w-4 h-4' />
+                <FiX class='h-4 w-4' />
               </button>
             </Show>
           </div>
@@ -198,9 +198,9 @@ export default function Editable(props) {
         <Show when={showEditIcon() && !showControls() && !api().editing}>
           <button
             {...api().getEditTriggerProps()}
-            class='p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100'
+            class='rounded p-1 text-gray-400 opacity-0 transition-colors group-hover:opacity-100 hover:bg-gray-100 hover:text-gray-600'
           >
-            <FiEdit2 class='w-4 h-4' />
+            <FiEdit2 class='h-4 w-4' />
           </button>
         </Show>
       </div>

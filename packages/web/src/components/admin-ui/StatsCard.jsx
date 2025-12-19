@@ -37,13 +37,13 @@ export default function StatsCard(props) {
           <p class='text-sm font-medium text-gray-600'>{props.title}</p>
           <Show
             when={!props.loading}
-            fallback={<div class='h-8 w-16 bg-gray-200 rounded animate-pulse mt-1' />}
+            fallback={<div class='mt-1 h-8 w-16 animate-pulse rounded bg-gray-200' />}
           >
-            <p class={`text-2xl font-bold mt-1 ${colors().text}`}>{props.value}</p>
+            <p class={`mt-1 text-2xl font-bold ${colors().text}`}>{props.value}</p>
           </Show>
         </div>
-        <div class={`p-3 rounded-lg ${colors().icon}`}>
-          <props.icon class='w-6 h-6' />
+        <div class={`rounded-lg p-3 ${colors().icon}`}>
+          <props.icon class='h-6 w-6' />
         </div>
       </div>
     </div>

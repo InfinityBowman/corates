@@ -75,17 +75,17 @@ export function Combobox(props) {
       <Show when={options().length > 0}>
         <ul
           {...api().getContentProps()}
-          class='bg-white rounded-lg shadow-lg border border-gray-200 py-1 max-h-60 overflow-auto z-50 focus:outline-none'
+          class='z-50 max-h-60 overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg focus:outline-none'
         >
           <For each={options()}>
             {item => (
               <li
                 {...api().getItemProps({ item })}
-                class='flex items-center justify-between px-3 py-2 text-sm cursor-pointer transition-colors text-gray-700 hover:bg-gray-50 data-highlighted:bg-gray-50 data-disabled:opacity-50 data-disabled:cursor-not-allowed'
+                class='flex cursor-pointer items-center justify-between px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 data-disabled:cursor-not-allowed data-disabled:opacity-50 data-highlighted:bg-gray-50'
               >
                 <span {...api().getItemTextProps({ item })}>{item.label}</span>
                 <Show when={api().getItemState({ item }).selected}>
-                  <FiCheck class='w-4 h-4 text-blue-600' />
+                  <FiCheck class='h-4 w-4 text-blue-600' />
                 </Show>
               </li>
             )}
@@ -98,32 +98,32 @@ export function Combobox(props) {
   return (
     <div {...api().getRootProps()} class={`w-full ${local.class || ''}`}>
       <Show when={local.label}>
-        <label {...api().getLabelProps()} class='block text-sm font-medium text-gray-700 mb-1'>
+        <label {...api().getLabelProps()} class='mb-1 block text-sm font-medium text-gray-700'>
           {local.label}
         </label>
       </Show>
       <div
         {...api().getControlProps()}
-        class='relative flex items-center border border-gray-300 rounded-lg bg-white data-focus:border-blue-500 data-focus:ring-1 data-focus:ring-blue-500 data-invalid:border-red-500 data-disabled:bg-gray-100 data-disabled:cursor-not-allowed'
+        class='relative flex items-center rounded-lg border border-gray-300 bg-white data-disabled:cursor-not-allowed data-disabled:bg-gray-100 data-focus:border-blue-500 data-focus:ring-1 data-focus:ring-blue-500 data-invalid:border-red-500'
       >
         <input
           {...api().getInputProps()}
           placeholder={local.placeholder}
-          class={`flex-1 px-3 py-2 bg-transparent outline-none text-sm placeholder:text-gray-400 disabled:cursor-not-allowed ${local.inputClass || ''}`}
+          class={`flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-gray-400 disabled:cursor-not-allowed ${local.inputClass || ''}`}
         />
         <Show when={api().hasSelectedItems}>
           <button
             {...api().getClearTriggerProps()}
-            class='p-1 mr-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100 transition-colors'
+            class='mr-1 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
           >
-            <FiX class='w-4 h-4' />
+            <FiX class='h-4 w-4' />
           </button>
         </Show>
         <button
           {...api().getTriggerProps()}
-          class='px-2 py-2 text-gray-400 hover:text-gray-600 transition-colors data-disabled:opacity-50 data-disabled:cursor-not-allowed'
+          class='px-2 py-2 text-gray-400 transition-colors hover:text-gray-600 data-disabled:cursor-not-allowed data-disabled:opacity-50'
         >
-          <FiChevronDown class='w-4 h-4 transition-transform data-[state=open]:rotate-180' />
+          <FiChevronDown class='h-4 w-4 transition-transform data-[state=open]:rotate-180' />
         </button>
       </div>
       <Show when={api().open}>

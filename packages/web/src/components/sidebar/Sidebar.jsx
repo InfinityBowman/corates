@@ -77,37 +77,25 @@ export default function Sidebar(props) {
 
   return (
     <div
-      class={`
-        transition-all duration-200 ease-in-out
-        bg-white border-r border-gray-200 h-full overflow-x-hidden shrink-0
-        ${props.open ? 'w-64' : 'w-0'}
-        md:relative
-        ${props.open ? '' : 'md:w-0'}
-        fixed top-12 left-0 z-30 md:static md:z-auto
-        ${props.open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-      `}
+      class={`h-full shrink-0 overflow-x-hidden border-r border-gray-200 bg-white transition-all duration-200 ease-in-out ${props.open ? 'w-64' : 'w-0'} md:relative ${props.open ? '' : 'md:w-0'} fixed top-12 left-0 z-30 md:static md:z-auto ${props.open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} `}
       style={{ 'max-width': '100vw' }}
     >
       <div
-        class={`
-          flex flex-col h-full w-64
-          transition-opacity duration-100
-          ${props.open ? 'duration-500 opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
-        `}
+        class={`flex h-full w-64 flex-col transition-opacity duration-100 ${props.open ? 'pointer-events-auto opacity-100 duration-500' : 'pointer-events-none opacity-0'} `}
       >
         {/* Main Content */}
-        <div class='flex-1 overflow-y-auto sidebar-scrollbar'>
+        <div class='sidebar-scrollbar flex-1 overflow-y-auto'>
           {/* Dashboard Link */}
           <div class='p-2 pt-4'>
             <button
               onClick={() => navigate('/dashboard')}
-              class={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              class={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 isCurrentPath('/dashboard') ?
                   'bg-blue-100 text-blue-700'
                 : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
-              <AiOutlineHome class='w-4 h-4' />
+              <AiOutlineHome class='h-4 w-4' />
               Dashboard
             </button>
           </div>
@@ -115,24 +103,24 @@ export default function Sidebar(props) {
           {/* Cloud Projects Section - Only show when logged in */}
           <Show when={isLoggedIn()}>
             <div class='px-3 pt-4 pb-2'>
-              <h3 class='text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5'>
-                <AiOutlineCloud class='w-3 h-3' />
+              <h3 class='flex items-center gap-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase'>
+                <AiOutlineCloud class='h-3 w-3' />
                 Cloud Projects
               </h3>
             </div>
-            <div class='px-2 space-y-0.5'>
+            <div class='space-y-0.5 px-2'>
               <Show
                 when={cloudProjects()?.length > 0}
                 fallback={
                   <Show when={!isProjectsLoading()}>
-                    <div class='text-center py-4 px-2'>
-                      <div class='w-8 h-8 bg-gray-100 rounded-lg mx-auto mb-2 flex items-center justify-center'>
-                        <AiOutlineFolder class='w-4 h-4 text-gray-400' />
+                    <div class='px-2 py-4 text-center'>
+                      <div class='mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100'>
+                        <AiOutlineFolder class='h-4 w-4 text-gray-400' />
                       </div>
-                      <p class='text-xs text-gray-500 font-medium'>No projects yet</p>
+                      <p class='text-xs font-medium text-gray-500'>No projects yet</p>
                       <button
                         onClick={() => navigate('/dashboard')}
-                        class='text-xs text-blue-600 hover:text-blue-700 mt-1'
+                        class='mt-1 text-xs text-blue-600 hover:text-blue-700'
                       >
                         Create a project
                       </button>
@@ -159,23 +147,23 @@ export default function Sidebar(props) {
 
           {/* Local Checklists Section */}
           <div class='px-3 pt-6 pb-2'>
-            <h3 class='text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5'>
-              <HiOutlineDocumentCheck class='w-3 h-3' />
+            <h3 class='flex items-center gap-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase'>
+              <HiOutlineDocumentCheck class='h-3 w-3' />
               Appraisals
             </h3>
           </div>
-          <div class='px-2 space-y-0.5'>
+          <div class='space-y-0.5 px-2'>
             <Show
               when={checklists()?.length > 0}
               fallback={
-                <div class='text-center py-4 px-2'>
-                  <div class='w-8 h-8 bg-gray-100 rounded-lg mx-auto mb-2 flex items-center justify-center'>
-                    <HiOutlineDocumentCheck class='w-4 h-4 text-gray-400' />
+                <div class='px-2 py-4 text-center'>
+                  <div class='mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100'>
+                    <HiOutlineDocumentCheck class='h-4 w-4 text-gray-400' />
                   </div>
-                  <p class='text-xs text-gray-500 font-medium'>No appraisals</p>
+                  <p class='text-xs font-medium text-gray-500'>No appraisals</p>
                   <button
                     onClick={() => navigate('/checklist/new')}
-                    class='text-xs text-blue-600 hover:text-blue-700 mt-1'
+                    class='mt-1 text-xs text-blue-600 hover:text-blue-700'
                   >
                     Create one
                   </button>

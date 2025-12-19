@@ -221,12 +221,11 @@ export default function ChecklistYjsWrapper() {
     const type = checklistType();
 
     Object.entries(patch).forEach(([key, value]) => {
-      // AMSTAR2: keys like q1, q2a, etc.
-      if (type === 'AMSTAR2' && AMSTAR2_KEY_PATTERN.test(key)) {
-        updateChecklistAnswer(params.studyId, params.checklistId, key, value);
-      }
-      // ROBINS-I: section and domain keys
-      else if (type === 'ROBINS_I' && ROBINS_I_KEYS.has(key)) {
+      // AMSTAR2: keys like q1, q2a, etc. | ROBINS-I: section and domain keys
+      const isValidKey =
+        (type === 'AMSTAR2' && AMSTAR2_KEY_PATTERN.test(key)) ||
+        (type === 'ROBINS_I' && ROBINS_I_KEYS.has(key));
+      if (isValidKey) {
         updateChecklistAnswer(params.studyId, params.checklistId, key, value);
       }
     });
@@ -296,12 +295,12 @@ export default function ChecklistYjsWrapper() {
       <confirmDialog.ConfirmDialogComponent />
       <button
         onClick={() => navigate(`/projects/${params.projectId}?tab=${getBackTab()}`)}
-        class='text-gray-400 hover:text-gray-700 transition-colors'
+        class='text-gray-400 transition-colors hover:text-gray-700'
       >
         <IoChevronBack size={20} />
       </button>
-      <div class='text-sm text-gray-600 truncate'>
-        <span class='text-gray-900 font-medium'>
+      <div class='truncate text-sm text-gray-600'>
+        <span class='font-medium text-gray-900'>
           {currentChecklist()?.type || 'AMSTAR2'} Checklist
         </span>
       </div>
@@ -311,7 +310,7 @@ export default function ChecklistYjsWrapper() {
           when={!isReadOnly()}
           fallback={
             <span
-              class={`px-3 py-1.5 text-sm font-medium rounded-lg ${
+              class={`rounded-lg px-3 py-1.5 text-sm font-medium ${
                 currentChecklist()?.status === 'completed' ?
                   'bg-green-100 text-green-700'
                 : 'bg-gray-100 text-gray-700'
@@ -323,7 +322,7 @@ export default function ChecklistYjsWrapper() {
         >
           <button
             onClick={handleToggleComplete}
-            class={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+            class={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               currentChecklist()?.status === 'completed' ?
                 'bg-green-100 text-green-700 hover:bg-green-200'
               : 'bg-blue-600 text-white hover:bg-blue-700'
@@ -341,7 +340,7 @@ export default function ChecklistYjsWrapper() {
       <Show
         when={checklistForUI()}
         fallback={
-          <div class='flex items-center justify-center min-h-screen bg-blue-50'>
+          <div class='flex min-h-screen items-center justify-center bg-blue-50'>
             <div class='text-gray-500'>
               <Show
                 when={connectionState().connecting || pdfLoading()}

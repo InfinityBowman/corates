@@ -67,27 +67,27 @@ export default function AdminDashboard() {
     <Show
       when={isAdminChecked()}
       fallback={
-        <div class='flex items-center justify-center min-h-100'>
-          <div class='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600' />
+        <div class='flex min-h-100 items-center justify-center'>
+          <div class='h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600' />
         </div>
       }
     >
       <Show
         when={isAdmin()}
         fallback={
-          <div class='flex flex-col items-center justify-center min-h-100 text-gray-500'>
-            <FiAlertCircle class='w-12 h-12 mb-4' />
+          <div class='flex min-h-100 flex-col items-center justify-center text-gray-500'>
+            <FiAlertCircle class='mb-4 h-12 w-12' />
             <p class='text-lg font-medium'>Access Denied</p>
             <p class='text-sm'>You do not have admin privileges.</p>
           </div>
         }
       >
-        <div class='max-w-7xl mx-auto p-6'>
+        <div class='mx-auto max-w-7xl p-6'>
           {/* Header */}
-          <div class='flex items-center justify-between mb-8'>
+          <div class='mb-8 flex items-center justify-between'>
             <div class='flex items-center space-x-3'>
-              <div class='p-2 bg-blue-100 rounded-lg'>
-                <FiShield class='w-6 h-6 text-blue-600' />
+              <div class='rounded-lg bg-blue-100 p-2'>
+                <FiShield class='h-6 w-6 text-blue-600' />
               </div>
               <div>
                 <h1 class='text-2xl font-bold text-gray-900'>Admin Dashboard</h1>
@@ -97,7 +97,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Stats Grid */}
-          <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'>
+          <div class='mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
             <StatsCard
               title='Total Users'
               value={stats()?.users ?? '-'}
@@ -129,18 +129,18 @@ export default function AdminDashboard() {
           </div>
 
           {/* Users Section */}
-          <div class='bg-white rounded-lg shadow-sm border border-gray-200'>
-            <div class='px-6 py-4 border-b border-gray-200'>
+          <div class='rounded-lg border border-gray-200 bg-white shadow-sm'>
+            <div class='border-b border-gray-200 px-6 py-4'>
               <div class='flex items-center justify-between'>
                 <h2 class='text-lg font-semibold text-gray-900'>Users</h2>
                 <div class='relative'>
-                  <FiSearch class='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
+                  <FiSearch class='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400' />
                   <input
                     type='text'
                     placeholder='Search by name or email...'
                     value={search()}
                     onInput={handleSearchInput}
-                    class='pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64'
+                    class='w-64 rounded-lg border border-gray-300 py-2 pr-4 pl-9 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
                   />
                 </div>
               </div>
@@ -151,7 +151,7 @@ export default function AdminDashboard() {
               when={!usersData.loading}
               fallback={
                 <div class='flex items-center justify-center py-12'>
-                  <div class='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600' />
+                  <div class='h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600' />
                 </div>
               }
             >
@@ -160,7 +160,7 @@ export default function AdminDashboard() {
 
             {/* Pagination */}
             <Show when={usersData()?.pagination}>
-              <div class='px-6 py-4 border-t border-gray-200 flex items-center justify-between'>
+              <div class='flex items-center justify-between border-t border-gray-200 px-6 py-4'>
                 <p class='text-sm text-gray-500'>
                   Showing {(page() - 1) * (usersData()?.pagination?.limit || 20) + 1} to{' '}
                   {Math.min(
@@ -173,9 +173,9 @@ export default function AdminDashboard() {
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page() === 1}
-                    class='p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
+                    class='rounded-lg border border-gray-300 p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
                   >
-                    <FiChevronLeft class='w-4 h-4' />
+                    <FiChevronLeft class='h-4 w-4' />
                   </button>
                   <span class='text-sm text-gray-600'>
                     Page {page()} of {usersData()?.pagination?.totalPages || 1}
@@ -185,9 +185,9 @@ export default function AdminDashboard() {
                       setPage(p => Math.min(usersData()?.pagination?.totalPages || 1, p + 1))
                     }
                     disabled={page() >= (usersData()?.pagination?.totalPages || 1)}
-                    class='p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
+                    class='rounded-lg border border-gray-300 p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
                   >
-                    <FiChevronRight class='w-4 h-4' />
+                    <FiChevronRight class='h-4 w-4' />
                   </button>
                 </div>
               </div>

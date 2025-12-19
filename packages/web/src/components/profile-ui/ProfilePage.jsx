@@ -243,23 +243,23 @@ export default function ProfilePage() {
 
   return (
     <div class='p-6'>
-      <div class='max-w-2xl mx-auto space-y-6'>
+      <div class='mx-auto max-w-2xl space-y-6'>
         {/* Header */}
         <div>
           <h1 class='text-2xl font-bold text-gray-900'>Profile</h1>
-          <p class='text-gray-500 mt-1'>Manage your account settings</p>
+          <p class='mt-1 text-gray-500'>Manage your account settings</p>
         </div>
 
         {/* Profile Card */}
-        <div class='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
+        <div class='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
           {/* Avatar and Name Row */}
-          <div class='flex items-center space-x-4 pb-6 border-b border-gray-100'>
+          <div class='flex items-center space-x-4 border-b border-gray-100 pb-6'>
             {/* Profile Image or Initials with Edit Button */}
-            <div class='relative group'>
+            <div class='group relative'>
               <Show
                 when={avatarUrl()}
                 fallback={
-                  <div class='w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xl font-bold'>
+                  <div class='flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-xl font-bold text-blue-600'>
                     {userInitials()}
                   </div>
                 }
@@ -267,7 +267,7 @@ export default function ProfilePage() {
                 <img
                   src={avatarUrl()}
                   alt={user()?.name || 'Profile'}
-                  class='w-16 h-16 rounded-full object-cover ring-2 ring-gray-100'
+                  class='h-16 w-16 rounded-full object-cover ring-2 ring-gray-100'
                   referrerPolicy='no-referrer'
                 />
               </Show>
@@ -275,16 +275,16 @@ export default function ProfilePage() {
               <button
                 onClick={triggerFileSelect}
                 disabled={uploadingImage()}
-                class='absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer disabled:cursor-wait'
+                class='absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 disabled:cursor-wait'
                 title='Change profile photo'
               >
                 <Show
                   when={!uploadingImage()}
                   fallback={
-                    <div class='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin' />
+                    <div class='h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent' />
                   }
                 >
-                  <FiCamera class='w-5 h-5 text-white' />
+                  <FiCamera class='h-5 w-5 text-white' />
                 </Show>
               </button>
               {/* Hidden file input */}
@@ -300,7 +300,7 @@ export default function ProfilePage() {
               <h2 class='text-lg font-semibold text-gray-900'>{user()?.name || 'User'}</h2>
               <p class='text-sm text-gray-500'>{user()?.email}</p>
               <Show when={user()?.persona}>
-                <span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700 mt-1'>
+                <span class='mt-1 inline-flex items-center rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700'>
                   {getRoleLabel(user()?.persona)}
                 </span>
               </Show>
@@ -308,7 +308,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Profile Fields */}
-          <div class='pt-6 space-y-5'>
+          <div class='space-y-5 pt-6'>
             {/* Name Field */}
             <div class='flex items-start justify-between'>
               <div class='flex-1'>
@@ -317,13 +317,13 @@ export default function ProfilePage() {
                   fallback={
                     <div class='grid grid-cols-2 gap-4'>
                       <div>
-                        <label class='block text-xs font-medium text-gray-500 uppercase tracking-wide'>
+                        <label class='block text-xs font-medium tracking-wide text-gray-500 uppercase'>
                           First Name
                         </label>
                         <p class='mt-1 text-gray-900'>{firstName() || 'Not set'}</p>
                       </div>
                       <div>
-                        <label class='block text-xs font-medium text-gray-500 uppercase tracking-wide'>
+                        <label class='block text-xs font-medium tracking-wide text-gray-500 uppercase'>
                           Last Name
                         </label>
                         <p class='mt-1 text-gray-900'>{lastName() || 'Not set'}</p>
@@ -333,26 +333,26 @@ export default function ProfilePage() {
                 >
                   <div class='grid grid-cols-2 gap-4'>
                     <div>
-                      <label class='block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1'>
+                      <label class='mb-1 block text-xs font-medium tracking-wide text-gray-500 uppercase'>
                         First Name
                       </label>
                       <input
                         type='text'
                         value={editFirstName()}
                         onInput={e => setEditFirstName(e.target.value)}
-                        class='block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm'
+                        class='block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-400 focus:outline-none'
                         placeholder='First name'
                       />
                     </div>
                     <div>
-                      <label class='block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1'>
+                      <label class='mb-1 block text-xs font-medium tracking-wide text-gray-500 uppercase'>
                         Last Name
                       </label>
                       <input
                         type='text'
                         value={editLastName()}
                         onInput={e => setEditLastName(e.target.value)}
-                        class='block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm'
+                        class='block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-400 focus:outline-none'
                         placeholder='Last name'
                       />
                     </div>
@@ -364,24 +364,24 @@ export default function ProfilePage() {
                 fallback={
                   <button
                     onClick={startEditingName}
-                    class='text-blue-600 hover:text-blue-700 text-sm font-medium ml-4'
+                    class='ml-4 text-sm font-medium text-blue-600 hover:text-blue-700'
                   >
                     Edit
                   </button>
                 }
               >
-                <div class='flex space-x-2 ml-4'>
+                <div class='ml-4 flex space-x-2'>
                   <button
                     onClick={saveName}
                     disabled={saving()}
-                    class='px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50'
+                    class='rounded-lg bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50'
                   >
                     Save
                   </button>
                   <button
                     onClick={cancelEditingName}
                     disabled={saving()}
-                    class='px-3 py-1 text-gray-600 text-sm font-medium hover:text-gray-800 disabled:opacity-50'
+                    class='px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 disabled:opacity-50'
                   >
                     Cancel
                   </button>
@@ -390,9 +390,9 @@ export default function ProfilePage() {
             </div>
 
             {/* Persona Field */}
-            <div class='flex items-start justify-between pt-4 border-t border-gray-100'>
+            <div class='flex items-start justify-between border-t border-gray-100 pt-4'>
               <div class='flex-1'>
-                <label class='block text-xs font-medium text-gray-500 uppercase tracking-wide'>
+                <label class='block text-xs font-medium tracking-wide text-gray-500 uppercase'>
                   Persona
                 </label>
                 <Show
@@ -404,7 +404,7 @@ export default function ProfilePage() {
                   <select
                     value={editRole()}
                     onChange={e => setEditRole(e.target.value)}
-                    class='mt-1 block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm'
+                    class='mt-1 block w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-400 focus:outline-none'
                   >
                     <option value=''>Select a persona</option>
                     <For each={ROLES}>{role => <option value={role.id}>{role.label}</option>}</For>
@@ -416,24 +416,24 @@ export default function ProfilePage() {
                 fallback={
                   <button
                     onClick={startEditingRole}
-                    class='text-blue-600 hover:text-blue-700 text-sm font-medium ml-4'
+                    class='ml-4 text-sm font-medium text-blue-600 hover:text-blue-700'
                   >
                     Edit
                   </button>
                 }
               >
-                <div class='flex space-x-2 ml-4'>
+                <div class='ml-4 flex space-x-2'>
                   <button
                     onClick={saveRole}
                     disabled={saving()}
-                    class='px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50'
+                    class='rounded-lg bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50'
                   >
                     Save
                   </button>
                   <button
                     onClick={cancelEditingRole}
                     disabled={saving()}
-                    class='px-3 py-1 text-gray-600 text-sm font-medium hover:text-gray-800 disabled:opacity-50'
+                    class='px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 disabled:opacity-50'
                   >
                     Cancel
                   </button>
@@ -442,14 +442,14 @@ export default function ProfilePage() {
             </div>
 
             {/* Email Field */}
-            <div class='pt-4 border-t border-gray-100'>
-              <label class='block text-xs font-medium text-gray-500 uppercase tracking-wide'>
+            <div class='border-t border-gray-100 pt-4'>
+              <label class='block text-xs font-medium tracking-wide text-gray-500 uppercase'>
                 Email
               </label>
               <div class='mt-1 flex items-center space-x-2'>
                 <p class='text-gray-900'>{user()?.email || 'Not set'}</p>
                 <Show when={user()?.emailVerified}>
-                  <span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700'>
+                  <span class='inline-flex items-center rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700'>
                     Verified
                   </span>
                 </Show>
@@ -457,8 +457,8 @@ export default function ProfilePage() {
             </div>
 
             {/* Member Since */}
-            <div class='pt-4 border-t border-gray-100'>
-              <label class='block text-xs font-medium text-gray-500 uppercase tracking-wide'>
+            <div class='border-t border-gray-100 pt-4'>
+              <label class='block text-xs font-medium tracking-wide text-gray-500 uppercase'>
                 Member since
               </label>
               <p class='mt-1 text-gray-900'>{formatDate(user()?.createdAt)}</p>
@@ -468,8 +468,8 @@ export default function ProfilePage() {
 
         {/* Danger Zone */}
         <Show when={user()}>
-          <div class='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden'>
-            <div class='px-6 py-4 border-b border-gray-200'>
+          <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
+            <div class='border-b border-gray-200 px-6 py-4'>
               <h3 class='text-base font-semibold text-gray-900'>Danger Zone</h3>
             </div>
             <div class='p-6'>
@@ -485,7 +485,7 @@ export default function ProfilePage() {
                     </div>
                     <button
                       onClick={() => setShowDeleteConfirm(true)}
-                      class='px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition'
+                      class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700'
                     >
                       Delete Account
                     </button>
@@ -493,11 +493,11 @@ export default function ProfilePage() {
                 }
               >
                 <div class='space-y-4'>
-                  <div class='p-4 bg-red-50 border border-red-200 rounded-lg'>
-                    <p class='text-sm text-red-800 font-medium mb-2'>
+                  <div class='rounded-lg border border-red-200 bg-red-50 p-4'>
+                    <p class='mb-2 text-sm font-medium text-red-800'>
                       Are you sure you want to delete your account?
                     </p>
-                    <ul class='text-sm text-red-700 list-disc list-inside space-y-1'>
+                    <ul class='list-inside list-disc space-y-1 text-sm text-red-700'>
                       <li>All your projects will be permanently deleted</li>
                       <li>All your checklists and reviews will be lost</li>
                       <li>You will be removed from all shared projects</li>
@@ -506,14 +506,14 @@ export default function ProfilePage() {
                   </div>
 
                   <div>
-                    <label class='block text-sm font-medium text-gray-700 mb-1'>
+                    <label class='mb-1 block text-sm font-medium text-gray-700'>
                       Type <span class='font-mono font-bold'>DELETE</span> to confirm
                     </label>
                     <input
                       type='text'
                       value={deleteConfirmText()}
                       onInput={e => setDeleteConfirmText(e.target.value)}
-                      class='block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent text-sm'
+                      class='block w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-red-400 focus:outline-none'
                       placeholder='DELETE'
                     />
                   </div>
@@ -522,7 +522,7 @@ export default function ProfilePage() {
                     <button
                       onClick={handleDeleteAccount}
                       disabled={deletingAccount() || deleteConfirmText() !== 'DELETE'}
-                      class='px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed'
+                      class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50'
                     >
                       {deletingAccount() ? 'Deleting...' : 'Permanently Delete Account'}
                     </button>
@@ -532,7 +532,7 @@ export default function ProfilePage() {
                         setShowDeleteConfirm(false);
                         setDeleteConfirmText('');
                       }}
-                      class='px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition'
+                      class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200'
                     >
                       Cancel
                     </button>

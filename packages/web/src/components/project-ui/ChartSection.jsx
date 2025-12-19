@@ -227,9 +227,9 @@ export default function ChartSection(props) {
     <Show
       when={checklistData().length > 0}
       fallback={
-        <div class='text-center py-8 bg-white rounded-lg border border-gray-200'>
+        <div class='rounded-lg border border-gray-200 bg-white py-8 text-center'>
           <p class='text-gray-500'>No completed checklists to display charts.</p>
-          <p class='text-gray-400 text-sm mt-1'>
+          <p class='mt-1 text-sm text-gray-400'>
             Add studies and complete checklists to see quality assessment charts.
           </p>
         </div>
@@ -240,10 +240,10 @@ export default function ChartSection(props) {
         <div class='flex justify-end'>
           <button
             onClick={() => setShowSettingsModal(true)}
-            class='inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors'
+            class='inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900'
             title='Chart Settings'
           >
-            <BiRegularCog class='w-4 h-4' />
+            <BiRegularCog class='h-4 w-4' />
             Settings
           </button>
         </div>

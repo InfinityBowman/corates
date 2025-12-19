@@ -9,7 +9,7 @@ export default function Dashboard() {
 
   return (
     <div class='p-6'>
-      <div class='max-w-7xl mx-auto space-y-8'>
+      <div class='mx-auto max-w-7xl space-y-8'>
         <Show when={isLoggedIn()}>
           <ProjectDashboard apiBase={API_BASE} userId={user()?.id} />
         </Show>

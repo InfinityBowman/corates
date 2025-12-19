@@ -52,16 +52,16 @@ export function Popover(props) {
     <div {...api().getPositionerProps()}>
       <div
         {...api().getContentProps()}
-        class={`bg-white rounded-lg shadow-lg border border-gray-200 min-w-50 max-w-sm z-50 ${local.class || ''}`}
+        class={`z-50 max-w-sm min-w-50 rounded-lg border border-gray-200 bg-white shadow-lg ${local.class || ''}`}
       >
         <Show when={local.showArrow}>
-          <div {...api().getArrowProps()} class='[--arrow-size:8px] [--arrow-background:white]'>
+          <div {...api().getArrowProps()} class='[--arrow-background:white] [--arrow-size:8px]'>
             <div {...api().getArrowTipProps()} />
           </div>
         </Show>
 
         <Show when={local.title || showCloseButton()}>
-          <div class='flex items-start justify-between p-3 border-b border-gray-100'>
+          <div class='flex items-start justify-between border-b border-gray-100 p-3'>
             <div>
               <Show when={local.title}>
                 <h3 {...api().getTitleProps()} class='text-sm font-medium text-gray-900'>
@@ -77,9 +77,9 @@ export function Popover(props) {
             <Show when={showCloseButton()}>
               <button
                 {...api().getCloseTriggerProps()}
-                class='p-1 text-gray-400 hover:text-gray-500 rounded hover:bg-gray-100 transition-colors -mr-1 -mt-1'
+                class='-mt-1 -mr-1 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500'
               >
-                <FiX class='w-4 h-4' />
+                <FiX class='h-4 w-4' />
               </button>
             </Show>
           </div>

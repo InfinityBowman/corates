@@ -31,14 +31,14 @@ export default function Switch(props) {
   return (
     <label
       {...api().getRootProps()}
-      class={`inline-flex items-center cursor-pointer ${disabled() ? 'cursor-not-allowed' : ''} ${
+      class={`inline-flex cursor-pointer items-center ${disabled() ? 'cursor-not-allowed' : ''} ${
         classValue() || ''
       }`}
     >
       <input {...api().getHiddenInputProps()} />
       <span
         {...api().getControlProps()}
-        class='relative inline-flex h-6 w-11 items-center rounded-full transition-colors data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-200 data-disabled:opacity-50 data-disabled:cursor-not-allowed'
+        class='relative inline-flex h-6 w-11 items-center rounded-full transition-colors data-disabled:cursor-not-allowed data-disabled:opacity-50 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-200'
       >
         <span
           {...api().getThumbProps()}

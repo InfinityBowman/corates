@@ -112,20 +112,20 @@ export default function Pricing() {
 
       <div class='min-h-screen bg-linear-to-b from-blue-50 to-white'>
         <Navbar />
-        <main class='max-w-6xl mx-auto px-6 py-12'>
-          <div class='text-center max-w-2xl mx-auto'>
-            <h1 class='text-3xl md:text-4xl font-bold text-gray-900'>Pricing</h1>
+        <main class='mx-auto max-w-6xl px-6 py-12'>
+          <div class='mx-auto max-w-2xl text-center'>
+            <h1 class='text-3xl font-bold text-gray-900 md:text-4xl'>Pricing</h1>
             <p class='mt-4 text-lg text-gray-600'>
               Start free for single-study appraisal. Upgrade for full projects, collaboration, and
               advanced workflows.
             </p>
           </div>
 
-          <div class='flex justify-center mt-10'>
-            <div class='bg-gray-100 p-1 rounded-lg inline-flex'>
+          <div class='mt-10 flex justify-center'>
+            <div class='inline-flex rounded-lg bg-gray-100 p-1'>
               <button
                 type='button'
-                class={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                class={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                   billing() === 'monthly' ?
                     'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
@@ -136,7 +136,7 @@ export default function Pricing() {
               </button>
               <button
                 type='button'
-                class={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                class={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                   billing() === 'yearly' ?
                     'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
@@ -144,16 +144,16 @@ export default function Pricing() {
                 onClick={() => setBilling('yearly')}
               >
                 Annual
-                <span class='ml-1 text-xs text-green-600 font-semibold'>Save 10%</span>
+                <span class='ml-1 text-xs font-semibold text-green-600'>Save 10%</span>
               </button>
             </div>
           </div>
 
-          <div class='mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+          <div class='mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
             <For each={plans()}>
               {(plan, index) => (
                 <div
-                  class={`relative rounded-xl border-2 p-6 flex flex-col transition-colors duration-300 ${
+                  class={`relative flex flex-col rounded-xl border-2 p-6 transition-colors duration-300 ${
                     showIntroAnimation() ? 'animate-fade-in-up' : ''
                   } ${
                     plan.tier === 'pro' ?
@@ -166,7 +166,7 @@ export default function Pricing() {
                 >
                   <Show when={plan.badge}>
                     <div class='absolute -top-3 left-1/2 -translate-x-1/2'>
-                      <span class='bg-blue-500 text-white text-xs font-semibold px-3 py-1 rounded-full'>
+                      <span class='rounded-full bg-blue-500 px-3 py-1 text-xs font-semibold text-white'>
                         {plan.badge}
                       </span>
                     </div>
@@ -174,7 +174,7 @@ export default function Pricing() {
 
                   <div class='mb-4'>
                     <h2 class='text-lg font-semibold text-gray-900'>{plan.name}</h2>
-                    <p class='text-sm text-gray-500 mt-1'>{plan.description}</p>
+                    <p class='mt-1 text-sm text-gray-500'>{plan.description}</p>
                   </div>
 
                   <div class='mb-6'>
@@ -186,9 +186,9 @@ export default function Pricing() {
                         <span class='text-3xl font-bold text-gray-900 transition-all duration-300'>
                           ${plan.price.amount}
                         </span>
-                        <span class='text-gray-500 ml-1'>{plan.price.unit}</span>
+                        <span class='ml-1 text-gray-500'>{plan.price.unit}</span>
                       </div>
-                      <p class='text-sm text-gray-500 mt-1'>
+                      <p class='mt-1 text-sm text-gray-500'>
                         {plan.price.amount === 0 ?
                           'Free'
                         : billing() === 'yearly' ?
@@ -198,11 +198,11 @@ export default function Pricing() {
                     </Show>
                   </div>
 
-                  <ul class='space-y-3 mb-6 flex-1'>
+                  <ul class='mb-6 flex-1 space-y-3'>
                     <For each={plan.features}>
                       {feature => (
                         <li class='flex items-start'>
-                          <FiCheck class='w-5 h-5 text-green-500 mr-2 shrink-0 mt-0.5' />
+                          <FiCheck class='mt-0.5 mr-2 h-5 w-5 shrink-0 text-green-500' />
                           <span class='text-sm text-gray-600'>{feature}</span>
                         </li>
                       )}
@@ -212,7 +212,7 @@ export default function Pricing() {
                   <a
                     href={plan.cta.href()}
                     rel={plan.cta.relExternal ? 'external' : undefined}
-                    class={`w-full text-center py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 active:scale-95 ${
+                    class={`w-full rounded-lg px-4 py-2.5 text-center text-sm font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 ${
                       plan.tier === 'pro' ?
                         'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md'
                       : plan.tier === 'enterprise' ?

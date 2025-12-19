@@ -19,14 +19,14 @@ export default function ChecklistRow(props) {
   };
 
   return (
-    <div class='p-4 transition-colors flex items-center justify-between group hover:bg-gray-50'>
+    <div class='group flex items-center justify-between p-4 transition-colors hover:bg-gray-50'>
       <div class='flex-1'>
         <div class='flex items-center gap-3'>
-          <h4 class='text-gray-900 font-medium'>
+          <h4 class='font-medium text-gray-900'>
             {getChecklistMetadata(props.checklist.type)?.name || 'AMSTAR2'} Checklist
           </h4>
           <span
-            class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusStyle(props.checklist.status)}`}
+            class={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusStyle(props.checklist.status)}`}
           >
             {props.checklist.status || 'pending'}
           </span>
@@ -39,7 +39,7 @@ export default function ChecklistRow(props) {
             e.stopPropagation();
             props.onOpen();
           }}
-          class='px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors'
+          class='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700'
         >
           Open
         </button>
@@ -48,10 +48,10 @@ export default function ChecklistRow(props) {
             e.stopPropagation();
             props.onDelete?.();
           }}
-          class='p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100'
+          class='rounded-lg p-2 text-gray-400 opacity-0 transition-colors group-hover:opacity-100 hover:bg-red-50 hover:text-red-600'
           title='Delete Checklist'
         >
-          <FiTrash2 class='w-4 h-4' />
+          <FiTrash2 class='h-4 w-4' />
         </button>
       </div>
     </div>

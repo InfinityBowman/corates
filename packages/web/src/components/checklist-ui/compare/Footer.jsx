@@ -9,29 +9,26 @@ export default function Footer(props) {
   // - saving: boolean indicating if save operation is in progress
 
   return (
-    <div class='p-6 bg-gray-50 border-t border-gray-200 flex items-center justify-between'>
+    <div class='flex items-center justify-between border-t border-gray-200 bg-gray-50 p-6'>
       <button
         onClick={() => props.onBack()}
-        class='flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg font-medium hover:bg-gray-100 shadow transition-colors'
+        class='flex items-center gap-2 rounded-lg bg-white px-4 py-2 font-medium text-gray-700 shadow transition-colors hover:bg-gray-100'
       >
-        <AiOutlineArrowLeft class='w-4 h-4' />
+        <AiOutlineArrowLeft class='h-4 w-4' />
         Back to Questions
       </button>
 
       <button
         onClick={() => props.onSave()}
         disabled={!props.allAnswered || props.saving}
-        class={`
-            flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors
-            ${
-              props.allAnswered && !props.saving ?
-                'bg-blue-600 text-white hover:bg-blue-700 shadow'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }
-          `}
+        class={`flex items-center gap-2 rounded-lg px-6 py-2 font-medium transition-colors ${
+          props.allAnswered && !props.saving ?
+            'bg-blue-600 text-white shadow hover:bg-blue-700'
+          : 'cursor-not-allowed bg-gray-300 text-gray-500'
+        } `}
       >
         <Show when={!props.saving} fallback='Saving...'>
-          <AiOutlineCheck class='w-4 h-4' />
+          <AiOutlineCheck class='h-4 w-4' />
           Save Reconciled Checklist
         </Show>
       </button>

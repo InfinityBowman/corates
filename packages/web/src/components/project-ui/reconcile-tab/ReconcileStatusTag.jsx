@@ -31,12 +31,12 @@ export default function ReconcileStatusTag(props) {
     <Show
       when={isReady()}
       fallback={
-        <span class='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800'>
+        <span class='inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-800'>
           Waiting for {waitingForReviewer()}
         </span>
       }
     >
-      <span class='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800'>
+      <span class='inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800'>
         Ready
       </span>
     </Show>

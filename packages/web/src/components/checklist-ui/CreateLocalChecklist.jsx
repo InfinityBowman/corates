@@ -79,25 +79,25 @@ export default function CreateLocalChecklist() {
   };
 
   return (
-    <div class='min-h-full flex items-center justify-center p-6'>
+    <div class='flex min-h-full items-center justify-center p-6'>
       <div class='w-full max-w-lg'>
-        <div class='bg-white rounded-xl shadow-sm border border-gray-200 p-8'>
-          <h1 class='text-2xl font-bold text-gray-900 mb-2'>Start an Appraisal</h1>
-          <p class='text-gray-600 mb-6'>
+        <div class='rounded-xl border border-gray-200 bg-white p-8 shadow-sm'>
+          <h1 class='mb-2 text-2xl font-bold text-gray-900'>Start an Appraisal</h1>
+          <p class='mb-6 text-gray-600'>
             Start a new quality assessment. Your progress will be saved locally on this device.
           </p>
 
           <form onSubmit={handleSubmit} class='space-y-6'>
             {/* Checklist Type */}
             <div>
-              <label for='checklist-type' class='block text-sm font-medium text-gray-700 mb-2'>
+              <label for='checklist-type' class='mb-2 block text-sm font-medium text-gray-700'>
                 Assessment Type
               </label>
               <select
                 id='checklist-type'
                 value={checklistType()}
                 onChange={e => setChecklistType(e.target.value)}
-                class='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white'
+                class='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 transition-colors outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500'
               >
                 <For each={typeOptions}>
                   {option => (
@@ -111,7 +111,7 @@ export default function CreateLocalChecklist() {
 
             {/* Checklist Name */}
             <div>
-              <label for='checklist-name' class='block text-sm font-medium text-gray-700 mb-2'>
+              <label for='checklist-name' class='mb-2 block text-sm font-medium text-gray-700'>
                 Study Name
               </label>
               <input
@@ -120,13 +120,13 @@ export default function CreateLocalChecklist() {
                 value={name()}
                 onInput={e => setName(e.target.value)}
                 placeholder='e.g., Study by Smith et al. 2024'
-                class='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors'
+                class='w-full rounded-lg border border-gray-300 px-4 py-3 transition-colors outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500'
               />
             </div>
 
             {/* PDF Upload */}
             <div>
-              <label class='block text-sm font-medium text-gray-700 mb-2'>
+              <label class='mb-2 block text-sm font-medium text-gray-700'>
                 PDF Document <span class='text-gray-400'>(optional)</span>
               </label>
 
@@ -141,10 +141,10 @@ export default function CreateLocalChecklist() {
                   />
                 }
               >
-                <div class='flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg'>
-                  <FiFileText class='w-8 h-8 text-blue-600 shrink-0' />
-                  <div class='flex-1 min-w-0'>
-                    <p class='text-sm font-medium text-gray-900 truncate'>{pdfFile().name}</p>
+                <div class='flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4'>
+                  <FiFileText class='h-8 w-8 shrink-0 text-blue-600' />
+                  <div class='min-w-0 flex-1'>
+                    <p class='truncate text-sm font-medium text-gray-900'>{pdfFile().name}</p>
                     <p class='text-xs text-gray-500'>
                       {(pdfFile().size / 1024 / 1024).toFixed(2)} MB
                     </p>
@@ -152,9 +152,9 @@ export default function CreateLocalChecklist() {
                   <button
                     type='button'
                     onClick={clearPdf}
-                    class='p-1 text-gray-400 hover:text-gray-600 transition-colors'
+                    class='p-1 text-gray-400 transition-colors hover:text-gray-600'
                   >
-                    <FiX class='w-5 h-5' />
+                    <FiX class='h-5 w-5' />
                   </button>
                 </div>
               </Show>
@@ -162,7 +162,7 @@ export default function CreateLocalChecklist() {
 
             {/* Error message */}
             <Show when={error()}>
-              <div class='p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600'>
+              <div class='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600'>
                 {error()}
               </div>
             </Show>
@@ -172,14 +172,14 @@ export default function CreateLocalChecklist() {
               <button
                 type='button'
                 onClick={handleCancel}
-                class='flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium'
+                class='flex-1 rounded-lg border border-gray-300 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50'
               >
                 Cancel
               </button>
               <button
                 type='submit'
                 disabled={creating()}
-                class='flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed'
+                class='flex-1 rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
               >
                 {creating() ? 'Adding...' : 'Start'}
               </button>
@@ -187,7 +187,7 @@ export default function CreateLocalChecklist() {
           </form>
 
           {/* Info box */}
-          <div class='mt-6 p-4 bg-gray-50 rounded-lg'>
+          <div class='mt-6 rounded-lg bg-gray-50 p-4'>
             <p class='text-xs text-gray-500'>
               Local studies are stored only on this device and don't require an account. To
               collaborate with others or access your studies from multiple devices,{' '}

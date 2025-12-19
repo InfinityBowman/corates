@@ -34,7 +34,7 @@ export function Clipboard(props) {
     <Show when={!local.children} fallback={local.children?.(api)}>
       <div {...api().getRootProps()} class={`w-full ${local.class || ''}`}>
         <Show when={local.label}>
-          <label {...api().getLabelProps()} class='block text-sm font-medium text-gray-700 mb-1'>
+          <label {...api().getLabelProps()} class='mb-1 block text-sm font-medium text-gray-700'>
             {local.label}
           </label>
         </Show>
@@ -42,16 +42,16 @@ export function Clipboard(props) {
           <Show when={showInput()}>
             <input
               {...api().getInputProps()}
-              class='flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              class='flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
               readOnly
             />
           </Show>
           <button
             {...api().getTriggerProps()}
-            class={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${api().copied ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            class={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${api().copied ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
           >
-            <Show when={api().copied} fallback={<FiCopy class='w-4 h-4' />}>
-              <FiCheck class='w-4 h-4' />
+            <Show when={api().copied} fallback={<FiCopy class='h-4 w-4' />}>
+              <FiCheck class='h-4 w-4' />
             </Show>
             <span>{api().copied ? 'Copied!' : 'Copy'}</span>
           </button>
@@ -142,8 +142,7 @@ export function CopyButton(props) {
     <div {...api().getRootProps()}>
       <button
         {...api().getTriggerProps()}
-        class={`inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors
-          ${getSizeClass()} ${getVariantClass()} ${local.class || ''}`}
+        class={`inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors ${getSizeClass()} ${getVariantClass()} ${local.class || ''}`}
       >
         <Show when={showIcon()}>
           <Show when={api().copied} fallback={<FiCopy class={iconSize()} />}>

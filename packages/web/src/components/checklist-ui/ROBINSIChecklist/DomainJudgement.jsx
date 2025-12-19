@@ -34,10 +34,10 @@ export function DomainJudgement(props) {
   };
 
   return (
-    <div class='bg-gray-50 rounded-lg p-4 mt-4'>
+    <div class='mt-4 rounded-lg bg-gray-50 p-4'>
       {/* Risk of bias judgement */}
       <div class='mb-3'>
-        <div class='text-sm font-medium text-gray-700 mb-2'>Risk of bias judgement</div>
+        <div class='mb-2 text-sm font-medium text-gray-700'>Risk of bias judgement</div>
         <div class='flex flex-wrap gap-2'>
           <For each={ROB_JUDGEMENTS}>
             {judgement => {
@@ -51,16 +51,11 @@ export function DomainJudgement(props) {
                     props.onJudgementChange(isSelected() ? null : judgement);
                   }}
                   disabled={props.disabled}
-                  class={`
-                    inline-flex items-center justify-center px-3 py-1.5 rounded-md text-sm font-medium
-                    transition-colors border-2
-                    ${props.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                    ${
-                      isSelected() ?
-                        getJudgementColor(judgement)
-                      : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
-                    }
-                  `}
+                  class={`inline-flex items-center justify-center rounded-md border-2 px-3 py-1.5 text-sm font-medium transition-colors ${props.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${
+                    isSelected() ?
+                      getJudgementColor(judgement)
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                  } `}
                 >
                   {judgement}
                 </button>
@@ -73,9 +68,9 @@ export function DomainJudgement(props) {
       {/* Direction of bias (optional) */}
       {props.showDirection && (
         <div>
-          <div class='text-sm font-medium text-gray-700 mb-2'>
+          <div class='mb-2 text-sm font-medium text-gray-700'>
             Predicted direction of bias
-            <span class='text-gray-400 font-normal ml-1'>(optional)</span>
+            <span class='ml-1 font-normal text-gray-400'>(optional)</span>
           </div>
           <div class='flex flex-wrap gap-2'>
             <For each={directionOptions()}>
@@ -90,16 +85,11 @@ export function DomainJudgement(props) {
                       props.onDirectionChange?.(isSelected() ? null : direction);
                     }}
                     disabled={props.disabled}
-                    class={`
-                      inline-flex items-center justify-center px-2 py-1 rounded text-xs font-medium
-                      transition-colors border
-                      ${props.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                      ${
-                        isSelected() ?
-                          'bg-blue-100 border-blue-400 text-blue-800'
-                        : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
-                      }
-                    `}
+                    class={`inline-flex items-center justify-center rounded border px-2 py-1 text-xs font-medium transition-colors ${props.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${
+                      isSelected() ?
+                        'border-blue-400 bg-blue-100 text-blue-800'
+                      : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
+                    } `}
                   >
                     {direction}
                   </button>
@@ -136,7 +126,7 @@ export function JudgementBadge(props) {
   };
 
   return (
-    <span class={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${getColor()}`}>
+    <span class={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${getColor()}`}>
       {props.judgement || 'Not assessed'}
     </span>
   );

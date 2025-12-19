@@ -69,25 +69,25 @@ export default function ProjectHeader(props) {
 
   return (
     <div class='mb-8'>
-      <div class='flex items-center gap-4 mb-2'>
+      <div class='mb-2 flex items-center gap-4'>
         <button
           onClick={() => props.onBack()}
-          class='text-gray-400 hover:text-gray-700 transition-colors'
+          class='text-gray-400 transition-colors hover:text-gray-700'
         >
-          <FiChevronLeft class='w-6 h-6' />
+          <FiChevronLeft class='h-6 w-6' />
         </button>
-        <div class='flex items-center gap-2 flex-1 min-w-0'>
+        <div class='flex min-w-0 flex-1 items-center gap-2'>
           <Editable
             activationMode='click'
             value={name()}
             onSubmit={handleNameChange}
             showEditIcon={canEdit()}
             readOnly={!canEdit()}
-            class='text-2xl font-bold text-gray-900 -ml-2'
+            class='-ml-2 text-2xl font-bold text-gray-900'
           />
         </div>
         <Show when={userRole()}>
-          <span class='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize'>
+          <span class='inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 capitalize'>
             {userRole()}
           </span>
         </Show>
@@ -98,17 +98,17 @@ export default function ProjectHeader(props) {
         <Show
           when={isEditingDescription()}
           fallback={
-            <div class='flex items-start gap-2 group'>
-              <p class='text-gray-500 flex-1'>
-                {description() || <span class='italic text-gray-400'>No description</span>}
+            <div class='group flex items-start gap-2'>
+              <p class='flex-1 text-gray-500'>
+                {description() || <span class='text-gray-400 italic'>No description</span>}
               </p>
               <Show when={canEdit()}>
                 <button
                   onClick={startEditingDescription}
-                  class='text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity'
+                  class='text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-gray-600'
                   title='Edit description'
                 >
-                  <FiEdit2 class='w-4 h-4' />
+                  <FiEdit2 class='h-4 w-4' />
                 </button>
               </Show>
             </div>
@@ -118,7 +118,7 @@ export default function ProjectHeader(props) {
             <textarea
               value={descriptionDraft()}
               onInput={e => setDescriptionDraft(e.target.value)}
-              class='w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-100 disabled:cursor-not-allowed'
+              class='w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100'
               rows={3}
               placeholder='Add a project description...'
               disabled={isSaving()}
@@ -127,17 +127,17 @@ export default function ProjectHeader(props) {
               <button
                 onClick={saveDescription}
                 disabled={isSaving()}
-                class='inline-flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed'
+                class='inline-flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
               >
-                <FiCheck class='w-4 h-4' />
+                <FiCheck class='h-4 w-4' />
                 {isSaving() ? 'Saving...' : 'Save'}
               </button>
               <button
                 onClick={cancelEditingDescription}
                 disabled={isSaving()}
-                class='inline-flex items-center gap-1 px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed'
+                class='inline-flex items-center gap-1 rounded-md bg-gray-200 px-3 py-1 text-sm text-gray-700 hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50'
               >
-                <FiX class='w-4 h-4' />
+                <FiX class='h-4 w-4' />
                 Cancel
               </button>
             </div>

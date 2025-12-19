@@ -31,7 +31,7 @@ export default function StudyCard(props) {
   const expanded = () => props.expanded;
 
   return (
-    <div class='bg-white border border-gray-200 rounded-lg shadow-sm hover:border-gray-300 transition-colors'>
+    <div class='rounded-lg border border-gray-200 bg-white shadow-sm transition-colors hover:border-gray-300'>
       <Collapsible
         open={expanded()}
         onOpenChange={open => {

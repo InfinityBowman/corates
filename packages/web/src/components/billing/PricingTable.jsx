@@ -40,11 +40,11 @@ export default function PricingTable(props) {
   return (
     <div class='py-6'>
       {/* Billing interval toggle */}
-      <div class='flex justify-center mb-8'>
-        <div class='bg-gray-100 p-1 rounded-lg inline-flex'>
+      <div class='mb-8 flex justify-center'>
+        <div class='inline-flex rounded-lg bg-gray-100 p-1'>
           <button
             type='button'
-            class={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            class={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               billingInterval() === 'monthly' ?
                 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
@@ -55,7 +55,7 @@ export default function PricingTable(props) {
           </button>
           <button
             type='button'
-            class={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            class={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               billingInterval() === 'yearly' ?
                 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
@@ -63,18 +63,18 @@ export default function PricingTable(props) {
             onClick={() => setBillingInterval('yearly')}
           >
             Yearly
-            <span class='ml-1 text-xs text-green-600 font-semibold'>Save 20%</span>
+            <span class='ml-1 text-xs font-semibold text-green-600'>Save 20%</span>
           </button>
         </div>
       </div>
 
       {/* Plans grid */}
       <Show when={!plans.loading} fallback={<PricingTableSkeleton />}>
-        <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+        <div class='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
           <For each={plans()?.plans ?? []}>
             {plan => (
               <div
-                class={`relative rounded-xl border-2 p-6 flex flex-col ${
+                class={`relative flex flex-col rounded-xl border-2 p-6 ${
                   plan.tier === currentTier() ? 'border-blue-500 bg-blue-50/50'
                   : plan.tier === 'pro' ? 'border-blue-200 bg-white'
                   : 'border-gray-200 bg-white'
@@ -83,7 +83,7 @@ export default function PricingTable(props) {
                 {/* Popular badge */}
                 <Show when={plan.tier === 'pro'}>
                   <div class='absolute -top-3 left-1/2 -translate-x-1/2'>
-                    <span class='bg-blue-500 text-white text-xs font-semibold px-3 py-1 rounded-full'>
+                    <span class='rounded-full bg-blue-500 px-3 py-1 text-xs font-semibold text-white'>
                       Most Popular
                     </span>
                   </div>
@@ -92,7 +92,7 @@ export default function PricingTable(props) {
                 {/* Current plan badge */}
                 <Show when={plan.tier === currentTier()}>
                   <div class='absolute -top-3 left-1/2 -translate-x-1/2'>
-                    <span class='bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full'>
+                    <span class='rounded-full bg-green-500 px-3 py-1 text-xs font-semibold text-white'>
                       Current Plan
                     </span>
                   </div>
@@ -101,7 +101,7 @@ export default function PricingTable(props) {
                 {/* Plan header */}
                 <div class='mb-4'>
                   <h3 class='text-lg font-semibold text-gray-900'>{plan.name}</h3>
-                  <p class='text-sm text-gray-500 mt-1'>{plan.description}</p>
+                  <p class='mt-1 text-sm text-gray-500'>{plan.description}</p>
                 </div>
 
                 {/* Price */}
@@ -117,20 +117,20 @@ export default function PricingTable(props) {
                           plan.price.monthly
                         : Math.round(plan.price.yearly / 12)}
                       </span>
-                      <span class='text-gray-500 ml-1'>/month</span>
+                      <span class='ml-1 text-gray-500'>/month</span>
                     </div>
                     <Show when={billingInterval() === 'yearly' && plan.price.yearly > 0}>
-                      <p class='text-sm text-gray-500 mt-1'>${plan.price.yearly} billed annually</p>
+                      <p class='mt-1 text-sm text-gray-500'>${plan.price.yearly} billed annually</p>
                     </Show>
                   </Show>
                 </div>
 
                 {/* Features */}
-                <ul class='space-y-3 mb-6 flex-1'>
+                <ul class='mb-6 flex-1 space-y-3'>
                   <For each={plan.features}>
                     {feature => (
                       <li class='flex items-start'>
-                        <FiCheck class='w-5 h-5 text-green-500 mr-2 shrink-0 mt-0.5' />
+                        <FiCheck class='mt-0.5 mr-2 h-5 w-5 shrink-0 text-green-500' />
                         <span class='text-sm text-gray-600'>{feature}</span>
                       </li>
                     )}
@@ -140,8 +140,8 @@ export default function PricingTable(props) {
                 {/* CTA Button */}
                 <button
                   type='button'
-                  class={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-colors ${
-                    plan.tier === currentTier() ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                  class={`w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+                    plan.tier === currentTier() ? 'cursor-not-allowed bg-gray-100 text-gray-500'
                     : plan.tier === 'pro' ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : plan.tier === 'enterprise' ? 'bg-gray-900 text-white hover:bg-gray-800'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -151,7 +151,7 @@ export default function PricingTable(props) {
                 >
                   <Show when={loadingTier() === plan.tier} fallback={getButtonText(plan.tier)}>
                     <span class='flex items-center justify-center'>
-                      <svg class='animate-spin -ml-1 mr-2 h-4 w-4' fill='none' viewBox='0 0 24 24'>
+                      <svg class='mr-2 -ml-1 h-4 w-4 animate-spin' fill='none' viewBox='0 0 24 24'>
                         <circle
                           class='opacity-25'
                           cx='12'
@@ -181,19 +181,19 @@ export default function PricingTable(props) {
 
 function PricingTableSkeleton() {
   return (
-    <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+    <div class='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
       <For each={[1, 2, 3, 4]}>
         {() => (
-          <div class='rounded-xl border-2 border-gray-200 p-6 animate-pulse'>
-            <div class='h-6 bg-gray-200 rounded w-24 mb-2' />
-            <div class='h-4 bg-gray-200 rounded w-32 mb-6' />
-            <div class='h-10 bg-gray-200 rounded w-28 mb-6' />
-            <div class='space-y-3 mb-6'>
-              <div class='h-4 bg-gray-200 rounded' />
-              <div class='h-4 bg-gray-200 rounded' />
-              <div class='h-4 bg-gray-200 rounded' />
+          <div class='animate-pulse rounded-xl border-2 border-gray-200 p-6'>
+            <div class='mb-2 h-6 w-24 rounded bg-gray-200' />
+            <div class='mb-6 h-4 w-32 rounded bg-gray-200' />
+            <div class='mb-6 h-10 w-28 rounded bg-gray-200' />
+            <div class='mb-6 space-y-3'>
+              <div class='h-4 rounded bg-gray-200' />
+              <div class='h-4 rounded bg-gray-200' />
+              <div class='h-4 rounded bg-gray-200' />
             </div>
-            <div class='h-10 bg-gray-200 rounded' />
+            <div class='h-10 rounded bg-gray-200' />
           </div>
         )}
       </For>

@@ -97,22 +97,22 @@ export default function MagicLinkForm(props) {
     <div class='space-y-4'>
       {/* Success State */}
       <Show when={sent()}>
-        <div class='text-center py-4'>
-          <div class='w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3'>
-            <FiMail class='w-7 h-7 text-green-600' />
+        <div class='py-4 text-center'>
+          <div class='mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-100'>
+            <FiMail class='h-7 w-7 text-green-600' />
           </div>
-          <h3 class='text-base font-semibold text-gray-900 mb-1'>Check your email</h3>
-          <p class='text-gray-600 text-sm mb-3'>
+          <h3 class='mb-1 text-base font-semibold text-gray-900'>Check your email</h3>
+          <p class='mb-3 text-sm text-gray-600'>
             We sent a sign-in link to <strong class='text-gray-900'>{email()}</strong>
           </p>
-          <p class='text-gray-500 text-xs mb-4'>
+          <p class='mb-4 text-xs text-gray-500'>
             Click the link in the email to sign in. The link expires in 10 minutes.
           </p>
 
           <ErrorMessage displayError={error} />
 
           <Show when={resent()}>
-            <div class='p-3 text-green-600 text-xs sm:text-sm bg-green-50 border border-green-200 rounded-lg mb-4'>
+            <div class='mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-600 sm:text-sm'>
               Email sent successfully!
             </div>
           </Show>
@@ -124,8 +124,8 @@ export default function MagicLinkForm(props) {
               disabled={!canResend() || resending()}
               class={`text-sm font-medium transition ${
                 canResend() && !resending() ?
-                  'text-blue-600 hover:text-blue-700 cursor-pointer'
-                : 'text-gray-400 cursor-not-allowed'
+                  'cursor-pointer text-blue-600 hover:text-blue-700'
+                : 'cursor-not-allowed text-gray-400'
               }`}
             >
               {resending() ?
@@ -137,7 +137,7 @@ export default function MagicLinkForm(props) {
             <button
               type='button'
               onClick={handleReset}
-              class='text-gray-500 hover:text-gray-700 text-sm font-medium'
+              class='text-sm font-medium text-gray-500 hover:text-gray-700'
             >
               Use a different email
             </button>
@@ -151,7 +151,7 @@ export default function MagicLinkForm(props) {
           <div class='space-y-4'>
             <div>
               <label
-                class='block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2'
+                class='mb-1 block text-xs font-semibold text-gray-700 sm:mb-2 sm:text-sm'
                 for='magic-link-email'
               >
                 Email
@@ -163,7 +163,7 @@ export default function MagicLinkForm(props) {
                 spellCheck='false'
                 value={email()}
                 onInput={e => setEmail(e.target.value)}
-                class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
+                class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:ring-2 focus:ring-blue-400 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
                 required
                 id='magic-link-email'
                 placeholder='you@example.com'

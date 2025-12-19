@@ -35,44 +35,44 @@ export default function PdfUploadSection() {
           <For each={studies.uploadedPdfs}>
             {pdf => (
               <div
-                class='flex items-center gap-3 p-3 rounded-lg border'
+                class='flex items-center gap-3 rounded-lg border p-3'
                 classList={{
                   'bg-red-50 border-red-200': pdf.error,
                   'bg-gray-50 border-gray-200': !pdf.error,
                 }}
               >
                 <CgFileDocument
-                  class='w-5 h-5 shrink-0'
+                  class='h-5 w-5 shrink-0'
                   classList={{
                     'text-gray-500': !pdf.error,
                     'text-red-500': pdf.error,
                   }}
                 />
-                <div class='flex-1 min-w-0'>
+                <div class='min-w-0 flex-1'>
                   {/* Error state */}
                   <Show when={pdf.error}>
                     <div class='flex items-center gap-2'>
-                      <VsWarning class='w-4 h-4 text-red-500 shrink-0' />
-                      <span class='text-sm text-red-600 font-medium'>{pdf.error}</span>
+                      <VsWarning class='h-4 w-4 shrink-0 text-red-500' />
+                      <span class='text-sm font-medium text-red-600'>{pdf.error}</span>
                       <button
                         type='button'
                         onClick={() => studies.retryPdfExtraction?.(pdf.id)}
-                        class='inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded transition-colors'
+                        class='inline-flex items-center gap-1 rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-200'
                       >
-                        <FiRefreshCw class='w-3 h-3' />
+                        <FiRefreshCw class='h-3 w-3' />
                         Retry
                       </button>
                     </div>
-                    <p class='text-xs text-red-500 truncate mt-1'>{pdf.file.name}</p>
+                    <p class='mt-1 truncate text-xs text-red-500'>{pdf.file.name}</p>
                   </Show>
 
                   {/* Extracting state */}
                   <Show when={!pdf.error && pdf.extracting}>
                     <div class='flex items-center gap-2'>
-                      <div class='w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin' />
+                      <div class='h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
                       <span class='text-sm text-gray-500'>Extracting metadata...</span>
                     </div>
-                    <p class='text-xs text-gray-400 truncate mt-1'>{pdf.file.name}</p>
+                    <p class='mt-1 truncate text-xs text-gray-400'>{pdf.file.name}</p>
                   </Show>
 
                   {/* Success state */}
@@ -82,26 +82,26 @@ export default function PdfUploadSection() {
                         type='text'
                         value={pdf.title || ''}
                         onInput={e => studies.updatePdfTitle(pdf.id, e.target.value)}
-                        class='flex-1 text-sm font-medium text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0'
+                        class='flex-1 border-none bg-transparent p-0 text-sm font-medium text-gray-900 focus:ring-0 focus:outline-none'
                         placeholder='Study title'
                       />
                       <Show when={pdf.matchedToRef}>
                         <span
-                          class='inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full shrink-0'
+                          class='inline-flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700'
                           title={`Matched to: ${pdf.matchedToRef}`}
                         >
-                          <FiLink class='w-3 h-3' />
+                          <FiLink class='h-3 w-3' />
                           Matched
                         </span>
                       </Show>
                     </div>
                     <div class='flex items-center gap-2'>
-                      <p class='text-xs text-gray-500 truncate'>{pdf.file.name}</p>
+                      <p class='truncate text-xs text-gray-500'>{pdf.file.name}</p>
                       {/* Loading metadata indicator */}
                       <Show when={pdf.metadataLoading}>
                         <span class='text-xs text-gray-400'>|</span>
                         <span class='inline-flex items-center gap-1 text-xs text-blue-600'>
-                          <div class='w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin' />
+                          <div class='h-3 w-3 animate-spin rounded-full border border-blue-500 border-t-transparent' />
                           Loading citation...
                         </span>
                       </Show>
@@ -113,7 +113,7 @@ export default function PdfUploadSection() {
                         }
                       >
                         <span class='text-xs text-gray-400'>|</span>
-                        <span class='text-xs text-gray-600 shrink-0'>
+                        <span class='shrink-0 text-xs text-gray-600'>
                           <Show when={pdf.metadata.firstAuthor}>
                             {pdf.metadata.firstAuthor}
                             <Show when={pdf.metadata.publicationYear}>, </Show>
@@ -129,9 +129,9 @@ export default function PdfUploadSection() {
                 <button
                   type='button'
                   onClick={() => studies.removePdf(pdf.id)}
-                  class='p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors'
+                  class='rounded p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500'
                 >
-                  <BiRegularTrash class='w-4 h-4' />
+                  <BiRegularTrash class='h-4 w-4' />
                 </button>
               </div>
             )}

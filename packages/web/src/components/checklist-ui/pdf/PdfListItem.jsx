@@ -91,19 +91,19 @@ export default function PdfListItem(props) {
 
   return (
     <>
-      <div class='flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors'>
+      <div class='flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 transition-colors hover:border-gray-300'>
         {/* File icon */}
         <div class='shrink-0'>
-          <CgFileDocument class='w-8 h-8 text-gray-400' />
+          <CgFileDocument class='h-8 w-8 text-gray-400' />
         </div>
 
         {/* File info */}
-        <div class='flex-1 min-w-0'>
+        <div class='min-w-0 flex-1'>
           <div class='flex items-center gap-2'>
-            <span class='text-sm font-medium text-gray-900 truncate'>{props.pdf.fileName}</span>
+            <span class='truncate text-sm font-medium text-gray-900'>{props.pdf.fileName}</span>
             <PdfTagBadge tag={props.pdf.tag} />
           </div>
-          <div class='text-xs text-gray-500 mt-0.5'>
+          <div class='mt-0.5 text-xs text-gray-500'>
             {formatFileSize(props.pdf.size)}
             <Show when={props.pdf.uploadedAt}> &middot; {formatDate(props.pdf.uploadedAt)}</Show>
           </div>
@@ -115,20 +115,20 @@ export default function PdfListItem(props) {
           <button
             type='button'
             onClick={() => props.onView?.(props.pdf)}
-            class='p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'
+            class='rounded-md p-2 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600'
             title='View PDF'
           >
-            <FiEye class='w-4 h-4' />
+            <FiEye class='h-4 w-4' />
           </button>
 
           {/* Download button */}
           <button
             type='button'
             onClick={() => props.onDownload?.(props.pdf)}
-            class='p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'
+            class='rounded-md p-2 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600'
             title='Download PDF'
           >
-            <FiDownload class='w-4 h-4' />
+            <FiDownload class='h-4 w-4' />
           </button>
 
           {/* Edit metadata button (if not read-only) */}
@@ -136,10 +136,10 @@ export default function PdfListItem(props) {
             <button
               type='button'
               onClick={() => props.onEditMetadata?.(props.pdf)}
-              class='p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'
+              class='rounded-md p-2 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600'
               title='Edit Metadata'
             >
-              <FiEdit2 class='w-4 h-4' />
+              <FiEdit2 class='h-4 w-4' />
             </button>
           </Show>
 
@@ -159,10 +159,10 @@ export default function PdfListItem(props) {
             <button
               type='button'
               onClick={() => setShowDeleteConfirm(true)}
-              class='p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'
+              class='rounded-md p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600'
               title='Delete PDF'
             >
-              <FiTrash2 class='w-4 h-4' />
+              <FiTrash2 class='h-4 w-4' />
             </button>
           </Show>
         </div>
@@ -171,7 +171,7 @@ export default function PdfListItem(props) {
       {/* Delete confirmation dialog */}
       <Dialog open={showDeleteConfirm()} onOpenChange={setShowDeleteConfirm} title='Delete PDF'>
         <div class='p-4'>
-          <p class='text-gray-600 mb-4'>
+          <p class='mb-4 text-gray-600'>
             Are you sure you want to delete <strong>{props.pdf.fileName}</strong>? This action
             cannot be undone.
           </p>
@@ -179,14 +179,14 @@ export default function PdfListItem(props) {
             <button
               type='button'
               onClick={() => setShowDeleteConfirm(false)}
-              class='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50'
+              class='rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
             >
               Cancel
             </button>
             <button
               type='button'
               onClick={handleDelete}
-              class='px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700'
+              class='rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700'
             >
               Delete
             </button>

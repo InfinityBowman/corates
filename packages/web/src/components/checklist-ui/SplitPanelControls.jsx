@@ -21,54 +21,54 @@ export default function SplitPanelControls(props) {
   const ratioLabel = () => props.defaultRatioLabel || '50/50';
 
   return (
-    <div class='flex items-center gap-2 shrink-0'>
+    <div class='flex shrink-0 items-center gap-2'>
       {/* Toggle second panel */}
       <button
         onClick={() => props.onToggleSecondPanel?.()}
-        class={`p-1.5 rounded transition-colors ${
-          props.showSecondPanel ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 text-gray-600'
+        class={`rounded p-1.5 transition-colors ${
+          props.showSecondPanel ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
         }`}
         title={props.showSecondPanel ? `Hide ${panelLabel()}` : `Show ${panelLabel()}`}
       >
-        <AiOutlineFilePdf class='w-5 h-5' />
+        <AiOutlineFilePdf class='h-5 w-5' />
       </button>
 
       <Show when={props.showSecondPanel}>
-        <div class='h-4 w-px bg-gray-300 mx-1' />
+        <div class='mx-1 h-4 w-px bg-gray-300' />
 
         {/* Vertical split (side by side) */}
         <button
           onClick={() => props.onSetLayout?.('vertical')}
-          class={`p-1.5 rounded transition-colors ${
+          class={`rounded p-1.5 transition-colors ${
             props.layout === 'vertical' ?
               'bg-blue-100 text-blue-700'
-            : 'hover:bg-gray-100 text-gray-600'
+            : 'text-gray-600 hover:bg-gray-100'
           }`}
           title='Side by side'
         >
-          <VsSplitHorizontal class='w-5 h-5' />
+          <VsSplitHorizontal class='h-5 w-5' />
         </button>
 
         {/* Horizontal split (stacked) */}
         <button
           onClick={() => props.onSetLayout?.('horizontal')}
-          class={`p-1.5 rounded transition-colors ${
+          class={`rounded p-1.5 transition-colors ${
             props.layout === 'horizontal' ?
               'bg-blue-100 text-blue-700'
-            : 'hover:bg-gray-100 text-gray-600'
+            : 'text-gray-600 hover:bg-gray-100'
           }`}
           title='Stacked'
         >
-          <VsSplitVertical class='w-5 h-5' />
+          <VsSplitVertical class='h-5 w-5' />
         </button>
 
         {/* Reset ratio */}
         <button
           onClick={() => props.onResetRatio?.()}
-          class='p-1.5 rounded hover:bg-gray-100 text-gray-600 transition-colors'
+          class='rounded p-1.5 text-gray-600 transition-colors hover:bg-gray-100'
           title={`Reset split (${ratioLabel()})`}
         >
-          <VsRefresh class='w-5 h-5' />
+          <VsRefresh class='h-5 w-5' />
         </button>
       </Show>
     </div>

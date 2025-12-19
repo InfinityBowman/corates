@@ -30,10 +30,10 @@ export default function CompletedTab() {
       <Show
         when={completedStudies().length > 0}
         fallback={
-          <div class='text-center py-16'>
-            <AiFillCheckCircle class='w-12 h-12 text-gray-300 mx-auto mb-4' />
-            <h3 class='text-lg font-medium text-gray-900 mb-2'>Completed</h3>
-            <p class='text-gray-500 max-w-md mx-auto'>
+          <div class='py-16 text-center'>
+            <AiFillCheckCircle class='mx-auto mb-4 h-12 w-12 text-gray-300' />
+            <h3 class='mb-2 text-lg font-medium text-gray-900'>Completed</h3>
+            <p class='mx-auto max-w-md text-gray-500'>
               Studies that have completed reconciliation will appear here.
             </p>
           </div>

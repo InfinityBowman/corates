@@ -6,35 +6,35 @@ import { FaSolidSchool, FaSolidBriefcaseMedical, FaSolidFileLines } from 'solid-
 export default function WhoIsCoRATESFor() {
   const audiences = [
     {
-      icon: <AiOutlineUsergroupAdd class='w-6 h-6' />,
+      icon: <AiOutlineUsergroupAdd class='h-6 w-6' />,
       title: 'Systematic review and evidence synthesis teams',
       description:
         'Appraise multiple studies in a structured, consistent way that supports rigorous, transparent, and well-documented review processes.',
       color: 'blue',
     },
     {
-      icon: <IoSchoolOutline class='w-6 h-6' />,
+      icon: <IoSchoolOutline class='h-6 w-6' />,
       title: 'Students learning to appraise research',
       description:
         'Learn study appraisal by using validated tools in a guided interface, with free single-study assessments for easy practice.',
       color: 'emerald',
     },
     {
-      icon: <FaSolidSchool class='w-6 h-6' />,
+      icon: <FaSolidSchool class='h-6 w-6' />,
       title: 'Faculty teaching research methods or appraisal',
       description:
         'Use structured appraisal activities to help students understand what makes different research designs rigorous by examining real published studies.',
       color: 'violet',
     },
     {
-      icon: <FaSolidBriefcaseMedical class='w-6 h-6' />,
+      icon: <FaSolidBriefcaseMedical class='h-6 w-6' />,
       title: 'Clinicians and practitioners',
       description:
         'Evaluate the quality of individual studies when deciding whether evidence should inform practice, policy, or program decisions.',
       color: 'rose',
     },
     {
-      icon: <FaSolidFileLines class='w-6 h-6' />,
+      icon: <FaSolidFileLines class='h-6 w-6' />,
       title: 'Anyone needing to appraise a single study',
       description:
         'CoRATES makes it easy to complete a one-off appraisal for free, including automatic study-level scoring.',
@@ -48,10 +48,10 @@ export default function WhoIsCoRATESFor() {
   });
 
   return (
-    <section class='max-w-5xl mx-auto px-6 py-20'>
-      <div class='text-center mb-12'>
-        <h2 class='text-2xl md:text-3xl font-bold text-gray-900 mb-4'>Who is CoRATES For?</h2>
-        <p class='text-gray-600 leading-relaxed max-w-3xl mx-auto'>
+    <section class='mx-auto max-w-5xl px-6 py-20'>
+      <div class='mb-12 text-center'>
+        <h2 class='mb-4 text-2xl font-bold text-gray-900 md:text-3xl'>Who is CoRATES For?</h2>
+        <p class='mx-auto max-w-3xl leading-relaxed text-gray-600'>
           Although CoRATES was designed with evidence synthesis teams in mind, it supports a wide
           range of users who need to appraise study quality. Whether you are part of a systematic
           review team, teaching evidence synthesis or research methods, needing to assess a single
@@ -60,19 +60,19 @@ export default function WhoIsCoRATESFor() {
         </p>
       </div>
 
-      <div class='grid md:grid-cols-2 lg:grid-cols-3 gap-6'>
+      <div class='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
         <For each={audiences}>
           {audience => {
             const colors = getColorClasses(audience.color);
             return (
-              <div class='bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 relative overflow-hidden group'>
+              <div class='group relative overflow-hidden rounded-xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md'>
                 <div
-                  class={`w-12 h-12 ${colors.bg} rounded-xl flex items-center justify-center mb-4 ${colors.icon}`}
+                  class={`h-12 w-12 ${colors.bg} mb-4 flex items-center justify-center rounded-xl ${colors.icon}`}
                 >
                   {audience.icon}
                 </div>
-                <h3 class='font-semibold text-gray-900 mb-2'>{audience.title}</h3>
-                <p class='text-sm text-gray-600 leading-relaxed'>{audience.description}</p>
+                <h3 class='mb-2 font-semibold text-gray-900'>{audience.title}</h3>
+                <p class='text-sm leading-relaxed text-gray-600'>{audience.description}</p>
               </div>
             );
           }}

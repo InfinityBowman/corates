@@ -66,12 +66,12 @@ export default function TwoFactorVerify(props) {
 
   return (
     <div class='space-y-4'>
-      <div class='text-center mb-4'>
-        <div class='w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-          <FiLock class='w-8 h-8 text-blue-600' />
+      <div class='mb-4 text-center'>
+        <div class='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100'>
+          <FiLock class='h-8 w-8 text-blue-600' />
         </div>
-        <h2 class='text-xl font-bold text-gray-900 mb-1'>Two-Factor Authentication</h2>
-        <p class='text-gray-500 text-sm'>
+        <h2 class='mb-1 text-xl font-bold text-gray-900'>Two-Factor Authentication</h2>
+        <p class='text-sm text-gray-500'>
           {useBackupCode() ?
             'Enter one of your backup codes'
           : 'Enter the code from your authenticator app'}
@@ -80,7 +80,7 @@ export default function TwoFactorVerify(props) {
 
       <form onSubmit={handleSubmit} class='space-y-4'>
         <div>
-          <label class='block text-sm font-medium text-gray-700 mb-2' for='2fa-code'>
+          <label class='mb-2 block text-sm font-medium text-gray-700' for='2fa-code'>
             {useBackupCode() ? 'Backup Code' : 'Verification Code'}
           </label>
           <input
@@ -92,7 +92,7 @@ export default function TwoFactorVerify(props) {
             onInput={e =>
               setCode(useBackupCode() ? e.target.value : e.target.value.replace(/\D/g, ''))
             }
-            class='w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-center font-mono text-xl tracking-widest'
+            class='w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-mono text-xl tracking-widest focus:ring-2 focus:ring-blue-400 focus:outline-none'
             placeholder={useBackupCode() ? 'XXXX-XXXX-XXXX' : '000000'}
             disabled={loading()}
             id='2fa-code'
@@ -106,7 +106,7 @@ export default function TwoFactorVerify(props) {
           Verify
         </PrimaryButton>
 
-        <div class='text-center space-y-2'>
+        <div class='space-y-2 text-center'>
           <button
             type='button'
             onClick={() => {
@@ -114,7 +114,7 @@ export default function TwoFactorVerify(props) {
               setCode('');
               setError('');
             }}
-            class='text-sm text-blue-600 hover:text-blue-700 font-medium'
+            class='text-sm font-medium text-blue-600 hover:text-blue-700'
           >
             {useBackupCode() ? 'Use authenticator app instead' : 'Use a backup code'}
           </button>

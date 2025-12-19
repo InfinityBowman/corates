@@ -25,6 +25,7 @@
     "test:ui": "pnpm --filter web test",
     "test": "pnpm --recursive run test",
     "logs": "pnpm --filter workers run logs",
+    "deps:check": "pnpm -r outdated",
     "deps:update": "pnpm -r up",
     "deps:update:latest": "pnpm -r up --latest",
     "user:make-admin:prod": "pnpm --filter @corates/workers run user:make-admin:prod",
@@ -46,8 +47,12 @@
     "@typescript-eslint/parser": "^8.49.0",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
+    "eslint-plugin-drizzle": "^0.2.3",
     "eslint-plugin-solid": "^0.14.5",
+    "eslint-plugin-sonarjs": "^3.0.5",
+    "eslint-plugin-unicorn": "^62.0.0",
     "prettier": "^3.7.4",
+    "prettier-plugin-tailwindcss": "^0.7.2",
     "wrangler": "^4.54.0"
   },
   "engines": {

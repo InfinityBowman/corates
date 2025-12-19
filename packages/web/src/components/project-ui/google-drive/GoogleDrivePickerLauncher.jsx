@@ -135,28 +135,28 @@ export default function GoogleDrivePickerLauncher(props) {
   return (
     <div class='space-y-3'>
       <Show when={!pickerConfigured()}>
-        <div class='p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800'>
+        <div class='rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800'>
           Google Picker is not configured. Set VITE_GOOGLE_PICKER_API_KEY.
         </div>
       </Show>
 
       <Show when={error()}>
-        <div class='p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700'>
+        <div class='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
           {error()}
         </div>
       </Show>
 
       <Show when={connected() === false}>
-        <div class='text-center py-4 px-4 border border-gray-200 rounded-lg'>
-          <img src='/logos/drive.svg' alt='Google Drive' class='w-10 h-10 mx-auto mb-3' />
-          <h4 class='text-sm font-medium text-gray-900 mb-1'>Connect Google Drive</h4>
-          <p class='text-xs text-gray-500 mb-4'>Connect your Google account to select PDFs.</p>
+        <div class='rounded-lg border border-gray-200 px-4 py-4 text-center'>
+          <img src='/logos/drive.svg' alt='Google Drive' class='mx-auto mb-3 h-10 w-10' />
+          <h4 class='mb-1 text-sm font-medium text-gray-900'>Connect Google Drive</h4>
+          <p class='mb-4 text-xs text-gray-500'>Connect your Google account to select PDFs.</p>
           <button
             type='button'
             onClick={handleConnectGoogle}
-            class='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors'
+            class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
           >
-            <img src='/logos/drive.svg' alt='' class='w-4 h-4' />
+            <img src='/logos/drive.svg' alt='' class='h-4 w-4' />
             Connect Google Account
           </button>
         </div>
@@ -167,15 +167,15 @@ export default function GoogleDrivePickerLauncher(props) {
           type='button'
           onClick={handleOpenPicker}
           disabled={loading() || !!props.disabled || !!props.busy || !pickerConfigured()}
-          class='w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 max-w-xl mx-auto'
+          class='mx-auto flex w-full max-w-xl items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-white transition-colors hover:bg-blue-700 disabled:opacity-50'
         >
           <Show
             when={!loading() && !props.busy}
             fallback={
-              <div class='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
+              <div class='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
             }
           />
-          <img src='/logos/drive.svg' alt='' class='w-6 h-6 bg-white rounded-sm p-0.5' />
+          <img src='/logos/drive.svg' alt='' class='h-6 w-6 rounded-sm bg-white p-0.5' />
           <span class='text-sm font-medium'>Select from Google Drive</span>
         </button>
       </Show>

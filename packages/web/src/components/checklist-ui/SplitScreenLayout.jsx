@@ -75,11 +75,11 @@ export default function SplitScreenLayout(props) {
   }
 
   return (
-    <div class='flex flex-col h-full'>
+    <div class='flex h-full flex-col'>
       {/* Combined header and layout controls */}
-      <div class='bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between shrink-0'>
+      <div class='flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 py-2'>
         {/* Left side: header content from parent */}
-        <div class='flex items-center gap-3 min-w-0'>{props.headerContent}</div>
+        <div class='flex min-w-0 items-center gap-3'>{props.headerContent}</div>
 
         {/* Right side: layout controls */}
         <SplitPanelControls
@@ -98,7 +98,7 @@ export default function SplitScreenLayout(props) {
       {/* Split content area */}
       <div
         ref={containerRef}
-        class={`flex-1 flex overflow-hidden ${
+        class={`flex flex-1 overflow-hidden ${
           layout() === 'vertical' ? 'flex-row' : 'flex-col'
         } ${isDragging() ? 'select-none' : ''}`}
       >
@@ -117,11 +117,7 @@ export default function SplitScreenLayout(props) {
         <Show when={showSecondPanel() && secondPanel()}>
           <div
             onMouseDown={handleMouseDown}
-            class={`
-              ${layout() === 'vertical' ? 'w-1 cursor-col-resize' : 'h-1 cursor-row-resize'}
-              bg-gray-200 hover:bg-blue-400 active:bg-blue-500 transition-colors shrink-0
-              ${isDragging() ? 'bg-blue-500' : ''}
-            `}
+            class={` ${layout() === 'vertical' ? 'w-1 cursor-col-resize' : 'h-1 cursor-row-resize'} shrink-0 bg-gray-200 transition-colors hover:bg-blue-400 active:bg-blue-500 ${isDragging() ? 'bg-blue-500' : ''} `}
           />
 
           {/* Second panel */}

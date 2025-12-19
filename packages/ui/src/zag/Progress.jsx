@@ -62,7 +62,7 @@ export function Progress(props) {
   return (
     <div {...api().getRootProps()} class={`w-full ${local.class || ''}`}>
       <Show when={local.label || local.showValue}>
-        <div class='flex items-center justify-between mb-1'>
+        <div class='mb-1 flex items-center justify-between'>
           <Show when={local.label}>
             <span {...api().getLabelProps()} class='text-sm font-medium text-gray-700'>
               {local.label}
@@ -77,7 +77,7 @@ export function Progress(props) {
       </Show>
       <div
         {...api().getTrackProps()}
-        class={`w-full bg-gray-200 rounded-full overflow-hidden ${getSizeClass()}`}
+        class={`w-full overflow-hidden rounded-full bg-gray-200 ${getSizeClass()}`}
       >
         <div
           {...api().getRangeProps()}

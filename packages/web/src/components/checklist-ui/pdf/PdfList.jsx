@@ -49,9 +49,9 @@ export default function PdfList(props) {
             type='button'
             onClick={() => props.onUpload?.()}
             disabled={props.uploading}
-            class='inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+            class='inline-flex items-center gap-1 rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50'
           >
-            <HiOutlineDocumentPlus class='w-4 h-4' />
+            <HiOutlineDocumentPlus class='h-4 w-4' />
             <span>{props.uploading ? 'Uploading...' : 'Add PDF'}</span>
           </button>
         </Show>
@@ -61,8 +61,8 @@ export default function PdfList(props) {
       <Show
         when={sortedPdfs().length > 0}
         fallback={
-          <div class='p-6 text-center border-2 border-dashed border-gray-200 rounded-lg'>
-            <HiOutlineDocumentPlus class='w-10 h-10 mx-auto text-gray-300 mb-2' />
+          <div class='rounded-lg border-2 border-dashed border-gray-200 p-6 text-center'>
+            <HiOutlineDocumentPlus class='mx-auto mb-2 h-10 w-10 text-gray-300' />
             <p class='text-sm text-gray-500'>No PDFs uploaded yet</p>
             <Show when={!props.readOnly}>
               <button

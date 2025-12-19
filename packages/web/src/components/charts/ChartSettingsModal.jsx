@@ -42,7 +42,7 @@ export default function ChartSettingsModal(props) {
   return (
     <Show when={props.isOpen}>
       {/* Backdrop - click to close */}
-      <div class='fixed inset-0 bg-black/50 z-40' />
+      <div class='fixed inset-0 z-40 bg-black/50' />
 
       {/* Modal */}
       <div
@@ -51,17 +51,17 @@ export default function ChartSettingsModal(props) {
         onMouseUp={handleBackdropMouseUp}
       >
         <div
-          class='bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col'
+          class='flex max-h-[80vh] w-full max-w-3xl flex-col rounded-xl bg-white shadow-2xl'
           onMouseDown={e => e.stopPropagation()}
         >
           {/* Header */}
-          <div class='flex items-center justify-between px-6 py-4 border-b border-gray-200'>
+          <div class='flex items-center justify-between border-b border-gray-200 px-6 py-4'>
             <h2 class='text-lg font-semibold text-gray-900'>Chart Settings</h2>
             <button
               onClick={() => props.onClose?.()}
-              class='p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors'
+              class='rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
             >
-              <BiRegularX class='w-5 h-5' />
+              <BiRegularX class='h-5 w-5' />
             </button>
           </div>
 
@@ -69,8 +69,8 @@ export default function ChartSettingsModal(props) {
           <div class='flex-1 overflow-y-auto p-6'>
             {/* Labels Section */}
             <div>
-              <h3 class='text-sm font-medium text-gray-700 mb-3'>Chart Labels</h3>
-              <p class='text-xs text-gray-500 mb-4'>
+              <h3 class='mb-3 text-sm font-medium text-gray-700'>Chart Labels</h3>
+              <p class='mb-4 text-xs text-gray-500'>
                 Edit labels directly. Changes are temporary and won't be saved.
               </p>
 
@@ -81,54 +81,54 @@ export default function ChartSettingsModal(props) {
                       type='text'
                       value={item().label}
                       onInput={e => props.onLabelChange(index, e.target.value)}
-                      class='w-full text-sm text-gray-700 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors'
+                      class='w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                     />
                   )}
                 </Index>
               </div>
 
               <Show when={props.labels.length === 0}>
-                <p class='text-sm text-gray-400 text-center py-4'>
+                <p class='py-4 text-center text-sm text-gray-400'>
                   No chart data available to edit.
                 </p>
               </Show>
             </div>
 
             {/* Chart Titles Section */}
-            <div class='mt-6 pt-6 border-t border-gray-200'>
-              <h3 class='text-sm font-medium text-gray-700 mb-3'>Chart Titles</h3>
+            <div class='mt-6 border-t border-gray-200 pt-6'>
+              <h3 class='mb-3 text-sm font-medium text-gray-700'>Chart Titles</h3>
               <div class='space-y-3'>
                 <div>
-                  <label class='block text-xs text-gray-500 mb-1'>Quality Assessment Chart</label>
+                  <label class='mb-1 block text-xs text-gray-500'>Quality Assessment Chart</label>
                   <input
                     type='text'
                     value={props.robvisTitle}
                     onInput={e => props.onRobvisTitleChange(e.target.value)}
-                    class='w-full text-sm text-gray-700 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors'
+                    class='w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                   />
                 </div>
                 <div>
-                  <label class='block text-xs text-gray-500 mb-1'>Distribution Chart</label>
+                  <label class='mb-1 block text-xs text-gray-500'>Distribution Chart</label>
                   <input
                     type='text'
                     value={props.distributionTitle}
                     onInput={e => props.onDistributionTitleChange(e.target.value)}
-                    class='w-full text-sm text-gray-700 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-colors'
+                    class='w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                   />
                 </div>
               </div>
             </div>
 
             {/* Display Options Section */}
-            <div class='mt-6 pt-6 border-t border-gray-200'>
-              <h3 class='text-sm font-medium text-gray-700 mb-3'>Display Options</h3>
+            <div class='mt-6 border-t border-gray-200 pt-6'>
+              <h3 class='mb-3 text-sm font-medium text-gray-700'>Display Options</h3>
 
-              <label class='flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors'>
+              <label class='flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-3 transition-colors hover:bg-gray-100'>
                 <input
                   type='checkbox'
                   checked={props.greyscale}
                   onChange={e => props.onGreyscaleChange(e.target.checked)}
-                  class='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2'
+                  class='h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500'
                 />
                 <div>
                   <span class='text-sm font-medium text-gray-700'>Greyscale Mode</span>
@@ -140,15 +140,15 @@ export default function ChartSettingsModal(props) {
             </div>
 
             {/* Export Section */}
-            <div class='mt-6 pt-6 border-t border-gray-200'>
-              <h3 class='text-sm font-medium text-gray-700 mb-3'>Export Charts</h3>
+            <div class='mt-6 border-t border-gray-200 pt-6'>
+              <h3 class='mb-3 text-sm font-medium text-gray-700'>Export Charts</h3>
 
-              <label class='flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors mb-3'>
+              <label class='mb-3 flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-3 transition-colors hover:bg-gray-100'>
                 <input
                   type='checkbox'
                   checked={props.transparentExport}
                   onChange={e => props.onTransparentExportChange(e.target.checked)}
-                  class='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2'
+                  class='h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500'
                 />
                 <div>
                   <span class='text-sm font-medium text-gray-700'>Transparent Background</span>
@@ -157,35 +157,35 @@ export default function ChartSettingsModal(props) {
               </label>
 
               <div class='space-y-3'>
-                <div class='p-3 bg-gray-50 rounded-lg'>
-                  <p class='text-sm font-medium text-gray-700 mb-2'>Quality Assessment Chart</p>
+                <div class='rounded-lg bg-gray-50 p-3'>
+                  <p class='mb-2 text-sm font-medium text-gray-700'>Quality Assessment Chart</p>
                   <div class='flex gap-2'>
                     <button
                       onClick={() => props.onExportRobvis('svg')}
-                      class='px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors'
+                      class='rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50'
                     >
                       Export SVG
                     </button>
                     <button
                       onClick={() => props.onExportRobvis('png')}
-                      class='px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors'
+                      class='rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50'
                     >
                       Export PNG
                     </button>
                   </div>
                 </div>
-                <div class='p-3 bg-gray-50 rounded-lg'>
-                  <p class='text-sm font-medium text-gray-700 mb-2'>Distribution Chart</p>
+                <div class='rounded-lg bg-gray-50 p-3'>
+                  <p class='mb-2 text-sm font-medium text-gray-700'>Distribution Chart</p>
                   <div class='flex gap-2'>
                     <button
                       onClick={() => props.onExportDistribution('svg')}
-                      class='px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors'
+                      class='rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50'
                     >
                       Export SVG
                     </button>
                     <button
                       onClick={() => props.onExportDistribution('png')}
-                      class='px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors'
+                      class='rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50'
                     >
                       Export PNG
                     </button>
@@ -195,25 +195,25 @@ export default function ChartSettingsModal(props) {
             </div>
 
             {/* How to Cite CoRATES Section */}
-            <div class='mt-6 pt-6 border-t border-gray-200'>
-              <h3 class='text-sm font-medium text-gray-700 mb-3'>How to Cite CoRATES</h3>
-              <p class='text-xs text-gray-500 mb-4'>
+            <div class='mt-6 border-t border-gray-200 pt-6'>
+              <h3 class='mb-3 text-sm font-medium text-gray-700'>How to Cite CoRATES</h3>
+              <p class='mb-4 text-xs text-gray-500'>
                 Use this citation when you reference CoRATES as the software used for study
                 appraisal.
               </p>
 
               <div class='space-y-4'>
-                <div class='p-4 bg-gray-50 rounded-lg'>
-                  <h4 class='text-xs font-semibold text-gray-700 mb-2'>APA</h4>
-                  <p class='text-sm text-gray-700 leading-relaxed'>
+                <div class='rounded-lg bg-gray-50 p-4'>
+                  <h4 class='mb-2 text-xs font-semibold text-gray-700'>APA</h4>
+                  <p class='text-sm leading-relaxed text-gray-700'>
                     Maynard, J. A., & Maynard, B. R. (2025). CoRATES (Collaborative Risk-of-Bias and
                     Appraisal Tracking for Evidence Synthesis) [Software]. https://corates.org
                   </p>
                 </div>
 
-                <div class='p-4 bg-gray-50 rounded-lg'>
-                  <h4 class='text-xs font-semibold text-gray-700 mb-2'>AMA</h4>
-                  <p class='text-sm text-gray-700 leading-relaxed'>
+                <div class='rounded-lg bg-gray-50 p-4'>
+                  <h4 class='mb-2 text-xs font-semibold text-gray-700'>AMA</h4>
+                  <p class='text-sm leading-relaxed text-gray-700'>
                     Maynard JA, Maynard BR. CoRATES (Collaborative Risk-of-Bias and Appraisal
                     Tracking for Evidence Synthesis)[software]. 2025. Accessed Month Day, Year.
                     https://corates.org
@@ -224,10 +224,10 @@ export default function ChartSettingsModal(props) {
           </div>
 
           {/* Footer */}
-          <div class='px-6 py-4 border-t border-gray-200 flex justify-end'>
+          <div class='flex justify-end border-t border-gray-200 px-6 py-4'>
             <button
               onClick={() => props.onClose?.()}
-              class='px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors'
+              class='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700'
             >
               Done
             </button>

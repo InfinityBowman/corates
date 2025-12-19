@@ -43,7 +43,7 @@ export default function AnswerPanel(props) {
               return (
                 <div class='border-t border-gray-200 pt-2 first:border-t-0 first:pt-0'>
                   <Show when={col.label}>
-                    <div class='text-xs font-semibold text-gray-700 mb-1'>{col.label}</div>
+                    <div class='mb-1 text-xs font-semibold text-gray-700'>{col.label}</div>
                   </Show>
                   <div class='space-y-1'>
                     <For each={col.options}>
@@ -52,7 +52,7 @@ export default function AnswerPanel(props) {
 
                         return (
                           <label
-                            class={`flex items-start gap-2 text-xs ${props.readOnly ? '' : 'cursor-pointer hover:bg-gray-50 p-1 rounded -m-1'}`}
+                            class={`flex items-start gap-2 text-xs ${props.readOnly ? '' : '-m-1 cursor-pointer rounded p-1 hover:bg-gray-50'}`}
                           >
                             <Show
                               when={isLastColumn()}
@@ -64,7 +64,7 @@ export default function AnswerPanel(props) {
                                   onChange={() =>
                                     !props.readOnly && props.onCheckboxChange?.(colIdx(), optIdx())
                                   }
-                                  class='w-3 h-3 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 shrink-0'
+                                  class='mt-0.5 h-3 w-3 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
                                 />
                               }
                             >
@@ -76,11 +76,11 @@ export default function AnswerPanel(props) {
                                 onChange={() =>
                                   !props.readOnly && props.onRadioChange?.(colIdx(), optIdx())
                                 }
-                                class='w-3 h-3 mt-0.5 text-blue-600 border-gray-300 focus:ring-blue-500 shrink-0'
+                                class='mt-0.5 h-3 w-3 shrink-0 border-gray-300 text-blue-600 focus:ring-blue-500'
                               />
                             </Show>
                             <span
-                              class={`text-xs ${isChecked() ? 'text-gray-900 font-medium' : 'text-gray-600'}`}
+                              class={`text-xs ${isChecked() ? 'font-medium text-gray-900' : 'text-gray-600'}`}
                             >
                               {option}
                             </span>
@@ -98,7 +98,7 @@ export default function AnswerPanel(props) {
     >
       <div class={`p-4 ${props.isFinal ? 'bg-green-50/30' : ''}`}>
         {/* Panel Header */}
-        <div class='flex items-center justify-between mb-4'>
+        <div class='mb-4 flex items-center justify-between'>
           <div>
             <h3 class='font-semibold text-gray-900'>{props.title}</h3>
             <Show when={props.isFinal && props.selectedSource}>
@@ -112,7 +112,7 @@ export default function AnswerPanel(props) {
           <Show when={!props.isFinal && !props.hideSelectButtons}>
             <button
               onClick={() => props.onUseThis?.()}
-              class={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              class={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                 props.isSelected ? 'bg-blue-600 text-white' : (
                   'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
                 )
@@ -127,7 +127,7 @@ export default function AnswerPanel(props) {
         <div class='mb-4 flex flex-wrap items-center gap-2'>
           <span class='text-xs text-gray-500'>Result:</span>
           <span
-            class={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium border ${getAnswerBadgeStyle(props.finalAnswer)}`}
+            class={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium ${getAnswerBadgeStyle(props.finalAnswer)}`}
           >
             {props.finalAnswer || 'Not selected'}
           </span>
@@ -143,10 +143,10 @@ export default function AnswerPanel(props) {
               return (
                 <div class='border-t border-gray-200 pt-3'>
                   <Show when={col.label}>
-                    <div class='text-xs font-semibold text-gray-700 mb-2'>{col.label}</div>
+                    <div class='mb-2 text-xs font-semibold text-gray-700'>{col.label}</div>
                   </Show>
                   <Show when={col.description}>
-                    <div class='text-xs text-gray-500 mb-2'>{col.description}</div>
+                    <div class='mb-2 text-xs text-gray-500'>{col.description}</div>
                   </Show>
 
                   <div class='space-y-2'>
@@ -156,7 +156,7 @@ export default function AnswerPanel(props) {
 
                         return (
                           <label
-                            class={`flex items-start gap-2 text-xs ${props.readOnly ? '' : 'cursor-pointer hover:bg-gray-50 p-1 rounded -m-1'}`}
+                            class={`flex items-start gap-2 text-xs ${props.readOnly ? '' : '-m-1 cursor-pointer rounded p-1 hover:bg-gray-50'}`}
                           >
                             <Show
                               when={isLastColumn()}
@@ -168,7 +168,7 @@ export default function AnswerPanel(props) {
                                   onChange={() =>
                                     !props.readOnly && props.onCheckboxChange?.(colIdx(), optIdx())
                                   }
-                                  class='w-3.5 h-3.5 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 shrink-0'
+                                  class='mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
                                 />
                               }
                             >
@@ -180,11 +180,11 @@ export default function AnswerPanel(props) {
                                 onChange={() =>
                                   !props.readOnly && props.onRadioChange?.(colIdx(), optIdx())
                                 }
-                                class='w-3.5 h-3.5 mt-0.5 text-blue-600 border-gray-300 focus:ring-blue-500 shrink-0'
+                                class='mt-0.5 h-3.5 w-3.5 shrink-0 border-gray-300 text-blue-600 focus:ring-blue-500'
                               />
                             </Show>
                             <span
-                              class={`${isChecked() ? 'text-gray-900 font-medium' : 'text-gray-600'}`}
+                              class={`${isChecked() ? 'font-medium text-gray-900' : 'text-gray-600'}`}
                             >
                               {option}
                             </span>

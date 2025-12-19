@@ -61,22 +61,22 @@ export default function Contact() {
       <div class='min-h-screen bg-linear-to-b from-blue-50 to-white'>
         <Navbar />
         <main class='py-16 sm:py-24'>
-          <div class='max-w-6xl mx-auto px-6'>
+          <div class='mx-auto max-w-6xl px-6'>
             {/* Hero Section */}
-            <div class='text-center mb-16'>
-              <h1 class='text-4xl sm:text-5xl font-bold text-gray-900 mb-4'>Get in Touch</h1>
-              <p class='text-xl text-gray-600 max-w-2xl mx-auto'>
+            <div class='mb-16 text-center'>
+              <h1 class='mb-4 text-4xl font-bold text-gray-900 sm:text-5xl'>Get in Touch</h1>
+              <p class='mx-auto max-w-2xl text-xl text-gray-600'>
                 Have questions about CoRATES? We would love to hear from you. Send us a message and
                 we will respond as soon as possible.
               </p>
             </div>
 
-            <div class='grid lg:grid-cols-2 gap-12 lg:gap-16'>
+            <div class='grid gap-12 lg:grid-cols-2 lg:gap-16'>
               {/* Contact Information */}
               <div class='space-y-8'>
                 <div>
-                  <h2 class='text-2xl font-semibold text-gray-900 mb-6'>We are here to help</h2>
-                  <p class='text-gray-600 mb-8'>
+                  <h2 class='mb-6 text-2xl font-semibold text-gray-900'>We are here to help</h2>
+                  <p class='mb-8 text-gray-600'>
                     Whether you have questions about our platform, need technical support, or want
                     to discuss partnership opportunities, our team is ready to assist you.
                   </p>
@@ -84,21 +84,21 @@ export default function Contact() {
 
                 <div class='space-y-6'>
                   <div class='flex items-start gap-4'>
-                    <div class='shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center'>
-                      <FiMail class='w-6 h-6 text-blue-600' />
+                    <div class='flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                      <FiMail class='h-6 w-6 text-blue-600' />
                     </div>
                     <div>
-                      <h3 class='font-semibold text-gray-900 mb-1'>Send Us a Message</h3>
-                      <p class='text-gray-500 mt-1'>We try to respond within 24 hours</p>
+                      <h3 class='mb-1 font-semibold text-gray-900'>Send Us a Message</h3>
+                      <p class='mt-1 text-gray-500'>We try to respond within 24 hours</p>
                     </div>
                   </div>
 
                   <div class='flex items-start gap-4'>
-                    <div class='shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center'>
-                      <FiMessageSquare class='w-6 h-6 text-blue-600' />
+                    <div class='flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                      <FiMessageSquare class='h-6 w-6 text-blue-600' />
                     </div>
                     <div>
-                      <h3 class='font-semibold text-gray-900 mb-1'>Feedback Welcome</h3>
+                      <h3 class='mb-1 font-semibold text-gray-900'>Feedback Welcome</h3>
                       <p class='text-gray-500'>
                         Your feedback helps us improve CoRATES for everyone.
                       </p>
@@ -110,58 +110,58 @@ export default function Contact() {
               </div>
 
               {/* Contact Form */}
-              <div class='bg-white rounded-2xl shadow-lg border border-gray-100 p-8'>
-                <h2 class='text-xl font-semibold text-gray-900 mb-6'>Send us a message</h2>
+              <div class='rounded-2xl border border-gray-100 bg-white p-8 shadow-lg'>
+                <h2 class='mb-6 text-xl font-semibold text-gray-900'>Send us a message</h2>
                 <form onSubmit={handleSubmit} class='space-y-6'>
                   <div>
-                    <label for='name' class='block text-sm font-medium text-gray-700 mb-2'>
+                    <label for='name' class='mb-2 block text-sm font-medium text-gray-700'>
                       Your Name
                     </label>
                     <div class='relative'>
-                      <FiUser class='absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+                      <FiUser class='absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400' />
                       <input
                         type='text'
                         id='name'
                         name='name'
                         required
-                        class='w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow'
+                        class='w-full rounded-lg border border-gray-200 py-3 pr-4 pl-10 transition-shadow focus:border-transparent focus:ring-2 focus:ring-blue-600 focus:outline-none'
                         placeholder='John Doe'
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label for='email' class='block text-sm font-medium text-gray-700 mb-2'>
+                    <label for='email' class='mb-2 block text-sm font-medium text-gray-700'>
                       Email Address
                     </label>
                     <div class='relative'>
-                      <FiMail class='absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+                      <FiMail class='absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400' />
                       <input
                         type='email'
                         id='email'
                         name='email'
                         required
-                        class='w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow'
+                        class='w-full rounded-lg border border-gray-200 py-3 pr-4 pl-10 transition-shadow focus:border-transparent focus:ring-2 focus:ring-blue-600 focus:outline-none'
                         placeholder='you@example.com'
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label for='subject' class='block text-sm font-medium text-gray-700 mb-2'>
+                    <label for='subject' class='mb-2 block text-sm font-medium text-gray-700'>
                       Subject
                     </label>
                     <input
                       type='text'
                       id='subject'
                       name='subject'
-                      class='w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow'
+                      class='w-full rounded-lg border border-gray-200 px-4 py-3 transition-shadow focus:border-transparent focus:ring-2 focus:ring-blue-600 focus:outline-none'
                       placeholder='What is this about?'
                     />
                   </div>
 
                   <div>
-                    <label for='message' class='block text-sm font-medium text-gray-700 mb-2'>
+                    <label for='message' class='mb-2 block text-sm font-medium text-gray-700'>
                       Message
                     </label>
                     <textarea
@@ -169,7 +169,7 @@ export default function Contact() {
                       name='message'
                       required
                       rows='5'
-                      class='w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow resize-none'
+                      class='w-full resize-none rounded-lg border border-gray-200 px-4 py-3 transition-shadow focus:border-transparent focus:ring-2 focus:ring-blue-600 focus:outline-none'
                       placeholder='Tell us how we can help...'
                     />
                   </div>
@@ -177,29 +177,29 @@ export default function Contact() {
                   <button
                     type='submit'
                     disabled={formState() === 'sending'}
-                    class='w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
+                    class='flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
                   >
                     {formState() === 'sending' ?
                       <>
-                        <FiLoader class='w-5 h-5 animate-spin' />
+                        <FiLoader class='h-5 w-5 animate-spin' />
                         Sending...
                       </>
                     : <>
-                        <FiSend class='w-5 h-5' />
+                        <FiSend class='h-5 w-5' />
                         Send Message
                       </>
                     }
                   </button>
 
                   {formState() === 'sent' && (
-                    <p class='text-center text-green-600 text-sm'>
+                    <p class='text-center text-sm text-green-600'>
                       Your message has been sent successfully. We will get back to you soon!
                     </p>
                   )}
 
                   {formState() === 'error' && (
-                    <div class='flex items-center justify-center gap-2 text-red-600 text-sm'>
-                      <FiAlertCircle class='w-4 h-4' />
+                    <div class='flex items-center justify-center gap-2 text-sm text-red-600'>
+                      <FiAlertCircle class='h-4 w-4' />
                       <p>{errorMessage()}</p>
                     </div>
                   )}

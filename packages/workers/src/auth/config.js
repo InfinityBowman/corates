@@ -169,7 +169,6 @@ export function createAuth(env, ctx) {
             })(),
           );
         }
-        return;
       },
     },
 
@@ -205,7 +204,6 @@ export function createAuth(env, ctx) {
         } else {
           console.log('[Auth] No ctx.waitUntil available, email will not be sent');
         }
-        return;
       },
     },
 

@@ -68,7 +68,7 @@ export default function GoogleDrivePickerModal(props) {
           <button
             type='button'
             onClick={() => props.onClose()}
-            class='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
+            class='rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
           >
             Cancel
           </button>

@@ -15,13 +15,13 @@ export function PrimaryButton(props) {
   return (
     <button
       type={props.type || 'submit'}
-      class='w-full py-2 sm:py-3 text-sm sm:text-base bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg sm:rounded-xl shadow transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
+      class='flex w-full items-center justify-center rounded-lg bg-blue-600 py-2 text-sm font-bold text-white shadow transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-xl sm:py-3 sm:text-base'
       disabled={props.disabled || props.loading}
       onClick={() => props.onClick?.()}
     >
       <AnimatedShow when={props.loading} fallback={props.children}>
         <div class='flex items-center'>
-          <AiOutlineLoading3Quarters class='animate-spin mr-2' size={22} />
+          <AiOutlineLoading3Quarters class='mr-2 animate-spin' size={22} />
           {props.loadingText || 'Loading...'}
         </div>
       </AnimatedShow>
@@ -41,7 +41,7 @@ export function SecondaryButton(props) {
   return (
     <button
       type={props.type || 'button'}
-      class='w-full py-2 sm:py-3 text-sm sm:text-base border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg sm:rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed'
+      class='w-full rounded-lg border border-gray-300 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-xl sm:py-3 sm:text-base'
       disabled={props.disabled}
       onClick={() => props.onClick?.()}
     >
@@ -61,7 +61,7 @@ export function AuthLink(props) {
   return (
     <a
       href={props.href}
-      class='text-blue-600 hover:underline font-semibold'
+      class='font-semibold text-blue-600 hover:underline'
       onClick={e => props.onClick?.(e)}
     >
       {props.children}

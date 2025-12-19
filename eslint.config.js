@@ -1,12 +1,23 @@
 import js from '@eslint/js';
 import solid from 'eslint-plugin-solid/configs/recommended';
+// import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 import * as tsParser from '@typescript-eslint/parser';
+import sonarjs from 'eslint-plugin-sonarjs';
 
 export default [
   js.configs.recommended,
   solid,
+  // eslintPluginUnicorn.configs.recommended,
+  // {
+  //   rules: {
+  //     'unicorn/better-regex': 'warn',
+  //   },
+  // },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
+    plugins: {
+      sonarjs,
+    },
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -16,8 +27,16 @@ export default [
           jsx: true,
         },
       },
+
       globals: {
         // Browser globals
+        HTMLDivElement: 'readonly',
+        HTMLInputElement: 'readonly',
+        HTMLTextAreaElement: 'readonly',
+        EventTarget: 'readonly',
+        HTMLSelectElement: 'readonly',
+        HTMLButtonElement: 'readonly',
+        HTMLLabelElement: 'readonly',
         window: 'readonly',
         document: 'readonly',
         navigator: 'readonly',
@@ -88,6 +107,7 @@ export default [
           caughtErrorsIgnorePattern: '^_',
         },
       ],
+      'sonarjs/cognitive-complexity': 'error',
     },
   },
   {
@@ -110,6 +130,7 @@ export default [
         afterAll: 'readonly',
       },
     },
+    rules: {},
   },
   {
     // Service worker configuration

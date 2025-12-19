@@ -116,13 +116,13 @@ export function FloatingPanel(props) {
         <div {...api().getPositionerProps()}>
           <div
             {...contentProps()}
-            class='bg-white rounded-lg shadow-2xl border border-gray-200 relative flex flex-col min-h-0'
+            class='relative flex min-h-0 flex-col rounded-lg border border-gray-200 bg-white shadow-2xl'
           >
             {/* Header with drag handle */}
             <div {...dragTriggerProps()}>
               <div
                 {...api().getHeaderProps()}
-                class='flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200 cursor-move select-none'
+                class='flex cursor-move items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-2 select-none'
               >
                 <h3 {...api().getTitleProps()} class='text-sm font-semibold text-gray-900'>
                   {props.title}
@@ -132,37 +132,37 @@ export function FloatingPanel(props) {
                     <Show when={showMinimize()}>
                       <button
                         {...api().getStageTriggerProps({ stage: 'minimized' })}
-                        class='p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded transition-colors'
+                        class='rounded p-1 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700'
                         title='Minimize'
                       >
-                        <AiOutlineMinus class='w-3.5 h-3.5' />
+                        <AiOutlineMinus class='h-3.5 w-3.5' />
                       </button>
                     </Show>
                     <Show when={showMaximize()}>
                       <button
                         {...api().getStageTriggerProps({ stage: 'maximized' })}
-                        class='p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded transition-colors'
+                        class='rounded p-1 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700'
                         title='Maximize'
                       >
-                        <FiMaximize2 class='w-3.5 h-3.5' />
+                        <FiMaximize2 class='h-3.5 w-3.5' />
                       </button>
                     </Show>
                     <Show when={showRestore()}>
                       <button
                         {...api().getStageTriggerProps({ stage: 'default' })}
-                        class='p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded transition-colors'
+                        class='rounded p-1 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700'
                         title='Restore'
                       >
-                        <FaSolidWindowRestore class='w-3.5 h-3.5' />
+                        <FaSolidWindowRestore class='h-3.5 w-3.5' />
                       </button>
                     </Show>
                     <Show when={showClose()}>
                       <button
                         {...api().getCloseTriggerProps()}
-                        class='p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors'
+                        class='rounded p-1 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600'
                         title='Close'
                       >
-                        <AiOutlineClose class='w-3.5 h-3.5' />
+                        <AiOutlineClose class='h-3.5 w-3.5' />
                       </button>
                     </Show>
                   </div>

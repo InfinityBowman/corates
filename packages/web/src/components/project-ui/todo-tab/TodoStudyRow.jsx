@@ -81,7 +81,7 @@ export default function TodoStudyRow(props) {
   };
 
   return (
-    <div class='bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors overflow-hidden'>
+    <div class='overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors hover:border-gray-300'>
       <Collapsible
         open={expanded()}
         onOpenChange={setExpanded}
@@ -93,22 +93,22 @@ export default function TodoStudyRow(props) {
           >
             {/* Chevron indicator (only if has PDFs) */}
             <Show when={hasPdfs()}>
-              <div class='shrink-0 p-1 -ml-1'>
+              <div class='-ml-1 shrink-0 p-1'>
                 <BiRegularChevronRight
-                  class={`w-5 h-5 text-gray-400 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
+                  class={`h-5 w-5 text-gray-400 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
                 />
               </div>
             </Show>
 
             {/* Study info */}
-            <div class='flex-1 min-w-0'>
+            <div class='min-w-0 flex-1'>
               <div class='flex items-center gap-2'>
-                <span class='font-medium text-gray-900 truncate'>{study().name}</span>
+                <span class='truncate font-medium text-gray-900'>{study().name}</span>
               </div>
               {/* Citation line - selectable */}
               <Show when={citationLine()}>
                 <p
-                  class='text-xs text-gray-500 truncate select-text cursor-text w-fit'
+                  class='w-fit cursor-text truncate text-xs text-gray-500 select-text'
                   data-selectable
                 >
                   {citationLine()}
@@ -125,7 +125,7 @@ export default function TodoStudyRow(props) {
             {/* Checklist type badge - selectable */}
             <Show when={checklist()}>
               <span
-                class='shrink-0 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 select-text cursor-text'
+                class='inline-flex shrink-0 cursor-text items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 select-text'
                 data-selectable
               >
                 {getChecklistMetadata(checklist().type)?.name || 'Checklist'}
@@ -135,7 +135,7 @@ export default function TodoStudyRow(props) {
             {/* Checklist status badge */}
             <Show when={checklist()}>
               <span
-                class={`shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium  select-text cursor-text ${getStatusStyle(checklist().status)}`}
+                class={`inline-flex shrink-0 cursor-text items-center rounded-full px-2.5 py-1 text-xs font-medium select-text ${getStatusStyle(checklist().status)}`}
                 data-selectable
               >
                 {checklist().status === 'in-progress' ?
@@ -150,7 +150,7 @@ export default function TodoStudyRow(props) {
             <Show when={checklist()}>
               <button
                 onClick={() => props.onOpenChecklist?.(checklist().id)}
-                class='shrink-0 px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors'
+                class='shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
               >
                 Open
               </button>
@@ -160,7 +160,7 @@ export default function TodoStudyRow(props) {
             <Show when={!checklist()}>
               <button
                 onClick={() => props.onToggleChecklistForm?.()}
-                class='shrink-0 px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors'
+                class='shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
               >
                 Select Checklist
               </button>
@@ -170,7 +170,7 @@ export default function TodoStudyRow(props) {
       >
         {/* Expanded PDF Section */}
         <Show when={hasPdfs()}>
-          <div class='border-t border-gray-100 px-4 py-3 space-y-2'>
+          <div class='space-y-2 border-t border-gray-100 px-4 py-3'>
             <For each={sortedPdfs()}>
               {pdf => (
                 <PdfListItem

@@ -36,13 +36,13 @@ export default function ChecklistsDashboard(props) {
   return (
     <div class='space-y-6'>
       {/* Header */}
-      <div class='flex justify-between items-center'>
+      <div class='flex items-center justify-between'>
         <div>
           <h1 class='text-2xl font-bold text-gray-900'>My Appraisals</h1>
-          <p class='text-gray-500 mt-1'>Create and manage appraisals locally on this device</p>
+          <p class='mt-1 text-gray-500'>Create and manage appraisals locally on this device</p>
         </div>
         <button
-          class='inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg gap-2'
+          class='inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg'
           onClick={() => navigate('/checklist')}
         >
           <span class='text-lg'>+</span>
@@ -52,16 +52,16 @@ export default function ChecklistsDashboard(props) {
 
       {/* Sign in prompt - only show when not logged in */}
       <Show when={!isLoggedIn()}>
-        <div class='bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between'>
+        <div class='flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-4'>
           <div>
-            <p class='text-blue-800 font-medium'>Want to collaborate with others?</p>
-            <p class='text-blue-600 text-sm'>
+            <p class='font-medium text-blue-800'>Want to collaborate with others?</p>
+            <p class='text-sm text-blue-600'>
               Sign in to create projects, invite team members, and sync across devices.
             </p>
           </div>
           <button
             onClick={() => navigate('/signin')}
-            class='px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors'
+            class='rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700'
           >
             Sign In
           </button>
@@ -74,11 +74,11 @@ export default function ChecklistsDashboard(props) {
           when={checklists().length > 0}
           fallback={
             <Show when={!loading()}>
-              <div class='col-span-full text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300'>
-                <div class='text-gray-500 mb-4'>No appraisals yet</div>
+              <div class='col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-white py-12 text-center'>
+                <div class='mb-4 text-gray-500'>No appraisals yet</div>
                 <button
                   onClick={() => navigate('/checklist')}
-                  class='text-blue-600 hover:text-blue-700 font-medium'
+                  class='font-medium text-blue-600 hover:text-blue-700'
                 >
                   Create your first appraisal
                 </button>
@@ -88,10 +88,10 @@ export default function ChecklistsDashboard(props) {
         >
           <For each={checklists()}>
             {checklist => (
-              <div class='bg-white border border-gray-200 rounded-lg shadow-sm p-6 hover:shadow-md hover:border-gray-300 transition-all duration-200 group relative'>
+              <div class='group relative rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 hover:border-gray-300 hover:shadow-md'>
                 {/* Local badge */}
                 <div class='absolute top-3 right-3'>
-                  <span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600'>
+                  <span class='inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600'>
                     Local
                   </span>
                 </div>
@@ -104,12 +104,12 @@ export default function ChecklistsDashboard(props) {
                     showEditIcon={true}
                     onSubmit={newName => updateChecklist(checklist.id, { name: newName })}
                   />
-                  <p class='text-gray-500 text-sm'>
+                  <p class='text-sm text-gray-500'>
                     {getChecklistMetadata(checklist.checklistType).name}
                   </p>
                 </div>
 
-                <div class='flex items-center justify-between text-xs text-gray-500 mb-4'>
+                <div class='mb-4 flex items-center justify-between text-xs text-gray-500'>
                   <span>
                     Updated{' '}
                     {new Date(checklist.updatedAt || checklist.createdAt).toLocaleDateString()}
@@ -119,13 +119,13 @@ export default function ChecklistsDashboard(props) {
                 <div class='flex gap-2'>
                   <button
                     onClick={() => openChecklist(checklist.id)}
-                    class='flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors font-medium'
+                    class='flex-1 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700'
                   >
                     Open
                   </button>
                   <button
                     onClick={e => handleDelete(e, checklist.id)}
-                    class='p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors'
+                    class='rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600'
                     title='Delete checklist'
                   >
                     <FiTrash2 class='h-5 w-5' />

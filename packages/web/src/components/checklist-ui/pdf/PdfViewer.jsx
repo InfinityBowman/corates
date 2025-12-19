@@ -43,7 +43,7 @@ export default function PdfViewer(props) {
   };
 
   return (
-    <div class='flex flex-col h-full bg-gray-100' ref={setContainerRef}>
+    <div class='flex h-full flex-col bg-gray-100' ref={setContainerRef}>
       <PdfToolbar
         readOnly={props.readOnly}
         allowDelete={props.allowDelete}
@@ -83,7 +83,7 @@ export default function PdfViewer(props) {
 
         {/* PDF Pages - Render all pages in a continuous scroll */}
         <Show when={pdf.libReady() && !pdf.loading() && !pdf.error() && pdf.pdfDoc()}>
-          <div class='flex flex-col items-center gap-8 min-w-fit pt-2'>
+          <div class='flex min-w-fit flex-col items-center gap-8 pt-2'>
             {/* Use For with docId-based keys to force DOM recreation when PDF changes */}
             <For
               each={Array.from({ length: pdf.totalPages() }, (_, i) => `${pdf.docId()}-${i + 1}`)}
@@ -93,7 +93,7 @@ export default function PdfViewer(props) {
                 return (
                   <div ref={el => pdf.setPageRef(pageNum, el)} class='relative'>
                     {/* Page number label */}
-                    <div class='text-xs text-gray-500 mb-1'>
+                    <div class='mb-1 text-xs text-gray-500'>
                       Page {pageNum} of {pdf.totalPages()}
                     </div>
                     <div class='relative shadow-lg'>

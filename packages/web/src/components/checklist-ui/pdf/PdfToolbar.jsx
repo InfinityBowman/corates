@@ -67,10 +67,10 @@ export default function PdfToolbar(props) {
   }
 
   return (
-    <div class='bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between gap-4 shrink-0'>
+    <div class='flex shrink-0 items-center justify-between gap-4 border-b border-gray-200 bg-white px-4 py-2'>
       <confirmRemovePdf.ConfirmDialogComponent />
       {/* File upload and info */}
-      <div class='flex items-center gap-2 min-w-0'>
+      <div class='flex min-w-0 items-center gap-2'>
         <Show when={!props.readOnly && !props.pdfDoc}>
           <input
             ref={props.fileInputRef}
@@ -82,9 +82,9 @@ export default function PdfToolbar(props) {
           <button
             onClick={() => props.onOpenFile?.()}
             disabled={!props.libReady}
-            class='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shrink-0'
+            class='inline-flex shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400'
           >
-            <AiOutlineUpload class='w-4 h-4' />
+            <AiOutlineUpload class='h-4 w-4' />
             Open PDF
           </button>
         </Show>
@@ -99,8 +99,8 @@ export default function PdfToolbar(props) {
         </Show>
 
         {/* Show file name if PDF is loaded (only when not using multi-PDF selector) */}
-        <Show when={props.fileName && !(props.pdfs?.length > 1)}>
-          <span class='text-sm text-gray-600 truncate max-w-40' title={props.fileName}>
+        <Show when={props.fileName && (props.pdfs?.length ?? 0) <= 1}>
+          <span class='max-w-40 truncate text-sm text-gray-600' title={props.fileName}>
             {props.fileName}
           </span>
         </Show>
@@ -120,10 +120,10 @@ export default function PdfToolbar(props) {
 
               if (didConfirm) props.onClearPdf?.();
             }}
-            class='p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors shrink-0'
+            class='shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
             title='Clear PDF'
           >
-            <AiOutlineClose class='w-4 h-4' />
+            <AiOutlineClose class='h-4 w-4' />
           </button>
         </Show>
       </div>
@@ -134,10 +134,10 @@ export default function PdfToolbar(props) {
           <button
             onClick={() => props.onPrevPage?.()}
             disabled={props.currentPage <= 1}
-            class='p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+            class='rounded p-1.5 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'
             title='Scroll to previous page'
           >
-            <BiRegularChevronLeft class='w-5 h-5' />
+            <BiRegularChevronLeft class='h-5 w-5' />
           </button>
           <form onSubmit={handlePageSubmit} class='flex items-center gap-1 whitespace-nowrap'>
             <input
@@ -146,7 +146,7 @@ export default function PdfToolbar(props) {
               value={pageInput()}
               onInput={e => setPageInput(e.target.value)}
               placeholder={String(props.currentPage)}
-              class='w-10 text-center text-sm text-gray-600 border border-gray-200 rounded px-1 py-0.5 focus:outline-none focus:border-blue-400'
+              class='w-10 rounded border border-gray-200 px-1 py-0.5 text-center text-sm text-gray-600 focus:border-blue-400 focus:outline-none'
               title='Enter page number'
             />
             <span class='text-sm text-gray-600'>/ {props.totalPages}</span>
@@ -154,10 +154,10 @@ export default function PdfToolbar(props) {
           <button
             onClick={() => props.onNextPage?.()}
             disabled={props.currentPage >= props.totalPages}
-            class='p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+            class='rounded p-1.5 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'
             title='Scroll to next page'
           >
-            <BiRegularChevronRight class='w-5 h-5' />
+            <BiRegularChevronRight class='h-5 w-5' />
           </button>
         </div>
 
@@ -166,10 +166,10 @@ export default function PdfToolbar(props) {
           <button
             onClick={() => props.onZoomOut?.()}
             disabled={props.scale <= 0.5}
-            class='p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+            class='rounded p-1.5 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'
             title='Zoom out'
           >
-            <AiOutlineMinus class='w-5 h-5' />
+            <AiOutlineMinus class='h-5 w-5' />
           </button>
           <form onSubmit={handleZoomSubmit} class='flex items-center'>
             <input
@@ -178,24 +178,24 @@ export default function PdfToolbar(props) {
               value={zoomInput()}
               onInput={e => setZoomInput(e.target.value)}
               placeholder={`${Math.round(props.scale * 100)}%`}
-              class='w-14 text-center text-sm text-gray-600 border border-gray-200 rounded px-1 py-0.5 focus:outline-none focus:border-blue-400'
+              class='w-14 rounded border border-gray-200 px-1 py-0.5 text-center text-sm text-gray-600 focus:border-blue-400 focus:outline-none'
               title='Enter zoom percentage (50-300)'
             />
           </form>
           <button
             onClick={() => props.onZoomIn?.()}
             disabled={props.scale >= 3.0}
-            class='p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+            class='rounded p-1.5 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'
             title='Zoom in'
           >
-            <AiOutlinePlus class='w-5 h-5' />
+            <AiOutlinePlus class='h-5 w-5' />
           </button>
           <button
             onClick={() => props.onFitToWidth?.()}
-            class='p-1.5 rounded hover:bg-gray-100 transition-colors'
+            class='rounded p-1.5 transition-colors hover:bg-gray-100'
             title='Fit to width'
           >
-            <BiRegularExpandHorizontal class='w-5 h-5' />
+            <BiRegularExpandHorizontal class='h-5 w-5' />
           </button>
         </div>
       </Show>

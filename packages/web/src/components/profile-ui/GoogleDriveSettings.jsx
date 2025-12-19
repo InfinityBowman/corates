@@ -61,8 +61,8 @@ export default function GoogleDriveSettings() {
   return (
     <div class='flex items-center justify-between'>
       <div class='flex items-center gap-3'>
-        <div class='p-2 bg-gray-100 rounded-lg'>
-          <img src='/logos/drive.svg' alt='Google Drive' class='w-5 h-5' />
+        <div class='rounded-lg bg-gray-100 p-2'>
+          <img src='/logos/drive.svg' alt='Google Drive' class='h-5 w-5' />
         </div>
         <div>
           <p class='font-medium text-gray-900'>Google Drive</p>
@@ -84,9 +84,9 @@ export default function GoogleDriveSettings() {
               type='button'
               onClick={handleConnect}
               disabled={connecting()}
-              class='inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50'
+              class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50'
             >
-              <img src='/logos/drive.svg' alt='Google Drive' class='w-4 h-4' />
+              <img src='/logos/drive.svg' alt='Google Drive' class='h-4 w-4' />
               {connecting() ? 'Connecting...' : 'Connect'}
             </button>
           }
@@ -96,9 +96,9 @@ export default function GoogleDriveSettings() {
               type='button'
               onClick={handleDisconnect}
               disabled={disconnecting()}
-              class='inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50'
+              class='inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50'
             >
-              <FiX class='w-4 h-4' />
+              <FiX class='h-4 w-4' />
               {disconnecting() ? 'Disconnecting...' : 'Disconnect'}
             </button>
           </div>

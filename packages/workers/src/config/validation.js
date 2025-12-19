@@ -170,7 +170,8 @@ export function validateRequest(schema) {
       // Attach validated data to context
       c.set('validatedBody', result.data);
       await next();
-    } catch (_error) {
+    } catch (error) {
+      console.warn('Body validation error:', error.message);
       return c.json(
         {
           error: 'Invalid JSON body',

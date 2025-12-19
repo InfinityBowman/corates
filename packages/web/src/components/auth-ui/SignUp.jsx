@@ -89,13 +89,13 @@ export default function SignUp() {
   }
 
   return (
-    <div class='h-full bg-blue-50 flex items-center justify-center px-4 py-8 sm:py-12'>
-      <div class='w-full max-w-md sm:max-w-xl bg-white rounded-xl sm:rounded-3xl shadow-2xl p-6 sm:p-12 border border-gray-100'>
-        <div class='text-center mb-4 sm:mb-6'>
-          <h2 class='text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2'>
+    <div class='flex h-full items-center justify-center bg-blue-50 px-4 py-8 sm:py-12'>
+      <div class='w-full max-w-md rounded-xl border border-gray-100 bg-white p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
+        <div class='mb-4 text-center sm:mb-6'>
+          <h2 class='mb-1 text-xl font-bold text-gray-900 sm:mb-2 sm:text-2xl'>
             Create an Account
           </h2>
-          <p class='text-gray-500 text-xs sm:text-sm'>Get started with CoRATES</p>
+          <p class='text-xs text-gray-500 sm:text-sm'>Get started with CoRATES</p>
         </div>
 
         {/* Social providers */}
@@ -123,7 +123,7 @@ export default function SignUp() {
           description="We'll send you a link to create your account - no password needed."
         />
 
-        <p class='text-center text-xs text-gray-400 mt-6'>
+        <p class='mt-6 text-center text-xs text-gray-400'>
           By continuing, you agree to our{' '}
           <a
             href={`${LANDING_URL}/terms`}
@@ -145,7 +145,7 @@ export default function SignUp() {
           .
         </p>
 
-        <div class='text-center text-xs sm:text-sm text-gray-500 mt-4 pt-4 border-t border-gray-100'>
+        <div class='mt-4 border-t border-gray-100 pt-4 text-center text-xs text-gray-500 sm:text-sm'>
           Already have an account?{' '}
           <AuthLink
             href='/signin'

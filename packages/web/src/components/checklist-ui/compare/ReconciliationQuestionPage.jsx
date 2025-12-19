@@ -147,10 +147,10 @@ function SingleQuestionPage(props) {
   const isCritical = () => props.reviewer1Answers?.critical || props.reviewer2Answers?.critical;
 
   return (
-    <div class='bg-white rounded-lg shadow-lg overflow-hidden'>
+    <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
       {/* Question Header */}
       <div
-        class={`p-4 ${props.isAgreement ? 'bg-green-50 border-b border-green-200' : 'bg-amber-50 border-b border-amber-200'}`}
+        class={`p-4 ${props.isAgreement ? 'border-b border-green-200 bg-green-50' : 'border-b border-amber-200 bg-amber-50'}`}
       >
         <h2 class='text-lg font-semibold text-gray-900'>
           {question()?.text}

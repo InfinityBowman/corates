@@ -481,22 +481,25 @@ function createBetterAuthStore() {
     }
   }
 
+  // Internal helper to verify TOTP code (used for both setup verification and sign-in)
+  async function _verifyTotpCode(code) {
+    setAuthError(null);
+    const { data, error } = await authClient.twoFactor.verifyTotp({
+      code,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    broadcastAuthChange();
+    return data;
+  }
+
   // Verify and complete 2FA setup with code from authenticator app
   async function verifyTwoFactorSetup(code) {
     try {
-      setAuthError(null);
-      const { data, error } = await authClient.twoFactor.verifyTotp({
-        code,
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Notify other tabs of auth change (2FA enabled)
-      broadcastAuthChange();
-
-      return data;
+      return await _verifyTotpCode(code);
     } catch (err) {
       setAuthError(err.message);
       throw err;
@@ -528,19 +531,7 @@ function createBetterAuthStore() {
   // Verify 2FA code during sign-in
   async function verifyTwoFactor(code) {
     try {
-      setAuthError(null);
-      const { data, error } = await authClient.twoFactor.verifyTotp({
-        code,
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Notify other tabs of auth change (2FA completed)
-      broadcastAuthChange();
-
-      return data;
+      return await _verifyTotpCode(code);
     } catch (err) {
       setAuthError(err.message);
       throw err;

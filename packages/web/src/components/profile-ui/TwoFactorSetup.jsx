@@ -170,7 +170,7 @@ export default function TwoFactorSetup() {
       {/* Loading state */}
       <Show when={loading() && !setupMode() && !disableMode()}>
         <div class='flex items-center justify-center py-4'>
-          <div class='w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin' />
+          <div class='h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent' />
         </div>
       </Show>
 
@@ -178,8 +178,8 @@ export default function TwoFactorSetup() {
       <Show when={!loading() && !setupMode() && !disableMode()}>
         {/* Needs password message - shown when user tried to enable but doesn't have password */}
         <Show when={needsPassword()}>
-          <div class='flex items-start space-x-3 p-3 mb-4 bg-amber-50 rounded-lg border border-amber-200'>
-            <FiInfo class='w-5 h-5 text-amber-600 mt-0.5 shrink-0' />
+          <div class='mb-4 flex items-start space-x-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
+            <FiInfo class='mt-0.5 h-5 w-5 shrink-0 text-amber-600' />
             <div class='text-sm text-amber-800'>
               <p class='font-medium'>Password required</p>
               <p class='mt-1'>
@@ -193,20 +193,20 @@ export default function TwoFactorSetup() {
         <div class='flex items-center justify-between'>
           <div>
             <div class='flex items-center space-x-2'>
-              <FiShield class={`w-5 h-5 ${isEnabled() ? 'text-green-600' : 'text-gray-400'}`} />
+              <FiShield class={`h-5 w-5 ${isEnabled() ? 'text-green-600' : 'text-gray-400'}`} />
               <p class='font-medium text-gray-900'>Two-Factor Authentication</p>
               <Show when={isEnabled()}>
-                <span class='px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full'>
+                <span class='rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700'>
                   Enabled
                 </span>
               </Show>
               <Show when={!isEnabled()}>
                 <Tooltip content="Requires a password. Add one above if you don't have one.">
-                  <FiHelpCircle class='w-4 h-4 text-gray-400 cursor-help' />
+                  <FiHelpCircle class='h-4 w-4 cursor-help text-gray-400' />
                 </Tooltip>
               </Show>
             </div>
-            <p class='text-sm text-gray-500 mt-1'>
+            <p class='mt-1 text-sm text-gray-500'>
               {isEnabled() ?
                 'Your account is protected with an authenticator app.'
               : 'Add an extra layer of security to your account.'}
@@ -217,7 +217,7 @@ export default function TwoFactorSetup() {
             fallback={
               <button
                 onClick={handleStartSetup}
-                class='px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition'
+                class='rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700'
               >
                 Enable 2FA
               </button>
@@ -225,7 +225,7 @@ export default function TwoFactorSetup() {
           >
             <button
               onClick={handleStartDisable}
-              class='px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition'
+              class='rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200'
             >
               Disable 2FA
             </button>
@@ -235,23 +235,23 @@ export default function TwoFactorSetup() {
 
       {/* Setup Mode */}
       <Show when={setupMode()}>
-        <div class='border border-gray-200 rounded-lg p-4 space-y-4'>
+        <div class='space-y-4 rounded-lg border border-gray-200 p-4'>
           <div class='flex items-center justify-between'>
             <div class='flex items-center space-x-2'>
               <h3 class='font-medium text-gray-900'>Set Up Two-Factor Authentication</h3>
               <Tooltip content="Requires a password. Add one above if you don't have one.">
-                <FiHelpCircle class='w-4 h-4 text-gray-400 cursor-help' />
+                <FiHelpCircle class='h-4 w-4 cursor-help text-gray-400' />
               </Tooltip>
             </div>
             <button onClick={handleCancel} class='text-gray-400 hover:text-gray-600'>
-              <FiX class='w-5 h-5' />
+              <FiX class='h-5 w-5' />
             </button>
           </div>
 
           {/* Needs password message */}
           <Show when={needsPassword()}>
-            <div class='flex items-start space-x-3 p-3 bg-amber-50 rounded-lg border border-amber-200'>
-              <FiInfo class='w-5 h-5 text-amber-600 mt-0.5' />
+            <div class='flex items-start space-x-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
+              <FiInfo class='mt-0.5 h-5 w-5 text-amber-600' />
               <div class='text-sm text-amber-800'>
                 <p class='font-medium'>Password required</p>
                 <p class='mt-1'>
@@ -265,8 +265,8 @@ export default function TwoFactorSetup() {
           {/* Step 0: Password */}
           <Show when={setupStep() === 0}>
             <form onSubmit={handlePasswordSubmit} class='space-y-4'>
-              <div class='flex items-start space-x-3 p-3 bg-blue-50 rounded-lg'>
-                <FiLock class='w-5 h-5 text-blue-600 mt-0.5' />
+              <div class='flex items-start space-x-3 rounded-lg bg-blue-50 p-3'>
+                <FiLock class='mt-0.5 h-5 w-5 text-blue-600' />
                 <div class='text-sm text-blue-800'>
                   <p class='font-medium'>Verify your identity</p>
                   <p class='mt-1'>Enter your password to enable two-factor authentication.</p>
@@ -296,14 +296,14 @@ export default function TwoFactorSetup() {
                 <button
                   type='button'
                   onClick={handleCancel}
-                  class='flex-1 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition'
+                  class='flex-1 rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200'
                 >
                   Cancel
                 </button>
                 <button
                   type='submit'
                   disabled={loading() || !password()}
-                  class='flex-1 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition disabled:opacity-50'
+                  class='flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50'
                 >
                   {loading() ? 'Verifying...' : 'Continue'}
                 </button>
@@ -314,8 +314,8 @@ export default function TwoFactorSetup() {
           {/* Step 1: QR Code */}
           <Show when={setupStep() === 1}>
             <div class='space-y-4'>
-              <div class='flex items-start space-x-3 p-3 bg-blue-50 rounded-lg'>
-                <FiSmartphone class='w-5 h-5 text-blue-600 mt-0.5' />
+              <div class='flex items-start space-x-3 rounded-lg bg-blue-50 p-3'>
+                <FiSmartphone class='mt-0.5 h-5 w-5 text-blue-600' />
                 <div class='text-sm text-blue-800'>
                   <p class='font-medium'>Step 1: Scan QR Code</p>
                   <p class='mt-1'>
@@ -327,34 +327,34 @@ export default function TwoFactorSetup() {
 
               {/* QR Code - Generated client-side for security */}
               <div class='flex justify-center'>
-                <div class='p-4 bg-white border border-gray-200 rounded-lg'>
+                <div class='rounded-lg border border-gray-200 bg-white p-4'>
                   <QRCode data={totpUri()} size={192} alt='2FA QR Code' />
                 </div>
               </div>
 
               {/* Manual entry */}
               <div class='text-center'>
-                <p class='text-sm text-gray-500 mb-2'>Or enter this code manually:</p>
+                <p class='mb-2 text-sm text-gray-500'>Or enter this code manually:</p>
                 <div class='flex items-center justify-center space-x-2'>
-                  <code class='px-3 py-1.5 bg-gray-100 rounded text-sm font-mono text-gray-900'>
+                  <code class='rounded bg-gray-100 px-3 py-1.5 font-mono text-sm text-gray-900'>
                     {secret()}
                   </code>
                   <button
                     onClick={copySecret}
-                    class='p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded'
+                    class='rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                     title='Copy to clipboard'
                   >
-                    <FiCopy class='w-4 h-4' />
+                    <FiCopy class='h-4 w-4' />
                   </button>
                 </div>
                 <Show when={copied()}>
-                  <p class='text-xs text-green-600 mt-1'>Copied!</p>
+                  <p class='mt-1 text-xs text-green-600'>Copied!</p>
                 </Show>
               </div>
 
               <button
                 onClick={() => setSetupStep(2)}
-                class='w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition'
+                class='w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700'
               >
                 Continue
               </button>
@@ -364,8 +364,8 @@ export default function TwoFactorSetup() {
           {/* Step 2: Verify */}
           <Show when={setupStep() === 2}>
             <form onSubmit={handleVerifySetup} class='space-y-4'>
-              <div class='flex items-start space-x-3 p-3 bg-blue-50 rounded-lg'>
-                <FiShield class='w-5 h-5 text-blue-600 mt-0.5' />
+              <div class='flex items-start space-x-3 rounded-lg bg-blue-50 p-3'>
+                <FiShield class='mt-0.5 h-5 w-5 text-blue-600' />
                 <div class='text-sm text-blue-800'>
                   <p class='font-medium'>Step 2: Verify Setup</p>
                   <p class='mt-1'>Enter the 6-digit code from your authenticator app to verify.</p>
@@ -373,7 +373,7 @@ export default function TwoFactorSetup() {
               </div>
 
               <div>
-                <label class='block text-sm font-medium text-gray-700 mb-1'>
+                <label class='mb-1 block text-sm font-medium text-gray-700'>
                   Verification Code
                 </label>
                 <input
@@ -383,7 +383,7 @@ export default function TwoFactorSetup() {
                   maxLength='6'
                   value={verificationCode()}
                   onInput={e => setVerificationCode(e.target.value.replace(/\D/g, ''))}
-                  class='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-center font-mono text-lg tracking-widest'
+                  class='w-full rounded-md border border-gray-300 px-3 py-2 text-center font-mono text-lg tracking-widest shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none'
                   placeholder='000000'
                   disabled={loading()}
                 />
@@ -393,14 +393,14 @@ export default function TwoFactorSetup() {
                 <button
                   type='button'
                   onClick={() => setSetupStep(1)}
-                  class='flex-1 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition'
+                  class='flex-1 rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200'
                 >
                   Back
                 </button>
                 <button
                   type='submit'
                   disabled={loading() || verificationCode().length !== 6}
-                  class='flex-1 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition disabled:opacity-50'
+                  class='flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50'
                 >
                   {loading() ? 'Verifying...' : 'Verify'}
                 </button>
@@ -411,8 +411,8 @@ export default function TwoFactorSetup() {
           {/* Step 3: Backup Codes */}
           <Show when={setupStep() === 3}>
             <div class='space-y-4'>
-              <div class='flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg'>
-                <FiShield class='w-5 h-5 text-yellow-600 mt-0.5' />
+              <div class='flex items-start space-x-3 rounded-lg bg-yellow-50 p-3'>
+                <FiShield class='mt-0.5 h-5 w-5 text-yellow-600' />
                 <div class='text-sm text-yellow-800'>
                   <p class='font-medium'>Save Your Backup Codes</p>
                   <p class='mt-1'>
@@ -422,11 +422,11 @@ export default function TwoFactorSetup() {
                 </div>
               </div>
 
-              <div class='bg-gray-50 rounded-lg p-4'>
+              <div class='rounded-lg bg-gray-50 p-4'>
                 <div class='grid grid-cols-2 gap-2'>
                   <For each={backupCodes()}>
                     {code => (
-                      <code class='px-2 py-1 bg-white border border-gray-200 rounded text-sm font-mono text-center'>
+                      <code class='rounded border border-gray-200 bg-white px-2 py-1 text-center font-mono text-sm'>
                         {code}
                       </code>
                     )}
@@ -434,16 +434,16 @@ export default function TwoFactorSetup() {
                 </div>
                 <button
                   onClick={copyBackupCodes}
-                  class='mt-3 w-full flex items-center justify-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md transition'
+                  class='mt-3 flex w-full items-center justify-center space-x-2 rounded-md px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-100'
                 >
-                  <FiCopy class='w-4 h-4' />
+                  <FiCopy class='h-4 w-4' />
                   <span>{copied() ? 'Copied!' : 'Copy all codes'}</span>
                 </button>
               </div>
 
               <button
                 onClick={handleCompleteSetup}
-                class='w-full px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition'
+                class='w-full rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700'
               >
                 I've Saved My Backup Codes
               </button>
@@ -454,18 +454,18 @@ export default function TwoFactorSetup() {
 
       {/* Disable Mode */}
       <Show when={disableMode()}>
-        <div class='border border-gray-200 rounded-lg p-4 space-y-4'>
+        <div class='space-y-4 rounded-lg border border-gray-200 p-4'>
           <div class='flex items-center justify-between'>
             <h3 class='font-medium text-gray-900'>Disable Two-Factor Authentication</h3>
             <button onClick={handleCancel} class='text-gray-400 hover:text-gray-600'>
-              <FiX class='w-5 h-5' />
+              <FiX class='h-5 w-5' />
             </button>
           </div>
 
           {/* Needs password message */}
           <Show when={needsPassword()}>
-            <div class='flex items-start space-x-3 p-3 bg-amber-50 rounded-lg border border-amber-200'>
-              <FiInfo class='w-5 h-5 text-amber-600 mt-0.5' />
+            <div class='flex items-start space-x-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
+              <FiInfo class='mt-0.5 h-5 w-5 text-amber-600' />
               <div class='text-sm text-amber-800'>
                 <p class='font-medium'>Password required</p>
                 <p class='mt-1'>
@@ -476,8 +476,8 @@ export default function TwoFactorSetup() {
             </div>
           </Show>
 
-          <div class='flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg'>
-            <FiShield class='w-5 h-5 text-yellow-600 mt-0.5' />
+          <div class='flex items-start space-x-3 rounded-lg bg-yellow-50 p-3'>
+            <FiShield class='mt-0.5 h-5 w-5 text-yellow-600' />
             <div class='text-sm text-yellow-800'>
               <p class='font-medium'>Are you sure?</p>
               <p class='mt-1'>
@@ -488,12 +488,12 @@ export default function TwoFactorSetup() {
 
           <form onSubmit={handleDisable} class='space-y-4'>
             <div>
-              <label class='block text-sm font-medium text-gray-700 mb-1'>Password</label>
+              <label class='mb-1 block text-sm font-medium text-gray-700'>Password</label>
               <input
                 type='password'
                 value={password()}
                 onInput={e => setPassword(e.target.value)}
-                class='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500'
+                class='w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none'
                 placeholder='Enter your password'
                 disabled={loading()}
               />
@@ -503,14 +503,14 @@ export default function TwoFactorSetup() {
               <button
                 type='button'
                 onClick={handleCancel}
-                class='flex-1 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition'
+                class='flex-1 rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200'
               >
                 Cancel
               </button>
               <button
                 type='submit'
                 disabled={loading() || !password()}
-                class='flex-1 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition disabled:opacity-50'
+                class='flex-1 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50'
               >
                 {loading() ? 'Disabling...' : 'Disable 2FA'}
               </button>

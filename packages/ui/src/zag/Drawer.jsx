@@ -79,7 +79,7 @@ export function Drawer(props) {
         <Show when={showBackdrop()}>
           <div
             {...api().getBackdropProps()}
-            class='fixed inset-0 bg-black/50 z-50 transition-opacity animate-fade-in'
+            class='animate-fade-in fixed inset-0 z-50 bg-black/50 transition-opacity'
           />
         </Show>
         {/* Positioner - full height, aligned to side */}
@@ -87,16 +87,16 @@ export function Drawer(props) {
           {/* Content - slides in from side */}
           <div
             {...api().getContentProps()}
-            class={`bg-white shadow-2xl h-full flex flex-col max-w-full ${getSizeClass()} ${getAnimationClasses()}`}
+            class={`flex h-full max-w-full flex-col bg-white shadow-2xl ${getSizeClass()} ${getAnimationClasses()}`}
           >
             {/* Header */}
             <Show when={showHeader()}>
-              <div class='flex items-center justify-between px-4 py-3 border-b border-gray-200 shrink-0'>
+              <div class='flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3'>
                 <div class='min-w-0 flex-1'>
                   <Show when={title()}>
                     <h2
                       {...api().getTitleProps()}
-                      class='text-lg font-semibold text-gray-900 truncate'
+                      class='truncate text-lg font-semibold text-gray-900'
                     >
                       {title()}
                     </h2>
@@ -104,7 +104,7 @@ export function Drawer(props) {
                   <Show when={description()}>
                     <p
                       {...api().getDescriptionProps()}
-                      class='mt-0.5 text-sm text-gray-500 truncate'
+                      class='mt-0.5 truncate text-sm text-gray-500'
                     >
                       {description()}
                     </p>
@@ -112,9 +112,9 @@ export function Drawer(props) {
                 </div>
                 <button
                   {...api().getCloseTriggerProps()}
-                  class='ml-4 p-1.5 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors shrink-0'
+                  class='ml-4 shrink-0 rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
                 >
-                  <FiX class='w-5 h-5' />
+                  <FiX class='h-5 w-5' />
                 </button>
               </div>
             </Show>

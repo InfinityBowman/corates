@@ -71,10 +71,10 @@ export default function ToDoTab() {
         when={myStudies().length > 0}
         fallback={
           <Show when={hasData()}>
-            <div class='text-center py-16'>
-              <BsListTask class='w-12 h-12 text-gray-300 mx-auto mb-4' />
-              <h3 class='text-lg font-medium text-gray-900 mb-2'>To Do</h3>
-              <p class='text-gray-500 max-w-md mx-auto'>
+            <div class='py-16 text-center'>
+              <BsListTask class='mx-auto mb-4 h-12 w-12 text-gray-300' />
+              <h3 class='mb-2 text-lg font-medium text-gray-900'>To Do</h3>
+              <p class='mx-auto max-w-md text-gray-500'>
                 Studies assigned to you will appear here. Complete your appraisals to move them to
                 the next stage.
               </p>

@@ -125,10 +125,10 @@ export default function UserTable(props) {
     <>
       {/* Error Toast */}
       <Show when={error()}>
-        <div class='mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center justify-between'>
+        <div class='mx-6 mt-4 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
           <span>{error()}</span>
           <button onClick={() => setError(null)} class='text-red-500 hover:text-red-700'>
-            <FiXCircle class='w-4 h-4' />
+            <FiXCircle class='h-4 w-4' />
           </button>
         </div>
       </Show>
@@ -136,23 +136,23 @@ export default function UserTable(props) {
       <div class='overflow-x-auto'>
         <table class='w-full'>
           <thead>
-            <tr class='bg-gray-50 border-b border-gray-200'>
-              <th class='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+            <tr class='border-b border-gray-200 bg-gray-50'>
+              <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
                 User
               </th>
-              <th class='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
                 Email
               </th>
-              <th class='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
                 Providers
               </th>
-              <th class='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
                 Status
               </th>
-              <th class='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
                 Joined
               </th>
-              <th class='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th class='px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase'>
                 Actions
               </th>
             </tr>
@@ -175,7 +175,7 @@ export default function UserTable(props) {
                       <Avatar
                         src={user.avatarUrl || user.image}
                         name={user.displayName || user.name}
-                        class='w-8 h-8'
+                        class='h-8 w-8'
                       />
                       <div>
                         <p class='font-medium text-gray-900'>
@@ -191,7 +191,7 @@ export default function UserTable(props) {
                     <div class='flex items-center space-x-2'>
                       <span class='text-sm text-gray-600'>{user.email}</span>
                       <Show when={user.emailVerified}>
-                        <FiCheckCircle class='w-4 h-4 text-green-500' title='Email verified' />
+                        <FiCheckCircle class='h-4 w-4 text-green-500' title='Email verified' />
                       </Show>
                     </div>
                   </td>
@@ -202,16 +202,16 @@ export default function UserTable(props) {
                           const info = PROVIDER_INFO[provider];
                           return (
                             <Tooltip content={info?.name || provider}>
-                              <div class='w-5 h-5 flex items-center justify-center'>
+                              <div class='flex h-5 w-5 items-center justify-center'>
                                 <Show
                                   when={info?.icon}
-                                  fallback={<FiMail class='w-4 h-4 text-gray-500' />}
+                                  fallback={<FiMail class='h-4 w-4 text-gray-500' />}
                                 >
                                   <img
                                     src={info?.icon}
                                     alt={info?.name || provider}
                                     title={info?.name || provider}
-                                    class='w-4 h-4'
+                                    class='h-4 w-4'
                                   />
                                 </Show>
                               </div>
@@ -228,12 +228,12 @@ export default function UserTable(props) {
                     <Show
                       when={user.banned}
                       fallback={
-                        <span class='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'>
+                        <span class='inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800'>
                           Active
                         </span>
                       }
                     >
-                      <span class='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800'>
+                      <span class='inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800'>
                         Banned
                       </span>
                     </Show>
@@ -254,15 +254,15 @@ export default function UserTable(props) {
                             setActionMenuOpen(user.id);
                           }
                         }}
-                        class='p-2 rounded-lg hover:bg-gray-100'
+                        class='rounded-lg p-2 hover:bg-gray-100'
                       >
-                        <FiMoreVertical class='w-4 h-4 text-gray-500' />
+                        <FiMoreVertical class='h-4 w-4 text-gray-500' />
                       </button>
 
                       {/* Action Menu */}
                       <Show when={actionMenuOpen() === user.id}>
                         <div
-                          class='fixed w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50'
+                          class='fixed z-50 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg'
                           style={{
                             top: `${menuPosition().top}px`,
                             right: `${menuPosition().right}px`,
@@ -270,9 +270,9 @@ export default function UserTable(props) {
                         >
                           <button
                             onClick={() => handleAction('impersonate', user)}
-                            class='w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2'
+                            class='flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100'
                           >
-                            <FiLogIn class='w-4 h-4' />
+                            <FiLogIn class='h-4 w-4' />
                             <span>Impersonate</span>
                           </button>
                           <Show
@@ -280,34 +280,34 @@ export default function UserTable(props) {
                             fallback={
                               <button
                                 onClick={() => handleAction('ban', user)}
-                                class='w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2'
+                                class='flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100'
                               >
-                                <FiUserX class='w-4 h-4' />
+                                <FiUserX class='h-4 w-4' />
                                 <span>Ban User</span>
                               </button>
                             }
                           >
                             <button
                               onClick={() => handleAction('unban', user)}
-                              class='w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2'
+                              class='flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100'
                             >
-                              <FiUserCheck class='w-4 h-4' />
+                              <FiUserCheck class='h-4 w-4' />
                               <span>Unban User</span>
                             </button>
                           </Show>
                           <button
                             onClick={() => handleAction('revoke', user)}
-                            class='w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2'
+                            class='flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100'
                           >
-                            <FiClock class='w-4 h-4' />
+                            <FiClock class='h-4 w-4' />
                             <span>Revoke Sessions</span>
                           </button>
                           <hr class='my-1 border-gray-200' />
                           <button
                             onClick={() => handleAction('delete', user)}
-                            class='w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2'
+                            class='flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50'
                           >
-                            <FiTrash2 class='w-4 h-4' />
+                            <FiTrash2 class='h-4 w-4' />
                             <span>Delete User</span>
                           </button>
                         </div>
@@ -334,26 +334,26 @@ export default function UserTable(props) {
             They will be logged out and unable to sign in.
           </p>
           <div>
-            <label class='block text-sm font-medium text-gray-700 mb-1'>Reason (optional)</label>
+            <label class='mb-1 block text-sm font-medium text-gray-700'>Reason (optional)</label>
             <textarea
               value={banReason()}
               onInput={e => setBanReason(e.target.value)}
               placeholder='Enter reason for ban...'
-              class='w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500'
+              class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none'
               rows={3}
             />
           </div>
           <div class='flex justify-end space-x-3'>
             <button
               onClick={() => setBanDialog(null)}
-              class='px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200'
+              class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
             >
               Cancel
             </button>
             <button
               onClick={handleBan}
               disabled={loading()}
-              class='px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50'
+              class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
             >
               {loading() ? 'Banning...' : 'Ban User'}
             </button>
@@ -394,14 +394,14 @@ export default function UserTable(props) {
           <div class='flex justify-end space-x-3'>
             <button
               onClick={() => setConfirmDialog(null)}
-              class='px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200'
+              class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
             >
               Cancel
             </button>
             <button
               onClick={handleConfirm}
               disabled={loading()}
-              class={`px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50 ${
+              class={`rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 ${
                 confirmDialog()?.type === 'delete' ?
                   'bg-red-600 hover:bg-red-700'
                 : 'bg-blue-600 hover:bg-blue-700'

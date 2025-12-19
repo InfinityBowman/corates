@@ -51,20 +51,20 @@ export function Dialog(props) {
         {/* Backdrop */}
         <div
           {...api().getBackdropProps()}
-          class='fixed inset-0 bg-black/50 z-50 transition-opacity'
+          class='fixed inset-0 z-50 bg-black/50 transition-opacity'
         />
         {/* Positioner - scrollable container */}
         <div
           {...api().getPositionerProps()}
-          class='fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto'
+          class='fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4'
         >
           {/* Content */}
           <div
             {...api().getContentProps()}
-            class={`bg-white rounded-lg shadow-xl w-full my-auto ${getSizeClass()}`}
+            class={`my-auto w-full rounded-lg bg-white shadow-xl ${getSizeClass()}`}
           >
             {/* Header */}
-            <div class='flex items-center justify-between p-4 border-b border-gray-200'>
+            <div class='flex items-center justify-between border-b border-gray-200 p-4'>
               <div>
                 <h2 {...api().getTitleProps()} class='text-lg font-semibold text-gray-900'>
                   {title()}
@@ -77,9 +77,9 @@ export function Dialog(props) {
               </div>
               <button
                 {...api().getCloseTriggerProps()}
-                class='p-1 text-gray-400 hover:text-gray-500 rounded-md hover:bg-gray-100 transition-colors'
+                class='rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500'
               >
-                <FiX class='w-5 h-5' />
+                <FiX class='h-5 w-5' />
               </button>
             </div>
             {/* Body */}
@@ -170,7 +170,7 @@ export function ConfirmDialog(props) {
         {/* Backdrop */}
         <div
           {...api().getBackdropProps()}
-          class='fixed inset-0 bg-black/50 z-50 transition-opacity'
+          class='fixed inset-0 z-50 bg-black/50 transition-opacity'
         />
         {/* Positioner */}
         <div
@@ -180,16 +180,16 @@ export function ConfirmDialog(props) {
           {/* Content */}
           <div
             {...api().getContentProps()}
-            class='bg-white rounded-lg shadow-xl max-w-md w-full overflow-hidden'
+            class='w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl'
           >
             <div class='p-6'>
               <div class='flex items-start gap-4'>
                 {/* Icon */}
-                <div class={`shrink-0 p-2 rounded-full ${getVariantStyles().iconBg}`}>
-                  <FiAlertTriangle class={`w-6 h-6 ${getVariantStyles().icon}`} />
+                <div class={`shrink-0 rounded-full p-2 ${getVariantStyles().iconBg}`}>
+                  <FiAlertTriangle class={`h-6 w-6 ${getVariantStyles().icon}`} />
                 </div>
                 {/* Text content */}
-                <div class='flex-1 min-w-0'>
+                <div class='min-w-0 flex-1'>
                   <h2 {...api().getTitleProps()} class='text-lg font-semibold text-gray-900'>
                     {title()}
                   </h2>
@@ -201,25 +201,25 @@ export function ConfirmDialog(props) {
                 <button
                   {...api().getCloseTriggerProps()}
                   disabled={loading()}
-                  class='shrink-0 p-1 text-gray-400 hover:text-gray-500 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50'
+                  class='shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500 disabled:opacity-50'
                 >
-                  <FiX class='w-5 h-5' />
+                  <FiX class='h-5 w-5' />
                 </button>
               </div>
             </div>
             {/* Footer */}
-            <div class='px-6 py-4 bg-gray-50 flex justify-end gap-3'>
+            <div class='flex justify-end gap-3 bg-gray-50 px-6 py-4'>
               <button
                 onClick={handleCancel}
                 disabled={loading()}
-                class='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50'
+                class='rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50'
               >
                 {cancelText() || 'Cancel'}
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={loading()}
-                class={`px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 ${getVariantStyles().button}`}
+                class={`rounded-md px-4 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-50 ${getVariantStyles().button}`}
               >
                 {loading() ? 'Loading...' : confirmText() || 'Confirm'}
               </button>

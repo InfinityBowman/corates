@@ -273,13 +273,13 @@ export default function ReconciliationWrapper() {
     <Show
       when={!error()}
       fallback={
-        <div class='min-h-screen bg-blue-50 flex items-center justify-center'>
-          <div class='bg-white rounded-lg shadow-lg p-8 max-w-md'>
-            <h2 class='text-xl font-bold text-red-600 mb-2'>Error</h2>
+        <div class='flex min-h-screen items-center justify-center bg-blue-50'>
+          <div class='max-w-md rounded-lg bg-white p-8 shadow-lg'>
+            <h2 class='mb-2 text-xl font-bold text-red-600'>Error</h2>
             <p class='text-gray-600'>{error()}</p>
             <button
               onClick={handleCancel}
-              class='mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700'
+              class='mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
             >
               Go Back
             </button>
@@ -290,9 +290,9 @@ export default function ReconciliationWrapper() {
       <Show
         when={connectionState().synced && checklist1Data() && checklist2Data()}
         fallback={
-          <div class='min-h-screen bg-blue-50 flex items-center justify-center'>
+          <div class='flex min-h-screen items-center justify-center bg-blue-50'>
             <div class='text-center'>
-              <div class='animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4' />
+              <div class='mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent' />
               <p class='text-gray-600'>Loading checklists...</p>
             </div>
           </div>

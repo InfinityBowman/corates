@@ -52,18 +52,13 @@ export function TagsInput(props) {
   return (
     <div {...api().getRootProps()} class={`w-full ${local.class || ''}`}>
       {local.label && (
-        <label {...api().getLabelProps()} class='block text-sm font-medium text-gray-700 mb-1'>
+        <label {...api().getLabelProps()} class='mb-1 block text-sm font-medium text-gray-700'>
           {local.label}
         </label>
       )}
       <div
         {...api().getControlProps()}
-        class={`flex flex-wrap gap-1.5 p-2 border rounded-lg transition-colors
-          border-gray-300 bg-white
-          data-focus:border-blue-500 data-focus:ring-1 data-focus:ring-blue-500
-          data-invalid:border-red-500 data-invalid:ring-red-500
-          data-disabled:bg-gray-100 data-disabled:cursor-not-allowed
-          data-readonly:bg-gray-50`}
+        class={`flex flex-wrap gap-1.5 rounded-lg border border-gray-300 bg-white p-2 transition-colors data-disabled:cursor-not-allowed data-disabled:bg-gray-100 data-focus:border-blue-500 data-focus:ring-1 data-focus:ring-blue-500 data-invalid:border-red-500 data-invalid:ring-red-500 data-readonly:bg-gray-50`}
       >
         <For each={api().value}>
           {(value, index) => (
@@ -73,17 +68,14 @@ export function TagsInput(props) {
             >
               <div
                 {...api().getItemPreviewProps({ index: index(), value })}
-                class={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-sm
-                  bg-gray-100 text-gray-800
-                  data-highlighted:bg-blue-100 data-highlighted:text-blue-800
-                  data-disabled:opacity-50`}
+                class={`inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-sm text-gray-800 data-disabled:opacity-50 data-highlighted:bg-blue-100 data-highlighted:text-blue-800`}
               >
                 <span {...api().getItemTextProps({ index: index(), value })}>{value}</span>
                 <button
                   {...api().getItemDeleteTriggerProps({ index: index(), value })}
-                  class='p-0.5 rounded hover:bg-gray-200 transition-colors focus:outline-none focus:ring-1 focus:ring-blue-500'
+                  class='rounded p-0.5 transition-colors hover:bg-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                 >
-                  <FiX class='w-3 h-3' />
+                  <FiX class='h-3 w-3' />
                 </button>
               </div>
               <input {...api().getItemInputProps({ index: index(), value })} class='sr-only' />
@@ -93,7 +85,7 @@ export function TagsInput(props) {
         <input
           {...api().getInputProps()}
           placeholder={local.placeholder || 'Add tag...'}
-          class={`flex-1 min-w-30 outline-none text-sm placeholder:text-gray-400 disabled:cursor-not-allowed bg-transparent ${local.inputClass || ''}`}
+          class={`min-w-30 flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400 disabled:cursor-not-allowed ${local.inputClass || ''}`}
         />
       </div>
       <input {...api().getHiddenInputProps()} />

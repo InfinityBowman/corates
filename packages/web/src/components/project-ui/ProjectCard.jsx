@@ -35,18 +35,18 @@ export default function ProjectCard(props) {
   const project = () => props.project;
 
   return (
-    <div class='bg-white border border-gray-200 rounded-lg shadow-sm p-6 hover:shadow-md hover:border-gray-300 transition-all duration-200 group flex flex-col h-full'>
+    <div class='group flex h-full flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 hover:border-gray-300 hover:shadow-md'>
       {/* Header section with fixed structure */}
-      <div class='flex-1 min-h-0'>
-        <h3 class='text-lg font-semibold text-gray-900 mb-1 line-clamp-2'>{project().name}</h3>
-        <p class='text-gray-500 text-sm line-clamp-2 min-h-10'>
+      <div class='min-h-0 flex-1'>
+        <h3 class='mb-1 line-clamp-2 text-lg font-semibold text-gray-900'>{project().name}</h3>
+        <p class='line-clamp-2 min-h-10 text-sm text-gray-500'>
           {project().description || 'No description'}
         </p>
       </div>
 
       {/* Metadata row */}
-      <div class='flex items-center justify-between text-xs text-gray-500 mt-3 mb-3'>
-        <span class='inline-flex items-center px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-800 capitalize'>
+      <div class='mt-3 mb-3 flex items-center justify-between text-xs text-gray-500'>
+        <span class='inline-flex items-center rounded-full bg-blue-100 px-2 py-1 font-medium text-blue-800 capitalize'>
           {project().role}
         </span>
         <span>{formatDate(project().createdAt)}</span>
@@ -56,7 +56,7 @@ export default function ProjectCard(props) {
       <div class='flex gap-2'>
         <button
           onClick={() => props.onOpen?.(project().id)}
-          class='flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors font-medium'
+          class='flex-1 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700'
         >
           Open Project
         </button>
@@ -66,10 +66,10 @@ export default function ProjectCard(props) {
               e.stopPropagation();
               props.onDelete?.(project().id);
             }}
-            class='p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors'
+            class='rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600'
             title='Delete Project'
           >
-            <FiTrash2 class='w-5 h-5' />
+            <FiTrash2 class='h-5 w-5' />
           </button>
         </Show>
       </div>

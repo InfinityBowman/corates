@@ -224,34 +224,23 @@ export function FileUpload(props) {
       <div
         {...api().getDropzoneProps()}
         onDrop={handleDrop}
-        class={`
-          border-2 border-dashed rounded-lg transition-all duration-200
-          ${isHighlighted() ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
-          ${compact() ? 'p-4' : 'p-8'}
-          ${dropzoneClass() || ''}
-        `}
+        class={`rounded-lg border-2 border-dashed transition-all duration-200 ${isHighlighted() ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'} ${compact() ? 'p-4' : 'p-8'} ${dropzoneClass() || ''} `}
       >
         <input {...api().getHiddenInputProps()} />
         <div class='flex flex-col items-center justify-center gap-2 text-center'>
           <BiRegularCloudUpload
-            class={`text-gray-400 ${compact() ? 'w-8 h-8' : 'w-12 h-12'} ${isHighlighted() ? 'text-blue-500' : ''}`}
+            class={`text-gray-400 ${compact() ? 'h-8 w-8' : 'h-12 w-12'} ${isHighlighted() ? 'text-blue-500' : ''}`}
           />
           <div class={compact() ? 'text-sm' : ''}>
             <p class='font-medium text-gray-700'>{merged.dropzoneText}</p>
             <Show when={helpText()}>
-              <p class='text-xs text-gray-500 mt-1'>{helpText()}</p>
+              <p class='mt-1 text-xs text-gray-500'>{helpText()}</p>
             </Show>
           </div>
-          <span class='text-gray-400 text-sm'>or</span>
+          <span class='text-sm text-gray-400'>or</span>
           <button
             {...api().getTriggerProps()}
-            class={`
-              px-4 py-2 bg-white border border-gray-300 rounded-lg
-              text-gray-700 font-medium hover:bg-gray-50
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-              transition-colors
-              ${compact() ? 'text-sm px-3 py-1.5' : ''}
-            `}
+            class={`rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none ${compact() ? 'px-3 py-1.5 text-sm' : ''} `}
           >
             {merged.buttonText}
           </button>
@@ -264,13 +253,13 @@ export function FileUpload(props) {
             {file => (
               <li
                 {...api().getItemProps({ file: file() })}
-                class='flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200'
+                class='flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3'
               >
-                <CgFileDocument class='w-8 h-8 text-gray-400 shrink-0' />
-                <div class='flex-1 min-w-0'>
+                <CgFileDocument class='h-8 w-8 shrink-0 text-gray-400' />
+                <div class='min-w-0 flex-1'>
                   <p
                     {...api().getItemNameProps({ file: file() })}
-                    class='text-sm font-medium text-gray-900 truncate'
+                    class='truncate text-sm font-medium text-gray-900'
                   >
                     {file().name}
                   </p>
@@ -278,10 +267,10 @@ export function FileUpload(props) {
                 </div>
                 <button
                   {...api().getItemDeleteTriggerProps({ file: file() })}
-                  class='p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors'
+                  class='rounded p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500'
                   title='Remove file'
                 >
-                  <BiRegularTrash class='w-4 h-4' />
+                  <BiRegularTrash class='h-4 w-4' />
                 </button>
               </li>
             )}

@@ -41,7 +41,7 @@ export default function PinInput(props) {
 
   return (
     <div class='flex flex-col items-center'>
-      <div {...api().getRootProps()} class='flex justify-center gap-1 sm:gap-3 my-6'>
+      <div {...api().getRootProps()} class='my-6 flex justify-center gap-1 sm:gap-3'>
         <input required={required()} {...api().getInputProps({ index: 0 })} class={inputClass()} />
         <input required={required()} {...api().getInputProps({ index: 1 })} class={inputClass()} />
         <input required={required()} {...api().getInputProps({ index: 2 })} class={inputClass()} />

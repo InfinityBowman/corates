@@ -171,8 +171,9 @@ export class EmailQueue {
   async cleanupSentEmail(emailId) {
     try {
       await this.state.storage.delete(`email:${emailId}`);
-    } catch (_err) {
-      // Ignore cleanup errors
+    } catch (err) {
+      // Log but don't throw - cleanup is non-critical
+      console.debug('Email cleanup failed:', emailId, err.message);
     }
   }
 

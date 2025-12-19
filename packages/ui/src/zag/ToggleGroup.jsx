@@ -49,20 +49,13 @@ export function ToggleGroup(props) {
   return (
     <div
       {...api().getRootProps()}
-      class={`inline-flex ${isVertical() ? 'flex-col' : 'flex-row'} rounded-lg border border-gray-200 overflow-hidden ${local.class || ''}`}
+      class={`inline-flex ${isVertical() ? 'flex-col' : 'flex-row'} overflow-hidden rounded-lg border border-gray-200 ${local.class || ''}`}
     >
       <For each={local.items}>
         {(item, index) => (
           <button
             {...api().getItemProps({ value: item.value, disabled: item.disabled })}
-            class={`${getSizeClass()} font-medium transition-colors
-              bg-white text-gray-700
-              hover:bg-gray-50
-              data-[state=on]:bg-blue-50 data-[state=on]:text-blue-700
-              data-focus:ring-2 data-focus:ring-blue-500 data-focus:ring-inset data-focus:z-10
-              data-disabled:opacity-50 data-disabled:cursor-not-allowed
-              ${!isVertical() && index() > 0 ? 'border-l border-gray-200' : ''}
-              ${isVertical() && index() > 0 ? 'border-t border-gray-200' : ''}`}
+            class={`${getSizeClass()} bg-white font-medium text-gray-700 transition-colors hover:bg-gray-50 data-disabled:cursor-not-allowed data-disabled:opacity-50 data-focus:z-10 data-focus:ring-2 data-focus:ring-blue-500 data-focus:ring-inset data-[state=on]:bg-blue-50 data-[state=on]:text-blue-700 ${!isVertical() && index() > 0 ? 'border-l border-gray-200' : ''} ${isVertical() && index() > 0 ? 'border-t border-gray-200' : ''}`}
           >
             {item.label}
           </button>
