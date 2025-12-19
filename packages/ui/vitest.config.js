@@ -1,0 +1,28 @@
+import { defineConfig } from 'vitest/config';
+import solidPlugin from 'vite-plugin-solid';
+
+export default defineConfig({
+  plugins: [solidPlugin()],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/__tests__/setup.js'],
+    include: ['src/**/*.{test,spec}.{js,jsx}'],
+    server: {
+      deps: {
+        inline: [/solid-icons/],
+      },
+    },
+    deps: {
+      optimizer: {
+        web: {
+          include: ['solid-js', '@zag-js/solid', 'solid-icons'],
+        },
+      },
+    },
+    testTimeout: 10000,
+  },
+  resolve: {
+    conditions: ['development', 'browser'],
+  },
+});
