@@ -1,18 +1,18 @@
 import js from '@eslint/js';
 import solid from 'eslint-plugin-solid/configs/recommended';
-import eslintPluginUnicorn from 'eslint-plugin-unicorn';
+// import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 import * as tsParser from '@typescript-eslint/parser';
 import sonarjs from 'eslint-plugin-sonarjs';
 
 export default [
   js.configs.recommended,
   solid,
-  eslintPluginUnicorn.configs.recommended,
-  {
-    rules: {
-      'unicorn/better-regex': 'warn',
-    },
-  },
+  // eslintPluginUnicorn.configs.recommended,
+  // {
+  //   rules: {
+  //     'unicorn/better-regex': 'warn',
+  //   },
+  // },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     plugins: {
