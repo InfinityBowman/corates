@@ -3,6 +3,7 @@
 Shared error definitions and utilities for CoRATES.
 
 This package provides:
+
 - Type-safe error code definitions
 - Error creation helpers
 - Error normalization and validation utilities
