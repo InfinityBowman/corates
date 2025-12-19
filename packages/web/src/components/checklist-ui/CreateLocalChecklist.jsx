@@ -67,10 +67,10 @@ export default function CreateLocalChecklist() {
   };
 
   const handleCancel = () => {
-    const fromParam = searchParams.from;
+    const fromParameter = searchParams.from;
 
     // If coming from landing page, navigate to landing
-    if (fromParam === 'landing') {
+    if (fromParameter === 'landing') {
       window.location.href = LANDING_URL;
     } else {
       // Otherwise go to dashboard

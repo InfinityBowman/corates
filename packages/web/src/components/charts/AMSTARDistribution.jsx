@@ -91,7 +91,7 @@ export default function AMSTARDistribution(props) {
   createEffect(() => {
     // Track greyscale changes to re-render and capture the value
     const colors = colorMap();
-    if (!data().length) return;
+    if (data().length === 0) return;
 
     // Prevent rendering if dimensions are invalid
     const w = width();
@@ -122,18 +122,18 @@ export default function AMSTARDistribution(props) {
       };
 
       // Count responses for this question
-      data().forEach(study => {
+      for (const study of data()) {
         const response = study.questions[q]?.toLowerCase?.() ?? 'no ma';
         if (Object.hasOwn(questionData.counts, response)) {
           questionData.counts[response]++;
         }
-      });
+      }
 
       // Convert to percentages
       questionData.percentages = {};
-      Object.keys(questionData.counts).forEach(key => {
+      for (const key of Object.keys(questionData.counts)) {
         questionData.percentages[key] = (questionData.counts[key] / totalStudies) * 100;
-      });
+      }
 
       processedData.push(questionData);
     }
@@ -167,13 +167,13 @@ export default function AMSTARDistribution(props) {
       .text(title());
 
     // Create stacked bars
-    processedData.forEach(d => {
+    for (const d of processedData) {
       let cumulativePercent = 0;
       const barHeight = Math.max(0, yScale.bandwidth());
       const y = yScale(d.label);
 
       // Draw each segment
-      ['yes', 'partial yes', 'no ma', 'no'].forEach(category => {
+      for (const category of ['yes', 'partial yes', 'no ma', 'no']) {
         const percent = d.percentages[category];
         const segmentWidth = Math.max(0, xScale(percent));
 
@@ -209,8 +209,8 @@ export default function AMSTARDistribution(props) {
         }
 
         cumulativePercent += percent;
-      });
-    });
+      }
+    }
 
     // Add Y-axis labels (question labels)
     chartGroup

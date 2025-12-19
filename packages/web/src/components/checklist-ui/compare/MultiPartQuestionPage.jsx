@@ -94,7 +94,7 @@ export default function MultiPartQuestionPage(props) {
     const current = localFinal();
     if (!current || !current[partKey]) return;
 
-    const newAnswers = current[partKey].answers.map(arr => [...arr]);
+    const newAnswers = current[partKey].answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !newAnswers[colIdx][optIdx];
 
     const newFinal = {
@@ -110,7 +110,7 @@ export default function MultiPartQuestionPage(props) {
     const current = localFinal();
     if (!current || !current[partKey]) return;
 
-    const newAnswers = current[partKey].answers.map(arr => [...arr]);
+    const newAnswers = current[partKey].answers.map(array => [...array]);
     newAnswers[colIdx] = newAnswers[colIdx].map(() => false);
     newAnswers[colIdx][optIdx] = true;
 

@@ -112,7 +112,7 @@ export default function MergeAccountsDialog(props) {
       const result = await completeMerge(mergeToken());
       setStep(STEPS.SUCCESS);
       const linkedInfo =
-        result.mergedProviders.length ? `Linked: ${result.mergedProviders.join(', ')}` : '';
+        result.mergedProviders.length > 0 ? `Linked: ${result.mergedProviders.join(', ')}` : '';
       showToast.success('Accounts Merged', `Successfully merged accounts. ${linkedInfo}`);
       props.onSuccess?.();
     } catch (err) {

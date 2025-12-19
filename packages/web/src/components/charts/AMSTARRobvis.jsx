@@ -109,7 +109,7 @@ export default function AMSTARRobvis(props) {
     // Track greyscale changes to re-render and capture reactive values
     const colors = colorMap();
     const cSize = cellSize();
-    if (!data().length) return;
+    if (data().length === 0) return;
 
     // Prevent rendering if dimensions are invalid
     if (cSize <= 0 || svgWidth() <= 0 || svgHeight() <= 0) {
@@ -125,7 +125,7 @@ export default function AMSTARRobvis(props) {
         .style('visibility', 'hidden')
         .style('position', 'absolute');
       let maxLabelWidth = 0;
-      data().forEach(row => {
+      for (const row of data()) {
         const tempText = tempSvg
           .append('text')
           .attr('font-size', '12px')
@@ -134,7 +134,7 @@ export default function AMSTARRobvis(props) {
         const bbox = tempText.node().getBBox();
         if (bbox.width > maxLabelWidth) maxLabelWidth = bbox.width;
         tempText.remove();
-      });
+      }
       tempSvg.remove();
       // Add padding and set margin (minimum 150px for short labels)
       const newMargin = Math.max(150, Math.ceil(maxLabelWidth + 20));
@@ -189,7 +189,7 @@ export default function AMSTARRobvis(props) {
     // Traffic light cells
     const cellGroup = svg.append('g').attr('class', 'cells');
 
-    data().forEach((row, rowIdx) => {
+    for (const [rowIdx, row] of data().entries()) {
       for (let colIdx = 0; colIdx < nQuestions; colIdx++) {
         const value = row.questions[colIdx]?.toLowerCase?.() ?? '';
         const cellColor = colors[value] ?? '#e5e7eb';
@@ -213,7 +213,7 @@ export default function AMSTARRobvis(props) {
             .style('filter', 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.1))');
         }
       }
-    });
+    }
 
     // Legend
     const legendData = [

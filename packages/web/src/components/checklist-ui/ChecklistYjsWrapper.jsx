@@ -67,7 +67,7 @@ export default function ChecklistYjsWrapper() {
   // Get the primary PDF or first PDF as default selection
   const defaultPdf = createMemo(() => {
     const pdfs = studyPdfs();
-    if (!pdfs.length) return null;
+    if (pdfs.length === 0) return null;
     // Prefer primary, then first available
     return pdfs.find(p => p.tag === 'primary') || pdfs[0];
   });
@@ -230,7 +230,7 @@ export default function ChecklistYjsWrapper() {
     if (isReadOnly()) return;
     const type = checklistType();
 
-    Object.entries(patch).forEach(([key, value]) => {
+    for (const [key, value] of Object.entries(patch)) {
       // AMSTAR2: keys like q1, q2a, etc. | ROBINS-I: section and domain keys
       const isValidKey =
         (type === 'AMSTAR2' && AMSTAR2_KEY_PATTERN.test(key)) ||
@@ -238,7 +238,7 @@ export default function ChecklistYjsWrapper() {
       if (isValidKey) {
         updateChecklistAnswer(params.studyId, params.checklistId, key, value);
       }
-    });
+    }
   }
 
   // Toggle checklist completion status

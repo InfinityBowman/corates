@@ -10,7 +10,7 @@ export function Question1(props) {
   const question = AMSTAR_CHECKLIST.q1;
 
   function handleChange(colIdx, optIdx) {
-    const newAnswers = state().answers.map(arr => [...arr]);
+    const newAnswers = state().answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !state().answers[colIdx][optIdx];
 
     // If first column changed, update Yes/No in last column
@@ -41,7 +41,7 @@ export function Question2(props) {
   const question = AMSTAR_CHECKLIST.q2;
 
   function handleChange(colIdx, optIdx) {
-    const newAnswers = state().answers.map(arr => [...arr]);
+    const newAnswers = state().answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !state().answers[colIdx][optIdx];
 
     // If first or second column changed, update Yes/Partial Yes/No in last column
@@ -74,7 +74,7 @@ export function Question3(props) {
   const question = AMSTAR_CHECKLIST.q3;
 
   function handleChange(colIdx, optIdx) {
-    const newAnswers = state().answers.map(arr => [...arr]);
+    const newAnswers = state().answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !state().answers[colIdx][optIdx];
 
     // If first column changed, update Yes/No in last column
@@ -105,7 +105,7 @@ export function Question4(props) {
   const question = AMSTAR_CHECKLIST.q4;
 
   function handleChange(colIdx, optIdx) {
-    const newAnswers = state().answers.map(arr => [...arr]);
+    const newAnswers = state().answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !state().answers[colIdx][optIdx];
 
     // If first or second column changed, update Yes/Partial Yes/No in last column
@@ -140,7 +140,7 @@ export function Question5(props) {
   const question = AMSTAR_CHECKLIST.q5;
 
   function handleChange(colIdx, optIdx) {
-    const newAnswers = state().answers.map(arr => [...arr]);
+    const newAnswers = state().answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !state().answers[colIdx][optIdx];
 
     // If first column changed, update Yes/No in last column
@@ -170,7 +170,7 @@ export function Question6(props) {
   const question = AMSTAR_CHECKLIST.q6;
 
   function handleChange(colIdx, optIdx) {
-    const newAnswers = state().answers.map(arr => [...arr]);
+    const newAnswers = state().answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !state().answers[colIdx][optIdx];
 
     // If first column changed, update Yes/No in last column
@@ -200,7 +200,7 @@ export function Question7(props) {
   const question = AMSTAR_CHECKLIST.q7;
 
   function handleChange(colIdx, optIdx) {
-    const newAnswers = state().answers.map(arr => [...arr]);
+    const newAnswers = state().answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !state().answers[colIdx][optIdx];
 
     // If first or second column changed, update Yes/Partial Yes/No in last column
@@ -234,7 +234,7 @@ export function Question8(props) {
   const question = AMSTAR_CHECKLIST.q8;
 
   function handleChange(colIdx, optIdx) {
-    const newAnswers = state().answers.map(arr => [...arr]);
+    const newAnswers = state().answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !state().answers[colIdx][optIdx];
 
     // If first or second column changed, update Yes/Partial Yes/No in last column
@@ -269,7 +269,7 @@ export function Question9(props) {
   const question = AMSTAR_CHECKLIST.q9;
 
   function handleChangeA(colIdx, optIdx) {
-    const newAnswersA = stateA().answers.map(arr => [...arr]);
+    const newAnswersA = stateA().answers.map(array => [...array]);
     newAnswersA[colIdx][optIdx] = !stateA().answers[colIdx][optIdx];
 
     // If first or second column changed, update Yes/Partial Yes/No/Not applicable in last column
@@ -295,7 +295,7 @@ export function Question9(props) {
   }
 
   function handleChangeB(colIdx, optIdx) {
-    const newAnswersB = stateB().answers.map(arr => [...arr]);
+    const newAnswersB = stateB().answers.map(array => [...array]);
     newAnswersB[colIdx][optIdx] = !stateB().answers[colIdx][optIdx];
 
     // If first or second column changed, update Yes/Partial Yes/No/Not applicable in last column
@@ -371,7 +371,7 @@ export function Question10(props) {
   const question = AMSTAR_CHECKLIST.q10;
 
   function handleChange(colIdx, optIdx) {
-    const newAnswers = state().answers.map(arr => [...arr]);
+    const newAnswers = state().answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !state().answers[colIdx][optIdx];
 
     // If first column changed, update Yes/No in last column
@@ -402,7 +402,7 @@ export function Question11(props) {
   const question = AMSTAR_CHECKLIST.q11;
 
   function handleChangeA(colIdx, optIdx) {
-    const newAnswersA = stateA().answers.map(arr => [...arr]);
+    const newAnswersA = stateA().answers.map(array => [...array]);
     newAnswersA[colIdx][optIdx] = !stateA().answers[colIdx][optIdx];
 
     // If first column changed, update Yes/No/No meta-analysis conducted in last column
@@ -425,7 +425,7 @@ export function Question11(props) {
   }
 
   function handleChangeB(colIdx, optIdx) {
-    const newAnswersB = stateB().answers.map(arr => [...arr]);
+    const newAnswersB = stateB().answers.map(array => [...array]);
     newAnswersB[colIdx][optIdx] = !stateB().answers[colIdx][optIdx];
 
     // If first column changed, update Yes/No/No meta-analysis conducted in last column
@@ -501,7 +501,7 @@ export function Question12(props) {
   const question = AMSTAR_CHECKLIST.q12;
 
   function handleChange(colIdx, optIdx) {
-    const newAnswers = state().answers.map(arr => [...arr]);
+    const newAnswers = state().answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !state().answers[colIdx][optIdx];
 
     // If first column changed, update Yes/No/No meta-analysis conducted in last column
@@ -539,7 +539,7 @@ export function Question13(props) {
   const question = AMSTAR_CHECKLIST.q13;
 
   function handleChange(colIdx, optIdx) {
-    const newAnswers = state().answers.map(arr => [...arr]);
+    const newAnswers = state().answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !state().answers[colIdx][optIdx];
 
     // If first column changed, update Yes/No in last column
@@ -569,7 +569,7 @@ export function Question14(props) {
   const question = AMSTAR_CHECKLIST.q14;
 
   function handleChange(colIdx, optIdx) {
-    const newAnswers = state().answers.map(arr => [...arr]);
+    const newAnswers = state().answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !state().answers[colIdx][optIdx];
 
     // If first column changed, update Yes/No in last column
@@ -599,7 +599,7 @@ export function Question15(props) {
   const question = AMSTAR_CHECKLIST.q15;
 
   function handleChange(colIdx, optIdx) {
-    const newAnswers = state().answers.map(arr => [...arr]);
+    const newAnswers = state().answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !state().answers[colIdx][optIdx];
 
     // If first column changed, update Yes/No/No meta-analysis conducted in last column
@@ -637,7 +637,7 @@ export function Question16(props) {
   const question = AMSTAR_CHECKLIST.q16;
 
   function handleChange(colIdx, optIdx) {
-    const newAnswers = state().answers.map(arr => [...arr]);
+    const newAnswers = state().answers.map(array => [...array]);
     newAnswers[colIdx][optIdx] = !state().answers[colIdx][optIdx];
 
     // If first column changed, update Yes/No in last column
@@ -701,10 +701,10 @@ function QuestionInfo(props) {
 
   function openInfoPanel() {
     if (containerRef()) {
-      const btnRect = containerRef().getBoundingClientRect();
+      const buttonRect = containerRef().getBoundingClientRect();
       setPanelPos({
-        x: btnRect.left + 20,
-        y: btnRect.top - 20,
+        x: buttonRect.left + 20,
+        y: buttonRect.top - 20,
       });
     }
     setShowInfo(true);

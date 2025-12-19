@@ -33,7 +33,7 @@ function createBetterAuthStore() {
       const timestamp = localStorage.getItem(AUTH_CACHE_TIMESTAMP_KEY);
       if (!cached || !timestamp) return null;
 
-      const age = Date.now() - parseInt(timestamp, 10);
+      const age = Date.now() - Number.parseInt(timestamp, 10);
       if (age > AUTH_CACHE_MAX_AGE) {
         // Cache expired, clear it
         localStorage.removeItem(AUTH_CACHE_KEY);
@@ -174,7 +174,7 @@ function createBetterAuthStore() {
 
   // BroadcastChannel for cross-tab auth state sync
   const authChannel =
-    typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('corates-auth') : null;
+    typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel('corates-auth');
 
   // Listen for auth state changes from other tabs
   if (authChannel) {

@@ -150,6 +150,7 @@ export default [
             params: false,
             dir: false,
             el: false,
+            acc: false,
             // React/SolidJS common patterns
             prev: false,
             props: false,

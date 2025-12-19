@@ -239,14 +239,14 @@ export default function ChecklistReconciliation(props) {
       const dataKeys = getDataKeysForQuestion(key);
       for (const dk of dataKeys) {
         if (!finals[key][dk]) return false;
-        const lastCol = finals[key][dk].answers?.[finals[key][dk].answers.length - 1];
-        if (!lastCol || !lastCol.some(v => v === true)) return false;
+        const lastCol = finals[key][dk].answers?.at(-1);
+        if (!lastCol || !lastCol.includes(true)) return false;
       }
       return true;
     } else {
       // Regular question
-      const lastCol = finals[key].answers?.[finals[key].answers.length - 1];
-      return lastCol && lastCol.some(v => v === true);
+      const lastCol = finals[key].answers?.at(-1);
+      return lastCol && lastCol.includes(true);
     }
   }
 

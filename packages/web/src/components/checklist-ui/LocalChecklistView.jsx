@@ -143,17 +143,17 @@ export default function LocalChecklistView() {
 
   // Get the checklist type from the loaded checklist
   const checklistType = () => {
-    const curr = checklist();
-    if (!curr) return null;
-    return getChecklistTypeFromState(curr);
+    const current = checklist();
+    if (!current) return null;
+    return getChecklistTypeFromState(current);
   };
 
   // Compute the current score based on checklist answers
   const currentScore = createMemo(() => {
-    const curr = checklist();
+    const current = checklist();
     const type = checklistType();
-    if (!curr || !type) return null;
-    return scoreChecklistOfType(type, curr);
+    if (!current || !type) return null;
+    return scoreChecklistOfType(type, current);
   });
 
   // Header content for the toolbar

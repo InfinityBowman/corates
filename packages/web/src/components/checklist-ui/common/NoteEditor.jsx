@@ -116,7 +116,7 @@ export default function NoteEditor(props) {
             onInput={handleInput}
             placeholder={props.placeholder || 'Add a note for this question...'}
             disabled={props.readOnly || !props.yText}
-            class={`w-full resize-none overflow-hidden rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none ${props.readOnly ? 'cursor-not-allowed bg-gray-50 text-gray-600' : 'bg-white text-gray-900'} ${!props.yText ? 'cursor-not-allowed bg-gray-100' : ''} `}
+            class={`w-full resize-none overflow-hidden rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none ${props.readOnly ? 'cursor-not-allowed bg-gray-50 text-gray-600' : 'bg-white text-gray-900'} ${props.yText ? '' : 'cursor-not-allowed bg-gray-100'} `}
             style={{ 'min-height': '60px' }}
             maxLength={maxLength()}
           />
