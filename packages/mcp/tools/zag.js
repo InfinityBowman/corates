@@ -66,12 +66,12 @@ async function fetchZagDocs() {
     if (nextMarker) {
       for (let j = nextMarker.lineNum - 1; j > marker.lineNum; j--) {
         if (lines[j].trim() === '' && j - 1 > marker.lineNum) {
-            const prevLine = lines[j - 1].trim();
-            if (prevLine.startsWith('Description:') || prevLine === '') {
-              endLine = j + 1;
-              break;
-            }
+          const prevLine = lines[j - 1].trim();
+          if (prevLine.startsWith('Description:') || prevLine === '') {
+            endLine = j + 1;
+            break;
           }
+        }
       }
       if (endLine === lines.length) endLine = nextMarker.lineNum;
     }
