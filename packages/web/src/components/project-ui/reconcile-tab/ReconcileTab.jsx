@@ -21,7 +21,7 @@ export default function ReconcileTab() {
   // Filter studies that are in reconciliation workflow:
   // - Dual reviewer studies (has both reviewer1 and reviewer2)
   // - Has at least 1 completed checklist
-  // - Does not have a reconciled checklist yet
+  // - Does not have a completed reconciled checklist (in-progress reconciliations are shown)
   const studiesInReconciliation = createMemo(() => {
     return studies().filter(study => {
       // Only for dual-reviewer studies
@@ -29,14 +29,21 @@ export default function ReconcileTab() {
 
       const checklists = study.checklists || [];
 
-      // Skip if already has a reconciled checklist
-      if (checklists.some(c => c.isReconciled)) return false;
+      // Skip if already has a completed reconciled checklist
+      // But show if there's an in-progress reconciliation
+      if (checklists.some(c => c.isReconciled && c.status === 'completed')) return false;
 
       // Count completed checklists
       const completedChecklists = checklists.filter(c => c.status === 'completed');
 
-      // Show if 1 or 2 checklists are completed
-      return completedChecklists.length >= 1 && completedChecklists.length <= 2;
+      // Show if 1 or 2 checklists are completed, OR if there's an in-progress reconciled checklist
+      const hasInProgressReconciliation = checklists.some(
+        c => c.isReconciled && c.status !== 'completed',
+      );
+      return (
+        hasInProgressReconciliation ||
+        (completedChecklists.length >= 1 && completedChecklists.length <= 2)
+      );
     });
   });
 

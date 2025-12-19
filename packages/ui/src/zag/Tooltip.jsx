@@ -1,6 +1,7 @@
 import * as tooltip from '@zag-js/tooltip';
 import { normalizeProps, useMachine } from '@zag-js/solid';
 import { createMemo, createUniqueId, Show } from 'solid-js';
+import { Portal } from 'solid-js/web';
 
 export function Tooltip(props) {
   const service = useMachine(tooltip.machine, () => ({
@@ -8,6 +9,7 @@ export function Tooltip(props) {
     positioning: {
       placement: props.placement || 'top',
       gutter: 8,
+      strategy: 'fixed', // Use fixed positioning to avoid stacking context issues
     },
     openDelay: props.openDelay ?? 100,
     closeDelay: props.closeDelay ?? 100,
@@ -20,17 +22,19 @@ export function Tooltip(props) {
     <>
       <span {...api().getTriggerProps()}>{props.children}</span>
       <Show when={api().open}>
-        <div {...api().getPositionerProps()}>
-          <div {...api().getArrowProps()} class='[--arrow-background:#111827] [--arrow-size:8px]'>
-            <div {...api().getArrowTipProps()} />
+        <Portal>
+          <div {...api().getPositionerProps()} class='z-50'>
+            <div {...api().getArrowProps()} class='[--arrow-background:#111827] [--arrow-size:8px]'>
+              <div {...api().getArrowTipProps()} />
+            </div>
+            <div
+              {...api().getContentProps()}
+              class='pointer-events-none max-w-xs rounded bg-gray-900 px-2 py-1 text-xs text-white shadow-lg'
+            >
+              {props.content}
+            </div>
           </div>
-          <div
-            {...api().getContentProps()}
-            class='pointer-events-none max-w-xs rounded bg-gray-900 px-2 py-1 text-xs text-white shadow-lg'
-          >
-            {props.content}
-          </div>
-        </div>
+        </Portal>
       </Show>
     </>
   );
