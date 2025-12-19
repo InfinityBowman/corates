@@ -596,7 +596,7 @@ describe('better-auth-store - Utility Functions', () => {
 
   it('should clear auth error', async () => {
     // Trigger an error first
-    const {authClient} = await import('@/api/authClient.js');
+    const { authClient } = await import('@/api/authClient.js');
     authClient.signIn.email.mockResolvedValue({
       data: null,
       error: { message: 'Test error' },

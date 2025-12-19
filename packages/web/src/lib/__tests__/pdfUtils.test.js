@@ -256,7 +256,7 @@ describe('readFileAsArrayBuffer', () => {
   });
 
   it('should preserve binary content', async () => {
-    const bytes = new Uint8Array([0x00, 0x01, 0x02, 0xFF, 0xFE, 0xFD]);
+    const bytes = new Uint8Array([0x00, 0x01, 0x02, 0xff, 0xfe, 0xfd]);
     const blob = new Blob([bytes]);
     const file = new File([blob], 'test.bin', { type: 'application/octet-stream' });
 
