@@ -271,6 +271,34 @@ projectRoutes.delete('/:id', async c => {
       console.error('Failed to disconnect users from DO:', err);
     }
 
+    // Clean up all PDFs from R2 storage for this project
+    try {
+      const prefix = `projects/${projectId}/`;
+      let cursor = undefined;
+      let deletedCount = 0;
+
+      // R2 list returns max 1000 objects at a time, so we need to paginate
+      do {
+        const listed = await c.env.PDF_BUCKET.list({ prefix, cursor });
+
+        if (listed.objects.length > 0) {
+          // Delete objects in batches
+          const keysToDelete = listed.objects.map(obj => obj.key);
+          await Promise.all(keysToDelete.map(key => c.env.PDF_BUCKET.delete(key)));
+          deletedCount += keysToDelete.length;
+        }
+
+        cursor = listed.truncated ? listed.cursor : undefined;
+      } while (cursor);
+
+      if (deletedCount > 0) {
+        console.log(`Deleted ${deletedCount} R2 objects for project ${projectId}`);
+      }
+    } catch (err) {
+      console.error('Failed to clean up R2 files for project:', projectId, err);
+      // Continue with deletion even if R2 cleanup fails
+    }
+
     // Delete project (cascade will remove members)
     await db.delete(projects).where(eq(projects.id, projectId));
 
