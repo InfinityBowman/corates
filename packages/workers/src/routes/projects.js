@@ -274,7 +274,7 @@ projectRoutes.delete('/:id', async c => {
     // Clean up all PDFs from R2 storage for this project
     try {
       const prefix = `projects/${projectId}/`;
-      let cursor = undefined;
+      let cursor;
       let deletedCount = 0;
 
       // R2 list returns max 1000 objects at a time, so we need to paginate

@@ -10,7 +10,7 @@ import {
   getEmailVerificationFailurePage,
   getEmailVerificationErrorPage,
 } from './templates.js';
-import { authRateLimit, sessionRateLimit } from '../middleware/rateLimit.js';
+import { authRateLimit, sessionRateLimit } from '../middleware/rate-limit.js';
 
 const auth = new Hono();
 

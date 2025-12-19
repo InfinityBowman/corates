@@ -16,7 +16,7 @@ import {
   subscriptions,
 } from '../db/schema.js';
 import { eq, desc, sql, like, or, count } from 'drizzle-orm';
-import { requireAdmin } from '../middleware/requireAdmin.js';
+import { requireAdmin } from '../middleware/require-admin.js';
 import { requireTrustedOrigin } from '../middleware/csrf.js';
 import { createAuth } from '../auth/config.js';
 const adminRoutes = new Hono();

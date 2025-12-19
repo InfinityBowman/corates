@@ -17,7 +17,7 @@ import {
 } from '../db/schema.js';
 import { eq, desc, or, like, sql } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
-import { searchRateLimit } from '../middleware/rateLimit.js';
+import { searchRateLimit } from '../middleware/rate-limit.js';
 
 const userRoutes = new Hono();
 
@@ -47,7 +47,7 @@ userRoutes.get('/search', searchRateLimit, async c => {
   const { user: currentUser } = getAuth(c);
   const query = c.req.query('q')?.trim();
   const projectId = c.req.query('projectId');
-  const limit = Math.min(parseInt(c.req.query('limit') || '10', 10), 20);
+  const limit = Math.min(Number.parseInt(c.req.query('limit') || '10', 10), 20);
 
   if (!query || query.length < 2) {
     return c.json({ error: 'Search query must be at least 2 characters' }, 400);

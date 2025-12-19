@@ -70,10 +70,13 @@ export class ProjectDoc {
       if (upgradeHeader !== 'websocket') {
         const { user } = await verifyAuth(request, this.env);
         if (!user) {
-          return new Response(JSON.stringify({ error: 'Authentication required' }), {
-            status: 401,
-            headers: { 'Content-Type': 'application/json' },
-          });
+          return Response.json(
+            { error: 'Authentication required' },
+            {
+              status: 401,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          );
         }
         request.user = user;
       }
@@ -88,16 +91,22 @@ export class ProjectDoc {
         return await this.getProjectInfo();
       }
 
-      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-        status: 405,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { error: 'Method not allowed' },
+        {
+          status: 405,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
     } catch (error) {
       console.error('ProjectDoc error:', error);
-      return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { error: 'Internal Server Error' },
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
     }
   }
 
@@ -141,15 +150,21 @@ export class ProjectDoc {
 
       // Updates are automatically broadcast via Y.doc update listener
 
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { success: true },
+        {
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
     } catch (error) {
       console.error('handleSync error:', error);
-      return new Response(JSON.stringify({ error: 'Sync failed' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { error: 'Sync failed' },
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
     }
   }
 
@@ -163,52 +178,69 @@ export class ProjectDoc {
       const { action, member } = await request.json();
       const membersMap = this.doc.getMap('members');
 
-      if (action === 'add') {
-        const memberYMap = new Y.Map();
-        memberYMap.set('role', member.role);
-        memberYMap.set('joinedAt', member.joinedAt);
-        memberYMap.set('name', member.name || null);
-        memberYMap.set('email', member.email || null);
-        memberYMap.set('displayName', member.displayName || null);
-        memberYMap.set('image', member.image || null);
-        membersMap.set(member.userId, memberYMap);
-      } else if (action === 'update') {
-        const existingMember = membersMap.get(member.userId);
-        if (existingMember) {
-          // Update role if provided
-          if (member.role !== undefined) {
-            existingMember.set('role', member.role);
-          }
-          // Update image if provided
-          if (member.image !== undefined) {
-            existingMember.set('image', member.image);
-          }
-          // Update display name if provided
-          if (member.displayName !== undefined) {
-            existingMember.set('displayName', member.displayName);
-          }
-          // Update name if provided
-          if (member.name !== undefined) {
-            existingMember.set('name', member.name);
-          }
+      switch (action) {
+        case 'add': {
+          const memberYMap = new Y.Map();
+          memberYMap.set('role', member.role);
+          memberYMap.set('joinedAt', member.joinedAt);
+          memberYMap.set('name', member.name || null);
+          memberYMap.set('email', member.email || null);
+          memberYMap.set('displayName', member.displayName || null);
+          memberYMap.set('image', member.image || null);
+          membersMap.set(member.userId, memberYMap);
+
+          break;
         }
-      } else if (action === 'remove') {
-        membersMap.delete(member.userId);
-        // Force disconnect the removed user from WebSocket
-        this.disconnectUser(member.userId, 'membership-revoked');
+        case 'update': {
+          const existingMember = membersMap.get(member.userId);
+          if (existingMember) {
+            // Update role if provided
+            if (member.role !== undefined) {
+              existingMember.set('role', member.role);
+            }
+            // Update image if provided
+            if (member.image !== undefined) {
+              existingMember.set('image', member.image);
+            }
+            // Update display name if provided
+            if (member.displayName !== undefined) {
+              existingMember.set('displayName', member.displayName);
+            }
+            // Update name if provided
+            if (member.name !== undefined) {
+              existingMember.set('name', member.name);
+            }
+          }
+
+          break;
+        }
+        case 'remove': {
+          membersMap.delete(member.userId);
+          // Force disconnect the removed user from WebSocket
+          this.disconnectUser(member.userId, 'membership-revoked');
+
+          break;
+        }
+        // No default
       }
 
       // Updates are automatically broadcast via Y.doc update listener
 
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { success: true },
+        {
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
     } catch (error) {
       console.error('handleSyncMember error:', error);
-      return new Response(JSON.stringify({ error: 'Sync failed' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { error: 'Sync failed' },
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
     }
   }
 
@@ -217,9 +249,12 @@ export class ProjectDoc {
    */
   async handleDisconnectAll() {
     this.disconnectAll('project-deleted');
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return Response.json(
+      { success: true },
+      {
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
   }
 
   /**
@@ -271,15 +306,21 @@ export class ProjectDoc {
 
       // Updates are automatically broadcast via Y.doc update listener
 
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { success: true },
+        {
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
     } catch (error) {
       console.error('handleSyncPdf error:', error);
-      return new Response(JSON.stringify({ error: 'Sync failed' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return Response.json(
+        { error: 'Sync failed' },
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
     }
   }
 
@@ -299,7 +340,7 @@ export class ProjectDoc {
       this.doc.on('update', async (update, origin) => {
         // Encode the full document state, not just the incremental update
         const fullState = Y.encodeStateAsUpdate(this.doc);
-        await this.state.storage.put('yjs-state', Array.from(fullState));
+        await this.state.storage.put('yjs-state', [...fullState]);
 
         // Broadcast update to all connected clients (except origin)
         const encoder = encoding.createEncoder();
@@ -311,7 +352,7 @@ export class ProjectDoc {
 
       // Broadcast awareness updates to all clients
       this.awareness.on('update', ({ added, updated, removed }, origin) => {
-        const changedClients = added.concat(updated, removed);
+        const changedClients = [...added, ...updated, ...removed];
         if (changedClients.length > 0) {
           const encoder = encoding.createEncoder();
           encoding.writeVarUint(encoder, messageAwareness);
@@ -430,8 +471,8 @@ export class ProjectDoc {
             // Extract and store the client's awareness ID from the update
             // The first client ID in the update is typically the sender's ID
             const awarenessDecoder = decoding.createDecoder(awarenessUpdate);
-            const len = decoding.readVarUint(awarenessDecoder);
-            if (len > 0) {
+            const length = decoding.readVarUint(awarenessDecoder);
+            if (length > 0) {
               const clientId = decoding.readVarUint(awarenessDecoder);
               const session = this.sessions.get(server);
               if (session && session.awarenessClientId === null) {
@@ -440,8 +481,9 @@ export class ProjectDoc {
             }
             break;
           }
-          default:
+          default: {
             console.warn('Unknown message type:', messageType);
+          }
         }
       } catch (error) {
         console.error('WebSocket message error (ProjectDoc):', error);
@@ -546,7 +588,7 @@ export class ProjectDoc {
       result.reviews.push(review);
     }
 
-    return new Response(JSON.stringify(result), {
+    return Response.json(result, {
       headers: { 'Content-Type': 'application/json' },
     });
   }
@@ -555,11 +597,11 @@ export class ProjectDoc {
    * Broadcast binary message to all connected clients
    */
   broadcastBinary(message, exclude = null) {
-    this.sessions.forEach((sessionData, ws) => {
+    for (const [ws, _sessionData] of this.sessions.entries()) {
       if (ws !== exclude && ws.readyState === 1) {
         ws.send(message);
       }
-    });
+    }
   }
 
   /**
@@ -569,11 +611,11 @@ export class ProjectDoc {
    */
   disconnectUser(userId, reason = 'membership-revoked') {
     const closeCode = 1008; // Policy Violation
-    this.sessions.forEach((sessionData, ws) => {
+    for (const [ws, sessionData] of this.sessions.entries()) {
       if (sessionData.user?.id === userId && ws.readyState === 1) {
         ws.close(closeCode, reason);
       }
-    });
+    }
   }
 
   /**
@@ -582,10 +624,10 @@ export class ProjectDoc {
    */
   disconnectAll(reason = 'project-deleted') {
     const closeCode = 1000; // Normal closure
-    this.sessions.forEach((sessionData, ws) => {
+    for (const [ws, _sessionData] of this.sessions.entries()) {
       if (ws.readyState === 1) {
         ws.close(closeCode, reason);
       }
-    });
+    }
   }
 }

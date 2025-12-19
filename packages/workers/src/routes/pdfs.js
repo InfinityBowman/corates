@@ -103,7 +103,7 @@ pdfRoutes.post('/', async c => {
   }
 
   // Check Content-Length header first for early rejection
-  const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
+  const contentLength = Number.parseInt(c.req.header('Content-Length') || '0', 10);
   if (contentLength > FILE_SIZE_LIMITS.PDF) {
     return c.json(
       createErrorResponse(

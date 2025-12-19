@@ -240,7 +240,7 @@ googleDriveRoutes.post('/import', async c => {
 
     // Check file size (limit to 50MB)
     const maxSize = 50 * 1024 * 1024;
-    if (fileMeta.size && parseInt(fileMeta.size, 10) > maxSize) {
+    if (fileMeta.size > 0 && Number.parseInt(fileMeta.size, 10) > maxSize) {
       return c.json({ error: 'File too large. Maximum size is 50MB.' }, 400);
     }
 

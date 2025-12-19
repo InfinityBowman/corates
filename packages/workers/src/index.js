@@ -9,7 +9,7 @@ import { UserSession } from './durable-objects/UserSession.js';
 import { ProjectDoc } from './durable-objects/ProjectDoc.js';
 import { EmailQueue } from './durable-objects/EmailQueue.js';
 import { createCorsMiddleware } from './middleware/cors.js';
-import { securityHeaders } from './middleware/securityHeaders.js';
+import { securityHeaders } from './middleware/security-headers.js';
 import { requireAuth } from './middleware/auth.js';
 import { requireTrustedOrigin } from './middleware/csrf.js';
 

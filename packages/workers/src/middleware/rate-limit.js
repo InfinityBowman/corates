@@ -10,7 +10,7 @@
 const rateLimitStore = new Map();
 
 // Clean up expired entries periodically
-const CLEANUP_INTERVAL = 60000; // 1 minute
+const CLEANUP_INTERVAL = 60_000; // 1 minute
 let lastCleanup = Date.now();
 
 function cleanupExpiredEntries() {
@@ -51,7 +51,7 @@ function getClientIdentifier(c) {
 export function rateLimit(options = {}) {
   const {
     limit = 100,
-    windowMs = 60000, // 1 minute default
+    windowMs = 60_000, // 1 minute default
     keyPrefix = '',
     keyGenerator = null,
     skipFailedRequests = false,

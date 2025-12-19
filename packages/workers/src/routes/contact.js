@@ -6,7 +6,7 @@
 import { Hono } from 'hono';
 import { Client as PostmarkClient } from 'postmark';
 import { z } from 'zod';
-import { contactRateLimit } from '../middleware/rateLimit.js';
+import { contactRateLimit } from '../middleware/rate-limit.js';
 
 const contact = new Hono();
 

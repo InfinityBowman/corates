@@ -25,7 +25,7 @@ import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:
 
 // Mock admin auth middleware so we can focus on admin route behavior.
 // We still test CSRF/trusted-origin behavior using the real middleware.
-vi.mock('../middleware/requireAdmin.js', () => {
+vi.mock('../middleware/require-admin.js', () => {
   return {
     isAdmin: () => true,
     requireAdmin: async (c, next) => {

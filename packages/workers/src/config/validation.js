@@ -85,7 +85,7 @@ export const userSchemas = {
       .string()
       .optional()
       .transform(val => {
-        const num = parseInt(val || '10', 10);
+        const num = Number.parseInt(val || '10', 10);
         return Math.min(Math.max(1, num), 20);
       }),
   }),
@@ -180,31 +180,5 @@ export function validateRequest(schema) {
         400,
       );
     }
-  };
-}
-
-/**
- * Hono middleware for query parameter validation
- * @param {z.ZodSchema} schema - Zod schema to validate against
- * @returns {Function} Hono middleware
- */
-export function validateQueryParams(schema) {
-  return async (c, next) => {
-    const query = c.req.query();
-    const result = validateQuery(schema, query);
-
-    if (!result.success) {
-      return c.json(
-        {
-          error: result.error.message,
-          code: 2001,
-          details: result.error.errors,
-        },
-        400,
-      );
-    }
-
-    c.set('validatedQuery', result.data);
-    await next();
   };
 }
