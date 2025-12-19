@@ -41,7 +41,7 @@ export default [
         document: 'readonly',
         navigator: 'readonly',
         console: 'readonly',
-        
+
         fetch: 'readonly',
         URL: 'readonly',
         caches: 'readonly',
