@@ -9,6 +9,30 @@ let pdfjsInitPromise = null;
 // DOI regex pattern
 const DOI_REGEX = /\b(10\.\d{4,}(?:\.\d+)*\/\S+)\b/gi;
 
+// Timeout constants
+const PDF_INIT_TIMEOUT = 10000; // 10 seconds for PDF.js initialization
+const PDF_EXTRACT_TIMEOUT = 10000; // 10 seconds for title/DOI extraction
+
+/**
+ * Wrap a promise with a timeout
+ * @param {Promise} promise - The promise to wrap
+ * @param {number} ms - Timeout in milliseconds
+ * @param {string} operationName - Name of the operation for error messages
+ * @returns {Promise} - The promise with timeout
+ */
+export function withTimeout(promise, ms, operationName = 'Operation') {
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`${operationName} timed out after ${ms / 1000} seconds`));
+    }, ms);
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    clearTimeout(timeoutId);
+  });
+}
+
 /**
  * Initialize PDF.js library lazily
  * This is the shared initialization function used by all PDF-related components
@@ -20,10 +44,11 @@ export async function initPdfJs() {
   if (pdfjsInitPromise) return pdfjsInitPromise;
 
   pdfjsInitPromise = (async () => {
-    const [pdfjs, workerModule] = await Promise.all([
-      import('pdfjs-dist'),
-      import('pdfjs-dist/build/pdf.worker.min.mjs?url'),
-    ]);
+    const [pdfjs, workerModule] = await withTimeout(
+      Promise.all([import('pdfjs-dist'), import('pdfjs-dist/build/pdf.worker.min.mjs?url')]),
+      PDF_INIT_TIMEOUT,
+      'PDF.js initialization',
+    );
 
     pdfjsLib = pdfjs;
     pdfjsLib.GlobalWorkerOptions.workerSrc = workerModule.default;
@@ -39,13 +64,21 @@ export async function initPdfJs() {
  * Tries metadata first, then extracts from first page text
  * @param {ArrayBuffer} pdfData - The PDF file as ArrayBuffer
  * @returns {Promise<string>} - The extracted title or fallback
+ * @throws {Error} - If extraction times out or fails
  */
 export async function extractPdfTitle(pdfData) {
-  try {
-    const pdfjs = await initPdfJs();
-    // verbosity: 0 = ERRORS only (suppress warnings about malformed PDFs)
-    const pdf = await pdfjs.getDocument({ data: pdfData, verbosity: 0 }).promise;
+  return withTimeout(extractPdfTitleInternal(pdfData), PDF_EXTRACT_TIMEOUT, 'PDF title extraction');
+}
 
+/**
+ * Internal implementation of title extraction (without timeout wrapper)
+ */
+async function extractPdfTitleInternal(pdfData) {
+  const pdfjs = await initPdfJs();
+  // verbosity: 0 = ERRORS only (suppress warnings about malformed PDFs)
+  const pdf = await pdfjs.getDocument({ data: pdfData, verbosity: 0 }).promise;
+
+  try {
     // Try to get title from PDF metadata first
     const metadata = await pdf.getMetadata();
     if (metadata?.info?.Title && metadata.info.Title.trim()) {
@@ -101,9 +134,10 @@ export async function extractPdfTitle(pdfData) {
     }
 
     return null;
-  } catch (error) {
-    console.error('Error extracting PDF title:', error);
-    return null;
+  } finally {
+    if (pdf) {
+      await pdf.destroy();
+    }
   }
 }
 
@@ -177,12 +211,20 @@ export function readFileAsArrayBuffer(file) {
  * Extract DOI from PDF metadata or first page text
  * @param {ArrayBuffer} pdfData - The PDF file as ArrayBuffer
  * @returns {Promise<string|null>} - The extracted DOI or null
+ * @throws {Error} - If extraction times out or fails
  */
 export async function extractPdfDoi(pdfData) {
-  try {
-    const pdfjs = await initPdfJs();
-    const pdf = await pdfjs.getDocument({ data: pdfData, verbosity: 0 }).promise;
+  return withTimeout(extractPdfDoiInternal(pdfData), PDF_EXTRACT_TIMEOUT, 'PDF DOI extraction');
+}
 
+/**
+ * Internal implementation of DOI extraction (without timeout wrapper)
+ */
+async function extractPdfDoiInternal(pdfData) {
+  const pdfjs = await initPdfJs();
+  const pdf = await pdfjs.getDocument({ data: pdfData, verbosity: 0 }).promise;
+
+  try {
     // Try metadata first
     const metadata = await pdf.getMetadata();
 
@@ -225,9 +267,10 @@ export async function extractPdfDoi(pdfData) {
     }
 
     return null;
-  } catch (error) {
-    console.error('Error extracting DOI from PDF:', error);
-    return null;
+  } finally {
+    if (pdf) {
+      await pdf.destroy();
+    }
   }
 }
 
