@@ -189,8 +189,20 @@ pdfRoutes.post('/', async c => {
       );
     }
 
-    // Store in R2
+    // Check if file with same name already exists
     const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
+    const existing = await c.env.PDF_BUCKET.head(key);
+    if (existing) {
+      return c.json(
+        createErrorResponse(
+          ERROR_CODES.FILE_ALREADY_EXISTS,
+          `File "${fileName}" already exists. Rename or remove the existing copy.`,
+        ),
+        409,
+      );
+    }
+
+    // Store in R2
 
     await c.env.PDF_BUCKET.put(key, pdfData, {
       httpMetadata: {

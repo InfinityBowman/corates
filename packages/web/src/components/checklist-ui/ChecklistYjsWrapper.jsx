@@ -188,7 +188,7 @@ export default function ChecklistYjsWrapper() {
           console.warn('Failed to clean up orphaned PDF:', cleanupErr),
         );
       }
-      showToast.error('Upload Failed', 'Failed to upload PDF');
+      showToast.error('Upload Failed', err.message || 'Failed to upload PDF');
     }
   };
 
