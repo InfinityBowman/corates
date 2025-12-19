@@ -87,13 +87,13 @@ export default function ProjectDashboard(props) {
   return (
     <div class='space-y-6'>
       {/* Header */}
-      <div class='flex justify-between items-center'>
+      <div class='flex items-center justify-between'>
         <div>
           <h1 class='text-2xl font-bold text-gray-900'>My Projects</h1>
-          <p class='text-gray-500 mt-1'>Manage your research projects</p>
+          <p class='mt-1 text-gray-500'>Manage your research projects</p>
         </div>
         <button
-          class='inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100'
+          class='inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
           onClick={() => setShowCreateForm(!showCreateForm())}
           disabled={!isOnline()}
           title={!isOnline() ? 'Cannot create projects while offline' : ''}
@@ -105,7 +105,7 @@ export default function ProjectDashboard(props) {
 
       {/* Error display */}
       <Show when={error() && !isOfflineError()}>
-        <div class='bg-red-50 border border-red-200 rounded-lg p-4 text-red-700'>
+        <div class='rounded-lg border border-red-200 bg-red-50 p-4 text-red-700'>
           {error()}
           <button onClick={() => projectStore.refreshProjectList(userId())} class='ml-2 underline'>
             Retry
@@ -128,11 +128,11 @@ export default function ProjectDashboard(props) {
           when={projects()?.length > 0}
           fallback={
             <Show when={!isLoading()}>
-              <div class='col-span-full text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300'>
-                <div class='text-gray-500 mb-4'>No projects yet</div>
+              <div class='col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-white py-12 text-center'>
+                <div class='mb-4 text-gray-500'>No projects yet</div>
                 <button
                   onClick={() => setShowCreateForm(true)}
-                  class='text-blue-600 hover:text-blue-700 font-medium'
+                  class='font-medium text-blue-600 hover:text-blue-700'
                 >
                   Create your first project
                 </button>
@@ -149,7 +149,7 @@ export default function ProjectDashboard(props) {
 
         {/* Loading state */}
         <Show when={isLoading() && !isLoaded()}>
-          <div class='col-span-full text-center py-12'>
+          <div class='col-span-full py-12 text-center'>
             <div class='text-gray-400'>Loading projects...</div>
           </div>
         </Show>

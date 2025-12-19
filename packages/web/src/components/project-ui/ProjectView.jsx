@@ -204,28 +204,28 @@ export default function ProjectView() {
 
   // Tab configuration
   const tabDefinitions = [
-    { value: 'overview', label: 'Overview', icon: <BiRegularHome class='w-4 h-4' /> },
+    { value: 'overview', label: 'Overview', icon: <BiRegularHome class='h-4 w-4' /> },
     {
       value: 'all-studies',
       label: 'All Studies',
-      icon: <AiOutlineBook class='w-4 h-4' />,
+      icon: <AiOutlineBook class='h-4 w-4' />,
     },
     {
       value: 'todo',
       label: 'To Do',
-      icon: <BsListTask class='w-4 h-4' />,
+      icon: <BsListTask class='h-4 w-4' />,
       getCount: getToDoCount,
     },
     {
       value: 'reconcile',
       label: 'Reconcile',
-      icon: <CgArrowsExchange class='w-4 h-4' />,
+      icon: <CgArrowsExchange class='h-4 w-4' />,
       getCount: getReconcileCount,
     },
     {
       value: 'completed',
       label: 'Completed',
-      icon: <AiFillCheckCircle class='w-4 h-4' />,
+      icon: <AiFillCheckCircle class='h-4 w-4' />,
     },
   ];
 
@@ -244,7 +244,7 @@ export default function ProjectView() {
   };
 
   return (
-    <div class='p-6 max-w-7xl mx-auto'>
+    <div class='mx-auto max-w-7xl p-6'>
       <ProjectProvider
         projectId={params.projectId}
         handlers={{ studyHandlers, checklistHandlers, pdfHandlers, memberHandlers }}

@@ -32,13 +32,13 @@ function ToastItem(props) {
     const type = api().type;
     switch (type) {
       case 'success':
-        return <FiCheck class='w-5 h-5 text-green-500' />;
+        return <FiCheck class='h-5 w-5 text-green-500' />;
       case 'error':
-        return <FiAlertCircle class='w-5 h-5 text-red-500' />;
+        return <FiAlertCircle class='h-5 w-5 text-red-500' />;
       case 'loading':
-        return <FiLoader class='w-5 h-5 text-blue-500 animate-spin' />;
+        return <FiLoader class='h-5 w-5 animate-spin text-blue-500' />;
       default:
-        return <FiInfo class='w-5 h-5 text-blue-500' />;
+        return <FiInfo class='h-5 w-5 text-blue-500' />;
     }
   };
 
@@ -80,7 +80,7 @@ function ToastItem(props) {
             <button
               type='button'
               onClick={() => api().dismiss()}
-              class='inline-flex rounded-md bg-transparent text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 p-1 cursor-pointer'
+              class='inline-flex cursor-pointer rounded-md bg-transparent p-1 text-gray-400 hover:text-gray-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none'
             >
               <span class='sr-only'>Close</span>
               <FiX class='h-5 w-5' />

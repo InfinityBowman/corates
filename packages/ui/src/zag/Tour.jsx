@@ -75,7 +75,7 @@ export function TourProvider(props) {
           <Show when={api().step.backdrop !== false}>
             <div
               {...api().getBackdropProps()}
-              class='fixed inset-0 bg-black/50 z-100 transition-opacity'
+              class='fixed inset-0 z-100 bg-black/50 transition-opacity'
             />
           </Show>
 
@@ -89,31 +89,31 @@ export function TourProvider(props) {
           >
             <div
               {...api().getContentProps()}
-              class={`bg-white rounded-lg shadow-xl ${api().step.type === 'dialog' ? 'max-w-md w-full' : 'max-w-sm'}`}
+              class={`rounded-lg bg-white shadow-xl ${api().step.type === 'dialog' ? 'w-full max-w-md' : 'max-w-sm'}`}
             >
               <Show when={api().step.arrow !== false && api().step.type === 'tooltip'}>
                 <div
                   {...api().getArrowProps()}
-                  class='[--arrow-size:8px] [--arrow-background:white]'
+                  class='[--arrow-background:white] [--arrow-size:8px]'
                 >
                   <div {...api().getArrowTipProps()} />
                 </div>
               </Show>
 
               <div class='p-4'>
-                <div class='flex items-start justify-between mb-2'>
+                <div class='mb-2 flex items-start justify-between'>
                   <h3 {...api().getTitleProps()} class='text-lg font-semibold text-gray-900'>
                     {api().step.title}
                   </h3>
                   <button
                     {...api().getCloseTriggerProps()}
-                    class='p-1 -mr-1 -mt-1 text-gray-400 hover:text-gray-500 rounded hover:bg-gray-100 transition-colors'
+                    class='-mt-1 -mr-1 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500'
                   >
-                    <FiX class='w-4 h-4' />
+                    <FiX class='h-4 w-4' />
                   </button>
                 </div>
 
-                <div {...api().getDescriptionProps()} class='text-sm text-gray-600 mb-4'>
+                <div {...api().getDescriptionProps()} class='mb-4 text-sm text-gray-600'>
                   {api().step.description}
                 </div>
 
@@ -127,12 +127,11 @@ export function TourProvider(props) {
                       {action => (
                         <button
                           {...api().getActionTriggerProps({ action })}
-                          class={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors
-                            ${
-                              action.action === 'next' || action.action === 'dismiss' ?
-                                'bg-blue-600 text-white hover:bg-blue-700'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                          class={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                            action.action === 'next' || action.action === 'dismiss' ?
+                              'bg-blue-600 text-white hover:bg-blue-700'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
                         >
                           {action.label}
                         </button>

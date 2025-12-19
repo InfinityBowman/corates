@@ -28,28 +28,28 @@ export default function NotificationToast(props) {
   };
 
   return (
-    <div class='fixed bottom-4 right-4 z-50 space-y-2 max-w-sm'>
+    <div class='fixed right-4 bottom-4 z-50 max-w-sm space-y-2'>
       <For each={props.notifications}>
         {notification => {
           const content = getNotificationContent(notification);
           return (
-            <div class='bg-white border border-gray-200 rounded-lg shadow-lg p-4 animate-slide-in'>
+            <div class='animate-slide-in rounded-lg border border-gray-200 bg-white p-4 shadow-lg'>
               <div class='flex items-start gap-3'>
                 <div class='shrink-0'>
-                  <div class='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center'>
-                    <FiBell class='w-4 h-4 text-blue-600' />
+                  <div class='flex h-8 w-8 items-center justify-center rounded-full bg-blue-100'>
+                    <FiBell class='h-4 w-4 text-blue-600' />
                   </div>
                 </div>
-                <div class='flex-1 min-w-0'>
+                <div class='min-w-0 flex-1'>
                   <p class='text-sm font-medium text-gray-900'>{content.title}</p>
-                  <p class='text-sm text-gray-500 mt-1'>{content.message}</p>
+                  <p class='mt-1 text-sm text-gray-500'>{content.message}</p>
                   <Show when={content.action}>
                     <button
                       onClick={() => {
                         content.action();
                         props.onDismiss(notification.timestamp);
                       }}
-                      class='text-sm text-blue-600 hover:text-blue-700 font-medium mt-2'
+                      class='mt-2 text-sm font-medium text-blue-600 hover:text-blue-700'
                     >
                       {content.actionLabel}
                     </button>
@@ -59,7 +59,7 @@ export default function NotificationToast(props) {
                   onClick={() => props.onDismiss(notification.timestamp)}
                   class='shrink-0 text-gray-400 hover:text-gray-600'
                 >
-                  <FiX class='w-4 h-4' />
+                  <FiX class='h-4 w-4' />
                 </button>
               </div>
             </div>

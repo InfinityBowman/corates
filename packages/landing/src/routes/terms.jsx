@@ -20,15 +20,15 @@ export default function TermsOfService() {
       <Meta name='twitter:title' content={title} />
       <Meta name='twitter:description' content={description} />
 
-      <div class='min-h-screen flex flex-col'>
+      <div class='flex min-h-screen flex-col'>
         <Navbar />
 
         <main class='flex-1 py-16'>
-          <div class='max-w-3xl mx-auto px-6'>
-            <h1 class='text-4xl font-bold text-gray-900 mb-2'>Terms of Service</h1>
-            <p class='text-gray-500 mb-12'>Effective date: December 5, 2025</p>
+          <div class='mx-auto max-w-3xl px-6'>
+            <h1 class='mb-2 text-4xl font-bold text-gray-900'>Terms of Service</h1>
+            <p class='mb-12 text-gray-500'>Effective date: December 5, 2025</p>
 
-            <div class='text-gray-700 leading-relaxed space-y-6'>
+            <div class='space-y-6 leading-relaxed text-gray-700'>
               <p>
                 THESE TERMS OF SERVICE (the "Agreement") GOVERN CUSTOMER'S RECEIPT, ACCESS TO AND
                 USE OF THE SERVICE (AS DEFINED BELOW) PROVIDED BY CORATES ("CoRATES"). IN ACCEPTING
@@ -48,7 +48,7 @@ export default function TermsOfService() {
                 HEREIN. THE PARTIES AGREE AS FOLLOWS:
               </p>
 
-              <h2 class='text-xl font-semibold text-gray-900 pt-6'>1. The Service</h2>
+              <h2 class='pt-6 text-xl font-semibold text-gray-900'>1. The Service</h2>
 
               <p>
                 <strong>1.1. Service Description.</strong> CoRATES is the owner and provider of a
@@ -99,7 +99,7 @@ export default function TermsOfService() {
                 the Permissions set by Customer and its Users.
               </p>
 
-              <h2 class='text-xl font-semibold text-gray-900 pt-6'>2. Restrictions</h2>
+              <h2 class='pt-6 text-xl font-semibold text-gray-900'>2. Restrictions</h2>
 
               <p>
                 <strong>2.1. Customer's Responsibilities.</strong> Customer is responsible for all
@@ -129,7 +129,7 @@ export default function TermsOfService() {
                 vulnerability of the Service or any CoRATES system or networks.
               </p>
 
-              <h2 class='text-xl font-semibold text-gray-900 pt-6'>3. Third-Party Applications</h2>
+              <h2 class='pt-6 text-xl font-semibold text-gray-900'>3. Third-Party Applications</h2>
 
               <p>
                 The Service may work together with third party products, services or applications
@@ -152,7 +152,7 @@ export default function TermsOfService() {
                 Privacy Policy.
               </p>
 
-              <h2 class='text-xl font-semibold text-gray-900 pt-6'>4. Payment Obligations</h2>
+              <h2 class='pt-6 text-xl font-semibold text-gray-900'>4. Payment Obligations</h2>
 
               <p>
                 <strong>4.1. Fees.</strong> Customer will pay for access to and use of the Service
@@ -185,7 +185,7 @@ export default function TermsOfService() {
                 amounts.
               </p>
 
-              <h2 class='text-xl font-semibold text-gray-900 pt-6'>5. Term and Termination</h2>
+              <h2 class='pt-6 text-xl font-semibold text-gray-900'>5. Term and Termination</h2>
 
               <p>
                 <strong>5.1. Agreement Term and Renewals.</strong> Subscriptions to access and use
@@ -223,7 +223,7 @@ export default function TermsOfService() {
                 survive any termination or expiration of this Agreement.
               </p>
 
-              <h2 class='text-xl font-semibold text-gray-900 pt-6'>
+              <h2 class='pt-6 text-xl font-semibold text-gray-900'>
                 6. Warranties and Disclaimers
               </h2>
 
@@ -244,7 +244,7 @@ export default function TermsOfService() {
                 JUDGMENT.
               </p>
 
-              <h2 class='text-xl font-semibold text-gray-900 pt-6'>7. Limitation of Liability</h2>
+              <h2 class='pt-6 text-xl font-semibold text-gray-900'>7. Limitation of Liability</h2>
 
               <p>
                 NOTWITHSTANDING ANYTHING TO THE CONTRARY IN THIS AGREEMENT, CORATES WILL NOT BE
@@ -259,7 +259,7 @@ export default function TermsOfService() {
                 PRECEDING THE EVENT WHICH GIVES RISE TO SUCH DAMAGES.
               </p>
 
-              <h2 class='text-xl font-semibold text-gray-900 pt-6'>8. Confidentiality</h2>
+              <h2 class='pt-6 text-xl font-semibold text-gray-900'>8. Confidentiality</h2>
 
               <p>
                 <strong>8.1. Definition.</strong> Each party (the "Receiving Party") understands
@@ -291,7 +291,7 @@ export default function TermsOfService() {
                 Feedback as CoRATES sees fit, without obligation or restriction of any kind.
               </p>
 
-              <h2 class='text-xl font-semibold text-gray-900 pt-6'>9. Data</h2>
+              <h2 class='pt-6 text-xl font-semibold text-gray-900'>9. Data</h2>
 
               <p>
                 <strong>9.1. User Information.</strong> Customer and its Users are required to
@@ -327,7 +327,7 @@ export default function TermsOfService() {
                 hardware, software, systems, information, and data.
               </p>
 
-              <h2 class='text-xl font-semibold text-gray-900 pt-6'>10. General Terms</h2>
+              <h2 class='pt-6 text-xl font-semibold text-gray-900'>10. General Terms</h2>
 
               <p>
                 <strong>10.1. Force Majeure.</strong> CoRATES will not be liable by reason of any

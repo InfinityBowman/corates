@@ -14,7 +14,7 @@ describe('Dialog', () => {
   describe('Rendering', () => {
     it('should not render when closed', () => {
       render(() => (
-        <Dialog open={false} title="Test Dialog">
+        <Dialog open={false} title='Test Dialog'>
           <p>Dialog content</p>
         </Dialog>
       ));
@@ -24,7 +24,7 @@ describe('Dialog', () => {
 
     it('should render when open', () => {
       render(() => (
-        <Dialog open={true} title="Test Dialog">
+        <Dialog open={true} title='Test Dialog'>
           <p>Dialog content</p>
         </Dialog>
       ));
@@ -35,7 +35,7 @@ describe('Dialog', () => {
 
     it('should render title', () => {
       render(() => (
-        <Dialog open={true} title="My Dialog Title">
+        <Dialog open={true} title='My Dialog Title'>
           <p>Content</p>
         </Dialog>
       ));
@@ -45,7 +45,7 @@ describe('Dialog', () => {
 
     it('should render description when provided', () => {
       render(() => (
-        <Dialog open={true} title="Title" description="This is a description">
+        <Dialog open={true} title='Title' description='This is a description'>
           <p>Content</p>
         </Dialog>
       ));
@@ -55,7 +55,7 @@ describe('Dialog', () => {
 
     it('should render children content', () => {
       render(() => (
-        <Dialog open={true} title="Title">
+        <Dialog open={true} title='Title'>
           <p>Custom content here</p>
           <button>Action button</button>
         </Dialog>
@@ -70,7 +70,7 @@ describe('Dialog', () => {
     it('should accept onOpenChange prop', () => {
       const onOpenChange = vi.fn();
       render(() => (
-        <Dialog open={true} title="Title" onOpenChange={onOpenChange}>
+        <Dialog open={true} title='Title' onOpenChange={onOpenChange}>
           <p>Content</p>
         </Dialog>
       ));
@@ -81,7 +81,7 @@ describe('Dialog', () => {
 
     it('should render close button', () => {
       render(() => (
-        <Dialog open={true} title="Title">
+        <Dialog open={true} title='Title'>
           <p>Content</p>
         </Dialog>
       ));
@@ -94,7 +94,7 @@ describe('Dialog', () => {
   describe('Size variants', () => {
     it('should apply small size class', () => {
       render(() => (
-        <Dialog open={true} title="Small Dialog" size="sm">
+        <Dialog open={true} title='Small Dialog' size='sm'>
           <p>Content</p>
         </Dialog>
       ));
@@ -105,7 +105,7 @@ describe('Dialog', () => {
 
     it('should apply medium size class by default', () => {
       render(() => (
-        <Dialog open={true} title="Medium Dialog">
+        <Dialog open={true} title='Medium Dialog'>
           <p>Content</p>
         </Dialog>
       ));
@@ -116,7 +116,7 @@ describe('Dialog', () => {
 
     it('should apply large size class', () => {
       render(() => (
-        <Dialog open={true} title="Large Dialog" size="lg">
+        <Dialog open={true} title='Large Dialog' size='lg'>
           <p>Content</p>
         </Dialog>
       ));
@@ -129,7 +129,7 @@ describe('Dialog', () => {
   describe('Accessibility', () => {
     it('should have dialog role', () => {
       render(() => (
-        <Dialog open={true} title="Accessible Dialog">
+        <Dialog open={true} title='Accessible Dialog'>
           <p>Content</p>
         </Dialog>
       ));
@@ -140,7 +140,7 @@ describe('Dialog', () => {
 
     it('should have proper title attributes', () => {
       render(() => (
-        <Dialog open={true} title="Dialog Title">
+        <Dialog open={true} title='Dialog Title'>
           <p>Content</p>
         </Dialog>
       ));
@@ -158,13 +158,7 @@ describe('ConfirmDialog', () => {
 
   describe('Rendering', () => {
     it('should not render when closed', () => {
-      render(() => (
-        <ConfirmDialog
-          open={false}
-          title="Confirm"
-          description="Are you sure?"
-        />
-      ));
+      render(() => <ConfirmDialog open={false} title='Confirm' description='Are you sure?' />);
 
       expect(screen.queryByText('Confirm')).not.toBeInTheDocument();
     });
@@ -173,8 +167,8 @@ describe('ConfirmDialog', () => {
       render(() => (
         <ConfirmDialog
           open={true}
-          title="Confirm Action"
-          description="Are you sure you want to proceed?"
+          title='Confirm Action'
+          description='Are you sure you want to proceed?'
         />
       ));
 
@@ -183,13 +177,7 @@ describe('ConfirmDialog', () => {
     });
 
     it('should render default button text', () => {
-      render(() => (
-        <ConfirmDialog
-          open={true}
-          title="Confirm Title"
-          description="Description"
-        />
-      ));
+      render(() => <ConfirmDialog open={true} title='Confirm Title' description='Description' />);
 
       expect(screen.getByText('Cancel')).toBeInTheDocument();
       // Confirm button shows "Confirm" text
@@ -202,10 +190,10 @@ describe('ConfirmDialog', () => {
       render(() => (
         <ConfirmDialog
           open={true}
-          title="Delete Item"
-          description="This action cannot be undone"
-          confirmText="Delete"
-          cancelText="Keep"
+          title='Delete Item'
+          description='This action cannot be undone'
+          confirmText='Delete'
+          cancelText='Keep'
         />
       ));
 
@@ -217,12 +205,7 @@ describe('ConfirmDialog', () => {
   describe('Variants', () => {
     it('should apply danger variant styling', () => {
       render(() => (
-        <ConfirmDialog
-          open={true}
-          title="Delete"
-          description="Are you sure?"
-          variant="danger"
-        />
+        <ConfirmDialog open={true} title='Delete' description='Are you sure?' variant='danger' />
       ));
 
       const iconBg = document.querySelector('.bg-red-100');
@@ -233,9 +216,9 @@ describe('ConfirmDialog', () => {
       render(() => (
         <ConfirmDialog
           open={true}
-          title="Warning"
-          description="Proceed with caution"
-          variant="warning"
+          title='Warning'
+          description='Proceed with caution'
+          variant='warning'
         />
       ));
 
@@ -247,9 +230,9 @@ describe('ConfirmDialog', () => {
       render(() => (
         <ConfirmDialog
           open={true}
-          title="Info"
-          description="This is informational"
-          variant="info"
+          title='Info'
+          description='This is informational'
+          variant='info'
         />
       ));
 
@@ -264,8 +247,8 @@ describe('ConfirmDialog', () => {
       render(() => (
         <ConfirmDialog
           open={true}
-          title="Confirm Action"
-          description="Proceed?"
+          title='Confirm Action'
+          description='Proceed?'
           onConfirm={onConfirm}
         />
       ));
@@ -279,8 +262,8 @@ describe('ConfirmDialog', () => {
       render(() => (
         <ConfirmDialog
           open={true}
-          title="Confirm"
-          description="Proceed?"
+          title='Confirm'
+          description='Proceed?'
           onOpenChange={onOpenChange}
         />
       ));
@@ -295,12 +278,7 @@ describe('ConfirmDialog', () => {
   describe('Loading state', () => {
     it('should show loading text when loading', () => {
       render(() => (
-        <ConfirmDialog
-          open={true}
-          title="Confirm"
-          description="Proceed?"
-          loading={true}
-        />
+        <ConfirmDialog open={true} title='Confirm' description='Proceed?' loading={true} />
       ));
 
       expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -308,12 +286,7 @@ describe('ConfirmDialog', () => {
 
     it('should disable buttons when loading', () => {
       render(() => (
-        <ConfirmDialog
-          open={true}
-          title="Confirm"
-          description="Proceed?"
-          loading={true}
-        />
+        <ConfirmDialog open={true} title='Confirm' description='Proceed?' loading={true} />
       ));
 
       const buttons = screen.getAllByRole('button');
@@ -325,13 +298,7 @@ describe('ConfirmDialog', () => {
 
   describe('Accessibility', () => {
     it('should have alertdialog role', () => {
-      render(() => (
-        <ConfirmDialog
-          open={true}
-          title="Confirm"
-          description="Are you sure?"
-        />
-      ));
+      render(() => <ConfirmDialog open={true} title='Confirm' description='Are you sure?' />);
 
       const dialog = screen.getByRole('alertdialog');
       expect(dialog).toBeInTheDocument();
@@ -349,7 +316,7 @@ describe('useConfirmDialog', () => {
       const { isOpen, ConfirmDialogComponent } = useConfirmDialog();
       return (
         <div>
-          <span data-testid="is-open">{isOpen() ? 'open' : 'closed'}</span>
+          <span data-testid='is-open'>{isOpen() ? 'open' : 'closed'}</span>
           <ConfirmDialogComponent />
         </div>
       );
@@ -365,7 +332,7 @@ describe('useConfirmDialog', () => {
       const { open, ConfirmDialogComponent } = useConfirmDialog();
       return (
         <div>
-          <span data-testid="has-open">{typeof open === 'function' ? 'yes' : 'no'}</span>
+          <span data-testid='has-open'>{typeof open === 'function' ? 'yes' : 'no'}</span>
           <ConfirmDialogComponent />
         </div>
       );
@@ -381,7 +348,7 @@ describe('useConfirmDialog', () => {
       const { close, ConfirmDialogComponent } = useConfirmDialog();
       return (
         <div>
-          <span data-testid="has-close">{typeof close === 'function' ? 'yes' : 'no'}</span>
+          <span data-testid='has-close'>{typeof close === 'function' ? 'yes' : 'no'}</span>
           <ConfirmDialogComponent />
         </div>
       );
@@ -397,7 +364,9 @@ describe('useConfirmDialog', () => {
       const { setLoading, ConfirmDialogComponent } = useConfirmDialog();
       return (
         <div>
-          <span data-testid="has-setLoading">{typeof setLoading === 'function' ? 'yes' : 'no'}</span>
+          <span data-testid='has-setLoading'>
+            {typeof setLoading === 'function' ? 'yes' : 'no'}
+          </span>
           <ConfirmDialogComponent />
         </div>
       );
@@ -413,7 +382,9 @@ describe('useConfirmDialog', () => {
       const { dialogProps, ConfirmDialogComponent } = useConfirmDialog();
       return (
         <div>
-          <span data-testid="has-dialogProps">{typeof dialogProps === 'function' ? 'yes' : 'no'}</span>
+          <span data-testid='has-dialogProps'>
+            {typeof dialogProps === 'function' ? 'yes' : 'no'}
+          </span>
           <ConfirmDialogComponent />
         </div>
       );

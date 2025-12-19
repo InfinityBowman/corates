@@ -179,8 +179,8 @@ export default function AddStudiesForm(props) {
     <div ref={containerRef} class='relative'>
       {/* Drag overlay */}
       <Show when={isDraggingOver() && hasExistingStudies() && !isExpanded()}>
-        <div class='fixed inset-0 bg-blue-500/10 z-50 flex items-center justify-center pointer-events-none'>
-          <div class='bg-white border-2 border-dashed border-blue-500 rounded-xl p-8 shadow-lg'>
+        <div class='pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-blue-500/10'>
+          <div class='rounded-xl border-2 border-dashed border-blue-500 bg-white p-8 shadow-lg'>
             <p class='text-lg font-medium text-blue-600'>Drop PDFs to add studies</p>
           </div>
         </div>
@@ -192,9 +192,9 @@ export default function AddStudiesForm(props) {
           <button
             type='button'
             onClick={handleExpand}
-            class='inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm'
+            class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700'
           >
-            <BiRegularPlus class='w-4 h-4' />
+            <BiRegularPlus class='h-4 w-4' />
             Add Studies
           </button>
         </div>
@@ -203,17 +203,17 @@ export default function AddStudiesForm(props) {
       {/* Expanded form */}
       <Show when={isExpanded()}>
         <div
-          class={`${props.collectMode ? '' : 'bg-white border border-gray-200 rounded-lg shadow-sm p-6'}`}
+          class={`${props.collectMode ? '' : 'rounded-lg border border-gray-200 bg-white p-6 shadow-sm'}`}
         >
           <Show when={!props.alwaysExpanded && !props.collectMode}>
-            <div class='flex items-center justify-between mb-4'>
+            <div class='mb-4 flex items-center justify-between'>
               <h3 class='text-lg font-semibold text-gray-900'>Add Studies</h3>
               <button
                 type='button'
                 onClick={handleCollapse}
-                class='p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors'
+                class='rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
               >
-                <FiChevronUp class='w-5 h-5' />
+                <FiChevronUp class='h-5 w-5' />
               </button>
             </div>
           </Show>
@@ -234,7 +234,7 @@ export default function AddStudiesForm(props) {
                       (t.value === 'drive' && studies.driveCount() > 0)
                     }
                   >
-                    <span class='inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full'>
+                    <span class='inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-100 px-1.5 text-xs font-medium text-blue-700'>
                       {t.value === 'pdfs' ?
                         studies.pdfCount()
                       : t.value === 'references' ?
@@ -276,12 +276,12 @@ export default function AddStudiesForm(props) {
 
           {/* Summary and Actions - hidden in collect mode since parent handles submission */}
           <Show when={studies.totalStudyCount() > 0 && !props.collectMode}>
-            <div class='mt-4 pt-4 border-t border-gray-200'>
+            <div class='mt-4 border-t border-gray-200 pt-4'>
               <div class='flex items-center justify-between'>
                 <div class='text-sm text-gray-600'>
                   <span class='font-medium'>{studies.totalStudyCount()}</span>{' '}
                   {studies.totalStudyCount() === 1 ? 'study' : 'studies'} ready to add
-                  <span class='text-gray-400 ml-2'>
+                  <span class='ml-2 text-gray-400'>
                     (
                     {[
                       studies.pdfCount() > 0 ?
@@ -301,7 +301,7 @@ export default function AddStudiesForm(props) {
                     <button
                       type='button'
                       onClick={handleCancel}
-                      class='px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors'
+                      class='rounded-lg px-3 py-1.5 text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800'
                     >
                       Cancel
                     </button>
@@ -310,13 +310,13 @@ export default function AddStudiesForm(props) {
                     type='button'
                     onClick={handleSubmit}
                     disabled={isSubmitting() || studies.totalStudyCount() === 0}
-                    class='inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors'
+                    class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400'
                   >
                     <Show
                       when={!isSubmitting()}
                       fallback={
                         <>
-                          <div class='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
+                          <div class='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
                           Adding...
                         </>
                       }
@@ -335,12 +335,12 @@ export default function AddStudiesForm(props) {
       {/* Initial drop zone for empty projects */}
       <Show when={!isExpanded() && !hasExistingStudies()}>
         <div
-          class='border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 hover:bg-blue-50/50 transition-colors cursor-pointer'
+          class='cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-8 text-center transition-colors hover:border-blue-500 hover:bg-blue-50/50'
           onClick={handleExpand}
         >
-          <AiOutlineCloudUpload class='w-12 h-12 text-gray-400 mx-auto mb-3' />
-          <p class='text-gray-600 font-medium'>Add Studies to Your Project</p>
-          <p class='text-sm text-gray-500 mt-1'>
+          <AiOutlineCloudUpload class='mx-auto mb-3 h-12 w-12 text-gray-400' />
+          <p class='font-medium text-gray-600'>Add Studies to Your Project</p>
+          <p class='mt-1 text-sm text-gray-500'>
             Upload PDFs, import from reference managers, or look up by DOI/PMID
           </p>
         </div>

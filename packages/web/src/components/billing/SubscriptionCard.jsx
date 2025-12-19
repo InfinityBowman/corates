@@ -33,16 +33,16 @@ export default function SubscriptionCard(props) {
   const currentStatus = () => statusConfig[status()] ?? statusConfig.active;
 
   return (
-    <div class='bg-white rounded-xl border border-gray-200 overflow-hidden'>
+    <div class='overflow-hidden rounded-xl border border-gray-200 bg-white'>
       {/* Header */}
-      <div class='px-6 py-4 border-b border-gray-200 bg-gray-50'>
+      <div class='border-b border-gray-200 bg-gray-50 px-6 py-4'>
         <div class='flex items-center justify-between'>
           <div class='flex items-center space-x-2'>
-            <FiCreditCard class='w-5 h-5 text-gray-600' />
+            <FiCreditCard class='h-5 w-5 text-gray-600' />
             <h2 class='text-lg font-medium text-gray-900'>Current Plan</h2>
           </div>
           <span
-            class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${currentStatus().color}-100 text-${currentStatus().color}-800`}
+            class={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-${currentStatus().color}-100 text-${currentStatus().color}-800`}
           >
             {currentStatus().label}
           </span>
@@ -54,13 +54,13 @@ export default function SubscriptionCard(props) {
         <div class='flex items-start justify-between'>
           <div>
             <h3 class='text-2xl font-bold text-gray-900'>{tierInfo().name}</h3>
-            <p class='text-sm text-gray-500 mt-1'>{tierInfo().description}</p>
+            <p class='mt-1 text-sm text-gray-500'>{tierInfo().description}</p>
           </div>
           <Show when={tier() !== 'free'}>
             <div class='text-right'>
               <Show when={periodEndDate()}>
                 <div class='flex items-center text-sm text-gray-500'>
-                  <FiCalendar class='w-4 h-4 mr-1' />
+                  <FiCalendar class='mr-1 h-4 w-4' />
                   <span>
                     {willCancel() ? 'Expires' : 'Renews'} {periodEndDate()}
                   </span>
@@ -72,9 +72,9 @@ export default function SubscriptionCard(props) {
 
         {/* Warning for past due */}
         <Show when={status() === 'past_due'}>
-          <div class='mt-4 p-3 bg-red-50 border border-red-200 rounded-lg'>
+          <div class='mt-4 rounded-lg border border-red-200 bg-red-50 p-3'>
             <div class='flex items-center'>
-              <FiAlertCircle class='w-5 h-5 text-red-500 mr-2' />
+              <FiAlertCircle class='mr-2 h-5 w-5 text-red-500' />
               <div>
                 <p class='text-sm font-medium text-red-800'>Payment Failed</p>
                 <p class='text-sm text-red-600'>
@@ -87,9 +87,9 @@ export default function SubscriptionCard(props) {
 
         {/* Warning for cancellation */}
         <Show when={willCancel() && status() === 'active'}>
-          <div class='mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg'>
+          <div class='mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-3'>
             <div class='flex items-center'>
-              <FiAlertCircle class='w-5 h-5 text-yellow-500 mr-2' />
+              <FiAlertCircle class='mr-2 h-5 w-5 text-yellow-500' />
               <div>
                 <p class='text-sm font-medium text-yellow-800'>Subscription Ending</p>
                 <p class='text-sm text-yellow-600'>
@@ -105,7 +105,7 @@ export default function SubscriptionCard(props) {
           <Show when={tier() !== 'free'}>
             <button
               type='button'
-              class='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
+              class='rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
               onClick={() => props.onManage?.()}
               disabled={props.loading}
             >
@@ -115,7 +115,7 @@ export default function SubscriptionCard(props) {
           <Show when={tier() === 'free' || willCancel()}>
             <button
               type='button'
-              class='px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors'
+              class='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700'
               onClick={() => props.onUpgrade?.()}
               disabled={props.loading}
             >

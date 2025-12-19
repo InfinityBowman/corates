@@ -30,29 +30,26 @@ export function SectionD(props) {
   const isSourceChecked = sourceName => props.sectionDState?.sources?.[sourceName] || false;
 
   return (
-    <div class='bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden'>
-      <div class='px-6 py-4 bg-gray-50 border-b border-gray-200'>
-        <h3 class='font-semibold text-gray-900 text-base'>{SECTION_D.title}</h3>
-        <p class='text-xs text-gray-500 mt-1'>{SECTION_D.description}</p>
+    <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
+      <div class='border-b border-gray-200 bg-gray-50 px-6 py-4'>
+        <h3 class='text-base font-semibold text-gray-900'>{SECTION_D.title}</h3>
+        <p class='mt-1 text-xs text-gray-500'>{SECTION_D.description}</p>
       </div>
 
-      <div class='px-6 py-4 space-y-3'>
+      <div class='space-y-3 px-6 py-4'>
         {/* Checkbox list for information sources */}
-        <div class='grid grid-cols-1 md:grid-cols-2 gap-2'>
+        <div class='grid grid-cols-1 gap-2 md:grid-cols-2'>
           <For each={INFORMATION_SOURCES}>
             {source => (
               <label
-                class={`flex items-start gap-3 p-3 rounded-lg border transition-all duration-200
-                  ${isSourceChecked(source) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'}
-                  ${props.disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
-                `}
+                class={`flex items-start gap-3 rounded-lg border p-3 transition-all duration-200 ${isSourceChecked(source) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'} ${props.disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'} `}
               >
                 <input
                   type='checkbox'
                   checked={isSourceChecked(source)}
                   disabled={props.disabled}
                   onChange={() => !props.disabled && handleSourceToggle(source)}
-                  class='mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500'
+                  class='mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
                 />
                 <span class='text-sm text-gray-700'>{source}</span>
               </label>
@@ -61,21 +58,16 @@ export function SectionD(props) {
         </div>
 
         {/* Other/additional sources textarea */}
-        <div class='pt-3 border-t border-gray-200'>
+        <div class='border-t border-gray-200 pt-3'>
           <label class='block'>
-            <span class='text-sm text-gray-700 font-medium'>{SECTION_D.otherField.label}</span>
+            <span class='text-sm font-medium text-gray-700'>{SECTION_D.otherField.label}</span>
             <textarea
               value={props.sectionDState?.otherSpecify || ''}
               disabled={props.disabled}
               placeholder={SECTION_D.otherField.placeholder}
               onInput={e => handleOtherChange(e.currentTarget.value)}
               rows={2}
-              class={`
-                mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm
-                placeholder:text-gray-400
-                focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none
-                ${props.disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'bg-white'}
-              `}
+              class={`mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none ${props.disabled ? 'cursor-not-allowed bg-gray-100 opacity-60' : 'bg-white'} `}
             />
           </label>
         </div>

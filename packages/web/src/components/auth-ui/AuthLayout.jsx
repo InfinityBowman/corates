@@ -51,11 +51,11 @@ export default function AuthLayout(props) {
   };
 
   return (
-    <div class='min-h-screen bg-blue-50 flex items-center justify-center px-4 py-8 sm:py-12'>
+    <div class='flex min-h-screen items-center justify-center bg-blue-50 px-4 py-8 sm:py-12'>
       <Show when={showLoading()}>
-        <div class='w-full max-w-md sm:max-w-xl flex items-center justify-center'>
+        <div class='flex w-full max-w-md items-center justify-center sm:max-w-xl'>
           <div class='text-center'>
-            <div class='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto' />
+            <div class='mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600' />
             <p class='mt-4 text-gray-600'>Loading...</p>
           </div>
         </div>

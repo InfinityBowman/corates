@@ -171,8 +171,8 @@ export default function SignIn() {
   }
 
   return (
-    <div class='h-full bg-blue-50 flex items-center justify-center px-4 py-8 sm:py-12'>
-      <div class='w-full max-w-md sm:max-w-xl bg-white rounded-xl sm:rounded-3xl shadow-2xl p-6 sm:p-12 space-y-4 border border-gray-100'>
+    <div class='flex h-full items-center justify-center bg-blue-50 px-4 py-8 sm:py-12'>
+      <div class='w-full max-w-md space-y-4 rounded-xl border border-gray-100 bg-white p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
         {/* Two-Factor Verification */}
         <Show when={showTwoFactor()}>
           <TwoFactorVerify onCancel={handleTwoFactorCancel} />
@@ -180,14 +180,14 @@ export default function SignIn() {
 
         {/* Normal Sign In */}
         <Show when={!showTwoFactor()}>
-          <div class='mb-2 sm:mb-4 text-center'>
+          <div class='mb-2 text-center sm:mb-4'>
             <h2
-              class='text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2'
+              class='mb-1 text-xl font-bold text-gray-900 sm:mb-2 sm:text-2xl'
               id='signin-heading'
             >
               Welcome Back
             </h2>
-            <p class='text-gray-500 text-xs sm:text-sm'>Sign in to your account.</p>
+            <p class='text-xs text-gray-500 sm:text-sm'>Sign in to your account.</p>
           </div>
 
           <LastLoginHint />
@@ -197,7 +197,7 @@ export default function SignIn() {
             <button
               type='button'
               onClick={() => setUseMagicLink(false)}
-              class={`flex-1 py-2 px-3 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+              class={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${
                 !useMagicLink() ?
                   'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
@@ -208,7 +208,7 @@ export default function SignIn() {
             <button
               type='button'
               onClick={() => setUseMagicLink(true)}
-              class={`flex-1 py-2 px-3 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+              class={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${
                 useMagicLink() ?
                   'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
@@ -229,7 +229,7 @@ export default function SignIn() {
               <div class='space-y-4'>
                 <div>
                   <label
-                    class='block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2'
+                    class='mb-1 block text-xs font-semibold text-gray-700 sm:mb-2 sm:text-sm'
                     for='email-input'
                   >
                     Email
@@ -241,7 +241,7 @@ export default function SignIn() {
                     spellCheck='false'
                     value={email()}
                     onInput={e => setEmail(e.target.value)}
-                    class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
+                    class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:ring-2 focus:ring-blue-400 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
                     required
                     id='email-input'
                     placeholder='you@example.com'
@@ -295,7 +295,7 @@ export default function SignIn() {
             />
           </SocialAuthContainer>
 
-          <div class='text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-4'>
+          <div class='mt-2 text-center text-xs text-gray-500 sm:mt-4 sm:text-sm'>
             Don&apos;t have an account?{' '}
             <AuthLink
               href='/signup'

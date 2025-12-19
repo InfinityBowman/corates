@@ -31,9 +31,9 @@ export default function ProtectedGuard(props) {
   return (
     <>
       <Show when={showLoading()}>
-        <div class='w-full max-w-md sm:max-w-xl flex items-center justify-center'>
+        <div class='flex w-full max-w-md items-center justify-center sm:max-w-xl'>
           <div class='text-center'>
-            <div class='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto' />
+            <div class='mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600' />
             <p class='mt-4 text-gray-600'>Loading...</p>
           </div>
         </div>

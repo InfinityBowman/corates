@@ -99,36 +99,28 @@ export default function NoteEditor(props) {
         trigger={api => (
           <div
             {...api.getTriggerProps()}
-            class={`
-              flex items-center gap-1.5 py-1 text-xs cursor-pointer select-none
-              ${hasContent() ? 'text-blue-600 hover:text-blue-700' : 'text-gray-500 hover:text-gray-700'}
-            `}
+            class={`flex cursor-pointer items-center gap-1.5 py-1 text-xs select-none ${hasContent() ? 'text-blue-600 hover:text-blue-700' : 'text-gray-500 hover:text-gray-700'} `}
           >
             <BiRegularChevronRight
-              class={`w-4 h-4 shrink-0 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
+              class={`h-4 w-4 shrink-0 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
             />
-            <BsJournalText class='w-3 h-3 shrink-0' />
+            <BsJournalText class='h-3 w-3 shrink-0' />
             <span class='font-medium'>{props.label || 'Notes'}</span>
           </div>
         )}
       >
-        <div class='pt-2 px-0.5 pb-0.5'>
+        <div class='px-0.5 pt-2 pb-0.5'>
           <textarea
             ref={textareaRef}
             value={localValue()}
             onInput={handleInput}
             placeholder={props.placeholder || 'Add a note for this question...'}
             disabled={props.readOnly || !props.yText}
-            class={`
-              w-full px-3 py-2 text-sm border rounded-lg resize-none overflow-hidden
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-              ${props.readOnly ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : 'bg-white text-gray-900'}
-              ${!props.yText ? 'bg-gray-100 cursor-not-allowed' : ''}
-            `}
+            class={`w-full resize-none overflow-hidden rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none ${props.readOnly ? 'cursor-not-allowed bg-gray-50 text-gray-600' : 'bg-white text-gray-900'} ${!props.yText ? 'cursor-not-allowed bg-gray-100' : ''} `}
             style={{ 'min-height': '60px' }}
             maxLength={maxLength()}
           />
-          <div class='flex justify-between items-center mt-1 text-2xs text-gray-400'>
+          <div class='text-2xs mt-1 flex items-center justify-between text-gray-400'>
             <span>{props.readOnly ? 'Read-only' : ''}</span>
             <span class={charCount() > maxLength() * 0.9 ? 'text-amber-500' : ''}>
               {charCount()} / {maxLength()}
@@ -149,12 +141,12 @@ export function NoteDisplay(props) {
 
   return (
     <Show when={hasContent()}>
-      <div class='mt-2 p-2 bg-gray-50 rounded-lg border border-gray-100'>
-        <div class='flex items-center gap-1.5 text-xs text-gray-500 mb-1'>
-          <BsJournalText class='w-3 h-3' />
+      <div class='mt-2 rounded-lg border border-gray-100 bg-gray-50 p-2'>
+        <div class='mb-1 flex items-center gap-1.5 text-xs text-gray-500'>
+          <BsJournalText class='h-3 w-3' />
           <span>Notes</span>
         </div>
-        <p class='text-sm text-gray-700 whitespace-pre-wrap'>{props.content}</p>
+        <p class='text-sm whitespace-pre-wrap text-gray-700'>{props.content}</p>
       </div>
     </Show>
   );

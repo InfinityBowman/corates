@@ -36,19 +36,19 @@ export default function ReconcileStudyCard(props) {
   };
 
   return (
-    <div class='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
+    <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
       {/* Study Header */}
-      <div class='p-4 border-b border-gray-200'>
+      <div class='border-b border-gray-200 p-4'>
         <div class='flex items-center justify-between'>
           <div class='flex-1'>
             <h3 class='text-lg font-semibold text-gray-900'>{props.study.name}</h3>
             <Show when={props.study.firstAuthor || props.study.publicationYear}>
-              <p class='text-sm text-gray-600 mt-0.5'>
+              <p class='mt-0.5 text-sm text-gray-600'>
                 <span class='font-medium'>{props.study.firstAuthor || 'Unknown'}</span>
                 {props.study.publicationYear && ` (${props.study.publicationYear})`}
                 <Show when={props.study.journal}>
                   <span class='mx-1'>-</span>
-                  <span class='italic text-gray-500'>{props.study.journal}</span>
+                  <span class='text-gray-500 italic'>{props.study.journal}</span>
                 </Show>
               </p>
             </Show>
@@ -57,10 +57,10 @@ export default function ReconcileStudyCard(props) {
             <Show when={hasPdfs()}>
               <button
                 onClick={() => props.onViewPdf?.(firstPdf())}
-                class='inline-flex items-center px-3 py-1.5 bg-white text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors gap-1.5 border border-gray-200'
+                class='inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100'
                 title='View PDF'
               >
-                <CgFileDocument class='w-4 h-4' />
+                <CgFileDocument class='h-4 w-4' />
                 View PDF
               </button>
             </Show>
@@ -69,7 +69,7 @@ export default function ReconcileStudyCard(props) {
       </div>
 
       {/* Reviewers and Action */}
-      <div class='px-4 py-3 flex items-center justify-between gap-3 bg-gray-50'>
+      <div class='flex items-center justify-between gap-3 bg-gray-50 px-4 py-3'>
         <div class='flex items-center gap-3'>
           <ReconcileStatusTag study={props.study} getAssigneeName={props.getAssigneeName} />
           <Show when={isReady()}>
@@ -87,13 +87,13 @@ export default function ReconcileStudyCard(props) {
         <button
           onClick={startReconciliation}
           disabled={!isReady()}
-          class={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
+          class={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
             isReady() ?
               'bg-blue-600 text-white hover:bg-blue-700'
-            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            : 'cursor-not-allowed bg-gray-200 text-gray-500'
           }`}
         >
-          <BsFileDiff class='w-4 h-4' />
+          <BsFileDiff class='h-4 w-4' />
           Reconcile
         </button>
       </div>

@@ -13,30 +13,30 @@ export default function SupportedTools() {
   ];
 
   return (
-    <section class='max-w-6xl mx-auto px-6 py-16'>
-      <div class='text-center mb-10'>
-        <h2 class='text-2xl md:text-3xl font-bold text-gray-900 mb-4'>Supported Appraisal tools</h2>
-        <p class='text-gray-600 max-w-xl mx-auto'>
+    <section class='mx-auto max-w-6xl px-6 py-16'>
+      <div class='mb-10 text-center'>
+        <h2 class='mb-4 text-2xl font-bold text-gray-900 md:text-3xl'>Supported Appraisal tools</h2>
+        <p class='mx-auto max-w-xl text-gray-600'>
           Start with AMSTAR-2 today. More tools are on the way!
         </p>
       </div>
 
-      <div class='grid grid-cols-2 md:grid-cols-3 gap-4'>
+      <div class='grid grid-cols-2 gap-4 md:grid-cols-3'>
         <For each={tools}>
           {tool => {
             const isAvailable = tool.status === 'available';
             return (
               <div
-                class={`rounded-xl p-5 text-center border ${
-                  isAvailable ? 'bg-blue-600/10 border-blue-700/20' : 'bg-gray-50 border-gray-200'
+                class={`rounded-xl border p-5 text-center ${
+                  isAvailable ? 'border-blue-700/20 bg-blue-600/10' : 'border-gray-200 bg-gray-50'
                 }`}
               >
-                <p class={`font-semibold mb-1 ${isAvailable ? 'text-blue-700' : 'text-gray-500'}`}>
+                <p class={`mb-1 font-semibold ${isAvailable ? 'text-blue-700' : 'text-gray-500'}`}>
                   {tool.name}
                 </p>
-                <p class='text-xs text-gray-500 mb-2'>{tool.description}</p>
+                <p class='mb-2 text-xs text-gray-500'>{tool.description}</p>
                 <span
-                  class={`inline-block text-xs px-2 py-0.5 rounded-full ${
+                  class={`inline-block rounded-full px-2 py-0.5 text-xs ${
                     isAvailable ? 'bg-blue-700 text-white' : 'bg-gray-300 text-gray-600'
                   }`}
                 >

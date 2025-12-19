@@ -46,15 +46,15 @@ export default function RoleSelector(props) {
           <button
             type='button'
             onClick={() => props.onSelect(roleOption.id)}
-            class={`p-3 sm:p-4 rounded-xl border-2 text-left transition-all hover:border-blue-400 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+            class={`rounded-xl border-2 p-3 text-left transition-all hover:border-blue-400 hover:bg-blue-50 focus:ring-2 focus:ring-blue-400 focus:outline-none sm:p-4 ${
               props.selectedRole === roleOption.id ?
                 'border-blue-600 bg-blue-50'
               : 'border-gray-200'
             }`}
           >
-            <roleOption.icon class='w-5 h-5 sm:w-6 sm:h-6 text-blue-600 mb-1.5' />
-            <div class='font-semibold text-gray-900 text-sm'>{roleOption.label}</div>
-            <div class='text-xs text-gray-500 mt-0.5 hidden sm:block'>{roleOption.description}</div>
+            <roleOption.icon class='mb-1.5 h-5 w-5 text-blue-600 sm:h-6 sm:w-6' />
+            <div class='text-sm font-semibold text-gray-900'>{roleOption.label}</div>
+            <div class='mt-0.5 hidden text-xs text-gray-500 sm:block'>{roleOption.description}</div>
           </button>
         )}
       </For>

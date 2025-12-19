@@ -30,7 +30,7 @@ export function Accordion(props) {
   return (
     <div
       {...api().getRootProps()}
-      class={`divide-y divide-gray-200 border border-gray-200 rounded-lg ${local.class || ''}`}
+      class={`divide-y divide-gray-200 rounded-lg border border-gray-200 ${local.class || ''}`}
     >
       <For each={local.items}>
         {item => (
@@ -38,14 +38,14 @@ export function Accordion(props) {
             <h3>
               <button
                 {...api().getItemTriggerProps({ value: item.value, disabled: item.disabled })}
-                class='flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                class='flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
               >
                 <span>{item.title}</span>
                 <span
                   {...api().getItemIndicatorProps({ value: item.value })}
                   class='ml-2 transition-transform duration-200 data-[state=open]:rotate-180'
                 >
-                  <svg class='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                  <svg class='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                     <path
                       stroke-linecap='round'
                       stroke-linejoin='round'
@@ -58,7 +58,7 @@ export function Accordion(props) {
             </h3>
             <div
               {...api().getItemContentProps({ value: item.value, disabled: item.disabled })}
-              class='overflow-hidden transition-all duration-200 data-[state=closed]:animate-collapse data-[state=open]:animate-expand'
+              class='data-[state=closed]:animate-collapse data-[state=open]:animate-expand overflow-hidden transition-all duration-200'
             >
               <div class='px-4 py-3 text-sm text-gray-600'>{item.content}</div>
             </div>

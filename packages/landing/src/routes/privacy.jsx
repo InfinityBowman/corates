@@ -20,15 +20,15 @@ export default function PrivacyPolicy() {
       <Meta name='twitter:title' content={title} />
       <Meta name='twitter:description' content={description} />
 
-      <div class='min-h-screen flex flex-col'>
+      <div class='flex min-h-screen flex-col'>
         <Navbar />
 
         <main class='flex-1 py-16'>
-          <div class='max-w-3xl mx-auto px-6'>
-            <h1 class='text-4xl font-bold text-gray-900 mb-2'>Privacy Policy</h1>
-            <p class='text-gray-500 mb-8'>Effective date: December 5, 2025</p>
+          <div class='mx-auto max-w-3xl px-6'>
+            <h1 class='mb-2 text-4xl font-bold text-gray-900'>Privacy Policy</h1>
+            <p class='mb-8 text-gray-500'>Effective date: December 5, 2025</p>
 
-            <div class='text-gray-700 leading-relaxed space-y-6'>
+            <div class='space-y-6 leading-relaxed text-gray-700'>
               <p>
                 At CoRATES ("CoRATES"), we take your privacy seriously. Please read this Privacy
                 Policy to learn how we treat your personal data. By using or accessing our Services
@@ -56,8 +56,8 @@ export default function PrivacyPolicy() {
               </p>
 
               {/* Table of Contents */}
-              <div class='bg-gray-50 rounded-lg p-6 my-8'>
-                <h2 class='text-lg font-semibold text-gray-900 mb-4'>
+              <div class='my-8 rounded-lg bg-gray-50 p-6'>
+                <h2 class='mb-4 text-lg font-semibold text-gray-900'>
                   Privacy Policy Table of Contents
                 </h2>
                 <ul class='space-y-2 text-gray-700'>
@@ -70,7 +70,7 @@ export default function PrivacyPolicy() {
                     <a href='#personal-data' class='hover:text-blue-600'>
                       Personal Data
                     </a>
-                    <ul class='ml-4 mt-1 space-y-1 text-sm text-gray-600'>
+                    <ul class='mt-1 ml-4 space-y-1 text-sm text-gray-600'>
                       <li>Categories of Personal Data We Collect</li>
                       <li>Categories of Sources of Personal Data</li>
                       <li>Our Purposes for Collecting Personal Data</li>
@@ -120,7 +120,7 @@ export default function PrivacyPolicy() {
               </div>
 
               {/* What this Privacy Policy Covers */}
-              <h2 id='what-this-covers' class='text-xl font-semibold text-gray-900 pt-6'>
+              <h2 id='what-this-covers' class='pt-6 text-xl font-semibold text-gray-900'>
                 What this Privacy Policy Covers
               </h2>
 
@@ -134,11 +134,11 @@ export default function PrivacyPolicy() {
               </p>
 
               {/* Personal Data */}
-              <h2 id='personal-data' class='text-xl font-semibold text-gray-900 pt-6'>
+              <h2 id='personal-data' class='pt-6 text-xl font-semibold text-gray-900'>
                 Personal Data
               </h2>
 
-              <h3 class='text-lg font-medium text-gray-900 pt-4'>
+              <h3 class='pt-4 text-lg font-medium text-gray-900'>
                 Categories of Personal Data We Collect
               </h3>
 
@@ -150,7 +150,7 @@ export default function PrivacyPolicy() {
               <div class='space-y-6'>
                 <div class='border-l-2 border-gray-200 pl-4'>
                   <h4 class='font-medium text-gray-900'>Profile or Contact Data</h4>
-                  <p class='text-sm text-gray-600 mt-1'>
+                  <p class='mt-1 text-sm text-gray-600'>
                     <strong>Examples:</strong> First and last name, email, ORCID identifier, unique
                     identifiers such as passwords
                   </p>
@@ -162,7 +162,7 @@ export default function PrivacyPolicy() {
 
                 <div class='border-l-2 border-gray-200 pl-4'>
                   <h4 class='font-medium text-gray-900'>Payment Data</h4>
-                  <p class='text-sm text-gray-600 mt-1'>
+                  <p class='mt-1 text-sm text-gray-600'>
                     <strong>Examples:</strong> Payment card type, last 4 digits of payment card,
                     billing address, phone number, and email
                   </p>
@@ -174,7 +174,7 @@ export default function PrivacyPolicy() {
 
                 <div class='border-l-2 border-gray-200 pl-4'>
                   <h4 class='font-medium text-gray-900'>Device/IP Data</h4>
-                  <p class='text-sm text-gray-600 mt-1'>
+                  <p class='mt-1 text-sm text-gray-600'>
                     <strong>Examples:</strong> IP address, device ID, type of device/operating
                     system/browser used to access the Services
                   </p>
@@ -186,7 +186,7 @@ export default function PrivacyPolicy() {
 
                 <div class='border-l-2 border-gray-200 pl-4'>
                   <h4 class='font-medium text-gray-900'>Web Analytics</h4>
-                  <p class='text-sm text-gray-600 mt-1'>
+                  <p class='mt-1 text-sm text-gray-600'>
                     <strong>Examples:</strong> Web page interactions, referring webpage/source,
                     statistics associated with the interaction between device or browser and the
                     Services
@@ -199,7 +199,7 @@ export default function PrivacyPolicy() {
 
                 <div class='border-l-2 border-gray-200 pl-4'>
                   <h4 class='font-medium text-gray-900'>Research Project Data</h4>
-                  <p class='text-sm text-gray-600 mt-1'>
+                  <p class='mt-1 text-sm text-gray-600'>
                     <strong>Examples:</strong> Projects, studies, checklists, assessments, and
                     documents you create within the Service
                   </p>
@@ -213,7 +213,7 @@ export default function PrivacyPolicy() {
                   <h4 class='font-medium text-gray-900'>
                     Other Identifying Information that You Voluntarily Choose to Provide
                   </h4>
-                  <p class='text-sm text-gray-600 mt-1'>
+                  <p class='mt-1 text-sm text-gray-600'>
                     <strong>Examples:</strong> Identifying information in emails or letters you send
                     us, uploaded PDF documents
                   </p>
@@ -224,16 +224,16 @@ export default function PrivacyPolicy() {
                 </div>
               </div>
 
-              <h3 class='text-lg font-medium text-gray-900 pt-6'>
+              <h3 class='pt-6 text-lg font-medium text-gray-900'>
                 Categories of Sources of Personal Data
               </h3>
 
               <p>We collect Personal Data about you from the following categories of sources:</p>
 
-              <ul class='list-disc list-outside ml-6 space-y-2'>
+              <ul class='ml-6 list-outside list-disc space-y-2'>
                 <li>
                   <strong>You</strong>
-                  <ul class='list-disc list-outside ml-6 mt-1 text-gray-600'>
+                  <ul class='mt-1 ml-6 list-outside list-disc text-gray-600'>
                     <li>When you provide such information directly to us</li>
                     <li>When you create an account or use our interactive tools and Services</li>
                     <li>
@@ -249,7 +249,7 @@ export default function PrivacyPolicy() {
                 </li>
                 <li>
                   <strong>Third Parties</strong>
-                  <ul class='list-disc list-outside ml-6 mt-1 text-gray-600'>
+                  <ul class='mt-1 ml-6 list-outside list-disc text-gray-600'>
                     <li>
                       Vendors (we may use analytics providers to analyze how you interact with the
                       Services)
@@ -262,14 +262,14 @@ export default function PrivacyPolicy() {
                 </li>
               </ul>
 
-              <h3 class='text-lg font-medium text-gray-900 pt-6'>
+              <h3 class='pt-6 text-lg font-medium text-gray-900'>
                 Our Purposes for Collecting Personal Data
               </h3>
 
-              <ul class='list-disc list-outside ml-6 space-y-2'>
+              <ul class='ml-6 list-outside list-disc space-y-2'>
                 <li>
                   <strong>Providing, Customizing and Improving the Services</strong>
-                  <ul class='list-disc list-outside ml-6 mt-1 text-gray-600'>
+                  <ul class='mt-1 ml-6 list-outside list-disc text-gray-600'>
                     <li>Creating and managing your account or other user profiles</li>
                     <li>Processing orders or other transactions; billing</li>
                     <li>Providing you with the products, services or information you request</li>
@@ -283,13 +283,13 @@ export default function PrivacyPolicy() {
                 </li>
                 <li>
                   <strong>Marketing the Services</strong>
-                  <ul class='list-disc list-outside ml-6 mt-1 text-gray-600'>
+                  <ul class='mt-1 ml-6 list-outside list-disc text-gray-600'>
                     <li>Marketing and selling the Services</li>
                   </ul>
                 </li>
                 <li>
                   <strong>Corresponding with You</strong>
-                  <ul class='list-disc list-outside ml-6 mt-1 text-gray-600'>
+                  <ul class='mt-1 ml-6 list-outside list-disc text-gray-600'>
                     <li>
                       Responding to correspondence that we receive from you, contacting you when
                       necessary or requested
@@ -302,7 +302,7 @@ export default function PrivacyPolicy() {
                 </li>
                 <li>
                   <strong>Meeting Legal Requirements and Enforcing Legal Terms</strong>
-                  <ul class='list-disc list-outside ml-6 mt-1 text-gray-600'>
+                  <ul class='mt-1 ml-6 list-outside list-disc text-gray-600'>
                     <li>
                       Fulfilling our legal obligations under applicable law, regulation, court order
                       or other legal process
@@ -323,7 +323,7 @@ export default function PrivacyPolicy() {
               </p>
 
               {/* How We Share Your Personal Data */}
-              <h2 id='how-we-share' class='text-xl font-semibold text-gray-900 pt-6'>
+              <h2 id='how-we-share' class='pt-6 text-xl font-semibold text-gray-900'>
                 How We Share Your Personal Data
               </h2>
 
@@ -332,11 +332,11 @@ export default function PrivacyPolicy() {
                 parties listed in this section.
               </p>
 
-              <ul class='list-disc list-outside ml-6 space-y-3'>
+              <ul class='ml-6 list-outside list-disc space-y-3'>
                 <li>
                   <strong>Service Providers.</strong> These parties help us provide the Services or
                   perform business functions on our behalf. They include:
-                  <ul class='list-disc list-outside ml-6 mt-1 text-gray-600'>
+                  <ul class='mt-1 ml-6 list-outside list-disc text-gray-600'>
                     <li>Hosting, technology and communication providers (Cloudflare)</li>
                     <li>Security and fraud prevention consultants</li>
                     <li>Analytics providers</li>
@@ -346,14 +346,14 @@ export default function PrivacyPolicy() {
                 </li>
                 <li>
                   <strong>Parties You Authorize, Access or Authenticate</strong>
-                  <ul class='list-disc list-outside ml-6 mt-1 text-gray-600'>
+                  <ul class='mt-1 ml-6 list-outside list-disc text-gray-600'>
                     <li>Third parties you access through the services (ORCID, Google Drive)</li>
                     <li>Project collaborators you invite</li>
                   </ul>
                 </li>
               </ul>
 
-              <h3 class='text-lg font-medium text-gray-900 pt-4'>Legal Obligations</h3>
+              <h3 class='pt-4 text-lg font-medium text-gray-900'>Legal Obligations</h3>
 
               <p>
                 We may share any Personal Data that we collect with third parties in conjunction
@@ -361,7 +361,7 @@ export default function PrivacyPolicy() {
                 Legal Terms" above.
               </p>
 
-              <h3 class='text-lg font-medium text-gray-900 pt-4'>Business Transfers</h3>
+              <h3 class='pt-4 text-lg font-medium text-gray-900'>Business Transfers</h3>
 
               <p>
                 All of your Personal Data that we collect may be transferred to a third party if we
@@ -371,7 +371,7 @@ export default function PrivacyPolicy() {
                 different privacy and security policies and practices.
               </p>
 
-              <h3 class='text-lg font-medium text-gray-900 pt-4'>Data that is Not Personal Data</h3>
+              <h3 class='pt-4 text-lg font-medium text-gray-900'>Data that is Not Personal Data</h3>
 
               <p>
                 We may create aggregated, de-identified or anonymized data from the Personal Data we
@@ -381,7 +381,7 @@ export default function PrivacyPolicy() {
                 provided that we will not share such data in a manner that could identify you.
               </p>
 
-              <h3 class='text-lg font-medium text-gray-900 pt-4'>Google OAuth and Google Drive</h3>
+              <h3 class='pt-4 text-lg font-medium text-gray-900'>Google OAuth and Google Drive</h3>
 
               <p>
                 If you choose to sign in with Google or connect your Google account to use Google
@@ -389,7 +389,7 @@ export default function PrivacyPolicy() {
                 provide the Services.
               </p>
 
-              <ul class='list-disc list-outside ml-6 space-y-2 text-gray-600'>
+              <ul class='ml-6 list-outside list-disc space-y-2 text-gray-600'>
                 <li>
                   <strong>Scopes requested.</strong> When you connect Google, we request standard
                   OpenID Connect scopes (openid, email, profile) and Google Drive read-only access
@@ -429,7 +429,7 @@ export default function PrivacyPolicy() {
               </p>
 
               {/* Tracking Tools and Opt-Out */}
-              <h2 id='tracking-tools' class='text-xl font-semibold text-gray-900 pt-6'>
+              <h2 id='tracking-tools' class='pt-6 text-xl font-semibold text-gray-900'>
                 Tracking Tools and Opt-Out
               </h2>
 
@@ -442,7 +442,7 @@ export default function PrivacyPolicy() {
 
               <p>We use the following types of Cookies:</p>
 
-              <ul class='list-disc list-outside ml-6 space-y-2'>
+              <ul class='ml-6 list-outside list-disc space-y-2'>
                 <li>
                   <strong>Essential Cookies.</strong> Essential Cookies are required for providing
                   you with features or services that you have requested. For example, certain
@@ -471,7 +471,7 @@ export default function PrivacyPolicy() {
               </p>
 
               {/* Data Security and Retention */}
-              <h2 id='data-security' class='text-xl font-semibold text-gray-900 pt-6'>
+              <h2 id='data-security' class='pt-6 text-xl font-semibold text-gray-900'>
                 Data Security and Retention
               </h2>
 
@@ -482,7 +482,7 @@ export default function PrivacyPolicy() {
                 These measures include:
               </p>
 
-              <ul class='list-disc list-outside ml-6 space-y-1'>
+              <ul class='ml-6 list-outside list-disc space-y-1'>
                 <li>Encryption of data in transit (HTTPS/TLS)</li>
                 <li>Secure password hashing</li>
                 <li>Access controls and authentication</li>
@@ -507,7 +507,7 @@ export default function PrivacyPolicy() {
               </p>
 
               {/* Personal Data of Children */}
-              <h2 id='children' class='text-xl font-semibold text-gray-900 pt-6'>
+              <h2 id='children' class='pt-6 text-xl font-semibold text-gray-900'>
                 Personal Data of Children
               </h2>
 
@@ -529,11 +529,11 @@ export default function PrivacyPolicy() {
               </p>
 
               {/* State Law Privacy Rights */}
-              <h2 id='state-rights' class='text-xl font-semibold text-gray-900 pt-6'>
+              <h2 id='state-rights' class='pt-6 text-xl font-semibold text-gray-900'>
                 State Law Privacy Rights
               </h2>
 
-              <h3 class='text-lg font-medium text-gray-900 pt-4'>California Resident Rights</h3>
+              <h3 class='pt-4 text-lg font-medium text-gray-900'>California Resident Rights</h3>
 
               <p>
                 Under California Civil Code Sections 1798.83-1798.84, California residents are
@@ -546,7 +546,7 @@ export default function PrivacyPolicy() {
                 .
               </p>
 
-              <h3 class='text-lg font-medium text-gray-900 pt-4'>Nevada Resident Rights</h3>
+              <h3 class='pt-4 text-lg font-medium text-gray-900'>Nevada Resident Rights</h3>
 
               <p>
                 If you are a resident of Nevada, you have the right to opt-out of the sale of
@@ -560,11 +560,11 @@ export default function PrivacyPolicy() {
               </p>
 
               {/* European Union Data Subject Rights */}
-              <h2 id='eu-rights' class='text-xl font-semibold text-gray-900 pt-6'>
+              <h2 id='eu-rights' class='pt-6 text-xl font-semibold text-gray-900'>
                 European Union Data Subject Rights
               </h2>
 
-              <h3 class='text-lg font-medium text-gray-900 pt-4'>EU Residents</h3>
+              <h3 class='pt-4 text-lg font-medium text-gray-900'>EU Residents</h3>
 
               <p>
                 If you are a resident of the European Union ("EU"), United Kingdom, Lichtenstein,
@@ -581,7 +581,7 @@ export default function PrivacyPolicy() {
                 connection with the Services.
               </p>
 
-              <h3 class='text-lg font-medium text-gray-900 pt-4'>EU Data Subject Rights</h3>
+              <h3 class='pt-4 text-lg font-medium text-gray-900'>EU Data Subject Rights</h3>
 
               <p>
                 You have certain rights with respect to your Personal Data, including those set
@@ -593,7 +593,7 @@ export default function PrivacyPolicy() {
                 .
               </p>
 
-              <ul class='list-disc list-outside ml-6 space-y-2'>
+              <ul class='ml-6 list-outside list-disc space-y-2'>
                 <li>
                   <strong>Access:</strong> You can request more information about the Personal Data
                   we hold about you and request a copy of such Personal Data.
@@ -631,7 +631,7 @@ export default function PrivacyPolicy() {
                 </li>
               </ul>
 
-              <h3 class='text-lg font-medium text-gray-900 pt-4'>Transfers of Personal Data</h3>
+              <h3 class='pt-4 text-lg font-medium text-gray-900'>Transfers of Personal Data</h3>
 
               <p>
                 The Services are hosted and operated in the United States ("U.S.") through CoRATES
@@ -644,7 +644,7 @@ export default function PrivacyPolicy() {
               </p>
 
               {/* Changes to this Privacy Policy */}
-              <h2 id='changes' class='text-xl font-semibold text-gray-900 pt-6'>
+              <h2 id='changes' class='pt-6 text-xl font-semibold text-gray-900'>
                 Changes to this Privacy Policy
               </h2>
 
@@ -660,7 +660,7 @@ export default function PrivacyPolicy() {
               </p>
 
               {/* Contact Information */}
-              <h2 id='contact' class='text-xl font-semibold text-gray-900 pt-6'>
+              <h2 id='contact' class='pt-6 text-xl font-semibold text-gray-900'>
                 Contact Information
               </h2>
 

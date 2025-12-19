@@ -19,14 +19,14 @@ export default function Navbar() {
   return (
     <>
       <nav
-        class='sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100'
+        class='sticky top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-sm'
         aria-label='Primary'
       >
-        <div class='flex items-center justify-between w-full mx-auto px-6 py-4'>
+        <div class='mx-auto flex w-full items-center justify-between px-6 py-4'>
           <div class='flex items-center gap-8'>
             <PrefetchLink
               href='/'
-              class='inline-flex items-center gap-2 text-xl font-bold text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 rounded'
+              class='inline-flex items-center gap-2 rounded text-xl font-bold text-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none'
             >
               <img
                 src='/logo.svg'
@@ -42,7 +42,7 @@ export default function Navbar() {
               {link => (
                 <PrefetchLink
                   href={link.href}
-                  class='hidden sm:inline-flex text-gray-600 hover:text-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 rounded'
+                  class='hidden rounded text-gray-600 transition-colors hover:text-gray-900 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
                 >
                   {link.label}
                 </PrefetchLink>
@@ -57,14 +57,14 @@ export default function Navbar() {
                   <a
                     href={urls.signIn()}
                     rel='external'
-                    class='hidden sm:inline-flex items-center px-4 py-2 text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2'
+                    class='hidden items-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
                   >
                     Sign In
                   </a>
                   <a
                     href={urls.signUp()}
                     rel='external'
-                    class='hidden sm:inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2'
+                    class='hidden items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
                   >
                     Sign Up
                   </a>
@@ -78,7 +78,7 @@ export default function Navbar() {
                 <a
                   href={urls.dashboard()}
                   rel='external'
-                  class='hidden sm:inline-flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2'
+                  class='hidden items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
                 >
                   My Dashboard
                 </a>
@@ -88,14 +88,14 @@ export default function Navbar() {
             {/* Mobile Menu Button */}
             <button
               type='button'
-              class='sm:hidden inline-flex items-center justify-center p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600'
+              class='inline-flex items-center justify-center rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:outline-none sm:hidden'
               onClick={toggleMobileMenu}
               aria-expanded={mobileMenuOpen()}
               aria-controls='mobile-menu'
               aria-label={mobileMenuOpen() ? 'Close menu' : 'Open menu'}
             >
-              <Show when={mobileMenuOpen()} fallback={<FiMenu class='w-6 h-6' />}>
-                <FiX class='w-6 h-6' />
+              <Show when={mobileMenuOpen()} fallback={<FiMenu class='h-6 w-6' />}>
+                <FiX class='h-6 w-6' />
               </Show>
             </button>
           </div>
@@ -121,7 +121,7 @@ function MobileMenu(props) {
     <Show when={props.isOpen()}>
       {/* Backdrop overlay */}
       <div
-        class='sm:hidden fixed inset-0 z-40 bg-gray-900/20 backdrop-blur-sm animate-backdrop-fade'
+        class='animate-backdrop-fade fixed inset-0 z-40 bg-gray-900/20 backdrop-blur-sm sm:hidden'
         onClick={() => props.onClose()}
         aria-hidden='true'
       />
@@ -129,14 +129,14 @@ function MobileMenu(props) {
       {/* Menu panel */}
       <div
         id='mobile-menu'
-        class='sm:hidden fixed top-16 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg animate-slide-down'
+        class='animate-slide-down fixed top-16 right-0 left-0 z-50 border-b border-gray-200 bg-white/95 shadow-lg backdrop-blur-md sm:hidden'
       >
-        <div class='px-6 py-6 space-y-1'>
+        <div class='space-y-1 px-6 py-6'>
           <For each={props.navLinks}>
             {(link, index) => (
               <PrefetchLink
                 href={link.href}
-                class='block text-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 py-3 px-3 -mx-3 rounded-lg transition-colors animate-stagger-item'
+                class='animate-stagger-item -mx-3 block rounded-lg px-3 py-3 text-lg text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600'
                 style={{ 'animation-delay': getDelay(index()) }}
                 onClick={() => props.onClose()}
               >
@@ -145,7 +145,7 @@ function MobileMenu(props) {
             )}
           </For>
           <div
-            class='pt-4 mt-4 border-t border-gray-200 space-y-3 animate-stagger-item'
+            class='animate-stagger-item mt-4 space-y-3 border-t border-gray-200 pt-4'
             style={{ 'animation-delay': getDelay(props.navLinks.length) }}
           >
             <Show
@@ -155,14 +155,14 @@ function MobileMenu(props) {
                   <a
                     href={urls.signIn()}
                     rel='external'
-                    class='block w-full text-center px-4 py-3 text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium'
+                    class='block w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-center font-medium text-gray-700 transition-colors hover:bg-gray-50'
                   >
                     Sign In
                   </a>
                   <a
                     href={urls.signUp()}
                     rel='external'
-                    class='block w-full text-center px-4 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium'
+                    class='block w-full rounded-lg bg-blue-600 px-4 py-3 text-center font-medium text-white shadow-sm transition-colors hover:bg-blue-700'
                   >
                     Sign Up
                   </a>
@@ -172,7 +172,7 @@ function MobileMenu(props) {
               <a
                 href={urls.dashboard()}
                 rel='external'
-                class='block w-full text-center px-4 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium'
+                class='block w-full rounded-lg bg-blue-600 px-4 py-3 text-center font-medium text-white shadow-sm transition-colors hover:bg-blue-700'
               >
                 My Dashboard
               </a>

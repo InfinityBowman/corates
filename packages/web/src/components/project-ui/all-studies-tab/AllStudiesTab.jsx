@@ -162,13 +162,13 @@ export default function AllStudiesTab() {
       </Show>
 
       <Show when={!hasData()} fallback={null}>
-        <div class='text-center py-12 bg-gray-50 rounded-lg'>
+        <div class='rounded-lg bg-gray-50 py-12 text-center'>
           <p class='text-gray-400'>Loading studies...</p>
         </div>
       </Show>
 
       {/* Study count */}
-      <div class='flex items-center justify-between mb-2'>
+      <div class='mb-2 flex items-center justify-between'>
         <p class='text-sm text-gray-500'>
           {studies().length} {studies().length === 1 ? 'study' : 'studies'} in this project
         </p>
@@ -179,8 +179,8 @@ export default function AllStudiesTab() {
         when={studies().length > 0}
         fallback={
           <Show when={hasData()}>
-            <div class='text-center py-12 bg-gray-50 rounded-lg'>
-              <AiOutlineBook class='w-12 h-12 text-gray-300 mx-auto mb-4' />
+            <div class='rounded-lg bg-gray-50 py-12 text-center'>
+              <AiOutlineBook class='mx-auto mb-4 h-12 w-12 text-gray-300' />
               <p class='text-gray-500'>No studies added yet. Add your first study above.</p>
             </div>
           </Show>

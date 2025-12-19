@@ -27,7 +27,7 @@ describe('Switch', () => {
     });
 
     it('should apply custom class', () => {
-      const { container } = render(() => <Switch class="custom-class" />);
+      const { container } = render(() => <Switch class='custom-class' />);
 
       const label = container.querySelector('label');
       expect(label.className).toContain('custom-class');
@@ -86,7 +86,7 @@ describe('Switch', () => {
 
   describe('Form integration', () => {
     it('should have name attribute for form submission', () => {
-      const { container } = render(() => <Switch name="notifications" />);
+      const { container } = render(() => <Switch name='notifications' />);
 
       const input = container.querySelector('input[type="checkbox"]');
       expect(input.name).toBe('notifications');
@@ -118,7 +118,7 @@ describe('Switch', () => {
     });
 
     it('should have hidden input for form submission', () => {
-      const { container } = render(() => <Switch name="toggle" />);
+      const { container } = render(() => <Switch name='toggle' />);
 
       const input = container.querySelector('input[type="checkbox"]');
       expect(input).toHaveAttribute('name', 'toggle');

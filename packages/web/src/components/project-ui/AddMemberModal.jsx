@@ -131,29 +131,29 @@ export default function AddMemberModal(props) {
   return (
     <Show when={props.isOpen}>
       <div
-        class='fixed inset-0 bg-black/50 flex items-center justify-center z-50'
+        class='fixed inset-0 z-50 flex items-center justify-center bg-black/50'
         onClick={e => {
           if (e.target === e.currentTarget) handleClose();
         }}
         onKeyDown={handleKeyDown}
       >
-        <div class='bg-white rounded-lg shadow-xl w-full max-w-md mx-4'>
+        <div class='mx-4 w-full max-w-md rounded-lg bg-white shadow-xl'>
           {/* Header */}
-          <div class='flex items-center justify-between p-4 border-b border-gray-200'>
+          <div class='flex items-center justify-between border-b border-gray-200 p-4'>
             <h2 class='text-lg font-semibold text-gray-900'>Add Member</h2>
             <button
               onClick={handleClose}
-              class='text-gray-400 hover:text-gray-600 transition-colors'
+              class='text-gray-400 transition-colors hover:text-gray-600'
             >
-              <FiX class='w-5 h-5' />
+              <FiX class='h-5 w-5' />
             </button>
           </div>
 
           {/* Content */}
-          <div class='p-4 space-y-4'>
+          <div class='space-y-4 p-4'>
             {/* Search Input */}
             <div class='relative'>
-              <label class='block text-sm font-medium text-gray-700 mb-1'>
+              <label class='mb-1 block text-sm font-medium text-gray-700'>
                 Search by name or email
               </label>
               <input
@@ -162,30 +162,30 @@ export default function AddMemberModal(props) {
                 value={searchQuery()}
                 onInput={e => handleSearchInput(e.target.value)}
                 placeholder='Type at least 2 characters...'
-                class='w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                class='w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
               />
 
               {/* Search Results Dropdown */}
               <Show when={searchResults().length > 0 && !selectedUser()}>
-                <div class='absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto'>
+                <div class='absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg'>
                   <For each={searchResults()}>
                     {user => (
                       <button
                         type='button'
                         onClick={() => handleSelectUser(user)}
-                        class='w-full px-4 py-3 text-left hover:bg-blue-50 flex items-center gap-3 transition-colors'
+                        class='flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-blue-50'
                       >
                         <Avatar
                           src={user.image}
                           name={user.displayName || user.name || user.email}
-                          class='w-8 h-8 rounded-full shrink-0'
+                          class='h-8 w-8 shrink-0 rounded-full'
                           fallbackClass='flex items-center justify-center w-full h-full bg-blue-600 text-white text-sm font-medium'
                         />
                         <div class='min-w-0'>
-                          <p class='text-gray-900 font-medium truncate'>
+                          <p class='truncate font-medium text-gray-900'>
                             {user.displayName || user.name || 'Unknown'}
                           </p>
-                          <p class='text-gray-500 text-sm truncate'>{user.email}</p>
+                          <p class='truncate text-sm text-gray-500'>{user.email}</p>
                         </div>
                       </button>
                     )}
@@ -195,8 +195,8 @@ export default function AddMemberModal(props) {
 
               {/* Searching indicator */}
               <Show when={searching()}>
-                <div class='absolute right-3 top-8'>
-                  <div class='animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full' />
+                <div class='absolute top-8 right-3'>
+                  <div class='h-5 w-5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent' />
                 </div>
               </Show>
             </div>
@@ -210,24 +210,24 @@ export default function AddMemberModal(props) {
                 !selectedUser()
               }
             >
-              <p class='text-gray-500 text-sm'>No users found matching "{searchQuery()}"</p>
+              <p class='text-sm text-gray-500'>No users found matching "{searchQuery()}"</p>
             </Show>
 
             {/* Selected User Display */}
             <Show when={selectedUser()}>
-              <div class='bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between'>
+              <div class='flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3'>
                 <div class='flex items-center gap-3'>
                   <Avatar
                     src={selectedUser().image}
                     name={selectedUser().displayName || selectedUser().name || selectedUser().email}
-                    class='w-10 h-10 rounded-full'
+                    class='h-10 w-10 rounded-full'
                     fallbackClass='flex items-center justify-center w-full h-full bg-blue-600 text-white font-medium'
                   />
                   <div>
-                    <p class='text-gray-900 font-medium'>
+                    <p class='font-medium text-gray-900'>
                       {selectedUser().displayName || selectedUser().name || 'Unknown'}
                     </p>
-                    <p class='text-gray-500 text-sm'>{selectedUser().email}</p>
+                    <p class='text-sm text-gray-500'>{selectedUser().email}</p>
                   </div>
                 </div>
                 <button
@@ -237,7 +237,7 @@ export default function AddMemberModal(props) {
                   }}
                   class='text-gray-400 hover:text-gray-600'
                 >
-                  <FiX class='w-5 h-5' />
+                  <FiX class='h-5 w-5' />
                 </button>
               </div>
             </Show>
@@ -261,24 +261,24 @@ export default function AddMemberModal(props) {
 
             {/* Error Message */}
             <Show when={error()}>
-              <div class='bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm'>
+              <div class='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
                 {error()}
               </div>
             </Show>
           </div>
 
           {/* Footer */}
-          <div class='flex justify-end gap-3 p-4 border-t border-gray-200'>
+          <div class='flex justify-end gap-3 border-t border-gray-200 p-4'>
             <button
               onClick={handleClose}
-              class='px-4 py-2 text-gray-700 font-medium rounded-lg border border-gray-300 hover:border-gray-400 transition-colors'
+              class='rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition-colors hover:border-gray-400'
             >
               Cancel
             </button>
             <button
               onClick={handleAddMember}
               disabled={!selectedUser() || adding()}
-              class='px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors'
+              class='rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400'
             >
               {adding() ? 'Adding...' : 'Add Member'}
             </button>

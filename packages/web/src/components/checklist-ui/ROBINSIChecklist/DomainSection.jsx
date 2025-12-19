@@ -55,17 +55,17 @@ export function DomainSection(props) {
   };
 
   return (
-    <div class='bg-white rounded-lg shadow-md overflow-hidden'>
+    <div class='overflow-hidden rounded-lg bg-white shadow-md'>
       {/* Domain header */}
       <button
         type='button'
         onClick={() => props.onToggleCollapse?.()}
-        class='w-full px-6 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors'
+        class='flex w-full items-center justify-between bg-gray-50 px-6 py-4 transition-colors hover:bg-gray-100'
       >
         <div class='flex flex-col items-start'>
-          <h3 class='font-semibold text-gray-900 text-left'>{domain()?.name}</h3>
+          <h3 class='text-left font-semibold text-gray-900'>{domain()?.name}</h3>
           <Show when={domain()?.subtitle}>
-            <span class='text-xs text-gray-500 mt-0.5'>{domain().subtitle}</span>
+            <span class='mt-0.5 text-xs text-gray-500'>{domain().subtitle}</span>
           </Show>
         </div>
 
@@ -82,7 +82,7 @@ export function DomainSection(props) {
 
           {/* Collapse indicator */}
           <svg
-            class={`w-5 h-5 text-gray-400 transition-transform ${props.collapsed ? '' : 'rotate-180'}`}
+            class={`h-5 w-5 text-gray-400 transition-transform ${props.collapsed ? '' : 'rotate-180'}`}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -123,7 +123,7 @@ export function DomainSection(props) {
             <For each={Object.entries(domain().subsections)}>
               {([_subKey, subsection]) => (
                 <div class='mb-4'>
-                  <div class='text-sm font-medium text-gray-600 mb-2 border-b border-gray-100 pb-1'>
+                  <div class='mb-2 border-b border-gray-100 pb-1 text-sm font-medium text-gray-600'>
                     {subsection.name}
                   </div>
                   <div class='space-y-1'>

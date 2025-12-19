@@ -9,12 +9,12 @@ export default function Stats() {
   ];
 
   return (
-    <section class='max-w-6xl mx-auto px-6 py-16'>
-      <div class='grid grid-cols-2 md:grid-cols-4 gap-8'>
+    <section class='mx-auto max-w-6xl px-6 py-16'>
+      <div class='grid grid-cols-2 gap-8 md:grid-cols-4'>
         <For each={stats}>
           {stat => (
             <div class='text-center'>
-              <div class='text-3xl md:text-4xl font-bold text-blue-700 mb-1'>{stat.value}</div>
+              <div class='mb-1 text-3xl font-bold text-blue-700 md:text-4xl'>{stat.value}</div>
               <div class='text-sm text-gray-600'>{stat.label}</div>
             </div>
           )}

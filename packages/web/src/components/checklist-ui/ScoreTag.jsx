@@ -59,7 +59,7 @@ export default function ScoreTag(props) {
   return (
     <Show when={props.currentScore}>
       <span
-        class={`px-2.5 py-1 text-xs font-medium rounded-full inline-flex items-center gap-1 ${styleClass()}`}
+        class={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${styleClass()}`}
       >
         <span>Score: {props.currentScore}</span>
         <Tooltip content={tooltipContent()} placement='bottom' openDelay={200}>
@@ -67,7 +67,7 @@ export default function ScoreTag(props) {
             href={infoUrl()}
             target='_blank'
             rel='noreferrer'
-            class='inline-flex items-center justify-center rounded-full p-0.5 mt-0.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            class='mt-0.5 inline-flex items-center justify-center rounded-full p-0.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'
             aria-label={`Open ${getChecklistMetadata(checklistType()).name} guidance in a new tab`}
           >
             <FaSolidCircleInfo size={12} />

@@ -329,13 +329,13 @@ export default function ChecklistReconciliation(props) {
 
   return (
     <div class='bg-blue-50'>
-      <div class='px-4 py-4 max-w-7xl mx-auto'>
+      <div class='mx-auto max-w-7xl px-4 py-4'>
         <confirmDialog.ConfirmDialogComponent />
         {/* Main Content */}
         <Show when={viewMode() === 'questions'}>
           <Show
             when={comparison() && currentQuestionKey()}
-            fallback={<div class='text-center py-12'>Loading...</div>}
+            fallback={<div class='py-12 text-center'>Loading...</div>}
           >
             <ReconciliationQuestionPage
               questionKey={currentQuestionKey()}
@@ -357,16 +357,13 @@ export default function ChecklistReconciliation(props) {
               <button
                 onClick={goToPrevious}
                 disabled={currentPage() === 0}
-                class={`
-                  flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors
-                  ${
-                    currentPage() === 0 ?
-                      'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 shadow'
-                  }
-                `}
+                class={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
+                  currentPage() === 0 ?
+                    'cursor-not-allowed bg-gray-100 text-gray-400'
+                  : 'bg-white text-gray-700 shadow hover:bg-gray-100'
+                } `}
               >
-                <AiOutlineArrowLeft class='w-4 h-4' />
+                <AiOutlineArrowLeft class='h-4 w-4' />
                 Previous
               </button>
 
@@ -376,10 +373,10 @@ export default function ChecklistReconciliation(props) {
 
               <button
                 onClick={goToNext}
-                class='flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors shadow'
+                class='flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow transition-colors hover:bg-blue-700'
               >
                 {currentPage() === totalPages - 1 ? 'Review Summary' : 'Next'}
-                <AiOutlineArrowRight class='w-4 h-4' />
+                <AiOutlineArrowRight class='h-4 w-4' />
               </button>
             </div>
           </Show>

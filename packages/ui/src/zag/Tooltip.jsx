@@ -21,12 +21,12 @@ export function Tooltip(props) {
       <span {...api().getTriggerProps()}>{props.children}</span>
       <Show when={api().open}>
         <div {...api().getPositionerProps()}>
-          <div {...api().getArrowProps()} class='[--arrow-size:8px] [--arrow-background:#111827]'>
+          <div {...api().getArrowProps()} class='[--arrow-background:#111827] [--arrow-size:8px]'>
             <div {...api().getArrowTipProps()} />
           </div>
           <div
             {...api().getContentProps()}
-            class='px-2 py-1 bg-gray-900 text-white text-xs rounded shadow-lg max-w-xs pointer-events-none'
+            class='pointer-events-none max-w-xs rounded bg-gray-900 px-2 py-1 text-xs text-white shadow-lg'
           >
             {props.content}
           </div>

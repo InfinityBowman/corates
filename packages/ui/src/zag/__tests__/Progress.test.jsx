@@ -27,7 +27,7 @@ describe('Progress', () => {
     });
 
     it('should apply custom class', () => {
-      const { container } = render(() => <Progress value={50} class="custom-class" />);
+      const { container } = render(() => <Progress value={50} class='custom-class' />);
 
       const root = container.querySelector('[data-part="root"]');
       expect(root).toHaveClass('custom-class');
@@ -36,7 +36,7 @@ describe('Progress', () => {
 
   describe('Value display', () => {
     it('should show label when provided', () => {
-      render(() => <Progress value={50} label="Loading" />);
+      render(() => <Progress value={50} label='Loading' />);
 
       expect(screen.getByText('Loading')).toBeInTheDocument();
     });
@@ -54,7 +54,7 @@ describe('Progress', () => {
     });
 
     it('should show both label and value', () => {
-      render(() => <Progress value={50} label="Progress" showValue />);
+      render(() => <Progress value={50} label='Progress' showValue />);
 
       expect(screen.getByText('Progress')).toBeInTheDocument();
       expect(screen.getByText('50%')).toBeInTheDocument();
@@ -63,7 +63,7 @@ describe('Progress', () => {
 
   describe('Size variants', () => {
     it('should apply small size class', () => {
-      const { container } = render(() => <Progress value={50} size="sm" />);
+      const { container } = render(() => <Progress value={50} size='sm' />);
 
       const track = container.querySelector('[data-part="track"]');
       expect(track).toHaveClass('h-1');
@@ -77,7 +77,7 @@ describe('Progress', () => {
     });
 
     it('should apply large size class', () => {
-      const { container } = render(() => <Progress value={50} size="lg" />);
+      const { container } = render(() => <Progress value={50} size='lg' />);
 
       const track = container.querySelector('[data-part="track"]');
       expect(track).toHaveClass('h-3');
@@ -93,21 +93,21 @@ describe('Progress', () => {
     });
 
     it('should apply success (green) color', () => {
-      const { container } = render(() => <Progress value={50} variant="success" />);
+      const { container } = render(() => <Progress value={50} variant='success' />);
 
       const range = container.querySelector('[data-part="range"]');
       expect(range).toHaveClass('bg-green-500');
     });
 
     it('should apply warning (yellow) color', () => {
-      const { container } = render(() => <Progress value={50} variant="warning" />);
+      const { container } = render(() => <Progress value={50} variant='warning' />);
 
       const range = container.querySelector('[data-part="range"]');
       expect(range).toHaveClass('bg-yellow-500');
     });
 
     it('should apply error (red) color', () => {
-      const { container } = render(() => <Progress value={50} variant="error" />);
+      const { container } = render(() => <Progress value={50} variant='error' />);
 
       const range = container.querySelector('[data-part="range"]');
       expect(range).toHaveClass('bg-red-500');
@@ -153,14 +153,14 @@ describe('Progress', () => {
 
   describe('Accessibility', () => {
     it('should have proper ARIA attributes on root', () => {
-      const { container } = render(() => <Progress value={50} label="Loading progress" />);
+      const { container } = render(() => <Progress value={50} label='Loading progress' />);
 
       const root = container.querySelector('[data-part="root"]');
       expect(root).toBeInTheDocument();
     });
 
     it('should have label element with proper attributes', () => {
-      const { container } = render(() => <Progress value={50} label="Loading" />);
+      const { container } = render(() => <Progress value={50} label='Loading' />);
 
       const label = container.querySelector('[data-part="label"]');
       expect(label).toBeInTheDocument();

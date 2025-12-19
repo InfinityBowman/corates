@@ -1,13 +1,13 @@
 export default function HowDidCoRATESStart() {
   return (
-    <section class='bg-linear-to-b from-white to-gray-50 border-y border-gray-100'>
-      <div class='max-w-4xl mx-auto px-6 py-20'>
-        <h2 class='text-2xl md:text-3xl font-bold text-gray-900 mb-8'>
+    <section class='border-y border-gray-100 bg-linear-to-b from-white to-gray-50'>
+      <div class='mx-auto max-w-4xl px-6 py-20'>
+        <h2 class='mb-8 text-2xl font-bold text-gray-900 md:text-3xl'>
           How Did CoRATES Get Started?
         </h2>
 
-        <div class='bg-white rounded-2xl p-8 md:p-10 shadow-sm border border-gray-100'>
-          <div class='space-y-6 text-gray-600 leading-relaxed'>
+        <div class='rounded-2xl border border-gray-100 bg-white p-8 shadow-sm md:p-10'>
+          <div class='space-y-6 leading-relaxed text-gray-600'>
             <p>
               CoRATES began with a problem familiar to anyone involved in evidence synthesis: the
               study appraisal process was far more cumbersome than it needed to be. Managing PDF or

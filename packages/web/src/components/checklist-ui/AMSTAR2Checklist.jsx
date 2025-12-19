@@ -339,20 +339,20 @@ export function Question9(props) {
   let containerRef;
 
   return (
-    <div class='bg-white rounded-lg shadow-md p-8 text-sm relative' ref={el => (containerRef = el)}>
+    <div class='relative rounded-lg bg-white p-8 text-sm shadow-md' ref={el => (containerRef = el)}>
       <QuestionInfo question={question} containerRef={containerRef} />
       <div class='flex'>
         <h3 class='font-semibold text-gray-900'>{question.text}</h3>
         <CriticalButton state={stateA} onUpdate={onUpdateab} />
       </div>
-      <div class='font-semibold text-gray-900 h-4 mt-2 mb-1'>{question.subtitle}</div>
+      <div class='mt-2 mb-1 h-4 font-semibold text-gray-900'>{question.subtitle}</div>
       <StandardQuestionInternal
         state={stateA}
         question={{ text: 'q9a' }}
         columns={question.columns}
         handleChange={handleChangeA}
       />
-      <div class='font-semibold text-gray-900 h-4 mt-2'>{question.subtitle2}</div>
+      <div class='mt-2 h-4 font-semibold text-gray-900'>{question.subtitle2}</div>
       <StandardQuestionInternal
         state={stateB}
         question={{ text: 'q9b' }}
@@ -466,14 +466,14 @@ export function Question11(props) {
   let containerRef;
 
   return (
-    <div class='bg-white rounded-lg shadow-md p-8 text-sm relative' ref={el => (containerRef = el)}>
+    <div class='relative rounded-lg bg-white p-8 text-sm shadow-md' ref={el => (containerRef = el)}>
       <QuestionInfo question={question} containerRef={containerRef} />
       <div class='flex'>
         <h3 class='font-semibold text-gray-900'>{question.text}</h3>
         <CriticalButton state={stateA} onUpdate={onUpdateab} />
       </div>
 
-      <div class='font-semibold text-gray-900 h-4 mt-2'>{question.subtitle}</div>
+      <div class='mt-2 h-4 font-semibold text-gray-900'>{question.subtitle}</div>
       <StandardQuestionInternal
         state={stateA}
         question={{ text: 'q11a' }}
@@ -481,7 +481,7 @@ export function Question11(props) {
         handleChange={handleChangeA}
         width='w-48'
       />
-      <div class='font-semibold text-gray-900 h-4 mt-4'>{question.subtitle2}</div>
+      <div class='mt-4 h-4 font-semibold text-gray-900'>{question.subtitle2}</div>
       <StandardQuestionInternal
         state={stateB}
         question={{ text: 'q11b' }}
@@ -680,10 +680,10 @@ function StandardQuestion(props) {
   };
 
   return (
-    <div class='bg-white rounded-lg shadow-md p-7 pb-3 relative' ref={el => (containerRef = el)}>
+    <div class='relative rounded-lg bg-white p-7 pb-3 shadow-md' ref={el => (containerRef = el)}>
       <QuestionInfo question={props.question} containerRef={containerRef} />
       <div class='flex'>
-        <h3 class='font-semibold text-sm text-gray-900 mb-1'>{props.question.text}</h3>
+        <h3 class='mb-1 text-sm font-semibold text-gray-900'>{props.question.text}</h3>
         <CriticalButton state={props.state} onUpdate={props.onUpdate} />
       </div>
       <StandardQuestionInternal columns={props.question.columns} {...props} />
@@ -727,7 +727,7 @@ function QuestionInfo(props) {
       <div class='absolute top-1.5 right-1.5'>
         <Tooltip content={question()} placement='top' openDelay={200}>
           <button
-            class='inline-flex items-center justify-center rounded-full p-1.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer'
+            class='inline-flex cursor-pointer items-center justify-center rounded-full p-1.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'
             onClick={openInfoPanel}
           >
             <FaSolidCircleInfo size={12} />
@@ -746,11 +746,10 @@ function CriticalButton(props) {
   return (
     <div class='ml-auto'>
       <button
-        class={`ml-2 px-3 h-6 rounded-full text-xs font-medium transition-colors text-nowrap
-        ${
+        class={`ml-2 h-6 rounded-full px-3 text-xs font-medium text-nowrap transition-colors ${
           props.state().critical ?
-            'bg-red-100 text-red-700 border border-red-300 hover:bg-red-200'
-          : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'
+            'border border-red-300 bg-red-100 text-red-700 hover:bg-red-200'
+          : 'border border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200'
         }`}
         onClick={() => onUpdateCritical(!props.state().critical)}
         aria-pressed={props.state().critical}
@@ -769,15 +768,15 @@ function StandardQuestionInternal(props) {
           <div
             class={
               colIdx() === props.columns.length - 1 ?
-                `${props.width ?? 'w-32'} flex flex-col min-w-0`
-              : 'flex-1 flex flex-col min-w-0'
+                `${props.width ?? 'w-32'} flex min-w-0 flex-col`
+              : 'flex min-w-0 flex-1 flex-col'
             }
           >
-            <div class='font-semibold text-gray-800 text-xs wrap-break-words whitespace-normal min-w-0 w-full min-h-8 flex items-center'>
+            <div class='wrap-break-words flex min-h-8 w-full min-w-0 items-center text-xs font-semibold whitespace-normal text-gray-800'>
               {col.label}
             </div>
             {colIdx() === props.columns.length - 1 ?
-              <div class='flex flex-col gap-2 mt-1'>
+              <div class='mt-1 flex flex-col gap-2'>
                 <For each={col.options}>
                   {(option, optIdx) => (
                     <label class='flex items-center space-x-2 text-xs'>
@@ -786,9 +785,9 @@ function StandardQuestionInternal(props) {
                         name={`col-${colIdx()}-${props.question?.text ?? ''}`}
                         checked={props.state().answers[colIdx()][optIdx()]}
                         onChange={() => props.handleChange(colIdx(), optIdx())}
-                        class='w-3.5 h-3.5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer'
+                        class='h-3.5 w-3.5 cursor-pointer border-gray-300 text-blue-600 focus:ring-blue-500'
                       />
-                      <span class='text-gray-700 wrap-break-words'>{option}</span>
+                      <span class='wrap-break-words text-gray-700'>{option}</span>
                     </label>
                   )}
                 </For>
@@ -801,9 +800,9 @@ function StandardQuestionInternal(props) {
                         type='checkbox'
                         checked={props.state().answers[colIdx()][optIdx()]}
                         onChange={() => props.handleChange(colIdx(), optIdx())}
-                        class='w-3 h-3 shrink-0 text-blue-600 border-gray-300 focus:ring-blue-500'
+                        class='h-3 w-3 shrink-0 border-gray-300 text-blue-600 focus:ring-blue-500'
                       />
-                      <span class='text-gray-700 wrap-break-words'>{option}</span>
+                      <span class='wrap-break-words text-gray-700'>{option}</span>
                     </label>
                   )}
                 </For>
@@ -854,9 +853,9 @@ export default function AMSTAR2Checklist(props = {}) {
 
   return (
     <div class='bg-blue-50'>
-      <div class='container mx-auto px-4 py-6 max-w-5xl'>
+      <div class='container mx-auto max-w-5xl px-4 py-6'>
         <Show when={currentChecklist()} fallback={<div>Loading...</div>}>
-          <div class='font-semibold text-lg text-gray-900 text-left sm:text-center mb-6'>
+          <div class='mb-6 text-left text-lg font-semibold text-gray-900 sm:text-center'>
             {currentChecklist().name || 'AMSTAR 2 Checklist'}
           </div>
           <fieldset disabled={!!props.readOnly} class={props.readOnly ? 'opacity-90' : ''}>

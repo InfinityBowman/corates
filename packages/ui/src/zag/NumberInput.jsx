@@ -65,7 +65,7 @@ export function NumberInput(props) {
   return (
     <div {...api().getRootProps()} class={`w-full ${local.class || ''}`}>
       <Show when={local.label}>
-        <label {...api().getLabelProps()} class='block text-sm font-medium text-gray-700 mb-1'>
+        <label {...api().getLabelProps()} class='mb-1 block text-sm font-medium text-gray-700'>
           {local.label}
         </label>
       </Show>
@@ -73,34 +73,22 @@ export function NumberInput(props) {
         <Show when={showControls()}>
           <button
             {...api().getDecrementTriggerProps()}
-            class={`${sizes().button} border border-r-0 border-gray-300 rounded-l-lg bg-gray-50 text-gray-600
-              hover:bg-gray-100 transition-colors
-              disabled:opacity-50 disabled:cursor-not-allowed
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset`}
+            class={`${sizes().button} rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-600 transition-colors hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-inset disabled:cursor-not-allowed disabled:opacity-50`}
           >
-            <FiMinus class='w-4 h-4' />
+            <FiMinus class='h-4 w-4' />
           </button>
         </Show>
         <input
           {...api().getInputProps()}
           placeholder={local.placeholder}
-          class={`${sizes().input} flex-1 border border-gray-300 text-center
-            ${showControls() ? '' : 'rounded-lg'}
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-            data-invalid:border-red-500 data-invalid:ring-red-500
-            disabled:bg-gray-100 disabled:cursor-not-allowed
-            read-only:bg-gray-50
-            ${local.inputClass || ''}`}
+          class={`${sizes().input} flex-1 border border-gray-300 text-center ${showControls() ? '' : 'rounded-lg'} read-only:bg-gray-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 data-invalid:border-red-500 data-invalid:ring-red-500 ${local.inputClass || ''}`}
         />
         <Show when={showControls()}>
           <button
             {...api().getIncrementTriggerProps()}
-            class={`${sizes().button} border border-l-0 border-gray-300 rounded-r-lg bg-gray-50 text-gray-600
-              hover:bg-gray-100 transition-colors
-              disabled:opacity-50 disabled:cursor-not-allowed
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset`}
+            class={`${sizes().button} rounded-r-lg border border-l-0 border-gray-300 bg-gray-50 text-gray-600 transition-colors hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-inset disabled:cursor-not-allowed disabled:opacity-50`}
           >
-            <FiPlus class='w-4 h-4' />
+            <FiPlus class='h-4 w-4' />
           </button>
         </Show>
       </div>

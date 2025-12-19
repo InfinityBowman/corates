@@ -102,19 +102,19 @@ export default function StudyPdfSection(props) {
         <div class='flex items-center justify-between'>
           <h4 class='text-sm font-medium text-gray-700'>PDFs ({pdfs().length})</h4>
           <Show when={!props.readOnly}>
-            <div class='flex items-center gap-2 mt-1'>
+            <div class='mt-1 flex items-center gap-2'>
               <button
                 type='button'
                 onClick={triggerFileInput}
                 disabled={uploading()}
-                class='inline-flex items-center gap-1 px-2 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                class='inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50'
               >
                 {uploading() ? 'Uploading...' : <FaSolidPlus />}
               </button>
               <button
                 type='button'
                 onClick={() => props.onOpenGoogleDrive?.(study().id)}
-                class='px-2 py-1.5 text-gray-500 text-sm font-medium hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'
+                class='rounded-md px-2 py-1.5 text-sm font-medium text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600'
                 title='Import from Google Drive'
               >
                 <FaBrandsGoogleDrive />
@@ -127,10 +127,10 @@ export default function StudyPdfSection(props) {
         <Show
           when={pdfs().length > 0}
           fallback={
-            <div class='p-6 text-center border-2 border-dashed border-gray-200 rounded-lg'>
+            <div class='rounded-lg border-2 border-dashed border-gray-200 p-6 text-center'>
               <p class='text-sm text-gray-500'>No PDFs uploaded yet</p>
               <Show when={!props.readOnly}>
-                <div class='flex items-center justify-center gap-2 mt-2'>
+                <div class='mt-2 flex items-center justify-center gap-2'>
                   <button
                     type='button'
                     onClick={triggerFileInput}

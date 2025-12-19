@@ -15,18 +15,15 @@ export default function ChecklistTreeItem(props) {
   return (
     <button
       onClick={() => navigate(checklistPath())}
-      class={`
-        w-full flex items-center gap-1.5 px-2 py-1 rounded text-left transition-colors
-        ${isSelected() ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}
-      `}
+      class={`flex w-full items-center gap-1.5 rounded px-2 py-1 text-left transition-colors ${isSelected() ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'} `}
     >
-      <HiOutlineDocumentCheck class='w-3 h-3 shrink-0' />
-      <span class='text-2xs font-medium truncate'>
+      <HiOutlineDocumentCheck class='h-3 w-3 shrink-0' />
+      <span class='text-2xs truncate font-medium'>
         {getChecklistMetadata(props.checklist.type).name}
       </span>
       <Show when={props.checklist.status}>
         <span
-          class={`text-3xs px-1 py-0.5 rounded ${
+          class={`text-3xs rounded px-1 py-0.5 ${
             props.checklist.status === 'completed' ? 'bg-green-100 text-green-700'
             : props.checklist.status === 'in-progress' ? 'bg-yellow-100 text-yellow-700'
             : 'bg-gray-100 text-gray-600'

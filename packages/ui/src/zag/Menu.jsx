@@ -51,7 +51,7 @@ export function Menu(props) {
     <div {...api().getPositionerProps()}>
       <ul
         {...api().getContentProps()}
-        class={`bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-40 z-50 focus:outline-none ${local.class || ''}`}
+        class={`z-50 min-w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg focus:outline-none ${local.class || ''}`}
       >
         <For each={local.items}>
           {item => (
@@ -63,7 +63,7 @@ export function Menu(props) {
                   fallback={
                     <li
                       {...api().getItemGroupLabelProps({ htmlFor: item.groupLabel })}
-                      class='px-3 py-1.5 text-xs font-medium text-gray-500 uppercase tracking-wide'
+                      class='px-3 py-1.5 text-xs font-medium tracking-wide text-gray-500 uppercase'
                     >
                       {item.groupLabel}
                     </li>
@@ -75,13 +75,10 @@ export function Menu(props) {
             >
               <li
                 {...api().getItemProps({ value: item.value, disabled: item.disabled })}
-                class={`flex items-center gap-2 px-3 py-2 text-sm cursor-pointer transition-colors
-                  ${item.destructive ? 'text-red-600 hover:bg-red-50 data-highlighted:bg-red-50' : 'text-gray-700 hover:bg-gray-50 data-highlighted:bg-gray-50'}
-                  ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                  focus:outline-none`}
+                class={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors ${item.destructive ? 'text-red-600 hover:bg-red-50 data-highlighted:bg-red-50' : 'text-gray-700 hover:bg-gray-50 data-highlighted:bg-gray-50'} ${item.disabled ? 'cursor-not-allowed opacity-50' : ''} focus:outline-none`}
               >
                 <Show when={item.icon}>
-                  <span class='w-4 h-4 shrink-0'>{item.icon}</span>
+                  <span class='h-4 w-4 shrink-0'>{item.icon}</span>
                 </Show>
                 <span>{item.label}</span>
               </li>
@@ -96,7 +93,7 @@ export function Menu(props) {
     <>
       <button
         {...api().getTriggerProps()}
-        class='inline-flex items-center gap-1 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors'
+        class='inline-flex items-center gap-1 rounded p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
       >
         {local.trigger}
         <Show when={!local.hideIndicator}>
@@ -104,7 +101,7 @@ export function Menu(props) {
             {...api().getIndicatorProps()}
             class='transition-transform data-[state=open]:rotate-180'
           >
-            <svg class='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+            <svg class='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
               <path
                 stroke-linecap='round'
                 stroke-linejoin='round'

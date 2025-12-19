@@ -13,7 +13,7 @@ function IllustrationWrapper(props) {
     <div
       class={`bg-linear-to-br ${props.gradient} rounded-xl border ${props.border} overflow-hidden p-8`}
     >
-      <div class='relative aspect-4/3 flex items-center justify-center'>{props.children}</div>
+      <div class='relative flex aspect-4/3 items-center justify-center'>{props.children}</div>
     </div>
   );
 }
@@ -23,12 +23,12 @@ function UserAvatar(props) {
     <div class={`absolute ${props.position}`}>
       <div class='relative'>
         <div
-          class={`w-12 h-12 rounded-full bg-linear-to-br ${props.gradient} flex items-center justify-center text-white font-bold shadow-lg`}
+          class={`h-12 w-12 rounded-full bg-linear-to-br ${props.gradient} flex items-center justify-center font-bold text-white shadow-lg`}
         >
           {props.letter}
         </div>
         <div
-          class={`absolute -bottom-1 -right-1 w-4 h-4 ${props.statusColor} rounded-full border-2 border-white ${props.pulse ? 'animate-pulse' : ''}`}
+          class={`absolute -right-1 -bottom-1 h-4 w-4 ${props.statusColor} rounded-full border-2 border-white ${props.pulse ? 'animate-pulse' : ''}`}
         />
       </div>
     </div>
@@ -39,7 +39,7 @@ function FloatingBadge(props) {
   return (
     <div class={`absolute ${props.position}`}>
       <div
-        class={`bg-white rounded-lg shadow-md px-3 py-2 flex items-center gap-2 border ${props.border}`}
+        class={`flex items-center gap-2 rounded-lg border bg-white px-3 py-2 shadow-md ${props.border}`}
       >
         {props.children}
       </div>
@@ -51,13 +51,13 @@ function ChecklistItem(props) {
   return (
     <div class='flex items-center gap-2'>
       <div
-        class={`w-4 h-4 rounded ${props.variant === 'warning' ? 'bg-yellow-500' : 'bg-green-500'} flex items-center justify-center`}
+        class={`h-4 w-4 rounded ${props.variant === 'warning' ? 'bg-yellow-500' : 'bg-green-500'} flex items-center justify-center`}
       >
         {props.variant === 'warning' ?
-          <span class='text-white text-xs font-bold'>!</span>
-        : <AiOutlineCheck class='w-3 h-3 text-white' />}
+          <span class='text-xs font-bold text-white'>!</span>
+        : <AiOutlineCheck class='h-3 w-3 text-white' />}
       </div>
-      <div class='h-2 bg-gray-200 rounded flex-1' />
+      <div class='h-2 flex-1 rounded bg-gray-200' />
     </div>
   );
 }
@@ -68,12 +68,12 @@ function CollaborationIllustration() {
     <IllustrationWrapper gradient='from-blue-50 to-indigo-50' border='border-blue-200'>
       {/* Central document */}
       <div class='absolute inset-0 flex items-center justify-center'>
-        <div class='bg-white rounded-lg shadow-lg p-6 w-48 border-2 border-blue-300'>
+        <div class='w-48 rounded-lg border-2 border-blue-300 bg-white p-6 shadow-lg'>
           <div class='space-y-2'>
-            <div class='h-2 bg-gray-200 rounded w-full' />
-            <div class='h-2 bg-gray-200 rounded w-5/6' />
-            <div class='h-2 bg-blue-400 rounded w-4/6 animate-pulse' />
-            <div class='h-2 bg-gray-100 rounded w-full' />
+            <div class='h-2 w-full rounded bg-gray-200' />
+            <div class='h-2 w-5/6 rounded bg-gray-200' />
+            <div class='h-2 w-4/6 animate-pulse rounded bg-blue-400' />
+            <div class='h-2 w-full rounded bg-gray-100' />
           </div>
         </div>
       </div>
@@ -101,13 +101,13 @@ function CollaborationIllustration() {
 
       {/* Activity indicators */}
       <FloatingBadge position='-right-4 top-1/4' border='border-green-200'>
-        <div class='w-2 h-2 bg-green-500 rounded-full animate-pulse' />
-        <span class='text-xs text-gray-700 font-medium'>Live</span>
+        <div class='h-2 w-2 animate-pulse rounded-full bg-green-500' />
+        <span class='text-xs font-medium text-gray-700'>Live</span>
       </FloatingBadge>
 
-      <div class='absolute -left-4 bottom-1/4'>
-        <div class='bg-white rounded-lg shadow-md px-3 py-2 text-xs flex items-center gap-1.5'>
-          <AiOutlineCheckCircle class='w-3 h-3 text-blue-600' />
+      <div class='absolute bottom-1/4 -left-4'>
+        <div class='flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs shadow-md'>
+          <AiOutlineCheckCircle class='h-3 w-3 text-blue-600' />
           <span class='text-gray-700'>Updated</span>
         </div>
       </div>
@@ -122,31 +122,31 @@ function SecurityIllustration() {
       {/* Central shield */}
       <div class='absolute inset-0 flex items-center justify-center'>
         <div class='relative'>
-          <div class='w-32 h-36 bg-linear-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-xl'>
-            <HiOutlineShieldCheck class='w-16 h-16 text-white' />
+          <div class='flex h-36 w-32 items-center justify-center rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 shadow-xl'>
+            <HiOutlineShieldCheck class='h-16 w-16 text-white' />
           </div>
-          <div class='absolute -inset-4 border-2 border-emerald-300 rounded-lg animate-pulse opacity-50' />
+          <div class='absolute -inset-4 animate-pulse rounded-lg border-2 border-emerald-300 opacity-50' />
         </div>
       </div>
 
       {/* Auth method badges */}
       <FloatingBadge position='top-4 left-4' border='border-emerald-200'>
-        <FiKey class='w-4 h-4 text-emerald-600' />
+        <FiKey class='h-4 w-4 text-emerald-600' />
         <span class='text-xs font-medium text-gray-700'>OAuth</span>
       </FloatingBadge>
 
       <FloatingBadge position='top-4 right-4' border='border-blue-200'>
-        <FiLock class='w-4 h-4 text-blue-600' />
+        <FiLock class='h-4 w-4 text-blue-600' />
         <span class='text-xs font-medium text-gray-700'>2FA</span>
       </FloatingBadge>
 
       <FloatingBadge position='bottom-6 left-6' border='border-purple-200'>
-        <AiOutlineMail class='w-4 h-4 text-purple-600' />
+        <AiOutlineMail class='h-4 w-4 text-purple-600' />
         <span class='text-xs font-medium text-gray-700'>Passwordless</span>
       </FloatingBadge>
 
       <FloatingBadge position='bottom-6 right-6' border='border-indigo-200'>
-        <FiShield class='w-4 h-4 text-indigo-600' />
+        <FiShield class='h-4 w-4 text-indigo-600' />
         <span class='text-xs font-medium text-gray-700'>SSO</span>
       </FloatingBadge>
     </IllustrationWrapper>
@@ -158,11 +158,11 @@ function ScoringIllustration() {
   return (
     <IllustrationWrapper gradient='from-sky-50 to-blue-100' border='border-blue-200'>
       {/* Checklist card */}
-      <div class='bg-white rounded-lg shadow-lg p-4 w-56 border border-blue-200'>
+      <div class='w-56 rounded-lg border border-blue-200 bg-white p-4 shadow-lg'>
         {/* Header */}
-        <div class='flex items-center justify-between mb-3 pb-2 border-b border-gray-100'>
+        <div class='mb-3 flex items-center justify-between border-b border-gray-100 pb-2'>
           <span class='text-xs font-semibold text-gray-700'>AMSTAR-2</span>
-          <div class='bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded'>High</div>
+          <div class='rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700'>High</div>
         </div>
 
         {/* Checklist items */}
@@ -174,28 +174,28 @@ function ScoringIllustration() {
         </div>
 
         {/* Progress bar */}
-        <div class='mt-3 pt-2 border-t border-gray-100'>
-          <div class='flex justify-between text-xs text-gray-500 mb-1'>
+        <div class='mt-3 border-t border-gray-100 pt-2'>
+          <div class='mb-1 flex justify-between text-xs text-gray-500'>
             <span>Progress</span>
             <span class='font-medium'>75%</span>
           </div>
-          <div class='h-2 bg-gray-100 rounded-full overflow-hidden'>
-            <div class='h-full w-3/4 bg-linear-to-r from-green-300 to-green-500 rounded-full' />
+          <div class='h-2 overflow-hidden rounded-full bg-gray-100'>
+            <div class='h-full w-3/4 rounded-full bg-linear-to-r from-green-300 to-green-500' />
           </div>
         </div>
       </div>
 
       {/* Floating score badge */}
       <div class='absolute -top-2 -right-2'>
-        <div class='bg-linear-to-br from-blue-500 to-sky-500 rounded-lg px-3 py-2 shadow-lg'>
-          <div class='text-white text-xs font-medium'>Scoring</div>
-          <div class='text-white text-xl font-bold'>12/16</div>
+        <div class='rounded-lg bg-linear-to-br from-blue-500 to-sky-500 px-3 py-2 shadow-lg'>
+          <div class='text-xs font-medium text-white'>Scoring</div>
+          <div class='text-xl font-bold text-white'>12/16</div>
         </div>
       </div>
 
       {/* Auto-calculate indicator */}
       <FloatingBadge position='-bottom-2 left-4' border='border-green-200'>
-        <div class='w-2 h-2 bg-green-500 rounded-full animate-pulse' />
+        <div class='h-2 w-2 animate-pulse rounded-full bg-green-500' />
         <span class='text-xs font-medium text-gray-700'>Automatic Scoring</span>
       </FloatingBadge>
     </IllustrationWrapper>
@@ -207,72 +207,72 @@ function PDFAnnotationIllustration() {
   return (
     <IllustrationWrapper gradient='from-rose-50 to-pink-50' border='border-rose-200'>
       {/* PDF document */}
-      <div class='bg-white rounded-lg shadow-lg w-52 border border-gray-200 overflow-hidden'>
+      <div class='w-52 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg'>
         {/* PDF header bar */}
-        <div class='bg-gray-100 px-3 py-1.5 border-b border-gray-200 flex items-center gap-2'>
-          <HiOutlineDocumentText class='w-4 h-4 text-rose-500' />
-          <span class='text-xs text-gray-600 truncate'>study_2025.pdf</span>
+        <div class='flex items-center gap-2 border-b border-gray-200 bg-gray-100 px-3 py-1.5'>
+          <HiOutlineDocumentText class='h-4 w-4 text-rose-500' />
+          <span class='truncate text-xs text-gray-600'>study_2025.pdf</span>
         </div>
 
         {/* PDF content */}
-        <div class='p-3 space-y-2'>
-          <div class='h-2 bg-gray-200 rounded w-full' />
-          <div class='h-2 bg-gray-200 rounded w-5/6' />
+        <div class='space-y-2 p-3'>
+          <div class='h-2 w-full rounded bg-gray-200' />
+          <div class='h-2 w-5/6 rounded bg-gray-200' />
 
           {/* Highlighted text */}
           <div class='relative'>
-            <div class='h-2 bg-yellow-300 rounded w-4/5' />
-            <div class='absolute -right-1 -top-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center shadow-sm'>
-              <span class='text-white text-xs font-bold'>1</span>
+            <div class='h-2 w-4/5 rounded bg-yellow-300' />
+            <div class='absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-yellow-500 shadow-sm'>
+              <span class='text-xs font-bold text-white'>1</span>
             </div>
           </div>
 
-          <div class='h-2 bg-gray-200 rounded w-full' />
-          <div class='h-2 bg-gray-200 rounded w-3/4' />
+          <div class='h-2 w-full rounded bg-gray-200' />
+          <div class='h-2 w-3/4 rounded bg-gray-200' />
 
           {/* Another highlight */}
           <div class='relative'>
-            <div class='h-2 bg-blue-300 rounded w-2/3' />
-            <div class='absolute -right-1 -top-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center shadow-sm'>
-              <span class='text-white text-xs font-bold'>2</span>
+            <div class='h-2 w-2/3 rounded bg-blue-300' />
+            <div class='absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 shadow-sm'>
+              <span class='text-xs font-bold text-white'>2</span>
             </div>
           </div>
 
-          <div class='h-2 bg-gray-200 rounded w-full' />
-          <div class='h-2 bg-gray-200 rounded w-4/6' />
+          <div class='h-2 w-full rounded bg-gray-200' />
+          <div class='h-2 w-4/6 rounded bg-gray-200' />
         </div>
       </div>
 
       {/* Annotation comment bubble */}
       <div class='absolute -top-2 -right-4'>
-        <div class='bg-white rounded-lg shadow-lg p-3 w-32 border border-rose-200'>
-          <div class='flex items-center gap-1.5 mb-1.5'>
-            <div class='w-5 h-5 rounded-full bg-linear-to-br from-rose-400 to-pink-500 flex items-center justify-center text-white text-xs font-bold'>
+        <div class='w-32 rounded-lg border border-rose-200 bg-white p-3 shadow-lg'>
+          <div class='mb-1.5 flex items-center gap-1.5'>
+            <div class='flex h-5 w-5 items-center justify-center rounded-full bg-linear-to-br from-rose-400 to-pink-500 text-xs font-bold text-white'>
               R
             </div>
             <span class='text-xs font-medium text-gray-700'>Note</span>
           </div>
-          <p class='text-xs text-gray-500 leading-tight'>Key finding for Q7...</p>
+          <p class='text-xs leading-tight text-gray-500'>Key finding for Q7...</p>
         </div>
       </div>
 
       {/* Link indicator */}
       <FloatingBadge position='-bottom-2 -left-2' border='border-rose-200'>
-        <AiOutlineLink class='w-4 h-4 text-rose-500' />
+        <AiOutlineLink class='h-4 w-4 text-rose-500' />
         <span class='text-xs font-medium text-gray-700'>Linked</span>
       </FloatingBadge>
 
       {/* Toolbar floating */}
-      <div class='absolute top-1/2 -left-4 transform -translate-y-1/2'>
-        <div class='bg-white rounded-lg shadow-md p-1.5 flex flex-col gap-1 border border-gray-200'>
-          <div class='w-6 h-6 bg-yellow-100 rounded flex items-center justify-center'>
-            <div class='w-3 h-3 bg-yellow-400 rounded-sm' />
+      <div class='absolute top-1/2 -left-4 -translate-y-1/2 transform'>
+        <div class='flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-1.5 shadow-md'>
+          <div class='flex h-6 w-6 items-center justify-center rounded bg-yellow-100'>
+            <div class='h-3 w-3 rounded-sm bg-yellow-400' />
           </div>
-          <div class='w-6 h-6 bg-blue-100 rounded flex items-center justify-center'>
-            <div class='w-3 h-3 bg-blue-400 rounded-sm' />
+          <div class='flex h-6 w-6 items-center justify-center rounded bg-blue-100'>
+            <div class='h-3 w-3 rounded-sm bg-blue-400' />
           </div>
-          <div class='w-6 h-6 bg-rose-100 rounded flex items-center justify-center'>
-            <BiRegularComment class='w-3 h-3 text-rose-500' />
+          <div class='flex h-6 w-6 items-center justify-center rounded bg-rose-100'>
+            <BiRegularComment class='h-3 w-3 text-rose-500' />
           </div>
         </div>
       </div>
@@ -287,40 +287,40 @@ function SpeedIllustration() {
       {/* Central speedometer */}
       <div class='absolute inset-0 flex items-center justify-center'>
         <div class='relative'>
-          <div class='w-36 h-36 rounded-full bg-white shadow-lg border-4 border-amber-200 flex items-center justify-center'>
+          <div class='flex h-36 w-36 items-center justify-center rounded-full border-4 border-amber-200 bg-white shadow-lg'>
             <div class='text-center'>
-              <BsLightningChargeFill class='w-12 h-12 text-amber-500 mx-auto' />
-              <div class='text-xs text-gray-500 font-semibold mt-1'>Streamlined</div>
+              <BsLightningChargeFill class='mx-auto h-12 w-12 text-amber-500' />
+              <div class='mt-1 text-xs font-semibold text-gray-500'>Streamlined</div>
             </div>
           </div>
-          <div class='absolute -inset-2 border-2 border-amber-300 rounded-full animate-pulse opacity-40' />
+          <div class='absolute -inset-2 animate-pulse rounded-full border-2 border-amber-300 opacity-40' />
         </div>
       </div>
 
       {/* Time saved badges */}
       <FloatingBadge position='-top-2 -left-2' border='border-green-200'>
-        <IoTimerOutline class='w-4 h-4 text-green-600' />
+        <IoTimerOutline class='h-4 w-4 text-green-600' />
         <span class='text-xs font-medium text-gray-700'>Save hours</span>
       </FloatingBadge>
 
       <FloatingBadge position='-top-2 -right-2' border='border-amber-200'>
-        <AiOutlineCheck class='w-4 h-4 text-amber-600' />
+        <AiOutlineCheck class='h-4 w-4 text-amber-600' />
         <span class='text-xs font-medium text-gray-700'>No busywork</span>
       </FloatingBadge>
 
       <FloatingBadge position='top-[40%] -right-2' border='border-blue-200'>
-        <RiDeviceWifiOffLine class='w-4 h-4 text-blue-600' />
+        <RiDeviceWifiOffLine class='h-4 w-4 text-blue-600' />
         <span class='text-xs font-medium text-gray-700'>Works offline</span>
       </FloatingBadge>
 
       {/* Productivity metrics */}
       <div class='absolute -bottom-2 left-1/2 -translate-x-1/2'>
-        <div class='bg-white rounded-lg shadow-md px-4 py-2 border border-amber-200 flex items-center gap-3'>
+        <div class='flex items-center gap-3 rounded-lg border border-amber-200 bg-white px-4 py-2 shadow-md'>
           <div class='text-center'>
             <div class='text-lg font-bold text-amber-600'>Fewer</div>
             <div class='text-xs text-gray-500'>Emails</div>
           </div>
-          <div class='w-px h-8 bg-gray-200' />
+          <div class='h-8 w-px bg-gray-200' />
           <div class='text-center'>
             <div class='text-lg font-bold text-green-600'>0</div>
             <div class='text-xs text-gray-500'>Spreadsheets</div>
@@ -344,11 +344,11 @@ function DataVisualizationIllustration() {
   return (
     <IllustrationWrapper gradient='from-violet-50 to-purple-50' border='border-violet-200'>
       {/* Chart card */}
-      <div class='bg-white rounded-lg shadow-lg p-4 w-56 border border-violet-200'>
+      <div class='w-56 rounded-lg border border-violet-200 bg-white p-4 shadow-lg'>
         {/* Chart header */}
-        <div class='flex items-center justify-between mb-3'>
+        <div class='mb-3 flex items-center justify-between'>
           <span class='text-xs font-semibold text-gray-700'>Risk of Bias</span>
-          <BsGraphUp class='w-4 h-4 text-violet-500' />
+          <BsGraphUp class='h-4 w-4 text-violet-500' />
         </div>
 
         {/* Stacked horizontal bar chart */}
@@ -356,8 +356,8 @@ function DataVisualizationIllustration() {
           <For each={chartData}>
             {row => (
               <div class='flex items-center gap-2'>
-                <span class='text-xs text-gray-500 w-8'>{row.label}</span>
-                <div class='flex-1 h-4 flex rounded overflow-hidden'>
+                <span class='w-8 text-xs text-gray-500'>{row.label}</span>
+                <div class='flex h-4 flex-1 overflow-hidden rounded'>
                   {row.green > 0 && <div class='bg-green-400' style={{ width: `${row.green}%` }} />}
                   {row.yellow > 0 && (
                     <div class='bg-yellow-400' style={{ width: `${row.yellow}%` }} />
@@ -370,17 +370,17 @@ function DataVisualizationIllustration() {
         </div>
 
         {/* Legend */}
-        <div class='flex items-center justify-center gap-3 mt-3 pt-2 border-t border-gray-100'>
+        <div class='mt-3 flex items-center justify-center gap-3 border-t border-gray-100 pt-2'>
           <div class='flex items-center gap-1'>
-            <div class='w-2 h-2 bg-green-400 rounded-sm' />
+            <div class='h-2 w-2 rounded-sm bg-green-400' />
             <span class='text-xs text-gray-500'>Low</span>
           </div>
           <div class='flex items-center gap-1'>
-            <div class='w-2 h-2 bg-yellow-400 rounded-sm' />
+            <div class='h-2 w-2 rounded-sm bg-yellow-400' />
             <span class='text-xs text-gray-500'>Some</span>
           </div>
           <div class='flex items-center gap-1'>
-            <div class='w-2 h-2 bg-red-400 rounded-sm' />
+            <div class='h-2 w-2 rounded-sm bg-red-400' />
             <span class='text-xs text-gray-500'>High</span>
           </div>
         </div>
@@ -388,11 +388,11 @@ function DataVisualizationIllustration() {
 
       {/* Export options floating */}
       <div class='absolute -top-2 -right-2'>
-        <div class='bg-white rounded-lg shadow-md p-2 flex gap-1 border border-violet-200'>
-          <div class='w-8 h-7 bg-violet-100 rounded flex items-center justify-center'>
+        <div class='flex gap-1 rounded-lg border border-violet-200 bg-white p-2 shadow-md'>
+          <div class='flex h-7 w-8 items-center justify-center rounded bg-violet-100'>
             <span class='text-xs font-bold text-violet-600'>PNG</span>
           </div>
-          <div class='w-8 h-7 bg-purple-100 rounded flex items-center justify-center'>
+          <div class='flex h-7 w-8 items-center justify-center rounded bg-purple-100'>
             <span class='text-xs font-bold text-purple-600'>SVG</span>
           </div>
         </div>
@@ -400,7 +400,7 @@ function DataVisualizationIllustration() {
 
       {/* Publication ready badge */}
       <div class='absolute -bottom-2 left-4'>
-        <div class='bg-linear-to-r from-sky-500 to-blue-500 rounded-lg px-3 py-1.5 shadow-lg'>
+        <div class='rounded-lg bg-linear-to-r from-sky-500 to-blue-500 px-3 py-1.5 shadow-lg'>
           <span class='text-xs font-medium text-white'>Publication Ready</span>
         </div>
       </div>
@@ -411,17 +411,17 @@ function DataVisualizationIllustration() {
 function FeatureSection(props) {
   return (
     <div
-      class={`grid md:grid-cols-2 gap-8 md:gap-12 items-center ${props.reversed ? 'md:flex-row-reverse' : ''}`}
+      class={`grid items-center gap-8 md:grid-cols-2 md:gap-12 ${props.reversed ? 'md:flex-row-reverse' : ''}`}
     >
       <div class={props.reversed ? 'md:order-2' : ''}>{props.feature.illustration}</div>
       <div class={props.reversed ? 'md:order-1' : ''}>
-        <h3 class='text-2xl md:text-3xl font-bold text-gray-900 mb-4'>{props.feature.title}</h3>
-        <p class='text-gray-600 text-lg mb-6 leading-relaxed'>{props.feature.description}</p>
+        <h3 class='mb-4 text-2xl font-bold text-gray-900 md:text-3xl'>{props.feature.title}</h3>
+        <p class='mb-6 text-lg leading-relaxed text-gray-600'>{props.feature.description}</p>
         <ul class='space-y-3'>
           <For each={props.feature.bullets}>
             {bullet => (
               <li class='flex items-start gap-3'>
-                <AiOutlineCheck class='w-5 h-5 text-blue-700 mt-0.5 shrink-0' />
+                <AiOutlineCheck class='mt-0.5 h-5 w-5 shrink-0 text-blue-700' />
                 <span class='text-gray-700'>{bullet}</span>
               </li>
             )}
@@ -500,12 +500,12 @@ export default function FeatureShowcase() {
   ];
 
   return (
-    <section class='max-w-6xl mx-auto px-6 py-16 md:py-24'>
-      <div class='text-center mb-16'>
-        <h2 class='text-3xl md:text-4xl font-bold text-gray-900 mb-4'>
+    <section class='mx-auto max-w-6xl px-6 py-16 md:py-24'>
+      <div class='mb-16 text-center'>
+        <h2 class='mb-4 text-3xl font-bold text-gray-900 md:text-4xl'>
           Everything you need for rigorous study appraisal
         </h2>
-        <p class='text-lg text-gray-600 max-w-2xl mx-auto'>
+        <p class='mx-auto max-w-2xl text-lg text-gray-600'>
           Built specifically for researchers conducting systematic reviews and evidence synthesis.
         </p>
       </div>

@@ -78,22 +78,18 @@ export default function Select(props) {
   const renderList = () => (
     <ul
       {...api().getContentProps()}
-      class='bg-white border border-gray-200 rounded-md shadow-lg py-1 max-h-60 overflow-auto focus:outline-none'
+      class='max-h-60 overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg focus:outline-none'
     >
       <For each={items()}>
         {item => (
           <li
             {...api().getItemProps({ item })}
-            class={`
-              px-3 py-2 cursor-pointer flex items-center justify-between whitespace-nowrap
-              hover:bg-gray-100 data-highlighted:bg-blue-50
-              ${isValueDisabled(item.value) ? 'text-gray-400 cursor-not-allowed hover:bg-transparent' : 'text-gray-900'}
-            `}
+            class={`flex cursor-pointer items-center justify-between px-3 py-2 whitespace-nowrap hover:bg-gray-100 data-highlighted:bg-blue-50 ${isValueDisabled(item.value) ? 'cursor-not-allowed text-gray-400 hover:bg-transparent' : 'text-gray-900'} `}
             data-disabled={isValueDisabled(item.value) || undefined}
           >
             <span {...api().getItemTextProps({ item })}>{item.label}</span>
             <Show when={api().value.includes(item.value)}>
-              <BiRegularCheck class='w-5 h-5 text-blue-600' />
+              <BiRegularCheck class='h-5 w-5 text-blue-600' />
             </Show>
           </li>
         )}
@@ -104,7 +100,7 @@ export default function Select(props) {
   return (
     <div {...api().getRootProps()} class='relative'>
       <Show when={props.label}>
-        <label {...api().getLabelProps()} class='block text-sm font-medium text-gray-700 mb-1'>
+        <label {...api().getLabelProps()} class='mb-1 block text-sm font-medium text-gray-700'>
           {props.label}
         </label>
       </Show>
@@ -113,20 +109,13 @@ export default function Select(props) {
         <button
           type='button'
           {...api().getTriggerProps()}
-          class={`
-            w-full flex items-center justify-between px-3 py-2 
-            border rounded-md shadow-sm text-left
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-            transition-colors
-            ${disabled() ? 'bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200' : 'bg-white border-gray-300 hover:border-gray-400'}
-            ${props.invalid ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
-          `}
+          class={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none ${disabled() ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-500' : 'border-gray-300 bg-white hover:border-gray-400'} ${props.invalid ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} `}
         >
           <span class={selectedLabel() ? 'text-gray-900' : 'text-gray-500'}>
             {selectedLabel() || placeholder()}
           </span>
           <BiRegularChevronDown
-            class={`w-5 h-5 text-gray-400 transition-transform ${api().open ? 'rotate-180' : ''}`}
+            class={`h-5 w-5 text-gray-400 transition-transform ${api().open ? 'rotate-180' : ''}`}
           />
         </button>
       </div>

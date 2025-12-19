@@ -27,7 +27,7 @@ export default function MainLayout(props) {
 
   return (
     <div
-      class={`h-screen flex flex-col bg-blue-50 overflow-hidden ${isImpersonating() ? 'pt-10' : ''}`}
+      class={`flex h-screen flex-col overflow-hidden bg-blue-50 ${isImpersonating() ? 'pt-10' : ''}`}
     >
       <ImpersonationBanner />
       <Navbar open={sidebarOpen()} toggleSidebar={toggleSidebar} />

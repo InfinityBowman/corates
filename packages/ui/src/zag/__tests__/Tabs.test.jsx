@@ -36,8 +36,8 @@ describe('Tabs', () => {
 
     it('should render with icons', () => {
       const tabsWithIcons = [
-        { value: 'tab1', label: 'Tab 1', icon: <span data-testid="icon1">📁</span> },
-        { value: 'tab2', label: 'Tab 2', icon: <span data-testid="icon2">📄</span> },
+        { value: 'tab1', label: 'Tab 1', icon: <span data-testid='icon1'>📁</span> },
+        { value: 'tab2', label: 'Tab 2', icon: <span data-testid='icon2'>📄</span> },
       ];
 
       render(() => <Tabs tabs={tabsWithIcons} />);
@@ -59,9 +59,7 @@ describe('Tabs', () => {
     });
 
     it('should render dynamic count via getCount', () => {
-      const tabsWithGetCount = [
-        { value: 'tab1', label: 'Tab 1', getCount: () => 42 },
-      ];
+      const tabsWithGetCount = [{ value: 'tab1', label: 'Tab 1', getCount: () => 42 }];
 
       render(() => <Tabs tabs={tabsWithGetCount} />);
 
@@ -78,7 +76,7 @@ describe('Tabs', () => {
     });
 
     it('should select specified defaultValue', () => {
-      render(() => <Tabs tabs={defaultTabs} defaultValue="tab2" />);
+      render(() => <Tabs tabs={defaultTabs} defaultValue='tab2' />);
 
       const tab2Button = screen.getByText('Tab 2').closest('button');
       expect(tab2Button).toHaveAttribute('data-selected');
@@ -87,7 +85,7 @@ describe('Tabs', () => {
 
   describe('Controlled behavior', () => {
     it('should reflect controlled value', () => {
-      render(() => <Tabs tabs={defaultTabs} value="tab3" />);
+      render(() => <Tabs tabs={defaultTabs} value='tab3' />);
 
       const tab3Button = screen.getByText('Tab 3').closest('button');
       expect(tab3Button).toHaveAttribute('data-selected');
@@ -109,7 +107,7 @@ describe('Tabs', () => {
         return (
           <div>
             <Tabs tabs={defaultTabs} value={value()} onValueChange={setValue} />
-            <button data-testid="change" onClick={() => setValue('tab3')}>
+            <button data-testid='change' onClick={() => setValue('tab3')}>
               Change to Tab 3
             </button>
           </div>
@@ -134,7 +132,7 @@ describe('Tabs', () => {
     it('should render content for active tab', () => {
       render(() => (
         <Tabs tabs={defaultTabs}>
-          {(value) => <div data-testid={`content-${value}`}>Content for {value}</div>}
+          {value => <div data-testid={`content-${value}`}>Content for {value}</div>}
         </Tabs>
       ));
 
@@ -146,7 +144,7 @@ describe('Tabs', () => {
     it('should switch content when tab changes', async () => {
       render(() => (
         <Tabs tabs={defaultTabs}>
-          {(value) => <div data-testid={`content-${value}`}>Content for {value}</div>}
+          {value => <div data-testid={`content-${value}`}>Content for {value}</div>}
         </Tabs>
       ));
 
@@ -184,7 +182,7 @@ describe('Tabs', () => {
     });
 
     it('should have aria-selected on active tab', () => {
-      render(() => <Tabs tabs={defaultTabs} value="tab2" />);
+      render(() => <Tabs tabs={defaultTabs} value='tab2' />);
 
       const tab2Button = screen.getByText('Tab 2').closest('button');
       expect(tab2Button).toHaveAttribute('aria-selected', 'true');
@@ -193,14 +191,14 @@ describe('Tabs', () => {
 
   describe('Styling', () => {
     it('should apply selected styling to active tab', () => {
-      render(() => <Tabs tabs={defaultTabs} value="tab1" />);
+      render(() => <Tabs tabs={defaultTabs} value='tab1' />);
 
       const tab1Button = screen.getByText('Tab 1').closest('button');
       expect(tab1Button).toHaveAttribute('data-selected');
     });
 
     it('should not apply selected styling to inactive tabs', () => {
-      render(() => <Tabs tabs={defaultTabs} value="tab1" />);
+      render(() => <Tabs tabs={defaultTabs} value='tab1' />);
 
       const tab2Button = screen.getByText('Tab 2').closest('button');
       expect(tab2Button).not.toHaveAttribute('data-selected');

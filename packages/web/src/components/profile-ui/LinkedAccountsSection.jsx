@@ -203,28 +203,28 @@ export default function LinkedAccountsSection() {
   });
 
   return (
-    <div class='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6'>
+    <div class='mb-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
       {/* Header */}
-      <div class='px-6 py-4 border-b border-gray-200 bg-gray-50'>
+      <div class='border-b border-gray-200 bg-gray-50 px-6 py-4'>
         <div class='flex items-center space-x-2'>
-          <FiLink class='w-5 h-5 text-gray-600' />
+          <FiLink class='h-5 w-5 text-gray-600' />
           <h2 class='text-lg font-medium text-gray-900'>Linked Accounts</h2>
         </div>
-        <p class='text-sm text-gray-500 mt-1'>Manage how you sign in to CoRATES</p>
+        <p class='mt-1 text-sm text-gray-500'>Manage how you sign in to CoRATES</p>
       </div>
 
-      <div class='p-6 space-y-4'>
+      <div class='space-y-4 p-6'>
         {/* Error state */}
         <Show when={accounts.error}>
-          <div class='p-4 rounded-lg bg-red-50 border border-red-200'>
+          <div class='rounded-lg border border-red-200 bg-red-50 p-4'>
             <div class='flex items-start gap-3'>
-              <FiAlertCircle class='w-5 h-5 text-red-500 mt-0.5' />
+              <FiAlertCircle class='mt-0.5 h-5 w-5 text-red-500' />
               <div>
                 <p class='font-medium text-red-800'>Failed to load linked accounts</p>
-                <p class='text-sm text-red-600 mt-1'>{accounts.error.message}</p>
+                <p class='mt-1 text-sm text-red-600'>{accounts.error.message}</p>
                 <button
                   onClick={() => refetch()}
-                  class='text-sm text-red-700 hover:text-red-800 mt-2 font-medium underline'
+                  class='mt-2 text-sm font-medium text-red-700 underline hover:text-red-800'
                 >
                   Try again
                 </button>
@@ -252,8 +252,8 @@ export default function LinkedAccountsSection() {
 
         {/* Available providers to link */}
         <Show when={availableProviders().length > 0}>
-          <div class={accounts()?.length > 0 ? 'border-t border-gray-200 pt-4 mt-4' : ''}>
-            <p class='text-sm font-medium text-gray-700 mb-3'>
+          <div class={accounts()?.length > 0 ? 'mt-4 border-t border-gray-200 pt-4' : ''}>
+            <p class='mb-3 text-sm font-medium text-gray-700'>
               {accounts()?.length > 0 ? 'Link another account:' : 'Link an account:'}
             </p>
             <div class='flex flex-wrap gap-2'>
@@ -262,11 +262,11 @@ export default function LinkedAccountsSection() {
                   <button
                     onClick={() => handleLinkProvider(provider.id)}
                     disabled={linkingProvider() === provider.id}
-                    class='inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                    class='inline-flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50'
                     aria-label={`Link ${provider.name} account`}
                   >
-                    <Show when={provider.icon} fallback={<FiMail class='w-4 h-4' />}>
-                      <img src={provider.icon} alt='' class='w-4 h-4' />
+                    <Show when={provider.icon} fallback={<FiMail class='h-4 w-4' />}>
+                      <img src={provider.icon} alt='' class='h-4 w-4' />
                     </Show>
                     {linkingProvider() === provider.id ? 'Linking...' : `+ ${provider.name}`}
                   </button>
@@ -277,9 +277,9 @@ export default function LinkedAccountsSection() {
         </Show>
 
         {/* Info box */}
-        <div class='bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4'>
+        <div class='mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4'>
           <div class='flex items-start gap-3'>
-            <FiInfo class='w-5 h-5 text-blue-600 mt-0.5 shrink-0' />
+            <FiInfo class='mt-0.5 h-5 w-5 shrink-0 text-blue-600' />
             <p class='text-sm text-blue-800'>
               <strong>Why link accounts?</strong> Linking multiple sign-in methods gives you backup
               options if you lose access to one. Your projects and data are shared across all linked
@@ -314,7 +314,7 @@ export default function LinkedAccountsSection() {
 
           {/* Error message */}
           <Show when={unlinkError()}>
-            <div class='p-3 rounded-md bg-red-50 border border-red-200'>
+            <div class='rounded-md border border-red-200 bg-red-50 p-3'>
               <p class='text-sm text-red-700'>{unlinkError()}</p>
             </div>
           </Show>
@@ -322,14 +322,14 @@ export default function LinkedAccountsSection() {
           <div class='flex justify-end gap-3 pt-2'>
             <button
               onClick={() => setShowUnlinkConfirm(false)}
-              class='px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors'
+              class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
             >
               Cancel
             </button>
             <button
               onClick={confirmUnlink}
               disabled={unlinkingId() !== null}
-              class='px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50'
+              class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50'
             >
               {unlinkingId() ? 'Unlinking...' : 'Unlink'}
             </button>

@@ -8,27 +8,27 @@ import { isMultiPartQuestion, getDataKeysForQuestion } from '@/AMSTAR2/checklist
  */
 export default function SummaryView(props) {
   return (
-    <div class='bg-white rounded-lg shadow-lg overflow-hidden'>
+    <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
       {/* Summary Header */}
-      <div class='p-6 bg-gray-50 border-b border-gray-200'>
-        <h2 class='text-xl font-bold text-gray-900 mb-4'>Review Summary</h2>
+      <div class='border-b border-gray-200 bg-gray-50 p-6'>
+        <h2 class='mb-4 text-xl font-bold text-gray-900'>Review Summary</h2>
 
         {/* Stats */}
         <Show when={props.summary}>
-          <div class='grid grid-cols-4 gap-4 mb-6'>
-            <div class='p-3 bg-white rounded-lg border border-gray-200 text-center'>
+          <div class='mb-6 grid grid-cols-4 gap-4'>
+            <div class='rounded-lg border border-gray-200 bg-white p-3 text-center'>
               <div class='text-2xl font-bold text-gray-700'>{props.summary.totalQuestions}</div>
               <div class='text-xs text-gray-500'>Total Questions</div>
             </div>
-            <div class='p-3 bg-green-50 rounded-lg border border-green-200 text-center'>
+            <div class='rounded-lg border border-green-200 bg-green-50 p-3 text-center'>
               <div class='text-2xl font-bold text-green-700'>{props.summary.agreementCount}</div>
               <div class='text-xs text-green-600'>Agreements</div>
             </div>
-            <div class='p-3 bg-amber-50 rounded-lg border border-amber-200 text-center'>
+            <div class='rounded-lg border border-amber-200 bg-amber-50 p-3 text-center'>
               <div class='text-2xl font-bold text-amber-700'>{props.summary.disagreementCount}</div>
               <div class='text-xs text-amber-600'>Disagreements</div>
             </div>
-            <div class='p-3 bg-purple-50 rounded-lg border border-purple-200 text-center'>
+            <div class='rounded-lg border border-purple-200 bg-purple-50 p-3 text-center'>
               <div class='text-2xl font-bold text-purple-700'>
                 {props.summary.agreementPercentage}%
               </div>
@@ -39,14 +39,14 @@ export default function SummaryView(props) {
 
         {/* Checklist Name */}
         <div>
-          <label class='block text-sm font-medium text-gray-700 mb-2'>
+          <label class='mb-2 block text-sm font-medium text-gray-700'>
             Reconciled Checklist Name
           </label>
           <input
             type='text'
             value={props.reconciledName}
             onInput={e => props.onReconciledNameChange(e.target.value)}
-            class='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+            class='w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none'
             placeholder='Enter name for the reconciled checklist'
           />
         </div>
@@ -96,15 +96,12 @@ export default function SummaryView(props) {
 
             return (
               <div
-                class='p-4 hover:bg-gray-50 cursor-pointer flex items-center justify-between'
+                class='flex cursor-pointer items-center justify-between p-4 hover:bg-gray-50'
                 onClick={() => props.onGoToQuestion(index())}
               >
                 <div class='flex items-center gap-3'>
                   <span
-                    class={`
-                    w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                    ${isAgreement() ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}
-                  `}
+                    class={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${isAgreement() ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'} `}
                   >
                     {index() + 1}
                   </span>
@@ -117,24 +114,21 @@ export default function SummaryView(props) {
                 </div>
                 <div class='flex items-center gap-3'>
                   <span
-                    class={`
-                    px-3 py-1 rounded-full text-sm font-medium
-                    ${
+                    class={`rounded-full px-3 py-1 text-sm font-medium ${
                       getFinalAnswer() === 'Yes' ? 'bg-green-100 text-green-700'
                       : getFinalAnswer() === 'Partial Yes' ? 'bg-yellow-100 text-yellow-700'
                       : getFinalAnswer() === 'No' ? 'bg-red-100 text-red-700'
                       : 'bg-gray-100 text-gray-600'
-                    }
-                  `}
+                    } `}
                   >
                     {getFinalAnswer()}
                   </span>
                   <Show when={isCritical()}>
-                    <span class='px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700'>
+                    <span class='rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700'>
                       Critical
                     </span>
                   </Show>
-                  <AiOutlineArrowRight class='w-4 h-4 text-gray-400' />
+                  <AiOutlineArrowRight class='h-4 w-4 text-gray-400' />
                 </div>
               </div>
             );

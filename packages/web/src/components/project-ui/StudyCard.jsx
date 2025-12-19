@@ -62,9 +62,9 @@ export default function StudyCard(props) {
   });
 
   return (
-    <div class='bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden'>
+    <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md'>
       {/* Study Header */}
-      <div class='p-4 border-b border-gray-200 bg-gray-50'>
+      <div class='border-b border-gray-200 bg-gray-50 p-4'>
         <div class='flex items-center justify-between'>
           <div class='flex-1'>
             <div class='flex items-center gap-2'>
@@ -72,12 +72,12 @@ export default function StudyCard(props) {
             </div>
             {/* Author/Year citation line */}
             <Show when={props.study.firstAuthor || props.study.publicationYear}>
-              <p class='text-sm text-gray-600 mt-0.5'>
+              <p class='mt-0.5 text-sm text-gray-600'>
                 <span class='font-medium'>{props.study.firstAuthor || 'Unknown'}</span>
                 {props.study.publicationYear && ` (${props.study.publicationYear})`}
                 <Show when={props.study.journal}>
                   <span class='mx-1'>-</span>
-                  <span class='italic text-gray-500'>{props.study.journal}</span>
+                  <span class='text-gray-500 italic'>{props.study.journal}</span>
                 </Show>
               </p>
             </Show>
@@ -86,7 +86,7 @@ export default function StudyCard(props) {
             <Show when={!props.hideAddChecklist}>
               <button
                 onClick={() => props.onToggleChecklistForm()}
-                class='inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors gap-1'
+                class='inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
               >
                 Select Checklist
               </button>
@@ -102,15 +102,15 @@ export default function StudyCard(props) {
             open={pdfSectionOpen()}
             onOpenChange={setPdfSectionOpen}
             trigger={() => (
-              <div class='flex items-center gap-2 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors'>
+              <div class='flex cursor-pointer items-center gap-2 px-4 py-3 transition-colors hover:bg-gray-50'>
                 <BiRegularChevronRight
-                  class={`w-4 h-4 text-gray-400 transition-transform duration-200 ${pdfSectionOpen() ? 'rotate-90' : ''}`}
+                  class={`h-4 w-4 text-gray-400 transition-transform duration-200 ${pdfSectionOpen() ? 'rotate-90' : ''}`}
                 />
                 <span class='text-sm font-medium text-gray-700'>PDFs ({pdfCount()})</span>
               </div>
             )}
           >
-            <div class='px-4 pb-4 space-y-2'>
+            <div class='space-y-2 px-4 pb-4'>
               <For each={sortedPdfs()}>
                 {pdf => (
                   <PdfListItem
@@ -141,7 +141,7 @@ export default function StudyCard(props) {
       <Show
         when={props.study.checklists?.length > 0}
         fallback={
-          <div class='p-4 text-center text-gray-400 text-sm'>No checklists in this study yet</div>
+          <div class='p-4 text-center text-sm text-gray-400'>No checklists in this study yet</div>
         }
       >
         <div class='divide-y divide-gray-200'>

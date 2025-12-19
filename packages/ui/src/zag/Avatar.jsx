@@ -37,7 +37,7 @@ export function Avatar(props) {
         src={src()}
         referrerPolicy='no-referrer'
         {...api().getImageProps()}
-        class='w-full h-full object-cover'
+        class='h-full w-full object-cover'
       />
     </div>
   );

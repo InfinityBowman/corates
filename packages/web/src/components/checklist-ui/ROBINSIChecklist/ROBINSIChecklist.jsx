@@ -72,8 +72,8 @@ export function ROBINSIChecklist(props) {
 
   return (
     <div class='bg-blue-50'>
-      <div class='container mx-auto px-4 py-6 max-w-5xl space-y-4'>
-        <div class='font-semibold text-lg text-gray-900 text-left sm:text-center mb-6'>
+      <div class='container mx-auto max-w-5xl space-y-4 px-4 py-6'>
+        <div class='mb-6 text-left text-lg font-semibold text-gray-900 sm:text-center'>
           {props.checklistState.name || 'ROBINS-I Checklist'}
         </div>
         {/* Response Legend */}
@@ -89,8 +89,8 @@ export function ROBINSIChecklist(props) {
         />
 
         {/* Preliminary Considerations Header */}
-        <div class='bg-blue-100 border border-blue-200 rounded-lg px-6 py-4'>
-          <h2 class='font-semibold text-blue-900 text-lg'>
+        <div class='rounded-lg border border-blue-200 bg-blue-100 px-6 py-4'>
+          <h2 class='text-lg font-semibold text-blue-900'>
             For Each Study Result: Preliminary Considerations (Parts A to D)
           </h2>
         </div>
@@ -151,9 +151,9 @@ export function ROBINSIChecklist(props) {
 
         {/* Critical risk message when stopped */}
         <Show when={stopAssessment()}>
-          <div class='bg-red-50 border-2 border-red-200 rounded-lg p-6 text-center'>
-            <div class='text-red-800 font-semibold text-lg mb-2'>Critical Risk of Bias</div>
-            <p class='text-red-600 text-sm'>
+          <div class='rounded-lg border-2 border-red-200 bg-red-50 p-6 text-center'>
+            <div class='mb-2 text-lg font-semibold text-red-800'>Critical Risk of Bias</div>
+            <p class='text-sm text-red-600'>
               Based on Section B responses, this result has been classified as Critical risk of
               bias. Domain assessment is not required.
             </p>

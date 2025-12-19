@@ -56,7 +56,7 @@ function QuestionPill(props) {
     <Tooltip content={tooltip()} placement='bottom' openDelay={200}>
       <button
         onClick={() => props.store.goToQuestion?.(props.questionIndex)}
-        class={`w-8 h-8 rounded-full text-xs font-medium transition-all ${pillStyle()}`}
+        class={`h-8 w-8 rounded-full text-xs font-medium transition-all ${pillStyle()}`}
         aria-label={tooltip()}
         aria-current={isCurrentPage() ? 'page' : undefined}
       >
@@ -82,7 +82,7 @@ function SummaryButton(props) {
     <Tooltip content='View summary of all questions' placement='bottom' openDelay={200}>
       <button
         onClick={() => props.store.setViewMode?.('summary')}
-        class={`px-3 h-8 rounded-full text-xs font-medium transition-all ${buttonStyle()}`}
+        class={`h-8 rounded-full px-3 text-xs font-medium transition-all ${buttonStyle()}`}
         aria-label='View summary'
         aria-current={isActive() ? 'page' : undefined}
       >
@@ -100,7 +100,7 @@ function ResetButton(props) {
     <Tooltip content='Reset all answers to unresolved' placement='bottom' openDelay={200}>
       <button
         onClick={() => props.onClick?.()}
-        class='px-3 h-8 rounded-full text-xs font-medium transition-all bg-red-100 text-red-700 hover:bg-red-200 flex items-center gap-1'
+        class='flex h-8 items-center gap-1 rounded-full bg-red-100 px-3 text-xs font-medium text-red-700 transition-all hover:bg-red-200'
         aria-label='Reset reconciliation'
       >
         <FaSolidArrowRotateLeft size={12} />

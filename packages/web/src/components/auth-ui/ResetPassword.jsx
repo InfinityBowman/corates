@@ -13,8 +13,8 @@ export default function ResetPassword() {
   const token = () => searchParams.token;
 
   return (
-    <div class='h-full bg-blue-50 flex items-center justify-center px-4 py-8 sm:py-12'>
-      <div class='w-full max-w-md sm:max-w-xl bg-white rounded-xl sm:rounded-3xl shadow-2xl p-6 sm:p-12 space-y-4 border border-gray-100'>
+    <div class='flex h-full items-center justify-center bg-blue-50 px-4 py-8 sm:py-12'>
+      <div class='w-full max-w-md space-y-4 rounded-xl border border-gray-100 bg-white p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
         <Show when={token()} fallback={<RequestResetForm />}>
           <SetNewPasswordForm token={token()} />
         </Show>
@@ -87,17 +87,17 @@ function RequestResetForm() {
 
   return (
     <>
-      <div class='mb-2 sm:mb-4 text-center'>
-        <h2 class='text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2'>Reset Password</h2>
-        <p class='text-gray-500 text-xs sm:text-sm'>
+      <div class='mb-2 text-center sm:mb-4'>
+        <h2 class='mb-1 text-xl font-bold text-gray-900 sm:mb-2 sm:text-2xl'>Reset Password</h2>
+        <p class='text-xs text-gray-500 sm:text-sm'>
           Enter your email address and we'll send you a link to reset your password.
         </p>
       </div>
 
       <AnimatedShow when={success()}>
-        <div class='p-4 bg-green-50 border border-green-200 rounded-lg text-center'>
-          <p class='text-green-700 text-sm font-medium mb-1'>Reset Email Sent!</p>
-          <p class='text-green-600 text-xs'>
+        <div class='rounded-lg border border-green-200 bg-green-50 p-4 text-center'>
+          <p class='mb-1 text-sm font-medium text-green-700'>Reset Email Sent!</p>
+          <p class='text-xs text-green-600'>
             Check your email for instructions to reset your password. Redirecting you to sign in...
           </p>
         </div>
@@ -107,7 +107,7 @@ function RequestResetForm() {
         <form onSubmit={handleSubmit} class='space-y-4'>
           <div>
             <label
-              class='block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2'
+              class='mb-1 block text-xs font-semibold text-gray-700 sm:mb-2 sm:text-sm'
               for='email-input'
             >
               Email Address
@@ -119,7 +119,7 @@ function RequestResetForm() {
               spellCheck='false'
               value={email()}
               onInput={e => setEmail(e.target.value)}
-              class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
+              class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:ring-2 focus:ring-blue-400 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
               required
               id='email-input'
               placeholder='you@example.com'
@@ -133,7 +133,7 @@ function RequestResetForm() {
             Send Reset Email
           </PrimaryButton>
 
-          <div class='text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-4'>
+          <div class='mt-2 text-center text-xs text-gray-500 sm:mt-4 sm:text-sm'>
             Remember your password? <AuthLink href='/signin'>Sign In</AuthLink>
           </div>
         </form>
@@ -211,15 +211,15 @@ function SetNewPasswordForm(props) {
 
   return (
     <>
-      <div class='mb-2 sm:mb-4 text-center'>
-        <h2 class='text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2'>Set New Password</h2>
-        <p class='text-gray-500 text-xs sm:text-sm'>Enter your new password below.</p>
+      <div class='mb-2 text-center sm:mb-4'>
+        <h2 class='mb-1 text-xl font-bold text-gray-900 sm:mb-2 sm:text-2xl'>Set New Password</h2>
+        <p class='text-xs text-gray-500 sm:text-sm'>Enter your new password below.</p>
       </div>
 
       <AnimatedShow when={success()}>
-        <div class='p-4 bg-green-50 border border-green-200 rounded-lg text-center'>
-          <p class='text-green-700 text-sm font-medium mb-1'>Password Reset Successfully!</p>
-          <p class='text-green-600 text-xs'>
+        <div class='rounded-lg border border-green-200 bg-green-50 p-4 text-center'>
+          <p class='mb-1 text-sm font-medium text-green-700'>Password Reset Successfully!</p>
+          <p class='text-xs text-green-600'>
             Your password has been updated. Redirecting you to sign in...
           </p>
         </div>
@@ -229,7 +229,7 @@ function SetNewPasswordForm(props) {
         <form onSubmit={handleSubmit} class='space-y-4'>
           <div>
             <label
-              class='block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2'
+              class='mb-1 block text-xs font-semibold text-gray-700 sm:mb-2 sm:text-sm'
               for='password-input'
             >
               New Password
@@ -239,7 +239,7 @@ function SetNewPasswordForm(props) {
               autoComplete='new-password'
               value={password()}
               onInput={e => setPassword(e.target.value)}
-              class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
+              class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:ring-2 focus:ring-blue-400 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
               required
               id='password-input'
               placeholder='Enter new password'
@@ -250,7 +250,7 @@ function SetNewPasswordForm(props) {
 
           <div>
             <label
-              class='block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2'
+              class='mb-1 block text-xs font-semibold text-gray-700 sm:mb-2 sm:text-sm'
               for='confirm-password-input'
             >
               Confirm Password
@@ -260,7 +260,7 @@ function SetNewPasswordForm(props) {
               autoComplete='new-password'
               value={confirmPassword()}
               onInput={e => setConfirmPassword(e.target.value)}
-              class='w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
+              class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:ring-2 focus:ring-blue-400 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
               required
               id='confirm-password-input'
               placeholder='Confirm new password'
@@ -274,7 +274,7 @@ function SetNewPasswordForm(props) {
             Set Password
           </PrimaryButton>
 
-          <div class='text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-4'>
+          <div class='mt-2 text-center text-xs text-gray-500 sm:mt-4 sm:text-sm'>
             <AuthLink href='/reset-password'>Request a new reset link</AuthLink>
           </div>
         </form>

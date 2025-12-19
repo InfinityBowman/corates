@@ -19,13 +19,13 @@ export function GoogleButton(props) {
           type='button'
           onClick={() => props.onClick?.()}
           disabled={props.loading}
-          class={`${baseClass} w-full py-2.5 sm:py-3 text-sm sm:text-base gap-3`}
+          class={`${baseClass} w-full gap-3 py-2.5 text-sm sm:py-3 sm:text-base`}
         >
           <Show
             when={props.loading}
-            fallback={<img src='/logos/google.svg' alt='Google' class='w-5 h-5' />}
+            fallback={<img src='/logos/google.svg' alt='Google' class='h-5 w-5' />}
           >
-            <div class='w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin' />
+            <div class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600' />
           </Show>
           Continue with Google
         </button>
@@ -40,9 +40,9 @@ export function GoogleButton(props) {
       >
         <Show
           when={props.loading}
-          fallback={<img src='/logos/google.svg' alt='Google' class='w-5 h-5 sm:w-6 sm:h-6' />}
+          fallback={<img src='/logos/google.svg' alt='Google' class='h-5 w-5 sm:h-6 sm:w-6' />}
         >
-          <div class='w-5 h-5 sm:w-6 sm:h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin' />
+          <div class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 sm:h-6 sm:w-6' />
         </Show>
       </button>
     </Show>
@@ -68,13 +68,13 @@ export function OrcidButton(props) {
           type='button'
           onClick={() => props.onClick?.()}
           disabled={props.loading}
-          class={`${baseClass} w-full py-2.5 sm:py-3 text-sm sm:text-base gap-3`}
+          class={`${baseClass} w-full gap-3 py-2.5 text-sm sm:py-3 sm:text-base`}
         >
           <Show
             when={props.loading}
-            fallback={<img src='/logos/orcid.svg' alt='ORCID' class='w-5 h-5' />}
+            fallback={<img src='/logos/orcid.svg' alt='ORCID' class='h-5 w-5' />}
           >
-            <div class='w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin' />
+            <div class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600' />
           </Show>
           Continue with ORCID
         </button>
@@ -89,9 +89,9 @@ export function OrcidButton(props) {
       >
         <Show
           when={props.loading}
-          fallback={<img src='/logos/orcid.svg' alt='ORCID' class='w-5 h-5 sm:w-6 sm:h-6' />}
+          fallback={<img src='/logos/orcid.svg' alt='ORCID' class='h-5 w-5 sm:h-6 sm:w-6' />}
         >
-          <div class='w-5 h-5 sm:w-6 sm:h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin' />
+          <div class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 sm:h-6 sm:w-6' />
         </Show>
       </button>
     </Show>
@@ -109,7 +109,7 @@ export function SocialAuthContainer(props) {
   // Use compact horizontal layout when there are multiple providers
   const isCompact = () => (props.buttonCount || 1) > 1;
 
-  return <div class={isCompact() ? 'flex gap-3 justify-center' : 'w-full'}>{props.children}</div>;
+  return <div class={isCompact() ? 'flex justify-center gap-3' : 'w-full'}>{props.children}</div>;
 }
 
 /**
@@ -122,7 +122,7 @@ export function AuthDivider() {
         <div class='w-full border-t border-gray-200' />
       </div>
       <div class='relative flex justify-center text-xs sm:text-sm'>
-        <span class='px-3 bg-white text-gray-500'>or</span>
+        <span class='bg-white px-3 text-gray-500'>or</span>
       </div>
     </div>
   );

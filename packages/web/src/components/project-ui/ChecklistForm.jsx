@@ -16,14 +16,14 @@ export default function ChecklistForm(props) {
   };
 
   return (
-    <div class='bg-blue-50 border border-blue-200 rounded-lg p-4 m-4'>
+    <div class='m-4 rounded-lg border border-blue-200 bg-blue-50 p-4'>
       <div class='space-y-3'>
         <div>
-          <label class='block text-sm font-semibold text-gray-700 mb-1'>Checklist Type</label>
+          <label class='mb-1 block text-sm font-semibold text-gray-700'>Checklist Type</label>
           <select
             value={type()}
             onChange={e => setType(e.target.value)}
-            class='w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
+            class='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
           >
             <For each={typeOptions}>
               {option => (
@@ -35,17 +35,17 @@ export default function ChecklistForm(props) {
           </select>
         </div>
       </div>
-      <div class='flex gap-2 mt-4'>
+      <div class='mt-4 flex gap-2'>
         <button
           onClick={handleSubmit}
           disabled={props.loading}
-          class='px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors'
+          class='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400'
         >
           {props.loading ? 'Adding...' : 'Add Checklist'}
         </button>
         <button
           onClick={() => props.onCancel()}
-          class='px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:border-blue-300 hover:text-blue-600 transition-colors'
+          class='rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-blue-300 hover:text-blue-600'
         >
           Cancel
         </button>

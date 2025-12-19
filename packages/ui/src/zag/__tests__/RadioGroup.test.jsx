@@ -19,13 +19,13 @@ describe('RadioGroup', () => {
 
   describe('Rendering', () => {
     it('should render group label', () => {
-      render(() => <RadioGroup items={defaultItems} label="Choose an option" />);
+      render(() => <RadioGroup items={defaultItems} label='Choose an option' />);
 
       expect(screen.getByText('Choose an option')).toBeInTheDocument();
     });
 
     it('should render all radio items', () => {
-      render(() => <RadioGroup items={defaultItems} label="Options" />);
+      render(() => <RadioGroup items={defaultItems} label='Options' />);
 
       expect(screen.getByText('Option 1')).toBeInTheDocument();
       expect(screen.getByText('Option 2')).toBeInTheDocument();
@@ -38,7 +38,7 @@ describe('RadioGroup', () => {
         { value: 'opt2', label: 'Option 2', description: 'Second option description' },
       ];
 
-      render(() => <RadioGroup items={itemsWithDesc} label="Options" />);
+      render(() => <RadioGroup items={itemsWithDesc} label='Options' />);
 
       expect(screen.getByText('First option description')).toBeInTheDocument();
       expect(screen.getByText('Second option description')).toBeInTheDocument();
@@ -46,7 +46,7 @@ describe('RadioGroup', () => {
 
     it('should apply custom class', () => {
       const { container } = render(() => (
-        <RadioGroup items={defaultItems} label="Options" class="custom-class" />
+        <RadioGroup items={defaultItems} label='Options' class='custom-class' />
       ));
 
       const root = container.querySelector('[data-part="root"]');
@@ -57,7 +57,7 @@ describe('RadioGroup', () => {
   describe('Uncontrolled behavior', () => {
     it('should select defaultValue initially', () => {
       const { container } = render(() => (
-        <RadioGroup items={defaultItems} label="Options" defaultValue="option2" />
+        <RadioGroup items={defaultItems} label='Options' defaultValue='option2' />
       ));
 
       const inputs = container.querySelectorAll('input[type="radio"]');
@@ -67,7 +67,7 @@ describe('RadioGroup', () => {
 
     it('should update selection on click', async () => {
       const { container } = render(() => (
-        <RadioGroup items={defaultItems} label="Options" defaultValue="option1" />
+        <RadioGroup items={defaultItems} label='Options' defaultValue='option1' />
       ));
 
       const option2Label = screen.getByText('Option 2').closest('label');
@@ -82,7 +82,7 @@ describe('RadioGroup', () => {
   describe('Controlled behavior', () => {
     it('should reflect controlled value', () => {
       const { container } = render(() => (
-        <RadioGroup items={defaultItems} label="Options" value="option3" />
+        <RadioGroup items={defaultItems} label='Options' value='option3' />
       ));
 
       const inputs = container.querySelectorAll('input[type="radio"]');
@@ -95,8 +95,8 @@ describe('RadioGroup', () => {
       render(() => (
         <RadioGroup
           items={defaultItems}
-          label="Options"
-          value="option1"
+          label='Options'
+          value='option1'
           onValueChange={onValueChange}
         />
       ));
@@ -112,8 +112,8 @@ describe('RadioGroup', () => {
       const { container } = render(() => (
         <RadioGroup
           items={defaultItems}
-          label="Options"
-          value="option1"
+          label='Options'
+          value='option1'
           onValueChange={onValueChange}
         />
       ));
@@ -127,7 +127,7 @@ describe('RadioGroup', () => {
   describe('Disabled state', () => {
     it('should disable all items when group is disabled', () => {
       const { container } = render(() => (
-        <RadioGroup items={defaultItems} label="Options" disabled />
+        <RadioGroup items={defaultItems} label='Options' disabled />
       ));
 
       const inputs = container.querySelectorAll('input[type="radio"]');
@@ -143,9 +143,7 @@ describe('RadioGroup', () => {
         { value: 'opt3', label: 'Option 3' },
       ];
 
-      const { container } = render(() => (
-        <RadioGroup items={itemsWithDisabled} label="Options" />
-      ));
+      const { container } = render(() => <RadioGroup items={itemsWithDisabled} label='Options' />);
 
       const inputs = container.querySelectorAll('input[type="radio"]');
       const opt2Input = Array.from(inputs).find(input => input.value === 'opt2');
@@ -158,7 +156,7 @@ describe('RadioGroup', () => {
         { value: 'opt2', label: 'Option 2', disabled: true },
       ];
 
-      render(() => <RadioGroup items={itemsWithDisabled} label="Options" />);
+      render(() => <RadioGroup items={itemsWithDisabled} label='Options' />);
 
       const opt2Label = screen.getByText('Option 2').closest('label');
       expect(opt2Label).toHaveClass('cursor-not-allowed');
@@ -167,9 +165,7 @@ describe('RadioGroup', () => {
 
   describe('Orientation', () => {
     it('should render vertically by default', () => {
-      const { container } = render(() => (
-        <RadioGroup items={defaultItems} label="Options" />
-      ));
+      const { container } = render(() => <RadioGroup items={defaultItems} label='Options' />);
 
       const itemsContainer = container.querySelector('.flex-col');
       expect(itemsContainer).toBeInTheDocument();
@@ -177,7 +173,7 @@ describe('RadioGroup', () => {
 
     it('should render horizontally when orientation is horizontal', () => {
       const { container } = render(() => (
-        <RadioGroup items={defaultItems} label="Options" orientation="horizontal" />
+        <RadioGroup items={defaultItems} label='Options' orientation='horizontal' />
       ));
 
       const itemsContainer = container.querySelector('.flex-row');
@@ -188,7 +184,7 @@ describe('RadioGroup', () => {
   describe('Form integration', () => {
     it('should have name attribute on inputs', () => {
       const { container } = render(() => (
-        <RadioGroup items={defaultItems} label="Options" name="myRadioGroup" />
+        <RadioGroup items={defaultItems} label='Options' name='myRadioGroup' />
       ));
 
       const inputs = container.querySelectorAll('input[type="radio"]');
@@ -200,14 +196,14 @@ describe('RadioGroup', () => {
 
   describe('Accessibility', () => {
     it('should have radiogroup role', () => {
-      render(() => <RadioGroup items={defaultItems} label="Options" />);
+      render(() => <RadioGroup items={defaultItems} label='Options' />);
 
       const radiogroup = screen.getByRole('radiogroup');
       expect(radiogroup).toBeInTheDocument();
     });
 
     it('should have radio roles for items', () => {
-      render(() => <RadioGroup items={defaultItems} label="Options" />);
+      render(() => <RadioGroup items={defaultItems} label='Options' />);
 
       const radios = screen.getAllByRole('radio');
       expect(radios.length).toBe(3);
@@ -215,7 +211,7 @@ describe('RadioGroup', () => {
 
     it('should have checked input for selected item', () => {
       const { container } = render(() => (
-        <RadioGroup items={defaultItems} label="Options" value="option2" />
+        <RadioGroup items={defaultItems} label='Options' value='option2' />
       ));
 
       const inputs = container.querySelectorAll('input[type="radio"]');
@@ -227,7 +223,7 @@ describe('RadioGroup', () => {
   describe('Visual states', () => {
     it('should show checked indicator on selected item', () => {
       const { container } = render(() => (
-        <RadioGroup items={defaultItems} label="Options" value="option1" />
+        <RadioGroup items={defaultItems} label='Options' value='option1' />
       ));
 
       const controls = container.querySelectorAll('[data-part="item-control"]');
@@ -237,7 +233,7 @@ describe('RadioGroup', () => {
 
     it('should show unchecked indicator on unselected items', () => {
       const { container } = render(() => (
-        <RadioGroup items={defaultItems} label="Options" value="option1" />
+        <RadioGroup items={defaultItems} label='Options' value='option1' />
       ));
 
       const controls = container.querySelectorAll('[data-part="item-control"]');

@@ -14,7 +14,7 @@ describe('Tooltip', () => {
   describe('Rendering', () => {
     it('should render trigger content', () => {
       render(() => (
-        <Tooltip content="Tooltip text">
+        <Tooltip content='Tooltip text'>
           <button>Hover me</button>
         </Tooltip>
       ));
@@ -24,7 +24,7 @@ describe('Tooltip', () => {
 
     it('should not show tooltip content initially', () => {
       render(() => (
-        <Tooltip content="Tooltip text">
+        <Tooltip content='Tooltip text'>
           <button>Hover me</button>
         </Tooltip>
       ));
@@ -36,7 +36,7 @@ describe('Tooltip', () => {
   describe('Placement', () => {
     it('should use default top placement', () => {
       const { container } = render(() => (
-        <Tooltip content="Tooltip text">
+        <Tooltip content='Tooltip text'>
           <button>Hover me</button>
         </Tooltip>
       ));
@@ -47,7 +47,7 @@ describe('Tooltip', () => {
 
     it('should accept custom placement prop', () => {
       render(() => (
-        <Tooltip content="Tooltip text" placement="bottom">
+        <Tooltip content='Tooltip text' placement='bottom'>
           <button>Hover me</button>
         </Tooltip>
       ));
@@ -59,7 +59,7 @@ describe('Tooltip', () => {
   describe('Trigger element', () => {
     it('should wrap trigger in span', () => {
       const { container } = render(() => (
-        <Tooltip content="Tooltip text">
+        <Tooltip content='Tooltip text'>
           <button>Hover me</button>
         </Tooltip>
       ));
@@ -70,7 +70,7 @@ describe('Tooltip', () => {
 
     it('should render any children as trigger', () => {
       render(() => (
-        <Tooltip content="Help text">
+        <Tooltip content='Help text'>
           <span>Info icon</span>
         </Tooltip>
       ));
@@ -80,7 +80,7 @@ describe('Tooltip', () => {
 
     it('should work with complex children', () => {
       render(() => (
-        <Tooltip content="Complex tooltip">
+        <Tooltip content='Complex tooltip'>
           <div>
             <span>First</span>
             <span>Second</span>
@@ -96,7 +96,7 @@ describe('Tooltip', () => {
   describe('Accessibility', () => {
     it('should have trigger with proper attributes', () => {
       const { container } = render(() => (
-        <Tooltip content="Tooltip text">
+        <Tooltip content='Tooltip text'>
           <button>Hover me</button>
         </Tooltip>
       ));
@@ -109,7 +109,7 @@ describe('Tooltip', () => {
   describe('Props', () => {
     it('should accept openDelay prop', () => {
       render(() => (
-        <Tooltip content="Tooltip text" openDelay={500}>
+        <Tooltip content='Tooltip text' openDelay={500}>
           <button>Hover me</button>
         </Tooltip>
       ));
@@ -119,7 +119,7 @@ describe('Tooltip', () => {
 
     it('should accept closeDelay prop', () => {
       render(() => (
-        <Tooltip content="Tooltip text" closeDelay={300}>
+        <Tooltip content='Tooltip text' closeDelay={300}>
           <button>Hover me</button>
         </Tooltip>
       ));
@@ -129,7 +129,7 @@ describe('Tooltip', () => {
 
     it('should accept interactive prop', () => {
       render(() => (
-        <Tooltip content="Tooltip text" interactive>
+        <Tooltip content='Tooltip text' interactive>
           <button>Hover me</button>
         </Tooltip>
       ));

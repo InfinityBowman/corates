@@ -1,9 +1,9 @@
 export default function WhoDevelopedCoRATES() {
   return (
-    <section class='max-w-5xl mx-auto px-6 py-20'>
-      <div class='text-center mb-12'>
-        <h2 class='text-2xl md:text-3xl font-bold text-gray-900 mb-4'>Who Developed CoRATES?</h2>
-        <p class='text-gray-600 leading-relaxed max-w-3xl mx-auto'>
+    <section class='mx-auto max-w-5xl px-6 py-20'>
+      <div class='mb-12 text-center'>
+        <h2 class='mb-4 text-2xl font-bold text-gray-900 md:text-3xl'>Who Developed CoRATES?</h2>
+        <p class='mx-auto max-w-3xl leading-relaxed text-gray-600'>
           CoRATES was developed through a collaboration between an evidence synthesis expert and a
           software engineer who recognized the need to modernize and streamline the workflow of
           study appraisal in research synthesis. Our continued development focuses on pairing
@@ -12,19 +12,19 @@ export default function WhoDevelopedCoRATES() {
         </p>
       </div>
 
-      <div class='grid md:grid-cols-2 gap-8'>
+      <div class='grid gap-8 md:grid-cols-2'>
         {/* Brandy */}
-        <div class='bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
-          <div class='flex flex-col items-center text-center mb-6'>
+        <div class='rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-shadow duration-200 hover:shadow-md'>
+          <div class='mb-6 flex flex-col items-center text-center'>
             <img
               src='/brandy.jpg'
               alt='Brandy Maynard'
-              class='w-28 h-28 rounded-full object-cover ring-4 ring-blue-50 mb-4'
+              class='mb-4 h-28 w-28 rounded-full object-cover ring-4 ring-blue-50'
             />
             <h3 class='text-xl font-semibold text-gray-900'>Brandy Maynard</h3>
-            <p class='text-sm text-blue-600 font-medium mt-1'>Research Synthesis Expert</p>
+            <p class='mt-1 text-sm font-medium text-blue-600'>Research Synthesis Expert</p>
           </div>
-          <div class='space-y-4 text-gray-600 text-sm leading-relaxed'>
+          <div class='space-y-4 text-sm leading-relaxed text-gray-600'>
             <p>
               Brandy is a research synthesist with extensive expertise in systematic review
               methodology and evidence appraisal. She completed her first systematic review as a{' '}
@@ -67,17 +67,17 @@ export default function WhoDevelopedCoRATES() {
         </div>
 
         {/* Jacob */}
-        <div class='bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200'>
-          <div class='flex flex-col items-center text-center mb-6'>
+        <div class='rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-shadow duration-200 hover:shadow-md'>
+          <div class='mb-6 flex flex-col items-center text-center'>
             <img
               src='/jacob.jpeg'
               alt='Jacob Maynard'
-              class='w-28 h-28 rounded-full object-cover ring-4 ring-blue-50 mb-4'
+              class='mb-4 h-28 w-28 rounded-full object-cover ring-4 ring-blue-50'
             />
             <h3 class='text-xl font-semibold text-gray-900'>Jacob Maynard</h3>
-            <p class='text-sm text-blue-600 font-medium mt-1'>Software Engineer & Data Scientist</p>
+            <p class='mt-1 text-sm font-medium text-blue-600'>Software Engineer & Data Scientist</p>
           </div>
-          <div class='space-y-4 text-gray-600 text-sm leading-relaxed'>
+          <div class='space-y-4 text-sm leading-relaxed text-gray-600'>
             <p>
               Jacob is a software engineer and data scientist who focuses on designing clear,
               intuitive, and scalable software. With strengths in systems architecture, user

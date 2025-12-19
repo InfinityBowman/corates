@@ -86,31 +86,31 @@ export default function ReconciliationWithPdf(props) {
   const hasPdf = () => props.pdfData || props.pdfLoading;
 
   return (
-    <div class='h-full flex flex-col bg-blue-50'>
+    <div class='flex h-full flex-col bg-blue-50'>
       {/* Header toolbar */}
-      <div class='bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-4 shrink-0'>
+      <div class='flex shrink-0 items-center gap-4 border-b border-gray-200 bg-white px-4 py-2'>
         {/* Back button */}
         <button
           onClick={() => props.onCancel?.()}
-          class='p-2 hover:bg-gray-100 rounded-lg transition-colors shrink-0'
+          class='shrink-0 rounded-lg p-2 transition-colors hover:bg-gray-100'
           title='Go back'
         >
-          <AiOutlineArrowLeft class='w-5 h-5 text-gray-600' />
+          <AiOutlineArrowLeft class='h-5 w-5 text-gray-600' />
         </button>
 
         {/* Title */}
         <div class='shrink-0'>
           <h1 class='text-lg font-bold text-gray-900'>Reconciliation</h1>
-          <p class='text-gray-500 text-xs'>
+          <p class='text-xs text-gray-500'>
             {props.reviewer1Name || 'Reviewer 1'} vs {props.reviewer2Name || 'Reviewer 2'}
           </p>
         </div>
 
-        <div class='h-8 w-px bg-gray-200 shrink-0' />
+        <div class='h-8 w-px shrink-0 bg-gray-200' />
 
         {/* Navbar - question navigation pills */}
         <Show when={navbarStore.questionKeys.length > 0}>
-          <div class='flex-1 flex items-center gap-4 overflow-x-auto'>
+          <div class='flex flex-1 items-center gap-4 overflow-x-auto'>
             <Navbar store={navbarStore} />
             {/* Progress indicator */}
             {/* <div class='flex items-center gap-2 text-sm text-gray-600 shrink-0'>
@@ -144,7 +144,7 @@ export default function ReconciliationWithPdf(props) {
       {/* Split content area */}
       <div
         ref={containerRef}
-        class={`flex-1 flex overflow-hidden ${
+        class={`flex flex-1 overflow-hidden ${
           layout() === 'vertical' ? 'flex-row' : 'flex-col'
         } ${isDragging() ? 'select-none' : ''}`}
       >
@@ -174,11 +174,7 @@ export default function ReconciliationWithPdf(props) {
         <Show when={showPdf() && hasPdf()}>
           <div
             onMouseDown={handleMouseDown}
-            class={`
-              ${layout() === 'vertical' ? 'w-1 cursor-col-resize' : 'h-1 cursor-row-resize'}
-              bg-gray-200 hover:bg-blue-400 active:bg-blue-500 transition-colors shrink-0
-              ${isDragging() ? 'bg-blue-500' : ''}
-            `}
+            class={` ${layout() === 'vertical' ? 'w-1 cursor-col-resize' : 'h-1 cursor-row-resize'} shrink-0 bg-gray-200 transition-colors hover:bg-blue-400 active:bg-blue-500 ${isDragging() ? 'bg-blue-500' : ''} `}
           />
 
           {/* Second panel: PDF Viewer (read-only) */}
@@ -191,9 +187,9 @@ export default function ReconciliationWithPdf(props) {
             <Show
               when={!props.pdfLoading}
               fallback={
-                <div class='flex items-center justify-center h-full bg-gray-100'>
+                <div class='flex h-full items-center justify-center bg-gray-100'>
                   <div class='flex items-center gap-3 text-gray-500'>
-                    <div class='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600' />
+                    <div class='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
                     Loading PDF...
                   </div>
                 </div>

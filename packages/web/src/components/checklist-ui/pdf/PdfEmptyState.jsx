@@ -7,7 +7,7 @@ import { HiOutlineDocument } from 'solid-icons/hi';
 import { FileUpload } from '@corates/ui';
 
 function LoadingSpinner() {
-  return <div class='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600' />;
+  return <div class='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />;
 }
 
 export default function PdfEmptyState(props) {
@@ -28,7 +28,7 @@ export default function PdfEmptyState(props) {
     <>
       {/* Library initializing */}
       <Show when={!props.libReady}>
-        <div class='flex items-center justify-center h-full'>
+        <div class='flex h-full items-center justify-center'>
           <div class='flex items-center gap-3 text-gray-500'>
             <LoadingSpinner />
             Initializing PDF viewer...
@@ -38,7 +38,7 @@ export default function PdfEmptyState(props) {
 
       {/* PDF loading */}
       <Show when={props.libReady && props.loading}>
-        <div class='flex items-center justify-center h-full'>
+        <div class='flex h-full items-center justify-center'>
           <div class='flex items-center gap-3 text-gray-500'>
             <LoadingSpinner />
             Loading PDF...
@@ -48,9 +48,9 @@ export default function PdfEmptyState(props) {
 
       {/* Error state */}
       <Show when={props.libReady && props.error}>
-        <div class='flex items-center justify-center h-full'>
+        <div class='flex h-full items-center justify-center'>
           <div class='text-center'>
-            <div class='text-red-600 mb-2'>{props.error}</div>
+            <div class='mb-2 text-red-600'>{props.error}</div>
             <Show when={!props.readOnly}>
               <FileUpload
                 accept='application/pdf'
@@ -58,7 +58,7 @@ export default function PdfEmptyState(props) {
                 showFileList={false}
                 onFileAccept={handleFileAccept}
                 compact
-                class='mt-4 max-w-sm mx-auto'
+                class='mx-auto mt-4 max-w-sm'
               />
             </Show>
           </div>
@@ -67,8 +67,8 @@ export default function PdfEmptyState(props) {
 
       {/* No PDF loaded */}
       <Show when={props.libReady && !props.loading && !props.error && !props.pdfDoc}>
-        <div class='flex flex-col items-center justify-center h-full text-gray-500'>
-          <HiOutlineDocument class='w-16 h-16 mb-4 text-gray-300' />
+        <div class='flex h-full flex-col items-center justify-center text-gray-500'>
+          <HiOutlineDocument class='mb-4 h-16 w-16 text-gray-300' />
           <p class='mb-4'>No PDF loaded</p>
           <Show
             when={!props.readOnly}
@@ -79,7 +79,7 @@ export default function PdfEmptyState(props) {
               helpText='PDF files only'
               showFileList={false}
               onFileAccept={handleFileAccept}
-              class='max-w-sm w-full'
+              class='w-full max-w-sm'
             />
           </Show>
         </div>

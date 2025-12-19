@@ -6,42 +6,42 @@ import { FiUsers } from 'solid-icons/fi';
 // Ecosystem illustration showing multiple tools unified
 function EcosystemIllustration() {
   return (
-    <div class='bg-linear-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-200 p-6 md:p-8'>
+    <div class='rounded-2xl border border-blue-200 bg-linear-to-br from-blue-50 to-indigo-50 p-6 md:p-8'>
       <div class='relative'>
         {/* Central hub */}
         <div class='flex items-center justify-center'>
-          <div class='w-20 h-20 bg-linear-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg'>
-            <span class='text-white font-bold text-lg'>Co</span>
+          <div class='flex h-20 w-20 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-blue-700 shadow-lg'>
+            <span class='text-lg font-bold text-white'>Co</span>
           </div>
         </div>
 
         {/* Orbiting elements */}
         <div class='absolute top-0 left-1/4 -translate-x-1/2 -translate-y-2'>
-          <div class='bg-white rounded-lg shadow-md p-2.5 border border-gray-200'>
-            <HiOutlineDocumentText class='w-5 h-5 text-rose-500' />
+          <div class='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
+            <HiOutlineDocumentText class='h-5 w-5 text-rose-500' />
           </div>
         </div>
 
         <div class='absolute top-0 right-1/4 translate-x-1/2 -translate-y-2'>
-          <div class='bg-white rounded-lg shadow-md p-2.5 border border-gray-200'>
-            <BsGraphUp class='w-5 h-5 text-violet-500' />
+          <div class='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
+            <BsGraphUp class='h-5 w-5 text-violet-500' />
           </div>
         </div>
 
         <div class='absolute bottom-0 left-1/4 -translate-x-1/2 translate-y-2'>
-          <div class='bg-white rounded-lg shadow-md p-2.5 border border-gray-200'>
-            <FiUsers class='w-5 h-5 text-emerald-500' />
+          <div class='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
+            <FiUsers class='h-5 w-5 text-emerald-500' />
           </div>
         </div>
 
-        <div class='absolute bottom-0 right-1/4 translate-x-1/2 translate-y-2'>
-          <div class='bg-white rounded-lg shadow-md p-2.5 border border-gray-200'>
-            <AiOutlineCheckCircle class='w-5 h-5 text-amber-500' />
+        <div class='absolute right-1/4 bottom-0 translate-x-1/2 translate-y-2'>
+          <div class='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
+            <AiOutlineCheckCircle class='h-5 w-5 text-amber-500' />
           </div>
         </div>
 
         {/* Connection lines (decorative) */}
-        <svg class='absolute inset-0 w-full h-full pointer-events-none' style={{ 'z-index': -1 }}>
+        <svg class='pointer-events-none absolute inset-0 h-full w-full' style={{ 'z-index': -1 }}>
           <circle
             cx='50%'
             cy='50%'
@@ -55,17 +55,17 @@ function EcosystemIllustration() {
       </div>
 
       {/* Labels */}
-      <div class='flex flex-wrap justify-center gap-2 mt-8'>
-        <span class='text-xs bg-white px-2.5 py-1 rounded-full border border-gray-200 text-gray-600'>
+      <div class='mt-8 flex flex-wrap justify-center gap-2'>
+        <span class='rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600'>
           Checklists
         </span>
-        <span class='text-xs bg-white px-2.5 py-1 rounded-full border border-gray-200 text-gray-600'>
+        <span class='rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600'>
           PDFs
         </span>
-        <span class='text-xs bg-white px-2.5 py-1 rounded-full border border-gray-200 text-gray-600'>
+        <span class='rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600'>
           Scoring
         </span>
-        <span class='text-xs bg-white px-2.5 py-1 rounded-full border border-gray-200 text-gray-600'>
+        <span class='rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600'>
           Collaboration
         </span>
       </div>
@@ -75,13 +75,13 @@ function EcosystemIllustration() {
 
 export default function WhatIsCoRATES() {
   return (
-    <section class='bg-linear-to-b from-gray-50 to-white border-y border-gray-100'>
-      <div class='max-w-5xl mx-auto px-6 py-20'>
-        <div class='grid md:grid-cols-5 gap-10 items-start'>
+    <section class='border-y border-gray-100 bg-linear-to-b from-gray-50 to-white'>
+      <div class='mx-auto max-w-5xl px-6 py-20'>
+        <div class='grid items-start gap-10 md:grid-cols-5'>
           {/* Content */}
           <div class='md:col-span-3'>
-            <h2 class='text-2xl md:text-3xl font-bold text-gray-900 mb-8'>What is CoRATES?</h2>
-            <div class='space-y-5 text-gray-600 leading-relaxed'>
+            <h2 class='mb-8 text-2xl font-bold text-gray-900 md:text-3xl'>What is CoRATES?</h2>
+            <div class='space-y-5 leading-relaxed text-gray-600'>
               <p>
                 CoRATES is more than a checklist platform. It is an ecosystem built to support
                 high-quality and efficient study appraisal by bringing every part of the process
@@ -105,7 +105,7 @@ export default function WhatIsCoRATES() {
           </div>
         </div>
 
-        <p class='text-gray-600 leading-relaxed mt-8 max-w-3xl'>
+        <p class='mt-8 max-w-3xl leading-relaxed text-gray-600'>
           CoRATES was not built to replace established appraisal tools; but to provide the
           infrastructure that supports the rigorous processes involved in applying those tools and
           synthesizing results across studies, ultimately improving the rigor of research synthesis.

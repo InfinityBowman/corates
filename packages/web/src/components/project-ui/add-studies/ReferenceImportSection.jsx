@@ -25,16 +25,16 @@ export default function ReferenceImportSection() {
         when={studies.importedRefs().length === 0}
         fallback={
           <div class='space-y-3'>
-            <div class='flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2'>
+            <div class='flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2'>
               <div class='flex items-center gap-2 text-sm text-gray-600'>
-                <AiOutlineFileText class='w-4 h-4' />
-                <span class='truncate max-w-48'>{studies.refFileName()}</span>
+                <AiOutlineFileText class='h-4 w-4' />
+                <span class='max-w-48 truncate'>{studies.refFileName()}</span>
                 <span class='text-gray-400'>({studies.importedRefs().length} references)</span>
               </div>
               <button
                 type='button'
                 onClick={studies.clearImportedRefs}
-                class='text-xs text-blue-600 hover:text-blue-700 font-medium'
+                class='text-xs font-medium text-blue-600 hover:text-blue-700'
               >
                 Change file
               </button>
@@ -49,29 +49,29 @@ export default function ReferenceImportSection() {
                 studies.foundPdfCount() > 0
               }
             >
-              <div class='flex items-center gap-3 text-xs flex-wrap'>
+              <div class='flex flex-wrap items-center gap-3 text-xs'>
                 <Show when={studies.lookingUpRefPdfs()}>
-                  <span class='inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-full'>
-                    <div class='w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin' />
+                  <span class='inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-blue-700'>
+                    <div class='h-3 w-3 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
                     Looking up PDFs...
                   </span>
                 </Show>
                 <Show when={studies.matchedRefPdfCount() > 0}>
-                  <span class='inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded-full'>
-                    <BiRegularLinkAlt class='w-3 h-3' />
+                  <span class='inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-green-700'>
+                    <BiRegularLinkAlt class='h-3 w-3' />
                     {studies.matchedRefPdfCount()} PDF{studies.matchedRefPdfCount() > 1 ? 's' : ''}{' '}
                     matched
                   </span>
                 </Show>
                 <Show when={studies.foundPdfCount() > 0}>
-                  <span class='inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full'>
-                    <CgFileDocument class='w-3 h-3' />
+                  <span class='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-emerald-700'>
+                    <CgFileDocument class='h-3 w-3' />
                     {studies.foundPdfCount()} open access
                   </span>
                 </Show>
                 <Show when={studies.unmatchedRefPdfCount() > 0}>
-                  <span class='inline-flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 rounded-full'>
-                    <CgFileDocument class='w-3 h-3' />
+                  <span class='inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-amber-700'>
+                    <CgFileDocument class='h-3 w-3' />
                     {studies.unmatchedRefPdfCount()} PDF
                     {studies.unmatchedRefPdfCount() > 1 ? 's' : ''} unmatched
                   </span>
@@ -79,7 +79,7 @@ export default function ReferenceImportSection() {
               </div>
             </Show>
 
-            <div class='flex items-center gap-2 pb-2 border-b border-gray-200'>
+            <div class='flex items-center gap-2 border-b border-gray-200 pb-2'>
               <Checkbox
                 checked={studies.selectedRefIds().size === studies.importedRefs().length}
                 indeterminate={
@@ -91,11 +91,11 @@ export default function ReferenceImportSection() {
               />
             </div>
 
-            <div class='max-h-48 overflow-y-auto space-y-1 pr-1'>
+            <div class='max-h-48 space-y-1 overflow-y-auto pr-1'>
               <For each={studies.importedRefs()}>
                 {ref => (
                   <div
-                    class={`flex items-start gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
+                    class={`flex cursor-pointer items-start gap-3 rounded-lg p-2 transition-colors ${
                       studies.selectedRefIds().has(ref._id) ?
                         'bg-blue-50 hover:bg-blue-100'
                       : 'bg-gray-50 hover:bg-gray-100'
@@ -107,20 +107,20 @@ export default function ReferenceImportSection() {
                       onChange={() => studies.toggleRefSelection(ref._id)}
                       class='mt-0.5'
                     />
-                    <div class='flex-1 min-w-0'>
+                    <div class='min-w-0 flex-1'>
                       <div class='flex items-center gap-2'>
-                        <p class='text-sm font-medium text-gray-900 line-clamp-2 flex-1'>
+                        <p class='line-clamp-2 flex-1 text-sm font-medium text-gray-900'>
                           {ref.title}
                         </p>
                         <Show when={ref.pdfData}>
-                          <span class='shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded'>
-                            <CgFileDocument class='w-3 h-3' />
+                          <span class='inline-flex shrink-0 items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700'>
+                            <CgFileDocument class='h-3 w-3' />
                             PDF
                           </span>
                         </Show>
                         <Show when={!ref.pdfData && ref.pdfAvailable}>
                           <span
-                            class={`shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded ${
+                            class={`inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs ${
                               ref.pdfAccessible ?
                                 'bg-emerald-100 text-emerald-700'
                               : 'bg-amber-100 text-amber-700'
@@ -131,12 +131,12 @@ export default function ReferenceImportSection() {
                               : 'PDF available (may require manual download)'
                             }
                           >
-                            <BiRegularLinkAlt class='w-3 h-3' />
+                            <BiRegularLinkAlt class='h-3 w-3' />
                             {ref.pdfAccessible ? 'OA' : 'PDF'}
                           </span>
                         </Show>
                       </div>
-                      <p class='text-xs text-gray-500 mt-0.5'>
+                      <p class='mt-0.5 text-xs text-gray-500'>
                         {getRefDisplayName(ref)}
                         <Show when={ref.journal}>
                           <span class='mx-1'>-</span>
@@ -144,7 +144,7 @@ export default function ReferenceImportSection() {
                         </Show>
                         <Show when={ref.pdfFileName}>
                           <span class='mx-1'>-</span>
-                          <span class='text-green-600 truncate max-w-32 inline-block align-bottom'>
+                          <span class='inline-block max-w-32 truncate align-bottom text-green-600'>
                             {ref.pdfFileName}
                           </span>
                         </Show>
@@ -176,8 +176,8 @@ export default function ReferenceImportSection() {
         />
 
         <div class='text-xs text-gray-500'>
-          <p class='font-medium mb-1'>Supported formats:</p>
-          <ul class='list-disc list-inside space-y-0.5'>
+          <p class='mb-1 font-medium'>Supported formats:</p>
+          <ul class='list-inside list-disc space-y-0.5'>
             <For each={SUPPORTED_FORMATS}>
               {format => (
                 <li>
@@ -193,7 +193,7 @@ export default function ReferenceImportSection() {
 
         <Show when={studies.parsingRefs()}>
           <div class='flex items-center justify-center gap-2 py-4 text-gray-500'>
-            <div class='w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin' />
+            <div class='h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
             <span>Parsing references...</span>
           </div>
         </Show>

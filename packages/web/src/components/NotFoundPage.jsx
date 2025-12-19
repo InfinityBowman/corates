@@ -6,11 +6,11 @@ export default function NotFoundPage() {
   const navigate = useNavigate();
 
   return (
-    <div class='min-h-screen bg-blue-50 flex items-center justify-center px-6 py-12'>
-      <div class='max-w-md w-full text-center'>
+    <div class='flex min-h-screen items-center justify-center bg-blue-50 px-6 py-12'>
+      <div class='w-full max-w-md text-center'>
         <div class='mb-8'>
-          <h1 class='text-9xl font-bold text-blue-600 mb-4'>404</h1>
-          <h2 class='text-2xl font-semibold text-gray-900 mb-2'>Page Not Found</h2>
+          <h1 class='mb-4 text-9xl font-bold text-blue-600'>404</h1>
+          <h2 class='mb-2 text-2xl font-semibold text-gray-900'>Page Not Found</h2>
           <p class='text-gray-600'>
             Sorry, we couldn't find the page you're looking for. It might have been moved or
             deleted.
@@ -20,18 +20,18 @@ export default function NotFoundPage() {
         <div class='space-y-3'>
           <button
             onClick={() => navigate('/dashboard')}
-            class='w-full inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm'
+            class='inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-medium text-white shadow-sm transition-colors hover:bg-blue-700'
           >
-            <FiHome class='w-5 h-5' />
+            <FiHome class='h-5 w-5' />
             Go to Dashboard
           </button>
 
           <div class='flex gap-3'>
             <button
               onClick={() => navigate('/checklist')}
-              class='flex-1 inline-flex items-center justify-center gap-2 bg-white text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors border border-gray-200'
+              class='inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50'
             >
-              <FiFileText class='w-5 h-5' />
+              <FiFileText class='h-5 w-5' />
               Start Appraisal
             </button>
           </div>
@@ -41,7 +41,7 @@ export default function NotFoundPage() {
           Need help?{' '}
           <a
             href={LANDING_URL}
-            class='text-blue-600 hover:text-blue-700 font-medium hover:underline'
+            class='font-medium text-blue-600 hover:text-blue-700 hover:underline'
           >
             Return to home
           </a>

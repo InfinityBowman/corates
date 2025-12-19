@@ -32,29 +32,29 @@ export default function StudyTreeItem(props) {
         }
       }}
       trigger={api => (
-        <div class='flex items-center group rounded transition-colors text-gray-600 hover:bg-gray-50'>
+        <div class='group flex items-center rounded text-gray-600 transition-colors hover:bg-gray-50'>
           <button
             {...api.getTriggerProps()}
-            class='p-1.5 hover:bg-gray-100 rounded'
+            class='rounded p-1.5 hover:bg-gray-100'
             aria-label={isExpanded() ? 'Collapse' : 'Expand'}
           >
             <FiChevronRight
-              class={`w-2.5 h-2.5 text-gray-400 transition-transform ${isExpanded() ? 'rotate-90' : ''}`}
+              class={`h-2.5 w-2.5 text-gray-400 transition-transform ${isExpanded() ? 'rotate-90' : ''}`}
             />
           </button>
-          <div class='flex-1 flex items-center gap-1.5 py-1.5 pr-2 text-left'>
-            <VsBook class='w-3.5 h-3.5 text-gray-400' />
-            <span class='text-xs font-medium truncate'>{props.study.name}</span>
+          <div class='flex flex-1 items-center gap-1.5 py-1.5 pr-2 text-left'>
+            <VsBook class='h-3.5 w-3.5 text-gray-400' />
+            <span class='truncate text-xs font-medium'>{props.study.name}</span>
           </div>
         </div>
       )}
     >
       {/* Checklists list */}
-      <div class='ml-4 pl-2 border-l border-gray-100 mt-0.5 space-y-0.5'>
+      <div class='mt-0.5 ml-4 space-y-0.5 border-l border-gray-100 pl-2'>
         <Show
           when={assignedChecklists()?.length > 0}
           fallback={
-            <div class='py-1 px-2 text-2xs text-gray-400'>
+            <div class='text-2xs px-2 py-1 text-gray-400'>
               {props.userId ? 'No checklists assigned to you' : 'No checklists'}
             </div>
           }

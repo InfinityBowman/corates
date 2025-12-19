@@ -10,13 +10,13 @@ export default function StepIndicator(props) {
   const steps = () => Array.from({ length: props.totalSteps }, (_, i) => i + 1);
 
   return (
-    <div class='flex items-center justify-center mb-5'>
+    <div class='mb-5 flex items-center justify-center'>
       <div class='flex items-center space-x-2'>
         <For each={steps()}>
           {(step, index) => (
             <>
               <div
-                class={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold transition-colors ${
+                class={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-colors sm:h-8 sm:w-8 sm:text-sm ${
                   props.currentStep >= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
                 }`}
               >
@@ -24,7 +24,7 @@ export default function StepIndicator(props) {
               </div>
               <Show when={index() < props.totalSteps - 1}>
                 <div
-                  class={`w-8 sm:w-10 h-0.5 transition-colors ${
+                  class={`h-0.5 w-8 transition-colors sm:w-10 ${
                     props.currentStep > step ? 'bg-blue-600' : 'bg-gray-200'
                   }`}
                 />

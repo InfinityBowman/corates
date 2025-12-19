@@ -159,10 +159,10 @@ export default function MultiPartQuestionPage(props) {
   };
 
   return (
-    <div class='bg-white rounded-lg shadow-lg overflow-hidden'>
+    <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
       {/* Question Header */}
       <div
-        class={`p-4 ${props.isAgreement ? 'bg-green-50 border-b border-green-200' : 'bg-amber-50 border-b border-amber-200'}`}
+        class={`p-4 ${props.isAgreement ? 'border-b border-green-200 bg-green-50' : 'border-b border-amber-200 bg-amber-50'}`}
       >
         <h2 class='text-lg font-semibold text-gray-900'>
           {question()?.text}
@@ -184,12 +184,12 @@ export default function MultiPartQuestionPage(props) {
         {/* Reviewer 1 Panel */}
         <div class='p-4'>
           {/* Panel Header */}
-          <div class='flex items-center justify-between mb-4'>
+          <div class='mb-4 flex items-center justify-between'>
             <h3 class='font-semibold text-gray-900'>{props.reviewer1Name || 'Reviewer 1'}</h3>
             <Show when={!reviewersAgree()}>
               <button
                 onClick={useReviewer1}
-                class={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                class={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                   selectedSource() === 'reviewer1' ? 'bg-blue-600 text-white' : (
                     'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
                   )
@@ -209,7 +209,7 @@ export default function MultiPartQuestionPage(props) {
                     {getSubtitleForPart(partKey)}
                   </span>
                   <span class='text-xs text-gray-500'>Result:</span>
-                  <span class='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border bg-gray-100 text-gray-600 border-gray-200'>
+                  <span class='inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600'>
                     {getFinalAnswerForPart(props.reviewer1Answers, partKey) || 'Not selected'}
                   </span>
                 </div>
@@ -229,12 +229,12 @@ export default function MultiPartQuestionPage(props) {
         {/* Reviewer 2 Panel */}
         <div class='p-4'>
           {/* Panel Header */}
-          <div class='flex items-center justify-between mb-4'>
+          <div class='mb-4 flex items-center justify-between'>
             <h3 class='font-semibold text-gray-900'>{props.reviewer2Name || 'Reviewer 2'}</h3>
             <Show when={!reviewersAgree()}>
               <button
                 onClick={useReviewer2}
-                class={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                class={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                   selectedSource() === 'reviewer2' ? 'bg-blue-600 text-white' : (
                     'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
                   )
@@ -254,7 +254,7 @@ export default function MultiPartQuestionPage(props) {
                     {getSubtitleForPart(partKey)}
                   </span>
                   <span class='text-xs text-gray-500'>Result:</span>
-                  <span class='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border bg-gray-100 text-gray-600 border-gray-200'>
+                  <span class='inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600'>
                     {getFinalAnswerForPart(props.reviewer2Answers, partKey) || 'Not selected'}
                   </span>
                 </div>
@@ -272,9 +272,9 @@ export default function MultiPartQuestionPage(props) {
         </div>
 
         {/* Final/Merged Panel */}
-        <div class='p-4 bg-green-50/30'>
+        <div class='bg-green-50/30 p-4'>
           {/* Panel Header */}
-          <div class='flex items-center justify-between mb-4'>
+          <div class='mb-4 flex items-center justify-between'>
             <div>
               <h3 class='font-semibold text-gray-900'>Final Answer</h3>
               <Show when={selectedSource()}>
@@ -296,7 +296,7 @@ export default function MultiPartQuestionPage(props) {
                     {getSubtitleForPart(partKey)}
                   </span>
                   <span class='text-xs text-gray-500'>Result:</span>
-                  <span class='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border bg-green-100 text-green-800 border-green-200'>
+                  <span class='inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2 py-1 text-xs font-medium text-green-800'>
                     {getFinalAnswerForPart(localFinal(), partKey) || 'Not selected'}
                   </span>
                 </div>

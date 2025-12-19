@@ -59,12 +59,12 @@ export default function AccountProviderCard(props) {
   });
 
   return (
-    <div class='flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200'>
+    <div class='flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-4'>
       <div class='flex items-center gap-3'>
         {/* Provider icon */}
-        <div class='p-2 bg-white rounded-lg border border-gray-200'>
-          <Show when={props.provider?.icon} fallback={<FiMail class='w-5 h-5 text-gray-600' />}>
-            <img src={props.provider.icon} alt={props.provider?.name} class='w-5 h-5' />
+        <div class='rounded-lg border border-gray-200 bg-white p-2'>
+          <Show when={props.provider?.icon} fallback={<FiMail class='h-5 w-5 text-gray-600' />}>
+            <img src={props.provider.icon} alt={props.provider?.name} class='h-5 w-5' />
           </Show>
         </div>
 
@@ -75,8 +75,8 @@ export default function AccountProviderCard(props) {
               {props.provider?.name || props.account.providerId}
             </p>
             <Show when={isCredential()}>
-              <span class='inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-green-700 bg-green-100 rounded-full'>
-                <FiCheck class='w-3 h-3' />
+              <span class='inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700'>
+                <FiCheck class='h-3 w-3' />
                 Primary
               </span>
             </Show>
@@ -89,16 +89,16 @@ export default function AccountProviderCard(props) {
                 href={orcidProfileUrl()}
                 target='_blank'
                 rel='noopener noreferrer'
-                class='text-gray-400 hover:text-gray-600 transition-colors'
+                class='text-gray-400 transition-colors hover:text-gray-600'
                 aria-label='View ORCID profile'
               >
-                <FiExternalLink class='w-3.5 h-3.5' />
+                <FiExternalLink class='h-3.5 w-3.5' />
               </a>
             </Show>
           </div>
 
           <Show when={linkedDate()}>
-            <p class='text-xs text-gray-400 mt-0.5'>Linked on {linkedDate()}</p>
+            <p class='mt-0.5 text-xs text-gray-400'>Linked on {linkedDate()}</p>
           </Show>
         </div>
       </div>
@@ -109,7 +109,7 @@ export default function AccountProviderCard(props) {
         fallback={
           <Show when={!isCredential()}>
             <Tooltip content="Can't unlink your only sign-in method. Link another account first.">
-              <span class='text-xs text-gray-400 cursor-help'>Only sign-in method</span>
+              <span class='cursor-help text-xs text-gray-400'>Only sign-in method</span>
             </Tooltip>
           </Show>
         }
@@ -118,10 +118,10 @@ export default function AccountProviderCard(props) {
           <button
             onClick={() => props.onUnlink?.()}
             disabled={props.unlinking}
-            class='inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            class='inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50'
             aria-label={`Unlink ${props.provider?.name} account`}
           >
-            <FiTrash2 class='w-4 h-4' />
+            <FiTrash2 class='h-4 w-4' />
             {props.unlinking ? 'Unlinking...' : 'Unlink'}
           </button>
         </Show>

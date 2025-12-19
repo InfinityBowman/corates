@@ -162,23 +162,23 @@ export default function CompleteProfile() {
   const displayError = () => error();
 
   return (
-    <div class='h-full bg-blue-50 flex items-center justify-center px-4 py-6 sm:py-12'>
+    <div class='flex h-full items-center justify-center bg-blue-50 px-4 py-6 sm:py-12'>
       <Show
         when={!authLoading()}
         fallback={
-          <div class='w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin' />
+          <div class='h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent' />
         }
       >
-        <div class='w-full max-w-md sm:max-w-xl bg-white rounded-xl sm:rounded-3xl shadow-2xl p-5 sm:p-10 border border-gray-100'>
+        <div class='w-full max-w-md rounded-xl border border-gray-100 bg-white p-5 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-10'>
           <StepIndicator currentStep={step()} totalSteps={2} />
 
           {/* Step 1: Name */}
           <Show when={step() === 1}>
-            <div class='text-center mb-5'>
-              <h2 class='text-xl sm:text-2xl font-bold text-gray-900 mb-1'>
+            <div class='mb-5 text-center'>
+              <h2 class='mb-1 text-xl font-bold text-gray-900 sm:text-2xl'>
                 Complete Your Profile
               </h2>
-              <p class='text-gray-500 text-xs sm:text-sm'>Just a few details to get you started</p>
+              <p class='text-xs text-gray-500 sm:text-sm'>Just a few details to get you started</p>
             </div>
 
             <form onSubmit={handleNextStep} class='space-y-4' autocomplete='off'>
@@ -186,7 +186,7 @@ export default function CompleteProfile() {
               <div class='grid grid-cols-2 gap-3'>
                 <div>
                   <label
-                    class='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'
+                    class='mb-1 block text-xs font-semibold text-gray-700 sm:text-sm'
                     for='first-name-input'
                   >
                     First Name
@@ -201,7 +201,7 @@ export default function CompleteProfile() {
                       setHasEditedName(true);
                       setFirstName(e.target.value);
                     }}
-                    class='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
+                    class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm transition focus:ring-2 focus:ring-blue-400 focus:outline-none'
                     required
                     id='first-name-input'
                     placeholder='First'
@@ -209,7 +209,7 @@ export default function CompleteProfile() {
                 </div>
                 <div>
                   <label
-                    class='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'
+                    class='mb-1 block text-xs font-semibold text-gray-700 sm:text-sm'
                     for='last-name-input'
                   >
                     Last Name
@@ -224,7 +224,7 @@ export default function CompleteProfile() {
                       setHasEditedName(true);
                       setLastName(e.target.value);
                     }}
-                    class='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition'
+                    class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm transition focus:ring-2 focus:ring-blue-400 focus:outline-none'
                     required
                     id='last-name-input'
                     placeholder='Last'
@@ -244,18 +244,18 @@ export default function CompleteProfile() {
               <button
                 type='button'
                 onClick={handleBack}
-                class='text-sm text-gray-500 hover:text-gray-700 flex items-center'
+                class='flex items-center text-sm text-gray-500 hover:text-gray-700'
               >
-                <FiChevronLeft class='w-4 h-4 mr-1' />
+                <FiChevronLeft class='mr-1 h-4 w-4' />
                 Back
               </button>
             </div>
 
-            <div class='text-center mb-5'>
-              <h2 class='text-xl sm:text-2xl font-bold text-gray-900 mb-1'>
+            <div class='mb-5 text-center'>
+              <h2 class='mb-1 text-xl font-bold text-gray-900 sm:text-2xl'>
                 What best describes you?
               </h2>
-              <p class='text-gray-500 text-xs sm:text-sm'>This helps us tailor your experience</p>
+              <p class='text-xs text-gray-500 sm:text-sm'>This helps us tailor your experience</p>
             </div>
 
             <form onSubmit={handleFinish} class='space-y-4'>
@@ -271,7 +271,7 @@ export default function CompleteProfile() {
                 type='button'
                 onClick={handleSkip}
                 disabled={loading()}
-                class='w-full py-2 text-sm text-gray-500 hover:text-gray-700 transition disabled:opacity-50'
+                class='w-full py-2 text-sm text-gray-500 transition hover:text-gray-700 disabled:opacity-50'
               >
                 Skip for now
               </button>
