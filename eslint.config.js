@@ -18,6 +18,7 @@ export default [
       },
       globals: {
         // Browser globals
+        HTMLDivElement: 'readonly',
         window: 'readonly',
         document: 'readonly',
         navigator: 'readonly',
