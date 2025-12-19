@@ -40,7 +40,7 @@ Use Zag.js for UI components and design system.
 
 ## Documentation Tool
 
-PLEASE USE THE CORATES MCP tools to explore local documentation sources. Use this MCP for all Better-Auth, Drizzle, Icons, and Zag documentation.
+PLEASE USE THE CORATES MCP tools to explore local documentation sources. Use this MCP for all Better-Auth, Drizzle, Icons, and Zag documentation. For linting, prefer using the MCP.
 
 ## Zag.js
 

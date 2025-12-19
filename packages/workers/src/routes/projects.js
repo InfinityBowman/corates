@@ -241,8 +241,63 @@ projectRoutes.delete('/:id', async c => {
       );
     }
 
+    // Get project name and all members before deletion (for notifications)
+    const project = await db
+      .select({ name: projects.name })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .get();
+
+    const members = await db
+      .select({ userId: projectMembers.userId })
+      .from(projectMembers)
+      .where(eq(projectMembers.projectId, projectId))
+      .all();
+
+    // Disconnect all connected users from the ProjectDoc DO
+    try {
+      const doId = c.env.PROJECT_DOC.idFromName(projectId);
+      const projectDoc = c.env.PROJECT_DOC.get(doId);
+      await projectDoc.fetch(
+        new Request('https://internal/disconnect-all', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Internal-Request': 'true',
+          },
+        }),
+      );
+    } catch (err) {
+      console.error('Failed to disconnect users from DO:', err);
+    }
+
     // Delete project (cascade will remove members)
     await db.delete(projects).where(eq(projects.id, projectId));
+
+    // Send notifications to all members (except the one who deleted)
+    for (const member of members) {
+      if (member.userId !== authUser.id) {
+        try {
+          const userSessionId = c.env.USER_SESSION.idFromName(member.userId);
+          const userSession = c.env.USER_SESSION.get(userSessionId);
+          await userSession.fetch(
+            new Request('https://internal/notify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'project-deleted',
+                projectId,
+                projectName: project?.name || 'Unknown Project',
+                deletedBy: authUser.name || authUser.email,
+                timestamp: Date.now(),
+              }),
+            }),
+          );
+        } catch (err) {
+          console.error('Failed to send deletion notification to user:', member.userId, err);
+        }
+      }
+    }
 
     return c.json({ success: true, deleted: projectId });
   } catch (error) {
