@@ -1,7 +1,7 @@
 import { For, Show, createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { FiPlus, FiTrash2 } from 'solid-icons/fi';
-import ChartSection from '../ChartSection.jsx';
+import ChartSection from './ChartSection.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
 import ReviewerAssignment from './ReviewerAssignment.jsx';
 import projectStore from '@/stores/projectStore.js';

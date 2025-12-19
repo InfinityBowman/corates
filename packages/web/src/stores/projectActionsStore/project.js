@@ -53,7 +53,7 @@ export function createProjectActions(getActiveConnection, getActiveProjectId) {
    * @param {string} targetProjectId - Project to delete
    * @param {boolean} shouldNavigate - Whether to navigate to dashboard after
    */
-  async function deleteById(targetProjectId, shouldNavigate = true) {
+  async function deleteById(targetProjectId) {
     try {
       const response = await fetch(`${API_BASE}/api/projects/${targetProjectId}`, {
         method: 'DELETE',
@@ -64,14 +64,8 @@ export function createProjectActions(getActiveConnection, getActiveProjectId) {
         throw new Error(data.error || 'Failed to delete project');
       }
       projectStore.removeProjectFromList(targetProjectId);
-
-      if (shouldNavigate) {
-        // Navigate handled by caller with useNavigate hook
-        showToast.success('Project Deleted', 'The project has been deleted successfully');
-      }
     } catch (err) {
       console.error('Error deleting project:', err);
-      showToast.error('Delete Failed', err.message || 'Failed to delete project');
       throw err;
     }
   }

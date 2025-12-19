@@ -94,7 +94,12 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
 
       uploadResult = await uploadPdf(projectId, studyId, file, file.name);
 
-      const arrayBuffer = await file.arrayBuffer();
+      let arrayBuffer = null;
+      try {
+        arrayBuffer = await file.arrayBuffer();
+      } catch {
+        // Ignore cache if arrayBuffer conversion fails
+      }
       cachePdf(projectId, studyId, uploadResult.fileName, arrayBuffer).catch(err =>
         console.warn('Failed to cache PDF:', err),
       );

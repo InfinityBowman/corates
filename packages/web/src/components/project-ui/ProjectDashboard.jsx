@@ -94,10 +94,10 @@ export default function ProjectDashboard(props) {
 
     try {
       // Use deleteById since we're outside the project view (no active project set)
-      await projectActionsStore.project.deleteById(targetProjectId, false);
+      await projectActionsStore.project.deleteById(targetProjectId);
       showToast.success('Project Deleted', 'The project has been deleted successfully');
-    } catch {
-      // Error already shown by projectActionsStore
+    } catch (err) {
+      showToast.error('Delete Failed', err.message || 'Failed to delete project');
     }
   };
 

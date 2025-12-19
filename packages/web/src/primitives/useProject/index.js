@@ -298,3 +298,10 @@ export function useProject(projectId) {
 }
 
 export default useProject;
+
+// Exported for testing purposes only
+export {
+  getOrCreateConnection as _getOrCreateConnection,
+  releaseConnection as _releaseConnection,
+  connectionRegistry as _connectionRegistry,
+};
