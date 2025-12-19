@@ -7,8 +7,10 @@ import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import useProject from '@/primitives/useProject/index.js';
 import projectStore from '@/stores/projectStore.js';
+import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import { downloadPdf } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
+import { showToast } from '@corates/ui';
 import ReconciliationWithPdf from './ReconciliationWithPdf.jsx';
 
 export default function ReconciliationWrapper() {
@@ -34,6 +36,15 @@ export default function ReconciliationWrapper() {
 
   // Read data from store
   const connectionState = () => projectStore.getConnectionState(params.projectId);
+
+  // Watch for access-denied errors and redirect to dashboard
+  createEffect(() => {
+    const state = connectionState();
+    if (state.error && ACCESS_DENIED_ERRORS.includes(state.error)) {
+      showToast.error('Access Denied', state.error);
+      navigate('/dashboard', { replace: true });
+    }
+  });
 
   const currentStudy = createMemo(() => {
     return projectStore.getStudy(params.projectId, params.studyId);

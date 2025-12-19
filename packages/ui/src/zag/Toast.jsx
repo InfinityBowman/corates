@@ -60,6 +60,16 @@ function ToastItem(props) {
     <div
       {...api().getRootProps()}
       class={`toast-item pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg border shadow-lg ${getStyles()}`}
+      style={{
+        translate: 'var(--x) var(--y)',
+        scale: 'var(--scale)',
+        'z-index': 'var(--z-index)',
+        height: 'var(--height)',
+        opacity: 'var(--opacity)',
+        'will-change': 'translate, opacity, scale',
+        transition: 'translate 400ms, scale 400ms, opacity 400ms',
+        'transition-timing-function': 'cubic-bezier(0.21, 1.02, 0.73, 1)',
+      }}
     >
       <div class='p-4'>
         <div class='flex items-start'>

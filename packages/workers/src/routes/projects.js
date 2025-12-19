@@ -241,8 +241,91 @@ projectRoutes.delete('/:id', async c => {
       );
     }
 
+    // Get project name and all members before deletion (for notifications)
+    const project = await db
+      .select({ name: projects.name })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .get();
+
+    const members = await db
+      .select({ userId: projectMembers.userId })
+      .from(projectMembers)
+      .where(eq(projectMembers.projectId, projectId))
+      .all();
+
+    // Disconnect all connected users from the ProjectDoc DO
+    try {
+      const doId = c.env.PROJECT_DOC.idFromName(projectId);
+      const projectDoc = c.env.PROJECT_DOC.get(doId);
+      await projectDoc.fetch(
+        new Request('https://internal/disconnect-all', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Internal-Request': 'true',
+          },
+        }),
+      );
+    } catch (err) {
+      console.error('Failed to disconnect users from DO:', err);
+    }
+
+    // Clean up all PDFs from R2 storage for this project
+    try {
+      const prefix = `projects/${projectId}/`;
+      let cursor = undefined;
+      let deletedCount = 0;
+
+      // R2 list returns max 1000 objects at a time, so we need to paginate
+      do {
+        const listed = await c.env.PDF_BUCKET.list({ prefix, cursor });
+
+        if (listed.objects.length > 0) {
+          // Delete objects in batches
+          const keysToDelete = listed.objects.map(obj => obj.key);
+          await Promise.all(keysToDelete.map(key => c.env.PDF_BUCKET.delete(key)));
+          deletedCount += keysToDelete.length;
+        }
+
+        cursor = listed.truncated ? listed.cursor : undefined;
+      } while (cursor);
+
+      if (deletedCount > 0) {
+        console.log(`Deleted ${deletedCount} R2 objects for project ${projectId}`);
+      }
+    } catch (err) {
+      console.error('Failed to clean up R2 files for project:', projectId, err);
+      // Continue with deletion even if R2 cleanup fails
+    }
+
     // Delete project (cascade will remove members)
     await db.delete(projects).where(eq(projects.id, projectId));
+
+    // Send notifications to all members (except the one who deleted)
+    for (const member of members) {
+      if (member.userId !== authUser.id) {
+        try {
+          const userSessionId = c.env.USER_SESSION.idFromName(member.userId);
+          const userSession = c.env.USER_SESSION.get(userSessionId);
+          await userSession.fetch(
+            new Request('https://internal/notify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'project-deleted',
+                projectId,
+                projectName: project?.name || 'Unknown Project',
+                deletedBy: authUser.name || authUser.email,
+                timestamp: Date.now(),
+              }),
+            }),
+          );
+        } catch (err) {
+          console.error('Failed to send deletion notification to user:', member.userId, err);
+        }
+      }
+    }
 
     return c.json({ success: true, deleted: projectId });
   } catch (error) {

@@ -84,11 +84,17 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
       throw new Error('Not connected to project');
     }
 
+    // Check for duplicate filename before uploading
+    const study = projectStore.getStudy(projectId, studyId);
+    const existingPdf = study?.pdfs?.find(pdf => pdf.fileName === file.name);
+    if (existingPdf) {
+      throw new Error(`File "${file.name}" already exists. Rename or remove the existing copy.`);
+    }
+
     let uploadResult = null;
 
     try {
       // Auto-set as primary if first PDF
-      const study = projectStore.getStudy(projectId, studyId);
       const hasPdfs = study?.pdfs?.length > 0;
       const effectiveTag = !hasPdfs ? 'primary' : tag;
 

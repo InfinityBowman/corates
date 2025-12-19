@@ -355,10 +355,40 @@ memberRoutes.delete('/:userId', async c => {
       .delete(projectMembers)
       .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
 
-    // Sync member removal to DO
+    // Sync member removal to DO (this also forces disconnect)
     await syncMemberToDO(c.env, projectId, 'remove', {
       userId: memberId,
     });
+
+    // Send notification to removed user (if not self-removal)
+    if (!isSelfRemoval) {
+      try {
+        // Get project name for notification
+        const project = await db
+          .select({ name: projects.name })
+          .from(projects)
+          .where(eq(projects.id, projectId))
+          .get();
+
+        const userSessionId = c.env.USER_SESSION.idFromName(memberId);
+        const userSession = c.env.USER_SESSION.get(userSessionId);
+        await userSession.fetch(
+          new Request('https://internal/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'removed-from-project',
+              projectId,
+              projectName: project?.name || 'Unknown Project',
+              removedBy: authUser.name || authUser.email,
+              timestamp: Date.now(),
+            }),
+          }),
+        );
+      } catch (err) {
+        console.error('Failed to send removal notification:', err);
+      }
+    }
 
     return c.json({ success: true, removed: memberId });
   } catch (error) {

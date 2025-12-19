@@ -99,6 +99,7 @@ export const ERROR_CODES = {
   FILE_INVALID_TYPE: { code: 5002, message: 'Invalid file type' },
   FILE_NOT_FOUND: { code: 5003, message: 'File not found' },
   FILE_UPLOAD_FAILED: { code: 5004, message: 'File upload failed' },
+  FILE_ALREADY_EXISTS: { code: 5005, message: 'File already exists' },
 
   // Database errors (6xxx)
   DB_ERROR: { code: 6001, message: 'Database error' },

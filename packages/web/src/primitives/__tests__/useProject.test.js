@@ -38,7 +38,10 @@ vi.mock('@/stores/projectStore.js', () => ({
     setActiveProject: vi.fn(),
     setConnectionState: vi.fn(),
     setProjectData: vi.fn(),
+    clearProject: vi.fn(),
+    removeProjectFromList: vi.fn(),
   },
+  registerStaleProjectCleanup: vi.fn(),
 }));
 
 vi.mock('@/stores/projectActionsStore', () => ({

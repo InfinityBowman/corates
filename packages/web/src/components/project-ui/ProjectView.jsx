@@ -7,12 +7,13 @@ import { createSignal, createEffect, Show, onCleanup, batch } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import useProject from '@/primitives/useProject/index.js';
 import projectStore from '@/stores/projectStore.js';
+import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
 import { importFromGoogleDrive } from '@api/google-drive.js';
-import { Tabs } from '@corates/ui';
+import { Tabs, showToast } from '@corates/ui';
 import { BiRegularHome } from 'solid-icons/bi';
 import { BsListTask } from 'solid-icons/bs';
 import { CgArrowsExchange } from 'solid-icons/cg';
@@ -55,6 +56,18 @@ export default function ProjectView() {
   onCleanup(() => {
     projectActionsStore._clearActiveProject();
     disconnect();
+  });
+
+  // Watch for access-denied errors and redirect to dashboard
+  // These errors occur when: project deleted, user removed, or user never had access
+  createEffect(() => {
+    const state = connectionState();
+    if (state.error && ACCESS_DENIED_ERRORS.includes(state.error)) {
+      // Show appropriate toast message
+      showToast.error('Access Denied', state.error);
+      // Navigate to dashboard
+      navigate('/dashboard', { replace: true });
+    }
   });
 
   // Retrieve pending data from projectStore (stored during project creation)

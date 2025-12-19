@@ -61,6 +61,9 @@ export class ProjectDoc {
         if (url.pathname === '/sync-pdf') {
           return await this.handleSyncPdf(request);
         }
+        if (url.pathname === '/disconnect-all') {
+          return await this.handleDisconnectAll(request);
+        }
       }
 
       // For HTTP requests verify auth (unless it's an upgrade to websocket)
@@ -191,6 +194,8 @@ export class ProjectDoc {
         }
       } else if (action === 'remove') {
         membersMap.delete(member.userId);
+        // Force disconnect the removed user from WebSocket
+        this.disconnectUser(member.userId, 'membership-revoked');
       }
 
       // Updates are automatically broadcast via Y.doc update listener
@@ -205,6 +210,16 @@ export class ProjectDoc {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+  }
+
+  /**
+   * Handle disconnect-all request (called when project is deleted)
+   */
+  async handleDisconnectAll() {
+    this.disconnectAll('project-deleted');
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   /**
@@ -543,6 +558,33 @@ export class ProjectDoc {
     this.sessions.forEach((sessionData, ws) => {
       if (ws !== exclude && ws.readyState === 1) {
         ws.send(message);
+      }
+    });
+  }
+
+  /**
+   * Disconnect a specific user from the WebSocket
+   * @param {string} userId - The user ID to disconnect
+   * @param {string} reason - The close reason (e.g., 'membership-revoked', 'project-deleted')
+   */
+  disconnectUser(userId, reason = 'membership-revoked') {
+    const closeCode = 1008; // Policy Violation
+    this.sessions.forEach((sessionData, ws) => {
+      if (sessionData.user?.id === userId && ws.readyState === 1) {
+        ws.close(closeCode, reason);
+      }
+    });
+  }
+
+  /**
+   * Disconnect all users from the WebSocket (e.g., when project is deleted)
+   * @param {string} reason - The close reason
+   */
+  disconnectAll(reason = 'project-deleted') {
+    const closeCode = 1000; // Normal closure
+    this.sessions.forEach((sessionData, ws) => {
+      if (ws.readyState === 1) {
+        ws.close(closeCode, reason);
       }
     });
   }

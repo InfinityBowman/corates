@@ -3,6 +3,7 @@ import { useParams, useNavigate } from '@solidjs/router';
 import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import useProject from '@/primitives/useProject/index.js';
 import projectStore from '@/stores/projectStore.js';
+import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import { downloadPdf, uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
 import { showToast, useConfirmDialog } from '@corates/ui';
@@ -33,6 +34,15 @@ export default function ChecklistYjsWrapper() {
 
   // Read data directly from store for faster reactivity
   const connectionState = () => projectStore.getConnectionState(params.projectId);
+
+  // Watch for access-denied errors and redirect to dashboard
+  createEffect(() => {
+    const state = connectionState();
+    if (state.error && ACCESS_DENIED_ERRORS.includes(state.error)) {
+      showToast.error('Access Denied', state.error);
+      navigate('/dashboard', { replace: true });
+    }
+  });
 
   // Find the current study and checklist from the store
   const currentStudy = createMemo(() => {
@@ -172,7 +182,7 @@ export default function ChecklistYjsWrapper() {
           console.warn('Failed to clean up orphaned PDF:', cleanupErr),
         );
       }
-      showToast.error('Upload Failed', 'Failed to upload PDF');
+      showToast.error('Upload Failed', err.message || 'Failed to upload PDF');
     }
   };
 

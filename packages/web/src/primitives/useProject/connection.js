@@ -8,20 +8,33 @@ import { getWsBaseUrl } from '@config/api.js';
 import projectStore from '@/stores/projectStore.js';
 
 /**
+ * Close reason codes for WebSocket disconnection
+ * These match the reasons sent by the backend ProjectDoc DO
+ */
+export const CLOSE_REASONS = {
+  PROJECT_DELETED: 'project-deleted',
+  MEMBERSHIP_REVOKED: 'membership-revoked',
+  NOT_A_MEMBER: 'not-a-member',
+};
+
+/**
  * Creates a connection manager for WebSocket sync
  * @param {string} projectId - The project ID
  * @param {Y.Doc} ydoc - The Y.js document
  * @param {Object} options - Configuration options
  * @param {Function} options.onSync - Called when sync completes
  * @param {Function} options.isLocalProject - Returns if this is a local-only project
+ * @param {Function} options.onAccessDenied - Called when access is denied (removed, deleted, not a member)
  * @returns {Object} Connection manager API
  */
 export function createConnectionManager(projectId, ydoc, options) {
-  const { onSync, isLocalProject } = options;
+  const { onSync, isLocalProject, onAccessDenied } = options;
 
   let provider = null;
   let lastErrorLog = 0;
+  let consecutiveErrors = 0;
   const ERROR_LOG_THROTTLE = 5000; // Only log errors every 5 seconds
+  const MAX_CONSECUTIVE_ERRORS = 5; // Stop reconnecting after this many failures
 
   // Track if we intend to be connected (for online/offline handling)
   let shouldBeConnected = false;
@@ -70,6 +83,11 @@ export function createConnectionManager(projectId, ydoc, options) {
         connected: status === 'connected',
         connecting: status === 'connecting',
       });
+
+      // Reset error count on successful connection
+      if (status === 'connected') {
+        consecutiveErrors = 0;
+      }
     });
 
     provider.on('sync', isSynced => {
@@ -89,8 +107,44 @@ export function createConnectionManager(projectId, ydoc, options) {
       // event can be null when disconnect() is called programmatically
       if (!event) return;
 
-      // Handle membership rejection (1008 = Policy Violation)
-      if (event.code === 1008 || event.reason?.includes('member')) {
+      const reason = event.reason || '';
+
+      // Handle project deletion - server closed connection because project was deleted
+      if (reason === CLOSE_REASONS.PROJECT_DELETED) {
+        projectStore.setConnectionState(projectId, {
+          error: 'This project has been deleted',
+          connected: false,
+          connecting: false,
+        });
+        provider.shouldConnect = false;
+        shouldBeConnected = false;
+        if (onAccessDenied) {
+          onAccessDenied({ reason: CLOSE_REASONS.PROJECT_DELETED });
+        }
+        return;
+      }
+
+      // Handle membership revocation - user was removed from project while connected
+      if (reason === CLOSE_REASONS.MEMBERSHIP_REVOKED) {
+        projectStore.setConnectionState(projectId, {
+          error: 'You have been removed from this project',
+          connected: false,
+          connecting: false,
+        });
+        provider.shouldConnect = false;
+        shouldBeConnected = false;
+        if (onAccessDenied) {
+          onAccessDenied({ reason: CLOSE_REASONS.MEMBERSHIP_REVOKED });
+        }
+        return;
+      }
+
+      // Handle membership rejection (1008 = Policy Violation) or generic "not a member"
+      if (
+        event.code === 1008 ||
+        reason.includes('member') ||
+        reason === CLOSE_REASONS.NOT_A_MEMBER
+      ) {
         projectStore.setConnectionState(projectId, {
           error: 'You are not a member of this project',
           connected: false,
@@ -99,6 +153,10 @@ export function createConnectionManager(projectId, ydoc, options) {
         // Prevent auto-reconnect for membership issues
         provider.shouldConnect = false;
         shouldBeConnected = false;
+        if (onAccessDenied) {
+          onAccessDenied({ reason: CLOSE_REASONS.NOT_A_MEMBER });
+        }
+        return;
       }
 
       // When offline, don't let the provider try to reconnect
@@ -113,12 +171,32 @@ export function createConnectionManager(projectId, ydoc, options) {
         return;
       }
 
+      consecutiveErrors++;
+
       // Throttle error logs to prevent console spam
       const now = Date.now();
       if (now - lastErrorLog > ERROR_LOG_THROTTLE) {
         console.error('WebSocket connection error');
         lastErrorLog = now;
       }
+
+      // After too many consecutive errors, stop trying to reconnect
+      // This handles cases where project was deleted or user doesn't have access
+      if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+        projectStore.setConnectionState(projectId, {
+          error:
+            'Unable to connect to project. It may have been deleted or you may not have access.',
+          connected: false,
+          connecting: false,
+        });
+        provider.shouldConnect = false;
+        shouldBeConnected = false;
+        if (onAccessDenied) {
+          onAccessDenied({ reason: 'connection-failed' });
+        }
+        return;
+      }
+
       projectStore.setConnectionState(projectId, {
         error: 'Connection error',
         connected: false,

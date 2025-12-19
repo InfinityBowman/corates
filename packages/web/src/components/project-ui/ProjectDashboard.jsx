@@ -1,6 +1,7 @@
 import { createEffect, createSignal, onCleanup, For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import useNotifications from '@primitives/useNotifications.js';
+import { cleanupProjectLocalData } from '@primitives/useProject/index.js';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useConfirmDialog, showToast } from '@corates/ui';
@@ -43,10 +44,21 @@ export default function ProjectDashboard(props) {
 
   // Connect to notifications for real-time project updates
   const { connect, disconnect } = useNotifications(userId(), {
-    onNotification: notification => {
+    onNotification: async notification => {
       if (notification.type === 'project-invite') {
         // Refresh to get the new project
         projectStore.refreshProjectList(userId());
+      } else if (notification.type === 'removed-from-project') {
+        // Clean up local data for the project we were removed from
+        await cleanupProjectLocalData(notification.projectId);
+        showToast.info(
+          'Removed from Project',
+          `You were removed from "${notification.projectName}"`,
+        );
+      } else if (notification.type === 'project-deleted') {
+        // Clean up local data for the deleted project
+        await cleanupProjectLocalData(notification.projectId);
+        showToast.info('Project Deleted', `"${notification.projectName}" was deleted`);
       }
     },
   });

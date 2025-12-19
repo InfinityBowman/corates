@@ -17,6 +17,22 @@ export default function NotificationToast(props) {
         actionLabel: 'Open Project',
       };
     }
+    if (notification.type === 'removed-from-project') {
+      return {
+        title: 'Removed from Project',
+        message: `You've been removed from "${notification.projectName}"`,
+        action: null,
+        actionLabel: null,
+      };
+    }
+    if (notification.type === 'project-deleted') {
+      return {
+        title: 'Project Deleted',
+        message: `"${notification.projectName}" has been deleted by ${notification.deletedBy}`,
+        action: null,
+        actionLabel: null,
+      };
+    }
     return {
       title: 'Notification',
       message: notification.message || 'You have a new notification',
