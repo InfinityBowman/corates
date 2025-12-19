@@ -189,10 +189,11 @@ export default function usePdfJs(options = {}) {
     }
 
     // Load the new PDF (old one stays visible until this completes)
-    const clonedData = Array.from(savedData);
+    // Keep as ArrayBuffer - PDF.js expects ArrayBuffer, not a regular Array
+    // We'll clone it in loadPdf if needed to avoid transfer issues with web workers
     setLoadedPdfName(savedName);
     setFileName(savedName);
-    setPdfSource({ data: clonedData });
+    setPdfSource({ data: savedData });
   });
 
   // Load PDF when source changes and library is ready
@@ -277,9 +278,11 @@ export default function usePdfJs(options = {}) {
     renderedPages.clear();
 
     // Cancel all pending render tasks
-    for (const task of currentRenderTasks) {
+    for (const task of currentRenderTasks.values()) {
       try {
-        task.cancel();
+        if (task) {
+          task.cancel();
+        }
       } catch {
         // Ignore cancel errors
       }
@@ -302,8 +305,8 @@ export default function usePdfJs(options = {}) {
       // Clone the ArrayBuffer before passing to PDF.js since it transfers ownership
       // to the web worker, which detaches the original buffer
       let loadSource = source;
-      if (source.data && source.data instanceof ArrayBuffer && source.data.byteLength > 0) {
-        loadSource = { ...source, data: [...source.data] };
+      if (source?.data && source.data instanceof ArrayBuffer && source.data.byteLength > 0) {
+        loadSource = { ...source, data: source.data.slice(0) };
       }
 
       // verbosity: 0 = ERRORS only (suppress warnings about malformed PDFs)
@@ -523,9 +526,11 @@ export default function usePdfJs(options = {}) {
     }
 
     // Cancel any pending render tasks
-    for (const task of currentRenderTasks) {
+    for (const task of currentRenderTasks.values()) {
       try {
-        task.cancel();
+        if (task) {
+          task.cancel();
+        }
       } catch {
         // Ignore
       }
@@ -626,9 +631,11 @@ export default function usePdfJs(options = {}) {
   // Cleanup
   onCleanup(() => {
     // Cancel all pending render tasks
-    for (const task of currentRenderTasks) {
+    for (const task of currentRenderTasks.values()) {
       try {
-        task.cancel();
+        if (task) {
+          task.cancel();
+        }
       } catch {
         // Ignore
       }
