@@ -27,7 +27,7 @@ function loadGoogleApiScript() {
     script.defer = true;
     script.onload = () => resolve();
     script.onerror = () => reject(new Error('Failed to load Google API script'));
-    document.head.appendChild(script);
+    document.head.append(script);
   });
 
   return googleApiScriptPromise;

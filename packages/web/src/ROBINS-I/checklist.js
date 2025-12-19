@@ -126,9 +126,9 @@ function createDomainState(domainKey) {
   const questions = getDomainQuestions(domainKey);
   const answers = {};
 
-  Object.keys(questions).forEach(qKey => {
+  for (const qKey of Object.keys(questions)) {
     answers[qKey] = { answer: null, comment: '' };
-  });
+  }
 
   const domain = ROBINS_I_CHECKLIST[domainKey];
 
@@ -225,14 +225,14 @@ export function suggestDomainJudgement(domainKey, answers) {
   let hasWeakNo = false;
   let hasNI = false;
 
-  questionKeys.forEach(qKey => {
+  for (const qKey of questionKeys) {
     const answer = answers[qKey]?.answer;
     if (answer === 'N') hasNo = true;
     if (answer === 'PN') hasProbablyNo = true;
     if (answer === 'SN') hasStrongNo = true;
     if (answer === 'WN') hasWeakNo = true;
     if (answer === 'NI') hasNI = true;
-  });
+  }
 
   // Simple heuristic (actual algorithms are domain-specific in ROBINS-I guidance)
   if (hasNo || hasStrongNo) return 'Serious';
@@ -274,17 +274,17 @@ export function getAnswers(checklist) {
   };
 
   // Section B
-  Object.keys(ROBINS_I_CHECKLIST.sectionB).forEach(key => {
+  for (const key of Object.keys(ROBINS_I_CHECKLIST.sectionB)) {
     result.sectionB[key] = checklist.sectionB?.[key]?.answer || null;
-  });
+  }
 
   // Domains
   const isPerProtocol = checklist.sectionC?.isPerProtocol || false;
   const activeDomains = getActiveDomainKeys(isPerProtocol);
 
-  activeDomains.forEach(domainKey => {
+  for (const domainKey of activeDomains) {
     const domain = checklist[domainKey];
-    if (!domain) return;
+    if (!domain) continue;
 
     result.domains[domainKey] = {
       judgement: domain.judgement,
@@ -292,10 +292,10 @@ export function getAnswers(checklist) {
       questions: {},
     };
 
-    Object.keys(domain.answers || {}).forEach(qKey => {
+    for (const qKey of Object.keys(domain.answers || {})) {
       result.domains[domainKey].questions[qKey] = domain.answers[qKey]?.answer || null;
-    });
-  });
+    }
+  }
 
   return result;
 }
@@ -313,14 +313,14 @@ export function getDomainSummary(checklist) {
 
   const summary = {};
 
-  activeDomains.forEach(domainKey => {
+  for (const domainKey of activeDomains) {
     const domain = checklist[domainKey];
     summary[domainKey] = {
       judgement: domain?.judgement || null,
       direction: domain?.direction || null,
       complete: isQuestionnaireComplete(domainKey, domain?.answers),
     };
-  });
+  }
 
   return summary;
 }
@@ -364,13 +364,13 @@ export function exportChecklistsToCSV(checklists) {
 
   const rows = [];
 
-  list.forEach(cl => {
+  for (const cl of list) {
     const isPerProtocol = cl.sectionC?.isPerProtocol || false;
     const activeDomains = getActiveDomainKeys(isPerProtocol);
     const overallScore = scoreChecklist(cl);
 
     // Section B
-    Object.entries(ROBINS_I_CHECKLIST.sectionB).forEach(([key, def]) => {
+    for (const [key, def] of Object.entries(ROBINS_I_CHECKLIST.sectionB)) {
       const ans = cl.sectionB?.[key];
       rows.push([
         cl.name || '',
@@ -385,15 +385,15 @@ export function exportChecklistsToCSV(checklists) {
         overallScore,
         cl.overall?.direction || '',
       ]);
-    });
+    }
 
     // Domains
-    activeDomains.forEach(domainKey => {
+    for (const domainKey of activeDomains) {
       const domainDef = ROBINS_I_CHECKLIST[domainKey];
       const domain = cl[domainKey];
       const questions = getDomainQuestions(domainKey);
 
-      Object.entries(questions).forEach(([qKey, qDef]) => {
+      for (const [qKey, qDef] of Object.entries(questions)) {
         const ans = domain?.answers?.[qKey];
         rows.push([
           cl.name || '',
@@ -408,12 +408,12 @@ export function exportChecklistsToCSV(checklists) {
           overallScore,
           cl.overall?.direction || '',
         ]);
-      });
-    });
-  });
+      }
+    }
+  }
 
   // CSV encode
-  const csvEscape = val => `"${String(val).replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+  const csvEscape = val => `"${String(val).replaceAll('"', '""').replaceAll('\n', ' ')}"`;
   const csv =
     headers.map(csvEscape).join(',') +
     '\n' +

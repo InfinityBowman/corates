@@ -182,7 +182,7 @@ describe('ConfirmDialog', () => {
       expect(screen.getByText('Cancel')).toBeInTheDocument();
       // Confirm button shows "Confirm" text
       const buttons = screen.getAllByRole('button');
-      const confirmButton = buttons.find(btn => btn.textContent === 'Confirm');
+      const confirmButton = buttons.find(button => button.textContent === 'Confirm');
       expect(confirmButton).toBeInTheDocument();
     });
 
@@ -290,9 +290,9 @@ describe('ConfirmDialog', () => {
       ));
 
       const buttons = screen.getAllByRole('button');
-      buttons.forEach(button => {
+      for (const button of buttons) {
         expect(button).toBeDisabled();
-      });
+      }
     });
   });
 

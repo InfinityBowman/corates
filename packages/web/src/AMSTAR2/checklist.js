@@ -161,9 +161,9 @@ export function scoreChecklist(state) {
   // Partial yes is scored same as yes
   // No MA is not counted as a flaw
 
-  Object.entries(state).forEach(([question, obj]) => {
-    if (!/^q\d+[a-z]*$/i.test(question)) return;
-    if (!obj || !Array.isArray(obj.answers)) return;
+  for (const [question, obj] of Object.entries(state)) {
+    if (!/^q\d+[a-z]*$/i.test(question)) continue;
+    if (!obj || !Array.isArray(obj.answers)) continue;
     const selected = getSelectedAnswer(obj.answers, question);
     if (!selected || selected === 'No') {
       if (obj.critical) {
@@ -172,7 +172,7 @@ export function scoreChecklist(state) {
         nonCriticalFlaws++;
       }
     }
-  });
+  }
 
   if (criticalFlaws > 1) return 'Critically Low';
   if (criticalFlaws === 1) return 'Low';
@@ -188,9 +188,9 @@ function getSelectedAnswer(answers, question) {
   const defaultLabels = ['Yes', 'Partial Yes', 'No', 'No MA'];
 
   if (!Array.isArray(answers) || answers.length === 0) return null;
-  const lastCol = answers[answers.length - 1];
+  const lastCol = answers.at(-1);
   if (!Array.isArray(lastCol)) return null;
-  const idx = lastCol.findIndex(v => v === true);
+  const idx = lastCol.indexOf(true);
   if (idx === -1) return null;
   if (customPatternQuestions.includes(question)) return customLabels[idx] || null;
   if (lastCol.length === 2) return idx === 0 ? 'Yes' : 'No';
@@ -202,13 +202,13 @@ export function getAnswers(checklist) {
   if (!checklist || typeof checklist !== 'object') return null;
   const result = {};
 
-  Object.entries(checklist).forEach(([key, value]) => {
-    if (!/^q\d+[a-z]*$/i.test(key)) return;
-    if (!value || !Array.isArray(value.answers)) return;
+  for (const [key, value] of Object.entries(checklist)) {
+    if (!/^q\d+[a-z]*$/i.test(key)) continue;
+    if (!value || !Array.isArray(value.answers)) continue;
 
     const selected = getSelectedAnswer(value.answers, key);
     result[key] = selected;
-  });
+  }
 
   // Consolidate q9a and q9b into q9 by taking the lower score
   if ('q9a' in result && 'q9b' in result) {
@@ -268,8 +268,8 @@ export function exportChecklistsToCSV(checklists) {
 
   const rows = [];
 
-  list.forEach(cl => {
-    questionKeys.forEach(q => {
+  for (const cl of list) {
+    for (const q of questionKeys) {
       const question = AMSTAR_CHECKLIST[q];
       const questionText = question?.text || q;
       const columns = question?.columns || [];
@@ -277,12 +277,12 @@ export function exportChecklistsToCSV(checklists) {
       const critical = cl[q]?.critical || false;
       const selectedAnswer = getSelectedAnswer(answers, q) || '';
 
-      columns.forEach((col, colIdx) => {
+      for (const [colIdx, col] of columns.entries()) {
         const colLabel = col.label || '';
         const options = col.options || [];
-        const ansArr = answers[colIdx] || [];
-        options.forEach((optText, optIdx) => {
-          const selected = ansArr[optIdx] === true ? 'TRUE' : 'FALSE';
+        const ansArray = answers[colIdx] || [];
+        for (const [optIdx, optText] of options.entries()) {
+          const selected = ansArray[optIdx] === true ? 'TRUE' : 'FALSE';
           rows.push([
             cl.name || '',
             cl.reviewerName || '',
@@ -296,13 +296,13 @@ export function exportChecklistsToCSV(checklists) {
             selected,
             selectedAnswer,
           ]);
-        });
-      });
-    });
-  });
+        }
+      }
+    }
+  }
 
   // CSV encode
-  const escape = val => `"${String(val).replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+  const escape = val => `"${String(val).replaceAll('"', '""').replaceAll('\n', ' ')}"`;
   const csv =
     headers.map(escape).join(',') + '\n' + rows.map(row => row.map(escape).join(',')).join('\n');
   return csv;

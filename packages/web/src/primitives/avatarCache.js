@@ -239,7 +239,7 @@ export async function fetchAndCacheAvatar(userId, imageUrl) {
       // Handle rate limiting (429) and other errors for external URLs
       if (!isRelativeUrl) {
         const retryAfter = response.headers.get('Retry-After');
-        recordExternalFetchFailure(fullUrl, retryAfter ? parseInt(retryAfter, 10) : null);
+        recordExternalFetchFailure(fullUrl, retryAfter ? Number.parseInt(retryAfter, 10) : null);
       }
       // Only warn for non-429 errors or first 429 occurrence
       if (response.status !== 429) {

@@ -252,8 +252,8 @@ export default [
       // For loop - for...of is preferred but for loops are fine
       'unicorn/no-for-loop': 'warn',
 
-      // Prefer switch - style preference
-      'unicorn/prefer-switch': 'warn',
+      // Prefer switch - disabled, if statements are fine
+      'unicorn/prefer-switch': 'off',
 
       // DOM node append - can be adopted gradually
       'unicorn/prefer-dom-node-append': 'warn',

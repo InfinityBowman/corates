@@ -179,7 +179,7 @@ pdfRoutes.post('/', async c => {
 
     // Validate it's a PDF (check magic bytes)
     const header = new Uint8Array(pdfData.slice(0, 5));
-    const pdfMagic = [0x25, 0x50, 0x44, 0x46, 0x2d]; // %PDF-
+    const pdfMagic = [0x25, 0x50, 0x44, 0x46, 0x2D]; // %PDF-
     const isPdf = pdfMagic.every((byte, i) => header[i] === byte);
 
     if (!isPdf) {

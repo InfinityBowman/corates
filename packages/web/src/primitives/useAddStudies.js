@@ -22,7 +22,7 @@ import {
 } from '@/lib/referenceLookup.js';
 
 // Timeout for fetching DOI metadata from CrossRef
-const DOI_FETCH_TIMEOUT = 10000; // 10 seconds
+const DOI_FETCH_TIMEOUT = 10_000; // 10 seconds
 
 /**
  * @param {Object} options
@@ -694,7 +694,7 @@ export function useAddStudies(options = {}) {
         setLookupRefs(prev => [...prev, ...newRefs]);
         setSelectedLookupIds(prev => {
           const next = new Set(prev);
-          newRefs.filter(r => r.pdfAvailable).forEach(r => next.add(r._id));
+          for (const r of newRefs.filter(r => r.pdfAvailable)) next.add(r._id);
           return next;
         });
         setIdentifierInput('');
@@ -761,11 +761,7 @@ export function useAddStudies(options = {}) {
   const toggleDriveFile = file => {
     setSelectedDriveFiles(prev => {
       const exists = prev.some(f => f.id === file.id);
-      if (exists) {
-        return prev.filter(f => f.id !== file.id);
-      } else {
-        return [...prev, file];
-      }
+      return exists ? prev.filter(f => f.id !== file.id) : [...prev, file];
     });
   };
 
@@ -1116,14 +1112,14 @@ export function useAddStudies(options = {}) {
 
       // Reference import state
       importedRefs: serializedImportedRefs,
-      selectedRefIds: Array.from(selectedRefIds()),
+      selectedRefIds: [...selectedRefIds()],
       refFileName: refFileName(),
       refPdfFiles: serializedRefPdfs,
 
       // DOI/PMID lookup state
       identifierInput: identifierInput(),
       lookupRefs: serializedLookupRefs,
-      selectedLookupIds: Array.from(selectedLookupIds()),
+      selectedLookupIds: [...selectedLookupIds()],
 
       // Google Drive state
       selectedDriveFiles: selectedDriveFiles().map(f => ({ id: f.id, name: f.name })),

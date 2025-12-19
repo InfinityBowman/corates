@@ -66,7 +66,7 @@ export function parseOAuthError(params) {
   if (!error) return null;
 
   // Normalize error code to uppercase with underscores (our convention)
-  let code = error.toUpperCase().replace(/-/g, '_');
+  let code = error.toUpperCase().replaceAll('-', '_');
 
   // Map common OAuth/Better Auth error codes to our standardized codes
   const errorMappings = {

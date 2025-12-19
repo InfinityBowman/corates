@@ -193,7 +193,7 @@ describe('ProjectDoc Y.js Sync Protocol', () => {
 
       // Simulate DO storage: convert to Array, then back to Uint8Array
       const fullState = Y.encodeStateAsUpdate(originalDoc);
-      const storedAsArray = Array.from(fullState);
+      const storedAsArray = [...fullState];
       const restoredUint8Array = new Uint8Array(storedAsArray);
 
       // Restore into new doc
@@ -271,7 +271,7 @@ describe('ProjectDoc Y.js Sync Protocol', () => {
       const clientStudiesMap = clientDoc.getMap('reviews');
       const oldStudyYMap = new Y.Map();
       oldStudyYMap.set('name', 'Old Study');
-      oldStudyYMap.set('createdAt', Date.now() - 100000);
+      oldStudyYMap.set('createdAt', Date.now() - 100_000);
       clientStudiesMap.set('old-study', oldStudyYMap);
 
       expect(clientDoc.getMap('reviews').size).toBe(1);
@@ -349,13 +349,13 @@ describe('Production Scenario: New User Joins Project', () => {
     // Add project metadata
     const metaMap = serverDoc.getMap('meta');
     metaMap.set('name', 'Research Project');
-    metaMap.set('createdAt', Date.now() - 86400000); // Created yesterday
+    metaMap.set('createdAt', Date.now() - 86_400_000); // Created yesterday
 
     // Add User A as owner
     const membersMap = serverDoc.getMap('members');
     const userAMember = new Y.Map();
     userAMember.set('role', 'owner');
-    userAMember.set('joinedAt', Date.now() - 86400000);
+    userAMember.set('joinedAt', Date.now() - 86_400_000);
     membersMap.set('user-a', userAMember);
 
     // User A adds 3 studies over time
@@ -363,19 +363,19 @@ describe('Production Scenario: New User Joins Project', () => {
 
     const study1 = new Y.Map();
     study1.set('name', 'Study 1 - Added Yesterday');
-    study1.set('createdAt', Date.now() - 86400000);
+    study1.set('createdAt', Date.now() - 86_400_000);
     study1.set('checklists', new Y.Map());
     studiesMap.set('study-1', study1);
 
     const study2 = new Y.Map();
     study2.set('name', 'Study 2 - Added This Morning');
-    study2.set('createdAt', Date.now() - 3600000);
+    study2.set('createdAt', Date.now() - 3_600_000);
     study2.set('checklists', new Y.Map());
     studiesMap.set('study-2', study2);
 
     const study3 = new Y.Map();
     study3.set('name', 'Study 3 - Added Recently');
-    study3.set('createdAt', Date.now() - 60000);
+    study3.set('createdAt', Date.now() - 60_000);
     study3.set('checklists', new Y.Map());
     studiesMap.set('study-3', study3);
 
@@ -390,7 +390,7 @@ describe('Production Scenario: New User Joins Project', () => {
     membersMap.set('user-b', userBMember);
 
     // Persist again after adding member
-    const persistedStateAfterMember = Array.from(Y.encodeStateAsUpdate(serverDoc));
+    const persistedStateAfterMember = [...Y.encodeStateAsUpdate(serverDoc)];
 
     // === SIMULATE DO RESTART (eviction) ===
     // Create new server doc from persisted state
@@ -434,7 +434,7 @@ describe('Production Scenario: New User Joins Project', () => {
     const staleStudies = clientDoc.getMap('reviews');
     const staleStudy = new Y.Map();
     staleStudy.set('name', 'Stale Study From Different Context');
-    staleStudy.set('createdAt', Date.now() - 999999999);
+    staleStudy.set('createdAt', Date.now() - 999_999_999);
     // Note: Using different clientID means this is treated as separate data
     staleStudies.set('stale-study-id', staleStudy);
 

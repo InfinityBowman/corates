@@ -29,7 +29,7 @@ vi.mock('@/lib/pdfUtils.js', () => ({
     return title
       .toLowerCase()
       .trim()
-      .replace(/[^a-z0-9]/g, '');
+      .replaceAll(/[^a-z0-9]/g, '');
   },
   readFileAsArrayBuffer: vi.fn(),
   withTimeout: (promise, _ms, _operationName) => promise, // Pass through the promise without timeout in tests
@@ -577,7 +577,7 @@ describe('useAddStudies - Collect Mode Effect', () => {
       expect(onStudiesChange).toHaveBeenCalled();
 
       // Check the structure of the data passed
-      const call = onStudiesChange.mock.calls[onStudiesChange.mock.calls.length - 1][0];
+      const call = onStudiesChange.mock.calls.at(-1)[0];
       expect(call).toHaveProperty('pdfs');
       expect(call).toHaveProperty('refs');
       expect(call).toHaveProperty('lookups');
@@ -623,7 +623,7 @@ describe('useAddStudies - Collect Mode Effect', () => {
 
       expect(onStudiesChange).toHaveBeenCalled();
 
-      const call = onStudiesChange.mock.calls[onStudiesChange.mock.calls.length - 1][0];
+      const call = onStudiesChange.mock.calls.at(-1)[0];
       expect(call.pdfs.length).toBe(1);
       expect(call.pdfs[0].title).toBe('No Abstract Study');
       expect(call.pdfs[0].doi).toBe('10.9999/no-abstract');
@@ -668,7 +668,7 @@ describe('useAddStudies - Collect Mode Effect', () => {
       await new Promise(resolve => setTimeout(resolve, 150));
 
       expect(onStudiesChange).toHaveBeenCalled();
-      const call = onStudiesChange.mock.calls[onStudiesChange.mock.calls.length - 1][0];
+      const call = onStudiesChange.mock.calls.at(-1)[0];
 
       // Lookups are surfaced as refs for backward compatibility
       expect(call.refs.length).toBe(1);

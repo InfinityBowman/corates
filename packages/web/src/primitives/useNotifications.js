@@ -20,7 +20,7 @@ export function useNotifications(userId, options = {}) {
   let reconnectTimeout = null;
   let pingInterval = null;
   let reconnectAttempts = 0;
-  const MAX_RECONNECT_DELAY = 60000; // 1 minute max
+  const MAX_RECONNECT_DELAY = 60_000; // 1 minute max
 
   // Track whether we should be connected (user intent)
   let shouldConnect = false;
@@ -50,7 +50,7 @@ export function useNotifications(userId, options = {}) {
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'ping' }));
         }
-      }, 30000);
+      }, 30_000);
     };
 
     ws.onmessage = event => {

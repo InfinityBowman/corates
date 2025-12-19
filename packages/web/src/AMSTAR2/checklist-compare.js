@@ -113,8 +113,8 @@ export function compareMultiPartQuestion(questionKey, q1Parts, q2Parts, dataKeys
   let allPartsAgree = true;
   const partComparisons = [];
 
-  for (let i = 0; i < q1Parts.length; i++) {
-    const partComparison = compareQuestion(dataKeys[i], q1Parts[i], q2Parts[i]);
+  for (const [i, q1Part] of q1Parts.entries()) {
+    const partComparison = compareQuestion(dataKeys[i], q1Part, q2Parts[i]);
     partComparisons.push(partComparison);
     if (!partComparison.isAgreement) {
       allPartsAgree = false;
@@ -187,10 +187,10 @@ export function compareQuestion(questionKey, q1, q2) {
 export function getFinalAnswer(answers, questionKey) {
   if (!Array.isArray(answers) || answers.length === 0) return null;
 
-  const lastCol = answers[answers.length - 1];
+  const lastCol = answers.at(-1);
   if (!Array.isArray(lastCol)) return null;
 
-  const idx = lastCol.findIndex(v => v === true);
+  const idx = lastCol.indexOf(true);
   if (idx === -1) return null;
 
   // Determine the label based on question type and column length
@@ -220,12 +220,12 @@ export function answersMatch(answers1, answers2) {
   if (!Array.isArray(answers1) || !Array.isArray(answers2)) return false;
   if (answers1.length !== answers2.length) return false;
 
-  for (let i = 0; i < answers1.length; i++) {
-    if (!Array.isArray(answers1[i]) || !Array.isArray(answers2[i])) return false;
-    if (answers1[i].length !== answers2[i].length) return false;
+  for (const [i, element] of answers1.entries()) {
+    if (!Array.isArray(element) || !Array.isArray(answers2[i])) return false;
+    if (element.length !== answers2[i].length) return false;
 
-    for (let j = 0; j < answers1[i].length; j++) {
-      if (answers1[i][j] !== answers2[i][j]) return false;
+    for (const [j, element_] of element.entries()) {
+      if (element_ !== answers2[i][j]) return false;
     }
   }
 

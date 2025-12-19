@@ -204,7 +204,7 @@ function normalizeCrossRefWork(work) {
   let abstract = work.abstract || null;
   if (abstract) {
     // Strip JATS XML tags
-    abstract = abstract.replace(/<[^>]*>/g, '').trim();
+    abstract = abstract.replaceAll(/<[^>]*>/g, '').trim();
   }
 
   return {
@@ -234,7 +234,7 @@ export async function fetchFromPMID(pmid) {
   // Clean up PMID - extract just the number
   const cleanPmid = pmid
     .replace(/^pmid:/i, '')
-    .replace(/\D/g, '')
+    .replaceAll(/\D/g, '')
     .trim();
 
   if (!cleanPmid) {
@@ -283,7 +283,7 @@ function parsePubMedXML(xmlText, pmid) {
   const authors = [];
   let firstAuthor = null;
 
-  authorEls.forEach((authorEl, index) => {
+  for (const [index, authorEl] of authorEls.entries()) {
     const lastName = authorEl.querySelector('LastName')?.textContent || '';
     const foreName = authorEl.querySelector('ForeName')?.textContent || '';
     const initials = authorEl.querySelector('Initials')?.textContent || '';
@@ -296,13 +296,13 @@ function parsePubMedXML(xmlText, pmid) {
         firstAuthor = lastName;
       }
     }
-  });
+  }
 
   // Extract publication year
   const pubDateEl =
     article.querySelector('PubDate Year') ||
     article.querySelector('PubMedPubDate[PubStatus="pubmed"] Year');
-  const publicationYear = pubDateEl ? parseInt(pubDateEl.textContent, 10) : null;
+  const publicationYear = pubDateEl ? Number.parseInt(pubDateEl.textContent, 10) : null;
 
   // Extract journal
   const journalEl = article.querySelector('Journal Title, ISOAbbreviation');
@@ -311,13 +311,13 @@ function parsePubMedXML(xmlText, pmid) {
   // Extract abstract
   const abstractEls = article.querySelectorAll('AbstractText');
   let abstract = '';
-  abstractEls.forEach(el => {
+  for (const el of abstractEls) {
     const label = el.getAttribute('Label');
     if (label) {
       abstract += `${label}: `;
     }
     abstract += el.textContent + ' ';
-  });
+  }
   abstract = abstract.trim() || null;
 
   // Extract DOI
@@ -362,7 +362,7 @@ function formatAuthorList(authors) {
 
   // More than 2 authors: "First, Second, ... and Last"
   const allButLast = authors.slice(0, -1).join(', ');
-  return `${allButLast}, and ${authors[authors.length - 1]}`;
+  return `${allButLast}, and ${authors.at(-1)}`;
 }
 
 /**

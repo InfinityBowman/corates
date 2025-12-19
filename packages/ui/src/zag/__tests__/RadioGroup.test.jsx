@@ -61,7 +61,7 @@ describe('RadioGroup', () => {
       ));
 
       const inputs = container.querySelectorAll('input[type="radio"]');
-      const option2Input = Array.from(inputs).find(input => input.value === 'option2');
+      const option2Input = [...inputs].find(input => input.value === 'option2');
       expect(option2Input.checked).toBe(true);
     });
 
@@ -74,7 +74,7 @@ describe('RadioGroup', () => {
       await fireEvent.click(option2Label);
 
       const inputs = container.querySelectorAll('input[type="radio"]');
-      const option2Input = Array.from(inputs).find(input => input.value === 'option2');
+      const option2Input = [...inputs].find(input => input.value === 'option2');
       expect(option2Input.checked).toBe(true);
     });
   });
@@ -86,7 +86,7 @@ describe('RadioGroup', () => {
       ));
 
       const inputs = container.querySelectorAll('input[type="radio"]');
-      const option3Input = Array.from(inputs).find(input => input.value === 'option3');
+      const option3Input = [...inputs].find(input => input.value === 'option3');
       expect(option3Input.checked).toBe(true);
     });
 
@@ -131,9 +131,9 @@ describe('RadioGroup', () => {
       ));
 
       const inputs = container.querySelectorAll('input[type="radio"]');
-      inputs.forEach(input => {
+      for (const input of inputs) {
         expect(input.disabled).toBe(true);
-      });
+      }
     });
 
     it('should disable individual items', () => {
@@ -146,7 +146,7 @@ describe('RadioGroup', () => {
       const { container } = render(() => <RadioGroup items={itemsWithDisabled} label='Options' />);
 
       const inputs = container.querySelectorAll('input[type="radio"]');
-      const opt2Input = Array.from(inputs).find(input => input.value === 'opt2');
+      const opt2Input = [...inputs].find(input => input.value === 'opt2');
       expect(opt2Input.disabled).toBe(true);
     });
 
@@ -188,9 +188,9 @@ describe('RadioGroup', () => {
       ));
 
       const inputs = container.querySelectorAll('input[type="radio"]');
-      inputs.forEach(input => {
+      for (const input of inputs) {
         expect(input.name).toBe('myRadioGroup');
-      });
+      }
     });
   });
 
@@ -215,7 +215,7 @@ describe('RadioGroup', () => {
       ));
 
       const inputs = container.querySelectorAll('input[type="radio"]');
-      const option2Input = Array.from(inputs).find(input => input.value === 'option2');
+      const option2Input = [...inputs].find(input => input.value === 'option2');
       expect(option2Input.checked).toBe(true);
     });
   });
@@ -227,7 +227,7 @@ describe('RadioGroup', () => {
       ));
 
       const controls = container.querySelectorAll('[data-part="item-control"]');
-      const option1Control = Array.from(controls)[0];
+      const option1Control = [...controls][0];
       expect(option1Control).toHaveAttribute('data-state', 'checked');
     });
 
@@ -237,7 +237,7 @@ describe('RadioGroup', () => {
       ));
 
       const controls = container.querySelectorAll('[data-part="item-control"]');
-      const option2Control = Array.from(controls)[1];
+      const option2Control = [...controls][1];
       expect(option2Control).toHaveAttribute('data-state', 'unchecked');
     });
   });

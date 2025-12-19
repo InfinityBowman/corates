@@ -29,12 +29,10 @@ class MockDOMParser {
         if (selector === 'PubmedArticle') {
           return {};
         }
-        if (selector === 'ArticleTitle') {
-          if (xmlText.includes('<ArticleTitle>')) {
+        if (selector === 'ArticleTitle' && xmlText.includes('<ArticleTitle>')) {
             const match = xmlText.match(/<ArticleTitle>([^<]+)<\/ArticleTitle>/);
             return match ? { textContent: match[1] } : null;
           }
-        }
         return null;
       }),
       querySelectorAll: vi.fn(() => []),
