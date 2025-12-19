@@ -48,11 +48,11 @@ export function getAllowedOrigins(env = {}) {
   // Add origins from environment variable
   if (env.ALLOWED_ORIGINS) {
     const envOrigins = env.ALLOWED_ORIGINS.split(',').map(o => o.trim());
-    envOrigins.forEach(origin => {
+    for (const origin of envOrigins) {
       if (origin && !origins.includes(origin)) {
         origins.push(origin);
       }
-    });
+    }
   }
 
   // Add AUTH_BASE_URL if set

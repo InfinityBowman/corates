@@ -23,16 +23,16 @@ export class EmailQueue {
       const payload = await request.json();
       // Minimally validate
       if (!payload?.to || !payload?.subject || (!payload?.html && !payload?.text)) {
-        return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400 });
+        return Response.json({ error: 'Invalid payload' }, { status: 400 });
       }
 
       // Add to queue and process
       await this.queueEmail(payload);
 
-      return new Response(JSON.stringify({ success: true }), { status: 202 });
+      return Response.json({ success: true }, { status: 202 });
     } catch (err) {
       console.error('EmailQueue error parsing request:', err);
-      return new Response(JSON.stringify({ error: 'Bad request' }), { status: 400 });
+      return Response.json({ error: 'Bad request' }, { status: 400 });
     }
   }
 
@@ -79,7 +79,7 @@ export class EmailQueue {
         // Keep record for a short time for debugging, then delete
         await this.state.storage.put(`email:${emailRecord.id}`, emailRecord);
         // Schedule cleanup
-        setTimeout(() => this.cleanupSentEmail(emailRecord.id), 60000);
+        setTimeout(() => this.cleanupSentEmail(emailRecord.id), 60_000);
         return true;
       } else {
         throw new Error(result.error || 'Unknown email error');
@@ -142,12 +142,10 @@ export class EmailQueue {
     for (const [_key, emailRecord] of emails) {
       if (emailRecord.status === 'retry-pending' && emailRecord.nextRetryAt <= now) {
         await this.attemptSend(emailRecord);
-      } else if (emailRecord.status === 'retry-pending' && emailRecord.nextRetryAt > now) {
-        // Track earliest next retry
-        if (!nextRetryTime || emailRecord.nextRetryAt < nextRetryTime) {
+      } else if (emailRecord.status === 'retry-pending' && emailRecord.nextRetryAt > now && // Track earliest next retry
+        (!nextRetryTime || emailRecord.nextRetryAt < nextRetryTime)) {
           nextRetryTime = emailRecord.nextRetryAt;
         }
-      }
     }
 
     // Schedule next alarm if there are pending retries
@@ -155,7 +153,7 @@ export class EmailQueue {
       await this.state.storage.setAlarm(nextRetryTime);
     }
 
-    return new Response(JSON.stringify({ success: true }), { status: 200 });
+    return Response.json({ success: true }, { status: 200 });
   }
 
   /**
@@ -182,6 +180,6 @@ export class EmailQueue {
    */
   async getDeadLetterQueue() {
     const deadLetters = await this.state.storage.list({ prefix: 'dead-letter:' });
-    return Array.from(deadLetters.values());
+    return [...deadLetters.values()];
   }
 }

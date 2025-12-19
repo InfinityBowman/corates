@@ -126,8 +126,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
   try {
     // Find user by userId or email
     let userToAdd;
-    if (userId) {
-      userToAdd = await db
+    userToAdd = await (userId ? db
         .select({
           id: user.id,
           name: user.name,
@@ -138,9 +137,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         })
         .from(user)
         .where(eq(user.id, userId))
-        .get();
-    } else {
-      userToAdd = await db
+        .get() : db
         .select({
           id: user.id,
           name: user.name,
@@ -151,8 +148,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         })
         .from(user)
         .where(eq(user.email, email.toLowerCase()))
-        .get();
-    }
+        .get());
 
     if (!userToAdd) {
       return c.json(createErrorResponse(ERROR_CODES.NOT_FOUND, 'User not found'), 404);

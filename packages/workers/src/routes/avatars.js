@@ -21,7 +21,7 @@ avatarRoutes.use('*', requireAuth);
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
 
 // Allowed image types
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 
 /**
  * Sync avatar URL to all project memberships for a user
@@ -72,7 +72,7 @@ avatarRoutes.post('/', async c => {
   const { user } = getAuth(c);
 
   // Check Content-Length header first for early rejection
-  const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
+  const contentLength = Number.parseInt(c.req.header('Content-Length') || '0', 10);
   if (contentLength > MAX_AVATAR_SIZE) {
     return c.json(
       createErrorResponse(
@@ -96,7 +96,7 @@ avatarRoutes.post('/', async c => {
       }
 
       // Validate file type
-      if (!ALLOWED_TYPES.includes(file.type)) {
+      if (!ALLOWED_TYPES.has(file.type)) {
         return c.json(
           createErrorResponse(
             ERROR_CODES.VALIDATION,

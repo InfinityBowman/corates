@@ -569,9 +569,9 @@ export function getDomainQuestions(domainKey) {
   if (domain.subsections) {
     // Domain 3 has subsections
     let allQuestions = {};
-    Object.values(domain.subsections).forEach(subsection => {
+    for (const subsection of Object.values(domain.subsections)) {
       allQuestions = { ...allQuestions, ...subsection.questions };
-    });
+    }
     return allQuestions;
   }
 

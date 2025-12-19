@@ -40,7 +40,7 @@ export class UserSession {
       // Verify authentication for all requests
       const { user } = await verifyAuth(request, this.env);
       if (!user) {
-        return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        return Response.json({ error: 'Authentication required' }, {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -52,7 +52,7 @@ export class UserSession {
 
       // Ensure user can only access their own session
       if (!sessionUserId || sessionUserId !== user.id) {
-        return new Response(JSON.stringify({ error: 'Access denied' }), {
+        return Response.json({ error: 'Access denied' }, {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -80,13 +80,13 @@ export class UserSession {
         return await this.deleteSession(corsHeaders);
       }
 
-      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      return Response.json({ error: 'Method not allowed' }, {
         status: 405,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (error) {
       console.error('UserSession error:', error);
-      return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+      return Response.json({ error: 'Internal Server Error' }, {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -109,12 +109,12 @@ export class UserSession {
       // Schedule cleanup alarm if not already set
       await this.scheduleCleanupAlarm();
 
-      return new Response(JSON.stringify(sessionData), {
+      return Response.json(sessionData, {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (error) {
       console.error('Get session error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to retrieve session' }), {
+      return Response.json({ error: 'Failed to retrieve session' }, {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -137,13 +137,13 @@ export class UserSession {
       // Schedule cleanup alarm
       await this.scheduleCleanupAlarm();
 
-      return new Response(JSON.stringify(sessionData), {
+      return Response.json(sessionData, {
         status: 201,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (error) {
       console.error('Create session error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to create session' }), {
+      return Response.json({ error: 'Failed to create session' }, {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -156,7 +156,7 @@ export class UserSession {
       const sessionData = await this.state.storage.get('session');
 
       if (!sessionData) {
-        return new Response(JSON.stringify({ error: 'Session not found' }), {
+        return Response.json({ error: 'Session not found' }, {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -170,12 +170,12 @@ export class UserSession {
 
       await this.state.storage.put('session', updatedSession);
 
-      return new Response(JSON.stringify(updatedSession), {
+      return Response.json(updatedSession, {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (error) {
       console.error('Update session error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to update session' }), {
+      return Response.json({ error: 'Failed to update session' }, {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -186,12 +186,12 @@ export class UserSession {
     try {
       await this.state.storage.deleteAll();
 
-      return new Response(JSON.stringify({ success: true }), {
+      return Response.json({ success: true }, {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (error) {
       console.error('Delete session error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to delete session' }), {
+      return Response.json({ error: 'Failed to delete session' }, {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -288,12 +288,12 @@ export class UserSession {
         await this.state.storage.put('pendingNotifications', pending);
       }
 
-      return new Response(JSON.stringify({ success: true, delivered }), {
+      return Response.json({ success: true, delivered }, {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (error) {
       console.error('Notification error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to send notification' }), {
+      return Response.json({ error: 'Failed to send notification' }, {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

@@ -22,6 +22,82 @@ function getStudyNameFromFilename(pdfFileName) {
 }
 
 /**
+ * Create a study from form input
+ * @returns {string|null} Study ID or null
+ */
+function createStudyFromInput(ops, study) {
+  const metadata = {
+    originalTitle: study.title || study.name || null,
+    firstAuthor: study.firstAuthor,
+    publicationYear: study.publicationYear,
+    authors: study.authors,
+    journal: study.journal,
+    doi: study.doi,
+    abstract: study.abstract,
+    importSource: study.importSource,
+    pdfUrl: study.pdfUrl,
+    pdfSource: study.pdfSource,
+  };
+
+  const studyName = getStudyNameFromFilename(study.pdfFileName);
+  return ops.createStudy(studyName, study.abstract || '', metadata);
+}
+
+/**
+ * Attach PDF to study from various sources
+ * Priority: 1) Direct PDF data, 2) Google Drive, 3) URL fetch
+ * @returns {Promise<boolean>} True if PDF was attached
+ */
+async function attachPdfToStudy(ops, study, studyId, projectId, userId) {
+  // Source 1: Direct PDF data (from file upload)
+  if (study.pdfData) {
+    return uploadAndAttachPdf(ops, study.pdfData, study.pdfFileName, studyId, projectId, userId);
+  }
+
+  // Source 2: Google Drive import
+  if (study.googleDriveFileId) {
+    const imported = await handleGoogleDrivePdf(ops, study, studyId, projectId, userId);
+    if (imported) return true;
+  }
+
+  // Source 3: Fetch from URL
+  if (study.pdfUrl && study.pdfAccessible) {
+    const fetched = await fetchPdfFromUrl(study);
+    if (fetched) {
+      return uploadAndAttachPdf(
+        ops,
+        fetched.pdfData,
+        fetched.pdfFileName,
+        studyId,
+        projectId,
+        userId,
+      );
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Show appropriate toast for batch add results
+ */
+function showBatchResultToast(successCount, manualPdfCount) {
+  if (successCount === 0) return;
+
+  const studyWord = successCount === 1 ? 'study' : 'studies';
+
+  if (manualPdfCount > 0) {
+    const pdfWord = manualPdfCount === 1 ? 'PDF requires' : 'PDFs require';
+    showToast.info(
+      'Studies Added',
+      `Added ${successCount} ${studyWord}. ${manualPdfCount} ${pdfWord} manual download from the publisher.`,
+    );
+  } else {
+    showToast.success('Studies Added', `Successfully added ${successCount} ${studyWord}.`);
+  }
+}
+
+/**
  * Extract metadata from PDF and optionally fetch DOI reference data
  * @returns {Object} Updates to apply to study metadata
  */
@@ -155,8 +231,8 @@ async function fetchPdfFromUrl(study) {
   try {
     const pdfData = await fetchPdfViaProxy(study.pdfUrl);
     const safeName = (study.doi || study.title || 'document')
-      .replace(/[^a-zA-Z0-9.-]/g, '_')
-      .substring(0, 50);
+      .replaceAll(/[^a-zA-Z0-9.-]/g, '_')
+      .slice(0, 50);
     return { pdfData, pdfFileName: `${safeName}.pdf` };
   } catch (err) {
     console.warn('Failed to fetch PDF from URL:', err);
@@ -298,82 +374,6 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
       console.error('Error adding studies:', err);
       showToast.error('Addition Failed', 'Failed to add studies');
       throw err;
-    }
-  }
-
-  /**
-   * Create a study from form input
-   * @returns {string|null} Study ID or null
-   */
-  function createStudyFromInput(ops, study) {
-    const metadata = {
-      originalTitle: study.title || study.name || null,
-      firstAuthor: study.firstAuthor,
-      publicationYear: study.publicationYear,
-      authors: study.authors,
-      journal: study.journal,
-      doi: study.doi,
-      abstract: study.abstract,
-      importSource: study.importSource,
-      pdfUrl: study.pdfUrl,
-      pdfSource: study.pdfSource,
-    };
-
-    const studyName = getStudyNameFromFilename(study.pdfFileName);
-    return ops.createStudy(studyName, study.abstract || '', metadata);
-  }
-
-  /**
-   * Attach PDF to study from various sources
-   * Priority: 1) Direct PDF data, 2) Google Drive, 3) URL fetch
-   * @returns {Promise<boolean>} True if PDF was attached
-   */
-  async function attachPdfToStudy(ops, study, studyId, projectId, userId) {
-    // Source 1: Direct PDF data (from file upload)
-    if (study.pdfData) {
-      return uploadAndAttachPdf(ops, study.pdfData, study.pdfFileName, studyId, projectId, userId);
-    }
-
-    // Source 2: Google Drive import
-    if (study.googleDriveFileId) {
-      const imported = await handleGoogleDrivePdf(ops, study, studyId, projectId, userId);
-      if (imported) return true;
-    }
-
-    // Source 3: Fetch from URL
-    if (study.pdfUrl && study.pdfAccessible) {
-      const fetched = await fetchPdfFromUrl(study);
-      if (fetched) {
-        return uploadAndAttachPdf(
-          ops,
-          fetched.pdfData,
-          fetched.pdfFileName,
-          studyId,
-          projectId,
-          userId,
-        );
-      }
-    }
-
-    return false;
-  }
-
-  /**
-   * Show appropriate toast for batch add results
-   */
-  function showBatchResultToast(successCount, manualPdfCount) {
-    if (successCount === 0) return;
-
-    const studyWord = successCount === 1 ? 'study' : 'studies';
-
-    if (manualPdfCount > 0) {
-      const pdfWord = manualPdfCount === 1 ? 'PDF requires' : 'PDFs require';
-      showToast.info(
-        'Studies Added',
-        `Added ${successCount} ${studyWord}. ${manualPdfCount} ${pdfWord} manual download from the publisher.`,
-      );
-    } else {
-      showToast.success('Studies Added', `Successfully added ${successCount} ${studyWord}.`);
     }
   }
 

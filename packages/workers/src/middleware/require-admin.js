@@ -6,7 +6,7 @@
 import { createAuth } from '../auth/config.js';
 import { isAdminUser } from '../auth/admin.js';
 
-export const isAdmin = isAdminUser;
+
 
 /**
  * Middleware that requires admin privileges
@@ -37,3 +37,5 @@ export async function requireAdmin(c, next) {
     return c.json({ error: 'Authentication required' }, 401);
   }
 }
+
+export {isAdminUser as isAdmin} from '../auth/admin.js';

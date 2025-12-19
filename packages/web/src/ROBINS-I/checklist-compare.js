@@ -77,7 +77,7 @@ export function compareChecklists(checklist1, checklist2) {
   agreements += result.sectionB.agreements.length;
 
   // Domain stats
-  Object.values(result.domains).forEach(domain => {
+  for (const domain of Object.values(result.domains)) {
     totalQuestions += domain.questions.agreements.length + domain.questions.disagreements.length;
     agreements += domain.questions.agreements.length;
 
@@ -88,7 +88,7 @@ export function compareChecklists(checklist1, checklist2) {
     } else if (domain.reviewer1?.judgement || domain.reviewer2?.judgement) {
       totalQuestions += 1;
     }
-  });
+  }
 
   result.stats = {
     total: totalQuestions,
@@ -392,7 +392,7 @@ export function getReconciliationSummary(comparison) {
   const domainDisagreements = [];
   const judgementDisagreements = [];
 
-  Object.entries(domains).forEach(([domainKey, domain]) => {
+  for (const [domainKey, domain] of Object.entries(domains)) {
     if (domain.questions.disagreements.length > 0) {
       domainDisagreements.push({
         domain: domainKey,
@@ -404,7 +404,7 @@ export function getReconciliationSummary(comparison) {
     if (!domain.judgementMatch && (domain.reviewer1?.judgement || domain.reviewer2?.judgement)) {
       judgementDisagreements.push(domainKey);
     }
-  });
+  }
 
   return {
     totalQuestions: stats.total,

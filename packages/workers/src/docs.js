@@ -15,9 +15,9 @@ export async function getDocsHtml(env) {
   const defaultMessage = `Run \`pnpm openapi\` from root to generate /openapi.json.`;
   const openapiMessage = env.OPENAPI_NOT_FOUND_MESSAGE || defaultMessage;
   const escapeHtml = s =>
-    String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
-  const jsonString = JSON.stringify(openapiJson).replace(/<\/script>/g, '<\\/script>');
+  const jsonString = JSON.stringify(openapiJson).replaceAll('</script>', String.raw`<\/script>`);
 
   const html = `<!DOCTYPE html>
 <html>

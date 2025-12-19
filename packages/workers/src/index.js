@@ -5,9 +5,7 @@
  */
 
 import { Hono } from 'hono';
-import { UserSession } from './durable-objects/UserSession.js';
-import { ProjectDoc } from './durable-objects/ProjectDoc.js';
-import { EmailQueue } from './durable-objects/EmailQueue.js';
+
 import { createCorsMiddleware } from './middleware/cors.js';
 import { securityHeaders } from './middleware/security-headers.js';
 import { requireAuth } from './middleware/auth.js';
@@ -29,7 +27,6 @@ import { accountMergeRoutes } from './routes/account-merge.js';
 import { contactRoutes } from './routes/contact.js';
 
 // Export Durable Objects
-export { UserSession, ProjectDoc, EmailQueue };
 
 // Create main Hono app
 const app = new Hono();
@@ -365,3 +362,7 @@ app.onError((err, c) => {
 });
 
 export default app;
+
+export { UserSession } from './durable-objects/UserSession.js';
+export { ProjectDoc } from './durable-objects/ProjectDoc.js';
+export { EmailQueue } from './durable-objects/EmailQueue.js';

@@ -80,9 +80,9 @@ auth.get('/verify-email', async c => {
       headers.set('Content-Type', 'text/html; charset=utf-8');
 
       // Append all Set-Cookie headers
-      setCookieHeaders.forEach(cookie => {
+      for (const cookie of setCookieHeaders) {
         headers.append('Set-Cookie', cookie);
-      });
+      }
 
       return new Response(getEmailVerificationSuccessPage(), {
         status: 200,

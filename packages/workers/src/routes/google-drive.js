@@ -79,9 +79,7 @@ async function getValidAccessToken(env, db, userId, tokens) {
   // is still valid. In that case, return the stored access token rather than forcing a refresh.
   // This avoids breaking Google Picker for older/partial account links that don't have refresh
   // tokens or expiry information.
-  if (!expiresAt || Number.isNaN(new Date(expiresAt).getTime())) {
-    if (tokens.accessToken) return tokens.accessToken;
-  }
+  if ((!expiresAt || Number.isNaN(new Date(expiresAt).getTime())) && tokens.accessToken) return tokens.accessToken;
 
   // Token is expired or about to expire, refresh it
   if (!tokens.refreshToken) {

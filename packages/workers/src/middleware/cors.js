@@ -30,6 +30,6 @@ export function createCorsMiddleware(env) {
       'User-Agent',
     ],
     credentials: true,
-    maxAge: 86400, // Cache preflight for 24 hours
+    maxAge: 86_400, // Cache preflight for 24 hours
   });
 }

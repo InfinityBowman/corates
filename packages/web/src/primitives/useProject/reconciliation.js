@@ -52,7 +52,7 @@ export function createReconciliationOperations(projectId, getYDoc, isSynced) {
 
     // Update each question's answers
     const finalAnswers = progressData.finalAnswers || {};
-    Object.entries(finalAnswers).forEach(([questionKey, questionData]) => {
+    for (const [questionKey, questionData] of Object.entries(finalAnswers)) {
       let questionYMap = finalAnswersMap.get(questionKey);
       if (!questionYMap || !(questionYMap instanceof Y.Map)) {
         questionYMap = new Y.Map();
@@ -71,7 +71,7 @@ export function createReconciliationOperations(projectId, getYDoc, isSynced) {
       if (!questionYMap.get('note')) {
         questionYMap.set('note', new Y.Text());
       }
-    });
+    }
 
     studyYMap.set('updatedAt', Date.now());
   }

@@ -222,7 +222,7 @@ export default [
       'unicorn/switch-case-braces': 'off',
 
       // Response static JSON - Cloudflare Workers pattern
-      'unicorn/prefer-response-static-json': 'off',
+      // 'unicorn/prefer-response-static-json': 'off',
 
       // Spread operator - can be adopted gradually
       'unicorn/prefer-spread': 'warn',

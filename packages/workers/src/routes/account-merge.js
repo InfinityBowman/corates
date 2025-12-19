@@ -56,7 +56,7 @@ const mergeInitiateRateLimiter = rateLimit({
 function generateCode() {
   const array = new Uint32Array(1);
   crypto.getRandomValues(array);
-  return (100000 + (array[0] % 900000)).toString();
+  return (100_000 + (array[0] % 900_000)).toString();
 }
 
 /**
@@ -404,18 +404,18 @@ accountMergeRoutes.post('/complete', async c => {
     const now = new Date();
 
     // 1. Move non-duplicate OAuth accounts to primary user
-    for (const acc of accountsToMove) {
+    for (const accumulator of accountsToMove) {
       batchOps.push(
         db
           .update(account)
           .set({ userId: primaryUserId, updatedAt: now })
-          .where(eq(account.id, acc.id)),
+          .where(eq(account.id, accumulator.id)),
       );
     }
 
     // 2. Delete duplicate provider accounts from secondary
-    for (const acc of duplicateAccounts) {
-      batchOps.push(db.delete(account).where(eq(account.id, acc.id)));
+    for (const accumulator of duplicateAccounts) {
+      batchOps.push(db.delete(account).where(eq(account.id, accumulator.id)));
     }
 
     // 3. Update project ownership

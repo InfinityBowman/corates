@@ -63,7 +63,7 @@ export const SESSION_CONFIG = {
 export const EMAIL_RETRY_CONFIG = {
   MAX_RETRIES: 3,
   BASE_DELAY_MS: 1000, // 1 second base delay
-  MAX_DELAY_MS: 30000, // 30 seconds max delay
+  MAX_DELAY_MS: 30_000, // 30 seconds max delay
   BACKOFF_MULTIPLIER: 2,
 };
 

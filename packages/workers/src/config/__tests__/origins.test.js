@@ -39,7 +39,7 @@ describe('matchesOriginPattern', () => {
 
   it('should return false for null or undefined origin', () => {
     expect(matchesOriginPattern(null)).toBe(false);
-    expect(matchesOriginPattern(undefined)).toBe(false);
+    expect(matchesOriginPattern()).toBe(false);
     expect(matchesOriginPattern('')).toBe(false);
   });
 });
@@ -127,7 +127,7 @@ describe('isOriginAllowed', () => {
 
   it('should reject null or undefined origins', () => {
     expect(isOriginAllowed(null)).toBe(false);
-    expect(isOriginAllowed(undefined)).toBe(false);
+    expect(isOriginAllowed()).toBe(false);
     expect(isOriginAllowed('')).toBe(false);
   });
 

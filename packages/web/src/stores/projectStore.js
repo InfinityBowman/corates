@@ -30,7 +30,7 @@ function createProjectStore() {
       const timestamp = localStorage.getItem(PROJECT_LIST_CACHE_TIMESTAMP_KEY);
       if (!cached || !timestamp) return null;
 
-      const age = Date.now() - parseInt(timestamp, 10);
+      const age = Date.now() - Number.parseInt(timestamp, 10);
       if (age > PROJECT_LIST_CACHE_MAX_AGE) {
         // Cache expired, clear it
         localStorage.removeItem(PROJECT_LIST_CACHE_KEY);

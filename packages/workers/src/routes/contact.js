@@ -130,7 +130,7 @@ function escapeHtml(text) {
     '"': '&quot;',
     "'": '&#039;',
   };
-  return String(text).replace(/[&<>"']/g, m => map[m]);
+  return String(text).replaceAll(/[&<>"']/g, m => map[m]);
 }
 
 export { contact as contactRoutes };

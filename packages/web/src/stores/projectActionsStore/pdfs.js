@@ -58,9 +58,9 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
       const a = document.createElement('a');
       a.href = url;
       a.download = pdf.fileName;
-      document.body.appendChild(a);
+      document.body.append(a);
       a.click();
-      document.body.removeChild(a);
+      a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Error downloading PDF:', err);
@@ -96,7 +96,7 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
     try {
       // Auto-set as primary if first PDF
       const hasPdfs = study?.pdfs?.length > 0;
-      const effectiveTag = !hasPdfs ? 'primary' : tag;
+      const effectiveTag = hasPdfs ? tag : 'primary';
 
       uploadResult = await uploadPdf(projectId, studyId, file, file.name);
 
@@ -191,7 +191,7 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
 
     const study = projectStore.getStudy(projectId, studyId);
     const hasPdfs = study?.pdfs?.length > 0;
-    const effectiveTag = !hasPdfs ? 'primary' : tag;
+    const effectiveTag = hasPdfs ? tag : 'primary';
 
     try {
       ops.addPdfToStudy(
