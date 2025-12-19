@@ -126,7 +126,8 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
   try {
     // Find user by userId or email
     let userToAdd;
-    userToAdd = await (userId ? db
+    userToAdd = await (userId ?
+      db
         .select({
           id: user.id,
           name: user.name,
@@ -137,7 +138,8 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         })
         .from(user)
         .where(eq(user.id, userId))
-        .get() : db
+        .get()
+    : db
         .select({
           id: user.id,
           name: user.name,

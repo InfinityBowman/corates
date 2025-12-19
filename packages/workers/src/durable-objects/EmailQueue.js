@@ -142,10 +142,13 @@ export class EmailQueue {
     for (const [_key, emailRecord] of emails) {
       if (emailRecord.status === 'retry-pending' && emailRecord.nextRetryAt <= now) {
         await this.attemptSend(emailRecord);
-      } else if (emailRecord.status === 'retry-pending' && emailRecord.nextRetryAt > now && // Track earliest next retry
-        (!nextRetryTime || emailRecord.nextRetryAt < nextRetryTime)) {
-          nextRetryTime = emailRecord.nextRetryAt;
-        }
+      } else if (
+        emailRecord.status === 'retry-pending' &&
+        emailRecord.nextRetryAt > now && // Track earliest next retry
+        (!nextRetryTime || emailRecord.nextRetryAt < nextRetryTime)
+      ) {
+        nextRetryTime = emailRecord.nextRetryAt;
+      }
     }
 
     // Schedule next alarm if there are pending retries
