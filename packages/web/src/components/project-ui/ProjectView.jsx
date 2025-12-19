@@ -12,7 +12,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
 import { importFromGoogleDrive } from '@api/google-drive.js';
-import { Tabs } from '@corates/ui';
+import { Tabs, showToast } from '@corates/ui';
 import { BiRegularHome } from 'solid-icons/bi';
 import { BsListTask } from 'solid-icons/bs';
 import { CgArrowsExchange } from 'solid-icons/cg';
@@ -55,6 +55,25 @@ export default function ProjectView() {
   onCleanup(() => {
     projectActionsStore._clearActiveProject();
     disconnect();
+  });
+
+  // Watch for access-denied errors and redirect to dashboard
+  // These errors occur when: project deleted, user removed, or user never had access
+  const ACCESS_DENIED_ERRORS = [
+    'This project has been deleted',
+    'You have been removed from this project',
+    'You are not a member of this project',
+    'Unable to connect to project. It may have been deleted or you may not have access.',
+  ];
+
+  createEffect(() => {
+    const state = connectionState();
+    if (state.error && ACCESS_DENIED_ERRORS.includes(state.error)) {
+      // Show appropriate toast message
+      showToast.error('Access Denied', state.error);
+      // Navigate to dashboard
+      navigate('/dashboard', { replace: true });
+    }
   });
 
   // Retrieve pending data from projectStore (stored during project creation)

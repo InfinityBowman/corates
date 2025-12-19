@@ -7,7 +7,7 @@
 import { createEffect, onCleanup, createMemo } from 'solid-js';
 import * as Y from 'yjs';
 import { IndexeddbPersistence } from 'y-indexeddb';
-import projectStore from '@/stores/projectStore.js';
+import projectStore, { registerStaleProjectCleanup } from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import useOnlineStatus from '../useOnlineStatus.js';
 import { createConnectionManager } from './connection.js';
@@ -22,6 +22,12 @@ import { createReconciliationOperations } from './reconciliation.js';
  * Each project ID maps to a connection instance with reference counting.
  */
 const connectionRegistry = new Map();
+
+/**
+ * IndexedDB database name prefix for Y.js persistence
+ * Must match the pattern used in the IndexeddbPersistence initialization
+ */
+const INDEXEDDB_PREFIX = 'corates-project-';
 
 /**
  * Get or create a shared connection for a project
@@ -81,6 +87,57 @@ function releaseConnection(projectId) {
     projectStore.setConnectionState(projectId, { connected: false, synced: false });
   }
 }
+
+/**
+ * Clean up all local data for a project.
+ * Called when user is removed from a project or when project is deleted.
+ * This ensures no stale data remains on the client.
+ * @param {string} projectId - The project ID to clean up
+ */
+export async function cleanupProjectLocalData(projectId) {
+  if (!projectId) return;
+
+  // 1. Force release connection regardless of refCount (handles removal while connected)
+  if (connectionRegistry.has(projectId)) {
+    const entry = connectionRegistry.get(projectId);
+    // Force cleanup
+    if (entry.connectionManager) {
+      entry.connectionManager.destroy();
+    }
+    if (entry.indexeddbProvider) {
+      entry.indexeddbProvider.destroy();
+    }
+    if (entry.ydoc) {
+      entry.ydoc.destroy();
+    }
+    connectionRegistry.delete(projectId);
+    projectActionsStore._removeConnection(projectId);
+  }
+
+  // 2. Delete IndexedDB storage (y-indexeddb uses this naming pattern)
+  try {
+    const dbName = `${INDEXEDDB_PREFIX}${projectId}`;
+    await new Promise((resolve, reject) => {
+      const request = indexedDB.deleteDatabase(dbName);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+      request.onblocked = () => {
+        console.warn('IndexedDB deletion blocked for project:', projectId);
+        resolve(); // Continue anyway
+      };
+    });
+  } catch (err) {
+    console.error('Failed to delete IndexedDB for project:', projectId, err);
+  }
+
+  // 3. Clear from projectStore (in-memory + localStorage cache)
+  projectStore.clearProject(projectId);
+  projectStore.removeProjectFromList(projectId);
+}
+
+// Register the cleanup function with projectStore for stale project reconciliation
+// This happens at module load time to avoid circular dependency issues
+registerStaleProjectCleanup(cleanupProjectLocalData);
 
 /**
  * Hook to connect to a project's Y.Doc and manage studies/checklists
@@ -205,6 +262,7 @@ export function useProject(projectId) {
 
     // Create and connect WebSocket manager
     // onSync is called when WebSocket has synced with server
+    // onAccessDenied is called when connection is rejected due to access issues
     connectionEntry.connectionManager = createConnectionManager(projectId, ydoc, {
       onSync: () => {
         // Mark as synced only after WebSocket has synced with server
@@ -212,6 +270,11 @@ export function useProject(projectId) {
         connectionEntry.syncManager?.syncFromYDoc();
       },
       isLocalProject,
+      onAccessDenied: async () => {
+        // Clean up all local data when access is denied
+        // This handles: removed from project, project deleted, never was a member
+        await cleanupProjectLocalData(projectId);
+      },
     });
     connectionEntry.connectionManager.connect();
   }

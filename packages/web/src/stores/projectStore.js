@@ -17,6 +17,10 @@ const PROJECT_LIST_CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 // This avoids passing non-serializable data through router state
 const pendingProjectData = new Map();
 
+// Callback for cleaning up local data when a project is no longer accessible
+// Set by useProject module to avoid circular dependency
+let onStaleProjectCleanup = null;
+
 function createProjectStore() {
   // Load cached project list from localStorage
   function loadCachedProjectList() {
@@ -405,6 +409,22 @@ function createProjectStore() {
       }
 
       const projects = await response.json();
+
+      // Reconcile: clean up local data for projects no longer in the server list
+      // This handles cases where user was removed or project was deleted while offline
+      const serverProjectIds = new Set(projects.map(p => p.id));
+      const cachedProjectIds = Object.keys(store.projects);
+
+      for (const cachedId of cachedProjectIds) {
+        if (!serverProjectIds.has(cachedId) && onStaleProjectCleanup) {
+          // User no longer has access to this project - clean up local data
+          // Run async but don't block the fetch
+          onStaleProjectCleanup(cachedId).catch(err => {
+            console.error('Failed to clean up stale project:', cachedId, err);
+          });
+        }
+      }
+
       setStore('projectList', {
         items: projects,
         loaded: true,
@@ -516,5 +536,14 @@ function createProjectStore() {
 // Create singleton store without createRoot
 // createStore doesn't need a reactive owner/root context
 const projectStore = createProjectStore();
+
+/**
+ * Register a callback for cleaning up stale project local data.
+ * This is called by useProject module to avoid circular dependency.
+ * @param {Function} callback - Async function that takes projectId and cleans up local data
+ */
+export function registerStaleProjectCleanup(callback) {
+  onStaleProjectCleanup = callback;
+}
 
 export default projectStore;

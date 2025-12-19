@@ -34,6 +34,22 @@ export default function ChecklistYjsWrapper() {
   // Read data directly from store for faster reactivity
   const connectionState = () => projectStore.getConnectionState(params.projectId);
 
+  // Watch for access-denied errors and redirect to dashboard
+  const ACCESS_DENIED_ERRORS = [
+    'This project has been deleted',
+    'You have been removed from this project',
+    'You are not a member of this project',
+    'Unable to connect to project. It may have been deleted or you may not have access.',
+  ];
+
+  createEffect(() => {
+    const state = connectionState();
+    if (state.error && ACCESS_DENIED_ERRORS.includes(state.error)) {
+      showToast.error('Access Denied', state.error);
+      navigate('/dashboard', { replace: true });
+    }
+  });
+
   // Find the current study and checklist from the store
   const currentStudy = createMemo(() => {
     return projectStore.getStudy(params.projectId, params.studyId);
