@@ -104,7 +104,7 @@ export default function SplitScreenLayout(props) {
       >
         {/* First panel */}
         <div
-          class='overflow-auto'
+          class='overflow-auto transition-all duration-300 ease-in-out'
           style={{
             [layout() === 'vertical' ? 'width' : 'height']:
               showSecondPanel() ? `${splitRatio()}%` : '100%',
@@ -113,21 +113,34 @@ export default function SplitScreenLayout(props) {
           {firstPanel()}
         </div>
 
-        {/* Divider / Resize handle */}
-        <Show when={showSecondPanel() && secondPanel()}>
+        {/* Divider / Resize handle with animation */}
+        <Show when={secondPanel()}>
           <div
             onMouseDown={handleMouseDown}
-            class={` ${layout() === 'vertical' ? 'w-1 cursor-col-resize' : 'h-1 cursor-row-resize'} shrink-0 bg-gray-200 transition-colors hover:bg-blue-400 active:bg-blue-500 ${isDragging() ? 'bg-blue-500' : ''} `}
-          />
-
-          {/* Second panel */}
-          <div
-            class='overflow-auto'
+            class={`${layout() === 'vertical' ? 'w-1 cursor-col-resize' : 'h-1 cursor-row-resize'} shrink-0 bg-gray-200 transition-all duration-300 ease-in-out hover:bg-blue-400 active:bg-blue-500 ${
+              isDragging() ? 'bg-blue-500' : ''
+            } ${showSecondPanel() ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
             style={{
-              [layout() === 'vertical' ? 'width' : 'height']: `${100 - splitRatio()}%`,
+              [layout() === 'vertical' ? 'width' : 'height']: showSecondPanel() ? undefined : '0',
+            }}
+          />
+        </Show>
+
+        {/* Second panel with slide animation */}
+        <Show when={secondPanel()}>
+          <div
+            class='overflow-hidden transition-all duration-300 ease-in-out'
+            style={{
+              [layout() === 'vertical' ? 'width' : 'height']:
+                showSecondPanel() ? `${100 - splitRatio()}%` : '0%',
+              opacity: showSecondPanel() ? 1 : 0,
+              transform:
+                showSecondPanel() ? 'translateX(0) translateY(0)'
+                : layout() === 'vertical' ? 'translateX(20px)'
+                : 'translateY(20px)',
             }}
           >
-            {secondPanel()}
+            <div class='h-full w-full overflow-auto'>{secondPanel()}</div>
           </div>
         </Show>
       </div>
