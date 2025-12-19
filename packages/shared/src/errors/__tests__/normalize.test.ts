@@ -53,6 +53,15 @@ describe('normalizeError', () => {
     expect(normalized.code).toBe('TRANSPORT_NETWORK_ERROR');
   });
 
+  it('should convert CORS Error to CORS transport error', () => {
+    const error = new Error('CORS error: Access denied');
+    const normalized = normalizeError(error);
+
+    expect(isTransportError(normalized)).toBe(true);
+    expect(normalized.code).toBe('TRANSPORT_CORS_ERROR');
+    expect(normalized.details?.originalError).toBe('CORS error: Access denied');
+  });
+
   it('should convert network Error to transport error', () => {
     const error = new Error('Failed to fetch');
     const normalized = normalizeError(error);

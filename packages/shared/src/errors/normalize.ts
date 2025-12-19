@@ -57,12 +57,18 @@ export function normalizeError(error: unknown): TransportError | DomainError {
   if (error instanceof Error) {
     const msg = error.message.toLowerCase();
 
+    // CORS errors - check first for specific handling
+    if (msg.includes('cors')) {
+      return createTransportError('TRANSPORT_CORS_ERROR', getErrorMessage('TRANSPORT_CORS_ERROR'), {
+        originalError: error.message,
+      });
+    }
+
     // Network errors - strict patterns
     if (
       msg.includes('failed to fetch') ||
       msg.includes('networkerror') ||
-      msg.includes('load failed') ||
-      msg.includes('cors')
+      msg.includes('load failed')
     ) {
       return createTransportError(
         'TRANSPORT_NETWORK_ERROR',

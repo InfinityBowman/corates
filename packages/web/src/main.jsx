@@ -2,6 +2,7 @@ import { render } from 'solid-js/web';
 import './global.css';
 import Routes from './Routes.jsx';
 import { cleanupExpiredStates } from '@lib/formStatePersistence.js';
+import AppErrorBoundary from './components/ErrorBoundary.jsx';
 
 // Clean up any expired form state entries from IndexedDB on app load
 cleanupExpiredStates().catch(() => {
@@ -9,7 +10,11 @@ cleanupExpiredStates().catch(() => {
 });
 
 function Root() {
-  return <Routes />;
+  return (
+    <AppErrorBoundary>
+      <Routes />
+    </AppErrorBoundary>
+  );
 }
 
 render(() => <Root />, document.getElementById('root'));

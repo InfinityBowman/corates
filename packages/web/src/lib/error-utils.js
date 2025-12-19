@@ -9,10 +9,7 @@ import {
   normalizeError,
   isDomainError,
   isTransportError,
-  getErrorMessage,
-  createUnknownError,
   AUTH_ERRORS,
-  PROJECT_ERRORS,
 } from '@corates/shared';
 import { showToast } from '@corates/ui';
 
