@@ -40,12 +40,12 @@ async function readDirectoryRecursively(dirEntry) {
   return files;
 }
 
-  // Format file size for display
-  const formatFileSize = bytes => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  };
+// Format file size for display
+const formatFileSize = bytes => {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+};
 
 /**
  * Extract all files from a drop event, including files nested in directories
