@@ -17,6 +17,70 @@ import { createPdfOperations } from './pdfs.js';
 import { createReconciliationOperations } from './reconciliation.js';
 
 /**
+ * Global connection registry to prevent multiple connections to the same project.
+ * Each project ID maps to a connection instance with reference counting.
+ */
+const connectionRegistry = new Map();
+
+/**
+ * Get or create a shared connection for a project
+ * @param {string} projectId - The project ID
+ * @returns {Object|null} The shared connection entry or null if projectId is invalid
+ */
+function getOrCreateConnection(projectId) {
+  if (!projectId) return null;
+
+  if (connectionRegistry.has(projectId)) {
+    const entry = connectionRegistry.get(projectId);
+    entry.refCount++;
+    return entry;
+  }
+
+  // Create new connection entry
+  const entry = {
+    ydoc: new Y.Doc(),
+    indexeddbProvider: null,
+    connectionManager: null,
+    syncManager: null,
+    studyOps: null,
+    checklistOps: null,
+    pdfOps: null,
+    reconciliationOps: null,
+    refCount: 1,
+    initialized: false,
+  };
+
+  connectionRegistry.set(projectId, entry);
+  return entry;
+}
+
+/**
+ * Release a connection reference. Destroys the connection when refCount reaches 0.
+ * @param {string} projectId - The project ID
+ */
+function releaseConnection(projectId) {
+  if (!projectId || !connectionRegistry.has(projectId)) return;
+
+  const entry = connectionRegistry.get(projectId);
+  entry.refCount--;
+
+  if (entry.refCount <= 0) {
+    // Clean up all resources
+    if (entry.connectionManager) {
+      entry.connectionManager.destroy();
+    }
+    if (entry.indexeddbProvider) {
+      entry.indexeddbProvider.destroy();
+    }
+    if (entry.ydoc) {
+      entry.ydoc.destroy();
+    }
+    connectionRegistry.delete(projectId);
+    projectStore.setConnectionState(projectId, { connected: false, synced: false });
+  }
+}
+
+/**
  * Hook to connect to a project's Y.Doc and manage studies/checklists
  * Note: Y.js map key remains 'reviews' for backward compatibility with existing data
  * @param {string} projectId - The project ID to connect to
@@ -26,9 +90,8 @@ export function useProject(projectId) {
   // Check if this is a local-only project
   const isLocalProject = () => projectId && projectId.startsWith('local-');
 
-  let ydoc = null;
-  let indexeddbProvider = null;
-  let connectionManager = null;
+  // Get shared connection from registry
+  const connectionEntry = getOrCreateConnection(projectId);
 
   const isOnline = useOnlineStatus();
 
@@ -44,98 +107,82 @@ export function useProject(projectId) {
   const meta = () => projectData()?.meta || {};
   const members = () => projectData()?.members || [];
 
-  // Helper to get the current Y.Doc
-  const getYDoc = () => ydoc;
-
-  // Create sync manager
-  let syncManager = null;
-
-  // Create domain operation modules (initialized after ydoc is created)
-  let studyOps = null;
-  let checklistOps = null;
-  let pdfOps = null;
-  let reconciliationOps = null;
+  // Helper to get the current Y.Doc from the shared connection
+  const getYDoc = () => connectionEntry?.ydoc || null;
 
   // Connect to the project's WebSocket (or just IndexedDB for local projects)
   function connect() {
-    if (ydoc || !projectId) return;
+    if (!projectId || !connectionEntry) return;
+
+    // If already initialized, just return - connection is shared
+    if (connectionEntry.initialized) return;
+
+    // Mark as initializing to prevent race conditions
+    connectionEntry.initialized = true;
 
     // Set this as the active project
     projectStore.setActiveProject(projectId);
     projectStore.setConnectionState(projectId, { connecting: true, error: null });
 
-    ydoc = new Y.Doc();
+    const { ydoc } = connectionEntry;
 
     // Initialize sync manager
-    syncManager = createSyncManager(projectId, getYDoc);
+    connectionEntry.syncManager = createSyncManager(projectId, getYDoc);
 
     // Initialize domain operation modules
-    studyOps = createStudyOperations(projectId, getYDoc, synced);
-    checklistOps = createChecklistOperations(projectId, getYDoc, synced);
-    pdfOps = createPdfOperations(projectId, getYDoc, synced);
-    reconciliationOps = createReconciliationOperations(projectId, getYDoc, synced);
+    connectionEntry.studyOps = createStudyOperations(projectId, getYDoc, synced);
+    connectionEntry.checklistOps = createChecklistOperations(projectId, getYDoc, synced);
+    connectionEntry.pdfOps = createPdfOperations(projectId, getYDoc, synced);
+    connectionEntry.reconciliationOps = createReconciliationOperations(projectId, getYDoc, synced);
+
+    // Listen for Y.Doc changes BEFORE setting up providers
+    // This ensures we catch all updates including initial sync
+    ydoc.on('update', () => {
+      connectionEntry.syncManager?.syncFromYDoc();
+    });
 
     // Set up IndexedDB persistence for offline support
-    indexeddbProvider = new IndexeddbPersistence(`corates-project-${projectId}`, ydoc);
+    connectionEntry.indexeddbProvider = new IndexeddbPersistence(
+      `corates-project-${projectId}`,
+      ydoc,
+    );
 
-    indexeddbProvider.whenSynced.then(() => {
-      projectStore.setConnectionState(projectId, { synced: true });
+    connectionEntry.indexeddbProvider.whenSynced.then(() => {
       // Sync UI from locally persisted data immediately
-      syncManager.syncFromYDoc();
+      connectionEntry.syncManager.syncFromYDoc();
 
-      // For local projects, we're "connected" once IndexedDB is synced
+      // For local projects, we're "connected" and "synced" once IndexedDB is synced
       if (isLocalProject()) {
         projectStore.setConnectionState(projectId, {
           connecting: false,
           connected: true,
+          synced: true,
         });
       }
+      // For online projects, synced: true is set when WebSocket syncs (in onSync callback)
     });
 
     // For local projects, don't connect to WebSocket
     if (isLocalProject()) {
-      // Listen for local Y.Doc changes (no WebSocket sync)
-      ydoc.on('update', () => {
-        syncManager.syncFromYDoc();
-      });
       return;
     }
 
     // Create and connect WebSocket manager
-    connectionManager = createConnectionManager(projectId, ydoc, {
-      onSync: () => syncManager.syncFromYDoc(),
+    // onSync is called when WebSocket has synced with server
+    connectionEntry.connectionManager = createConnectionManager(projectId, ydoc, {
+      onSync: () => {
+        // Mark as synced only after WebSocket has synced with server
+        projectStore.setConnectionState(projectId, { synced: true });
+        connectionEntry.syncManager?.syncFromYDoc();
+      },
       isLocalProject,
     });
-    connectionManager.connect();
-
-    // Listen for local Y.Doc changes
-    ydoc.on('update', () => {
-      syncManager.syncFromYDoc();
-    });
+    connectionEntry.connectionManager.connect();
   }
 
-  // Disconnect from WebSocket
+  // Disconnect this instance's reference to the connection
   function disconnect() {
-    if (connectionManager) {
-      connectionManager.destroy(); // Use destroy to clean up event listeners
-      connectionManager = null;
-    }
-    if (indexeddbProvider) {
-      indexeddbProvider.destroy();
-      indexeddbProvider = null;
-    }
-    if (ydoc) {
-      ydoc.destroy();
-      ydoc = null;
-    }
-
-    syncManager = null;
-    studyOps = null;
-    checklistOps = null;
-    pdfOps = null;
-    reconciliationOps = null;
-
-    projectStore.setConnectionState(projectId, { connected: false, synced: false });
+    releaseConnection(projectId);
   }
 
   // Auto-connect when projectId changes
@@ -147,9 +194,10 @@ export function useProject(projectId) {
 
   // Reconnect when coming back online
   createEffect(() => {
-    if (isOnline() && connectionManager?.getShouldReconnect() && !connected() && !connecting()) {
-      connectionManager.setShouldReconnect(false);
-      connectionManager.reconnect();
+    const cm = connectionEntry?.connectionManager;
+    if (isOnline() && cm?.getShouldReconnect() && !connected() && !connecting()) {
+      cm.setShouldReconnect(false);
+      cm.reconnect();
     }
   });
 
@@ -170,37 +218,42 @@ export function useProject(projectId) {
     isLocalProject,
 
     // Study operations
-    createStudy: (...args) => studyOps?.createStudy(...args),
-    updateStudy: (...args) => studyOps?.updateStudy(...args),
-    deleteStudy: (...args) => studyOps?.deleteStudy(...args),
-    updateProjectSettings: (...args) => studyOps?.updateProjectSettings(...args),
-    renameProject: (...args) => studyOps?.renameProject(...args),
-    updateDescription: (...args) => studyOps?.updateDescription(...args),
+    createStudy: (...args) => connectionEntry?.studyOps?.createStudy(...args),
+    updateStudy: (...args) => connectionEntry?.studyOps?.updateStudy(...args),
+    deleteStudy: (...args) => connectionEntry?.studyOps?.deleteStudy(...args),
+    updateProjectSettings: (...args) => connectionEntry?.studyOps?.updateProjectSettings(...args),
+    renameProject: (...args) => connectionEntry?.studyOps?.renameProject(...args),
+    updateDescription: (...args) => connectionEntry?.studyOps?.updateDescription(...args),
 
     // Checklist operations
-    createChecklist: (...args) => checklistOps?.createChecklist(...args),
-    updateChecklist: (...args) => checklistOps?.updateChecklist(...args),
-    deleteChecklist: (...args) => checklistOps?.deleteChecklist(...args),
-    getChecklistAnswersMap: (...args) => checklistOps?.getChecklistAnswersMap(...args),
-    getChecklistData: (...args) => checklistOps?.getChecklistData(...args),
-    updateChecklistAnswer: (...args) => checklistOps?.updateChecklistAnswer(...args),
-    getQuestionNote: (...args) => checklistOps?.getQuestionNote(...args),
+    createChecklist: (...args) => connectionEntry?.checklistOps?.createChecklist(...args),
+    updateChecklist: (...args) => connectionEntry?.checklistOps?.updateChecklist(...args),
+    deleteChecklist: (...args) => connectionEntry?.checklistOps?.deleteChecklist(...args),
+    getChecklistAnswersMap: (...args) =>
+      connectionEntry?.checklistOps?.getChecklistAnswersMap(...args),
+    getChecklistData: (...args) => connectionEntry?.checklistOps?.getChecklistData(...args),
+    updateChecklistAnswer: (...args) =>
+      connectionEntry?.checklistOps?.updateChecklistAnswer(...args),
+    getQuestionNote: (...args) => connectionEntry?.checklistOps?.getQuestionNote(...args),
 
     // PDF operations
-    addPdfToStudy: (...args) => pdfOps?.addPdfToStudy(...args),
-    removePdfFromStudy: (...args) => pdfOps?.removePdfFromStudy(...args),
-    removePdfByFileName: (...args) => pdfOps?.removePdfByFileName(...args),
-    updatePdfTag: (...args) => pdfOps?.updatePdfTag(...args),
-    updatePdfMetadata: (...args) => pdfOps?.updatePdfMetadata(...args),
-    setPdfAsPrimary: (...args) => pdfOps?.setPdfAsPrimary(...args),
-    setPdfAsProtocol: (...args) => pdfOps?.setPdfAsProtocol(...args),
+    addPdfToStudy: (...args) => connectionEntry?.pdfOps?.addPdfToStudy(...args),
+    removePdfFromStudy: (...args) => connectionEntry?.pdfOps?.removePdfFromStudy(...args),
+    removePdfByFileName: (...args) => connectionEntry?.pdfOps?.removePdfByFileName(...args),
+    updatePdfTag: (...args) => connectionEntry?.pdfOps?.updatePdfTag(...args),
+    updatePdfMetadata: (...args) => connectionEntry?.pdfOps?.updatePdfMetadata(...args),
+    setPdfAsPrimary: (...args) => connectionEntry?.pdfOps?.setPdfAsPrimary(...args),
+    setPdfAsProtocol: (...args) => connectionEntry?.pdfOps?.setPdfAsProtocol(...args),
 
     // Reconciliation operations
-    saveReconciliationProgress: (...args) => reconciliationOps?.saveReconciliationProgress(...args),
-    getReconciliationProgress: (...args) => reconciliationOps?.getReconciliationProgress(...args),
-    getReconciliationNote: (...args) => reconciliationOps?.getReconciliationNote(...args),
+    saveReconciliationProgress: (...args) =>
+      connectionEntry?.reconciliationOps?.saveReconciliationProgress(...args),
+    getReconciliationProgress: (...args) =>
+      connectionEntry?.reconciliationOps?.getReconciliationProgress(...args),
+    getReconciliationNote: (...args) =>
+      connectionEntry?.reconciliationOps?.getReconciliationNote(...args),
     clearReconciliationProgress: (...args) =>
-      reconciliationOps?.clearReconciliationProgress(...args),
+      connectionEntry?.reconciliationOps?.clearReconciliationProgress(...args),
 
     // Connection management
     connect,
