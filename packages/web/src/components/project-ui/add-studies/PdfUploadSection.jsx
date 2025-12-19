@@ -44,8 +44,8 @@ export default function PdfUploadSection() {
                 <CgFileDocument
                   class='w-5 h-5 shrink-0'
                   classList={{
-                    'text-red-500': !pdf.error,
-                    'text-red-400': pdf.error,
+                    'text-gray-500': !pdf.error,
+                    'text-red-500': pdf.error,
                   }}
                 />
                 <div class='flex-1 min-w-0'>
