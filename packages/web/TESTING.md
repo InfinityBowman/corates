@@ -156,7 +156,7 @@ global.indexedDB = mockIndexedDB;
 ```javascript
 import { vi } from 'vitest';
 
-vi.mock('@api/better-auth-store', () => ({
+vi.mock('@api/betterAuthStore', () => ({
   useBetterAuth: () => ({
     user: () => ({ id: 'test-user', name: 'Test' }),
     isLoggedIn: () => true,
