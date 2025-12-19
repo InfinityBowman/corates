@@ -3,6 +3,7 @@ import { Portal } from 'solid-js/web';
 import { useMachine, normalizeProps } from '@zag-js/solid';
 import { createMemo, createUniqueId, Show } from 'solid-js';
 import { FiX } from 'solid-icons/fi';
+import { Z_INDEX } from '../constants/zIndex.js';
 
 /**
  * Drawer - A slide-in panel component composed from Dialog
@@ -79,11 +80,14 @@ export function Drawer(props) {
         <Show when={showBackdrop()}>
           <div
             {...api().getBackdropProps()}
-            class='animate-fade-in fixed inset-0 z-50 bg-black/50 transition-opacity'
+            class={`animate-fade-in fixed inset-0 ${Z_INDEX.BACKDROP} bg-black/50 transition-opacity`}
           />
         </Show>
         {/* Positioner - full height, aligned to side */}
-        <div {...api().getPositionerProps()} class={`fixed z-50 ${getPositionClasses()}`}>
+        <div
+          {...api().getPositionerProps()}
+          class={`fixed ${Z_INDEX.DIALOG} ${getPositionClasses()}`}
+        >
           {/* Content - slides in from side */}
           <div
             {...api().getContentProps()}

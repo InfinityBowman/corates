@@ -18,6 +18,7 @@ import { BiRegularHome } from 'solid-icons/bi';
 import { BsListTask } from 'solid-icons/bs';
 import { CgArrowsExchange } from 'solid-icons/cg';
 import { AiFillCheckCircle, AiOutlineBook } from 'solid-icons/ai';
+import { isStudyInReconciliation } from '@/utils/reconciliation.js';
 
 // Components
 import { ProjectProvider } from './ProjectContext.jsx';
@@ -192,14 +193,7 @@ export default function ProjectView() {
   };
 
   const getReconcileCount = () => {
-    // Count dual-reviewer studies with at least 1 completed checklist (not reconciled yet)
-    return studies().filter(study => {
-      if (!study.reviewer1 || !study.reviewer2) return false;
-      const checklists = study.checklists || [];
-      if (checklists.some(c => c.isReconciled)) return false;
-      const completedChecklists = checklists.filter(c => c.status === 'completed');
-      return completedChecklists.length >= 1 && completedChecklists.length <= 2;
-    }).length;
+    return studies().filter(isStudyInReconciliation).length;
   };
 
   // Tab configuration

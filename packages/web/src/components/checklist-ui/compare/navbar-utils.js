@@ -32,7 +32,7 @@ export function hasQuestionAnswer(questionKey, finalAnswers) {
 /**
  * Get pill styling classes based on question state
  * @param {boolean} isCurrentPage - Is this the active page
- * @param {boolean} hasAnswer - Has this question been answered
+ * @param {boolean} hasAnswer - Has this question been answered (not used for styling, checkmark overlay handles it)
  * @param {boolean} isAgreement - Do reviewers agree on this question
  * @returns {string} Tailwind CSS classes
  */
@@ -40,13 +40,7 @@ export function getQuestionPillStyle(isCurrentPage, hasAnswer, isAgreement) {
   if (isCurrentPage) {
     return 'bg-blue-600 text-white ring-2 ring-blue-300';
   }
-  if (hasAnswer) {
-    // Answered - show solid color
-    return isAgreement ?
-        'bg-green-500 text-white hover:bg-green-600'
-      : 'bg-amber-500 text-white hover:bg-amber-600';
-  }
-  // Not answered yet - show lighter color to indicate agreement/disagreement status
+  // Always use lighter colors - checkmark icon indicates if answered
   return isAgreement ?
       'bg-green-100 text-green-700 hover:bg-green-200'
     : 'bg-amber-100 text-amber-700 hover:bg-amber-200';

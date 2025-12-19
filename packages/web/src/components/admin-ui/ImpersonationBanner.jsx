@@ -9,6 +9,7 @@ import {
   stopImpersonation,
   checkImpersonationStatus,
 } from '@/stores/adminStore.js';
+import { Z_INDEX } from '@corates/ui';
 
 export default function ImpersonationBanner() {
   // Check impersonation status on mount
@@ -26,7 +27,9 @@ export default function ImpersonationBanner() {
 
   return (
     <Show when={isImpersonating()}>
-      <div class='fixed top-0 right-0 left-0 z-100 bg-orange-500 px-4 py-2 text-white'>
+      <div
+        class={`fixed top-0 right-0 left-0 ${Z_INDEX.BANNER} bg-orange-500 px-4 py-2 text-white`}
+      >
         <div class='mx-auto flex max-w-7xl items-center justify-between'>
           <div class='flex items-center space-x-2'>
             <FiAlertTriangle class='h-5 w-5' />

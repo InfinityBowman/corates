@@ -76,8 +76,16 @@ export function createChecklistActions(getActiveConnection) {
    * Get checklist data
    */
   function getData(studyId, checklistId) {
-    const ops = getActiveConnection();
-    return ops?.getChecklistData?.(studyId, checklistId);
+    try {
+      const ops = getActiveConnection();
+      return ops?.getChecklistData?.(studyId, checklistId);
+    } catch (err) {
+      // Handle case where there's no active project (e.g., during navigation)
+      if (err.message?.includes('No active project')) {
+        return null;
+      }
+      throw err;
+    }
   }
 
   /**

@@ -152,7 +152,7 @@ function SingleQuestionPage(props) {
       <div
         class={`p-4 ${props.isAgreement ? 'border-b border-green-200 bg-green-50' : 'border-b border-amber-200 bg-amber-50'}`}
       >
-        <h2 class='text-lg font-semibold text-gray-900'>
+        <h2 class='text-md font-medium text-gray-900'>
           {question()?.text}
           <Show when={isCritical()}>
             <span class='ml-2 text-sm font-medium text-red-600'>(Critical)</span>
@@ -160,7 +160,7 @@ function SingleQuestionPage(props) {
         </h2>
         <div class='mt-2 flex items-center gap-3'>
           <span
-            class={`text-sm font-medium ${props.isAgreement ? 'text-green-700' : 'text-amber-700'}`}
+            class={`text-xs font-medium ${props.isAgreement ? 'text-green-700' : 'text-amber-700'}`}
           >
             {props.isAgreement ? 'Reviewers Agree' : 'Requires Reconciliation'}
           </span>

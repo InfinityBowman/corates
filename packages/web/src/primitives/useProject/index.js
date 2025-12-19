@@ -350,8 +350,6 @@ export function useProject(projectId) {
       connectionEntry?.reconciliationOps?.saveReconciliationProgress(...args),
     getReconciliationProgress: (...args) =>
       connectionEntry?.reconciliationOps?.getReconciliationProgress(...args),
-    getReconciliationNote: (...args) =>
-      connectionEntry?.reconciliationOps?.getReconciliationNote(...args),
     clearReconciliationProgress: (...args) =>
       connectionEntry?.reconciliationOps?.clearReconciliationProgress(...args),
 

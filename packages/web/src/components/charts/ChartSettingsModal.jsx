@@ -1,5 +1,6 @@
 import { Show, Index, createSignal } from 'solid-js';
 import { BiRegularX } from 'solid-icons/bi';
+import { Z_INDEX } from '@corates/ui';
 
 /**
  * ChartSettingsModal - Modal for editing chart settings like labels
@@ -42,11 +43,11 @@ export default function ChartSettingsModal(props) {
   return (
     <Show when={props.isOpen}>
       {/* Backdrop - click to close */}
-      <div class='fixed inset-0 z-40 bg-black/50' />
+      <div class={`fixed inset-0 ${Z_INDEX.BACKDROP} bg-black/50`} />
 
       {/* Modal */}
       <div
-        class='fixed inset-0 z-50 flex items-center justify-center p-4'
+        class={`fixed inset-0 ${Z_INDEX.DIALOG} flex items-center justify-center p-4`}
         onMouseDown={handleBackdropMouseDown}
         onMouseUp={handleBackdropMouseUp}
       >

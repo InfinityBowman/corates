@@ -98,9 +98,9 @@ export default function AnswerPanel(props) {
     >
       <div class={`p-4 ${props.isFinal ? 'bg-green-50/30' : ''}`}>
         {/* Panel Header */}
-        <div class='mb-4 flex items-center justify-between'>
+        <div class={`${props.isFinal ? 'mb-0' : 'mb-4'} flex items-center justify-between`}>
           <div>
-            <h3 class='font-semibold text-gray-900'>{props.title}</h3>
+            <h3 class='-mb-1 font-semibold text-gray-900'>{props.title}</h3>
             <Show when={props.isFinal && props.selectedSource}>
               <span class='text-xs text-gray-500'>
                 {props.selectedSource === 'custom' ?
@@ -127,7 +127,7 @@ export default function AnswerPanel(props) {
         <div class='mb-4 flex flex-wrap items-center gap-2'>
           <span class='text-xs text-gray-500'>Result:</span>
           <span
-            class={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium ${getAnswerBadgeStyle(props.finalAnswer)}`}
+            class={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getAnswerBadgeStyle(props.finalAnswer)}`}
           >
             {props.finalAnswer || 'Not selected'}
           </span>

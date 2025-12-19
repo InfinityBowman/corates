@@ -3,6 +3,7 @@ import { Portal } from 'solid-js/web';
 import { normalizeProps, useMachine } from '@zag-js/solid';
 import { createMemo, createUniqueId, Show, splitProps, mergeProps } from 'solid-js';
 import { FiX } from 'solid-icons/fi';
+import { Z_INDEX } from '../constants/zIndex.js';
 
 /**
  * Popover - Non-modal floating dialog
@@ -52,7 +53,7 @@ export function Popover(props) {
     <div {...api().getPositionerProps()}>
       <div
         {...api().getContentProps()}
-        class={`z-50 max-w-sm min-w-50 rounded-lg border border-gray-200 bg-white shadow-lg ${local.class || ''}`}
+        class={`${Z_INDEX.POPOVER} max-w-sm min-w-50 rounded-lg border border-gray-200 bg-white shadow-lg ${local.class || ''}`}
       >
         <Show when={local.showArrow}>
           <div {...api().getArrowProps()} class='[--arrow-background:white] [--arrow-size:8px]'>

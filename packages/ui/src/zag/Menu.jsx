@@ -2,6 +2,7 @@ import * as menu from '@zag-js/menu';
 import { Portal } from 'solid-js/web';
 import { normalizeProps, useMachine } from '@zag-js/solid';
 import { createMemo, createUniqueId, Show, For, splitProps } from 'solid-js';
+import { Z_INDEX } from '../constants/zIndex.js';
 
 /**
  * Menu - Dropdown menu for actions
@@ -51,7 +52,7 @@ export function Menu(props) {
     <div {...api().getPositionerProps()}>
       <ul
         {...api().getContentProps()}
-        class={`z-50 min-w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg focus:outline-none ${local.class || ''}`}
+        class={`${Z_INDEX.MENU} min-w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg focus:outline-none ${local.class || ''}`}
       >
         <For each={local.items}>
           {item => (

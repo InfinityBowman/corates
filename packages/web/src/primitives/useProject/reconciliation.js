@@ -1,8 +1,9 @@
 /**
  * Reconciliation progress operations for useProject
  *
- * Note: finalAnswers are stored as a nested Y.Map structure to enable
- * collaborative editing of notes during reconciliation.
+ * Note: finalAnswers are now stored in a third checklist (reconciled checklist)
+ * that both reviewers can edit. This leverages existing checklist infrastructure
+ * for automatic Yjs sync. Reconciliation progress only stores metadata references.
  */
 
 import * as Y from 'yjs';
@@ -17,9 +18,9 @@ import * as Y from 'yjs';
 export function createReconciliationOperations(projectId, getYDoc, isSynced) {
   /**
    * Save reconciliation progress for a study
-   * Uses Y.Map for finalAnswers to enable collaborative note editing
+   * Stores only metadata references - finalAnswers are in the reconciled checklist
    * @param {string} studyId - The study ID
-   * @param {Object} progressData - Progress data { checklist1Id, checklist2Id, currentPage, viewMode, finalAnswers }
+   * @param {Object} progressData - Progress data { checklist1Id, checklist2Id, reconciledChecklistId }
    */
   function saveReconciliationProgress(studyId, progressData) {
     const ydoc = getYDoc();
@@ -36,42 +37,13 @@ export function createReconciliationOperations(projectId, getYDoc, isSynced) {
       studyYMap.set('reconciliation', reconciliationMap);
     }
 
-    // Save the progress data
+    // Save the progress data (minimal - just references)
     reconciliationMap.set('checklist1Id', progressData.checklist1Id);
     reconciliationMap.set('checklist2Id', progressData.checklist2Id);
-    reconciliationMap.set('currentPage', progressData.currentPage);
-    reconciliationMap.set('viewMode', progressData.viewMode || 'questions');
-    reconciliationMap.set('updatedAt', Date.now());
-
-    // Store finalAnswers as a nested Y.Map for collaborative editing
-    let finalAnswersMap = reconciliationMap.get('finalAnswers');
-    if (!finalAnswersMap || !(finalAnswersMap instanceof Y.Map)) {
-      finalAnswersMap = new Y.Map();
-      reconciliationMap.set('finalAnswers', finalAnswersMap);
+    if (progressData.reconciledChecklistId) {
+      reconciliationMap.set('reconciledChecklistId', progressData.reconciledChecklistId);
     }
-
-    // Update each question's answers
-    const finalAnswers = progressData.finalAnswers || {};
-    Object.entries(finalAnswers).forEach(([questionKey, questionData]) => {
-      let questionYMap = finalAnswersMap.get(questionKey);
-      if (!questionYMap || !(questionYMap instanceof Y.Map)) {
-        questionYMap = new Y.Map();
-        finalAnswersMap.set(questionKey, questionYMap);
-      }
-
-      // Store answers and critical flag
-      if (questionData.answers !== undefined) {
-        questionYMap.set('answers', questionData.answers);
-      }
-      if (questionData.critical !== undefined) {
-        questionYMap.set('critical', questionData.critical);
-      }
-
-      // Initialize Y.Text for note if not present (for collaborative editing)
-      if (!questionYMap.get('note')) {
-        questionYMap.set('note', new Y.Text());
-      }
-    });
+    reconciliationMap.set('updatedAt', Date.now());
 
     studyYMap.set('updatedAt', Date.now());
   }
@@ -96,86 +68,12 @@ export function createReconciliationOperations(projectId, getYDoc, isSynced) {
     const checklist2Id = reconciliationMap.get('checklist2Id');
     if (!checklist1Id || !checklist2Id) return null;
 
-    // Extract finalAnswers from Y.Map structure
-    const finalAnswers = {};
-    const finalAnswersMap = reconciliationMap.get('finalAnswers');
-    if (finalAnswersMap && finalAnswersMap instanceof Y.Map) {
-      for (const [questionKey, questionYMap] of finalAnswersMap.entries()) {
-        if (questionYMap instanceof Y.Map) {
-          finalAnswers[questionKey] = {
-            answers: questionYMap.get('answers'),
-            critical: questionYMap.get('critical'),
-            // Note: Y.Text note is accessed separately via getReconciliationNote
-          };
-        }
-      }
-    }
-
     return {
       checklist1Id,
       checklist2Id,
-      currentPage: reconciliationMap.get('currentPage') || 0,
-      viewMode: reconciliationMap.get('viewMode') || 'questions',
-      finalAnswers,
+      reconciledChecklistId: reconciliationMap.get('reconciledChecklistId') || null,
       updatedAt: reconciliationMap.get('updatedAt'),
     };
-  }
-
-  /**
-   * Get a Y.Text reference for a reconciliation note (for direct binding)
-   * @param {string} studyId - The study ID
-   * @param {string} questionKey - The question key (e.g., 'q1', 'q9')
-   * @returns {Y.Text|null} The Y.Text reference or null
-   */
-  function getReconciliationNote(studyId, questionKey) {
-    const ydoc = getYDoc();
-    if (!ydoc) return null;
-
-    const studiesMap = ydoc.getMap('reviews');
-    const studyYMap = studiesMap.get(studyId);
-    if (!studyYMap) return null;
-
-    // Create reconciliation map if it doesn't exist
-    let reconciliationMap = studyYMap.get('reconciliation');
-    if (!reconciliationMap) {
-      if (!isSynced()) return null;
-      reconciliationMap = new Y.Map();
-      studyYMap.set('reconciliation', reconciliationMap);
-    }
-
-    // Create finalAnswers map if it doesn't exist
-    let finalAnswersMap = reconciliationMap.get('finalAnswers');
-    if (!finalAnswersMap || !(finalAnswersMap instanceof Y.Map)) {
-      if (!isSynced()) return null;
-      finalAnswersMap = new Y.Map();
-      reconciliationMap.set('finalAnswers', finalAnswersMap);
-    }
-
-    let questionYMap = finalAnswersMap.get(questionKey);
-    if (!questionYMap || !(questionYMap instanceof Y.Map)) {
-      // Create the question map if it doesn't exist
-      if (isSynced()) {
-        questionYMap = new Y.Map();
-        questionYMap.set('note', new Y.Text());
-        finalAnswersMap.set(questionKey, questionYMap);
-        return questionYMap.get('note');
-      }
-      return null;
-    }
-
-    let note = questionYMap.get('note');
-    if (note instanceof Y.Text) {
-      return note;
-    }
-
-    // Create note if missing
-    if (isSynced()) {
-      note = new Y.Text();
-      questionYMap.set('note', note);
-      return note;
-    }
-
-    return null;
   }
 
   /**
@@ -197,7 +95,6 @@ export function createReconciliationOperations(projectId, getYDoc, isSynced) {
   return {
     saveReconciliationProgress,
     getReconciliationProgress,
-    getReconciliationNote,
     clearReconciliationProgress,
   };
 }

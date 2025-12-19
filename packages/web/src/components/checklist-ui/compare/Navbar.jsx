@@ -1,5 +1,6 @@
-import { For, createMemo } from 'solid-js';
+import { For, createMemo, Show } from 'solid-js';
 import { FaSolidArrowRotateLeft } from 'solid-icons/fa';
+import { FiCheck } from 'solid-icons/fi';
 import { Tooltip } from '@corates/ui';
 import { hasQuestionAnswer, getQuestionPillStyle, getQuestionTooltip } from './navbar-utils.js';
 
@@ -56,11 +57,19 @@ function QuestionPill(props) {
     <Tooltip content={tooltip()} placement='bottom' openDelay={200}>
       <button
         onClick={() => props.store.goToQuestion?.(props.questionIndex)}
-        class={`h-8 w-8 rounded-full text-xs font-medium transition-all ${pillStyle()}`}
+        class={`relative h-8 w-8 rounded-full text-xs font-medium transition-all ${pillStyle()}`}
         aria-label={tooltip()}
         aria-current={isCurrentPage() ? 'page' : undefined}
       >
         {props.questionIndex + 1}
+        <Show when={hasAnswer()}>
+          <span
+            class='absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border-[0.5px] bg-white shadow-sm'
+            aria-hidden='true'
+          >
+            <FiCheck class='h-2.5 w-2.5 text-green-600' />
+          </span>
+        </Show>
       </button>
     </Tooltip>
   );
