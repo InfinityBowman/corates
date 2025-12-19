@@ -165,22 +165,22 @@ describe('useProject - Study CRUD Operations', () => {
 
         expect(studyId).toBe('study-uuid-123');
 
-      // Verify synced store payload contains the persisted metadata fields
-      const lastCall = projectStore.setProjectData.mock.calls.at(-1);
-      expect(lastCall).toBeTruthy();
+        // Verify synced store payload contains the persisted metadata fields
+        const lastCall = projectStore.setProjectData.mock.calls.at(-1);
+        expect(lastCall).toBeTruthy();
 
-      const payload = lastCall[1];
-      const createdStudy = payload?.studies?.find(s => s.id === 'study-uuid-123');
-      expect(createdStudy).toBeTruthy();
-      expect(createdStudy.firstAuthor).toBe('Smith');
-      expect(createdStudy.publicationYear).toBe(2023);
-      expect(createdStudy.doi).toBe('10.1234/test');
-      expect(createdStudy.importSource).toBe('doi');
-      expect(createdStudy.pdfUrl).toBe('https://example.com/test.pdf');
-      expect(createdStudy.pdfSource).toBe('unpaywall');
-      expect(createdStudy.pdfAccessible).toBe(true);
-      expect(createdStudy.pmid).toBe('12345678');
-      expect(createdStudy.volume).toBe('12');
+        const payload = lastCall[1];
+        const createdStudy = payload?.studies?.find(s => s.id === 'study-uuid-123');
+        expect(createdStudy).toBeTruthy();
+        expect(createdStudy.firstAuthor).toBe('Smith');
+        expect(createdStudy.publicationYear).toBe(2023);
+        expect(createdStudy.doi).toBe('10.1234/test');
+        expect(createdStudy.importSource).toBe('doi');
+        expect(createdStudy.pdfUrl).toBe('https://example.com/test.pdf');
+        expect(createdStudy.pdfSource).toBe('unpaywall');
+        expect(createdStudy.pdfAccessible).toBe(true);
+        expect(createdStudy.pmid).toBe('12345678');
+        expect(createdStudy.volume).toBe('12');
         resolveTest();
       });
     });
