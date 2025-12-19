@@ -1,6 +1,6 @@
 import { createSignal, onCleanup, onMount, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 import { PasswordInput } from '@corates/ui';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton, AuthLink } from './AuthButtons.jsx';

@@ -1,6 +1,6 @@
 import { Show, createEffect, createSignal, onMount, onCleanup } from 'solid-js';
 import { A, useNavigate } from '@solidjs/router';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 import { FiMenu, FiWifiOff, FiChevronDown } from 'solid-icons/fi';
 import { LANDING_URL } from '@config/api.js';
 import useOnlineStatus from '@primitives/useOnlineStatus.js';

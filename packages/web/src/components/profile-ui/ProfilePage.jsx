@@ -1,5 +1,5 @@
 import { createSignal, Show, For } from 'solid-js';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 import { FiCamera } from 'solid-icons/fi';
 import { showToast } from '@corates/ui';
 import { LANDING_URL, API_BASE } from '@config/api.js';

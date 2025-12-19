@@ -5,7 +5,7 @@ import { cleanupProjectLocalData } from '@primitives/useProject/index.js';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useConfirmDialog, showToast } from '@corates/ui';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 import CreateProjectForm from './CreateProjectForm.jsx';
 import ProjectCard from './ProjectCard.jsx';
 import { getRestoreParamsFromUrl } from '@lib/formStatePersistence.js';

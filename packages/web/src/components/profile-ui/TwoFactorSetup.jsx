@@ -1,6 +1,6 @@
 import { createSignal, Show, onMount, For } from 'solid-js';
 import { FiShield, FiX, FiCopy, FiSmartphone, FiLock, FiInfo, FiHelpCircle } from 'solid-icons/fi';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 import { Tooltip, PasswordInput, showToast, QRCode } from '@corates/ui';
 
 export default function TwoFactorSetup() {

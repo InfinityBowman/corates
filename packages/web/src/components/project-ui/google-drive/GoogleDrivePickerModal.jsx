@@ -5,7 +5,7 @@
 import { createSignal } from 'solid-js';
 import { Dialog, showToast } from '@corates/ui';
 
-import { importFromGoogleDrive } from '@/api/google-drive.js';
+import { importFromGoogleDrive } from '@/api/googleDrive.js';
 import GoogleDrivePickerLauncher from './GoogleDrivePickerLauncher.jsx';
 
 /**

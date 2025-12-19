@@ -2,10 +2,10 @@
  * Study operations for projectActionsStore
  */
 
-import { uploadPdf, fetchPdfViaProxy, downloadPdf, deletePdf } from '@api/pdf-api.js';
+import { uploadPdf, fetchPdfViaProxy, downloadPdf, deletePdf } from '@/api/pdfApi.js';
 import { cachePdf } from '@primitives/pdfCache.js';
 import { showToast } from '@corates/ui';
-import { importFromGoogleDrive } from '@api/google-drive.js';
+import { importFromGoogleDrive } from '@/api/googleDrive.js';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
 

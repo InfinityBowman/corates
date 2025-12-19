@@ -15,7 +15,7 @@
  * High-level handlers include error handling and toasts.
  */
 
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 import { createStudyActions } from './studies.js';
 import { createChecklistActions } from './checklists.js';
 import { createPdfActions } from './pdfs.js';

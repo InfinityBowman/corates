@@ -9,7 +9,7 @@ import {
   getGoogleDriveStatus,
   disconnectGoogleDrive,
   connectGoogleAccount,
-} from '@/api/google-drive.js';
+} from '@/api/googleDrive.js';
 
 export default function GoogleDriveSettings() {
   const [loading, setLoading] = createSignal(true);

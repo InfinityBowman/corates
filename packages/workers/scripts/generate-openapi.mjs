@@ -258,8 +258,8 @@ async function generate() {
     { file: 'src/routes/admin.js', basePath: '/api/admin' },
     { file: 'src/routes/contact.js', basePath: '/api/contact' },
     { file: 'src/routes/avatars.js', basePath: '/api/users/avatar' },
-    { file: 'src/routes/google-drive.js', basePath: '/api/google-drive' },
-    { file: 'src/routes/account-merge.js', basePath: '/api/accounts/merge' },
+    { file: 'src/routes/googleDrive.js', basePath: '/api/googleDrive' },
+    { file: 'src/routes/accountMerge.js', basePath: '/api/accounts/merge' },
     { file: 'src/routes/email.js', basePath: '/api/email' },
     { file: 'src/routes/database.js', basePath: '/api/db' },
   ];

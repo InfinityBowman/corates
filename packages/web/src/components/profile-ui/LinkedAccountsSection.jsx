@@ -12,12 +12,12 @@
 
 import { createSignal, createResource, createMemo, For, Show, onMount } from 'solid-js';
 import { FiLink, FiMail, FiInfo, FiAlertCircle } from 'solid-icons/fi';
-import { authClient } from '@api/auth-client.js';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { authClient } from '@/api/authClient.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 import { showToast, Dialog } from '@corates/ui';
 import AccountProviderCard from './AccountProviderCard.jsx';
 import MergeAccountsDialog from './MergeAccountsDialog.jsx';
-import { parseOAuthError, getLinkErrorMessage } from '@lib/account-linking-errors.js';
+import { parseOAuthError, getLinkErrorMessage } from '@/lib/accountLinkingErrors.js';
 
 // Provider metadata
 const PROVIDERS = {

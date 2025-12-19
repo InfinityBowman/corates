@@ -16,7 +16,7 @@ import {
   subscriptions,
 } from '../db/schema.js';
 import { eq, desc, sql, like, or, count } from 'drizzle-orm';
-import { requireAdmin } from '../middleware/require-admin.js';
+import { requireAdmin } from '../middleware/requireAdmin.js';
 import { requireTrustedOrigin } from '../middleware/csrf.js';
 import { createAuth } from '../auth/config.js';
 const adminRoutes = new Hono();
@@ -73,8 +73,8 @@ adminRoutes.get('/stats', async c => {
 adminRoutes.get('/users', async c => {
   const db = createDb(c.env.DB);
 
-  const page = Math.max(1, parseInt(c.req.query('page') || '1', 10));
-  const limit = Math.min(100, Math.max(1, parseInt(c.req.query('limit') || '20', 10)));
+  const page = Math.max(1, Number.parseInt(c.req.query('page') || '1', 10));
+  const limit = Math.min(100, Math.max(1, Number.parseInt(c.req.query('limit') || '20', 10)));
   const search = c.req.query('search')?.trim();
   const offset = (page - 1) * limit;
 

@@ -4,7 +4,7 @@ import { BsListTask } from 'solid-icons/bs';
 import TodoStudyRow from './TodoStudyRow.jsx';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 
 /**

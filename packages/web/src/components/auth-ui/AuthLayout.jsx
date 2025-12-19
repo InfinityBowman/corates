@@ -1,6 +1,6 @@
 import { createEffect, Show, createSignal } from 'solid-js';
 import { useNavigate, useLocation } from '@solidjs/router';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 
 /**
  * AuthLayout - Layout for auth pages (signin, signup, etc.)

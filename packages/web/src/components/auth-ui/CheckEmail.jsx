@@ -1,6 +1,6 @@
 import { createSignal, onMount, onCleanup } from 'solid-js';
 import { useNavigate, useSearchParams } from '@solidjs/router';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 import { AiOutlineLoading3Quarters, AiOutlineMail } from 'solid-icons/ai';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton, SecondaryButton } from './AuthButtons.jsx';

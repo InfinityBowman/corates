@@ -7,7 +7,7 @@
 import { Hono } from 'hono';
 
 import { createCorsMiddleware } from './middleware/cors.js';
-import { securityHeaders } from './middleware/security-headers.js';
+import { securityHeaders } from './middleware/securityHeaders.js';
 import { requireAuth } from './middleware/auth.js';
 import { requireTrustedOrigin } from './middleware/csrf.js';
 
@@ -20,10 +20,10 @@ import { pdfRoutes } from './routes/pdfs.js';
 import { dbRoutes } from './routes/database.js';
 import { emailRoutes } from './routes/email.js';
 import { billingRoutes } from './routes/billing/index.js';
-import { googleDriveRoutes } from './routes/google-drive.js';
+import { googleDriveRoutes } from './routes/googleDrive.js';
 import { avatarRoutes } from './routes/avatars.js';
 import { adminRoutes } from './routes/admin.js';
-import { accountMergeRoutes } from './routes/account-merge.js';
+import { accountMergeRoutes } from './routes/accountMerge.js';
 import { contactRoutes } from './routes/contact.js';
 
 // Export Durable Objects

@@ -4,7 +4,7 @@
  */
 
 import { Hono } from 'hono';
-import { emailRateLimit } from '../middleware/rate-limit.js';
+import { emailRateLimit } from '../middleware/rateLimit.js';
 
 const emailRoutes = new Hono();
 

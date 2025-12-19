@@ -107,19 +107,21 @@ export default [
       // Unicorn rules - customized for this project
       // The recommended config is already applied above, these are overrides/customizations
 
-      // File naming - allow kebab-case, camelCase, and PascalCase
+      // File naming - prefer camelCase, but allow kebab-case and PascalCase
       // Set to warn so you can gradually fix file names
       'unicorn/filename-case': [
         'warn',
         {
-          case: 'kebabCase',
+          case: 'camelCase',
           ignore: [
             // Allow PascalCase for React/SolidJS components
             /^[A-Z][a-zA-Z0-9]*\.(jsx|tsx)$/,
-            // Allow camelCase for config files
+            // Allow kebab-case for config files
             /^(eslint|prettier|vite|wrangler|jsconfig|tsconfig)\.(js|ts|json)$/,
             // Allow UPPER_CASE for constants/config
             /^[A-Z_]+\.(js|ts)$/,
+            // Allow kebab-case files (common in many projects)
+            /^[a-z]+(-[a-z]+)*\.(js|jsx|ts|tsx)$/,
           ],
         },
       ],
@@ -147,6 +149,7 @@ export default [
             ctx: false,
             params: false,
             dir: false,
+            el: false,
             // React/SolidJS common patterns
             prev: false,
             props: false,

@@ -6,7 +6,7 @@ import AddMemberModal from './AddMemberModal.jsx';
 import ReviewerAssignment from './ReviewerAssignment.jsx';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 import { Avatar, useConfirmDialog, showToast } from '@corates/ui';
 

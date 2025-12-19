@@ -1,5 +1,5 @@
 import { A } from '@solidjs/router';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 import { HiOutlineClipboardDocumentCheck } from 'solid-icons/hi';
 import { AiOutlineUsergroupAdd, AiOutlineCloudSync, AiOutlineArrowRight } from 'solid-icons/ai';
 import { BsClipboardCheck } from 'solid-icons/bs';

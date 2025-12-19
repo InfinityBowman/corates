@@ -6,7 +6,7 @@
 import { For, Show } from 'solid-js';
 import { BiRegularTrash } from 'solid-icons/bi';
 import { FiFile } from 'solid-icons/fi';
-import { formatFileSize } from '@/api/google-drive.js';
+import { formatFileSize } from '@/api/googleDrive.js';
 import GoogleDrivePickerLauncher from '../google-drive/GoogleDrivePickerLauncher.jsx';
 import { useStudiesContext, useFormPersistenceContext } from './AddStudiesContext.jsx';
 

@@ -26,7 +26,7 @@ import {
 } from '../db/schema.js';
 import { eq, sql, like } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
-import { rateLimit } from '../middleware/rate-limit.js';
+import { rateLimit } from '../middleware/rateLimit.js';
 import { createEmailService } from '../auth/email.js';
 import { getAccountMergeEmailHtml, getAccountMergeEmailText } from '../auth/emailTemplates.js';
 

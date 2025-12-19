@@ -16,7 +16,7 @@
 import { createSignal, createEffect, Show } from 'solid-js';
 import { FiAlertTriangle, FiCheck, FiLoader, FiUserPlus, FiMail } from 'solid-icons/fi';
 import { Dialog, PinInput, showToast } from '@corates/ui';
-import { initiateMerge, verifyMergeCode, completeMerge, cancelMerge } from '@api/account-merge.js';
+import { initiateMerge, verifyMergeCode, completeMerge, cancelMerge } from '@/api/accountMerge.js';
 
 // Merge flow steps
 const STEPS = {

@@ -17,7 +17,7 @@ import {
 } from '../db/schema.js';
 import { eq, desc, or, like, sql } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
-import { searchRateLimit } from '../middleware/rate-limit.js';
+import { searchRateLimit } from '../middleware/rateLimit.js';
 
 const userRoutes = new Hono();
 

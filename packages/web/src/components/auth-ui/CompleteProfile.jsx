@@ -1,6 +1,6 @@
 import { createSignal, createEffect, onMount, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton } from './AuthButtons.jsx';
 import RoleSelector from './RoleSelector.jsx';

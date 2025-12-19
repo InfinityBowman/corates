@@ -1,6 +1,6 @@
 import { Show, For, createSignal, createEffect } from 'solid-js';
 import { useNavigate, useLocation } from '@solidjs/router';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 import { useLocalChecklists } from '@primitives/useLocalChecklists.js';
 import projectStore from '@/stores/projectStore.js';
 import { useConfirmDialog } from '@corates/ui';

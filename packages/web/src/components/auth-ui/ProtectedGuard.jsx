@@ -1,6 +1,6 @@
 import { createEffect, Show, createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 
 /**
  * ProtectedGuard - For authenticated pages (profile, settings, admin, etc.)

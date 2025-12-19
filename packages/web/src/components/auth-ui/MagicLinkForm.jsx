@@ -1,5 +1,5 @@
 import { createSignal, Show } from 'solid-js';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton } from './AuthButtons.jsx';
 import { FiMail } from 'solid-icons/fi';

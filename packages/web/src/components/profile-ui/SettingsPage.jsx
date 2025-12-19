@@ -13,7 +13,7 @@ import {
   FiChevronRight,
 } from 'solid-icons/fi';
 import { LANDING_URL } from '@config/api.js';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { useBetterAuth } from '@/api/betterAuthStore.js';
 import { Switch } from '@corates/ui';
 import GoogleDriveSettings from './GoogleDriveSettings.jsx';
 import TwoFactorSetup from './TwoFactorSetup.jsx';
