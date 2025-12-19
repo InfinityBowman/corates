@@ -26,6 +26,7 @@ export default function ReconciliationWithPdf(props) {
   // props.pdfs - Array of PDFs for multi-PDF selection
   // props.selectedPdfId - Currently selected PDF ID
   // props.onPdfSelect - Handler for PDF selection change
+  // props.getReconciliationNote - Function to get Y.Text for a reconciliation note (questionKey => Y.Text)
 
   // Layout state
   const [showPdf, setShowPdf] = createSignal(true);
@@ -165,6 +166,7 @@ export default function ReconciliationWithPdf(props) {
             onSaveReconciled={props.onSaveReconciled}
             onCancel={props.onCancel}
             setNavbarStore={setNavbarStore}
+            getReconciliationNote={props.getReconciliationNote}
           />
         </div>
 

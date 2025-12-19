@@ -26,6 +26,7 @@ export default function ReconciliationWrapper() {
     updateChecklist,
     getChecklistData,
     getReconciliationProgress,
+    getReconciliationNote,
     saveReconciliationProgress,
     clearReconciliationProgress,
     connect,
@@ -312,6 +313,7 @@ export default function ReconciliationWrapper() {
           pdfs={studyPdfs()}
           selectedPdfId={selectedPdfId()}
           onPdfSelect={handlePdfSelect}
+          getReconciliationNote={questionKey => getReconciliationNote(params.studyId, questionKey)}
         />
       </Show>
     </Show>

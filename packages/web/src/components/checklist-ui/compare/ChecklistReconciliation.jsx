@@ -26,6 +26,7 @@ export default function ChecklistReconciliation(props) {
   // props.reviewer1Name - Display name for first reviewer
   // props.reviewer2Name - Display name for second reviewer
   // props.setNavbarStore - Store setter for navbar state (deep reactivity)
+  // props.getReconciliationNote - Function to get Y.Text for final reconciliation note (questionKey => Y.Text)
 
   // Track if we've initialized from saved progress
   const [initialized, setInitialized] = createSignal(false);
@@ -111,6 +112,18 @@ export default function ChecklistReconciliation(props) {
       return parts;
     }
     return checklist[questionKey];
+  };
+
+  // Get reviewer note for a question
+  // For multi-part questions (q9, q11), notes are stored at the parent level
+  const getReviewerNote = (checklist, questionKey) => {
+    if (!checklist) return '';
+    // For multi-part questions, the note is at the parent level (q9 or q11)
+    const noteData = checklist[questionKey];
+    if (noteData?.note !== undefined) {
+      return typeof noteData.note === 'string' ? noteData.note : noteData.note?.toString?.() || '';
+    }
+    return '';
   };
 
   // Initialize final answers from saved progress or auto-fill agreements
@@ -334,6 +347,9 @@ export default function ChecklistReconciliation(props) {
               reviewer2Name={props.reviewer2Name || props.checklist2?.reviewerName || 'Reviewer 2'}
               isAgreement={currentComparison()?.isAgreement ?? true}
               isMultiPart={isMultiPartQuestion(currentQuestionKey())}
+              reviewer1Note={getReviewerNote(props.checklist1, currentQuestionKey())}
+              reviewer2Note={getReviewerNote(props.checklist2, currentQuestionKey())}
+              finalNoteYText={props.getReconciliationNote?.(currentQuestionKey())}
             />
 
             {/* Navigation Buttons */}

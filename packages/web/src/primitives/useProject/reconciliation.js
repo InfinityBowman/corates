@@ -135,11 +135,21 @@ export function createReconciliationOperations(projectId, getYDoc, isSynced) {
     const studyYMap = studiesMap.get(studyId);
     if (!studyYMap) return null;
 
-    const reconciliationMap = studyYMap.get('reconciliation');
-    if (!reconciliationMap) return null;
+    // Create reconciliation map if it doesn't exist
+    let reconciliationMap = studyYMap.get('reconciliation');
+    if (!reconciliationMap) {
+      if (!isSynced()) return null;
+      reconciliationMap = new Y.Map();
+      studyYMap.set('reconciliation', reconciliationMap);
+    }
 
-    const finalAnswersMap = reconciliationMap.get('finalAnswers');
-    if (!finalAnswersMap || !(finalAnswersMap instanceof Y.Map)) return null;
+    // Create finalAnswers map if it doesn't exist
+    let finalAnswersMap = reconciliationMap.get('finalAnswers');
+    if (!finalAnswersMap || !(finalAnswersMap instanceof Y.Map)) {
+      if (!isSynced()) return null;
+      finalAnswersMap = new Y.Map();
+      reconciliationMap.set('finalAnswers', finalAnswersMap);
+    }
 
     let questionYMap = finalAnswersMap.get(questionKey);
     if (!questionYMap || !(questionYMap instanceof Y.Map)) {
