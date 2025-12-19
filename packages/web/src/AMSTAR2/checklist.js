@@ -304,7 +304,9 @@ export function exportChecklistsToCSV(checklists) {
   // CSV encode
   const escapeCsv = val => `"${String(val).replaceAll('"', '""').replaceAll('\n', ' ')}"`;
   const csv =
-    headers.map(escapeCsv).join(',') + '\n' + rows.map(row => row.map(escapeCsv).join(',')).join('\n');
+    headers.map(escapeCsv).join(',') +
+    '\n' +
+    rows.map(row => row.map(escapeCsv).join(',')).join('\n');
   return csv;
 }
 
