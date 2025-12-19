@@ -9,20 +9,20 @@
  * - Actions menu
  *
  * Clicking anywhere on the header (except interactive elements) toggles expand/collapse.
+ * Uses projectActionsStore directly for mutations.
  */
 
 import { Show, For } from 'solid-js';
 import { BiRegularChevronRight } from 'solid-icons/bi';
 import { FiUsers, FiTrash2, FiMoreVertical } from 'solid-icons/fi';
 import { Menu, Editable } from '@corates/ui';
+import projectActionsStore from '@/stores/projectActionsStore';
 
 export default function StudyCardHeader(props) {
   // props.study: Study object with pdfs array
   // props.expanded: boolean
   // props.onToggle: () => void
-  // props.onAssignReviewers: () => void
-  // props.onDelete: () => void
-  // props.onUpdateStudy: (studyId, updates) => void
+  // props.onAssignReviewers: () => void - needs to open modal at parent level
   // props.getAssigneeName: (userId) => string
 
   const study = () => props.study;
@@ -46,11 +46,16 @@ export default function StudyCardHeader(props) {
   // Study name - directly use study.name (editable by user)
   const studyName = () => study().name || 'Untitled Study';
 
-  // Handle study name update
+  // Handle study name update - use store directly
   const handleNameChange = newName => {
     if (newName && newName.trim() && newName !== study().name) {
-      props.onUpdateStudy?.(study().id, { name: newName.trim() });
+      projectActionsStore.study.update(study().id, { name: newName.trim() });
     }
+  };
+
+  // Handle delete - use store directly
+  const handleDelete = () => {
+    projectActionsStore.study.delete(study().id);
   };
 
   // Citation line: author, year, journal from primary PDF
@@ -88,7 +93,7 @@ export default function StudyCardHeader(props) {
         props.onAssignReviewers?.();
         break;
       case 'delete':
-        props.onDelete?.();
+        handleDelete();
         break;
     }
   };

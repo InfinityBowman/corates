@@ -1,17 +1,19 @@
 import { For, Show, createMemo } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 import { CgArrowsExchange } from 'solid-icons/cg';
-import ReconcileStudyCard from '../ReconcileStudyCard.jsx';
+import ReconcileStudyCard from './ReconcileStudyCard.jsx';
 import projectStore from '@/stores/projectStore.js';
+import projectActionsStore from '@/stores/projectActionsStore';
 import { useProjectContext } from '../ProjectContext.jsx';
 
 /**
  * ReconcileTab - Shows studies in reconciliation workflow
  * Displays studies with at least 1 completed checklist (dual reviewer mode)
- * Uses ProjectContext for projectId, handlers, and helpers
+ * Uses projectActionsStore directly for mutations.
  */
 export default function ReconcileTab() {
-  const { projectId, handlers, getAssigneeName } = useProjectContext();
-  const { checklistHandlers, pdfHandlers } = handlers;
+  const { projectId, getAssigneeName } = useProjectContext();
+  const navigate = useNavigate();
 
   // Read from store directly
   const studies = () => projectStore.getStudies(projectId);
@@ -38,6 +40,15 @@ export default function ReconcileTab() {
     });
   });
 
+  // Navigation helpers
+  const openReconciliation = (studyId, checklist1Id, checklist2Id) => {
+    navigate(`/projects/${projectId}/studies/${studyId}/reconcile/${checklist1Id}/${checklist2Id}`);
+  };
+
+  const handleViewPdf = (studyId, pdf) => {
+    projectActionsStore.pdf.view(studyId, pdf);
+  };
+
   return (
     <div class='space-y-6'>
       <Show
@@ -59,9 +70,9 @@ export default function ReconcileTab() {
               <ReconcileStudyCard
                 study={study}
                 onReconcile={(checklist1Id, checklist2Id) =>
-                  checklistHandlers.openReconciliation(study.id, checklist1Id, checklist2Id)
+                  openReconciliation(study.id, checklist1Id, checklist2Id)
                 }
-                onViewPdf={pdf => pdfHandlers.handleViewPdf(study.id, pdf)}
+                onViewPdf={pdf => handleViewPdf(study.id, pdf)}
                 getAssigneeName={getAssigneeName}
               />
             )}

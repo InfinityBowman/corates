@@ -6,7 +6,7 @@
 import { Show } from 'solid-js';
 import { CgFileDocument } from 'solid-icons/cg';
 import { BsFileDiff } from 'solid-icons/bs';
-import ReconcileStatusTag from './reconcile-tab/ReconcileStatusTag.jsx';
+import ReconcileStatusTag from './ReconcileStatusTag.jsx';
 
 export default function ReconcileStudyCard(props) {
   // Check if study has PDFs

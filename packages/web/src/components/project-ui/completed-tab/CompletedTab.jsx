@@ -1,12 +1,18 @@
 import { For, Show, createMemo } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 import { AiFillCheckCircle } from 'solid-icons/ai';
 import projectStore from '@/stores/projectStore.js';
+import projectActionsStore from '@/stores/projectActionsStore';
 import { useProjectContext } from '@project-ui/ProjectContext.jsx';
 import CompletedStudyCard from './CompletedStudyCard.jsx';
 
+/**
+ * CompletedTab - Shows studies that have completed review
+ * Uses projectActionsStore directly for mutations.
+ */
 export default function CompletedTab() {
-  const { projectId, handlers } = useProjectContext();
-  const { checklistHandlers, pdfHandlers } = handlers;
+  const { projectId } = useProjectContext();
+  const navigate = useNavigate();
 
   const studies = () => projectStore.getStudies(projectId);
 
@@ -24,6 +30,15 @@ export default function CompletedTab() {
       return checklists.some(c => c.isReconciled);
     });
   });
+
+  // Navigation helpers
+  const openChecklist = (studyId, checklistId) => {
+    navigate(`/projects/${projectId}/studies/${studyId}/checklists/${checklistId}`);
+  };
+
+  const handleViewPdf = (studyId, pdf) => {
+    projectActionsStore.pdf.view(studyId, pdf);
+  };
 
   return (
     <div class='space-y-6'>
@@ -44,10 +59,8 @@ export default function CompletedTab() {
             {study => (
               <CompletedStudyCard
                 study={study}
-                onOpenChecklist={checklistId =>
-                  checklistHandlers.openChecklist(study.id, checklistId)
-                }
-                onViewPdf={pdf => pdfHandlers.handleViewPdf(study.id, pdf)}
+                onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
+                onViewPdf={pdf => handleViewPdf(study.id, pdf)}
               />
             )}
           </For>
