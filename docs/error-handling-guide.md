@@ -67,10 +67,7 @@ export async function getProject(c) {
   const project = await db.getProject(c.req.param('id'));
 
   if (!project) {
-    return c.json(
-      createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId: c.req.param('id') }),
-      404
-    );
+    return c.json(createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId: c.req.param('id') }), 404);
   }
 
   return c.json(project);
@@ -97,10 +94,7 @@ import { handleFetchError, handleDomainError } from '@/lib/error-utils.js';
 
 // Wrap fetch calls
 try {
-  const response = await handleFetchError(
-    fetch('/api/projects'),
-    { showToast: true }
-  );
+  const response = await handleFetchError(fetch('/api/projects'), { showToast: true });
   const data = await response.json();
 } catch (error) {
   // Error already handled (toast shown, etc.)
@@ -162,12 +156,14 @@ function App() {
 ## Error Code Reference
 
 ### Authentication Errors (`AUTH_*`)
+
 - `AUTH_REQUIRED` - Authentication required (401)
 - `AUTH_INVALID` - Invalid credentials (401)
 - `AUTH_EXPIRED` - Session expired (401)
 - `AUTH_FORBIDDEN` - Access denied (403)
 
 ### Validation Errors (`VALIDATION_*`)
+
 - `VALIDATION_FIELD_REQUIRED` - Required field missing (400)
 - `VALIDATION_FIELD_INVALID_FORMAT` - Invalid format (400)
 - `VALIDATION_FIELD_TOO_LONG` - Value too long (400)
@@ -176,23 +172,27 @@ function App() {
 - `VALIDATION_FAILED` - General validation failure (400)
 
 ### Project Errors (`PROJECT_*`)
+
 - `PROJECT_NOT_FOUND` - Project not found (404)
 - `PROJECT_ACCESS_DENIED` - Access denied (403)
 - `PROJECT_MEMBER_EXISTS` - User already a member (409)
 - `PROJECT_LAST_OWNER` - Cannot remove last owner (400)
 
 ### File Errors (`FILE_*`)
+
 - `FILE_TOO_LARGE` - File exceeds size limit (413)
 - `FILE_INVALID_TYPE` - Invalid file type (400)
 - `FILE_NOT_FOUND` - File not found (404)
 - `FILE_UPLOAD_FAILED` - Upload failed (500)
 
 ### Transport Errors (`TRANSPORT_*`)
+
 - `TRANSPORT_NETWORK_ERROR` - Network connection failed
 - `TRANSPORT_TIMEOUT` - Request timed out
 - `TRANSPORT_CORS_ERROR` - CORS error
 
 ### Unknown Errors (`UNKNOWN_*`)
+
 - `UNKNOWN_PROGRAMMER_ERROR` - Programmer error (500)
 - `UNKNOWN_UNHANDLED_ERROR` - Unhandled error (500)
 - `UNKNOWN_INVALID_RESPONSE` - Invalid API response (500)
@@ -235,6 +235,7 @@ When migrating existing code:
 ## Examples
 
 See the test files for comprehensive examples:
+
 - `packages/shared/src/errors/__tests__/helpers.test.ts`
 - `packages/web/src/lib/__tests__/error-utils.test.js`
 - `packages/web/src/lib/__tests__/form-errors.test.js`
