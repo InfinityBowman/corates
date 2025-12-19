@@ -11,7 +11,6 @@ const DOI_REGEX = /\b(10\.\d{4,}(?:\.\d+)*\/\S+)\b/gi;
 
 // Timeout constants
 const PDF_INIT_TIMEOUT = 10000; // 10 seconds for PDF.js initialization
-const PDF_PARSE_TIMEOUT = 15000; // 15 seconds for parsing a single PDF
 const PDF_EXTRACT_TIMEOUT = 10000; // 10 seconds for title/DOI extraction
 
 /**
@@ -77,67 +76,69 @@ export async function extractPdfTitle(pdfData) {
 async function extractPdfTitleInternal(pdfData) {
   const pdfjs = await initPdfJs();
   // verbosity: 0 = ERRORS only (suppress warnings about malformed PDFs)
-  const pdf = await withTimeout(
-    pdfjs.getDocument({ data: pdfData, verbosity: 0 }).promise,
-    PDF_PARSE_TIMEOUT,
-    'PDF document loading',
-  );
+  const pdf = await pdfjs.getDocument({ data: pdfData, verbosity: 0 }).promise;
 
-  // Try to get title from PDF metadata first
-  const metadata = await pdf.getMetadata();
-  if (metadata?.info?.Title && metadata.info.Title.trim()) {
-    return metadata.info.Title.trim();
-  }
+  try {
+    // Try to get title from PDF metadata first
+    const metadata = await pdf.getMetadata();
+    if (metadata?.info?.Title && metadata.info.Title.trim()) {
+      return metadata.info.Title.trim();
+    }
 
-  // Fall back to extracting from first page text
-  const firstPage = await pdf.getPage(1);
-  const textContent = await firstPage.getTextContent();
+    // Fall back to extracting from first page text
+    const firstPage = await pdf.getPage(1);
+    const textContent = await firstPage.getTextContent();
 
-  // Get text items from the first page
-  const textItems = textContent.items;
-  if (!textItems || textItems.length === 0) {
+    // Get text items from the first page
+    const textItems = textContent.items;
+    if (!textItems || textItems.length === 0) {
+      return null;
+    }
+
+    // Strategy: Find the largest font size text on the first page (likely the title)
+    // Group text by approximate y-position to find lines
+    const lines = groupTextIntoLines(textItems);
+
+    // Find the line with the largest font size (likely the title)
+    let titleLine = null;
+    let maxFontSize = 0;
+
+    for (const line of lines.slice(0, 10)) {
+      // Only check first 10 lines
+      const avgFontSize = line.reduce((sum, item) => sum + (item.height || 12), 0) / line.length;
+      if (avgFontSize > maxFontSize) {
+        maxFontSize = avgFontSize;
+        titleLine = line;
+      }
+    }
+
+    if (titleLine) {
+      const title = titleLine
+        .map(item => item.str)
+        .join(' ')
+        .trim();
+      if (title.length > 5 && title.length < 300) {
+        return cleanTitle(title);
+      }
+    }
+
+    // Fallback: just use the first substantial line of text
+    for (const line of lines) {
+      const text = line
+        .map(item => item.str)
+        .join(' ')
+        .trim();
+      if (text.length > 10 && text.length < 300) {
+        return cleanTitle(text);
+      }
+    }
+
     return null;
-  }
-
-  // Strategy: Find the largest font size text on the first page (likely the title)
-  // Group text by approximate y-position to find lines
-  const lines = groupTextIntoLines(textItems);
-
-  // Find the line with the largest font size (likely the title)
-  let titleLine = null;
-  let maxFontSize = 0;
-
-  for (const line of lines.slice(0, 10)) {
-    // Only check first 10 lines
-    const avgFontSize = line.reduce((sum, item) => sum + (item.height || 12), 0) / line.length;
-    if (avgFontSize > maxFontSize) {
-      maxFontSize = avgFontSize;
-      titleLine = line;
+  } finally {
+    if (pdf) {
+      await pdf.destroy();
     }
   }
-
-  if (titleLine) {
-    const title = titleLine
-      .map(item => item.str)
-      .join(' ')
-      .trim();
-    if (title.length > 5 && title.length < 300) {
-      return cleanTitle(title);
-    }
-  }
-
-  // Fallback: just use the first substantial line of text
-  for (const line of lines) {
-    const text = line
-      .map(item => item.str)
-      .join(' ')
-      .trim();
-    if (text.length > 10 && text.length < 300) {
-      return cleanTitle(text);
-    }
-  }
-
-  return null;
 }
 
 /**
@@ -221,54 +222,56 @@ export async function extractPdfDoi(pdfData) {
  */
 async function extractPdfDoiInternal(pdfData) {
   const pdfjs = await initPdfJs();
-  const pdf = await withTimeout(
-    pdfjs.getDocument({ data: pdfData, verbosity: 0 }).promise,
-    PDF_PARSE_TIMEOUT,
-    'PDF document loading',
-  );
+  const pdf = await pdfjs.getDocument({ data: pdfData, verbosity: 0 }).promise;
 
-  // Try metadata first
-  const metadata = await pdf.getMetadata();
+  try {
+    // Try metadata first
+    const metadata = await pdf.getMetadata();
 
-  // Check specific metadata fields that commonly contain DOI
-  const info = metadata?.info || {};
+    // Check specific metadata fields that commonly contain DOI
+    const info = metadata?.info || {};
 
-  // Check common DOI fields directly
-  const doiFields = ['doi', 'DOI', 'Subject', 'Keywords', 'Description'];
-  for (const field of doiFields) {
-    if (info[field]) {
-      const fieldValue = String(info[field]);
-      const match = fieldValue.match(DOI_REGEX);
-      if (match) {
-        return cleanDoi(match[0]);
-      }
-    }
-  }
-
-  // Check custom metadata
-  if (metadata?.metadata?._metadataMap) {
-    for (const [key, value] of metadata.metadata._metadataMap) {
-      const valueStr = String(value || '');
-      if (valueStr && /doi/i.test(key)) {
-        const match = valueStr.match(DOI_REGEX);
+    // Check common DOI fields directly
+    const doiFields = ['doi', 'DOI', 'Subject', 'Keywords', 'Description'];
+    for (const field of doiFields) {
+      if (info[field]) {
+        const fieldValue = String(info[field]);
+        const match = fieldValue.match(DOI_REGEX);
         if (match) {
           return cleanDoi(match[0]);
         }
       }
     }
+
+    // Check custom metadata
+    if (metadata?.metadata?._metadataMap) {
+      for (const [key, value] of metadata.metadata._metadataMap) {
+        const valueStr = String(value || '');
+        if (valueStr && /doi/i.test(key)) {
+          const match = valueStr.match(DOI_REGEX);
+          if (match) {
+            return cleanDoi(match[0]);
+          }
+        }
+      }
+    }
+
+    // Fall back to extracting from first page text
+    const firstPage = await pdf.getPage(1);
+    const textContent = await firstPage.getTextContent();
+    const pageText = textContent.items.map(item => item.str).join(' ');
+
+    const textMatch = pageText.match(DOI_REGEX);
+    if (textMatch) {
+      return cleanDoi(textMatch[0]);
+    }
+
+    return null;
+  } finally {
+    if (pdf) {
+      await pdf.destroy();
+    }
   }
-
-  // Fall back to extracting from first page text
-  const firstPage = await pdf.getPage(1);
-  const textContent = await firstPage.getTextContent();
-  const pageText = textContent.items.map(item => item.str).join(' ');
-
-  const textMatch = pageText.match(DOI_REGEX);
-  if (textMatch) {
-    return cleanDoi(textMatch[0]);
-  }
-
-  return null;
 }
 
 /**
