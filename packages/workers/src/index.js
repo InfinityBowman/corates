@@ -304,7 +304,8 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
 });
 
 // Project Document Durable Object routes
-app.all('/api/project/:projectId/*', async c => {
+// Handler function shared between both route patterns
+const handleProjectDoc = async c => {
   const projectId = c.req.param('projectId');
 
   if (!projectId) {
@@ -321,10 +322,16 @@ app.all('/api/project/:projectId/*', async c => {
   }
 
   return response;
-});
+};
+
+// Route without trailing path (for WebSocket connections from y-websocket)
+app.all('/api/project/:projectId', handleProjectDoc);
+// Route with trailing path (for any sub-resource requests)
+app.all('/api/project/:projectId/*', handleProjectDoc);
 
 // User Session Durable Object routes
-app.all('/api/sessions/:sessionId/*', async c => {
+// Handler function shared between both route patterns
+const handleUserSession = async c => {
   const sessionId = c.req.param('sessionId');
 
   if (!sessionId) {
@@ -341,7 +348,12 @@ app.all('/api/sessions/:sessionId/*', async c => {
   }
 
   return response;
-});
+};
+
+// Route without trailing path (for WebSocket connections)
+app.all('/api/sessions/:sessionId', handleUserSession);
+// Route with trailing path (for any sub-resource requests)
+app.all('/api/sessions/:sessionId/*', handleUserSession);
 
 // 404 handler
 app.notFound(c => c.json({ error: 'Not Found' }, 404));
