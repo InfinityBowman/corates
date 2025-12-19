@@ -32,6 +32,7 @@ vi.mock('@/lib/pdfUtils.js', () => ({
       .replace(/[^a-z0-9]/g, '');
   },
   readFileAsArrayBuffer: vi.fn(),
+  withTimeout: (promise, ms, operationName) => promise, // Pass through the promise without timeout in tests
 }));
 
 vi.mock('@/lib/referenceParser.js', () => ({
@@ -76,8 +77,11 @@ describe('useAddStudies - PDF Sync with Lookup Refs', () => {
     const { extractPdfTitle, extractPdfDoi, readFileAsArrayBuffer } =
       await import('@/lib/pdfUtils.js');
 
-    const { fetchReferenceByIdentifier, parseIdentifiers } =
+    const { fetchReferenceByIdentifier, parseIdentifiers, fetchFromDOI } =
       await import('@/lib/referenceLookup.js');
+
+    // Mock fetchFromDOI for background metadata fetch
+    fetchFromDOI.mockResolvedValue(null);
 
     await createRoot(async d => {
       dispose = d;
@@ -185,8 +189,11 @@ describe('useAddStudies - PDF Sync with Lookup Refs', () => {
     const { extractPdfTitle, extractPdfDoi, readFileAsArrayBuffer } =
       await import('@/lib/pdfUtils.js');
 
-    const { fetchReferenceByIdentifier, parseIdentifiers } =
+    const { fetchReferenceByIdentifier, parseIdentifiers, fetchFromDOI } =
       await import('@/lib/referenceLookup.js');
+
+    // Mock fetchFromDOI for background metadata fetch
+    fetchFromDOI.mockResolvedValue(null);
 
     await createRoot(async d => {
       dispose = d;

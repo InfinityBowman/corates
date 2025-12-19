@@ -61,7 +61,7 @@ export function createConnectionManager(projectId, ydoc, options) {
     const wsUrl = `${getWsBaseUrl()}/api/project`;
 
     provider = new WebsocketProvider(wsUrl, projectId, ydoc, {
-      connect: true,
+      connect: false, // Don't connect until listeners are attached
       // WebsocketProvider handles reconnection automatically with exponential backoff
     });
 
@@ -75,6 +75,15 @@ export function createConnectionManager(projectId, ydoc, options) {
     provider.on('sync', isSynced => {
       if (isSynced && onSync) onSync();
     });
+
+    // Check if already synced (in case sync happened before listener was attached)
+    // and then connect
+    if (provider.synced && onSync) {
+      onSync();
+    }
+
+    // Now connect after all listeners are attached
+    provider.connect();
 
     provider.on('connection-close', (event, provider) => {
       // event can be null when disconnect() is called programmatically
