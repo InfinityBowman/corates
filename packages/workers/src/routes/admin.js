@@ -146,11 +146,13 @@ adminRoutes.get('/users', async c => {
         );
 
       // Group accounts by userId
-      accountsMap = accounts.reduce((acc, a) => {
-        if (!acc[a.userId]) acc[a.userId] = [];
-        acc[a.userId].push(a.providerId);
-        return acc;
-      }, {});
+      accountsMap = {};
+      for (const account of accounts) {
+        if (!accountsMap[account.userId]) {
+          accountsMap[account.userId] = [];
+        }
+        accountsMap[account.userId].push(account.providerId);
+      }
     }
 
     // Merge providers into user objects

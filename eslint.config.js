@@ -269,7 +269,7 @@ export default [
 
       // Additional rules for gradual adoption
       // Prefer single call - style preference
-      'unicorn/prefer-single-call': 'warn',
+      'unicorn/prefer-single-call': 'off',
 
       // Prefer includes - can be adopted gradually
       'unicorn/prefer-includes': 'warn',

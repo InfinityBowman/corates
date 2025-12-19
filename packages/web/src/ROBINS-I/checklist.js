@@ -75,10 +75,7 @@ export function createChecklist({
 
     // Section D: Information sources
     sectionD: {
-      sources: INFORMATION_SOURCES.reduce((acc, source) => {
-        acc[source] = false;
-        return acc;
-      }, {}),
+      sources: Object.fromEntries(INFORMATION_SOURCES.map(source => [source, false])),
       otherSpecify: '',
     },
 

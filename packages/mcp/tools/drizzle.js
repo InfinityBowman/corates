@@ -78,7 +78,7 @@ function generateDrizzleIndex(header, sections) {
     groups.get(firstSegment).push(docPath);
   }
 
-  const sortedGroups = [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const sortedGroups = groups.entries().toSorted((a, b) => a[0].localeCompare(b[0]));
 
   let index = `# Drizzle ORM Documentation Index\n\n`;
   index += `${header}\n\n`;
@@ -86,7 +86,7 @@ function generateDrizzleIndex(header, sections) {
 
   for (const [group, paths] of sortedGroups) {
     index += `### ${group}\n\n`;
-    for (const p of paths.sort()) {
+    for (const p of paths.toSorted()) {
       index += `- [${p}](${p})\n`;
     }
     index += '\n';
