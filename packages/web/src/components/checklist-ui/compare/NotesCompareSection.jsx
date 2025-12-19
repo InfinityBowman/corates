@@ -57,6 +57,8 @@ export default function NotesCompareSection(props) {
 
   // Auto-resize textarea
   createEffect(() => {
+    // Read finalNoteText to track text changes
+    finalNoteText();
     if (textareaRef && expanded()) {
       textareaRef.style.height = 'auto';
       textareaRef.style.height = `${Math.min(textareaRef.scrollHeight, MAX_HEIGHT)}px`;
