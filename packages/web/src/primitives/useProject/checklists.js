@@ -92,12 +92,34 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
     const answersYMap = new Y.Map();
 
     if (type === CHECKLIST_TYPES.AMSTAR2) {
-      // AMSTAR2: Store each question as a nested Y.Map with answers and critical
+      // AMSTAR2: Store each question as a nested Y.Map with answers, critical, and note
+      // Note: q9 and q11 are multi-part questions (q9a/q9b, q11a/q11b) but get one note each
+      // at the parent level (q9, q11)
+      const multiPartParents = ['q9', 'q11'];
+      const subQuestionPattern = /^(q9|q11)[a-z]$/;
+
       Object.entries(answersData).forEach(([questionKey, questionData]) => {
         const questionYMap = new Y.Map();
         questionYMap.set('answers', questionData.answers);
         questionYMap.set('critical', questionData.critical);
+
+        // Add note for non-sub-questions
+        // Sub-questions (q9a, q9b, q11a, q11b) don't get notes - the parent does
+        if (!subQuestionPattern.test(questionKey)) {
+          questionYMap.set('note', new Y.Text());
+        }
+
         answersYMap.set(questionKey, questionYMap);
+      });
+
+      // Add note entries for multi-part parent questions (q9, q11)
+      // These don't have answer data but need a note
+      multiPartParents.forEach(parentKey => {
+        if (!answersYMap.has(parentKey)) {
+          const parentYMap = new Y.Map();
+          parentYMap.set('note', new Y.Text());
+          answersYMap.set(parentKey, parentYMap);
+        }
       });
     } else if (type === CHECKLIST_TYPES.ROBINS_I) {
       // ROBINS-I: Store each section/domain as nested Y.Maps to support concurrent edits
@@ -364,12 +386,20 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
 
     const checklistType = checklistYMap.get('type');
 
-    // AMSTAR2: Store as nested Y.Map with answers and critical
+    // AMSTAR2: Store as nested Y.Map with answers and critical (preserving existing note)
     if (checklistType === 'AMSTAR2' && data.answers !== undefined) {
-      const questionYMap = new Y.Map();
+      let questionYMap = answersMap.get(key);
+      if (!questionYMap || !(questionYMap instanceof Y.Map)) {
+        questionYMap = new Y.Map();
+        answersMap.set(key, questionYMap);
+      }
       questionYMap.set('answers', data.answers);
       questionYMap.set('critical', data.critical);
-      answersMap.set(key, questionYMap);
+      // Note: Y.Text note is preserved - we don't overwrite it here
+      // If no note exists yet, create one (for existing checklists without notes)
+      if (!questionYMap.get('note')) {
+        questionYMap.set('note', new Y.Text());
+      }
     }
     // ROBINS-I: Update nested Y.Maps granularly for concurrent edit support
     else if (checklistType === 'ROBINS_I') {
@@ -453,6 +483,49 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
     checklistYMap.set('updatedAt', Date.now());
   }
 
+  /**
+   * Get a Y.Text reference for a question's note (for direct binding)
+   * @param {string} studyId - The study ID
+   * @param {string} checklistId - The checklist ID
+   * @param {string} questionKey - The question key (e.g., 'q1', 'q9' for multi-part)
+   * @returns {Y.Text|null} The Y.Text reference or null
+   */
+  function getQuestionNote(studyId, checklistId, questionKey) {
+    const ydoc = getYDoc();
+    if (!ydoc) return null;
+
+    const studiesMap = ydoc.getMap('reviews');
+    const studyYMap = studiesMap.get(studyId);
+    if (!studyYMap) return null;
+
+    const checklistsMap = studyYMap.get('checklists');
+    if (!checklistsMap) return null;
+
+    const checklistYMap = checklistsMap.get(checklistId);
+    if (!checklistYMap) return null;
+
+    const answersMap = checklistYMap.get('answers');
+    if (!answersMap) return null;
+
+    const questionYMap = answersMap.get(questionKey);
+    if (!questionYMap || !(questionYMap instanceof Y.Map)) return null;
+
+    const note = questionYMap.get('note');
+    // Return existing note, or create one if missing (for existing checklists)
+    if (note instanceof Y.Text) {
+      return note;
+    }
+
+    // Create note if it doesn't exist (backward compatibility)
+    if (isSynced()) {
+      const newNote = new Y.Text();
+      questionYMap.set('note', newNote);
+      return newNote;
+    }
+
+    return null;
+  }
+
   return {
     createChecklist,
     updateChecklist,
@@ -460,5 +533,6 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
     getChecklistAnswersMap,
     getChecklistData,
     updateChecklistAnswer,
+    getQuestionNote,
   };
 }

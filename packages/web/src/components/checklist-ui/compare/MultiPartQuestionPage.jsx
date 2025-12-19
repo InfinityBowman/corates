@@ -2,6 +2,7 @@ import { createSignal, createEffect, createMemo, For, Show } from 'solid-js';
 import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
 import { getDataKeysForQuestion, getFinalAnswer } from '@/AMSTAR2/checklist-compare.js';
 import AnswerPanel from './AnswerPanel.jsx';
+import NotesCompareSection from './NotesCompareSection.jsx';
 
 /**
  * MultiPartQuestionPage - Handles q9 and q11 which have a/b parts
@@ -315,6 +316,18 @@ export default function MultiPartQuestionPage(props) {
             )}
           </For>
         </div>
+      </div>
+
+      {/* Notes Section - One note for the entire multi-part question */}
+      <div class='px-4 pb-4'>
+        <NotesCompareSection
+          reviewer1Note={props.reviewer1Note}
+          reviewer2Note={props.reviewer2Note}
+          finalNoteYText={props.finalNoteYText}
+          reviewer1Name={props.reviewer1Name}
+          reviewer2Name={props.reviewer2Name}
+          collapsed={true}
+        />
       </div>
     </div>
   );

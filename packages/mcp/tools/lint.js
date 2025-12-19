@@ -12,7 +12,7 @@ export function registerLintTools(server, repoRoot) {
       fix: z.boolean().optional().default(false).describe('Whether to run lint with --fix'),
     },
     async ({ fix = false }) => {
-      const command = `pnpm run lint${fix ? ' -- --fix' : ''}`;
+      const command = `pnpm run lint${fix ? ' --fix' : ''}`;
 
       try {
         const { stdout, stderr } = await exec(command, {

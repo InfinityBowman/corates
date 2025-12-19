@@ -3,6 +3,7 @@
  * Shows Reviewer 1, Reviewer 2, and Final (editable) answer panels side by side
  */
 import AnswerPanel from './AnswerPanel.jsx';
+import NotesCompareSection from './NotesCompareSection.jsx';
 import { createSignal, createEffect, Show } from 'solid-js';
 import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
 import MultiPartQuestionPage from './MultiPartQuestionPage.jsx';
@@ -31,6 +32,9 @@ export default function ReconciliationQuestionPage(props) {
   // props.reviewer2Name
   // props.isAgreement - whether reviewers agree on this question
   // props.isMultiPart - whether this is a multi-part question (q9 or q11)
+  // props.reviewer1Note - text content of reviewer 1's note for this question
+  // props.reviewer2Note - text content of reviewer 2's note for this question
+  // props.finalNoteYText - Y.Text reference for the final reconciled note
 
   // For multi-part questions, delegate to MultiPartQuestionPage
   // Use Show for proper SolidJS reactivity
@@ -207,6 +211,18 @@ function SingleQuestionPage(props) {
           onRadioChange={handleFinalRadioChange}
           highlightColor='green'
           selectedSource={selectedSource()}
+        />
+      </div>
+
+      {/* Notes Section */}
+      <div class='px-4 pb-4'>
+        <NotesCompareSection
+          reviewer1Note={props.reviewer1Note}
+          reviewer2Note={props.reviewer2Note}
+          finalNoteYText={props.finalNoteYText}
+          reviewer1Name={props.reviewer1Name}
+          reviewer2Name={props.reviewer2Name}
+          collapsed={true}
         />
       </div>
     </div>

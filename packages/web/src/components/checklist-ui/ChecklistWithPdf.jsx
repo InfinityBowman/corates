@@ -23,6 +23,7 @@ export default function ChecklistWithPdf(props) {
   // props.pdfs - array of PDFs for multi-PDF selection
   // props.selectedPdfId - currently selected PDF ID
   // props.onPdfSelect - handler for PDF selection change
+  // props.getQuestionNote - function to get Y.Text for a question note
 
   return (
     <div class='h-full flex flex-col bg-blue-50'>
@@ -39,6 +40,7 @@ export default function ChecklistWithPdf(props) {
           checklist={props.checklist}
           onUpdate={props.onUpdate}
           readOnly={props.readOnly}
+          getQuestionNote={props.getQuestionNote}
         />
 
         {/* Second panel: PDF Viewer */}

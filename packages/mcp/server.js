@@ -42,7 +42,7 @@ registerCodeReviewTools(server, repoRoot);
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('Corates MCP Server started');
+  console.log('Corates MCP Server started');
 }
 
 main().catch(err => {

@@ -23,9 +23,13 @@ export default function ChecklistYjsWrapper() {
   const [selectedPdfId, setSelectedPdfId] = createSignal(null);
 
   // Use full hook for write operations
-  const { updateChecklistAnswer, updateChecklist, getChecklistData, addPdfToStudy } = useProject(
-    params.projectId,
-  );
+  const {
+    updateChecklistAnswer,
+    updateChecklist,
+    getChecklistData,
+    addPdfToStudy,
+    getQuestionNote,
+  } = useProject(params.projectId);
 
   // Read data directly from store for faster reactivity
   const connectionState = () => projectStore.getConnectionState(params.projectId);
@@ -362,6 +366,9 @@ export default function ChecklistYjsWrapper() {
           pdfs={studyPdfs()}
           selectedPdfId={selectedPdfId()}
           onPdfSelect={handlePdfSelect}
+          getQuestionNote={questionKey =>
+            getQuestionNote(params.studyId, params.checklistId, questionKey)
+          }
         />
       </Show>
     </>
