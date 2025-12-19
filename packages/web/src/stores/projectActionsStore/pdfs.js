@@ -88,10 +88,7 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
     const study = projectStore.getStudy(projectId, studyId);
     const existingPdf = study?.pdfs?.find(pdf => pdf.fileName === file.name);
     if (existingPdf) {
-      throw new Error(
-          `File "${file.name}" already exists. Rename or remove the existing copy.`,
-        
-      );
+      throw new Error(`File "${file.name}" already exists. Rename or remove the existing copy.`);
     }
 
     let uploadResult = null;

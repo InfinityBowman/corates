@@ -112,6 +112,7 @@ export async function cleanupProjectLocalData(projectId) {
     }
     connectionRegistry.delete(projectId);
     projectActionsStore._removeConnection(projectId);
+    projectStore.setConnectionState(projectId, { connected: false, synced: false });
   }
 
   // 2. Delete IndexedDB storage (y-indexeddb uses this naming pattern)
