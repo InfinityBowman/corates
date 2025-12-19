@@ -134,7 +134,7 @@ export function createFormErrorState() {
  */
 export function createFormErrorSignals(createSignal) {
   const [fieldErrors, setFieldErrors] = createSignal({});
-  const [globalError, setGlobalError] = createSignal('');
+  const [globalError, _setGlobalErrorSignal] = createSignal('');
 
   return {
     /**
@@ -182,14 +182,14 @@ export function createFormErrorSignals(createSignal) {
      * @param {string} message - Error message
      */
     setGlobalError(message) {
-      setGlobalError(message || '');
+      _setGlobalErrorSignal(message || '');
     },
 
     /**
      * Clear global error
      */
     clearGlobalError() {
-      setGlobalError('');
+      _setGlobalErrorSignal('');
     },
 
     /**
@@ -197,7 +197,7 @@ export function createFormErrorSignals(createSignal) {
      */
     clearAll() {
       setFieldErrors({});
-      setGlobalError('');
+      _setGlobalErrorSignal('');
     },
 
     /**

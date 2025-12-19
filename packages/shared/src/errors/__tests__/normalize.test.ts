@@ -59,7 +59,11 @@ describe('normalizeError', () => {
 
     expect(isTransportError(normalized)).toBe(true);
     expect(normalized.code).toBe('TRANSPORT_CORS_ERROR');
-    expect(normalized.details?.originalError).toBe('CORS error: Access denied');
+    // Type guard narrows to TransportError
+    if (isTransportError(normalized)) {
+      // TypeScript now knows normalized is TransportError
+      expect(normalized.details?.originalError).toBe('CORS error: Access denied');
+    }
   });
 
   it('should convert network Error to transport error', () => {

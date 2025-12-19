@@ -10,6 +10,7 @@ import {
   isDomainError,
   isTransportError,
   AUTH_ERRORS,
+  USER_ERRORS,
 } from '@corates/shared';
 import { showToast } from '@corates/ui';
 
@@ -106,7 +107,7 @@ export async function handleDomainError(error, options = {}) {
       navigate('/signin', { replace: true });
       return;
     }
-    if (error.code === 'USER_EMAIL_NOT_VERIFIED') {
+    if (error.code === USER_ERRORS.EMAIL_NOT_VERIFIED.code) {
       navigate('/verify-email', { replace: true });
       return;
     }
