@@ -3,6 +3,7 @@ import { Portal } from 'solid-js/web';
 import { normalizeProps, useMachine } from '@zag-js/solid';
 import { createMemo, createSignal, createUniqueId, For, Show, splitProps } from 'solid-js';
 import { FiChevronDown, FiX, FiCheck } from 'solid-icons/fi';
+import { Z_INDEX } from '../constants/zIndex.js';
 
 /**
  * Combobox - Searchable select with autocomplete
@@ -75,7 +76,7 @@ export function Combobox(props) {
       <Show when={options().length > 0}>
         <ul
           {...api().getContentProps()}
-          class='z-50 max-h-60 overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg focus:outline-none'
+          class={`${Z_INDEX.COMBOBOX} max-h-60 overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg focus:outline-none`}
         >
           <For each={options()}>
             {item => (

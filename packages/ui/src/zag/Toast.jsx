@@ -2,6 +2,7 @@ import * as toast from '@zag-js/toast';
 import { normalizeProps, useMachine, Key } from '@zag-js/solid';
 import { createMemo, createUniqueId, Show } from 'solid-js';
 import { FiX, FiCheck, FiAlertCircle, FiInfo, FiLoader } from 'solid-icons/fi';
+import { Z_INDEX } from '../constants/zIndex.js';
 
 /**
  * Create the toast store - this is the global toaster instance
@@ -116,7 +117,7 @@ export function Toaster() {
   return (
     <div
       {...api().getGroupProps()}
-      class='pointer-events-none fixed inset-0 z-50 flex flex-col items-end p-4 sm:p-6'
+      class={`pointer-events-none fixed inset-0 ${Z_INDEX.TOAST} flex flex-col items-end p-4 sm:p-6`}
     >
       <Key each={api().getToasts()} by={t => t.id}>
         {(toastItem, index) => <ToastItem toast={toastItem} parent={service} index={index} />}

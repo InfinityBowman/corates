@@ -11,6 +11,7 @@ import {
   useContext,
 } from 'solid-js';
 import { FiX } from 'solid-icons/fi';
+import { Z_INDEX } from '../constants/zIndex.js';
 
 // Context for providing tour API to children
 const TourContext = createContext();
@@ -75,17 +76,17 @@ export function TourProvider(props) {
           <Show when={api().step.backdrop !== false}>
             <div
               {...api().getBackdropProps()}
-              class='fixed inset-0 z-100 bg-black/50 transition-opacity'
+              class={`fixed inset-0 ${Z_INDEX.TOUR_BACKDROP} bg-black/50 transition-opacity`}
             />
           </Show>
 
           <Show when={api().step.type === 'tooltip' && api().step.target}>
-            <div {...api().getSpotlightProps()} class='z-101' />
+            <div {...api().getSpotlightProps()} class={Z_INDEX.TOUR_SPOTLIGHT} />
           </Show>
 
           <div
             {...api().getPositionerProps()}
-            class={`z-102 ${api().step.type === 'dialog' ? 'fixed inset-0 flex items-center justify-center p-4' : ''}`}
+            class={`${Z_INDEX.TOUR_CONTENT} ${api().step.type === 'dialog' ? 'fixed inset-0 flex items-center justify-center p-4' : ''}`}
           >
             <div
               {...api().getContentProps()}

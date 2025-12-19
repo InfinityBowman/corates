@@ -2,6 +2,7 @@ import * as tooltip from '@zag-js/tooltip';
 import { normalizeProps, useMachine } from '@zag-js/solid';
 import { createMemo, createUniqueId, Show } from 'solid-js';
 import { Portal } from 'solid-js/web';
+import { Z_INDEX } from '../constants/zIndex.js';
 
 export function Tooltip(props) {
   const service = useMachine(tooltip.machine, () => ({
@@ -23,7 +24,7 @@ export function Tooltip(props) {
       <span {...api().getTriggerProps()}>{props.children}</span>
       <Show when={api().open}>
         <Portal>
-          <div {...api().getPositionerProps()} class='z-50'>
+          <div {...api().getPositionerProps()} class={Z_INDEX.TOOLTIP}>
             <div {...api().getArrowProps()} class='[--arrow-background:#111827] [--arrow-size:8px]'>
               <div {...api().getArrowTipProps()} />
             </div>

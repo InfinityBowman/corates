@@ -5,6 +5,7 @@ import ReconcileStudyCard from './ReconcileStudyCard.jsx';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useProjectContext } from '../ProjectContext.jsx';
+import { isStudyInReconciliation } from '@/utils/reconciliation.js';
 
 /**
  * ReconcileTab - Shows studies in reconciliation workflow
@@ -18,33 +19,9 @@ export default function ReconcileTab() {
   // Read from store directly
   const studies = () => projectStore.getStudies(projectId);
 
-  // Filter studies that are in reconciliation workflow:
-  // - Dual reviewer studies (has both reviewer1 and reviewer2)
-  // - Has at least 1 completed checklist
-  // - Does not have a completed reconciled checklist (in-progress reconciliations are shown)
+  // Filter studies that are in reconciliation workflow
   const studiesInReconciliation = createMemo(() => {
-    return studies().filter(study => {
-      // Only for dual-reviewer studies
-      if (!study.reviewer1 || !study.reviewer2) return false;
-
-      const checklists = study.checklists || [];
-
-      // Skip if already has a completed reconciled checklist
-      // But show if there's an in-progress reconciliation
-      if (checklists.some(c => c.isReconciled && c.status === 'completed')) return false;
-
-      // Count completed checklists
-      const completedChecklists = checklists.filter(c => c.status === 'completed');
-
-      // Show if 1 or 2 checklists are completed, OR if there's an in-progress reconciled checklist
-      const hasInProgressReconciliation = checklists.some(
-        c => c.isReconciled && c.status !== 'completed',
-      );
-      return (
-        hasInProgressReconciliation ||
-        (completedChecklists.length >= 1 && completedChecklists.length <= 2)
-      );
-    });
+    return studies().filter(isStudyInReconciliation);
   });
 
   // Navigation helpers

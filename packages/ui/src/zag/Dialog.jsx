@@ -3,6 +3,7 @@ import { Portal } from 'solid-js/web';
 import { useMachine, normalizeProps } from '@zag-js/solid';
 import { createMemo, createSignal, createUniqueId, Show } from 'solid-js';
 import { FiAlertTriangle, FiX } from 'solid-icons/fi';
+import { Z_INDEX } from '../constants/zIndex.js';
 
 /**
  * Dialog - A generic dialog/modal component
@@ -51,12 +52,12 @@ export function Dialog(props) {
         {/* Backdrop */}
         <div
           {...api().getBackdropProps()}
-          class='fixed inset-0 z-50 bg-black/50 transition-opacity'
+          class={`fixed inset-0 ${Z_INDEX.BACKDROP} bg-black/50 transition-opacity`}
         />
         {/* Positioner - scrollable container */}
         <div
           {...api().getPositionerProps()}
-          class='fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4'
+          class={`fixed inset-0 ${Z_INDEX.DIALOG} flex items-center justify-center overflow-y-auto p-4`}
         >
           {/* Content */}
           <div
@@ -170,12 +171,12 @@ export function ConfirmDialog(props) {
         {/* Backdrop */}
         <div
           {...api().getBackdropProps()}
-          class='fixed inset-0 z-50 bg-black/50 transition-opacity'
+          class={`fixed inset-0 ${Z_INDEX.BACKDROP} bg-black/50 transition-opacity`}
         />
         {/* Positioner */}
         <div
           {...api().getPositionerProps()}
-          class='fixed inset-0 z-50 flex items-center justify-center p-4'
+          class={`fixed inset-0 ${Z_INDEX.DIALOG} flex items-center justify-center p-4`}
         >
           {/* Content */}
           <div
