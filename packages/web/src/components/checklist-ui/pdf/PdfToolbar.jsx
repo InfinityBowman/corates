@@ -99,7 +99,7 @@ export default function PdfToolbar(props) {
         </Show>
 
         {/* Show file name if PDF is loaded (only when not using multi-PDF selector) */}
-        <Show when={props.fileName && !(props.pdfs?.length > 1)}>
+        <Show when={props.fileName && (props.pdfs?.length ?? 0) <= 1}>
           <span class='max-w-40 truncate text-sm text-gray-600' title={props.fileName}>
             {props.fileName}
           </span>

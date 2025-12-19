@@ -9,22 +9,20 @@ export default function NotificationToast(props) {
   const navigate = useNavigate();
 
   const getNotificationContent = notification => {
-    switch (notification.type) {
-      case 'project-invite':
-        return {
-          title: 'Added to Project',
-          message: `You've been added to "${notification.projectName}" as ${notification.role}`,
-          action: () => navigate(`/projects/${notification.projectId}`),
-          actionLabel: 'Open Project',
-        };
-      default:
-        return {
-          title: 'Notification',
-          message: notification.message || 'You have a new notification',
-          action: null,
-          actionLabel: null,
-        };
+    if (notification.type === 'project-invite') {
+      return {
+        title: 'Added to Project',
+        message: `You've been added to "${notification.projectName}" as ${notification.role}`,
+        action: () => navigate(`/projects/${notification.projectId}`),
+        actionLabel: 'Open Project',
+      };
     }
+    return {
+      title: 'Notification',
+      message: notification.message || 'You have a new notification',
+      action: null,
+      actionLabel: null,
+    };
   };
 
   return (

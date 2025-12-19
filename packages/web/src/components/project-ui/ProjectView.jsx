@@ -238,7 +238,8 @@ export default function ProjectView() {
     const searchParams = new URLSearchParams(location.search);
     value === 'overview' ? searchParams.delete('tab') : searchParams.set('tab', value);
     const newSearch = searchParams.toString();
-    navigate(`${location.pathname}${newSearch ? `?${newSearch}` : ''}`, {
+    const queryString = newSearch ? `?${newSearch}` : '';
+    navigate(`${location.pathname}${queryString}`, {
       replace: true,
     });
   };

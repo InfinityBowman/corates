@@ -221,12 +221,11 @@ export default function ChecklistYjsWrapper() {
     const type = checklistType();
 
     Object.entries(patch).forEach(([key, value]) => {
-      // AMSTAR2: keys like q1, q2a, etc.
-      if (type === 'AMSTAR2' && AMSTAR2_KEY_PATTERN.test(key)) {
-        updateChecklistAnswer(params.studyId, params.checklistId, key, value);
-      }
-      // ROBINS-I: section and domain keys
-      else if (type === 'ROBINS_I' && ROBINS_I_KEYS.has(key)) {
+      // AMSTAR2: keys like q1, q2a, etc. | ROBINS-I: section and domain keys
+      const isValidKey =
+        (type === 'AMSTAR2' && AMSTAR2_KEY_PATTERN.test(key)) ||
+        (type === 'ROBINS_I' && ROBINS_I_KEYS.has(key));
+      if (isValidKey) {
         updateChecklistAnswer(params.studyId, params.checklistId, key, value);
       }
     });

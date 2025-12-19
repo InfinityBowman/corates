@@ -372,7 +372,8 @@ describe('Member Routes - Project Membership Middleware', () => {
   it('should identify owner status', async () => {
     mockDb.get.mockResolvedValue({ role: 'owner' });
 
-    const isOwner = 'owner' === 'owner';
+    const role = 'owner';
+    const isOwner = role === 'owner';
     expect(isOwner).toBe(true);
   });
 

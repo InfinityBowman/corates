@@ -219,7 +219,8 @@ export default function SettingsPage() {
                   try {
                     await resetPassword(user()?.email);
                     setAddPasswordSent(true);
-                  } catch (_err) {
+                  } catch (err) {
+                    console.warn('Password reset email failed:', err);
                     setPasswordError('Failed to send password setup email. Please try again.');
                   } finally {
                     setAddPasswordLoading(false);

@@ -154,8 +154,9 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
       try {
         const errorBody = await response.json();
         message = errorBody?.error || message;
-      } catch (_err) {
-        // ignore
+      } catch (err) {
+        // JSON parsing failed - use default message
+        console.debug('Could not parse error response:', err.message);
       }
       throw new Error(message);
     }
@@ -201,8 +202,9 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
       try {
         const errorBody = await response.json();
         message = errorBody?.error || message;
-      } catch (_err) {
-        // ignore
+      } catch (err) {
+        // JSON parsing failed - use default message
+        console.debug('Could not parse error response:', err.message);
       }
       throw new Error(message);
     }

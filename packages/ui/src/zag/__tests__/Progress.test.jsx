@@ -116,19 +116,19 @@ describe('Progress', () => {
 
   describe('Value range', () => {
     it('should handle 0% value', () => {
-      const { container } = render(() => <Progress value={0} showValue />);
+      const { _container } = render(() => <Progress value={0} showValue />);
 
       expect(screen.getByText('0%')).toBeInTheDocument();
     });
 
     it('should handle 100% value', () => {
-      const { container } = render(() => <Progress value={100} showValue />);
+      const { _container } = render(() => <Progress value={100} showValue />);
 
       expect(screen.getByText('100%')).toBeInTheDocument();
     });
 
     it('should handle custom min/max values', () => {
-      const { container } = render(() => <Progress value={50} min={0} max={200} showValue />);
+      const { _container } = render(() => <Progress value={50} min={0} max={200} showValue />);
 
       expect(screen.getByText('25%')).toBeInTheDocument();
     });

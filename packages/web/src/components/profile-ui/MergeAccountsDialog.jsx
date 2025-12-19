@@ -111,10 +111,9 @@ export default function MergeAccountsDialog(props) {
     try {
       const result = await completeMerge(mergeToken());
       setStep(STEPS.SUCCESS);
-      showToast.success(
-        'Accounts Merged',
-        `Successfully merged accounts. ${result.mergedProviders.length ? `Linked: ${result.mergedProviders.join(', ')}` : ''}`,
-      );
+      const linkedInfo =
+        result.mergedProviders.length ? `Linked: ${result.mergedProviders.join(', ')}` : '';
+      showToast.success('Accounts Merged', `Successfully merged accounts. ${linkedInfo}`);
       props.onSuccess?.();
     } catch (err) {
       setError(err.message);
