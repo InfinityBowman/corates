@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock dependencies before importing the store
-vi.mock('@api/auth-client.js', () => ({
+vi.mock('@/api/authClient.js', () => ({
   authClient: {
     signUp: {
       email: vi.fn(),
