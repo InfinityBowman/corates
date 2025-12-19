@@ -55,7 +55,7 @@ function cleanTitle(title) {
   return (
     title
       // Remove excessive whitespace
-      .replace(/\s+/g, ' ')
+      .replaceAll(/\s+/g, ' ')
       // Remove common prefixes (with optional : or -)
       .replace(/^(original\s+article|research\s+article|review|article)\s*[:|-]?\s*/i, '')
       .trim()
@@ -256,7 +256,7 @@ describe('readFileAsArrayBuffer', () => {
   });
 
   it('should preserve binary content', async () => {
-    const bytes = new Uint8Array([0x00, 0x01, 0x02, 0xff, 0xfe, 0xfd]);
+    const bytes = new Uint8Array([0x00, 0x01, 0x02, 0xFF, 0xFE, 0xFD]);
     const blob = new Blob([bytes]);
     const file = new File([blob], 'test.bin', { type: 'application/octet-stream' });
 

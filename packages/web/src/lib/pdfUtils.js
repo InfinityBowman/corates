@@ -10,8 +10,8 @@ let pdfjsInitPromise = null;
 const DOI_REGEX = /\b(10\.\d{4,}(?:\.\d+)*\/\S+)\b/gi;
 
 // Timeout constants
-const PDF_INIT_TIMEOUT = 10000; // 10 seconds for PDF.js initialization
-const PDF_EXTRACT_TIMEOUT = 10000; // 10 seconds for title/DOI extraction
+const PDF_INIT_TIMEOUT = 10_000; // 10 seconds for PDF.js initialization
+const PDF_EXTRACT_TIMEOUT = 10_000; // 10 seconds for title/DOI extraction
 
 /**
  * Wrap a promise with a timeout
@@ -186,7 +186,7 @@ function cleanTitle(title) {
   return (
     title
       // Remove excessive whitespace
-      .replace(/\s+/g, ' ')
+      .replaceAll(/\s+/g, ' ')
       // Remove common prefixes (with optional : or -)
       .replace(/^(original\s+article|research\s+article|review|article)\s*[:|-]?\s*/i, '')
       .trim()
@@ -246,9 +246,9 @@ async function extractPdfDoiInternal(pdfData) {
     // Check custom metadata
     if (metadata?.metadata?._metadataMap) {
       for (const [key, value] of metadata.metadata._metadataMap) {
-        const valueStr = String(value || '');
-        if (valueStr && /doi/i.test(key)) {
-          const match = valueStr.match(DOI_REGEX);
+        const valueString = String(value || '');
+        if (valueString && /doi/i.test(key)) {
+          const match = valueString.match(DOI_REGEX);
           if (match) {
             return cleanDoi(match[0]);
           }
@@ -309,7 +309,7 @@ export function normalizeTitle(title) {
   if (!title) return '';
   return title
     .toLowerCase()
-    .replace(/[^\w\s]/g, '') // Remove punctuation
-    .replace(/\s+/g, ' ') // Normalize whitespace
+    .replaceAll(/[^\w\s]/g, '') // Remove punctuation
+    .replaceAll(/\s+/g, ' ') // Normalize whitespace
     .trim();
 }

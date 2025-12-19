@@ -233,7 +233,7 @@ describe('useProject - Study CRUD Operations', () => {
           });
 
           resolveTest();
-        } catch (_e) {
+        } catch {
           // Resolve anyway to prevent timeout
           resolveTest();
         }
@@ -260,7 +260,7 @@ describe('useProject - Study CRUD Operations', () => {
           project.deleteStudy(studyId);
 
           resolveTest();
-        } catch (_e) {
+        } catch {
           resolveTest();
         }
       });
@@ -295,7 +295,7 @@ describe('useProject - PDF Operations', () => {
       project.addPdfToStudy(studyId, {
         fileName: 'test.pdf',
         key: 'r2-storage-key',
-        size: 123456,
+        size: 123_456,
         uploadedBy: 'user-1',
         uploadedAt: Date.now(),
       });
@@ -316,7 +316,7 @@ describe('useProject - PDF Operations', () => {
       project.addPdfToStudy(studyId, {
         fileName: 'test.pdf',
         key: 'r2-key',
-        size: 12345,
+        size: 12_345,
         uploadedBy: 'user-1',
       });
 
@@ -746,7 +746,7 @@ describe('useProject - Connection Reference Counting', () => {
 
     it('should return null for null/undefined projectId', () => {
       expect(_getOrCreateConnection(null)).toBeNull();
-      expect(_getOrCreateConnection(undefined)).toBeNull();
+      expect(_getOrCreateConnection()).toBeNull();
       expect(_getOrCreateConnection('')).toBeNull();
     });
 
@@ -754,7 +754,7 @@ describe('useProject - Connection Reference Counting', () => {
       // Should not throw
       expect(() => _releaseConnection('non-existent-id')).not.toThrow();
       expect(() => _releaseConnection(null)).not.toThrow();
-      expect(() => _releaseConnection(undefined)).not.toThrow();
+      expect(() => _releaseConnection()).not.toThrow();
     });
   });
 

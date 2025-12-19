@@ -49,11 +49,11 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
     // Extract answers based on checklist type
     if (type === CHECKLIST_TYPES.AMSTAR2) {
       // AMSTAR2: Extract question answers (q1, q2, etc.)
-      Object.entries(checklistTemplate).forEach(([key, value]) => {
+      for (const [key, value] of Object.entries(checklistTemplate)) {
         if (/^q\d+[a-z]*$/i.test(key)) {
           answersData[key] = value;
         }
-      });
+      }
     } else if (type === CHECKLIST_TYPES.ROBINS_I) {
       // ROBINS-I: Extract all domain and section data
       const robinsKeys = [
@@ -72,11 +72,11 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
         'domain6',
         'overall',
       ];
-      robinsKeys.forEach(key => {
+      for (const key of robinsKeys) {
         if (checklistTemplate[key] !== undefined) {
           answersData[key] = checklistTemplate[key];
         }
-      });
+      }
     }
 
     const checklistYMap = new Y.Map();
@@ -98,7 +98,7 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
       const multiPartParents = ['q9', 'q11'];
       const subQuestionPattern = /^(q9|q11)[a-z]$/;
 
-      Object.entries(answersData).forEach(([questionKey, questionData]) => {
+      for (const [questionKey, questionData] of Object.entries(answersData)) {
         const questionYMap = new Y.Map();
         questionYMap.set('answers', questionData.answers);
         questionYMap.set('critical', questionData.critical);
@@ -110,20 +110,20 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
         }
 
         answersYMap.set(questionKey, questionYMap);
-      });
+      }
 
       // Add note entries for multi-part parent questions (q9, q11)
       // These don't have answer data but need a note
-      multiPartParents.forEach(parentKey => {
+      for (const parentKey of multiPartParents) {
         if (!answersYMap.has(parentKey)) {
           const parentYMap = new Y.Map();
           parentYMap.set('note', new Y.Text());
           answersYMap.set(parentKey, parentYMap);
         }
-      });
+      }
     } else if (type === CHECKLIST_TYPES.ROBINS_I) {
       // ROBINS-I: Store each section/domain as nested Y.Maps to support concurrent edits
-      Object.entries(answersData).forEach(([key, value]) => {
+      for (const [key, value] of Object.entries(answersData)) {
         const sectionYMap = new Y.Map();
 
         // Domain keys have nested 'answers' object with individual questions
@@ -137,17 +137,17 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
           // Store each question as a nested Y.Map for concurrent edits
           if (value.answers) {
             const answersNestedYMap = new Y.Map();
-            Object.entries(value.answers).forEach(([qKey, qValue]) => {
+            for (const [qKey, qValue] of Object.entries(value.answers)) {
               const questionYMap = new Y.Map();
               questionYMap.set('answer', qValue.answer ?? null);
               questionYMap.set('comment', qValue.comment ?? '');
               answersNestedYMap.set(qKey, questionYMap);
-            });
+            }
             sectionYMap.set('answers', answersNestedYMap);
           }
         } else if (key === 'sectionB') {
           // Section B has individual questions (b1, b2, b3) and stopAssessment
-          Object.entries(value).forEach(([subKey, subValue]) => {
+          for (const [subKey, subValue] of Object.entries(value)) {
             if (typeof subValue === 'object' && subValue !== null) {
               const questionYMap = new Y.Map();
               questionYMap.set('answer', subValue.answer ?? null);
@@ -156,7 +156,7 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
             } else {
               sectionYMap.set(subKey, subValue);
             }
-          });
+          }
         } else if (key === 'confoundingEvaluation') {
           // Confounding evaluation has arrays - store as JSON for now
           sectionYMap.set('predefined', value.predefined ?? []);
@@ -167,18 +167,18 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
           sectionYMap.set('otherSpecify', value.otherSpecify ?? '');
         } else {
           // Other sections (planning, sectionA, sectionC): store each field
-          Object.entries(value).forEach(([fieldKey, fieldValue]) => {
+          for (const [fieldKey, fieldValue] of Object.entries(value)) {
             sectionYMap.set(fieldKey, fieldValue);
-          });
+          }
         }
 
         answersYMap.set(key, sectionYMap);
-      });
+      }
     } else {
       // Other types: Store data directly (will be serialized as JSON)
-      Object.entries(answersData).forEach(([key, value]) => {
+      for (const [key, value] of Object.entries(answersData)) {
         answersYMap.set(key, value);
-      });
+      }
     }
 
     checklistYMap.set('answers', answersYMap);
@@ -305,14 +305,10 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
             const answersNestedYMap = sectionYMap.get('answers');
             if (answersNestedYMap instanceof Y.Map) {
               for (const [qKey, questionYMap] of answersNestedYMap.entries()) {
-                if (questionYMap instanceof Y.Map) {
-                  sectionData.answers[qKey] = {
+                sectionData.answers[qKey] = questionYMap instanceof Y.Map ? {
                     answer: questionYMap.get('answer') ?? null,
                     comment: questionYMap.get('comment') ?? '',
-                  };
-                } else {
-                  sectionData.answers[qKey] = questionYMap;
-                }
+                  } : questionYMap;
               }
             }
             answers[key] = sectionData;
@@ -329,14 +325,10 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
           } else if (key === 'sectionB') {
             const sectionData = {};
             for (const [subKey, subValue] of sectionYMap.entries()) {
-              if (subValue instanceof Y.Map) {
-                sectionData[subKey] = {
+              sectionData[subKey] = subValue instanceof Y.Map ? {
                   answer: subValue.get('answer') ?? null,
                   comment: subValue.get('comment') ?? '',
-                };
-              } else {
-                sectionData[subKey] = subValue;
-              }
+                } : subValue;
             }
             answers[key] = sectionData;
           } else {
@@ -429,7 +421,7 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
             sectionYMap.set('answers', answersNestedYMap);
           }
 
-          Object.entries(data.answers).forEach(([qKey, qValue]) => {
+          for (const [qKey, qValue] of Object.entries(data.answers)) {
             let questionYMap = answersNestedYMap.get(qKey);
             if (!questionYMap || !(questionYMap instanceof Y.Map)) {
               questionYMap = new Y.Map();
@@ -437,11 +429,11 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
             }
             if (qValue.answer !== undefined) questionYMap.set('answer', qValue.answer);
             if (qValue.comment !== undefined) questionYMap.set('comment', qValue.comment);
-          });
+          }
         }
       } else if (key === 'sectionB') {
         // Section B: update individual questions or stopAssessment
-        Object.entries(data).forEach(([subKey, subValue]) => {
+        for (const [subKey, subValue] of Object.entries(data)) {
           if (typeof subValue === 'object' && subValue !== null) {
             let questionYMap = sectionYMap.get(subKey);
             if (!questionYMap || !(questionYMap instanceof Y.Map)) {
@@ -453,7 +445,7 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
           } else {
             sectionYMap.set(subKey, subValue);
           }
-        });
+        }
       } else if (key === 'confoundingEvaluation') {
         // Confounding evaluation: update arrays
         if (data.predefined !== undefined) sectionYMap.set('predefined', data.predefined);
@@ -464,9 +456,9 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
         if (data.otherSpecify !== undefined) sectionYMap.set('otherSpecify', data.otherSpecify);
       } else {
         // Other sections: update individual fields
-        Object.entries(data).forEach(([fieldKey, fieldValue]) => {
+        for (const [fieldKey, fieldValue] of Object.entries(data)) {
           sectionYMap.set(fieldKey, fieldValue);
-        });
+        }
       }
     }
     // Other types: Store data directly

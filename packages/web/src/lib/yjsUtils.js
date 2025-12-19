@@ -11,9 +11,9 @@ export function yToPlain(value) {
   }
 
   if (value instanceof Y.Array) {
-    const arr = [];
-    for (let i = 0; i < value.length; i++) arr.push(yToPlain(value.get(i)));
-    return arr;
+    const array = [];
+    for (let i = 0; i < value.length; i++) array.push(yToPlain(value.get(i)));
+    return array;
   }
 
   // primitive or plain object
@@ -30,28 +30,28 @@ export function yToPlain(value) {
 export function applyObjectToYMap(target, obj) {
   if (!(target instanceof Y.Map)) throw new Error('target must be a Y.Map');
 
-  Object.entries(obj || {}).forEach(([key, val]) => {
+  for (const [key, val] of Object.entries(obj || {})) {
     if (val instanceof Y.Map || val instanceof Y.Array) {
       target.set(key, val);
-      return;
+      continue;
     }
 
     if (Array.isArray(val)) {
-      const arr = new Y.Array();
-      val.forEach(item => arr.push([convertPrimitiveToY(item)]));
-      target.set(key, arr);
-      return;
+      const array = new Y.Array();
+      for (const item of val) array.push([convertPrimitiveToY(item)]);
+      target.set(key, array);
+      continue;
     }
 
     if (val && typeof val === 'object') {
       const map = new Y.Map();
       applyObjectToYMap(map, val);
       target.set(key, map);
-      return;
+      continue;
     }
 
     target.set(key, val);
-  });
+  }
 }
 
 // Helper: convert primitive/obj/array to a Y-friendly value
@@ -64,7 +64,7 @@ function convertPrimitiveToY(value) {
 
   if (Array.isArray(value)) {
     const a = new Y.Array();
-    value.forEach(v => a.push([convertPrimitiveToY(v)]));
+    for (const v of value) a.push([convertPrimitiveToY(v)]);
     return a;
   }
 

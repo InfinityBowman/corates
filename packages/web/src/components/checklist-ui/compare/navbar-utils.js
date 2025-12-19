@@ -19,14 +19,14 @@ export function hasQuestionAnswer(questionKey, finalAnswers) {
     const dataKeys = getDataKeysForQuestion(questionKey);
     for (const dk of dataKeys) {
       if (!final[dk]) return false;
-      const lastCol = final[dk].answers?.[final[dk].answers.length - 1];
-      if (!lastCol || !lastCol.some(v => v === true)) return false;
+      const lastCol = final[dk].answers?.at(-1);
+      if (!lastCol || !lastCol.includes(true)) return false;
     }
     return true;
   }
 
-  const lastCol = final.answers?.[final.answers.length - 1];
-  return lastCol && lastCol.some(v => v === true);
+  const lastCol = final.answers?.at(-1);
+  return lastCol && lastCol.includes(true);
 }
 
 /**

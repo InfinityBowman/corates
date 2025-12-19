@@ -113,13 +113,13 @@ function addRISValue(ref, tag, value) {
     // Extract year from various formats (2024, 2024/01/15, etc.)
     const yearMatch = value.match(/^(\d{4})/);
     if (yearMatch) {
-      ref.year = parseInt(yearMatch[1], 10);
+      ref.year = Number.parseInt(yearMatch[1], 10);
     }
   } else if (field === 'date') {
     // Date format might be YYYY/MM/DD or YYYY-MM-DD
     const yearMatch = value.match(/^(\d{4})/);
     if (yearMatch && !ref.year) {
-      ref.year = parseInt(yearMatch[1], 10);
+      ref.year = Number.parseInt(yearMatch[1], 10);
     }
   } else {
     ref[field] = value;
@@ -163,7 +163,7 @@ export function parseBibTeX(content) {
           ref.authors = cleanValue.split(/\s+and\s+/).map(a => cleanBibTeXValue(a.trim()));
           break;
         case 'year':
-          ref.year = parseInt(cleanValue, 10);
+          ref.year = Number.parseInt(cleanValue, 10);
           break;
         case 'journal':
         case 'journaltitle':
@@ -216,15 +216,15 @@ export function parseBibTeX(content) {
  */
 function cleanBibTeXValue(value) {
   return value
-    .replace(/[{}]/g, '')
-    .replace(/\\&/g, '&')
-    .replace(/\\\$/g, '$')
-    .replace(/\\%/g, '%')
-    .replace(/\\_/g, '_')
-    .replace(/\\#/g, '#')
-    .replace(/\\textit\{([^}]*)\}/g, '$1')
-    .replace(/\\textbf\{([^}]*)\}/g, '$1')
-    .replace(/\\emph\{([^}]*)\}/g, '$1')
+    .replaceAll(/[{}]/g, '')
+    .replaceAll(String.raw`\&`, '&')
+    .replaceAll(String.raw`\$`, '$')
+    .replaceAll(String.raw`\%`, '%')
+    .replaceAll(String.raw`\_`, '_')
+    .replaceAll(String.raw`\#`, '#')
+    .replaceAll(/\\textit\{([^}]*)\}/g, '$1')
+    .replaceAll(/\\textbf\{([^}]*)\}/g, '$1')
+    .replaceAll(/\\emph\{([^}]*)\}/g, '$1')
     .trim();
 }
 
@@ -268,7 +268,7 @@ function extractFirstAuthor(authors) {
 
   // Handle "First Last" format - take last word
   const parts = firstAuthor.trim().split(/\s+/);
-  return parts[parts.length - 1];
+  return parts.at(-1);
 }
 
 /**
@@ -287,7 +287,7 @@ function formatAuthors(authors) {
 
   // More than 2 authors: "First, Second, ... and Last"
   const allButLast = authors.slice(0, -1).join(', ');
-  return `${allButLast}, and ${authors[authors.length - 1]}`;
+  return `${allButLast}, and ${authors.at(-1)}`;
 }
 
 /**

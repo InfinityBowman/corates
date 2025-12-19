@@ -131,43 +131,43 @@ describe('createChecklist', () => {
       'q16',
     ];
 
-    expectedQuestions.forEach(q => {
+    for (const q of expectedQuestions) {
       it(`should include question ${q}`, () => {
         expect(checklist[q]).toBeDefined();
         expect(checklist[q]).toHaveProperty('answers');
         expect(checklist[q]).toHaveProperty('critical');
         expect(Array.isArray(checklist[q].answers)).toBe(true);
       });
-    });
+    }
 
     // Critical questions per AMSTAR2: 2, 4, 7, 9, 11, 13, 15
     const criticalQuestions = ['q2', 'q4', 'q7', 'q9a', 'q9b', 'q11a', 'q11b', 'q13', 'q15'];
     const nonCriticalQuestions = ['q1', 'q3', 'q5', 'q6', 'q8', 'q10', 'q12', 'q14', 'q16'];
 
-    criticalQuestions.forEach(q => {
+    for (const q of criticalQuestions) {
       it(`should mark ${q} as critical`, () => {
         expect(checklist[q].critical).toBe(true);
       });
-    });
+    }
 
-    nonCriticalQuestions.forEach(q => {
+    for (const q of nonCriticalQuestions) {
       it(`should mark ${q} as non-critical`, () => {
         expect(checklist[q].critical).toBe(false);
       });
-    });
+    }
 
     it('should initialize all answers to false (no selection)', () => {
       // Check that answers are arrays of arrays with all false values
       // All answers should be initialized to false (no default selection)
-      Object.keys(checklist).forEach(key => {
-        if (!/^q\d+[a-z]*$/i.test(key)) return;
+      for (const key of Object.keys(checklist)) {
+        if (!/^q\d+[a-z]*$/i.test(key)) continue;
         const question = checklist[key];
-        question.answers.forEach((col, _colIdx) => {
+        for (const [_colIdx, col] of question.answers.entries()) {
           // All columns should have all false values by default
           const allFalse = col.every(v => v === false);
           expect(allFalse).toBe(true);
-        });
-      });
+        }
+      }
     });
   });
 });
@@ -178,11 +178,11 @@ describe('scoreChecklist', () => {
     const checklist = createChecklist({ id: 'test', name: 'Test' });
 
     // Apply selections - format: { q1: 'Yes', q2: 'No', ... }
-    Object.entries(selections).forEach(([question, answer]) => {
-      if (!checklist[question]) return;
+    for (const [question, answer] of Object.entries(selections)) {
+      if (!checklist[question]) continue;
 
       const answers = checklist[question].answers;
-      const lastCol = answers[answers.length - 1];
+      const lastCol = answers.at(-1);
 
       // Reset last column to all false
       lastCol.fill(false);
@@ -202,7 +202,7 @@ describe('scoreChecklist', () => {
       if (answerMap[answer] !== undefined && answerMap[answer] < lastCol.length) {
         lastCol[answerMap[answer]] = true;
       }
-    });
+    }
 
     return checklist;
   }
@@ -212,7 +212,7 @@ describe('scoreChecklist', () => {
   });
 
   it('should return "Error" for undefined input', () => {
-    expect(scoreChecklist(undefined)).toBe('Error');
+    expect(scoreChecklist()).toBe('Error');
   });
 
   it('should return "Error" for non-object input', () => {

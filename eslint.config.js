@@ -151,6 +151,7 @@ export default [
             dir: false,
             el: false,
             acc: false,
+            utils: false,
             // React/SolidJS common patterns
             prev: false,
             props: false,

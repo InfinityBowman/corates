@@ -125,7 +125,7 @@ export default function ProjectDashboard(props) {
           class='inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
           onClick={() => setShowCreateForm(!showCreateForm())}
           disabled={!isOnline()}
-          title={!isOnline() ? 'Cannot create projects while offline' : ''}
+          title={isOnline() ? '' : 'Cannot create projects while offline'}
         >
           <span class='text-lg'>+</span>
           New Project

@@ -21,7 +21,7 @@ export default function usePdfJs(options = {}) {
   const [pdfDoc, setPdfDoc] = createSignal(null);
   const [currentPage, setCurrentPage] = createSignal(1);
   const [totalPages, setTotalPages] = createSignal(0);
-  const [scale, setScale] = createSignal(1.0);
+  const [scale, setScale] = createSignal(1);
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal(null);
   const [pdfSource, setPdfSource] = createSignal(null);
@@ -90,7 +90,7 @@ export default function usePdfJs(options = {}) {
   }
 
   // Track scale at gesture start for Safari
-  let gestureStartScale = 1.0;
+  let gestureStartScale = 1;
 
   function handleGestureStart(e) {
     e.preventDefault();
@@ -100,7 +100,7 @@ export default function usePdfJs(options = {}) {
   function handleGestureChange(e) {
     e.preventDefault();
     // e.scale is relative to gesture start (1.0 = no change)
-    const newScale = Math.min(Math.max(gestureStartScale * e.scale, 0.5), 3.0);
+    const newScale = Math.min(Math.max(gestureStartScale * e.scale, 0.5), 3);
     setScale(newScale);
   }
 
@@ -118,7 +118,7 @@ export default function usePdfJs(options = {}) {
     // Use deltaY directly for smooth, proportional zooming
     // Smaller divisor = more sensitive, larger = less sensitive
     const zoomDelta = -e.deltaY * 0.01;
-    const newScale = Math.min(Math.max(scale() + zoomDelta, 0.5), 3.0);
+    const newScale = Math.min(Math.max(scale() + zoomDelta, 0.5), 3);
     setScale(newScale);
   }
 
@@ -132,7 +132,7 @@ export default function usePdfJs(options = {}) {
     let closestPage = 1;
     let closestDistance = Infinity;
 
-    pageRefs.forEach((pageEl, pageNum) => {
+    for (const [pageNum, pageEl] of pageRefs.entries()) {
       if (pageEl) {
         const pageRect = pageEl.getBoundingClientRect();
         const pageMiddle = pageRect.top + pageRect.height / 2;
@@ -143,7 +143,7 @@ export default function usePdfJs(options = {}) {
           closestPage = pageNum;
         }
       }
-    });
+    }
 
     if (closestPage !== currentPage()) {
       setCurrentPage(closestPage);
@@ -189,7 +189,7 @@ export default function usePdfJs(options = {}) {
     }
 
     // Load the new PDF (old one stays visible until this completes)
-    const clonedData = savedData.slice(0);
+    const clonedData = [...savedData];
     setLoadedPdfName(savedName);
     setFileName(savedName);
     setPdfSource({ data: clonedData });
@@ -235,15 +235,15 @@ export default function usePdfJs(options = {}) {
 
     // Find canvases that exist but haven't been rendered
     const pagesToRender = [];
-    for (let i = 0; i < canvases.length; i++) {
-      if (canvases[i] && !renderedPages.has(i + 1)) {
+    for (const [i, canvase] of canvases.entries()) {
+      if (canvase && !renderedPages.has(i + 1)) {
         pagesToRender.push(i + 1);
       }
     }
 
     if (pagesToRender.length > 0) {
       // Mark pages as being rendered to avoid duplicate renders
-      pagesToRender.forEach(p => renderedPages.add(p));
+      for (const p of pagesToRender) renderedPages.add(p);
 
       // Capture scale for async callback
       const capturedScale = currentScale;
@@ -277,13 +277,13 @@ export default function usePdfJs(options = {}) {
     renderedPages.clear();
 
     // Cancel all pending render tasks
-    currentRenderTasks.forEach(task => {
+    for (const task of currentRenderTasks) {
       try {
         task.cancel();
       } catch {
         // Ignore cancel errors
       }
-    });
+    }
     currentRenderTasks.clear();
     renderingPages.clear();
     pendingRenders.clear();
@@ -303,7 +303,7 @@ export default function usePdfJs(options = {}) {
       // to the web worker, which detaches the original buffer
       let loadSource = source;
       if (source.data && source.data instanceof ArrayBuffer && source.data.byteLength > 0) {
-        loadSource = { ...source, data: source.data.slice(0) };
+        loadSource = { ...source, data: [...source.data] };
       }
 
       // verbosity: 0 = ERRORS only (suppress warnings about malformed PDFs)
@@ -313,12 +313,12 @@ export default function usePdfJs(options = {}) {
       // Clear any existing canvases visually before setting new doc
       // This prevents showing stale content from previous PDF
       const existingCanvases = pageCanvases();
-      existingCanvases.forEach(canvas => {
+      for (const canvas of existingCanvases) {
         if (canvas) {
           const ctx = canvas.getContext('2d');
           ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
-      });
+      }
 
       // Increment docId to force DOM recreation of canvas elements
       setDocId(id => id + 1);
@@ -329,8 +329,8 @@ export default function usePdfJs(options = {}) {
 
       // Initialize canvas and text layer refs arrays - the effect watching pageCanvases
       // will render pages as canvases are mounted in the DOM
-      setPageCanvases(Array(pdf.numPages).fill(null));
-      setPageTextLayers(Array(pdf.numPages).fill(null));
+      setPageCanvases(new Array(pdf.numPages).fill(null));
+      setPageTextLayers(new Array(pdf.numPages).fill(null));
     } catch (err) {
       console.error('Error loading PDF:', err);
       setError('Failed to load PDF. Please try another file.');
@@ -523,13 +523,13 @@ export default function usePdfJs(options = {}) {
     }
 
     // Cancel any pending render tasks
-    currentRenderTasks.forEach(task => {
+    for (const task of currentRenderTasks) {
       try {
         task.cancel();
       } catch {
         // Ignore
       }
-    });
+    }
     currentRenderTasks.clear();
     renderingPages.clear();
     pendingRenders.clear();
@@ -543,14 +543,14 @@ export default function usePdfJs(options = {}) {
     }
 
     // Clear all canvases
-    pageCanvases().forEach(canvas => {
+    for (const canvas of pageCanvases()) {
       if (canvas) {
         const context = canvas.getContext('2d');
         context.clearRect(0, 0, canvas.width, canvas.height);
         canvas.width = 0;
         canvas.height = 0;
       }
-    });
+    }
 
     // Mark as user-cleared to prevent auto-reload from props
     userCleared = true;
@@ -599,7 +599,7 @@ export default function usePdfJs(options = {}) {
 
   // Zoom controls
   function zoomIn() {
-    setScale(Math.min(scale() + 0.25, 3.0));
+    setScale(Math.min(scale() + 0.25, 3));
   }
 
   function zoomOut() {
@@ -607,7 +607,7 @@ export default function usePdfJs(options = {}) {
   }
 
   function resetZoom() {
-    setScale(1.0);
+    setScale(1);
   }
 
   function fitToWidth() {
@@ -616,23 +616,23 @@ export default function usePdfJs(options = {}) {
     pdfDoc()
       .getPage(1)
       .then(page => {
-        const viewport = page.getViewport({ scale: 1.0 });
+        const viewport = page.getViewport({ scale: 1 });
         const containerWidth = containerRef.clientWidth - 64; // Account for padding
         const newScale = containerWidth / viewport.width;
-        setScale(Math.min(Math.max(newScale, 0.5), 3.0));
+        setScale(Math.min(Math.max(newScale, 0.5), 3));
       });
   }
 
   // Cleanup
   onCleanup(() => {
     // Cancel all pending render tasks
-    currentRenderTasks.forEach(task => {
+    for (const task of currentRenderTasks) {
       try {
         task.cancel();
       } catch {
         // Ignore
       }
-    });
+    }
     currentRenderTasks.clear();
     renderingPages.clear();
     pendingRenders.clear();
@@ -646,14 +646,14 @@ export default function usePdfJs(options = {}) {
     }
 
     // Clear all canvas refs
-    pageCanvases().forEach(canvas => {
+    for (const canvas of pageCanvases()) {
       if (canvas) {
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         canvas.width = 0;
         canvas.height = 0;
       }
-    });
+    }
 
     if (blobUrl) {
       URL.revokeObjectURL(blobUrl);
