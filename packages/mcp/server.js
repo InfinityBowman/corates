@@ -45,7 +45,4 @@ async function main() {
   console.log('Corates MCP Server started');
 }
 
-main().catch(err => {
-  console.error('Failed to start MCP server:', err);
-  process.exit(1);
-});
+await main();

@@ -32,7 +32,7 @@ export default function TodoStudyRow(props) {
   // Get PDFs sorted: primary first, then protocol, then secondary
   const sortedPdfs = createMemo(() => {
     const pdfs = study().pdfs || [];
-    return [...pdfs].sort((a, b) => {
+    return pdfs.toSorted((a, b) => {
       const tagOrder = { primary: 0, protocol: 1, secondary: 2 };
       const tagA = tagOrder[a.tag] ?? 2;
       const tagB = tagOrder[b.tag] ?? 2;

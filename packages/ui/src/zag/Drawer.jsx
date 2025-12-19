@@ -22,7 +22,7 @@ import { FiX } from 'solid-icons/fi';
 export function Drawer(props) {
   const open = () => props.open;
   const side = () => props.side || 'right';
-  const size = () => props.size || 'md';
+  const size = () => props.size > 0 || 'md';
   const title = () => props.title;
   const description = () => props.description;
   const children = () => props.children;

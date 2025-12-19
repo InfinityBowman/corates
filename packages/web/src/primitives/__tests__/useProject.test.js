@@ -111,7 +111,7 @@ describe('useProject - Study CRUD Operations', () => {
   let projectStore;
 
   beforeEach(async () => {
-    projectStore = (await import('@/stores/projectStore.js')).default;
+    ({ default: projectStore } = await import('@/stores/projectStore.js'));
     vi.spyOn(global.crypto, 'randomUUID').mockReturnValue('study-uuid-123');
   });
 
@@ -273,7 +273,7 @@ describe('useProject - PDF Operations', () => {
   let projectStore;
 
   beforeEach(async () => {
-    projectStore = (await import('../../stores/projectStore.js')).default;
+    ({ default: projectStore } = await import('../../stores/projectStore.js'));
     vi.spyOn(global.crypto, 'randomUUID').mockReturnValue('study-123');
   });
 
@@ -334,7 +334,7 @@ describe('useProject - Checklist Operations', () => {
   let projectStore;
 
   beforeEach(async () => {
-    projectStore = (await import('@/stores/projectStore.js')).default;
+    ({ default: projectStore } = await import('@/stores/projectStore.js'));
     let callCount = 0;
     vi.spyOn(global.crypto, 'randomUUID').mockImplementation(() => {
       callCount++;
@@ -487,7 +487,7 @@ describe('useProject - Reconciliation Operations', () => {
   let projectStore;
 
   beforeEach(async () => {
-    projectStore = (await import('../../stores/projectStore.js')).default;
+    ({ default: projectStore } = await import('../../stores/projectStore.js'));
     let callCount = 0;
     vi.spyOn(global.crypto, 'randomUUID').mockImplementation(() => `uuid-${callCount++}`);
   });
@@ -591,7 +591,7 @@ describe('useProject - Project Settings', () => {
   let projectStore;
 
   beforeEach(async () => {
-    projectStore = (await import('../../stores/projectStore.js')).default;
+    ({ default: projectStore } = await import('../../stores/projectStore.js'));
     vi.spyOn(global.crypto, 'randomUUID').mockReturnValue('uuid-123');
   });
 
@@ -632,7 +632,7 @@ describe('useProject - Connection Reference Counting', () => {
     _releaseConnection = module._releaseConnection;
     _connectionRegistry = module._connectionRegistry;
 
-    projectStore = (await import('@/stores/projectStore.js')).default;
+    ({ default: projectStore } = await import('@/stores/projectStore.js'));
 
     // Clear the registry before each test
     _connectionRegistry.clear();

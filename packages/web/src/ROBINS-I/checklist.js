@@ -32,7 +32,7 @@ export function createChecklist({
   }
 
   let d = new Date(createdAt);
-  if (isNaN(d)) d = new Date();
+  if (Number.isNaN(d)) d = new Date();
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
   const formattedDate = `${d.getFullYear()}-${mm}-${dd}`;

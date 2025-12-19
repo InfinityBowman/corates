@@ -58,7 +58,7 @@ function SingleQuestionPage(props) {
   // Initialize local final from props or default to reviewer1
   createEffect(() => {
     if (props.finalAnswers) {
-      setLocalFinal(JSON.parse(JSON.stringify(props.finalAnswers)));
+      setLocalFinal(structuredClone(props.finalAnswers));
       // Determine which source it matches
       if (answersEqual(props.finalAnswers, props.reviewer1Answers)) {
         setSelectedSource('reviewer1');
@@ -69,7 +69,7 @@ function SingleQuestionPage(props) {
       }
     } else if (props.reviewer1Answers) {
       // Default to reviewer1
-      setLocalFinal(JSON.parse(JSON.stringify(props.reviewer1Answers)));
+      setLocalFinal(structuredClone(props.reviewer1Answers));
       setSelectedSource('reviewer1');
     }
   });
@@ -92,7 +92,7 @@ function SingleQuestionPage(props) {
   // Apply reviewer 1's answers as final
   function useReviewer1() {
     if (!props.reviewer1Answers) return;
-    const newFinal = JSON.parse(JSON.stringify(props.reviewer1Answers));
+    const newFinal = structuredClone(props.reviewer1Answers);
     setLocalFinal(newFinal);
     setSelectedSource('reviewer1');
     props.onFinalChange?.(newFinal);
@@ -101,7 +101,7 @@ function SingleQuestionPage(props) {
   // Apply reviewer 2's answers as final
   function useReviewer2() {
     if (!props.reviewer2Answers) return;
-    const newFinal = JSON.parse(JSON.stringify(props.reviewer2Answers));
+    const newFinal = structuredClone(props.reviewer2Answers);
     setLocalFinal(newFinal);
     setSelectedSource('reviewer2');
     props.onFinalChange?.(newFinal);

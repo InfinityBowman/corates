@@ -94,7 +94,7 @@ async function fetchZagDocs() {
  * Generate an index of all Zag component sections
  */
 function generateZagIndex(sections) {
-  const sortedComponents = [...sections.keys()].toSorted();
+  const sortedComponents = sections.keys().toSorted();
 
   let index = `# Zag.js Documentation Index\n\n`;
   index += `Zag.js is a framework-agnostic toolkit for building accessible UI components. Below are the ${sortedComponents.length} available components.\n\n`;

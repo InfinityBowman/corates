@@ -25,6 +25,7 @@ export default [
 
       globals: {
         // Browser globals
+        structuredClone: 'readonly',
         HTMLDivElement: 'readonly',
         HTMLInputElement: 'readonly',
         HTMLTextAreaElement: 'readonly',
@@ -152,6 +153,7 @@ export default [
             el: false,
             acc: false,
             utils: false,
+            def: false,
             // React/SolidJS common patterns
             prev: false,
             props: false,
@@ -193,34 +195,37 @@ export default [
       // 'unicorn/switch-case-braces': 'warn', // Consider enabling as warn first
 
       // Consistent function scoping - can be noisy, especially in React/SolidJS components
-      'unicorn/consistent-function-scoping': 'warn', // Downgrade to warn
+      'unicorn/consistent-function-scoping': 'off',
 
       // Array forEach - many violations, but forEach is sometimes more readable
-      'unicorn/no-array-for-each': 'warn', // Downgrade to warn
+      'unicorn/no-array-for-each': 'warn',
 
       // String replaceAll - many violations, but replace() is fine for single replacements
-      'unicorn/prefer-string-replace-all': 'warn', // Downgrade to warn
+      'unicorn/prefer-string-replace-all': 'warn',
 
       // Number properties - parseInt/parseFloat are widely understood
-      'unicorn/prefer-number-properties': 'warn', // Downgrade to warn
+      'unicorn/prefer-number-properties': 'warn',
 
       // Numeric separators - nice to have but not critical
-      'unicorn/numeric-separators-style': 'warn', // Downgrade to warn
+      'unicorn/numeric-separators-style': 'warn',
 
       // Structured clone - JSON.parse(JSON.stringify()) is fine for simple cases
-      'unicorn/prefer-structured-clone': 'warn', // Downgrade to warn
+      'unicorn/prefer-structured-clone': 'error',
 
       // Node protocol - disabled, standard imports are fine
       'unicorn/prefer-node-protocol': 'off',
 
       // Array sort - toSorted() is newer, sort() is fine for now
-      'unicorn/no-array-sort': 'warn', // Downgrade to warn
+      'unicorn/no-array-sort': 'warn',
 
       // Nested ternary - disabled, nested ternaries are acceptable
       'unicorn/no-nested-ternary': 'off',
 
+      // New array - disabled, new Array() is fine and used for arraybuffers
+      'unicorn/no-new-array': 'off',
+
       // Explicit length check - `array.length > 0` vs `array.length`
-      'unicorn/explicit-length-check': 'warn', // Downgrade to warn
+      'unicorn/explicit-length-check': 'warn',
 
       // Additional rules to disable/warn for gradual adoption
       // Switch case braces - disabled, braces in case clauses are optional
@@ -230,7 +235,7 @@ export default [
       // 'unicorn/prefer-response-static-json': 'off',
 
       // Spread operator - can be adopted gradually
-      'unicorn/prefer-spread': 'warn',
+      'unicorn/prefer-spread': 'off',
 
       // Await expression member - can be fixed gradually
       'unicorn/no-await-expression-member': 'warn',
@@ -273,13 +278,13 @@ export default [
       'unicorn/prefer-export-from': 'warn',
 
       // Number literal case - style preference
-      'unicorn/number-literal-case': 'warn',
+      'unicorn/number-literal-case': 'off',
 
       // Lonely if - style preference
       'unicorn/no-lonely-if': 'warn',
 
       // Array callback reference - can be adopted gradually
-      'unicorn/no-array-callback-reference': 'warn',
+      'unicorn/no-array-callback-reference': 'off',
 
       // DOM node remove - can be adopted gradually
       'unicorn/prefer-dom-node-remove': 'warn',

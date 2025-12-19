@@ -24,7 +24,7 @@ export default function StudyPdfSection(props) {
 
   // Sort PDFs: primary first, then protocol, then secondary by uploadedAt desc
   const sortedPdfs = createMemo(() => {
-    return [...pdfs()].sort((a, b) => {
+    return pdfs().toSorted((a, b) => {
       const tagOrder = { primary: 0, protocol: 1, secondary: 2 };
       const tagA = tagOrder[a.tag] ?? 2;
       const tagB = tagOrder[b.tag] ?? 2;

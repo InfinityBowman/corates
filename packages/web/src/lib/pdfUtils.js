@@ -151,7 +151,7 @@ function groupTextIntoLines(textItems) {
   const yThreshold = 5; // pixels
 
   // Sort by y position (descending, since PDF coords start from bottom)
-  const sorted = [...textItems].sort((a, b) => b.transform[5] - a.transform[5]);
+  const sorted = textItems.toSorted((a, b) => b.transform[5] - a.transform[5]);
 
   for (const item of sorted) {
     if (!item.str.trim()) continue;
@@ -199,10 +199,17 @@ function cleanTitle(title) {
  * @returns {Promise<ArrayBuffer>}
  */
 export function readFileAsArrayBuffer(file) {
+  // Prefer modern Blob.arrayBuffer() API, fallback to FileReader for test environments
+  if (typeof file.arrayBuffer === 'function') {
+    return file.arrayBuffer();
+  }
+
+  // Fallback for test environments that don't support arrayBuffer()
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
     reader.onerror = () => reject(reader.error);
+    // eslint-disable-next-line unicorn/prefer-blob-reading-methods
     reader.readAsArrayBuffer(file);
   });
 }

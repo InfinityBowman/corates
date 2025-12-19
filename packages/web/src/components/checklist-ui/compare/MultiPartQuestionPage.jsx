@@ -31,7 +31,7 @@ export default function MultiPartQuestionPage(props) {
     if (props.finalAnswers && typeof props.finalAnswers === 'object') {
       const hasParts = keys.some(dk => props.finalAnswers[dk]);
       if (hasParts) {
-        setLocalFinal(JSON.parse(JSON.stringify(props.finalAnswers)));
+        setLocalFinal(structuredClone(props.finalAnswers));
         // Determine source
         if (multiPartAnswersEqual(props.finalAnswers, props.reviewer1Answers)) {
           setSelectedSource('reviewer1');
@@ -46,7 +46,7 @@ export default function MultiPartQuestionPage(props) {
 
     // Default to reviewer1 if available
     if (props.reviewer1Answers && keys.some(dk => props.reviewer1Answers[dk])) {
-      setLocalFinal(JSON.parse(JSON.stringify(props.reviewer1Answers)));
+      setLocalFinal(structuredClone(props.reviewer1Answers));
       setSelectedSource('reviewer1');
     }
   });
@@ -75,7 +75,7 @@ export default function MultiPartQuestionPage(props) {
 
   function useReviewer1() {
     if (!props.reviewer1Answers) return;
-    const newFinal = JSON.parse(JSON.stringify(props.reviewer1Answers));
+    const newFinal = structuredClone(props.reviewer1Answers);
     setLocalFinal(newFinal);
     setSelectedSource('reviewer1');
     props.onFinalChange?.(newFinal);
@@ -83,7 +83,7 @@ export default function MultiPartQuestionPage(props) {
 
   function useReviewer2() {
     if (!props.reviewer2Answers) return;
-    const newFinal = JSON.parse(JSON.stringify(props.reviewer2Answers));
+    const newFinal = structuredClone(props.reviewer2Answers);
     setLocalFinal(newFinal);
     setSelectedSource('reviewer2');
     props.onFinalChange?.(newFinal);

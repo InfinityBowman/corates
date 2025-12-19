@@ -23,7 +23,7 @@ function groupTextIntoLines(textItems) {
   const yThreshold = 5; // pixels
 
   // Sort by y position (descending, since PDF coords start from bottom)
-  const sorted = [...textItems].sort((a, b) => b.transform[5] - a.transform[5]);
+  const sorted = textItems.toSorted((a, b) => b.transform[5] - a.transform[5]);
 
   for (const item of sorted) {
     if (!item.str.trim()) continue;
@@ -290,7 +290,9 @@ describe('readFileAsArrayBuffer', () => {
 
     globalThis.FileReader = MockFileReader;
 
+    // Create a file without arrayBuffer() to force FileReader fallback
     const file = new File(['test'], 'test.txt');
+    delete file.arrayBuffer;
 
     await expect(readFileAsArrayBuffer(file)).rejects.toThrow();
 

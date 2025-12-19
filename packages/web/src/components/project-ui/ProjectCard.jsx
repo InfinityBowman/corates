@@ -22,7 +22,7 @@ function formatDate(value) {
     return '';
   }
 
-  return isNaN(date.getTime()) ? '' : date.toLocaleDateString();
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString();
 }
 
 /**

@@ -26,7 +26,7 @@ export default function PdfList(props) {
   const sortedPdfs = createMemo(() => {
     const pdfs = props.pdfs || [];
     // Sort: primary first, then protocol, then secondary by uploadedAt desc
-    return [...pdfs].sort((a, b) => {
+    return pdfs.toSorted((a, b) => {
       const tagOrder = { primary: 0, protocol: 1, secondary: 2 };
       const tagA = tagOrder[a.tag] ?? 2;
       const tagB = tagOrder[b.tag] ?? 2;

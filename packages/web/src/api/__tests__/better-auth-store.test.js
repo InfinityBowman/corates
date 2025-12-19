@@ -98,7 +98,7 @@ describe('better-auth-store - Signup Flow', () => {
     localStorage.clear();
 
     // Re-import to get fresh instance
-    authClient = (await import('@/api/authClient.js')).authClient;
+    ({ authClient } = await import('@/api/authClient.js'));
 
     // Import store after mocks are set up
     const { useBetterAuth } = await import('../betterAuthStore.js');
@@ -162,8 +162,8 @@ describe('better-auth-store - Signin Flow', () => {
     vi.clearAllMocks();
     localStorage.clear();
 
-    authClient = (await import('@/api/authClient.js')).authClient;
-    saveLastLoginMethod = (await import('@lib/lastLoginMethod.js')).saveLastLoginMethod;
+    ({ authClient } = await import('@/api/authClient.js'));
+    ({ saveLastLoginMethod } = await import('@lib/lastLoginMethod.js'));
 
     const { useBetterAuth } = await import('../betterAuthStore.js');
     authStore = useBetterAuth();
@@ -224,7 +224,7 @@ describe('better-auth-store - Social Auth', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    authClient = (await import('@/api/authClient.js')).authClient;
+    ({ authClient } = await import('@/api/authClient.js'));
     const lastLoginModule = await import('@lib/lastLoginMethod.js');
     saveLastLoginMethod = lastLoginModule.saveLastLoginMethod;
     LOGIN_METHODS = lastLoginModule.LOGIN_METHODS;
@@ -294,8 +294,8 @@ describe('better-auth-store - Signout', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    authClient = (await import('@/api/authClient.js')).authClient;
-    projectStore = (await import('@/stores/projectStore.js')).default;
+    ({ authClient } = await import('@/api/authClient.js'));
+    ({ default: projectStore } = await import('@/stores/projectStore.js'));
 
     const { useBetterAuth } = await import('../betterAuthStore.js');
     authStore = useBetterAuth();
@@ -329,7 +329,7 @@ describe('better-auth-store - Password Management', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    authClient = (await import('@/api/authClient.js')).authClient;
+    ({ authClient } = await import('@/api/authClient.js'));
 
     global.window.location = { origin: 'http://localhost:5173' };
 
@@ -398,7 +398,7 @@ describe('better-auth-store - Two-Factor Authentication', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    authClient = (await import('@/api/authClient.js')).authClient;
+    ({ authClient } = await import('@/api/authClient.js'));
 
     const { useBetterAuth } = await import('../betterAuthStore.js');
     authStore = useBetterAuth();
@@ -488,7 +488,7 @@ describe('better-auth-store - Profile Management', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    authClient = (await import('@/api/authClient.js')).authClient;
+    ({ authClient } = await import('@/api/authClient.js'));
 
     const { useBetterAuth } = await import('../betterAuthStore.js');
     authStore = useBetterAuth();
@@ -532,8 +532,8 @@ describe('better-auth-store - Account Deletion', () => {
     vi.clearAllMocks();
     localStorage.clear();
 
-    authClient = (await import('@/api/authClient.js')).authClient;
-    projectStore = (await import('@/stores/projectStore.js')).default;
+    ({ authClient } = await import('@/api/authClient.js'));
+    ({ default: projectStore } = await import('@/stores/projectStore.js'));
     authClient.signOut.mockResolvedValue({ error: null });
 
     global.fetch = vi.fn();

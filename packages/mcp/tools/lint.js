@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { exec as execCallback } from 'child_process';
-import util from 'util';
+import { util } from 'util';
 
 const exec = util.promisify(execCallback);
 

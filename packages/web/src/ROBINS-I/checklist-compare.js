@@ -7,15 +7,6 @@ import { ROBINS_I_CHECKLIST, getDomainQuestions, getActiveDomainKeys } from './c
 import { CHECKLIST_TYPES } from '@/checklist-registry/types.js';
 
 /**
- * Deep clone a plain object/array via JSON serialization
- * @param {*} value - Value to clone
- * @returns {*} Deep cloned value
- */
-function deepClone(value) {
-  return JSON.parse(JSON.stringify(value));
-}
-
-/**
  * Get all section B question keys
  * @returns {string[]} Array of section B question keys
  */
@@ -224,20 +215,18 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
     sourceChecklists: [checklist1.id, checklist2.id],
 
     // Copy structural elements from checklist1
-    planning: deepClone(checklist1.planning || {}),
-    sectionA: deepClone(checklist1.sectionA || {}),
-    sectionC: deepClone(checklist1.sectionC || {}),
-    sectionD: deepClone(checklist1.sectionD || {}),
-    confoundingEvaluation: deepClone(checklist1.confoundingEvaluation || {}),
+    planning: structuredClone(checklist1.planning || {}),
+    sectionA: structuredClone(checklist1.sectionA || {}),
+    sectionB: reconcileSection(
+      checklist1.sectionB,
+      checklist2.sectionB,
+      selections.sectionB || {},
+      getSectionBKeys(),
+    ),
+    sectionC: structuredClone(checklist1.sectionC || {}),
+    sectionD: structuredClone(checklist1.sectionD || {}),
+    confoundingEvaluation: structuredClone(checklist1.confoundingEvaluation || {}),
   };
-
-  // Reconcile Section B
-  reconciled.sectionB = reconcileSection(
-    checklist1.sectionB,
-    checklist2.sectionB,
-    selections.sectionB || {},
-    getSectionBKeys(),
-  );
 
   // Reconcile domains
   const activeDomains = getActiveDomainKeys(isPerProtocol);
@@ -253,7 +242,7 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
 
   // Copy inactive domain from checklist1 (for completeness)
   const inactiveDomain = isPerProtocol ? 'domain1a' : 'domain1b';
-  reconciled[inactiveDomain] = deepClone(checklist1[inactiveDomain] || {});
+  reconciled[inactiveDomain] = structuredClone(checklist1[inactiveDomain] || {});
 
   // Reconcile overall
   reconciled.overall = reconcileOverall(
@@ -280,15 +269,11 @@ function reconcileSection(section1, section2, selections, keys) {
     const selection = selections[key];
 
     if (!selection || selection === 'reviewer1') {
-      reconciled[key] = JSON.parse(
-        JSON.stringify(section1?.[key] || { answer: null, comment: '' }),
-      );
+      reconciled[key] = structuredClone(section1?.[key] || { answer: null, comment: '' });
     } else if (selection === 'reviewer2') {
-      reconciled[key] = JSON.parse(
-        JSON.stringify(section2?.[key] || { answer: null, comment: '' }),
-      );
+      reconciled[key] = structuredClone(section2?.[key] || { answer: null, comment: '' });
     } else if (typeof selection === 'object') {
-      reconciled[key] = JSON.parse(JSON.stringify(selection));
+      reconciled[key] = structuredClone(selection);
     }
   }
 
@@ -313,15 +298,15 @@ function reconcileDomain(domainKey, domain1, domain2, selections) {
     const selection = selections.answers?.[qKey];
 
     if (!selection || selection === 'reviewer1') {
-      reconciledAnswers[qKey] = deepClone(
+      reconciledAnswers[qKey] = structuredClone(
         domain1?.answers?.[qKey] || { answer: null, comment: '' },
       );
     } else if (selection === 'reviewer2') {
-      reconciledAnswers[qKey] = deepClone(
+      reconciledAnswers[qKey] = structuredClone(
         domain2?.answers?.[qKey] || { answer: null, comment: '' },
       );
     } else if (typeof selection === 'object') {
-      reconciledAnswers[qKey] = deepClone(selection);
+      reconciledAnswers[qKey] = structuredClone(selection);
     }
   }
 

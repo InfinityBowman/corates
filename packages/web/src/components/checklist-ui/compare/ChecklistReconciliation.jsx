@@ -193,7 +193,7 @@ export default function ChecklistReconciliation(props) {
       if (defaultAnswer) {
         setFinalAnswers(prev => ({
           ...prev,
-          [key]: JSON.parse(JSON.stringify(defaultAnswer)),
+          [key]: structuredClone(defaultAnswer),
         }));
       }
     }

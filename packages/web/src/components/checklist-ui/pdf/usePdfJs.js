@@ -189,7 +189,7 @@ export default function usePdfJs(options = {}) {
     }
 
     // Load the new PDF (old one stays visible until this completes)
-    const clonedData = [...savedData];
+    const clonedData = Array.from(savedData);
     setLoadedPdfName(savedName);
     setFileName(savedName);
     setPdfSource({ data: clonedData });

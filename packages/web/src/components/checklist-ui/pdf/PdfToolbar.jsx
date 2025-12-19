@@ -48,7 +48,7 @@ export default function PdfToolbar(props) {
   function handlePageSubmit(e) {
     e.preventDefault();
     const pageNum = Number.parseInt(pageInput(), 10);
-    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= props.totalPages) {
+    if (!Number.isNaN(pageNum) && pageNum >= 1 && pageNum <= props.totalPages) {
       props.onGoToPage?.(pageNum);
     }
     setPageInput('');
@@ -59,7 +59,7 @@ export default function PdfToolbar(props) {
   function handleZoomSubmit(e) {
     e.preventDefault();
     const zoomPercent = Number.parseInt(zoomInput(), 10);
-    if (!isNaN(zoomPercent) && zoomPercent >= 50 && zoomPercent <= 300) {
+    if (!Number.isNaN(zoomPercent) && zoomPercent >= 50 && zoomPercent <= 300) {
       props.onSetScale?.(zoomPercent / 100);
     }
     setZoomInput('');

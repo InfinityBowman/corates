@@ -77,7 +77,4 @@ async function main() {
   console.log(`Manifest written to ${outFile}`);
 }
 
-main().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+await main();
