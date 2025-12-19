@@ -12,7 +12,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
 import { importFromGoogleDrive } from '@api/google-drive.js';
-import { useConfirmDialog, Tabs } from '@corates/ui';
+import { Tabs } from '@corates/ui';
 import { BiRegularHome } from 'solid-icons/bi';
 import { BsListTask } from 'solid-icons/bs';
 import { CgArrowsExchange } from 'solid-icons/cg';
@@ -33,7 +33,6 @@ export default function ProjectView() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useBetterAuth();
-  const confirmDialog = useConfirmDialog();
 
   // Y.js hook - connection is also registered with projectActionsStore
   const projectConnection = useProject(params.projectId);
@@ -271,8 +270,6 @@ export default function ProjectView() {
       </ProjectProvider>
 
       <PdfPreviewPanel />
-
-      <confirmDialog.ConfirmDialogComponent />
     </div>
   );
 }

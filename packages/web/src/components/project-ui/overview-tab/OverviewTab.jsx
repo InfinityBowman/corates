@@ -193,6 +193,7 @@ export default function OverviewTab() {
         onClose={() => setShowAddMemberModal(false)}
         projectId={projectId}
       />
+      <confirmDialog.ConfirmDialogComponent />
     </>
   );
 }
