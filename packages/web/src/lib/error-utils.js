@@ -94,77 +94,52 @@ export async function parseApiError(response) {
 }
 
 /**
+ * Error pattern matchers - use regex for more precise matching
+ * Patterns are checked in order of specificity (most specific first)
+ */
+const ERROR_PATTERNS = [
+  // Network errors - check for specific network-related phrases
+  {
+    pattern: /\b(failed to fetch|load failed|network error|connection error|cors error)\b/i,
+    code: 'NETWORK_ERROR',
+  },
+  // Timeout errors
+  {
+    pattern: /\b(timeout|timed out|request timeout)\b/i,
+    code: 'TIMEOUT_ERROR',
+  },
+  // Authentication errors - check for credential-related phrases
+  {
+    pattern: /\b(invalid credentials?|incorrect (email|password)|wrong (email|password))\b/i,
+    code: 'INVALID_CREDENTIALS',
+  },
+  // User not found - check for user-related phrases
+  {
+    pattern: /\b(user|account) (not found|does not exist|doesn't exist|not exist)\b/i,
+    code: 'USER_NOT_FOUND',
+  },
+  // Email verification errors
+  {
+    pattern: /\b(email (not )?verified|email_verified_at is null)\b/i,
+    code: 'EMAIL_NOT_VERIFIED',
+  },
+  // Rate limiting
+  {
+    pattern: /\b(too many requests|rate limit(ed)?|rate-limit)\b/i,
+    code: 'RATE_LIMITED',
+  },
+];
+
+/**
  * Parse error from an Error object or string
  * Handles Better Auth errors, network errors, and generic errors
+ * Uses pattern matching for more robust error detection
  * @param {Error|string|any} error - Error object, string, or other error format
  * @returns {{code: string, message: string}}
  */
 export function parseError(error) {
-  // Handle Error objects
-  if (error instanceof Error) {
-    const msg = error.message?.toLowerCase() || '';
-
-    // Network errors
-    if (
-      msg.includes('failed to fetch') ||
-      msg.includes('load failed') ||
-      msg.includes('network') ||
-      msg.includes('cors')
-    ) {
-      return {
-        code: 'NETWORK_ERROR',
-        message: getErrorMessage('NETWORK_ERROR'),
-      };
-    }
-
-    // Timeout errors
-    if (msg.includes('timeout')) {
-      return {
-        code: 'TIMEOUT_ERROR',
-        message: getErrorMessage('TIMEOUT_ERROR'),
-      };
-    }
-
-    // Authentication errors
-    if (
-      msg.includes('invalid credentials') ||
-      msg.includes('incorrect email or password') ||
-      msg.includes('invalid email or password')
-    ) {
-      return {
-        code: 'INVALID_CREDENTIALS',
-        message: getErrorMessage('INVALID_CREDENTIALS'),
-      };
-    }
-
-    // User not found
-    if (
-      msg.includes('user not found') ||
-      msg.includes('user does not exist') ||
-      msg.includes('no user found')
-    ) {
-      return {
-        code: 'USER_NOT_FOUND',
-        message: getErrorMessage('USER_NOT_FOUND'),
-      };
-    }
-
-    // Email not verified
-    if (msg.includes('email not verified') || msg.includes('email_verified_at is null')) {
-      return {
-        code: 'EMAIL_NOT_VERIFIED',
-        message: getErrorMessage('EMAIL_NOT_VERIFIED'),
-      };
-    }
-
-    // Rate limiting
-    if (msg.includes('too many requests')) {
-      return {
-        code: 'RATE_LIMITED',
-        message: getErrorMessage('RATE_LIMITED'),
-      };
-    }
-
+  // Handle structured error objects first (Better Auth format)
+  if (error && typeof error === 'object' && !(error instanceof Error)) {
     // Better Auth error format: { error: { status: number, message: string } }
     if (error.error && typeof error.error === 'object') {
       if (error.error.status === 429) {
@@ -183,19 +158,37 @@ export function parseError(error) {
         return parseError(error.error.message);
       }
     }
+  }
 
-    // Fallback to error message if it exists
-    if (error.message) {
+  // Handle Error objects and strings
+  let errorMessage = '';
+  if (error instanceof Error) {
+    errorMessage = error.message || '';
+  } else if (typeof error === 'string') {
+    errorMessage = error;
+  } else if (error && typeof error === 'object' && error.message) {
+    errorMessage = error.message;
+  }
+
+  // Normalize message for pattern matching
+  const normalizedMessage = errorMessage.toLowerCase().trim();
+
+  // Try pattern matching (most specific patterns first)
+  for (const { pattern, code } of ERROR_PATTERNS) {
+    if (pattern.test(normalizedMessage)) {
       return {
-        code: 'UNKNOWN_ERROR',
-        message: error.message,
+        code,
+        message: getErrorMessage(code),
       };
     }
   }
 
-  // Handle string errors
-  if (typeof error === 'string') {
-    return parseError(new Error(error));
+  // Fallback: if we have an error message, use it
+  if (errorMessage) {
+    return {
+      code: 'UNKNOWN_ERROR',
+      message: errorMessage,
+    };
   }
 
   // Default unknown error
@@ -207,22 +200,26 @@ export function parseError(error) {
 
 /**
  * Unified error handling with optional toast notification and state update
- * @param {Error|Response|string|any} error - Error to handle
+ * @param {Error|Response|string|{code: string, message: string}|any} error - Error to handle, or pre-parsed error object
  * @param {Object} options - Handling options
  * @param {Function} [options.setError] - State setter function for inline errors
  * @param {boolean} [options.showToast=true] - Whether to show toast notification
  * @param {string} [options.toastTitle] - Custom toast title (defaults to error message)
  * @param {Function} [options.onError] - Callback function with parsed error
  * @param {Function} [options.navigate] - Navigation function for redirects
- * @returns {{code: string, message: string}} Parsed error object
+ * @returns {Promise<{code: string, message: string}>} Parsed error object
  */
 export async function handleError(error, options = {}) {
   const { setError, showToast: showToastOption = true, toastTitle, onError, navigate } = options;
 
   let parsedError;
 
+  // If error is already a parsed error object (has code and message), use it directly
+  if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
+    parsedError = error;
+  }
   // Handle Response objects (from fetch)
-  if (error instanceof Response) {
+  else if (error instanceof Response) {
     parsedError = await parseApiError(error);
   } else {
     parsedError = parseError(error);
@@ -267,21 +264,23 @@ export async function handleFetchError(fetchPromise, options = {}) {
     const response = await fetchPromise;
 
     if (!response.ok) {
+      // Parse the response once
       const parsedError = await parseApiError(response);
-      await handleError(response, options);
+      // Pass the parsed error object to handleError to avoid double parsing
+      await handleError(parsedError, options);
       throw new Error(parsedError.message);
     }
 
     return response;
   } catch (error) {
-    // If it's already a parsed error, re-throw
-    if (error instanceof Error && error.message) {
-      const parsedError = parseError(error);
+    // If it's already a parsed error object, use it directly
+    if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
       await handleError(error, options);
-      throw new Error(parsedError.message);
+      throw new Error(error.message);
     }
-    // Otherwise handle and re-throw
-    await handleError(error, options);
-    throw error;
+    // Otherwise parse and handle
+    const parsedError = parseError(error);
+    await handleError(parsedError, options);
+    throw new Error(parsedError.message);
   }
 }
