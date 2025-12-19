@@ -1,6 +1,14 @@
 /**
- * ProjectContext - Provides project data and handlers to child components
- * Eliminates prop drilling for projectId, handlers, and utilities
+ * ProjectContext - Provides project identity and user role to child components
+ *
+ * This context is simplified to only provide:
+ * - projectId: The current project ID
+ * - userRole: The current user's role in the project
+ * - isOwner: Whether the current user is the project owner
+ * - getAssigneeName: Helper to get a member's display name
+ *
+ * For actions (mutations), import projectActionsStore directly:
+ *   import projectActionsStore from '@/stores/projectActionsStore.js';
  */
 
 import { createContext, useContext, createMemo } from 'solid-js';
@@ -33,12 +41,6 @@ export function ProjectProvider(props) {
   const value = {
     get projectId() {
       return props.projectId;
-    },
-    get handlers() {
-      return props.handlers;
-    },
-    get projectActions() {
-      return props.projectActions;
     },
     userRole,
     isOwner,

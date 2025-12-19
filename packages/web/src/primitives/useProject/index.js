@@ -8,6 +8,7 @@ import { createEffect, onCleanup, createMemo } from 'solid-js';
 import * as Y from 'yjs';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import projectStore from '@/stores/projectStore.js';
+import projectActionsStore from '@/stores/projectActionsStore';
 import useOnlineStatus from '../useOnlineStatus.js';
 import { createConnectionManager } from './connection.js';
 import { createSyncManager } from './sync.js';
@@ -76,6 +77,7 @@ function releaseConnection(projectId) {
       entry.ydoc.destroy();
     }
     connectionRegistry.delete(projectId);
+    projectActionsStore._removeConnection(projectId);
     projectStore.setConnectionState(projectId, { connected: false, synced: false });
   }
 }
@@ -134,6 +136,40 @@ export function useProject(projectId) {
     connectionEntry.checklistOps = createChecklistOperations(projectId, getYDoc, synced);
     connectionEntry.pdfOps = createPdfOperations(projectId, getYDoc, synced);
     connectionEntry.reconciliationOps = createReconciliationOperations(projectId, getYDoc, synced);
+
+    // Register operations with the global action store
+    projectActionsStore._setConnection(projectId, {
+      // Study operations
+      createStudy: connectionEntry.studyOps.createStudy,
+      updateStudy: connectionEntry.studyOps.updateStudy,
+      deleteStudy: connectionEntry.studyOps.deleteStudy,
+      renameProject: connectionEntry.studyOps.renameProject,
+      updateDescription: connectionEntry.studyOps.updateDescription,
+      updateProjectSettings: connectionEntry.studyOps.updateProjectSettings,
+      // Checklist operations
+      createChecklist: connectionEntry.checklistOps.createChecklist,
+      updateChecklist: connectionEntry.checklistOps.updateChecklist,
+      deleteChecklist: connectionEntry.checklistOps.deleteChecklist,
+      getChecklistAnswersMap: connectionEntry.checklistOps.getChecklistAnswersMap,
+      getChecklistData: connectionEntry.checklistOps.getChecklistData,
+      updateChecklistAnswer: connectionEntry.checklistOps.updateChecklistAnswer,
+      getQuestionNote: connectionEntry.checklistOps.getQuestionNote,
+      // PDF operations
+      addPdfToStudy: connectionEntry.pdfOps.addPdfToStudy,
+      removePdfFromStudy: connectionEntry.pdfOps.removePdfFromStudy,
+      removePdfByFileName: connectionEntry.pdfOps.removePdfByFileName,
+      updatePdfTag: connectionEntry.pdfOps.updatePdfTag,
+      updatePdfMetadata: connectionEntry.pdfOps.updatePdfMetadata,
+      setPdfAsPrimary: connectionEntry.pdfOps.setPdfAsPrimary,
+      setPdfAsProtocol: connectionEntry.pdfOps.setPdfAsProtocol,
+      // Reconciliation operations
+      saveReconciliationProgress: connectionEntry.reconciliationOps.saveReconciliationProgress,
+      getReconciliationProgress: connectionEntry.reconciliationOps.getReconciliationProgress,
+      getReconciliationNote: connectionEntry.reconciliationOps.getReconciliationNote,
+      clearReconciliationProgress: connectionEntry.reconciliationOps.clearReconciliationProgress,
+      applyReconciliationToChecklists:
+        connectionEntry.reconciliationOps.applyReconciliationToChecklists,
+    });
 
     // Listen for Y.Doc changes BEFORE setting up providers
     // This ensures we catch all updates including initial sync
@@ -262,3 +298,10 @@ export function useProject(projectId) {
 }
 
 export default useProject;
+
+// Exported for testing purposes only
+export {
+  getOrCreateConnection as _getOrCreateConnection,
+  releaseConnection as _releaseConnection,
+  connectionRegistry as _connectionRegistry,
+};

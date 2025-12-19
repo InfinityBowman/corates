@@ -1,21 +1,26 @@
-import { For, Show } from 'solid-js';
+import { For, Show, createSignal } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 import { FiPlus, FiTrash2 } from 'solid-icons/fi';
-import ChartSection from '../ChartSection.jsx';
-import ReviewerAssignment from '../ReviewerAssignment.jsx';
+import ChartSection from './ChartSection.jsx';
+import AddMemberModal from './AddMemberModal.jsx';
+import ReviewerAssignment from './ReviewerAssignment.jsx';
 import projectStore from '@/stores/projectStore.js';
+import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
-import { Avatar } from '@corates/ui';
+import { Avatar, useConfirmDialog, showToast } from '@corates/ui';
 
 /**
  * OverviewTab - Project overview with stats, settings, and members
- *
- * Props:
- * - onAddMember: () => void
+ * Uses projectActionsStore directly for mutations.
  */
-export default function OverviewTab(props) {
+export default function OverviewTab() {
+  const [showAddMemberModal, setShowAddMemberModal] = createSignal(false);
+
   const { user } = useBetterAuth();
-  const { projectId, handlers, isOwner, projectActions } = useProjectContext();
+  const { projectId, isOwner } = useProjectContext();
+  const confirmDialog = useConfirmDialog();
+  const navigate = useNavigate();
 
   // Read from store directly
   const studies = () => projectStore.getStudies(projectId);
@@ -36,6 +41,43 @@ export default function OverviewTab(props) {
       const completedChecklists = checklists.filter(c => c.status === 'completed');
       return completedChecklists.length === 2;
     }).length;
+
+  // Handlers (use active project - no projectId needed)
+  const handleUpdateStudy = (studyId, updates) => {
+    projectActionsStore.study.update(studyId, updates);
+  };
+
+  const handleRemoveMember = async (memberId, memberName) => {
+    const currentUser = user();
+    const isSelf = currentUser?.id === memberId;
+
+    const confirmed = await confirmDialog.open({
+      title: isSelf ? 'Leave Project' : 'Remove Member',
+      description:
+        isSelf ?
+          'Are you sure you want to leave this project? You will need to be re-invited to rejoin.'
+        : `Are you sure you want to remove ${memberName} from this project?`,
+      confirmText: isSelf ? 'Leave Project' : 'Remove',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
+    try {
+      const result = await projectActionsStore.member.remove(memberId);
+      if (result.isSelf) {
+        navigate('/dashboard', { replace: true });
+        showToast.success('Left Project', 'You have left the project');
+      } else {
+        showToast.success('Member Removed', `${memberName} has been removed from the project`);
+      }
+    } catch (err) {
+      showToast.error('Remove Failed', err.message || 'Failed to remove member');
+    }
+  };
+
+  const getChecklistData = (studyId, checklistId) => {
+    return projectActionsStore.checklist.getData(studyId, checklistId);
+  };
 
   return (
     <>
@@ -64,7 +106,7 @@ export default function OverviewTab(props) {
             <ReviewerAssignment
               studies={studies}
               members={members}
-              onAssignReviewers={handlers.studyHandlers.handleUpdateStudy}
+              onAssignReviewers={handleUpdateStudy}
             />
           </Show>
         </div>
@@ -77,7 +119,7 @@ export default function OverviewTab(props) {
               <h3 class='text-lg font-semibold text-gray-900'>Project Members</h3>
               <Show when={isOwner()}>
                 <button
-                  onClick={() => props.onAddMember()}
+                  onClick={() => setShowAddMemberModal(true)}
                   class='inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
                 >
                   <FiPlus class='h-4 w-4' />
@@ -119,7 +161,7 @@ export default function OverviewTab(props) {
                           <Show when={canRemove && !isLastOwner}>
                             <button
                               onClick={() =>
-                                handlers.memberHandlers.handleRemoveMember(
+                                handleRemoveMember(
                                   member.userId,
                                   member.displayName || member.name || member.email,
                                 )
@@ -144,12 +186,14 @@ export default function OverviewTab(props) {
       {/* Charts Section - Full width */}
       <div>
         <h3 class='mb-4 text-lg font-semibold text-gray-900'>Quality Assessment Charts</h3>
-        <ChartSection
-          studies={studies}
-          members={members}
-          getChecklistData={projectActions.getChecklistData}
-        />
+        <ChartSection studies={studies} members={members} getChecklistData={getChecklistData} />
       </div>
+      <AddMemberModal
+        isOpen={showAddMemberModal()}
+        onClose={() => setShowAddMemberModal(false)}
+        projectId={projectId}
+      />
+      <confirmDialog.ConfirmDialogComponent />
     </>
   );
 }

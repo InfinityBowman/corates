@@ -1,5 +1,7 @@
 /**
  * AllStudiesTab - Displays all studies in a project as expandable cards
+ *
+ * Uses projectActionsStore for mutations - leaf components call store directly.
  */
 
 import { For, Show, createSignal, onMount } from 'solid-js';
@@ -7,9 +9,9 @@ import { AiOutlineBook } from 'solid-icons/ai';
 import AddStudiesForm from '../AddStudiesForm.jsx';
 import GoogleDrivePickerModal from '../google-drive/GoogleDrivePickerModal.jsx';
 import { StudyCard } from './study-card/index.js';
-import EditPdfMetadataModal from './EditPdfMetadataModal.jsx';
 import AssignReviewersModal from './AssignReviewersModal.jsx';
 import projectStore from '@/stores/projectStore.js';
+import projectActionsStore from '@/stores/projectActionsStore';
 import { useProjectContext } from '../ProjectContext.jsx';
 import {
   saveFormState,
@@ -20,7 +22,7 @@ import {
 } from '@lib/formStatePersistence.js';
 
 export default function AllStudiesTab() {
-  const { projectId, handlers, getAssigneeName } = useProjectContext();
+  const { projectId, getAssigneeName } = useProjectContext();
 
   // Local UI state
   const [showGoogleDriveModal, setShowGoogleDriveModal] = createSignal(false);
@@ -32,10 +34,7 @@ export default function AllStudiesTab() {
 
   // Modal state
   const [showReviewersModal, setShowReviewersModal] = createSignal(false);
-  const [showPdfMetadataModal, setShowPdfMetadataModal] = createSignal(false);
   const [editingStudy, setEditingStudy] = createSignal(null);
-  const [editingPdf, setEditingPdf] = createSignal(null);
-  const [editingPdfStudyId, setEditingPdfStudyId] = createSignal(null);
 
   // Check for and restore state on mount (after OAuth redirect)
   onMount(async () => {
@@ -64,9 +63,9 @@ export default function AllStudiesTab() {
   const connectionState = () => projectStore.getConnectionState(projectId);
   const hasData = () => connectionState().synced || studies().length > 0;
 
-  // Handler for adding studies
+  // Handler for adding studies (uses active project internally)
   const handleAddStudies = async studiesToAdd => {
-    await handlers.studyHandlers.handleAddStudies(studiesToAdd);
+    await projectActionsStore.study.addBatch(studiesToAdd);
   };
 
   // Google Drive handlers
@@ -77,7 +76,7 @@ export default function AllStudiesTab() {
 
   const handleGoogleDriveImportSuccess = file => {
     const studyId = googleDriveTargetStudyId();
-    handlers.pdfHandlers.handleGoogleDriveImportSuccess(studyId, file);
+    projectActionsStore.pdf.handleGoogleDriveImport(studyId, file);
   };
 
   // Modal handlers
@@ -93,44 +92,8 @@ export default function AllStudiesTab() {
     }
   };
 
-  // PDF metadata modal handlers
-  const handleOpenPdfMetadataModal = (studyId, pdf) => {
-    setEditingPdfStudyId(studyId);
-    setEditingPdf(pdf);
-    setShowPdfMetadataModal(true);
-  };
-
-  const handleClosePdfMetadataModal = open => {
-    if (!open) {
-      setShowPdfMetadataModal(false);
-      setEditingPdf(null);
-      setEditingPdfStudyId(null);
-    }
-  };
-
-  const handleSavePdfMetadata = (studyId, pdfId, metadata) => {
-    handlers.pdfHandlers.handleUpdatePdfMetadata?.(studyId, pdfId, metadata);
-  };
-
-  // PDF handlers
-  const handleViewPdf = (studyId, pdf) => {
-    handlers.pdfHandlers.handleViewPdf(studyId, pdf);
-  };
-
-  const handleDownloadPdf = (studyId, pdf) => {
-    handlers.pdfHandlers.handleDownloadPdf?.(studyId, pdf);
-  };
-
-  const handleUploadPdf = async (studyId, file) => {
-    await handlers.pdfHandlers.handleUploadPdf(studyId, file);
-  };
-
-  const handleDeletePdf = (studyId, pdf) => {
-    handlers.pdfHandlers.handleDeletePdf?.(studyId, pdf);
-  };
-
-  const handleTagChange = (studyId, pdfId, newTag) => {
-    handlers.pdfHandlers.handleTagChange?.(studyId, pdfId, newTag);
+  const handleSaveReviewers = (studyId, updates) => {
+    projectActionsStore.study.update(studyId, updates);
   };
 
   // Expand/collapse handlers
@@ -174,7 +137,7 @@ export default function AllStudiesTab() {
         </p>
       </div>
 
-      {/* Study Cards */}
+      {/* Study Cards - they handle mutations internally via store */}
       <Show
         when={studies().length > 0}
         fallback={
@@ -194,15 +157,7 @@ export default function AllStudiesTab() {
                 expanded={isStudyExpanded(study.id)}
                 onToggleExpanded={() => toggleStudyExpanded(study.id)}
                 getAssigneeName={getAssigneeName}
-                onUpdateStudy={handlers.studyHandlers.handleUpdateStudy}
                 onAssignReviewers={handleOpenReviewersModal}
-                onDeleteStudy={handlers.studyHandlers.handleDeleteStudy}
-                onViewPdf={handleViewPdf}
-                onDownloadPdf={handleDownloadPdf}
-                onUploadPdf={handleUploadPdf}
-                onDeletePdf={handleDeletePdf}
-                onTagChange={handleTagChange}
-                onEditPdfMetadata={handleOpenPdfMetadataModal}
                 onOpenGoogleDrive={handleOpenGoogleDrive}
               />
             )}
@@ -228,16 +183,7 @@ export default function AllStudiesTab() {
         onOpenChange={handleCloseReviewersModal}
         study={editingStudy()}
         projectId={projectId}
-        onSave={handlers.studyHandlers.handleUpdateStudy}
-      />
-
-      {/* Edit PDF Metadata Modal */}
-      <EditPdfMetadataModal
-        open={showPdfMetadataModal()}
-        onOpenChange={handleClosePdfMetadataModal}
-        pdf={editingPdf()}
-        studyId={editingPdfStudyId()}
-        onSave={handleSavePdfMetadata}
+        onSave={handleSaveReviewers}
       />
     </div>
   );

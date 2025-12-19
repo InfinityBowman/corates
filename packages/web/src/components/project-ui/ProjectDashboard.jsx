@@ -2,8 +2,8 @@ import { createEffect, createSignal, onCleanup, For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import useNotifications from '@primitives/useNotifications.js';
 import projectStore from '@/stores/projectStore.js';
-import { useConfirmDialog } from '@corates/ui';
-import useProjectMemberHandlers from '@primitives/useProjectMemberHandlers.js';
+import projectActionsStore from '@/stores/projectActionsStore';
+import { useConfirmDialog, showToast } from '@corates/ui';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import CreateProjectForm from './CreateProjectForm.jsx';
 import ProjectCard from './ProjectCard.jsx';
@@ -11,6 +11,7 @@ import { getRestoreParamsFromUrl } from '@lib/formStatePersistence.js';
 
 export default function ProjectDashboard(props) {
   const navigate = useNavigate();
+  const confirmDialog = useConfirmDialog();
 
   // Check if we're returning from OAuth with state to restore
   const restoreParams = getRestoreParamsFromUrl();
@@ -80,9 +81,25 @@ export default function ProjectDashboard(props) {
     navigate(`/projects/${projectId}`);
   };
 
-  // Confirm dialog and handlers for delete
-  const confirmDialog = useConfirmDialog();
-  const { handleDeleteProject } = useProjectMemberHandlers(null, confirmDialog);
+  // Handler for deleting projects from dashboard
+  const handleDeleteProject = async targetProjectId => {
+    const confirmed = await confirmDialog.open({
+      title: 'Delete Project',
+      description:
+        'Are you sure you want to delete this entire project? This action cannot be undone.',
+      confirmText: 'Delete Project',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
+    try {
+      // Use deleteById since we're outside the project view (no active project set)
+      await projectActionsStore.project.deleteById(targetProjectId);
+      showToast.success('Project Deleted', 'The project has been deleted successfully');
+    } catch (err) {
+      showToast.error('Delete Failed', err.message || 'Failed to delete project');
+    }
+  };
 
   return (
     <div class='space-y-6'>

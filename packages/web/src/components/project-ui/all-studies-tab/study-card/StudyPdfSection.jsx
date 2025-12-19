@@ -1,26 +1,19 @@
 /**
  * StudyPdfSection - PDF management section within a study card
  *
- * Wrapper around PdfList that:
- * - Passes study PDFs
- * - Handles upload via file input + Google Drive
- * - Connects to PDF handlers
+ * Directly imports projectActionsStore for all PDF operations.
+ * No callback props needed - component handles all actions internally.
  */
 
 import { createSignal, createMemo, Show, For } from 'solid-js';
 import { FaBrandsGoogleDrive, FaSolidPlus } from 'solid-icons/fa';
 import { showToast } from '@corates/ui';
 import PdfListItem from '@/components/checklist-ui/pdf/PdfListItem.jsx';
+import projectActionsStore from '@/stores/projectActionsStore';
 
 export default function StudyPdfSection(props) {
   // props.study: Study object with pdfs array
-  // props.onViewPdf: (studyId, pdf) => void
-  // props.onDownloadPdf: (studyId, pdf) => void
-  // props.onUploadPdf: (studyId, file) => Promise<void>
-  // props.onDeletePdf: (studyId, pdf) => void
-  // props.onTagChange: (studyId, pdfId, newTag) => void
-  // props.onEditPdfMetadata: (studyId, pdf) => void
-  // props.onOpenGoogleDrive: (studyId) => void
+  // props.onOpenGoogleDrive: (studyId) => void - Google Drive picker callback (needs modal state at parent)
   // props.readOnly: boolean
 
   const [uploading, setUploading] = createSignal(false);
@@ -52,7 +45,7 @@ export default function StudyPdfSection(props) {
 
     setUploading(true);
     try {
-      await props.onUploadPdf?.(study().id, file);
+      await projectActionsStore.pdf.upload(study().id, file);
     } catch (err) {
       console.error('Error uploading PDF:', err);
       showToast.error('Upload Failed', 'Failed to upload PDF');
@@ -67,23 +60,24 @@ export default function StudyPdfSection(props) {
   };
 
   const handleView = pdf => {
-    props.onViewPdf?.(study().id, pdf);
+    projectActionsStore.pdf.view(study().id, pdf);
   };
 
   const handleDownload = pdf => {
-    props.onDownloadPdf?.(study().id, pdf);
+    projectActionsStore.pdf.download(study().id, pdf);
   };
 
   const handleDelete = pdf => {
-    props.onDeletePdf?.(study().id, pdf);
+    projectActionsStore.pdf.delete(study().id, pdf);
   };
 
   const handleTagChange = (pdfId, newTag) => {
-    props.onTagChange?.(study().id, pdfId, newTag);
+    projectActionsStore.pdf.updateTag(study().id, pdfId, newTag);
   };
 
   const handleEditMetadata = pdf => {
-    props.onEditPdfMetadata?.(study().id, pdf);
+    // TODO: Open metadata edit modal - for now just log
+    console.log('Edit metadata for PDF:', pdf.id);
   };
 
   return (

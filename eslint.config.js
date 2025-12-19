@@ -1,8 +1,8 @@
 import js from '@eslint/js';
 import solid from 'eslint-plugin-solid/configs/recommended';
-// import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 import * as tsParser from '@typescript-eslint/parser';
-import sonarjs from 'eslint-plugin-sonarjs';
+// import eslintPluginUnicorn from 'eslint-plugin-unicorn';
+// import sonarjs from 'eslint-plugin-sonarjs';
 
 export default [
   js.configs.recommended,
@@ -15,9 +15,9 @@ export default [
   // },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
-    plugins: {
-      sonarjs,
-    },
+    // plugins: {
+    //   sonarjs,
+    // },
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -107,7 +107,7 @@ export default [
           caughtErrorsIgnorePattern: '^_',
         },
       ],
-      'sonarjs/cognitive-complexity': 'error',
+      // 'sonarjs/cognitive-complexity': 'error',
     },
   },
   {

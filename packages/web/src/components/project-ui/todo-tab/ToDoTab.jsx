@@ -1,18 +1,20 @@
 import { For, Show, createMemo, createSignal } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 import { BsListTask } from 'solid-icons/bs';
 import TodoStudyRow from './TodoStudyRow.jsx';
 import projectStore from '@/stores/projectStore.js';
+import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 
 /**
  * ToDoTab - Shows studies assigned to the current user in compact rows
- * Uses ProjectContext for projectId, handlers, and helpers
+ * Uses projectActionsStore directly for mutations.
  */
 export default function ToDoTab() {
-  const { projectId, handlers } = useProjectContext();
-  const { checklistHandlers, pdfHandlers } = handlers;
+  const { projectId } = useProjectContext();
   const { user } = useBetterAuth();
+  const navigate = useNavigate();
 
   // Local UI state
   const [showChecklistForm, setShowChecklistForm] = createSignal(null);
@@ -53,15 +55,27 @@ export default function ToDoTab() {
     );
   });
 
-  // Wrap checklist creation to manage local loading state
+  // Handlers
   const handleCreateChecklist = async (studyId, type, assigneeId) => {
     setCreatingChecklist(true);
     try {
-      const success = await checklistHandlers.handleCreateChecklist(studyId, type, assigneeId);
+      const success = projectActionsStore.checklist.create(studyId, type, assigneeId);
       if (success) setShowChecklistForm(null);
     } finally {
       setCreatingChecklist(false);
     }
+  };
+
+  const openChecklist = (studyId, checklistId) => {
+    navigate(`/projects/${projectId}/studies/${studyId}/checklists/${checklistId}`);
+  };
+
+  const handleViewPdf = (studyId, pdf) => {
+    projectActionsStore.pdf.view(studyId, pdf);
+  };
+
+  const handleDownloadPdf = (studyId, pdf) => {
+    projectActionsStore.pdf.download(studyId, pdf);
   };
 
   return (
@@ -95,11 +109,9 @@ export default function ToDoTab() {
               onAddChecklist={(type, assigneeId) =>
                 handleCreateChecklist(study.id, type, assigneeId)
               }
-              onOpenChecklist={checklistId =>
-                checklistHandlers.openChecklist(study.id, checklistId)
-              }
-              onViewPdf={pdf => pdfHandlers.handleViewPdf(study.id, pdf)}
-              onDownloadPdf={pdf => pdfHandlers.handleDownloadPdf(study.id, pdf)}
+              onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
+              onViewPdf={pdf => handleViewPdf(study.id, pdf)}
+              onDownloadPdf={pdf => handleDownloadPdf(study.id, pdf)}
               creatingChecklist={creatingChecklist()}
             />
           )}

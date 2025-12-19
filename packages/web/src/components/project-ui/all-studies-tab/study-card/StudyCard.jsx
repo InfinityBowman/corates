@@ -4,6 +4,9 @@
  * Combines:
  * - StudyCardHeader (always visible, clickable to toggle)
  * - StudyPdfSection (visible when expanded)
+ *
+ * Uses projectActionsStore internally for all mutations.
+ * Only needs study data and minimal control props.
  */
 
 import { Collapsible } from '@corates/ui';
@@ -15,16 +18,8 @@ export default function StudyCard(props) {
   // props.expanded: boolean - controlled expanded state
   // props.onToggleExpanded: () => void - toggle callback
   // props.getAssigneeName: (userId) => string
-  // props.onUpdateStudy: (studyId, updates) => void
-  // props.onAssignReviewers: (study) => void
-  // props.onDeleteStudy: (studyId) => void
-  // props.onViewPdf: (studyId, pdf) => void
-  // props.onDownloadPdf: (studyId, pdf) => void
-  // props.onUploadPdf: (studyId, file) => Promise<void>
-  // props.onDeletePdf: (studyId, pdf) => void
-  // props.onTagChange: (studyId, pdfId, newTag) => void
-  // props.onEditPdfMetadata: (studyId, pdf) => void
-  // props.onOpenGoogleDrive: (studyId) => void
+  // props.onAssignReviewers: (study) => void - opens modal (needs parent state)
+  // props.onOpenGoogleDrive: (studyId) => void - opens picker (needs parent state)
   // props.readOnly: boolean
 
   const study = () => props.study;
@@ -45,9 +40,7 @@ export default function StudyCard(props) {
             study={study()}
             expanded={expanded()}
             onToggle={() => props.onToggleExpanded?.()}
-            onUpdateStudy={props.onUpdateStudy}
             onAssignReviewers={() => props.onAssignReviewers?.(study())}
-            onDelete={() => props.onDeleteStudy?.(study().id)}
             getAssigneeName={props.getAssigneeName}
           />
         )}
@@ -55,12 +48,6 @@ export default function StudyCard(props) {
         <div class='border-t border-gray-100'>
           <StudyPdfSection
             study={study()}
-            onViewPdf={props.onViewPdf}
-            onDownloadPdf={props.onDownloadPdf}
-            onUploadPdf={props.onUploadPdf}
-            onDeletePdf={props.onDeletePdf}
-            onTagChange={props.onTagChange}
-            onEditPdfMetadata={props.onEditPdfMetadata}
             onOpenGoogleDrive={props.onOpenGoogleDrive}
             readOnly={props.readOnly}
           />

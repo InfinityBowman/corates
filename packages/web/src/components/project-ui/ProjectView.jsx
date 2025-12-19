@@ -7,25 +7,19 @@ import { createSignal, createEffect, Show, onCleanup, batch } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import useProject from '@/primitives/useProject/index.js';
 import projectStore from '@/stores/projectStore.js';
+import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
 import { importFromGoogleDrive } from '@api/google-drive.js';
-import { useConfirmDialog, Tabs } from '@corates/ui';
+import { Tabs } from '@corates/ui';
 import { BiRegularHome } from 'solid-icons/bi';
 import { BsListTask } from 'solid-icons/bs';
 import { CgArrowsExchange } from 'solid-icons/cg';
 import { AiFillCheckCircle, AiOutlineBook } from 'solid-icons/ai';
 
-// Handler hooks
-import useProjectStudyHandlers from '@primitives/useProjectStudyHandlers.js';
-import useProjectChecklistHandlers from '@primitives/useProjectChecklistHandlers.js';
-import useProjectPdfHandlers from '@primitives/useProjectPdfHandlers.js';
-import useProjectMemberHandlers from '@primitives/useProjectMemberHandlers.js';
-
 // Components
 import { ProjectProvider } from './ProjectContext.jsx';
-import AddMemberModal from './AddMemberModal.jsx';
 import ProjectHeader from './ProjectHeader.jsx';
 import PdfPreviewPanel from './PdfPreviewPanel.jsx';
 import { OverviewTab } from './overview-tab';
@@ -39,33 +33,28 @@ export default function ProjectView() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useBetterAuth();
-  const confirmDialog = useConfirmDialog();
 
-  // Modal state that needs to be at this level (shared across tabs or triggered from header)
-  const [showAddMemberModal, setShowAddMemberModal] = createSignal(false);
-
-  // Y.js hook for write operations
-  const projectActions = useProject(params.projectId);
-  const { connect, disconnect, createStudy, addPdfToStudy } = projectActions;
+  // Y.js hook - connection is also registered with projectActionsStore
+  const projectConnection = useProject(params.projectId);
+  const { connect, disconnect } = projectConnection;
 
   // Read data from store (only what's needed at this level)
   const studies = () => projectStore.getStudies(params.projectId);
   const meta = () => projectStore.getMeta(params.projectId);
   const connectionState = () => projectStore.getConnectionState(params.projectId);
 
-  // Create handlers
-  const studyHandlers = useProjectStudyHandlers(params.projectId, projectActions, confirmDialog);
-  const checklistHandlers = useProjectChecklistHandlers(
-    params.projectId,
-    projectActions,
-    confirmDialog,
-  );
-  const pdfHandlers = useProjectPdfHandlers(params.projectId, projectActions);
-  const memberHandlers = useProjectMemberHandlers(params.projectId, confirmDialog);
-
-  // Connect to Y.js on mount
+  // Set active project for action store (so methods don't need projectId)
   createEffect(() => {
-    if (params.projectId) connect();
+    if (params.projectId) {
+      projectActionsStore._setActiveProject(params.projectId);
+      connect();
+    }
+  });
+
+  // Clear active project on unmount
+  onCleanup(() => {
+    projectActionsStore._clearActiveProject();
+    disconnect();
   });
 
   // Retrieve pending data from projectStore (stored during project creation)
@@ -92,14 +81,14 @@ export default function ProjectView() {
         doi: pdf.doi ?? pdf.metadata?.doi ?? null,
         importSource: pdf.metadata?.importSource || 'pdf',
       };
-      const studyId = createStudy(pdf.title, abstract, metadata);
+      const studyId = projectActionsStore.study.create(pdf.title, abstract, metadata);
       if (studyId && pdf.data) {
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
         uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName)
           .then(result => {
             cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(console.warn);
             try {
-              addPdfToStudy(studyId, {
+              projectActionsStore.pdf.addToStudy(studyId, {
                 key: result.key,
                 fileName: result.fileName,
                 size: result.size,
@@ -128,7 +117,7 @@ export default function ProjectView() {
     });
 
     for (const ref of refs) {
-      createStudy(ref.title, ref.metadata?.abstract || '', ref.metadata || {});
+      projectActionsStore.study.create(ref.title, ref.metadata?.abstract || '', ref.metadata || {});
     }
   });
 
@@ -151,12 +140,12 @@ export default function ProjectView() {
         ...(file.metadata || {}),
         importSource: file.metadata?.importSource || file.importSource || 'google-drive',
       };
-      const studyId = createStudy(title, abstract, metadata);
+      const studyId = projectActionsStore.study.create(title, abstract, metadata);
       if (studyId && file.id) {
         importFromGoogleDrive(file.id, params.projectId, studyId)
           .then(result => {
             try {
-              addPdfToStudy(studyId, {
+              projectActionsStore.pdf.addToStudy(studyId, {
                 key: result.file.key,
                 fileName: result.file.fileName,
                 size: result.file.size,
@@ -174,8 +163,6 @@ export default function ProjectView() {
       }
     }
   });
-
-  onCleanup(() => disconnect());
 
   // Helper functions to count studies for tab badges
   const getToDoCount = () => {
@@ -246,17 +233,12 @@ export default function ProjectView() {
 
   return (
     <div class='mx-auto max-w-7xl p-6'>
-      <ProjectProvider
-        projectId={params.projectId}
-        handlers={{ studyHandlers, checklistHandlers, pdfHandlers, memberHandlers }}
-        projectActions={projectActions}
-        onAddMember={() => setShowAddMemberModal(true)}
-      >
+      <ProjectProvider projectId={params.projectId}>
         <ProjectHeader
           name={() => meta()?.name}
           description={() => meta()?.description}
-          onRename={projectActions.renameProject}
-          onUpdateDescription={projectActions.updateDescription}
+          onRename={newName => projectActionsStore.project.rename(newName)}
+          onUpdateDescription={desc => projectActionsStore.project.updateDescription(desc)}
           onBack={() => navigate('/dashboard')}
         />
 
@@ -264,7 +246,7 @@ export default function ProjectView() {
           {tabValue => (
             <>
               <Show when={tabValue === 'overview'}>
-                <OverviewTab onAddMember={() => setShowAddMemberModal(true)} />
+                <OverviewTab />
               </Show>
 
               <Show when={tabValue === 'all-studies'}>
@@ -287,15 +269,7 @@ export default function ProjectView() {
         </Tabs>
       </ProjectProvider>
 
-      <AddMemberModal
-        isOpen={showAddMemberModal()}
-        onClose={() => setShowAddMemberModal(false)}
-        projectId={params.projectId}
-      />
-
       <PdfPreviewPanel />
-
-      <confirmDialog.ConfirmDialogComponent />
     </div>
   );
 }
