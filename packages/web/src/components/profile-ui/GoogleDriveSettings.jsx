@@ -33,8 +33,10 @@ export default function GoogleDriveSettings() {
     try {
       await connectGoogleAccount(window.location.href);
     } catch (err) {
-      console.error('Error connecting Google:', err);
-      showToast.error('Error', 'Failed to connect Google account.');
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        toastTitle: 'Error',
+      });
       setConnecting(false);
     }
   };
@@ -51,8 +53,10 @@ export default function GoogleDriveSettings() {
       setConnected(false);
       showToast.success('Disconnected', 'Google account has been disconnected.');
     } catch (err) {
-      console.error('Error disconnecting Google:', err);
-      showToast.error('Error', 'Failed to disconnect Google account.');
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        toastTitle: 'Error',
+      });
     } finally {
       setDisconnecting(false);
     }

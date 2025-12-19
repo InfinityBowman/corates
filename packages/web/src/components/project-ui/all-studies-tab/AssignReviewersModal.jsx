@@ -7,7 +7,7 @@
  */
 
 import { createSignal, createEffect, createMemo, Show } from 'solid-js';
-import { Dialog, showToast, Select } from '@corates/ui';
+import { Dialog, Select } from '@corates/ui';
 import { BiRegularUser } from 'solid-icons/bi';
 import projectStore from '@/stores/projectStore.js';
 
@@ -60,8 +60,10 @@ export default function AssignReviewersModal(props) {
       await props.onSave?.(props.study.id, updates);
       props.onOpenChange(false);
     } catch (err) {
-      console.error('Error assigning reviewers:', err);
-      showToast.error('Update Failed', 'Failed to assign reviewers.');
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        toastTitle: 'Update Failed',
+      });
     } finally {
       setSaving(false);
     }

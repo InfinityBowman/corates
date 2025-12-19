@@ -69,7 +69,11 @@ export default function MergeAccountsDialog(props) {
       setStep(STEPS.ENTER_CODE);
       showToast.success('Code Sent', `A verification code has been sent to ${email}`);
     } catch (err) {
-      setError(err.message);
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
     } finally {
       setLoading(false);
     }
@@ -97,7 +101,11 @@ export default function MergeAccountsDialog(props) {
       }
       setStep(STEPS.CONFIRM);
     } catch (err) {
-      setError(err.message);
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,8 @@
 import { Show, createMemo, createSignal } from 'solid-js';
 import { FiChevronLeft, FiEdit2, FiCheck, FiX } from 'solid-icons/fi';
 import { useProjectContext } from './ProjectContext.jsx';
-import { Editable, showToast } from '@corates/ui';
+import { Editable } from '@corates/ui';
+import { handleError } from '@/lib/error-utils.js';
 
 export default function ProjectHeader(props) {
   const { userRole } = useProjectContext();
@@ -24,11 +25,8 @@ export default function ProjectHeader(props) {
       try {
         await props.onRename?.(newName.trim());
       } catch (error) {
-        console.error('Failed to rename project:', error);
-        showToast({
-          title: 'Failed to rename project',
-          description: error.message || 'Please try again',
-          type: 'error',
+        await handleError(error, {
+          toastTitle: 'Failed to rename project',
         });
       }
     }
@@ -52,11 +50,8 @@ export default function ProjectHeader(props) {
       await props.onUpdateDescription?.(newDesc);
       setIsEditingDescription(false);
     } catch (error) {
-      console.error('Failed to update description:', error);
-      showToast({
-        title: 'Failed to update description',
-        description: error.message || 'Please try again',
-        type: 'error',
+      await handleError(error, {
+        toastTitle: 'Failed to update description',
       });
     } finally {
       setIsSaving(false);

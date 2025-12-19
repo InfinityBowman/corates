@@ -2,6 +2,7 @@ import { createSignal, For, Show, createEffect, onCleanup } from 'solid-js';
 import { API_BASE } from '@config/api.js';
 import { FiX } from 'solid-icons/fi';
 import { Select, Avatar } from '@corates/ui';
+import { handleFetchError } from '@/lib/error-utils.js';
 
 /**
  * Modal for searching and adding members to a project
@@ -54,19 +55,20 @@ export default function AddMemberModal(props) {
       url.searchParams.set('q', query);
       url.searchParams.set('projectId', props.projectId);
 
-      const response = await fetch(url, {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
+      const response = await handleFetchError(
+        fetch(url, {
+          credentials: 'include',
+        }),
+        {
+          setError,
+          showToast: false,
+        },
+      );
 
       const results = await response.json();
       setSearchResults(results);
-    } catch (err) {
-      console.error('Error searching users:', err);
-      setError('Failed to search users');
+    } catch (_err) {
+      // Error already handled by handleFetchError
     } finally {
       setSearching(false);
     }
@@ -86,27 +88,27 @@ export default function AddMemberModal(props) {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE}/api/projects/${props.projectId}/members`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          role: selectedRole(),
+      await handleFetchError(
+        fetch(`${API_BASE}/api/projects/${props.projectId}/members`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            role: selectedRole(),
+          }),
         }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to add member');
-      }
+        {
+          setError,
+          showToast: false,
+        },
+      );
 
       handleClose();
-    } catch (err) {
-      console.error('Error adding member:', err);
-      setError(err.message);
+    } catch (_err) {
+      // Error already handled by handleFetchError
     } finally {
       setAdding(false);
     }

@@ -21,7 +21,10 @@ export default function PricingTable(props) {
     try {
       await redirectToCheckout(tier, billingInterval());
     } catch (error) {
-      console.error('Checkout error:', error);
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(error, {
+        toastTitle: 'Checkout Error',
+      });
       setLoadingTier(null);
     }
   };

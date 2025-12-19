@@ -191,13 +191,12 @@ export default function ProfilePage() {
 
       showToast.success('Photo Updated', 'Your profile photo has been updated.');
     } catch (err) {
-      console.error('Avatar upload error:', err);
       // Revert optimistic update on error
       setOptimisticImage(null);
-      showToast.error(
-        'Upload Failed',
-        err.message || 'Failed to update profile photo. Please try again.',
-      );
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        toastTitle: 'Upload Failed',
+      });
     } finally {
       setUploadingImage(false);
     }
@@ -224,10 +223,10 @@ export default function ProfilePage() {
       // Redirect to landing page after successful deletion
       window.location.href = LANDING_URL;
     } catch (err) {
-      showToast.error(
-        'Delete Failed',
-        err.message || 'Failed to delete account. Please try again.',
-      );
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        toastTitle: 'Delete Failed',
+      });
       setDeletingAccount(false);
     }
   };

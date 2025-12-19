@@ -47,8 +47,10 @@ export default function StudyPdfSection(props) {
     try {
       await projectActionsStore.pdf.upload(study().id, file);
     } catch (err) {
-      console.error('Error uploading PDF:', err);
-      showToast.error('Upload Failed', err.message || 'Failed to upload PDF');
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        toastTitle: 'Upload Failed',
+      });
     } finally {
       setUploading(false);
       if (fileInputRef) fileInputRef.value = '';

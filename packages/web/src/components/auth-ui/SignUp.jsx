@@ -11,6 +11,7 @@ import {
 } from './SocialAuthButtons.jsx';
 import MagicLinkForm from './MagicLinkForm.jsx';
 import { LANDING_URL } from '@config/api.js';
+import { handleError } from '@/lib/error-utils.js';
 
 /**
  * Sign Up page - minimal friction with magic link or social providers
@@ -65,7 +66,10 @@ export default function SignUp() {
       await signinWithGoogle('/complete-profile');
     } catch (err) {
       console.error('Google sign-up error:', err);
-      setError('Failed to sign up with Google. Please try again.');
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
       localStorage.removeItem('oauthSignup');
       setGoogleLoading(false);
     }
@@ -82,7 +86,10 @@ export default function SignUp() {
       await signinWithOrcid('/complete-profile');
     } catch (err) {
       console.error('ORCID sign-up error:', err);
-      setError('Failed to sign up with ORCID. Please try again.');
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
       localStorage.removeItem('oauthSignup');
       setOrcidLoading(false);
     }

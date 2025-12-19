@@ -553,18 +553,33 @@ function createBetterAuthStore() {
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Authentication required');
+        // Import error utilities dynamically to avoid circular dependencies
+        const { parseApiError, getErrorMessage } = await import('@/lib/error-utils.js');
+        const parsedError = await parseApiError(response);
+
+        if (parsedError.code === 'AUTH_REQUIRED' || parsedError.code === 'AUTH_EXPIRED') {
+          setAuthError(getErrorMessage('AUTH_EXPIRED'));
         }
-        throw new Error(`Request failed with status ${response.status}`);
+
+        throw new Error(parsedError.message);
       }
 
       return response;
     } catch (err) {
-      if (err.message.includes('Authentication required')) {
-        setAuthError('Session expired. Please sign in again.');
+      // Re-throw if it's already been processed
+      if (err.message && !err.message.includes('Request failed with status')) {
+        throw err;
       }
-      throw err;
+
+      // Handle unprocessed errors
+      const { parseError, getErrorMessage } = await import('@/lib/error-utils.js');
+      const parsedError = parseError(err);
+
+      if (parsedError.code === 'AUTH_REQUIRED' || parsedError.code === 'AUTH_EXPIRED') {
+        setAuthError(getErrorMessage('AUTH_EXPIRED'));
+      }
+
+      throw new Error(parsedError.message);
     }
   }
 

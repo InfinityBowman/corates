@@ -13,6 +13,7 @@ import {
 import MagicLinkForm from './MagicLinkForm.jsx';
 import TwoFactorVerify from './TwoFactorVerify.jsx';
 import LastLoginHint from './LastLoginHint.jsx';
+import { handleError } from '@/lib/error-utils.js';
 
 export default function SignIn() {
   const [email, setEmail] = createSignal('');
@@ -124,40 +125,12 @@ export default function SignIn() {
     } catch (err) {
       console.error('Sign in error:', err);
 
-      const msg = err.message?.toLowerCase() || '';
-
-      // Handle specific error types
-      if (msg.includes('email not verified') || msg.includes('email_verified_at is null')) {
-        navigate('/verify-email', { replace: true });
-      } else if (
-        msg.includes('invalid credentials') ||
-        msg.includes('incorrect email or password') ||
-        msg.includes('invalid email or password')
-      ) {
-        setError('Incorrect email or password');
-      } else if (
-        msg.includes('user not found') ||
-        msg.includes('user does not exist') ||
-        msg.includes('no user found')
-      ) {
-        setError('No account found with this email');
-      } else if (msg.includes('too many requests')) {
-        setError('Too many sign-in attempts. Please try again later.');
-      } else if (
-        msg.includes('failed to fetch') ||
-        msg.includes('load failed') ||
-        msg.includes('network') ||
-        msg.includes('cors')
-      ) {
-        setError(
-          'Unable to connect to the server. Please check your internet connection and try again.',
-        );
-      } else if (msg.includes('timeout')) {
-        setError('The request timed out. Please try again.');
-      } else {
-        // Catch-all for any unhandled errors - don't show raw error messages
-        setError('Something went wrong. Please try again.');
-      }
+      // Use centralized error handling
+      await handleError(err, {
+        setError,
+        showToast: false, // Don't show toast, use inline error message
+        navigate,
+      });
     } finally {
       setLoading(false);
     }

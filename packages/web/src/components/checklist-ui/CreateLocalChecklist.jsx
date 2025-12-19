@@ -60,8 +60,11 @@ export default function CreateLocalChecklist() {
       // Navigate to the new checklist
       navigate(`/checklist/${checklist.id}`);
     } catch (err) {
-      console.error('Error creating checklist:', err);
-      setError(err.message || 'Failed to create checklist');
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
       setCreating(false);
     }
   };

@@ -60,14 +60,18 @@ export default function TwoFactorSetup() {
       setSetupStep(1); // Move to QR code step
       setPassword(''); // Clear password
     } catch (err) {
-      const message = err.message || 'Failed to start 2FA setup';
+      const { handleError } = await import('@/lib/error-utils.js');
+      const parsedError = await handleError(err, {
+        showToast: true,
+        toastTitle: '2FA Setup Failed',
+      });
       // Check if error is about missing/invalid password - close setup and show message
-      if (message.toLowerCase().includes('password') || message.toLowerCase().includes('invalid')) {
+      const message = parsedError.message.toLowerCase();
+      if (message.includes('password') || message.includes('invalid')) {
         setNeedsPassword(true);
         setSetupMode(false); // Close setup mode to show the message in main view
         setPassword('');
       }
-      showToast.error(message);
     } finally {
       setLoading(false);
     }
@@ -88,7 +92,11 @@ export default function TwoFactorSetup() {
       await verifyTwoFactorSetup(verificationCode());
       setSetupStep(3); // Show backup codes
     } catch (err) {
-      showToast.error(err.message || 'Invalid verification code');
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        showToast: true,
+        toastTitle: 'Verification Failed',
+      });
     } finally {
       setLoading(false);
     }
@@ -129,13 +137,17 @@ export default function TwoFactorSetup() {
       setPassword('');
       showToast.success('Two-factor authentication has been disabled');
     } catch (err) {
-      const message = err.message || 'Failed to disable 2FA';
-      if (message.toLowerCase().includes('password') || message.toLowerCase().includes('invalid')) {
+      const { handleError } = await import('@/lib/error-utils.js');
+      const parsedError = await handleError(err, {
+        showToast: true,
+        toastTitle: 'Disable Failed',
+      });
+      const message = parsedError.message.toLowerCase();
+      if (message.includes('password') || message.includes('invalid')) {
         setNeedsPassword(true);
         setDisableMode(false); // Close disable mode to show message in main view
         setPassword('');
       }
-      showToast.error(message);
     } finally {
       setLoading(false);
     }

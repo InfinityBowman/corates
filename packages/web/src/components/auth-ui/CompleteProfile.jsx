@@ -6,6 +6,7 @@ import { PrimaryButton } from './AuthButtons.jsx';
 import RoleSelector from './RoleSelector.jsx';
 import StepIndicator from './StepIndicator.jsx';
 import { FiChevronLeft } from 'solid-icons/fi';
+import { handleError } from '@/lib/error-utils.js';
 
 /**
  * Complete Profile page - shown after email verification or OAuth signup
@@ -133,14 +134,10 @@ export default function CompleteProfile() {
       await new Promise(resolve => setTimeout(resolve, 200));
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      console.error('Profile update error:', err);
-      const msg = err.message?.toLowerCase() || '';
-
-      if (msg.includes('failed to fetch') || msg.includes('network')) {
-        setError('Unable to connect to the server. Please check your connection.');
-      } else {
-        setError('Something went wrong. Please try again.');
-      }
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
     } finally {
       setLoading(false);
     }

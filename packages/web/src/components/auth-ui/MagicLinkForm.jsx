@@ -3,6 +3,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton } from './AuthButtons.jsx';
 import { FiMail } from 'solid-icons/fi';
+import { handleError } from '@/lib/error-utils.js';
 
 const RESEND_COOLDOWN_MS = 30000; // 30 seconds between resends
 
@@ -40,16 +41,10 @@ export default function MagicLinkForm(props) {
       // Allow resending after cooldown
       setTimeout(() => setCanResend(true), RESEND_COOLDOWN_MS);
     } catch (err) {
-      console.error('Magic link error:', err);
-      const msg = err.message?.toLowerCase() || '';
-
-      if (msg.includes('too many requests') || msg.includes('rate limit')) {
-        setError('Too many requests. Please try again in a few minutes.');
-      } else if (msg.includes('invalid email')) {
-        setError('Please enter a valid email address.');
-      } else {
-        setError('Failed to send sign-in link. Please try again.');
-      }
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
     } finally {
       setLoading(false);
     }
@@ -79,14 +74,10 @@ export default function MagicLinkForm(props) {
         setResent(false);
       }, RESEND_COOLDOWN_MS);
     } catch (err) {
-      console.error('Resend magic link error:', err);
-      const msg = err.message?.toLowerCase() || '';
-
-      if (msg.includes('too many requests') || msg.includes('rate limit')) {
-        setError('Too many requests. Please try again in a few minutes.');
-      } else {
-        setError('Failed to resend link. Please try again.');
-      }
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
       setCanResend(true);
     } finally {
       setResending(false);

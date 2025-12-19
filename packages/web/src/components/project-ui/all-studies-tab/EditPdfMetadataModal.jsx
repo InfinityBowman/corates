@@ -11,6 +11,7 @@
 
 import { createSignal, createEffect } from 'solid-js';
 import { Dialog, showToast } from '@corates/ui';
+import { handleError } from '@/lib/error-utils.js';
 
 export default function EditPdfMetadataModal(props) {
   // props.open: boolean
@@ -68,8 +69,9 @@ export default function EditPdfMetadataModal(props) {
       showToast.success('PDF Updated', 'Citation metadata saved.');
       props.onOpenChange(false);
     } catch (err) {
-      console.error('Error updating PDF metadata:', err);
-      showToast.error('Update Failed', 'Failed to update PDF metadata.');
+      await handleError(err, {
+        toastTitle: 'Update Failed',
+      });
     } finally {
       setSaving(false);
     }
