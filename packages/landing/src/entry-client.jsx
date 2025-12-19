@@ -57,4 +57,4 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-mount(() => <StartClient />, document.getElementById('app'));
+mount(() => <StartClient />, document.querySelector('#app'));

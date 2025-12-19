@@ -146,6 +146,7 @@ export default [
             num: false,
             ctx: false,
             params: false,
+            dir: false,
             // React/SolidJS common patterns
             prev: false,
             props: false,
@@ -204,21 +205,21 @@ export default [
       // Structured clone - JSON.parse(JSON.stringify()) is fine for simple cases
       'unicorn/prefer-structured-clone': 'warn', // Downgrade to warn
 
-      // Node protocol - nice but requires refactoring all Node.js imports
-      'unicorn/prefer-node-protocol': 'warn', // Downgrade to warn for now
+      // Node protocol - disabled, standard imports are fine
+      'unicorn/prefer-node-protocol': 'off',
 
       // Array sort - toSorted() is newer, sort() is fine for now
       'unicorn/no-array-sort': 'warn', // Downgrade to warn
 
-      // Nested ternary - can be hard to read, but sometimes acceptable
-      'unicorn/no-nested-ternary': 'warn', // Downgrade to warn
+      // Nested ternary - disabled, nested ternaries are acceptable
+      'unicorn/no-nested-ternary': 'off',
 
       // Explicit length check - `array.length > 0` vs `array.length`
       'unicorn/explicit-length-check': 'warn', // Downgrade to warn
 
       // Additional rules to disable/warn for gradual adoption
-      // Switch case braces - style preference, can be enabled gradually
-      'unicorn/switch-case-braces': 'warn',
+      // Switch case braces - disabled, braces in case clauses are optional
+      'unicorn/switch-case-braces': 'off',
 
       // Response static JSON - Cloudflare Workers pattern
       'unicorn/prefer-response-static-json': 'off',
@@ -357,7 +358,7 @@ export default [
     files: ['**/mcp/**/*.{js,jsx,ts,tsx,mjs}'],
     rules: {
       'unicorn/filename-case': 'off', // Allow camelCase for tool files
-      'unicorn/prefer-node-protocol': 'warn', // Warn but don't error
+      'unicorn/prefer-node-protocol': 'off', // Standard imports are fine
       'unicorn/no-process-exit': 'off', // CLI tools need process.exit
       'unicorn/prevent-abbreviations': 'off', // More lenient for tooling
     },

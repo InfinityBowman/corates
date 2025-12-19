@@ -3,7 +3,7 @@ import { normalizeProps, useMachine } from '@zag-js/solid';
 import { createMemo, createUniqueId } from 'solid-js';
 
 export function Avatar(props) {
-  const src = () => props.src;
+  const source = () => props.src;
   const name = () => props.name;
   const alt = () => props.alt || name() || 'Avatar';
   const onStatusChange = () => props.onStatusChange;
@@ -20,7 +20,7 @@ export function Avatar(props) {
     if (!displayName) return '';
     const parts = displayName.trim().split(' ');
     if (parts.length === 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return (parts[0][0] + parts.at(-1)[0]).toUpperCase();
   };
 
   const fallbackClass = () =>
@@ -34,7 +34,7 @@ export function Avatar(props) {
       </span>
       <img
         alt={alt()}
-        src={src()}
+        src={source()}
         referrerPolicy='no-referrer'
         {...api().getImageProps()}
         class='h-full w-full object-cover'

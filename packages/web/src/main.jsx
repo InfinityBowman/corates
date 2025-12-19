@@ -12,4 +12,4 @@ function Root() {
   return <Routes />;
 }
 
-render(() => <Root />, document.getElementById('root'));
+render(() => <Root />, document.querySelector('#root'));

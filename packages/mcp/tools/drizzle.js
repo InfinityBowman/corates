@@ -27,8 +27,8 @@ async function fetchDrizzleDocs() {
 
   // Find header (before first Source:)
   let headerEnd = 0;
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].startsWith('Source: https://orm.drizzle.team/docs/')) {
+  for (const [i, line] of lines.entries()) {
+    if (line.startsWith('Source: https://orm.drizzle.team/docs/')) {
       headerEnd = i;
       break;
     }

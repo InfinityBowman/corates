@@ -16,7 +16,7 @@ async function loadManifest() {
 
 app.get('/search', async (req, res) => {
   const q = (req.query.q || '').toLowerCase();
-  const limit = parseInt(req.query.limit || '20', 10);
+  const limit = Number.parseInt(req.query.limit || '20', 10);
   const manifest = await loadManifest();
 
   const results = [];

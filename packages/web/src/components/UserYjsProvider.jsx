@@ -117,21 +117,21 @@ export default function UserYjsProvider(props) {
     const { ydoc, ws } = connection;
     const checklistsMap = ydoc.getMap('checklists');
 
-    if (!checklistsMap.has(checklistId)) {
+    if (checklistsMap.has(checklistId)) {
+      // Update existing checklist
+      const checklistMap = checklistsMap.get(checklistId);
+      applyObjectToYMap(checklistMap, updates);
+    } else {
       // Create new checklist
       const checklistMap = new Y.Map();
       applyObjectToYMap(checklistMap, updates);
       checklistsMap.set(checklistId, checklistMap);
-    } else {
-      // Update existing checklist
-      const checklistMap = checklistsMap.get(checklistId);
-      applyObjectToYMap(checklistMap, updates);
     }
 
     // Send update
     const update = Y.encodeStateAsUpdate(ydoc);
     if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'update', update: Array.from(update) }));
+      ws.send(JSON.stringify({ type: 'update', update: [...update] }));
     }
   }
 
@@ -166,11 +166,11 @@ export default function UserYjsProvider(props) {
 
   onCleanup(() => {
     // Close all WebSocket connections
-    Object.values(connections).forEach(({ ws }) => {
+    for (const { ws } of Object.values(connections)) {
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.close();
       }
-    });
+    }
     connections = {};
   });
 

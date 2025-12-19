@@ -15,7 +15,7 @@ async function listLocalDocsWithLlmsTxt(docsRoot) {
     const docNames = entries
       .filter(e => e.isDirectory())
       .map(e => e.name)
-      .sort((a, b) => a.localeCompare(b));
+      .toSorted((a, b) => a.localeCompare(b));
 
     const results = [];
     for (const name of docNames) {
@@ -76,7 +76,7 @@ export function registerLocalDocsTools(server, docsRoot) {
       const isAllowed = available.some(d => d.name === doc);
       if (!isAllowed) {
         const suggestion =
-          available.length ? `\n\nAvailable: ${available.map(d => d.name).join(', ')}` : '';
+          available.length > 0 ? `\n\nAvailable: ${available.map(d => d.name).join(', ')}` : '';
         return {
           content: [
             { type: 'text', text: `Unknown doc "${doc}" or missing llms.txt.${suggestion}` },

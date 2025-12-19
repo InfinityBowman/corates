@@ -65,15 +65,13 @@ async function fetchZagDocs() {
     let endLine = lines.length;
     if (nextMarker) {
       for (let j = nextMarker.lineNum - 1; j > marker.lineNum; j--) {
-        if (lines[j].trim() === '') {
-          if (j - 1 > marker.lineNum) {
+        if (lines[j].trim() === '' && j - 1 > marker.lineNum) {
             const prevLine = lines[j - 1].trim();
             if (prevLine.startsWith('Description:') || prevLine === '') {
               endLine = j + 1;
               break;
             }
           }
-        }
       }
       if (endLine === lines.length) endLine = nextMarker.lineNum;
     }
@@ -96,7 +94,7 @@ async function fetchZagDocs() {
  * Generate an index of all Zag component sections
  */
 function generateZagIndex(sections) {
-  const sortedComponents = [...sections.keys()].sort();
+  const sortedComponents = [...sections.keys()].toSorted();
 
   let index = `# Zag.js Documentation Index\n\n`;
   index += `Zag.js is a framework-agnostic toolkit for building accessible UI components. Below are the ${sortedComponents.length} available components.\n\n`;

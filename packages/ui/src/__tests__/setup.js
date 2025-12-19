@@ -110,7 +110,7 @@ if (typeof PointerEvent === 'undefined') {
 if (!navigator.clipboard) {
   Object.defineProperty(navigator, 'clipboard', {
     value: {
-      writeText: vi.fn().mockResolvedValue(undefined),
+      writeText: vi.fn().mockResolvedValue(),
       readText: vi.fn().mockResolvedValue(''),
     },
     writable: true,

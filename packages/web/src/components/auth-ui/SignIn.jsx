@@ -198,9 +198,9 @@ export default function SignIn() {
               type='button'
               onClick={() => setUseMagicLink(false)}
               class={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${
-                !useMagicLink() ?
-                  'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                useMagicLink() ?
+                  'text-gray-600 hover:text-gray-900'
+                : 'bg-white text-gray-900 shadow-sm'
               }`}
             >
               Password

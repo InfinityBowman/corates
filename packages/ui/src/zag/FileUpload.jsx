@@ -40,6 +40,13 @@ async function readDirectoryRecursively(dirEntry) {
   return files;
 }
 
+  // Format file size for display
+  const formatFileSize = bytes => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
 /**
  * Extract all files from a drop event, including files nested in directories
  * @param {DataTransfer} dataTransfer
@@ -51,12 +58,11 @@ async function getFilesFromDrop(dataTransfer) {
 
   if (!items) {
     // Fallback for browsers that don't support DataTransferItemList
-    return Array.from(dataTransfer.files);
+    return [...dataTransfer.files];
   }
 
   const entries = [];
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
+  for (const item of items) {
     // webkitGetAsEntry is the standard way to get directory access
     const entry = item.webkitGetAsEntry?.();
     if (entry) {
@@ -112,7 +118,7 @@ export function FileUpload(props) {
   );
 
   // Allow directories by default when multiple files are allowed
-  const allowDirs = () => merged.allowDirectories ?? merged.multiple;
+  const allowDirectories = () => merged.allowDirectories ?? merged.multiple;
   const showFileList = () => merged.showFileList;
   const accept = () => merged.accept;
   const classValue = () => merged.class;
@@ -164,13 +170,13 @@ export function FileUpload(props) {
     const items = e.dataTransfer?.items;
     const hasDirectories =
       items &&
-      Array.from(items).some(item => {
+      [...items].some(item => {
         const entry = item.webkitGetAsEntry?.();
         return entry?.isDirectory;
       });
 
     // If no directories and allowDirs is false, let normal handling occur
-    if (!hasDirectories && !allowDirs()) {
+    if (!hasDirectories && !allowDirectories()) {
       return;
     }
 
@@ -210,13 +216,6 @@ export function FileUpload(props) {
       // Fall back to normal handling if directory reading fails
       console.error('Error reading dropped items:', err);
     }
-  };
-
-  // Format file size for display
-  const formatFileSize = bytes => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
   return (

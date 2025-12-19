@@ -9,7 +9,7 @@ function prefetch(href) {
   const link = document.createElement('link');
   link.rel = 'prefetch';
   link.href = href;
-  document.head.appendChild(link);
+  document.head.append(link);
 }
 
 export default function PrefetchLink(props) {

@@ -4,7 +4,7 @@ import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton } from './AuthButtons.jsx';
 import { FiMail } from 'solid-icons/fi';
 
-const RESEND_COOLDOWN_MS = 30000; // 30 seconds between resends
+const RESEND_COOLDOWN_MS = 30_000; // 30 seconds between resends
 
 export default function MagicLinkForm(props) {
   const [email, setEmail] = createSignal(props.initialEmail || '');

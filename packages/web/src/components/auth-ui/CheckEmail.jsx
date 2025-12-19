@@ -48,10 +48,10 @@ export default function CheckEmail() {
         setTimeout(() => {
           // Redirect to complete-profile if user hasn't completed setup yet
           // Otherwise go to dashboard
-          if (!isProfileComplete) {
-            navigate('/complete-profile', { replace: true });
-          } else {
+          if (isProfileComplete) {
             navigate('/dashboard', { replace: true });
+          } else {
+            navigate('/complete-profile', { replace: true });
           }
         }, REDIRECT_DELAY_MS);
         return true;
