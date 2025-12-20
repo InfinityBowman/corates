@@ -14,8 +14,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.24.3",
-    "zod": "^4.1.13"
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "vitest": "^3.2.4"

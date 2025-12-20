@@ -26,19 +26,19 @@
     "solid-js": "^1.9.10",
     "y-indexeddb": "^9.0.12",
     "y-websocket": "^3.0.0",
-    "yjs": "^13.6.27"
+    "yjs": "^13.6.28"
   },
   "devDependencies": {
     "@solidjs/testing-library": "^0.8.10",
     "@tailwindcss/vite": "^4.1.18",
     "@testing-library/jest-dom": "^6.9.1",
-    "@vitest/ui": "^4.0.15",
+    "@vitest/ui": "^4.0.16",
     "jsdom": "^27.3.0",
     "prettier": "^3.7.4",
-    "puppeteer": "^24.33.0",
+    "puppeteer": "^24.34.0",
     "tailwindcss": "^4.1.18",
-    "vite": "^7.2.7",
+    "vite": "^7.3.0",
     "vite-plugin-solid": "^2.11.10",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.16"
   }
 }

@@ -44,7 +44,7 @@
   "license": "PolyForm-Noncommercial-1.0.0",
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@typescript-eslint/parser": "^8.49.0",
+    "@typescript-eslint/parser": "^8.50.0",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
     "eslint-plugin-drizzle": "^0.2.3",
@@ -53,7 +53,7 @@
     "eslint-plugin-unicorn": "^62.0.0",
     "prettier": "^3.7.4",
     "prettier-plugin-tailwindcss": "^0.7.2",
-    "wrangler": "^4.54.0"
+    "wrangler": "^4.56.0"
   },
   "engines": {
     "node": ">=24.0.0",

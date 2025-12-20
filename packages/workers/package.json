@@ -26,23 +26,23 @@
     "openapi:serve": "node ./scripts/serve-docs.mjs"
   },
   "dependencies": {
+    "@cloudflare/workers-types": "^4.20251220.0",
     "@corates/shared": "workspace:*",
-    "@cloudflare/workers-types": "^4.20251213.0",
     "better-auth": "1.4.5",
     "drizzle-orm": "^0.45.1",
-    "hono": "^4.10.8",
+    "hono": "^4.11.1",
     "lib0": "^0.2.115",
     "postmark": "^4.0.5",
-    "stripe": "^20.0.0",
-    "y-protocols": "^1.0.6",
-    "yjs": "^13.6.27",
-    "zod": "^4.1.13"
+    "stripe": "^20.1.0",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.28",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.10.15",
-    "drizzle-kit": "^0.30.0",
+    "drizzle-kit": "^0.30.6",
     "vitest": "3.2.0",
-    "wrangler": "^4.54.0",
+    "wrangler": "^4.56.0",
     "yaml": "^2.8.2"
   }
 }
