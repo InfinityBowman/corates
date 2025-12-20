@@ -3,11 +3,12 @@
  */
 
 import { uploadPdf, fetchPdfViaProxy, downloadPdf, deletePdf } from '@api/pdf-api.js';
-import { cachePdf } from '@primitives/pdfCache.js';
+import { cachePdf, clearStudyCache } from '@primitives/pdfCache.js';
 import { showToast } from '@corates/ui';
 import { importFromGoogleDrive } from '@api/google-drive.js';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
+import projectStore from '../projectStore.js';
 
 // ============================================================================
 // Helpers
@@ -256,15 +257,41 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
 
   /**
    * Delete a study (low-level, no confirmation) (uses active project)
+   * Cleans up all associated PDFs from R2 and IndexedDB before deleting from Y.js
    */
-  function deleteStudy(studyId) {
+  async function deleteStudy(studyId) {
+    const projectId = getActiveProjectId();
     const ops = getActiveConnection();
     if (!ops?.deleteStudy) {
       console.error('No connection for active project');
       showToast.error('Delete Failed', 'Not connected to project');
       return;
     }
+
     try {
+      // Get study data to access PDFs before deletion
+      const study = projectStore.getStudy(projectId, studyId);
+      const pdfs = study?.pdfs || [];
+
+      // Delete each PDF from R2 storage
+      if (pdfs.length > 0) {
+        const deletePromises = pdfs.map(pdf => {
+          if (!pdf?.fileName) return Promise.resolve();
+          return deletePdf(projectId, studyId, pdf.fileName).catch(err => {
+            // Log but don't block - continue with other PDFs
+            console.warn(`Failed to delete PDF ${pdf.fileName} from R2:`, err);
+          });
+        });
+        await Promise.all(deletePromises);
+      }
+
+      // Clear all PDFs for this study from IndexedDB
+      await clearStudyCache(projectId, studyId).catch(err => {
+        // Log but don't block - continue with Y.js deletion
+        console.warn('Failed to clear study PDF cache from IndexedDB:', err);
+      });
+
+      // Finally, delete the study from Y.js
       ops.deleteStudy(studyId);
     } catch (err) {
       console.error('Error deleting study:', err);

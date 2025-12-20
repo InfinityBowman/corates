@@ -212,19 +212,11 @@ pdfRoutes.post('/', async c => {
       return c.json(error, error.statusCode);
     }
 
-    // Check if file with same name already exists
-    const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
-    const existing = await c.env.PDF_BUCKET.head(key);
-    if (existing) {
-      const error = createDomainError(
-        FILE_ERRORS.ALREADY_EXISTS,
-        { fileName, key },
-        `File "${fileName}" already exists. Rename or remove the existing copy.`,
-      );
-      return c.json(error, error.statusCode);
-    }
-
     // Store in R2
+    // Note: Frontend already checks for duplicate filenames before uploading,
+    // so we skip the R2 head() call to reduce latency. Race conditions are
+    // unlikely and would just result in an overwrite.
+    const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
 
     await c.env.PDF_BUCKET.put(key, pdfData, {
       httpMetadata: {

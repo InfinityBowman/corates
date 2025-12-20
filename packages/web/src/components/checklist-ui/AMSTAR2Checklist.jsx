@@ -2,7 +2,7 @@ import { createSignal, createEffect, Show, For } from 'solid-js';
 import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
 import { createChecklist as createAMSTAR2Checklist } from '@/AMSTAR2/checklist.js';
 import { FaSolidCircleInfo } from 'solid-icons/fa';
-import { Tooltip, FloatingPanel } from '@corates/ui';
+import { Tooltip } from '@corates/ui';
 import NoteEditor from '@checklist-ui/common/NoteEditor.jsx';
 
 export function Question1(props) {
@@ -695,43 +695,13 @@ function StandardQuestion(props) {
 }
 
 function QuestionInfo(props) {
-  const [showInfo, setShowInfo] = createSignal(false);
-  const [panelPos, setPanelPos] = createSignal({ x: 0, y: 0 });
-  let containerRef = () => props.containerRef;
-
-  function openInfoPanel() {
-    if (containerRef()) {
-      const btnRect = containerRef().getBoundingClientRect();
-      setPanelPos({
-        x: btnRect.left + 20,
-        y: btnRect.top - 20,
-      });
-    }
-    setShowInfo(true);
-  }
-
-  let question = () => props.question.text.split('.')[0] + '. Learn more';
-
   return (
     <>
-      <FloatingPanel
-        title={question()}
-        open={showInfo()}
-        onOpenChange={details => setShowInfo(details.open)}
-        position={panelPos()}
-        onPositionChange={pos => setPanelPos(pos.position)}
-        showMaximize={false}
-      >
-        {props.question.info}
-      </FloatingPanel>
       <div class='absolute top-1.5 right-1.5'>
-        <Tooltip content={question()} placement='top' openDelay={200}>
-          <button
-            class='inline-flex cursor-pointer items-center justify-center rounded-full p-1.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-            onClick={openInfoPanel}
-          >
+        <Tooltip content={props.question.info} placement='top' openDelay={200}>
+          <div class='inline-flex items-center justify-center rounded-full p-1.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'>
             <FaSolidCircleInfo size={12} />
-          </button>
+          </div>
         </Tooltip>
       </div>
     </>

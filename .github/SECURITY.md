@@ -13,6 +13,7 @@ We will acknowledge receipt and work to address the issue as quickly as possible
 ## Scope
 
 This policy applies to:
+
 - The CoRATES web application
 - Cloudflare Workers and Durable Objects
 - Client-side synchronization and storage logic

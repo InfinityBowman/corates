@@ -66,17 +66,18 @@ Individual response to a checklist question. Stored entirely in Durable Objects 
 
 ## Storage Split
 
-| Entity                       | Storage                    | Reason                              |
-| ---------------------------- | -------------------------- | ----------------------------------- |
-| Users                        | D1 (SQLite)                | User accounts, authentication       |
-| Projects (metadata)          | D1 (SQLite)                | Basic project info (id, name, description, createdBy, timestamps) - source of truth for access control |
-| Project Members (relationships) | D1 (SQLite)            | Access control (who can access which projects) |
-| Studies, Checklists, Answers | Durable Objects (Yjs Document) | All project content - real-time sync, offline collaboration |
-| Project Metadata (synced)    | Durable Objects (Yjs Document) | Synced copy from D1 for real-time access |
-| Project Members (synced)     | Durable Objects (Yjs Document) | Synced copy from D1 for real-time access |
-| PDFs                         | R2                         | Large binary files                  |
+| Entity                          | Storage                        | Reason                                                                                                 |
+| ------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Users                           | D1 (SQLite)                    | User accounts, authentication                                                                          |
+| Projects (metadata)             | D1 (SQLite)                    | Basic project info (id, name, description, createdBy, timestamps) - source of truth for access control |
+| Project Members (relationships) | D1 (SQLite)                    | Access control (who can access which projects)                                                         |
+| Studies, Checklists, Answers    | Durable Objects (Yjs Document) | All project content - real-time sync, offline collaboration                                            |
+| Project Metadata (synced)       | Durable Objects (Yjs Document) | Synced copy from D1 for real-time access                                                               |
+| Project Members (synced)        | Durable Objects (Yjs Document) | Synced copy from D1 for real-time access                                                               |
+| PDFs                            | R2                             | Large binary files                                                                                     |
 
 **Architecture Notes**:
+
 - **D1** stores project metadata (name, description, etc.) and membership relationships. This is the source of truth for authorization and access control.
 - **Durable Objects** store the actual project content (studies, checklists, answers) in a Yjs Document, plus synced copies of metadata and members for real-time collaborative access.
 - When a project is created, it's written to D1 first, then metadata is synced to the Durable Object.

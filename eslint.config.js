@@ -30,6 +30,7 @@ export default [
 
       globals: {
         // Browser globals
+        performance: 'readonly',
         ReadableStream: 'readonly',
         HTMLDivElement: 'readonly',
         HTMLInputElement: 'readonly',

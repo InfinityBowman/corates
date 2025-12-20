@@ -31,11 +31,11 @@ graph TB
 
 ## Package Details
 
-| Package   | Purpose                             | Tech                     |
-| --------- | ----------------------------------- | ------------------------ |
-| `web`     | Main SolidJS application            | SolidJS, Vite, Tailwind  |
-| `workers` | Backend API and real-time sync      | Hono, Cloudflare Workers |
-| `landing` | Marketing site (includes web app)   | SolidStart               |
-| `ui`      | Shared component library            | SolidJS, Zag.js          |
-| `shared`  | Shared error definitions and utilities | TypeScript             |
-| `mcp`     | Development tooling (docs, linting) | Node.js                  |
+| Package   | Purpose                                | Tech                     |
+| --------- | -------------------------------------- | ------------------------ |
+| `web`     | Main SolidJS application               | SolidJS, Vite, Tailwind  |
+| `workers` | Backend API and real-time sync         | Hono, Cloudflare Workers |
+| `landing` | Marketing site (includes web app)      | SolidStart               |
+| `ui`      | Shared component library               | SolidJS, Zag.js          |
+| `shared`  | Shared error definitions and utilities | TypeScript               |
+| `mcp`     | Development tooling (docs, linting)    | Node.js                  |
