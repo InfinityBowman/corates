@@ -45,11 +45,13 @@ pnpm db:generate
 ```
 
 This runs `drizzle-kit generate` which:
+
 - Reads the Drizzle schema from `src/db/schema.js`
 - Compares it with existing migrations
 - Generates new migration SQL files in `migrations/`
 
 **Note:** Currently, the project uses a single consolidated migration file (`0001_init.sql`). When making schema changes, you can either:
+
 1. Manually edit `migrations/0001_init.sql` to match the schema
 2. Use `drizzle-kit generate` and merge the generated SQL into `0001_init.sql`
 
@@ -60,6 +62,7 @@ pnpm db:generate:test
 ```
 
 This runs `scripts/generate-test-sql.mjs` which:
+
 - Reads `migrations/0001_init.sql`
 - Generates `src/__tests__/migration-sql.js` with the SQL as an exported constant
 - Used by test helpers to reset the database schema in tests
@@ -85,14 +88,17 @@ export const myTable = sqliteTable('my_table', {
 You have two options:
 
 **Option A: Manual Update (Current Approach)**
+
 - Edit `migrations/0001_init.sql` directly
 - Add/update CREATE TABLE statements, indexes, etc.
 - Keep it in sync with the Drizzle schema
 
 **Option B: Use Drizzle Kit (Future)**
+
 ```bash
 pnpm db:generate
 ```
+
 - This generates migration files in `migrations/` directory
 - Review and apply the generated SQL
 - For this project, you may need to merge into `0001_init.sql`
@@ -110,11 +116,13 @@ This ensures test helpers use the latest schema.
 ### Step 4: Apply Migration to Database
 
 **Local development:**
+
 ```bash
 pnpm db:migrate
 ```
 
 **Production:**
+
 ```bash
 pnpm db:migrate:prod
 ```
@@ -126,6 +134,7 @@ Test seed functions use Drizzle ORM and Zod validation:
 ### Seed Functions
 
 All seed functions (`seedUser`, `seedProject`, `seedProjectMember`, `seedSession`, `seedSubscription`) now:
+
 - Use Drizzle ORM `insert()` operations (no raw SQL)
 - Validate inputs with Zod schemas (`src/__tests__/seed-schemas.js`)
 - Automatically convert timestamps and handle type transformations
@@ -159,6 +168,7 @@ await seedProject({
 ### Validation
 
 All seed function parameters are validated using Zod schemas:
+
 - Required fields are enforced
 - Email format is validated
 - Enums (roles, tiers, statuses) are validated
@@ -170,6 +180,7 @@ All seed function parameters are validated using Zod schemas:
 ### Drizzle Kit Config
 
 `drizzle.config.ts`:
+
 ```typescript
 export default defineConfig({
   dialect: 'sqlite',
@@ -196,6 +207,7 @@ export default defineConfig({
 ### Test SQL is out of sync
 
 If tests fail with schema errors:
+
 ```bash
 pnpm db:generate:test
 ```
@@ -209,6 +221,7 @@ pnpm db:generate:test
 ### Seed function validation errors
 
 Check the Zod schema in `src/__tests__/seed-schemas.js`:
+
 - Required fields must be provided
 - Enums must match valid values
 - Timestamps can be Date objects or Unix timestamps (seconds)
