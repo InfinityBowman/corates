@@ -136,6 +136,7 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
 
   /**
    * Delete a PDF from a study (uses active project)
+   * Ensures cleanup from R2, IndexedDB, and Y.js with proper error handling
    */
   async function deletePdfFromStudy(studyId, pdf) {
     const projectId = getActiveProjectId();
@@ -146,12 +147,44 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
       throw new Error('Not connected to project');
     }
 
+    let r2Deleted = false;
+
     try {
-      await deletePdf(projectId, studyId, pdf.fileName);
-      ops.removePdfFromStudy(studyId, pdf.id);
-      removeCachedPdf(projectId, studyId, pdf.fileName).catch(err =>
-        console.warn('Failed to remove PDF from cache:', err),
-      );
+      // Step 1: Delete from R2 storage first
+      try {
+        await deletePdf(projectId, studyId, pdf.fileName);
+        r2Deleted = true;
+      } catch (r2Err) {
+        console.error('Failed to delete PDF from R2:', r2Err);
+        // Still attempt IndexedDB cleanup even if R2 deletion fails
+      }
+
+      // Step 2: Remove from Y.js only if R2 deletion succeeded
+      // This prevents inconsistencies where PDF exists in R2 but not in Y.js
+      if (r2Deleted) {
+        try {
+          ops.removePdfFromStudy(studyId, pdf.id);
+        } catch (yjsErr) {
+          console.error('Failed to remove PDF from Y.js:', yjsErr);
+          // R2 deletion succeeded but Y.js removal failed - log warning
+          // The PDF will remain in Y.js but is deleted from R2
+          throw new Error('PDF deleted from R2 but failed to remove from study');
+        }
+      }
+
+      // Step 3: Always attempt IndexedDB cleanup, even if previous steps failed
+      // This ensures local cache doesn't accumulate stale data
+      try {
+        await removeCachedPdf(projectId, studyId, pdf.fileName);
+      } catch (cacheErr) {
+        console.warn('Failed to remove PDF from IndexedDB cache:', cacheErr);
+        // Don't throw - cache cleanup failure shouldn't block the operation
+      }
+
+      // If R2 deletion failed, throw to indicate the operation didn't fully succeed
+      if (!r2Deleted) {
+        throw new Error('Failed to delete PDF from R2 storage');
+      }
     } catch (err) {
       console.error('Error deleting PDF:', err);
       throw err;
