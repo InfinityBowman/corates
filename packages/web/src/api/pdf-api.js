@@ -40,25 +40,25 @@ export async function fetchPdfViaProxy(url) {
 export async function uploadPdf(projectId, studyId, file, fileName = null) {
   const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs`;
 
-  let body;
-  let headers = {};
+  // Always use FormData for consistency and better browser streaming support
+  // This works for both File objects and ArrayBuffers (by converting ArrayBuffer to Blob)
+  const formData = new FormData();
 
   if (file instanceof File) {
-    const formData = new FormData();
     formData.append('file', file);
-    body = formData;
   } else {
-    // ArrayBuffer
-    body = file;
-    headers['Content-Type'] = 'application/pdf';
-    headers['X-File-Name'] = fileName || 'document.pdf';
+    // Convert ArrayBuffer to Blob so we can use FormData
+    const blob = new Blob([file], { type: 'application/pdf' });
+    const fileObj = new File([blob], fileName || 'document.pdf', { type: 'application/pdf' });
+    formData.append('file', fileObj);
   }
 
+  // Don't set Content-Type - browser will set it automatically with boundary for multipart/form-data
+  // Don't set Content-Length - browser will calculate it automatically for FormData
   const response = await fetch(url, {
     method: 'POST',
     credentials: 'include',
-    headers,
-    body,
+    body: formData,
   });
 
   if (!response.ok) {
