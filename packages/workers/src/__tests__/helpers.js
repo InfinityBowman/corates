@@ -3,175 +3,16 @@
  */
 
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-
-// Migration SQL content - should be kept in sync with packages/workers/migrations/0001_init.sql
-// This is embedded here because Cloudflare Workers test environment doesn't support
-// reading files from the local file system at runtime
-const MIGRATION_SQL = `-- Consolidated Corates Database Schema
--- Run: wrangler d1 migrations apply corates-db --local
-
--- Drop existing tables if they exist (for clean migration)
-DROP TABLE IF EXISTS subscriptions;
-DROP TABLE IF EXISTS mediaFiles;
-DROP TABLE IF EXISTS project_members;
-DROP TABLE IF EXISTS projects;
-DROP TABLE IF EXISTS email_verification_tokens;
-DROP TABLE IF EXISTS password_reset_tokens;
-DROP TABLE IF EXISTS auth_accounts;
-DROP TABLE IF EXISTS auth_sessions;
-DROP TABLE IF EXISTS verification;
-DROP TABLE IF EXISTS account;
-DROP TABLE IF EXISTS session;
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS user;
-DROP TABLE IF EXISTS twoFactor;
-
--- Better Auth user table
-CREATE TABLE user (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  email TEXT NOT NULL UNIQUE,
-  emailVerified INTEGER DEFAULT 0,
-  image TEXT,
-  createdAt INTEGER DEFAULT (unixepoch()),
-  updatedAt INTEGER DEFAULT (unixepoch()),
-  username TEXT UNIQUE,
-  displayName TEXT,
-  avatarUrl TEXT,
-  role TEXT, -- Better Auth admin/plugin role (e.g. 'user', 'admin')
-  persona TEXT, -- optional: researcher, student, librarian, other
-  profileCompletedAt INTEGER, -- unix timestamp (seconds)
-  twoFactorEnabled INTEGER DEFAULT 0,
-  -- Admin plugin fields
-  banned INTEGER DEFAULT 0,
-  banReason TEXT,
-  banExpires INTEGER
-);
-
--- Better Auth session table
-CREATE TABLE session (
-  id TEXT PRIMARY KEY,
-  expiresAt INTEGER NOT NULL,
-  token TEXT NOT NULL UNIQUE,
-  createdAt INTEGER DEFAULT (unixepoch()),
-  updatedAt INTEGER DEFAULT (unixepoch()),
-  ipAddress TEXT,
-  userAgent TEXT,
-  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-  impersonatedBy TEXT REFERENCES user(id) ON DELETE SET NULL
-);
-
--- Better Auth account table (for OAuth and password)
-CREATE TABLE account (
-  id TEXT PRIMARY KEY,
-  accountId TEXT NOT NULL,
-  providerId TEXT NOT NULL,
-  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-  accessToken TEXT,
-  refreshToken TEXT,
-  idToken TEXT,
-  accessTokenExpiresAt INTEGER,
-  refreshTokenExpiresAt INTEGER,
-  scope TEXT,
-  password TEXT, -- For email/password auth
-  createdAt INTEGER DEFAULT (unixepoch()),
-  updatedAt INTEGER DEFAULT (unixepoch()),
-  unlinkedAt INTEGER DEFAULT NULL -- For soft-delete grace period on unlink
-);
-
--- Better Auth verification table
-CREATE TABLE verification (
-  id TEXT PRIMARY KEY,
-  identifier TEXT NOT NULL,
-  value TEXT NOT NULL,
-  expiresAt INTEGER NOT NULL,
-  createdAt INTEGER DEFAULT (unixepoch()),
-  updatedAt INTEGER DEFAULT (unixepoch())
-);
-
--- Better Auth two-factor table
-CREATE TABLE twoFactor (
-  id TEXT PRIMARY KEY,
-  secret TEXT NOT NULL,
-  backupCodes TEXT NOT NULL,
-  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-  createdAt INTEGER DEFAULT (unixepoch()),
-  updatedAt INTEGER DEFAULT (unixepoch())
-);
-
--- Projects table (for user's research projects)
-CREATE TABLE projects (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  description TEXT,
-  createdBy TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-  createdAt INTEGER DEFAULT (unixepoch()),
-  updatedAt INTEGER DEFAULT (unixepoch())
-);
-
--- Project membership table (which users have access to which projects)
-CREATE TABLE project_members (
-  id TEXT PRIMARY KEY,
-  projectId TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-  role TEXT DEFAULT 'member', -- owner, collaborator, member, viewer
-  joinedAt INTEGER DEFAULT (unixepoch()),
-
-  -- Ensure unique user-project combinations
-  UNIQUE(projectId, userId)
-);
-
--- Subscriptions table (Stripe billing)
-CREATE TABLE subscriptions (
-  id TEXT PRIMARY KEY,
-  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
-  stripeCustomerId TEXT UNIQUE,
-  stripeSubscriptionId TEXT UNIQUE,
-  tier TEXT NOT NULL DEFAULT 'free', -- 'free', 'pro', 'team', 'enterprise'
-  status TEXT NOT NULL DEFAULT 'active', -- 'active', 'canceled', 'past_due', 'trialing', 'incomplete'
-  currentPeriodStart INTEGER,
-  currentPeriodEnd INTEGER,
-  cancelAtPeriodEnd INTEGER DEFAULT 0,
-  createdAt INTEGER DEFAULT (unixepoch()),
-  updatedAt INTEGER DEFAULT (unixepoch()),
-
-  UNIQUE(userId)
-);
-
--- Media files table (for uploaded files stored in R2)
-CREATE TABLE mediaFiles (
-  id TEXT PRIMARY KEY,
-  filename TEXT NOT NULL,
-  originalName TEXT,
-  fileType TEXT,
-  fileSize INTEGER,
-  uploadedBy TEXT REFERENCES user(id),
-  bucketKey TEXT NOT NULL,
-  createdAt INTEGER DEFAULT (unixepoch())
-);
-
--- Create indexes for better performance
-
--- Auth indexes
-CREATE INDEX idx_session_userId ON session(userId);
-CREATE INDEX idx_session_token ON session(token);
-CREATE INDEX idx_account_userId ON account(userId);
-CREATE INDEX idx_account_providerId ON account(providerId);
-CREATE INDEX idx_verification_identifier ON verification(identifier);
-
--- Two-factor indexes
-CREATE INDEX idx_twoFactor_userId ON twoFactor(userId);
-
--- Project indexes
-CREATE INDEX idx_projects_createdBy ON projects(createdBy);
-CREATE INDEX idx_projects_createdAt ON projects(createdAt);
-CREATE INDEX idx_project_members_projectId ON project_members(projectId);
-CREATE INDEX idx_project_members_userId ON project_members(userId);
-
--- Subscription indexes
-CREATE INDEX idx_subscriptions_userId ON subscriptions(userId);
-CREATE INDEX idx_subscriptions_stripeCustomerId ON subscriptions(stripeCustomerId);
-CREATE INDEX idx_subscriptions_stripeSubscriptionId ON subscriptions(stripeSubscriptionId);`;
+import { createDb } from '../db/client.js';
+import { user, projects, projectMembers, session, subscriptions } from '../db/schema.js';
+import {
+  seedUserSchema,
+  seedProjectSchema,
+  seedProjectMemberSchema,
+  seedSessionSchema,
+  seedSubscriptionSchema,
+} from './seed-schemas.js';
+import { MIGRATION_SQL } from './migration-sql.js';
 
 /**
  * Parse SQL file into individual statements, handling comments and multi-line statements
@@ -244,122 +85,98 @@ export async function resetTestDatabase() {
 /**
  * Seed a user into the test database
  */
-export async function seedUser({
-  id,
-  name,
-  email,
-  createdAt,
-  updatedAt,
-  role = 'researcher',
-  displayName = null,
-  username = null,
-  banned = 0,
-  banReason = null,
-  banExpires = null,
-  emailVerified = 0,
-}) {
-  await env.DB.prepare(
-    `INSERT INTO user (
-      id, name, email, displayName, username, role,
-      emailVerified, banned, banReason, banExpires, createdAt, updatedAt
-    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)`,
-  )
-    .bind(
-      id,
-      name,
-      email,
-      displayName,
-      username,
-      role,
-      emailVerified,
-      banned,
-      banReason,
-      banExpires,
-      createdAt,
-      updatedAt,
-    )
-    .run();
+export async function seedUser(params) {
+  const validated = seedUserSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(user).values({
+    id: validated.id,
+    name: validated.name,
+    email: validated.email,
+    displayName: validated.displayName,
+    username: validated.username,
+    role: validated.role,
+    emailVerified: validated.emailVerified === 1,
+    banned: validated.banned === 1,
+    banReason: validated.banReason,
+    banExpires: validated.banExpires ? new Date(validated.banExpires * 1000) : null,
+    createdAt: new Date(validated.createdAt * 1000),
+    updatedAt: new Date(validated.updatedAt * 1000),
+  });
 }
 
 /**
  * Seed a project into the test database
  */
-export async function seedProject({
-  id,
-  name,
-  description = null,
-  createdBy,
-  createdAt,
-  updatedAt,
-}) {
-  await env.DB.prepare(
-    `INSERT INTO projects (id, name, description, createdBy, createdAt, updatedAt)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
-  )
-    .bind(id, name, description, createdBy, createdAt, updatedAt)
-    .run();
+export async function seedProject(params) {
+  const validated = seedProjectSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(projects).values({
+    id: validated.id,
+    name: validated.name,
+    description: validated.description,
+    createdBy: validated.createdBy,
+    createdAt: new Date(validated.createdAt * 1000),
+    updatedAt: new Date(validated.updatedAt * 1000),
+  });
 }
 
 /**
  * Seed a project member into the test database
  */
-export async function seedProjectMember({ id, projectId, userId, role = 'member', joinedAt }) {
-  await env.DB.prepare(
-    `INSERT INTO project_members (id, projectId, userId, role, joinedAt)
-     VALUES (?1, ?2, ?3, ?4, ?5)`,
-  )
-    .bind(id, projectId, userId, role, joinedAt)
-    .run();
+export async function seedProjectMember(params) {
+  const validated = seedProjectMemberSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(projectMembers).values({
+    id: validated.id,
+    projectId: validated.projectId,
+    userId: validated.userId,
+    role: validated.role,
+    joinedAt: new Date(validated.joinedAt * 1000),
+  });
 }
 
 /**
  * Seed a session into the test database
  */
-export async function seedSession({ id, token, userId, expiresAt, createdAt, updatedAt }) {
-  await env.DB.prepare(
-    `INSERT INTO session (id, token, userId, expiresAt, createdAt, updatedAt)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
-  )
-    .bind(id, token, userId, expiresAt, createdAt, updatedAt)
-    .run();
+export async function seedSession(params) {
+  const validated = seedSessionSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(session).values({
+    id: validated.id,
+    token: validated.token,
+    userId: validated.userId,
+    expiresAt: new Date(validated.expiresAt * 1000),
+    createdAt: new Date(validated.createdAt * 1000),
+    updatedAt: new Date(validated.updatedAt * 1000),
+  });
 }
 
 /**
  * Seed a subscription into the test database
  */
-export async function seedSubscription({
-  id,
-  userId,
-  tier = 'free',
-  status = 'active',
-  stripeCustomerId = null,
-  stripeSubscriptionId = null,
-  currentPeriodStart = null,
-  currentPeriodEnd = null,
-  cancelAtPeriodEnd = 0,
-  createdAt,
-  updatedAt,
-}) {
-  await env.DB.prepare(
-    `INSERT INTO subscriptions (
-      id, userId, tier, status, stripeCustomerId, stripeSubscriptionId,
-      currentPeriodStart, currentPeriodEnd, cancelAtPeriodEnd, createdAt, updatedAt
-    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)`,
-  )
-    .bind(
-      id,
-      userId,
-      tier,
-      status,
-      stripeCustomerId,
-      stripeSubscriptionId,
-      currentPeriodStart,
-      currentPeriodEnd,
-      cancelAtPeriodEnd,
-      createdAt,
-      updatedAt,
-    )
-    .run();
+export async function seedSubscription(params) {
+  const validated = seedSubscriptionSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(subscriptions).values({
+    id: validated.id,
+    userId: validated.userId,
+    tier: validated.tier,
+    status: validated.status,
+    stripeCustomerId: validated.stripeCustomerId,
+    stripeSubscriptionId: validated.stripeSubscriptionId,
+    currentPeriodStart:
+      validated.currentPeriodStart ? new Date(validated.currentPeriodStart * 1000) : null,
+    currentPeriodEnd:
+      validated.currentPeriodEnd ? new Date(validated.currentPeriodEnd * 1000) : null,
+    cancelAtPeriodEnd: validated.cancelAtPeriodEnd === 1,
+    createdAt: new Date(validated.createdAt * 1000),
+    updatedAt: new Date(validated.updatedAt * 1000),
+  });
 }
 
 /**
