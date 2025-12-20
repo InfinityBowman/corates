@@ -2,7 +2,7 @@
  * Tests for requireAdmin middleware
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { Hono } from 'hono';
 import { requireAdmin, isAdmin } from '../requireAdmin.js';
 

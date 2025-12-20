@@ -313,12 +313,10 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
       joinedAt: nowSec,
     });
 
-    let syncCalled = false;
     const originalFetch = mockProjectDO.get({ toString: () => 'do-project-1' }).fetch;
     mockProjectDO.get({ toString: () => 'do-project-1' }).fetch = async request => {
       const url = new URL(request.url);
       if (url.pathname === '/sync-member') {
-        syncCalled = true;
         const body = await request.json();
         expect(body.action).toBe('update');
         expect(body.member.userId).toBe('user-1');

@@ -188,7 +188,6 @@ function parseSqlStatements(sqlContent) {
 
   for (let i = 0; i < withoutComments.length; i++) {
     const char = withoutComments[i];
-    const nextChar = withoutComments[i + 1];
 
     // Track string boundaries
     if ((char === "'" || char === '"') && (i === 0 || withoutComments[i - 1] !== '\\')) {
