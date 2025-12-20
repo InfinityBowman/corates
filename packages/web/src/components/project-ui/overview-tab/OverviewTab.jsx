@@ -42,6 +42,16 @@ export default function OverviewTab() {
       return completedChecklists.length === 2;
     }).length;
 
+  const completedStudies = () =>
+    studies().filter(s => {
+      const checklists = s.checklists || [];
+      const isSingleReviewer = s.reviewer1 && !s.reviewer2;
+      if (isSingleReviewer) {
+        return checklists.some(c => c.status === 'completed');
+      }
+      return checklists.some(c => c.isReconciled && c.status === 'completed');
+    }).length;
+
   // Handlers (use active project - no projectId needed)
   const handleUpdateStudy = (studyId, updates) => {
     projectActionsStore.study.update(studyId, updates);
@@ -90,13 +100,17 @@ export default function OverviewTab() {
           <p class='text-2xl font-bold text-gray-900'>{studies().length}</p>
           <p class='text-sm text-gray-500'>Total Studies</p>
         </div>
-        <div class='rounded-lg bg-blue-50 p-4 text-center'>
-          <p class='text-2xl font-bold text-blue-900'>{inProgressStudies()}</p>
-          <p class='text-sm text-blue-600'>In Progress</p>
+        <div class='rounded-lg bg-amber-50 p-4 text-center'>
+          <p class='text-2xl font-bold text-amber-900'>{inProgressStudies()}</p>
+          <p class='text-sm text-amber-600'>In Progress</p>
         </div>
         <div class='rounded-lg bg-green-50 p-4 text-center'>
           <p class='text-2xl font-bold text-green-900'>{readyToReconcile()}</p>
           <p class='text-sm text-green-600'>Ready to Reconcile</p>
+        </div>
+        <div class='rounded-lg bg-blue-50 p-4 text-center'>
+          <p class='text-2xl font-bold text-blue-900'>{completedStudies()}</p>
+          <p class='text-sm text-blue-500'>Completed</p>
         </div>
       </div>
 
@@ -188,7 +202,7 @@ export default function OverviewTab() {
 
       {/* Charts Section - Full width */}
       <div>
-        <h3 class='mb-4 text-lg font-semibold text-gray-900'>Quality Assessment Charts</h3>
+        <h3 class='mb-4 text-lg font-semibold text-gray-900'>Quality Assessment Figures</h3>
         <ChartSection studies={studies} members={members} getChecklistData={getChecklistData} />
       </div>
       <AddMemberModal

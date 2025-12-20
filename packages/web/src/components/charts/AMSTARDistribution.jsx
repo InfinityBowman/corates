@@ -80,10 +80,10 @@ export default function AMSTARDistribution(props) {
   };
 
   const colorMapGreyscale = {
-    yes: '#1f2937',
-    'partial yes': '#6b7280',
-    no: '#d1d5db',
-    'no ma': '#f3f4f6',
+    yes: '#1b1b1b',
+    'partial yes': '#484848',
+    no: '#727272',
+    'no ma': '#a2a2a2',
   };
 
   const colorMap = () => (greyscale() ? colorMapGreyscale : colorMapDefault);

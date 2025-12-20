@@ -9,6 +9,7 @@ import { createSignal, createMemo, Show, For } from 'solid-js';
 import { FaBrandsGoogleDrive, FaSolidPlus } from 'solid-icons/fa';
 import { showToast } from '@corates/ui';
 import PdfListItem from '@/components/checklist-ui/pdf/PdfListItem.jsx';
+import EditPdfMetadataModal from '@/components/project-ui/all-studies-tab/EditPdfMetadataModal.jsx';
 import projectActionsStore from '@/stores/projectActionsStore';
 
 export default function StudyPdfSection(props) {
@@ -17,6 +18,8 @@ export default function StudyPdfSection(props) {
   // props.readOnly: boolean
 
   const [uploading, setUploading] = createSignal(false);
+  const [editingPdf, setEditingPdf] = createSignal(null);
+  const [metadataModalOpen, setMetadataModalOpen] = createSignal(false);
   let fileInputRef;
 
   const study = () => props.study;
@@ -78,8 +81,12 @@ export default function StudyPdfSection(props) {
   };
 
   const handleEditMetadata = pdf => {
-    // TODO: Open metadata edit modal - for now just log
-    console.log('Edit metadata for PDF:', pdf.id);
+    setEditingPdf(pdf);
+    setMetadataModalOpen(true);
+  };
+
+  const handleSaveMetadata = async (studyId, pdfId, metadata) => {
+    projectActionsStore.pdf.updateMetadata(studyId, pdfId, metadata);
   };
 
   return (
@@ -167,6 +174,15 @@ export default function StudyPdfSection(props) {
           </div>
         </Show>
       </div>
+
+      {/* Edit Metadata Modal */}
+      <EditPdfMetadataModal
+        open={metadataModalOpen()}
+        onOpenChange={setMetadataModalOpen}
+        pdf={editingPdf()}
+        studyId={study().id}
+        onSave={handleSaveMetadata}
+      />
     </div>
   );
 }

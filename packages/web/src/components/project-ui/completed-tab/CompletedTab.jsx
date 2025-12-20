@@ -27,7 +27,7 @@ export default function CompletedTab() {
       }
 
       // Dual reviewer: only show when reconciled
-      return checklists.some(c => c.isReconciled);
+      return checklists.some(c => c.isReconciled && c.status === 'completed');
     });
   });
 
