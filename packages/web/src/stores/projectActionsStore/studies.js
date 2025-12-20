@@ -182,7 +182,8 @@ async function uploadAndAttachPdf(ops, pdfData, pdfFileName, studyId, projectId,
       // Map study metadata fields to PDF metadata fields
       if (metadataUpdates.originalTitle) pdfMetadata.title = metadataUpdates.originalTitle;
       if (metadataUpdates.firstAuthor) pdfMetadata.firstAuthor = metadataUpdates.firstAuthor;
-      if (metadataUpdates.publicationYear) pdfMetadata.publicationYear = metadataUpdates.publicationYear;
+      if (metadataUpdates.publicationYear)
+        pdfMetadata.publicationYear = metadataUpdates.publicationYear;
       if (metadataUpdates.journal) pdfMetadata.journal = metadataUpdates.journal;
       if (metadataUpdates.doi) pdfMetadata.doi = metadataUpdates.doi;
     } catch (extractErr) {
