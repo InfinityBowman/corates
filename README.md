@@ -1,10 +1,12 @@
 # CoRATES
 
-**Collaborative Research Appraisal Tool for Evidence Synthesis**
+### Collaborative Research Appraisal Tool for Evidence Synthesis
 
 CoRATES is a web application designed to streamline the entire quality and risk-of-bias appraisal process with intuitive workflows, real-time collaboration, and automation, creating greater transparency and efficiency at every step. Built for researchers conducting evidence synthesis, it enables real-time collaboration, offline support, and PDF annotation.
 
-![Home Page](./docs/assets/marketing.png)
+<p align="center">
+  <img src="./docs/assets/marketing.png" alt="Home Page" width="800" />
+</p>
 
 ## Getting Started
 

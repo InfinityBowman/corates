@@ -5,10 +5,11 @@
 - [Git](https://git-scm.com/downloads)
 - [Node.js](https://nodejs.org/en/download) v24.0.0 or higher
 - [pnpm](https://pnpm.io/installation) v10.0.0 or higher
-  ```sh
-  # Recommended pnpm install if you have node
-  npm install -g pnpm
-  ```
+
+```sh
+# Recommended pnpm install if you have node
+npm install -g pnpm
+```
 
 ## Project Structure
 
@@ -20,6 +21,7 @@ This is a pnpm monorepo with the following packages:
 | `packages/workers` | Cloudflare Workers backend (Hono)      |
 | `packages/landing` | Landing/marketing site (SolidJS Start) |
 | `packages/ui`      | Shared UI component library (Zag.js)   |
+| `packages/shared`  | Shared error definitions and utilities |
 | `packages/mcp`     | MCP server for AI agent integration    |
 
 ## Quick Start
@@ -74,7 +76,7 @@ pnpm lint:fix    # Auto-fix linting issues
 pnpm format      # Format code with Prettier
 ```
 
-A GitHub Action automatically runs Prettier on non-main branches and commits any formatting changes.  
+A GitHub Action automatically runs Prettier on non-main branches and commits any formatting changes.
 This means you may need to pull any applied formatting changes after you push if you did not format beforehand.
 
 ### Testing
@@ -115,9 +117,14 @@ This project includes a custom MCP server for AI agent context:
 pnpm run initialize-mcp
 
 # In VS Code:
-# 1. Press Cmd+Shift+P
+# 1. Press Cmd+Shift+P or Ctrl+Shift+P
 # 2. Type "MCP: List Servers"
 # 3. Find 'corates' and start it
+
+# In Cursor:
+# 1. Press Cmd+Shift+P or Ctrl+Shift+P
+# 2. Type "Open MCP Settings"
+# 3. Find 'corates' and start it if it has not been found and started already
 ```
 
 ## Useful Commands
@@ -139,7 +146,7 @@ pnpm run initialize-mcp
 ## Code Style
 
 - Follow existing patterns in the codebase
-- Remove dev console logs before PRs
+- Remove development console logs before PRs
 
 See [style-guide.md](style-guide.md) for detailed conventions.
 
@@ -150,9 +157,19 @@ pnpm run docs
 ```
 
 This serves the architecture documentation at http://localhost:3020.
+Note: these docs are not the Open API docs which are served by the Workers backend.
+
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](.github/CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to support@corates.org.
+
+## Security
+
+If you discover a security vulnerability, please review our [Security Policy](.github/SECURITY.md) and report it responsibly to support@corates.org rather than opening a public issue.
 
 ## Need Help?
 
 - Check existing issues or open a new one
 - Review the architecture docs with `pnpm run docs`
-- You may notice that the package.json file acts like a folder in VS Code, this is configured by the .vscode settings.
+- Review the API docs by running the backend with `pnpm dev:workers`, generating openapi schema with `pnpm openapi` and visiting http://localhost:8787/docs
+- You may notice that the package.json file acts like a folder in your IDE, this is configured by the .vscode settings.

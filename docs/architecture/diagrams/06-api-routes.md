@@ -8,12 +8,18 @@ flowchart LR
         direction TB
         auth["/auth/*<br/>BetterAuth"]
         projects["/projects/*"]
-        members["/members/*"]
+        members["/projects/:id/members"]
         users["/users/*"]
-        pdfs["/pdfs/*"]
+        pdfs["/projects/:id/studies/:id/pdfs"]
         billing["/billing/*"]
         admin["/admin/*"]
-        avatars["/avatars/*"]
+        avatars["/users/avatar"]
+        email["/email"]
+        contact["/contact"]
+        googledrive["/google-drive"]
+        pdfproxy["/pdf-proxy"]
+        accounts["/accounts/merge"]
+        db["/db"]
     end
 
     subgraph Middleware
@@ -46,23 +52,72 @@ flowchart LR
 
 Handled by BetterAuth. Includes signin, signup, session management.
 
-### Projects (`/projects/*`)
+### Projects (`/api/projects/*`)
 
-- `GET /projects` - List user's projects
-- `POST /projects` - Create new project
-- `GET /projects/:id` - Get project details
-- `DELETE /projects/:id` - Delete project
+- `GET /api/projects` - List user's projects
+- `POST /api/projects` - Create new project
+- `GET /api/projects/:id` - Get project details
+- `DELETE /api/projects/:id` - Delete project
 
-### PDFs (`/pdfs/*`)
+### Project Members (`/api/projects/:projectId/members`)
 
-- `POST /pdfs/upload` - Upload PDF to R2
-- `GET /pdfs/:key` - Download PDF from R2
-- `DELETE /pdfs/:key` - Remove PDF
+- `GET /api/projects/:projectId/members` - List project members
+- `POST /api/projects/:projectId/members` - Add member to project
+- `PATCH /api/projects/:projectId/members/:userId` - Update member role
+- `DELETE /api/projects/:projectId/members/:userId` - Remove member
 
-### Billing (`/billing/*`)
+### PDFs (`/api/projects/:projectId/studies/:studyId/pdfs`)
 
-Stripe integration for subscriptions and payments.
+- `POST /api/projects/:projectId/studies/:studyId/pdfs` - Upload PDF to R2
+- `GET /api/projects/:projectId/studies/:studyId/pdfs/:key` - Download PDF from R2
+- `DELETE /api/projects/:projectId/studies/:studyId/pdfs/:key` - Remove PDF
 
-### Admin (`/admin/*`)
+### PDF Proxy (`/api/pdf-proxy`)
+
+- `POST /api/pdf-proxy` - Proxy external PDF URLs to avoid CORS issues
+
+### Users (`/api/users/*`)
+
+- `GET /api/users/search` - Search users
+- `GET /api/users/avatar` - Get user avatar
+- `POST /api/users/avatar` - Upload user avatar
+
+### Account Merge (`/api/accounts/merge`)
+
+- `POST /api/accounts/merge` - Merge two user accounts
+
+### Billing (`/api/billing/*`)
+
+Stripe integration for subscriptions and payments:
+- `GET /api/billing/subscription` - Get user subscription
+- `POST /api/billing/checkout` - Create Stripe checkout session
+- `POST /api/billing/portal` - Create Stripe customer portal session
+- `POST /api/billing/webhooks` - Stripe webhook handler
+
+### Admin (`/api/admin/*`)
 
 Admin-only endpoints for user management and system stats.
+
+### Email (`/api/email`)
+
+Email sending endpoints for notifications and transactional emails.
+
+### Contact (`/api/contact`)
+
+Public contact form submission endpoint.
+
+### Google Drive (`/api/google-drive`)
+
+Google Drive integration endpoints for importing documents.
+
+### Database (`/api/db/*`)
+
+Development/diagnostic endpoints:
+- `GET /api/db/users` - List users (development only)
+
+### Durable Object Routes
+
+These routes connect to Durable Objects directly:
+
+- `/api/project/:projectId` - ProjectDoc WebSocket connection for Yjs sync
+- `/api/sessions/:sessionId` - UserSession WebSocket connection

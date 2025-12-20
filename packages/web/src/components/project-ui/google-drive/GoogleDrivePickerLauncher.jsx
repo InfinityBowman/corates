@@ -32,6 +32,8 @@ export default function GoogleDrivePickerLauncher(props) {
   const [loading, setLoading] = createSignal(true);
   const [connected, setConnected] = createSignal(null);
   const [error, setError] = createSignal(null);
+  // eslint-disable-next-line solid/reactivity
+  let studyId = props.studyId;
 
   const pickerConfigured = () => !!GOOGLE_PICKER_API_KEY;
 
@@ -135,7 +137,8 @@ export default function GoogleDrivePickerLauncher(props) {
 
       const picked = await openPicker({ multiselect: !!props.multiselect });
       if (!picked || picked.length === 0) return;
-      await props.onPick?.(picked);
+      console.log('picked', picked, studyId);
+      await props.onPick?.(picked, studyId);
     } catch {
       // primitive sets error
     }

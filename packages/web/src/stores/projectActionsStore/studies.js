@@ -176,6 +176,21 @@ async function uploadAndAttachPdf(ops, pdfData, pdfFileName, studyId, projectId,
       console.warn('Failed to cache PDF:', err),
     );
 
+    // Extract PDF metadata (title, DOI, and fetch DOI metadata if available)
+    let pdfMetadata = {};
+    try {
+      const metadataUpdates = await extractPdfMetadata(pdfData, null, null);
+      // Map study metadata fields to PDF metadata fields
+      if (metadataUpdates.originalTitle) pdfMetadata.title = metadataUpdates.originalTitle;
+      if (metadataUpdates.firstAuthor) pdfMetadata.firstAuthor = metadataUpdates.firstAuthor;
+      if (metadataUpdates.publicationYear)
+        pdfMetadata.publicationYear = metadataUpdates.publicationYear;
+      if (metadataUpdates.journal) pdfMetadata.journal = metadataUpdates.journal;
+      if (metadataUpdates.doi) pdfMetadata.doi = metadataUpdates.doi;
+    } catch (extractErr) {
+      console.warn('Failed to extract PDF metadata:', extractErr);
+    }
+
     await addPdfMetadataToStudy(
       ops,
       studyId,
@@ -185,6 +200,12 @@ async function uploadAndAttachPdf(ops, pdfData, pdfFileName, studyId, projectId,
         size: result.size,
         uploadedBy: userId,
         uploadedAt: Date.now(),
+        // Pass extracted citation metadata
+        title: pdfMetadata.title || null,
+        firstAuthor: pdfMetadata.firstAuthor || null,
+        publicationYear: pdfMetadata.publicationYear || null,
+        journal: pdfMetadata.journal || null,
+        doi: pdfMetadata.doi || null,
       },
       projectId,
     );

@@ -9,6 +9,7 @@ graph TB
         web["web<br/>(SolidJS App)"]
         workers["workers<br/>(Cloudflare Workers API)"]
         ui["ui<br/>(Shared Components)"]
+        shared["shared<br/>(Error Definitions)"]
         mcp["mcp<br/>(Dev Tooling)"]
     end
 
@@ -21,6 +22,8 @@ graph TB
     web -->|"copied into"| landing
     web -->|"API calls"| workers
     ui -->|"shared components"| web
+    shared -->|"error utilities"| web
+    shared -->|"error utilities"| workers
     workers --> D1
     workers --> R2
     workers --> DO
@@ -34,4 +37,5 @@ graph TB
 | `workers` | Backend API and real-time sync      | Hono, Cloudflare Workers |
 | `landing` | Marketing site (includes web app)   | SolidStart               |
 | `ui`      | Shared component library            | SolidJS, Zag.js          |
+| `shared`  | Shared error definitions and utilities | TypeScript             |
 | `mcp`     | Development tooling (docs, linting) | Node.js                  |

@@ -8,6 +8,7 @@ flowchart TD
         signin["/signin"]
         signup["/signup"]
         checkemail["/check-email"]
+        completeprofile["/complete-profile"]
         resetpw["/reset-password"]
     end
 
@@ -25,7 +26,7 @@ flowchart TD
         subgraph Project["Project Routes"]
             projectview["/projects/:projectId"]
             checklistview["/projects/:projectId/studies/:studyId/checklists/:checklistId"]
-            reconcile["/projects/:projectId/studies/:studyId/reconcile/:c1/:c2"]
+            reconcile["/projects/:projectId/studies/:studyId/reconcile/:checklist1Id/:checklist2Id"]
         end
     end
 
@@ -42,12 +43,13 @@ flowchart TD
 
 No authentication required. Redirects to dashboard if already logged in.
 
-| Route             | Component     | Purpose                   |
-| ----------------- | ------------- | ------------------------- |
-| `/signin`         | SignIn        | Email/password login      |
-| `/signup`         | SignUp        | New account creation      |
-| `/check-email`    | CheckEmail    | Email verification prompt |
-| `/reset-password` | ResetPassword | Password recovery         |
+| Route             | Component      | Purpose                   |
+| ----------------- | -------------- | ------------------------- |
+| `/signin`         | SignIn         | Email/password login      |
+| `/signup`         | SignUp         | New account creation      |
+| `/check-email`    | CheckEmail     | Email verification prompt |
+| `/complete-profile` | CompleteProfile | Initial profile setup  |
+| `/reset-password` | ResetPassword  | Password recovery         |
 
 ### Protected Routes (ProtectedGuard)
 
@@ -66,4 +68,12 @@ Requires authentication. Redirects to signin if not logged in.
 | ------------------------------ | --------------------- | ------------------------------ |
 | `/projects/:projectId`         | ProjectView           | Project overview, studies list |
 | `/.../checklists/:checklistId` | ChecklistYjsWrapper   | Checklist assessment           |
-| `/.../reconcile/:c1/:c2`       | ReconciliationWrapper | Compare two checklists         |
+| `/.../reconcile/:checklist1Id/:checklist2Id` | ReconciliationWrapper | Compare two checklists         |
+
+### Local Routes
+
+Routes for local-only checklists (no authentication required, stored in IndexedDB).
+
+| Route                    | Component          | Purpose                      |
+| ------------------------ | ------------------ | ---------------------------- |
+| `/checklist/:checklistId` | LocalChecklistView | Local-only checklist editor  |
