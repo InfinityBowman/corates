@@ -65,21 +65,21 @@ export async function handleFetchError(fetchPromise, options = {}) {
       throw error;
     }
 
-    // Otherwise, it's a transport error (network, fetch failure, etc.)
-    const transportError = normalizeError(error);
-    if (isTransportError(transportError)) {
-      await handleTransportError(transportError, options);
-      throw transportError;
-    }
+    // Normalize the error once
+    const normalizedError = normalizeError(error);
 
-    // Fallback to unknown error
-    const unknownError = normalizeError(error);
-    if (isDomainError(unknownError)) {
-      await handleDomainError(unknownError, options);
+    // Branch based on error type
+    if (isTransportError(normalizedError)) {
+      await handleTransportError(normalizedError, options);
+      throw normalizedError;
+    } else if (isDomainError(normalizedError)) {
+      await handleDomainError(normalizedError, options);
+      throw normalizedError;
     } else {
-      await handleTransportError(unknownError, options);
+      // Fallback: treat as transport error
+      await handleTransportError(normalizedError, options);
+      throw normalizedError;
     }
-    throw unknownError;
   }
 }
 
