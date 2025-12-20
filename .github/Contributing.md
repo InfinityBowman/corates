@@ -117,9 +117,14 @@ This project includes a custom MCP server for AI agent context:
 pnpm run initialize-mcp
 
 # In VS Code:
-# 1. Press Cmd+Shift+P
+# 1. Press Cmd+Shift+P or Ctrl+Shift+P
 # 2. Type "MCP: List Servers"
 # 3. Find 'corates' and start it
+
+# In Cursor:
+# 1. Press Cmd+Shift+P or Ctrl+Shift+P
+# 2. Type "Open MCP Settings"
+# 3. Find 'corates' and start it if it has not been found and started already
 ```
 
 ## Useful Commands
@@ -141,7 +146,7 @@ pnpm run initialize-mcp
 ## Code Style
 
 - Follow existing patterns in the codebase
-- Remove dev console logs before PRs
+- Remove development console logs before PRs
 
 See [style-guide.md](style-guide.md) for detailed conventions.
 
@@ -152,6 +157,7 @@ pnpm run docs
 ```
 
 This serves the architecture documentation at http://localhost:3020.
+Note: these docs are not the Open API docs which are served by the Workers backend.
 
 ## Code of Conduct
 
