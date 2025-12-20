@@ -2,9 +2,9 @@
  * Tests for rate limiting middleware
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Hono } from 'hono';
-import { rateLimit, searchRateLimit, emailRateLimit } from '../rateLimit.js';
+import { rateLimit, searchRateLimit, emailRateLimit, clearRateLimitStore } from '../rateLimit.js';
 
 describe('rateLimit middleware', () => {
   // Use unique IP addresses per test to avoid interference
@@ -12,6 +12,10 @@ describe('rateLimit middleware', () => {
 
   beforeEach(() => {
     testCounter++;
+  });
+
+  afterEach(() => {
+    clearRateLimitStore();
   });
 
   it('should allow requests within limit', async () => {
@@ -187,6 +191,10 @@ describe('searchRateLimit', () => {
     testCounter++;
   });
 
+  afterEach(() => {
+    clearRateLimitStore();
+  });
+
   it('should enforce search rate limit', async () => {
     const app = new Hono();
     app.use('*', searchRateLimit);
@@ -220,6 +228,10 @@ describe('emailRateLimit', () => {
 
   beforeEach(() => {
     testCounter++;
+  });
+
+  afterEach(() => {
+    clearRateLimitStore();
   });
 
   it('should enforce email rate limit', async () => {

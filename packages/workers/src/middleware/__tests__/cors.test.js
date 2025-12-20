@@ -73,14 +73,16 @@ describe('CORS middleware', () => {
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:5173');
   });
 
-  it('should include credentials header', async () => {
+  it('should include credentials header in preflight requests', async () => {
     const app = new Hono();
     app.use('*', createCorsMiddleware({}));
-    app.get('/test', c => c.json({ message: 'success' }));
+    app.post('/test', c => c.json({ message: 'success' }));
 
     const res = await app.request('/test', {
+      method: 'OPTIONS',
       headers: {
         origin: 'http://localhost:5173',
+        'access-control-request-method': 'POST',
       },
     });
 

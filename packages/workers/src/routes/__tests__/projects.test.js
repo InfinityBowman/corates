@@ -12,7 +12,6 @@ import {
   seedProject,
   seedProjectMember,
   json,
-  fetchApp,
 } from '../../__tests__/helpers.js';
 
 // Mock postmark

@@ -122,7 +122,7 @@ describe('Email Routes - POST /api/email/queue', () => {
       EMAIL_QUEUE: {
         idFromName: vi.fn(() => ({ toString: () => 'do-id' })),
         get: vi.fn(() => ({
-          fetch: vi.fn(async request => {
+          fetch: vi.fn(async _request => {
             throw new Error('DO fetch failed');
           }),
         })),

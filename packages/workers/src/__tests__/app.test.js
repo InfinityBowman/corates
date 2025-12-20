@@ -36,7 +36,7 @@ async function fetchApp(path, init = {}) {
     EMAIL_QUEUE: {
       idFromName: vi.fn(() => ({ toString: () => 'do-id' })),
       get: vi.fn(() => ({
-        fetch: vi.fn(async request => {
+        fetch: vi.fn(async _request => {
           return new Response(JSON.stringify({ success: true }), {
             status: 202,
             headers: { 'Content-Type': 'application/json' },

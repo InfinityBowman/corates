@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
+import { env } from 'cloudflare:test';
 import { resetTestDatabase, seedUser, seedSubscription } from '../../../__tests__/helpers.js';
 import { handleWebhook } from '../webhooks.js';
 import { createDb } from '../../../db/client.js';

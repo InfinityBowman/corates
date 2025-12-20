@@ -2,22 +2,9 @@
  * Tests for auth middleware
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { Hono } from 'hono';
 import { requireAuth, getAuth } from '../auth.js';
-
-// Mock Better Auth
-const mockSession = {
-  user: {
-    id: 'user-123',
-    email: 'test@example.com',
-    name: 'Test User',
-  },
-  session: {
-    id: 'session-123',
-    expiresAt: Date.now() + 86400000,
-  },
-};
 
 vi.mock('../../auth/config.js', () => {
   return {
@@ -73,7 +60,9 @@ describe('requireAuth middleware', () => {
 
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Authentication required');
+    expect(body.code).toBe('AUTH_REQUIRED');
+    expect(body.message).toBeDefined();
+    expect(body.statusCode).toBe(401);
   });
 
   it('should set user and session in context', async () => {
@@ -115,7 +104,9 @@ describe('requireAuth middleware', () => {
 
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Authentication required');
+    expect(body.code).toBe('AUTH_REQUIRED');
+    expect(body.message).toBeDefined();
+    expect(body.statusCode).toBe(401);
   });
 });
 

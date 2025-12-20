@@ -22,10 +22,11 @@ export async function createPortalSession(env, user) {
   const subscription = await getSubscriptionByUserId(db, user.id);
 
   if (!subscription?.stripeCustomerId) {
-    const error = createDomainError(USER_ERRORS.NOT_FOUND, {
-      context: 'billing_account',
-      message: 'No billing account found. Please subscribe to a plan first.',
-    });
+    const error = createDomainError(
+      USER_ERRORS.NOT_FOUND,
+      { context: 'billing_account' },
+      'No billing account found. Please subscribe to a plan first.',
+    );
     throw error;
   }
 

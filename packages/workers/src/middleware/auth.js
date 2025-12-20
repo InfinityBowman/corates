@@ -4,6 +4,7 @@
  */
 
 import { createAuth } from '../auth/config.js';
+import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 
 /**
  * Auth middleware that attaches user and session to context
@@ -39,7 +40,8 @@ export async function requireAuth(c, next) {
     });
 
     if (!session?.user) {
-      return c.json({ error: 'Authentication required' }, 401);
+      const error = createDomainError(AUTH_ERRORS.REQUIRED);
+      return c.json(error, error.statusCode);
     }
 
     c.set('user', session.user);
@@ -48,7 +50,8 @@ export async function requireAuth(c, next) {
     await next();
   } catch (error) {
     console.error('Auth verification error:', error);
-    return c.json({ error: 'Authentication required' }, 401);
+    const authError = createDomainError(AUTH_ERRORS.REQUIRED);
+    return c.json(authError, authError.statusCode);
   }
 }
 

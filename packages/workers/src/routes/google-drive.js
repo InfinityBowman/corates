@@ -166,19 +166,22 @@ googleDriveRoutes.get('/picker-token', async c => {
     });
   } catch (error) {
     console.error('Google Drive picker-token error:', error);
-    if (error.message.includes('reconnect') || (error.code && error.code.includes('GOOGLE'))) {
+    if (
+      (typeof error?.message === 'string' && error.message.includes('reconnect')) ||
+      (typeof error?.code === 'string' && error.code.includes('GOOGLE'))
+    ) {
       const authError =
         error.code ? error : (
           createDomainError(AUTH_ERRORS.INVALID, {
             context: 'google_token_expired',
-            originalError: error.message,
+            originalError: typeof error?.message === 'string' ? error.message : String(error),
           })
         );
       return c.json(authError, authError.statusCode);
     }
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'get_google_picker_token',
-      originalError: error.message,
+      originalError: typeof error?.message === 'string' ? error.message : String(error),
     });
     return c.json(systemError, systemError.statusCode);
   }

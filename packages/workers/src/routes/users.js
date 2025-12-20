@@ -230,7 +230,7 @@ userRoutes.post('/sync-profile', async c => {
       .limit(1);
 
     if (!userData) {
-      const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId: targetUserId });
+      const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId: currentUser.id });
       return c.json(error, error.statusCode);
     }
 

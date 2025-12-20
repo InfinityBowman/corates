@@ -5,7 +5,6 @@
  */
 
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { resetTestDatabase, json, fetchApp } from './helpers.js';
 

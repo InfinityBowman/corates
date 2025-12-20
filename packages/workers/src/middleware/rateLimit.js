@@ -159,3 +159,11 @@ export const apiRateLimit = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   keyPrefix: 'api',
 });
+
+/**
+ * Clear the rate limit store (for testing only)
+ * @internal
+ */
+export function clearRateLimitStore() {
+  rateLimitStore.clear();
+}

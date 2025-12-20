@@ -16,6 +16,7 @@ import {
   createValidationError,
   VALIDATION_ERRORS,
   SYSTEM_ERRORS,
+  isDomainError,
 } from '@corates/shared';
 
 const billingRoutes = new Hono();
@@ -195,6 +196,11 @@ billingRoutes.post('/webhook', async c => {
     return c.json(result);
   } catch (error) {
     console.error('Webhook error:', error);
+    // If it's already a domain error, pass it through
+    if (isDomainError(error)) {
+      return c.json(error, error.statusCode);
+    }
+    // Only wrap non-domain/unexpected errors
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'process_webhook',
       originalError: error.message,

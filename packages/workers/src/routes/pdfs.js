@@ -17,6 +17,7 @@ import {
   VALIDATION_ERRORS,
   AUTH_ERRORS,
   SYSTEM_ERRORS,
+  PROJECT_ERRORS,
 } from '@corates/shared';
 
 const pdfRoutes = new Hono();
