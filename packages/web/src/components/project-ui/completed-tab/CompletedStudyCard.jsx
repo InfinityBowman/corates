@@ -23,7 +23,7 @@ export default function CompletedStudyCard(props) {
       return checklists.filter(c => c.status === 'completed');
     }
     // Dual reviewer: show reconciled checklists
-    return checklists.filter(c => c.isReconciled);
+    return checklists.filter(c => c.isReconciled && c.status === 'completed');
   });
 
   return (
