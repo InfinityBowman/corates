@@ -19,6 +19,8 @@ const MAX_HEIGHT = 300;
  * @param {boolean} [props.collapsed] - Start collapsed (default: true)
  * @param {number} [props.maxLength] - Maximum character limit (default: 2000)
  * @param {string} [props.label] - Label for the collapsible section
+ * @param {boolean} [props.inline] - Render without collapsible wrapper (default: false)
+ * @param {string} [props.focusRingColor] - Focus ring color class (default: 'blue-500')
  */
 export default function NoteEditor(props) {
   // Initialize expanded state - default to collapsed unless props.collapsed is false
@@ -78,7 +80,7 @@ export default function NoteEditor(props) {
 
   // Auto-resize textarea as content changes
   createEffect(() => {
-    const isExpanded = expanded();
+    const isExpanded = props.inline ? true : expanded();
     if (textareaRef && isExpanded) {
       // Reset height to auto to get correct scrollHeight
       textareaRef.style.height = 'auto';
@@ -91,44 +93,66 @@ export default function NoteEditor(props) {
   const charCount = () => localValue().length;
   const maxLength = () => props.maxLength ?? 2000;
 
+  // Get focus ring color class
+  const getFocusRingClass = () => {
+    const color = props.focusRingColor || 'blue-500';
+    const colorMap = {
+      'blue-500': 'focus:ring-blue-500',
+      'green-500': 'focus:ring-green-500',
+    };
+    return colorMap[color] || 'focus:ring-blue-500';
+  };
+
+  // Render textarea content (shared between inline and collapsible modes)
+  const textareaContent = (
+    <>
+      <textarea
+        ref={textareaRef}
+        value={localValue()}
+        onInput={handleInput}
+        placeholder={props.placeholder || 'Add a note for this question...'}
+        disabled={props.readOnly || !props.yText}
+        class={`w-full resize-none overflow-hidden rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:outline-none ${getFocusRingClass()} ${props.readOnly ? 'cursor-not-allowed bg-gray-50 text-gray-600' : 'bg-white text-gray-900'} ${!props.yText ? 'cursor-not-allowed bg-gray-100' : ''}`}
+        style={{ 'min-height': '60px' }}
+        maxLength={maxLength()}
+      />
+      <div class='text-2xs mt-1 flex items-center justify-between text-gray-400'>
+        <span>{props.readOnly ? 'Read-only' : ''}</span>
+        <span class={charCount() > maxLength() * 0.9 ? 'text-amber-500' : ''}>
+          {charCount()} / {maxLength()}
+        </span>
+      </div>
+    </>
+  );
+
   return (
-    <div class='mt-3 border-t border-gray-100 pt-2'>
-      <Collapsible
-        open={expanded()}
-        onOpenChange={setExpanded}
-        trigger={api => (
-          <div
-            {...api.getTriggerProps()}
-            class={`flex cursor-pointer items-center gap-1.5 py-1 text-xs select-none ${hasContent() ? 'text-blue-600 hover:text-blue-700' : 'text-gray-500 hover:text-gray-700'} `}
+    <Show
+      when={props.inline}
+      fallback={
+        <div class='mt-3 border-t border-gray-100 pt-2'>
+          <Collapsible
+            open={expanded()}
+            onOpenChange={setExpanded}
+            trigger={api => (
+              <div
+                {...api.getTriggerProps()}
+                class={`flex cursor-pointer items-center gap-1.5 py-1 text-xs select-none ${hasContent() ? 'text-blue-600 hover:text-blue-700' : 'text-gray-500 hover:text-gray-700'} `}
+              >
+                <BiRegularChevronRight
+                  class={`h-4 w-4 shrink-0 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
+                />
+                <BsJournalText class='h-3 w-3 shrink-0' />
+                <span class='font-medium'>{props.label || 'Notes'}</span>
+              </div>
+            )}
           >
-            <BiRegularChevronRight
-              class={`h-4 w-4 shrink-0 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
-            />
-            <BsJournalText class='h-3 w-3 shrink-0' />
-            <span class='font-medium'>{props.label || 'Notes'}</span>
-          </div>
-        )}
-      >
-        <div class='px-0.5 pt-2 pb-0.5'>
-          <textarea
-            ref={textareaRef}
-            value={localValue()}
-            onInput={handleInput}
-            placeholder={props.placeholder || 'Add a note for this question...'}
-            disabled={props.readOnly || !props.yText}
-            class={`w-full resize-none overflow-hidden rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none ${props.readOnly ? 'cursor-not-allowed bg-gray-50 text-gray-600' : 'bg-white text-gray-900'} ${!props.yText ? 'cursor-not-allowed bg-gray-100' : ''} `}
-            style={{ 'min-height': '60px' }}
-            maxLength={maxLength()}
-          />
-          <div class='text-2xs mt-1 flex items-center justify-between text-gray-400'>
-            <span>{props.readOnly ? 'Read-only' : ''}</span>
-            <span class={charCount() > maxLength() * 0.9 ? 'text-amber-500' : ''}>
-              {charCount()} / {maxLength()}
-            </span>
-          </div>
+            <div class='px-0.5 pt-2 pb-0.5'>{textareaContent}</div>
+          </Collapsible>
         </div>
-      </Collapsible>
-    </div>
+      }
+    >
+      <div>{textareaContent}</div>
+    </Show>
   );
 }
 

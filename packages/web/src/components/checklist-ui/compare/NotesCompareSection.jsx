@@ -8,9 +8,9 @@ import { createSignal, createEffect, onCleanup, Show } from 'solid-js';
 import { BiRegularChevronRight } from 'solid-icons/bi';
 import { BsJournalText, BsClipboard2 } from 'solid-icons/bs';
 import { Collapsible } from '@corates/ui';
+import NoteEditor from '@checklist-ui/common/NoteEditor.jsx';
 
 const MAX_LENGTH = 2000;
-const MAX_HEIGHT = 200;
 
 /**
  * @param {Object} props
@@ -24,28 +24,25 @@ const MAX_HEIGHT = 200;
 export default function NotesCompareSection(props) {
   // eslint-disable-next-line solid/reactivity -- intentionally read once for initial state
   const [expanded, setExpanded] = createSignal(!props.collapsed);
-  const [finalNoteText, setFinalNoteText] = createSignal('');
-  let textareaRef;
+  const [hasFinalNote, setHasFinalNote] = createSignal(false);
 
   const hasReviewer1Note = () => (props.reviewer1Note || '').trim().length > 0;
   const hasReviewer2Note = () => (props.reviewer2Note || '').trim().length > 0;
-  const hasAnyNote = () =>
-    hasReviewer1Note() || hasReviewer2Note() || finalNoteText().trim().length > 0;
 
-  // Initialize from Y.Text and set up observer
+  // Track final note content reactively
   createEffect(() => {
     const yText = props.finalNoteYText;
     if (!yText) {
-      setFinalNoteText('');
+      setHasFinalNote(false);
       return;
     }
 
-    // Get initial value
-    setFinalNoteText(yText.toString());
+    // Update initial state
+    setHasFinalNote(yText.toString().trim().length > 0);
 
-    // Observe changes from other users
+    // Observe changes
     const observer = () => {
-      setFinalNoteText(yText.toString());
+      setHasFinalNote(yText.toString().trim().length > 0);
     };
 
     yText.observe(observer);
@@ -55,39 +52,8 @@ export default function NotesCompareSection(props) {
     });
   });
 
-  // Auto-resize textarea
-  createEffect(() => {
-    // Read finalNoteText to track text changes
-    finalNoteText();
-    if (textareaRef && expanded()) {
-      textareaRef.style.height = 'auto';
-      textareaRef.style.height = `${Math.min(textareaRef.scrollHeight, MAX_HEIGHT)}px`;
-    }
-  });
-
-  // Handle input for final note
-  function handleFinalNoteInput(e) {
-    const newValue = e.target.value;
-
-    // Enforce max length
-    if (newValue.length > MAX_LENGTH) {
-      e.target.value = newValue.slice(0, MAX_LENGTH);
-      return;
-    }
-
-    // Resize
-    e.target.style.height = 'auto';
-    e.target.style.height = `${Math.min(e.target.scrollHeight, MAX_HEIGHT)}px`;
-
-    const yText = props.finalNoteYText;
-    if (!yText) return;
-
-    // Update Y.Text
-    yText.doc.transact(() => {
-      yText.delete(0, yText.length);
-      yText.insert(0, newValue);
-    });
-  }
+  const hasAnyNote = () =>
+    hasReviewer1Note() || hasReviewer2Note() || hasFinalNote();
 
   // Copy reviewer note to final note
   function copyToFinal(sourceNote) {
@@ -142,7 +108,7 @@ export default function NotesCompareSection(props) {
                 {[
                   hasReviewer1Note() && 'R1',
                   hasReviewer2Note() && 'R2',
-                  finalNoteText().trim() && 'Final',
+                  hasFinalNote() && 'Final',
                 ]
                   .filter(Boolean)
                   .join(', ')}
@@ -227,20 +193,13 @@ export default function NotesCompareSection(props) {
                 when={props.finalNoteYText}
                 fallback={<p class='text-xs text-gray-400 italic'>Loading...</p>}
               >
-                <textarea
-                  ref={textareaRef}
-                  value={finalNoteText()}
-                  onInput={handleFinalNoteInput}
+                <NoteEditor
+                  yText={props.finalNoteYText}
+                  inline={true}
                   placeholder='Add the final reconciled note...'
-                  class='w-full resize-none overflow-hidden rounded-lg border bg-white px-3 py-2 text-sm text-gray-900 focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none'
-                  style={{ 'min-height': '60px' }}
                   maxLength={MAX_LENGTH}
+                  focusRingColor='green-500'
                 />
-                <div class='text-2xs mt-1 flex justify-end text-gray-400'>
-                  <span class={finalNoteText().length > MAX_LENGTH * 0.9 ? 'text-amber-500' : ''}>
-                    {finalNoteText().length} / {MAX_LENGTH}
-                  </span>
-                </div>
               </Show>
             </div>
           </div>
