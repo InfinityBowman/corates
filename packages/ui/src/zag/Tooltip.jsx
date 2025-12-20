@@ -11,6 +11,23 @@ export function Tooltip(props) {
       placement: props.placement || 'top',
       gutter: 8,
       strategy: 'fixed', // Use fixed positioning to avoid stacking context issues
+      flip: true,
+      // shift: true,
+      boundary: () => {
+        // Get the main navbar element to use as a boundary
+        const navbar = document.querySelector('nav[class*="sticky"]');
+        if (navbar) {
+          const navbarRect = navbar.getBoundingClientRect();
+          const navbarBottom = navbarRect.bottom;
+          return {
+            x: 0,
+            y: navbarBottom,
+            width: window.innerWidth,
+            height: window.innerHeight - navbarBottom,
+          };
+        }
+        return 'viewport';
+      },
     },
     openDelay: props.openDelay ?? 100,
     closeDelay: props.closeDelay ?? 100,
