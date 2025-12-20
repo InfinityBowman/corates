@@ -5,10 +5,11 @@
 - [Git](https://git-scm.com/downloads)
 - [Node.js](https://nodejs.org/en/download) v24.0.0 or higher
 - [pnpm](https://pnpm.io/installation) v10.0.0 or higher
-  ```sh
-  # Recommended pnpm install if you have node
-  npm install -g pnpm
-  ```
+
+```sh
+# Recommended pnpm install if you have node
+npm install -g pnpm
+```
 
 ## Project Structure
 
@@ -20,6 +21,7 @@ This is a pnpm monorepo with the following packages:
 | `packages/workers` | Cloudflare Workers backend (Hono)      |
 | `packages/landing` | Landing/marketing site (SolidJS Start) |
 | `packages/ui`      | Shared UI component library (Zag.js)   |
+| `packages/shared`  | Shared error definitions and utilities |
 | `packages/mcp`     | MCP server for AI agent integration    |
 
 ## Quick Start
@@ -74,7 +76,7 @@ pnpm lint:fix    # Auto-fix linting issues
 pnpm format      # Format code with Prettier
 ```
 
-A GitHub Action automatically runs Prettier on non-main branches and commits any formatting changes.  
+A GitHub Action automatically runs Prettier on non-main branches and commits any formatting changes.
 This means you may need to pull any applied formatting changes after you push if you did not format beforehand.
 
 ### Testing
@@ -151,8 +153,17 @@ pnpm run docs
 
 This serves the architecture documentation at http://localhost:3020.
 
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](.github/CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to support@corates.org.
+
+## Security
+
+If you discover a security vulnerability, please review our [Security Policy](.github/SECURITY.md) and report it responsibly to support@corates.org rather than opening a public issue.
+
 ## Need Help?
 
 - Check existing issues or open a new one
 - Review the architecture docs with `pnpm run docs`
-- You may notice that the package.json file acts like a folder in VS Code, this is configured by the .vscode settings.
+- Review the API docs by running the backend with `pnpm dev:workers`, generating openapi schema with `pnpm openapi` and visiting http://localhost:8787/docs
+- You may notice that the package.json file acts like a folder in your IDE, this is configured by the .vscode settings.
