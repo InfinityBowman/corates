@@ -102,12 +102,20 @@ export default function ProjectView() {
           .then(result => {
             cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(console.warn);
             try {
+              // Extract PDF metadata from pdf.metadata to pass to the PDF object
+              const pdfMetadata = pdf.metadata || {};
               projectActionsStore.pdf.addToStudy(studyId, {
                 key: result.key,
                 fileName: result.fileName,
                 size: result.size,
                 uploadedBy: user()?.id,
                 uploadedAt: Date.now(),
+                // Pass citation metadata from extracted metadata
+                title: pdfMetadata.title || pdf.title || null,
+                firstAuthor: pdfMetadata.firstAuthor || null,
+                publicationYear: pdfMetadata.publicationYear || null,
+                journal: pdfMetadata.journal || null,
+                doi: pdf.doi ?? pdfMetadata.doi ?? null,
               });
             } catch (metaErr) {
               console.error('Failed to add PDF metadata:', metaErr);

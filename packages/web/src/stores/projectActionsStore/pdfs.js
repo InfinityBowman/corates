@@ -4,6 +4,8 @@
 
 import { uploadPdf, downloadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf, removeCachedPdf, getCachedPdf } from '@primitives/pdfCache.js';
+import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
+import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import projectStore from '../projectStore.js';
 import pdfPreviewStore from '../pdfPreviewStore.js';
 
@@ -110,6 +112,38 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
         console.warn('Failed to cache PDF:', err),
       );
 
+      // Extract PDF metadata (title and DOI)
+      let pdfMetadata = {};
+      if (arrayBuffer) {
+        try {
+          const [extractedTitle, extractedDoi] = await Promise.all([
+            extractPdfTitle(arrayBuffer.slice(0)).catch(() => null),
+            extractPdfDoi(arrayBuffer.slice(0)).catch(() => null),
+          ]);
+
+          if (extractedTitle) pdfMetadata.title = extractedTitle;
+          if (extractedDoi) pdfMetadata.doi = extractedDoi;
+
+          // Fetch additional metadata from DOI if available
+          if (extractedDoi) {
+            try {
+              const refData = await fetchFromDOI(extractedDoi);
+              if (refData) {
+                if (refData.firstAuthor) pdfMetadata.firstAuthor = refData.firstAuthor;
+                if (refData.publicationYear) pdfMetadata.publicationYear = refData.publicationYear;
+                if (refData.journal) pdfMetadata.journal = refData.journal;
+                // Use extracted DOI if refData doesn't have one
+                if (!pdfMetadata.doi) pdfMetadata.doi = refData.doi || extractedDoi;
+              }
+            } catch (doiErr) {
+              console.warn('Failed to fetch DOI metadata:', doiErr);
+            }
+          }
+        } catch (extractErr) {
+          console.warn('Failed to extract PDF metadata:', extractErr);
+        }
+      }
+
       const pdfId = ops.addPdfToStudy(
         studyId,
         {
@@ -118,6 +152,12 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
           size: uploadResult.size,
           uploadedBy: userId,
           uploadedAt: Date.now(),
+          // Pass extracted citation metadata
+          title: pdfMetadata.title || null,
+          firstAuthor: pdfMetadata.firstAuthor || null,
+          publicationYear: pdfMetadata.publicationYear || null,
+          journal: pdfMetadata.journal || null,
+          doi: pdfMetadata.doi || null,
         },
         effectiveTag,
       );
