@@ -19,6 +19,16 @@ export const EDIT_ROLES = ['owner', 'collaborator', 'member'];
 export const ADMIN_ROLES = ['owner'];
 
 /**
+ * Valid subscription tiers
+ */
+export const SUBSCRIPTION_TIERS = ['free', 'basic', 'pro', 'team', 'enterprise'];
+
+/**
+ * Valid subscription statuses
+ */
+export const SUBSCRIPTION_STATUSES = ['active', 'canceled', 'past_due', 'trialing', 'incomplete'];
+
+/**
  * Maximum file sizes (in bytes)
  */
 export const FILE_SIZE_LIMITS = {
@@ -97,4 +107,22 @@ export function canEdit(role) {
  */
 export function canManageMembers(role) {
   return ADMIN_ROLES.includes(role);
+}
+
+/**
+ * Check if a subscription tier is valid
+ * @param {string} tier - Tier to validate
+ * @returns {boolean}
+ */
+export function isValidSubscriptionTier(tier) {
+  return SUBSCRIPTION_TIERS.includes(tier);
+}
+
+/**
+ * Check if a subscription status is valid
+ * @param {string} status - Status to validate
+ * @returns {boolean}
+ */
+export function isValidSubscriptionStatus(status) {
+  return SUBSCRIPTION_STATUSES.includes(status);
 }

@@ -33,8 +33,11 @@ export const MIGRATION_SQL = \`${migrationSql.replace(/`/g, '\\`').replace(/\${/
   // Write the generated file
   writeFileSync(OUTPUT_FILE, jsContent, 'utf-8');
 
-  console.log(`✓ Generated test SQL constant: ${OUTPUT_FILE}`);
+  // eslint-disable-next-line no-undef
+  console.log(`Generated test SQL constant: ${OUTPUT_FILE}`);
 } catch (error) {
+  // eslint-disable-next-line no-undef
   console.error('Error generating test SQL constant:', error.message);
+  // eslint-disable-next-line no-undef
   process.exit(1);
 }

@@ -4,27 +4,7 @@
  */
 
 import { z } from 'zod/v4';
-import { PROJECT_ROLES } from '../config/constants.js';
-
-/**
- * Subscription tier enum
- */
-const SUBSCRIPTION_TIERS = ['free', 'basic', 'pro', 'team', 'enterprise'];
-
-/**
- * Subscription status enum
- */
-const SUBSCRIPTION_STATUSES = ['active', 'canceled', 'past_due', 'trialing', 'incomplete'];
-
-/**
- * Helper to convert Date or number (timestamp) to Date
- */
-const dateOrTimestamp = z.union([z.date(), z.number().int()]).transform(val => {
-  if (typeof val === 'number') {
-    return new Date(val * 1000); // Convert Unix timestamp (seconds) to Date
-  }
-  return val;
-});
+import { PROJECT_ROLES, SUBSCRIPTION_TIERS, SUBSCRIPTION_STATUSES } from '../config/constants.js';
 
 /**
  * Helper to convert Date or number (timestamp) to number (Unix timestamp in seconds)

@@ -6,11 +6,11 @@
   "license": "PolyForm-Noncommercial-1.0.0",
   "scripts": {
     "dev": "vinxi dev --port 3010",
-    "dev:prod": "pnpm run build:prod && pnpm --filter @corates/shared build && pnpm --filter @corates/web build && wrangler dev --port 3010",
+    "dev:prod": "pnpm run build:prod && wrangler dev --port 3010",
     "build": "vinxi build --mode production && node scripts/version-sw.js",
     "build:prod": "pnpm run build && pnpm --filter @corates/shared build && pnpm --filter @corates/web build",
     "preview": "npx serve .output/public",
-    "deploy": "pnpm run build:prod && pnpm --filter @corates/shared build && pnpm --filter @corates/web build && wrangler deploy"
+    "deploy": "pnpm run build:prod && wrangler deploy"
   },
   "dependencies": {
     "@solidjs/meta": "^0.29.4",
