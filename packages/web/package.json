@@ -12,7 +12,8 @@
     "deploy": "pnpm run build",
     "test:ui": "vitest --ui --ui.port=51234",
     "test": "vitest run --reporter=verbose",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "analyze": "vite build --mode analyze && source-map-explorer dist/assets/index-*.js --no-border-checks"
   },
   "dependencies": {
     "@corates/shared": "workspace:*",
@@ -36,7 +37,10 @@
     "jsdom": "^27.3.0",
     "prettier": "^3.7.4",
     "puppeteer": "^24.34.0",
+    "rollup-plugin-visualizer": "^6.0.5",
+    "source-map-explorer": "^2.5.3",
     "tailwindcss": "^4.1.18",
+    "terser": "^5.44.1",
     "vite": "^7.3.0",
     "vite-plugin-solid": "^2.11.10",
     "vitest": "^4.0.16"

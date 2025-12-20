@@ -3,7 +3,7 @@ import solidPlugin from 'vite-plugin-solid';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   base: process.env.VITE_BASEPATH || '/',
   resolve: {
     alias: {
@@ -27,6 +27,13 @@ export default defineConfig({
   plugins: [solidPlugin(), tailwindcss()],
   build: {
     target: ['es2020', 'safari14'],
+    minify: mode === 'analyze' ? 'terser' : 'esbuild',
+    sourcemap: mode === 'analyze',
+    terserOptions: {
+      format: {
+        comments: false,
+      },
+    },
   },
   test: {
     environment: 'jsdom',
@@ -34,4 +41,4 @@ export default defineConfig({
     setupFiles: ['./src/__tests__/setup.js'],
     include: ['src/**/*.{test,spec}.{js,jsx}'],
   },
-});
+}));

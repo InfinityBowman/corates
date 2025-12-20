@@ -15,6 +15,7 @@ import {
 } from '@/AMSTAR2/checklist-compare.js';
 import ReconciliationQuestionPage from './ReconciliationQuestionPage.jsx';
 import SummaryView from './SummaryView.jsx';
+import { createChecklist } from '@/AMSTAR2/checklist.js';
 
 export default function ChecklistReconciliation(props) {
   // props.checklist1 - First reviewer's checklist data
@@ -285,7 +286,6 @@ export default function ChecklistReconciliation(props) {
     if (!props.updateChecklistAnswer) return;
 
     // Get default empty structure from createChecklist
-    const { createChecklist } = await import('@/AMSTAR2/checklist.js');
     const defaultChecklist = createChecklist({
       name: 'temp',
       id: 'temp',

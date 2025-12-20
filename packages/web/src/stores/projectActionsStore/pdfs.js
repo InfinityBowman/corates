@@ -159,7 +159,15 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
         // Still attempt IndexedDB cleanup even if R2 deletion fails
       }
 
-      // Step 2: Remove from Y.js only if R2 deletion succeeded
+      // Step 2: Always attempt IndexedDB cleanup, even if previous step failed
+      try {
+        await removeCachedPdf(projectId, studyId, pdf.fileName);
+      } catch (cacheErr) {
+        console.warn('Failed to remove PDF from IndexedDB cache:', cacheErr);
+        // Don't throw - cache cleanup failure shouldn't block the operation
+      }
+
+      // Step 3: Remove from Y.js only if R2 deletion succeeded
       // This prevents inconsistencies where PDF exists in R2 but not in Y.js
       if (r2Deleted) {
         try {
@@ -170,15 +178,6 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
           // The PDF will remain in Y.js but is deleted from R2
           throw new Error('PDF deleted from R2 but failed to remove from study');
         }
-      }
-
-      // Step 3: Always attempt IndexedDB cleanup, even if previous steps failed
-      // This ensures local cache doesn't accumulate stale data
-      try {
-        await removeCachedPdf(projectId, studyId, pdf.fileName);
-      } catch (cacheErr) {
-        console.warn('Failed to remove PDF from IndexedDB cache:', cacheErr);
-        // Don't throw - cache cleanup failure shouldn't block the operation
       }
 
       // If R2 deletion failed, throw to indicate the operation didn't fully succeed
