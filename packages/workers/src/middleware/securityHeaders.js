@@ -11,6 +11,12 @@ export function securityHeaders() {
   return async (c, next) => {
     await next();
 
+    // Skip security headers for WebSocket upgrade responses (status 101)
+    // WebSocket upgrades require special handling and cannot have standard HTTP headers
+    if (c.res.status === 101) {
+      return;
+    }
+
     // Enforce HTTPS for future requests (only meaningful over HTTPS)
     try {
       const url = new URL(c.req.url);

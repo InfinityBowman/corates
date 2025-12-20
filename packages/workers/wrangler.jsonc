@@ -85,6 +85,16 @@
           "zone_name": "corates.org"
         }
       ],
+      "observability": {
+        "enabled": true,
+        "head_sampling_rate": 1,
+        "logs": {
+          "enabled": true,
+          "head_sampling_rate": 1,
+          "persist": true,
+          "invocation_logs": true
+        }
+      },
       "vars": {
         "ENVIRONMENT": "production",
         "AUTH_BASE_URL": "https://api.corates.org",
