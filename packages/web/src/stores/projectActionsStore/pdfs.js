@@ -18,6 +18,47 @@ import pdfPreviewStore from '../pdfPreviewStore.js';
  */
 export function createPdfActions(getActiveConnection, getActiveProjectId, getCurrentUserId) {
   /**
+   * Extract PDF metadata (title, DOI, and fetch DOI reference data)
+   * @param {ArrayBuffer} arrayBuffer - PDF file data
+   * @returns {Promise<Object>} Metadata object with title, doi, firstAuthor, publicationYear, journal
+   */
+  async function extractPdfMetadata(arrayBuffer) {
+    const metadata = {};
+
+    if (!arrayBuffer) return metadata;
+
+    try {
+      const [extractedTitle, extractedDoi] = await Promise.all([
+        extractPdfTitle(arrayBuffer.slice(0)).catch(() => null),
+        extractPdfDoi(arrayBuffer.slice(0)).catch(() => null),
+      ]);
+
+      if (extractedTitle) metadata.title = extractedTitle;
+      if (extractedDoi) metadata.doi = extractedDoi;
+
+      // Fetch additional metadata from DOI if available
+      if (extractedDoi) {
+        try {
+          const refData = await fetchFromDOI(extractedDoi);
+          if (refData) {
+            if (refData.firstAuthor) metadata.firstAuthor = refData.firstAuthor;
+            if (refData.publicationYear) metadata.publicationYear = refData.publicationYear;
+            if (refData.journal) metadata.journal = refData.journal;
+            // Use extracted DOI if refData doesn't have one
+            if (!metadata.doi) metadata.doi = refData.doi || extractedDoi;
+          }
+        } catch (doiErr) {
+          console.warn('Failed to fetch DOI metadata:', doiErr);
+        }
+      }
+    } catch (extractErr) {
+      console.warn('Failed to extract PDF metadata:', extractErr);
+    }
+
+    return metadata;
+  }
+
+  /**
    * View a PDF (opens in slide-in drawer panel) (uses active project)
    */
   async function view(studyId, pdf) {
@@ -112,37 +153,8 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
         console.warn('Failed to cache PDF:', err),
       );
 
-      // Extract PDF metadata (title and DOI)
-      let pdfMetadata = {};
-      if (arrayBuffer) {
-        try {
-          const [extractedTitle, extractedDoi] = await Promise.all([
-            extractPdfTitle(arrayBuffer.slice(0)).catch(() => null),
-            extractPdfDoi(arrayBuffer.slice(0)).catch(() => null),
-          ]);
-
-          if (extractedTitle) pdfMetadata.title = extractedTitle;
-          if (extractedDoi) pdfMetadata.doi = extractedDoi;
-
-          // Fetch additional metadata from DOI if available
-          if (extractedDoi) {
-            try {
-              const refData = await fetchFromDOI(extractedDoi);
-              if (refData) {
-                if (refData.firstAuthor) pdfMetadata.firstAuthor = refData.firstAuthor;
-                if (refData.publicationYear) pdfMetadata.publicationYear = refData.publicationYear;
-                if (refData.journal) pdfMetadata.journal = refData.journal;
-                // Use extracted DOI if refData doesn't have one
-                if (!pdfMetadata.doi) pdfMetadata.doi = refData.doi || extractedDoi;
-              }
-            } catch (doiErr) {
-              console.warn('Failed to fetch DOI metadata:', doiErr);
-            }
-          }
-        } catch (extractErr) {
-          console.warn('Failed to extract PDF metadata:', extractErr);
-        }
-      }
+      // Extract PDF metadata
+      const pdfMetadata = await extractPdfMetadata(arrayBuffer);
 
       const pdfId = ops.addPdfToStudy(
         studyId,
@@ -222,7 +234,7 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
    * @param {Object} file - Imported file metadata
    * @param {string} [tag='secondary'] - PDF tag
    */
-  function handleGoogleDriveImport(studyId, file, tag = 'secondary') {
+  async function handleGoogleDriveImport(studyId, file, tag = 'secondary') {
     const projectId = getActiveProjectId();
     const userId = getCurrentUserId();
     const ops = getActiveConnection();
@@ -234,6 +246,24 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
     const effectiveTag = !hasPdfs ? 'primary' : tag;
 
     try {
+      // Download PDF to extract metadata and cache it
+      let arrayBuffer = null;
+      try {
+        arrayBuffer = await downloadPdf(projectId, studyId, file.fileName);
+        cachePdf(projectId, studyId, file.fileName, arrayBuffer).catch(err =>
+          console.warn('Failed to cache Google Drive PDF:', err),
+        );
+      } catch (downloadErr) {
+        console.warn(
+          'Failed to download/cache Google Drive PDF for metadata extraction:',
+          downloadErr,
+        );
+        // Continue without metadata extraction if download fails
+      }
+
+      // Extract PDF metadata
+      const pdfMetadata = await extractPdfMetadata(arrayBuffer);
+
       ops.addPdfToStudy(
         studyId,
         {
@@ -243,6 +273,12 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
           uploadedBy: userId,
           uploadedAt: Date.now(),
           source: 'google-drive',
+          // Pass extracted citation metadata
+          title: pdfMetadata.title || null,
+          firstAuthor: pdfMetadata.firstAuthor || null,
+          publicationYear: pdfMetadata.publicationYear || null,
+          journal: pdfMetadata.journal || null,
+          doi: pdfMetadata.doi || null,
         },
         effectiveTag,
       );

@@ -18,24 +18,24 @@ import GoogleDrivePickerLauncher from './GoogleDrivePickerLauncher.jsx';
  */
 export default function GoogleDrivePickerModal(props) {
   const [importing, setImporting] = createSignal(false);
+  const projectId = () => props.projectId;
+  const onImportSuccess = () => props.onImportSuccess;
 
-  const handlePicked = picked => {
+  const handlePicked = (picked, studyId) => {
     const file = picked?.[0];
     if (!file) return;
 
-    const projectId = props.projectId;
-    const studyId = props.studyId;
-    const onImportSuccess = props.onImportSuccess;
-
     (async () => {
       try {
+        console.log('importing from google drive', file.id, projectId(), studyId);
         setImporting(true);
-        const result = await importFromGoogleDrive(file.id, projectId, studyId);
+        const result = await importFromGoogleDrive(file.id, projectId(), studyId);
         showToast.success(
           'PDF Imported',
           `Successfully imported "${file.name}" from Google Drive.`,
         );
-        onImportSuccess?.(result.file);
+        // Pass both file and studyId to the callback
+        onImportSuccess()?.(result.file, studyId);
       } catch (err) {
         console.error('Picker import error:', err);
         showToast.error('Import Failed', err.message);
@@ -61,6 +61,7 @@ export default function GoogleDrivePickerModal(props) {
           busy={importing()}
           onBeforeOpenPicker={() => props.onClose()}
           onPick={handlePicked}
+          studyId={props.studyId}
         />
 
         {/* Action buttons */}

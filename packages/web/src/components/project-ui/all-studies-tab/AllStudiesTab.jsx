@@ -74,9 +74,14 @@ export default function AllStudiesTab() {
     setShowGoogleDriveModal(true);
   };
 
-  const handleGoogleDriveImportSuccess = file => {
-    const studyId = googleDriveTargetStudyId();
-    projectActionsStore.pdf.handleGoogleDriveImport(studyId, file);
+  const handleGoogleDriveImportSuccess = (file, studyId) => {
+    // Use studyId from callback if provided, otherwise fall back to state
+    const targetStudyId = studyId || googleDriveTargetStudyId();
+    if (!targetStudyId) {
+      console.error('No study ID available for Google Drive import');
+      return;
+    }
+    projectActionsStore.pdf.handleGoogleDriveImport(targetStudyId, file);
   };
 
   // Modal handlers
