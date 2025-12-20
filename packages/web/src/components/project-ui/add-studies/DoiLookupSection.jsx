@@ -129,8 +129,10 @@ export default function DoiLookupSection() {
                     studies.attachPdfToLookupRef?.(ref._id, file.name, arrayBuffer);
                     showToast.success('PDF Attached', `Attached ${file.name}`);
                   } catch (err) {
-                    console.error('Error reading PDF:', err);
-                    showToast.error('Error', 'Failed to read PDF file');
+                    const { handleError } = await import('@/lib/error-utils.js');
+                    await handleError(err, {
+                      toastTitle: 'Error',
+                    });
                   }
 
                   if (fileInputRef) fileInputRef.value = '';

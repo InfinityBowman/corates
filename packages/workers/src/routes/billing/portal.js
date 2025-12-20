@@ -5,6 +5,7 @@
 import Stripe from 'stripe';
 import { createDb } from '../../db/client.js';
 import { getSubscriptionByUserId } from '../../db/subscriptions.js';
+import { createDomainError, USER_ERRORS } from '@corates/shared';
 
 /**
  * Create a Stripe Customer Portal session
@@ -21,7 +22,12 @@ export async function createPortalSession(env, user) {
   const subscription = await getSubscriptionByUserId(db, user.id);
 
   if (!subscription?.stripeCustomerId) {
-    throw new Error('No billing account found. Please subscribe to a plan first.');
+    const error = createDomainError(
+      USER_ERRORS.NOT_FOUND,
+      { context: 'billing_account' },
+      'No billing account found. Please subscribe to a plan first.',
+    );
+    throw error;
   }
 
   // Create the portal session

@@ -78,7 +78,11 @@ export default function UserTable(props) {
       }
       props.onRefresh?.();
     } catch (err) {
-      setError(err.message);
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
     } finally {
       setLoading(false);
     }
@@ -95,7 +99,11 @@ export default function UserTable(props) {
       setBanReason('');
       props.onRefresh?.();
     } catch (err) {
-      setError(err.message);
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
     } finally {
       setLoading(false);
     }
@@ -115,7 +123,11 @@ export default function UserTable(props) {
       setConfirmDialog(null);
       props.onRefresh?.();
     } catch (err) {
-      setError(err.message);
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
     } finally {
       setLoading(false);
     }

@@ -191,9 +191,8 @@ app.route('/api/projects', projectRoutes);
 // Mount project member routes: /api/projects/:projectId/members
 app.route('/api/projects/:projectId/members', memberRoutes);
 
-// Mount PDF routes: /api/projects/:projectId/studies/:studyId/pdf(s)
+// Mount PDF routes: /api/projects/:projectId/studies/:studyId/pdfs
 app.route('/api/projects/:projectId/studies/:studyId/pdfs', pdfRoutes);
-app.route('/api/projects/:projectId/studies/:studyId/pdf', pdfRoutes);
 
 // Mount Google Drive routes
 app.route('/api/google-drive', googleDriveRoutes);

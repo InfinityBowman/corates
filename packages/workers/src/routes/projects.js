@@ -9,7 +9,8 @@ import { projects, projectMembers, user } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { projectSchemas, validateRequest } from '../config/validation.js';
-import { createErrorResponse, ERROR_CODES, EDIT_ROLES } from '../config/constants.js';
+import { EDIT_ROLES } from '../config/constants.js';
+import { createDomainError, PROJECT_ERRORS, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 
 const projectRoutes = new Hono();
 
@@ -65,13 +66,18 @@ projectRoutes.get('/:id', async c => {
       .get();
 
     if (!result) {
-      return c.json(createErrorResponse(ERROR_CODES.PROJECT_NOT_FOUND), 404);
+      const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
+      return c.json(error, error.statusCode);
     }
 
     return c.json(result);
   } catch (error) {
     console.error('Error fetching project:', error);
-    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'fetch_project',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -162,7 +168,11 @@ projectRoutes.post('/', validateRequest(projectSchemas.create), async c => {
     return c.json(newProject, 201);
   } catch (error) {
     console.error('Error creating project:', error);
-    return c.json(createErrorResponse(ERROR_CODES.DB_TRANSACTION_FAILED, error.message), 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_TRANSACTION_FAILED, {
+      operation: 'create_project',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -185,13 +195,12 @@ projectRoutes.put('/:id', validateRequest(projectSchemas.update), async c => {
       .get();
 
     if (!membership || !EDIT_ROLES.includes(membership.role)) {
-      return c.json(
-        createErrorResponse(
-          ERROR_CODES.AUTH_FORBIDDEN,
-          'Only owners and collaborators can update projects',
-        ),
-        403,
+      const error = createDomainError(
+        AUTH_ERRORS.FORBIDDEN,
+        { reason: 'update_project' },
+        'Only owners and collaborators can update projects',
       );
+      return c.json(error, error.statusCode);
     }
 
     const now = new Date();
@@ -213,7 +222,11 @@ projectRoutes.put('/:id', validateRequest(projectSchemas.update), async c => {
     return c.json({ success: true, projectId });
   } catch (error) {
     console.error('Error updating project:', error);
-    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'update_project',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -235,10 +248,12 @@ projectRoutes.delete('/:id', async c => {
       .get();
 
     if (!membership || membership.role !== 'owner') {
-      return c.json(
-        createErrorResponse(ERROR_CODES.AUTH_FORBIDDEN, 'Only project owners can delete projects'),
-        403,
+      const error = createDomainError(
+        AUTH_ERRORS.FORBIDDEN,
+        { reason: 'delete_project' },
+        'Only project owners can delete projects',
       );
+      return c.json(error, error.statusCode);
     }
 
     // Get project name and all members before deletion (for notifications)
@@ -330,7 +345,11 @@ projectRoutes.delete('/:id', async c => {
     return c.json({ success: true, deleted: projectId });
   } catch (error) {
     console.error('Error deleting project:', error);
-    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'delete_project',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 

@@ -7,6 +7,7 @@ import { createDb } from '../db/client.js';
 import { getSubscriptionByUserId } from '../db/subscriptions.js';
 import { hasMinimumTier, hasFeatureAccess } from '../config/stripe.js';
 import { getAuth } from './auth.js';
+import { DEFAULT_SUBSCRIPTION_TIER, ACTIVE_STATUSES } from '../config/constants.js';
 
 /**
  * Middleware that requires a minimum subscription tier
@@ -24,10 +25,10 @@ export function requireTier(minTier) {
 
     const db = createDb(c.env.DB);
     const subscription = await getSubscriptionByUserId(db, user.id);
-    const userTier = subscription?.tier ?? 'free';
+    const userTier = subscription?.tier ?? DEFAULT_SUBSCRIPTION_TIER;
 
     // Check if subscription is active
-    if (subscription && subscription.status !== 'active' && subscription.status !== 'trialing') {
+    if (subscription && !ACTIVE_STATUSES.includes(subscription.status)) {
       return c.json(
         {
           error: 'Subscription inactive',
@@ -75,10 +76,10 @@ export function requireFeature(feature) {
 
     const db = createDb(c.env.DB);
     const subscription = await getSubscriptionByUserId(db, user.id);
-    const userTier = subscription?.tier ?? 'free';
+    const userTier = subscription?.tier ?? DEFAULT_SUBSCRIPTION_TIER;
 
     // Check if subscription is active
-    if (subscription && subscription.status !== 'active' && subscription.status !== 'trialing') {
+    if (subscription && !ACTIVE_STATUSES.includes(subscription.status)) {
       return c.json(
         {
           error: 'Subscription inactive',
@@ -117,6 +118,6 @@ export function requireFeature(feature) {
 export function getSubscription(c) {
   return {
     subscription: c.get('subscription') ?? null,
-    tier: c.get('tier') ?? 'free',
+    tier: c.get('tier') ?? DEFAULT_SUBSCRIPTION_TIER,
   };
 }

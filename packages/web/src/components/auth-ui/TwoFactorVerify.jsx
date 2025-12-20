@@ -4,6 +4,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton } from './AuthButtons.jsx';
 import { FiLock } from 'solid-icons/fi';
+import { handleError } from '@/lib/error-utils.js';
 
 export default function TwoFactorVerify(props) {
   const [code, setCode] = createSignal('');
@@ -42,16 +43,10 @@ export default function TwoFactorVerify(props) {
       // Navigate to dashboard on success
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      console.error('2FA verification error:', err);
-      const msg = err.message?.toLowerCase() || '';
-
-      if (msg.includes('invalid') || msg.includes('incorrect')) {
-        setError(useBackupCode() ? 'Invalid backup code' : 'Invalid verification code');
-      } else if (msg.includes('expired')) {
-        setError('Code expired. Please try again.');
-      } else {
-        setError('Verification failed. Please try again.');
-      }
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
     } finally {
       setLoading(false);
     }

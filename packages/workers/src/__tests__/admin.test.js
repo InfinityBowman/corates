@@ -541,7 +541,10 @@ describe('Admin API routes', () => {
 
     expect(res.status).toBe(400);
     const body = await json(res);
-    expect(body.error).toMatch(/ban yourself/i);
+    expect(body.code).toBeDefined();
+    expect(body.code).toMatch(/VALIDATION/);
+    // Check for validation error - message may be generic "Invalid input" but code indicates the issue
+    expect(body.details?.constraint).toMatch(/cannot_ban_self/i);
   });
 
   it('DELETE /api/admin/users/:userId deletes user data (and blocks self-delete)', async () => {

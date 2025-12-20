@@ -11,6 +11,14 @@ import { createCheckoutSession } from './checkout.js';
 import { createPortalSession } from './portal.js';
 import { handleWebhook } from './webhooks.js';
 import { TIER_INFO, PRICE_IDS } from '../../config/stripe.js';
+import { DEFAULT_SUBSCRIPTION_TIER, DEFAULT_SUBSCRIPTION_STATUS } from '../../config/constants.js';
+import {
+  createDomainError,
+  createValidationError,
+  VALIDATION_ERRORS,
+  SYSTEM_ERRORS,
+  isDomainError,
+} from '@corates/shared';
 
 const billingRoutes = new Hono();
 
@@ -28,8 +36,8 @@ billingRoutes.get('/subscription', requireAuth, async c => {
     if (!subscription) {
       // Return default free tier info
       return c.json({
-        tier: 'free',
-        status: 'active',
+        tier: DEFAULT_SUBSCRIPTION_TIER,
+        status: DEFAULT_SUBSCRIPTION_STATUS,
         tierInfo: TIER_INFO.free,
         stripeSubscriptionId: null,
         currentPeriodEnd: null,
@@ -47,7 +55,11 @@ billingRoutes.get('/subscription', requireAuth, async c => {
     });
   } catch (error) {
     console.error('Error fetching subscription:', error);
-    return c.json({ error: 'Failed to fetch subscription' }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'fetch_subscription',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -112,15 +124,29 @@ billingRoutes.post('/checkout', requireAuth, async c => {
     const body = await c.req.json();
     const { tier, interval = 'monthly' } = body;
 
-    if (!tier || tier === 'free') {
-      return c.json({ error: 'Invalid tier selection' }, 400);
+    if (!tier || tier === DEFAULT_SUBSCRIPTION_TIER) {
+      const error = createValidationError(
+        'tier',
+        VALIDATION_ERRORS.INVALID_INPUT.code,
+        tier,
+        'invalid_tier',
+      );
+      return c.json(error, error.statusCode);
     }
 
     const result = await createCheckoutSession(c.env, user, tier, interval);
     return c.json(result);
   } catch (error) {
     console.error('Error creating checkout session:', error);
-    return c.json({ error: 'Failed to create checkout session' }, 500);
+    // If it's already a domain error, return it directly
+    if (isDomainError(error)) {
+      return c.json(error, error.statusCode);
+    }
+    const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+      operation: 'create_checkout_session',
+      originalError: error.message,
+    });
+    return c.json(systemError, systemError.statusCode);
   }
 });
 
@@ -136,7 +162,15 @@ billingRoutes.post('/portal', requireAuth, async c => {
     return c.json(result);
   } catch (error) {
     console.error('Error creating portal session:', error);
-    return c.json({ error: 'Failed to create portal session' }, 500);
+    // If it's already a domain error, return it directly
+    if (isDomainError(error)) {
+      return c.json(error, error.statusCode);
+    }
+    const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+      operation: 'create_portal_session',
+      originalError: error.message,
+    });
+    return c.json(systemError, systemError.statusCode);
   }
 });
 
@@ -150,14 +184,29 @@ billingRoutes.post('/webhook', async c => {
     const rawBody = await c.req.text();
 
     if (!signature) {
-      return c.json({ error: 'Missing signature' }, 400);
+      const error = createValidationError(
+        'signature',
+        VALIDATION_ERRORS.FIELD_REQUIRED.code,
+        null,
+        'required',
+      );
+      return c.json(error, error.statusCode);
     }
 
     const result = await handleWebhook(c.env, rawBody, signature);
     return c.json(result);
   } catch (error) {
     console.error('Webhook error:', error);
-    return c.json({ error: 'Webhook processing failed' }, 400);
+    // If it's already a domain error, pass it through
+    if (isDomainError(error)) {
+      return c.json(error, error.statusCode);
+    }
+    // Only wrap non-domain/unexpected errors
+    const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+      operation: 'process_webhook',
+      originalError: error.message,
+    });
+    return c.json(systemError, systemError.statusCode);
   }
 });
 

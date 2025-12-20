@@ -66,8 +66,11 @@ export default function LocalChecklistView() {
 
         setLoading(false);
       } catch (err) {
-        console.error('Error loading checklist:', err);
-        setError(err.message || 'Failed to load checklist');
+        const { handleError } = await import('@/lib/error-utils.js');
+        await handleError(err, {
+          setError,
+          showToast: false,
+        });
         setLoading(false);
       }
     })();

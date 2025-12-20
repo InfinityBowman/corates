@@ -182,7 +182,10 @@ export default function ChecklistYjsWrapper() {
           console.warn('Failed to clean up orphaned PDF:', cleanupErr),
         );
       }
-      showToast.error('Upload Failed', err.message || 'Failed to upload PDF');
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        toastTitle: 'Upload Failed',
+      });
     }
   };
 

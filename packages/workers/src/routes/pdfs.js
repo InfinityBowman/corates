@@ -10,7 +10,15 @@ import { requireAuth, getAuth } from '../middleware/auth.js';
 import { createDb } from '../db/client.js';
 import { projectMembers } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
-import { createErrorResponse, ERROR_CODES, FILE_SIZE_LIMITS } from '../config/constants.js';
+import { FILE_SIZE_LIMITS } from '../config/constants.js';
+import {
+  createDomainError,
+  FILE_ERRORS,
+  VALIDATION_ERRORS,
+  AUTH_ERRORS,
+  SYSTEM_ERRORS,
+  PROJECT_ERRORS,
+} from '@corates/shared';
 
 const pdfRoutes = new Hono();
 
@@ -26,7 +34,10 @@ async function verifyProjectMembership(c, next) {
   const studyId = c.req.param('studyId');
 
   if (!projectId || !studyId) {
-    return c.json({ error: 'Missing project or study ID' }, 400);
+    const error = createDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, {
+      field: 'projectId or studyId',
+    });
+    return c.json(error, error.statusCode);
   }
 
   // Verify user is a member of this project using Drizzle ORM
@@ -38,7 +49,8 @@ async function verifyProjectMembership(c, next) {
     .get();
 
   if (!membership) {
-    return c.json({ error: 'Not a member of this project' }, 403);
+    const error = createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId });
+    return c.json(error, error.statusCode);
   }
 
   c.set('projectId', projectId);
@@ -83,12 +95,16 @@ pdfRoutes.get('/', async c => {
     return c.json({ pdfs });
   } catch (error) {
     console.error('PDF list error:', error);
-    return c.json(createErrorResponse(ERROR_CODES.DB_ERROR, error.message), 500);
+    const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+      operation: 'list_pdfs',
+      originalError: error.message,
+    });
+    return c.json(systemError, systemError.statusCode);
   }
 });
 
 /**
- * POST /api/projects/:projectId/studies/:studyId/pdf
+ * POST /api/projects/:projectId/studies/:studyId/pdfs
  * Upload a PDF for a study
  */
 pdfRoutes.post('/', async c => {
@@ -99,19 +115,23 @@ pdfRoutes.post('/', async c => {
 
   // Enforce read-only access for viewers
   if (memberRole === 'viewer') {
-    return c.json(createErrorResponse(ERROR_CODES.AUTH_FORBIDDEN, 'Insufficient permissions'), 403);
+    const error = createDomainError(
+      AUTH_ERRORS.FORBIDDEN,
+      { reason: 'upload_pdf' },
+      'Insufficient permissions',
+    );
+    return c.json(error, error.statusCode);
   }
 
   // Check Content-Length header first for early rejection
   const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
   if (contentLength > FILE_SIZE_LIMITS.PDF) {
-    return c.json(
-      createErrorResponse(
-        ERROR_CODES.FILE_TOO_LARGE,
-        `File size exceeds limit of ${FILE_SIZE_LIMITS.PDF / (1024 * 1024)}MB`,
-      ),
-      413,
+    const error = createDomainError(
+      FILE_ERRORS.TOO_LARGE,
+      { fileSize: contentLength, maxSize: FILE_SIZE_LIMITS.PDF },
+      `File size exceeds limit of ${FILE_SIZE_LIMITS.PDF / (1024 * 1024)}MB`,
     );
+    return c.json(error, error.statusCode);
   }
 
   const contentType = c.req.header('Content-Type') || '';
@@ -126,18 +146,22 @@ pdfRoutes.post('/', async c => {
       const file = formData.get('file');
 
       if (!file || !(file instanceof File)) {
-        return c.json(createErrorResponse(ERROR_CODES.MISSING_FIELD, 'No file provided'), 400);
+        const error = createDomainError(
+          VALIDATION_ERRORS.FIELD_REQUIRED,
+          { field: 'file' },
+          'No file provided',
+        );
+        return c.json(error, error.statusCode);
       }
 
       // Check file size
       if (file.size > FILE_SIZE_LIMITS.PDF) {
-        return c.json(
-          createErrorResponse(
-            ERROR_CODES.FILE_TOO_LARGE,
-            `File size (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds limit of ${FILE_SIZE_LIMITS.PDF / (1024 * 1024)}MB`,
-          ),
-          413,
+        const error = createDomainError(
+          FILE_ERRORS.TOO_LARGE,
+          { fileSize: file.size, maxSize: FILE_SIZE_LIMITS.PDF },
+          `File size (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds limit of ${FILE_SIZE_LIMITS.PDF / (1024 * 1024)}MB`,
         );
+        return c.json(error, error.statusCode);
       }
 
       fileName = file.name || 'document.pdf';
@@ -149,32 +173,29 @@ pdfRoutes.post('/', async c => {
 
       // Check size after reading for raw uploads
       if (pdfData.byteLength > FILE_SIZE_LIMITS.PDF) {
-        return c.json(
-          createErrorResponse(
-            ERROR_CODES.FILE_TOO_LARGE,
-            `File size (${(pdfData.byteLength / (1024 * 1024)).toFixed(2)}MB) exceeds limit of ${FILE_SIZE_LIMITS.PDF / (1024 * 1024)}MB`,
-          ),
-          413,
+        const error = createDomainError(
+          FILE_ERRORS.TOO_LARGE,
+          { fileSize: pdfData.byteLength, maxSize: FILE_SIZE_LIMITS.PDF },
+          `File size (${(pdfData.byteLength / (1024 * 1024)).toFixed(2)}MB) exceeds limit of ${FILE_SIZE_LIMITS.PDF / (1024 * 1024)}MB`,
         );
+        return c.json(error, error.statusCode);
       }
     } else {
-      return c.json(
-        createErrorResponse(
-          ERROR_CODES.FILE_INVALID_TYPE,
-          'Invalid content type. Expected multipart/form-data or application/pdf',
-        ),
-        400,
+      const error = createDomainError(
+        FILE_ERRORS.INVALID_TYPE,
+        { contentType },
+        'Invalid content type. Expected multipart/form-data or application/pdf',
       );
+      return c.json(error, error.statusCode);
     }
 
     if (!isValidFileName(fileName)) {
-      return c.json(
-        createErrorResponse(
-          ERROR_CODES.MISSING_FIELD,
-          'Invalid file name. Avoid quotes, slashes, control characters, and very long names.',
-        ),
-        400,
+      const error = createDomainError(
+        VALIDATION_ERRORS.FIELD_INVALID_FORMAT,
+        { field: 'fileName', value: fileName },
+        'Invalid file name. Avoid quotes, slashes, control characters, and very long names.',
       );
+      return c.json(error, error.statusCode);
     }
 
     // Validate it's a PDF (check magic bytes)
@@ -183,23 +204,24 @@ pdfRoutes.post('/', async c => {
     const isPdf = pdfMagic.every((byte, i) => header[i] === byte);
 
     if (!isPdf) {
-      return c.json(
-        createErrorResponse(ERROR_CODES.FILE_INVALID_TYPE, 'File is not a valid PDF'),
-        400,
+      const error = createDomainError(
+        FILE_ERRORS.INVALID_TYPE,
+        { fileType: 'unknown', expectedType: 'application/pdf' },
+        'File is not a valid PDF',
       );
+      return c.json(error, error.statusCode);
     }
 
     // Check if file with same name already exists
     const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
     const existing = await c.env.PDF_BUCKET.head(key);
     if (existing) {
-      return c.json(
-        createErrorResponse(
-          ERROR_CODES.FILE_ALREADY_EXISTS,
-          `File "${fileName}" already exists. Rename or remove the existing copy.`,
-        ),
-        409,
+      const error = createDomainError(
+        FILE_ERRORS.ALREADY_EXISTS,
+        { fileName, key },
+        `File "${fileName}" already exists. Rename or remove the existing copy.`,
       );
+      return c.json(error, error.statusCode);
     }
 
     // Store in R2
@@ -225,12 +247,17 @@ pdfRoutes.post('/', async c => {
     });
   } catch (error) {
     console.error('PDF upload error:', error);
-    return c.json(createErrorResponse(ERROR_CODES.FILE_UPLOAD_FAILED, error.message), 500);
+    const uploadError = createDomainError(
+      FILE_ERRORS.UPLOAD_FAILED,
+      { operation: 'upload_pdf', originalError: error.message },
+      error.message,
+    );
+    return c.json(uploadError, uploadError.statusCode);
   }
 });
 
 /**
- * GET /api/projects/:projectId/studies/:studyId/pdf/:fileName
+ * GET /api/projects/:projectId/studies/:studyId/pdfs/:fileName
  * Download a PDF for a study
  */
 pdfRoutes.get('/:fileName', async c => {
@@ -239,11 +266,21 @@ pdfRoutes.get('/:fileName', async c => {
   const fileName = decodeURIComponent(c.req.param('fileName'));
 
   if (!fileName) {
-    return c.json(createErrorResponse(ERROR_CODES.MISSING_FIELD, 'Missing file name'), 400);
+    const error = createDomainError(
+      VALIDATION_ERRORS.FIELD_REQUIRED,
+      { field: 'fileName' },
+      'Missing file name',
+    );
+    return c.json(error, error.statusCode);
   }
 
   if (!isValidFileName(fileName)) {
-    return c.json(createErrorResponse(ERROR_CODES.MISSING_FIELD, 'Invalid file name'), 400);
+    const error = createDomainError(
+      VALIDATION_ERRORS.FIELD_INVALID_FORMAT,
+      { field: 'fileName', value: fileName },
+      'Invalid file name',
+    );
+    return c.json(error, error.statusCode);
   }
 
   const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
@@ -252,7 +289,8 @@ pdfRoutes.get('/:fileName', async c => {
     const object = await c.env.PDF_BUCKET.get(key);
 
     if (!object) {
-      return c.json(createErrorResponse(ERROR_CODES.FILE_NOT_FOUND), 404);
+      const error = createDomainError(FILE_ERRORS.NOT_FOUND, { fileName, key });
+      return c.json(error, error.statusCode);
     }
 
     return new Response(object.body, {
@@ -266,12 +304,17 @@ pdfRoutes.get('/:fileName', async c => {
     });
   } catch (error) {
     console.error('PDF download error:', error);
-    return c.json(createErrorResponse(ERROR_CODES.INTERNAL_ERROR, error.message), 500);
+    const internalError = createDomainError(
+      SYSTEM_ERRORS.INTERNAL_ERROR,
+      { operation: 'download_pdf', originalError: error.message },
+      error.message,
+    );
+    return c.json(internalError, internalError.statusCode);
   }
 });
 
 /**
- * DELETE /api/projects/:projectId/studies/:studyId/pdf/:fileName
+ * DELETE /api/projects/:projectId/studies/:studyId/pdfs/:fileName
  * Delete a PDF for a study
  */
 pdfRoutes.delete('/:fileName', async c => {
@@ -279,7 +322,12 @@ pdfRoutes.delete('/:fileName', async c => {
 
   // Verify user has edit permissions
   if (memberRole === 'viewer') {
-    return c.json(createErrorResponse(ERROR_CODES.AUTH_FORBIDDEN, 'Insufficient permissions'), 403);
+    const error = createDomainError(
+      AUTH_ERRORS.FORBIDDEN,
+      { reason: 'delete_pdf' },
+      'Insufficient permissions',
+    );
+    return c.json(error, error.statusCode);
   }
 
   const projectId = c.get('projectId');
@@ -287,11 +335,21 @@ pdfRoutes.delete('/:fileName', async c => {
   const fileName = decodeURIComponent(c.req.param('fileName'));
 
   if (!fileName) {
-    return c.json(createErrorResponse(ERROR_CODES.MISSING_FIELD, 'Missing file name'), 400);
+    const error = createDomainError(
+      VALIDATION_ERRORS.FIELD_REQUIRED,
+      { field: 'fileName' },
+      'Missing file name',
+    );
+    return c.json(error, error.statusCode);
   }
 
   if (!isValidFileName(fileName)) {
-    return c.json(createErrorResponse(ERROR_CODES.MISSING_FIELD, 'Invalid file name'), 400);
+    const error = createDomainError(
+      VALIDATION_ERRORS.FIELD_INVALID_FORMAT,
+      { field: 'fileName', value: fileName },
+      'Invalid file name',
+    );
+    return c.json(error, error.statusCode);
   }
 
   const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
@@ -301,7 +359,12 @@ pdfRoutes.delete('/:fileName', async c => {
     return c.json({ success: true });
   } catch (error) {
     console.error('PDF delete error:', error);
-    return c.json(createErrorResponse(ERROR_CODES.INTERNAL_ERROR, error.message), 500);
+    const internalError = createDomainError(
+      SYSTEM_ERRORS.INTERNAL_ERROR,
+      { operation: 'delete_pdf', originalError: error.message },
+      error.message,
+    );
+    return c.json(internalError, internalError.statusCode);
   }
 });
 

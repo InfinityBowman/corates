@@ -43,9 +43,12 @@ export default function GoogleDrivePickerLauncher(props) {
       const status = await getGoogleDriveStatus();
       setConnected(status.connected);
     } catch (err) {
-      console.error('Error checking Google Drive status:', err);
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
       setConnected(false);
-      setError('Failed to check Google Drive connection');
     } finally {
       setLoading(false);
     }
@@ -67,8 +70,11 @@ export default function GoogleDrivePickerLauncher(props) {
 
       await connectGoogleAccount(callbackUrl);
     } catch (err) {
-      console.error('Error connecting Google:', err);
-      setError(err?.message || 'Failed to connect Google account');
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
       throw err;
     }
   };
@@ -97,8 +103,11 @@ export default function GoogleDrivePickerLauncher(props) {
         multiselect,
       });
     } catch (err) {
-      const message = err?.message || 'Failed to open Google Picker';
-      setError(message);
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
       throw err;
     }
   };

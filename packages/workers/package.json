@@ -11,8 +11,11 @@
     "tail": "wrangler tail",
     "test": "vitest run",
     "test:watch": "vitest",
+    "build": "pnpm --filter @corates/shared build",
     "logs": "pnpm wrangler tail corates-workers-prod",
     "clear-workers": "rm -rf .wrangler/state && pnpm run db:migrate",
+    "db:generate": "drizzle-kit generate",
+    "db:generate:test": "node ./scripts/generate-test-sql.mjs",
     "db:migrate": "y | wrangler d1 migrations apply corates-db --local",
     "db:migrate:prod": "wrangler d1 migrations apply corates-db --remote",
     "db:setup:prod": "wrangler d1 execute corates-db-prod --remote --file=migrations/0001_init.sql",
@@ -23,6 +26,7 @@
     "openapi:serve": "node ./scripts/serve-docs.mjs"
   },
   "dependencies": {
+    "@corates/shared": "workspace:*",
     "@cloudflare/workers-types": "^4.20251213.0",
     "better-auth": "1.4.5",
     "drizzle-orm": "^0.45.1",
@@ -36,6 +40,7 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.10.15",
+    "drizzle-kit": "^0.30.0",
     "vitest": "3.2.0",
     "wrangler": "^4.54.0",
     "yaml": "^2.8.2"

@@ -18,6 +18,14 @@ import {
 import { eq, desc, or, like, sql } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { searchRateLimit } from '../middleware/rateLimit.js';
+import {
+  createDomainError,
+  createValidationError,
+  VALIDATION_ERRORS,
+  AUTH_ERRORS,
+  USER_ERRORS,
+  SYSTEM_ERRORS,
+} from '@corates/shared';
 
 const userRoutes = new Hono();
 
@@ -50,7 +58,13 @@ userRoutes.get('/search', searchRateLimit, async c => {
   const limit = Math.min(parseInt(c.req.query('limit') || '10', 10), 20);
 
   if (!query || query.length < 2) {
-    return c.json({ error: 'Search query must be at least 2 characters' }, 400);
+    const error = createValidationError(
+      'query',
+      VALIDATION_ERRORS.FIELD_TOO_SHORT.code,
+      query,
+      'min_length',
+    );
+    return c.json(error, error.statusCode);
   }
 
   const db = createDb(c.env.DB);
@@ -106,7 +120,11 @@ userRoutes.get('/search', searchRateLimit, async c => {
     return c.json(sanitizedResults);
   } catch (error) {
     console.error('Error searching users:', error);
-    return c.json({ error: 'Failed to search users' }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'search_users',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -120,7 +138,10 @@ userRoutes.get('/:userId/projects', async c => {
 
   // Only allow users to access their own projects
   if (authUser.id !== userId) {
-    return c.json({ error: 'Unauthorized' }, 403);
+    const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+      reason: 'view_other_user_projects',
+    });
+    return c.json(error, error.statusCode);
   }
 
   const db = createDb(c.env.DB);
@@ -143,7 +164,11 @@ userRoutes.get('/:userId/projects', async c => {
     return c.json(results);
   } catch (error) {
     console.error('Error fetching user projects:', error);
-    return c.json({ error: 'Failed to fetch projects' }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'fetch_user_projects',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -175,7 +200,11 @@ userRoutes.delete('/me', async c => {
     return c.json({ success: true, message: 'Account deleted successfully' });
   } catch (error) {
     console.error('Error deleting account:', error);
-    return c.json({ error: 'Failed to delete account' }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'delete_account',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -201,7 +230,8 @@ userRoutes.post('/sync-profile', async c => {
       .limit(1);
 
     if (!userData) {
-      return c.json({ error: 'User not found' }, 404);
+      const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId: currentUser.id });
+      return c.json(error, error.statusCode);
     }
 
     // Get all projects this user is a member of
@@ -251,7 +281,11 @@ userRoutes.post('/sync-profile', async c => {
     });
   } catch (error) {
     console.error('Error syncing profile:', error);
-    return c.json({ error: 'Failed to sync profile' }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'sync_profile',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 

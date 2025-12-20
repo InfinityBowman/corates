@@ -159,3 +159,20 @@ export const apiRateLimit = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   keyPrefix: 'api',
 });
+
+/**
+ * Clear the rate limit store (for testing only)
+ * @internal
+ */
+export function clearRateLimitStore() {
+  // Only allow clearing in test environment
+  const isTest =
+    (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') ||
+    (typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'test');
+
+  if (isTest) {
+    rateLimitStore.clear();
+  } else {
+    console.warn('Attempted to clear rate limit store outside of test environment');
+  }
+}

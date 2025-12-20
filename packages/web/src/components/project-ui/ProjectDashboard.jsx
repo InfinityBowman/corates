@@ -109,7 +109,10 @@ export default function ProjectDashboard(props) {
       await projectActionsStore.project.deleteById(targetProjectId);
       showToast.success('Project Deleted', 'The project has been deleted successfully');
     } catch (err) {
-      showToast.error('Delete Failed', err.message || 'Failed to delete project');
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        toastTitle: 'Delete Failed',
+      });
     }
   };
 

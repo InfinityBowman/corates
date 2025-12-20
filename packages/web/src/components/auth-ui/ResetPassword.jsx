@@ -5,6 +5,7 @@ import { AnimatedShow } from '../AnimatedShow.jsx';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton, AuthLink } from './AuthButtons.jsx';
 import StrengthIndicator from './StrengthIndicator.jsx';
+import { handleError } from '@/lib/error-utils.js';
 
 const REDIRECT_DELAY_MS = 3000;
 
@@ -56,30 +57,10 @@ function RequestResetForm() {
         navigate('/signin');
       }, REDIRECT_DELAY_MS);
     } catch (err) {
-      console.error('Reset password error:', err);
-
-      const msg = err.message?.toLowerCase() || '';
-
-      if (msg.includes('user not found')) {
-        setError('No account found with this email address');
-      } else if (msg.includes('too many requests')) {
-        setError('Too many reset attempts. Please try again later.');
-      } else if (msg.includes('invalid email')) {
-        setError('Please enter a valid email address');
-      } else if (
-        msg.includes('failed to fetch') ||
-        msg.includes('load failed') ||
-        msg.includes('network') ||
-        msg.includes('cors')
-      ) {
-        setError(
-          'Unable to connect to the server. Please check your internet connection and try again.',
-        );
-      } else if (msg.includes('timeout')) {
-        setError('The request timed out. Please try again.');
-      } else {
-        setError('Something went wrong. Please try again.');
-      }
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
     } finally {
       setLoading(false);
     }
@@ -187,23 +168,10 @@ function SetNewPasswordForm(props) {
         navigate('/signin');
       }, REDIRECT_DELAY_MS);
     } catch (err) {
-      console.error('Confirm reset password error:', err);
-
-      const msg = err.message?.toLowerCase() || '';
-
-      if (msg.includes('invalid') || msg.includes('expired')) {
-        setError('This reset link is invalid or has expired. Please request a new one.');
-      } else if (msg.includes('password')) {
-        setError('Password does not meet requirements. Please try a stronger password.');
-      } else if (
-        msg.includes('failed to fetch') ||
-        msg.includes('load failed') ||
-        msg.includes('network')
-      ) {
-        setError('Unable to connect to the server. Please try again.');
-      } else {
-        setError('Something went wrong. Please try again.');
-      }
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
     } finally {
       setLoading(false);
     }

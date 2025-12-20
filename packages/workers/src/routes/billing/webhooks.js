@@ -5,6 +5,7 @@
 import Stripe from 'stripe';
 import { createDb } from '../../db/client.js';
 import { upsertSubscription, updateSubscriptionByStripeId } from '../../db/subscriptions.js';
+import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 
 /**
  * Map Stripe subscription status to our status
@@ -64,7 +65,11 @@ export async function handleWebhook(env, rawBody, signature) {
     );
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
-    throw new Error(`Webhook signature verification failed: ${err.message}`);
+    const error = createDomainError(AUTH_ERRORS.INVALID, {
+      context: 'webhook_signature',
+      originalError: err.message,
+    });
+    throw error;
   }
 
   const db = createDb(env.DB);
@@ -140,13 +145,29 @@ async function handleSubscriptionUpdated(db, subscription) {
   const priceId = subscription.items.data[0]?.price.id;
   const tier = getTierFromPriceId(priceId);
 
-  await updateSubscriptionByStripeId(db, subscription.id, {
+  // Convert Unix timestamps to Date objects for Drizzle timestamp mode
+  const updates = {
     tier,
     status: mapStripeStatus(subscription.status),
-    currentPeriodStart: new Date(subscription.current_period_start * 1000),
-    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-    cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    currentPeriodStart:
+      subscription.current_period_start ?
+        new Date(subscription.current_period_start * 1000)
+      : undefined,
+    currentPeriodEnd:
+      subscription.current_period_end ?
+        new Date(subscription.current_period_end * 1000)
+      : undefined,
+    cancelAtPeriodEnd: subscription.cancel_at_period_end ?? false,
+  };
+
+  // Remove undefined values to avoid overwriting with null
+  Object.keys(updates).forEach(key => {
+    if (updates[key] === undefined) {
+      delete updates[key];
+    }
   });
+
+  await updateSubscriptionByStripeId(db, subscription.id, updates);
 
   console.log(`Subscription updated: ${subscription.id} - ${tier} (${subscription.status})`);
 }

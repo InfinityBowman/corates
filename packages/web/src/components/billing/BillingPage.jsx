@@ -31,7 +31,10 @@ export default function BillingPage() {
     try {
       await redirectToPortal();
     } catch (error) {
-      console.error('Portal error:', error);
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(error, {
+        toastTitle: 'Portal Error',
+      });
       setPortalLoading(false);
     }
   };

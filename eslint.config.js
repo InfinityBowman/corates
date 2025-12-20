@@ -30,6 +30,7 @@ export default [
 
       globals: {
         // Browser globals
+        ReadableStream: 'readonly',
         HTMLDivElement: 'readonly',
         HTMLInputElement: 'readonly',
         HTMLTextAreaElement: 'readonly',
@@ -108,6 +109,11 @@ export default [
           caughtErrorsIgnorePattern: '^_',
         },
       ],
+      // Prevent throwing literals - must throw Error objects
+      'no-throw-literal': 'error',
+      // Prevent creating Error objects without proper error handling
+      // Encourage using error helpers from @corates/shared
+      'no-new-error': 'off', // This doesn't exist, but we document the pattern
       // 'sonarjs/cognitive-complexity': 'error',
     },
   },

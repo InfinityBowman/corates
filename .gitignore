@@ -48,6 +48,7 @@ secrets.txt
 
 # Generated files
 openapi.json
+packages/workers/src/__tests__/migration-sql.js
 
 # Temp files
 /docs/plans*

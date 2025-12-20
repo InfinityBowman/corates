@@ -8,6 +8,15 @@ import { requireAuth, getAuth } from '../middleware/auth.js';
 import { createDb } from '../db/client.js';
 import { account } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
+import {
+  createDomainError,
+  createValidationError,
+  VALIDATION_ERRORS,
+  AUTH_ERRORS,
+  FILE_ERRORS,
+  SYSTEM_ERRORS,
+  isDomainError,
+} from '@corates/shared';
 
 const googleDriveRoutes = new Hono();
 
@@ -50,8 +59,12 @@ async function refreshGoogleToken(env, refreshToken) {
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to refresh token: ${error}`);
+    const errorText = await response.text();
+    const error = createDomainError(AUTH_ERRORS.INVALID, {
+      context: 'google_token_refresh',
+      originalError: errorText,
+    });
+    throw error;
   }
 
   const data = await response.json();
@@ -85,7 +98,11 @@ async function getValidAccessToken(env, db, userId, tokens) {
 
   // Token is expired or about to expire, refresh it
   if (!tokens.refreshToken) {
-    throw new Error('No refresh token available. User needs to reconnect Google account.');
+    const error = createDomainError(AUTH_ERRORS.INVALID, {
+      context: 'google_no_refresh_token',
+      message: 'No refresh token available. User needs to reconnect Google account.',
+    });
+    throw error;
   }
 
   const newTokens = await refreshGoogleToken(env, tokens.refreshToken);
@@ -131,7 +148,11 @@ googleDriveRoutes.get('/picker-token', async c => {
 
   const tokens = await getGoogleTokens(db, user.id);
   if (!tokens?.accessToken) {
-    return c.json({ error: 'Google account not connected', code: 'GOOGLE_NOT_CONNECTED' }, 400);
+    const error = createDomainError(AUTH_ERRORS.INVALID, {
+      context: 'google_not_connected',
+      code: 'GOOGLE_NOT_CONNECTED',
+    });
+    return c.json(error, error.statusCode);
   }
 
   try {
@@ -146,10 +167,24 @@ googleDriveRoutes.get('/picker-token', async c => {
     });
   } catch (error) {
     console.error('Google Drive picker-token error:', error);
-    if (error.message.includes('reconnect')) {
-      return c.json({ error: error.message, code: 'GOOGLE_TOKEN_EXPIRED' }, 401);
+    if (
+      (typeof error?.message === 'string' && error.message.includes('reconnect')) ||
+      (typeof error?.code === 'string' && error.code.includes('GOOGLE'))
+    ) {
+      const authError =
+        error.code ? error : (
+          createDomainError(AUTH_ERRORS.INVALID, {
+            context: 'google_token_expired',
+            originalError: typeof error?.message === 'string' ? error.message : String(error),
+          })
+        );
+      return c.json(authError, authError.statusCode);
     }
-    return c.json({ error: 'Failed to get Google picker token' }, 500);
+    const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+      operation: 'get_google_picker_token',
+      originalError: typeof error?.message === 'string' ? error.message : String(error),
+    });
+    return c.json(systemError, systemError.statusCode);
   }
 });
 
@@ -170,7 +205,11 @@ googleDriveRoutes.delete('/disconnect', async c => {
     return c.json({ success: true, message: 'Google account disconnected' });
   } catch (error) {
     console.error('Google disconnect error:', error);
-    return c.json({ error: 'Failed to disconnect Google account' }, 500);
+    const systemError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'disconnect_google_account',
+      originalError: error?.message || String(error),
+    });
+    return c.json(systemError, systemError.statusCode);
   }
 });
 
@@ -196,19 +235,35 @@ googleDriveRoutes.post('/import', async c => {
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: 'Invalid JSON body' }, 400);
+    const error = createValidationError(
+      'body',
+      VALIDATION_ERRORS.INVALID_INPUT.code,
+      null,
+      'invalid_json',
+    );
+    return c.json(error, error.statusCode);
   }
 
   const { fileId, projectId, studyId } = body;
 
   if (!fileId || !projectId || !studyId) {
-    return c.json({ error: 'fileId, projectId, and studyId are required' }, 400);
+    const error = createValidationError(
+      'fileId/projectId/studyId',
+      VALIDATION_ERRORS.FIELD_REQUIRED.code,
+      null,
+      'required',
+    );
+    return c.json(error, error.statusCode);
   }
 
   const tokens = await getGoogleTokens(db, user.id);
 
   if (!tokens?.accessToken) {
-    return c.json({ error: 'Google account not connected', code: 'GOOGLE_NOT_CONNECTED' }, 400);
+    const error = createDomainError(AUTH_ERRORS.INVALID, {
+      context: 'google_not_connected',
+      code: 'GOOGLE_NOT_CONNECTED',
+    });
+    return c.json(error, error.statusCode);
   }
 
   try {
@@ -226,22 +281,38 @@ googleDriveRoutes.post('/import', async c => {
 
     if (!metaResponse.ok) {
       if (metaResponse.status === 404) {
-        return c.json({ error: 'File not found in Google Drive' }, 404);
+        const error = createDomainError(FILE_ERRORS.NOT_FOUND, {
+          fileName: fileId,
+          source: 'google-drive',
+        });
+        return c.json(error, error.statusCode);
       }
-      return c.json({ error: 'Failed to fetch file from Google Drive' }, 500);
+      const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        operation: 'fetch_google_drive_file',
+        originalError: `HTTP ${metaResponse.status}`,
+      });
+      return c.json(systemError, systemError.statusCode);
     }
 
     const fileMeta = await metaResponse.json();
 
     // Verify it's a PDF
     if (fileMeta.mimeType !== 'application/pdf') {
-      return c.json({ error: 'Only PDF files can be imported' }, 400);
+      const error = createDomainError(FILE_ERRORS.INVALID_TYPE, {
+        expectedType: 'application/pdf',
+        receivedType: fileMeta.mimeType,
+      });
+      return c.json(error, error.statusCode);
     }
 
     // Check file size (limit to 50MB)
     const maxSize = 50 * 1024 * 1024;
     if (fileMeta.size && parseInt(fileMeta.size, 10) > maxSize) {
-      return c.json({ error: 'File too large. Maximum size is 50MB.' }, 400);
+      const error = createDomainError(FILE_ERRORS.TOO_LARGE, {
+        maxSize: maxSize,
+        fileSize: parseInt(fileMeta.size, 10),
+      });
+      return c.json(error, error.statusCode);
     }
 
     // Download the file content
@@ -255,7 +326,11 @@ googleDriveRoutes.post('/import', async c => {
     );
 
     if (!downloadResponse.ok) {
-      return c.json({ error: 'Failed to download file from Google Drive' }, 500);
+      const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        operation: 'download_google_drive_file',
+        originalError: `HTTP ${downloadResponse.status}`,
+      });
+      return c.json(systemError, systemError.statusCode);
     }
 
     // Upload to R2 bucket
@@ -285,7 +360,15 @@ googleDriveRoutes.post('/import', async c => {
     });
   } catch (error) {
     console.error('Google Drive import error:', error);
-    return c.json({ error: 'Failed to import file from Google Drive' }, 500);
+    // If it's already a domain error, return it directly
+    if (isDomainError(error)) {
+      return c.json(error, error.statusCode);
+    }
+    const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+      operation: 'import_google_drive_file',
+      originalError: typeof error?.message === 'string' ? error.message : String(error),
+    });
+    return c.json(systemError, systemError.statusCode);
   }
 });
 

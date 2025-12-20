@@ -1,5 +1,4 @@
 import { createSignal, Show, onMount } from 'solid-js';
-import { showToast } from '@corates/ui';
 import AddStudiesForm from './AddStudiesForm.jsx';
 import {
   saveFormState,
@@ -92,19 +91,23 @@ export default function CreateProjectForm(props) {
 
     setIsCreating(true);
     try {
-      const response = await fetch(`${props.apiBase}/api/projects`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: projectName().trim(),
-          description: projectDescription().trim(),
+      const { handleFetchError } = await import('@/lib/error-utils.js');
+      const response = await handleFetchError(
+        fetch(`${props.apiBase}/api/projects`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: projectName().trim(),
+            description: projectDescription().trim(),
+          }),
         }),
-      });
-
-      if (!response.ok) throw new Error('Failed to create project');
+        {
+          toastTitle: 'Creation Failed',
+        },
+      );
 
       const newProject = await response.json();
       const studies = collectedStudies();
@@ -119,9 +122,8 @@ export default function CreateProjectForm(props) {
       const driveFiles = studies.driveFiles || [];
 
       props.onProjectCreated?.(newProject, pendingPdfs, allRefsToImport, driveFiles);
-    } catch (error) {
-      console.error('Error creating project:', error);
-      showToast.error('Creation Failed', 'Failed to create project. Please try again.');
+    } catch (_error) {
+      // Error already handled by handleFetchError
     } finally {
       setIsCreating(false);
     }

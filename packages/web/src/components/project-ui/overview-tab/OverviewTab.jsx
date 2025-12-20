@@ -71,7 +71,10 @@ export default function OverviewTab() {
         showToast.success('Member Removed', `${memberName} has been removed from the project`);
       }
     } catch (err) {
-      showToast.error('Remove Failed', err.message || 'Failed to remove member');
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        toastTitle: 'Remove Failed',
+      });
     }
   };
 
