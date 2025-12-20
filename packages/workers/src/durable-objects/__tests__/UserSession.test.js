@@ -74,7 +74,7 @@ describe('UserSession Durable Object', () => {
     });
 
     it('should get existing session', async () => {
-      mockVerifyAuth.mockResolvedValueOnce({
+      mockVerifyAuth.mockResolvedValue({
         user: { id: 'test-user-1', email: 'test@example.com' },
       });
 

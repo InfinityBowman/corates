@@ -165,5 +165,14 @@ export const apiRateLimit = rateLimit({
  * @internal
  */
 export function clearRateLimitStore() {
-  rateLimitStore.clear();
+  // Only allow clearing in test environment
+  const isTest =
+    (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') ||
+    (typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'test');
+
+  if (isTest) {
+    rateLimitStore.clear();
+  } else {
+    console.warn('Attempted to clear rate limit store outside of test environment');
+  }
 }

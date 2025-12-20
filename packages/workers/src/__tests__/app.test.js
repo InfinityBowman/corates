@@ -4,8 +4,7 @@
  */
 
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import { resetTestDatabase, json } from './helpers.js';
+import { resetTestDatabase, json, fetchApp } from './helpers.js';
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -30,32 +29,9 @@ beforeEach(async () => {
   await resetTestDatabase();
 });
 
-async function fetchApp(path, init = {}) {
-  const testEnv = {
-    ...env,
-    EMAIL_QUEUE: {
-      idFromName: vi.fn(() => ({ toString: () => 'do-id' })),
-      get: vi.fn(() => ({
-        fetch: vi.fn(async _request => {
-          return new Response(JSON.stringify({ success: true }), {
-            status: 202,
-            headers: { 'Content-Type': 'application/json' },
-          });
-        }),
-      })),
-    },
-  };
-
-  const ctx = createExecutionContext();
-  const req = new Request(`http://localhost${path}`, init);
-  const res = await app.fetch(req, testEnv, ctx);
-  await waitOnExecutionContext(ctx);
-  return res;
-}
-
 describe('Main App - Route Mounting', () => {
   it('should mount health check routes', async () => {
-    const res = await fetchApp('/health');
+    const res = await fetchApp(app, '/health');
     expect(res.status).toBe(200);
 
     const body = await json(res);
@@ -63,21 +39,21 @@ describe('Main App - Route Mounting', () => {
   });
 
   it('should mount healthz route', async () => {
-    const res = await fetchApp('/healthz');
+    const res = await fetchApp(app, '/healthz');
     expect(res.status).toBe(200);
     const text = await res.text();
     expect(text).toBe('OK');
   });
 
   it('should mount root route', async () => {
-    const res = await fetchApp('/');
+    const res = await fetchApp(app, '/');
     expect(res.status).toBe(200);
     const text = await res.text();
     expect(text).toContain('Corates Workers API');
   });
 
   it('should mount project routes', async () => {
-    const res = await fetchApp('/api/projects/nonexistent', {
+    const res = await fetchApp(app, '/api/projects/nonexistent', {
       headers: {
         'x-test-user-id': 'user-1',
       },
@@ -87,7 +63,7 @@ describe('Main App - Route Mounting', () => {
   });
 
   it('should mount member routes', async () => {
-    const res = await fetchApp('/api/projects/test-project/members', {
+    const res = await fetchApp(app, '/api/projects/test-project/members', {
       headers: {
         'x-test-user-id': 'user-1',
       },
@@ -97,7 +73,7 @@ describe('Main App - Route Mounting', () => {
   });
 
   it('should mount user routes', async () => {
-    const res = await fetchApp('/api/users/search?q=test', {
+    const res = await fetchApp(app, '/api/users/search?q=test', {
       headers: {
         'x-test-user-id': 'user-1',
       },
@@ -107,14 +83,14 @@ describe('Main App - Route Mounting', () => {
   });
 
   it('should mount billing routes', async () => {
-    const res = await fetchApp('/api/billing/plans');
+    const res = await fetchApp(app, '/api/billing/plans');
     expect(res.status).toBe(200);
     const body = await json(res);
     expect(body.plans).toBeDefined();
   });
 
   it('should mount email routes', async () => {
-    const res = await fetchApp('/api/email/queue', {
+    const res = await fetchApp(app, '/api/email/queue', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ to: 'test@example.com' }),
@@ -124,7 +100,7 @@ describe('Main App - Route Mounting', () => {
   });
 
   it('should mount contact routes', async () => {
-    const res = await fetchApp('/api/contact', {
+    const res = await fetchApp(app, '/api/contact', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -140,7 +116,7 @@ describe('Main App - Route Mounting', () => {
 
 describe('Main App - Middleware Chain', () => {
   it('should apply CORS middleware', async () => {
-    const res = await fetchApp('/health', {
+    const res = await fetchApp(app, '/health', {
       headers: {
         origin: 'http://localhost:5173',
       },
@@ -151,7 +127,7 @@ describe('Main App - Middleware Chain', () => {
   });
 
   it('should apply security headers', async () => {
-    const res = await fetchApp('/health');
+    const res = await fetchApp(app, '/health');
 
     expect(res.headers.get('X-Frame-Options')).toBe('DENY');
     expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
@@ -160,7 +136,7 @@ describe('Main App - Middleware Chain', () => {
   });
 
   it('should handle CORS preflight requests', async () => {
-    const res = await fetchApp('/health', {
+    const res = await fetchApp(app, '/health', {
       method: 'OPTIONS',
       headers: {
         origin: 'http://localhost:5173',
@@ -176,7 +152,7 @@ describe('Main App - Middleware Chain', () => {
 
 describe('Main App - Error Handling', () => {
   it('should return 404 for unknown routes', async () => {
-    const res = await fetchApp('/api/nonexistent/route');
+    const res = await fetchApp(app, '/api/nonexistent/route');
     expect(res.status).toBe(404);
 
     const body = await json(res);
@@ -186,7 +162,7 @@ describe('Main App - Error Handling', () => {
   it('should handle errors gracefully', async () => {
     // Test error handler by making a request that might fail
     // The app has an error handler that returns 500
-    const res = await fetchApp('/api/projects', {
+    const res = await fetchApp(app, '/api/projects', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -202,7 +178,7 @@ describe('Main App - Error Handling', () => {
 
 describe('Main App - PDF Proxy Endpoint', () => {
   it('should require authentication', async () => {
-    const res = await fetchApp('/api/pdf-proxy', {
+    const res = await fetchApp(app, '/api/pdf-proxy', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ url: 'https://example.com/test.pdf' }),
@@ -212,7 +188,7 @@ describe('Main App - PDF Proxy Endpoint', () => {
   });
 
   it('should reject requests without URL', async () => {
-    const res = await fetchApp('/api/pdf-proxy', {
+    const res = await fetchApp(app, '/api/pdf-proxy', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -230,7 +206,7 @@ describe('Main App - PDF Proxy Endpoint', () => {
   });
 
   it('should reject invalid URL protocols', async () => {
-    const res = await fetchApp('/api/pdf-proxy', {
+    const res = await fetchApp(app, '/api/pdf-proxy', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -246,13 +222,13 @@ describe('Main App - PDF Proxy Endpoint', () => {
 
 describe('Main App - Durable Object Routes', () => {
   it('should handle project DO routes', async () => {
-    const res = await fetchApp('/api/project/test-project-id');
+    const res = await fetchApp(app, '/api/project/test-project-id');
     // Should return 200, 400, or 401 (auth required)
     expect([200, 400, 401]).toContain(res.status);
   });
 
   it('should handle user session DO routes', async () => {
-    const res = await fetchApp('/api/sessions/test-session-id');
+    const res = await fetchApp(app, '/api/sessions/test-session-id');
     // Should return 200, 400, or 401 (auth required)
     expect([200, 400, 401]).toContain(res.status);
   });

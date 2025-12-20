@@ -360,12 +360,12 @@ googleDriveRoutes.post('/import', async c => {
   } catch (error) {
     console.error('Google Drive import error:', error);
     // If it's already a domain error, return it directly
-    if (error.code && error.statusCode) {
+    if (isDomainError(error)) {
       return c.json(error, error.statusCode);
     }
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'import_google_drive_file',
-      originalError: error.message,
+      originalError: typeof error?.message === 'string' ? error.message : String(error),
     });
     return c.json(systemError, systemError.statusCode);
   }

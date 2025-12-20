@@ -95,11 +95,11 @@ pdfRoutes.get('/', async c => {
     return c.json({ pdfs });
   } catch (error) {
     console.error('PDF list error:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+    const fileError = createDomainError(FILE_ERRORS.UPLOAD_FAILED, {
       operation: 'list_pdfs',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(fileError, fileError.statusCode);
   }
 });
 

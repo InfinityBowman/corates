@@ -293,6 +293,7 @@ export function createTestEnv(overrides = {}) {
       get: async () => null,
       put: async () => {},
     },
+    POSTMARK_SERVER_TOKEN: 'test-token',
     ENVIRONMENT: 'test',
     ...overrides,
   };
@@ -313,8 +314,8 @@ export async function json(res) {
 /**
  * Make a request to a Hono app with test environment
  */
-export async function fetchApp(app, path, init = {}) {
-  const testEnv = createTestEnv();
+export async function fetchApp(app, path, init = {}, envOverrides = {}) {
+  const testEnv = createTestEnv(envOverrides);
   const ctx = createExecutionContext();
   const req = new Request(`http://localhost${path}`, init);
   const res = await app.fetch(req, testEnv, ctx);

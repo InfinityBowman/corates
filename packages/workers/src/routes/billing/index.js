@@ -138,7 +138,7 @@ billingRoutes.post('/checkout', requireAuth, async c => {
   } catch (error) {
     console.error('Error creating checkout session:', error);
     // If it's already a domain error, return it directly
-    if (error.code && error.statusCode) {
+    if (isDomainError(error)) {
       return c.json(error, error.statusCode);
     }
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
@@ -162,7 +162,7 @@ billingRoutes.post('/portal', requireAuth, async c => {
   } catch (error) {
     console.error('Error creating portal session:', error);
     // If it's already a domain error, return it directly
-    if (error.code && error.statusCode) {
+    if (isDomainError(error)) {
       return c.json(error, error.statusCode);
     }
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
