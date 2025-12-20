@@ -29,6 +29,13 @@ import { requireAuth, getAuth } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rateLimit.js';
 import { createEmailService } from '../auth/email.js';
 import { getAccountMergeEmailHtml, getAccountMergeEmailText } from '../auth/emailTemplates.js';
+import {
+  createDomainError,
+  createValidationError,
+  VALIDATION_ERRORS,
+  USER_ERRORS,
+  SYSTEM_ERRORS,
+} from '@corates/shared';
 
 const accountMergeRoutes = new Hono();
 
@@ -71,13 +78,25 @@ accountMergeRoutes.post('/initiate', async c => {
   const { targetEmail } = await c.req.json();
 
   if (!targetEmail || typeof targetEmail !== 'string') {
-    return c.json({ error: 'Target email is required' }, 400);
+    const error = createValidationError(
+      'targetEmail',
+      VALIDATION_ERRORS.FIELD_REQUIRED.code,
+      null,
+      'required',
+    );
+    return c.json(error, error.statusCode);
   }
 
   const normalizedEmail = targetEmail.trim().toLowerCase();
 
   if (normalizedEmail === currentUser.email.toLowerCase()) {
-    return c.json({ error: 'Cannot merge with your own account' }, 400);
+    const error = createValidationError(
+      'targetEmail',
+      VALIDATION_ERRORS.INVALID_INPUT.code,
+      normalizedEmail,
+      'cannot_merge_self',
+    );
+    return c.json(error, error.statusCode);
   }
 
   // Apply rate limiting keyed by user ID + target email
@@ -98,7 +117,8 @@ accountMergeRoutes.post('/initiate', async c => {
     .then(rows => rows[0]);
 
   if (!targetUser) {
-    return c.json({ error: 'No account found with that email' }, 404);
+    const error = createDomainError(USER_ERRORS.NOT_FOUND, { email: normalizedEmail });
+    return c.json(error, error.statusCode);
   }
 
   // Get linked accounts for both users to show what will be merged
@@ -156,7 +176,11 @@ accountMergeRoutes.post('/initiate', async c => {
       .delete(verification)
       .where(eq(verification.identifier, `merge:${currentUser.id}:${targetUser.id}`));
 
-    return c.json({ error: 'Failed to send verification email. Please try again later.' }, 502);
+    const error = createDomainError(SYSTEM_ERRORS.EMAIL_SEND_FAILED, {
+      operation: 'send_merge_verification',
+      originalError: emailResult.error?.message,
+    });
+    return c.json(error, error.statusCode);
   }
 
   // In dev, log the code for testing
@@ -195,16 +219,34 @@ accountMergeRoutes.post('/verify', async c => {
   const { mergeToken, code } = await c.req.json();
 
   if (!mergeToken || !code) {
-    return c.json({ error: 'Merge token and code are required' }, 400);
+    const error = createValidationError(
+      'mergeToken/code',
+      VALIDATION_ERRORS.FIELD_REQUIRED.code,
+      null,
+      'required',
+    );
+    return c.json(error, error.statusCode);
   }
 
   if (typeof mergeToken !== 'string' || typeof code !== 'string') {
-    return c.json({ error: 'Merge token and code must be strings' }, 400);
+    const error = createValidationError(
+      'mergeToken/code',
+      VALIDATION_ERRORS.FIELD_INVALID_FORMAT.code,
+      { mergeToken: typeof mergeToken, code: typeof code },
+      'invalid_type',
+    );
+    return c.json(error, error.statusCode);
   }
 
   const trimmedCode = code.trim();
   if (!trimmedCode) {
-    return c.json({ error: 'Code cannot be empty' }, 400);
+    const error = createValidationError(
+      'code',
+      VALIDATION_ERRORS.FIELD_REQUIRED.code,
+      null,
+      'empty',
+    );
+    return c.json(error, error.statusCode);
   }
 
   // Apply rate limiting keyed by mergeToken
@@ -223,7 +265,11 @@ accountMergeRoutes.post('/verify', async c => {
     .where(like(verification.identifier, `merge:${currentUser.id}:%`));
 
   if (mergeRequests.length === 0) {
-    return c.json({ error: 'Merge request not found' }, 404);
+    const error = createDomainError(USER_ERRORS.NOT_FOUND, {
+      context: 'merge_request',
+      userId: currentUser.id,
+    });
+    return c.json(error, error.statusCode);
   }
 
   const mergeRequest = mergeRequests[0];
@@ -231,18 +277,36 @@ accountMergeRoutes.post('/verify', async c => {
 
   // Verify token matches
   if (mergeData.token !== mergeToken) {
-    return c.json({ error: 'Invalid merge token' }, 400);
+    const error = createValidationError(
+      'mergeToken',
+      VALIDATION_ERRORS.INVALID_INPUT.code,
+      mergeToken,
+      'invalid_token',
+    );
+    return c.json(error, error.statusCode);
   }
 
   // Check expiry
   if (mergeRequest.expiresAt < new Date()) {
     await db.delete(verification).where(eq(verification.id, mergeRequest.id));
-    return c.json({ error: 'Verification code has expired. Please start again.' }, 400);
+    const error = createValidationError(
+      'code',
+      VALIDATION_ERRORS.INVALID_INPUT.code,
+      null,
+      'expired',
+    );
+    return c.json(error, error.statusCode);
   }
 
   // Verify code
   if (mergeData.code !== trimmedCode) {
-    return c.json({ error: 'Invalid verification code' }, 400);
+    const error = createValidationError(
+      'code',
+      VALIDATION_ERRORS.INVALID_INPUT.code,
+      null,
+      'invalid_code',
+    );
+    return c.json(error, error.statusCode);
   }
 
   // Mark as verified
@@ -294,11 +358,13 @@ accountMergeRoutes.post('/complete', async c => {
   const { mergeToken } = await c.req.json();
 
   if (typeof mergeToken !== 'string' || !mergeToken.trim()) {
-    return c.json({ error: 'Merge token is required' }, 400);
-  }
-
-  if (typeof mergeToken !== 'string' || mergeToken.trim().length === 0) {
-    return c.json({ error: 'Merge token must be a non-empty string' }, 400);
+    const error = createValidationError(
+      'mergeToken',
+      VALIDATION_ERRORS.FIELD_REQUIRED.code,
+      null,
+      'required',
+    );
+    return c.json(error, error.statusCode);
   }
 
   const db = createDb(c.env.DB);
@@ -310,7 +376,11 @@ accountMergeRoutes.post('/complete', async c => {
     .where(like(verification.identifier, `merge:${currentUser.id}:%`));
 
   if (mergeRequests.length === 0) {
-    return c.json({ error: 'Merge request not found' }, 404);
+    const error = createDomainError(USER_ERRORS.NOT_FOUND, {
+      context: 'merge_request',
+      userId: currentUser.id,
+    });
+    return c.json(error, error.statusCode);
   }
 
   const mergeRequest = mergeRequests[0];
@@ -318,18 +388,36 @@ accountMergeRoutes.post('/complete', async c => {
 
   // Verify token matches
   if (mergeData.token !== mergeToken) {
-    return c.json({ error: 'Invalid merge token' }, 400);
+    const error = createValidationError(
+      'mergeToken',
+      VALIDATION_ERRORS.INVALID_INPUT.code,
+      mergeToken,
+      'invalid_token',
+    );
+    return c.json(error, error.statusCode);
   }
 
   // Ensure it's verified
   if (!mergeData.verified) {
-    return c.json({ error: 'Please verify the code first' }, 400);
+    const error = createValidationError(
+      'code',
+      VALIDATION_ERRORS.INVALID_INPUT.code,
+      null,
+      'code_not_verified',
+    );
+    return c.json(error, error.statusCode);
   }
 
   // Check expiry
   if (mergeRequest.expiresAt < new Date()) {
     await db.delete(verification).where(eq(verification.id, mergeRequest.id));
-    return c.json({ error: 'Merge request has expired. Please start again.' }, 400);
+    const error = createValidationError(
+      'mergeRequest',
+      VALIDATION_ERRORS.INVALID_INPUT.code,
+      null,
+      'expired',
+    );
+    return c.json(error, error.statusCode);
   }
 
   const primaryUserId = currentUser.id;
@@ -479,7 +567,11 @@ accountMergeRoutes.post('/complete', async c => {
     });
   } catch (err) {
     console.error('[AccountMerge] Error during merge:', err);
-    return c.json({ error: 'Failed to merge accounts. Please try again.' }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'merge_accounts',
+      originalError: err.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 

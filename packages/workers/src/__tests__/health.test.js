@@ -1,48 +1,147 @@
 /**
- * Example test for workers health check endpoint
+ * Health check endpoint integration tests
  *
- * This demonstrates how to test your Hono routes with mocked Cloudflare bindings.
- * You can expand this to test other routes, middleware, and Durable Objects.
+ * Tests the /health and /healthz endpoints with real Cloudflare bindings
  */
 
-import { describe, it, expect } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Hono } from 'hono';
+import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
+import { resetTestDatabase, json, fetchApp } from './helpers.js';
 
-describe('Health Check Endpoint', () => {
-  it('should be a placeholder test', () => {
-    // This is a basic placeholder test
-    // TODO: Set up proper Hono app testing with mocked env
-    expect(true).toBe(true);
-  });
-
-  it('should validate health check returns expected structure', () => {
-    const healthCheck = {
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      services: {},
-    };
-
-    expect(healthCheck).toHaveProperty('status');
-    expect(healthCheck).toHaveProperty('timestamp');
-    expect(healthCheck).toHaveProperty('services');
-    expect(healthCheck.status).toBe('healthy');
-  });
+// Mock postmark
+vi.mock('postmark', () => {
+  return {
+    Client: class {
+      constructor() {}
+      sendEmail() {
+        return Promise.resolve({ Message: 'mock' });
+      }
+    },
+  };
 });
 
-/**
- * TODO: Add real integration tests
- *
- * Examples of what to test:
- * - Health check endpoint returns 200
- * - Auth middleware correctly validates tokens
- * - Project routes CRUD operations
- * - Durable Objects state management
- * - Rate limiting middleware
- * - CORS middleware with different origins
- * - Database operations with mocked D1
- *
- * For testing Hono apps with Cloudflare Workers:
- * 1. Mock the env object (c.env) with your bindings
- * 2. Use Hono's test utilities to make requests
- * 3. Test individual route handlers
- * 4. Mock Durable Object stubs for integration tests
- */
+let app;
+
+beforeAll(async () => {
+  // Import the main app
+  const mainApp = await import('../index.js');
+  app = mainApp.default;
+});
+
+beforeEach(async () => {
+  await resetTestDatabase();
+});
+
+describe('Health Check Endpoints', () => {
+  it('GET /health returns healthy status with all services', async () => {
+    const res = await fetchApp(app, '/health');
+    expect(res.status).toBe(200);
+
+    const body = await json(res);
+    expect(body).toHaveProperty('status');
+    expect(body).toHaveProperty('timestamp');
+    expect(body).toHaveProperty('services');
+    expect(body.status).toBe('healthy');
+    expect(body.services).toHaveProperty('database');
+    expect(body.services).toHaveProperty('storage');
+    expect(body.services).toHaveProperty('durableObjects');
+  });
+
+  it('GET /health checks database connectivity', async () => {
+    const res = await fetchApp(app, '/health');
+    const body = await json(res);
+
+    expect(body.services.database).toBeDefined();
+    expect(body.services.database.type).toBe('D1');
+    expect(body.services.database.status).toBe('healthy');
+  });
+
+  it('GET /health checks R2 storage connectivity', async () => {
+    const res = await fetchApp(app, '/health');
+    const body = await json(res);
+
+    expect(body.services.storage).toBeDefined();
+    expect(body.services.storage.type).toBe('R2');
+    expect(body.services.storage.status).toBe('healthy');
+  });
+
+  it('GET /health checks Durable Objects bindings', async () => {
+    const res = await fetchApp(app, '/health');
+    const body = await json(res);
+
+    expect(body.services.durableObjects).toBeDefined();
+    expect(body.services.durableObjects.type).toBe('Durable Objects');
+    expect(body.services.durableObjects.status).toBe('healthy');
+    expect(body.services.durableObjects.bindings).toBeDefined();
+    expect(body.services.durableObjects.bindings.USER_SESSION).toBe(true);
+    expect(body.services.durableObjects.bindings.PROJECT_DOC).toBe(true);
+    expect(body.services.durableObjects.bindings.EMAIL_QUEUE).toBe(true);
+  });
+
+  it('GET /health returns degraded status when database fails', async () => {
+    // Create a test env with a failing DB
+    const testEnv = {
+      ...env,
+      DB: {
+        prepare: () => ({
+          first: async () => {
+            throw new Error('Database connection failed');
+          },
+        }),
+      },
+    };
+
+    const ctx = createExecutionContext();
+    const req = new Request('http://localhost/health');
+    const res = await app.fetch(req, testEnv, ctx);
+    await waitOnExecutionContext(ctx);
+
+    expect(res.status).toBe(503);
+    const body = await json(res);
+    expect(body.status).toBe('degraded');
+    expect(body.services.database.status).toBe('unhealthy');
+    expect(body.services.database.error).toBeDefined();
+  });
+
+  it('GET /health returns degraded status when R2 fails', async () => {
+    // Create a test env with a failing R2
+    const testEnv = {
+      ...env,
+      PDF_BUCKET: {
+        list: async () => {
+          throw new Error('R2 connection failed');
+        },
+      },
+    };
+
+    const ctx = createExecutionContext();
+    const req = new Request('http://localhost/health');
+    const res = await app.fetch(req, testEnv, ctx);
+    await waitOnExecutionContext(ctx);
+
+    expect(res.status).toBe(503);
+    const body = await json(res);
+    expect(body.status).toBe('degraded');
+    expect(body.services.storage.status).toBe('unhealthy');
+    expect(body.services.storage.error).toBeDefined();
+  });
+
+  it('GET /healthz returns OK text', async () => {
+    const res = await fetchApp(app, '/healthz');
+    expect(res.status).toBe(200);
+
+    const text = await res.text();
+    expect(text).toBe('OK');
+  });
+
+  it('GET /health includes ISO timestamp', async () => {
+    const res = await fetchApp(app, '/health');
+    const body = await json(res);
+
+    expect(body.timestamp).toBeDefined();
+    // Verify it's a valid ISO timestamp
+    expect(() => new Date(body.timestamp)).not.toThrow();
+    expect(new Date(body.timestamp).toISOString()).toBe(body.timestamp);
+  });
+});

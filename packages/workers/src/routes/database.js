@@ -8,6 +8,12 @@ import { createDb } from '../db/client.js';
 import { user } from '../db/schema.js';
 import { desc } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth.js';
+import {
+  createDomainError,
+  createValidationError,
+  VALIDATION_ERRORS,
+  SYSTEM_ERRORS,
+} from '@corates/shared';
 
 const dbRoutes = new Hono();
 
@@ -35,7 +41,11 @@ dbRoutes.get('/users', requireAuth, async c => {
     return c.json({ users: results });
   } catch (error) {
     console.error('Error fetching users:', error);
-    return c.json({ error: 'Failed to fetch users' }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'fetch_users',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -44,7 +54,13 @@ dbRoutes.get('/users', requireAuth, async c => {
  * Redirect to auth for user registration
  */
 dbRoutes.post('/users', c => {
-  return c.json({ error: 'Use /api/auth/register for user registration' }, 400);
+  const error = createValidationError(
+    'endpoint',
+    VALIDATION_ERRORS.INVALID_INPUT.code,
+    null,
+    'use_auth_register',
+  );
+  return c.json(error, error.statusCode);
 });
 
 /**
@@ -68,7 +84,11 @@ dbRoutes.post('/migrate', async c => {
     return c.json({ success: true, message: 'Migration completed' });
   } catch (error) {
     console.error('Migration error:', error);
-    return c.json({ error: 'Migration failed: ' + error.message }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'check_migration',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 

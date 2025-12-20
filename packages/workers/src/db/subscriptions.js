@@ -124,17 +124,17 @@ export async function upsertSubscription(db, data) {
  * @returns {Promise<Object | null>}
  */
 export async function updateSubscriptionByStripeId(db, stripeSubscriptionId, updates) {
-  const result = await db
+  await db
     .update(subscriptions)
     .set({
       ...updates,
       updatedAt: new Date(),
     })
-    .where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId))
-    .returning()
-    .get();
+    .where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId));
 
-  return result ?? null;
+  // Query the updated record
+  const result = await getSubscriptionByStripeSubscriptionId(db, stripeSubscriptionId);
+  return result;
 }
 
 /**

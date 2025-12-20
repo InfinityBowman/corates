@@ -5,6 +5,12 @@
 
 import { Hono } from 'hono';
 import { emailRateLimit } from '../middleware/rateLimit.js';
+import {
+  createDomainError,
+  createValidationError,
+  VALIDATION_ERRORS,
+  SYSTEM_ERRORS,
+} from '@corates/shared';
 
 const emailRoutes = new Hono();
 
@@ -20,23 +26,35 @@ emailRoutes.post('/queue', async c => {
     const payload = await c.req.json();
 
     if (!payload?.to) {
-      return c.json({ error: 'Email `to` required' }, 400);
+      const error = createValidationError(
+        'to',
+        VALIDATION_ERRORS.FIELD_REQUIRED.code,
+        null,
+        'required',
+      );
+      return c.json(error, error.statusCode);
     }
 
     const id = c.env.EMAIL_QUEUE.idFromName('default');
     const queue = c.env.EMAIL_QUEUE.get(id);
 
-    const resp = await queue.fetch('/enqueue', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    const resp = await queue.fetch(
+      new Request('https://internal/enqueue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
+    );
 
     const data = await resp.json();
     return c.json({ success: true, queued: data.success });
   } catch (err) {
     console.error('Email queue handler error:', err);
-    return c.json({ error: 'Failed to queue email' }, 500);
+    const error = createDomainError(SYSTEM_ERRORS.EMAIL_SEND_FAILED, {
+      operation: 'queue_email',
+      originalError: err.message,
+    });
+    return c.json(error, error.statusCode);
   }
 });
 

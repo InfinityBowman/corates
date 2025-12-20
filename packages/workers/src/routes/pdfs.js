@@ -33,7 +33,10 @@ async function verifyProjectMembership(c, next) {
   const studyId = c.req.param('studyId');
 
   if (!projectId || !studyId) {
-    return c.json({ error: 'Missing project or study ID' }, 400);
+    const error = createDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, {
+      field: 'projectId or studyId',
+    });
+    return c.json(error, error.statusCode);
   }
 
   // Verify user is a member of this project using Drizzle ORM
@@ -45,7 +48,8 @@ async function verifyProjectMembership(c, next) {
     .get();
 
   if (!membership) {
-    return c.json({ error: 'Not a member of this project' }, 403);
+    const error = createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId });
+    return c.json(error, error.statusCode);
   }
 
   c.set('projectId', projectId);

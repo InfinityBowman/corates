@@ -19,6 +19,13 @@ import { eq, desc, sql, like, or, count } from 'drizzle-orm';
 import { requireAdmin } from '../middleware/requireAdmin.js';
 import { requireTrustedOrigin } from '../middleware/csrf.js';
 import { createAuth } from '../auth/config.js';
+import {
+  createDomainError,
+  createValidationError,
+  VALIDATION_ERRORS,
+  USER_ERRORS,
+  SYSTEM_ERRORS,
+} from '@corates/shared';
 const adminRoutes = new Hono();
 
 // Apply admin middleware to all routes
@@ -56,7 +63,11 @@ adminRoutes.get('/stats', async c => {
     });
   } catch (error) {
     console.error('Error fetching admin stats:', error);
-    return c.json({ error: 'Failed to fetch statistics' }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'fetch_admin_stats',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -170,7 +181,11 @@ adminRoutes.get('/users', async c => {
     });
   } catch (error) {
     console.error('Error fetching users:', error);
-    return c.json({ error: 'Failed to fetch users' }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'fetch_users',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -186,7 +201,8 @@ adminRoutes.get('/users/:userId', async c => {
     const [userData] = await db.select().from(user).where(eq(user.id, userId)).limit(1);
 
     if (!userData) {
-      return c.json({ error: 'User not found' }, 404);
+      const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId });
+      return c.json(error, error.statusCode);
     }
 
     // Get user's projects
@@ -234,7 +250,11 @@ adminRoutes.get('/users/:userId', async c => {
     });
   } catch (error) {
     console.error('Error fetching user details:', error);
-    return c.json({ error: 'Failed to fetch user details' }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'fetch_user_details',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -251,7 +271,13 @@ adminRoutes.post('/users/:userId/ban', async c => {
     // Don't allow banning yourself
     const adminUser = c.get('user');
     if (adminUser.id === userId) {
-      return c.json({ error: 'Cannot ban yourself' }, 400);
+      const error = createValidationError(
+        'userId',
+        VALIDATION_ERRORS.INVALID_INPUT.code,
+        userId,
+        'cannot_ban_self',
+      );
+      return c.json(error, error.statusCode);
     }
 
     // Ban user and invalidate sessions atomically
@@ -271,7 +297,11 @@ adminRoutes.post('/users/:userId/ban', async c => {
     return c.json({ success: true, message: 'User banned successfully' });
   } catch (error) {
     console.error('Error banning user:', error);
-    return c.json({ error: 'Failed to ban user' }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'ban_user',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -297,7 +327,11 @@ adminRoutes.post('/users/:userId/unban', async c => {
     return c.json({ success: true, message: 'User unbanned successfully' });
   } catch (error) {
     console.error('Error unbanning user:', error);
-    return c.json({ error: 'Failed to unban user' }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'unban_user',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -313,7 +347,13 @@ adminRoutes.post('/users/:userId/impersonate', async c => {
   try {
     // Don't allow impersonating yourself
     if (adminUser.id === userId) {
-      return c.json({ error: 'Cannot impersonate yourself' }, 400);
+      const error = createValidationError(
+        'userId',
+        VALIDATION_ERRORS.INVALID_INPUT.code,
+        userId,
+        'cannot_impersonate_self',
+      );
+      return c.json(error, error.statusCode);
     }
 
     // Use Better Auth's handler for impersonation to properly handle cookies
@@ -352,7 +392,11 @@ adminRoutes.post('/users/:userId/impersonate', async c => {
     return response;
   } catch (error) {
     console.error('Error impersonating user:', error);
-    return c.json({ error: 'Failed to impersonate user' }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'impersonate_user',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -374,7 +418,11 @@ adminRoutes.delete('/users/:userId/sessions', async c => {
     return c.json({ success: true, message: 'All sessions revoked' });
   } catch (error) {
     console.error('Error revoking sessions:', error);
-    return c.json({ error: 'Failed to revoke sessions' }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'revoke_sessions',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -390,7 +438,13 @@ adminRoutes.delete('/users/:userId', async c => {
   try {
     // Don't allow deleting yourself
     if (adminUser.id === userId) {
-      return c.json({ error: 'Cannot delete yourself' }, 400);
+      const error = createValidationError(
+        'userId',
+        VALIDATION_ERRORS.INVALID_INPUT.code,
+        userId,
+        'cannot_delete_self',
+      );
+      return c.json(error, error.statusCode);
     }
 
     // Fetch user to get email for verification cleanup
@@ -399,7 +453,8 @@ adminRoutes.delete('/users/:userId', async c => {
       .from(user)
       .where(eq(user.id, userId));
     if (!userToDelete) {
-      return c.json({ error: 'User not found' }, 404);
+      const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId });
+      return c.json(error, error.statusCode);
     }
 
     // Delete all user data atomically using batch transaction
@@ -418,7 +473,11 @@ adminRoutes.delete('/users/:userId', async c => {
     return c.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
     console.error('Error deleting user:', error);
-    return c.json({ error: 'Failed to delete user' }, 500);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'delete_user',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
 });
 

@@ -1,414 +1,953 @@
 /**
- * Tests for member routes
- * P1 Priority: Member management operations
- * Tests adding, updating, removing members and role management
+ * Integration tests for member routes
+ * Tests member management operations with real D1 database
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Hono } from 'hono';
+import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
+import {
+  resetTestDatabase,
+  seedUser,
+  seedProject,
+  seedProjectMember,
+  json,
+} from '../../__tests__/helpers.js';
 
-// Mock dependencies
-const mockDb = {
-  select: vi.fn().mockReturnThis(),
-  from: vi.fn().mockReturnThis(),
-  innerJoin: vi.fn().mockReturnThis(),
-  where: vi.fn().mockReturnThis(),
-  orderBy: vi.fn().mockReturnThis(),
-  get: vi.fn(),
-  insert: vi.fn().mockReturnThis(),
-  values: vi.fn(),
-  update: vi.fn().mockReturnThis(),
-  set: vi.fn().mockReturnThis(),
-  delete: vi.fn().mockReturnThis(),
-};
-
-const mockEnv = {
-  DB: {},
-  PROJECT_DOC: {
-    idFromName: vi.fn(() => 'do-id'),
-    get: vi.fn(() => ({
-      fetch: vi.fn().mockResolvedValue({ ok: true }),
-    })),
-  },
-  USER_SESSION: {
-    idFromName: vi.fn(() => 'user-session-id'),
-    get: vi.fn(() => ({
-      fetch: vi.fn().mockResolvedValue({ ok: true }),
-    })),
-  },
-};
-
-// Mock the db client
-vi.mock('../../db/client.js', () => ({
-  createDb: vi.fn(() => mockDb),
-}));
+// Mock postmark
+vi.mock('postmark', () => {
+  return {
+    Client: class {
+      constructor() {}
+      sendEmail() {
+        return Promise.resolve({ Message: 'mock' });
+      }
+    },
+  };
+});
 
 // Mock auth middleware
-vi.mock('../../middleware/auth.js', () => ({
-  requireAuth: vi.fn((c, next) => next()),
-  getAuth: vi.fn(() => ({ user: { id: 'user-123', email: 'owner@example.com' } })),
-}));
+vi.mock('../../middleware/auth.js', () => {
+  return {
+    requireAuth: async (c, next) => {
+      const userId = c.req.raw.headers.get('x-test-user-id') || 'user-1';
+      const email = c.req.raw.headers.get('x-test-user-email') || 'user1@example.com';
+      c.set('user', {
+        id: userId,
+        email,
+        name: 'Test User',
+        displayName: 'Test User',
+        image: null,
+      });
+      c.set('session', { id: 'test-session' });
+      await next();
+    },
+    getAuth: c => ({
+      user: c.get('user'),
+      session: c.get('session'),
+    }),
+  };
+});
+
+let app;
+
+beforeAll(async () => {
+  const { memberRoutes } = await import('../members.js');
+  app = new Hono();
+  app.route('/api/projects/:projectId/members', memberRoutes);
+});
+
+beforeEach(async () => {
+  await resetTestDatabase();
+});
+
+async function fetchMembers(projectId, path = '', init = {}) {
+  const ctx = createExecutionContext();
+  const req = new Request(`http://localhost/api/projects/${projectId}/members${path}`, {
+    ...init,
+    headers: {
+      'x-test-user-id': 'user-1',
+      'x-test-user-email': 'user1@example.com',
+      ...init.headers,
+    },
+  });
+  const res = await app.fetch(req, env, ctx);
+  await waitOnExecutionContext(ctx);
+  return res;
+}
 
 describe('Member Routes - GET /api/projects/:projectId/members', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it('should list all members of a project', async () => {
-    const mockMembers = [
-      {
-        userId: 'user-1',
-        role: 'owner',
-        joinedAt: new Date('2023-01-01'),
-        name: 'Owner User',
-        email: 'owner@example.com',
-        username: 'owner',
-        displayName: 'Owner',
-        image: null,
-      },
-      {
-        userId: 'user-2',
-        role: 'collaborator',
-        joinedAt: new Date('2023-01-02'),
-        name: 'Collaborator User',
-        email: 'collab@example.com',
-        username: 'collab',
-        displayName: 'Collaborator',
-        image: null,
-      },
-    ];
+    const nowSec = Math.floor(Date.now() / 1000);
 
-    mockDb.get.mockResolvedValue(mockMembers);
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner User',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    expect(mockDb.select).toBeDefined();
-    expect(mockDb.from).toBeDefined();
-    expect(mockDb.innerJoin).toBeDefined();
+    await seedUser({
+      id: 'user-2',
+      name: 'Collaborator User',
+      email: 'collab@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-2',
+      projectId: 'project-1',
+      userId: 'user-2',
+      role: 'collaborator',
+      joinedAt: nowSec + 1,
+    });
+
+    const res = await fetchMembers('project-1');
+    expect(res.status).toBe(200);
+
+    const body = await json(res);
+    expect(body).toHaveLength(2);
+    expect(body[0].userId).toBe('user-1');
+    expect(body[0].role).toBe('owner');
+    expect(body[0].name).toBe('Owner User');
+    expect(body[1].userId).toBe('user-2');
+    expect(body[1].role).toBe('collaborator');
   });
 
   it('should order members by join date', async () => {
-    mockDb.orderBy = vi.fn().mockReturnThis();
+    const nowSec = Math.floor(Date.now() / 1000);
 
-    expect(mockDb.orderBy).toBeDefined();
+    await seedUser({
+      id: 'user-1',
+      name: 'User 1',
+      email: 'user1@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedUser({
+      id: 'user-2',
+      name: 'User 2',
+      email: 'user2@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-2',
+      projectId: 'project-1',
+      userId: 'user-2',
+      role: 'collaborator',
+      joinedAt: nowSec + 10,
+    });
+
+    const res = await fetchMembers('project-1');
+    const body = await json(res);
+
+    // joinedAt is returned as Unix timestamp (number or string)
+    const joinedAt0 =
+      typeof body[0].joinedAt === 'string' ? parseInt(body[0].joinedAt) : body[0].joinedAt;
+    const joinedAt1 =
+      typeof body[1].joinedAt === 'string' ? parseInt(body[1].joinedAt) : body[1].joinedAt;
+    expect(joinedAt0).toBeLessThanOrEqual(joinedAt1);
   });
 
   it('should require project membership to view members', async () => {
-    // Middleware should check membership before listing
-    expect(mockDb.where).toBeDefined();
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    await seedUser({
+      id: 'user-1',
+      name: 'User 1',
+      email: 'user1@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedUser({
+      id: 'user-2',
+      name: 'User 2',
+      email: 'user2@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-2',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-2',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
+    // user-1 is not a member - should get 403 ACCESS_DENIED
+    const res = await fetchMembers('project-1');
+    expect(res.status).toBe(403);
+    const body = await json(res);
+    expect(body.error || body.code).toBeDefined();
   });
 });
 
 describe('Member Routes - POST /api/projects/:projectId/members', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it('should allow owner to add member by userId', async () => {
-    const mockUser = {
-      id: 'user-new',
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedUser({
+      id: 'user-2',
       name: 'New User',
       email: 'new@example.com',
-      username: 'newuser',
-      displayName: 'New User',
-      image: null,
-    };
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    mockDb.get
-      .mockResolvedValueOnce(mockUser) // Find user
-      .mockResolvedValueOnce(null) // Check not existing member
-      .mockResolvedValueOnce({ name: 'Test Project' }); // Get project name
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    expect(mockDb.insert).toBeDefined();
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
+    const res = await fetchMembers('project-1', '', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        userId: 'user-2',
+        role: 'collaborator',
+      }),
+    });
+
+    expect(res.status).toBe(201);
+    const body = await json(res);
+    expect(body.userId).toBe('user-2');
+    expect(body.role).toBe('collaborator');
+    expect(body.name).toBe('New User');
   });
 
   it('should allow owner to add member by email', async () => {
-    const mockUser = {
-      id: 'user-new',
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedUser({
+      id: 'user-2',
       name: 'New User',
       email: 'new@example.com',
-      username: 'newuser',
-      displayName: 'New User',
-      image: null,
-    };
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    mockDb.get
-      .mockResolvedValueOnce(mockUser) // Find user by email
-      .mockResolvedValueOnce(null); // Check not existing member
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    expect(mockDb.where).toBeDefined();
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
+    const res = await fetchMembers('project-1', '', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        email: 'new@example.com',
+        role: 'member',
+      }),
+    });
+
+    expect(res.status).toBe(201);
+    const body = await json(res);
+    expect(body.userId).toBe('user-2');
+    expect(body.email).toBe('new@example.com');
   });
 
   it('should normalize email to lowercase', async () => {
-    const email = 'Test@Example.COM';
-    expect(email.toLowerCase()).toBe('test@example.com');
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedUser({
+      id: 'user-2',
+      name: 'New User',
+      email: 'new@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
+    const res = await fetchMembers('project-1', '', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        email: 'NEW@EXAMPLE.COM',
+        role: 'member',
+      }),
+    });
+
+    expect(res.status).toBe(201);
+    const body = await json(res);
+    expect(body.email).toBe('new@example.com');
   });
 
   it('should return 404 if user not found', async () => {
-    mockDb.get.mockResolvedValue(null);
+    const nowSec = Math.floor(Date.now() / 1000);
 
-    expect(mockDb.get).toBeDefined();
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
+    const res = await fetchMembers('project-1', '', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        email: 'nonexistent@example.com',
+        role: 'member',
+      }),
+    });
+
+    expect(res.status).toBe(404);
+    const body = await json(res);
+    // Domain errors have 'code' field, not 'error'
+    expect(body.code || body.error).toBeDefined();
+    expect(body.code).toMatch(/NOT_FOUND/);
   });
 
   it('should return 409 if user is already a member', async () => {
-    const mockUser = {
-      id: 'user-new',
-      name: 'New User',
-      email: 'new@example.com',
-    };
+    const nowSec = Math.floor(Date.now() / 1000);
 
-    mockDb.get
-      .mockResolvedValueOnce(mockUser) // Find user
-      .mockResolvedValueOnce({ id: 'existing-member' }); // Already a member
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    expect(mockDb.get).toBeDefined();
+    await seedUser({
+      id: 'user-2',
+      name: 'Existing Member',
+      email: 'member@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-2',
+      projectId: 'project-1',
+      userId: 'user-2',
+      role: 'member',
+      joinedAt: nowSec,
+    });
+
+    const res = await fetchMembers('project-1', '', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        userId: 'user-2',
+        role: 'collaborator',
+      }),
+    });
+
+    expect(res.status).toBe(409);
+    const body = await json(res);
+    // Domain errors have 'code' field, not 'error'
+    expect(body.code || body.error).toBeDefined();
+    expect(body.code).toMatch(/MEMBER_ALREADY_EXISTS/);
   });
 
   it('should deny non-owner from adding members', async () => {
-    const isOwner = false;
-    expect(isOwner).toBe(false);
-  });
+    const nowSec = Math.floor(Date.now() / 1000);
 
-  it('should send notification to added user', async () => {
-    const mockUser = {
-      id: 'user-new',
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedUser({
+      id: 'user-2',
+      name: 'Collaborator',
+      email: 'collab@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedUser({
+      id: 'user-3',
       name: 'New User',
       email: 'new@example.com',
-    };
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    mockDb.get
-      .mockResolvedValueOnce(mockUser)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ name: 'Test Project' });
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    const userSessionFetch = vi.fn().mockResolvedValue({ ok: true });
-    mockEnv.USER_SESSION.get.mockReturnValue({ fetch: userSessionFetch });
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
 
-    expect(mockEnv.USER_SESSION.idFromName).toBeDefined();
+    await seedProjectMember({
+      id: 'pm-2',
+      projectId: 'project-1',
+      userId: 'user-2',
+      role: 'collaborator',
+      joinedAt: nowSec,
+    });
+
+    const res = await fetchMembers('project-1', '', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-test-user-id': 'user-2',
+      },
+      body: JSON.stringify({
+        userId: 'user-3',
+        role: 'member',
+      }),
+    });
+
+    expect(res.status).toBe(403);
+    const body = await json(res);
+    // Domain errors have 'code' field, not 'error'
+    expect(body.code || body.error).toBeDefined();
+    expect(body.code).toMatch(/FORBIDDEN/);
   });
 
-  it('should sync member to Durable Object', async () => {
-    const mockUser = {
-      id: 'user-new',
+  it('should default role to member', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedUser({
+      id: 'user-2',
       name: 'New User',
       email: 'new@example.com',
-    };
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    mockDb.get.mockResolvedValueOnce(mockUser).mockResolvedValueOnce(null);
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    const doFetch = vi.fn().mockResolvedValue({ ok: true });
-    mockEnv.PROJECT_DOC.get.mockReturnValue({ fetch: doFetch });
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
 
-    expect(mockEnv.PROJECT_DOC.get).toBeDefined();
-  });
+    const res = await fetchMembers('project-1', '', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        userId: 'user-2',
+      }),
+    });
 
-  it('should accept valid project roles', async () => {
-    const validRoles = ['owner', 'collaborator', 'viewer'];
-    expect(validRoles).toContain('owner');
-    expect(validRoles).toContain('collaborator');
-    expect(validRoles).toContain('viewer');
+    expect(res.status).toBe(201);
+    const body = await json(res);
+    expect(body.role).toBe('member');
   });
 });
 
 describe('Member Routes - PUT /api/projects/:projectId/members/:userId', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it('should allow owner to update member role', async () => {
-    mockDb.get
-      .mockResolvedValueOnce({ count: 2 }) // Two owners exist
-      .mockResolvedValueOnce({ role: 'collaborator' }); // Target is collaborator
+    const nowSec = Math.floor(Date.now() / 1000);
 
-    mockDb.update = vi.fn().mockReturnThis();
-    mockDb.set.mockReturnThis();
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    expect(mockDb.update).toBeDefined();
-  });
+    await seedUser({
+      id: 'user-2',
+      name: 'Member',
+      email: 'member@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-  it('should deny non-owner from updating roles', async () => {
-    const isOwner = false;
-    expect(isOwner).toBe(false);
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-2',
+      projectId: 'project-1',
+      userId: 'user-2',
+      role: 'member',
+      joinedAt: nowSec,
+    });
+
+    const res = await fetchMembers('project-1', '/user-2', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        role: 'collaborator',
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await json(res);
+    expect(body.success).toBe(true);
+    expect(body.role).toBe('collaborator');
+
+    // Verify update in DB
+    const member = await env.DB.prepare(
+      'SELECT * FROM project_members WHERE projectId = ?1 AND userId = ?2',
+    )
+      .bind('project-1', 'user-2')
+      .first();
+    expect(member.role).toBe('collaborator');
   });
 
   it('should prevent removing the last owner', async () => {
-    mockDb.get
-      .mockResolvedValueOnce({ count: 1 }) // Only one owner
-      .mockResolvedValueOnce({ role: 'owner' }); // Target is that owner
+    const nowSec = Math.floor(Date.now() / 1000);
 
-    const ownerCount = 1;
-    const targetRole = 'owner';
-    const newRole = 'collaborator';
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    // Should prevent downgrading the last owner
-    expect(targetRole === 'owner' && ownerCount <= 1 && newRole !== 'owner').toBe(true);
-  });
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-  it('should allow promoting to owner', async () => {
-    mockDb.get.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ role: 'collaborator' });
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
 
-    mockDb.update = vi.fn().mockReturnThis();
-    mockDb.set.mockReturnThis();
+    const res = await fetchMembers('project-1', '/user-1', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        role: 'collaborator',
+      }),
+    });
 
-    const newRole = 'owner';
-    expect(newRole).toBe('owner');
+    expect(res.status).toBe(400);
+    const body = await json(res);
+    // Domain errors have 'code' field, not 'error'
+    expect(body.code || body.error).toBeDefined();
+    expect(body.code).toMatch(/LAST_OWNER/);
   });
 
   it('should allow demoting owner if multiple owners exist', async () => {
-    mockDb.get
-      .mockResolvedValueOnce({ count: 2 }) // Two owners
-      .mockResolvedValueOnce({ role: 'owner' }); // Target is owner
+    const nowSec = Math.floor(Date.now() / 1000);
 
-    mockDb.update = vi.fn().mockReturnThis();
-    mockDb.set.mockReturnThis();
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner 1',
+      email: 'owner1@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    const ownerCount = 2;
-    expect(ownerCount > 1).toBe(true);
-  });
+    await seedUser({
+      id: 'user-2',
+      name: 'Owner 2',
+      email: 'owner2@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-  it('should sync role update to Durable Object', async () => {
-    mockDb.get.mockResolvedValueOnce({ count: 2 }).mockResolvedValueOnce({ role: 'collaborator' });
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    const doFetch = vi.fn().mockResolvedValue({ ok: true });
-    mockEnv.PROJECT_DOC.get.mockReturnValue({ fetch: doFetch });
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
 
-    expect(mockEnv.PROJECT_DOC.get).toBeDefined();
+    await seedProjectMember({
+      id: 'pm-2',
+      projectId: 'project-1',
+      userId: 'user-2',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
+    const res = await fetchMembers('project-1', '/user-1', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        role: 'collaborator',
+      }),
+    });
+
+    expect(res.status).toBe(200);
   });
 });
 
 describe('Member Routes - DELETE /api/projects/:projectId/members/:userId', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it('should allow owner to remove member', async () => {
-    mockDb.get
-      .mockResolvedValueOnce({ role: 'collaborator' }) // Target member
-      .mockResolvedValueOnce({ count: 2 }); // Owner count (not relevant for collaborator)
+    const nowSec = Math.floor(Date.now() / 1000);
 
-    mockDb.delete = vi.fn().mockReturnThis();
-    mockDb.where.mockReturnThis();
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    expect(mockDb.delete).toBeDefined();
+    await seedUser({
+      id: 'user-2',
+      name: 'Member',
+      email: 'member@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-2',
+      projectId: 'project-1',
+      userId: 'user-2',
+      role: 'collaborator',
+      joinedAt: nowSec,
+    });
+
+    const res = await fetchMembers('project-1', '/user-2', {
+      method: 'DELETE',
+    });
+
+    expect(res.status).toBe(200);
+    const body = await json(res);
+    expect(body.success).toBe(true);
+    expect(body.removed).toBe('user-2');
+
+    // Verify member was removed (D1 returns null, not undefined)
+    const member = await env.DB.prepare(
+      'SELECT * FROM project_members WHERE projectId = ?1 AND userId = ?2',
+    )
+      .bind('project-1', 'user-2')
+      .first();
+    expect(member).toBeNull();
   });
 
   it('should allow member to remove themselves', async () => {
-    const authUserId = 'user-123';
-    const targetUserId = 'user-123';
-    const isSelfRemoval = authUserId === targetUserId;
+    const nowSec = Math.floor(Date.now() / 1000);
 
-    expect(isSelfRemoval).toBe(true);
-  });
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-  it('should deny non-owner from removing others', async () => {
-    const isOwner = false;
-    const authUserId = 'user-123';
-    const targetUserId = 'user-456';
-    const isSelfRemoval = authUserId === targetUserId;
+    await seedUser({
+      id: 'user-2',
+      name: 'Member',
+      email: 'member@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    expect(!isOwner && !isSelfRemoval).toBe(true);
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-2',
+      projectId: 'project-1',
+      userId: 'user-2',
+      role: 'member',
+      joinedAt: nowSec,
+    });
+
+    const res = await fetchMembers('project-1', '/user-2', {
+      method: 'DELETE',
+      headers: {
+        'x-test-user-id': 'user-2',
+      },
+    });
+
+    expect(res.status).toBe(200);
   });
 
   it('should prevent removing the last owner', async () => {
-    mockDb.get
-      .mockResolvedValueOnce({ role: 'owner' }) // Target is owner
-      .mockResolvedValueOnce({ count: 1 }); // Only one owner
+    const nowSec = Math.floor(Date.now() / 1000);
 
-    const ownerCount = 1;
-    const targetRole = 'owner';
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    expect(targetRole === 'owner' && ownerCount <= 1).toBe(true);
-  });
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-  it('should allow removing owner if multiple owners exist', async () => {
-    mockDb.get
-      .mockResolvedValueOnce({ role: 'owner' }) // Target is owner
-      .mockResolvedValueOnce({ count: 3 }); // Three owners
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
 
-    mockDb.delete = vi.fn().mockReturnThis();
-    mockDb.where.mockReturnThis();
+    const res = await fetchMembers('project-1', '/user-1', {
+      method: 'DELETE',
+    });
 
-    const ownerCount = 3;
-    expect(ownerCount > 1).toBe(true);
+    expect(res.status).toBe(400);
+    const body = await json(res);
+    // Domain errors have 'code' field, not 'error'
+    expect(body.code || body.error).toBeDefined();
+    expect(body.code).toMatch(/LAST_OWNER/);
   });
 
   it('should return 404 if member not found', async () => {
-    mockDb.get.mockResolvedValue(null);
+    const nowSec = Math.floor(Date.now() / 1000);
 
-    expect(mockDb.get).toBeDefined();
-  });
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-  it('should sync member removal to Durable Object', async () => {
-    mockDb.get.mockResolvedValueOnce({ role: 'collaborator' }).mockResolvedValueOnce({ count: 2 });
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
-    const doFetch = vi.fn().mockResolvedValue({ ok: true });
-    mockEnv.PROJECT_DOC.get.mockReturnValue({ fetch: doFetch });
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
 
-    expect(mockEnv.PROJECT_DOC.get).toBeDefined();
-  });
-});
+    const res = await fetchMembers('project-1', '/nonexistent-user', {
+      method: 'DELETE',
+    });
 
-describe('Member Routes - Project Membership Middleware', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('should verify user is project member', async () => {
-    mockDb.get.mockResolvedValue({ role: 'owner' });
-
-    expect(mockDb.where).toBeDefined();
-  });
-
-  it('should return 404 for non-members', async () => {
-    mockDb.get.mockResolvedValue(null);
-
-    expect(mockDb.get).toBeDefined();
-  });
-
-  it('should set project context for valid members', async () => {
-    mockDb.get.mockResolvedValue({ role: 'owner' });
-
-    const membership = { role: 'owner' };
-    expect(membership.role).toBe('owner');
-  });
-
-  it('should identify owner status', async () => {
-    mockDb.get.mockResolvedValue({ role: 'owner' });
-
-    const role = 'owner';
-    const isOwner = role === 'owner';
-    expect(isOwner).toBe(true);
-  });
-
-  it('should identify non-owner status', async () => {
-    mockDb.get.mockResolvedValue({ role: 'collaborator' });
-
-    const isOwner = 'collaborator' === 'owner';
-    expect(isOwner).toBe(false);
-  });
-});
-
-describe('Member Routes - Error Handling', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('should handle database errors gracefully', async () => {
-    mockDb.get.mockRejectedValue(new Error('Database connection failed'));
-
-    expect(mockDb.get).toBeDefined();
-  });
-
-  it('should handle DO sync failures gracefully', async () => {
-    const doFetch = vi.fn().mockRejectedValue(new Error('DO sync failed'));
-    mockEnv.PROJECT_DOC.get.mockReturnValue({ fetch: doFetch });
-
-    // DO sync failures should be logged but not fail the request
-    expect(doFetch).toBeDefined();
-  });
-
-  it('should handle notification failures gracefully', async () => {
-    const userSessionFetch = vi.fn().mockRejectedValue(new Error('Notification failed'));
-    mockEnv.USER_SESSION.get.mockReturnValue({ fetch: userSessionFetch });
-
-    // Notification failures should be logged but not fail the request
-    expect(userSessionFetch).toBeDefined();
+    expect(res.status).toBe(404);
   });
 });

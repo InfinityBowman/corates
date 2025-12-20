@@ -192,7 +192,8 @@ avatarRoutes.get('/:userId', async c => {
     const listed = await c.env.PDF_BUCKET.list({ prefix: `avatars/${userId}/` });
 
     if (listed.objects.length === 0) {
-      return c.json({ error: 'Avatar not found' }, 404);
+      const error = createDomainError(FILE_ERRORS.NOT_FOUND, { fileName: 'avatar' });
+      return c.json(error, error.statusCode);
     }
 
     // Get the most recent avatar
@@ -200,7 +201,8 @@ avatarRoutes.get('/:userId', async c => {
     const object = await c.env.PDF_BUCKET.get(avatarKey);
 
     if (!object) {
-      return c.json({ error: 'Avatar not found' }, 404);
+      const error = createDomainError(FILE_ERRORS.NOT_FOUND, { fileName: 'avatar' });
+      return c.json(error, error.statusCode);
     }
 
     // Return the image with proper headers

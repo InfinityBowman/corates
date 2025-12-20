@@ -6,6 +6,7 @@ import Stripe from 'stripe';
 import { createDb } from '../../db/client.js';
 import { getSubscriptionByUserId } from '../../db/subscriptions.js';
 import { getPriceId } from '../../config/stripe.js';
+import { createDomainError, VALIDATION_ERRORS } from '@corates/shared';
 
 /**
  * Create a Stripe Checkout session for subscription
@@ -22,7 +23,11 @@ export async function createCheckoutSession(env, user, tier, interval = 'monthly
   // Get price ID for the selected tier and interval
   const priceId = getPriceId(tier, interval);
   if (!priceId) {
-    throw new Error(`Invalid tier or interval: ${tier}/${interval}`);
+    const error = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
+      field: 'tier/interval',
+      value: `${tier}/${interval}`,
+    });
+    throw error;
   }
 
   // Check for existing subscription
