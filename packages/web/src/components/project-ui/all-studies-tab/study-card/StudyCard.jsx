@@ -22,32 +22,29 @@ export default function StudyCard(props) {
   // props.onOpenGoogleDrive: (studyId) => void - opens picker (needs parent state)
   // props.readOnly: boolean
 
-  const study = () => props.study;
-  const expanded = () => props.expanded;
-
   return (
     <div class='rounded-lg border border-gray-200 bg-white shadow-sm transition-colors hover:border-gray-300'>
       <Collapsible
-        open={expanded()}
+        open={props.expanded}
         onOpenChange={open => {
           // Only toggle if the state is actually different
-          if (open !== expanded()) {
+          if (open !== props.expanded) {
             props.onToggleExpanded?.();
           }
         }}
         trigger={() => (
           <StudyCardHeader
-            study={study()}
-            expanded={expanded()}
+            study={props.study}
+            expanded={props.expanded}
             onToggle={() => props.onToggleExpanded?.()}
-            onAssignReviewers={() => props.onAssignReviewers?.(study())}
+            onAssignReviewers={() => props.onAssignReviewers?.(props.study)}
             getAssigneeName={props.getAssigneeName}
           />
         )}
       >
         <div class='border-t border-gray-100'>
           <StudyPdfSection
-            study={study()}
+            study={props.study}
             onOpenGoogleDrive={props.onOpenGoogleDrive}
             readOnly={props.readOnly}
           />

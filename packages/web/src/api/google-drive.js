@@ -3,6 +3,7 @@
  */
 
 import { API_BASE } from '@config/api.js';
+import { parseApiError } from '@/lib/error-utils.js';
 
 /**
  * Check if the user has connected their Google account
@@ -15,7 +16,8 @@ export async function getGoogleDriveStatus() {
   });
 
   if (!response.ok) {
-    throw new Error('Failed to check Google Drive status');
+    const parsedError = await parseApiError(response);
+    throw new Error(parsedError.message);
   }
 
   return response.json();
@@ -32,8 +34,8 @@ export async function disconnectGoogleDrive() {
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to disconnect Google account');
+    const parsedError = await parseApiError(response);
+    throw new Error(parsedError.message);
   }
 
   return response.json();
@@ -47,6 +49,7 @@ export async function disconnectGoogleDrive() {
  * @returns {Promise<{success: boolean, file: Object}>}
  */
 export async function importFromGoogleDrive(fileId, projectId, studyId) {
+  console.log('importing from google drive', fileId, projectId, studyId);
   const response = await fetch(`${API_BASE}/api/google-drive/import`, {
     method: 'POST',
     credentials: 'include',
@@ -57,16 +60,8 @@ export async function importFromGoogleDrive(fileId, projectId, studyId) {
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-
-    if (error.code === 'GOOGLE_NOT_CONNECTED') {
-      throw new Error('Google account not connected. Please connect your Google account first.');
-    }
-    if (error.code === 'GOOGLE_TOKEN_EXPIRED') {
-      throw new Error('Google session expired. Please reconnect your Google account.');
-    }
-
-    throw new Error(error.error || 'Failed to import file from Google Drive');
+    const parsedError = await parseApiError(response);
+    throw new Error(parsedError.message);
   }
 
   return response.json();
@@ -83,16 +78,8 @@ export async function getGoogleDrivePickerToken() {
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-
-    if (error.code === 'GOOGLE_NOT_CONNECTED') {
-      throw new Error('Google account not connected. Please connect your Google account first.');
-    }
-    if (error.code === 'GOOGLE_TOKEN_EXPIRED') {
-      throw new Error('Google session expired. Please reconnect your Google account.');
-    }
-
-    throw new Error(error.error || 'Failed to get Google picker token');
+    const parsedError = await parseApiError(response);
+    throw new Error(parsedError.message);
   }
 
   return response.json();
@@ -117,8 +104,8 @@ export async function connectGoogleAccount(callbackUrl) {
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Failed to initiate Google sign-in');
+    const parsedError = await parseApiError(response);
+    throw new Error(parsedError.message);
   }
 
   const data = await response.json();

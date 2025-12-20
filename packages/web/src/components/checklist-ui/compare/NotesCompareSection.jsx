@@ -52,8 +52,7 @@ export default function NotesCompareSection(props) {
     });
   });
 
-  const hasAnyNote = () =>
-    hasReviewer1Note() || hasReviewer2Note() || hasFinalNote();
+  const hasAnyNote = () => hasReviewer1Note() || hasReviewer2Note() || hasFinalNote();
 
   // Copy reviewer note to final note
   function copyToFinal(sourceNote) {
@@ -105,11 +104,7 @@ export default function NotesCompareSection(props) {
             <Show when={hasAnyNote()}>
               <span class='ml-1 text-xs text-gray-400'>
                 (
-                {[
-                  hasReviewer1Note() && 'R1',
-                  hasReviewer2Note() && 'R2',
-                  hasFinalNote() && 'Final',
-                ]
+                {[hasReviewer1Note() && 'R1', hasReviewer2Note() && 'R2', hasFinalNote() && 'Final']
                   .filter(Boolean)
                   .join(', ')}
                 )

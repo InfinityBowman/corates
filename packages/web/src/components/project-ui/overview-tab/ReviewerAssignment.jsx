@@ -425,7 +425,7 @@ export default function ReviewerAssignment(props) {
   };
 
   return (
-    <div class='overflow-hidden rounded-lg border border-gray-200 bg-white'>
+    <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
       <Collapsible
         open={isExpanded()}
         onOpenChange={setIsExpanded}
