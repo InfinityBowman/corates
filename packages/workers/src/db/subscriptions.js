@@ -4,7 +4,7 @@
 
 import { eq } from 'drizzle-orm';
 import { subscriptions } from './schema.js';
-import { SUBSCRIPTION_TIERS, SUBSCRIPTION_STATUSES } from '../config/constants.js';
+import { DEFAULT_SUBSCRIPTION_TIER, DEFAULT_SUBSCRIPTION_STATUS } from '../config/constants.js';
 
 /**
  * Get a user's subscription
@@ -105,8 +105,8 @@ export async function upsertSubscription(db, data) {
       userId,
       stripeCustomerId,
       stripeSubscriptionId,
-      tier: tier ?? SUBSCRIPTION_TIERS[0], // 'free'
-      status: status ?? SUBSCRIPTION_STATUSES[0], // 'active'
+      tier: tier ?? DEFAULT_SUBSCRIPTION_TIER,
+      status: status ?? DEFAULT_SUBSCRIPTION_STATUS,
       currentPeriodStart,
       currentPeriodEnd,
       cancelAtPeriodEnd: cancelAtPeriodEnd ?? false,
@@ -161,8 +161,8 @@ export async function createFreeSubscription(db, userId, subscriptionId) {
     .values({
       id: subscriptionId,
       userId,
-      tier: SUBSCRIPTION_TIERS[0], // 'free'
-      status: SUBSCRIPTION_STATUSES[0], // 'active'
+      tier: DEFAULT_SUBSCRIPTION_TIER,
+      status: DEFAULT_SUBSCRIPTION_STATUS,
     })
     .returning()
     .get();

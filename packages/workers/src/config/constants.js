@@ -29,6 +29,21 @@ export const SUBSCRIPTION_TIERS = ['free', 'basic', 'pro', 'team', 'enterprise']
 export const SUBSCRIPTION_STATUSES = ['active', 'canceled', 'past_due', 'trialing', 'incomplete'];
 
 /**
+ * Default subscription tier for new users
+ */
+export const DEFAULT_SUBSCRIPTION_TIER = 'free';
+
+/**
+ * Default subscription status for new subscriptions
+ */
+export const DEFAULT_SUBSCRIPTION_STATUS = 'active';
+
+/**
+ * Subscription statuses that are considered active (allow access to features)
+ */
+export const ACTIVE_STATUSES = [SUBSCRIPTION_STATUSES[0], SUBSCRIPTION_STATUSES[3]];
+
+/**
  * Maximum file sizes (in bytes)
  */
 export const FILE_SIZE_LIMITS = {

@@ -11,7 +11,10 @@ import { createCheckoutSession } from './checkout.js';
 import { createPortalSession } from './portal.js';
 import { handleWebhook } from './webhooks.js';
 import { TIER_INFO, PRICE_IDS } from '../../config/stripe.js';
-import { SUBSCRIPTION_TIERS, SUBSCRIPTION_STATUSES } from '../../config/constants.js';
+import {
+  DEFAULT_SUBSCRIPTION_TIER,
+  DEFAULT_SUBSCRIPTION_STATUS,
+} from '../../config/constants.js';
 import {
   createDomainError,
   createValidationError,
@@ -36,8 +39,8 @@ billingRoutes.get('/subscription', requireAuth, async c => {
     if (!subscription) {
       // Return default free tier info
       return c.json({
-        tier: SUBSCRIPTION_TIERS[0], // 'free'
-        status: SUBSCRIPTION_STATUSES[0], // 'active'
+        tier: DEFAULT_SUBSCRIPTION_TIER,
+        status: DEFAULT_SUBSCRIPTION_STATUS,
         tierInfo: TIER_INFO.free,
         stripeSubscriptionId: null,
         currentPeriodEnd: null,
@@ -124,7 +127,7 @@ billingRoutes.post('/checkout', requireAuth, async c => {
     const body = await c.req.json();
     const { tier, interval = 'monthly' } = body;
 
-    if (!tier || tier === SUBSCRIPTION_TIERS[0]) {
+    if (!tier || tier === DEFAULT_SUBSCRIPTION_TIER) {
       const error = createValidationError(
         'tier',
         VALIDATION_ERRORS.INVALID_INPUT.code,
