@@ -93,6 +93,7 @@ export async function getDocsHtml(env) {
     });
 
     // Inline checks: try fetching the OpenAPI spec and the auth session
+    let intervalId;
     (async function() {
       // OpenAPI availability
       if (!${hasOpenapi}) {
@@ -101,7 +102,6 @@ export async function getDocsHtml(env) {
       }
 
       const AUTH_CHECK_INTERVAL = 5000; // 5 seconds
-      let intervalId;
 
       // Inline function to check auth
       async function checkAuth() {
@@ -142,6 +142,7 @@ export async function getDocsHtml(env) {
     document.querySelectorAll('.warning .close').forEach(btn => {
       btn.addEventListener('click', () => {
         btn.parentElement.style.display = 'none';
+        clearInterval(intervalId);
       });
       btn.title = 'Dismiss this warning';
     });

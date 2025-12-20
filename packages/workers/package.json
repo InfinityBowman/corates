@@ -9,7 +9,7 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --env production",
     "tail": "wrangler tail",
-    "test": "vitest run",
+    "test": "pnpm db:generate:test && vitest run",
     "test:watch": "vitest",
     "build": "pnpm --filter @corates/shared build",
     "logs": "pnpm wrangler tail corates-workers-prod",
@@ -22,8 +22,7 @@
     "db:reset:prod": "./scripts/reset-db-prod.sh",
     "user:make-admin:local": "node ./scripts/make-admin-local.mjs",
     "user:make-admin:prod": "node ./scripts/make-admin-prod.mjs",
-    "openapi:generate": "node ./scripts/generate-openapi.mjs",
-    "openapi:serve": "node ./scripts/serve-docs.mjs"
+    "openapi:generate": "node ./scripts/generate-openapi.mjs"
   },
   "dependencies": {
     "@cloudflare/workers-types": "^4.20251220.0",
