@@ -9,6 +9,7 @@ This document describes the testing environment and best practices for the Cloud
 The test suite uses Vitest with the `@cloudflare/vitest-pool-workers` pool to run tests in a Workers-like environment.
 
 **Key Configuration (`vitest.config.js`):**
+
 - `singleWorker: true` - Runs tests serially in a single worker process to avoid network address conflicts
 - `isolatedStorage: false` - Disabled to avoid Durable Object cleanup issues (tests use database resets for isolation instead)
 - `testTimeout: 10000` - Increased timeout for Durable Object operations
@@ -17,12 +18,14 @@ The test suite uses Vitest with the `@cloudflare/vitest-pool-workers` pool to ru
 ### Global Test Setup
 
 The `src/__tests__/setup.js` file runs before all tests and provides:
+
 - **Postmark Mock**: Prevents syntax errors from loading the postmark library
 - **Stripe Mock**: Provides default Stripe mocks (tests can override with specific mocks)
 
 ### Test Isolation
 
 Tests are isolated through:
+
 1. **Database Resets**: Each test file should call `resetTestDatabase()` in `beforeEach` to ensure a clean database state
 2. **Mock Clearing**: Use `vi.clearAllMocks()` in `beforeEach` to reset mock state
 3. **Unique Test Data**: Use unique IDs for test data to avoid conflicts between tests
@@ -57,6 +60,7 @@ vi.mock('../../middleware/auth.js', () => {
 #### Testing with Durable Objects
 
 When testing routes that interact with Durable Objects:
+
 - Ensure all Durable Object operations are properly awaited
 - Mock Durable Object bindings in test helpers if needed
 - Be aware that Durable Objects persist across tests when `isolatedStorage: false`
@@ -64,6 +68,7 @@ When testing routes that interact with Durable Objects:
 #### Testing Database Operations
 
 Always use Drizzle queries in tests (matching production code):
+
 ```javascript
 import { createDb } from '../../../db/client.js';
 import { getSubscriptionByStripeSubscriptionId } from '../../../db/subscriptions.js';
@@ -97,6 +102,7 @@ const subscription = await getSubscriptionByStripeSubscriptionId(db, 'sub-id');
 **Problem**: Updates made through Drizzle aren't visible in subsequent queries.
 
 **Solution**:
+
 - Ensure all database operations are properly awaited
 - Use Drizzle queries consistently (don't mix raw D1 queries with Drizzle)
 - Query the database using the same Drizzle instance that performed the update
