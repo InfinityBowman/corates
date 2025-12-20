@@ -7,10 +7,7 @@ import { createDb } from '../db/client.js';
 import { getSubscriptionByUserId } from '../db/subscriptions.js';
 import { hasMinimumTier, hasFeatureAccess } from '../config/stripe.js';
 import { getAuth } from './auth.js';
-import {
-  DEFAULT_SUBSCRIPTION_TIER,
-  ACTIVE_STATUSES,
-} from '../config/constants.js';
+import { DEFAULT_SUBSCRIPTION_TIER, ACTIVE_STATUSES } from '../config/constants.js';
 
 /**
  * Middleware that requires a minimum subscription tier

@@ -11,10 +11,7 @@ import { createCheckoutSession } from './checkout.js';
 import { createPortalSession } from './portal.js';
 import { handleWebhook } from './webhooks.js';
 import { TIER_INFO, PRICE_IDS } from '../../config/stripe.js';
-import {
-  DEFAULT_SUBSCRIPTION_TIER,
-  DEFAULT_SUBSCRIPTION_STATUS,
-} from '../../config/constants.js';
+import { DEFAULT_SUBSCRIPTION_TIER, DEFAULT_SUBSCRIPTION_STATUS } from '../../config/constants.js';
 import {
   createDomainError,
   createValidationError,
