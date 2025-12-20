@@ -56,7 +56,7 @@ let mockR2Bucket;
 beforeAll(async () => {
   const { pdfRoutes } = await import('../pdfs.js');
   app = new Hono();
-  app.route('/api/projects/:projectId/studies/:studyId/pdf', pdfRoutes);
+  app.route('/api/projects/:projectId/studies/:studyId/pdfs', pdfRoutes);
 });
 
 beforeEach(async () => {
@@ -133,11 +133,11 @@ beforeEach(async () => {
 
 async function fetchPdf(projectId, studyId, path = '', init = {}) {
   const ctx = createExecutionContext();
-  // Route is mounted at /api/projects/:projectId/studies/:studyId/pdf
+  // Route is mounted at /api/projects/:projectId/studies/:studyId/pdfs
   // For list endpoint, path should be empty or '/'
   const routePath = path === 's' ? '' : path;
   const req = new Request(
-    `http://localhost/api/projects/${projectId}/studies/${studyId}/pdf${routePath}`,
+    `http://localhost/api/projects/${projectId}/studies/${studyId}/pdfs${routePath}`,
     {
       ...init,
       headers: {
@@ -231,7 +231,7 @@ describe('PDF Routes - GET /api/projects/:projectId/studies/:studyId/pdfs', () =
   });
 });
 
-describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdf', () => {
+describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdfs', () => {
   it('should upload PDF successfully', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
     await seedUser({
@@ -500,7 +500,7 @@ describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdf', () =
   });
 });
 
-describe('PDF Routes - GET /api/projects/:projectId/studies/:studyId/pdf/:fileName', () => {
+describe('PDF Routes - GET /api/projects/:projectId/studies/:studyId/pdfs/:fileName', () => {
   it('should download PDF successfully', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
     await seedUser({
@@ -575,7 +575,7 @@ describe('PDF Routes - GET /api/projects/:projectId/studies/:studyId/pdf/:fileNa
   });
 });
 
-describe('PDF Routes - DELETE /api/projects/:projectId/studies/:studyId/pdf/:fileName', () => {
+describe('PDF Routes - DELETE /api/projects/:projectId/studies/:studyId/pdfs/:fileName', () => {
   it('should delete PDF successfully', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
     await seedUser({

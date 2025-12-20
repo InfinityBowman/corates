@@ -38,7 +38,7 @@ export async function fetchPdfViaProxy(url) {
  * @returns {Promise<{success: boolean, key: string, fileName: string, size: number}>}
  */
 export async function uploadPdf(projectId, studyId, file, fileName = null) {
-  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdf`;
+  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs`;
 
   let body;
   let headers = {};
@@ -77,7 +77,7 @@ export async function uploadPdf(projectId, studyId, file, fileName = null) {
  * @returns {Promise<ArrayBuffer>}
  */
 export async function downloadPdf(projectId, studyId, fileName) {
-  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdf/${encodeURIComponent(fileName)}`;
+  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs/${encodeURIComponent(fileName)}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -100,7 +100,7 @@ export async function downloadPdf(projectId, studyId, fileName) {
  * @returns {string}
  */
 export function getPdfUrl(projectId, studyId, fileName) {
-  return `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdf/${encodeURIComponent(fileName)}`;
+  return `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs/${encodeURIComponent(fileName)}`;
 }
 
 /**
@@ -111,7 +111,7 @@ export function getPdfUrl(projectId, studyId, fileName) {
  * @returns {Promise<{success: boolean}>}
  */
 export async function deletePdf(projectId, studyId, fileName) {
-  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdf/${encodeURIComponent(fileName)}`;
+  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs/${encodeURIComponent(fileName)}`;
 
   const response = await fetch(url, {
     method: 'DELETE',

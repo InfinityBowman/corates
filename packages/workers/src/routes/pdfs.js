@@ -104,7 +104,7 @@ pdfRoutes.get('/', async c => {
 });
 
 /**
- * POST /api/projects/:projectId/studies/:studyId/pdf
+ * POST /api/projects/:projectId/studies/:studyId/pdfs
  * Upload a PDF for a study
  */
 pdfRoutes.post('/', async c => {
@@ -257,7 +257,7 @@ pdfRoutes.post('/', async c => {
 });
 
 /**
- * GET /api/projects/:projectId/studies/:studyId/pdf/:fileName
+ * GET /api/projects/:projectId/studies/:studyId/pdfs/:fileName
  * Download a PDF for a study
  */
 pdfRoutes.get('/:fileName', async c => {
@@ -314,7 +314,7 @@ pdfRoutes.get('/:fileName', async c => {
 });
 
 /**
- * DELETE /api/projects/:projectId/studies/:studyId/pdf/:fileName
+ * DELETE /api/projects/:projectId/studies/:studyId/pdfs/:fileName
  * Delete a PDF for a study
  */
 pdfRoutes.delete('/:fileName', async c => {

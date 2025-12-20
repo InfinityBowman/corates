@@ -196,6 +196,11 @@ describe('Account Merge Routes - POST /api/accounts/merge/initiate', () => {
   });
 
   it('should enforce rate limiting', async () => {
+    // Skip test if RATE_LIMIT_KV is not configured
+    if (!env.RATE_LIMIT_KV) {
+      return;
+    }
+
     const nowSec = Math.floor(Date.now() / 1000);
     await seedUser({
       id: 'user-1',
@@ -213,28 +218,29 @@ describe('Account Merge Routes - POST /api/accounts/merge/initiate', () => {
       updatedAt: nowSec,
     });
 
-    // Mock rate limit KV to simulate rate limit exceeded
-    const originalGet = env.RATE_LIMIT_KV?.get;
-    if (env.RATE_LIMIT_KV) {
-      env.RATE_LIMIT_KV.get = vi.fn(async key => {
-        if (key.includes('merge-initiate')) {
-          return JSON.stringify({ count: 3, resetAt: Date.now() + 10000 });
-        }
-        return originalGet ? await originalGet(key) : null;
-      });
-    }
-
-    const res = await fetchAccountMerge('/api/accounts/merge/initiate', {
-      method: 'POST',
-      body: JSON.stringify({
-        targetEmail: 'user2@example.com',
-      }),
+    // Mock rate limit KV to simulate rate limit exceeded for merge-initiate key
+    const originalGet = env.RATE_LIMIT_KV.get;
+    env.RATE_LIMIT_KV.get = vi.fn(async key => {
+      if (key.includes('merge-initiate')) {
+        return JSON.stringify({ count: 3, resetAt: Date.now() + 10000 });
+      }
+      return originalGet ? await originalGet(key) : null;
     });
 
-    // Rate limit should be enforced (429 or allow if not configured)
-    if (res.status === 429) {
+    try {
+      const res = await fetchAccountMerge('/api/accounts/merge/initiate', {
+        method: 'POST',
+        body: JSON.stringify({
+          targetEmail: 'user2@example.com',
+        }),
+      });
+
+      expect(res.status).toBe(429);
       const body = await json(res);
       expect(body.code).toBeDefined();
+    } finally {
+      // Restore the original get mock
+      env.RATE_LIMIT_KV.get = originalGet;
     }
   });
 });
