@@ -4,144 +4,242 @@
 
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 
+// Migration SQL content - should be kept in sync with packages/workers/migrations/0001_init.sql
+// This is embedded here because Cloudflare Workers test environment doesn't support
+// reading files from the local file system at runtime
+const MIGRATION_SQL = `-- Consolidated Corates Database Schema
+-- Run: wrangler d1 migrations apply corates-db --local
+
+-- Drop existing tables if they exist (for clean migration)
+DROP TABLE IF EXISTS subscriptions;
+DROP TABLE IF EXISTS mediaFiles;
+DROP TABLE IF EXISTS project_members;
+DROP TABLE IF EXISTS projects;
+DROP TABLE IF EXISTS email_verification_tokens;
+DROP TABLE IF EXISTS password_reset_tokens;
+DROP TABLE IF EXISTS auth_accounts;
+DROP TABLE IF EXISTS auth_sessions;
+DROP TABLE IF EXISTS verification;
+DROP TABLE IF EXISTS account;
+DROP TABLE IF EXISTS session;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS user;
+DROP TABLE IF EXISTS twoFactor;
+
+-- Better Auth user table
+CREATE TABLE user (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  emailVerified INTEGER DEFAULT 0,
+  image TEXT,
+  createdAt INTEGER DEFAULT (unixepoch()),
+  updatedAt INTEGER DEFAULT (unixepoch()),
+  username TEXT UNIQUE,
+  displayName TEXT,
+  avatarUrl TEXT,
+  role TEXT, -- Better Auth admin/plugin role (e.g. 'user', 'admin')
+  persona TEXT, -- optional: researcher, student, librarian, other
+  profileCompletedAt INTEGER, -- unix timestamp (seconds)
+  twoFactorEnabled INTEGER DEFAULT 0,
+  -- Admin plugin fields
+  banned INTEGER DEFAULT 0,
+  banReason TEXT,
+  banExpires INTEGER
+);
+
+-- Better Auth session table
+CREATE TABLE session (
+  id TEXT PRIMARY KEY,
+  expiresAt INTEGER NOT NULL,
+  token TEXT NOT NULL UNIQUE,
+  createdAt INTEGER DEFAULT (unixepoch()),
+  updatedAt INTEGER DEFAULT (unixepoch()),
+  ipAddress TEXT,
+  userAgent TEXT,
+  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+  impersonatedBy TEXT REFERENCES user(id) ON DELETE SET NULL
+);
+
+-- Better Auth account table (for OAuth and password)
+CREATE TABLE account (
+  id TEXT PRIMARY KEY,
+  accountId TEXT NOT NULL,
+  providerId TEXT NOT NULL,
+  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+  accessToken TEXT,
+  refreshToken TEXT,
+  idToken TEXT,
+  accessTokenExpiresAt INTEGER,
+  refreshTokenExpiresAt INTEGER,
+  scope TEXT,
+  password TEXT, -- For email/password auth
+  createdAt INTEGER DEFAULT (unixepoch()),
+  updatedAt INTEGER DEFAULT (unixepoch()),
+  unlinkedAt INTEGER DEFAULT NULL -- For soft-delete grace period on unlink
+);
+
+-- Better Auth verification table
+CREATE TABLE verification (
+  id TEXT PRIMARY KEY,
+  identifier TEXT NOT NULL,
+  value TEXT NOT NULL,
+  expiresAt INTEGER NOT NULL,
+  createdAt INTEGER DEFAULT (unixepoch()),
+  updatedAt INTEGER DEFAULT (unixepoch())
+);
+
+-- Better Auth two-factor table
+CREATE TABLE twoFactor (
+  id TEXT PRIMARY KEY,
+  secret TEXT NOT NULL,
+  backupCodes TEXT NOT NULL,
+  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+  createdAt INTEGER DEFAULT (unixepoch()),
+  updatedAt INTEGER DEFAULT (unixepoch())
+);
+
+-- Projects table (for user's research projects)
+CREATE TABLE projects (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  createdBy TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+  createdAt INTEGER DEFAULT (unixepoch()),
+  updatedAt INTEGER DEFAULT (unixepoch())
+);
+
+-- Project membership table (which users have access to which projects)
+CREATE TABLE project_members (
+  id TEXT PRIMARY KEY,
+  projectId TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+  role TEXT DEFAULT 'member', -- owner, collaborator, member, viewer
+  joinedAt INTEGER DEFAULT (unixepoch()),
+
+  -- Ensure unique user-project combinations
+  UNIQUE(projectId, userId)
+);
+
+-- Subscriptions table (Stripe billing)
+CREATE TABLE subscriptions (
+  id TEXT PRIMARY KEY,
+  userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+  stripeCustomerId TEXT UNIQUE,
+  stripeSubscriptionId TEXT UNIQUE,
+  tier TEXT NOT NULL DEFAULT 'free', -- 'free', 'pro', 'team', 'enterprise'
+  status TEXT NOT NULL DEFAULT 'active', -- 'active', 'canceled', 'past_due', 'trialing', 'incomplete'
+  currentPeriodStart INTEGER,
+  currentPeriodEnd INTEGER,
+  cancelAtPeriodEnd INTEGER DEFAULT 0,
+  createdAt INTEGER DEFAULT (unixepoch()),
+  updatedAt INTEGER DEFAULT (unixepoch()),
+
+  UNIQUE(userId)
+);
+
+-- Media files table (for uploaded files stored in R2)
+CREATE TABLE mediaFiles (
+  id TEXT PRIMARY KEY,
+  filename TEXT NOT NULL,
+  originalName TEXT,
+  fileType TEXT,
+  fileSize INTEGER,
+  uploadedBy TEXT REFERENCES user(id),
+  bucketKey TEXT NOT NULL,
+  createdAt INTEGER DEFAULT (unixepoch())
+);
+
+-- Create indexes for better performance
+
+-- Auth indexes
+CREATE INDEX idx_session_userId ON session(userId);
+CREATE INDEX idx_session_token ON session(token);
+CREATE INDEX idx_account_userId ON account(userId);
+CREATE INDEX idx_account_providerId ON account(providerId);
+CREATE INDEX idx_verification_identifier ON verification(identifier);
+
+-- Two-factor indexes
+CREATE INDEX idx_twoFactor_userId ON twoFactor(userId);
+
+-- Project indexes
+CREATE INDEX idx_projects_createdBy ON projects(createdBy);
+CREATE INDEX idx_projects_createdAt ON projects(createdAt);
+CREATE INDEX idx_project_members_projectId ON project_members(projectId);
+CREATE INDEX idx_project_members_userId ON project_members(userId);
+
+-- Subscription indexes
+CREATE INDEX idx_subscriptions_userId ON subscriptions(userId);
+CREATE INDEX idx_subscriptions_stripeCustomerId ON subscriptions(stripeCustomerId);
+CREATE INDEX idx_subscriptions_stripeSubscriptionId ON subscriptions(stripeSubscriptionId);`;
+
 /**
- * Reset database schema for tests
+ * Parse SQL file into individual statements, handling comments and multi-line statements
+ */
+function parseSqlStatements(sqlContent) {
+  // Remove single-line comments (-- ...)
+  const withoutComments = sqlContent.replace(/--.*$/gm, '');
+
+  // Split by semicolons, but keep statements that span multiple lines
+  const statements = [];
+  let currentStatement = '';
+  let inString = false;
+  let stringChar = null;
+
+  for (let i = 0; i < withoutComments.length; i++) {
+    const char = withoutComments[i];
+    const nextChar = withoutComments[i + 1];
+
+    // Track string boundaries
+    if ((char === "'" || char === '"') && (i === 0 || withoutComments[i - 1] !== '\\')) {
+      if (!inString) {
+        inString = true;
+        stringChar = char;
+      } else if (char === stringChar) {
+        inString = false;
+        stringChar = null;
+      }
+    }
+
+    currentStatement += char;
+
+    // If we hit a semicolon outside of a string, we have a complete statement
+    if (char === ';' && !inString) {
+      const trimmed = currentStatement.trim();
+      if (trimmed && trimmed !== ';') {
+        statements.push(trimmed);
+      }
+      currentStatement = '';
+    }
+  }
+
+  // Add any remaining statement (though migration file should end with semicolon)
+  const trimmed = currentStatement.trim();
+  if (trimmed) {
+    statements.push(trimmed);
+  }
+
+  return statements.filter(stmt => stmt.length > 0);
+}
+
+/**
+ * Reset database schema for tests using Drizzle migrations
  */
 export async function resetTestDatabase() {
   const run = sql => env.DB.prepare(sql).run();
 
+  // Enable foreign keys
   await run('PRAGMA foreign_keys = ON');
 
-  // Drop tables in reverse dependency order
-  await run('DROP TABLE IF EXISTS subscriptions');
-  await run('DROP TABLE IF EXISTS twoFactor');
-  await run('DROP TABLE IF EXISTS verification');
-  await run('DROP TABLE IF EXISTS account');
-  await run('DROP TABLE IF EXISTS project_members');
-  await run('DROP TABLE IF EXISTS projects');
-  await run('DROP TABLE IF EXISTS session');
-  await run('DROP TABLE IF EXISTS user');
+  // Parse and execute the migration SQL
+  const statements = parseSqlStatements(MIGRATION_SQL);
 
-  // Create tables
-  await run(`
-    CREATE TABLE user (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      emailVerified INTEGER DEFAULT 0,
-      image TEXT,
-      createdAt INTEGER DEFAULT (unixepoch()),
-      updatedAt INTEGER DEFAULT (unixepoch()),
-      username TEXT UNIQUE,
-      displayName TEXT,
-      avatarUrl TEXT,
-      role TEXT,
-      twoFactorEnabled INTEGER DEFAULT 0,
-      banned INTEGER DEFAULT 0,
-      banReason TEXT,
-      banExpires INTEGER
-    )
-  `);
-
-  await run(`
-    CREATE TABLE account (
-      id TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
-      accountId TEXT NOT NULL,
-      providerId TEXT NOT NULL,
-      accessToken TEXT,
-      refreshToken TEXT,
-      accessTokenExpiresAt INTEGER,
-      refreshTokenExpiresAt INTEGER,
-      scope TEXT,
-      idToken TEXT,
-      password TEXT,
-      createdAt INTEGER DEFAULT (unixepoch()),
-      updatedAt INTEGER DEFAULT (unixepoch()),
-      FOREIGN KEY(userId) REFERENCES user(id) ON DELETE CASCADE
-    )
-  `);
-
-  await run(`
-    CREATE TABLE projects (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      description TEXT,
-      createdBy TEXT NOT NULL,
-      createdAt INTEGER DEFAULT (unixepoch()),
-      updatedAt INTEGER DEFAULT (unixepoch()),
-      FOREIGN KEY(createdBy) REFERENCES user(id) ON DELETE CASCADE
-    )
-  `);
-
-  await run(`
-    CREATE TABLE project_members (
-      id TEXT PRIMARY KEY,
-      projectId TEXT NOT NULL,
-      userId TEXT NOT NULL,
-      role TEXT DEFAULT 'member',
-      joinedAt INTEGER DEFAULT (unixepoch()),
-      FOREIGN KEY(projectId) REFERENCES projects(id) ON DELETE CASCADE,
-      FOREIGN KEY(userId) REFERENCES user(id) ON DELETE CASCADE
-    )
-  `);
-
-  await run(`
-    CREATE TABLE session (
-      id TEXT PRIMARY KEY,
-      expiresAt INTEGER NOT NULL,
-      token TEXT NOT NULL UNIQUE,
-      createdAt INTEGER DEFAULT (unixepoch()),
-      updatedAt INTEGER DEFAULT (unixepoch()),
-      ipAddress TEXT,
-      userAgent TEXT,
-      userId TEXT NOT NULL,
-      impersonatedBy TEXT,
-      FOREIGN KEY(userId) REFERENCES user(id) ON DELETE CASCADE,
-      FOREIGN KEY(impersonatedBy) REFERENCES user(id) ON DELETE SET NULL
-    )
-  `);
-
-  await run(`
-    CREATE TABLE verification (
-      id TEXT PRIMARY KEY,
-      identifier TEXT NOT NULL,
-      value TEXT NOT NULL,
-      expiresAt INTEGER NOT NULL,
-      createdAt INTEGER DEFAULT (unixepoch()),
-      updatedAt INTEGER DEFAULT (unixepoch())
-    )
-  `);
-
-  await run(`
-    CREATE TABLE twoFactor (
-      id TEXT PRIMARY KEY,
-      secret TEXT NOT NULL,
-      backupCodes TEXT NOT NULL,
-      userId TEXT NOT NULL,
-      createdAt INTEGER DEFAULT (unixepoch()),
-      updatedAt INTEGER DEFAULT (unixepoch()),
-      FOREIGN KEY(userId) REFERENCES user(id) ON DELETE CASCADE
-    )
-  `);
-
-  await run(`
-    CREATE TABLE subscriptions (
-      id TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
-      stripeCustomerId TEXT UNIQUE,
-      stripeSubscriptionId TEXT UNIQUE,
-      tier TEXT NOT NULL DEFAULT 'free',
-      status TEXT NOT NULL DEFAULT 'active',
-      currentPeriodStart INTEGER,
-      currentPeriodEnd INTEGER,
-      cancelAtPeriodEnd INTEGER DEFAULT 0,
-      createdAt INTEGER DEFAULT (unixepoch()),
-      updatedAt INTEGER DEFAULT (unixepoch()),
-      UNIQUE(userId),
-      FOREIGN KEY(userId) REFERENCES user(id) ON DELETE CASCADE
-    )
-  `);
+  // Execute each migration statement
+  for (const statement of statements) {
+    if (statement.trim()) {
+      await run(statement);
+    }
+  }
 }
 
 /**

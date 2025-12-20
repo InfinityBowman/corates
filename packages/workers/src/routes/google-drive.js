@@ -15,6 +15,7 @@ import {
   AUTH_ERRORS,
   FILE_ERRORS,
   SYSTEM_ERRORS,
+  isDomainError,
 } from '@corates/shared';
 
 const googleDriveRoutes = new Hono();
@@ -206,7 +207,7 @@ googleDriveRoutes.delete('/disconnect', async c => {
     console.error('Google disconnect error:', error);
     const systemError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'disconnect_google_account',
-      originalError: error.message,
+      originalError: error?.message || String(error),
     });
     return c.json(systemError, systemError.statusCode);
   }
