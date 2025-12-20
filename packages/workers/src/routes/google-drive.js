@@ -333,10 +333,14 @@ googleDriveRoutes.post('/import', async c => {
       return c.json(systemError, systemError.statusCode);
     }
 
+    // Read the file content into an ArrayBuffer
+    // This is necessary because R2 requires a stream with a known length
+    const fileContent = await downloadResponse.arrayBuffer();
+
     // Upload to R2 bucket
     const r2Key = `projects/${projectId}/studies/${studyId}/${fileMeta.name}`;
 
-    await c.env.PDF_BUCKET.put(r2Key, downloadResponse.body, {
+    await c.env.PDF_BUCKET.put(r2Key, fileContent, {
       httpMetadata: {
         contentType: 'application/pdf',
       },
