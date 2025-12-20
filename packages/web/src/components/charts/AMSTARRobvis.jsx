@@ -96,11 +96,12 @@ export default function AMSTARRobvis(props) {
     'no ma': '#9ca3af',
   };
 
+  // https://dev.to/finnhvman/grayscale-color-palette-with-equal-contrast-ratios-2pgl
   const colorMapGreyscale = {
-    yes: '#1f2937',
-    'partial yes': '#6b7280',
-    no: '#d1d5db',
-    'no ma': '#f3f4f6',
+    yes: '#1b1b1b',
+    'partial yes': '#484848',
+    no: '#727272',
+    'no ma': '#a2a2a2',
   };
 
   const colorMap = () => (greyscale() ? colorMapGreyscale : colorMapDefault);
