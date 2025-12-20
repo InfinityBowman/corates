@@ -89,6 +89,7 @@ Handled by BetterAuth. Includes signin, signup, session management.
 ### Billing (`/api/billing/*`)
 
 Stripe integration for subscriptions and payments:
+
 - `GET /api/billing/subscription` - Get user subscription
 - `POST /api/billing/checkout` - Create Stripe checkout session
 - `POST /api/billing/portal` - Create Stripe customer portal session
@@ -113,6 +114,7 @@ Google Drive integration endpoints for importing documents.
 ### Database (`/api/db/*`)
 
 Development/diagnostic endpoints:
+
 - `GET /api/db/users` - List users (development only)
 
 ### Durable Object Routes
