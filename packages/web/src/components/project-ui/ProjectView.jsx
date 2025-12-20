@@ -90,12 +90,15 @@ export default function ProjectView() {
     for (const pdf of pdfs) {
       // Use metadata if available (from merged ref/lookup data)
       const abstract = pdf.metadata?.abstract || '';
+      // Use filename (without .pdf extension) as study name, extracted title as originalTitle
+      const studyName = pdf.fileName ? pdf.fileName.replace(/\.pdf$/i, '') : 'Untitled Study';
       const metadata = {
         ...(pdf.metadata || {}),
+        originalTitle: pdf.title || pdf.metadata?.title || null,
         doi: pdf.doi ?? pdf.metadata?.doi ?? null,
         importSource: pdf.metadata?.importSource || 'pdf',
       };
-      const studyId = projectActionsStore.study.create(pdf.title, abstract, metadata);
+      const studyId = projectActionsStore.study.create(studyName, abstract, metadata);
       if (studyId && pdf.data) {
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
         uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName)
