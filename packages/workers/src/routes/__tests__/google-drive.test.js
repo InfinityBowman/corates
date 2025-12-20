@@ -340,20 +340,26 @@ describe('Google Drive Routes - POST /api/google-drive/import', () => {
     await seedGoogleAccount('user-1');
 
     // Mock Google Drive API calls
+    const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]); // %PDF-
     mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: 'file-123',
-          name: 'document.pdf',
-          mimeType: 'application/pdf',
-          size: '1024',
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: 'file-123',
+            name: 'document.pdf',
+            mimeType: 'application/pdf',
+            size: '1024',
+          }),
+          {
+            headers: { 'Content-Type': 'application/json' },
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(pdfData.buffer, {
+          headers: { 'Content-Type': 'application/pdf' },
         }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        body: new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]), // %PDF-
-      });
+      );
 
     const res = await fetchGoogleDrive('/api/google-drive/import', {
       method: 'POST',
