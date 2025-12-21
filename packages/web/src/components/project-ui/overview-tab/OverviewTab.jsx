@@ -1,4 +1,4 @@
-import { For, Show, createSignal, createEffect } from 'solid-js';
+import { For, Show, createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { FiPlus, FiTrash2 } from 'solid-icons/fi';
 import ChartSection from './ChartSection.jsx';
@@ -28,11 +28,6 @@ export default function OverviewTab() {
   const members = () => projectStore.getMembers(projectId);
   const currentUserId = () => user()?.id;
 
-  createEffect(() => {
-    // console.log('studies', studies());
-    console.log('members', members());
-    // console.log('currentUserId', currentUserId());
-  });
   // Calculate additional stats
 
   const inProgressStudies = () =>
@@ -174,7 +169,6 @@ export default function OverviewTab() {
                               {member.displayName || member.name || 'Unknown'}
                               {isSelf && <span class='ml-1 text-gray-400'>(you)</span>}
                             </p>
-                            <p class='text-sm text-gray-500'>{member.email}</p>
                           </div>
                         </div>
                         <div class='flex items-center gap-2'>
