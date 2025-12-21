@@ -39,6 +39,14 @@ export default function Footer() {
                 </PrefetchLink>
               </li>
               <li>
+                <PrefetchLink
+                  href='/resources'
+                  class='text-gray-500 transition-colors hover:text-gray-700'
+                >
+                  Resources
+                </PrefetchLink>
+              </li>
+              <li>
                 <a
                   href={urls.checklist()}
                   rel='external'
