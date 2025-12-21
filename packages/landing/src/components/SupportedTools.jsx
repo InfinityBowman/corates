@@ -7,8 +7,8 @@ export default function SupportedTools() {
       status: 'available',
       description: 'Systematic reviews of interventions',
     },
-    { name: 'Cochrane RoB 2', status: 'coming', description: 'Randomized trials' },
     { name: 'ROBINS-I', status: 'coming', description: 'Non-randomized studies' },
+    { name: 'Cochrane RoB 2', status: 'coming', description: 'Randomized trials' },
     // { name: 'GRADE', status: 'coming', description: 'Certainty of evidence' },
   ];
 
@@ -25,12 +25,16 @@ export default function SupportedTools() {
         <For each={tools}>
           {tool => {
             const isAvailable = tool.status === 'available';
-            return (
-              <div
-                class={`rounded-xl border p-5 text-center ${
-                  isAvailable ? 'border-blue-700/20 bg-blue-600/10' : 'border-gray-200 bg-gray-50'
-                }`}
-              >
+            const baseClasses = `rounded-xl border p-5 text-center ${
+              isAvailable ? 'border-blue-700/20 bg-blue-600/10' : 'border-gray-200 bg-gray-50'
+            }`;
+            const interactiveClasses =
+              isAvailable ?
+                'cursor-pointer transition-all hover:border-blue-700/40 hover:bg-blue-600/20 hover:shadow-md active:scale-[0.98]'
+              : '';
+
+            const content = (
+              <>
                 <p class={`mb-1 font-semibold ${isAvailable ? 'text-blue-700' : 'text-gray-500'}`}>
                   {tool.name}
                 </p>
@@ -42,8 +46,14 @@ export default function SupportedTools() {
                 >
                   {isAvailable ? 'Available' : 'Coming Soon'}
                 </span>
-              </div>
+              </>
             );
+
+            return isAvailable ?
+                <a href='/resources' rel='external' class={`${baseClasses} ${interactiveClasses}`}>
+                  {content}
+                </a>
+              : <div class={baseClasses}>{content}</div>;
           }}
         </For>
       </div>

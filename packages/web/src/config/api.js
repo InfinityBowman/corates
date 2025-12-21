@@ -11,7 +11,6 @@ function getApiBase() {
 export const API_BASE = getApiBase();
 export const LANDING_URL = import.meta.env.VITE_PUBLIC_APP_URL;
 export const BASEPATH = import.meta.env.VITE_BASEPATH;
-export const AMSTAR2_URL = 'https://www.bmj.com/content/358/bmj.j4008';
 
 /**
  * Get WebSocket URL from API base
