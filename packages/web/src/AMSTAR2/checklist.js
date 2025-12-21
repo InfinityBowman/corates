@@ -83,7 +83,7 @@ export function createChecklist({
     q8: {
       answers: [
         [false, false, false, false, false],
-        [false, false, false, false],
+        [false, false, false, false, false],
         [false, false, false],
       ],
       critical: false,
