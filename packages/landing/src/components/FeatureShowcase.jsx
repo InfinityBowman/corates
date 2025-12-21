@@ -305,7 +305,7 @@ function SpeedIllustration() {
 
       <FloatingBadge position='-top-2 -right-2' border='border-amber-200'>
         <AiOutlineCheck class='h-4 w-4 text-amber-600' />
-        <span class='text-xs font-medium text-gray-700'>No busywork</span>
+        <span class='text-xs font-medium text-gray-700'>Automated</span>
       </FloatingBadge>
 
       <FloatingBadge position='top-[40%] -right-2' border='border-blue-200'>
@@ -458,18 +458,6 @@ export default function FeatureShowcase() {
       ],
     },
     {
-      title: 'Enterprise-Grade Security',
-      description:
-        'Your research data is protected with multiple authentication options and industry-standard security practices.',
-      illustration: <SecurityIllustration />,
-      bullets: [
-        'OAuth, passwordless login',
-        'Two-factor authentication (2FA) for enhanced security',
-        'Role-based access control and audit logging (coming soon)',
-        'Single Sign-On (SSO) support (coming soon)',
-      ],
-    },
-    {
       title: 'Automatic Scoring',
       description:
         'Eliminate manual calculation errors. Complex scores are computed instantly as you complete appraisals.',
@@ -478,6 +466,17 @@ export default function FeatureShowcase() {
         'Built-in appraisal scoring',
         'Complex scoring rubrics applied automatically',
         'Real-time updates as appraisals are completed',
+      ],
+    },
+    {
+      title: 'Data Visualizations',
+      description:
+        'Publication-ready visual summaries generated automatically from appraisal data.',
+      illustration: <DataVisualizationIllustration />,
+      bullets: [
+        'Study-level and across-study figures generated in real time',
+        'Customizable labels, axes, and formatting',
+        'Export to PNG, SVG, in color or grayscale',
       ],
     },
     {
@@ -492,14 +491,15 @@ export default function FeatureShowcase() {
       ],
     },
     {
-      title: 'Data Visualizations',
+      title: 'Enterprise-Grade Security',
       description:
-        'Publication-ready visual summaries generated automatically from appraisal data.',
-      illustration: <DataVisualizationIllustration />,
+        'Your research data is protected with multiple authentication options and industry-standard security practices.',
+      illustration: <SecurityIllustration />,
       bullets: [
-        'Study-level and across-study figures generated in real time',
-        'Customizable labels, axes, and formatting',
-        'Export to PNG, SVG, in color or grayscale',
+        'OAuth, passwordless login',
+        'Two-factor authentication (2FA) for enhanced security',
+        'Role-based access control and audit logging (coming soon)',
+        'Single Sign-On (SSO) support (coming soon)',
       ],
     },
   ];

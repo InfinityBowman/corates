@@ -1,6 +1,10 @@
-# GitHub Copilot Instructions
+---
+alwaysApply: true
+---
 
-This file contains instructions for GitHub Copilot to follow when generating code for this project. Please adhere to these guidelines to ensure consistency and maintainability across the codebase. This project is CoRATES (Collaborative Research Appraisal Tool for Evidence Synthesis), a SolidJS-based web application deployed on Cloudflare Workers.
+# Agent Instructions
+
+This file contains instructions for Agents to follow when generating code for this project. Please adhere to these guidelines to ensure consistency and maintainability across the codebase. This project is CoRATES (Collaborative Research Appraisal Tool for Evidence Synthesis), a SolidJS-based web application deployed on Cloudflare Workers.
 
 the /web package contains the frontend application built with SolidJS.
 the /workers package contains backend services, including API endpoints and database migrations.
@@ -8,7 +12,7 @@ the /landing package contains the marketing and landing site.
 
 The web package is copied into the landing package during the build process for deployment and all deployed as a single site on a single worker.
 
-Do not worry about migrations either client side or backend unless specifically instructed to do so in the prompt. This project is not in production and has no users.
+Do not worry about migrations either claient side or backend unless specifically instructed to do so in the prompt. This project is not in production and has no users.
 
 ## Coding Standards
 

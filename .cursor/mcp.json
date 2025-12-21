@@ -1,3 +1,10 @@
 {
-  "mcpServers": {}
+  "mcpServers": {
+    "corates": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/Users/jacobmaynard/Documents/Repos/corates/packages/mcp/server.js"],
+      "env": {}
+    }
+  }
 }
