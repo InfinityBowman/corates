@@ -72,7 +72,7 @@ export default function Resources() {
                           href='https://www.bmj.com/content/358/bmj.j4008'
                           target='_blank'
                           rel='external noopener noreferrer'
-                          class='font-medium text-blue-600 hover:text-blue-700 inline-flex items-center gap-2'
+                          class='inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700'
                         >
                           AMSTAR 2 paper
                           <FiExternalLink class='h-4 w-4' />
@@ -83,7 +83,7 @@ export default function Resources() {
                           href='https://www.bmj.com/highwire/filestream/951408/field_highwire_adjunct_files/1/sheb036104.ww1.pdf'
                           target='_blank'
                           rel='external noopener noreferrer'
-                          class='font-medium text-blue-600 hover:text-blue-700 inline-flex items-center gap-2'
+                          class='inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700'
                         >
                           AMSTAR 2 Guidance document
                           <FiExternalLink class='h-4 w-4' />
@@ -135,10 +135,10 @@ export default function Resources() {
                           one weakness but no critical flaws. It may provide an accurate summary of
                           the results of the available studies that were included in the review.
                         </p>
-                        <p class='text-sm italic text-gray-500'>
-                          *Multiple non-critical weaknesses may diminish confidence in the review and
-                          it may be appropriate to move the overall appraisal down from moderate to
-                          low confidence.
+                        <p class='text-sm text-gray-500 italic'>
+                          *Multiple non-critical weaknesses may diminish confidence in the review
+                          and it may be appropriate to move the overall appraisal down from moderate
+                          to low confidence.
                         </p>
                       </div>
                     </div>
@@ -153,9 +153,9 @@ export default function Resources() {
                       <div>
                         <h3 class='mb-2 text-lg font-semibold text-gray-900'>Low</h3>
                         <p class='text-gray-600'>
-                          One critical flaw with or without non-critical weaknesses: the review has a
-                          critical flaw and may not provide an accurate and comprehensive summary of
-                          the available studies that address the question of interest.
+                          One critical flaw with or without non-critical weaknesses: the review has
+                          a critical flaw and may not provide an accurate and comprehensive summary
+                          of the available studies that address the question of interest.
                         </p>
                       </div>
                     </div>
