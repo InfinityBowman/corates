@@ -1,7 +1,7 @@
 import { For } from 'solid-js';
-import { AiOutlineCheckCircle, AiOutlineCheck, AiOutlineMail, AiOutlineLink } from 'solid-icons/ai';
+import { AiOutlineCheck, AiOutlineMail, AiOutlineLink } from 'solid-icons/ai';
 import { HiOutlineDocumentText, HiOutlineShieldCheck } from 'solid-icons/hi';
-import { BsGraphUp, BsLightningChargeFill } from 'solid-icons/bs';
+import { BsLightningChargeFill } from 'solid-icons/bs';
 import { FiLock, FiKey, FiShield } from 'solid-icons/fi';
 import { BiRegularComment } from 'solid-icons/bi';
 import { RiDeviceWifiOffLine } from 'solid-icons/ri';
@@ -23,12 +23,12 @@ function UserAvatar(props) {
     <div class={`absolute ${props.position}`}>
       <div class='relative'>
         <div
-          class={`h-12 w-12 rounded-full bg-linear-to-br ${props.gradient} flex items-center justify-center font-bold text-white shadow-lg`}
+          class={`h-8 w-8 rounded-full bg-linear-to-br ${props.gradient} flex items-center justify-center font-bold text-white shadow-lg`}
         >
           {props.letter}
         </div>
         <div
-          class={`absolute -right-1 -bottom-1 h-4 w-4 ${props.statusColor} rounded-full border-2 border-white ${props.pulse ? 'animate-pulse' : ''}`}
+          class={`absolute right-0 bottom-0 h-2 w-2 ${props.statusColor} rounded-full border border-white ${props.pulse ? 'animate-pulse' : ''}`}
         />
       </div>
     </div>
@@ -47,17 +47,23 @@ function FloatingBadge(props) {
   );
 }
 
-function ChecklistItem(props) {
+function AnimatedCursor(props) {
   return (
-    <div class='flex items-center gap-2'>
-      <div
-        class={`h-4 w-4 rounded ${props.variant === 'warning' ? 'bg-yellow-500' : 'bg-green-500'} flex items-center justify-center`}
-      >
-        {props.variant === 'warning' ?
-          <span class='text-xs font-bold text-white'>!</span>
-        : <AiOutlineCheck class='h-3 w-3 text-white' />}
-      </div>
-      <div class='h-2 flex-1 rounded bg-gray-200' />
+    <div
+      class={`absolute ${props.class || ''}`}
+      style={{
+        animation: `cursorMove${props.path} ${props.duration || '8s'} ease-in-out infinite`,
+        'animation-delay': props.delay || '0s',
+      }}
+    >
+      <svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'>
+        <path
+          fill='#FFF'
+          stroke={props.stroke}
+          stroke-width='2'
+          d='M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.35Z'
+        />
+      </svg>
     </div>
   );
 }
@@ -65,53 +71,76 @@ function ChecklistItem(props) {
 // Real-time Collaboration Illustration
 function CollaborationIllustration() {
   return (
-    <IllustrationWrapper gradient='from-blue-50 to-indigo-50' border='border-blue-200'>
-      {/* Central document */}
-      <div class='absolute inset-0 flex items-center justify-center'>
-        <div class='w-48 rounded-lg border-2 border-blue-300 bg-white p-6 shadow-lg'>
-          <div class='space-y-2'>
-            <div class='h-2 w-full rounded bg-gray-200' />
-            <div class='h-2 w-5/6 rounded bg-gray-200' />
-            <div class='h-2 w-4/6 animate-pulse rounded bg-blue-400' />
-            <div class='h-2 w-full rounded bg-gray-100' />
+    <>
+      <style>
+        {`
+          @keyframes cursorMove1 {
+            0%, 100% { transform: translate(20%, 30%); }
+            25% { transform: translate(60%, 20%); }
+            50% { transform: translate(70%, 60%); }
+            75% { transform: translate(40%, 70%); }
+          }
+          @keyframes cursorMove2 {
+            0%, 100% { transform: translate(70%, 40%); }
+            25% { transform: translate(30%, 50%); }
+            50% { transform: translate(25%, 20%); }
+            75% { transform: translate(60%, 65%); }
+          }
+        `}
+      </style>
+      <IllustrationWrapper gradient='from-blue-50 to-indigo-50' border='border-blue-200'>
+        {/* Reconcile image */}
+        <div class='absolute inset-0 flex items-center justify-center'>
+          <div class='relative rounded-lg border border-blue-200 bg-white p-1 shadow-lg'>
+            <picture>
+              <source srcset='/assets/corates_reconcile_progress.webp' type='image/webp' />
+              <img
+                src='/assets/corates_reconcile_progress.png'
+                alt='Real-time collaboration and reconciliation progress'
+                class='h-auto w-full max-w-md rounded'
+                loading='lazy'
+                decoding='async'
+              />
+            </picture>
+            {/* Animated cursors */}
+            <AnimatedCursor
+              path='1'
+              duration='10s'
+              delay='0s'
+              class='top-[60%] left-[50%] -translate-x-1/2 -translate-y-1/2'
+              stroke='#f6339a'
+            />
+            <AnimatedCursor
+              path='2'
+              duration='12s'
+              delay='2s'
+              class='top-[50%] left-[20%] -translate-x-1/2 -translate-y-1/2'
+              stroke='#2b7fff'
+            />
           </div>
         </div>
-      </div>
 
-      {/* User avatars with activity indicators */}
-      <UserAvatar
-        position='-top-2 -left-2'
-        gradient='from-purple-400 to-purple-600'
-        letter='A'
-        statusColor='bg-green-500'
-      />
-      <UserAvatar
-        position='-top-2 -right-2'
-        gradient='from-pink-400 to-pink-600'
-        letter='B'
-        statusColor='bg-green-500'
-        pulse
-      />
-      <UserAvatar
-        position='-bottom-2 -left-2'
-        gradient='from-blue-400 to-blue-600'
-        letter='C'
-        statusColor='bg-yellow-500'
-      />
+        {/* User avatars with activity indicators */}
+        <UserAvatar
+          position='-top-2 -right-2'
+          gradient='from-pink-400 to-pink-600'
+          letter='B'
+          statusColor='bg-green-500'
+        />
+        <UserAvatar
+          position='-top-2 right-4'
+          gradient='from-blue-400 to-blue-600'
+          letter='J'
+          statusColor='bg-green-500'
+        />
 
-      {/* Activity indicators */}
-      <FloatingBadge position='-right-4 top-1/4' border='border-green-200'>
-        <div class='h-2 w-2 animate-pulse rounded-full bg-green-500' />
-        <span class='text-xs font-medium text-gray-700'>Live</span>
-      </FloatingBadge>
-
-      <div class='absolute bottom-1/4 -left-4'>
-        <div class='flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs shadow-md'>
-          <AiOutlineCheckCircle class='h-3 w-3 text-blue-600' />
-          <span class='text-gray-700'>Updated</span>
-        </div>
-      </div>
-    </IllustrationWrapper>
+        {/* Activity indicators */}
+        <FloatingBadge position='-left-4 -bottom-2' border='border-green-200'>
+          <div class='h-2 w-2 animate-pulse rounded-full bg-green-500' />
+          <span class='text-xs font-medium text-gray-700'>Live</span>
+        </FloatingBadge>
+      </IllustrationWrapper>
+    </>
   );
 }
 
@@ -157,47 +186,21 @@ function SecurityIllustration() {
 function ScoringIllustration() {
   return (
     <IllustrationWrapper gradient='from-sky-50 to-blue-100' border='border-blue-200'>
-      {/* Checklist card */}
-      <div class='w-56 rounded-lg border border-blue-200 bg-white p-4 shadow-lg'>
-        {/* Header */}
-        <div class='mb-3 flex items-center justify-between border-b border-gray-100 pb-2'>
-          <span class='text-xs font-semibold text-gray-700'>AMSTAR-2</span>
-          <div class='rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700'>High</div>
-        </div>
-
-        {/* Checklist items */}
-        <div class='space-y-2'>
-          <ChecklistItem />
-          <ChecklistItem />
-          <ChecklistItem variant='warning' />
-          <ChecklistItem />
-        </div>
-
-        {/* Progress bar */}
-        <div class='mt-3 border-t border-gray-100 pt-2'>
-          <div class='mb-1 flex justify-between text-xs text-gray-500'>
-            <span>Progress</span>
-            <span class='font-medium'>75%</span>
-          </div>
-          <div class='h-2 overflow-hidden rounded-full bg-gray-100'>
-            <div class='h-full w-3/4 rounded-full bg-linear-to-r from-green-300 to-green-500' />
-          </div>
+      {/* Scoring image */}
+      <div class='flex items-center justify-center'>
+        <div class='relative rounded-lg border border-blue-200 bg-white p-1 shadow-lg'>
+          <picture>
+            <source srcset='/assets/corates_scoring.webp' type='image/webp' />
+            <img
+              src='/assets/corates_scoring.png'
+              alt='Automatic scoring visualization'
+              class='h-auto w-full max-w-md rounded'
+              loading='lazy'
+              decoding='async'
+            />
+          </picture>
         </div>
       </div>
-
-      {/* Floating score badge */}
-      <div class='absolute -top-2 -right-2'>
-        <div class='rounded-lg bg-linear-to-br from-blue-500 to-sky-500 px-3 py-2 shadow-lg'>
-          <div class='text-xs font-medium text-white'>Scoring</div>
-          <div class='text-xl font-bold text-white'>12/16</div>
-        </div>
-      </div>
-
-      {/* Auto-calculate indicator */}
-      <FloatingBadge position='-bottom-2 left-4' border='border-green-200'>
-        <div class='h-2 w-2 animate-pulse rounded-full bg-green-500' />
-        <span class='text-xs font-medium text-gray-700'>Automatic Scoring</span>
-      </FloatingBadge>
     </IllustrationWrapper>
   );
 }
@@ -332,78 +335,56 @@ function SpeedIllustration() {
 }
 
 // Data Visualizations Illustration
-const chartData = [
-  { label: 'D1', green: 60, yellow: 20, red: 20 },
-  { label: 'D2', green: 80, yellow: 20, red: 0 },
-  { label: 'D3', green: 40, yellow: 40, red: 20 },
-  { label: 'D4', green: 70, yellow: 30, red: 0 },
-  { label: 'D5', green: 50, yellow: 25, red: 25 },
-];
-
 function DataVisualizationIllustration() {
   return (
-    <IllustrationWrapper gradient='from-violet-50 to-purple-50' border='border-violet-200'>
-      {/* Chart card */}
-      <div class='w-56 rounded-lg border border-violet-200 bg-white p-4 shadow-lg'>
-        {/* Chart header */}
-        <div class='mb-3 flex items-center justify-between'>
-          <span class='text-xs font-semibold text-gray-700'>Risk of Bias</span>
-          <BsGraphUp class='h-4 w-4 text-violet-500' />
+    <IllustrationWrapper gradient='from-emerald-50 to-teal-50' border='border-emerald-200'>
+      {/* Data visualization images */}
+      <div class='flex flex-col items-center justify-center gap-4'>
+        {/* ROBVIS visualization */}
+        <div class='relative rounded-lg border border-emerald-200 bg-white p-3 shadow-lg'>
+          <picture>
+            <source srcset='/assets/corates_robvis.webp' type='image/webp' />
+            <img
+              src='/assets/corates_robvis.png'
+              alt='ROBVIS risk of bias visualization'
+              class='h-auto w-full max-w-md rounded'
+              loading='lazy'
+              decoding='async'
+            />
+          </picture>
         </div>
 
-        {/* Stacked horizontal bar chart */}
-        <div class='space-y-2'>
-          <For each={chartData}>
-            {row => (
-              <div class='flex items-center gap-2'>
-                <span class='w-8 text-xs text-gray-500'>{row.label}</span>
-                <div class='flex h-4 flex-1 overflow-hidden rounded'>
-                  {row.green > 0 && <div class='bg-green-400' style={{ width: `${row.green}%` }} />}
-                  {row.yellow > 0 && (
-                    <div class='bg-yellow-400' style={{ width: `${row.yellow}%` }} />
-                  )}
-                  {row.red > 0 && <div class='bg-red-400' style={{ width: `${row.red}%` }} />}
-                </div>
-              </div>
-            )}
-          </For>
-        </div>
-
-        {/* Legend */}
-        <div class='mt-3 flex items-center justify-center gap-3 border-t border-gray-100 pt-2'>
-          <div class='flex items-center gap-1'>
-            <div class='h-2 w-2 rounded-sm bg-green-400' />
-            <span class='text-xs text-gray-500'>Low</span>
-          </div>
-          <div class='flex items-center gap-1'>
-            <div class='h-2 w-2 rounded-sm bg-yellow-400' />
-            <span class='text-xs text-gray-500'>Some</span>
-          </div>
-          <div class='flex items-center gap-1'>
-            <div class='h-2 w-2 rounded-sm bg-red-400' />
-            <span class='text-xs text-gray-500'>High</span>
-          </div>
+        {/* Distribution plot */}
+        <div class='relative rounded-lg border border-emerald-200 bg-white p-3 shadow-lg'>
+          <picture>
+            <source srcset='/assets/corates_dist.webp' type='image/webp' />
+            <img
+              src='/assets/corates_dist.png'
+              alt='Distribution plot visualization'
+              class='h-auto w-full max-w-md rounded'
+              loading='lazy'
+              decoding='async'
+            />
+          </picture>
         </div>
       </div>
 
       {/* Export options floating */}
       <div class='absolute -top-2 -right-2'>
-        <div class='flex gap-1 rounded-lg border border-violet-200 bg-white p-2 shadow-md'>
-          <div class='flex h-7 w-8 items-center justify-center rounded bg-violet-100'>
-            <span class='text-xs font-bold text-violet-600'>PNG</span>
+        <div class='flex gap-1 rounded-lg border border-sky-200 bg-white p-2 shadow-md'>
+          <div class='flex items-center justify-center rounded bg-sky-100 px-2 py-1'>
+            <span class='text-xs font-bold text-blue-600'>PNG</span>
           </div>
-          <div class='flex h-7 w-8 items-center justify-center rounded bg-purple-100'>
-            <span class='text-xs font-bold text-purple-600'>SVG</span>
+          <div class='flex items-center justify-center rounded bg-sky-100 px-2 py-1'>
+            <span class='text-xs font-bold text-blue-600'>SVG</span>
           </div>
         </div>
       </div>
 
       {/* Publication ready badge */}
-      <div class='absolute -bottom-2 left-4'>
-        <div class='rounded-lg bg-linear-to-r from-sky-500 to-blue-500 px-3 py-1.5 shadow-lg'>
-          <span class='text-xs font-medium text-white'>Publication Ready</span>
-        </div>
-      </div>
+      <FloatingBadge position='-bottom-2 -left-2' border='border-sky-200'>
+        <span class='text-xs font-medium text-gray-700'>Publication Ready!</span>
+      </FloatingBadge>
     </IllustrationWrapper>
   );
 }
