@@ -1,6 +1,5 @@
 import { Show, createMemo } from 'solid-js';
 import { FaSolidCircleInfo } from 'solid-icons/fa';
-import { AMSTAR2_URL } from '@/config/api.js';
 import { Tooltip } from '@corates/ui';
 import { getChecklistMetadata, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
 
@@ -29,7 +28,7 @@ function getScoreStyle(score, checklistType) {
  */
 function getInfoUrl(checklistType) {
   const metadata = getChecklistMetadata(checklistType);
-  return metadata.url || AMSTAR2_URL;
+  return metadata.url;
 }
 
 /**

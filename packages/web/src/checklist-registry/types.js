@@ -1,3 +1,5 @@
+import { LANDING_URL } from '@/config/api.js';
+
 /**
  * Checklist Type Constants and Metadata
  *
@@ -26,7 +28,7 @@ export const CHECKLIST_METADATA = {
     shortName: 'AMSTAR 2',
     description: 'Quality assessment of systematic reviews',
     version: '2017',
-    url: 'https://amstar.ca/Amstar_Checklist.php',
+    url: `${LANDING_URL}/resources`,
     scoreLevels: ['High', 'Moderate', 'Low', 'Critically Low'],
     scoreColors: {
       High: { bg: 'bg-green-100', text: 'text-green-800' },
