@@ -105,6 +105,19 @@ export default function GoogleDrivePickerLauncher(props) {
         multiselect,
       });
     } catch (err) {
+      // Check if this is a refresh token error - if so, automatically reconnect
+      const parsedError = err.domainError || err;
+
+      if (
+        parsedError?.code === 'AUTH_INVALID' &&
+        parsedError?.details?.context === 'google_no_refresh_token'
+      ) {
+        // Automatically trigger reconnection instead of showing error
+        await connect();
+        return null;
+      }
+
+      // For other errors, show them normally
       const { handleError } = await import('@/lib/error-utils.js');
       await handleError(err, {
         setError,

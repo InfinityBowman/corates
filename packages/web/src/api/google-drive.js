@@ -79,7 +79,10 @@ export async function getGoogleDrivePickerToken() {
 
   if (!response.ok) {
     const parsedError = await parseApiError(response);
-    throw new Error(parsedError.message);
+    // Preserve the full error structure by attaching it to the Error object
+    const error = new Error(parsedError.message);
+    error.domainError = parsedError;
+    throw error;
   }
 
   return response.json();
