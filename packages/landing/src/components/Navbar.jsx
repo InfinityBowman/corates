@@ -65,7 +65,7 @@ export default function Navbar() {
                   <a
                     href={urls.signUp()}
                     rel='external'
-                    class='hidden items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
+                    class='hidden items-center gap-2 rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
                   >
                     Sign Up
                   </a>
@@ -79,7 +79,7 @@ export default function Navbar() {
                 <a
                   href={urls.dashboard()}
                   rel='external'
-                  class='hidden items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
+                  class='hidden items-center gap-2 rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
                 >
                   My Dashboard
                 </a>
@@ -164,7 +164,7 @@ function MobileMenu(props) {
                   <a
                     href={urls.signUp()}
                     rel='external'
-                    class='block w-full rounded-lg bg-blue-600 px-4 py-3 text-center font-medium text-white shadow-sm transition-colors hover:bg-blue-700'
+                    class='block w-full rounded-lg border border-transparent bg-blue-600 px-4 py-3 text-center font-medium text-white shadow-sm transition-colors hover:bg-blue-700'
                   >
                     Sign Up
                   </a>
@@ -174,7 +174,7 @@ function MobileMenu(props) {
               <a
                 href={urls.dashboard()}
                 rel='external'
-                class='block w-full rounded-lg bg-blue-600 px-4 py-3 text-center font-medium text-white shadow-sm transition-colors hover:bg-blue-700'
+                class='block w-full rounded-lg border border-transparent bg-blue-600 px-4 py-3 text-center font-medium text-white shadow-sm transition-colors hover:bg-blue-700'
               >
                 My Dashboard
               </a>
