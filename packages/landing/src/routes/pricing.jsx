@@ -119,9 +119,9 @@ export default function Pricing() {
               CoRATES is currently in active development and testing. We’re working closely with
               early users to refine features, workflows, and team-based collaboration. Pricing will
               be announced closer to launch and will reflect the needs of individual researchers,
-              teams, and institutions. Interested in early access? Join the waitlist or{' '}
+              teams, and institutions. Interested in getting involved?{' '}
               <a href='/contact' class='text-blue-600 hover:text-blue-700'>
-                contact us
+                Contact us
               </a>{' '}
               to learn more.
             </p>
@@ -233,7 +233,7 @@ export default function Pricing() {
             </For>
           </div>
 
-          <p class='mt-8 text-center text-sm text-gray-500'>
+          <p class='mt-8 hidden text-center text-sm text-gray-500'>
             For institutional purchasing, contact{' '}
             <a href='mailto:support@corates.org' class='text-blue-600 hover:text-blue-700'>
               support@corates.org
