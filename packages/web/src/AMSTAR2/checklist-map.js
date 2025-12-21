@@ -49,12 +49,11 @@ export const AMSTAR_CHECKLIST = {
         options: [
           'a meta-analysis/synthesis plan, if appropriate, and',
           'a plan for investigating causes of heterogeneity',
-          'a plan for investigating causes of heterogeneity',
+          'justification for any derivations from the protocol',
         ],
       },
       {
         label: '',
-        description: '',
         options: ['Yes', 'Partial Yes', 'No'],
       },
     ],
@@ -112,7 +111,7 @@ export const AMSTAR_CHECKLIST = {
       {
         label: 'For Yes, either ONE of the following:',
         options: [
-          'at least two reviewers achieved consensus on which data to extract from included studies',
+          'at least two reviewers independently agreed on selection of eligible studies and achieved consensus on which studies to include',
           'OR two reviewers extracted data from a sample of eligible studies and achieved good agreement (at least 80 percent), with the remainder extracted by one reviewer.',
         ],
       },
@@ -177,8 +176,9 @@ export const AMSTAR_CHECKLIST = {
         label: 'For Yes, should also have ALL the following:',
         options: [
           'described population in detail',
+          'described intervention in detail (including doses where relevant)',
           'described comparator in detail (including doses where relevant)',
-          'described study’s setting in detail',
+          'described study’s setting',
           'timeframe for follow-up',
         ],
       },
@@ -209,7 +209,6 @@ export const AMSTAR_CHECKLIST = {
       },
       {
         label: '',
-        description: '',
         options: ['Yes', 'Partial Yes', 'No', ' Includes only NRSI'],
       },
     ],

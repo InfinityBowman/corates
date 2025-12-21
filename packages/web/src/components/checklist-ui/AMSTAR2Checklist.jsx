@@ -745,6 +745,11 @@ function StandardQuestionInternal(props) {
             <div class='wrap-break-words flex min-h-8 w-full min-w-0 items-center text-xs font-semibold whitespace-normal text-gray-800'>
               {col.label}
             </div>
+            <Show when={col.description}>
+              <div class='wrap-break-words -mt-1 mb-2 flex items-center text-xs text-gray-800'>
+                {col.description}
+              </div>
+            </Show>
             {colIdx() === props.columns.length - 1 ?
               <div class='mt-1 flex flex-col gap-2'>
                 <For each={col.options}>
