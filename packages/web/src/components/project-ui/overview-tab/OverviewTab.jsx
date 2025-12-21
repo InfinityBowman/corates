@@ -1,4 +1,4 @@
-import { For, Show, createSignal } from 'solid-js';
+import { For, Show, createSignal, createEffect } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { FiPlus, FiTrash2 } from 'solid-icons/fi';
 import ChartSection from './ChartSection.jsx';
@@ -9,6 +9,7 @@ import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 import { Avatar, useConfirmDialog, showToast } from '@corates/ui';
+import { API_BASE } from '@config/api.js';
 
 /**
  * OverviewTab - Project overview with stats, settings, and members
@@ -27,6 +28,11 @@ export default function OverviewTab() {
   const members = () => projectStore.getMembers(projectId);
   const currentUserId = () => user()?.id;
 
+  createEffect(() => {
+    // console.log('studies', studies());
+    console.log('members', members());
+    // console.log('currentUserId', currentUserId());
+  });
   // Calculate additional stats
 
   const inProgressStudies = () =>
@@ -158,7 +164,7 @@ export default function OverviewTab() {
                       <div class='flex items-center justify-between p-4'>
                         <div class='flex items-center gap-3'>
                           <Avatar
-                            src={member.image}
+                            src={`${API_BASE}/api/users/avatar/${member.userId}`}
                             name={member.displayName || member.name || member.email}
                             class='h-10 w-10 overflow-hidden rounded-full'
                             fallbackClass='flex items-center justify-center w-full h-full bg-blue-600 text-white font-medium'
