@@ -435,6 +435,18 @@ function FeatureSection(props) {
 export default function FeatureShowcase() {
   const features = [
     {
+      title: 'Speed & Productivity',
+      description:
+        'Stop wrestling with spreadsheets and manual processes. CoRATES streamlines your workflow so you can focus on what matters.',
+      illustration: <SpeedIllustration />,
+      bullets: [
+        'Complete appraisals faster with guided workflows',
+        'All-in-one platform replaces scattered tools',
+        'Intuitive and blazing-fast interface',
+        'Continue working even without internet access (coming soon)',
+      ],
+    },
+    {
       title: 'Real-time Collaboration',
       description:
         'Work together with your team seamlessly. See updates instantly as reviewers complete their assessments.',
@@ -442,7 +454,7 @@ export default function FeatureShowcase() {
       bullets: [
         'Independent ratings with blinded mode',
         'Automatic inter-rater reliability calculation (coming soon)',
-        'Built-in conflict resolution workflow',
+        'Live, real-time collaboration with instant updates',
       ],
     },
     {
@@ -451,9 +463,10 @@ export default function FeatureShowcase() {
         'Your research data is protected with multiple authentication options and industry-standard security practices.',
       illustration: <SecurityIllustration />,
       bullets: [
-        'OAuth, passwordless login, and SSO support',
+        'OAuth, passwordless login',
         'Two-factor authentication (2FA) for enhanced security',
         'Role-based access control and audit logging (coming soon)',
+        'Single Sign-On (SSO) support (coming soon)',
       ],
     },
     {
@@ -461,7 +474,11 @@ export default function FeatureShowcase() {
       description:
         'Eliminate manual calculation errors. Complex scores are computed instantly as you complete appraisals.',
       illustration: <ScoringIllustration />,
-      bullets: ['Appraisal scoring built in', 'Visual summary charts', 'Export-ready reports'],
+      bullets: [
+        'Built-in appraisal scoring',
+        'Complex scoring rubrics applied automatically',
+        'Real-time updates as appraisals are completed',
+      ],
     },
     {
       title: 'PDF Annotation (coming soon)',
@@ -477,24 +494,12 @@ export default function FeatureShowcase() {
     {
       title: 'Data Visualizations',
       description:
-        'Generate publication-ready charts and graphs from your appraisal data with a single click.',
+        'Publication-ready visual summaries generated automatically from appraisal data.',
       illustration: <DataVisualizationIllustration />,
       bullets: [
-        'Interactive summary visualizations',
-        'Customizable chart styles and formats',
-        'Export to PNG, SVG, in color or black & white',
-      ],
-    },
-    {
-      title: 'Speed & Productivity',
-      description:
-        'Stop wrestling with spreadsheets and manual processes. CoRATES streamlines your workflow so you can focus on what matters.',
-      illustration: <SpeedIllustration />,
-      bullets: [
-        'Complete appraisals faster with guided workflows',
-        'All-in-one platform replaces scattered tools',
-        'Intuitive and blazing-fast interface',
-        'Continue working even without internet access',
+        'Study-level and across-study figures generated in real time',
+        'Customizable labels, axes, and formatting',
+        'Export to PNG, SVG, in color or grayscale',
       ],
     },
   ];

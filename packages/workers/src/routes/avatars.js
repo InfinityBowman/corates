@@ -152,7 +152,8 @@ avatarRoutes.post('/', async c => {
       // can treat the avatar as a first-class asset for offline usage.
       // Absolute URLs may point to a different hostname (e.g. api.corates.org) which
       // some service worker logic deliberately skips, preventing offline caching.
-      const avatarUrl = `/api/users/avatar/${user.id}`;
+      // Add timestamp query parameter for cache-busting when avatar is updated
+      const avatarUrl = `/api/users/avatar/${user.id}?t=${timestamp}`;
 
       // Sync the new avatar URL to all project memberships
       await syncAvatarToProjects(c.env, user.id, avatarUrl);

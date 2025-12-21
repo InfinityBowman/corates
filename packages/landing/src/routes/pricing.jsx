@@ -116,12 +116,18 @@ export default function Pricing() {
           <div class='mx-auto max-w-2xl text-center'>
             <h1 class='text-3xl font-bold text-gray-900 md:text-4xl'>Pricing</h1>
             <p class='mt-4 text-lg text-gray-600'>
-              Start free for single-study appraisal. Upgrade for full projects, collaboration, and
-              advanced workflows.
+              CoRATES is currently in active development and testing. We’re working closely with
+              early users to refine features, workflows, and team-based collaboration. Pricing will
+              be announced closer to launch and will reflect the needs of individual researchers,
+              teams, and institutions. Interested in early access? Join the waitlist or{' '}
+              <a href='/contact' class='text-blue-600 hover:text-blue-700'>
+                contact us
+              </a>{' '}
+              to learn more.
             </p>
           </div>
 
-          <div class='mt-10 flex justify-center'>
+          <div class='mt-10 flex hidden justify-center'>
             <div class='inline-flex rounded-lg bg-gray-100 p-1'>
               <button
                 type='button'
@@ -149,7 +155,7 @@ export default function Pricing() {
             </div>
           </div>
 
-          <div class='mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
+          <div class='mt-10 grid hidden grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
             <For each={plans()}>
               {(plan, index) => (
                 <div

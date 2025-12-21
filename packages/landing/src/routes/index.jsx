@@ -12,7 +12,6 @@ import Audience from '~/components/Audience';
 import CTA from '~/components/CTA';
 import Navbar from '~/components/Navbar';
 import Footer from '~/components/Footer';
-import EarlyAccessBanner from '~/components/EarlyAccessBanner';
 import { config } from '~/lib/config';
 
 export default function Home() {
@@ -33,7 +32,6 @@ export default function Home() {
       <Meta name='twitter:description' content={description} />
       <div class='min-h-screen bg-linear-to-b from-blue-50 to-white'>
         <Navbar />
-        <EarlyAccessBanner />
         <main>
           <Hero />
           {/* <TrustLogos /> */}

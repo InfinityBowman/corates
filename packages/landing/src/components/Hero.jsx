@@ -15,9 +15,9 @@ export default function Hero() {
             </h1>
           </div>
           <p class='mx-auto mb-8 max-w-3xl text-center text-lg leading-tight text-gray-600 sm:text-xl'>
-            Streamline the entire quality and risk-of-bias appraisal process with intuitive
-            workflows, real-time collaboration, and automation, creating greater transparency and
-            efficiency at every step.
+            Streamline the quality and risk-of-bias appraisal process with intuitive workflows,
+            real-time collaboration, and automation that improve transparency and efficiency at
+            every stage.
           </p>
           <div class='mb-2 flex flex-col justify-center gap-4 sm:flex-row sm:gap-12'>
             <a

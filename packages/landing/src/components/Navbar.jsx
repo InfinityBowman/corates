@@ -3,6 +3,7 @@ import { FiMenu, FiX } from 'solid-icons/fi';
 import { urls } from '~/lib/config';
 import { useAuth } from '~/lib/auth';
 import PrefetchLink from '~/components/PrefetchLink';
+import EarlyAccessBanner from '~/components/EarlyAccessBanner';
 
 export default function Navbar() {
   const { isLoggedIn, user } = useAuth();
@@ -107,6 +108,7 @@ export default function Navbar() {
         onClose={() => setMobileMenuOpen(false)}
         navLinks={navLinks}
       />
+      <EarlyAccessBanner />
     </>
   );
 }
