@@ -16,7 +16,7 @@ Do not worry about migrations either claient side or backend unless specifically
 
 ## Coding Standards
 
-- Do not use emojis in code, comments, documentation, or commit messages.
+- Do not use emojis in code, comments, documentation, plan files, or commit messages.
 - For UI icons, use the `solid-icons` library or SVGs only. Do not use emojis.
 - Follow standard JavaScript/SolidJS/Cloudflare best practices.
 - Prefer modern ES6+ syntax and features.

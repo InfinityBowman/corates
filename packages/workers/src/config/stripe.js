@@ -19,25 +19,6 @@ export const PRICE_IDS = {
   },
 };
 
-// Tier hierarchy for permission checks
-export const TIER_LEVELS = {
-  free: 0,
-  pro: 1,
-  team: 2,
-  enterprise: 3,
-};
-
-// Feature access by tier
-export const FEATURE_ACCESS = {
-  'unlimited-projects': ['pro', 'team', 'enterprise'],
-  'advanced-analytics': ['pro', 'team', 'enterprise'],
-  'team-collaboration': ['team', 'enterprise'],
-  'priority-support': ['team', 'enterprise'],
-  sso: ['enterprise'],
-  'custom-branding': ['enterprise'],
-  'dedicated-support': ['enterprise'],
-};
-
 // Tier display names and descriptions
 export const TIER_INFO = {
   free: {
@@ -57,30 +38,6 @@ export const TIER_INFO = {
     description: 'For organizations with advanced needs',
   },
 };
-
-/**
- * Check if a tier has access to a minimum required tier
- * @param {string} userTier - The user's current tier
- * @param {string} requiredTier - The minimum required tier
- * @returns {boolean}
- */
-export function hasMinimumTier(userTier, requiredTier) {
-  const userLevel = TIER_LEVELS[userTier] ?? 0;
-  const requiredLevel = TIER_LEVELS[requiredTier] ?? 0;
-  return userLevel >= requiredLevel;
-}
-
-/**
- * Check if a tier has access to a specific feature
- * @param {string} userTier - The user's current tier
- * @param {string} feature - The feature to check
- * @returns {boolean}
- */
-export function hasFeatureAccess(userTier, feature) {
-  const allowedTiers = FEATURE_ACCESS[feature];
-  if (!allowedTiers) return true; // Feature not gated
-  return allowedTiers.includes(userTier);
-}
 
 /**
  * Get the price ID for a tier and billing interval

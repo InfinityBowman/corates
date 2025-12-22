@@ -81,6 +81,7 @@ export function createPdfOperations(projectId, getYDoc, isSynced) {
     }
 
     const pdfId = nanoid();
+    console.log('pdfId', pdfId);
     const pdfYMap = new Y.Map();
     pdfYMap.set('id', pdfId);
     pdfYMap.set('key', pdfInfo.key);

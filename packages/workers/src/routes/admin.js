@@ -26,6 +26,9 @@ import {
   USER_ERRORS,
   SYSTEM_ERRORS,
 } from '@corates/shared';
+import { upsertSubscription, getSubscriptionByUserId } from '../db/subscriptions.js';
+import { getPlan } from '../config/plans.js';
+import { subscriptionSchemas, validateRequest } from '../config/validation.js';
 const adminRoutes = new Hono();
 
 // Apply admin middleware to all routes
@@ -138,23 +141,35 @@ adminRoutes.get('/users', async c => {
     // Get paginated results
     const users = await query.orderBy(desc(user.createdAt)).limit(limit).offset(offset);
 
-    // Fetch linked accounts for all users in the result set
+    // Fetch linked accounts and subscriptions for all users in the result set
     const userIds = users.map(u => u.id);
     let accountsMap = {};
+    let subscriptionsMap = {};
 
     if (userIds.length > 0) {
-      const accounts = await db
-        .select({
-          userId: account.userId,
-          providerId: account.providerId,
-        })
-        .from(account)
-        .where(
-          sql`${account.userId} IN (${sql.join(
-            userIds.map(id => sql`${id}`),
-            sql`, `,
-          )})`,
-        );
+      const [accounts, userSubscriptions] = await Promise.all([
+        db
+          .select({
+            userId: account.userId,
+            providerId: account.providerId,
+          })
+          .from(account)
+          .where(
+            sql`${account.userId} IN (${sql.join(
+              userIds.map(id => sql`${id}`),
+              sql`, `,
+            )})`,
+          ),
+        db
+          .select()
+          .from(subscriptions)
+          .where(
+            sql`${subscriptions.userId} IN (${sql.join(
+              userIds.map(id => sql`${id}`),
+              sql`, `,
+            )})`,
+          ),
+      ]);
 
       // Group accounts by userId
       accountsMap = accounts.reduce((acc, a) => {
@@ -162,12 +177,19 @@ adminRoutes.get('/users', async c => {
         acc[a.userId].push(a.providerId);
         return acc;
       }, {});
+
+      // Group subscriptions by userId
+      subscriptionsMap = userSubscriptions.reduce((acc, s) => {
+        acc[s.userId] = s;
+        return acc;
+      }, {});
     }
 
-    // Merge providers into user objects
+    // Merge providers and subscriptions into user objects
     const usersWithProviders = users.map(u => ({
       ...u,
       providers: accountsMap[u.id] || [],
+      subscription: subscriptionsMap[u.id] || null,
     }));
 
     return c.json({
@@ -242,11 +264,19 @@ adminRoutes.get('/users/:userId', async c => {
       .where(eq(account.userId, userId))
       .orderBy(desc(account.createdAt));
 
+    // Get user's subscription/access
+    const [userSubscription] = await db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, userId))
+      .limit(1);
+
     return c.json({
       user: userData,
       projects: userProjects,
       sessions: userSessions,
       accounts: linkedAccounts,
+      subscription: userSubscription || null,
     });
   } catch (error) {
     console.error('Error fetching user details:', error);
@@ -495,6 +525,128 @@ adminRoutes.get('/check', async c => {
       name: adminUser.name,
     },
   });
+});
+
+/**
+ * POST /api/admin/users/:userId/subscription
+ * Grant or update subscription for a user
+ * Body: { tier: 'free'|'pro'|'unlimited', status: 'active', currentPeriodStart?: timestamp, currentPeriodEnd?: timestamp }
+ * Admins select the plan (tier), which determines entitlements/quotas via configuration
+ */
+adminRoutes.post(
+  '/users/:userId/subscription',
+  validateRequest(subscriptionSchemas.grant),
+  async c => {
+    const userId = c.req.param('userId');
+    const db = createDb(c.env.DB);
+
+    try {
+      const { tier, currentPeriodStart, currentPeriodEnd } = c.get('validatedBody');
+      // status is validated by Zod schema to be 'active', so we can use it directly
+
+      // Validate user exists
+      const [userData] = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+      if (!userData) {
+        const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId });
+        return c.json(error, error.statusCode);
+      }
+
+      // Convert timestamps if provided (expecting seconds, but handle both)
+      let periodStart = currentPeriodStart;
+      let periodEnd = currentPeriodEnd;
+
+      if (periodStart && typeof periodStart === 'number') {
+        // If timestamp is in milliseconds, convert to seconds
+        if (periodStart > 1000000000000) {
+          periodStart = Math.floor(periodStart / 1000);
+        }
+      }
+
+      if (periodEnd !== null && periodEnd !== undefined && typeof periodEnd === 'number') {
+        // If timestamp is in milliseconds, convert to seconds
+        if (periodEnd > 1000000000000) {
+          periodEnd = Math.floor(periodEnd / 1000);
+        }
+      }
+
+      // Create or update subscription
+      const subscriptionId = crypto.randomUUID();
+      const subscription = await upsertSubscription(db, {
+        id: subscriptionId,
+        userId,
+        tier,
+        status: 'active',
+        currentPeriodStart: periodStart ? new Date(periodStart * 1000) : new Date(),
+        currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
+      });
+
+      // Get plan info for response
+      const plan = getPlan(tier);
+
+      return c.json({
+        success: true,
+        message: 'Subscription granted successfully',
+        subscription,
+        plan: {
+          id: tier,
+          name: plan.name,
+          entitlements: plan.entitlements,
+          quotas: plan.quotas,
+        },
+      });
+    } catch (error) {
+      console.error('Error granting access:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'grant_access',
+        originalError: error.message,
+      });
+      return c.json(dbError, dbError.statusCode);
+    }
+  },
+);
+
+/**
+ * DELETE /api/admin/users/:userId/subscription
+ * Revoke subscription for a user (sets status to inactive)
+ */
+adminRoutes.delete('/users/:userId/subscription', async c => {
+  const userId = c.req.param('userId');
+  const db = createDb(c.env.DB);
+
+  try {
+    // Validate user exists
+    const [userData] = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+    if (!userData) {
+      const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId });
+      return c.json(error, error.statusCode);
+    }
+
+    // Get existing subscription
+    const existing = await getSubscriptionByUserId(db, userId);
+
+    if (existing) {
+      // Set status to inactive instead of deleting (preserves history)
+      await db
+        .update(subscriptions)
+        .set({
+          status: 'inactive',
+          updatedAt: new Date(),
+        })
+        .where(eq(subscriptions.userId, userId));
+    }
+
+    return c.json({
+      success: true,
+      message: 'Subscription revoked successfully',
+    });
+  } catch (error) {
+    console.error('Error revoking access:', error);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'revoke_access',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
+  }
 });
 
 export { adminRoutes };

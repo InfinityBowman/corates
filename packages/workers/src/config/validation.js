@@ -109,6 +109,31 @@ export const emailSchemas = {
 };
 
 /**
+ * Subscription schemas
+ */
+export const subscriptionSchemas = {
+  grant: z.object({
+    tier: z.enum(['free', 'pro', 'unlimited'], {
+      error: "Tier must be one of: 'free', 'pro', 'unlimited'",
+    }),
+    status: z.literal('active', {
+      error: "Status must be 'active'",
+    }),
+    currentPeriodStart: z
+      .number()
+      .int('Current period start must be an integer timestamp')
+      .positive('Current period start must be a positive number')
+      .optional(),
+    currentPeriodEnd: z
+      .number()
+      .int('Current period end must be an integer timestamp')
+      .positive('Current period end must be a positive number')
+      .nullable()
+      .optional(),
+  }),
+};
+
+/**
  * Map Zod error to validation error code
  * @param {object} issue - Zod issue object from error.issues array
  * @param {string} [issue.kind] - Error kind (Zod v4)

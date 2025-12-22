@@ -6,6 +6,7 @@ import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useConfirmDialog, showToast } from '@corates/ui';
 import { useBetterAuth } from '@api/better-auth-store.js';
+import { useSubscription } from '@primitives/useSubscription.js';
 import CreateProjectForm from './CreateProjectForm.jsx';
 import ProjectCard from './ProjectCard.jsx';
 import { getRestoreParamsFromUrl } from '@lib/formStatePersistence.js';
@@ -20,14 +21,24 @@ export default function ProjectDashboard(props) {
 
   const [showCreateForm, setShowCreateForm] = createSignal(shouldRestoreCreateProject);
   const { isOnline } = useBetterAuth();
+  const { hasEntitlement, hasQuota, quotas, loading: subscriptionLoading } = useSubscription();
 
   const userId = () => props.userId;
 
   // Read from store
   const projects = () => projectStore.getProjectList();
+  const projectCount = () => projects()?.length || 0;
   const isLoading = () => projectStore.isProjectListLoading();
   const isLoaded = () => projectStore.isProjectListLoaded();
   const error = () => projectStore.getProjectListError();
+
+  // Check both entitlement and quota
+  const canCreateProject = () => {
+    return (
+      hasEntitlement('project.create') &&
+      hasQuota('projects.max', { used: projectCount(), requested: 1 })
+    );
+  };
 
   // Check if error is due to offline state
   const isOfflineError = () => {
@@ -124,15 +135,29 @@ export default function ProjectDashboard(props) {
           <h1 class='text-2xl font-bold text-gray-900'>My Projects</h1>
           <p class='mt-1 text-gray-500'>Manage your research projects</p>
         </div>
-        <button
-          class='inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
-          onClick={() => setShowCreateForm(!showCreateForm())}
-          disabled={!isOnline()}
-          title={!isOnline() ? 'Cannot create projects while offline' : ''}
+        <Show
+          when={canCreateProject()}
+          fallback={
+            <div class='flex flex-col items-end gap-1'>
+              <div class='text-sm text-gray-600'>
+                {!hasEntitlement('project.create') ?
+                  'Project creation not available on your plan'
+                : `Project limit reached (${projectCount()}/${quotas()['projects.max'] === Infinity ? '∞' : quotas()['projects.max']})`
+                }
+              </div>
+            </div>
+          }
         >
-          <span class='text-lg'>+</span>
-          New Project
-        </button>
+          <button
+            class='inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
+            onClick={() => setShowCreateForm(!showCreateForm())}
+            disabled={!isOnline() || subscriptionLoading()}
+            title={!isOnline() ? 'Cannot create projects while offline' : ''}
+          >
+            <span class='text-lg'>+</span>
+            New Project
+          </button>
+        </Show>
       </div>
 
       {/* Error display */}
@@ -162,12 +187,24 @@ export default function ProjectDashboard(props) {
             <Show when={!isLoading()}>
               <div class='col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-white py-12 text-center'>
                 <div class='mb-4 text-gray-500'>No projects yet</div>
-                <button
-                  onClick={() => setShowCreateForm(true)}
-                  class='font-medium text-blue-600 hover:text-blue-700'
+                <Show
+                  when={canCreateProject()}
+                  fallback={
+                    <div class='text-sm text-gray-600'>
+                      {!hasEntitlement('project.create') ?
+                        'Project creation not available on your plan'
+                      : `Project limit reached (${projectCount()}/${quotas()['projects.max'] === Infinity ? '∞' : quotas()['projects.max']})`
+                      }
+                    </div>
+                  }
                 >
-                  Create your first project
-                </button>
+                  <button
+                    onClick={() => setShowCreateForm(true)}
+                    class='font-medium text-blue-600 hover:text-blue-700'
+                  >
+                    Create your first project
+                  </button>
+                </Show>
               </div>
             </Show>
           }

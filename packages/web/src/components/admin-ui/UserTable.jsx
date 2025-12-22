@@ -20,8 +20,11 @@ import {
   impersonateUser,
   revokeUserSessions,
   deleteUser,
+  grantAccess,
+  revokeAccess,
 } from '@/stores/adminStore.js';
 import { Avatar, Dialog, Tooltip } from '@corates/ui';
+import { hasActiveAccess } from '@/lib/access.js';
 
 // Provider display info
 const PROVIDER_INFO = {
@@ -36,6 +39,9 @@ export default function UserTable(props) {
   const [confirmDialog, setConfirmDialog] = createSignal(null);
   const [banDialog, setBanDialog] = createSignal(null);
   const [banReason, setBanReason] = createSignal('');
+  const [accessDialog, setAccessDialog] = createSignal(null);
+  const [selectedPlan, setSelectedPlan] = createSignal('pro');
+  const [accessExpiration, setAccessExpiration] = createSignal('');
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal(null);
 
@@ -65,6 +71,16 @@ export default function UserTable(props) {
 
     if (action === 'revoke') {
       setConfirmDialog({ type: 'revoke', user });
+      return;
+    }
+
+    if (action === 'grant-access') {
+      setAccessDialog(user);
+      return;
+    }
+
+    if (action === 'revoke-access') {
+      setConfirmDialog({ type: 'revoke-access', user });
       return;
     }
 
@@ -119,6 +135,8 @@ export default function UserTable(props) {
         await deleteUser(dialog.user.id);
       } else if (dialog.type === 'revoke') {
         await revokeUserSessions(dialog.user.id);
+      } else if (dialog.type === 'revoke-access') {
+        await revokeAccess(dialog.user.id);
       }
       setConfirmDialog(null);
       props.onRefresh?.();
@@ -131,6 +149,79 @@ export default function UserTable(props) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGrantAccess = async () => {
+    const user = accessDialog();
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const expiration = accessExpiration();
+      let currentPeriodEnd = null;
+
+      if (expiration) {
+        // Parse date and convert to seconds timestamp
+        const date = new Date(expiration);
+        currentPeriodEnd = Math.floor(date.getTime() / 1000);
+      }
+
+      await grantAccess(user.id, { tier: selectedPlan(), currentPeriodEnd });
+      setAccessDialog(null);
+      setSelectedPlan('pro');
+      setAccessExpiration('');
+      props.onRefresh?.();
+    } catch (err) {
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(err, {
+        setError,
+        showToast: false,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatAccessStatus = user => {
+    const subscription = user.subscription;
+    if (!subscription) return { label: 'Free Plan', color: 'gray', plan: 'free' };
+
+    const planNames = { free: 'Free', pro: 'Pro', unlimited: 'Unlimited' };
+    const planName = planNames[subscription.tier] || subscription.tier || 'Free';
+
+    if (hasActiveAccess(subscription)) {
+      if (subscription.currentPeriodEnd) {
+        const date = new Date(subscription.currentPeriodEnd * 1000);
+        return {
+          label: `${planName} (expires ${date.toLocaleDateString()})`,
+          color: 'green',
+          plan: subscription.tier,
+        };
+      }
+      return { label: `${planName} (no expiration)`, color: 'green', plan: subscription.tier };
+    }
+
+    if (subscription.status === 'inactive') {
+      return { label: `${planName} (revoked)`, color: 'red', plan: subscription.tier };
+    }
+
+    if (subscription.currentPeriodEnd) {
+      const date = new Date(subscription.currentPeriodEnd * 1000);
+      const now = Date.now();
+      if (subscription.currentPeriodEnd * 1000 < now) {
+        return {
+          label: `${planName} (expired ${date.toLocaleDateString()})`,
+          color: 'red',
+          plan: subscription.tier,
+        };
+      }
+    }
+
+    return {
+      label: `${planName} (${subscription.status || 'inactive'})`,
+      color: 'gray',
+      plan: subscription.tier,
+    };
   };
 
   return (
@@ -162,6 +253,9 @@ export default function UserTable(props) {
                 Status
               </th>
               <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                Access
+              </th>
+              <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
                 Joined
               </th>
               <th class='px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase'>
@@ -174,7 +268,7 @@ export default function UserTable(props) {
               each={props.users}
               fallback={
                 <tr>
-                  <td colspan='6' class='px-6 py-12 text-center text-gray-500'>
+                  <td colspan='7' class='px-6 py-12 text-center text-gray-500'>
                     No users found
                   </td>
                 </tr>
@@ -250,6 +344,24 @@ export default function UserTable(props) {
                       </span>
                     </Show>
                   </td>
+                  <td class='px-6 py-4'>
+                    {(() => {
+                      const access = formatAccessStatus(user);
+                      const colorClasses = {
+                        green: 'bg-green-100 text-green-800',
+                        red: 'bg-red-100 text-red-800',
+                        gray: 'bg-gray-100 text-gray-800',
+                      };
+                      return (
+                        <span
+                          class={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${colorClasses[access.color]}`}
+                          title={access.label}
+                        >
+                          {access.label}
+                        </span>
+                      );
+                    })()}
+                  </td>
                   <td class='px-6 py-4 text-sm text-gray-500'>{formatDate(user.createdAt)}</td>
                   <td class='px-6 py-4 text-right'>
                     <div class='relative'>
@@ -315,6 +427,27 @@ export default function UserTable(props) {
                             <span>Revoke Sessions</span>
                           </button>
                           <hr class='my-1 border-gray-200' />
+                          <Show
+                            when={hasActiveAccess(user.subscription)}
+                            fallback={
+                              <button
+                                onClick={() => handleAction('grant-access', user)}
+                                class='flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100'
+                              >
+                                <FiCheckCircle class='h-4 w-4' />
+                                <span>Grant Access</span>
+                              </button>
+                            }
+                          >
+                            <button
+                              onClick={() => handleAction('revoke-access', user)}
+                              class='flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100'
+                            >
+                              <FiXCircle class='h-4 w-4' />
+                              <span>Revoke Access</span>
+                            </button>
+                          </Show>
+                          <hr class='my-1 border-gray-200' />
                           <button
                             onClick={() => handleAction('delete', user)}
                             class='flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50'
@@ -373,11 +506,83 @@ export default function UserTable(props) {
         </div>
       </Dialog>
 
+      {/* Grant Access Dialog */}
+      <Dialog
+        open={!!accessDialog()}
+        onOpenChange={open => !open && setAccessDialog(null)}
+        title='Grant Subscription'
+      >
+        <div class='space-y-4'>
+          <p class='text-sm text-gray-600'>
+            Grant subscription to{' '}
+            <strong>
+              {accessDialog()?.displayName || accessDialog()?.name || accessDialog()?.email}
+            </strong>
+            . Plan selection determines entitlements and quotas automatically.
+          </p>
+          <div>
+            <label class='mb-1 block text-sm font-medium text-gray-700'>Plan</label>
+            <select
+              value={selectedPlan()}
+              onInput={e => setSelectedPlan(e.target.value)}
+              class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+            >
+              <option value='free'>Free</option>
+              <option value='pro'>Pro</option>
+              <option value='unlimited'>Unlimited</option>
+            </select>
+            <p class='mt-1 text-xs text-gray-500'>
+              Select the plan tier. Entitlements and quotas are automatically determined by the
+              plan.
+            </p>
+          </div>
+          <div>
+            <label class='mb-1 block text-sm font-medium text-gray-700'>
+              Expiration Date (Optional)
+            </label>
+            <input
+              type='datetime-local'
+              value={accessExpiration()}
+              onInput={e => setAccessExpiration(e.target.value)}
+              class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+            />
+            <p class='mt-1 text-xs text-gray-500'>
+              Leave empty for permanent access. Subscription will expire at the specified date and
+              time.
+            </p>
+          </div>
+          <div class='flex justify-end space-x-3'>
+            <button
+              onClick={() => {
+                setAccessDialog(null);
+                setSelectedPlan('pro');
+                setAccessExpiration('');
+              }}
+              class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleGrantAccess}
+              disabled={loading()}
+              class='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50'
+            >
+              {loading() ? 'Granting...' : 'Grant Subscription'}
+            </button>
+          </div>
+        </div>
+      </Dialog>
+
       {/* Confirm Dialog */}
       <Dialog
         open={!!confirmDialog()}
         onOpenChange={open => !open && setConfirmDialog(null)}
-        title={confirmDialog()?.type === 'delete' ? 'Delete User' : 'Revoke Sessions'}
+        title={
+          confirmDialog()?.type === 'delete' ? 'Delete User'
+          : confirmDialog()?.type === 'revoke-access' ?
+            'Revoke Access'
+          : 'Revoke Sessions'
+        }
         role='alertdialog'
       >
         <div class='space-y-4'>
@@ -403,6 +608,17 @@ export default function UserTable(props) {
               from all devices.
             </p>
           </Show>
+          <Show when={confirmDialog()?.type === 'revoke-access'}>
+            <p class='text-sm text-gray-600'>
+              Are you sure you want to revoke access for{' '}
+              <strong>
+                {confirmDialog()?.user?.displayName ||
+                  confirmDialog()?.user?.name ||
+                  confirmDialog()?.user?.email}
+              </strong>
+              ? They will no longer be able to create projects.
+            </p>
+          </Show>
           <div class='flex justify-end space-x-3'>
             <button
               onClick={() => setConfirmDialog(null)}
@@ -423,6 +639,8 @@ export default function UserTable(props) {
                 'Processing...'
               : confirmDialog()?.type === 'delete' ?
                 'Delete'
+              : confirmDialog()?.type === 'revoke-access' ?
+                'Revoke Access'
               : 'Revoke'}
             </button>
           </div>
