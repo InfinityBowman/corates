@@ -50,7 +50,7 @@ function FloatingBadge(props) {
 function AnimatedCursor(props) {
   return (
     <div
-      class={`absolute ${props.class || ''}`}
+      class={`absolute ${props.class || ''} drop-shadow-md`}
       style={{
         animation: `cursorMove${props.path} ${props.duration || '8s'} ease-in-out infinite`,
         'animation-delay': props.delay || '0s',
