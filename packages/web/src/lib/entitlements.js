@@ -67,10 +67,11 @@ export function isSubscriptionActive(subscription) {
   if (!subscription.currentPeriodEnd) return true;
   const now = Math.floor(Date.now() / 1000);
   // Handle both seconds and milliseconds timestamps
-  const endTime = typeof subscription.currentPeriodEnd === 'number'
-    ? (subscription.currentPeriodEnd > 1000000000000
-        ? Math.floor(subscription.currentPeriodEnd / 1000)
-        : subscription.currentPeriodEnd)
+  const endTime =
+    typeof subscription.currentPeriodEnd === 'number' ?
+      subscription.currentPeriodEnd > 1000000000000 ?
+        Math.floor(subscription.currentPeriodEnd / 1000)
+      : subscription.currentPeriodEnd
     : parseInt(subscription.currentPeriodEnd);
   return endTime > now;
 }
@@ -127,5 +128,5 @@ export function hasQuota(subscription, quotaKey, { used, requested = 1 }) {
   const quotas = getEffectiveQuotas(subscription);
   const limit = quotas[quotaKey];
   if (limit === Infinity) return true;
-  return (used + requested) <= limit;
+  return used + requested <= limit;
 }

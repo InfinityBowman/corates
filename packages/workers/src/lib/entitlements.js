@@ -82,5 +82,5 @@ export function hasQuota(subscription, quotaKey, { used, requested = 1 }) {
   if (limit === Infinity) return true;
 
   // Check if usage + requested exceeds limit
-  return (used + requested) <= limit;
+  return used + requested <= limit;
 }
