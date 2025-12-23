@@ -27,7 +27,7 @@ import {
   SYSTEM_ERRORS,
 } from '@corates/shared';
 import { upsertSubscription, getSubscriptionByUserId } from '../db/subscriptions.js';
-import { getPlan } from '../config/plans.js';
+import { getPlan } from '@corates/shared/plans';
 import { subscriptionSchemas, validateRequest } from '../config/validation.js';
 const adminRoutes = new Hono();
 

@@ -4,7 +4,12 @@
  * Plans are static configuration - not stored in database
  */
 
-export const PLANS = {
+import type { Plans, PlanId } from './types.js';
+
+/**
+ * Plan configurations for all subscription tiers
+ */
+export const PLANS: Plans = {
   free: {
     name: 'Free',
     entitlements: {
@@ -49,13 +54,19 @@ export const PLANS = {
   },
 };
 
-export const DEFAULT_PLAN = 'free';
+/**
+ * Default plan ID for users without an active subscription
+ */
+export const DEFAULT_PLAN: PlanId = 'free';
 
 /**
  * Get plan configuration by plan ID
- * @param {string} planId - Plan ID (e.g., 'free', 'pro', 'unlimited')
- * @returns {Object} Plan configuration
+ * @param planId - Plan ID (e.g., 'free', 'pro', 'unlimited')
+ * @returns Plan configuration, or default plan if planId is invalid
  */
-export function getPlan(planId) {
-  return PLANS[planId] || PLANS[DEFAULT_PLAN];
+export function getPlan(planId: PlanId | string): Plans[PlanId] {
+  if (planId in PLANS) {
+    return PLANS[planId as PlanId];
+  }
+  return PLANS[DEFAULT_PLAN];
 }

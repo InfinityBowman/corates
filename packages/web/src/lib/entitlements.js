@@ -3,58 +3,7 @@
  * Computes effective entitlements and quotas from subscription at request time
  */
 
-// Plan configuration - should match backend
-// In production, this could be fetched from an API endpoint
-const PLANS = {
-  free: {
-    name: 'Free',
-    entitlements: {
-      'project.create': false,
-      'checklist.edit': true,
-      'export.pdf': false,
-      'ai.run': false,
-    },
-    quotas: {
-      'projects.max': 0,
-      'storage.project.maxMB': 10,
-      'ai.tokens.monthly': 0,
-    },
-  },
-  pro: {
-    name: 'Pro',
-    entitlements: {
-      'project.create': true,
-      'checklist.edit': true,
-      'export.pdf': true,
-      'ai.run': true,
-    },
-    quotas: {
-      'projects.max': 10,
-      'storage.project.maxMB': 1000,
-      'ai.tokens.monthly': 100000,
-    },
-  },
-  unlimited: {
-    name: 'Unlimited',
-    entitlements: {
-      'project.create': true,
-      'checklist.edit': true,
-      'export.pdf': true,
-      'ai.run': true,
-    },
-    quotas: {
-      'projects.max': Infinity,
-      'storage.project.maxMB': Infinity,
-      'ai.tokens.monthly': Infinity,
-    },
-  },
-};
-
-const DEFAULT_PLAN = 'free';
-
-function getPlan(planId) {
-  return PLANS[planId] || PLANS[DEFAULT_PLAN];
-}
+import { getPlan, DEFAULT_PLAN } from '@corates/shared/plans';
 
 /**
  * Check if subscription is active

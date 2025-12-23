@@ -39,7 +39,7 @@ export default function UserTable(props) {
   const [banDialog, setBanDialog] = createSignal(null);
   const [banReason, setBanReason] = createSignal('');
   const [accessDialog, setAccessDialog] = createSignal(null);
-  const [selectedPlan, setSelectedPlan] = createSignal('pro');
+  const [selectedPlan, setSelectedPlan] = createSignal('free');
   const [accessExpiration, setAccessExpiration] = createSignal('');
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal(null);

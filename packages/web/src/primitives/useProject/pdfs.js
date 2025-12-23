@@ -8,7 +8,6 @@
  */
 
 import * as Y from 'yjs';
-import { nanoid } from 'nanoid';
 
 /**
  * Creates PDF operations
@@ -80,8 +79,7 @@ export function createPdfOperations(projectId, getYDoc, isSynced) {
       clearTag(studyId, tag);
     }
 
-    const pdfId = nanoid();
-    console.log('pdfId', pdfId);
+    const pdfId = crypto.randomUUID();
     const pdfYMap = new Y.Map();
     pdfYMap.set('id', pdfId);
     pdfYMap.set('key', pdfInfo.key);

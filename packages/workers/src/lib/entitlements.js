@@ -3,7 +3,7 @@
  * Computes effective entitlements and quotas from subscription at request time
  */
 
-import { getPlan, DEFAULT_PLAN } from '../config/plans.js';
+import { getPlan, DEFAULT_PLAN } from '@corates/shared/plans';
 
 /**
  * Check if subscription is active
