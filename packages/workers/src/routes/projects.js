@@ -112,34 +112,29 @@ projectRoutes.post(
     const { name, description } = c.get('validatedBody');
 
     const projectId = crypto.randomUUID();
+    const memberId = crypto.randomUUID();
     const now = new Date();
 
     try {
-      // Use D1 batch for transaction-like behavior
+      // Use Drizzle batch for transaction-like behavior
       // D1 doesn't support true transactions, but batch ensures atomicity
-      const statements = [
-        c.env.DB.prepare(
-          'INSERT INTO projects (id, name, description, createdBy, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
-        ).bind(
+      await db.batch([
+        db.insert(projects).values({
+          id: projectId,
+          name: name.trim(),
+          description: description?.trim() || null,
+          createdBy: authUser.id,
+          createdAt: now,
+          updatedAt: now,
+        }),
+        db.insert(projectMembers).values({
+          id: memberId,
           projectId,
-          name,
-          description,
-          authUser.id,
-          Math.floor(now.getTime() / 1000),
-          Math.floor(now.getTime() / 1000),
-        ),
-        c.env.DB.prepare(
-          'INSERT INTO project_members (id, projectId, userId, role, joinedAt) VALUES (?, ?, ?, ?, ?)',
-        ).bind(
-          crypto.randomUUID(),
-          projectId,
-          authUser.id,
-          'owner',
-          Math.floor(now.getTime() / 1000),
-        ),
-      ];
-
-      await c.env.DB.batch(statements);
+          userId: authUser.id,
+          role: 'owner',
+          joinedAt: now,
+        }),
+      ]);
 
       // Get creator's user info for DO sync
       const creator = await db
