@@ -11,19 +11,12 @@ export type PlanId = 'free' | 'pro' | 'unlimited';
 /**
  * Entitlement keys - boolean capabilities that can be enabled/disabled per plan
  */
-export type EntitlementKey =
-  | 'project.create'
-  | 'checklist.edit'
-  | 'export.pdf'
-  | 'ai.run';
+export type EntitlementKey = 'project.create' | 'checklist.edit' | 'export.pdf' | 'ai.run';
 
 /**
  * Quota keys - numeric limits that can be set per plan
  */
-export type QuotaKey =
-  | 'projects.max'
-  | 'storage.project.maxMB'
-  | 'ai.tokens.monthly';
+export type QuotaKey = 'projects.max' | 'storage.project.maxMB' | 'ai.tokens.monthly';
 
 /**
  * Entitlements - mapping of entitlement keys to boolean values
