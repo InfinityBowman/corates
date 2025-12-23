@@ -15,4 +15,4 @@ export type {
 } from './types.js';
 
 // Plan configuration
-export { PLANS, DEFAULT_PLAN, getPlan } from './plans.js';
+export { PLANS, DEFAULT_PLAN, getPlan, isUnlimitedQuota } from './plans.js';

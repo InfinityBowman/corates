@@ -2,6 +2,7 @@ import { createSignal, Show, onMount } from 'solid-js';
 import AddStudiesForm from './AddStudiesForm.jsx';
 import { showToast } from '@corates/ui';
 import { AUTH_ERRORS } from '@corates/shared';
+import { isUnlimitedQuota } from '@corates/shared/plans';
 import {
   saveFormState,
   getFormState,
@@ -137,7 +138,7 @@ export default function CreateProjectForm(props) {
           const { quotaKey, used, limit, requested } = error.details;
           showToast.error(
             'Quota Exceeded',
-            `${quotaKey}: Current usage ${used}, Limit ${limit === Infinity ? 'unlimited' : limit}, Requested ${requested}`,
+            `${quotaKey}: Current usage ${used}, Limit ${isUnlimitedQuota(limit) ? 'unlimited' : limit}, Requested ${requested}`,
           );
         } else {
           await handleError(error, { toastTitle: 'Creation Failed' });

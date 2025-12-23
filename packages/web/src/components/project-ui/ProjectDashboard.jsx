@@ -7,6 +7,7 @@ import projectActionsStore from '@/stores/projectActionsStore';
 import { useConfirmDialog, showToast } from '@corates/ui';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useSubscription } from '@primitives/useSubscription.js';
+import { isUnlimitedQuota } from '@corates/shared/plans';
 import CreateProjectForm from './CreateProjectForm.jsx';
 import ProjectCard from './ProjectCard.jsx';
 import { getRestoreParamsFromUrl } from '@lib/formStatePersistence.js';
@@ -142,7 +143,7 @@ export default function ProjectDashboard(props) {
               <div class='text-sm text-gray-600'>
                 {!hasEntitlement('project.create') ?
                   'Project creation not available on your plan'
-                : `Project limit reached (${projectCount()}/${quotas()['projects.max'] === Infinity ? '∞' : quotas()['projects.max']})`
+                : `Project limit reached (${projectCount()}/${isUnlimitedQuota(quotas()['projects.max']) ? '∞' : quotas()['projects.max']})`
                 }
               </div>
             </div>
@@ -193,7 +194,7 @@ export default function ProjectDashboard(props) {
                     <div class='text-sm text-gray-600'>
                       {!hasEntitlement('project.create') ?
                         'Project creation not available on your plan'
-                      : `Project limit reached (${projectCount()}/${quotas()['projects.max'] === Infinity ? '∞' : quotas()['projects.max']})`
+                      : `Project limit reached (${projectCount()}/${isUnlimitedQuota(quotas()['projects.max']) ? '∞' : quotas()['projects.max']})`
                       }
                     </div>
                   }

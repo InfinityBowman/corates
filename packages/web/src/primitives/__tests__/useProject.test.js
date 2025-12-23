@@ -57,6 +57,7 @@ vi.mock('../useOnlineStatus.js', () => ({
 
 vi.mock('@config/api.js', () => ({
   getWsBaseUrl: vi.fn(() => 'ws://localhost:8787'),
+  LANDING_URL: vi.fn(() => 'https://corates.org'),
 }));
 
 // Mock WebSocket - prevent actual connection attempts

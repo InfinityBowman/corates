@@ -159,7 +159,13 @@ export default function OverviewTab() {
                       <div class='flex items-center justify-between p-4'>
                         <div class='flex items-center gap-3'>
                           <Avatar
-                            src={`${API_BASE}/api/users/avatar/${member.userId}`}
+                            src={
+                              member.image ?
+                                member.image.startsWith('/') ?
+                                  `${API_BASE}${member.image}`
+                                : member.image
+                              : `${API_BASE}/api/users/avatar/${member.userId}`
+                            }
                             name={member.displayName || member.name || member.email}
                             class='h-10 w-10 overflow-hidden rounded-full'
                             fallbackClass='flex items-center justify-center w-full h-full bg-blue-600 text-white font-medium'

@@ -3,7 +3,7 @@
  * Computes effective entitlements and quotas from subscription at request time
  */
 
-import { getPlan, DEFAULT_PLAN } from '@corates/shared/plans';
+import { getPlan, DEFAULT_PLAN, isUnlimitedQuota } from '@corates/shared/plans';
 
 /**
  * Check if subscription is active
@@ -78,8 +78,8 @@ export function hasQuota(subscription, quotaKey, { used, requested = 1 }) {
   const quotas = getEffectiveQuotas(subscription);
   const limit = quotas[quotaKey];
 
-  // Infinity means unlimited
-  if (limit === Infinity) return true;
+  // -1 means unlimited
+  if (isUnlimitedQuota(limit)) return true;
 
   // Check if usage + requested exceeds limit
   return used + requested <= limit;

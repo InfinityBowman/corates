@@ -11,6 +11,7 @@ import {
   seedUser,
   seedProject,
   seedProjectMember,
+  seedSubscription,
   json,
 } from '../../__tests__/helpers.js';
 
@@ -178,6 +179,15 @@ describe('Project Routes - POST /api/projects', () => {
       updatedAt: nowSec,
     });
 
+    await seedSubscription({
+      id: 'sub-1',
+      userId: 'user-1',
+      tier: 'pro',
+      status: 'active',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
     const res = await fetchProjects('/api/projects', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -222,6 +232,15 @@ describe('Project Routes - POST /api/projects', () => {
       updatedAt: nowSec,
     });
 
+    await seedSubscription({
+      id: 'sub-1',
+      userId: 'user-1',
+      tier: 'pro',
+      status: 'active',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
     const res = await fetchProjects('/api/projects', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -248,6 +267,15 @@ describe('Project Routes - POST /api/projects', () => {
       updatedAt: nowSec,
     });
 
+    await seedSubscription({
+      id: 'sub-1',
+      userId: 'user-1',
+      tier: 'pro',
+      status: 'active',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
     const res = await fetchProjects('/api/projects', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -269,6 +297,15 @@ describe('Project Routes - POST /api/projects', () => {
       id: 'user-1',
       name: 'User 1',
       email: 'user1@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedSubscription({
+      id: 'sub-1',
+      userId: 'user-1',
+      tier: 'pro',
+      status: 'active',
       createdAt: nowSec,
       updatedAt: nowSec,
     });

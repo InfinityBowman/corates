@@ -8,6 +8,7 @@ import { getSubscriptionByUserId } from '../db/subscriptions.js';
 import { getAuth } from './auth.js';
 import { hasQuota, getEffectiveQuotas } from '../lib/entitlements.js';
 import { createDomainError, AUTH_ERRORS } from '@corates/shared';
+import { isUnlimitedQuota } from '@corates/shared/plans';
 
 /**
  * Middleware that requires quota availability
@@ -37,7 +38,7 @@ export function requireQuota(quotaKey, getUsage, requested = 1) {
       const error = createDomainError(
         AUTH_ERRORS.FORBIDDEN,
         { reason: 'quota_exceeded', quotaKey, used, limit, requested },
-        `Quota exceeded: ${quotaKey}. Current usage: ${used}, Limit: ${limit === Infinity ? 'unlimited' : limit}, Requested: ${requested}`,
+        `Quota exceeded: ${quotaKey}. Current usage: ${used}, Limit: ${isUnlimitedQuota(limit) ? 'unlimited' : limit}, Requested: ${requested}`,
       );
       return c.json(error, error.statusCode);
     }

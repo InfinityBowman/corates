@@ -36,7 +36,8 @@ export interface Entitlements {
 }
 
 /**
- * Quotas - mapping of quota keys to numeric values (Infinity for unlimited)
+ * Quotas - mapping of quota keys to numeric values
+ * A value of -1 indicates unlimited quota (JSON-safe alternative to Infinity)
  */
 export interface Quotas {
   'projects.max': number;

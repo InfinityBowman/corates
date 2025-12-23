@@ -47,9 +47,9 @@ export const PLANS: Plans = {
       'ai.run': true,
     },
     quotas: {
-      'projects.max': Infinity,
-      'storage.project.maxMB': Infinity,
-      'ai.tokens.monthly': Infinity,
+      'projects.max': -1,
+      'storage.project.maxMB': -1,
+      'ai.tokens.monthly': -1,
     },
   },
 };
@@ -69,4 +69,13 @@ export function getPlan(planId: PlanId | string): Plans[PlanId] {
     return PLANS[planId as PlanId];
   }
   return PLANS[DEFAULT_PLAN];
+}
+
+/**
+ * Check if a quota value represents unlimited quota
+ * @param quota - Quota value to check
+ * @returns True if quota is unlimited (value is -1)
+ */
+export function isUnlimitedQuota(quota: number): boolean {
+  return quota === -1;
 }
