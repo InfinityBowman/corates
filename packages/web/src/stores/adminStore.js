@@ -202,6 +202,55 @@ async function deleteUser(userId) {
   return response.json();
 }
 
+/**
+ * Grant subscription to a user
+ * @param {string} userId - User ID
+ * @param {Object} options - Subscription options
+ * @param {string} options.tier - Plan tier ('free', 'pro', 'unlimited')
+ * @param {number} [options.currentPeriodEnd] - Expiration timestamp in seconds (optional, null = no expiration)
+ */
+async function grantAccess(userId, options = {}) {
+  const { tier, currentPeriodEnd } = options;
+  if (!tier) {
+    throw new Error('Tier is required');
+  }
+  const body = {
+    tier,
+    status: 'active',
+    currentPeriodStart: Math.floor(Date.now() / 1000),
+  };
+  if (currentPeriodEnd) {
+    body.currentPeriodEnd = currentPeriodEnd;
+  }
+
+  const response = await fetch(`${API_BASE}/api/admin/users/${userId}/subscription`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to grant subscription');
+  }
+  return response.json();
+}
+
+/**
+ * Revoke subscription from a user
+ */
+async function revokeAccess(userId) {
+  const response = await fetch(`${API_BASE}/api/admin/users/${userId}/subscription`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to revoke subscription');
+  }
+  return response.json();
+}
+
 export {
   isAdmin,
   isAdminChecked,
@@ -218,4 +267,6 @@ export {
   stopImpersonation,
   revokeUserSessions,
   deleteUser,
+  grantAccess,
+  revokeAccess,
 };

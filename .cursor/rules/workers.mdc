@@ -1,0 +1,51 @@
+---
+alwaysApply: true
+scope: packages/workers
+---
+
+# Workers Package Rules
+
+## Drizzle Transactions
+
+**ALWAYS use `db.batch()` for multiple related database operations** to ensure atomicity:
+
+```javascript
+// ✅ DO: Use batch for related operations
+const batchOps = [
+  db.insert(projects).values({ id, name, createdBy }),
+  db.insert(projectMembers).values({ projectId: id, userId, role: 'owner' }),
+];
+await db.batch(batchOps);
+
+// ❌ DON'T: Separate operations
+await db.insert(projects).values({ id, name });
+await db.insert(projectMembers).values({ projectId: id, userId });
+```
+
+Use batch when operations must be atomic (all succeed or all fail). Single independent operations don't need batch.
+
+## Zod Validation
+
+**ALWAYS validate request bodies** using `validateRequest` middleware:
+
+```javascript
+// ✅ DO: Use middleware
+import { validateRequest, projectSchemas } from '../config/validation.js';
+
+projectRoutes.post('/', validateRequest(projectSchemas.create), async c => {
+  const data = c.get('validatedBody'); // Already validated
+});
+
+// ❌ DON'T: Manual validation
+projectRoutes.post('/', async c => {
+  const body = await c.req.json();
+  // Manual checks...
+});
+```
+
+**Add new schemas to `config/validation.js`** and reuse `commonFields` when possible. Use `validateQueryParams` for query parameters.
+
+## Examples
+
+- See `src/routes/account-merge.js` for batch usage
+- See `src/routes/projects.js` for validation patterns

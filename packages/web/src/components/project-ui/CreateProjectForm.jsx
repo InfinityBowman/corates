@@ -1,5 +1,8 @@
 import { createSignal, Show, onMount } from 'solid-js';
 import AddStudiesForm from './AddStudiesForm.jsx';
+import { showToast } from '@corates/ui';
+import { AUTH_ERRORS } from '@corates/shared';
+import { isUnlimitedQuota } from '@corates/shared/plans';
 import {
   saveFormState,
   getFormState,
@@ -7,6 +10,7 @@ import {
   getRestoreParamsFromUrl,
   clearRestoreParamsFromUrl,
 } from '@lib/formStatePersistence.js';
+import { isErrorCode, handleFetchError, handleError } from '@/lib/error-utils.js';
 
 /**
  * Form for creating a new project with optional study imports
@@ -91,7 +95,6 @@ export default function CreateProjectForm(props) {
 
     setIsCreating(true);
     try {
-      const { handleFetchError } = await import('@/lib/error-utils.js');
       const response = await handleFetchError(
         fetch(`${props.apiBase}/api/projects`, {
           method: 'POST',
@@ -106,6 +109,7 @@ export default function CreateProjectForm(props) {
         }),
         {
           toastTitle: 'Creation Failed',
+          showToast: false,
         },
       );
 
@@ -122,8 +126,26 @@ export default function CreateProjectForm(props) {
       const driveFiles = studies.driveFiles || [];
 
       props.onProjectCreated?.(newProject, pendingPdfs, allRefsToImport, driveFiles);
-    } catch (_error) {
-      // Error already handled by handleFetchError
+    } catch (error) {
+      // Check if this is an entitlement or quota error
+      if (isErrorCode(error, AUTH_ERRORS.FORBIDDEN.code)) {
+        if (error.details?.reason === 'missing_entitlement') {
+          showToast.error(
+            'Feature Not Available',
+            `This feature requires the '${error.details.entitlement}' entitlement. Please upgrade your plan.`,
+          );
+        } else if (error.details?.reason === 'quota_exceeded') {
+          const { quotaKey, used, limit, requested } = error.details;
+          showToast.error(
+            'Quota Exceeded',
+            `${quotaKey}: Current usage ${used}, Limit ${isUnlimitedQuota(limit) ? 'unlimited' : limit}, Requested ${requested}`,
+          );
+        } else {
+          await handleError(error, { toastTitle: 'Creation Failed' });
+        }
+      } else {
+        await handleError(error, { toastTitle: 'Creation Failed' });
+      }
     } finally {
       setIsCreating(false);
     }
