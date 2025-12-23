@@ -66,12 +66,10 @@ export function isSubscriptionActive(subscription) {
   if (subscription.status !== 'active') return false;
   if (!subscription.currentPeriodEnd) return true;
   const now = Math.floor(Date.now() / 1000);
-  // Handle both seconds and milliseconds timestamps
+
   const endTime =
     typeof subscription.currentPeriodEnd === 'number' ?
-      subscription.currentPeriodEnd > 1000000000000 ?
-        Math.floor(subscription.currentPeriodEnd / 1000)
-      : subscription.currentPeriodEnd
+      subscription.currentPeriodEnd
     : parseInt(subscription.currentPeriodEnd);
   return endTime > now;
 }

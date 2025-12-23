@@ -21,7 +21,6 @@ import {
   revokeUserSessions,
   deleteUser,
   grantAccess,
-  revokeAccess,
 } from '@/stores/adminStore.js';
 import { Avatar, Dialog, Tooltip } from '@corates/ui';
 import { hasActiveAccess } from '@/lib/access.js';
@@ -74,13 +73,18 @@ export default function UserTable(props) {
       return;
     }
 
-    if (action === 'grant-access') {
+    if (action === 'change-access') {
+      // Initialize with user's current plan or 'free' if no subscription
+      const currentPlan = user.subscription?.tier || 'free';
+      setSelectedPlan(currentPlan);
+      // Pre-fill expiration if existing
+      if (user.subscription?.currentPeriodEnd) {
+        const date = new Date(user.subscription.currentPeriodEnd * 1000);
+        setAccessExpiration(date.toISOString().slice(0, 16)); // YYYY-MM-DDTHH:MM
+      } else {
+        setAccessExpiration('');
+      }
       setAccessDialog(user);
-      return;
-    }
-
-    if (action === 'revoke-access') {
-      setConfirmDialog({ type: 'revoke-access', user });
       return;
     }
 
@@ -135,8 +139,6 @@ export default function UserTable(props) {
         await deleteUser(dialog.user.id);
       } else if (dialog.type === 'revoke') {
         await revokeUserSessions(dialog.user.id);
-      } else if (dialog.type === 'revoke-access') {
-        await revokeAccess(dialog.user.id);
       }
       setConfirmDialog(null);
       props.onRefresh?.();
@@ -151,7 +153,7 @@ export default function UserTable(props) {
     }
   };
 
-  const handleGrantAccess = async () => {
+  const handleChangeAccess = async () => {
     const user = accessDialog();
     if (!user) return;
 
@@ -168,7 +170,7 @@ export default function UserTable(props) {
 
       await grantAccess(user.id, { tier: selectedPlan(), currentPeriodEnd });
       setAccessDialog(null);
-      setSelectedPlan('pro');
+      setSelectedPlan('free');
       setAccessExpiration('');
       props.onRefresh?.();
     } catch (err) {
@@ -427,26 +429,13 @@ export default function UserTable(props) {
                             <span>Revoke Sessions</span>
                           </button>
                           <hr class='my-1 border-gray-200' />
-                          <Show
-                            when={hasActiveAccess(user.subscription)}
-                            fallback={
-                              <button
-                                onClick={() => handleAction('grant-access', user)}
-                                class='flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100'
-                              >
-                                <FiCheckCircle class='h-4 w-4' />
-                                <span>Grant Access</span>
-                              </button>
-                            }
+                          <button
+                            onClick={() => handleAction('change-access', user)}
+                            class='flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100'
                           >
-                            <button
-                              onClick={() => handleAction('revoke-access', user)}
-                              class='flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100'
-                            >
-                              <FiXCircle class='h-4 w-4' />
-                              <span>Revoke Access</span>
-                            </button>
-                          </Show>
+                            <FiCheckCircle class='h-4 w-4' />
+                            <span>Change Access</span>
+                          </button>
                           <hr class='my-1 border-gray-200' />
                           <button
                             onClick={() => handleAction('delete', user)}
@@ -506,15 +495,15 @@ export default function UserTable(props) {
         </div>
       </Dialog>
 
-      {/* Grant Access Dialog */}
+      {/* Change Access Dialog */}
       <Dialog
         open={!!accessDialog()}
         onOpenChange={open => !open && setAccessDialog(null)}
-        title='Grant Subscription'
+        title='Change Access'
       >
         <div class='space-y-4'>
           <p class='text-sm text-gray-600'>
-            Grant subscription to{' '}
+            Change subscription plan for{' '}
             <strong>
               {accessDialog()?.displayName || accessDialog()?.name || accessDialog()?.email}
             </strong>
@@ -555,7 +544,7 @@ export default function UserTable(props) {
             <button
               onClick={() => {
                 setAccessDialog(null);
-                setSelectedPlan('pro');
+                setSelectedPlan('free');
                 setAccessExpiration('');
               }}
               class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
@@ -563,11 +552,11 @@ export default function UserTable(props) {
               Cancel
             </button>
             <button
-              onClick={handleGrantAccess}
+              onClick={handleChangeAccess}
               disabled={loading()}
               class='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50'
             >
-              {loading() ? 'Granting...' : 'Grant Subscription'}
+              {loading() ? 'Updating...' : 'Update Plan'}
             </button>
           </div>
         </div>
@@ -577,12 +566,7 @@ export default function UserTable(props) {
       <Dialog
         open={!!confirmDialog()}
         onOpenChange={open => !open && setConfirmDialog(null)}
-        title={
-          confirmDialog()?.type === 'delete' ? 'Delete User'
-          : confirmDialog()?.type === 'revoke-access' ?
-            'Revoke Access'
-          : 'Revoke Sessions'
-        }
+        title={confirmDialog()?.type === 'delete' ? 'Delete User' : 'Revoke Sessions'}
         role='alertdialog'
       >
         <div class='space-y-4'>
@@ -608,17 +592,6 @@ export default function UserTable(props) {
               from all devices.
             </p>
           </Show>
-          <Show when={confirmDialog()?.type === 'revoke-access'}>
-            <p class='text-sm text-gray-600'>
-              Are you sure you want to revoke access for{' '}
-              <strong>
-                {confirmDialog()?.user?.displayName ||
-                  confirmDialog()?.user?.name ||
-                  confirmDialog()?.user?.email}
-              </strong>
-              ? They will no longer be able to create projects.
-            </p>
-          </Show>
           <div class='flex justify-end space-x-3'>
             <button
               onClick={() => setConfirmDialog(null)}
@@ -639,8 +612,6 @@ export default function UserTable(props) {
                 'Processing...'
               : confirmDialog()?.type === 'delete' ?
                 'Delete'
-              : confirmDialog()?.type === 'revoke-access' ?
-                'Revoke Access'
               : 'Revoke'}
             </button>
           </div>
