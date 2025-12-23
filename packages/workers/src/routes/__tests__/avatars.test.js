@@ -189,7 +189,7 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
     expect(res.status).toBe(200);
     const body = await json(res);
     expect(body.success).toBe(true);
-    expect(body.url).toBe('/api/users/avatar/user-1');
+    expect(body.url).toMatch(/^\/api\/users\/avatar\/user-1\?t=\d+$/);
     expect(body.key).toMatch(/^avatars\/user-1\/\d+\.(jpg|jpeg|png|gif|webp)$/);
   });
 
@@ -320,7 +320,7 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
         const body = await request.json();
         expect(body.action).toBe('update');
         expect(body.member.userId).toBe('user-1');
-        expect(body.member.image).toBe('/api/users/avatar/user-1');
+        expect(body.member.image).toMatch(/^\/api\/users\/avatar\/user-1\?t=\d+$/);
       }
       return originalFetch(request);
     };
