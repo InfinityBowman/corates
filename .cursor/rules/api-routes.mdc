@@ -1,0 +1,214 @@
+---
+alwaysApply: false
+description: "API route patterns for validation, database operations, and error handling in Workers"
+globs: packages/workers/**
+---
+
+# API Route Patterns
+
+## Request Validation
+
+**ALWAYS use `validateRequest` middleware** for request body validation:
+
+```js
+// CORRECT
+import { validateRequest, projectSchemas } from '../config/validation.js';
+
+projectRoutes.post('/', validateRequest(projectSchemas.create), async c => {
+  const { name, description } = c.get('validatedBody'); // Already validated
+  // Use validated data
+});
+
+// WRONG - Manual validation
+projectRoutes.post('/', async c => {
+  const body = await c.req.json();
+  // Don't manually validate - use middleware
+});
+```
+
+### Adding New Schemas
+
+1. Add schema to `src/config/validation.js`
+2. Reuse `commonFields` when possible:
+
+```js
+import { commonFields } from '../config/validation.js';
+
+export const mySchemas = {
+  create: z.object({
+    name: commonFields.nonEmptyString,
+    email: commonFields.email,
+    // custom fields
+  }),
+};
+```
+
+### Query Parameter Validation
+
+Use `validateQueryParams` for query strings:
+
+```js
+import { validateQueryParams } from '../config/validation.js';
+
+const querySchema = z.object({
+  page: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().max(100).optional(),
+});
+
+route.get('/', validateQueryParams(querySchema), async c => {
+  const { page, limit } = c.get('validatedQuery');
+});
+```
+
+## Database Operations
+
+### Database Client
+
+Always create DB client from environment:
+
+```js
+import { createDb } from '../db/client.js';
+
+async c => {
+  const db = createDb(c.env.DB);
+  // Use db
+}
+```
+
+### Batch Operations for Atomicity
+
+**Use `db.batch()` for related operations** that must be atomic:
+
+```js
+// CORRECT - Atomic operations
+const batchOps = [
+  db.insert(projects).values({ id, name, createdBy }),
+  db.insert(projectMembers).values({ projectId: id, userId, role: 'owner' }),
+];
+await db.batch(batchOps);
+
+// WRONG - Not atomic
+await db.insert(projects).values({ id, name });
+await db.insert(projectMembers).values({ projectId: id, userId });
+```
+
+Use batch when operations must succeed or fail together. Single independent operations don't need batch.
+
+### Drizzle Query Patterns
+
+Always use Drizzle ORM - never raw SQL:
+
+```js
+// CORRECT
+import { eq, and, count } from 'drizzle-orm';
+
+const result = await db
+  .select()
+  .from(projects)
+  .where(and(eq(projects.id, projectId), eq(projects.createdBy, userId)))
+  .get();
+
+// WRONG
+const result = await db.prepare('SELECT * FROM projects WHERE id = ?').bind(projectId).first();
+```
+
+## Error Handling
+
+**ALWAYS use `createDomainError` from `@corates/shared`:**
+
+```js
+import { createDomainError, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+
+// CORRECT
+if (!project) {
+  const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
+  return c.json(error, error.statusCode);
+}
+
+// Database errors
+try {
+  const result = await db.select()...
+} catch (error) {
+  console.error('Error fetching project:', error);
+  const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+    operation: 'fetch_project',
+    originalError: error.message,
+  });
+  return c.json(dbError, dbError.statusCode);
+}
+```
+
+### Error Constants
+
+Use error constants from `@corates/shared`:
+- `PROJECT_ERRORS.*`
+- `AUTH_ERRORS.*`
+- `VALIDATION_ERRORS.*`
+- `SYSTEM_ERRORS.*`
+- `USER_ERRORS.*`
+
+Never create error objects manually or throw strings.
+
+## Route Structure
+
+### Basic Route Pattern
+
+```js
+import { Hono } from 'hono';
+import { requireAuth, getAuth } from '../middleware/auth.js';
+import { validateRequest, projectSchemas } from '../config/validation.js';
+import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
+import { createDb } from '../db/client.js';
+
+const routes = new Hono();
+
+// Apply middleware
+routes.use('*', requireAuth);
+
+// Route handler
+routes.post('/', validateRequest(projectSchemas.create), async c => {
+  const { user } = getAuth(c);
+  const db = createDb(c.env.DB);
+  const data = c.get('validatedBody');
+
+  try {
+    // Database operations
+    const result = await db.insert(projects).values(data);
+    return c.json(result);
+  } catch (error) {
+    // Error handling
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'create_project',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
+  }
+});
+```
+
+### Middleware Chain
+
+Order matters:
+1. Authentication (`requireAuth`)
+2. Authorization (`requireEntitlement`, `requireQuota`)
+3. Validation (`validateRequest`, `validateQueryParams`)
+4. Route handler
+
+```js
+routes.post(
+  '/',
+  requireAuth,
+  requireEntitlement('project.create'),
+  requireQuota('projects.max', getProjectCount, 1),
+  validateRequest(projectSchemas.create),
+  async c => { /* handler */ }
+);
+```
+
+## Examples from Codebase
+
+See these files for reference:
+- `packages/workers/src/routes/projects.js` - Full CRUD with validation, batch operations
+- `packages/workers/src/routes/members.js` - Validation, error handling
+- `packages/workers/src/routes/account-merge.js` - Complex batch operations
+- `packages/workers/src/config/validation.js` - Schema definitions

@@ -1,0 +1,180 @@
+---
+alwaysApply: false
+description: "Error handling patterns for both frontend and backend using createDomainError and handleFetchError"
+globs: packages/web/**, packages/workers/**
+---
+
+# Error Handling Patterns
+
+See `docs/error-handling-guide.md` for comprehensive error handling documentation.
+
+## Backend (Workers) Error Handling
+
+### Domain Errors
+
+**ALWAYS use `createDomainError` from `@corates/shared`:**
+
+```js
+import { createDomainError, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+
+// CORRECT
+if (!project) {
+  const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
+  return c.json(error, error.statusCode);
+}
+
+// WRONG
+if (!project) {
+  return c.json({ error: 'Project not found' }, 404);
+}
+```
+
+### Error Constants
+
+Use predefined error constants from `@corates/shared`:
+- `PROJECT_ERRORS.*` - Project-related errors
+- `AUTH_ERRORS.*` - Authentication/authorization errors
+- `VALIDATION_ERRORS.*` - Validation errors
+- `SYSTEM_ERRORS.*` - System/database errors
+- `USER_ERRORS.*` - User-related errors
+
+### Database Errors
+
+Wrap database operations in try-catch and return domain errors:
+
+```js
+try {
+  const result = await db.select()...
+} catch (error) {
+  console.error('Error fetching project:', error);
+  const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+    operation: 'fetch_project',
+    originalError: error.message,
+  });
+  return c.json(dbError, dbError.statusCode);
+}
+```
+
+### Validation Errors
+
+Validation middleware automatically creates validation errors. Don't manually create them in routes:
+
+```js
+// CORRECT - Middleware handles validation
+routes.post('/', validateRequest(schema), async c => {
+  const data = c.get('validatedBody'); // Already validated
+});
+
+// WRONG - Manual validation
+routes.post('/', async c => {
+  const body = await c.req.json();
+  if (!body.name) {
+    // Don't manually create validation errors
+  }
+});
+```
+
+## Frontend (Web) Error Handling
+
+### API Calls
+
+**ALWAYS use `handleFetchError` for fetch calls:**
+
+```js
+import { handleFetchError } from '@/lib/error-utils.js';
+
+// CORRECT
+try {
+  const response = await handleFetchError(
+    fetch('/api/projects', { method: 'POST', body: JSON.stringify(data) }),
+    { showToast: true }
+  );
+  const result = await response.json();
+} catch (error) {
+  // Error already handled (toast shown if showToast: true)
+  // error is a DomainError or TransportError
+}
+
+// WRONG
+try {
+  const response = await fetch('/api/projects');
+  if (!response.ok) {
+    // Don't manually handle errors
+  }
+} catch (error) {
+  // Don't manually show toasts
+}
+```
+
+### Form Validation Errors
+
+Use `createFormErrorSignals` for form error handling:
+
+```js
+import { createFormErrorSignals } from '@/lib/form-errors.js';
+import { createSignal } from 'solid-js';
+
+function MyForm() {
+  const errors = createFormErrorSignals(createSignal);
+
+  async function handleSubmit() {
+    try {
+      const response = await handleFetchError(fetch('/api/projects', { ... }));
+      // success
+    } catch (error) {
+      errors.handleError(error); // Handles field-level and global errors
+    }
+  }
+
+  return (
+    <form>
+      <input name="email" />
+      {errors.fieldErrors().email && (
+        <span class="error">{errors.fieldErrors().email}</span>
+      )}
+      {errors.globalError() && (
+        <div class="error">{errors.globalError()}</div>
+      )}
+    </form>
+  );
+}
+```
+
+### Error Types
+
+- **Domain Errors**: From backend API, always have `statusCode`
+- **Transport Errors**: Network/fetch errors, no `statusCode`
+
+Both are handled by `handleFetchError` automatically.
+
+## Common Patterns
+
+### Never Throw String Literals
+
+```js
+// WRONG
+throw 'Something went wrong';
+
+// CORRECT
+throw new Error('Something went wrong');
+// Or better: return domain error in API route
+```
+
+### Error Checking
+
+Use error utilities from `@corates/shared` or `@/lib/error-utils.js`:
+
+```js
+import { isErrorCode } from '@/lib/error-utils.js';
+
+if (isErrorCode(error, 'PROJECT_NOT_FOUND')) {
+  // Handle specific error
+}
+```
+
+## Examples from Codebase
+
+- `packages/workers/src/routes/projects.js` - Domain error patterns
+- `packages/web/src/lib/error-utils.js` - Frontend error utilities
+- `packages/web/src/lib/form-errors.js` - Form error handling
+- `packages/web/src/components/project-ui/CreateProjectForm.jsx` - Form error usage

@@ -1,0 +1,123 @@
+---
+alwaysApply: false
+description: "UI component usage patterns including Zag.js components, solid-icons, and import aliases"
+globs: packages/web/**, packages/ui/**
+---
+
+# UI Components
+
+## Zag.js Components
+
+**Zag components are in `@corates/ui` package, NOT in local components.**
+
+```js
+// CORRECT - Import from @corates/ui
+import { Dialog, Select, Toast, showToast, Avatar } from '@corates/ui';
+
+// WRONG - Don't import from local components
+import { Dialog } from '@/components/zag/Dialog.jsx';
+import { Dialog } from 'packages/web/src/components/zag/Dialog.jsx';
+```
+
+### Available Components
+
+See `packages/ui/src/zag/index.js` for all available components. Common ones:
+- `Dialog`, `ConfirmDialog`, `useConfirmDialog`
+- `Select`, `Combobox`
+- `Toast`, `toaster`, `showToast`
+- `Avatar`
+- `Tabs`
+- `Checkbox`, `Switch`, `RadioGroup`
+- `Tooltip`, `Popover`, `Menu`
+- `FileUpload`
+- `PasswordInput`
+- And more...
+
+### Component Usage
+
+```js
+import { Dialog, useConfirmDialog, showToast } from '@corates/ui';
+
+function MyComponent() {
+  const confirmDialog = useConfirmDialog();
+
+  const handleDelete = async () => {
+    const confirmed = await confirmDialog.confirm({
+      title: 'Delete Project?',
+      message: 'This action cannot be undone.',
+    });
+
+    if (confirmed) {
+      // Delete logic
+      showToast.success('Project deleted');
+    }
+  };
+}
+```
+
+## Icons - solid-icons
+
+**ALWAYS use `solid-icons` library, NEVER use emojis:**
+
+```js
+// CORRECT - Import from solid-icons
+import { BiRegularHome, BiRegularCheck } from 'solid-icons/bi';
+import { FiUsers } from 'solid-icons/fi';
+import { AiFillCheckCircle } from 'solid-icons/ai';
+
+// WRONG - Don't use emojis
+<span>Home</span> // Use icon component instead
+```
+
+### Icon Packages
+
+Import from specific icon sets:
+- `solid-icons/bi` - BoxIcons Regular
+- `solid-icons/bx` - BoxIcons
+- `solid-icons/fi` - Feather Icons
+- `solid-icons/ai` - Ant Design Icons
+- And more...
+
+Use the icon search MCP tool to find icons: `mcp_corates_search_icons`
+
+## Import Aliases
+
+**Use import aliases from `packages/web/jsconfig.json`:**
+
+```js
+// CORRECT - Use aliases
+import projectStore from '@/stores/projectStore.js';
+import { handleError } from '@/lib/error-utils.js';
+import SignIn from '@auth-ui/SignIn.jsx';
+import ChecklistWrapper from '@checklist-ui/ChecklistYjsWrapper.jsx';
+
+// WRONG - Don't use relative paths unnecessarily
+import projectStore from '../../stores/projectStore.js';
+```
+
+### Available Aliases
+
+- `@/*` → `src/*`
+- `@components/*` → `src/components/*`
+- `@auth-ui/*` → `src/components/auth-ui/*`
+- `@checklist-ui/*` → `src/components/checklist-ui/*`
+- `@project-ui/*` → `src/components/project-ui/*`
+- `@routes/*` → `src/routes/*`
+- `@primitives/*` → `src/primitives/*`
+- `@api/*` → `src/api/*`
+- `@config/*` → `src/config/*`
+- `@lib/*` → `src/lib/*`
+
+## Styling
+
+- Use Tailwind CSS classes
+- Reference `style-guide.md` for design system patterns
+- Use responsive design (mobile-first)
+- Follow component patterns from existing codebase
+
+## Examples from Codebase
+
+- `packages/web/src/components/project-ui/ProjectView.jsx` - Import patterns
+- `packages/web/src/components/admin-ui/UserTable.jsx` - Avatar, Dialog usage
+- `packages/web/src/components/auth-ui/SignIn.jsx` - PasswordInput usage
+- `packages/ui/README.md` - Component library documentation

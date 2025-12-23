@@ -1,0 +1,233 @@
+---
+alwaysApply: false
+description: "SolidJS reactivity patterns, props, stores, and primitives for frontend components"
+globs: packages/web/**, packages/landing/**
+---
+# SolidJS Patterns
+
+## Props - Critical Reactivity Rules
+
+**NEVER destructure props** - it breaks reactivity:
+
+```js
+// WRONG - breaks reactivity
+function MyComponent(props) {
+  const { name } = props;
+  const name = props.name;
+  return <div>{name}</div>; // Won't update when prop changes
+}
+
+// CORRECT - access directly
+function MyComponent(props) {
+  return <div>{props.name}</div>; // Maintains reactivity
+}
+
+// CORRECT - wrap in function for computed access
+function MyComponent(props) {
+  const name = () => props.name;
+  return <div>{name()}</div>; // Maintains reactivity
+}
+```
+
+## State Architecture
+
+### Stores vs Props vs Context Decision Tree
+
+1. **Shared/cross-feature state** → External store (`packages/web/src/stores/`)
+2. **Local component state** → `createSignal` or `createStore`
+3. **Feature-scoped state** → Solid Context (use sparingly)
+4. **Derived values** → `createMemo`
+5. **Local configuration** → Props
+
+### Store Pattern
+
+Import stores directly - do NOT prop-drill:
+
+```js
+// CORRECT
+import projectStore from '@/stores/projectStore.js';
+
+function MyComponent() {
+  const projects = () => projectStore.getProjectList();
+  return <div>{projects()?.length}</div>;
+}
+
+// WRONG - prop drilling
+function MyComponent({ projects }) {
+  // Don't pass store data through props
+}
+```
+
+### Store Read/Write Pattern
+
+- **Read**: Import store directly (e.g., `projectStore.getProjectList()`)
+- **Write**: Import actions store (e.g., `projectActionsStore.createProject()`)
+
+```js
+import projectStore from '@/stores/projectStore.js';
+import projectActionsStore from '@/stores/projectActionsStore';
+
+function MyComponent() {
+  // Read from store
+  const projects = () => projectStore.getProjectList();
+
+  // Write via actions store
+  const handleCreate = () => {
+    projectActionsStore.createProject({ name: 'New Project' });
+  };
+}
+```
+
+## Reactive Primitives
+
+### createSignal - Simple Values
+
+```js
+import { createSignal } from 'solid-js';
+
+const [count, setCount] = createSignal(0);
+// Use derived state with signals or memo when possible, prefer this over effects
+```
+
+### createStore - Complex Objects
+
+Use `createStore` for objects/arrays that need granular reactivity:
+
+```js
+import { createStore } from 'solid-js/store';
+
+const [state, setState] = createStore({ items: [], loading: false });
+
+// Granular updates - only affected parts re-render
+setState('loading', true);
+setState('items', items => [...items, newItem]);
+```
+
+### createMemo - Derived Values
+
+Use `createMemo` for computed values that depend on reactive state:
+
+```js
+import { createMemo } from 'solid-js';
+
+const filteredItems = createMemo(() => {
+  return items().filter(item => item.active);
+});
+```
+
+### createEffect - Side Effects
+
+Always clean up effects that create subscriptions or timers:
+
+```js
+import { createEffect, onCleanup } from 'solid-js';
+
+// Use effects sparingly, only when derived values won't work well
+createEffect(() => {
+  const interval = setInterval(() => {
+    // do something
+  }, 1000);
+
+  onCleanup(() => {
+    clearInterval(interval);
+  });
+});
+```
+
+## Component Patterns
+
+### Lean Components
+
+Components should be lean and focused on rendering:
+
+```js
+// CORRECT - Component focuses on UI
+function ProjectList() {
+  const projects = () => projectStore.getProjectList();
+
+  return (
+    <For each={projects()}>
+      {project => <ProjectCard project={project} />}
+    </For>
+  );
+}
+
+// WRONG - Business logic in component
+function ProjectList() {
+  const [projects, setProjects] = createSignal([]);
+
+  // Don't put fetch logic in component
+  fetch('/api/projects').then(res => res.json()).then(setProjects);
+
+  return <div>...</div>;
+}
+```
+
+Move business logic to:
+- **Stores** - Shared state and operations
+- **Primitives** - Reusable hooks/logic
+- **Utilities** - Pure functions
+
+### Primitives (Hooks)
+
+Create reusable logic in primitives:
+
+```js
+// packages/web/src/primitives/useProject.js
+export function useProject(projectId) {
+  const project = () => projectStore.getProject(projectId);
+  const connect = () => { /* connection logic */ };
+  return { project, connect };
+}
+
+// Component uses primitive
+import useProject from '@/primitives/useProject';
+
+function ProjectView() {
+  const { project, connect } = useProject(params.projectId);
+  // Clean component, logic in primitive
+}
+```
+
+## Common Patterns
+
+### Conditional Rendering
+
+```js
+import { Show } from 'solid-js';
+
+<Show when={loading()} fallback={<div>Loading...</div>}>
+  <Content />
+</Show>
+```
+
+### Lists
+
+```js
+import { For } from 'solid-js';
+
+<For each={items()}>
+  {(item, index) => <ItemCard item={item} />}
+</For>
+```
+
+### Children Helper
+
+When manipulating children, use the `children` helper:
+
+```js
+import { children } from 'solid-js';
+
+function Wrapper(props) {
+  const safeChildren = children(() => props.children);
+  return <div>{safeChildren()}</div>;
+}
+```
+
+## Examples from Codebase
+
+See these files for reference:
+- `packages/web/src/components/project-ui/ProjectView.jsx` - Store usage, effects
+- `packages/web/src/components/checklist-ui/compare/ReconciliationWrapper.jsx` - createMemo, effects
+- `packages/web/src/stores/projectStore.js` - Store implementation
+- `packages/web/src/primitives/useProject/index.js` - Primitive pattern

@@ -1,6 +1,7 @@
 ---
-alwaysApply: true
-scope: packages/workers
+alwaysApply: false
+description: "Workers package specific patterns for database batch operations and validation"
+globs: packages/workers/src/**
 ---
 
 # Workers Package Rules
@@ -10,14 +11,14 @@ scope: packages/workers
 **ALWAYS use `db.batch()` for multiple related database operations** to ensure atomicity:
 
 ```javascript
-// ✅ DO: Use batch for related operations
+// DO: Use batch for related operations
 const batchOps = [
   db.insert(projects).values({ id, name, createdBy }),
   db.insert(projectMembers).values({ projectId: id, userId, role: 'owner' }),
 ];
 await db.batch(batchOps);
 
-// ❌ DON'T: Separate operations
+// DON'T: Separate operations
 await db.insert(projects).values({ id, name });
 await db.insert(projectMembers).values({ projectId: id, userId });
 ```
@@ -29,14 +30,14 @@ Use batch when operations must be atomic (all succeed or all fail). Single indep
 **ALWAYS validate request bodies** using `validateRequest` middleware:
 
 ```javascript
-// ✅ DO: Use middleware
+// DO: Use middleware
 import { validateRequest, projectSchemas } from '../config/validation.js';
 
 projectRoutes.post('/', validateRequest(projectSchemas.create), async c => {
   const data = c.get('validatedBody'); // Already validated
 });
 
-// ❌ DON'T: Manual validation
+// DON'T: Manual validation
 projectRoutes.post('/', async c => {
   const body = await c.req.json();
   // Manual checks...
