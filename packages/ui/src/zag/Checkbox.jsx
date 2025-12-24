@@ -1,25 +1,28 @@
 /**
- * Checkbox component using Zag.js
+ * Checkbox component using Ark UI
+ *
+ * Supports both high-level convenience API and low-level composition API
  */
 
-import * as checkbox from '@zag-js/checkbox';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, mergeProps, Show } from 'solid-js';
+import { Checkbox as ArkCheckbox, useCheckbox } from '@ark-ui/solid/checkbox';
+import { mergeProps, splitProps, Show, createMemo } from 'solid-js';
 import { BiRegularCheck, BiRegularMinus } from 'solid-icons/bi';
 
 /**
- * @param {Object} props
- * @param {boolean} [props.checked] - Controlled checked state
- * @param {boolean} [props.defaultChecked] - Default checked state (uncontrolled)
- * @param {boolean} [props.indeterminate] - Whether checkbox is in indeterminate state
- * @param {boolean} [props.disabled] - Whether checkbox is disabled
- * @param {string} [props.name] - Name for form submission
- * @param {string} [props.value] - Value for form submission
- * @param {string} [props.label] - Label text
- * @param {Function} [props.onChange] - Callback when checked state changes: (checked: boolean) => void
- * @param {string} [props.class] - Additional CSS classes
+ * Checkbox - Full description
+ *
+ * Props:
+ * - checked: boolean - Controlled checked state
+ * - defaultChecked: boolean - Default checked state (uncontrolled)
+ * - indeterminate: boolean - Whether checkbox is in indeterminate state
+ * - disabled: boolean - Whether checkbox is disabled
+ * - name: string - Name for form submission
+ * - value: string - Value for form submission
+ * - label: string - Label text
+ * - onChange: Function - Callback when checked state changes: (checked: boolean) => void
+ * - class: string - Additional CSS classes
  */
-export function Checkbox(props) {
+export default function CheckboxComponent(props) {
   const merged = mergeProps(
     {
       defaultChecked: false,
@@ -27,59 +30,72 @@ export function Checkbox(props) {
     props,
   );
 
-  const checked = () => merged.checked;
-  const indeterminate = () => merged.indeterminate;
-  const defaultChecked = () => merged.defaultChecked;
-  const disabled = () => merged.disabled;
-  const name = () => merged.name;
-  const value = () => merged.value;
-  const classValue = () => merged.class;
-  const label = () => merged.label;
+  const [local, machineProps] = splitProps(merged, ['label', 'class', 'indeterminate', 'onChange']);
 
-  const service = useMachine(checkbox.machine, () => ({
-    id: createUniqueId(),
-    checked: indeterminate() ? 'indeterminate' : checked(),
-    defaultChecked: defaultChecked(),
-    disabled: disabled(),
-    name: name(),
-    value: value(),
-    onCheckedChange(details) {
-      merged.onChange?.(details.checked === true);
-    },
-  }));
+  const label = () => local.label;
+  const classValue = () => local.class;
+  const indeterminate = () => local.indeterminate;
+  const onChange = () => local.onChange;
 
-  const api = createMemo(() => checkbox.connect(service, normalizeProps));
+  const checked = () => machineProps.checked;
+  const defaultChecked = () => machineProps.defaultChecked;
+  const disabled = () => machineProps.disabled;
+  const name = () => machineProps.name;
+  const value = () => machineProps.value || 'on';
+
+  // Convert indeterminate to checked state
+  const checkedState = createMemo(() => {
+    if (indeterminate()) return 'indeterminate';
+    if (checked() !== undefined) return checked() === true;
+    return undefined;
+  });
+
+  const defaultCheckedState = createMemo(() => {
+    if (indeterminate()) return 'indeterminate';
+    return defaultChecked();
+  });
+
+  const handleCheckedChange = details => {
+    if (onChange()) {
+      // When transitioning from indeterminate, treat it as checking
+      const newChecked = details.checked === true || details.checked === 'indeterminate';
+      onChange()(newChecked);
+    }
+    if (machineProps.onCheckedChange) {
+      machineProps.onCheckedChange(details);
+    }
+  };
 
   return (
-    <label
-      {...api().getRootProps()}
+    <ArkCheckbox.Root
+      {...machineProps}
+      checked={checkedState()}
+      defaultChecked={defaultCheckedState()}
+      disabled={disabled()}
+      name={name()}
+      value={value()}
+      onCheckedChange={handleCheckedChange}
       class={`inline-flex cursor-pointer items-center gap-2 select-none ${
         disabled() ? 'cursor-not-allowed opacity-50' : ''
       } ${classValue() || ''}`}
     >
-      <div
-        {...api().getControlProps()}
-        class={`flex h-4 w-4 items-center justify-center rounded border-2 transition-colors ${
-          api().checked || api().indeterminate ?
-            'border-blue-600 bg-blue-600'
-          : 'border-gray-300 bg-white hover:border-blue-400'
-        } ${api().focused ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
-      >
-        <Show when={api().indeterminate}>
+      <ArkCheckbox.Control class='flex h-4 w-4 items-center justify-center rounded border-2 transition-colors data-[focus]:ring-2 data-[focus]:ring-blue-500 data-[focus]:ring-offset-1 data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=indeterminate]:border-blue-600 data-[state=indeterminate]:bg-blue-600 data-[state=unchecked]:border-gray-300 data-[state=unchecked]:bg-white data-[state=unchecked]:hover:border-blue-400'>
+        <ArkCheckbox.Indicator indeterminate class='h-3 w-3 text-white'>
           <BiRegularMinus class='h-3 w-3 text-white' />
-        </Show>
-        <Show when={api().checked && !api().indeterminate}>
+        </ArkCheckbox.Indicator>
+        <ArkCheckbox.Indicator class='h-3 w-3 text-white'>
           <BiRegularCheck class='h-3 w-3 text-white' />
-        </Show>
-      </div>
-      <input {...api().getHiddenInputProps()} />
+        </ArkCheckbox.Indicator>
+      </ArkCheckbox.Control>
+      <ArkCheckbox.HiddenInput />
       <Show when={label()}>
-        <span {...api().getLabelProps()} class='text-sm text-gray-700'>
-          {label()}
-        </span>
+        <ArkCheckbox.Label class='text-sm text-gray-700'>{label()}</ArkCheckbox.Label>
       </Show>
-    </label>
+    </ArkCheckbox.Root>
   );
 }
 
-export default Checkbox;
+export { CheckboxComponent as Checkbox };
+
+// Export hook for programmatic control
+export { useCheckbox };

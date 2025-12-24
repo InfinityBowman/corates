@@ -1,7 +1,11 @@
-import * as popover from '@zag-js/popover';
-import { Portal } from 'solid-js/web';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, Show, splitProps, mergeProps } from 'solid-js';
+/**
+ * Popover component using Ark UI
+ *
+ * Supports both high-level convenience API and low-level composition API
+ */
+
+import { Popover as ArkPopover, usePopover } from '@ark-ui/solid/popover';
+import { mergeProps, splitProps, Show } from 'solid-js';
 import { FiX } from 'solid-icons/fi';
 import { Z_INDEX } from '../constants/zIndex.js';
 
@@ -25,8 +29,20 @@ import { Z_INDEX } from '../constants/zIndex.js';
  * - inDialog: boolean - Set to true when used inside a Dialog
  * - class: string - Additional class for content
  */
-export function Popover(props) {
-  const [local, machineProps] = splitProps(props, [
+export default function PopoverComponent(props) {
+  const merged = mergeProps(
+    {
+      placement: 'bottom',
+      modal: false,
+      closeOnInteractOutside: true,
+      closeOnEscape: true,
+      showArrow: false,
+      showCloseButton: true,
+    },
+    props,
+  );
+
+  const [local, machineProps] = splitProps(merged, [
     'trigger',
     'children',
     'title',
@@ -37,72 +53,73 @@ export function Popover(props) {
     'class',
   ]);
 
-  const context = mergeProps(machineProps, {
-    id: createUniqueId(),
-    closeOnInteractOutside: true,
-    closeOnEscape: true,
+  const trigger = () => local.trigger;
+  const children = () => local.children;
+  const title = () => local.title;
+  const description = () => local.description;
+  const showArrow = () => local.showArrow;
+  const showCloseButton = () => local.showCloseButton !== false;
+  const inDialog = () => local.inDialog;
+  const classValue = () => local.class;
+
+  const handleOpenChange = details => {
+    if (machineProps.onOpenChange) {
+      machineProps.onOpenChange(details);
+    }
+  };
+
+  const positioning = () => ({
+    placement: machineProps.placement || 'bottom',
   });
 
-  const service = useMachine(popover.machine, context);
+  return (
+    <ArkPopover.Root
+      {...machineProps}
+      positioning={positioning()}
+      portalled={!inDialog()}
+      onOpenChange={handleOpenChange}
+    >
+      <ArkPopover.Trigger class='inline-flex'>{trigger()}</ArkPopover.Trigger>
+      <ArkPopover.Positioner>
+        <ArkPopover.Content
+          class={`${Z_INDEX.POPOVER} max-w-sm min-w-50 rounded-lg border border-gray-200 bg-white shadow-lg ${classValue() || ''}`}
+        >
+          <Show when={showArrow()}>
+            <ArkPopover.Arrow class='[--arrow-background:white] [--arrow-size:8px]'>
+              <ArkPopover.ArrowTip />
+            </ArkPopover.Arrow>
+          </Show>
 
-  const api = createMemo(() => popover.connect(service, normalizeProps));
-
-  const showCloseButton = () => local.showCloseButton !== false;
-
-  const content = () => (
-    <div {...api().getPositionerProps()}>
-      <div
-        {...api().getContentProps()}
-        class={`${Z_INDEX.POPOVER} max-w-sm min-w-50 rounded-lg border border-gray-200 bg-white shadow-lg ${local.class || ''}`}
-      >
-        <Show when={local.showArrow}>
-          <div {...api().getArrowProps()} class='[--arrow-background:white] [--arrow-size:8px]'>
-            <div {...api().getArrowTipProps()} />
-          </div>
-        </Show>
-
-        <Show when={local.title || showCloseButton()}>
-          <div class='flex items-start justify-between border-b border-gray-100 p-3'>
-            <div>
-              <Show when={local.title}>
-                <h3 {...api().getTitleProps()} class='text-sm font-medium text-gray-900'>
-                  {local.title}
-                </h3>
-              </Show>
-              <Show when={local.description}>
-                <p {...api().getDescriptionProps()} class='mt-1 text-xs text-gray-500'>
-                  {local.description}
-                </p>
+          <Show when={title() || showCloseButton()}>
+            <div class='flex items-start justify-between border-b border-gray-100 p-3'>
+              <div>
+                <Show when={title()}>
+                  <ArkPopover.Title class='text-sm font-medium text-gray-900'>
+                    {title()}
+                  </ArkPopover.Title>
+                </Show>
+                <Show when={description()}>
+                  <ArkPopover.Description class='mt-1 text-xs text-gray-500'>
+                    {description()}
+                  </ArkPopover.Description>
+                </Show>
+              </div>
+              <Show when={showCloseButton()}>
+                <ArkPopover.CloseTrigger class='-mt-1 -mr-1 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500'>
+                  <FiX class='h-4 w-4' />
+                </ArkPopover.CloseTrigger>
               </Show>
             </div>
-            <Show when={showCloseButton()}>
-              <button
-                {...api().getCloseTriggerProps()}
-                class='-mt-1 -mr-1 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500'
-              >
-                <FiX class='h-4 w-4' />
-              </button>
-            </Show>
-          </div>
-        </Show>
+          </Show>
 
-        <div class='p-3'>{local.children}</div>
-      </div>
-    </div>
-  );
-
-  return (
-    <>
-      <button {...api().getTriggerProps()} class='inline-flex'>
-        {local.trigger}
-      </button>
-      <Show when={api().open}>
-        <Show when={!local.inDialog} fallback={content()}>
-          <Portal>{content()}</Portal>
-        </Show>
-      </Show>
-    </>
+          <div class='p-3'>{children()}</div>
+        </ArkPopover.Content>
+      </ArkPopover.Positioner>
+    </ArkPopover.Root>
   );
 }
 
-export default Popover;
+export { PopoverComponent as Popover };
+
+// Export hook for programmatic control
+export { usePopover };

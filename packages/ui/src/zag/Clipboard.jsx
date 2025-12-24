@@ -1,6 +1,9 @@
-import * as clipboard from '@zag-js/clipboard';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, Show, splitProps } from 'solid-js';
+/**
+ * Clipboard components using Ark UI
+ */
+
+import { Clipboard } from '@ark-ui/solid/clipboard';
+import { Show, splitProps, createSignal, createMemo } from 'solid-js';
 import { FiCopy, FiCheck } from 'solid-icons/fi';
 
 /**
@@ -17,46 +20,68 @@ import { FiCopy, FiCheck } from 'solid-icons/fi';
  * - children: (api: ClipboardApi) => JSX.Element - Render function for custom UI
  * - class: string - Additional class for root element
  */
-export function Clipboard(props) {
+export default function ClipboardComponent(props) {
   const [local, machineProps] = splitProps(props, ['label', 'showInput', 'children', 'class']);
+  const [copied, setCopied] = createSignal(false);
 
-  const service = useMachine(clipboard.machine, () => ({
-    id: createUniqueId(),
-    timeout: 3000,
-    ...machineProps,
+  const handleStatusChange = details => {
+    setCopied(details.copied);
+    if (machineProps.onStatusChange) {
+      machineProps.onStatusChange({ copied: details.copied });
+    }
+  };
+
+  const handleValueChange = details => {
+    if (machineProps.onValueChange) {
+      machineProps.onValueChange(details);
+    }
+  };
+
+  // Create API object for render prop compatibility
+  const api = createMemo(() => ({
+    get copied() {
+      return copied();
+    },
+    copy: () => {
+      // Trigger copy via the Clipboard.Trigger
+    },
   }));
-
-  const api = createMemo(() => clipboard.connect(service, normalizeProps));
 
   const showInput = () => local.showInput !== false;
 
   return (
-    <Show when={!local.children} fallback={local.children?.(api)}>
-      <div {...api().getRootProps()} class={`w-full ${local.class || ''}`}>
+    <Show when={!local.children} fallback={local.children?.(api())}>
+      <Clipboard.Root
+        value={machineProps.value}
+        defaultValue={machineProps.defaultValue}
+        onValueChange={handleValueChange}
+        onStatusChange={handleStatusChange}
+        timeout={machineProps.timeout ?? 3000}
+        class={`w-full ${local.class || ''}`}
+      >
         <Show when={local.label}>
-          <label {...api().getLabelProps()} class='mb-1 block text-sm font-medium text-gray-700'>
+          <Clipboard.Label class='mb-1 block text-sm font-medium text-gray-700'>
             {local.label}
-          </label>
+          </Clipboard.Label>
         </Show>
-        <div {...api().getControlProps()} class='flex items-center gap-2'>
+        <Clipboard.Control class='flex items-center gap-2'>
           <Show when={showInput()}>
-            <input
-              {...api().getInputProps()}
-              class='flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-              readOnly
-            />
+            <Clipboard.Input class='flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none' />
           </Show>
-          <button
-            {...api().getTriggerProps()}
-            class={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${api().copied ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          <Clipboard.Trigger
+            class={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              copied() ?
+                'bg-green-100 text-green-700 hover:bg-green-200'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
           >
-            <Show when={api().copied} fallback={<FiCopy class='h-4 w-4' />}>
-              <FiCheck class='h-4 w-4' />
-            </Show>
-            <span>{api().copied ? 'Copied!' : 'Copy'}</span>
-          </button>
-        </div>
-      </div>
+            <Clipboard.Indicator copied={<FiCheck class='h-4 w-4' />}>
+              <FiCopy class='h-4 w-4' />
+            </Clipboard.Indicator>
+            <span>{copied() ? 'Copied!' : 'Copy'}</span>
+          </Clipboard.Trigger>
+        </Clipboard.Control>
+      </Clipboard.Root>
     </Show>
   );
 }
@@ -86,14 +111,14 @@ export function CopyButton(props) {
     'showLabel',
     'class',
   ]);
+  const [copied, setCopied] = createSignal(false);
 
-  const service = useMachine(clipboard.machine, () => ({
-    id: createUniqueId(),
-    timeout: 3000,
-    ...machineProps,
-  }));
-
-  const api = createMemo(() => clipboard.connect(service, normalizeProps));
+  const handleStatusChange = details => {
+    setCopied(details.copied);
+    if (machineProps.onStatusChange) {
+      machineProps.onStatusChange({ copied: details.copied });
+    }
+  };
 
   const showIcon = () => local.showIcon !== false;
   const showLabel = () => local.showLabel !== false;
@@ -112,16 +137,15 @@ export function CopyButton(props) {
   };
 
   const getVariantClass = () => {
-    const copied = api().copied;
     switch (local.variant) {
       case 'outline':
-        return copied ?
+        return copied() ?
             'border border-green-500 text-green-700 hover:bg-green-50'
           : 'border border-gray-300 text-gray-700 hover:bg-gray-50';
       case 'ghost':
-        return copied ? 'text-green-700 hover:bg-green-100' : 'text-gray-700 hover:bg-gray-100';
+        return copied() ? 'text-green-700 hover:bg-green-100' : 'text-gray-700 hover:bg-gray-100';
       default:
-        return copied ?
+        return copied() ?
             'bg-green-600 text-white hover:bg-green-700'
           : 'bg-blue-600 text-white hover:bg-blue-700';
     }
@@ -139,22 +163,26 @@ export function CopyButton(props) {
   };
 
   return (
-    <div {...api().getRootProps()}>
-      <button
-        {...api().getTriggerProps()}
+    <Clipboard.Root
+      value={machineProps.value}
+      defaultValue={machineProps.defaultValue}
+      onStatusChange={handleStatusChange}
+      timeout={machineProps.timeout ?? 3000}
+    >
+      <Clipboard.Trigger
         class={`inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors ${getSizeClass()} ${getVariantClass()} ${local.class || ''}`}
       >
         <Show when={showIcon()}>
-          <Show when={api().copied} fallback={<FiCopy class={iconSize()} />}>
-            <FiCheck class={iconSize()} />
-          </Show>
+          <Clipboard.Indicator copied={<FiCheck class={iconSize()} />}>
+            <FiCopy class={iconSize()} />
+          </Clipboard.Indicator>
         </Show>
         <Show when={showLabel()}>
-          <span>{api().copied ? copiedLabel() : label()}</span>
+          <span>{copied() ? copiedLabel() : label()}</span>
         </Show>
-      </button>
-    </div>
+      </Clipboard.Trigger>
+    </Clipboard.Root>
   );
 }
 
-export default Clipboard;
+export { ClipboardComponent as Clipboard };

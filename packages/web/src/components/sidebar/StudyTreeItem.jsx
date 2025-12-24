@@ -26,28 +26,24 @@ export default function StudyTreeItem(props) {
   return (
     <Collapsible
       open={isExpanded()}
-      onOpenChange={open => {
+      onOpenChange={({ open }) => {
         if (open !== isExpanded()) {
           props.onToggle?.();
         }
       }}
-      trigger={api => (
+      trigger={
         <div class='group flex items-center rounded text-gray-600 transition-colors hover:bg-gray-50'>
-          <button
-            {...api.getTriggerProps()}
-            class='rounded p-1.5 hover:bg-gray-100'
-            aria-label={isExpanded() ? 'Collapse' : 'Expand'}
-          >
+          <div class='pointer-events-none rounded p-1.5'>
             <FiChevronRight
               class={`h-2.5 w-2.5 text-gray-400 transition-transform ${isExpanded() ? 'rotate-90' : ''}`}
             />
-          </button>
+          </div>
           <div class='flex flex-1 items-center gap-1.5 py-1.5 pr-2 text-left'>
             <VsBook class='h-3.5 w-3.5 text-gray-400' />
             <span class='truncate text-xs font-medium'>{props.study.name}</span>
           </div>
         </div>
-      )}
+      }
     >
       {/* Checklists list */}
       <div class='mt-0.5 ml-4 space-y-0.5 border-l border-gray-100 pl-2'>

@@ -1,6 +1,9 @@
-import * as floatingPanel from '@zag-js/floating-panel';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, Show } from 'solid-js';
+/**
+ * FloatingPanel component using Ark UI
+ */
+
+import { FloatingPanel } from '@ark-ui/solid/floating-panel';
+import { Show } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { AiOutlineMinus, AiOutlineClose } from 'solid-icons/ai';
 import { FiMaximize2 } from 'solid-icons/fi';
@@ -35,160 +38,145 @@ import { FaSolidWindowRestore } from 'solid-icons/fa';
  * - closeOnEscape: boolean - Close panel on Escape key (default: true)
  * - persistRect: boolean - Persist size/position when closed (default: false)
  */
-export function FloatingPanel(props) {
-  const service = useMachine(floatingPanel.machine, () => ({
-    id: createUniqueId(),
-    open: props.open,
-    defaultOpen: props.defaultOpen,
-    onOpenChange: details => props.onOpenChange?.(details),
-    defaultSize: props.defaultSize ?? { width: 320, height: 240 },
-    size: props.size,
-    onSizeChange: details => props.onSizeChange?.(details),
-    defaultPosition: props.defaultPosition,
-    position: props.position,
-    onPositionChange: details => props.onPositionChange?.(details),
-    onStageChange: details => props.onStageChange?.(details),
-    resizable: props.resizable ?? true,
-    draggable: props.draggable ?? true,
-    minSize: props.minSize ?? { width: 200, height: 150 },
-    maxSize: props.maxSize,
-    lockAspectRatio: props.lockAspectRatio ?? false,
-    closeOnEscape: props.closeOnEscape ?? true,
-    persistRect: props.persistRect ?? false,
-  }));
-
-  const api = createMemo(() => floatingPanel.connect(service, normalizeProps));
+export default function FloatingPanelComponent(props) {
   const showControls = () => props.showControls ?? true;
   const showMinimize = () => showControls() && (props.showMinimize ?? true);
   const showMaximize = () => showControls() && (props.showMaximize ?? true);
   const showRestore = () => showControls() && (props.showRestore ?? true);
   const showClose = () => showControls() && (props.showClose ?? true);
 
-  // Helper to merge Zag's style with custom style
-  const contentProps = () => {
-    const cp = api().getContentProps();
-    return {
-      ...cp,
-      onKeyDown: event => {
-        // Let Zag handle its own key bindings first.
-        // Note: Zag's default handler only runs when the content element itself
-        // is the event target, so Escape won't close when a child has focus.
-        cp.onKeyDown?.(event);
-        if (!(props.closeOnEscape ?? true)) return;
-        if (event.key !== 'Escape' && event.key !== 'Esc') return;
-        event.stopPropagation();
-        event.preventDefault();
-        api().setOpen(false);
-      },
-      style: { ...cp.style, overflow: 'hidden' },
-    };
+  const handleOpenChange = details => {
+    if (props.onOpenChange) {
+      props.onOpenChange(details);
+    }
   };
 
-  const resizeTrigger = axis => {
-    const rp = api().getResizeTriggerProps({ axis });
-    const extraStyle =
-      axis.length === 1 ?
-        axis === 'n' || axis === 's' ?
-          { height: '8px' }
-        : { width: '8px' }
-      : { width: '12px', height: '12px' };
-    return { ...rp, style: { ...rp.style, ...extraStyle } };
+  const handleSizeChange = details => {
+    if (props.onSizeChange) {
+      props.onSizeChange(details);
+    }
   };
 
-  const cx = (...parts) => parts.filter(Boolean).join(' ');
-
-  const dragTriggerProps = () => {
-    const dp = api().getDragTriggerProps();
-    return { ...dp, class: cx(dp.class, 'shrink-0') };
+  const handlePositionChange = details => {
+    if (props.onPositionChange) {
+      props.onPositionChange(details);
+    }
   };
 
-  const bodyProps = () => {
-    const bp = api().getBodyProps();
-    return {
-      ...bp,
-      class: cx(bp.class, 'flex-1 min-h-0 p-4 overflow-auto'),
-    };
+  const handleStageChange = details => {
+    if (props.onStageChange) {
+      props.onStageChange(details);
+    }
+  };
+
+  const getResizeTriggerStyle = axis => {
+    if (axis.length === 1) {
+      return axis === 'n' || axis === 's' ? { height: '8px' } : { width: '8px' };
+    }
+    return { width: '12px', height: '12px' };
   };
 
   return (
-    <Show when={api().open}>
-      <Portal>
-        <div {...api().getPositionerProps()}>
-          <div
-            {...contentProps()}
-            class='relative flex min-h-0 flex-col rounded-lg border border-gray-200 bg-white shadow-2xl'
-          >
-            {/* Header with drag handle */}
-            <div {...dragTriggerProps()}>
-              <div
-                {...api().getHeaderProps()}
-                class='flex cursor-move items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-2 select-none'
-              >
-                <h3 {...api().getTitleProps()} class='text-sm font-semibold text-gray-900'>
-                  {props.title}
-                </h3>
-                <Show when={showControls()}>
-                  <div {...api().getControlProps()} class='flex items-center gap-0.5'>
-                    <Show when={showMinimize()}>
-                      <button
-                        {...api().getStageTriggerProps({ stage: 'minimized' })}
-                        class='rounded p-1 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700'
-                        title='Minimize'
-                      >
-                        <AiOutlineMinus class='h-3.5 w-3.5' />
-                      </button>
-                    </Show>
-                    <Show when={showMaximize()}>
-                      <button
-                        {...api().getStageTriggerProps({ stage: 'maximized' })}
-                        class='rounded p-1 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700'
-                        title='Maximize'
-                      >
-                        <FiMaximize2 class='h-3.5 w-3.5' />
-                      </button>
-                    </Show>
-                    <Show when={showRestore()}>
-                      <button
-                        {...api().getStageTriggerProps({ stage: 'default' })}
-                        class='rounded p-1 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700'
-                        title='Restore'
-                      >
-                        <FaSolidWindowRestore class='h-3.5 w-3.5' />
-                      </button>
-                    </Show>
-                    <Show when={showClose()}>
-                      <button
-                        {...api().getCloseTriggerProps()}
-                        class='rounded p-1 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600'
-                        title='Close'
-                      >
-                        <AiOutlineClose class='h-3.5 w-3.5' />
-                      </button>
-                    </Show>
-                  </div>
-                </Show>
-              </div>
-            </div>
+    <FloatingPanel.Root
+      open={props.open}
+      defaultOpen={props.defaultOpen}
+      onOpenChange={handleOpenChange}
+      defaultSize={props.defaultSize ?? { width: 320, height: 240 }}
+      size={props.size}
+      onSizeChange={handleSizeChange}
+      defaultPosition={props.defaultPosition}
+      position={props.position}
+      onPositionChange={handlePositionChange}
+      onStageChange={handleStageChange}
+      resizable={props.resizable ?? true}
+      draggable={props.draggable ?? true}
+      minSize={props.minSize ?? { width: 200, height: 150 }}
+      maxSize={props.maxSize}
+      lockAspectRatio={props.lockAspectRatio ?? false}
+      closeOnEscape={props.closeOnEscape ?? true}
+      persistRect={props.persistRect ?? false}
+    >
+      <FloatingPanel.Context>
+        {api => (
+          <Show when={api().open}>
+            <Portal>
+              <FloatingPanel.Positioner>
+                <FloatingPanel.Content
+                  class='relative flex min-h-0 flex-col rounded-lg border border-gray-200 bg-white shadow-2xl'
+                  style={{ overflow: 'hidden' }}
+                >
+                  {/* Header with drag handle */}
+                  <FloatingPanel.DragTrigger class='shrink-0'>
+                    <FloatingPanel.Header class='flex cursor-move items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-2 select-none'>
+                      <FloatingPanel.Title class='text-sm font-semibold text-gray-900'>
+                        {props.title}
+                      </FloatingPanel.Title>
+                      <Show when={showControls()}>
+                        <FloatingPanel.Control class='flex items-center gap-0.5'>
+                          <Show when={showMinimize()}>
+                            <FloatingPanel.StageTrigger
+                              stage='minimized'
+                              class='rounded p-1 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700'
+                              title='Minimize'
+                            >
+                              <AiOutlineMinus class='h-3.5 w-3.5' />
+                            </FloatingPanel.StageTrigger>
+                          </Show>
+                          <Show when={showMaximize()}>
+                            <FloatingPanel.StageTrigger
+                              stage='maximized'
+                              class='rounded p-1 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700'
+                              title='Maximize'
+                            >
+                              <FiMaximize2 class='h-3.5 w-3.5' />
+                            </FloatingPanel.StageTrigger>
+                          </Show>
+                          <Show when={showRestore()}>
+                            <FloatingPanel.StageTrigger
+                              stage='default'
+                              class='rounded p-1 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700'
+                              title='Restore'
+                            >
+                              <FaSolidWindowRestore class='h-3.5 w-3.5' />
+                            </FloatingPanel.StageTrigger>
+                          </Show>
+                          <Show when={showClose()}>
+                            <FloatingPanel.CloseTrigger
+                              class='rounded p-1 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600'
+                              title='Close'
+                            >
+                              <AiOutlineClose class='h-3.5 w-3.5' />
+                            </FloatingPanel.CloseTrigger>
+                          </Show>
+                        </FloatingPanel.Control>
+                      </Show>
+                    </FloatingPanel.Header>
+                  </FloatingPanel.DragTrigger>
 
-            {/* Body */}
-            <div {...bodyProps()}>{props.children}</div>
+                  {/* Body */}
+                  <FloatingPanel.Body class='min-h-0 flex-1 overflow-auto p-4'>
+                    {props.children}
+                  </FloatingPanel.Body>
 
-            {/* Resize handles - merge Zag's styles with our size overrides */}
-            <Show when={props.resizable ?? true}>
-              <div {...resizeTrigger('n')} />
-              <div {...resizeTrigger('e')} />
-              <div {...resizeTrigger('w')} />
-              <div {...resizeTrigger('s')} />
-              <div {...resizeTrigger('ne')} />
-              <div {...resizeTrigger('se')} />
-              <div {...resizeTrigger('sw')} />
-              <div {...resizeTrigger('nw')} />
-            </Show>
-          </div>
-        </div>
-      </Portal>
-    </Show>
+                  {/* Resize handles */}
+                  <Show when={props.resizable ?? true}>
+                    <FloatingPanel.ResizeTrigger axis='n' style={getResizeTriggerStyle('n')} />
+                    <FloatingPanel.ResizeTrigger axis='e' style={getResizeTriggerStyle('e')} />
+                    <FloatingPanel.ResizeTrigger axis='w' style={getResizeTriggerStyle('w')} />
+                    <FloatingPanel.ResizeTrigger axis='s' style={getResizeTriggerStyle('s')} />
+                    <FloatingPanel.ResizeTrigger axis='ne' style={getResizeTriggerStyle('ne')} />
+                    <FloatingPanel.ResizeTrigger axis='se' style={getResizeTriggerStyle('se')} />
+                    <FloatingPanel.ResizeTrigger axis='sw' style={getResizeTriggerStyle('sw')} />
+                    <FloatingPanel.ResizeTrigger axis='nw' style={getResizeTriggerStyle('nw')} />
+                  </Show>
+                </FloatingPanel.Content>
+              </FloatingPanel.Positioner>
+            </Portal>
+          </Show>
+        )}
+      </FloatingPanel.Context>
+    </FloatingPanel.Root>
   );
 }
 
-export default FloatingPanel;
+export { FloatingPanelComponent as FloatingPanel };

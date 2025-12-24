@@ -1,7 +1,10 @@
-import * as dialog from '@zag-js/dialog';
+/**
+ * Drawer component using Ark UI Dialog
+ */
+
+import { Dialog } from '@ark-ui/solid/dialog';
 import { Portal } from 'solid-js/web';
-import { useMachine, normalizeProps } from '@zag-js/solid';
-import { createMemo, createUniqueId, Show } from 'solid-js';
+import { Show } from 'solid-js';
 import { FiX } from 'solid-icons/fi';
 import { Z_INDEX } from '../constants/zIndex.js';
 
@@ -20,7 +23,7 @@ import { Z_INDEX } from '../constants/zIndex.js';
  * - closeOnOutsideClick: boolean - Close when clicking backdrop (default: true)
  * - showBackdrop: boolean - Whether to show the dark overlay backdrop (default: true)
  */
-export function Drawer(props) {
+export default function DrawerComponent(props) {
   const open = () => props.open;
   const side = () => props.side || 'right';
   const size = () => props.size || 'md';
@@ -30,16 +33,11 @@ export function Drawer(props) {
   const showHeader = () => props.showHeader ?? true;
   const showBackdrop = () => props.showBackdrop ?? true;
 
-  const service = useMachine(dialog.machine, {
-    id: createUniqueId(),
-    get open() {
-      return open();
-    },
-    onOpenChange: details => props.onOpenChange?.(details.open),
-    closeOnInteractOutside: () => props.closeOnOutsideClick ?? true,
-  });
-
-  const api = createMemo(() => dialog.connect(service, normalizeProps));
+  const handleOpenChange = details => {
+    if (props.onOpenChange) {
+      props.onOpenChange(details.open);
+    }
+  };
 
   const getSizeClass = () => {
     switch (size()) {
@@ -74,61 +72,53 @@ export function Drawer(props) {
   };
 
   return (
-    <Show when={api().open}>
-      <Portal>
-        {/* Backdrop - optional */}
-        <Show when={showBackdrop()}>
-          <div
-            {...api().getBackdropProps()}
-            class={`animate-fade-in fixed inset-0 ${Z_INDEX.BACKDROP} bg-black/50 transition-opacity`}
-          />
-        </Show>
-        {/* Positioner - full height, aligned to side */}
-        <div
-          {...api().getPositionerProps()}
-          class={`fixed ${Z_INDEX.DIALOG} ${getPositionClasses()}`}
-        >
-          {/* Content - slides in from side */}
-          <div
-            {...api().getContentProps()}
-            class={`flex h-full max-w-full flex-col bg-white shadow-2xl ${getSizeClass()} ${getAnimationClasses()}`}
-          >
-            {/* Header */}
-            <Show when={showHeader()}>
-              <div class='flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3'>
-                <div class='min-w-0 flex-1'>
-                  <Show when={title()}>
-                    <h2
-                      {...api().getTitleProps()}
-                      class='truncate text-lg font-semibold text-gray-900'
-                    >
-                      {title()}
-                    </h2>
-                  </Show>
-                  <Show when={description()}>
-                    <p
-                      {...api().getDescriptionProps()}
-                      class='mt-0.5 truncate text-sm text-gray-500'
-                    >
-                      {description()}
-                    </p>
-                  </Show>
+    <Dialog.Root
+      open={open()}
+      onOpenChange={handleOpenChange}
+      closeOnInteractOutside={props.closeOnOutsideClick ?? true}
+    >
+      <Show when={open()}>
+        <Portal>
+          {/* Backdrop - optional */}
+          <Show when={showBackdrop()}>
+            <Dialog.Backdrop
+              class={`animate-fade-in fixed inset-0 ${Z_INDEX.BACKDROP} bg-black/50 transition-opacity`}
+            />
+          </Show>
+          {/* Positioner - full height, aligned to side */}
+          <Dialog.Positioner class={`fixed ${Z_INDEX.DIALOG} ${getPositionClasses()}`}>
+            {/* Content - slides in from side */}
+            <Dialog.Content
+              class={`flex h-full max-w-full flex-col bg-white shadow-2xl ${getSizeClass()} ${getAnimationClasses()}`}
+            >
+              {/* Header */}
+              <Show when={showHeader()}>
+                <div class='flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3'>
+                  <div class='min-w-0 flex-1'>
+                    <Show when={title()}>
+                      <Dialog.Title class='truncate text-lg font-semibold text-gray-900'>
+                        {title()}
+                      </Dialog.Title>
+                    </Show>
+                    <Show when={description()}>
+                      <Dialog.Description class='mt-0.5 truncate text-sm text-gray-500'>
+                        {description()}
+                      </Dialog.Description>
+                    </Show>
+                  </div>
+                  <Dialog.CloseTrigger class='ml-4 shrink-0 rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'>
+                    <FiX class='h-5 w-5' />
+                  </Dialog.CloseTrigger>
                 </div>
-                <button
-                  {...api().getCloseTriggerProps()}
-                  class='ml-4 shrink-0 rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
-                >
-                  <FiX class='h-5 w-5' />
-                </button>
-              </div>
-            </Show>
-            {/* Body - scrollable */}
-            <div class='flex-1 overflow-auto'>{children()}</div>
-          </div>
-        </div>
-      </Portal>
-    </Show>
+              </Show>
+              {/* Body - scrollable */}
+              <div class='flex-1 overflow-auto'>{children()}</div>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Show>
+    </Dialog.Root>
   );
 }
 
-export default Drawer;
+export { DrawerComponent as Drawer };

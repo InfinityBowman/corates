@@ -1,8 +1,22 @@
-import * as pinInput from '@zag-js/pin-input';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, mergeProps } from 'solid-js';
+/**
+ * PinInput component using Ark UI
+ */
 
-export default function PinInput(props) {
+import { PinInput } from '@ark-ui/solid/pin-input';
+import { mergeProps, Index } from 'solid-js';
+
+/**
+ * PinInput - OTP/PIN code input
+ *
+ * Props:
+ * - required: boolean - Whether input is required (default: true)
+ * - otp: boolean - Whether to use OTP mode (default: true)
+ * - autoComplete: string - Autocomplete attribute (default: 'one-time-code')
+ * - isError: boolean - Whether to show error state
+ * - onInput: (value: string) => void - Callback when value changes
+ * - onComplete: (value: string) => void - Callback when all inputs are filled
+ */
+export default function PinInputComponent(props) {
   const merged = mergeProps(
     {
       required: true,
@@ -14,23 +28,19 @@ export default function PinInput(props) {
 
   const required = () => merged.required;
   const otp = () => merged.otp;
-  const autoComplete = () => merged.autoComplete;
   const isError = () => merged.isError;
 
-  const service = useMachine(pinInput.machine, () => ({
-    id: createUniqueId(),
-    required: required(),
-    autoComplete: autoComplete(),
-    otp: otp(),
-    onValueChange(value) {
-      merged.onInput?.(value.valueAsString);
-    },
-    onValueComplete(details) {
-      merged.onComplete?.(details.valueAsString);
-    },
-  }));
+  const handleValueChange = details => {
+    if (merged.onInput) {
+      merged.onInput(details.valueAsString);
+    }
+  };
 
-  const api = createMemo(() => pinInput.connect(service, normalizeProps));
+  const handleValueComplete = details => {
+    if (merged.onComplete) {
+      merged.onComplete(details.valueAsString);
+    }
+  };
 
   const inputClass = () =>
     'w-10 h-12 sm:w-14 sm:h-14 rounded-lg border-2 ' +
@@ -41,14 +51,23 @@ export default function PinInput(props) {
 
   return (
     <div class='flex flex-col items-center'>
-      <div {...api().getRootProps()} class='my-6 flex justify-center gap-1 sm:gap-3'>
-        <input required={required()} {...api().getInputProps({ index: 0 })} class={inputClass()} />
-        <input required={required()} {...api().getInputProps({ index: 1 })} class={inputClass()} />
-        <input required={required()} {...api().getInputProps({ index: 2 })} class={inputClass()} />
-        <input required={required()} {...api().getInputProps({ index: 3 })} class={inputClass()} />
-        <input required={required()} {...api().getInputProps({ index: 4 })} class={inputClass()} />
-        <input required={required()} {...api().getInputProps({ index: 5 })} class={inputClass()} />
-      </div>
+      <PinInput.Root
+        required={required()}
+        otp={otp()}
+        onValueChange={handleValueChange}
+        onValueComplete={handleValueComplete}
+        class='my-6 flex justify-center gap-1 sm:gap-3'
+        invalid={isError()}
+      >
+        <PinInput.HiddenInput />
+        <Index each={[0, 1, 2, 3, 4, 5]}>
+          {(_, index) => (
+            <PinInput.Input index={index()} required={required()} class={inputClass()} />
+          )}
+        </Index>
+      </PinInput.Root>
     </div>
   );
 }
+
+export { PinInputComponent as PinInput };

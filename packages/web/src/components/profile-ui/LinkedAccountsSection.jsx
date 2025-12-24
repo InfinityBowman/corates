@@ -86,7 +86,7 @@ export default function LinkedAccountsSection() {
       // Check if this is an "already linked" error - offer merge option
       if (error.code === 'ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER') {
         // Show merge dialog instead of just an error toast
-        // Small delay to ensure Zag dialog machine is fully initialized
+        // Small delay to ensure dialog machine is fully initialized
         setMergeConflictProvider(provider);
         setTimeout(() => {
           setShowMergeDialog(true);

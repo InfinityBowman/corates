@@ -10,13 +10,13 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.{js,jsx}'],
     server: {
       deps: {
-        inline: [/solid-icons/],
+        inline: [/solid-icons/, /@ark-ui/],
       },
     },
     deps: {
       optimizer: {
         web: {
-          include: ['solid-js', '@zag-js/solid', 'solid-icons'],
+          include: ['solid-js', '@ark-ui/solid', 'solid-icons'],
         },
       },
     },

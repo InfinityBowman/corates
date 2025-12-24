@@ -137,7 +137,7 @@ export default function CreateLocalChecklist() {
                 when={pdfFile()}
                 fallback={
                   <FileUpload
-                    accept='application/pdf'
+                    accept='application/pdf,.pdf'
                     helpText='PDF files only'
                     showFileList={false}
                     onFilesChange={handleFilesChange}

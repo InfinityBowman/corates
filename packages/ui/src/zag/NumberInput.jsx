@@ -1,6 +1,9 @@
-import * as numberInput from '@zag-js/number-input';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, Show, splitProps, mergeProps } from 'solid-js';
+/**
+ * NumberInput - Numeric input with increment/decrement controls using Ark UI
+ */
+
+import { NumberInput } from '@ark-ui/solid/number-input';
+import { Show, splitProps, mergeProps, createMemo } from 'solid-js';
 import { FiMinus, FiPlus } from 'solid-icons/fi';
 
 /**
@@ -29,7 +32,7 @@ import { FiMinus, FiPlus } from 'solid-icons/fi';
  * - class: string - Additional class for root element
  * - inputClass: string - Additional class for input element
  */
-export function NumberInput(props) {
+export default function NumberInputComponent(props) {
   const [local, machineProps] = splitProps(props, [
     'label',
     'placeholder',
@@ -40,14 +43,9 @@ export function NumberInput(props) {
   ]);
 
   const context = mergeProps(machineProps, {
-    id: createUniqueId(),
     clampValueOnBlur: true,
     spinOnPress: true,
   });
-
-  const service = useMachine(numberInput.machine, context);
-
-  const api = createMemo(() => numberInput.connect(service, normalizeProps));
 
   const showControls = () => local.showControls !== false;
 
@@ -63,37 +61,51 @@ export function NumberInput(props) {
   });
 
   return (
-    <div {...api().getRootProps()} class={`w-full ${local.class || ''}`}>
+    <NumberInput.Root
+      value={context.value}
+      defaultValue={context.defaultValue}
+      onValueChange={context.onValueChange}
+      min={context.min}
+      max={context.max}
+      step={context.step}
+      disabled={context.disabled}
+      readOnly={context.readOnly}
+      invalid={context.invalid}
+      required={context.required}
+      name={context.name}
+      allowMouseWheel={context.allowMouseWheel}
+      clampValueOnBlur={context.clampValueOnBlur}
+      spinOnPress={context.spinOnPress}
+      formatOptions={context.formatOptions}
+      class={`w-full ${local.class || ''}`}
+    >
       <Show when={local.label}>
-        <label {...api().getLabelProps()} class='mb-1 block text-sm font-medium text-gray-700'>
+        <NumberInput.Label class='mb-1 block text-sm font-medium text-gray-700'>
           {local.label}
-        </label>
+        </NumberInput.Label>
       </Show>
       <div class='flex'>
         <Show when={showControls()}>
-          <button
-            {...api().getDecrementTriggerProps()}
+          <NumberInput.DecrementTrigger
             class={`${sizes().button} rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-600 transition-colors hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-inset disabled:cursor-not-allowed disabled:opacity-50`}
           >
             <FiMinus class='h-4 w-4' />
-          </button>
+          </NumberInput.DecrementTrigger>
         </Show>
-        <input
-          {...api().getInputProps()}
+        <NumberInput.Input
           placeholder={local.placeholder}
-          class={`${sizes().input} flex-1 border border-gray-300 text-center ${showControls() ? '' : 'rounded-lg'} read-only:bg-gray-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 data-invalid:border-red-500 data-invalid:ring-red-500 ${local.inputClass || ''}`}
+          class={`${sizes().input} flex-1 border border-gray-300 text-center ${showControls() ? '' : 'rounded-lg'} read-only:bg-gray-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 data-[invalid]:border-red-500 data-[invalid]:ring-red-500 ${local.inputClass || ''}`}
         />
         <Show when={showControls()}>
-          <button
-            {...api().getIncrementTriggerProps()}
+          <NumberInput.IncrementTrigger
             class={`${sizes().button} rounded-r-lg border border-l-0 border-gray-300 bg-gray-50 text-gray-600 transition-colors hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-inset disabled:cursor-not-allowed disabled:opacity-50`}
           >
             <FiPlus class='h-4 w-4' />
-          </button>
+          </NumberInput.IncrementTrigger>
         </Show>
       </div>
-    </div>
+    </NumberInput.Root>
   );
 }
 
-export default NumberInput;
+export { NumberInputComponent as NumberInput };

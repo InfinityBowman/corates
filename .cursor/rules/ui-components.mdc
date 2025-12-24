@@ -1,14 +1,14 @@
 ---
 alwaysApply: false
-description: "UI component usage patterns including Zag.js components, solid-icons, and import aliases"
+description: "UI component usage patterns including Ark UI components, solid-icons, and import aliases"
 globs: packages/web/**, packages/ui/**
 ---
 
 # UI Components
 
-## Zag.js Components
+## Ark UI Components
 
-**Zag components are in `@corates/ui` package, NOT in local components.**
+**UI components are in `@corates/ui` package, built with Ark UI (and some remaining Zag.js components). NOT in local components.**
 
 ```js
 // CORRECT - Import from @corates/ui
@@ -21,7 +21,7 @@ import { Dialog } from 'packages/web/src/components/zag/Dialog.jsx';
 
 ### Available Components
 
-See `packages/ui/src/zag/index.js` for all available components. Common ones:
+See `packages/ui/src/zag/index.js` for all available components. Most components have been migrated to Ark UI. Common ones:
 - `Dialog`, `ConfirmDialog`, `useConfirmDialog`
 - `Select`, `Combobox`
 - `Toast`, `toaster`, `showToast`

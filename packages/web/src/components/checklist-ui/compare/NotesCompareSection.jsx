@@ -90,10 +90,9 @@ export default function NotesCompareSection(props) {
     <div class='mt-4 border-t border-gray-200 pt-3'>
       <Collapsible
         open={expanded()}
-        onOpenChange={setExpanded}
-        trigger={api => (
+        onOpenChange={({ open }) => setExpanded(open)}
+        trigger={
           <div
-            {...api.getTriggerProps()}
             class={`flex cursor-pointer items-center gap-1.5 py-1 text-sm select-none ${hasAnyNote() ? 'text-blue-600 hover:text-blue-700' : 'text-gray-500 hover:text-gray-700'} `}
           >
             <BiRegularChevronRight
@@ -111,7 +110,7 @@ export default function NotesCompareSection(props) {
               </span>
             </Show>
           </div>
-        )}
+        }
       >
         <div class='pt-3'>
           {/* Three column layout for notes */}

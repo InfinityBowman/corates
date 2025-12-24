@@ -1,7 +1,7 @@
 /**
  * PdfTagSelect - Dropdown to change PDF tag
  *
- * Uses the Zag Select component to allow changing PDF tags
+ * Uses the Select component to allow changing PDF tags
  */
 
 import { Select } from '@corates/ui';

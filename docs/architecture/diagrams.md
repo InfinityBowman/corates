@@ -10,11 +10,12 @@ Mermaid diagrams to help new contributors understand the CoRATES application arc
 
 ## Diagrams
 
-| #   | Diagram                                                     | Description                                  |
-| --- | ----------------------------------------------------------- | -------------------------------------------- |
-| 1   | [Package Architecture](diagrams/01-package-architecture.md) | Monorepo structure and package relationships |
-| 2   | [System Architecture](diagrams/02-system-architecture.md)   | Frontend, backend, and storage layers        |
-| 3   | [Sync Flow](diagrams/03-sync-flow.md)                       | Local-first CRDT sync with Yjs               |
-| 4   | [Data Model](diagrams/04-data-model.md)                     | Entity relationships and storage             |
-| 5   | [Frontend Routes](diagrams/05-frontend-routes.md)           | Application routing structure                |
-| 6   | [API Routes](diagrams/06-api-routes.md)                     | Backend endpoints and middleware             |
+| #   | Diagram                                                     | Description                                                          |
+| --- | ----------------------------------------------------------- | -------------------------------------------------------------------- |
+| 1   | [Package Architecture](diagrams/01-package-architecture.md) | Monorepo structure and package relationships                         |
+| 2   | [System Architecture](diagrams/02-system-architecture.md)   | Frontend, backend, and storage layers                                |
+| 3   | [Sync Flow](diagrams/03-sync-flow.md)                       | Local-first CRDT sync with Yjs                                       |
+| 4   | [Data Model](diagrams/04-data-model.md)                     | Entity relationships and storage                                     |
+| 5   | [Frontend Routes](diagrams/05-frontend-routes.md)           | Application routing structure                                        |
+| 6   | [API Routes](diagrams/06-api-routes.md)                     | Backend endpoints and middleware                                     |
+| 7   | [API Actions](diagrams/07-api-actions.md)                   | All actions and failure points for projects, studies, and checklists |

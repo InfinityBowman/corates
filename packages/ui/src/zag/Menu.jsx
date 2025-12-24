@@ -1,7 +1,10 @@
-import * as menu from '@zag-js/menu';
+/**
+ * Menu - Dropdown menu for actions using Ark UI
+ */
+
+import { Menu } from '@ark-ui/solid/menu';
 import { Portal } from 'solid-js/web';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, Show, For, splitProps } from 'solid-js';
+import { createSignal, Show, For, splitProps } from 'solid-js';
 import { Z_INDEX } from '../constants/zIndex.js';
 
 /**
@@ -29,7 +32,7 @@ import { Z_INDEX } from '../constants/zIndex.js';
  * - separator?: boolean - Render as separator instead of item
  * - groupLabel?: string - Render as group label
  */
-export function Menu(props) {
+export default function MenuComponent(props) {
   const [local, machineProps] = splitProps(props, [
     'trigger',
     'items',
@@ -39,19 +42,25 @@ export function Menu(props) {
     'class',
   ]);
 
-  const service = useMachine(menu.machine, () => ({
-    id: createUniqueId(),
-    closeOnSelect: true,
-    positioning: { placement: local.placement || 'bottom-start' },
-    ...machineProps,
-  }));
+  const handleSelect = details => {
+    if (machineProps.onSelect) {
+      machineProps.onSelect(details);
+    }
+  };
 
-  const api = createMemo(() => menu.connect(service, normalizeProps));
+  // Track open state for conditional rendering
+  const [isOpen, setIsOpen] = createSignal(false);
 
-  const content = () => (
-    <div {...api().getPositionerProps()}>
-      <ul
-        {...api().getContentProps()}
+  const handleOpenChange = details => {
+    setIsOpen(details.open);
+    if (machineProps.onOpenChange) {
+      machineProps.onOpenChange(details);
+    }
+  };
+
+  const renderContent = () => (
+    <Menu.Positioner>
+      <Menu.Content
         class={`${Z_INDEX.MENU} min-w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg focus:outline-none ${local.class || ''}`}
       >
         <For each={local.items}>
@@ -62,46 +71,50 @@ export function Menu(props) {
                 <Show
                   when={item.separator}
                   fallback={
-                    <li
-                      {...api().getItemGroupLabelProps({ htmlFor: item.groupLabel })}
-                      class='px-3 py-1.5 text-xs font-medium tracking-wide text-gray-500 uppercase'
-                    >
+                    <Menu.ItemGroupLabel class='px-3 py-1.5 text-xs font-medium tracking-wide text-gray-500 uppercase'>
                       {item.groupLabel}
-                    </li>
+                    </Menu.ItemGroupLabel>
                   }
                 >
-                  <li {...api().getSeparatorProps()} class='my-1 border-t border-gray-100' />
+                  <Menu.Separator class='my-1 border-t border-gray-100' />
                 </Show>
               }
             >
-              <li
-                {...api().getItemProps({ value: item.value, disabled: item.disabled })}
-                class={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors ${item.destructive ? 'text-red-600 hover:bg-red-50 data-highlighted:bg-red-50' : 'text-gray-700 hover:bg-gray-50 data-highlighted:bg-gray-50'} ${item.disabled ? 'cursor-not-allowed opacity-50' : ''} focus:outline-none`}
+              <Menu.Item
+                value={item.value}
+                disabled={item.disabled}
+                closeOnSelect={machineProps.closeOnSelect ?? true}
+                class={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                  item.destructive ?
+                    'text-red-600 hover:bg-red-50 data-[highlighted]:bg-red-50'
+                  : 'text-gray-700 hover:bg-gray-50 data-[highlighted]:bg-gray-50'
+                } ${item.disabled ? 'cursor-not-allowed opacity-50' : ''} focus:outline-none`}
               >
                 <Show when={item.icon}>
                   <span class='h-4 w-4 shrink-0'>{item.icon}</span>
                 </Show>
-                <span>{item.label}</span>
-              </li>
+                <Menu.ItemText>{item.label}</Menu.ItemText>
+              </Menu.Item>
             </Show>
           )}
         </For>
-      </ul>
-    </div>
+      </Menu.Content>
+    </Menu.Positioner>
   );
 
   return (
-    <>
-      <button
-        {...api().getTriggerProps()}
-        class='inline-flex items-center gap-1 rounded p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
-      >
+    <Menu.Root
+      open={machineProps.open}
+      defaultOpen={machineProps.defaultOpen}
+      onOpenChange={handleOpenChange}
+      onSelect={handleSelect}
+      closeOnSelect={machineProps.closeOnSelect ?? true}
+      positioning={{ placement: local.placement || 'bottom-start' }}
+    >
+      <Menu.Trigger class='inline-flex items-center gap-1 rounded p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'>
         {local.trigger}
         <Show when={!local.hideIndicator}>
-          <span
-            {...api().getIndicatorProps()}
-            class='transition-transform data-[state=open]:rotate-180'
-          >
+          <Menu.Indicator class='transition-transform data-[state=open]:rotate-180'>
             <svg class='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
               <path
                 stroke-linecap='round'
@@ -110,16 +123,16 @@ export function Menu(props) {
                 d='M19 9l-7 7-7-7'
               />
             </svg>
-          </span>
+          </Menu.Indicator>
         </Show>
-      </button>
-      <Show when={api().open}>
-        <Show when={!local.inDialog} fallback={content()}>
-          <Portal>{content()}</Portal>
+      </Menu.Trigger>
+      <Show when={isOpen()}>
+        <Show when={!local.inDialog} fallback={renderContent()}>
+          <Portal>{renderContent()}</Portal>
         </Show>
       </Show>
-    </>
+    </Menu.Root>
   );
 }
 
-export default Menu;
+export { MenuComponent as Menu };

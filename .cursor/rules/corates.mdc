@@ -15,7 +15,7 @@ The project is split into multiple packages under the `packages/` directory:
 - `/web`: Frontend application built with SolidJS
 - `/workers`: Backend services, API endpoints, and database migrations
 - `/landing`: Marketing and landing site
-- `/ui`: Shared UI component library built with Zag.js
+- `/ui`: Shared UI component library built with Ark UI
 - `/shared`: Shared TypeScript utilities and error definitions
 - `/mcp`: MCP server for development tools and documentation
 
@@ -48,7 +48,7 @@ Do not worry about migrations (client side or backend) unless specifically instr
 - **Zod**: Schema and input validation (backend)
 - **Drizzle ORM**: ALL database interactions and migrations
 - **Better-Auth**: Authentication and user management
-- **Zag.js**: UI components from `@corates/ui` package (NOT from local components)
+- **Ark UI**: UI components from `@corates/ui` package
 - **solid-icons**: Icon library (e.g., `solid-icons/bi`, `solid-icons/fi`)
 
 ### Code Comments
@@ -81,14 +81,14 @@ retries += 1
 
 ### UI Components
 
-**Zag components are in `@corates/ui` package, NOT in local components.**
+**Ark UI components are in `@corates/ui` package, NOT in local components.**
 
 ```js
 // CORRECT
 import { Dialog, Select, Toast } from '@corates/ui';
 
 // WRONG
-import { Dialog } from '@/components/zag/Dialog.jsx';
+import { Dialog } from '@/components/ark/Dialog.jsx';
 ```
 
 See `ui-components.mdc` for detailed component usage patterns.
@@ -112,7 +112,7 @@ See `solidjs.mdc` for detailed reactivity patterns and examples.
 
 ## Documentation
 
-- **ALWAYS use Corates MCP tools** for Better-Auth, Drizzle, Icons, linting, and Zag documentation
+- **ALWAYS use Corates MCP tools or other MCP** for Better-Auth, Drizzle, Icons, linting, and Ark UI documentation
 - Reference `style-guide.md` for UI styling guidelines
 - Reference `docs/error-handling-guide.md` for error handling patterns
 - See `TESTING.md` for testing guidelines (do NOT add tests unless asked)

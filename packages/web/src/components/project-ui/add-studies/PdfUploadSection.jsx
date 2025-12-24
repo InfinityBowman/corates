@@ -22,8 +22,9 @@ export default function PdfUploadSection() {
       </p>
 
       <FileUpload
-        accept='application/pdf'
+        accept='application/pdf,.pdf'
         multiple
+        allowDirectories={false}
         helpText='PDF files only'
         showFileList={false}
         onFilesChange={studies.handlePdfSelect}

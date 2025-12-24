@@ -1,19 +1,25 @@
-import * as avatar from '@zag-js/avatar';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId } from 'solid-js';
+/**
+ * Avatar component using Ark UI
+ */
 
-export function Avatar(props) {
+import { Avatar } from '@ark-ui/solid/avatar';
+
+/**
+ * Avatar - User avatar with fallback support
+ *
+ * Props:
+ * - src: string - Image source URL
+ * - name: string - Name for generating initials fallback
+ * - alt: string - Alt text for image
+ * - onStatusChange: (details: StatusChangeDetails) => void - Callback when image loading status changes
+ * - fallbackClass: string - CSS classes for fallback element
+ * - class: string - Additional class for root element
+ */
+export default function AvatarComponent(props) {
   const src = () => props.src;
   const name = () => props.name;
   const alt = () => props.alt || name() || 'Avatar';
   const onStatusChange = () => props.onStatusChange;
-
-  const service = useMachine(avatar.machine, () => ({
-    id: createUniqueId(),
-    onStatusChange: onStatusChange(),
-  }));
-
-  const api = createMemo(() => avatar.connect(service, normalizeProps));
 
   const getInitials = () => {
     const displayName = name();
@@ -28,19 +34,16 @@ export function Avatar(props) {
     'flex items-center justify-center w-full h-full bg-gray-200 text-gray-700 font-medium';
 
   return (
-    <div {...api().getRootProps()} class={`overflow-hidden ${props.class || ''}`}>
-      <span {...api().getFallbackProps()} class={fallbackClass()}>
-        {getInitials()}
-      </span>
-      <img
+    <Avatar.Root onStatusChange={onStatusChange()} class={`overflow-hidden ${props.class || ''}`}>
+      <Avatar.Fallback class={fallbackClass()}>{getInitials()}</Avatar.Fallback>
+      <Avatar.Image
         alt={alt()}
         src={src()}
         referrerPolicy='no-referrer'
-        {...api().getImageProps()}
         class='h-full w-full object-cover'
       />
-    </div>
+    </Avatar.Root>
   );
 }
 
-export default Avatar;
+export { AvatarComponent as Avatar };

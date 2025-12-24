@@ -118,6 +118,39 @@
   animation: slide-in-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Collapsible animations using CSS variables from Ark UI */
+@keyframes slideDown {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--height);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    height: var(--height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+[data-scope='collapsible'][data-part='content'][data-state='open'] {
+  animation: slideDown 250ms;
+}
+
+[data-scope='collapsible'][data-part='content'][data-state='closed'] {
+  animation: slideUp 200ms;
+}
+
+/* Collapsible trigger takes full width */
+[data-scope='collapsible'][data-part='trigger'] {
+  width: 100%;
+  text-align: left;
+}
+
 /* PDF.js text layer styles for text selection */
 .pdf-text-layer {
   position: absolute;

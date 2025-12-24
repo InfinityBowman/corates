@@ -51,7 +51,7 @@ Fetch Drizzle ORM documentation.
 
 ### `zag_docs`
 
-Fetch Zag.js documentation for building accessible UI components with SolidJS.
+Fetch Zag.js documentation for building accessible UI components with SolidJS. Note: Most components have been migrated to Ark UI, but this tool is still useful for components that haven't been migrated yet.
 
 **Parameters:**
 

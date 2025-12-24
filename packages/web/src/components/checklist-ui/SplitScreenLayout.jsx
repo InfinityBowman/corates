@@ -16,7 +16,7 @@ export default function SplitScreenLayout(props) {
   const [layout, setLayout] = createSignal(props.defaultLayout || 'vertical');
   const [splitRatio, setSplitRatio] = createSignal(props.defaultRatio || 50);
   const [isDragging, setIsDragging] = createSignal(false);
-  const [showSecondPanel, setShowSecondPanel] = createSignal(true);
+  const [showSecondPanel, setShowSecondPanel] = createSignal(false);
 
   // Sync showSecondPanel with prop changes
   createEffect(() => {
@@ -104,10 +104,22 @@ export default function SplitScreenLayout(props) {
       >
         {/* First panel */}
         <div
-          class='overflow-auto transition-all duration-300 ease-in-out'
+          class='overflow-auto'
           style={{
             [layout() === 'vertical' ? 'width' : 'height']:
               showSecondPanel() ? `${splitRatio()}%` : '100%',
+            transition:
+              isDragging() ? 'none' : (
+                `${layout() === 'vertical' ? 'width' : 'height'} 200ms ease-in-out`
+              ),
+            willChange:
+              isDragging() ?
+                layout() === 'vertical' ?
+                  'width'
+                : 'height'
+              : 'auto',
+            transform: 'translateZ(0)',
+            contain: 'layout',
           }}
         >
           {firstPanel()}
@@ -117,11 +129,15 @@ export default function SplitScreenLayout(props) {
         <Show when={secondPanel()}>
           <div
             onMouseDown={handleMouseDown}
-            class={`${layout() === 'vertical' ? 'w-1 cursor-col-resize' : 'h-1 cursor-row-resize'} shrink-0 bg-gray-200 transition-all duration-300 ease-in-out hover:bg-blue-400 active:bg-blue-500 ${
+            class={`${layout() === 'vertical' ? 'w-1 cursor-col-resize' : 'h-1 cursor-row-resize'} shrink-0 bg-gray-200 hover:bg-blue-400 active:bg-blue-500 ${
               isDragging() ? 'bg-blue-500' : ''
             } ${showSecondPanel() ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
             style={{
               [layout() === 'vertical' ? 'width' : 'height']: showSecondPanel() ? undefined : '0',
+              transition:
+                isDragging() ? 'none' : (
+                  `opacity 300ms ease-in-out, ${layout() === 'vertical' ? 'width' : 'height'} 200ms ease-in-out`
+                ),
             }}
           />
         </Show>
@@ -129,15 +145,26 @@ export default function SplitScreenLayout(props) {
         {/* Second panel with slide animation */}
         <Show when={secondPanel()}>
           <div
-            class='overflow-hidden transition-all duration-300 ease-in-out'
+            class='overflow-hidden'
             style={{
               [layout() === 'vertical' ? 'width' : 'height']:
                 showSecondPanel() ? `${100 - splitRatio()}%` : '0%',
               opacity: showSecondPanel() ? 1 : 0,
               transform:
-                showSecondPanel() ? 'translateX(0) translateY(0)'
-                : layout() === 'vertical' ? 'translateX(20px)'
-                : 'translateY(20px)',
+                showSecondPanel() ? 'translateX(0) translateY(0) translateZ(0)'
+                : layout() === 'vertical' ? 'translateX(20px) translateZ(0)'
+                : 'translateY(20px) translateZ(0)',
+              transition:
+                isDragging() ? 'none' : (
+                  `${layout() === 'vertical' ? 'width' : 'height'} 200ms ease-in-out, opacity 200ms ease-in-out, transform 200ms ease-in-out`
+                ),
+              willChange:
+                isDragging() ?
+                  layout() === 'vertical' ?
+                    'width'
+                  : 'height'
+                : 'auto',
+              contain: 'layout',
             }}
           >
             <div class='h-full w-full overflow-auto'>{secondPanel()}</div>

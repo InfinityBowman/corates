@@ -53,7 +53,7 @@ export default function PdfEmptyState(props) {
             <div class='mb-2 text-red-600'>{props.error}</div>
             <Show when={!props.readOnly}>
               <FileUpload
-                accept='application/pdf'
+                accept='application/pdf,.pdf'
                 helpText='PDF files only'
                 showFileList={false}
                 onFileAccept={handleFileAccept}
@@ -75,7 +75,7 @@ export default function PdfEmptyState(props) {
             fallback={<p class='text-sm text-gray-400'>PDF will be displayed here</p>}
           >
             <FileUpload
-              accept='application/pdf'
+              accept='application/pdf,.pdf'
               helpText='PDF files only'
               showFileList={false}
               onFileAccept={handleFileAccept}

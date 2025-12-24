@@ -1,6 +1,9 @@
-import * as toggle from '@zag-js/toggle-group';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, For, splitProps } from 'solid-js';
+/**
+ * ToggleGroup - Group of toggle buttons using Ark UI
+ */
+
+import { ToggleGroup } from '@ark-ui/solid/toggle-group';
+import { For, splitProps, createMemo } from 'solid-js';
 
 /**
  * ToggleGroup - Group of toggle buttons
@@ -19,19 +22,8 @@ import { createMemo, createUniqueId, For, splitProps } from 'solid-js';
  * - size: 'sm' | 'md' | 'lg' - Button size (default: 'md')
  * - class: string - Additional class for root element
  */
-export function ToggleGroup(props) {
+export default function ToggleGroupComponent(props) {
   const [local, machineProps] = splitProps(props, ['items', 'size', 'class']);
-
-  const service = useMachine(toggle.machine, () => ({
-    id: createUniqueId(),
-    orientation: 'horizontal',
-    loop: true,
-    rovingFocus: true,
-    deselectable: true,
-    ...machineProps,
-  }));
-
-  const api = createMemo(() => toggle.connect(service, normalizeProps));
 
   const getSizeClass = () => {
     switch (local.size) {
@@ -44,25 +36,43 @@ export function ToggleGroup(props) {
     }
   };
 
-  const isVertical = () => api().orientation === 'vertical';
+  const orientation = () => machineProps.orientation || 'horizontal';
+  const isVertical = createMemo(() => orientation() === 'vertical');
+
+  const handleValueChange = details => {
+    if (machineProps.onValueChange) {
+      machineProps.onValueChange(details);
+    }
+  };
 
   return (
-    <div
-      {...api().getRootProps()}
+    <ToggleGroup.Root
+      value={machineProps.value}
+      defaultValue={machineProps.defaultValue}
+      onValueChange={handleValueChange}
+      multiple={machineProps.multiple}
+      disabled={machineProps.disabled}
+      orientation={orientation()}
+      loopFocus={machineProps.loop ?? true}
+      rovingFocus={machineProps.rovingFocus ?? true}
+      deselectable={machineProps.deselectable ?? true}
       class={`inline-flex ${isVertical() ? 'flex-col' : 'flex-row'} overflow-hidden rounded-lg border border-gray-200 ${local.class || ''}`}
     >
       <For each={local.items}>
         {(item, index) => (
-          <button
-            {...api().getItemProps({ value: item.value, disabled: item.disabled })}
-            class={`${getSizeClass()} bg-white font-medium text-gray-700 transition-colors hover:bg-gray-50 data-disabled:cursor-not-allowed data-disabled:opacity-50 data-focus:z-10 data-focus:ring-2 data-focus:ring-blue-500 data-focus:ring-inset data-[state=on]:bg-blue-50 data-[state=on]:text-blue-700 ${!isVertical() && index() > 0 ? 'border-l border-gray-200' : ''} ${isVertical() && index() > 0 ? 'border-t border-gray-200' : ''}`}
+          <ToggleGroup.Item
+            value={item.value}
+            disabled={item.disabled}
+            class={`${getSizeClass()} bg-white font-medium text-gray-700 transition-colors hover:bg-gray-50 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[focus]:z-10 data-[focus]:ring-2 data-[focus]:ring-blue-500 data-[focus]:ring-inset data-[state=on]:bg-blue-50 data-[state=on]:text-blue-700 ${
+              !isVertical() && index() > 0 ? 'border-l border-gray-200' : ''
+            } ${isVertical() && index() > 0 ? 'border-t border-gray-200' : ''}`}
           >
             {item.label}
-          </button>
+          </ToggleGroup.Item>
         )}
       </For>
-    </div>
+    </ToggleGroup.Root>
   );
 }
 
-export default ToggleGroup;
+export { ToggleGroupComponent as ToggleGroup };

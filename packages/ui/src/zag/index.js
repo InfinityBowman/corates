@@ -1,11 +1,12 @@
-// Zag.js UI Components
+// UI Components
+// Most components have been migrated to Ark UI, some still use Zag.js
 // Re-export all components from individual files
 
 export { Accordion } from './Accordion.jsx';
 export { Avatar } from './Avatar.jsx';
 export { Checkbox } from './Checkbox.jsx';
 export { Clipboard, CopyButton } from './Clipboard.jsx';
-export { default as Collapsible } from './Collapsible.jsx';
+export { default as Collapsible, useCollapsible } from './Collapsible.jsx';
 export { Combobox } from './Combobox.jsx';
 export { Dialog, ConfirmDialog, useConfirmDialog } from './Dialog.jsx';
 export { Drawer } from './Drawer.jsx';

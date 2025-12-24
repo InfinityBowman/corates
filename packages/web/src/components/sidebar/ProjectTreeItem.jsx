@@ -7,7 +7,7 @@ import { FiChevronRight } from 'solid-icons/fi';
 import StudyTreeItem from './StudyTreeItem.jsx';
 
 /**
- * Project tree item with expandable studies using Zag collapsible
+ * Project tree item with expandable studies using collapsible component
  */
 export default function ProjectTreeItem(props) {
   const navigate = useNavigate();
@@ -25,26 +25,25 @@ export default function ProjectTreeItem(props) {
         return (
           <Collapsible
             open={props.isExpanded}
-            onOpenChange={open => {
+            onOpenChange={({ open }) => {
               if (open !== props.isExpanded) {
                 props.onToggle();
               }
             }}
-            trigger={api => (
+            trigger={
               <div
                 class={`group flex cursor-pointer items-center rounded-lg transition-colors ${isSelected() ? 'bg-blue-100 text-blue-700' : 'text-gray-700 hover:bg-gray-50'} `}
               >
-                <button
-                  {...api.getTriggerProps()}
-                  class='rounded-l-lg p-2 hover:bg-gray-100'
-                  aria-label={props.isExpanded ? 'Collapse' : 'Expand'}
-                >
+                <div class='pointer-events-none rounded-l-lg p-2 hover:bg-gray-100'>
                   <FiChevronRight
                     class={`h-3 w-3 text-gray-500 transition-transform ${props.isExpanded ? 'rotate-90' : ''}`}
                   />
-                </button>
+                </div>
                 <button
-                  onClick={() => navigate(projectPath)}
+                  onClick={e => {
+                    e.stopPropagation();
+                    navigate(projectPath);
+                  }}
                   class='flex flex-1 items-center gap-2 py-2 pr-2 text-left'
                 >
                   <Show
@@ -56,7 +55,7 @@ export default function ProjectTreeItem(props) {
                   <span class='truncate text-sm font-medium'>{project().name}</span>
                 </button>
               </div>
-            )}
+            }
           >
             {/* Studies list */}
             <div class='mt-0.5 ml-6 space-y-0.5 border-l border-gray-200 pl-2'>

@@ -1,30 +1,27 @@
-import * as splitter from '@zag-js/splitter';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId } from 'solid-js';
+/**
+ * Splitter component using Ark UI
+ */
 
-export function Splitter() {
-  const service = useMachine(splitter.machine, {
-    id: createUniqueId(),
-    defaultSize: [80, 20],
-    panels: [
-      { id: 'a', minSize: 10 },
-      { id: 'b', minSize: 10 },
-    ],
-  });
+import { Splitter } from '@ark-ui/solid/splitter';
 
-  const api = createMemo(() => splitter.connect(service, normalizeProps));
-
+export default function SplitterComponent() {
   return (
-    <div {...api().getRootProps()}>
-      <div {...api().getPanelProps({ id: 'a' })}>
+    <Splitter.Root
+      panels={[
+        { id: 'a', minSize: 10 },
+        { id: 'b', minSize: 10 },
+      ]}
+      defaultSize={[80, 20]}
+    >
+      <Splitter.Panel id='a'>
         <p>A</p>
-      </div>
-      <div {...api().getResizeTriggerProps({ id: 'a:b' })} />
-      <div {...api().getPanelProps({ id: 'b' })}>
+      </Splitter.Panel>
+      <Splitter.ResizeTrigger id='a:b' aria-label='Resize' />
+      <Splitter.Panel id='b'>
         <p>B</p>
-      </div>
-    </div>
+      </Splitter.Panel>
+    </Splitter.Root>
   );
 }
 
-export default Splitter;
+export { SplitterComponent as Splitter };

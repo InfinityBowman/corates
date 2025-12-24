@@ -1,6 +1,8 @@
 # @corates/ui
 
-Shared UI component library for Corates built with [Zag.js](https://zagjs.com/) and [SolidJS](https://solidjs.com/).
+Shared UI component library for Corates built with [Ark UI](https://ark-ui.com/) and [SolidJS](https://solidjs.com/).
+
+Most components have been migrated from Zag.js to Ark UI, which provides a more modern and maintainable API while maintaining backward compatibility.
 
 ## Installation
 
@@ -26,7 +28,7 @@ import { Dialog, Select, Toast, toaster } from '@corates/ui';
 
 ## Components
 
-The following Zag.js components are available:
+The following components are available (most migrated to Ark UI):
 
 | Component     | Description                                          |
 | ------------- | ---------------------------------------------------- |

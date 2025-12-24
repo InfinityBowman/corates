@@ -5,6 +5,10 @@
       "command": "node",
       "args": ["/Users/jacobmaynard/Documents/Repos/corates/packages/mcp/server.js"],
       "env": {}
+    },
+    "ark-ui": {
+      "command": "npx",
+      "args": ["-y", "@ark-ui/mcp"]
     }
   }
 }

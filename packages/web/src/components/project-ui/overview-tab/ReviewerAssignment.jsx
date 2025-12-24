@@ -428,12 +428,9 @@ export default function ReviewerAssignment(props) {
     <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
       <Collapsible
         open={isExpanded()}
-        onOpenChange={setIsExpanded}
-        trigger={api => (
-          <div
-            {...api.getTriggerProps()}
-            class='flex w-full cursor-pointer items-center gap-3 px-4 py-3 select-none'
-          >
+        onOpenChange={({ open }) => setIsExpanded(open)}
+        trigger={
+          <div class='flex w-full cursor-pointer items-center gap-3 px-4 py-3 select-none'>
             {/* Chevron indicator */}
             <div class='shrink-0'>
               <BiRegularChevronRight
@@ -445,7 +442,7 @@ export default function ReviewerAssignment(props) {
               <span class='text-sm font-medium text-gray-900'>Assign Reviewers to Studies</span>
             </div>
           </div>
-        )}
+        }
       >
         <div class='border-t border-gray-200 px-4 pb-4'>
           <Show
