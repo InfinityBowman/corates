@@ -59,7 +59,7 @@ export interface ComboboxProps {
 /**
  * Combobox - Searchable select with autocomplete
  */
-const ComboboxComponent: Component<ComboboxProps> = (props) => {
+const ComboboxComponent: Component<ComboboxProps> = props => {
   const merged = mergeProps(
     {
       openOnClick: true,
@@ -108,7 +108,7 @@ const ComboboxComponent: Component<ComboboxProps> = (props) => {
     if (machineProps.onValueChange) {
       // Find the items that match the selected values
       const selectedItems = details.value
-        .map((val) => getItems().find((item) => item.value === val))
+        .map(val => getItems().find(item => item.value === val))
         .filter((item): item is ComboboxItem => item !== undefined);
       machineProps.onValueChange({ value: details.value, items: selectedItems });
     }
@@ -128,7 +128,7 @@ const ComboboxComponent: Component<ComboboxProps> = (props) => {
         >
           <ArkCombobox.ItemGroup>
             <Index each={collection().items}>
-              {(item) => (
+              {item => (
                 <ArkCombobox.Item
                   item={item()}
                   class='flex cursor-pointer items-center justify-between px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[highlighted]:bg-gray-50'

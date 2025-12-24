@@ -67,7 +67,11 @@ function filterFiles(files: string): string {
 
 type CompareTarget = 'staged' | 'unstaged' | string;
 
-function buildReviewPrompt(files: string, diff: string | null, compareTarget: CompareTarget): string {
+function buildReviewPrompt(
+  files: string,
+  diff: string | null,
+  compareTarget: CompareTarget,
+): string {
   const fileList = files
     .trim()
     .split('\n')
@@ -261,19 +265,23 @@ export function registerCodeReviewTools(server: McpServerType, repoRoot: string)
         const filesArgs: string[] =
           staged ? ['diff', '--staged', '--name-only'] : ['diff', `${base}...HEAD`, '--name-only'];
 
-        const { stdout: rawFiles } = await execFileAsync('git', filesArgs, {
+        const { stdout: rawFiles } = (await execFileAsync('git', filesArgs, {
           cwd: repoRoot,
           maxBuffer: 1024 * 1024,
-        }) as ExecFileResult;
+        })) as ExecFileResult;
 
         // Filter out ignored files
         const files = filterFiles(rawFiles);
 
         if (!files.trim()) {
           // Fall back to unstaged changes if no branch diff
-          const { stdout: rawUnstagedFiles } = await execFileAsync('git', ['diff', '--name-only'], {
-            cwd: repoRoot,
-          }) as ExecFileResult;
+          const { stdout: rawUnstagedFiles } = (await execFileAsync(
+            'git',
+            ['diff', '--name-only'],
+            {
+              cwd: repoRoot,
+            },
+          )) as ExecFileResult;
 
           const unstagedFiles = filterFiles(rawUnstagedFiles);
 
@@ -289,14 +297,14 @@ export function registerCodeReviewTools(server: McpServerType, repoRoot: string)
           }
 
           // Use unstaged diff instead (with pathspec to exclude ignored files)
-          const { stdout: diff } = await execFileAsync(
+          const { stdout: diff } = (await execFileAsync(
             'git',
             ['diff', '--', ...unstagedFiles.trim().split('\n')],
             {
               cwd: repoRoot,
               maxBuffer: 1024 * 1024 * 5,
             },
-          ) as ExecFileResult;
+          )) as ExecFileResult;
 
           return {
             content: [
@@ -326,10 +334,10 @@ export function registerCodeReviewTools(server: McpServerType, repoRoot: string)
             ['diff', '--staged', '--', ...fileList]
           : ['diff', `${base}...HEAD`, '--', ...fileList];
 
-        const { stdout: diff } = await execFileAsync('git', diffArgs, {
+        const { stdout: diff } = (await execFileAsync('git', diffArgs, {
           cwd: repoRoot,
           maxBuffer: 1024 * 1024 * 5, // 5MB buffer for large diffs
-        }) as ExecFileResult;
+        })) as ExecFileResult;
 
         return {
           content: [

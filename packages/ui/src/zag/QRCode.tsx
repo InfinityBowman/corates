@@ -22,7 +22,7 @@ export interface QRCodeProps {
  * QR Code component
  * Renders an SVG-based QR code with customizable error correction and styling.
  */
-const QRCodeComponent: Component<QRCodeProps> = (props) => {
+const QRCodeComponent: Component<QRCodeProps> = props => {
   const data = () => props.data;
   const ecc = () => props.ecc;
   const size = () => props.size;

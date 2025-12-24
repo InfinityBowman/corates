@@ -27,7 +27,7 @@ export interface PinInputProps {
 /**
  * PinInput - OTP/PIN code input
  */
-const PinInputComponent: Component<PinInputProps> = (props) => {
+const PinInputComponent: Component<PinInputProps> = props => {
   const [local, machineProps] = splitProps(props, [
     'count',
     'isError',
@@ -82,7 +82,7 @@ const PinInputComponent: Component<PinInputProps> = (props) => {
         <PinInput.HiddenInput />
         <PinInput.Control>
           <Index each={inputIndices()}>
-            {(item) => <PinInput.Input index={item()} class={inputClass()} />}
+            {item => <PinInput.Input index={item()} class={inputClass()} />}
           </Index>
         </PinInput.Control>
       </PinInput.Root>

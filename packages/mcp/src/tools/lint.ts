@@ -18,9 +18,7 @@ export function registerLintTools(server: McpServerType, repoRoot: string): void
     {
       fix: z.boolean().optional().default(false).describe('Whether to run lint with --fix'),
     },
-    async ({
-      fix = false,
-    }): Promise<{ content: Array<{ type: 'text'; text: string }> }> => {
+    async ({ fix = false }): Promise<{ content: Array<{ type: 'text'; text: string }> }> => {
       const command = `pnpm run lint${fix ? ' --fix' : ''}`;
 
       try {

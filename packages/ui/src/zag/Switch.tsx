@@ -27,7 +27,7 @@ export interface SwitchProps {
 /**
  * Switch - Full description
  */
-const SwitchComponent: Component<SwitchProps> = (props) => {
+const SwitchComponent: Component<SwitchProps> = props => {
   const merged = mergeProps(
     {
       defaultChecked: false,

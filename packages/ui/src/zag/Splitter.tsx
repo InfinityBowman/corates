@@ -25,13 +25,15 @@ export interface SplitterProps {
 /**
  * Splitter - Resizable panel splitter
  */
-const SplitterComponent: Component<SplitterProps> = (props) => {
+const SplitterComponent: Component<SplitterProps> = props => {
   return (
     <Splitter.Root
-      panels={props.panels || [
-        { id: 'a', minSize: 10 },
-        { id: 'b', minSize: 10 },
-      ]}
+      panels={
+        props.panels || [
+          { id: 'a', minSize: 10 },
+          { id: 'b', minSize: 10 },
+        ]
+      }
       defaultSize={props.defaultSize || [80, 20]}
       orientation={props.orientation || 'horizontal'}
       class={props.class}

@@ -59,7 +59,7 @@ export interface PopoverProps {
 /**
  * Popover - Non-modal floating dialog
  */
-const PopoverComponent: Component<PopoverProps> = (props) => {
+const PopoverComponent: Component<PopoverProps> = props => {
   const merged = mergeProps(
     {
       placement: 'bottom',
@@ -124,7 +124,9 @@ const PopoverComponent: Component<PopoverProps> = (props) => {
             <div class='flex items-start justify-between border-b border-gray-100 p-3'>
               <div>
                 <Show when={title()}>
-                  <ArkPopover.Title class='text-sm font-medium text-gray-900'>{title()}</ArkPopover.Title>
+                  <ArkPopover.Title class='text-sm font-medium text-gray-900'>
+                    {title()}
+                  </ArkPopover.Title>
                 </Show>
                 <Show when={description()}>
                   <ArkPopover.Description class='mt-1 text-xs text-gray-500'>

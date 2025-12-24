@@ -56,7 +56,7 @@ export interface SelectProps {
 /**
  * Select - Reusable select/dropdown component using Ark UI
  */
-const SelectComponent: Component<SelectProps> = (props) => {
+const SelectComponent: Component<SelectProps> = props => {
   // Split convenience props from Ark UI props
   const [local, arkProps] = splitProps(props, [
     'items',
@@ -99,7 +99,7 @@ const SelectComponent: Component<SelectProps> = (props) => {
 
   // Create collection from items with disabled handling
   const collection = createMemo(() => {
-    const collectionItems = items().map((item) => ({
+    const collectionItems = items().map(item => ({
       ...item,
       disabled: item.disabled || disabledValues().includes(item.value),
     }));
@@ -116,7 +116,11 @@ const SelectComponent: Component<SelectProps> = (props) => {
   const selectValue = createMemo(() => {
     const v = value();
     if (merged.multiple) {
-      return Array.isArray(v) ? v : v != null ? [v] : [];
+      return (
+        Array.isArray(v) ? v
+        : v != null ? [v]
+        : []
+      );
     }
     // For single select: return empty array if value is null/undefined, otherwise [value]
     // Empty string is valid (for "Unassigned" option)
@@ -133,7 +137,7 @@ const SelectComponent: Component<SelectProps> = (props) => {
       const newValue = details.value[0] || '';
       // Prevent selecting disabled values
       const currentCollection = collection();
-      const item = currentCollection.items.find((i) => i.value === newValue);
+      const item = currentCollection.items.find(i => i.value === newValue);
       if (item?.disabled || disabledValues().includes(newValue)) {
         return;
       }
@@ -144,7 +148,7 @@ const SelectComponent: Component<SelectProps> = (props) => {
   // Helper to check if a value is disabled
   const isValueDisabled = (val: string) => {
     const currentCollection = collection();
-    const item = currentCollection.items.find((i) => i.value === val);
+    const item = currentCollection.items.find(i => i.value === val);
     const disabledSet = new Set(disabledValues());
     return item?.disabled || disabledSet.has(val);
   };
@@ -197,7 +201,7 @@ const SelectComponent: Component<SelectProps> = (props) => {
           >
             <ArkSelect.ItemGroup>
               <Index each={collection().items}>
-                {(item) => {
+                {item => {
                   const isDisabled = () => isValueDisabled(item().value);
                   return (
                     <ArkSelect.Item
@@ -227,7 +231,7 @@ const SelectComponent: Component<SelectProps> = (props) => {
             >
               <ArkSelect.ItemGroup>
                 <Index each={collection().items}>
-                  {(item) => {
+                  {item => {
                     const isDisabled = () => isValueDisabled(item().value);
                     return (
                       <ArkSelect.Item
