@@ -7,14 +7,32 @@
 import { ErrorBoundary as SolidErrorBoundary } from 'solid-js';
 import { normalizeError } from '@corates/shared';
 import { FiAlertTriangle, FiRefreshCw, FiHome } from 'solid-icons/fi';
-import { useNavigate } from '@solidjs/router';
+
+/**
+ * Safe navigation button that works both inside and outside Route context
+ */
+function SafeNavigateButton() {
+  const handleNavigate = () => {
+    // Use window.location as fallback - works everywhere
+    window.location.href = '/dashboard';
+  };
+
+  return (
+    <button
+      onClick={handleNavigate}
+      class='flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none'
+    >
+      <FiHome class='h-4 w-4' />
+      Go Home
+    </button>
+  );
+}
 
 /**
  * Default error display component
  * Shows user-friendly error message with recovery options
  */
 function ErrorDisplay(props) {
-  const navigate = useNavigate();
   // ErrorBoundary fallback receives (error, reset) as function parameters
   // Access props directly - these are not reactive in this context
   // eslint-disable-next-line solid/reactivity
@@ -59,13 +77,7 @@ function ErrorDisplay(props) {
               Try Again
             </button>
           )}
-          <button
-            onClick={() => navigate('/dashboard', { replace: true })}
-            class='flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none'
-          >
-            <FiHome class='h-4 w-4' />
-            Go Home
-          </button>
+          <SafeNavigateButton />
         </div>
 
         {/* Show error details in development */}

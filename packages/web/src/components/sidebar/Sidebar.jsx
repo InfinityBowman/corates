@@ -37,9 +37,11 @@ export default function Sidebar(props) {
   // Fetch projects if user is logged in
   createEffect(() => {
     const userId = user()?.id;
-    if (isLoggedIn() && userId) {
-      projectStore.fetchProjectList(userId);
+    // Only fetch if logged in AND userId exists
+    if (!isLoggedIn() || !userId) {
+      return;
     }
+    projectStore.fetchProjectList(userId);
   });
 
   const toggleProject = projectId => {

@@ -12,22 +12,47 @@ import {
   getEffectiveQuotas,
   hasQuota as checkQuota,
 } from '@/lib/entitlements.js';
+import { useBetterAuth } from '@/api/better-auth-store.js';
+
+const DEFAULT_SUBSCRIPTION = {
+  tier: 'free',
+  status: 'active',
+  tierInfo: { name: 'Free', description: 'For individuals getting started' },
+  stripeSubscriptionId: null,
+  currentPeriodEnd: null,
+  cancelAtPeriodEnd: false,
+};
+
+/**
+ * Wrapper for getSubscription that handles errors gracefully
+ * Returns default subscription on error to prevent error boundary from catching it
+ */
+async function getSubscriptionSafe() {
+  try {
+    return await getSubscription();
+  } catch (error) {
+    // Silently return default subscription on error
+    // This prevents error boundary from catching network/auth errors during signout
+    console.warn('Failed to fetch subscription:', error.message);
+    return DEFAULT_SUBSCRIPTION;
+  }
+}
 
 /**
  * Hook to manage subscription state and permissions
  * @returns {Object} Subscription state and helper functions
  */
 export function useSubscription() {
-  const [subscription, { refetch, mutate }] = createResource(getSubscription, {
-    initialValue: {
-      tier: 'free',
-      status: 'active',
-      tierInfo: { name: 'Free', description: 'For individuals getting started' },
-      stripeSubscriptionId: null,
-      currentPeriodEnd: null,
-      cancelAtPeriodEnd: false,
+  const { isLoggedIn } = useBetterAuth();
+
+  // Only fetch subscription when user is logged in
+  // This prevents errors during signout when component is still mounted
+  const [subscription, { refetch, mutate }] = createResource(
+    () => (isLoggedIn() ? getSubscriptionSafe() : null),
+    {
+      initialValue: DEFAULT_SUBSCRIPTION,
     },
-  });
+  );
 
   /**
    * Current subscription tier
