@@ -68,19 +68,18 @@ export default function SelectComponent(props) {
         <Select.ItemGroup>
           <Index each={items()}>
             {item => {
-              const itemValue = item();
-              const isDisabled = isValueDisabled(itemValue.value);
+              const isDisabled = createMemo(() => isValueDisabled(item().value));
               return (
                 <Select.Item
-                  item={itemValue}
-                  disabled={isDisabled}
+                  item={item()}
+                  disabled={isDisabled()}
                   class={`flex cursor-pointer items-center justify-between px-3 py-2 whitespace-nowrap hover:bg-gray-100 data-[highlighted]:bg-blue-50 ${
-                    isDisabled ?
+                    isDisabled() ?
                       'cursor-not-allowed text-gray-400 hover:bg-transparent'
                     : 'text-gray-900'
                   }`}
                 >
-                  <Select.ItemText>{itemValue.label}</Select.ItemText>
+                  <Select.ItemText>{item().label}</Select.ItemText>
                   <Select.ItemIndicator>
                     <BiRegularCheck class='h-5 w-5 text-blue-600' />
                   </Select.ItemIndicator>

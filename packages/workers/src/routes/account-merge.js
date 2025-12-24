@@ -24,7 +24,7 @@ import {
   mediaFiles,
   verification,
 } from '../db/schema.js';
-import { eq, sql, like } from 'drizzle-orm';
+import { eq, sql, like, and } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rateLimit.js';
 import { createEmailService } from '../auth/email.js';
@@ -67,19 +67,56 @@ function generateCode() {
 }
 
 /**
+ * Normalize ORCID ID for lookup
+ * Removes hyphens and @orcid.org suffix, converts to lowercase
+ * @param {string} orcidId - ORCID ID (e.g., "0000-0001-2345-6789" or "0000-0001-2345-6789@orcid.org")
+ * @returns {string} Normalized ORCID ID (e.g., "0000000123456789")
+ */
+function normalizeOrcidId(orcidId) {
+  if (!orcidId || typeof orcidId !== 'string') return '';
+  // Remove @orcid.org suffix if present
+  let normalized = orcidId.replace(/@orcid\.org$/i, '');
+  // Remove hyphens
+  normalized = normalized.replace(/-/g, '');
+  // Convert to lowercase
+  return normalized.toLowerCase();
+}
+
+/**
+ * Format ORCID ID for display (add hyphens)
+ * @param {string} orcidId - Normalized ORCID ID (e.g., "0000000123456789")
+ * @returns {string} Formatted ORCID ID (e.g., "0000-0001-2345-6789")
+ */
+function formatOrcidId(orcidId) {
+  if (!orcidId || typeof orcidId !== 'string') return '';
+  // Remove any existing hyphens
+  const cleaned = orcidId.replace(/-/g, '');
+  // Format as XXXX-XXXX-XXXX-XXXX (last char can be X for checksum)
+  if (cleaned.length === 16) {
+    return cleaned.replace(/(\d{4})(\d{4})(\d{4})(\d{3}[\dXx])/, '$1-$2-$3-$4');
+  }
+  return cleaned;
+}
+
+/**
  * POST /api/accounts/merge/initiate
  *
  * Start a merge request. Sends a verification code to the target email.
  *
- * Body: { targetEmail: string }
+ * Body: { targetEmail?: string, targetOrcidId?: string }
+ * Either targetEmail or targetOrcidId must be provided, but not both.
  */
 accountMergeRoutes.post('/initiate', async c => {
   const { user: currentUser } = getAuth(c);
-  const { targetEmail } = await c.req.json();
+  const { targetEmail, targetOrcidId } = await c.req.json();
 
-  if (!targetEmail || typeof targetEmail !== 'string') {
+  // Validate that exactly one identifier is provided
+  const hasEmail = targetEmail && typeof targetEmail === 'string' && targetEmail.trim();
+  const hasOrcidId = targetOrcidId && typeof targetOrcidId === 'string' && targetOrcidId.trim();
+
+  if (!hasEmail && !hasOrcidId) {
     const error = createValidationError(
-      'targetEmail',
+      'targetEmail/targetOrcidId',
       VALIDATION_ERRORS.FIELD_REQUIRED.code,
       null,
       'required',
@@ -87,37 +124,115 @@ accountMergeRoutes.post('/initiate', async c => {
     return c.json(error, error.statusCode);
   }
 
-  const normalizedEmail = targetEmail.trim().toLowerCase();
-
-  if (normalizedEmail === currentUser.email.toLowerCase()) {
+  if (hasEmail && hasOrcidId) {
     const error = createValidationError(
-      'targetEmail',
+      'targetEmail/targetOrcidId',
       VALIDATION_ERRORS.INVALID_INPUT.code,
-      normalizedEmail,
-      'cannot_merge_self',
+      null,
+      'cannot_provide_both',
     );
     return c.json(error, error.statusCode);
   }
 
-  // Apply rate limiting keyed by user ID + target email
-  c.set('mergeInitiateKey', `${currentUser.id}:${normalizedEmail}`);
-  const rateLimitResult = await mergeInitiateRateLimiter(c, async () => {});
-  if (rateLimitResult) {
-    return rateLimitResult;
+  const db = createDb(c.env.DB);
+  let targetUser = null;
+  let targetOrcidAccount = null;
+  let lookupMethod = 'email';
+
+  if (hasEmail) {
+    const normalizedEmail = targetEmail.trim().toLowerCase();
+
+    if (normalizedEmail === currentUser.email.toLowerCase()) {
+      const error = createValidationError(
+        'targetEmail',
+        VALIDATION_ERRORS.INVALID_INPUT.code,
+        normalizedEmail,
+        'cannot_merge_self',
+      );
+      return c.json(error, error.statusCode);
+    }
+
+    // Apply rate limiting keyed by user ID + target email
+    c.set('mergeInitiateKey', `${currentUser.id}:${normalizedEmail}`);
+    const rateLimitResult = await mergeInitiateRateLimiter(c, async () => {});
+    if (rateLimitResult) {
+      return rateLimitResult;
+    }
+
+    // Find the target user by email
+    targetUser = await db
+      .select({ id: user.id, email: user.email, name: user.name })
+      .from(user)
+      .where(sql`lower(${user.email}) = ${normalizedEmail}`)
+      .limit(1)
+      .then(rows => rows[0]);
+  } else {
+    // Lookup by ORCID ID
+    const normalizedOrcidId = normalizeOrcidId(targetOrcidId);
+
+    if (!normalizedOrcidId || normalizedOrcidId.length !== 16) {
+      const error = createValidationError(
+        'targetOrcidId',
+        VALIDATION_ERRORS.INVALID_INPUT.code,
+        targetOrcidId,
+        'invalid_orcid_format',
+      );
+      return c.json(error, error.statusCode);
+    }
+
+    // Apply rate limiting keyed by user ID + ORCID ID
+    c.set('mergeInitiateKey', `${currentUser.id}:${normalizedOrcidId}`);
+    const rateLimitResult = await mergeInitiateRateLimiter(c, async () => {});
+    if (rateLimitResult) {
+      return rateLimitResult;
+    }
+
+    // Find the ORCID account
+    // Normalize both stored accountId and input for comparison (remove hyphens)
+    targetOrcidAccount = await db
+      .select({
+        accountId: account.accountId,
+        userId: account.userId,
+      })
+      .from(account)
+      .where(
+        and(
+          eq(account.providerId, 'orcid'),
+          sql`REPLACE(REPLACE(${account.accountId}, '-', ''), '@orcid.org', '') = ${normalizedOrcidId}`,
+        ),
+      )
+      .limit(1)
+      .then(rows => rows[0]);
+
+    if (targetOrcidAccount) {
+      // Find the user associated with this ORCID account
+      targetUser = await db
+        .select({ id: user.id, email: user.email, name: user.name })
+        .from(user)
+        .where(eq(user.id, targetOrcidAccount.userId))
+        .limit(1)
+        .then(rows => rows[0]);
+    }
+
+    lookupMethod = 'orcid';
   }
 
-  const db = createDb(c.env.DB);
-
-  // Find the target user
-  const targetUser = await db
-    .select({ id: user.id, email: user.email, name: user.name })
-    .from(user)
-    .where(sql`lower(${user.email}) = ${normalizedEmail}`)
-    .limit(1)
-    .then(rows => rows[0]);
-
   if (!targetUser) {
-    const error = createDomainError(USER_ERRORS.NOT_FOUND, { email: normalizedEmail });
+    const error = createDomainError(USER_ERRORS.NOT_FOUND, {
+      email: hasEmail ? targetEmail : undefined,
+      orcidId: hasOrcidId ? targetOrcidId : undefined,
+    });
+    return c.json(error, error.statusCode);
+  }
+
+  // Prevent merging with self
+  if (targetUser.id === currentUser.id) {
+    const error = createValidationError(
+      hasEmail ? 'targetEmail' : 'targetOrcidId',
+      VALIDATION_ERRORS.INVALID_INPUT.code,
+      hasEmail ? targetEmail : targetOrcidId,
+      'cannot_merge_self',
+    );
     return c.json(error, error.statusCode);
   }
 
@@ -188,10 +303,34 @@ accountMergeRoutes.post('/initiate', async c => {
     console.log('[AccountMerge] DEV MODE - Verification code:', verificationCode);
   }
 
+  // Get ORCID ID if the target account has one (for response)
+  let formattedOrcidId = null;
+  if (lookupMethod === 'orcid' && targetOrcidAccount) {
+    formattedOrcidId = formatOrcidId(targetOrcidAccount.accountId);
+  } else {
+    // Check if target user has an ORCID account
+    const orcidAccount = await db
+      .select({ accountId: account.accountId })
+      .from(account)
+      .where(
+        and(
+          eq(account.userId, targetUser.id),
+          eq(account.providerId, 'orcid'),
+        ),
+      )
+      .limit(1)
+      .then(rows => rows[0]);
+
+    if (orcidAccount) {
+      formattedOrcidId = formatOrcidId(orcidAccount.accountId);
+    }
+  }
+
   return c.json({
     success: true,
     mergeToken,
     targetEmail: targetUser.email,
+    targetOrcidId: formattedOrcidId,
     preview: {
       currentProviders: currentAccounts.map(a => a.providerId),
       // targetProviders deferred until after code verification for security

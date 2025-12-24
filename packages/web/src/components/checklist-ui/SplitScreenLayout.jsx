@@ -112,7 +112,7 @@ export default function SplitScreenLayout(props) {
               isDragging() ? 'none' : (
                 `${layout() === 'vertical' ? 'width' : 'height'} 200ms ease-in-out`
               ),
-            willChange:
+            'will-change':
               isDragging() ?
                 layout() === 'vertical' ?
                   'width'
@@ -158,7 +158,7 @@ export default function SplitScreenLayout(props) {
                 isDragging() ? 'none' : (
                   `${layout() === 'vertical' ? 'width' : 'height'} 200ms ease-in-out, opacity 200ms ease-in-out, transform 200ms ease-in-out`
                 ),
-              willChange:
+              'will-change':
                 isDragging() ?
                   layout() === 'vertical' ?
                     'width'

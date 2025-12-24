@@ -182,7 +182,7 @@ export const CopyButton: Component<CopyButtonProps>;
 export interface CollapsibleApi {
   open: boolean;
   visible: boolean;
-  setOpen: (open: boolean) => void;
+  setOpen: (_open: boolean) => void;
 }
 
 export interface CollapsibleProps {
@@ -222,7 +222,7 @@ export const Collapsible: Component<CollapsibleProps> & {
   RootProvider: Component<any>;
 };
 
-export function useCollapsible(props?: any): Accessor<CollapsibleApi>;
+export function useCollapsible(_props?: any): Accessor<CollapsibleApi>;
 
 // ============================================================================
 // Combobox

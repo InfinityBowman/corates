@@ -13,7 +13,7 @@
  * 6. SUCCESS - Done
  */
 
-import { createSignal, createEffect, Show } from 'solid-js';
+import { createSignal, createEffect, Show, createMemo } from 'solid-js';
 import { FiAlertTriangle, FiCheck, FiLoader, FiUserPlus, FiMail } from 'solid-icons/fi';
 import { Dialog, PinInput, showToast } from '@corates/ui';
 import { initiateMerge, verifyMergeCode, completeMerge, cancelMerge } from '@api/account-merge.js';
@@ -33,6 +33,7 @@ export default function MergeAccountsDialog(props) {
 
   const [step, setStep] = createSignal(STEPS.PROMPT);
   const [targetEmail, setTargetEmail] = createSignal('');
+  const [targetOrcidId, setTargetOrcidId] = createSignal(null);
   const [verificationCode, setVerificationCode] = createSignal('');
   const [mergeToken, setMergeToken] = createSignal(null);
   const [mergePreview, setMergePreview] = createSignal(null);
@@ -44,6 +45,7 @@ export default function MergeAccountsDialog(props) {
     if (props.open) {
       setStep(STEPS.PROMPT);
       setTargetEmail('');
+      setTargetOrcidId(null);
       setVerificationCode('');
       setMergeToken(null);
       setMergePreview(null);
@@ -52,10 +54,38 @@ export default function MergeAccountsDialog(props) {
     }
   });
 
+  // Check if this is an ORCID conflict
+  const isOrcidConflict = createMemo(() => props.conflictProvider === 'orcid');
+
+  /**
+   * Normalize ORCID ID input (remove hyphens, handle @orcid.org suffix)
+   */
+  function normalizeOrcidInput(input) {
+    if (!input) return '';
+    // Remove @orcid.org suffix if present
+    let normalized = input.replace(/@orcid\.org$/i, '');
+    // Remove hyphens
+    normalized = normalized.replace(/-/g, '');
+    return normalized.trim();
+  }
+
+  /**
+   * Check if input looks like an ORCID ID (16 digits) or email
+   */
+  function isOrcidId(input) {
+    const normalized = normalizeOrcidInput(input);
+    // ORCID IDs are 16 characters (digits, last can be X)
+    return /^[\dXx]{16}$/.test(normalized);
+  }
+
   async function handleSendCode() {
-    const email = targetEmail().trim();
-    if (!email) {
-      setError('Please enter the email address of the other account');
+    const input = targetEmail().trim();
+    if (!input) {
+      setError(
+        isOrcidConflict() ?
+          'Please enter the email address or ORCID ID of the other account'
+        : 'Please enter the email address of the other account',
+      );
       return;
     }
 
@@ -63,11 +93,26 @@ export default function MergeAccountsDialog(props) {
     setError(null);
 
     try {
-      const result = await initiateMerge(email);
+      // Determine if input is ORCID ID or email
+      const isOrcid = isOrcidId(input);
+      let result;
+
+      if (isOrcid) {
+        const normalizedOrcidId = normalizeOrcidInput(input);
+        result = await initiateMerge(null, normalizedOrcidId);
+        setTargetOrcidId(normalizedOrcidId);
+      } else {
+        result = await initiateMerge(input, null);
+        setTargetOrcidId(null);
+      }
+
       setMergeToken(result.mergeToken);
       // Preview with targetProviders is deferred until after code verification
       setStep(STEPS.ENTER_CODE);
-      showToast.success('Code Sent', `A verification code has been sent to ${email}`);
+
+      const displayValue =
+        isOrcid && result.targetOrcidId ? result.targetOrcidId : result.targetEmail;
+      showToast.success('Code Sent', `A verification code has been sent to ${displayValue}`);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils.js');
       await handleError(err, {
@@ -153,6 +198,17 @@ export default function MergeAccountsDialog(props) {
     return names[props.conflictProvider] || props.conflictProvider;
   };
 
+  /**
+   * Format ORCID ID for display (add hyphens if not present)
+   */
+  function formatOrcidId(id) {
+    if (!id) return '';
+    // If already formatted with hyphens, return as-is
+    if (id.includes('-')) return id;
+    // Format as XXXX-XXXX-XXXX-XXXX (last char can be X for checksum)
+    return id.replace(/(\d{4})(\d{4})(\d{4})(\d{3}[\dXx])/, '$1-$2-$3-$4');
+  }
+
   // Preserve reactivity for open prop
   const isOpen = () => props.open;
 
@@ -179,6 +235,16 @@ export default function MergeAccountsDialog(props) {
             </div>
           </div>
 
+          <Show when={isOrcidConflict()}>
+            <div class='rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800'>
+              <p class='font-medium'>ORCID Account Merge</p>
+              <p class='mt-1'>
+                You can enter either the email address or your ORCID ID (e.g., 0000-0001-2345-6789)
+                to identify the account you want to merge.
+              </p>
+            </div>
+          </Show>
+
           <p class='text-sm text-gray-600'>
             Merging will combine all your projects, data, and sign-in methods into this account. The
             other account will be deleted.
@@ -204,16 +270,22 @@ export default function MergeAccountsDialog(props) {
         {/* Step: Enter Email */}
         <Show when={step() === STEPS.ENTER_EMAIL}>
           <p class='text-sm text-gray-600'>
-            Enter the email address of the other CoRATES account. We'll send a verification code to
-            prove you own it.
+            {isOrcidConflict() ?
+              `Enter the email address or ORCID ID (e.g., 0000-0001-2345-6789) of the other CoRATES account. We'll send a verification code to prove you own it.`
+            : `Enter the email address of the other CoRATES account. We'll send a verification code to prove you own it.`
+            }
           </p>
 
           <input
-            type='email'
+            type='text'
             value={targetEmail()}
             onInput={e => setTargetEmail(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSendCode()}
-            placeholder='other@example.com'
+            placeholder={
+              isOrcidConflict() ?
+                'Email or ORCID ID (e.g., 0000-0001-2345-6789)'
+              : 'other@example.com'
+            }
             class='w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500'
             disabled={loading()}
           />
@@ -250,7 +322,9 @@ export default function MergeAccountsDialog(props) {
             <div class='text-sm text-blue-800'>
               <p class='font-medium'>Verification code sent</p>
               <p class='mt-1'>
-                Check <strong>{targetEmail()}</strong> for a 6-digit code.
+                Check{' '}
+                <strong>{targetOrcidId() ? formatOrcidId(targetOrcidId()) : targetEmail()}</strong>{' '}
+                for a 6-digit code.
               </p>
             </div>
           </div>
@@ -304,7 +378,10 @@ export default function MergeAccountsDialog(props) {
             <FiCheck class='mt-0.5 h-5 w-5 shrink-0 text-green-600' />
             <div class='text-sm text-green-800'>
               <p class='font-medium'>Email verified!</p>
-              <p class='mt-1'>You've confirmed access to {targetEmail()}.</p>
+              <p class='mt-1'>
+                You've confirmed access to{' '}
+                {targetOrcidId() ? formatOrcidId(targetOrcidId()) : targetEmail()}.
+              </p>
             </div>
           </div>
 
@@ -329,8 +406,8 @@ export default function MergeAccountsDialog(props) {
           <div class='rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800'>
             <p class='font-medium'>Warning: This action cannot be undone.</p>
             <p class='mt-1'>
-              The account ({targetEmail()}) will be deleted and all its data merged into your
-              current account.
+              The account ({targetOrcidId() ? formatOrcidId(targetOrcidId()) : targetEmail()}) will
+              be deleted and all its data merged into your current account.
             </p>
           </div>
 

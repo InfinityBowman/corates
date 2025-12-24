@@ -58,6 +58,12 @@ export function rateLimit(options = {}) {
   } = options;
 
   return async (c, next) => {
+    // Skip rate limiting in development mode
+    if (c.env?.ENVIRONMENT !== 'production') {
+      await next();
+      return;
+    }
+
     cleanupExpiredEntries();
 
     // Generate rate limit key

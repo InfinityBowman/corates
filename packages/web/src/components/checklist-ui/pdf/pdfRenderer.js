@@ -24,13 +24,10 @@ export function createPdfRenderer(document, scrollHandler) {
   let resizeObserver = null;
   let resizeRafId = null;
   let prevScale = null;
-  let prevContainerWidth = null;
-  let prevContainerHeight = null;
 
   const RENDER_CONCURRENCY = 3; // Limit concurrent renders to avoid overwhelming GPU
   const CANVAS_CLEAR_DELAY = 5000; // Clear canvas 5 seconds after page leaves viewport
   const canvasClearTimeouts = new Map(); // Track timeouts for clearing canvases
-  const RESIZE_THRESHOLD = 50; // Only re-render if container size changes by more than 50px
 
   // Setup resize observer
   // Note: We don't re-render on resize to avoid white flashes.
