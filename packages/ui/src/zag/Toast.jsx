@@ -1,6 +1,9 @@
-import * as toast from '@zag-js/toast';
-import { normalizeProps, useMachine, Key } from '@zag-js/solid';
-import { createMemo, createUniqueId, Show } from 'solid-js';
+/**
+ * Toast components using Ark UI
+ */
+
+import { Toast, Toaster, createToaster } from '@ark-ui/solid/toast';
+import { Show, For } from 'solid-js';
 import { FiX, FiCheck, FiAlertCircle, FiInfo, FiLoader } from 'solid-icons/fi';
 import { Z_INDEX } from '../constants/zIndex.js';
 
@@ -8,29 +11,18 @@ import { Z_INDEX } from '../constants/zIndex.js';
  * Create the toast store - this is the global toaster instance
  * Import this to create toasts from anywhere in the app
  */
-export const toaster = toast.createStore({
+export const toaster = createToaster({
   placement: 'top-end',
   overlap: true,
   gap: 12,
-  offsets: '16px',
-  removeDelay: 200, // Allow time for fade out animation
+  offset: '16px',
 });
 
 /**
- * Individual Toast component
+ * Toaster component - renders all active toasts
  */
-function ToastItem(props) {
-  const machineProps = createMemo(() => ({
-    ...props.toast(),
-    parent: props.parent,
-    index: props.index(),
-  }));
-  // eslint-disable-next-line solid/reactivity
-  const service = useMachine(toast.machine, machineProps);
-  const api = createMemo(() => toast.connect(service, normalizeProps));
-
-  const getIcon = () => {
-    const type = api().type;
+export function ToasterComponent() {
+  const getIcon = (type) => {
     switch (type) {
       case 'success':
         return <FiCheck class='h-5 w-5 text-green-500' />;
@@ -43,8 +35,7 @@ function ToastItem(props) {
     }
   };
 
-  const getStyles = () => {
-    const type = api().type;
+  const getStyles = (type) => {
     switch (type) {
       case 'success':
         return 'border-green-200 bg-green-50';
@@ -58,71 +49,38 @@ function ToastItem(props) {
   };
 
   return (
-    <div
-      {...api().getRootProps()}
-      class={`toast-item pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg border shadow-lg ${getStyles()}`}
-      style={{
-        translate: 'var(--x) var(--y)',
-        scale: 'var(--scale)',
-        'z-index': 'var(--z-index)',
-        height: 'var(--height)',
-        opacity: 'var(--opacity)',
-        'will-change': 'translate, opacity, scale',
-        transition: 'translate 400ms, scale 400ms, opacity 400ms',
-        'transition-timing-function': 'cubic-bezier(0.21, 1.02, 0.73, 1)',
-      }}
-    >
-      <div class='p-4'>
-        <div class='flex items-start'>
-          <div class='shrink-0'>{getIcon()}</div>
-          <div class='ml-3 w-0 flex-1'>
-            <Show when={api().title}>
-              <p {...api().getTitleProps()} class='text-sm font-medium text-gray-900'>
-                {api().title}
-              </p>
-            </Show>
-            <Show when={api().description}>
-              <p {...api().getDescriptionProps()} class='mt-1 text-sm text-gray-500'>
-                {api().description}
-              </p>
-            </Show>
-          </div>
-          <div class='ml-4 flex shrink-0'>
-            <button
-              type='button'
-              onClick={() => api().dismiss()}
-              class='inline-flex cursor-pointer rounded-md bg-transparent p-1 text-gray-400 hover:text-gray-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none'
-            >
-              <span class='sr-only'>Close</span>
-              <FiX class='h-5 w-5' />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Toaster component - renders all active toasts
- */
-export function Toaster() {
-  const service = useMachine(toast.group.machine, {
-    id: createUniqueId(),
-    store: toaster,
-  });
-
-  const api = createMemo(() => toast.group.connect(service, normalizeProps));
-
-  return (
-    <div
-      {...api().getGroupProps()}
+    <Toaster
+      toaster={toaster}
       class={`pointer-events-none fixed inset-0 ${Z_INDEX.TOAST} flex flex-col items-end p-4 sm:p-6`}
     >
-      <Key each={api().getToasts()} by={t => t.id}>
-        {(toastItem, index) => <ToastItem toast={toastItem} parent={service} index={index} />}
-      </Key>
-    </div>
+      {(toast) => (
+        <Toast.Root
+          class={`toast-item pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg border shadow-lg ${getStyles(toast().type)}`}
+        >
+          <div class='p-4'>
+            <div class='flex items-start'>
+              <div class='shrink-0'>{getIcon(toast().type)}</div>
+              <div class='ml-3 w-0 flex-1'>
+                <Show when={toast().title}>
+                  <Toast.Title class='text-sm font-medium text-gray-900'>{toast().title}</Toast.Title>
+                </Show>
+                <Show when={toast().description}>
+                  <Toast.Description class='mt-1 text-sm text-gray-500'>
+                    {toast().description}
+                  </Toast.Description>
+                </Show>
+              </div>
+              <div class='ml-4 flex shrink-0'>
+                <Toast.CloseTrigger class='inline-flex cursor-pointer rounded-md bg-transparent p-1 text-gray-400 hover:text-gray-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none'>
+                  <span class='sr-only'>Close</span>
+                  <FiX class='h-5 w-5' />
+                </Toast.CloseTrigger>
+              </div>
+            </div>
+          </div>
+        </Toast.Root>
+      )}
+    </Toaster>
   );
 }
 
@@ -144,9 +102,10 @@ export const showToast = {
 
   promise: (promise, options) => toaster.promise(promise, options),
 
-  dismiss: id => toaster.dismiss(id),
+  dismiss: (id) => toaster.dismiss(id),
 
   update: (id, options) => toaster.update(id, options),
 };
 
-export default Toaster;
+export { ToasterComponent as Toaster };
+export default ToasterComponent;

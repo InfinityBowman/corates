@@ -1,4 +1,5 @@
-// Zag.js UI Components
+// UI Components
+// Most components have been migrated to Ark UI, some still use Zag.js
 // Re-export all components from individual files
 
 export { Accordion } from './Accordion.jsx';

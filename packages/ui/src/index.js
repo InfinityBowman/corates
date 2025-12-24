@@ -1,6 +1,6 @@
 // @corates/ui - Shared UI Components
 
-// Re-export all Zag components
+// Re-export all UI components (built with Ark UI and some remaining Zag.js components)
 export * from './zag/index.js';
 
 // Re-export primitives

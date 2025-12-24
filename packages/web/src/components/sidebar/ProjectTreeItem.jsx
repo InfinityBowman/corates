@@ -7,7 +7,7 @@ import { FiChevronRight } from 'solid-icons/fi';
 import StudyTreeItem from './StudyTreeItem.jsx';
 
 /**
- * Project tree item with expandable studies using Zag collapsible
+ * Project tree item with expandable studies using collapsible component
  */
 export default function ProjectTreeItem(props) {
   const navigate = useNavigate();

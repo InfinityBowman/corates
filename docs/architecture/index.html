@@ -12,6 +12,17 @@
         startOnLoad: false,
         theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default',
         securityLevel: 'loose',
+        flowchart: {
+          useMaxWidth: false,
+          htmlLabels: true,
+          curve: 'basis',
+        },
+        gantt: {
+          useMaxWidth: false,
+        },
+        sequence: {
+          useMaxWidth: false,
+        },
       });
 
       const diagrams = [
@@ -21,6 +32,7 @@
         { id: 'data', file: '04-data-model.md', title: 'Data Model' },
         { id: 'routes', file: '05-frontend-routes.md', title: 'Frontend Routes' },
         { id: 'api', file: '06-api-routes.md', title: 'API Routes' },
+        { id: 'actions', file: '07-api-actions.md', title: 'API Actions' },
       ];
 
       async function loadDiagrams() {
@@ -59,6 +71,13 @@
 
         // Render all mermaid diagrams
         await mermaid.run({ querySelector: '.language-mermaid' });
+
+        // Scale up diagrams after rendering
+        document.querySelectorAll('.diagram-container svg').forEach(svg => {
+          svg.style.minWidth = '1200px';
+          svg.style.width = '100%';
+          svg.style.height = 'auto';
+        });
       }
 
       // Custom renderer to handle mermaid code blocks
@@ -96,12 +115,16 @@
       }
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        max-width: 1200px;
-        margin: 0 auto;
+        max-width: 100%;
+        margin: 0;
         padding: 2rem;
         background: var(--bg);
         color: var(--text);
         line-height: 1.6;
+      }
+      .content-wrapper {
+        max-width: 1800px;
+        margin: 0 auto;
       }
       h1 {
         border-bottom: 2px solid var(--accent);
@@ -111,20 +134,55 @@
       h2 {
         margin-top: 2rem;
         color: var(--accent);
+        font-size: 1.8rem;
+      }
+      section {
+        width: 100%;
+        max-width: 100%;
       }
       .diagram-container {
         background: var(--card-bg);
         border: 1px solid var(--border);
         border-radius: 8px;
-        padding: 1.5rem;
-        margin: 1rem 0 2rem;
+        padding: 2rem;
+        margin: 2rem 0 3rem;
         overflow-x: auto;
+        overflow-y: visible;
+        min-height: 400px;
+        width: 100%;
+        position: relative;
       }
       .language-mermaid {
-        display: flex;
-        justify-content: center;
+        display: block;
         background: transparent;
         margin: 0;
+        width: 100%;
+        min-width: 100%;
+      }
+      .language-mermaid svg {
+        max-width: none !important;
+        width: 100% !important;
+        height: auto !important;
+        min-width: 1200px;
+        font-size: 14px;
+      }
+      .diagram-container svg .nodeLabel,
+      .diagram-container svg .edgeLabel {
+        font-size: 14px !important;
+      }
+      .diagram-container::-webkit-scrollbar {
+        height: 12px;
+      }
+      .diagram-container::-webkit-scrollbar-track {
+        background: var(--card-bg);
+        border-radius: 6px;
+      }
+      .diagram-container::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 6px;
+      }
+      .diagram-container::-webkit-scrollbar-thumb:hover {
+        background: var(--accent);
       }
       p {
         color: var(--text);
@@ -197,6 +255,8 @@
       <span id="nav-links"></span>
     </nav>
 
-    <div id="diagrams"></div>
+    <div class="content-wrapper">
+      <div id="diagrams"></div>
+    </div>
   </body>
 </html>

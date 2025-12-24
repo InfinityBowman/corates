@@ -1,6 +1,9 @@
-import * as progress from '@zag-js/progress';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, Show, splitProps } from 'solid-js';
+/**
+ * Progress - Linear progress bar using Ark UI
+ */
+
+import { Progress } from '@ark-ui/solid/progress';
+import { Show, splitProps, createMemo } from 'solid-js';
 
 /**
  * Progress - Linear progress bar
@@ -16,7 +19,7 @@ import { createMemo, createUniqueId, Show, splitProps } from 'solid-js';
  * - indeterminate: boolean - Show indeterminate animation
  * - class: string - Additional class for root element
  */
-export function Progress(props) {
+export function ProgressComponent(props) {
   const [local, machineProps] = splitProps(props, [
     'label',
     'showValue',
@@ -25,15 +28,6 @@ export function Progress(props) {
     'indeterminate',
     'class',
   ]);
-
-  const service = useMachine(progress.machine, () => ({
-    id: createUniqueId(),
-    min: 0,
-    max: 100,
-    ...machineProps,
-  }));
-
-  const api = createMemo(() => progress.connect(service, normalizeProps));
 
   const getSizeClass = () => {
     switch (local.size) {
@@ -59,34 +53,42 @@ export function Progress(props) {
     }
   };
 
+  // For indeterminate, set value to undefined
+  const progressValue = createMemo(() => {
+    if (local.indeterminate) return undefined;
+    return machineProps.value;
+  });
+
   return (
-    <div {...api().getRootProps()} class={`w-full ${local.class || ''}`}>
+    <Progress.Root
+      value={progressValue()}
+      min={machineProps.min ?? 0}
+      max={machineProps.max ?? 100}
+      class={`w-full ${local.class || ''}`}
+    >
       <Show when={local.label || local.showValue}>
         <div class='mb-1 flex items-center justify-between'>
           <Show when={local.label}>
-            <span {...api().getLabelProps()} class='text-sm font-medium text-gray-700'>
-              {local.label}
-            </span>
+            <Progress.Label class='text-sm font-medium text-gray-700'>{local.label}</Progress.Label>
           </Show>
           <Show when={local.showValue && !local.indeterminate}>
-            <span {...api().getValueTextProps()} class='text-sm text-gray-500'>
-              {api().valueAsString}
-            </span>
+            <Progress.ValueText class='text-sm text-gray-500' />
           </Show>
         </div>
       </Show>
-      <div
-        {...api().getTrackProps()}
+      <Progress.Track
         class={`w-full overflow-hidden rounded-full bg-gray-200 ${getSizeClass()}`}
       >
-        <div
-          {...api().getRangeProps()}
-          class={`h-full rounded-full transition-all duration-300 ${getVariantClass()} ${local.indeterminate ? 'animate-progress-indeterminate' : ''}`}
+        <Progress.Range
+          class={`h-full rounded-full transition-all duration-300 ${getVariantClass()} ${
+            local.indeterminate ? 'animate-progress-indeterminate' : ''
+          }`}
           style={local.indeterminate ? { width: '30%' } : undefined}
         />
-      </div>
-    </div>
+      </Progress.Track>
+    </Progress.Root>
   );
 }
 
-export default Progress;
+export { ProgressComponent as Progress };
+export default ProgressComponent;

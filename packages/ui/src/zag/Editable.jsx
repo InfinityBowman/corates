@@ -1,6 +1,9 @@
-import * as editable from '@zag-js/editable';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, Show, mergeProps, createEffect, on } from 'solid-js';
+/**
+ * Editable - An inline editable single-line text component using Ark UI
+ */
+
+import { Editable } from '@ark-ui/solid/editable';
+import { Show, mergeProps, createEffect, on } from 'solid-js';
 import { FiCheck, FiX, FiEdit2 } from 'solid-icons/fi';
 import { cn } from '../lib/cn.js';
 
@@ -37,7 +40,7 @@ const variants = {
 };
 
 /**
- * Editable - An inline editable single-line text component using Zag.js
+ * Editable - An inline editable single-line text component using Ark UI
  *
  * Best for: titles, names, labels - single line text that can be edited inline.
  * For multi-line text (descriptions, notes), use a manual textarea approach instead.
@@ -65,7 +68,7 @@ const variants = {
  * - showEditIcon: boolean - Whether to show only an edit icon trigger (no save/cancel) (default: false)
  * - label: string - Optional label text
  */
-export default function Editable(props) {
+export default function EditableComponent(props) {
   const merged = mergeProps(
     {
       placeholder: 'Click to edit...',
@@ -100,110 +103,106 @@ export default function Editable(props) {
   const previewClass = () => merged.previewClass;
   const label = () => merged.label;
 
-  // Create stable ID outside the machine config to prevent focus loss on re-render
-  const id = createUniqueId();
+  const handleValueChange = (details) => {
+    if (merged.onChange) {
+      merged.onChange(details.value);
+    }
+  };
 
-  const service = useMachine(editable.machine, () => ({
-    id,
-    // Always use defaultValue - Zag manages internal editing state
-    defaultValue: value() ?? defaultValue() ?? '',
-    placeholder: placeholder(),
-    disabled: disabled(),
-    readOnly: readOnly(),
-    autoResize: autoResize(),
-    activationMode: activationMode(),
-    submitMode: submitMode(),
-    selectOnFocus: selectOnFocus(),
-    maxLength: maxLength(),
-    onValueChange(details) {
-      merged.onChange?.(details.value);
-    },
-    onValueCommit(details) {
-      merged.onSubmit?.(details.value);
-    },
-    onValueRevert() {
-      merged.onCancel?.();
-    },
-  }));
+  const handleValueCommit = (details) => {
+    if (merged.onSubmit) {
+      merged.onSubmit(details.value);
+    }
+  };
 
-  const api = createMemo(() => editable.connect(service, normalizeProps));
+  const handleValueRevert = () => {
+    if (merged.onCancel) {
+      merged.onCancel();
+    }
+  };
 
-  // Sync external value changes ONLY when not editing
-  // This handles cases like the parent updating value after a successful save
-  createEffect(
-    on(value, newValue => {
-      if (newValue !== undefined && newValue !== api().value && !api().editing) {
-        api().setValue(newValue);
-      }
-    }),
-  );
+  // Use value if provided, otherwise defaultValue, otherwise empty string
+  const editableValue = () => value() ?? defaultValue() ?? '';
 
   return (
-    <div {...api().getRootProps()} class={cn('group inline-block', classValue())}>
-      <Show when={label()}>
-        <label {...api().getLabelProps()} class='mb-1 block text-sm font-medium text-gray-700'>
-          {label()}
-        </label>
-      </Show>
-
-      <div class='flex items-center gap-2'>
-        <div
-          {...api().getAreaProps()}
-          class={cn(
-            variantStyles().area,
-            disabled() && 'cursor-not-allowed opacity-50',
-            areaClass(),
-          )}
-        >
-          <input {...api().getInputProps()} class={cn(variantStyles().input, inputClass())} />
-          <span
-            {...api().getPreviewProps()}
-            class={cn(variantStyles().preview, !api().value && 'text-gray-400', previewClass())}
-          >
-            {api().value || placeholder()}
-          </span>
-        </div>
-
-        {/* External controls for edit mode */}
-        <Show when={showControls()}>
-          <div class='flex items-center gap-1'>
-            <Show
-              when={api().editing}
-              fallback={
-                <button
-                  {...api().getEditTriggerProps()}
-                  class='rounded p-1 text-gray-400 opacity-0 transition-colors group-hover:opacity-100 hover:bg-gray-100 hover:text-gray-600'
-                >
-                  <FiEdit2 class='h-4 w-4' />
-                </button>
-              }
-            >
-              <button
-                {...api().getSubmitTriggerProps()}
-                class='rounded p-1 text-green-500 transition-colors hover:bg-green-50 hover:text-green-600'
-              >
-                <FiCheck class='h-4 w-4' />
-              </button>
-              <button
-                {...api().getCancelTriggerProps()}
-                class='rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
-              >
-                <FiX class='h-4 w-4' />
-              </button>
+    <Editable.Root
+      value={value() !== undefined ? value() : undefined}
+      defaultValue={value() === undefined ? editableValue() : undefined}
+      placeholder={placeholder()}
+      disabled={disabled()}
+      readOnly={readOnly()}
+      autoResize={autoResize()}
+      activationMode={activationMode()}
+      submitMode={submitMode()}
+      selectOnFocus={selectOnFocus()}
+      maxLength={maxLength()}
+      onValueChange={handleValueChange}
+      onValueCommit={handleValueCommit}
+      onValueRevert={handleValueRevert}
+      class={cn('group inline-block', classValue())}
+    >
+      <Editable.Context>
+        {(api) => (
+          <>
+            <Show when={label()}>
+              <Editable.Label class='mb-1 block text-sm font-medium text-gray-700'>
+                {label()}
+              </Editable.Label>
             </Show>
-          </div>
-        </Show>
 
-        {/* Edit icon only (no save/cancel) */}
-        <Show when={showEditIcon() && !showControls() && !api().editing}>
-          <button
-            {...api().getEditTriggerProps()}
-            class='rounded p-1 text-gray-400 opacity-0 transition-colors group-hover:opacity-100 hover:bg-gray-100 hover:text-gray-600'
-          >
-            <FiEdit2 class='h-4 w-4' />
-          </button>
-        </Show>
-      </div>
-    </div>
+            <div class='flex items-center gap-2'>
+              <Editable.Area
+                class={cn(
+                  variantStyles().area,
+                  disabled() && 'cursor-not-allowed opacity-50',
+                  areaClass(),
+                )}
+              >
+                <Editable.Input class={cn(variantStyles().input, inputClass())} />
+                <Editable.Preview
+                  class={cn(
+                    variantStyles().preview,
+                    !api().value && 'text-gray-400',
+                    previewClass(),
+                  )}
+                >
+                  {api().value || placeholder()}
+                </Editable.Preview>
+              </Editable.Area>
+
+              {/* External controls for edit mode */}
+              <Show when={showControls()}>
+                <div class='flex items-center gap-1'>
+                  <Show
+                    when={api().editing}
+                    fallback={
+                      <Editable.EditTrigger class='rounded p-1 text-gray-400 opacity-0 transition-colors group-hover:opacity-100 hover:bg-gray-100 hover:text-gray-600'>
+                        <FiEdit2 class='h-4 w-4' />
+                      </Editable.EditTrigger>
+                    }
+                  >
+                    <Editable.SubmitTrigger class='rounded p-1 text-green-500 transition-colors hover:bg-green-50 hover:text-green-600'>
+                      <FiCheck class='h-4 w-4' />
+                    </Editable.SubmitTrigger>
+                    <Editable.CancelTrigger class='rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'>
+                      <FiX class='h-4 w-4' />
+                    </Editable.CancelTrigger>
+                  </Show>
+                </div>
+              </Show>
+
+              {/* Edit icon only (no save/cancel) */}
+              <Show when={showEditIcon() && !showControls() && !api().editing}>
+                <Editable.EditTrigger class='rounded p-1 text-gray-400 opacity-0 transition-colors group-hover:opacity-100 hover:bg-gray-100 hover:text-gray-600'>
+                  <FiEdit2 class='h-4 w-4' />
+                </Editable.EditTrigger>
+              </Show>
+            </div>
+          </>
+        )}
+      </Editable.Context>
+    </Editable.Root>
   );
 }
+
+export { EditableComponent as Editable };

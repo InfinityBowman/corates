@@ -44,7 +44,7 @@ flowchart TB
 
 ### Frontend (SolidJS)
 
-- **UI Components**: Zag.js-based accessible components
+- **UI Components**: Ark UI-based accessible components
 - **Stores**: Centralized state management (no prop drilling)
 - **Yjs Client**: CRDT sync with local IndexedDB persistence for project content
 - **Notification WebSocket**: Real-time connection to UserSession for user-level notifications (project invites, etc.)

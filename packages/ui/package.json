@@ -2,7 +2,7 @@
   "name": "@corates/ui",
   "version": "0.0.1",
   "private": true,
-  "description": "Shared UI components for Corates built with Zag.js and SolidJS",
+  "description": "Shared UI components for Corates built with Ark UI and SolidJS",
   "type": "module",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -20,6 +20,7 @@
     "./zag/*": "./src/zag/*.jsx"
   },
   "dependencies": {
+    "@ark-ui/solid": "^5.30.0",
     "@zag-js/accordion": "^1.31.1",
     "@zag-js/avatar": "^1.31.1",
     "@zag-js/checkbox": "^1.31.1",

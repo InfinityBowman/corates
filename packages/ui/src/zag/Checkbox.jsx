@@ -1,10 +1,9 @@
 /**
- * Checkbox component using Zag.js
+ * Checkbox component using Ark UI
  */
 
-import * as checkbox from '@zag-js/checkbox';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createUniqueId, mergeProps, Show } from 'solid-js';
+import { Checkbox } from '@ark-ui/solid/checkbox';
+import { mergeProps, Show, createMemo } from 'solid-js';
 import { BiRegularCheck, BiRegularMinus } from 'solid-icons/bi';
 
 /**
@@ -19,7 +18,7 @@ import { BiRegularCheck, BiRegularMinus } from 'solid-icons/bi';
  * @param {Function} [props.onChange] - Callback when checked state changes: (checked: boolean) => void
  * @param {string} [props.class] - Additional CSS classes
  */
-export function Checkbox(props) {
+export function CheckboxComponent(props) {
   const merged = mergeProps(
     {
       defaultChecked: false,
@@ -32,54 +31,59 @@ export function Checkbox(props) {
   const defaultChecked = () => merged.defaultChecked;
   const disabled = () => merged.disabled;
   const name = () => merged.name;
-  const value = () => merged.value;
+  const value = () => merged.value || 'on';
   const classValue = () => merged.class;
   const label = () => merged.label;
 
-  const service = useMachine(checkbox.machine, () => ({
-    id: createUniqueId(),
-    checked: indeterminate() ? 'indeterminate' : checked(),
-    defaultChecked: defaultChecked(),
-    disabled: disabled(),
-    name: name(),
-    value: value(),
-    onCheckedChange(details) {
-      merged.onChange?.(details.checked === true);
-    },
-  }));
+  // Convert indeterminate to checked state
+  const checkedState = createMemo(() => {
+    if (indeterminate()) return 'indeterminate';
+    if (checked() !== undefined) return checked() === true;
+    return undefined;
+  });
 
-  const api = createMemo(() => checkbox.connect(service, normalizeProps));
+  const defaultCheckedState = createMemo(() => {
+    if (indeterminate()) return 'indeterminate';
+    return defaultChecked();
+  });
+
+  const handleCheckedChange = (details) => {
+    if (merged.onChange) {
+      // When transitioning from indeterminate, treat it as checking
+      const newChecked = details.checked === true || details.checked === 'indeterminate';
+      merged.onChange(newChecked);
+    }
+  };
 
   return (
-    <label
-      {...api().getRootProps()}
+    <Checkbox.Root
+      checked={checkedState()}
+      defaultChecked={defaultCheckedState()}
+      disabled={disabled()}
+      name={name()}
+      value={value()}
+      onCheckedChange={handleCheckedChange}
       class={`inline-flex cursor-pointer items-center gap-2 select-none ${
         disabled() ? 'cursor-not-allowed opacity-50' : ''
       } ${classValue() || ''}`}
     >
-      <div
-        {...api().getControlProps()}
-        class={`flex h-4 w-4 items-center justify-center rounded border-2 transition-colors ${
-          api().checked || api().indeterminate ?
-            'border-blue-600 bg-blue-600'
-          : 'border-gray-300 bg-white hover:border-blue-400'
-        } ${api().focused ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
+      <Checkbox.Control
+        class='flex h-4 w-4 items-center justify-center rounded border-2 transition-colors data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=indeterminate]:border-blue-600 data-[state=indeterminate]:bg-blue-600 data-[state=unchecked]:border-gray-300 data-[state=unchecked]:bg-white data-[state=unchecked]:hover:border-blue-400 data-[focus]:ring-2 data-[focus]:ring-blue-500 data-[focus]:ring-offset-1'
       >
-        <Show when={api().indeterminate}>
+        <Checkbox.Indicator indeterminate class='h-3 w-3 text-white'>
           <BiRegularMinus class='h-3 w-3 text-white' />
-        </Show>
-        <Show when={api().checked && !api().indeterminate}>
+        </Checkbox.Indicator>
+        <Checkbox.Indicator class='h-3 w-3 text-white'>
           <BiRegularCheck class='h-3 w-3 text-white' />
-        </Show>
-      </div>
-      <input {...api().getHiddenInputProps()} />
+        </Checkbox.Indicator>
+      </Checkbox.Control>
+      <Checkbox.HiddenInput />
       <Show when={label()}>
-        <span {...api().getLabelProps()} class='text-sm text-gray-700'>
-          {label()}
-        </span>
+        <Checkbox.Label class='text-sm text-gray-700'>{label()}</Checkbox.Label>
       </Show>
-    </label>
+    </Checkbox.Root>
   );
 }
 
-export default Checkbox;
+export { CheckboxComponent as Checkbox };
+export default CheckboxComponent;

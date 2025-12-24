@@ -1,7 +1,11 @@
-import * as combobox from '@zag-js/combobox';
+/**
+ * Combobox - Searchable select with autocomplete using Ark UI
+ */
+
+import { Combobox, useListCollection } from '@ark-ui/solid/combobox';
+import { useFilter } from '@ark-ui/solid/locale';
 import { Portal } from 'solid-js/web';
-import { normalizeProps, useMachine } from '@zag-js/solid';
-import { createMemo, createSignal, createUniqueId, For, Show, splitProps } from 'solid-js';
+import { createMemo, createSignal, Show, splitProps, Index } from 'solid-js';
 import { FiChevronDown, FiX, FiCheck } from 'solid-icons/fi';
 import { Z_INDEX } from '../constants/zIndex.js';
 
@@ -28,7 +32,7 @@ import { Z_INDEX } from '../constants/zIndex.js';
  * - class: string - Additional class for root element
  * - inputClass: string - Additional class for input element
  */
-export function Combobox(props) {
+export function ComboboxComponent(props) {
   const [local, machineProps] = splitProps(props, [
     'items',
     'label',
@@ -39,101 +43,122 @@ export function Combobox(props) {
   ]);
 
   const getItems = () => local.items || [];
-  const [options, setOptions] = createSignal(getItems());
 
-  const collection = createMemo(() =>
-    combobox.collection({
-      items: options(),
-      itemToValue: item => item.value,
-      itemToString: item => item.label,
-      itemToDisabled: item => item.disabled,
-    }),
-  );
+  // Use Ark UI's filter utility
+  const filterFn = useFilter({ sensitivity: 'base' });
 
-  const service = useMachine(combobox.machine, () => ({
-    id: createUniqueId(),
-    openOnClick: true,
-    ...machineProps,
-    get collection() {
-      return collection();
-    },
-    onOpenChange() {
-      setOptions(getItems());
-    },
-    onInputValueChange({ inputValue }) {
-      const items = getItems();
-      const filtered = items.filter(item =>
-        item.label.toLowerCase().includes(inputValue.toLowerCase()),
-      );
-      setOptions(filtered.length > 0 ? filtered : items);
-    },
-  }));
+  // Create collection with filtering
+  const { collection, filter } = useListCollection({
+    initialItems: getItems(),
+    filter: filterFn().contains,
+    itemToString: (item) => item.label,
+    itemToValue: (item) => item.value,
+    itemToDisabled: (item) => item.disabled,
+  });
 
-  const api = createMemo(() => combobox.connect(service, normalizeProps));
+  const handleInputValueChange = (details) => {
+    filter(details.inputValue);
+    if (machineProps.onInputValueChange) {
+      machineProps.onInputValueChange(details);
+    }
+  };
 
-  const content = () => (
-    <div {...api().getPositionerProps()}>
-      <Show when={options().length > 0}>
-        <ul
-          {...api().getContentProps()}
+  const handleValueChange = (details) => {
+    if (machineProps.onValueChange) {
+      machineProps.onValueChange(details);
+    }
+  };
+
+  // Track open state for conditional rendering
+  const [isOpen, setIsOpen] = createSignal(false);
+
+  const handleOpenChange = (details) => {
+    setIsOpen(details.open);
+    if (machineProps.onOpenChange) {
+      machineProps.onOpenChange(details);
+    }
+  };
+
+  // Check if there are selected items
+  const hasSelectedItems = createMemo(() => {
+    const value = machineProps.value || machineProps.defaultValue || [];
+    return value.length > 0;
+  });
+
+  const renderContent = () => (
+    <Combobox.Positioner>
+      <Show when={collection().items.length > 0}>
+        <Combobox.Content
           class={`${Z_INDEX.COMBOBOX} max-h-60 overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg focus:outline-none`}
         >
-          <For each={options()}>
-            {item => (
-              <li
-                {...api().getItemProps({ item })}
-                class='flex cursor-pointer items-center justify-between px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 data-disabled:cursor-not-allowed data-disabled:opacity-50 data-highlighted:bg-gray-50'
-              >
-                <span {...api().getItemTextProps({ item })}>{item.label}</span>
-                <Show when={api().getItemState({ item }).selected}>
-                  <FiCheck class='h-4 w-4 text-blue-600' />
-                </Show>
-              </li>
-            )}
-          </For>
-        </ul>
+          <Combobox.ItemGroup>
+            <Index each={collection().items}>
+              {(item) => {
+                const itemValue = item();
+                return (
+                  <Combobox.Item
+                    item={itemValue}
+                    class='flex cursor-pointer items-center justify-between px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[highlighted]:bg-gray-50'
+                  >
+                    <Combobox.ItemText>{itemValue.label}</Combobox.ItemText>
+                    <Combobox.ItemIndicator>
+                      <FiCheck class='h-4 w-4 text-blue-600' />
+                    </Combobox.ItemIndicator>
+                  </Combobox.Item>
+                );
+              }}
+            </Index>
+          </Combobox.ItemGroup>
+        </Combobox.Content>
       </Show>
-    </div>
+    </Combobox.Positioner>
   );
 
   return (
-    <div {...api().getRootProps()} class={`w-full ${local.class || ''}`}>
+    <Combobox.Root
+      collection={collection()}
+      value={machineProps.value}
+      defaultValue={machineProps.defaultValue}
+      onValueChange={handleValueChange}
+      onInputValueChange={handleInputValueChange}
+      onOpenChange={handleOpenChange}
+      multiple={machineProps.multiple}
+      disabled={machineProps.disabled}
+      readOnly={machineProps.readOnly}
+      invalid={machineProps.invalid}
+      name={machineProps.name}
+      allowCustomValue={machineProps.allowCustomValue}
+      closeOnSelect={machineProps.closeOnSelect}
+      openOnClick={machineProps.openOnClick ?? true}
+      class={`w-full ${local.class || ''}`}
+    >
       <Show when={local.label}>
-        <label {...api().getLabelProps()} class='mb-1 block text-sm font-medium text-gray-700'>
+        <Combobox.Label class='mb-1 block text-sm font-medium text-gray-700'>
           {local.label}
-        </label>
+        </Combobox.Label>
       </Show>
-      <div
-        {...api().getControlProps()}
-        class='relative flex items-center rounded-lg border border-gray-300 bg-white data-disabled:cursor-not-allowed data-disabled:bg-gray-100 data-focus:border-blue-500 data-focus:ring-1 data-focus:ring-blue-500 data-invalid:border-red-500'
-      >
-        <input
-          {...api().getInputProps()}
+      <Combobox.Control class='relative flex items-center rounded-lg border border-gray-300 bg-white data-[disabled]:cursor-not-allowed data-[disabled]:bg-gray-100 data-[focus]:border-blue-500 data-[focus]:ring-1 data-[focus]:ring-blue-500 data-[invalid]:border-red-500'>
+        <Combobox.Input
           placeholder={local.placeholder}
           class={`flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-gray-400 disabled:cursor-not-allowed ${local.inputClass || ''}`}
         />
-        <Show when={api().hasSelectedItems}>
-          <button
-            {...api().getClearTriggerProps()}
-            class='mr-1 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
-          >
+        <Show when={hasSelectedItems()}>
+          <Combobox.ClearTrigger class='mr-1 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'>
             <FiX class='h-4 w-4' />
-          </button>
+          </Combobox.ClearTrigger>
         </Show>
-        <button
-          {...api().getTriggerProps()}
-          class='px-2 py-2 text-gray-400 transition-colors hover:text-gray-600 data-disabled:cursor-not-allowed data-disabled:opacity-50'
-        >
+        <Combobox.Trigger class='px-2 py-2 text-gray-400 transition-colors hover:text-gray-600 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50'>
           <FiChevronDown class='h-4 w-4 transition-transform data-[state=open]:rotate-180' />
-        </button>
-      </div>
-      <Show when={api().open}>
-        <Show when={!local.inDialog} fallback={content()}>
-          <Portal>{content()}</Portal>
+        </Combobox.Trigger>
+      </Combobox.Control>
+      <Show when={isOpen()}>
+        <Show when={!local.inDialog} fallback={renderContent()}>
+          <Portal>{renderContent()}</Portal>
         </Show>
       </Show>
-    </div>
+    </Combobox.Root>
   );
 }
 
-export default Combobox;
+export { ComboboxComponent as Combobox };
+export default ComboboxComponent;

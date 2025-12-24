@@ -14,7 +14,7 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 
 ## Tech Stack
 
-- **Frontend**: SolidJS, SolidStart, Tailwind CSS, Vite, Zag
+- **Frontend**: SolidJS, SolidStart, Tailwind CSS, Vite, Ark UI
 - **Backend**: Cloudflare Workers, Durable Objects
 - **Database**: Cloudflare D1 (SQLite)
 - **Storage**: Cloudflare R2 (PDF documents)

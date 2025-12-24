@@ -185,7 +185,7 @@ app.route('/api/users/avatar', avatarRoutes);
 // Mount account merge routes
 app.route('/api/accounts/merge', accountMergeRoutes);
 
-// Mount project routes (must be before members to avoid conflicts)
+// Mount project routes
 app.route('/api/projects', projectRoutes);
 
 // Mount project member routes: /api/projects/:projectId/members
