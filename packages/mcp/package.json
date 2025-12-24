@@ -4,12 +4,15 @@
   "type": "module",
   "license": "PolyForm-Noncommercial-1.0.0",
   "bin": {
-    "corates-mcp": "./server.js"
+    "corates-mcp": "./dist/server.js"
   },
   "scripts": {
-    "start": "nohup node server.js > /dev/null 2>&1 & echo 'MCP server started in background'",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "start": "nohup node dist/server.js > /dev/null 2>&1 & echo 'MCP server started in background'",
     "stop": "pkill -f 'node.*server.js' || echo 'No MCP server running'",
-    "scrape": "node scrape-icons.js",
+    "scrape": "tsx src/scrape-icons.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -18,6 +21,9 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   }
 }

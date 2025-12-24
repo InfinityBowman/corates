@@ -6,8 +6,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/__tests__/setup.js'],
-    include: ['src/**/*.{test,spec}.{js,jsx}'],
+    setupFiles: ['./src/__tests__/setup.ts'],
+    include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
     server: {
       deps: {
         inline: [/solid-icons/, /@ark-ui/],

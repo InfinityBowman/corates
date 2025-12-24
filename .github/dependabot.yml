@@ -1,0 +1,202 @@
+version: 2
+updates:
+  # Root package.json dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "root"
+    versioning-strategy: increase
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    rebase-strategy: "auto"
+    groups:
+      root-dev-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "development"
+
+  # Landing package
+  - package-ecosystem: "npm"
+    directory: "/packages/landing"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "landing"
+    versioning-strategy: increase
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    rebase-strategy: "auto"
+    groups:
+      landing-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "production"
+      landing-dev-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "development"
+
+  # MCP package
+  - package-ecosystem: "npm"
+    directory: "/packages/mcp"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "mcp"
+    versioning-strategy: increase
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    rebase-strategy: "auto"
+    groups:
+      mcp-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "production"
+      mcp-dev-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "development"
+
+  # Shared package
+  - package-ecosystem: "npm"
+    directory: "/packages/shared"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "shared"
+    versioning-strategy: increase
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    rebase-strategy: "auto"
+    groups:
+      shared-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "production"
+      shared-dev-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "development"
+
+  # UI package
+  - package-ecosystem: "npm"
+    directory: "/packages/ui"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "ui"
+    versioning-strategy: increase
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    rebase-strategy: "auto"
+    groups:
+      ui-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "production"
+      ui-dev-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "development"
+
+  # Web package
+  - package-ecosystem: "npm"
+    directory: "/packages/web"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "web"
+    versioning-strategy: increase
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    rebase-strategy: "auto"
+    groups:
+      web-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "production"
+      web-dev-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "development"
+
+  # Workers package
+  - package-ecosystem: "npm"
+    directory: "/packages/workers"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "workers"
+    versioning-strategy: increase
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    rebase-strategy: "auto"
+    groups:
+      workers-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "production"
+      workers-dev-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "development"
+
+  # GitHub Actions workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    rebase-strategy: "auto"

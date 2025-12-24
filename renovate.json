@@ -1,0 +1,15 @@
+{
+  "extends": ["config:recommended"],
+  "labels": ["dependencies"],
+  "rangeStrategy": "bump",
+  "packageRules": [
+    {
+      "matchPaths": ["apps/**", "packages/**"],
+      "groupName": "workspace dependencies"
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "groupName": "dev dependencies"
+    }
+  ]
+}
