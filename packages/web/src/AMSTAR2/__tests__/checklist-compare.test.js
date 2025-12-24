@@ -250,7 +250,6 @@ describe('createReconciledChecklist', () => {
 
     expect(reconciled.name).toBe('Reconciled');
     expect(reconciled.id).toBe('reconciled-1');
-    expect(reconciled.isReconciled).toBe(true);
     expect(reconciled.q1.answers[2]).toEqual([false, true]); // From reviewer 2
     expect(reconciled.q2.answers).toEqual(cl1.q2.answers); // From reviewer 1
   });

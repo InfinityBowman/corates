@@ -6,24 +6,16 @@
 
 import { For, Show, createMemo } from 'solid-js';
 import { CgFileDocument } from 'solid-icons/cg';
+import { getCompletedChecklists } from '@/lib/checklist-domain.js';
 import CompletedChecklistRow from './CompletedChecklistRow.jsx';
 
 export default function CompletedStudyCard(props) {
   const hasPdfs = () => props.study?.pdfs && props.study.pdfs.length > 0;
   const firstPdf = () => (hasPdfs() ? props.study.pdfs[0] : null);
 
-  // Check if single reviewer study
-  const isSingleReviewer = () => props.study?.reviewer1 && !props.study?.reviewer2;
-
   // Get displayable checklists based on reviewer mode
   const displayChecklists = createMemo(() => {
-    const checklists = props.study?.checklists || [];
-    if (isSingleReviewer()) {
-      // Single reviewer: show completed checklists
-      return checklists.filter(c => c.status === 'completed');
-    }
-    // Dual reviewer: show reconciled checklists
-    return checklists.filter(c => c.isReconciled && c.status === 'completed');
+    return getCompletedChecklists(props.study);
   });
 
   return (

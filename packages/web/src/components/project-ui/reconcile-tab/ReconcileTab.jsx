@@ -5,7 +5,7 @@ import ReconcileStudyCard from './ReconcileStudyCard.jsx';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useProjectContext } from '../ProjectContext.jsx';
-import { isStudyInReconciliation } from '@/utils/reconciliation.js';
+import { getStudiesForTab } from '@/lib/checklist-domain.js';
 
 /**
  * ReconcileTab - Shows studies in reconciliation workflow
@@ -21,7 +21,7 @@ export default function ReconcileTab() {
 
   // Filter studies that are in reconciliation workflow
   const studiesInReconciliation = createMemo(() => {
-    return studies().filter(isStudyInReconciliation);
+    return getStudiesForTab(studies(), 'reconcile', null);
   });
 
   // Navigation helpers

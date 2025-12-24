@@ -742,6 +742,8 @@ export interface SelectProps {
   placeholder?: string;
   /** Disable the select */
   disabled?: boolean;
+  /** Set to true when used inside a Dialog or Popover */
+  inDialog?: boolean;
 }
 
 export const Select: Component<SelectProps>;

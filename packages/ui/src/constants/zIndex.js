@@ -21,6 +21,9 @@ export const Z_INDEX = {
   MENU: 'z-40',
   COMBOBOX: 'z-40',
 
+  /** Select - Dropdown select (needs to be above dialogs) */
+  SELECT: 'z-[60]',
+
   /** Dialog and Drawer Backdrop - Modal backdrops */
   BACKDROP: 'z-50',
 

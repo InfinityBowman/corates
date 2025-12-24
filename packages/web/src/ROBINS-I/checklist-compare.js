@@ -220,7 +220,6 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
     createdAt: metadata.createdAt || new Date().toISOString().split('T')[0],
     id: metadata.id || `reconciled-${Date.now()}`,
     checklistType: CHECKLIST_TYPES.ROBINS_I,
-    isReconciled: true,
     sourceChecklists: [checklist1.id, checklist2.id],
 
     // Copy structural elements from checklist1

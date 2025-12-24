@@ -3,6 +3,7 @@ import AMSTARDistribution from '@components/charts/AMSTARDistribution';
 import ChartSettingsModal from '@components/charts/ChartSettingsModal';
 import { getAnswers } from '@/AMSTAR2/checklist.js';
 import { createMemo, createSignal, createEffect, Show } from 'solid-js';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 import { createStore } from 'solid-js/store';
 import { BiRegularCog } from 'solid-icons/bi';
 
@@ -146,9 +147,7 @@ export default function ChartSection(props) {
   };
 
   // Build raw chart data from studies and their checklists
-  // Only includes checklists from the completed tab:
-  // - Single reviewer: completed checklists (status === 'completed')
-  // - Dual reviewer: reconciled checklists (isReconciled === true)
+  // Only includes checklists from the completed tab (status === COMPLETED)
   const rawChecklistData = createMemo(() => {
     const studiesList = props.studies?.() || [];
     const membersList = props.members?.() || [];
@@ -159,18 +158,9 @@ export default function ChartSection(props) {
     for (const study of studiesList) {
       if (!study.checklists || study.checklists.length === 0) continue;
 
-      // Determine if single or dual reviewer
-      const isSingleReviewer = study.reviewer1 && !study.reviewer2;
-
       for (const checklist of study.checklists) {
-        // Filter: only include completed/reconciled checklists
-        if (isSingleReviewer) {
-          // Single reviewer: only show completed checklists
-          if (checklist.status !== 'completed') continue;
-        } else {
-          // Dual reviewer: only show reconciled checklists
-          if (!checklist.isReconciled || checklist.status !== 'completed') continue;
-        }
+        // Filter: only include completed checklists (getCompletedChecklists handles single/dual logic)
+        if (checklist.status !== CHECKLIST_STATUS.COMPLETED) continue;
 
         // Get full checklist data with answers
         const fullChecklist = props.getChecklistData?.(study.id, checklist.id);

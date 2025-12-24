@@ -2,6 +2,7 @@ import { HiOutlineDocumentCheck } from 'solid-icons/hi';
 import { useNavigate } from '@solidjs/router';
 import { Show } from 'solid-js';
 import { getChecklistMetadata } from '@/checklist-registry';
+import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status.js';
 
 /**
  * Checklist tree item (leaf node)
@@ -22,14 +23,8 @@ export default function ChecklistTreeItem(props) {
         {getChecklistMetadata(props.checklist.type).name}
       </span>
       <Show when={props.checklist.status}>
-        <span
-          class={`text-3xs rounded px-1 py-0.5 ${
-            props.checklist.status === 'completed' ? 'bg-green-100 text-green-700'
-            : props.checklist.status === 'in-progress' ? 'bg-yellow-100 text-yellow-700'
-            : 'bg-gray-100 text-gray-600'
-          }`}
-        >
-          {props.checklist.status}
+        <span class={`text-3xs rounded px-1 py-0.5 ${getStatusStyle(props.checklist.status)}`}>
+          {getStatusLabel(props.checklist.status)}
         </span>
       </Show>
     </button>

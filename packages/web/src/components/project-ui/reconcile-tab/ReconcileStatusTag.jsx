@@ -1,4 +1,6 @@
 import { Show } from 'solid-js';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
+import { isReconciledChecklist } from '@/lib/checklist-domain.js';
 
 /**
  * ReconcileStatusTag - Shows "Waiting for {Reviewer}" or "Ready" status
@@ -8,21 +10,23 @@ import { Show } from 'solid-js';
  * @param {Function} props.getAssigneeName - Function to get reviewer name from ID
  */
 export default function ReconcileStatusTag(props) {
-  const completedChecklists = () =>
-    (props.study.checklists || []).filter(c => c.status === 'completed');
+  const awaitingReconcileChecklists = () =>
+    (props.study.checklists || []).filter(
+      c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.AWAITING_RECONCILE,
+    );
 
-  const isReady = () => completedChecklists().length === 2;
+  const isReady = () => awaitingReconcileChecklists().length === 2;
 
   const waitingForReviewer = () => {
     if (isReady()) return null;
 
-    const completed = completedChecklists();
-    if (completed.length !== 1) return null;
+    const awaiting = awaitingReconcileChecklists();
+    if (awaiting.length !== 1) return null;
 
-    const completedReviewerId = completed[0].assignedTo;
+    const awaitingReviewerId = awaiting[0].assignedTo;
     // Find the other reviewer
     const waitingReviewerId =
-      completedReviewerId === props.study.reviewer1 ? props.study.reviewer2 : props.study.reviewer1;
+      awaitingReviewerId === props.study.reviewer1 ? props.study.reviewer2 : props.study.reviewer1;
 
     return props.getAssigneeName(waitingReviewerId);
   };

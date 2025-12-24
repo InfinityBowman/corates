@@ -98,7 +98,6 @@ function buildStudyFromYMap(studyId, studyData, studyYMap) {
         title: checklistData.title || null,
         assignedTo: checklistData.assignedTo || null,
         status: checklistData.status || 'pending',
-        isReconciled: checklistData.isReconciled || false,
         createdAt: checklistData.createdAt,
         updatedAt: checklistData.updatedAt,
       });

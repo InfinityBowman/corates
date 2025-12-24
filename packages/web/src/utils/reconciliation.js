@@ -3,6 +3,9 @@
  * Shared logic for determining if a study is in the reconciliation workflow
  */
 
+import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
+import { isReconciledChecklist } from '@/lib/checklist-domain.js';
+
 /**
  * Determines if a study is eligible for reconciliation
  * @param {Object} study - The study object
@@ -16,24 +19,12 @@ export function isStudyInReconciliation(study) {
 
   const checklists = study.checklists || [];
 
-  // Skip if already has a completed reconciled checklist
-  if (checklists.some(c => c.isReconciled && c.status === 'completed')) {
-    return false;
-  }
-
-  // Count completed checklists (excluding reconciled ones)
-  const completedChecklists = checklists.filter(c => c.status === 'completed' && !c.isReconciled);
-
-  // Check if there's an in-progress reconciliation
-  const hasInProgressReconciliation = checklists.some(
-    c => c.isReconciled && c.status !== 'completed',
+  // Check for individual reviewer checklists awaiting reconciliation
+  // (not reconciled checklists - those are identified by assignedTo === null)
+  const awaitingReconcile = checklists.filter(
+    c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.AWAITING_RECONCILE,
   );
 
-  // Show if:
-  // 1. There's an in-progress reconciliation, OR
-  // 2. There are 1 or 2 completed (non-reconciled) checklists
-  return (
-    hasInProgressReconciliation ||
-    (completedChecklists.length >= 1 && completedChecklists.length <= 2)
-  );
+  // Show if there are 1 or 2 individual checklists awaiting reconciliation
+  return awaitingReconcile.length >= 1 && awaitingReconcile.length <= 2;
 }

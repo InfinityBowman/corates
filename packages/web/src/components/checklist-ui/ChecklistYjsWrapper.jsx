@@ -4,6 +4,8 @@ import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import useProject from '@/primitives/useProject/index.js';
 import projectStore from '@/stores/projectStore.js';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
+import { CHECKLIST_STATUS, isEditable } from '@/constants/checklist-status.js';
+import { getNextStatusForCompletion } from '@/lib/checklist-domain.js';
 import { downloadPdf, uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
 import { showToast, useConfirmDialog } from '@corates/ui';
@@ -55,8 +57,11 @@ export default function ChecklistYjsWrapper() {
     return study.checklists?.find(c => c.id === params.checklistId);
   });
 
-  const isReadOnly = () =>
-    currentChecklist()?.isReconciled === true || currentChecklist()?.status === 'completed';
+  const isReadOnly = () => {
+    const checklist = currentChecklist();
+    if (!checklist) return false;
+    return !isEditable(checklist.status);
+  };
 
   // Get all PDFs from the study
   const studyPdfs = createMemo(() => {
@@ -248,10 +253,11 @@ export default function ChecklistYjsWrapper() {
   async function handleToggleComplete() {
     if (isReadOnly()) return;
     const checklist = currentChecklist();
-    if (!checklist) return;
+    const study = currentStudy();
+    if (!checklist || !study) return;
 
     // If already completed, don't allow toggle back (checklist is locked)
-    if (checklist.status === 'completed') {
+    if (checklist.status === CHECKLIST_STATUS.COMPLETED) {
       showToast.info('Checklist Locked', 'Completed checklists cannot be edited.');
       return;
     }
@@ -268,10 +274,15 @@ export default function ChecklistYjsWrapper() {
 
     if (!confirmed) return;
 
-    updateChecklist(params.studyId, params.checklistId, { status: 'completed' });
+    // Determine the appropriate status based on reviewer count
+    const nextStatus = getNextStatusForCompletion(study);
+    updateChecklist(params.studyId, params.checklistId, { status: nextStatus });
+
+    const statusLabel =
+      nextStatus === CHECKLIST_STATUS.COMPLETED ? 'completed' : 'awaiting reconciliation';
     showToast.success(
       'Checklist Completed',
-      'This checklist has been marked as completed and is now locked.',
+      `This checklist has been marked as ${statusLabel} and is now locked.`,
     );
   }
 
@@ -296,10 +307,19 @@ export default function ChecklistYjsWrapper() {
   const getBackTab = () => {
     const checklist = currentChecklist();
     const study = currentStudy();
-    if (!checklist || checklist.status !== 'completed') return 'todo';
-    // Completed checklist: navigate to appropriate tab
-    const isSingleReviewer = study?.reviewer1 && !study?.reviewer2;
-    return isSingleReviewer ? 'completed' : 'reconcile';
+    if (!checklist) return 'todo';
+
+    if (checklist.status === CHECKLIST_STATUS.COMPLETED) {
+      // Completed checklist: navigate to appropriate tab
+      const isSingleReviewer = study?.reviewer1 && !study?.reviewer2;
+      return isSingleReviewer ? 'completed' : 'reconcile';
+    }
+
+    if (checklist.status === CHECKLIST_STATUS.AWAITING_RECONCILE) {
+      return 'reconcile';
+    }
+
+    return 'todo';
   };
 
   // Header content for the split screen toolbar (left side)
@@ -324,24 +344,28 @@ export default function ChecklistYjsWrapper() {
           fallback={
             <span
               class={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                currentChecklist()?.status === 'completed' ?
+                currentChecklist()?.status === CHECKLIST_STATUS.COMPLETED ?
                   'bg-green-100 text-green-700'
                 : 'bg-gray-100 text-gray-700'
               }`}
             >
-              {currentChecklist()?.status === 'completed' ? 'Completed' : 'Read-only'}
+              {currentChecklist()?.status === CHECKLIST_STATUS.COMPLETED ?
+                'Completed'
+              : 'Read-only'}
             </span>
           }
         >
           <button
             onClick={handleToggleComplete}
             class={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              currentChecklist()?.status === 'completed' ?
+              currentChecklist()?.status === CHECKLIST_STATUS.COMPLETED ?
                 'bg-green-100 text-green-700 hover:bg-green-200'
               : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}
           >
-            {currentChecklist()?.status === 'completed' ? 'Completed' : 'Mark Complete'}
+            {currentChecklist()?.status === CHECKLIST_STATUS.COMPLETED ?
+              'Completed'
+            : 'Mark Complete'}
           </button>
         </Show>
       </div>
