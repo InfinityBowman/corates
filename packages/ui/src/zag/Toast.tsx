@@ -2,12 +2,7 @@
  * Toast components using Ark UI
  */
 
-import {
-  Toast,
-  Toaster,
-  createToaster,
-  type ToastPromiseOptions,
-} from '@ark-ui/solid/toast';
+import { Toast, Toaster, createToaster, type ToastPromiseOptions } from '@ark-ui/solid/toast';
 import { Component, Show } from 'solid-js';
 import { FiX, FiCheck, FiAlertCircle, FiInfo, FiLoader } from 'solid-icons/fi';
 import { Z_INDEX } from '../constants/zIndex.js';
