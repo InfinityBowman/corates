@@ -3,44 +3,55 @@
  */
 
 import { PinInput } from '@ark-ui/solid/pin-input';
-import { mergeProps, Index } from 'solid-js';
+import { splitProps, Index, createMemo, mergeProps } from 'solid-js';
 
 /**
  * PinInput - OTP/PIN code input
  *
  * Props:
- * - required: boolean - Whether input is required (default: true)
- * - otp: boolean - Whether to use OTP mode (default: true)
- * - autoComplete: string - Autocomplete attribute (default: 'one-time-code')
+ * - count: number - Number of input fields (default: 6)
  * - isError: boolean - Whether to show error state
  * - onInput: (value: string) => void - Callback when value changes
  * - onComplete: (value: string) => void - Callback when all inputs are filled
+ * - class: string - Additional class for root element
+ * - required: boolean - Whether input is required (default: true)
+ * - otp: boolean - Whether to use OTP mode (default: true)
+ * - All other props are passed to PinInput.Root
  */
 export default function PinInputComponent(props) {
-  const merged = mergeProps(
+  const [local, machineProps] = splitProps(props, [
+    'count',
+    'isError',
+    'onInput',
+    'onComplete',
+    'class',
+  ]);
+
+  const mergedMachineProps = mergeProps(
     {
       required: true,
       otp: true,
-      autoComplete: 'one-time-code',
     },
-    props,
+    machineProps,
   );
 
-  const required = () => merged.required;
-  const otp = () => merged.otp;
-  const isError = () => merged.isError;
+  const count = () => local.count ?? 6;
+  const isError = () => local.isError;
+  const classValue = () => local.class;
 
   const handleValueChange = details => {
-    if (merged.onInput) {
-      merged.onInput(details.valueAsString);
+    if (local.onInput) {
+      local.onInput(details.valueAsString);
     }
   };
 
   const handleValueComplete = details => {
-    if (merged.onComplete) {
-      merged.onComplete(details.valueAsString);
+    if (local.onComplete) {
+      local.onComplete(details.valueAsString);
     }
   };
+
+  const inputIndices = createMemo(() => Array.from({ length: count() }, (_, i) => i));
 
   const inputClass = () =>
     'w-10 h-12 sm:w-14 sm:h-14 rounded-lg border-2 ' +
@@ -50,21 +61,21 @@ export default function PinInputComponent(props) {
     ' bg-gray-50 text-center text-xl font-semibold outline-none';
 
   return (
-    <div class='flex flex-col items-center'>
+    <div class={`flex flex-col items-center ${classValue() || ''}`}>
       <PinInput.Root
-        required={required()}
-        otp={otp()}
+        {...mergedMachineProps}
+        count={count()}
         onValueChange={handleValueChange}
         onValueComplete={handleValueComplete}
-        class='my-6 flex justify-center gap-1 sm:gap-3'
         invalid={isError()}
+        class='my-6 flex justify-center gap-1 sm:gap-3'
       >
         <PinInput.HiddenInput />
-        <Index each={[0, 1, 2, 3, 4, 5]}>
-          {(_, index) => (
-            <PinInput.Input index={index()} required={required()} class={inputClass()} />
-          )}
-        </Index>
+        <PinInput.Control>
+          <Index each={inputIndices()}>
+            {item => <PinInput.Input index={item()} class={inputClass()} />}
+          </Index>
+        </PinInput.Control>
       </PinInput.Root>
     </div>
   );

@@ -13,7 +13,7 @@ import { dirname, join } from 'path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 
-const BUCKET_NAME = 'corates-pdfs-prod';
+// const BUCKET_NAME = 'corates-pdfs-prod';
 const DB_NAME = 'corates-db-prod';
 
 function runCommand(command, args, options = {}) {
@@ -70,18 +70,6 @@ function runWranglerD1ExecuteFile(filePath) {
   ];
 
   return runCommand('pnpm', args);
-}
-
-function deleteR2Bucket() {
-  const args = ['wrangler', 'r2', 'bucket', 'delete', BUCKET_NAME, '--env', 'production'];
-
-  return runCommand('pnpm', args, { allowFailure: true });
-}
-
-function createR2Bucket() {
-  const args = ['wrangler', 'r2', 'bucket', 'create', BUCKET_NAME, '--env', 'production'];
-
-  return runCommand('pnpm', args, { allowFailure: true });
 }
 
 function deployWorkers() {

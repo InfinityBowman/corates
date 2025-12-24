@@ -5,27 +5,39 @@
  * multiple accounts and wants to combine them.
  */
 
+import { parseApiError } from '@/lib/error-utils.js';
+
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8787';
 
 /**
  * Initiate a merge request
  * @param {string} targetEmail - Email of the account to merge with
- * @returns {Promise<{ success: boolean, mergeToken: string, targetEmail: string, preview: { currentProviders: string[] } }>}
+ * @param {string} targetOrcidId - ORCID ID of the account to merge with (alternative to targetEmail)
+ * @returns {Promise<{ success: boolean, mergeToken: string, targetEmail: string, targetOrcidId?: string, preview: { currentProviders: string[] } }>}
  */
-export async function initiateMerge(targetEmail) {
+export async function initiateMerge(targetEmail, targetOrcidId) {
+  const body = {};
+  if (targetEmail) {
+    body.targetEmail = targetEmail;
+  } else if (targetOrcidId) {
+    body.targetOrcidId = targetOrcidId;
+  } else {
+    throw new Error('Either targetEmail or targetOrcidId must be provided');
+  }
+
   const response = await fetch(`${API_BASE}/api/accounts/merge/initiate`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ targetEmail }),
+    body: JSON.stringify(body),
   });
 
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to initiate merge');
+    const error = await parseApiError(response);
+    throw error;
   }
 
+  const data = await response.json();
   return data;
 }
 
@@ -43,12 +55,12 @@ export async function verifyMergeCode(mergeToken, code) {
     body: JSON.stringify({ mergeToken, code }),
   });
 
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to verify code');
+    const error = await parseApiError(response);
+    throw error;
   }
 
+  const data = await response.json();
   return data;
 }
 
@@ -65,12 +77,12 @@ export async function completeMerge(mergeToken) {
     body: JSON.stringify({ mergeToken }),
   });
 
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to complete merge');
+    const error = await parseApiError(response);
+    throw error;
   }
 
+  const data = await response.json();
   return data;
 }
 
@@ -88,12 +100,12 @@ export async function getMergeStatus(mergeToken) {
     },
   );
 
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to get merge status');
+    const error = await parseApiError(response);
+    throw error;
   }
 
+  const data = await response.json();
   return data;
 }
 
@@ -110,11 +122,11 @@ export async function cancelMerge(mergeToken) {
     body: JSON.stringify({ mergeToken }),
   });
 
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to cancel merge');
+    const error = await parseApiError(response);
+    throw error;
   }
 
+  const data = await response.json();
   return data;
 }

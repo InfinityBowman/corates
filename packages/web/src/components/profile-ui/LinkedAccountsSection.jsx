@@ -73,15 +73,33 @@ export default function LinkedAccountsSection() {
     const error = parseOAuthError(params);
 
     if (error) {
-      // Get provider before cleaning URL (might be passed as param)
-      const provider = params.get('provider') || 'google';
+      // Get provider from URL param, sessionStorage (stored when linking started),
+      // or callback path (e.g., /api/auth/oauth2/callback/orcid)
+      let provider = params.get('provider');
 
-      // Clean URL params
+      if (!provider) {
+        // Check if stored in sessionStorage from when linking started
+        provider = sessionStorage.getItem('linkingProvider');
+      }
+
+      if (!provider) {
+        // Try to extract from callback path (e.g., /api/auth/oauth2/callback/orcid)
+        const pathMatch = window.location.pathname.match(/\/oauth2\/callback\/([^/]+)/);
+        if (pathMatch) {
+          provider = pathMatch[1];
+        }
+      }
+
+      // Fallback to google if still not found
+      provider = provider || 'google';
+
+      // Clean URL params and sessionStorage
       const url = new URL(window.location.href);
       url.searchParams.delete('error');
       url.searchParams.delete('error_description');
       url.searchParams.delete('provider');
       window.history.replaceState({}, '', url.pathname + url.search);
+      sessionStorage.removeItem('linkingProvider');
 
       // Check if this is an "already linked" error - offer merge option
       if (error.code === 'ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER') {
@@ -119,6 +137,9 @@ export default function LinkedAccountsSection() {
         return;
       }
 
+      // Store the provider being linked so we can use it if the callback doesn't include it
+      sessionStorage.setItem('linkingProvider', providerId);
+
       await authClient.linkSocial({
         provider: providerId,
         callbackURL: window.location.href,
@@ -129,6 +150,7 @@ export default function LinkedAccountsSection() {
       const message = getLinkErrorMessage(err.code) || err.message || 'Failed to link account';
       showToast.error('Link Failed', message);
       setLinkingProvider(null);
+      sessionStorage.removeItem('linkingProvider');
     }
   }
 
@@ -287,6 +309,33 @@ export default function LinkedAccountsSection() {
             </p>
           </div>
         </div>
+
+        {/* Dev mode: Test merge dialog */}
+        {import.meta.env.DEV && (
+          <div class='mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4'>
+            <p class='mb-2 text-xs font-semibold text-amber-800'>Dev Mode: Test Merge Flow</p>
+            <div class='flex gap-2'>
+              <button
+                onClick={() => {
+                  setMergeConflictProvider('orcid');
+                  setShowMergeDialog(true);
+                }}
+                class='rounded bg-amber-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-amber-700'
+              >
+                Test ORCID Merge
+              </button>
+              <button
+                onClick={() => {
+                  setMergeConflictProvider('google');
+                  setShowMergeDialog(true);
+                }}
+                class='rounded bg-amber-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-amber-700'
+              >
+                Test Google Merge
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Unlink confirmation dialog */}

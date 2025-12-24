@@ -30,6 +30,8 @@ export default [
 
       globals: {
         // Browser globals
+        requestIdleCallback: 'readonly',
+        cancelIdleCallback: 'readonly',
         performance: 'readonly',
         ReadableStream: 'readonly',
         HTMLDivElement: 'readonly',
