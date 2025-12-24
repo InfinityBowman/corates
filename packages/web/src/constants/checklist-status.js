@@ -83,7 +83,10 @@ export function canTransitionTo(currentStatus, newStatus) {
   }
 
   // Can transition from awaiting-reconcile to completed (after reconciliation)
-  if (currentStatus === CHECKLIST_STATUS.AWAITING_RECONCILE && newStatus === CHECKLIST_STATUS.COMPLETED) {
+  if (
+    currentStatus === CHECKLIST_STATUS.AWAITING_RECONCILE &&
+    newStatus === CHECKLIST_STATUS.COMPLETED
+  ) {
     return true;
   }
 

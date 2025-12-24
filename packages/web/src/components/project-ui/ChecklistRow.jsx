@@ -7,7 +7,6 @@ import { getChecklistMetadata } from '@/checklist-registry';
 import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status.js';
 
 export default function ChecklistRow(props) {
-
   return (
     <div class='group flex items-center justify-between p-4 transition-colors hover:bg-gray-50'>
       <div class='flex-1'>
