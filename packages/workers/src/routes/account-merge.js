@@ -312,12 +312,7 @@ accountMergeRoutes.post('/initiate', async c => {
     const orcidAccount = await db
       .select({ accountId: account.accountId })
       .from(account)
-      .where(
-        and(
-          eq(account.userId, targetUser.id),
-          eq(account.providerId, 'orcid'),
-        ),
-      )
+      .where(and(eq(account.userId, targetUser.id), eq(account.providerId, 'orcid')))
       .limit(1)
       .then(rows => rows[0]);
 
