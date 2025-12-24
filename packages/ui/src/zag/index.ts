@@ -26,7 +26,7 @@ export { Splitter } from './Splitter.tsx';
 export { default as Switch } from './Switch.tsx';
 export { Tabs } from './Tabs.tsx';
 export { TagsInput } from './TagsInput.tsx';
-export { Toaster, toaster, showToast } from './Toast.tsx';
+export { Toaster, toaster, showToast, type ToastPromiseOptions } from './Toast.tsx';
 export { ToggleGroup } from './ToggleGroup.tsx';
 export { Tooltip } from './Tooltip.tsx';
 export { Tour, TourProvider, useTour } from './Tour.tsx';

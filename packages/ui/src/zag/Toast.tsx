@@ -2,7 +2,12 @@
  * Toast components using Ark UI
  */
 
-import { Toast, Toaster, createToaster } from '@ark-ui/solid/toast';
+import {
+  Toast,
+  Toaster,
+  createToaster,
+  type ToastPromiseOptions,
+} from '@ark-ui/solid/toast';
 import { Component, Show } from 'solid-js';
 import { FiX, FiCheck, FiAlertCircle, FiInfo, FiLoader } from 'solid-icons/fi';
 import { Z_INDEX } from '../constants/zIndex.js';
@@ -111,7 +116,8 @@ export const showToast = {
   loading: (title?: string, description?: string) =>
     toaster.create({ title, description, type: 'loading', duration: Infinity }),
 
-  promise: <T,>(promise: Promise<T>, options: ToastOptions) => toaster.promise(promise, options),
+  promise: <T,>(promise: Promise<T>, options: ToastPromiseOptions) =>
+    toaster.promise(promise, options),
 
   dismiss: (id: string) => toaster.dismiss(id),
 
@@ -119,3 +125,4 @@ export const showToast = {
 };
 
 export { ToasterComponent as Toaster };
+export type { ToastPromiseOptions };
