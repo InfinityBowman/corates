@@ -103,13 +103,13 @@ export default function EditableComponent(props) {
   const previewClass = () => merged.previewClass;
   const label = () => merged.label;
 
-  const handleValueChange = (details) => {
+  const handleValueChange = details => {
     if (merged.onChange) {
       merged.onChange(details.value);
     }
   };
 
-  const handleValueCommit = (details) => {
+  const handleValueCommit = details => {
     if (merged.onSubmit) {
       merged.onSubmit(details.value);
     }
@@ -142,7 +142,7 @@ export default function EditableComponent(props) {
       class={cn('group inline-block', classValue())}
     >
       <Editable.Context>
-        {(api) => (
+        {api => (
           <>
             <Show when={label()}>
               <Editable.Label class='mb-1 block text-sm font-medium text-gray-700'>

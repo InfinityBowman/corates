@@ -22,7 +22,7 @@ export const toaster = createToaster({
  * Toaster component - renders all active toasts
  */
 export function ToasterComponent() {
-  const getIcon = (type) => {
+  const getIcon = type => {
     switch (type) {
       case 'success':
         return <FiCheck class='h-5 w-5 text-green-500' />;
@@ -35,7 +35,7 @@ export function ToasterComponent() {
     }
   };
 
-  const getStyles = (type) => {
+  const getStyles = type => {
     switch (type) {
       case 'success':
         return 'border-green-200 bg-green-50';
@@ -53,7 +53,7 @@ export function ToasterComponent() {
       toaster={toaster}
       class={`pointer-events-none fixed inset-0 ${Z_INDEX.TOAST} flex flex-col items-end p-4 sm:p-6`}
     >
-      {(toast) => (
+      {toast => (
         <Toast.Root
           class={`toast-item pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg border shadow-lg ${getStyles(toast().type)}`}
         >
@@ -62,7 +62,9 @@ export function ToasterComponent() {
               <div class='shrink-0'>{getIcon(toast().type)}</div>
               <div class='ml-3 w-0 flex-1'>
                 <Show when={toast().title}>
-                  <Toast.Title class='text-sm font-medium text-gray-900'>{toast().title}</Toast.Title>
+                  <Toast.Title class='text-sm font-medium text-gray-900'>
+                    {toast().title}
+                  </Toast.Title>
                 </Show>
                 <Show when={toast().description}>
                   <Toast.Description class='mt-1 text-sm text-gray-500'>
@@ -102,7 +104,7 @@ export const showToast = {
 
   promise: (promise, options) => toaster.promise(promise, options),
 
-  dismiss: (id) => toaster.dismiss(id),
+  dismiss: id => toaster.dismiss(id),
 
   update: (id, options) => toaster.update(id, options),
 };

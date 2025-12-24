@@ -34,10 +34,7 @@ export function AvatarComponent(props) {
     'flex items-center justify-center w-full h-full bg-gray-200 text-gray-700 font-medium';
 
   return (
-    <Avatar.Root
-      onStatusChange={onStatusChange()}
-      class={`overflow-hidden ${props.class || ''}`}
-    >
+    <Avatar.Root onStatusChange={onStatusChange()} class={`overflow-hidden ${props.class || ''}`}>
       <Avatar.Fallback class={fallbackClass()}>{getInitials()}</Avatar.Fallback>
       <Avatar.Image
         alt={alt()}

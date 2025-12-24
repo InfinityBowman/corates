@@ -31,13 +31,13 @@ export default function PinInputComponent(props) {
   const autoComplete = () => merged.autoComplete;
   const isError = () => merged.isError;
 
-  const handleValueChange = (details) => {
+  const handleValueChange = details => {
     if (merged.onInput) {
       merged.onInput(details.valueAsString);
     }
   };
 
-  const handleValueComplete = (details) => {
+  const handleValueComplete = details => {
     if (merged.onComplete) {
       merged.onComplete(details.valueAsString);
     }

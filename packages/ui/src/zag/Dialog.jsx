@@ -26,7 +26,7 @@ export function DialogComponent(props) {
   const description = () => props.description;
   const children = () => props.children;
 
-  const handleOpenChange = (details) => {
+  const handleOpenChange = details => {
     if (props.onOpenChange) {
       props.onOpenChange(details.open);
     }
@@ -105,7 +105,7 @@ export function ConfirmDialogComponent(props) {
   const confirmText = () => props.confirmText;
   const cancelText = () => props.cancelText;
 
-  const handleOpenChange = (details) => {
+  const handleOpenChange = details => {
     if (props.onOpenChange) {
       props.onOpenChange(details.open);
     }
@@ -169,7 +169,9 @@ export function ConfirmDialogComponent(props) {
                   </div>
                   {/* Text content */}
                   <div class='min-w-0 flex-1'>
-                    <Dialog.Title class='text-lg font-semibold text-gray-900'>{title()}</Dialog.Title>
+                    <Dialog.Title class='text-lg font-semibold text-gray-900'>
+                      {title()}
+                    </Dialog.Title>
                     <Dialog.Description class='mt-2 text-sm text-gray-600'>
                       {description()}
                     </Dialog.Description>

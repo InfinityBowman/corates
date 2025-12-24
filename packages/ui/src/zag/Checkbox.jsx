@@ -47,7 +47,7 @@ export function CheckboxComponent(props) {
     return defaultChecked();
   });
 
-  const handleCheckedChange = (details) => {
+  const handleCheckedChange = details => {
     if (merged.onChange) {
       // When transitioning from indeterminate, treat it as checking
       const newChecked = details.checked === true || details.checked === 'indeterminate';
@@ -67,9 +67,7 @@ export function CheckboxComponent(props) {
         disabled() ? 'cursor-not-allowed opacity-50' : ''
       } ${classValue() || ''}`}
     >
-      <Checkbox.Control
-        class='flex h-4 w-4 items-center justify-center rounded border-2 transition-colors data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=indeterminate]:border-blue-600 data-[state=indeterminate]:bg-blue-600 data-[state=unchecked]:border-gray-300 data-[state=unchecked]:bg-white data-[state=unchecked]:hover:border-blue-400 data-[focus]:ring-2 data-[focus]:ring-blue-500 data-[focus]:ring-offset-1'
-      >
+      <Checkbox.Control class='flex h-4 w-4 items-center justify-center rounded border-2 transition-colors data-[focus]:ring-2 data-[focus]:ring-blue-500 data-[focus]:ring-offset-1 data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=indeterminate]:border-blue-600 data-[state=indeterminate]:bg-blue-600 data-[state=unchecked]:border-gray-300 data-[state=unchecked]:bg-white data-[state=unchecked]:hover:border-blue-400'>
         <Checkbox.Indicator indeterminate class='h-3 w-3 text-white'>
           <BiRegularMinus class='h-3 w-3 text-white' />
         </Checkbox.Indicator>

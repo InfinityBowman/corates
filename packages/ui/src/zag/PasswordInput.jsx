@@ -34,14 +34,14 @@ export default function PasswordInputComponent(props) {
     inputClass() ||
     'w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition big-placeholder';
 
-  const handleInput = (e) => {
+  const handleInput = e => {
     props.onPasswordChange?.(e.target.value);
   };
 
   return (
     <PasswordInput.Root
       visible={visible()}
-      onVisibilityChange={(details) => setVisible(details.visible)}
+      onVisibilityChange={details => setVisible(details.visible)}
       autoComplete={autoComplete()}
       required={required()}
       class={classValue()}

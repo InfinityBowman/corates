@@ -25,7 +25,7 @@ export function RadioGroupComponent(props) {
   const orientation = () => machineProps.orientation || 'vertical';
   const isVertical = createMemo(() => orientation() === 'vertical');
 
-  const handleValueChange = (details) => {
+  const handleValueChange = details => {
     if (machineProps.onValueChange) {
       machineProps.onValueChange(details);
     }

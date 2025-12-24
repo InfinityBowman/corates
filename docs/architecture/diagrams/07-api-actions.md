@@ -5,11 +5,13 @@ Comprehensive diagrams showing all actions that can be performed on projects, st
 ## Overview
 
 This document visualizes the complete API surface for the three main entities in CoRATES:
+
 - **Projects**: Backend API routes + Y.js sync operations
 - **Studies**: Y.js operations + PDF management via backend API
 - **Checklists**: Y.js operations only
 
 Each diagram shows:
+
 - All CRUD operations
 - Permission and validation checks
 - External dependencies (D1, R2, Durable Objects)
@@ -628,12 +630,14 @@ flowchart TB
 ### Error Code Categories
 
 #### Authentication Errors (AUTH_ERRORS)
+
 - **AUTH_REQUIRED** (401): User not authenticated
 - **AUTH_INVALID** (401): Invalid credentials
 - **AUTH_EXPIRED** (401): Session expired
 - **AUTH_FORBIDDEN** (403): Insufficient permissions or missing entitlement
 
 #### Validation Errors (VALIDATION_ERRORS)
+
 - **FIELD_REQUIRED** (400): Required field missing
 - **FIELD_INVALID_FORMAT** (400): Field format invalid
 - **FIELD_TOO_LONG** (400): Field exceeds maximum length
@@ -643,6 +647,7 @@ flowchart TB
 - **INVALID_INPUT** (400): Invalid input data
 
 #### Project Errors (PROJECT_ERRORS)
+
 - **NOT_FOUND** (404): Project, member, or resource not found
 - **ACCESS_DENIED** (403): User does not have access to project
 - **MEMBER_ALREADY_EXISTS** (409): User is already a member
@@ -650,6 +655,7 @@ flowchart TB
 - **INVALID_ROLE** (400): Invalid role specified
 
 #### File Errors (FILE_ERRORS)
+
 - **TOO_LARGE** (413): File exceeds size limit
 - **INVALID_TYPE** (400): Invalid file type (not PDF)
 - **NOT_FOUND** (404): File not found in R2
@@ -657,10 +663,12 @@ flowchart TB
 - **ALREADY_EXISTS** (409): File with same name already exists
 
 #### User Errors (USER_ERRORS)
+
 - **NOT_FOUND** (404): User not found
 - **EMAIL_NOT_VERIFIED** (403): Email address not verified
 
 #### System Errors (SYSTEM_ERRORS)
+
 - **DB_ERROR** (500): Database operation failed
 - **DB_TRANSACTION_FAILED** (500): Database transaction failed
 - **EMAIL_SEND_FAILED** (500): Failed to send email
@@ -686,6 +694,7 @@ flowchart TB
 ### Y.js Sync Failures
 
 Y.js operations can fail in several ways:
+
 - **Not Connected**: No active Y.js connection to project
 - **Not Synced**: Y.js document not yet synced with server
 - **Y.Doc Missing**: Y.Doc not available (null/undefined)
@@ -695,6 +704,7 @@ Y.js operations can fail in several ways:
 ### Network Failures
 
 External API calls can fail:
+
 - **Network Error**: Connection timeout, DNS failure, etc.
 - **API Error**: External API returns error response
 - **Parse Error**: Failed to parse API response

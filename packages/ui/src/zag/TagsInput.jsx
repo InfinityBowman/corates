@@ -36,7 +36,7 @@ export function TagsInputComponent(props) {
     'inputClass',
   ]);
 
-  const validate = (details) => {
+  const validate = details => {
     if (local.allowDuplicates) return true;
     return !details.values.includes(details.inputValue);
   };
@@ -47,7 +47,7 @@ export function TagsInputComponent(props) {
     validate,
   });
 
-  const handleValueChange = (details) => {
+  const handleValueChange = details => {
     if (context.onValueChange) {
       context.onValueChange(details);
     }
@@ -69,7 +69,7 @@ export function TagsInputComponent(props) {
       class={`w-full ${local.class || ''}`}
     >
       <TagsInput.Context>
-        {(api) => (
+        {api => (
           <>
             {local.label && (
               <TagsInput.Label class='mb-1 block text-sm font-medium text-gray-700'>

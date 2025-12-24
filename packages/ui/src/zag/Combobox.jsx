@@ -51,19 +51,19 @@ export function ComboboxComponent(props) {
   const { collection, filter } = useListCollection({
     initialItems: getItems(),
     filter: filterFn().contains,
-    itemToString: (item) => item.label,
-    itemToValue: (item) => item.value,
-    itemToDisabled: (item) => item.disabled,
+    itemToString: item => item.label,
+    itemToValue: item => item.value,
+    itemToDisabled: item => item.disabled,
   });
 
-  const handleInputValueChange = (details) => {
+  const handleInputValueChange = details => {
     filter(details.inputValue);
     if (machineProps.onInputValueChange) {
       machineProps.onInputValueChange(details);
     }
   };
 
-  const handleValueChange = (details) => {
+  const handleValueChange = details => {
     if (machineProps.onValueChange) {
       machineProps.onValueChange(details);
     }
@@ -72,7 +72,7 @@ export function ComboboxComponent(props) {
   // Track open state for conditional rendering
   const [isOpen, setIsOpen] = createSignal(false);
 
-  const handleOpenChange = (details) => {
+  const handleOpenChange = details => {
     setIsOpen(details.open);
     if (machineProps.onOpenChange) {
       machineProps.onOpenChange(details);
@@ -93,7 +93,7 @@ export function ComboboxComponent(props) {
         >
           <Combobox.ItemGroup>
             <Index each={collection().items}>
-              {(item) => {
+              {item => {
                 const itemValue = item();
                 return (
                   <Combobox.Item

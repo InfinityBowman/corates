@@ -28,7 +28,7 @@ export default function SwitchComponent(props) {
   const name = () => merged.name;
   const classValue = () => merged.class;
 
-  const handleCheckedChange = (details) => {
+  const handleCheckedChange = details => {
     if (merged.onChange) {
       merged.onChange(details.checked === true);
     }

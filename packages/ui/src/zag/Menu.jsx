@@ -42,7 +42,7 @@ export function MenuComponent(props) {
     'class',
   ]);
 
-  const handleSelect = (details) => {
+  const handleSelect = details => {
     if (machineProps.onSelect) {
       machineProps.onSelect(details);
     }
@@ -51,7 +51,7 @@ export function MenuComponent(props) {
   // Track open state for conditional rendering
   const [isOpen, setIsOpen] = createSignal(false);
 
-  const handleOpenChange = (details) => {
+  const handleOpenChange = details => {
     setIsOpen(details.open);
     if (machineProps.onOpenChange) {
       machineProps.onOpenChange(details);
@@ -64,7 +64,7 @@ export function MenuComponent(props) {
         class={`${Z_INDEX.MENU} min-w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg focus:outline-none ${local.class || ''}`}
       >
         <For each={local.items}>
-          {(item) => (
+          {item => (
             <Show
               when={!item.separator && !item.groupLabel}
               fallback={

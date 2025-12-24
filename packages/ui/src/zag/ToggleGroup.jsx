@@ -39,7 +39,7 @@ export function ToggleGroupComponent(props) {
   const orientation = () => machineProps.orientation || 'horizontal';
   const isVertical = createMemo(() => orientation() === 'vertical');
 
-  const handleValueChange = (details) => {
+  const handleValueChange = details => {
     if (machineProps.onValueChange) {
       machineProps.onValueChange(details);
     }

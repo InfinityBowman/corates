@@ -76,9 +76,7 @@ export function ProgressComponent(props) {
           </Show>
         </div>
       </Show>
-      <Progress.Track
-        class={`w-full overflow-hidden rounded-full bg-gray-200 ${getSizeClass()}`}
-      >
+      <Progress.Track class={`w-full overflow-hidden rounded-full bg-gray-200 ${getSizeClass()}`}>
         <Progress.Range
           class={`h-full rounded-full transition-all duration-300 ${getVariantClass()} ${
             local.indeterminate ? 'animate-progress-indeterminate' : ''

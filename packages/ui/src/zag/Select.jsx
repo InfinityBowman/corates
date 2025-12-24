@@ -34,8 +34,8 @@ export default function SelectComponent(props) {
   const collection = createMemo(() =>
     createListCollection({
       items: items(),
-      itemToString: (item) => item.label,
-      itemToValue: (item) => item.value,
+      itemToString: item => item.label,
+      itemToValue: item => item.value,
     }),
   );
 
@@ -45,10 +45,10 @@ export default function SelectComponent(props) {
     return v ? [v] : [];
   });
 
-  const handleValueChange = (details) => {
+  const handleValueChange = details => {
     const newValue = details.value[0] || '';
     // Prevent selecting disabled values
-    const item = items().find((i) => i.value === newValue);
+    const item = items().find(i => i.value === newValue);
     if (item?.disabled || disabledValues().includes(newValue)) {
       return;
     }
@@ -56,20 +56,18 @@ export default function SelectComponent(props) {
   };
 
   // Helper to check if a value is disabled
-  const isValueDisabled = (val) => {
-    const item = items().find((i) => i.value === val);
+  const isValueDisabled = val => {
+    const item = items().find(i => i.value === val);
     return item?.disabled || disabledValues().includes(val);
   };
 
   // Render content with or without portal
   const renderContent = () => (
-    <Select.Positioner
-      class={inDialog() ? 'absolute top-full left-0 right-0 z-10' : ''}
-    >
+    <Select.Positioner class={inDialog() ? 'absolute top-full right-0 left-0 z-10' : ''}>
       <Select.Content class='max-h-60 overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg focus:outline-none'>
         <Select.ItemGroup>
           <Index each={items()}>
-            {(item) => {
+            {item => {
               const itemValue = item();
               const isDisabled = isValueDisabled(itemValue.value);
               return (
@@ -77,7 +75,9 @@ export default function SelectComponent(props) {
                   item={itemValue}
                   disabled={isDisabled}
                   class={`flex cursor-pointer items-center justify-between px-3 py-2 whitespace-nowrap hover:bg-gray-100 data-[highlighted]:bg-blue-50 ${
-                    isDisabled ? 'cursor-not-allowed text-gray-400 hover:bg-transparent' : 'text-gray-900'
+                    isDisabled ?
+                      'cursor-not-allowed text-gray-400 hover:bg-transparent'
+                    : 'text-gray-900'
                   }`}
                 >
                   <Select.ItemText>{itemValue.label}</Select.ItemText>
