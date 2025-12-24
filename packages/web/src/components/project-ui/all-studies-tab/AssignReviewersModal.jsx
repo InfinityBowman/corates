@@ -68,15 +68,11 @@ export default function AssignReviewersModal(props) {
       setReviewer2(study.reviewer2 || '');
 
       // Small delay to ensure Select components are ready before rendering
-      setSelectsReady(false);
-      setTimeout(() => {
-        setSelectsReady(true);
-      }, 0);
+      setSelectsReady(true);
     } else if (!isOpen) {
       // Reset when modal closes
       setReviewer1('');
       setReviewer2('');
-      setSelectsReady(false);
     }
   });
 
@@ -102,12 +98,6 @@ export default function AssignReviewersModal(props) {
       setSaving(false);
     }
   };
-
-  // createEffect(() => {
-  //   console.log('reviewer1', reviewer1());
-  //   console.log('reviewer2', reviewer2());
-  //   console.log('memberItems', memberItems());
-  // });
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange} title='Assign Reviewers' size='md'>
