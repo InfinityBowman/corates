@@ -10,6 +10,8 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 import { Avatar, useConfirmDialog, showToast } from '@corates/ui';
 import { API_BASE } from '@config/api.js';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
+import { shouldShowInTab } from '@/lib/checklist-domain.js';
 
 /**
  * OverviewTab - Project overview with stats, settings, and members
@@ -29,29 +31,21 @@ export default function OverviewTab() {
   const currentUserId = () => user()?.id;
 
   // Calculate additional stats
-
   const inProgressStudies = () =>
     studies().filter(s => {
       const checklists = s.checklists || [];
-      return checklists.some(c => c.status === 'in_progress');
+      return checklists.some(c => c.status === CHECKLIST_STATUS.IN_PROGRESS);
     }).length;
 
   const readyToReconcile = () =>
     studies().filter(s => {
       const checklists = s.checklists || [];
-      const completedChecklists = checklists.filter(c => c.status === 'completed');
+      const completedChecklists = checklists.filter(c => c.status === CHECKLIST_STATUS.COMPLETED);
       return completedChecklists.length === 2;
     }).length;
 
   const completedStudies = () =>
-    studies().filter(s => {
-      const checklists = s.checklists || [];
-      const isSingleReviewer = s.reviewer1 && !s.reviewer2;
-      if (isSingleReviewer) {
-        return checklists.some(c => c.status === 'completed');
-      }
-      return checklists.some(c => c.isReconciled && c.status === 'completed');
-    }).length;
+    studies().filter(s => shouldShowInTab(s, 'completed', null)).length;
 
   // Handlers (use active project - no projectId needed)
   const handleUpdateStudy = (studyId, updates) => {

@@ -77,8 +77,10 @@ export default function Contact() {
                 <div>
                   <h2 class='mb-6 text-2xl font-semibold text-gray-900'>We are here to help</h2>
                   <p class='mb-8 text-gray-600'>
-                    Whether you have questions about our platform, need technical support, or want
-                    to discuss partnership opportunities, our team is ready to assist you.
+                    Whether you have questions about our platform, need technical support, want to
+                    provide feedback, or discuss partnership opportunities, our team is ready to
+                    assist you. If you would like early access to the platform, please fill out the
+                    form below with 'Early Access Request' as the subject.
                   </p>
                 </div>
 

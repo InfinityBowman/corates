@@ -18,7 +18,7 @@ import { BiRegularHome } from 'solid-icons/bi';
 import { BsListTask } from 'solid-icons/bs';
 import { CgArrowsExchange } from 'solid-icons/cg';
 import { AiFillCheckCircle, AiOutlineBook } from 'solid-icons/ai';
-import { isStudyInReconciliation } from '@/utils/reconciliation.js';
+import { getChecklistCount } from '@/lib/checklist-domain.js';
 
 // Components
 import { ProjectProvider } from './ProjectContext.jsx';
@@ -193,18 +193,11 @@ export default function ProjectView() {
   const getToDoCount = () => {
     const userId = user()?.id;
     if (!userId) return 0;
-    // Count studies where user is a reviewer and has non-completed checklists to work on
-    return studies().filter(study => {
-      if (study.reviewer1 !== userId && study.reviewer2 !== userId) return false;
-      const checklists = study.checklists || [];
-      const userChecklists = checklists.filter(c => c.assignedTo === userId);
-      // Show if user has no checklist yet OR has a non-completed checklist
-      return userChecklists.length === 0 || userChecklists.some(c => c.status !== 'completed');
-    }).length;
+    return getChecklistCount(studies(), 'todo', userId);
   };
 
   const getReconcileCount = () => {
-    return studies().filter(isStudyInReconciliation).length;
+    return getChecklistCount(studies(), 'reconcile', null);
   };
 
   // Tab configuration

@@ -8,6 +8,11 @@ import { useParams, useNavigate } from '@solidjs/router';
 import useProject from '@/primitives/useProject/index.js';
 import projectStore from '@/stores/projectStore.js';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
+import {
+  findReconciledChecklist,
+  getInProgressReconciledChecklists,
+} from '@/lib/checklist-domain.js';
 import { downloadPdf } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
 import { showToast } from '@corates/ui';
@@ -225,9 +230,9 @@ export default function ReconciliationWrapper() {
       progress.checklist2Id === params.checklist2Id &&
       progress.reconciledChecklistId
     ) {
-      // Verify it still exists in study checklists
+      // Verify it still exists and is not completed
       const existingChecklist = study.checklists?.find(
-        c => c.id === progress.reconciledChecklistId && c.isReconciled,
+        c => c.id === progress.reconciledChecklistId && c.status !== CHECKLIST_STATUS.COMPLETED,
       );
       if (existingChecklist) {
         setReconciledChecklistId(progress.reconciledChecklistId);
@@ -236,11 +241,9 @@ export default function ReconciliationWrapper() {
       }
     }
 
-    // Check if one exists in study checklists (another client may have created it)
-    const existingReconciled = study.checklists?.find(
-      c => c.isReconciled && c.status !== 'completed',
-    );
-    if (existingReconciled) {
+    // Check if a reconciled checklist already exists (another client may have created it)
+    const existingReconciled = findReconciledChecklist(study);
+    if (existingReconciled && existingReconciled.status !== CHECKLIST_STATUS.COMPLETED) {
       // Found existing - save reference in progress and use it
       saveReconciliationProgress(params.studyId, {
         checklist1Id: params.checklist1Id,
@@ -264,10 +267,9 @@ export default function ReconciliationWrapper() {
       return;
     }
 
-    // Mark it as reconciled and in_progress
+    // Mark it as in-progress (reconciled checklist starts as in-progress)
     updateChecklist(params.studyId, newChecklistId, {
-      isReconciled: true,
-      status: 'in_progress',
+      status: CHECKLIST_STATUS.IN_PROGRESS,
       title: 'Reconciled Checklist',
     });
 
@@ -294,9 +296,8 @@ export default function ReconciliationWrapper() {
     const currentId = reconciledChecklistId();
     if (!study || !currentId) return;
 
-    // Check if there's another reconciled checklist (another client may have created one)
-    const allReconciled =
-      study.checklists?.filter(c => c.isReconciled && c.status !== 'completed') || [];
+    // Get all in-progress reconciled checklists
+    const allReconciled = getInProgressReconciledChecklists(study);
 
     if (allReconciled.length > 1) {
       // Multiple reconciled checklists exist - use the one created first
@@ -360,9 +361,8 @@ export default function ReconciliationWrapper() {
 
       // Mark the reconciled checklist as completed
       updateChecklist(params.studyId, id, {
-        status: 'completed',
+        status: CHECKLIST_STATUS.COMPLETED,
         title: reconciledName || 'Reconciled Checklist',
-        isReconciled: true,
       });
 
       // Clear the reconciliation progress since we've completed it

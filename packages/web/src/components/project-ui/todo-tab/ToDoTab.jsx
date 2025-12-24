@@ -6,6 +6,7 @@ import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
+import { getStudiesForTab } from '@/lib/checklist-domain.js';
 
 /**
  * ToDoTab - Shows studies assigned to the current user in compact rows
@@ -32,27 +33,7 @@ export default function ToDoTab() {
   const myStudies = createMemo(() => {
     const userId = currentUserId();
     if (!userId) return [];
-    return (
-      studies()
-        .filter(study => study.reviewer1 === userId || study.reviewer2 === userId)
-        .map(study => {
-          const originalChecklists = study.checklists || [];
-          // Check if user has any checklist (completed or not)
-          const userHasChecklist = originalChecklists.some(c => c.assignedTo === userId);
-          // Filter to only show the current user's non-completed checklists
-          const activeChecklists = originalChecklists.filter(
-            c => c.assignedTo === userId && c.status !== 'completed',
-          );
-          return {
-            ...study,
-            checklists: activeChecklists,
-            // Flag to indicate if user needs to create a checklist
-            _needsChecklist: !userHasChecklist,
-          };
-        })
-        // Only show studies that have active checklists OR need a checklist created
-        .filter(study => study.checklists.length > 0 || study._needsChecklist)
-    );
+    return getStudiesForTab(studies(), 'todo', userId);
   });
 
   // Handlers

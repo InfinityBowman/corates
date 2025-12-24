@@ -21,8 +21,21 @@ export default function AssignReviewersModal(props) {
   const [reviewer1, setReviewer1] = createSignal('');
   const [reviewer2, setReviewer2] = createSignal('');
   const [saving, setSaving] = createSignal(false);
+  const [selectsReady, setSelectsReady] = createSignal(false);
 
   const members = () => projectStore.getMembers(props.projectId) || [];
+
+  // Get studies array reactively to establish reactive dependency
+  const studies = () => projectStore.getStudies(props.projectId) || [];
+
+  // Get the current study from store by ID (ensures we always get latest data)
+  const currentStudy = createMemo(() => {
+    const studyId = props.study?.id;
+    if (!studyId) return null;
+    // Access studies array reactively, then find by ID
+    const allStudies = studies();
+    return allStudies.find(s => s.id === studyId) || null;
+  });
 
   // Convert members to Select items format
   const memberItems = createMemo(() => {
@@ -38,17 +51,35 @@ export default function AssignReviewersModal(props) {
     ];
   });
 
+  // Disabled values for each reviewer select (prevent selecting the same reviewer twice)
+  const reviewer1DisabledValues = createMemo(() => (reviewer2() ? [reviewer2()] : []));
+  const reviewer2DisabledValues = createMemo(() => (reviewer1() ? [reviewer1()] : []));
+
   // Reset form when study changes or modal opens
+  // Track study ID explicitly to ensure effect re-runs when switching studies
   createEffect(() => {
-    const study = props.study;
-    if (study && props.open) {
+    const studyId = props.study?.id;
+    const isOpen = props.open;
+    const study = currentStudy();
+
+    if (isOpen && studyId && study) {
+      // Sync from the store's current study data
       setReviewer1(study.reviewer1 || '');
       setReviewer2(study.reviewer2 || '');
+
+      // Small delay to ensure Select components are ready before rendering
+      setSelectsReady(true);
+    } else if (!isOpen) {
+      // Reset when modal closes
+      setReviewer1('');
+      setReviewer2('');
+      setSelectsReady(false);
     }
   });
 
   const handleSave = async () => {
-    if (!props.study) return;
+    const study = currentStudy();
+    if (!study) return;
 
     setSaving(true);
     try {
@@ -57,7 +88,7 @@ export default function AssignReviewersModal(props) {
         reviewer2: reviewer2() || null,
       };
 
-      await props.onSave?.(props.study.id, updates);
+      await props.onSave?.(study.id, updates);
       props.onOpenChange(false);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils.js');
@@ -84,26 +115,28 @@ export default function AssignReviewersModal(props) {
             <span>Reviewer Assignments</span>
           </div>
 
-          <div class='grid grid-cols-2 gap-4'>
-            <Select
-              label='Reviewer 1'
-              items={memberItems()}
-              value={reviewer1()}
-              onChange={setReviewer1}
-              placeholder='Unassigned'
-              disabledValues={reviewer2() ? [reviewer2()] : []}
-              inDialog
-            />
-            <Select
-              label='Reviewer 2'
-              items={memberItems()}
-              value={reviewer2()}
-              onChange={setReviewer2}
-              placeholder='Unassigned'
-              disabledValues={reviewer1() ? [reviewer1()] : []}
-              inDialog
-            />
-          </div>
+          <Show when={selectsReady()} fallback={<div class='grid h-20 grid-cols-2 gap-4' />}>
+            <div class='grid grid-cols-2 gap-4'>
+              <Select
+                label='Reviewer 1'
+                items={memberItems()}
+                value={reviewer1()}
+                onChange={setReviewer1}
+                placeholder='Unassigned'
+                disabledValues={reviewer1DisabledValues()}
+                inDialog={true}
+              />
+              <Select
+                label='Reviewer 2'
+                items={memberItems()}
+                value={reviewer2()}
+                onChange={setReviewer2}
+                placeholder='Unassigned'
+                disabledValues={reviewer2DisabledValues()}
+                inDialog={true}
+              />
+            </div>
+          </Show>
 
           <Show when={members().length === 0}>
             <p class='text-sm text-gray-500'>

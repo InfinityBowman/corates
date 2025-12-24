@@ -248,7 +248,6 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
     reviewerName: metadata.reviewerName || 'Consensus',
     createdAt: metadata.createdAt || new Date().toISOString().split('T')[0],
     id: metadata.id || `reconciled-${Date.now()}`,
-    isReconciled: true,
     sourceChecklists: [checklist1.id, checklist2.id],
   };
 

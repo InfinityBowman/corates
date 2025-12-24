@@ -21,7 +21,7 @@ export { Popover } from './Popover.jsx';
 export { Progress } from './Progress.jsx';
 export { default as QRCode } from './QRCode.jsx';
 export { RadioGroup } from './RadioGroup.jsx';
-export { default as Select } from './Select.jsx';
+export { default as Select, useSelect } from './Select.jsx';
 export { Splitter } from './Splitter.jsx';
 export { default as Switch } from './Switch.jsx';
 export { Tabs } from './Tabs.jsx';

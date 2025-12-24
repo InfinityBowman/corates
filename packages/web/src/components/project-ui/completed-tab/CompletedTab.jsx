@@ -4,6 +4,7 @@ import { AiFillCheckCircle } from 'solid-icons/ai';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useProjectContext } from '@project-ui/ProjectContext.jsx';
+import { getStudiesForTab } from '@/lib/checklist-domain.js';
 import CompletedStudyCard from './CompletedStudyCard.jsx';
 
 /**
@@ -17,18 +18,7 @@ export default function CompletedTab() {
   const studies = () => projectStore.getStudies(projectId);
 
   const completedStudies = createMemo(() => {
-    return studies().filter(study => {
-      const checklists = study.checklists || [];
-
-      // Single reviewer: completed checklist goes directly to completed
-      const isSingleReviewer = study.reviewer1 && !study.reviewer2;
-      if (isSingleReviewer) {
-        return checklists.some(c => c.status === 'completed');
-      }
-
-      // Dual reviewer: only show when reconciled
-      return checklists.some(c => c.isReconciled && c.status === 'completed');
-    });
+    return getStudiesForTab(studies(), 'completed', null);
   });
 
   // Navigation helpers

@@ -6,6 +6,8 @@
 import { Show } from 'solid-js';
 import { CgFileDocument } from 'solid-icons/cg';
 import { BsFileDiff } from 'solid-icons/bs';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
+import { isReconciledChecklist } from '@/lib/checklist-domain.js';
 import ReconcileStatusTag from './ReconcileStatusTag.jsx';
 
 export default function ReconcileStudyCard(props) {
@@ -13,17 +15,19 @@ export default function ReconcileStudyCard(props) {
   const hasPdfs = () => props.study.pdfs && props.study.pdfs.length > 0;
   const firstPdf = () => (hasPdfs() ? props.study.pdfs[0] : null);
 
-  // Get the completed checklists
-  const completedChecklists = () => {
-    return (props.study.checklists || []).filter(c => c.status === 'completed');
+  // Get the individual reviewer checklists awaiting reconciliation
+  const awaitingReconcileChecklists = () => {
+    return (props.study.checklists || []).filter(
+      c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.AWAITING_RECONCILE,
+    );
   };
 
-  // Check if ready for reconciliation (both checklists completed)
-  const isReady = () => completedChecklists().length === 2;
+  // Check if ready for reconciliation (both reviewers have completed their checklists)
+  const isReady = () => awaitingReconcileChecklists().length === 2;
 
-  // Start reconciliation - directly compare the two completed checklists
+  // Start reconciliation - directly compare the two checklists awaiting reconciliation
   const startReconciliation = () => {
-    const [checklist1, checklist2] = completedChecklists();
+    const [checklist1, checklist2] = awaitingReconcileChecklists();
     if (checklist1 && checklist2) {
       props.onReconcile?.(checklist1.id, checklist2.id);
     }
@@ -74,11 +78,11 @@ export default function ReconcileStudyCard(props) {
           <ReconcileStatusTag study={props.study} getAssigneeName={props.getAssigneeName} />
           <Show when={isReady()}>
             <div class='flex items-center gap-2 text-sm text-gray-700'>
-              <Show when={completedChecklists()[0]}>
+              <Show when={awaitingReconcileChecklists()[0]}>
                 {checklist => <span>{getReviewerName(checklist())}</span>}
               </Show>
               <span class='text-gray-400'>vs</span>
-              <Show when={completedChecklists()[1]}>
+              <Show when={awaitingReconcileChecklists()[1]}>
                 {checklist => <span>{getReviewerName(checklist())}</span>}
               </Show>
             </div>

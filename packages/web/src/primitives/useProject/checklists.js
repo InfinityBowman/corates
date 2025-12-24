@@ -4,6 +4,7 @@
 
 import * as Y from 'yjs';
 import { createChecklistOfType, CHECKLIST_TYPES } from '@/checklist-registry';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 
 /**
  * Creates checklist operations
@@ -83,8 +84,7 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
     checklistYMap.set('type', type);
     checklistYMap.set('title', `${type} Checklist`);
     checklistYMap.set('assignedTo', assignedTo);
-    checklistYMap.set('status', 'pending');
-    checklistYMap.set('isReconciled', false);
+    checklistYMap.set('status', CHECKLIST_STATUS.PENDING);
     checklistYMap.set('createdAt', now);
     checklistYMap.set('updatedAt', now);
 
@@ -219,7 +219,6 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
     if (updates.title !== undefined) checklistYMap.set('title', updates.title);
     if (updates.assignedTo !== undefined) checklistYMap.set('assignedTo', updates.assignedTo);
     if (updates.status !== undefined) checklistYMap.set('status', updates.status);
-    if (updates.isReconciled !== undefined) checklistYMap.set('isReconciled', updates.isReconciled);
     checklistYMap.set('updatedAt', Date.now());
   }
 
@@ -481,8 +480,8 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
 
     // Auto-transition status from 'pending' to 'in-progress' on first edit
     const currentStatus = checklistYMap.get('status');
-    if (currentStatus === 'pending') {
-      checklistYMap.set('status', 'in-progress');
+    if (currentStatus === CHECKLIST_STATUS.PENDING) {
+      checklistYMap.set('status', CHECKLIST_STATUS.IN_PROGRESS);
     }
 
     checklistYMap.set('updatedAt', Date.now());

@@ -4,20 +4,9 @@
 
 import { FiTrash2 } from 'solid-icons/fi';
 import { getChecklistMetadata } from '@/checklist-registry';
+import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status.js';
 
 export default function ChecklistRow(props) {
-  // Get status badge styling
-  const getStatusStyle = status => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'in-progress':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   return (
     <div class='group flex items-center justify-between p-4 transition-colors hover:bg-gray-50'>
       <div class='flex-1'>
@@ -28,7 +17,7 @@ export default function ChecklistRow(props) {
           <span
             class={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusStyle(props.checklist.status)}`}
           >
-            {props.checklist.status || 'pending'}
+            {getStatusLabel(props.checklist.status)}
           </span>
         </div>
       </div>

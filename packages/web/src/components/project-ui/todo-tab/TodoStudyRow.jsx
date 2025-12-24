@@ -11,6 +11,7 @@ import { Collapsible } from '@corates/ui';
 import { getChecklistMetadata } from '@/checklist-registry';
 import PdfListItem from '@/components/checklist-ui/pdf/PdfListItem.jsx';
 import ChecklistForm from '../ChecklistForm.jsx';
+import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status.js';
 
 export default function TodoStudyRow(props) {
   // props.study: Study object with pdfs and checklists arrays
@@ -51,18 +52,6 @@ export default function TodoStudyRow(props) {
     const year = primaryPdf?.publicationYear || study().publicationYear;
     if (!author && !year) return null;
     return `${author || 'Unknown'}${year ? ` (${year})` : ''}`;
-  };
-
-  // Status badge styling
-  const getStatusStyle = status => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-700';
-      case 'in-progress':
-        return 'bg-yellow-100 text-yellow-700';
-      default:
-        return 'bg-gray-100 text-gray-600';
-    }
   };
 
   return (
@@ -126,11 +115,7 @@ export default function TodoStudyRow(props) {
                 class={`inline-flex shrink-0 cursor-text items-center rounded-full px-2.5 py-1 text-xs font-medium select-text ${getStatusStyle(checklist().status)}`}
                 data-selectable
               >
-                {checklist().status === 'in-progress' ?
-                  'In Progress'
-                : checklist().status === 'completed' ?
-                  'Completed'
-                : 'Pending'}
+                {getStatusLabel(checklist().status)}
               </span>
             </Show>
 
