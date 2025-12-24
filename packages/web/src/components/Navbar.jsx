@@ -44,7 +44,8 @@ export default function Navbar(props) {
   const handleSignOut = async () => {
     try {
       await signout();
-      navigate('/signin');
+      // Use replace: true to avoid back button issues
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       console.error('Sign out failed:', error);
     }

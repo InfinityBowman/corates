@@ -377,6 +377,11 @@ function createBetterAuthStore() {
       // Clear cached project data on logout
       projectStore.clearProjectList();
 
+      // Refetch session to immediately clear it in current tab
+      // This ensures session().data becomes null right away, preventing components
+      // from trying to fetch data with stale user state
+      await session().refetch?.();
+
       // Notify other tabs of auth change
       broadcastAuthChange();
     } catch (err) {

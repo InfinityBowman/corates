@@ -77,9 +77,13 @@ export default function ProjectDashboard(props) {
 
   // Connect to notifications when component mounts
   createEffect(() => {
-    if (userId()) {
-      connect();
+    const currentUserId = userId();
+    if (!currentUserId) {
+      // Disconnect if userId becomes null (e.g., during signout)
+      disconnect();
+      return;
     }
+    connect();
   });
 
   onCleanup(() => {
