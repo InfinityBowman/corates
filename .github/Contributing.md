@@ -13,7 +13,7 @@ npm install -g pnpm
 
 ## Project Structure
 
-This is a pnpm monorepo with the following packages:
+This is a pnpm monorepo powered by [Turborepo](https://turbo.build/repo) for build orchestration and task caching. The following packages are available:
 
 | Package            | Description                            |
 | ------------------ | -------------------------------------- |
@@ -29,7 +29,7 @@ This is a pnpm monorepo with the following packages:
 1. **Fork and clone the repository:**
 
    ```sh
-   git clone https://github.com/YOUR_USERNAME/corates.git
+   git clone https://github.com/InfinityBowman/corates.git
    cd corates
    ```
 
@@ -71,10 +71,13 @@ This is a pnpm monorepo with the following packages:
 Before submitting a PR, ensure your code passes linting and formatting:
 
 ```sh
-pnpm lint        # Check for linting errors
-pnpm lint:fix    # Auto-fix linting issues
-pnpm format      # Format code with Prettier
+turbo lint       # Check for linting errors across all packages
+turbo format     # Format code with Prettier across all packages
 ```
+
+For auto-fixing linting issues, you can use `pnpm lint:fix` which runs ESLint with the `--fix` flag.
+
+Turborepo automatically caches build outputs and test results, making subsequent runs faster. It also runs tasks in parallel where possible based on dependency graphs. Use `turbo` commands when you want to run tasks across all packages in the monorepo.
 
 A GitHub Action automatically runs Prettier on non-main branches and commits any formatting changes.
 This means you may need to pull any applied formatting changes after you push if you did not format beforehand.
@@ -82,11 +85,11 @@ This means you may need to pull any applied formatting changes after you push if
 ### Testing
 
 ```sh
-pnpm test        # Run all tests
-pnpm test:ui     # Run tests with browser UI (broken sort of)
+turbo test       # Run all tests across all packages
+pnpm test:ui     # Run tests with browser UI for web package (broken sort of)
 ```
 
-Tests use Vitest. Place test files alongside source files in `__tests__/` using the pattern `*.test.{js,jsx,ts,tsx}`.
+Tests use Vitest and are orchestrated by Turborepo. Place test files alongside source files in `__tests__/` using the pattern `*.test.{js,jsx,ts,tsx}`. Turborepo will cache test results and only re-run tests when relevant files change.
 
 See [packages/web/TESTING.md](packages/web/TESTING.md) for detailed testing guidelines.
 
@@ -94,7 +97,7 @@ See [packages/web/TESTING.md](packages/web/TESTING.md) for detailed testing guid
 
 1. Create a feature branch from `main`
 2. Make your changes
-3. Run `pnpm lint` and `pnpm test`
+3. Run `turbo lint` and `turbo test` to verify your changes
 4. Push your branch and open a Pull Request
 
 ## API Documentation
@@ -110,7 +113,8 @@ For secured endpoints, sign in via the frontend first (http://localhost:3010). T
 ## MCP Server (AI Agent Integration)
 
 This repository is optimized for AI agent workflows. It includes copilot-instructions, claude instructions, and cursor instructions.
-If asked to create a plan file, agents will create them in docs/plans
+If asked to create a plan file, agents will create them in docs/plans (vscode only)
+Cursor rules are defined in .cursor/rules. Place new rules here, scope them to the required contexts.
 This project includes a custom MCP server for AI agent context:
 
 ```sh
@@ -129,19 +133,30 @@ pnpm run initialize-mcp
 
 ## Useful Commands
 
+### Turborepo Commands (Recommended for running across all packages)
+
+| Command                | Description                                         |
+| ---------------------- | --------------------------------------------------- |
+| `turbo build`          | Build all packages (with caching and parallelization) |
+| `turbo test`           | Run all tests across all packages                   |
+| `turbo lint`           | Run ESLint across all packages                      |
+| `turbo format`         | Run Prettier across all packages                    |
+| `turbo dev`            | Run dev servers for all packages that have a dev task |
+
+### Package-Specific Commands (Use pnpm scripts for convenience)
+
 | Command                                           | Description                     |
 | ------------------------------------------------- | ------------------------------- |
 | `pnpm dev:front`                                  | Start frontend (landing + web)  |
 | `pnpm dev:workers`                                | Start backend workers           |
-| `pnpm build`                                      | Build all packages              |
-| `pnpm test`                                       | Run all tests                   |
-| `pnpm lint`                                       | Run ESLint                      |
-| `pnpm format`                                     | Run Prettier                    |
+| `pnpm lint:fix`                                   | Auto-fix ESLint issues          |
+| `pnpm test:ui`                                    | Run tests with browser UI       |
 | `pnpm clear-workers`                              | Clear local worker storage      |
 | `pnpm logs`                                       | View worker logs                |
 | `pnpm docs`                                       | View architecture documentation |
 | `pnpm loc`                                        | Lines of code report            |
 | `pnpm user:make-admin:local -- email@example.com` | Make a user admin (local)       |
+| `pnpm openapi`                                    | Generate OpenAPI documentation  |
 
 ## Code Style
 
