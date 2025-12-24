@@ -41,7 +41,7 @@ export interface ToggleGroupProps {
 /**
  * ToggleGroup - Group of toggle buttons
  */
-const ToggleGroupComponent: Component<ToggleGroupProps> = (props) => {
+const ToggleGroupComponent: Component<ToggleGroupProps> = props => {
   const [local, machineProps] = splitProps(props, ['items', 'size', 'class']);
 
   const getSizeClass = () => {

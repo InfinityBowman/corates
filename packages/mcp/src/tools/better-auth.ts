@@ -43,9 +43,7 @@ export function registerBetterAuthTools(server: McpServerType): void {
         )
         .optional(),
     },
-    async ({
-      path: docPath,
-    }): Promise<{ content: Array<{ type: 'text'; text: string }> }> => {
+    async ({ path: docPath }): Promise<{ content: Array<{ type: 'text'; text: string }> }> => {
       try {
         const url =
           docPath ?

@@ -36,7 +36,7 @@ export interface RadioGroupProps {
 /**
  * RadioGroup - Radio button group for single selection
  */
-const RadioGroupComponent: Component<RadioGroupProps> = (props) => {
+const RadioGroupComponent: Component<RadioGroupProps> = props => {
   const [local, machineProps] = splitProps(props, ['items', 'label', 'class']);
 
   const orientation = () => machineProps.orientation || 'vertical';
@@ -63,7 +63,7 @@ const RadioGroupComponent: Component<RadioGroupProps> = (props) => {
       </RadioGroup.Label>
       <div class={`flex gap-3 ${isVertical() ? 'flex-col' : 'flex-row flex-wrap'}`}>
         <For each={local.items}>
-          {(item) => (
+          {item => (
             <RadioGroup.Item
               value={item.value}
               disabled={item.disabled || machineProps.disabled}

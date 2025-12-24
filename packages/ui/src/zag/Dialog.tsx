@@ -26,7 +26,7 @@ export interface DialogProps {
 /**
  * Dialog - A generic dialog/modal component
  */
-const DialogComponent: Component<DialogProps> = (props) => {
+const DialogComponent: Component<DialogProps> = props => {
   const open = () => props.open;
   const size = () => props.size;
   const title = () => props.title;
@@ -115,7 +115,7 @@ export interface ConfirmDialogProps {
 /**
  * ConfirmDialog - A reusable confirmation dialog component
  */
-export const ConfirmDialogComponent: Component<ConfirmDialogProps> = (props) => {
+export const ConfirmDialogComponent: Component<ConfirmDialogProps> = props => {
   const open = () => props.open;
   const loading = () => props.loading;
   const variant = () => props.variant || 'danger';
@@ -254,7 +254,7 @@ export function useConfirmDialog() {
   let resolvePromise: ((value: boolean) => void) | null = null;
 
   const open = (dialogConfig: ConfirmDialogConfig) => {
-    return new Promise<boolean>((resolve) => {
+    return new Promise<boolean>(resolve => {
       resolvePromise = resolve;
       setConfig({
         title: dialogConfig.title || 'Confirm',

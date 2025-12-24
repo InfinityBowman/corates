@@ -61,11 +61,7 @@ export interface TourStep {
   /** Show arrow for tooltips (default: true) */
   arrow?: boolean;
   /** Side effect before showing step */
-  effect?: (ctx: {
-    next: () => void;
-    show: () => void;
-    update: () => void;
-  }) => void | (() => void);
+  effect?: (ctx: { next: () => void; show: () => void; update: () => void }) => void | (() => void);
 }
 
 export interface TourApi {
@@ -147,7 +143,7 @@ export interface TourProviderProps {
 /**
  * TourProvider - Provides tour functionality to children
  */
-export const TourProvider: Component<TourProviderProps> = (props) => {
+export const TourProvider: Component<TourProviderProps> = props => {
   const [local, machineProps] = splitProps(props, ['children']);
 
   const service = useMachine(tour.machine, () => ({
@@ -218,7 +214,7 @@ export const TourProvider: Component<TourProviderProps> = (props) => {
 
                   <div class='flex items-center gap-2'>
                     <For each={api().step?.actions}>
-                      {(action) => (
+                      {action => (
                         <button
                           {...api().getActionTriggerProps({ action })}
                           class={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -250,7 +246,7 @@ export interface TourProps extends Omit<TourProviderProps, 'children'> {
 /**
  * Tour - Standalone tour component (alternative to TourProvider)
  */
-const TourComponent: Component<TourProps> = (props) => {
+const TourComponent: Component<TourProps> = props => {
   const [local, rest] = splitProps(props, ['renderTrigger']);
 
   return (

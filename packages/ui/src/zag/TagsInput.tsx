@@ -44,7 +44,7 @@ export interface TagsInputProps {
 /**
  * TagsInput - Input for multiple tag values
  */
-const TagsInputComponent: Component<TagsInputProps> = (props) => {
+const TagsInputComponent: Component<TagsInputProps> = props => {
   const [local, machineProps] = splitProps(props, [
     'label',
     'placeholder',
@@ -86,7 +86,7 @@ const TagsInputComponent: Component<TagsInputProps> = (props) => {
       class={`w-full ${local.class || ''}`}
     >
       <TagsInput.Context>
-        {(api) => (
+        {api => (
           <>
             {local.label && (
               <TagsInput.Label class='mb-1 block text-sm font-medium text-gray-700'>

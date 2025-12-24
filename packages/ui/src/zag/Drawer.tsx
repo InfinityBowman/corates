@@ -34,7 +34,7 @@ export interface DrawerProps {
 /**
  * Drawer - A slide-in panel component composed from Dialog
  */
-const DrawerComponent: Component<DrawerProps> = (props) => {
+const DrawerComponent: Component<DrawerProps> = props => {
   const open = () => props.open;
   const side = () => props.side || 'right';
   const size = () => props.size || 'md';
@@ -107,7 +107,9 @@ const DrawerComponent: Component<DrawerProps> = (props) => {
                 <div class='flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3'>
                   <div class='min-w-0 flex-1'>
                     <Show when={title()}>
-                      <Dialog.Title class='truncate text-lg font-semibold text-gray-900'>{title()}</Dialog.Title>
+                      <Dialog.Title class='truncate text-lg font-semibold text-gray-900'>
+                        {title()}
+                      </Dialog.Title>
                     </Show>
                     <Show when={description()}>
                       <Dialog.Description class='mt-0.5 truncate text-sm text-gray-500'>

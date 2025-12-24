@@ -49,7 +49,7 @@ export interface ClipboardProps {
 /**
  * Clipboard - Copy to clipboard functionality
  */
-const ClipboardComponent: Component<ClipboardProps> = (props) => {
+const ClipboardComponent: Component<ClipboardProps> = props => {
   const [local, machineProps] = splitProps(props, ['label', 'showInput', 'children', 'class']);
   const [copied, setCopied] = createSignal(false);
 
@@ -147,7 +147,7 @@ export interface CopyButtonProps {
 /**
  * CopyButton - Simple copy button without input field
  */
-export const CopyButton: Component<CopyButtonProps> = (props) => {
+export const CopyButton: Component<CopyButtonProps> = props => {
   const [local, machineProps] = splitProps(props, [
     'label',
     'copiedLabel',

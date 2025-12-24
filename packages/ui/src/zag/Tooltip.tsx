@@ -76,7 +76,7 @@ export interface TooltipProps {
 /**
  * Tooltip - High-level convenience component
  */
-const TooltipComponent: Component<TooltipProps> = (props) => {
+const TooltipComponent: Component<TooltipProps> = props => {
   const merged = mergeProps(
     {
       placement: 'top',

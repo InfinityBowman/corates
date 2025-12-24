@@ -23,7 +23,7 @@ export interface AvatarProps {
 /**
  * Avatar - User avatar with fallback support
  */
-const AvatarComponent: Component<AvatarProps> = (props) => {
+const AvatarComponent: Component<AvatarProps> = props => {
   const src = () => props.src;
   const name = () => props.name;
   const alt = () => props.alt || name() || 'Avatar';

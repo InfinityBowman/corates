@@ -115,9 +115,7 @@ export function registerDrizzleTools(server: McpServerType): void {
         )
         .optional(),
     },
-    async ({
-      path: docPath,
-    }): Promise<{ content: Array<{ type: 'text'; text: string }> }> => {
+    async ({ path: docPath }): Promise<{ content: Array<{ type: 'text'; text: string }> }> => {
       try {
         const { header, sections } = await fetchDrizzleDocs();
 
@@ -143,7 +141,10 @@ export function registerDrizzleTools(server: McpServerType): void {
         if (matches.length === 1) {
           return {
             content: [
-              { type: 'text', text: `# Drizzle ORM: ${matches[0]}\n\n${sections.get(matches[0])!}` },
+              {
+                type: 'text',
+                text: `# Drizzle ORM: ${matches[0]}\n\n${sections.get(matches[0])!}`,
+              },
             ],
           };
         }

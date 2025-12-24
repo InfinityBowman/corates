@@ -54,7 +54,7 @@ export interface NumberInputProps {
 /**
  * NumberInput - Numeric input with increment/decrement controls
  */
-const NumberInputComponent: Component<NumberInputProps> = (props) => {
+const NumberInputComponent: Component<NumberInputProps> = props => {
   const [local, machineProps] = splitProps(props, [
     'label',
     'placeholder',

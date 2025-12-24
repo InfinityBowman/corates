@@ -114,7 +114,7 @@ function CollapsibleWithApi(props: {
 /**
  * High-level Collapsible component (convenience API)
  */
-const CollapsibleComponent: Component<CollapsibleProps> = (props) => {
+const CollapsibleComponent: Component<CollapsibleProps> = props => {
   // Split convenience props from Ark UI props
   const [local, arkProps] = splitProps(props, ['trigger', 'indicator', 'children']);
 

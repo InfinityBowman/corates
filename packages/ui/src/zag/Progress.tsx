@@ -29,7 +29,7 @@ export interface ProgressProps {
 /**
  * Progress - Linear progress bar
  */
-const ProgressComponent: Component<ProgressProps> = (props) => {
+const ProgressComponent: Component<ProgressProps> = props => {
   const [local, machineProps] = splitProps(props, [
     'label',
     'showValue',

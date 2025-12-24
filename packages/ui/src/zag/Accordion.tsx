@@ -36,7 +36,7 @@ export interface AccordionProps {
 /**
  * Accordion - Vertically stacked expandable sections
  */
-const AccordionComponent: Component<AccordionProps> = (props) => {
+const AccordionComponent: Component<AccordionProps> = props => {
   const [local, machineProps] = splitProps(props, ['items', 'class']);
 
   const handleValueChange = (details: { value: string[] }) => {
@@ -57,7 +57,7 @@ const AccordionComponent: Component<AccordionProps> = (props) => {
       class={`divide-y divide-gray-200 rounded-lg border border-gray-200 ${local.class || ''}`}
     >
       <For each={local.items}>
-        {(item) => (
+        {item => (
           <Accordion.Item value={item.value} disabled={item.disabled}>
             <h3>
               <Accordion.ItemTrigger class='flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'>

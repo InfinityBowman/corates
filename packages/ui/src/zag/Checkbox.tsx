@@ -34,7 +34,7 @@ export interface CheckboxProps {
 /**
  * Checkbox - Full description
  */
-const CheckboxComponent: Component<CheckboxProps> = (props) => {
+const CheckboxComponent: Component<CheckboxProps> = props => {
   const merged = mergeProps(
     {
       defaultChecked: false,

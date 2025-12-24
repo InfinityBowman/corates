@@ -29,7 +29,7 @@ export interface TabsProps {
 /**
  * Reusable Tabs component
  */
-const TabsComponent: Component<TabsProps> = (props) => {
+const TabsComponent: Component<TabsProps> = props => {
   const value = () => props.value;
   const defaultValue = () => props.defaultValue;
   const tabsList = () => props.tabs;
@@ -49,7 +49,7 @@ const TabsComponent: Component<TabsProps> = (props) => {
     >
       <Tabs.List class='flex overflow-x-auto rounded-t-lg border-b border-gray-200 bg-white'>
         <For each={tabsList()}>
-          {(tab) => (
+          {tab => (
             <Tabs.Trigger
               value={tab.value}
               class='flex items-center gap-2 border-b-2 border-transparent px-4 py-3 text-sm font-medium whitespace-nowrap text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:bg-blue-50/50 data-[selected]:text-blue-600'
@@ -70,7 +70,7 @@ const TabsComponent: Component<TabsProps> = (props) => {
       </Tabs.List>
       <Show when={children()}>
         <For each={tabsList()}>
-          {(tab) => (
+          {tab => (
             <Tabs.Content
               value={tab.value}
               class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'

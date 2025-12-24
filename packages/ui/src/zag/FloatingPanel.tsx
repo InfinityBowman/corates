@@ -73,7 +73,7 @@ export interface FloatingPanelProps {
 /**
  * FloatingPanel - A draggable and resizable floating panel component
  */
-const FloatingPanelComponent: Component<FloatingPanelProps> = (props) => {
+const FloatingPanelComponent: Component<FloatingPanelProps> = props => {
   const showControls = () => props.showControls ?? true;
   const showMinimize = () => showControls() && (props.showMinimize ?? true);
   const showMaximize = () => showControls() && (props.showMaximize ?? true);
@@ -132,7 +132,7 @@ const FloatingPanelComponent: Component<FloatingPanelProps> = (props) => {
       persistRect={props.persistRect ?? false}
     >
       <FloatingPanel.Context>
-        {(api) => (
+        {api => (
           <Show when={api().open}>
             <Portal>
               <FloatingPanel.Positioner>

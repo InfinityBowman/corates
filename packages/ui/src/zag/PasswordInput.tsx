@@ -28,7 +28,7 @@ export interface PasswordInputProps {
 /**
  * PasswordInput - Password input with visibility toggle
  */
-const PasswordInputComponent: Component<PasswordInputProps> = (props) => {
+const PasswordInputComponent: Component<PasswordInputProps> = props => {
   const autoComplete = () => props.autoComplete || 'new-password';
   const password = () => props.password || '';
   const required = () => props.required || false;

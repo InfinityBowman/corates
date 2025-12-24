@@ -59,7 +59,7 @@ export interface MenuProps {
 /**
  * Menu - Dropdown menu for actions
  */
-const MenuComponent: Component<MenuProps> = (props) => {
+const MenuComponent: Component<MenuProps> = props => {
   const [local, machineProps] = splitProps(props, [
     'trigger',
     'items',
@@ -91,7 +91,7 @@ const MenuComponent: Component<MenuProps> = (props) => {
         class={`${Z_INDEX.MENU} min-w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg focus:outline-none ${local.class || ''}`}
       >
         <For each={local.items}>
-          {(item) => (
+          {item => (
             <Show
               when={!item.separator && !item.groupLabel}
               fallback={
