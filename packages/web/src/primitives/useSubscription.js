@@ -4,7 +4,8 @@
  */
 
 import { createResource, createMemo } from 'solid-js';
-import { getSubscription } from '@/api/billing.js';
+import { API_BASE } from '@config/api.js';
+import { handleFetchError } from '@/lib/error-utils.js';
 import { hasActiveAccess as checkActiveAccess } from '@/lib/access.js';
 import {
   hasEntitlement as checkEntitlement,
@@ -29,7 +30,16 @@ const DEFAULT_SUBSCRIPTION = {
  */
 async function getSubscriptionSafe() {
   try {
-    return await getSubscription();
+    return await handleFetchError(
+      fetch(`${API_BASE}/api/billing/subscription`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'GET',
+      }),
+      { showToast: false },
+    ).then(res => res.json());
   } catch (error) {
     // Silently return default subscription on error
     // This prevents error boundary from catching network/auth errors during signout
