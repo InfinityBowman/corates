@@ -221,7 +221,7 @@ export function createPdfScrollHandler(document) {
         root: scrollContainerRef,
         rootMargin: `${RENDER_MARGIN * 100}% 0px`, // Render margin pages
         threshold: 0.01,
-      }
+      },
     );
 
     // Observe all existing page refs
@@ -355,7 +355,8 @@ export function createPdfScrollHandler(document) {
       if (!targetPage || targetPageNum === null) {
         // Fallback: use viewport center calculation
         const oldScrollHeight = scrollContainerRef.scrollHeight;
-        const scrollRatio = oldScrollHeight > 0 ? scrollContainerRef.scrollTop / oldScrollHeight : 0;
+        const scrollRatio =
+          oldScrollHeight > 0 ? scrollContainerRef.scrollTop / oldScrollHeight : 0;
 
         // Wait for pages to re-render, then adjust scroll
         setTimeout(() => {

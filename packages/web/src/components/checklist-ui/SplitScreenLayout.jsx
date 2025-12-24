@@ -112,7 +112,12 @@ export default function SplitScreenLayout(props) {
               isDragging() ? 'none' : (
                 `${layout() === 'vertical' ? 'width' : 'height'} 200ms ease-in-out`
               ),
-            willChange: isDragging() ? (layout() === 'vertical' ? 'width' : 'height') : 'auto',
+            willChange:
+              isDragging() ?
+                layout() === 'vertical' ?
+                  'width'
+                : 'height'
+              : 'auto',
             transform: 'translateZ(0)',
             contain: 'layout',
           }}
@@ -146,16 +151,19 @@ export default function SplitScreenLayout(props) {
                 showSecondPanel() ? `${100 - splitRatio()}%` : '0%',
               opacity: showSecondPanel() ? 1 : 0,
               transform:
-                showSecondPanel() ?
-                  'translateX(0) translateY(0) translateZ(0)'
-                : layout() === 'vertical' ?
-                  'translateX(20px) translateZ(0)'
+                showSecondPanel() ? 'translateX(0) translateY(0) translateZ(0)'
+                : layout() === 'vertical' ? 'translateX(20px) translateZ(0)'
                 : 'translateY(20px) translateZ(0)',
               transition:
                 isDragging() ? 'none' : (
                   `${layout() === 'vertical' ? 'width' : 'height'} 200ms ease-in-out, opacity 200ms ease-in-out, transform 200ms ease-in-out`
                 ),
-              willChange: isDragging() ? (layout() === 'vertical' ? 'width' : 'height') : 'auto',
+              willChange:
+                isDragging() ?
+                  layout() === 'vertical' ?
+                    'width'
+                  : 'height'
+                : 'auto',
               contain: 'layout',
             }}
           >

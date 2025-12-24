@@ -61,7 +61,8 @@ export function createPdfRenderer(document, scrollHandler) {
     const currentScale = scrollHandler.scale();
     if (doc && prevScale !== null && prevScale !== currentScale) {
       // Clear rendered tracking for visible pages
-      const visiblePages = scrollHandler.getVisiblePages ? scrollHandler.getVisiblePages() : new Set();
+      const visiblePages =
+        scrollHandler.getVisiblePages ? scrollHandler.getVisiblePages() : new Set();
       if (visiblePages.size > 0) {
         visiblePages.forEach(pageNum => renderedPages.delete(pageNum));
       } else {
@@ -86,7 +87,8 @@ export function createPdfRenderer(document, scrollHandler) {
     }
 
     // Get visible pages from scroll handler
-    const visiblePages = scrollHandler.getVisiblePages ? scrollHandler.getVisiblePages() : new Set();
+    const visiblePages =
+      scrollHandler.getVisiblePages ? scrollHandler.getVisiblePages() : new Set();
 
     // Find canvases that exist but haven't been rendered
     // Only render if page is visible or if no visibility tracking is available (fallback)
@@ -181,7 +183,8 @@ export function createPdfRenderer(document, scrollHandler) {
     if (pages.length === 0) return;
 
     // Get visible pages and current page for prioritization
-    const visiblePages = scrollHandler.getVisiblePages ? scrollHandler.getVisiblePages() : new Set();
+    const visiblePages =
+      scrollHandler.getVisiblePages ? scrollHandler.getVisiblePages() : new Set();
     const currentPageNum = scrollHandler.currentPage ? scrollHandler.currentPage() : 1;
 
     // Sort by priority: visible first, then by distance from current page
@@ -210,7 +213,8 @@ export function createPdfRenderer(document, scrollHandler) {
       const currentScale = scrollHandler.scale();
 
       // Get visible pages - only re-render visible pages on resize
-      const visiblePages = scrollHandler.getVisiblePages ? scrollHandler.getVisiblePages() : new Set();
+      const visiblePages =
+        scrollHandler.getVisiblePages ? scrollHandler.getVisiblePages() : new Set();
 
       // Clear rendered tracking for visible pages only
       if (visiblePages.size > 0) {
