@@ -73,6 +73,7 @@ export default function AssignReviewersModal(props) {
       // Reset when modal closes
       setReviewer1('');
       setReviewer2('');
+      setSelectsReady(false);
     }
   });
 
