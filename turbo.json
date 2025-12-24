@@ -2,14 +2,32 @@
   "$schema": "./node_modules/turbo/schema.json",
   "tasks": {
     "build": {
-      "outputs": ["dist/**"]
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".output/**", ".vinxi/**"]
     },
-    "check-types": {
-      "dependsOn": ["^check-types"]
+    "@corates/workers#build": {
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"]
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
     },
     "dev": {
-      "persistent": true,
+      "cache": false,
+      "persistent": true
+    },
+    "deploy": {
+      "dependsOn": ["build"],
       "cache": false
+    },
+    "lint": {
+      "outputs": []
+    },
+    "format": {
+      "outputs": []
     }
   }
 }

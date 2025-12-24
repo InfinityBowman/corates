@@ -302,6 +302,7 @@ describe('Contact Routes - POST /api/contact', () => {
     for (let i = 0; i < 5; i++) {
       const testEnv = {
         ...env,
+        ENVIRONMENT: 'production',
         POSTMARK_SERVER_TOKEN: 'test-token',
         CONTACT_EMAIL: 'contact@example.com',
         EMAIL_FROM: 'noreply@example.com',
@@ -328,6 +329,7 @@ describe('Contact Routes - POST /api/contact', () => {
     // 6th request should be rate limited
     const testEnv = {
       ...env,
+      ENVIRONMENT: 'production',
       POSTMARK_SERVER_TOKEN: 'test-token',
       CONTACT_EMAIL: 'contact@example.com',
       EMAIL_FROM: 'noreply@example.com',

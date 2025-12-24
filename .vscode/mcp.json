@@ -3,7 +3,7 @@
     "corates": {
       "type": "stdio",
       "command": "node",
-      "args": ["${workspaceFolder}/packages/mcp/server.js"]
+      "args": ["${workspaceFolder}/packages/mcp/dist/server.js"]
     }
     // "stripe": {
     //   "type": "http",

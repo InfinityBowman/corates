@@ -4,8 +4,8 @@
   "private": true,
   "description": "Shared UI components for Corates built with Ark UI and SolidJS",
   "type": "module",
-  "main": "./src/index.js",
-  "types": "./src/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
@@ -13,11 +13,11 @@
   },
   "exports": {
     ".": {
-      "types": "./src/index.d.ts",
-      "default": "./src/index.js"
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
     },
-    "./zag": "./src/zag/index.js",
-    "./zag/*": "./src/zag/*.jsx"
+    "./zag": "./src/zag/index.ts",
+    "./zag/*": "./src/zag/*.tsx"
   },
   "dependencies": {
     "@ark-ui/solid": "^5.30.0",
@@ -36,6 +36,7 @@
     "jsdom": "^27.3.0",
     "solid-icons": "^1.1.0",
     "solid-js": "^1.9.10",
+    "typescript": "^5.9.3",
     "vite-plugin-solid": "^2.11.10",
     "vitest": "^4.0.16"
   }
