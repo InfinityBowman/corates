@@ -179,22 +179,50 @@ export const CopyButton: Component<CopyButtonProps>;
 // Collapsible
 // ============================================================================
 
+export interface CollapsibleApi {
+  open: boolean;
+  visible: boolean;
+  setOpen: (open: boolean) => void;
+}
+
 export interface CollapsibleProps {
   /** Controlled open state */
   open?: boolean;
   /** Initial open state (uncontrolled) */
   defaultOpen?: boolean;
   /** Callback when open state changes */
-  onOpenChange?: (_open: boolean) => void;
+  onOpenChange?: (_details: { open: boolean }) => void;
   /** Disable the collapsible */
   disabled?: boolean;
-  /** Render function for trigger */
-  trigger?: (_api: { open: boolean }) => JSX.Element;
+  /** Enable lazy mounting */
+  lazyMount?: boolean;
+  /** Unmount content when closed */
+  unmountOnExit?: boolean;
+  /** Height when collapsed */
+  collapsedHeight?: string | number;
+  /** Width when collapsed */
+  collapsedWidth?: string | number;
+  /** Callback when exit animation completes */
+  onExitComplete?: () => void;
+  /** Custom IDs for root, content, trigger */
+  ids?: { root?: string; content?: string; trigger?: string };
+  /** Trigger element or render function receiving collapsible API */
+  trigger?: JSX.Element | ((_api: CollapsibleApi) => JSX.Element);
+  /** Indicator element or render function receiving collapsible API */
+  indicator?: JSX.Element | ((_api: CollapsibleApi) => JSX.Element);
   /** Collapsible content */
   children?: JSX.Element;
 }
 
-export const Collapsible: Component<CollapsibleProps>;
+export const Collapsible: Component<CollapsibleProps> & {
+  Root: Component<any>;
+  Trigger: Component<any>;
+  Content: Component<any>;
+  Indicator: Component<any>;
+  RootProvider: Component<any>;
+};
+
+export function useCollapsible(props?: any): Accessor<CollapsibleApi>;
 
 // ============================================================================
 // Combobox

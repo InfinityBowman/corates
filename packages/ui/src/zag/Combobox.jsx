@@ -1,11 +1,13 @@
 /**
  * Combobox - Searchable select with autocomplete using Ark UI
+ *
+ * Supports both high-level convenience API and low-level composition API
  */
 
-import { Combobox, useListCollection } from '@ark-ui/solid/combobox';
+import { Combobox as ArkCombobox, useCombobox, useListCollection } from '@ark-ui/solid/combobox';
 import { useFilter } from '@ark-ui/solid/locale';
 import { Portal } from 'solid-js/web';
-import { createMemo, createSignal, Show, splitProps, Index } from 'solid-js';
+import { mergeProps, splitProps, createMemo, Show, Index } from 'solid-js';
 import { FiChevronDown, FiX, FiCheck } from 'solid-icons/fi';
 import { Z_INDEX } from '../constants/zIndex.js';
 
@@ -32,8 +34,16 @@ import { Z_INDEX } from '../constants/zIndex.js';
  * - class: string - Additional class for root element
  * - inputClass: string - Additional class for input element
  */
-export function ComboboxComponent(props) {
-  const [local, machineProps] = splitProps(props, [
+export default function ComboboxComponent(props) {
+  const merged = mergeProps(
+    {
+      openOnClick: true,
+      defaultValue: [],
+    },
+    props,
+  );
+
+  const [local, machineProps] = splitProps(merged, [
     'items',
     'label',
     'placeholder',
@@ -69,16 +79,6 @@ export function ComboboxComponent(props) {
     }
   };
 
-  // Track open state for conditional rendering
-  const [isOpen, setIsOpen] = createSignal(false);
-
-  const handleOpenChange = details => {
-    setIsOpen(details.open);
-    if (machineProps.onOpenChange) {
-      machineProps.onOpenChange(details);
-    }
-  };
-
   // Check if there are selected items
   const hasSelectedItems = createMemo(() => {
     const value = machineProps.value || machineProps.defaultValue || [];
@@ -86,79 +86,66 @@ export function ComboboxComponent(props) {
   });
 
   const renderContent = () => (
-    <Combobox.Positioner>
+    <ArkCombobox.Positioner>
       <Show when={collection().items.length > 0}>
-        <Combobox.Content
+        <ArkCombobox.Content
           class={`${Z_INDEX.COMBOBOX} max-h-60 overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg focus:outline-none`}
         >
-          <Combobox.ItemGroup>
+          <ArkCombobox.ItemGroup>
             <Index each={collection().items}>
-              {item => {
-                const itemValue = item();
-                return (
-                  <Combobox.Item
-                    item={itemValue}
-                    class='flex cursor-pointer items-center justify-between px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[highlighted]:bg-gray-50'
-                  >
-                    <Combobox.ItemText>{itemValue.label}</Combobox.ItemText>
-                    <Combobox.ItemIndicator>
-                      <FiCheck class='h-4 w-4 text-blue-600' />
-                    </Combobox.ItemIndicator>
-                  </Combobox.Item>
-                );
-              }}
+              {item => (
+                <ArkCombobox.Item
+                  item={item()}
+                  class='flex cursor-pointer items-center justify-between px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[highlighted]:bg-gray-50'
+                >
+                  <ArkCombobox.ItemText>{item().label}</ArkCombobox.ItemText>
+                  <ArkCombobox.ItemIndicator>
+                    <FiCheck class='h-4 w-4 text-blue-600' />
+                  </ArkCombobox.ItemIndicator>
+                </ArkCombobox.Item>
+              )}
             </Index>
-          </Combobox.ItemGroup>
-        </Combobox.Content>
+          </ArkCombobox.ItemGroup>
+        </ArkCombobox.Content>
       </Show>
-    </Combobox.Positioner>
+    </ArkCombobox.Positioner>
   );
 
   return (
-    <Combobox.Root
+    <ArkCombobox.Root
+      {...machineProps}
       collection={collection()}
-      value={machineProps.value}
-      defaultValue={machineProps.defaultValue}
       onValueChange={handleValueChange}
-      onInputValueChange={handleInputValueChange}
-      onOpenChange={handleOpenChange}
-      multiple={machineProps.multiple}
-      disabled={machineProps.disabled}
-      readOnly={machineProps.readOnly}
-      invalid={machineProps.invalid}
-      name={machineProps.name}
-      allowCustomValue={machineProps.allowCustomValue}
-      closeOnSelect={machineProps.closeOnSelect}
-      openOnClick={machineProps.openOnClick ?? true}
       class={`w-full ${local.class || ''}`}
     >
       <Show when={local.label}>
-        <Combobox.Label class='mb-1 block text-sm font-medium text-gray-700'>
+        <ArkCombobox.Label class='mb-1 block text-sm font-medium text-gray-700'>
           {local.label}
-        </Combobox.Label>
+        </ArkCombobox.Label>
       </Show>
-      <Combobox.Control class='relative flex items-center rounded-lg border border-gray-300 bg-white data-[disabled]:cursor-not-allowed data-[disabled]:bg-gray-100 data-[focus]:border-blue-500 data-[focus]:ring-1 data-[focus]:ring-blue-500 data-[invalid]:border-red-500'>
-        <Combobox.Input
+      <ArkCombobox.Control class='relative flex items-center rounded-lg border border-gray-300 bg-white data-[disabled]:cursor-not-allowed data-[disabled]:bg-gray-100 data-[focus]:border-blue-500 data-[focus]:ring-1 data-[focus]:ring-blue-500 data-[invalid]:border-red-500'>
+        <ArkCombobox.Input
           placeholder={local.placeholder}
           class={`flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-gray-400 disabled:cursor-not-allowed ${local.inputClass || ''}`}
+          onInputValueChange={handleInputValueChange}
         />
         <Show when={hasSelectedItems()}>
-          <Combobox.ClearTrigger class='mr-1 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'>
+          <ArkCombobox.ClearTrigger class='mr-1 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'>
             <FiX class='h-4 w-4' />
-          </Combobox.ClearTrigger>
+          </ArkCombobox.ClearTrigger>
         </Show>
-        <Combobox.Trigger class='px-2 py-2 text-gray-400 transition-colors hover:text-gray-600 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50'>
+        <ArkCombobox.Trigger class='px-2 py-2 text-gray-400 transition-colors hover:text-gray-600 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50'>
           <FiChevronDown class='h-4 w-4 transition-transform data-[state=open]:rotate-180' />
-        </Combobox.Trigger>
-      </Combobox.Control>
-      <Show when={isOpen()}>
-        <Show when={!local.inDialog} fallback={renderContent()}>
-          <Portal>{renderContent()}</Portal>
-        </Show>
+        </ArkCombobox.Trigger>
+      </ArkCombobox.Control>
+      <Show when={!local.inDialog} fallback={renderContent()}>
+        <Portal>{renderContent()}</Portal>
       </Show>
-    </Combobox.Root>
+    </ArkCombobox.Root>
   );
 }
 
 export { ComboboxComponent as Combobox };
-export default ComboboxComponent;
+
+// Export hook for programmatic control
+export { useCombobox };

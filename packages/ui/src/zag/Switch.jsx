@@ -1,18 +1,22 @@
 /**
  * Switch component using Ark UI
+ *
+ * Supports both high-level convenience API and low-level composition API
  */
 
-import { Switch } from '@ark-ui/solid/switch';
-import { mergeProps } from 'solid-js';
+import { Switch as ArkSwitch, useSwitch } from '@ark-ui/solid/switch';
+import { mergeProps, splitProps } from 'solid-js';
 
 /**
- * @param {Object} props
- * @param {boolean} [props.checked] - Controlled checked state
- * @param {boolean} [props.defaultChecked] - Default checked state (uncontrolled)
- * @param {boolean} [props.disabled] - Whether switch is disabled
- * @param {string} [props.name] - Name for form submission
- * @param {Function} [props.onChange] - Callback when checked state changes: (checked: boolean) => void
- * @param {string} [props.class] - Additional CSS classes
+ * Switch - Full description
+ *
+ * Props:
+ * - checked: boolean - Controlled checked state
+ * - defaultChecked: boolean - Default checked state (uncontrolled)
+ * - disabled: boolean - Whether switch is disabled
+ * - name: string - Name for form submission
+ * - onChange: Function - Callback when checked state changes: (checked: boolean) => void
+ * - class: string - Additional CSS classes
  */
 export default function SwitchComponent(props) {
   const merged = mergeProps(
@@ -22,20 +26,28 @@ export default function SwitchComponent(props) {
     props,
   );
 
-  const checked = () => merged.checked;
-  const defaultChecked = () => merged.defaultChecked;
-  const disabled = () => merged.disabled;
-  const name = () => merged.name;
-  const classValue = () => merged.class;
+  const [local, machineProps] = splitProps(merged, ['class', 'onChange']);
+
+  const classValue = () => local.class;
+  const onChange = () => local.onChange;
+
+  const checked = () => machineProps.checked;
+  const defaultChecked = () => machineProps.defaultChecked;
+  const disabled = () => machineProps.disabled;
+  const name = () => machineProps.name;
 
   const handleCheckedChange = details => {
-    if (merged.onChange) {
-      merged.onChange(details.checked === true);
+    if (onChange()) {
+      onChange()(details.checked === true);
+    }
+    if (machineProps.onCheckedChange) {
+      machineProps.onCheckedChange(details);
     }
   };
 
   return (
-    <Switch.Root
+    <ArkSwitch.Root
+      {...machineProps}
       checked={checked()}
       defaultChecked={defaultChecked()}
       disabled={disabled()}
@@ -45,12 +57,14 @@ export default function SwitchComponent(props) {
         classValue() || ''
       }`}
     >
-      <Switch.HiddenInput />
-      <Switch.Control class='relative inline-flex h-6 w-11 items-center rounded-full transition-colors data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-200'>
-        <Switch.Thumb class='inline-block h-4 w-4 transform rounded-full bg-white transition-transform data-[state=checked]:translate-x-6 data-[state=unchecked]:translate-x-1' />
-      </Switch.Control>
-    </Switch.Root>
+      <ArkSwitch.HiddenInput />
+      <ArkSwitch.Control class='relative inline-flex h-6 w-11 items-center rounded-full transition-colors data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-200'>
+        <ArkSwitch.Thumb class='inline-block h-4 w-4 transform rounded-full bg-white transition-transform data-[state=checked]:translate-x-6 data-[state=unchecked]:translate-x-1' />
+      </ArkSwitch.Control>
+    </ArkSwitch.Root>
   );
 }
 
 export { SwitchComponent as Switch };
+// Export hook for programmatic control
+export { useSwitch };

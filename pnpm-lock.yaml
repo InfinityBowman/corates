@@ -16,6 +16,9 @@ importers:
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
       eslint:
         specifier: ^9.39.2
         version: 9.39.2(jiti@2.6.1)
@@ -96,87 +99,9 @@ importers:
       '@ark-ui/solid':
         specifier: ^5.30.0
         version: 5.30.0(solid-js@1.9.10)
-      '@zag-js/accordion':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/avatar':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/checkbox':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/clipboard':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/collapsible':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/combobox':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/dialog':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/editable':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/file-upload':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/floating-panel':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/menu':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/number-input':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/password-input':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/pin-input':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/popover':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/progress':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/qr-code':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/radio-group':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/select':
-        specifier: ^1.31.1
-        version: 1.31.1
       '@zag-js/solid':
         specifier: ^1.31.1
         version: 1.31.1(solid-js@1.9.10)
-      '@zag-js/splitter':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/switch':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/tabs':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/tags-input':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/toast':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/toggle-group':
-        specifier: ^1.31.1
-        version: 1.31.1
-      '@zag-js/tooltip':
-        specifier: ^1.31.1
-        version: 1.31.1
       '@zag-js/tour':
         specifier: ^1.31.1
         version: 1.31.1
@@ -12270,7 +12195,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 3.0.3
-      vitest: 4.0.16(@types/node@25.0.3)(@vitest/ui@4.0.16)(jiti@2.6.1)(jsdom@26.1.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
+      vitest: 4.0.16(@types/node@25.0.3)(@vitest/ui@4.0.16)(jiti@2.6.1)(jsdom@27.3.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
 
   '@vitest/utils@3.2.0':
     dependencies:

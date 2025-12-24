@@ -4,7 +4,7 @@
 
 import { Select, createListCollection } from '@ark-ui/solid/select';
 import { Portal } from 'solid-js/web';
-import { createMemo, For, Show, Index } from 'solid-js';
+import { createMemo, Show, Index } from 'solid-js';
 import { BiRegularCheck, BiRegularChevronDown } from 'solid-icons/bi';
 
 /**

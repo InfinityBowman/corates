@@ -26,7 +26,7 @@ export default function StudyCard(props) {
     <div class='rounded-lg border border-gray-200 bg-white shadow-sm transition-colors hover:border-gray-300'>
       <Collapsible
         open={props.expanded}
-        onOpenChange={open => {
+        onOpenChange={({ open }) => {
           // Only toggle if the state is actually different
           if (open !== props.expanded) {
             props.onToggleExpanded?.();

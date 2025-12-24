@@ -19,7 +19,7 @@ import { Show, splitProps, createMemo } from 'solid-js';
  * - indeterminate: boolean - Show indeterminate animation
  * - class: string - Additional class for root element
  */
-export function ProgressComponent(props) {
+export default function ProgressComponent(props) {
   const [local, machineProps] = splitProps(props, [
     'label',
     'showValue',
@@ -89,4 +89,3 @@ export function ProgressComponent(props) {
 }
 
 export { ProgressComponent as Progress };
-export default ProgressComponent;

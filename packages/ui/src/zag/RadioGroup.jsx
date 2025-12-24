@@ -19,7 +19,7 @@ import { For, splitProps, createMemo } from 'solid-js';
  * - orientation: 'horizontal' | 'vertical' - Layout orientation (default: 'vertical')
  * - class: string - Additional class for root element
  */
-export function RadioGroupComponent(props) {
+export default function RadioGroupComponent(props) {
   const [local, machineProps] = splitProps(props, ['items', 'label', 'class']);
 
   const orientation = () => machineProps.orientation || 'vertical';
@@ -75,4 +75,3 @@ export function RadioGroupComponent(props) {
 }
 
 export { RadioGroupComponent as RadioGroup };
-export default RadioGroupComponent;

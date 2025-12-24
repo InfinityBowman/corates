@@ -3,7 +3,7 @@
  */
 
 import { TagsInput } from '@ark-ui/solid/tags-input';
-import { For, splitProps, mergeProps, Index } from 'solid-js';
+import { splitProps, mergeProps, Index } from 'solid-js';
 import { FiX } from 'solid-icons/fi';
 
 /**
@@ -27,7 +27,7 @@ import { FiX } from 'solid-icons/fi';
  * - class: string - Additional class for root element
  * - inputClass: string - Additional class for input element
  */
-export function TagsInputComponent(props) {
+export default function TagsInputComponent(props) {
   const [local, machineProps] = splitProps(props, [
     'label',
     'placeholder',
@@ -104,4 +104,3 @@ export function TagsInputComponent(props) {
 }
 
 export { TagsInputComponent as TagsInput };
-export default TagsInputComponent;

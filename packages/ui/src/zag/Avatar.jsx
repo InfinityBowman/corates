@@ -15,7 +15,7 @@ import { Avatar } from '@ark-ui/solid/avatar';
  * - fallbackClass: string - CSS classes for fallback element
  * - class: string - Additional class for root element
  */
-export function AvatarComponent(props) {
+export default function AvatarComponent(props) {
   const src = () => props.src;
   const name = () => props.name;
   const alt = () => props.alt || name() || 'Avatar';
@@ -47,4 +47,3 @@ export function AvatarComponent(props) {
 }
 
 export { AvatarComponent as Avatar };
-export default AvatarComponent;

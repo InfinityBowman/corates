@@ -3,7 +3,7 @@
  */
 
 import { Editable } from '@ark-ui/solid/editable';
-import { Show, mergeProps, createEffect, on } from 'solid-js';
+import { Show, mergeProps } from 'solid-js';
 import { FiCheck, FiX, FiEdit2 } from 'solid-icons/fi';
 import { cn } from '../lib/cn.js';
 

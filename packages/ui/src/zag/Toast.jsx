@@ -3,7 +3,7 @@
  */
 
 import { Toast, Toaster, createToaster } from '@ark-ui/solid/toast';
-import { Show, For } from 'solid-js';
+import { Show } from 'solid-js';
 import { FiX, FiCheck, FiAlertCircle, FiInfo, FiLoader } from 'solid-icons/fi';
 import { Z_INDEX } from '../constants/zIndex.js';
 
@@ -21,7 +21,7 @@ export const toaster = createToaster({
 /**
  * Toaster component - renders all active toasts
  */
-export function ToasterComponent() {
+export default function ToasterComponent() {
   const getIcon = type => {
     switch (type) {
       case 'success':
@@ -110,4 +110,3 @@ export const showToast = {
 };
 
 export { ToasterComponent as Toaster };
-export default ToasterComponent;

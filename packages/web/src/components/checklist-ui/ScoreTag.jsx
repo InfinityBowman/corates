@@ -38,7 +38,7 @@ function getInfoUrl(checklistType) {
  */
 function getTooltipContent(checklistType) {
   const metadata = getChecklistMetadata(checklistType);
-  return `Open ${metadata.shortName || metadata.name} scoring guide`;
+  return `See ${metadata.shortName || metadata.name} resources`;
 }
 
 /**

@@ -16,7 +16,7 @@ export default defineConfig({
     deps: {
       optimizer: {
         web: {
-          include: ['solid-js', '@zag-js/solid', '@ark-ui/solid', 'solid-icons'],
+          include: ['solid-js', '@ark-ui/solid', 'solid-icons'],
         },
       },
     },

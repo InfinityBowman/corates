@@ -22,7 +22,7 @@ import { For, splitProps, createMemo } from 'solid-js';
  * - size: 'sm' | 'md' | 'lg' - Button size (default: 'md')
  * - class: string - Additional class for root element
  */
-export function ToggleGroupComponent(props) {
+export default function ToggleGroupComponent(props) {
   const [local, machineProps] = splitProps(props, ['items', 'size', 'class']);
 
   const getSizeClass = () => {
@@ -76,4 +76,3 @@ export function ToggleGroupComponent(props) {
 }
 
 export { ToggleGroupComponent as ToggleGroup };
-export default ToggleGroupComponent;

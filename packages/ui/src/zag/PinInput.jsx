@@ -28,7 +28,6 @@ export default function PinInputComponent(props) {
 
   const required = () => merged.required;
   const otp = () => merged.otp;
-  const autoComplete = () => merged.autoComplete;
   const isError = () => merged.isError;
 
   const handleValueChange = details => {

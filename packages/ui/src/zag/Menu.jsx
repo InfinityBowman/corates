@@ -32,7 +32,7 @@ import { Z_INDEX } from '../constants/zIndex.js';
  * - separator?: boolean - Render as separator instead of item
  * - groupLabel?: string - Render as group label
  */
-export function MenuComponent(props) {
+export default function MenuComponent(props) {
   const [local, machineProps] = splitProps(props, [
     'trigger',
     'items',
@@ -84,7 +84,6 @@ export function MenuComponent(props) {
                 value={item.value}
                 disabled={item.disabled}
                 closeOnSelect={machineProps.closeOnSelect ?? true}
-                onSelect={handleSelect}
                 class={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors ${
                   item.destructive ?
                     'text-red-600 hover:bg-red-50 data-[highlighted]:bg-red-50'
@@ -108,6 +107,7 @@ export function MenuComponent(props) {
       open={machineProps.open}
       defaultOpen={machineProps.defaultOpen}
       onOpenChange={handleOpenChange}
+      onSelect={handleSelect}
       closeOnSelect={machineProps.closeOnSelect ?? true}
       positioning={{ placement: local.placement || 'bottom-start' }}
     >
@@ -136,4 +136,3 @@ export function MenuComponent(props) {
 }
 
 export { MenuComponent as Menu };
-export default MenuComponent;

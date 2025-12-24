@@ -1,24 +1,28 @@
 /**
  * Checkbox component using Ark UI
+ *
+ * Supports both high-level convenience API and low-level composition API
  */
 
-import { Checkbox } from '@ark-ui/solid/checkbox';
-import { mergeProps, Show, createMemo } from 'solid-js';
+import { Checkbox as ArkCheckbox, useCheckbox } from '@ark-ui/solid/checkbox';
+import { mergeProps, splitProps, Show, createMemo } from 'solid-js';
 import { BiRegularCheck, BiRegularMinus } from 'solid-icons/bi';
 
 /**
- * @param {Object} props
- * @param {boolean} [props.checked] - Controlled checked state
- * @param {boolean} [props.defaultChecked] - Default checked state (uncontrolled)
- * @param {boolean} [props.indeterminate] - Whether checkbox is in indeterminate state
- * @param {boolean} [props.disabled] - Whether checkbox is disabled
- * @param {string} [props.name] - Name for form submission
- * @param {string} [props.value] - Value for form submission
- * @param {string} [props.label] - Label text
- * @param {Function} [props.onChange] - Callback when checked state changes: (checked: boolean) => void
- * @param {string} [props.class] - Additional CSS classes
+ * Checkbox - Full description
+ *
+ * Props:
+ * - checked: boolean - Controlled checked state
+ * - defaultChecked: boolean - Default checked state (uncontrolled)
+ * - indeterminate: boolean - Whether checkbox is in indeterminate state
+ * - disabled: boolean - Whether checkbox is disabled
+ * - name: string - Name for form submission
+ * - value: string - Value for form submission
+ * - label: string - Label text
+ * - onChange: Function - Callback when checked state changes: (checked: boolean) => void
+ * - class: string - Additional CSS classes
  */
-export function CheckboxComponent(props) {
+export default function CheckboxComponent(props) {
   const merged = mergeProps(
     {
       defaultChecked: false,
@@ -26,14 +30,18 @@ export function CheckboxComponent(props) {
     props,
   );
 
-  const checked = () => merged.checked;
-  const indeterminate = () => merged.indeterminate;
-  const defaultChecked = () => merged.defaultChecked;
-  const disabled = () => merged.disabled;
-  const name = () => merged.name;
-  const value = () => merged.value || 'on';
-  const classValue = () => merged.class;
-  const label = () => merged.label;
+  const [local, machineProps] = splitProps(merged, ['label', 'class', 'indeterminate', 'onChange']);
+
+  const label = () => local.label;
+  const classValue = () => local.class;
+  const indeterminate = () => local.indeterminate;
+  const onChange = () => local.onChange;
+
+  const checked = () => machineProps.checked;
+  const defaultChecked = () => machineProps.defaultChecked;
+  const disabled = () => machineProps.disabled;
+  const name = () => machineProps.name;
+  const value = () => machineProps.value || 'on';
 
   // Convert indeterminate to checked state
   const checkedState = createMemo(() => {
@@ -48,15 +56,19 @@ export function CheckboxComponent(props) {
   });
 
   const handleCheckedChange = details => {
-    if (merged.onChange) {
+    if (onChange()) {
       // When transitioning from indeterminate, treat it as checking
       const newChecked = details.checked === true || details.checked === 'indeterminate';
-      merged.onChange(newChecked);
+      onChange()(newChecked);
+    }
+    if (machineProps.onCheckedChange) {
+      machineProps.onCheckedChange(details);
     }
   };
 
   return (
-    <Checkbox.Root
+    <ArkCheckbox.Root
+      {...machineProps}
       checked={checkedState()}
       defaultChecked={defaultCheckedState()}
       disabled={disabled()}
@@ -67,21 +79,23 @@ export function CheckboxComponent(props) {
         disabled() ? 'cursor-not-allowed opacity-50' : ''
       } ${classValue() || ''}`}
     >
-      <Checkbox.Control class='flex h-4 w-4 items-center justify-center rounded border-2 transition-colors data-[focus]:ring-2 data-[focus]:ring-blue-500 data-[focus]:ring-offset-1 data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=indeterminate]:border-blue-600 data-[state=indeterminate]:bg-blue-600 data-[state=unchecked]:border-gray-300 data-[state=unchecked]:bg-white data-[state=unchecked]:hover:border-blue-400'>
-        <Checkbox.Indicator indeterminate class='h-3 w-3 text-white'>
+      <ArkCheckbox.Control class='flex h-4 w-4 items-center justify-center rounded border-2 transition-colors data-[focus]:ring-2 data-[focus]:ring-blue-500 data-[focus]:ring-offset-1 data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=indeterminate]:border-blue-600 data-[state=indeterminate]:bg-blue-600 data-[state=unchecked]:border-gray-300 data-[state=unchecked]:bg-white data-[state=unchecked]:hover:border-blue-400'>
+        <ArkCheckbox.Indicator indeterminate class='h-3 w-3 text-white'>
           <BiRegularMinus class='h-3 w-3 text-white' />
-        </Checkbox.Indicator>
-        <Checkbox.Indicator class='h-3 w-3 text-white'>
+        </ArkCheckbox.Indicator>
+        <ArkCheckbox.Indicator class='h-3 w-3 text-white'>
           <BiRegularCheck class='h-3 w-3 text-white' />
-        </Checkbox.Indicator>
-      </Checkbox.Control>
-      <Checkbox.HiddenInput />
+        </ArkCheckbox.Indicator>
+      </ArkCheckbox.Control>
+      <ArkCheckbox.HiddenInput />
       <Show when={label()}>
-        <Checkbox.Label class='text-sm text-gray-700'>{label()}</Checkbox.Label>
+        <ArkCheckbox.Label class='text-sm text-gray-700'>{label()}</ArkCheckbox.Label>
       </Show>
-    </Checkbox.Root>
+    </ArkCheckbox.Root>
   );
 }
 
 export { CheckboxComponent as Checkbox };
-export default CheckboxComponent;
+
+// Export hook for programmatic control
+export { useCheckbox };

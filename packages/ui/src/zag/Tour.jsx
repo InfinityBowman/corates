@@ -1,3 +1,9 @@
+/**
+ * Tour component - Keeping Zag.js implementation for now
+ * Ark UI Tour has a different API structure that requires significant refactoring.
+ * This component is not currently used in the codebase, so migration can be deferred.
+ */
+
 import * as tour from '@zag-js/tour';
 import { Portal } from 'solid-js/web';
 import { normalizeProps, useMachine } from '@zag-js/solid';
@@ -156,7 +162,7 @@ export function TourProvider(props) {
  * - Same as TourProvider
  * - renderTrigger: (api: TourApi) => JSX.Element - Render function for trigger
  */
-export function Tour(props) {
+export default function TourComponent(props) {
   const [local, rest] = splitProps(props, ['renderTrigger']);
 
   return (
@@ -172,4 +178,4 @@ function TourContent(props) {
   return <Show when={props.renderTrigger}>{props.renderTrigger(api)}</Show>;
 }
 
-export default Tour;
+export { TourComponent as Tour };

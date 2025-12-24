@@ -3,7 +3,7 @@
  */
 
 import { PasswordInput } from '@ark-ui/solid/password-input';
-import { Show, createSignal, createEffect } from 'solid-js';
+import { createSignal } from 'solid-js';
 import { FiEyeOff, FiEye } from 'solid-icons/fi';
 
 /**

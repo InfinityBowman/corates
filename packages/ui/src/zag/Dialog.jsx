@@ -2,7 +2,7 @@
  * Dialog components using Ark UI
  */
 
-import { Dialog } from '@ark-ui/solid/dialog';
+import { Dialog as ArkDialog, useDialog } from '@ark-ui/solid/dialog';
 import { Portal } from 'solid-js/web';
 import { createSignal, Show } from 'solid-js';
 import { FiAlertTriangle, FiX } from 'solid-icons/fi';
@@ -19,7 +19,7 @@ import { Z_INDEX } from '../constants/zIndex.js';
  * - children: JSX.Element - Dialog content
  * - size: 'sm' | 'md' | 'lg' | 'xl' - Dialog width (default: 'md')
  */
-export function DialogComponent(props) {
+export default function DialogComponent(props) {
   const open = () => props.open;
   const size = () => props.size;
   const title = () => props.title;
@@ -46,39 +46,41 @@ export function DialogComponent(props) {
   };
 
   return (
-    <Dialog.Root open={open()} onOpenChange={handleOpenChange}>
+    <ArkDialog.Root open={open()} onOpenChange={handleOpenChange}>
       <Show when={open()}>
         <Portal>
-          <Dialog.Backdrop
+          <ArkDialog.Backdrop
             class={`fixed inset-0 ${Z_INDEX.BACKDROP} bg-black/50 transition-opacity`}
           />
-          <Dialog.Positioner
+          <ArkDialog.Positioner
             class={`fixed inset-0 ${Z_INDEX.DIALOG} flex items-center justify-center overflow-y-auto p-4`}
           >
-            <Dialog.Content
+            <ArkDialog.Content
               class={`my-auto w-full rounded-lg bg-white shadow-xl ${getSizeClass()}`}
             >
               {/* Header */}
               <div class='flex items-center justify-between border-b border-gray-200 p-4'>
                 <div>
-                  <Dialog.Title class='text-lg font-semibold text-gray-900'>{title()}</Dialog.Title>
+                  <ArkDialog.Title class='text-lg font-semibold text-gray-900'>
+                    {title()}
+                  </ArkDialog.Title>
                   <Show when={description()}>
-                    <Dialog.Description class='mt-1 text-sm text-gray-500'>
+                    <ArkDialog.Description class='mt-1 text-sm text-gray-500'>
                       {description()}
-                    </Dialog.Description>
+                    </ArkDialog.Description>
                   </Show>
                 </div>
-                <Dialog.CloseTrigger class='rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500'>
+                <ArkDialog.CloseTrigger class='rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500'>
                   <FiX class='h-5 w-5' />
-                </Dialog.CloseTrigger>
+                </ArkDialog.CloseTrigger>
               </div>
               {/* Body */}
               <div class='p-4'>{children()}</div>
-            </Dialog.Content>
-          </Dialog.Positioner>
+            </ArkDialog.Content>
+          </ArkDialog.Positioner>
         </Portal>
       </Show>
-    </Dialog.Root>
+    </ArkDialog.Root>
   );
 }
 
@@ -145,7 +147,7 @@ export function ConfirmDialogComponent(props) {
   };
 
   return (
-    <Dialog.Root
+    <ArkDialog.Root
       open={open()}
       onOpenChange={handleOpenChange}
       role='alertdialog'
@@ -154,13 +156,13 @@ export function ConfirmDialogComponent(props) {
     >
       <Show when={open()}>
         <Portal>
-          <Dialog.Backdrop
+          <ArkDialog.Backdrop
             class={`fixed inset-0 ${Z_INDEX.BACKDROP} bg-black/50 transition-opacity`}
           />
-          <Dialog.Positioner
+          <ArkDialog.Positioner
             class={`fixed inset-0 ${Z_INDEX.DIALOG} flex items-center justify-center p-4`}
           >
-            <Dialog.Content class='w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl'>
+            <ArkDialog.Content class='w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl'>
               <div class='p-6'>
                 <div class='flex items-start gap-4'>
                   {/* Icon */}
@@ -169,20 +171,20 @@ export function ConfirmDialogComponent(props) {
                   </div>
                   {/* Text content */}
                   <div class='min-w-0 flex-1'>
-                    <Dialog.Title class='text-lg font-semibold text-gray-900'>
+                    <ArkDialog.Title class='text-lg font-semibold text-gray-900'>
                       {title()}
-                    </Dialog.Title>
-                    <Dialog.Description class='mt-2 text-sm text-gray-600'>
+                    </ArkDialog.Title>
+                    <ArkDialog.Description class='mt-2 text-sm text-gray-600'>
                       {description()}
-                    </Dialog.Description>
+                    </ArkDialog.Description>
                   </div>
                   {/* Close button */}
-                  <Dialog.CloseTrigger
+                  <ArkDialog.CloseTrigger
                     disabled={loading()}
                     class='shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500 disabled:opacity-50'
                   >
                     <FiX class='h-5 w-5' />
-                  </Dialog.CloseTrigger>
+                  </ArkDialog.CloseTrigger>
                 </div>
               </div>
               {/* Footer */}
@@ -202,11 +204,11 @@ export function ConfirmDialogComponent(props) {
                   {loading() ? 'Loading...' : confirmText() || 'Confirm'}
                 </button>
               </div>
-            </Dialog.Content>
-          </Dialog.Positioner>
+            </ArkDialog.Content>
+          </ArkDialog.Positioner>
         </Portal>
       </Show>
-    </Dialog.Root>
+    </ArkDialog.Root>
   );
 }
 
@@ -300,4 +302,6 @@ export function useConfirmDialog() {
 }
 
 export { DialogComponent as Dialog, ConfirmDialogComponent as ConfirmDialog };
-export default DialogComponent;
+
+// Export hook for programmatic control
+export { useDialog };

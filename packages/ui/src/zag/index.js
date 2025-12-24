@@ -6,7 +6,7 @@ export { Accordion } from './Accordion.jsx';
 export { Avatar } from './Avatar.jsx';
 export { Checkbox } from './Checkbox.jsx';
 export { Clipboard, CopyButton } from './Clipboard.jsx';
-export { default as Collapsible } from './Collapsible.jsx';
+export { default as Collapsible, useCollapsible } from './Collapsible.jsx';
 export { Combobox } from './Combobox.jsx';
 export { Dialog, ConfirmDialog, useConfirmDialog } from './Dialog.jsx';
 export { Drawer } from './Drawer.jsx';

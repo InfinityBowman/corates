@@ -65,30 +65,18 @@ export default function TodoStudyRow(props) {
     }
   };
 
-  // Handle header click - toggle unless clicking on interactive elements or selectable text
-  const handleHeaderClick = e => {
-    // Don't toggle if clicking on interactive elements or selectable text areas
-    const target = e.target;
-    const interactive = target.closest(
-      'button, [role="button"], [role="menuitem"], input, textarea, [data-selectable]',
-    );
-    if (interactive) return;
-
-    // Only toggle if there are PDFs to show
-    if (hasPdfs()) {
-      setExpanded(prev => !prev);
-    }
-  };
-
   return (
     <div class='overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors hover:border-gray-300'>
       <Collapsible
         open={expanded()}
-        onOpenChange={setExpanded}
-        trigger={api => (
+        onOpenChange={({ open }) => {
+          // Only toggle if there are PDFs to show
+          if (hasPdfs()) {
+            setExpanded(open);
+          }
+        }}
+        trigger={
           <div
-            {...api.getTriggerProps()}
-            onClick={handleHeaderClick}
             class={`flex items-center gap-3 px-4 py-3 select-none ${hasPdfs() ? 'cursor-pointer' : ''}`}
           >
             {/* Chevron indicator (only if has PDFs) */}
@@ -149,7 +137,10 @@ export default function TodoStudyRow(props) {
             {/* Open checklist button (when checklist exists) */}
             <Show when={checklist()}>
               <button
-                onClick={() => props.onOpenChecklist?.(checklist().id)}
+                onClick={e => {
+                  e.stopPropagation();
+                  props.onOpenChecklist?.(checklist().id);
+                }}
                 class='shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
               >
                 Open
@@ -159,14 +150,17 @@ export default function TodoStudyRow(props) {
             {/* Select Checklist button (when no checklist) */}
             <Show when={!checklist()}>
               <button
-                onClick={() => props.onToggleChecklistForm?.()}
+                onClick={e => {
+                  e.stopPropagation();
+                  props.onToggleChecklistForm?.();
+                }}
                 class='shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
               >
                 Select Checklist
               </button>
             </Show>
           </div>
-        )}
+        }
       >
         {/* Expanded PDF Section */}
         <Show when={hasPdfs()}>

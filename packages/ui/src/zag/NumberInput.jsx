@@ -32,7 +32,7 @@ import { FiMinus, FiPlus } from 'solid-icons/fi';
  * - class: string - Additional class for root element
  * - inputClass: string - Additional class for input element
  */
-export function NumberInputComponent(props) {
+export default function NumberInputComponent(props) {
   const [local, machineProps] = splitProps(props, [
     'label',
     'placeholder',
@@ -109,4 +109,3 @@ export function NumberInputComponent(props) {
 }
 
 export { NumberInputComponent as NumberInput };
-export default NumberInputComponent;
