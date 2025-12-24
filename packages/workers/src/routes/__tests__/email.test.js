@@ -49,6 +49,7 @@ async function fetchEmail(path, init = {}) {
 
   const testEnv = {
     ...env,
+    ENVIRONMENT: 'production',
     EMAIL_QUEUE: {
       idFromName: vi.fn(() => ({ toString: () => 'do-id' })),
       get: vi.fn(() => ({

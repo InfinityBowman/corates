@@ -29,7 +29,7 @@ describe('rateLimit middleware', () => {
         headers: {
           'CF-Connecting-IP': uniqueIP,
         },
-      });
+      }, { ENVIRONMENT: 'production' });
       expect(res.status).toBe(200);
     }
   });
@@ -40,13 +40,14 @@ describe('rateLimit middleware', () => {
     app.get('/test', c => c.json({ message: 'success' }));
 
     const uniqueIP = `192.168.2.${testCounter}`;
+    const testEnv = { ENVIRONMENT: 'production' };
     // Make 3 requests (within limit)
     for (let i = 0; i < 3; i++) {
       const res = await app.request('/test', {
         headers: {
           'CF-Connecting-IP': uniqueIP,
         },
-      });
+      }, testEnv);
       expect(res.status).toBe(200);
     }
 
@@ -55,7 +56,7 @@ describe('rateLimit middleware', () => {
       headers: {
         'CF-Connecting-IP': uniqueIP,
       },
-    });
+    }, testEnv);
 
     expect(res.status).toBe(429);
     const body = await res.json();
@@ -72,7 +73,7 @@ describe('rateLimit middleware', () => {
       headers: {
         'CF-Connecting-IP': '192.168.1.1',
       },
-    });
+    }, { ENVIRONMENT: 'production' });
 
     expect(res.headers.get('X-RateLimit-Limit')).toBe('10');
     expect(res.headers.get('X-RateLimit-Remaining')).toBeDefined();
@@ -86,6 +87,7 @@ describe('rateLimit middleware', () => {
 
     const uniqueIP1 = `192.168.3.${testCounter}`;
     const uniqueIP2 = `192.168.4.${testCounter}`;
+    const testEnv = { ENVIRONMENT: 'production' };
 
     // IP 1 makes 2 requests
     for (let i = 0; i < 2; i++) {
@@ -93,7 +95,7 @@ describe('rateLimit middleware', () => {
         headers: {
           'CF-Connecting-IP': uniqueIP1,
         },
-      });
+      }, testEnv);
       expect(res.status).toBe(200);
     }
 
@@ -102,7 +104,7 @@ describe('rateLimit middleware', () => {
       headers: {
         'CF-Connecting-IP': uniqueIP2,
       },
-    });
+    }, testEnv);
 
     expect(res.status).toBe(200);
   });
@@ -119,13 +121,14 @@ describe('rateLimit middleware', () => {
     );
     app.get('/test', c => c.json({ message: 'success' }));
 
+    const testEnv = { ENVIRONMENT: 'production' };
     // User 1 makes 2 requests
     for (let i = 0; i < 2; i++) {
       const res = await app.request('/test', {
         headers: {
           'x-user-id': 'user-1',
         },
-      });
+      }, testEnv);
       expect(res.status).toBe(200);
     }
 
@@ -134,7 +137,7 @@ describe('rateLimit middleware', () => {
       headers: {
         'x-user-id': 'user-1',
       },
-    });
+    }, testEnv);
     expect(res1.status).toBe(429);
 
     // User 2 should still be able to make requests
@@ -142,7 +145,7 @@ describe('rateLimit middleware', () => {
       headers: {
         'x-user-id': 'user-2',
       },
-    });
+    }, testEnv);
     expect(res2.status).toBe(200);
   });
 
@@ -152,6 +155,7 @@ describe('rateLimit middleware', () => {
     app.get('/test', c => c.json({ message: 'success' }));
 
     const uniqueIP = `192.168.5.${testCounter}`;
+    const testEnv = { ENVIRONMENT: 'production' };
 
     // Make 2 requests (within limit)
     for (let i = 0; i < 2; i++) {
@@ -159,7 +163,7 @@ describe('rateLimit middleware', () => {
         headers: {
           'CF-Connecting-IP': uniqueIP,
         },
-      });
+      }, testEnv);
       expect(res.status).toBe(200);
     }
 
@@ -168,7 +172,7 @@ describe('rateLimit middleware', () => {
       headers: {
         'CF-Connecting-IP': uniqueIP,
       },
-    });
+    }, testEnv);
     expect(res1.status).toBe(429);
 
     // Wait for window to expire
@@ -179,7 +183,7 @@ describe('rateLimit middleware', () => {
       headers: {
         'CF-Connecting-IP': uniqueIP,
       },
-    });
+    }, testEnv);
     expect(res2.status).toBe(200);
   });
 });
@@ -201,6 +205,7 @@ describe('searchRateLimit', () => {
     app.get('/search', c => c.json({ results: [] }));
 
     const uniqueIP = `192.168.10.${testCounter}`;
+    const testEnv = { ENVIRONMENT: 'production' };
 
     // Make requests up to limit
     for (let i = 0; i < 30; i++) {
@@ -208,7 +213,7 @@ describe('searchRateLimit', () => {
         headers: {
           'CF-Connecting-IP': uniqueIP,
         },
-      });
+      }, testEnv);
       expect(res.status).toBe(200);
     }
 
@@ -217,7 +222,7 @@ describe('searchRateLimit', () => {
       headers: {
         'CF-Connecting-IP': uniqueIP,
       },
-    });
+    }, testEnv);
 
     expect(res.status).toBe(429);
   });
@@ -240,6 +245,7 @@ describe('emailRateLimit', () => {
     app.post('/email', c => c.json({ success: true }));
 
     const uniqueIP = `192.168.20.${testCounter}`;
+    const testEnv = { ENVIRONMENT: 'production' };
 
     // Make requests up to limit
     for (let i = 0; i < 5; i++) {
@@ -248,7 +254,7 @@ describe('emailRateLimit', () => {
         headers: {
           'CF-Connecting-IP': uniqueIP,
         },
-      });
+      }, testEnv);
       expect(res.status).toBe(200);
     }
 
@@ -258,7 +264,7 @@ describe('emailRateLimit', () => {
       headers: {
         'CF-Connecting-IP': uniqueIP,
       },
-    });
+    }, testEnv);
 
     expect(res.status).toBe(429);
   });

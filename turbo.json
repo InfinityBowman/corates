@@ -6,8 +6,7 @@
       "outputs": ["dist/**", ".output/**", ".vinxi/**"]
     },
     "test": {
-      "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "dependsOn": ["^build"]
     },
     "test:watch": {
       "cache": false,
