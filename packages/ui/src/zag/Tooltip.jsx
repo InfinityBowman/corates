@@ -58,6 +58,7 @@ export default function TooltipComponent(props) {
     'children',
     'placement',
     'showArrow',
+    'interactive',
     'class',
     'contentClass',
   ]);
@@ -66,6 +67,7 @@ export default function TooltipComponent(props) {
   const children = () => local.children;
   const showArrow = () => local.showArrow;
   const placement = () => local.placement;
+  const interactive = () => local.interactive;
 
   // Calculate boundary for positioning (avoid navbar overlap)
   const getBoundary = createMemo(() => {
@@ -103,7 +105,7 @@ export default function TooltipComponent(props) {
             </ArkTooltip.Arrow>
           </Show>
           <ArkTooltip.Content
-            class={`data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out pointer-events-none max-w-xs rounded bg-gray-900 px-2 py-1 text-xs text-white shadow-lg ${local.contentClass || ''}`}
+            class={`data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out ${interactive() ? '' : 'pointer-events-none'} max-w-xs rounded bg-gray-900 px-2 py-1 text-xs text-white shadow-lg ${local.contentClass || ''}`}
           >
             {content()}
           </ArkTooltip.Content>

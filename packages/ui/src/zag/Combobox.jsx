@@ -7,7 +7,7 @@
 import { Combobox as ArkCombobox, useCombobox, useListCollection } from '@ark-ui/solid/combobox';
 import { useFilter } from '@ark-ui/solid/locale';
 import { Portal } from 'solid-js/web';
-import { mergeProps, splitProps, createMemo, Show, Index } from 'solid-js';
+import { mergeProps, splitProps, createMemo, createEffect, Show, Index } from 'solid-js';
 import { FiChevronDown, FiX, FiCheck } from 'solid-icons/fi';
 import { Z_INDEX } from '../constants/zIndex.js';
 
@@ -58,12 +58,18 @@ export default function ComboboxComponent(props) {
   const filterFn = useFilter({ sensitivity: 'base' });
 
   // Create collection with filtering
-  const { collection, filter } = useListCollection({
+  const { collection, filter, set } = useListCollection({
     initialItems: getItems(),
     filter: filterFn().contains,
     itemToString: item => item.label,
     itemToValue: item => item.value,
     itemToDisabled: item => item.disabled,
+  });
+
+  // Sync items when props.items changes
+  createEffect(() => {
+    const items = getItems();
+    set(items);
   });
 
   const handleInputValueChange = details => {
