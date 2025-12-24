@@ -135,13 +135,13 @@ pnpm run initialize-mcp
 
 ### Turborepo Commands (Recommended for running across all packages)
 
-| Command                | Description                                         |
-| ---------------------- | --------------------------------------------------- |
-| `turbo build`          | Build all packages (with caching and parallelization) |
-| `turbo test`           | Run all tests across all packages                   |
-| `turbo lint`           | Run ESLint across all packages                      |
-| `turbo format`         | Run Prettier across all packages                    |
-| `turbo dev`            | Run dev servers for all packages that have a dev task |
+| Command        | Description                                           |
+| -------------- | ----------------------------------------------------- |
+| `turbo build`  | Build all packages (with caching and parallelization) |
+| `turbo test`   | Run all tests across all packages                     |
+| `turbo lint`   | Run ESLint across all packages                        |
+| `turbo format` | Run Prettier across all packages                      |
+| `turbo dev`    | Run dev servers for all packages that have a dev task |
 
 ### Package-Specific Commands (Use pnpm scripts for convenience)
 
