@@ -3,7 +3,7 @@
  */
 
 import { Tabs } from '@ark-ui/solid/tabs';
-import { Component, For, Show, JSX } from 'solid-js';
+import { Component, For, Show, JSX, createMemo } from 'solid-js';
 
 export interface TabDefinition {
   value: string;
@@ -41,25 +41,35 @@ const TabsComponent: Component<TabsProps> = props => {
     }
   };
 
+  // Conditionally provide value or defaultValue (but not both)
+  // When value is provided, use controlled mode
+  // Otherwise, use defaultValue for uncontrolled mode
+  const rootProps = createMemo(() => {
+    const currentValue = value();
+    if (currentValue !== undefined && currentValue !== null) {
+      return { value: currentValue, onValueChange: handleValueChange };
+    }
+    return {
+      defaultValue: defaultValue() || tabsList()[0]?.value,
+      onValueChange: handleValueChange,
+    };
+  });
+
   return (
-    <Tabs.Root
-      value={value()}
-      defaultValue={defaultValue() || tabsList()[0]?.value}
-      onValueChange={handleValueChange}
-    >
+    <Tabs.Root {...rootProps()}>
       <Tabs.List class='flex overflow-x-auto rounded-t-lg border-b border-gray-200 bg-white'>
         <For each={tabsList()}>
           {tab => (
             <Tabs.Trigger
               value={tab.value}
-              class='flex items-center gap-2 border-b-2 border-transparent px-4 py-3 text-sm font-medium whitespace-nowrap text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:bg-blue-50/50 data-[selected]:text-blue-600'
+              class='flex items-center gap-2 border-b-2 border-transparent px-4 py-3 text-sm font-medium whitespace-nowrap text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900'
             >
               <Show when={tab.icon}>
                 <span class='h-4 w-4'>{tab.icon}</span>
               </Show>
               {tab.label}
               <Show when={tab.count !== undefined || tab.getCount}>
-                <span class='ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 data-[selected]:bg-blue-100 data-[selected]:text-blue-700'>
+                <span class='ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600'>
                   {tab.getCount ? tab.getCount() : tab.count}
                 </span>
               </Show>

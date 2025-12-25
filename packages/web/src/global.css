@@ -151,6 +151,19 @@
   text-align: left;
 }
 
+/* Tabs - Selected tab styling */
+[data-scope='tabs'][data-part='trigger'][data-selected] {
+  border-bottom-color: rgb(37 99 235); /* blue-600 */
+  background-color: rgb(239 246 255 / 0.5); /* blue-50/50 */
+  color: rgb(37 99 235); /* blue-600 */
+}
+
+/* Tabs - Selected tab badge/count styling (badge inside selected trigger) */
+[data-scope='tabs'][data-part='trigger'][data-selected] span.rounded-full {
+  background-color: rgb(219 234 254) !important; /* blue-100 */
+  color: rgb(29 78 216) !important; /* blue-700 */
+}
+
 /* PDF.js text layer styles for text selection */
 .pdf-text-layer {
   position: absolute;
