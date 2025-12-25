@@ -17,11 +17,11 @@ export interface SwitchProps {
   /** Name for form submission */
   name?: string;
   /** Callback when checked state changes */
-  onChange?: (checked: boolean) => void;
+  onChange?: (_checked: boolean) => void;
   /** Additional CSS classes */
   class?: string;
   /** Callback when checked state changes (Ark UI compatible) */
-  onCheckedChange?: (details: { checked: boolean }) => void;
+  onCheckedChange?: (_details: { checked: boolean }) => void;
 }
 
 /**
@@ -46,8 +46,9 @@ const SwitchComponent: Component<SwitchProps> = props => {
   const name = () => machineProps.name;
 
   const handleCheckedChange = (details: { checked: boolean }) => {
-    if (onChange()) {
-      onChange()(details.checked === true);
+    const changeHandler = onChange();
+    if (changeHandler) {
+      changeHandler(details.checked === true);
     }
     if (machineProps.onCheckedChange) {
       machineProps.onCheckedChange(details);

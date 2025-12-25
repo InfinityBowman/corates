@@ -31,9 +31,9 @@ export interface ClipboardProps {
   /** Initial value to copy */
   defaultValue?: string;
   /** Callback when value changes */
-  onValueChange?: (details: { value: string }) => void;
+  onValueChange?: (_details: { value: string }) => void;
   /** Callback when copy status changes */
-  onStatusChange?: (details: { copied: boolean }) => void;
+  onStatusChange?: (_details: { copied: boolean }) => void;
   /** Time in ms before resetting copied state (default: 3000) */
   timeout?: number;
   /** Label for the input */
@@ -41,7 +41,7 @@ export interface ClipboardProps {
   /** Show input field (default: true) */
   showInput?: boolean;
   /** Render function for custom UI */
-  children?: (api: Accessor<ClipboardApi>) => JSX.Element;
+  children?: (_api: Accessor<ClipboardApi>) => JSX.Element;
   /** Additional class for root element */
   class?: string;
 }
@@ -125,7 +125,7 @@ export interface CopyButtonProps {
   /** Value to copy */
   value: string;
   /** Callback when copy status changes */
-  onStatusChange?: (details: { copied: boolean }) => void;
+  onStatusChange?: (_details: { copied: boolean }) => void;
   /** Time in ms before resetting (default: 3000) */
   timeout?: number;
   /** Button label (default: 'Copy') */
@@ -211,7 +211,6 @@ export const CopyButton: Component<CopyButtonProps> = props => {
   return (
     <Clipboard.Root
       value={machineProps.value}
-      defaultValue={machineProps.defaultValue}
       onStatusChange={handleStatusChange}
       timeout={machineProps.timeout ?? 3000}
     >

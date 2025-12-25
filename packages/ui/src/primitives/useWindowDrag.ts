@@ -11,7 +11,7 @@ export function useWindowDrag(options?: { onDragEnd?: () => void }): {
   let dragCounter = 0;
 
   onMount(() => {
-    const handleDragEnter = (e: DragEvent) => {
+    const handleDragEnter = (e: globalThis.DragEvent) => {
       // Only respond to file drags
       if (e.dataTransfer?.types?.includes('Files')) {
         dragCounter++;

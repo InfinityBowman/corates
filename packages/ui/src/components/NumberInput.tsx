@@ -14,7 +14,7 @@ export interface NumberInputProps {
   /** Initial value */
   defaultValue?: string;
   /** Callback when value changes */
-  onValueChange?: (details: { value: string; valueAsNumber: number }) => void;
+  onValueChange?: (_details: { value: string; valueAsNumber: number }) => void;
   /** Minimum value */
   min?: number;
   /** Maximum value */

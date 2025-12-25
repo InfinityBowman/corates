@@ -10,7 +10,7 @@ import { Component, Show, splitProps, createMemo, JSX, Accessor } from 'solid-js
 export interface CollapsibleApi {
   open: boolean;
   visible: boolean;
-  setOpen: (open: boolean) => void;
+  setOpen: (_open: boolean) => void;
 }
 
 export interface CollapsibleProps {
@@ -19,7 +19,7 @@ export interface CollapsibleProps {
   /** Initial open state (uncontrolled) */
   defaultOpen?: boolean;
   /** Callback when open state changes */
-  onOpenChange?: (details: { open: boolean }) => void;
+  onOpenChange?: (_details: { open: boolean }) => void;
   /** Disable the collapsible */
   disabled?: boolean;
   /** Enable lazy mounting */
@@ -35,9 +35,9 @@ export interface CollapsibleProps {
   /** Custom IDs for root, content, trigger */
   ids?: { root?: string; content?: string; trigger?: string };
   /** Trigger element or render function receiving collapsible API */
-  trigger?: JSX.Element | ((api: Accessor<CollapsibleApi>) => JSX.Element);
+  trigger?: JSX.Element | ((_api: Accessor<CollapsibleApi>) => JSX.Element);
   /** Indicator element or render function receiving collapsible API */
-  indicator?: JSX.Element | ((api: Accessor<CollapsibleApi>) => JSX.Element);
+  indicator?: JSX.Element | ((_api: Accessor<CollapsibleApi>) => JSX.Element);
   /** Collapsible content */
   children?: JSX.Element;
 }
@@ -97,12 +97,12 @@ function CollapsibleWithApi(props: {
       <ArkCollapsible.Root {...arkProps()}>
         <Show when={props.trigger()}>
           <ArkCollapsible.Trigger class='w-full' onClick={handleTriggerClick}>
-            {renderTrigger()}
+            {renderTrigger() as JSX.Element}
           </ArkCollapsible.Trigger>
         </Show>
         <Show when={props.indicator()}>
           <ArkCollapsible.Indicator class='transition-transform duration-200 data-[state=open]:rotate-90'>
-            {renderIndicator()}
+            {renderIndicator() as JSX.Element}
           </ArkCollapsible.Indicator>
         </Show>
         <ArkCollapsible.Content class='overflow-hidden'>{props.children()}</ArkCollapsible.Content>
@@ -167,12 +167,12 @@ const CollapsibleComponent: Component<CollapsibleProps> = props => {
         <ArkCollapsible.Root {...arkProps}>
           <Show when={trigger()}>
             <ArkCollapsible.Trigger class='w-full' onClick={handleTriggerClick}>
-              {renderTrigger()}
+              {renderTrigger() as JSX.Element}
             </ArkCollapsible.Trigger>
           </Show>
           <Show when={indicator()}>
             <ArkCollapsible.Indicator class='transition-transform duration-200 data-[state=open]:rotate-90'>
-              {renderIndicator()}
+              {renderIndicator() as JSX.Element}
             </ArkCollapsible.Indicator>
           </Show>
           <ArkCollapsible.Content class='overflow-hidden'>{children()}</ArkCollapsible.Content>

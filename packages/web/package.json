@@ -12,6 +12,7 @@
     "deploy": "pnpm run build",
     "test:ui": "vitest --ui --ui.port=51234",
     "test": "vitest run --reporter=verbose",
+    "lint": "eslint .",
     "format": "prettier --write .",
     "analyze": "vite build --mode analyze && source-map-explorer dist/assets/index-*.js --no-border-checks"
   },

@@ -23,7 +23,8 @@
     "user:make-admin:local": "node ./scripts/make-admin-local.mjs",
     "user:make-admin:prod": "node ./scripts/make-admin-prod.mjs",
     "user:create-orcid:local": "node ./scripts/create-test-orcid-user.mjs",
-    "openapi:generate": "node ./scripts/generate-openapi.mjs"
+    "openapi:generate": "node ./scripts/generate-openapi.mjs",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@cloudflare/workers-types": "^4.20251224.0",

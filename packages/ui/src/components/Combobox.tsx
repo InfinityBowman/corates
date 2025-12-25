@@ -29,9 +29,9 @@ export interface ComboboxProps {
   /** Initial selected values */
   defaultValue?: string[];
   /** Callback when selection changes */
-  onValueChange?: (details: { value: string[]; items: ComboboxItem[] }) => void;
+  onValueChange?: (_details: { value: string[]; items: ComboboxItem[] }) => void;
   /** Callback when input changes */
-  onInputValueChange?: (details: { inputValue: string }) => void;
+  onInputValueChange?: (_details: { inputValue: string }) => void;
   /** Allow multiple selections (default: false) */
   multiple?: boolean;
   /** Disable the combobox */
@@ -83,12 +83,11 @@ const ComboboxComponent: Component<ComboboxProps> = props => {
   const filterFn = useFilter({ sensitivity: 'base' });
 
   // Create collection with filtering
-  const { collection, filter, set } = useListCollection({
+  const { collection, set } = useListCollection({
     initialItems: getItems(),
     filter: filterFn().contains,
     itemToString: (item: ComboboxItem) => item.label,
     itemToValue: (item: ComboboxItem) => item.value,
-    itemToDisabled: (item: ComboboxItem) => item.disabled || false,
   });
 
   // Sync items when props.items changes
@@ -97,12 +96,6 @@ const ComboboxComponent: Component<ComboboxProps> = props => {
     set(items);
   });
 
-  const handleInputValueChange = (details: { inputValue: string }) => {
-    filter(details.inputValue);
-    if (machineProps.onInputValueChange) {
-      machineProps.onInputValueChange(details);
-    }
-  };
 
   const handleValueChange = (details: { value: string[] }) => {
     if (machineProps.onValueChange) {
@@ -162,7 +155,6 @@ const ComboboxComponent: Component<ComboboxProps> = props => {
         <ArkCombobox.Input
           placeholder={local.placeholder}
           class={`flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-gray-400 disabled:cursor-not-allowed ${local.inputClass || ''}`}
-          onInputValueChange={handleInputValueChange}
         />
         <Show when={hasSelectedItems()}>
           <ArkCombobox.ClearTrigger class='mr-1 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'>

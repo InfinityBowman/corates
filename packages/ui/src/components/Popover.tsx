@@ -37,7 +37,7 @@ export interface PopoverProps {
   /** Initial open state */
   defaultOpen?: boolean;
   /** Callback when open state changes */
-  onOpenChange?: (details: { open: boolean }) => void;
+  onOpenChange?: (_details: { open: boolean }) => void;
   /** Popover placement (default: 'bottom') */
   placement?: Placement;
   /** Whether to trap focus (default: false) */
@@ -98,8 +98,8 @@ const PopoverComponent: Component<PopoverProps> = props => {
     }
   };
 
-  const positioning = () => ({
-    placement: machineProps.placement || 'bottom',
+  const positioning = (): { placement: Placement } => ({
+    placement: (machineProps.placement || 'bottom') as Placement,
   });
 
   return (

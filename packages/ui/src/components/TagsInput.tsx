@@ -16,7 +16,7 @@ export interface TagsInputProps {
   /** Initial tag values */
   defaultValue?: string[];
   /** Callback when tags change */
-  onValueChange?: (details: { value: string[] }) => void;
+  onValueChange?: (_details: { value: string[] }) => void;
   /** Maximum number of tags */
   max?: number;
   /** Allow duplicate tags (default: false) */

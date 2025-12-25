@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@solidjs/testing-library';
 import { createSignal } from 'solid-js';
-import { Tabs } from '../Tabs.tsx';
+import { Tabs } from '../Tabs';
 
 describe('Tabs', () => {
   const defaultTabs = [

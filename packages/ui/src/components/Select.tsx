@@ -8,7 +8,7 @@ import { Select as ArkSelect, createListCollection, useSelect } from '@ark-ui/so
 import { Portal } from 'solid-js/web';
 import { Component, createMemo, Show, Index, splitProps, mergeProps } from 'solid-js';
 import { BiRegularCheck, BiRegularChevronDown } from 'solid-icons/bi';
-import { Z_INDEX } from '../constants/zIndex.ts';
+import { Z_INDEX } from '../constants/zIndex';
 
 export interface SelectOption {
   label: string;
@@ -22,7 +22,7 @@ export interface SelectProps {
   /** The selected value (controlled) */
   value?: string;
   /** Callback when value changes */
-  onChange?: (value: string) => void;
+  onChange?: (_value: string) => void;
   /** Label text for the select */
   label?: string;
   /** Placeholder text when no value selected (default: 'Select option') */
@@ -154,11 +154,22 @@ const SelectComponent: Component<SelectProps> = props => {
   };
 
   // Get positioning options - use provided or default
-  const positioningOptions = () =>
-    local.positioning || {
+  const positioningOptions = (): {
+    placement?: string;
+    sameWidth?: boolean;
+    [key: string]: unknown;
+  } => {
+    const defaultPos = {
       placement: 'bottom-start',
       sameWidth: true,
     };
+    if (!local.positioning) return defaultPos;
+    return {
+      ...local.positioning,
+      placement: local.positioning.placement,
+      sameWidth: local.positioning.sameWidth,
+    };
+  };
 
   return (
     <ArkSelect.Root
@@ -168,7 +179,9 @@ const SelectComponent: Component<SelectProps> = props => {
       deselectable={merged.deselectable}
       closeOnSelect={merged.closeOnSelect}
       multiple={merged.multiple}
-      positioning={positioningOptions()}
+      positioning={
+        positioningOptions() as unknown as Parameters<typeof ArkSelect.Root>[0]['positioning']
+      }
       disabled={disabled()}
       invalid={invalid()}
       {...arkProps}
@@ -206,7 +219,6 @@ const SelectComponent: Component<SelectProps> = props => {
                   return (
                     <ArkSelect.Item
                       item={item()}
-                      disabled={isDisabled()}
                       class={`flex cursor-pointer items-center justify-between px-3 py-2 whitespace-nowrap hover:bg-gray-100 data-[highlighted]:bg-blue-50 ${
                         isDisabled() ?
                           'cursor-not-allowed text-gray-400 hover:bg-transparent'
@@ -236,7 +248,6 @@ const SelectComponent: Component<SelectProps> = props => {
                     return (
                       <ArkSelect.Item
                         item={item()}
-                        disabled={isDisabled()}
                         class={`flex cursor-pointer items-center justify-between px-3 py-2 whitespace-nowrap hover:bg-gray-100 data-[highlighted]:bg-blue-50 ${
                           isDisabled() ?
                             'cursor-not-allowed text-gray-400 hover:bg-transparent'

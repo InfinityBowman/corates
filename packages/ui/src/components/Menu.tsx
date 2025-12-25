@@ -37,13 +37,13 @@ export interface MenuProps {
   /** Menu items */
   items: MenuItem[];
   /** Callback when item is selected */
-  onSelect?: (details: { value: string }) => void;
+  onSelect?: (_details: { value: string }) => void;
   /** Controlled open state */
   open?: boolean;
   /** Initial open state */
   defaultOpen?: boolean;
   /** Callback when open state changes */
-  onOpenChange?: (details: { open: boolean }) => void;
+  onOpenChange?: (_details: { open: boolean }) => void;
   /** Menu placement (default: 'bottom-start') */
   placement?: Placement;
   /** Close menu on selection (default: true) */

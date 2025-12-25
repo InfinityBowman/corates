@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@solidjs/testing-library';
-import { Dialog, ConfirmDialog, useConfirmDialog } from '../Dialog.tsx';
+import { Dialog, ConfirmDialog, useConfirmDialog } from '../Dialog';
 
 describe('Dialog', () => {
   beforeEach(() => {
@@ -99,7 +99,8 @@ describe('Dialog', () => {
         </Dialog>
       ));
 
-      const content = document.querySelector('[data-part="content"]');
+      const content = document.querySelector('[data-part="content"]') as HTMLElement;
+      expect(content).not.toBeNull();
       expect(content.className).toContain('max-w-sm');
     });
 
@@ -110,7 +111,8 @@ describe('Dialog', () => {
         </Dialog>
       ));
 
-      const content = document.querySelector('[data-part="content"]');
+      const content = document.querySelector('[data-part="content"]') as HTMLElement;
+      expect(content).not.toBeNull();
       expect(content.className).toContain('max-w-md');
     });
 
@@ -121,7 +123,8 @@ describe('Dialog', () => {
         </Dialog>
       ));
 
-      const content = document.querySelector('[data-part="content"]');
+      const content = document.querySelector('[data-part="content"]') as HTMLElement;
+      expect(content).not.toBeNull();
       expect(content.className).toContain('max-w-lg');
     });
   });
@@ -146,6 +149,7 @@ describe('Dialog', () => {
       ));
 
       const title = document.querySelector('[data-part="title"]');
+      expect(title).not.toBeNull();
       expect(title).toHaveTextContent('Dialog Title');
     });
   });

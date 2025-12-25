@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@solidjs/testing-library';
 import { createSignal } from 'solid-js';
-import { Checkbox } from '../Checkbox.tsx';
+import { Checkbox } from '../Checkbox';
 
 describe('Checkbox', () => {
   beforeEach(() => {
@@ -29,7 +29,8 @@ describe('Checkbox', () => {
     it('should apply custom class', () => {
       const { container } = render(() => <Checkbox class='custom-class' />);
 
-      const label = container.querySelector('label');
+      const label = container.querySelector('label') as HTMLLabelElement;
+      expect(label).not.toBeNull();
       expect(label.className).toContain('custom-class');
     });
   });
@@ -56,7 +57,8 @@ describe('Checkbox', () => {
       const { container } = render(() => <Checkbox label='Test' onChange={onChange} />);
 
       const label = container.querySelector('label');
-      await fireEvent.click(label);
+      expect(label).not.toBeNull();
+      await fireEvent.click(label!);
 
       expect(onChange).toHaveBeenCalledWith(true);
     });
@@ -77,7 +79,8 @@ describe('Checkbox', () => {
       expect(screen.getByTestId('state')).toHaveTextContent('unchecked');
 
       const label = container.querySelector('label');
-      fireEvent.click(label);
+      expect(label).not.toBeNull();
+      fireEvent.click(label!);
 
       expect(screen.getByTestId('state')).toHaveTextContent('checked');
     });
@@ -87,14 +90,16 @@ describe('Checkbox', () => {
     it('should be disabled when disabled prop is true', () => {
       const { container } = render(() => <Checkbox label='Test' disabled />);
 
-      const input = container.querySelector('input[type="checkbox"]');
+      const input = container.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      expect(input).not.toBeNull();
       expect(input.disabled).toBe(true);
     });
 
     it('should apply disabled styling', () => {
       const { container } = render(() => <Checkbox label='Test' disabled />);
 
-      const label = container.querySelector('label');
+      const label = container.querySelector('label') as HTMLLabelElement;
+      expect(label).not.toBeNull();
       expect(label.className).toContain('cursor-not-allowed');
     });
   });
@@ -112,14 +117,16 @@ describe('Checkbox', () => {
     it('should have name attribute for form submission', () => {
       const { container } = render(() => <Checkbox label='Test' name='acceptTerms' />);
 
-      const input = container.querySelector('input[type="checkbox"]');
+      const input = container.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      expect(input).not.toBeNull();
       expect(input.name).toBe('acceptTerms');
     });
 
     it('should have value attribute for form submission', () => {
       const { container } = render(() => <Checkbox label='Test' name='option' value='option1' />);
 
-      const input = container.querySelector('input[type="checkbox"]');
+      const input = container.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      expect(input).not.toBeNull();
       expect(input.value).toBe('option1');
     });
   });

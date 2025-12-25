@@ -43,7 +43,7 @@ export interface TooltipProps {
   /** Initial open state (uncontrolled) */
   defaultOpen?: boolean;
   /** Callback when open state changes */
-  onOpenChange?: (details: { open: boolean }) => void;
+  onOpenChange?: (_details: { open: boolean }) => void;
   /** Show arrow pointing to trigger (default: true) */
   showArrow?: boolean;
   /** Enable lazy mounting (default: true) */
@@ -126,17 +126,29 @@ const TooltipComponent: Component<TooltipProps> = props => {
     return 'viewport';
   });
 
-  const positioning = createMemo(() => ({
-    placement: placement(),
-    gutter: 8,
-    strategy: 'fixed' as const,
-    flip: true,
-    boundary: getBoundary(),
-    ...machineProps.positioning,
-  }));
+  const positioning = createMemo(
+    (): {
+      placement?: string;
+      gutter?: number;
+      strategy?: 'absolute' | 'fixed';
+      flip?: boolean;
+      boundary?: string | { x: number; y: number; width: number; height: number };
+      [key: string]: unknown;
+    } => ({
+      placement: placement(),
+      gutter: 8,
+      strategy: 'fixed' as const,
+      flip: true,
+      boundary: getBoundary(),
+      ...machineProps.positioning,
+    }),
+  );
 
   return (
-    <ArkTooltip.Root {...machineProps} positioning={positioning()} class={local.class}>
+    <ArkTooltip.Root
+      {...machineProps}
+      positioning={positioning() as unknown as Parameters<typeof ArkTooltip.Root>[0]['positioning']}
+    >
       <ArkTooltip.Trigger>{children()}</ArkTooltip.Trigger>
       <Portal>
         <ArkTooltip.Positioner class={Z_INDEX.TOOLTIP}>

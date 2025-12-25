@@ -13,7 +13,7 @@ export interface AvatarProps {
   /** Alt text for image */
   alt?: string;
   /** Callback when image loading status changes */
-  onStatusChange?: (details: { status: 'loading' | 'loaded' | 'error' }) => void;
+  onStatusChange?: (_details: { status: 'loading' | 'loaded' | 'error' }) => void;
   /** CSS classes for fallback element */
   fallbackClass?: string;
   /** Additional class for root element */

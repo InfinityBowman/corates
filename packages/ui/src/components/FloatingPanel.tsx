@@ -25,7 +25,7 @@ export interface FloatingPanelProps {
   /** Initial open state (uncontrolled) */
   defaultOpen?: boolean;
   /** Callback when open state changes */
-  onOpenChange?: (details: { open: boolean }) => void;
+  onOpenChange?: (_details: { open: boolean }) => void;
   /** Panel title */
   title?: string;
   /** Panel content */
@@ -39,11 +39,11 @@ export interface FloatingPanelProps {
   /** Controlled position */
   position?: FloatingPanelPosition;
   /** Callback when size changes */
-  onSizeChange?: (details: { size: FloatingPanelSize }) => void;
+  onSizeChange?: (_details: { size: FloatingPanelSize }) => void;
   /** Callback when position changes */
-  onPositionChange?: (details: { position: FloatingPanelPosition }) => void;
+  onPositionChange?: (_details: { position: FloatingPanelPosition }) => void;
   /** Callback when stage changes */
-  onStageChange?: (details: { stage: 'minimized' | 'maximized' | 'default' }) => void;
+  onStageChange?: (_details: { stage: 'minimized' | 'maximized' | 'default' }) => void;
   /** Whether the panel can be resized (default: true) */
   resizable?: boolean;
   /** Whether the panel can be dragged (default: true) */

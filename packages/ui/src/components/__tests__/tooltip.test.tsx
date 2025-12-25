@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, cleanup } from '@solidjs/testing-library';
-import { Tooltip } from '../Tooltip.tsx';
+import { Tooltip } from '../Tooltip';
 
 describe('Tooltip', () => {
   beforeEach(() => {

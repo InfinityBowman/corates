@@ -21,9 +21,9 @@ export interface TabsProps {
   /** Controlled tab value */
   value?: string;
   /** Callback when tab changes */
-  onValueChange?: (value: string) => void;
+  onValueChange?: (_value: string) => void;
   /** Tab content render function */
-  children?: (tabValue: string) => JSX.Element;
+  children?: (_tabValue: string) => JSX.Element;
 }
 
 /**

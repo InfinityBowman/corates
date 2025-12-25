@@ -12,7 +12,7 @@ export interface DialogProps {
   /** Controlled open state */
   open?: boolean;
   /** Callback when open state changes */
-  onOpenChange?: (open: boolean) => void;
+  onOpenChange?: (_open: boolean) => void;
   /** Dialog title */
   title?: string;
   /** Dialog description */
@@ -95,7 +95,7 @@ export interface ConfirmDialogProps {
   /** Controlled open state */
   open?: boolean;
   /** Callback when open state changes */
-  onOpenChange?: (open: boolean) => void;
+  onOpenChange?: (_open: boolean) => void;
   /** Callback when user confirms */
   onConfirm?: () => void;
   /** Dialog title */
@@ -251,7 +251,7 @@ export function useConfirmDialog() {
   });
   const [loading, setLoading] = createSignal(false);
 
-  let resolvePromise: ((value: boolean) => void) | null = null;
+  let resolvePromise: ((_value: boolean) => void) | null = null;
 
   const open = (dialogConfig: ConfirmDialogConfig) => {
     return new Promise<boolean>(resolve => {

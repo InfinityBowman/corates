@@ -20,7 +20,7 @@ export interface AccordionProps {
   /** Controlled expanded items */
   value?: string[];
   /** Callback when expanded items change */
-  onValueChange?: (details: { value: string[] }) => void;
+  onValueChange?: (_details: { value: string[] }) => void;
   /** Allow multiple items expanded (default: false) */
   multiple?: boolean;
   /** Allow collapsing all items (default: true) */

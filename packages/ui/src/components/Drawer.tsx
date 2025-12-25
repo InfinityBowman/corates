@@ -15,7 +15,7 @@ export interface DrawerProps {
   /** Controlled open state */
   open?: boolean;
   /** Callback when open state changes */
-  onOpenChange?: (open: boolean) => void;
+  onOpenChange?: (_open: boolean) => void;
   /** Drawer title */
   title?: string;
   /** Drawer side (default: 'right') */

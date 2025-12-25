@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@solidjs/testing-library';
-import { RadioGroup } from '../RadioGroup.tsx';
+import { RadioGroup } from '../RadioGroup';
 
 describe('RadioGroup', () => {
   const defaultItems = [
@@ -61,7 +61,10 @@ describe('RadioGroup', () => {
       ));
 
       const inputs = container.querySelectorAll('input[type="radio"]');
-      const option2Input = Array.from(inputs).find(input => input.value === 'option2');
+      const option2Input = Array.from(inputs).find(
+        input => (input as HTMLInputElement).value === 'option2'
+      ) as HTMLInputElement;
+      expect(option2Input).toBeDefined();
       expect(option2Input.checked).toBe(true);
     });
 
@@ -71,10 +74,14 @@ describe('RadioGroup', () => {
       ));
 
       const option2Label = screen.getByText('Option 2').closest('label');
-      await fireEvent.click(option2Label);
+      expect(option2Label).not.toBeNull();
+      await fireEvent.click(option2Label!);
 
       const inputs = container.querySelectorAll('input[type="radio"]');
-      const option2Input = Array.from(inputs).find(input => input.value === 'option2');
+      const option2Input = Array.from(inputs).find(
+        input => (input as HTMLInputElement).value === 'option2'
+      ) as HTMLInputElement;
+      expect(option2Input).toBeDefined();
       expect(option2Input.checked).toBe(true);
     });
   });
@@ -86,7 +93,10 @@ describe('RadioGroup', () => {
       ));
 
       const inputs = container.querySelectorAll('input[type="radio"]');
-      const option3Input = Array.from(inputs).find(input => input.value === 'option3');
+      const option3Input = Array.from(inputs).find(
+        input => (input as HTMLInputElement).value === 'option3'
+      ) as HTMLInputElement;
+      expect(option3Input).toBeDefined();
       expect(option3Input.checked).toBe(true);
     });
 
@@ -102,7 +112,8 @@ describe('RadioGroup', () => {
       ));
 
       const option2Label = screen.getByText('Option 2').closest('label');
-      await fireEvent.click(option2Label);
+      expect(option2Label).not.toBeNull();
+      await fireEvent.click(option2Label!);
 
       expect(onValueChange).toHaveBeenCalledWith({ value: 'option2' });
     });
@@ -132,7 +143,7 @@ describe('RadioGroup', () => {
 
       const inputs = container.querySelectorAll('input[type="radio"]');
       inputs.forEach(input => {
-        expect(input.disabled).toBe(true);
+        expect((input as HTMLInputElement).disabled).toBe(true);
       });
     });
 
@@ -146,7 +157,10 @@ describe('RadioGroup', () => {
       const { container } = render(() => <RadioGroup items={itemsWithDisabled} label='Options' />);
 
       const inputs = container.querySelectorAll('input[type="radio"]');
-      const opt2Input = Array.from(inputs).find(input => input.value === 'opt2');
+      const opt2Input = Array.from(inputs).find(
+        input => (input as HTMLInputElement).value === 'opt2'
+      ) as HTMLInputElement;
+      expect(opt2Input).toBeDefined();
       expect(opt2Input.disabled).toBe(true);
     });
 
@@ -189,7 +203,7 @@ describe('RadioGroup', () => {
 
       const inputs = container.querySelectorAll('input[type="radio"]');
       inputs.forEach(input => {
-        expect(input.name).toBe('myRadioGroup');
+        expect((input as HTMLInputElement).name).toBe('myRadioGroup');
       });
     });
   });
@@ -215,7 +229,10 @@ describe('RadioGroup', () => {
       ));
 
       const inputs = container.querySelectorAll('input[type="radio"]');
-      const option2Input = Array.from(inputs).find(input => input.value === 'option2');
+      const option2Input = Array.from(inputs).find(
+        input => (input as HTMLInputElement).value === 'option2'
+      ) as HTMLInputElement;
+      expect(option2Input).toBeDefined();
       expect(option2Input.checked).toBe(true);
     });
   });

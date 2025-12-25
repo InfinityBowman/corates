@@ -156,9 +156,9 @@ export const TourProvider: Component<TourProviderProps> = props => {
     closeOnEscape: true,
     keyboardNavigation: true,
     ...machineProps,
-  }));
+  }) as Parameters<typeof useMachine<typeof tour.machine>>[1] extends (..._args: any[]) => infer R ? R : never);
 
-  const api = createMemo(() => tour.connect(service, normalizeProps) as TourApi);
+  const api = createMemo(() => tour.connect(service, normalizeProps) as unknown as TourApi);
 
   return (
     <TourContext.Provider value={api}>
@@ -244,7 +244,7 @@ export const TourProvider: Component<TourProviderProps> = props => {
 
 export interface TourProps extends Omit<TourProviderProps, 'children'> {
   /** Render function for trigger */
-  renderTrigger?: (api: Accessor<TourApi>) => JSX.Element;
+  renderTrigger?: (_api: Accessor<TourApi>) => JSX.Element;
 }
 
 /**
@@ -260,7 +260,7 @@ const TourComponent: Component<TourProps> = props => {
   );
 };
 
-function TourContent(props: { renderTrigger?: (api: Accessor<TourApi>) => JSX.Element }) {
+function TourContent(props: { renderTrigger?: (_api: Accessor<TourApi>) => JSX.Element }) {
   const api = useTour();
 
   return <Show when={props.renderTrigger}>{props.renderTrigger?.(api)}</Show>;

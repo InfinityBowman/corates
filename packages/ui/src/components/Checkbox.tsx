@@ -24,11 +24,11 @@ export interface CheckboxProps {
   /** Label text */
   label?: string;
   /** Callback when checked state changes */
-  onChange?: (checked: boolean) => void;
+  onChange?: (_checked: boolean) => void;
   /** Additional CSS classes */
   class?: string;
   /** Callback when checked state changes (Ark UI compatible) */
-  onCheckedChange?: (details: { checked: boolean | 'indeterminate' }) => void;
+  onCheckedChange?: (_details: { checked: boolean | 'indeterminate' }) => void;
 }
 
 /**
@@ -68,10 +68,11 @@ const CheckboxComponent: Component<CheckboxProps> = props => {
   });
 
   const handleCheckedChange = (details: { checked: boolean | 'indeterminate' }) => {
-    if (onChange()) {
+    const changeHandler = onChange();
+    if (changeHandler) {
       // When transitioning from indeterminate, treat it as checking
       const newChecked = details.checked === true || details.checked === 'indeterminate';
-      onChange()(newChecked);
+      changeHandler(newChecked);
     }
     if (machineProps.onCheckedChange) {
       machineProps.onCheckedChange(details);

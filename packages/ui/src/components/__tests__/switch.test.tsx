@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, cleanup } from '@solidjs/testing-library';
-import { Switch } from '../Switch.tsx';
+import { Switch } from '../Switch';
 
 describe('Switch', () => {
   beforeEach(() => {
@@ -29,7 +29,8 @@ describe('Switch', () => {
     it('should apply custom class', () => {
       const { container } = render(() => <Switch class='custom-class' />);
 
-      const label = container.querySelector('label');
+      const label = container.querySelector('label') as HTMLLabelElement;
+      expect(label).not.toBeNull();
       expect(label.className).toContain('custom-class');
     });
   });
@@ -72,14 +73,16 @@ describe('Switch', () => {
     it('should be disabled when disabled prop is true', () => {
       const { container } = render(() => <Switch disabled />);
 
-      const input = container.querySelector('input[type="checkbox"]');
+      const input = container.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      expect(input).not.toBeNull();
       expect(input.disabled).toBe(true);
     });
 
     it('should apply disabled styling', () => {
       const { container } = render(() => <Switch disabled />);
 
-      const label = container.querySelector('label');
+      const label = container.querySelector('label') as HTMLLabelElement;
+      expect(label).not.toBeNull();
       expect(label.className).toContain('cursor-not-allowed');
     });
   });
@@ -88,7 +91,8 @@ describe('Switch', () => {
     it('should have name attribute for form submission', () => {
       const { container } = render(() => <Switch name='notifications' />);
 
-      const input = container.querySelector('input[type="checkbox"]');
+      const input = container.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      expect(input).not.toBeNull();
       expect(input.name).toBe('notifications');
     });
   });

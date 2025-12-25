@@ -50,14 +50,22 @@ class MockIntersectionObserver {
   observe() {}
   unobserve() {}
   disconnect() {}
+  takeRecords() {
+    return [];
+  }
+  root: Element | Document | null = null;
+  rootMargin: string = '0px';
+  thresholds: ReadonlyArray<number> = [];
 }
-global.IntersectionObserver = MockIntersectionObserver as typeof IntersectionObserver;
+global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
 
 // Mock crypto.randomUUID
 if (!global.crypto) {
   global.crypto = {} as Crypto;
 }
-global.crypto.randomUUID = vi.fn(() => 'test-uuid-' + Math.random().toString(36).slice(2));
+global.crypto.randomUUID = vi.fn(
+  () => 'test-uuid-' + Math.random().toString(36).slice(2)
+) as () => `${string}-${string}-${string}-${string}-${string}`;
 
 // Mock requestAnimationFrame
 global.requestAnimationFrame = vi.fn((cb: FrameRequestCallback) => setTimeout(cb, 0));
@@ -65,8 +73,9 @@ global.cancelAnimationFrame = vi.fn((id: number) => clearTimeout(id));
 
 // Mock Element.prototype methods used by Zag
 Element.prototype.scrollIntoView = vi.fn();
-Element.prototype.focus = vi.fn();
-Element.prototype.blur = vi.fn();
+// Mock HTMLElement.prototype methods (focus/blur don't exist on Element)
+HTMLElement.prototype.focus = vi.fn();
+HTMLElement.prototype.blur = vi.fn();
 
 // Mock getComputedStyle for Zag positioning
 const originalGetComputedStyle = window.getComputedStyle;

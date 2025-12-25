@@ -10,7 +10,7 @@ export interface PasswordInputProps {
   /** Controlled password value */
   password?: string;
   /** Callback when password changes */
-  onPasswordChange?: (value: string) => void;
+  onPasswordChange?: (_value: string) => void;
   /** Autocomplete attribute (default: 'new-password') */
   autoComplete?: 'current-password' | 'new-password';
   /** Whether input is required */

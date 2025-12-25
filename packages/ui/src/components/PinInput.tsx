@@ -11,9 +11,9 @@ export interface PinInputProps {
   /** Whether to show error state */
   isError?: boolean;
   /** Callback when value changes */
-  onInput?: (value: string) => void;
+  onInput?: (_value: string) => void;
   /** Callback when all inputs are filled */
-  onComplete?: (value: string) => void;
+  onComplete?: (_value: string) => void;
   /** Additional class for root element */
   class?: string;
   /** Whether input is required (default: true) */

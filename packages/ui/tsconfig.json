@@ -21,7 +21,7 @@
       "@/*": ["src/*"],
       "@zag/*": ["src/zag/*"]
     },
-    "types": []
+    "types": ["@testing-library/jest-dom"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

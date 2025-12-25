@@ -22,7 +22,7 @@ export interface RadioGroupProps {
   /** Initial selected value */
   defaultValue?: string;
   /** Callback when selection changes */
-  onValueChange?: (details: { value: string }) => void;
+  onValueChange?: (_details: { value: string }) => void;
   /** Form field name */
   name?: string;
   /** Disable all items */
@@ -42,9 +42,9 @@ const RadioGroupComponent: Component<RadioGroupProps> = props => {
   const orientation = () => machineProps.orientation || 'vertical';
   const isVertical = createMemo(() => orientation() === 'vertical');
 
-  const handleValueChange = (details: { value: string }) => {
-    if (machineProps.onValueChange) {
-      machineProps.onValueChange(details);
+  const handleValueChange = (details: { value: string | null }) => {
+    if (machineProps.onValueChange && details.value !== null) {
+      machineProps.onValueChange({ value: details.value });
     }
   };
 
