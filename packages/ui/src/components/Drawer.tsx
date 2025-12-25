@@ -2,11 +2,12 @@
  * Drawer component for sliding panels
  *
  * Provides a slide-in drawer/panel UI pattern for side panels, PDF viewers, etc.
- * Uses CSS transforms for smooth animations without JavaScript animation libraries.
+ * Built on Ark UI Dialog with custom slide animations.
  */
 
+import { Dialog as ArkDialog } from '@ark-ui/solid/dialog';
 import { Portal } from 'solid-js/web';
-import { Component, Show, JSX, onMount, onCleanup, createSignal, createEffect } from 'solid-js';
+import { Component, Show, JSX } from 'solid-js';
 import { FiX } from 'solid-icons/fi';
 import { Z_INDEX } from '../constants/zIndex.js';
 
@@ -30,7 +31,7 @@ export interface DrawerProps {
 }
 
 /**
- * Drawer - A sliding panel/drawer component
+ * Drawer - A sliding panel/drawer component built on Ark UI Dialog
  */
 const DrawerComponent: Component<DrawerProps> = props => {
   const open = () => props.open ?? false;
@@ -41,50 +42,11 @@ const DrawerComponent: Component<DrawerProps> = props => {
   const showBackdrop = () => props.showBackdrop ?? true;
   const closeOnOutsideClick = () => props.closeOnOutsideClick ?? true;
 
-  // Track if drawer should be visible (for animation)
-  const [isVisible, setIsVisible] = createSignal(false);
-
-  // When open state changes, handle visibility with a slight delay for animation
-  createEffect(() => {
-    if (open()) {
-      // Small delay to ensure the component is mounted before animating
-      requestAnimationFrame(() => {
-        setIsVisible(true);
-      });
-    } else {
-      setIsVisible(false);
-    }
-  });
-
-  const handleOpenChange = (newOpen: boolean) => {
+  const handleOpenChange = (details: { open: boolean }) => {
     if (props.onOpenChange) {
-      props.onOpenChange(newOpen);
+      props.onOpenChange(details.open);
     }
   };
-
-  const handleClose = () => {
-    handleOpenChange(false);
-  };
-
-  const handleBackdropClick = (e: MouseEvent) => {
-    if (closeOnOutsideClick() && e.target === e.currentTarget) {
-      handleClose();
-    }
-  };
-
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && open()) {
-      handleClose();
-    }
-  };
-
-  onMount(() => {
-    document.addEventListener('keydown', handleKeyDown);
-  });
-
-  onCleanup(() => {
-    document.removeEventListener('keydown', handleKeyDown);
-  });
 
   const getSizeClass = () => {
     switch (size()) {
@@ -102,51 +64,64 @@ const DrawerComponent: Component<DrawerProps> = props => {
   const getSideClasses = () => {
     const isLeft = side() === 'left';
     const baseClasses = isLeft ? 'left-0' : 'right-0';
-    const transformClass = isVisible() ? 'translate-x-0' : isLeft ? '-translate-x-full' : 'translate-x-full';
-    return `${baseClasses} ${transformClass}`;
+    // Default to closed position, transition to open
+    const defaultTransform = isLeft ? '-translate-x-full' : 'translate-x-full';
+    if (isLeft) {
+      return `${baseClasses} ${defaultTransform} data-[state=open]:translate-x-0`;
+    } else {
+      return `${baseClasses} ${defaultTransform} data-[state=open]:translate-x-0`;
+    }
   };
 
   return (
-    <Show when={open()}>
+    <ArkDialog.Root
+      open={open()}
+      onOpenChange={handleOpenChange}
+      closeOnInteractOutside={closeOnOutsideClick()}
+      closeOnEscape={true}
+      lazyMount={true}
+      unmountOnExit={true}
+    >
       <Portal>
         {/* Backdrop */}
         <Show when={showBackdrop()}>
-          <div
-            class={`fixed inset-0 ${Z_INDEX.BACKDROP} bg-black/50 transition-opacity ${
-              isVisible() ? 'opacity-100' : 'opacity-0'
-            }`}
-            onClick={handleBackdropClick}
+          <ArkDialog.Backdrop
+            class={`fixed inset-0 ${Z_INDEX.BACKDROP} bg-black/50 transition-opacity duration-300 data-[state=open]:opacity-100 data-[state=closed]:opacity-0`}
           />
         </Show>
 
-        {/* Drawer */}
-        <div
-          class={`fixed top-0 h-screen ${getSideClasses()} ${getSizeClass()} ${Z_INDEX.DIALOG} flex flex-col bg-white shadow-xl transition-transform duration-300 ease-out`}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={title() ? 'drawer-title' : undefined}
+        {/* Drawer Positioner */}
+        <ArkDialog.Positioner
+          class={`fixed top-0 h-screen ${side() === 'left' ? 'left-0' : 'right-0'} ${Z_INDEX.DIALOG}`}
         >
-          {/* Header */}
-          <div class="flex shrink-0 items-center justify-between border-b border-gray-200 p-4">
-            <Show when={title()}>
-              <h2 id="drawer-title" class="text-lg font-semibold text-gray-900">
-                {title()}
-              </h2>
-            </Show>
-            <button
-              onClick={handleClose}
-              class="ml-auto rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500"
-              aria-label="Close drawer"
-            >
-              <FiX class="h-5 w-5" />
-            </button>
-          </div>
+          {/* Drawer Content */}
+          <ArkDialog.Content
+            class={`h-screen ${getSizeClass()} flex flex-col bg-white shadow-xl transition-transform duration-300 ease-out ${getSideClasses()}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title() ? 'drawer-title' : undefined}
+          >
+            {/* Header */}
+            <div class="flex shrink-0 items-center justify-between border-b border-gray-200 p-4">
+              <Show when={title()}>
+                <ArkDialog.Title id="drawer-title" class="text-lg font-semibold text-gray-900">
+                  {title()}
+                </ArkDialog.Title>
+              </Show>
+              <ArkDialog.CloseTrigger
+                class="ml-auto rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500"
+                aria-label="Close drawer"
+              >
+                <FiX class="h-5 w-5" />
+              </ArkDialog.CloseTrigger>
+            </div>
 
-          {/* Body */}
-          <div class="min-h-0 flex-1 overflow-auto">{children()}</div>
-        </div>
+            {/* Body */}
+            <div class="min-h-0 flex-1 overflow-auto">{children()}</div>
+          </ArkDialog.Content>
+        </ArkDialog.Positioner>
       </Portal>
-    </Show>
+    </ArkDialog.Root>
   );
 };
 
