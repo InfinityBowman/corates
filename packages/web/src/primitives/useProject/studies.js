@@ -23,7 +23,7 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
    */
   function createStudy(name, description = '', metadata = {}) {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return null;
+    if (!ydoc) return null;
 
     const studyId = crypto.randomUUID();
     const now = Date.now();
@@ -69,7 +69,7 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
    */
   function updateStudy(studyId, updates) {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return;
+    if (!ydoc) return;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -110,7 +110,7 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
    */
   function deleteStudy(studyId) {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return;
+    if (!ydoc) return;
 
     const studiesMap = ydoc.getMap('reviews');
     studiesMap.delete(studyId);
@@ -122,7 +122,7 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
    */
   function updateProjectSettings(settings) {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return;
+    if (!ydoc) return;
 
     const metaMap = ydoc.getMap('meta');
     for (const [key, value] of Object.entries(settings)) {

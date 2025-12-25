@@ -23,7 +23,7 @@ export function createPdfOperations(projectId, getYDoc, isSynced) {
    */
   function getPdfsMap(studyId, create = false) {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return null;
+    if (!ydoc) return null;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -57,20 +57,15 @@ export function createPdfOperations(projectId, getYDoc, isSynced) {
    * @param {string} studyId - The study ID
    * @param {Object} pdfInfo - PDF metadata { key, fileName, size, uploadedBy, uploadedAt, title?, firstAuthor?, publicationYear?, journal?, doi? }
    * @param {string} [tag='secondary'] - PDF tag: 'primary' | 'protocol' | 'secondary'
-   * @returns {string} The generated PDF ID
-   * @throws {Error} If YDoc is not ready or study doesn't exist
+   * @returns {string|null} The generated PDF ID or null if YDoc is not ready or study doesn't exist
    */
   function addPdfToStudy(studyId, pdfInfo, tag = 'secondary') {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) {
-      throw new Error('YDoc not ready');
-    }
+    if (!ydoc) return null;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
-    if (!studyYMap) {
-      throw new Error('Study not found');
-    }
+    if (!studyYMap) return null;
 
     const pdfsMap = getPdfsMap(studyId, true);
 
@@ -109,7 +104,7 @@ export function createPdfOperations(projectId, getYDoc, isSynced) {
    */
   function removePdfFromStudy(studyId, pdfId) {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return;
+    if (!ydoc) return;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -148,7 +143,7 @@ export function createPdfOperations(projectId, getYDoc, isSynced) {
    */
   function updatePdfTag(studyId, pdfId, tag) {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return;
+    if (!ydoc) return;
 
     const pdfsMap = getPdfsMap(studyId);
     if (!pdfsMap) return;
@@ -178,7 +173,7 @@ export function createPdfOperations(projectId, getYDoc, isSynced) {
    */
   function updatePdfMetadata(studyId, pdfId, metadata) {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return;
+    if (!ydoc) return;
 
     const pdfsMap = getPdfsMap(studyId);
     if (!pdfsMap) return;

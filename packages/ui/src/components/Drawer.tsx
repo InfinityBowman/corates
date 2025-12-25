@@ -86,7 +86,7 @@ const DrawerComponent: Component<DrawerProps> = props => {
         {/* Backdrop */}
         <Show when={showBackdrop()}>
           <ArkDialog.Backdrop
-            class={`fixed inset-0 ${Z_INDEX.BACKDROP} bg-black/50 transition-opacity duration-300 data-[state=open]:opacity-100 data-[state=closed]:opacity-0`}
+            class={`fixed inset-0 ${Z_INDEX.BACKDROP} bg-black/50 transition-opacity duration-300 data-[state=closed]:opacity-0 data-[state=open]:opacity-100`}
           />
         </Show>
 
@@ -97,27 +97,27 @@ const DrawerComponent: Component<DrawerProps> = props => {
           {/* Drawer Content */}
           <ArkDialog.Content
             class={`h-screen ${getSizeClass()} flex flex-col bg-white shadow-xl transition-transform duration-300 ease-out ${getSideClasses()}`}
-            role="dialog"
-            aria-modal="true"
+            role='dialog'
+            aria-modal='true'
             aria-labelledby={title() ? 'drawer-title' : undefined}
           >
             {/* Header */}
-            <div class="flex shrink-0 items-center justify-between border-b border-gray-200 p-4">
+            <div class='flex shrink-0 items-center justify-between border-b border-gray-200 p-4'>
               <Show when={title()}>
-                <ArkDialog.Title id="drawer-title" class="text-lg font-semibold text-gray-900">
+                <ArkDialog.Title id='drawer-title' class='text-lg font-semibold text-gray-900'>
                   {title()}
                 </ArkDialog.Title>
               </Show>
               <ArkDialog.CloseTrigger
-                class="ml-auto rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500"
-                aria-label="Close drawer"
+                class='ml-auto rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500'
+                aria-label='Close drawer'
               >
-                <FiX class="h-5 w-5" />
+                <FiX class='h-5 w-5' />
               </ArkDialog.CloseTrigger>
             </div>
 
             {/* Body */}
-            <div class="min-h-0 flex-1 overflow-auto">{children()}</div>
+            <div class='min-h-0 flex-1 overflow-auto'>{children()}</div>
           </ArkDialog.Content>
         </ArkDialog.Positioner>
       </Portal>

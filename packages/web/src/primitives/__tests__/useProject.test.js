@@ -190,26 +190,6 @@ describe('useProject - Study CRUD Operations', () => {
     });
   });
 
-  it('should not create study if not synced', async () => {
-    projectStore.getConnectionState.mockReturnValue({
-      connected: false,
-      connecting: false,
-      synced: false,
-      error: null,
-    });
-
-    createRoot(async dispose => {
-      cleanup = dispose;
-      const project = useProject('local-test');
-
-      await new Promise(resolve => setTimeout(resolve, 10));
-
-      const studyId = project.createStudy('Test Study');
-
-      expect(studyId).toBeNull();
-    });
-  });
-
   it('should update a study', async () => {
     await new Promise(resolveTest => {
       createRoot(async dispose => {
@@ -288,12 +268,10 @@ describe('useProject - PDF Operations', () => {
       cleanup = dispose;
       const project = useProject('local-test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
-
       const studyId = project.createStudy('Test Study');
       projectStore.setProjectData.mockClear();
 
-      project.addPdfToStudy(studyId, {
+      const pdfId = project.addPdfToStudy(studyId, {
         fileName: 'test.pdf',
         key: 'r2-storage-key',
         size: 123456,
@@ -301,6 +279,7 @@ describe('useProject - PDF Operations', () => {
         uploadedAt: Date.now(),
       });
 
+      expect(pdfId).toBeTruthy();
       expect(projectStore.setProjectData).toHaveBeenCalled();
     });
   });
@@ -309,8 +288,6 @@ describe('useProject - PDF Operations', () => {
     createRoot(async dispose => {
       cleanup = dispose;
       const project = useProject('local-test');
-
-      await new Promise(resolve => setTimeout(resolve, 10));
 
       const studyId = project.createStudy('Test Study');
 
@@ -360,27 +337,6 @@ describe('useProject - Checklist Operations', () => {
 
       expect(checklistId).toBe('checklist-2');
       expect(projectStore.setProjectData).toHaveBeenCalled();
-    });
-  });
-
-  it('should not create checklist if not synced', async () => {
-    projectStore.getConnectionState.mockReturnValue({
-      connected: false,
-      connecting: false,
-      synced: false,
-      error: null,
-    });
-
-    createRoot(async dispose => {
-      cleanup = dispose;
-      const project = useProject('local-test');
-
-      await new Promise(resolve => setTimeout(resolve, 10));
-
-      const studyId = project.createStudy('Test Study');
-      const checklistId = project.createChecklist(studyId);
-
-      expect(checklistId).toBeNull();
     });
   });
 
