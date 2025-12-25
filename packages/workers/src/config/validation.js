@@ -141,18 +141,22 @@ export const billingSchemas = {
     tier: z.enum(['pro', 'team', 'enterprise'], {
       error: "Tier must be one of: 'pro', 'team', 'enterprise'",
     }),
-    interval: z.enum(['monthly', 'yearly'], {
-      error: "Interval must be 'monthly' or 'yearly'",
-    }).default('monthly'),
+    interval: z
+      .enum(['monthly', 'yearly'], {
+        error: "Interval must be 'monthly' or 'yearly'",
+      })
+      .default('monthly'),
   }),
 
   checkout: z.object({
     tier: z.enum(['pro', 'team', 'enterprise'], {
       error: "Tier must be one of: 'pro', 'team', 'enterprise'",
     }),
-    interval: z.enum(['monthly', 'yearly'], {
-      error: "Interval must be 'monthly' or 'yearly'",
-    }).default('monthly'),
+    interval: z
+      .enum(['monthly', 'yearly'], {
+        error: "Interval must be 'monthly' or 'yearly'",
+      })
+      .default('monthly'),
   }),
 };
 
