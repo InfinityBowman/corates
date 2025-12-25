@@ -24,7 +24,7 @@ export function createReconciliationOperations(projectId, getYDoc, isSynced) {
    */
   function saveReconciliationProgress(studyId, progressData) {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return;
+    if (!ydoc) return;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -82,7 +82,7 @@ export function createReconciliationOperations(projectId, getYDoc, isSynced) {
    */
   function clearReconciliationProgress(studyId) {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return;
+    if (!ydoc) return;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);

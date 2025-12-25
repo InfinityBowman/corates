@@ -23,7 +23,7 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
    */
   function createChecklist(studyId, type = 'AMSTAR2', assignedTo = null) {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return null;
+    if (!ydoc) return null;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -204,7 +204,7 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
    */
   function updateChecklist(studyId, checklistId, updates) {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return;
+    if (!ydoc) return;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -229,7 +229,7 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
    */
   function deleteChecklist(studyId, checklistId) {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return;
+    if (!ydoc) return;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -370,7 +370,7 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
    */
   function updateChecklistAnswer(studyId, checklistId, key, data) {
     const ydoc = getYDoc();
-    if (!ydoc || !isSynced()) return;
+    if (!ydoc) return;
 
     const studiesMap = ydoc.getMap('reviews');
     const studyYMap = studiesMap.get(studyId);
@@ -521,13 +521,9 @@ export function createChecklistOperations(projectId, getYDoc, isSynced) {
     }
 
     // Create note if it doesn't exist (backward compatibility)
-    if (isSynced()) {
-      const newNote = new Y.Text();
-      questionYMap.set('note', newNote);
-      return newNote;
-    }
-
-    return null;
+    const newNote = new Y.Text();
+    questionYMap.set('note', newNote);
+    return newNote;
   }
 
   return {
