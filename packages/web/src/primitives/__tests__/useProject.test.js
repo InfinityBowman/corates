@@ -190,7 +190,6 @@ describe('useProject - Study CRUD Operations', () => {
     });
   });
 
-
   it('should update a study', async () => {
     await new Promise(resolveTest => {
       createRoot(async dispose => {
@@ -340,7 +339,6 @@ describe('useProject - Checklist Operations', () => {
       expect(projectStore.setProjectData).toHaveBeenCalled();
     });
   });
-
 
   it('should update checklist', async () => {
     createRoot(async dispose => {
