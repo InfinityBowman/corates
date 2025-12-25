@@ -109,3 +109,24 @@ export async function redirectToPortal() {
   const { url } = await createPortalSession();
   window.location.href = url;
 }
+
+/**
+ * Create a payment intent for Stripe Elements
+ * @param {string} tier - Subscription tier
+ * @param {'monthly' | 'yearly'} interval - Billing interval
+ * @returns {Promise<{ clientSecret: string }>}
+ */
+export async function createPaymentIntent(tier, interval = 'monthly') {
+  const response = await fetch(`${API_BASE}/api/billing/payment-intent`, {
+    ...fetchOptions,
+    method: 'POST',
+    body: JSON.stringify({ tier, interval }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to create payment intent' }));
+    throw new Error(error.error || 'Failed to create payment intent');
+  }
+
+  return response.json();
+}

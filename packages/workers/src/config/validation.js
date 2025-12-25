@@ -134,6 +134,29 @@ export const subscriptionSchemas = {
 };
 
 /**
+ * Billing schemas
+ */
+export const billingSchemas = {
+  paymentIntent: z.object({
+    tier: z.enum(['pro', 'team', 'enterprise'], {
+      error: "Tier must be one of: 'pro', 'team', 'enterprise'",
+    }),
+    interval: z.enum(['monthly', 'yearly'], {
+      error: "Interval must be 'monthly' or 'yearly'",
+    }).default('monthly'),
+  }),
+
+  checkout: z.object({
+    tier: z.enum(['pro', 'team', 'enterprise'], {
+      error: "Tier must be one of: 'pro', 'team', 'enterprise'",
+    }),
+    interval: z.enum(['monthly', 'yearly'], {
+      error: "Interval must be 'monthly' or 'yearly'",
+    }).default('monthly'),
+  }),
+};
+
+/**
  * Map Zod error to validation error code
  * @param {object} issue - Zod issue object from error.issues array
  * @param {string} [issue.kind] - Error kind (Zod v4)

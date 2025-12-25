@@ -10,8 +10,10 @@ import { getSubscriptionByUserId } from '../../db/subscriptions.js';
 import { createCheckoutSession } from './checkout.js';
 import { createPortalSession } from './portal.js';
 import { handleWebhook } from './webhooks.js';
+import { createPaymentIntent } from './payment-intent.js';
 import { TIER_INFO, PRICE_IDS } from '../../config/stripe.js';
 import { DEFAULT_SUBSCRIPTION_TIER, DEFAULT_SUBSCRIPTION_STATUS } from '../../config/constants.js';
+import { billingSchemas, validateRequest } from '../../config/validation.js';
 import {
   createDomainError,
   createValidationError,
@@ -117,23 +119,11 @@ billingRoutes.get('/plans', async c => {
  * POST /api/billing/checkout
  * Create a Stripe Checkout session
  */
-billingRoutes.post('/checkout', requireAuth, async c => {
+billingRoutes.post('/checkout', requireAuth, validateRequest(billingSchemas.checkout), async c => {
   const { user } = getAuth(c);
+  const { tier, interval } = c.get('validatedBody');
 
   try {
-    const body = await c.req.json();
-    const { tier, interval = 'monthly' } = body;
-
-    if (!tier || tier === DEFAULT_SUBSCRIPTION_TIER) {
-      const error = createValidationError(
-        'tier',
-        VALIDATION_ERRORS.INVALID_INPUT.code,
-        tier,
-        'invalid_tier',
-      );
-      return c.json(error, error.statusCode);
-    }
-
     const result = await createCheckoutSession(c.env, user, tier, interval);
     return c.json(result);
   } catch (error) {
@@ -149,6 +139,36 @@ billingRoutes.post('/checkout', requireAuth, async c => {
     return c.json(systemError, systemError.statusCode);
   }
 });
+
+/**
+ * POST /api/billing/payment-intent
+ * Create a Payment Intent for Stripe Elements
+ */
+billingRoutes.post(
+  '/payment-intent',
+  requireAuth,
+  validateRequest(billingSchemas.paymentIntent),
+  async c => {
+    const { user } = getAuth(c);
+    const { tier, interval } = c.get('validatedBody');
+
+    try {
+      const result = await createPaymentIntent(c.env, user, tier, interval);
+      return c.json(result);
+    } catch (error) {
+      console.error('Error creating payment intent:', error);
+      // If it's already a domain error, return it directly
+      if (isDomainError(error)) {
+        return c.json(error, error.statusCode);
+      }
+      const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        operation: 'create_payment_intent',
+        originalError: error.message,
+      });
+      return c.json(systemError, systemError.statusCode);
+    }
+  },
+);
 
 /**
  * POST /api/billing/portal

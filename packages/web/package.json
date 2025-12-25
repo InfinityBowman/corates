@@ -20,6 +20,7 @@
     "@corates/shared": "workspace:*",
     "@corates/ui": "workspace:*",
     "@solidjs/router": "^0.15.4",
+    "@stripe/stripe-js": "^8.6.0",
     "better-auth": "^1.4.5",
     "d3": "^7.9.0",
     "pdfjs-dist": "^5.4.449",

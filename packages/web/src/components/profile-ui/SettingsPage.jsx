@@ -82,7 +82,7 @@ export default function SettingsPage() {
 
       {/* Billing Section */}
       <A
-        href='/settings/billing'
+        href='/billing'
         class='mb-6 block overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-colors hover:border-blue-300'
       >
         <div class='flex items-center justify-between px-6 py-4'>
