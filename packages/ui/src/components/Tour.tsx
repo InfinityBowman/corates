@@ -20,7 +20,7 @@ import {
   JSX,
 } from 'solid-js';
 import { FiX } from 'solid-icons/fi';
-import { Z_INDEX } from '../constants/zIndex.ts';
+import { Z_INDEX } from '../constants/zIndex';
 
 export type Placement =
   | 'top'
@@ -61,7 +61,11 @@ export interface TourStep {
   /** Show arrow for tooltips (default: true) */
   arrow?: boolean;
   /** Side effect before showing step */
-  effect?: (ctx: { next: () => void; show: () => void; update: () => void }) => void | (() => void);
+  effect?: (_ctx: {
+    next: () => void;
+    show: () => void;
+    update: () => void;
+  }) => void | (() => void);
 }
 
 export interface TourApi {
@@ -98,7 +102,7 @@ export interface TourApi {
   /** Get progress text props */
   getProgressTextProps: () => Record<string, unknown>;
   /** Get action trigger props */
-  getActionTriggerProps: (options: { action: TourStepAction }) => Record<string, unknown>;
+  getActionTriggerProps: (_options: { action: TourStepAction }) => Record<string, unknown>;
   /** Get close trigger props */
   getCloseTriggerProps: () => Record<string, unknown>;
 }
@@ -121,9 +125,9 @@ export interface TourProviderProps {
   /** Tour steps configuration */
   steps: TourStep[];
   /** Callback when step changes */
-  onStepChange?: (details: { stepId: string; stepIndex: number }) => void;
+  onStepChange?: (_details: { stepId: string; stepIndex: number }) => void;
   /** Callback when tour status changes */
-  onStatusChange?: (details: { status: 'started' | 'stopped' | 'completed' | 'skipped' }) => void;
+  onStatusChange?: (_details: { status: 'started' | 'stopped' | 'completed' | 'skipped' }) => void;
   /** Close on outside click (default: true) */
   closeOnInteractOutside?: boolean;
   /** Close on escape key (default: true) */

@@ -1,13 +1,13 @@
 // @corates/ui - Shared UI Components
 
 // Re-export all UI components (built with Ark UI and some remaining Zag.js components)
-export * from './zag/index.ts';
+export * from './components/index';
 
 // Re-export primitives
-export { useWindowDrag } from './primitives/useWindowDrag.ts';
+export { useWindowDrag } from './primitives/useWindowDrag';
 
 // Re-export utilities
-export { cn } from './lib/cn.ts';
+export { cn } from './lib/cn';
 
 // Re-export constants
-export { Z_INDEX } from './constants/zIndex.ts';
+export { Z_INDEX } from './constants/zIndex';

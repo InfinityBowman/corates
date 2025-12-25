@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
     "start": "nohup node dist/server.js > /dev/null 2>&1 & echo 'MCP server started in background'",
     "stop": "pkill -f 'node.*server.js' || echo 'No MCP server running'",

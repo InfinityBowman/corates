@@ -26,7 +26,6 @@ export const toaster = createToaster({
   placement: 'top-end',
   overlap: true,
   gap: 12,
-  offset: '16px',
 });
 
 /**
@@ -113,7 +112,7 @@ export const showToast = {
   loading: (title?: string, description?: string) =>
     toaster.create({ title, description, type: 'loading', duration: Infinity }),
 
-  promise: <T,>(promise: Promise<T>, options: ToastPromiseOptions) =>
+  promise: <T,>(promise: Promise<T>, options: ToastPromiseOptions<T>) =>
     toaster.promise(promise, options),
 
   dismiss: (id: string) => toaster.dismiss(id),

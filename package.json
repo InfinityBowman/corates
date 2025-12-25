@@ -24,6 +24,7 @@
     "initialize-mcp": "pnpm --filter mcp run scrape:all",
     "test:ui": "pnpm --filter web test",
     "test": "pnpm --recursive run test",
+    "typecheck": "pnpm --recursive run typecheck",
     "logs": "pnpm --filter workers run logs",
     "deps:check": "pnpm -r outdated",
     "deps:update": "pnpm -r up",

@@ -32,25 +32,29 @@ export default function PdfPreviewPanel() {
       side='right'
       size='lg'
       showBackdrop={false}
-      closeOnOutsideClick={false}
+      closeOnOutsideClick={true}
     >
-      <div class='flex h-full flex-col'>
+      <div class='flex h-full min-h-0 flex-col'>
         {/* Loading state */}
         <Show when={pdfPreviewStore.loading()}>
-          <div class='flex flex-1 items-center justify-center bg-gray-100'>
-            <div class='flex items-center gap-3 text-gray-500'>
-              <div class='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
-              Loading PDF...
+          <div class='flex h-full flex-1 flex-col bg-gray-100'>
+            <div class='flex flex-1 items-center justify-center'>
+              <div class='flex items-center gap-3 text-gray-500'>
+                <div class='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
+                Loading PDF...
+              </div>
             </div>
           </div>
         </Show>
 
         {/* Error state */}
         <Show when={pdfPreviewStore.error()}>
-          <div class='flex flex-1 items-center justify-center bg-gray-100'>
-            <div class='text-center'>
-              <p class='mb-2 text-red-600'>Failed to load PDF</p>
-              <p class='text-sm text-gray-500'>{pdfPreviewStore.error()}</p>
+          <div class='flex h-full flex-1 flex-col bg-gray-100'>
+            <div class='flex flex-1 items-center justify-center'>
+              <div class='text-center'>
+                <p class='mb-2 text-red-600'>Failed to load PDF</p>
+                <p class='text-sm text-gray-500'>{pdfPreviewStore.error()}</p>
+              </div>
             </div>
           </div>
         </Show>

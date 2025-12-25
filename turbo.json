@@ -28,6 +28,9 @@
     },
     "format": {
       "outputs": []
+    },
+    "typecheck": {
+      "outputs": []
     }
   }
 }

@@ -19,7 +19,7 @@ export interface ToggleGroupProps {
   /** Initial selected values */
   defaultValue?: string[];
   /** Callback when selection changes */
-  onValueChange?: (details: { value: string[] }) => void;
+  onValueChange?: (_details: { value: string[] }) => void;
   /** Allow multiple selections (default: false) */
   multiple?: boolean;
   /** Disable all toggles */
