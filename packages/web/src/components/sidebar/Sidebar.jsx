@@ -164,7 +164,7 @@ export default function Sidebar(props) {
                   </div>
                   <p class='text-xs font-medium text-gray-500'>No appraisals</p>
                   <button
-                    onClick={() => navigate('/checklist/new')}
+                    onClick={() => navigate('/checklist')}
                     class='mt-1 text-xs text-blue-600 hover:text-blue-700'
                   >
                     Create one
