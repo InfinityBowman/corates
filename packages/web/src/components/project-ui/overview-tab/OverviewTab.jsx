@@ -1,6 +1,9 @@
-import { For, Show, createSignal } from 'solid-js';
+import { For, Show, createSignal, createMemo } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { FiPlus, FiTrash2 } from 'solid-icons/fi';
+import { AiOutlineBook } from 'solid-icons/ai';
+import { BiRegularCheckCircle, BiRegularTimeFive } from 'solid-icons/bi';
+import { CgArrowsExchange } from 'solid-icons/cg';
 import ChartSection from './ChartSection.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
 import ReviewerAssignment from './ReviewerAssignment.jsx';
@@ -8,10 +11,11 @@ import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
-import { Avatar, useConfirmDialog, showToast } from '@corates/ui';
+import { Avatar, useConfirmDialog, showToast, Progress, Collapsible } from '@corates/ui';
 import { API_BASE } from '@config/api.js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 import { shouldShowInTab } from '@/lib/checklist-domain.js';
+import CircularProgress from './CircularProgress.jsx';
 
 /**
  * OverviewTab - Project overview with stats, settings, and members
@@ -19,6 +23,7 @@ import { shouldShowInTab } from '@/lib/checklist-domain.js';
  */
 export default function OverviewTab() {
   const [showAddMemberModal, setShowAddMemberModal] = createSignal(false);
+  const [chartsExpanded, setChartsExpanded] = createSignal(false);
 
   const { user } = useBetterAuth();
   const { projectId, isOwner } = useProjectContext();
@@ -46,6 +51,59 @@ export default function OverviewTab() {
 
   const completedStudies = () =>
     studies().filter(s => shouldShowInTab(s, 'completed', null)).length;
+
+  // Calculate overall progress (completed studies / total studies)
+  const overallProgress = createMemo(() => {
+    const total = studies().length;
+    if (total === 0) return 0;
+    const completed = completedStudies();
+    return Math.round((completed / total) * 100);
+  });
+
+  // Calculate user progress for all users (memoized for performance)
+  const userProgressMap = createMemo(() => {
+    const progressMap = new Map();
+
+    studies().forEach(study => {
+      const checklists = study.checklists || [];
+      checklists.forEach(checklist => {
+        const userId = checklist.assignedTo;
+        if (!userId) return;
+
+        if (!progressMap.has(userId)) {
+          progressMap.set(userId, { completed: 0, total: 0 });
+        }
+
+        const progress = progressMap.get(userId);
+        progress.total++;
+        if (
+          checklist.status === CHECKLIST_STATUS.AWAITING_RECONCILE ||
+          checklist.status === CHECKLIST_STATUS.COMPLETED
+        ) {
+          progress.completed++;
+        }
+      });
+    });
+
+    // Convert to percentage
+    const result = new Map();
+    progressMap.forEach((progress, userId) => {
+      result.set(userId, {
+        percentage:
+          progress.total === 0 ? 0 : Math.round((progress.completed / progress.total) * 100),
+        completed: progress.completed,
+        total: progress.total,
+      });
+    });
+
+    return result;
+  });
+
+  // Helper to get user progress
+  const getUserProgress = userId => {
+    if (!userId) return { percentage: 0, completed: 0, total: 0 };
+    return userProgressMap().get(userId) || { percentage: 0, completed: 0, total: 0 };
+  };
 
   // Handlers (use active project - no projectId needed)
   const handleUpdateStudy = (studyId, updates) => {
@@ -87,70 +145,105 @@ export default function OverviewTab() {
     return projectActionsStore.checklist.getData(studyId, checklistId);
   };
 
+  // Calculate unassigned studies for Reviewer Assignment visibility
+  const unassignedStudies = createMemo(() => studies().filter(s => !s.reviewer1 && !s.reviewer2));
+
+  // Determine if Reviewer Assignment should be shown
+  const shouldShowReviewerAssignment = () =>
+    isOwner() && studies().length > 0 && unassignedStudies().length > 0;
+
   return (
     <>
-      {/* Stats Summary */}
-      <div class='mb-6 grid grid-cols-2 gap-4 md:grid-cols-4'>
-        <div class='rounded-lg bg-gray-50 p-4 text-center'>
-          <p class='text-2xl font-bold text-gray-900'>{studies().length}</p>
-          <p class='text-sm text-gray-500'>Total Studies</p>
-        </div>
-        <div class='rounded-lg bg-amber-50 p-4 text-center'>
-          <p class='text-2xl font-bold text-amber-900'>{inProgressStudies()}</p>
-          <p class='text-sm text-amber-600'>In Progress</p>
-        </div>
-        <div class='rounded-lg bg-green-50 p-4 text-center'>
-          <p class='text-2xl font-bold text-green-900'>{readyToReconcile()}</p>
-          <p class='text-sm text-green-600'>Ready to Reconcile</p>
-        </div>
-        <div class='rounded-lg bg-blue-50 p-4 text-center'>
-          <p class='text-2xl font-bold text-blue-900'>{completedStudies()}</p>
-          <p class='text-sm text-blue-500'>Completed</p>
+      {/* Section 1: Project Progress - Hero Section */}
+      <div class='mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+        <h2 class='mb-6 text-lg font-semibold text-gray-900'>Project Progress</h2>
+
+        <div class='mb-6 flex flex-col items-center md:flex-row md:items-start md:gap-8'>
+          {/* Overall Progress - Circular */}
+          <div class='mb-6 md:mb-0'>
+            <CircularProgress
+              value={overallProgress()}
+              showValue={true}
+              variant={
+                overallProgress() === 100 ? 'success'
+                : overallProgress() >= 50 ?
+                  'default'
+                : 'warning'
+              }
+              size={160}
+            />
+            <p class='mt-3 text-center text-sm text-gray-600'>
+              {completedStudies()} of {studies().length} studies completed
+            </p>
+          </div>
+
+          {/* Enhanced Stats Grid */}
+          <div class='grid flex-1 grid-cols-2 gap-4 md:grid-cols-4'>
+            <div class='rounded-lg border border-gray-200 bg-gray-50 p-5 text-center'>
+              <div class='mb-2 flex justify-center'>
+                <AiOutlineBook class='h-6 w-6 text-gray-600' />
+              </div>
+              <p class='text-3xl font-bold text-gray-900'>{studies().length}</p>
+              <p class='mt-1 text-sm font-medium text-gray-600'>Total Studies</p>
+            </div>
+            <div class='rounded-lg border border-amber-200 bg-amber-50 p-5 text-center'>
+              <div class='mb-2 flex justify-center'>
+                <BiRegularTimeFive class='h-6 w-6 text-amber-700' />
+              </div>
+              <p class='text-3xl font-bold text-amber-900'>{inProgressStudies()}</p>
+              <p class='mt-1 text-sm font-medium text-amber-700'>In Progress</p>
+            </div>
+            <div class='rounded-lg border border-green-200 bg-green-50 p-5 text-center'>
+              <div class='mb-2 flex justify-center'>
+                <CgArrowsExchange class='h-6 w-6 text-green-700' />
+              </div>
+              <p class='text-3xl font-bold text-green-900'>{readyToReconcile()}</p>
+              <p class='mt-1 text-sm font-medium text-green-700'>Ready to Reconcile</p>
+            </div>
+            <div class='rounded-lg border border-blue-200 bg-blue-50 p-5 text-center'>
+              <div class='mb-2 flex justify-center'>
+                <BiRegularCheckCircle class='h-6 w-6 text-blue-700' />
+              </div>
+              <p class='text-3xl font-bold text-blue-900'>{completedStudies()}</p>
+              <p class='mt-1 text-sm font-medium text-blue-700'>Completed</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Two-column layout for better space utilization */}
-      <div class='mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2'>
-        {/* Left Column */}
-        <div class='space-y-6'>
-          {/* Reviewer Assignment Section */}
-          <Show when={isOwner() && studies().length > 0}>
-            <ReviewerAssignment
-              studies={studies}
-              members={members}
-              onAssignReviewers={handleUpdateStudy}
-            />
-          </Show>
-        </div>
+      {/* Section 2: Team & Collaboration */}
+      <div class='mb-8 space-y-6'>
+        <h2 class='text-lg font-semibold text-gray-900'>Team & Collaboration</h2>
 
-        {/* Right Column */}
-        <div class='space-y-6'>
-          {/* Members Section */}
-          <div>
-            <div class='mb-4 flex items-center justify-between'>
-              <h3 class='text-lg font-semibold text-gray-900'>Project Members</h3>
-              <Show when={isOwner()}>
-                <button
-                  onClick={() => setShowAddMemberModal(true)}
-                  class='inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
-                >
-                  <FiPlus class='h-4 w-4' />
-                  Add Member
-                </button>
-              </Show>
-            </div>
-            <Show when={members().length > 0}>
-              <div class='divide-y divide-gray-200 rounded-lg bg-gray-50'>
-                <For each={members()}>
-                  {member => {
-                    const isSelf = currentUserId() === member.userId;
-                    const canRemove = isOwner() || isSelf;
-                    const isLastOwner =
-                      member.role === 'owner' &&
-                      members().filter(m => m.role === 'owner').length <= 1;
+        {/* Members Section - Full Width */}
+        <div class='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+          <div class='mb-4 flex items-center justify-between'>
+            <h3 class='text-base font-semibold text-gray-900'>Project Members</h3>
+            <Show when={isOwner()}>
+              <button
+                onClick={() => setShowAddMemberModal(true)}
+                class='inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
+              >
+                <FiPlus class='h-4 w-4' />
+                Add Member
+              </button>
+            </Show>
+          </div>
+          <Show when={members().length > 0}>
+            <div class='divide-y divide-gray-200 rounded-lg bg-gray-50'>
+              <For each={members()}>
+                {member => {
+                  const isSelf = currentUserId() === member.userId;
+                  const canRemove = isOwner() || isSelf;
+                  const isLastOwner =
+                    member.role === 'owner' &&
+                    members().filter(m => m.role === 'owner').length <= 1;
 
-                    return (
-                      <div class='flex items-center justify-between p-4'>
+                  const userProgress = () => getUserProgress(member.userId);
+
+                  return (
+                    <div class='p-4'>
+                      <div class='flex items-center justify-between'>
                         <div class='flex items-center gap-3'>
                           <Avatar
                             src={
@@ -191,19 +284,64 @@ export default function OverviewTab() {
                           </Show>
                         </div>
                       </div>
-                    );
-                  }}
-                </For>
-              </div>
-            </Show>
-          </div>
+                      <Show when={userProgress().total > 0}>
+                        <div class='mt-4'>
+                          <Progress
+                            value={userProgress().percentage}
+                            label={`${userProgress().completed} of ${userProgress().total} appraisals completed`}
+                            showValue={true}
+                            size='sm'
+                            variant={
+                              userProgress().percentage === 100 ? 'success'
+                              : userProgress().percentage >= 50 ?
+                                'default'
+                              : 'warning'
+                            }
+                          />
+                        </div>
+                      </Show>
+                    </div>
+                  );
+                }}
+              </For>
+            </div>
+          </Show>
         </div>
+
+        {/* Reviewer Assignment - Below Members, Collapsed by Default */}
+        <Show when={shouldShowReviewerAssignment()}>
+          <ReviewerAssignment
+            studies={studies}
+            members={members}
+            onAssignReviewers={handleUpdateStudy}
+          />
+        </Show>
       </div>
 
-      {/* Charts Section - Full width */}
-      <div>
-        <h3 class='mb-4 text-lg font-semibold text-gray-900'>Quality Assessment Figures</h3>
-        <ChartSection studies={studies} members={members} getChecklistData={getChecklistData} />
+      {/* Section 3: Quality Assessment - Collapsible */}
+      <div class='mb-8'>
+        <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
+          <Collapsible
+            open={chartsExpanded()}
+            onOpenChange={({ open }) => setChartsExpanded(open)}
+            trigger={
+              <div class='flex w-full cursor-pointer items-center justify-between px-6 py-4 transition-colors select-none hover:bg-gray-50'>
+                <h2 class='text-lg font-semibold text-gray-900'>Quality Assessment</h2>
+                <div class='text-sm text-gray-500'>
+                  {chartsExpanded() ? 'Click to collapse' : 'Click to expand charts'}
+                </div>
+              </div>
+            }
+          >
+            <div class='border-t border-gray-200 px-6 py-6'>
+              <ChartSection
+                studies={studies}
+                members={members}
+                getChecklistData={getChecklistData}
+              />
+            </div>
+          </Collapsible>
+        </div>
       </div>
       <AddMemberModal
         isOpen={showAddMemberModal()}
