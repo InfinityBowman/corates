@@ -64,7 +64,7 @@ if (!global.crypto) {
   global.crypto = {} as Crypto;
 }
 global.crypto.randomUUID = vi.fn(
-  () => 'test-uuid-' + Math.random().toString(36).slice(2)
+  () => 'test-uuid-' + Math.random().toString(36).slice(2),
 ) as () => `${string}-${string}-${string}-${string}-${string}`;
 
 // Mock requestAnimationFrame

@@ -96,7 +96,6 @@ const ComboboxComponent: Component<ComboboxProps> = props => {
     set(items);
   });
 
-
   const handleValueChange = (details: { value: string[] }) => {
     if (machineProps.onValueChange) {
       // Find the items that match the selected values

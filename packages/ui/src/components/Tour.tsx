@@ -150,13 +150,21 @@ export interface TourProviderProps {
 export const TourProvider: Component<TourProviderProps> = props => {
   const [local, machineProps] = splitProps(props, ['children']);
 
-  const service = useMachine(tour.machine, () => ({
-    id: createUniqueId(),
-    closeOnInteractOutside: true,
-    closeOnEscape: true,
-    keyboardNavigation: true,
-    ...machineProps,
-  }) as Parameters<typeof useMachine<typeof tour.machine>>[1] extends (..._args: any[]) => infer R ? R : never);
+  const service = useMachine(
+    tour.machine,
+    () =>
+      ({
+        id: createUniqueId(),
+        closeOnInteractOutside: true,
+        closeOnEscape: true,
+        keyboardNavigation: true,
+        ...machineProps,
+      }) as Parameters<typeof useMachine<typeof tour.machine>>[1] extends (
+        (..._args: any[]) => infer R
+      ) ?
+        R
+      : never,
+  );
 
   const api = createMemo(() => tour.connect(service, normalizeProps) as unknown as TourApi);
 

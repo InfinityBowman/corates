@@ -62,7 +62,7 @@ describe('RadioGroup', () => {
 
       const inputs = container.querySelectorAll('input[type="radio"]');
       const option2Input = Array.from(inputs).find(
-        input => (input as HTMLInputElement).value === 'option2'
+        input => (input as HTMLInputElement).value === 'option2',
       ) as HTMLInputElement;
       expect(option2Input).toBeDefined();
       expect(option2Input.checked).toBe(true);
@@ -79,7 +79,7 @@ describe('RadioGroup', () => {
 
       const inputs = container.querySelectorAll('input[type="radio"]');
       const option2Input = Array.from(inputs).find(
-        input => (input as HTMLInputElement).value === 'option2'
+        input => (input as HTMLInputElement).value === 'option2',
       ) as HTMLInputElement;
       expect(option2Input).toBeDefined();
       expect(option2Input.checked).toBe(true);
@@ -94,7 +94,7 @@ describe('RadioGroup', () => {
 
       const inputs = container.querySelectorAll('input[type="radio"]');
       const option3Input = Array.from(inputs).find(
-        input => (input as HTMLInputElement).value === 'option3'
+        input => (input as HTMLInputElement).value === 'option3',
       ) as HTMLInputElement;
       expect(option3Input).toBeDefined();
       expect(option3Input.checked).toBe(true);
@@ -158,7 +158,7 @@ describe('RadioGroup', () => {
 
       const inputs = container.querySelectorAll('input[type="radio"]');
       const opt2Input = Array.from(inputs).find(
-        input => (input as HTMLInputElement).value === 'opt2'
+        input => (input as HTMLInputElement).value === 'opt2',
       ) as HTMLInputElement;
       expect(opt2Input).toBeDefined();
       expect(opt2Input.disabled).toBe(true);
@@ -230,7 +230,7 @@ describe('RadioGroup', () => {
 
       const inputs = container.querySelectorAll('input[type="radio"]');
       const option2Input = Array.from(inputs).find(
-        input => (input as HTMLInputElement).value === 'option2'
+        input => (input as HTMLInputElement).value === 'option2',
       ) as HTMLInputElement;
       expect(option2Input).toBeDefined();
       expect(option2Input.checked).toBe(true);
