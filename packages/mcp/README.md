@@ -47,14 +47,6 @@ Fetch Drizzle ORM documentation.
 
 **Parameters:**
 
-- `path` (optional) - Doc path (e.g. "select", "insert", "relations"). Omit for index.
-
-### `zag_docs`
-
-Fetch Zag.js documentation for building accessible UI components with SolidJS. Note: Most components have been migrated to Ark UI, but this tool is still useful for components that haven't been migrated yet.
-
-**Parameters:**
-
 - `path` (optional) - Component name (e.g. "accordion", "dialog", "tooltip"). Omit for index.
 
 ### `code_review`
