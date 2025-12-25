@@ -245,8 +245,9 @@ export default function ChartSection(props) {
         <div class='flex items-start justify-between gap-4'>
           <div class='flex-1'>
             <p class='text-sm text-gray-600'>
-              Visual representation of AMSTAR-2 quality assessment ratings across completed checklists.
-              Use the settings to customize chart appearance, labels, and export options.
+              Visual representation of AMSTAR-2 quality assessment ratings across completed
+              checklists. Use the settings to customize chart appearance, labels, and export
+              options.
             </p>
           </div>
           <button

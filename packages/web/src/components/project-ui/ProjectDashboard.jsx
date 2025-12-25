@@ -200,7 +200,7 @@ export default function ProjectDashboard(props) {
           when={projects()?.length > 0}
           fallback={
             <Show when={!isLoading()}>
-              <div class='col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-white py-12 px-6'>
+              <div class='col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12'>
                 <div class='mb-4 text-gray-500'>No projects yet</div>
                 <Show
                   when={canCreateProject()}
