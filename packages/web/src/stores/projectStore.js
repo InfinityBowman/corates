@@ -491,6 +491,43 @@ function createProjectStore() {
   }
 
   /**
+   * Validate cached project list against current user ID
+   * Clears cache if user ID doesn't match
+   * @param {string} currentUserId - The current authenticated user's ID
+   */
+  function validateProjectListCache(currentUserId) {
+    if (!currentUserId) {
+      // No user ID, clear the cache
+      setStore('projectList', {
+        items: [],
+        loaded: false,
+        loading: false,
+        error: null,
+        cachedUserId: null,
+      });
+      // Clear localStorage cache
+      saveCachedProjectList(null, null);
+      return;
+    }
+
+    const cachedUserId = store.projectList.cachedUserId;
+
+    // If cached user ID doesn't match current user, clear the cache
+    if (cachedUserId && cachedUserId !== currentUserId) {
+      console.log('[projectStore] Cached project list belongs to different user, clearing cache');
+      setStore('projectList', {
+        items: [],
+        loaded: false,
+        loading: false,
+        error: null,
+        cachedUserId: null,
+      });
+      // Clear localStorage cache
+      saveCachedProjectList(null, null);
+    }
+  }
+
+  /**
    * Temporarily store pending project data during creation
    * This avoids passing non-serializable data through router state
    */
@@ -540,6 +577,7 @@ function createProjectStore() {
     // Actions - Project List (Dashboard)
     fetchProjectList,
     refreshProjectList,
+    validateProjectListCache,
     addProjectToList,
     updateProjectInList,
     removeProjectFromList,
