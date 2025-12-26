@@ -156,7 +156,7 @@ See [style-guide.md](style-guide.md) for detailed conventions.
 pnpm run docs
 ```
 
-This serves the architecture documentation at http://localhost:3020.
+This serves the architecture documentation at http://localhost:8080.
 Note: these docs are not the Open API docs which are served by the Workers backend.
 
 ## Code of Conduct
