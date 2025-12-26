@@ -4,7 +4,11 @@
 
 import Stripe from 'stripe';
 import { createDb } from '../../db/client.js';
-import { upsertSubscription, updateSubscriptionByStripeId } from '../../db/subscriptions.js';
+import {
+  upsertSubscription,
+  updateSubscriptionByStripeId,
+  getSubscriptionByStripeSubscriptionId,
+} from '../../db/subscriptions.js';
 import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 
 /**
@@ -82,7 +86,7 @@ export async function handleWebhook(env, rawBody, signature) {
 
     case 'customer.subscription.created':
     case 'customer.subscription.updated':
-      await handleSubscriptionUpdated(db, event.data.object);
+      await handleSubscriptionUpdated(db, stripe, event.data.object);
       break;
 
     case 'customer.subscription.deleted':
@@ -140,15 +144,53 @@ async function handleCheckoutCompleted(db, stripe, session) {
 /**
  * Handle customer.subscription.updated event
  * This handles upgrades, downgrades, and status changes
+ * Also handles incomplete_expired subscriptions (abandoned checkouts after 23 hours)
+ * For Elements flow: subscriptions are created before payment, so we may need to create the DB record
  */
-async function handleSubscriptionUpdated(db, subscription) {
+async function handleSubscriptionUpdated(db, stripe, subscription) {
   const priceId = subscription.items.data[0]?.price.id;
   const tier = getTierFromPriceId(priceId);
+  const mappedStatus = mapStripeStatus(subscription.status);
 
-  // Convert Unix timestamps to Date objects for Drizzle timestamp mode
+  // Check if subscription exists in our database
+  const existing = await getSubscriptionByStripeSubscriptionId(db, subscription.id);
+
+  // If subscription doesn't exist and is now active, create it
+  // This handles Elements flow where subscription is created before payment
+  if (!existing && subscription.status === 'active') {
+    const userId = subscription.metadata?.userId;
+    if (!userId) {
+      console.error(`Subscription ${subscription.id} missing userId in metadata`);
+      return;
+    }
+
+    const subscriptionId = `sub_${crypto.randomUUID()}`;
+    await upsertSubscription(db, {
+      id: subscriptionId,
+      userId,
+      stripeCustomerId: subscription.customer,
+      stripeSubscriptionId: subscription.id,
+      tier,
+      status: mappedStatus,
+      currentPeriodStart:
+        subscription.current_period_start ?
+          new Date(subscription.current_period_start * 1000)
+        : undefined,
+      currentPeriodEnd:
+        subscription.current_period_end ?
+          new Date(subscription.current_period_end * 1000)
+        : undefined,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end ?? false,
+    });
+
+    console.log(`Subscription created from webhook: ${subscription.id} - ${tier} (active)`);
+    return;
+  }
+
+  // Update existing subscription
   const updates = {
     tier,
-    status: mapStripeStatus(subscription.status),
+    status: mappedStatus,
     currentPeriodStart:
       subscription.current_period_start ?
         new Date(subscription.current_period_start * 1000)
@@ -167,9 +209,25 @@ async function handleSubscriptionUpdated(db, subscription) {
     }
   });
 
-  await updateSubscriptionByStripeId(db, subscription.id, updates);
+  const updated = await updateSubscriptionByStripeId(db, subscription.id, updates);
 
-  console.log(`Subscription updated: ${subscription.id} - ${tier} (${subscription.status})`);
+  // If subscription doesn't exist in DB and status is incomplete_expired, log but don't create
+  // These are abandoned checkouts that Stripe automatically cleaned up
+  if (!updated && subscription.status === 'incomplete_expired') {
+    console.log(
+      `Incomplete subscription expired (abandoned checkout): ${subscription.id} - Stripe automatically cleaned up`,
+    );
+    return;
+  }
+
+  // Log incomplete_expired subscriptions for monitoring abandoned checkouts
+  if (subscription.status === 'incomplete_expired') {
+    console.log(
+      `Incomplete subscription expired (abandoned checkout): ${subscription.id} - Stripe automatically cleaned up`,
+    );
+  } else {
+    console.log(`Subscription updated: ${subscription.id} - ${tier} (${subscription.status})`);
+  }
 }
 
 /**

@@ -44,8 +44,8 @@ export async function createCheckoutSession(env, user, tier, interval = 'monthly
         quantity: 1,
       },
     ],
-    success_url: `${env.APP_URL}/settings/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${env.APP_URL}/settings/billing?canceled=true`,
+    success_url: `${env.APP_URL}/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${env.APP_URL}/billing?canceled=true`,
     metadata: {
       userId: user.id,
       tier,

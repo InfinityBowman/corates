@@ -3,12 +3,13 @@
  * Settings page for managing subscription and billing
  */
 
-import { createSignal, Show } from 'solid-js';
+import { createSignal, Show, onMount } from 'solid-js';
 import { useSearchParams } from '@solidjs/router';
 import { FiCreditCard, FiArrowLeft, FiCheckCircle, FiXCircle } from 'solid-icons/fi';
 import { A } from '@solidjs/router';
 import { useSubscription } from '@/primitives/useSubscription.js';
 import { redirectToPortal } from '@/api/billing.js';
+import { getStripe } from '@/lib/stripe.js';
 import { SubscriptionCard, PricingTable } from '@/components/billing/index.js';
 
 export default function BillingPage() {
@@ -16,15 +17,38 @@ export default function BillingPage() {
   const { subscription, loading, refetch, tier } = useSubscription();
   const [portalLoading, setPortalLoading] = createSignal(false);
   const [showPricing, setShowPricing] = createSignal(false);
+  const [verifyingPayment, setVerifyingPayment] = createSignal(false);
 
   // Check for success/canceled query params from Stripe redirect
   const checkoutSuccess = () => searchParams.success === 'true';
   const checkoutCanceled = () => searchParams.canceled === 'true';
+  const paymentIntentClientSecret = () => searchParams.payment_intent_client_secret;
 
-  // Refetch subscription on successful checkout
-  if (checkoutSuccess()) {
-    refetch();
-  }
+  // Verify payment intent status when redirected back from Stripe
+  onMount(async () => {
+    const clientSecret = paymentIntentClientSecret();
+    if (clientSecret && checkoutSuccess()) {
+      setVerifyingPayment(true);
+      try {
+        const stripe = await getStripe();
+        if (stripe) {
+          const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+
+          // If payment succeeded, refetch subscription
+          if (paymentIntent && paymentIntent.status === 'succeeded') {
+            await refetch();
+          }
+        }
+      } catch (error) {
+        console.error('Error verifying payment intent:', error);
+      } finally {
+        setVerifyingPayment(false);
+      }
+    } else if (checkoutSuccess()) {
+      // If success param but no client secret, still refetch (for Checkout Session redirects)
+      refetch();
+    }
+  });
 
   const handleManageSubscription = async () => {
     setPortalLoading(true);

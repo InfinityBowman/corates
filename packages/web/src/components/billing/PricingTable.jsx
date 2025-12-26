@@ -4,29 +4,21 @@
  */
 
 import { createSignal, createResource, For, Show } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 import { FiCheck } from 'solid-icons/fi';
-import { getPlans, redirectToCheckout } from '@/api/billing.js';
+import { getPlans } from '@/api/billing.js';
 
 export default function PricingTable(props) {
   const [plans] = createResource(getPlans);
   const [billingInterval, setBillingInterval] = createSignal('monthly');
-  const [loadingTier, setLoadingTier] = createSignal(null);
+  const navigate = useNavigate();
 
   const currentTier = () => props.currentTier ?? 'free';
 
-  const handleUpgrade = async tier => {
-    if (tier === 'free' || tier === currentTier()) return;
+  const handleUpgrade = tier => {
+    if (tier === 'free' || tier === currentTier() || tier === 'enterprise') return;
 
-    setLoadingTier(tier);
-    try {
-      await redirectToCheckout(tier, billingInterval());
-    } catch (error) {
-      const { handleError } = await import('@/lib/error-utils.js');
-      await handleError(error, {
-        toastTitle: 'Checkout Error',
-      });
-      setLoadingTier(null);
-    }
+    navigate(`/billing/checkout?tier=${tier}&interval=${billingInterval()}`);
   };
 
   const getButtonText = tier => {
@@ -37,7 +29,7 @@ export default function PricingTable(props) {
   };
 
   const isButtonDisabled = tier => {
-    return tier === currentTier() || tier === 'free' || loadingTier() !== null;
+    return tier === currentTier() || tier === 'free' || tier === 'enterprise';
   };
 
   return (
@@ -152,26 +144,7 @@ export default function PricingTable(props) {
                   onClick={() => handleUpgrade(plan.tier)}
                   disabled={isButtonDisabled(plan.tier)}
                 >
-                  <Show when={loadingTier() === plan.tier} fallback={getButtonText(plan.tier)}>
-                    <span class='flex items-center justify-center'>
-                      <svg class='mr-2 -ml-1 h-4 w-4 animate-spin' fill='none' viewBox='0 0 24 24'>
-                        <circle
-                          class='opacity-25'
-                          cx='12'
-                          cy='12'
-                          r='10'
-                          stroke='currentColor'
-                          stroke-width='4'
-                        />
-                        <path
-                          class='opacity-75'
-                          fill='currentColor'
-                          d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                        />
-                      </svg>
-                      Processing...
-                    </span>
-                  </Show>
+                  {getButtonText(plan.tier)}
                 </button>
               </div>
             )}

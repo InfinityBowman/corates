@@ -6,6 +6,9 @@
       "args": ["/Users/jacobmaynard/Documents/Repos/corates/packages/mcp/dist/server.js"],
       "env": {}
     },
+    "stripe": {
+      "url": "https://mcp.stripe.com"
+    },
     "ark-ui": {
       "command": "npx",
       "args": ["-y", "@ark-ui/mcp"]
