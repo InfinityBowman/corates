@@ -70,7 +70,7 @@ routes.post(
   validateRequest(projectSchemas.create),
   async c => {
     // Handler
-  }
+  },
 );
 ```
 
@@ -183,7 +183,7 @@ import { createDb } from '../db/client.js';
 async c => {
   const db = createDb(c.env.DB);
   // Use db
-}
+};
 ```
 
 ### Batch Operations for Atomicity
@@ -227,36 +227,19 @@ const result = await db.prepare('SELECT * FROM projects WHERE id = ?').bind(proj
 
 ```js
 // Get single record
-const project = await db
-  .select()
-  .from(projects)
-  .where(eq(projects.id, projectId))
-  .get();
+const project = await db.select().from(projects).where(eq(projects.id, projectId)).get();
 
 // Get multiple records
-const allProjects = await db
-  .select()
-  .from(projects)
-  .where(eq(projects.createdBy, userId))
-  .all();
+const allProjects = await db.select().from(projects).where(eq(projects.createdBy, userId)).all();
 
 // Count records
-const projectCount = await db
-  .select({ count: count() })
-  .from(projects)
-  .where(eq(projects.createdBy, userId))
-  .get();
+const projectCount = await db.select({ count: count() }).from(projects).where(eq(projects.createdBy, userId)).get();
 
 // Update record
-await db
-  .update(projects)
-  .set({ name: newName, updatedAt: new Date() })
-  .where(eq(projects.id, projectId));
+await db.update(projects).set({ name: newName, updatedAt: new Date() }).where(eq(projects.id, projectId));
 
 // Delete record
-await db
-  .delete(projects)
-  .where(eq(projects.id, projectId));
+await db.delete(projects).where(eq(projects.id, projectId));
 
 // Join query
 const projectWithMembers = await db
@@ -413,15 +396,9 @@ Check user entitlements (subscription-based permissions):
 ```js
 import { requireEntitlement } from '../middleware/entitlements.js';
 
-routes.post(
-  '/',
-  requireAuth,
-  requireEntitlement('project.create'),
-  validateRequest(projectSchemas.create),
-  async c => {
-    // User has entitlement, proceed
-  }
-);
+routes.post('/', requireAuth, requireEntitlement('project.create'), validateRequest(projectSchemas.create), async c => {
+  // User has entitlement, proceed
+});
 ```
 
 ### Quotas
@@ -443,7 +420,7 @@ routes.post(
   validateRequest(projectSchemas.create),
   async c => {
     // User has quota, proceed
-  }
+  },
 );
 ```
 
@@ -457,11 +434,7 @@ routes.get('/:id', requireAuth, async c => {
   const db = createDb(c.env.DB);
   const projectId = c.req.param('id');
 
-  const project = await db
-    .select()
-    .from(projects)
-    .where(eq(projects.id, projectId))
-    .get();
+  const project = await db.select().from(projects).where(eq(projects.id, projectId)).get();
 
   if (!project) {
     const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
@@ -472,12 +445,7 @@ routes.get('/:id', requireAuth, async c => {
   const member = await db
     .select()
     .from(projectMembers)
-    .where(
-      and(
-        eq(projectMembers.projectId, projectId),
-        eq(projectMembers.userId, user.id)
-      )
-    )
+    .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, user.id)))
     .get();
 
   if (!member) {
@@ -492,102 +460,81 @@ routes.get('/:id', requireAuth, async c => {
 ### POST Route with Validation
 
 ```js
-routes.post('/',
-  requireAuth,
-  validateRequest(projectSchemas.create),
-  async c => {
-    const { user } = getAuth(c);
-    const db = createDb(c.env.DB);
-    const data = c.get('validatedBody');
+routes.post('/', requireAuth, validateRequest(projectSchemas.create), async c => {
+  const { user } = getAuth(c);
+  const db = createDb(c.env.DB);
+  const data = c.get('validatedBody');
 
-    const projectId = crypto.randomUUID();
+  const projectId = crypto.randomUUID();
 
-    try {
-      // Batch operations for atomicity
-      const batchOps = [
-        db.insert(projects).values({
-          id: projectId,
-          name: data.name,
-          description: data.description,
-          createdBy: user.id,
-        }),
-        db.insert(projectMembers).values({
-          id: crypto.randomUUID(),
-          projectId,
-          userId: user.id,
-          role: 'owner',
-        }),
-      ];
+  try {
+    // Batch operations for atomicity
+    const batchOps = [
+      db.insert(projects).values({
+        id: projectId,
+        name: data.name,
+        description: data.description,
+        createdBy: user.id,
+      }),
+      db.insert(projectMembers).values({
+        id: crypto.randomUUID(),
+        projectId,
+        userId: user.id,
+        role: 'owner',
+      }),
+    ];
 
-      await db.batch(batchOps);
+    await db.batch(batchOps);
 
-      const project = await db
-        .select()
-        .from(projects)
-        .where(eq(projects.id, projectId))
-        .get();
+    const project = await db.select().from(projects).where(eq(projects.id, projectId)).get();
 
-      return c.json(project, 201);
-    } catch (error) {
-      console.error('Error creating project:', error);
-      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'create_project',
-        originalError: error.message,
-      });
-      return c.json(dbError, dbError.statusCode);
-    }
+    return c.json(project, 201);
+  } catch (error) {
+    console.error('Error creating project:', error);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'create_project',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
   }
-);
+});
 ```
 
 ### PATCH Route
 
 ```js
-routes.patch('/:id',
-  requireAuth,
-  validateRequest(projectSchemas.update),
-  async c => {
-    const { user } = getAuth(c);
-    const db = createDb(c.env.DB);
-    const projectId = c.req.param('id');
-    const data = c.get('validatedBody');
+routes.patch('/:id', requireAuth, validateRequest(projectSchemas.update), async c => {
+  const { user } = getAuth(c);
+  const db = createDb(c.env.DB);
+  const projectId = c.req.param('id');
+  const data = c.get('validatedBody');
 
-    // Check access and ownership
-    const member = await db
-      .select()
-      .from(projectMembers)
-      .where(
-        and(
-          eq(projectMembers.projectId, projectId),
-          eq(projectMembers.userId, user.id)
-        )
-      )
-      .get();
+  // Check access and ownership
+  const member = await db
+    .select()
+    .from(projectMembers)
+    .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, user.id)))
+    .get();
 
-    if (!member || member.role !== 'owner') {
-      const error = createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId });
-      return c.json(error, error.statusCode);
-    }
-
-    // Build update object (only include provided fields)
-    const updates = {};
-    if (data.name !== undefined) updates.name = data.name;
-    if (data.description !== undefined) updates.description = data.description;
-
-    await db
-      .update(projects)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(projects.id, projectId));
-
-    const updated = await db
-      .select()
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .get();
-
-    return c.json(updated);
+  if (!member || member.role !== 'owner') {
+    const error = createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId });
+    return c.json(error, error.statusCode);
   }
-);
+
+  // Build update object (only include provided fields)
+  const updates = {};
+  if (data.name !== undefined) updates.name = data.name;
+  if (data.description !== undefined) updates.description = data.description;
+
+  await db
+    .update(projects)
+    .set({ ...updates, updatedAt: new Date() })
+    .where(eq(projects.id, projectId));
+
+  const updated = await db.select().from(projects).where(eq(projects.id, projectId)).get();
+
+  return c.json(updated);
+});
 ```
 
 ### DELETE Route
@@ -599,11 +546,7 @@ routes.delete('/:id', requireAuth, async c => {
   const projectId = c.req.param('id');
 
   // Check ownership
-  const project = await db
-    .select()
-    .from(projects)
-    .where(eq(projects.id, projectId))
-    .get();
+  const project = await db.select().from(projects).where(eq(projects.id, projectId)).get();
 
   if (!project) {
     const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
@@ -616,9 +559,7 @@ routes.delete('/:id', requireAuth, async c => {
   }
 
   // Delete (cascade will handle related records)
-  await db
-    .delete(projects)
-    .where(eq(projects.id, projectId));
+  await db.delete(projects).where(eq(projects.id, projectId));
 
   return c.json({ success: true }, 204);
 });

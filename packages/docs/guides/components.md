@@ -27,9 +27,7 @@ export default function MyComponent(props) {
   return (
     <div>
       <Show when={isOpen()}>
-        <For each={projects()}>
-          {project => <ProjectCard project={project} />}
-        </For>
+        <For each={projects()}>{project => <ProjectCard project={project} />}</For>
       </Show>
     </div>
   );
@@ -46,7 +44,11 @@ export default function MyComponent(props) {
 // WRONG - breaks reactivity
 function MyComponent(props) {
   const { name, age } = props;
-  return <div>{name} is {age}</div>; // Won't update when props change
+  return (
+    <div>
+      {name} is {age}
+    </div>
+  ); // Won't update when props change
 }
 
 // WRONG - another example
@@ -57,7 +59,11 @@ function MyComponent(props) {
 
 // CORRECT - access directly
 function MyComponent(props) {
-  return <div>{props.name} is {props.age}</div>; // Maintains reactivity
+  return (
+    <div>
+      {props.name} is {props.age}
+    </div>
+  ); // Maintains reactivity
 }
 
 // CORRECT - wrap in function for computed access
@@ -122,7 +128,7 @@ function ProjectCard(props) {
   const project = () => props.project;
 
   return (
-    <div class="project-card">
+    <div class='project-card'>
       <h3>{project().name}</h3>
       <ProjectActions projectId={project().id} />
     </div>
@@ -327,11 +333,7 @@ function MyComponent() {
     }
   };
 
-  return (
-    <Dialog>
-      {/* Dialog content */}
-    </Dialog>
-  );
+  return <Dialog>{/* Dialog content */}</Dialog>;
 }
 ```
 
@@ -400,7 +402,7 @@ import { Switch, Match } from 'solid-js';
   <Match when={status() === 'success'}>
     <Content />
   </Match>
-</Switch>
+</Switch>;
 ```
 
 ## Lists
@@ -494,7 +496,7 @@ async function handleSubmit() {
         method: 'POST',
         body: JSON.stringify(data),
       }),
-      { showToast: true }
+      { showToast: true },
     );
     // Success
   } catch (error) {
@@ -524,13 +526,9 @@ function MyForm() {
 
   return (
     <form>
-      <input name="email" />
-      {errors.fieldErrors().email && (
-        <span class="error">{errors.fieldErrors().email}</span>
-      )}
-      {errors.globalError() && (
-        <div class="error">{errors.globalError()}</div>
-      )}
+      <input name='email' />
+      {errors.fieldErrors().email && <span class='error'>{errors.fieldErrors().email}</span>}
+      {errors.globalError() && <div class='error'>{errors.globalError()}</div>}
     </form>
   );
 }
@@ -543,9 +541,9 @@ Use Tailwind CSS classes (see [Style Guide](/guides/style-guide)):
 ```jsx
 function MyComponent() {
   return (
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h3 class="text-lg font-semibold text-gray-900">Title</h3>
-      <p class="text-sm text-gray-600">Description</p>
+    <div class='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+      <h3 class='text-lg font-semibold text-gray-900'>Title</h3>
+      <p class='text-sm text-gray-600'>Description</p>
     </div>
   );
 }
@@ -588,11 +586,9 @@ export default function ProjectList() {
   const loading = () => projectStore.isProjectListLoading();
 
   return (
-    <div class="space-y-4">
+    <div class='space-y-4'>
       <Show when={loading()} fallback={<div>Loading...</div>}>
-        <For each={projects()}>
-          {project => <ProjectCard project={project} />}
-        </For>
+        <For each={projects()}>{project => <ProjectCard project={project} />}</For>
       </Show>
     </div>
   );
@@ -626,15 +622,9 @@ export default function CreateProjectForm(props) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <input
-        value={name()}
-        onInput={(e) => setName(e.target.value)}
-        class="border rounded px-3 py-2"
-      />
-      {errors.fieldErrors().name && (
-        <span class="text-red-600">{errors.fieldErrors().name}</span>
-      )}
-      <button type="submit">Create</button>
+      <input value={name()} onInput={e => setName(e.target.value)} class='rounded border px-3 py-2' />
+      {errors.fieldErrors().name && <span class='text-red-600'>{errors.fieldErrors().name}</span>}
+      <button type='submit'>Create</button>
     </form>
   );
 }

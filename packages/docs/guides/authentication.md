@@ -325,11 +325,13 @@ Sessions are managed with secure cookies (7-day expiry by default). Session data
 ### Session Access
 
 **Backend:**
+
 ```js
 const { user, session } = getAuth(c);
 ```
 
 **Frontend:**
+
 ```js
 const auth = useBetterAuth();
 const user = () => auth.user();

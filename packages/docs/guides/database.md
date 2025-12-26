@@ -92,7 +92,7 @@ import { createDb } from '../db/client.js';
 async c => {
   const db = createDb(c.env.DB);
   // Use db
-}
+};
 ```
 
 ### Query Patterns
@@ -102,21 +102,13 @@ async c => {
 ```js
 import { eq } from 'drizzle-orm';
 
-const project = await db
-  .select()
-  .from(projects)
-  .where(eq(projects.id, projectId))
-  .get();
+const project = await db.select().from(projects).where(eq(projects.id, projectId)).get();
 ```
 
 #### Select Multiple Records
 
 ```js
-const allProjects = await db
-  .select()
-  .from(projects)
-  .where(eq(projects.createdBy, userId))
-  .all();
+const allProjects = await db.select().from(projects).where(eq(projects.createdBy, userId)).all();
 ```
 
 #### Select with Joins
@@ -140,10 +132,7 @@ const projectWithMembers = await db
 ```js
 import { count } from 'drizzle-orm';
 
-const [result] = await db
-  .select({ count: count() })
-  .from(projects)
-  .where(eq(projects.createdBy, userId));
+const [result] = await db.select({ count: count() }).from(projects).where(eq(projects.createdBy, userId));
 
 const projectCount = result?.count || 0;
 ```
@@ -178,9 +167,7 @@ await db
 #### Delete Records
 
 ```js
-await db
-  .delete(projects)
-  .where(eq(projects.id, projectId));
+await db.delete(projects).where(eq(projects.id, projectId));
 ```
 
 ### Batch Operations
@@ -213,12 +200,7 @@ import { and, or, eq, like } from 'drizzle-orm';
 const result = await db
   .select()
   .from(projects)
-  .where(
-    and(
-      eq(projects.id, projectId),
-      eq(projects.createdBy, userId)
-    )
-  )
+  .where(and(eq(projects.id, projectId), eq(projects.createdBy, userId)))
   .get();
 
 // OR condition
@@ -229,7 +211,7 @@ const results = await db
     or(
       eq(projects.createdBy, userId),
       // User is member via join
-    )
+    ),
   )
   .all();
 
@@ -418,11 +400,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_user_email ON user(email);
 ### Check Existence
 
 ```js
-const exists = await db
-  .select({ id: projects.id })
-  .from(projects)
-  .where(eq(projects.id, projectId))
-  .get();
+const exists = await db.select({ id: projects.id }).from(projects).where(eq(projects.id, projectId)).get();
 
 if (!exists) {
   // Project doesn't exist
@@ -463,21 +441,12 @@ await db
 
 ```js
 // Check if exists, then insert or update
-const existing = await db
-  .select()
-  .from(projects)
-  .where(eq(projects.id, projectId))
-  .get();
+const existing = await db.select().from(projects).where(eq(projects.id, projectId)).get();
 
 if (existing) {
-  await db
-    .update(projects)
-    .set({ name: newName })
-    .where(eq(projects.id, projectId));
+  await db.update(projects).set({ name: newName }).where(eq(projects.id, projectId));
 } else {
-  await db
-    .insert(projects)
-    .values({ id: projectId, name: newName, createdBy: userId });
+  await db.insert(projects).values({ id: projectId, name: newName, createdBy: userId });
 }
 ```
 
@@ -488,7 +457,7 @@ if (existing) {
 Timestamps are stored as integers (Unix epoch in seconds):
 
 ```js
-createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`)
+createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`);
 ```
 
 Convert between Date and integer:
@@ -508,7 +477,7 @@ const date = project.createdAt; // Date object (if mode: 'timestamp')
 Booleans stored as integers (0/1):
 
 ```js
-emailVerified: integer('emailVerified', { mode: 'boolean' }).default(false)
+emailVerified: integer('emailVerified', { mode: 'boolean' }).default(false);
 ```
 
 Drizzle automatically converts between boolean and integer.

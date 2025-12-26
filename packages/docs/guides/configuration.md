@@ -79,11 +79,13 @@ import { useProject } from '@primitives/useProject/index.js';
 Environment variables are defined in `wrangler.jsonc` or `.dev.vars`:
 
 **Required:**
+
 - `DB` - D1 database binding
 - `BETTER_AUTH_SECRET` - Secret key for Better Auth
 - `BETTER_AUTH_URL` - Base URL for Better Auth callbacks
 
 **Optional:**
+
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` - Google OAuth
 - `ORCID_CLIENT_ID` / `ORCID_CLIENT_SECRET` - ORCID OAuth
 - `POSTMARK_API_KEY` - Email service

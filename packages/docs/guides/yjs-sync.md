@@ -235,10 +235,7 @@ Client-side persistence uses y-indexeddb:
 import { IndexeddbPersistence } from 'y-indexeddb';
 
 // Set up IndexedDB persistence for offline support
-connectionEntry.indexeddbProvider = new IndexeddbPersistence(
-  `corates-project-${projectId}`,
-  connectionEntry.ydoc
-);
+connectionEntry.indexeddbProvider = new IndexeddbPersistence(`corates-project-${projectId}`, connectionEntry.ydoc);
 ```
 
 ## WebSocket Connection
@@ -260,7 +257,7 @@ connectionEntry.indexeddbProvider = new IndexeddbPersistence(
 
 ```js
 // Client receives update
-ws.onmessage = (event) => {
+ws.onmessage = event => {
   const data = JSON.parse(event.data);
   if (data.type === 'sync' || data.type === 'update') {
     const update = new Uint8Array(data.update);
@@ -310,12 +307,10 @@ await projectActionsStore.createStudy({
 });
 
 // Update checklist answer
-await projectActionsStore.updateChecklistAnswer(
-  studyId,
-  checklistId,
-  'q1',
-  { value: 'yes', notes: 'Based on section 2.1' }
-);
+await projectActionsStore.updateChecklistAnswer(studyId, checklistId, 'q1', {
+  value: 'yes',
+  notes: 'Based on section 2.1',
+});
 ```
 
 ### Yjs Data Structures

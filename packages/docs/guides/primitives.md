@@ -9,6 +9,7 @@ Primitives are reusable SolidJS hooks that encapsulate business logic, state man
 ## What Are Primitives?
 
 Primitives are similar to React hooks - they're functions that:
+
 - Start with `use` (e.g., `useProject`, `useSubscription`)
 - Use SolidJS reactive primitives (`createSignal`, `createStore`, `createMemo`, `createEffect`)
 - Return reactive values and helper functions
@@ -153,6 +154,7 @@ export function useProject(projectId) {
 ```
 
 This primitive:
+
 - Manages WebSocket connections
 - Handles IndexedDB persistence
 - Coordinates sync between Yjs and the store
@@ -187,6 +189,7 @@ export function useSubscription() {
 ```
 
 This primitive:
+
 - Uses `createResource` for async data fetching
 - Provides memoized computed values
 - Handles loading and error states
@@ -239,6 +242,7 @@ export function useProjectData(projectId, options = {}) {
 ```
 
 This primitive:
+
 - Provides reactive getters from the store
 - Optionally establishes connections
 - Keeps components simple when only reading data
@@ -279,6 +283,7 @@ export default useOnlineStatus;
 ```
 
 This primitive:
+
 - Wraps browser API in a reactive signal
 - Handles event listener cleanup
 - Works in SSR contexts (checks for `navigator`)
@@ -323,9 +328,7 @@ function MyComponent(props) {
   return (
     <div>
       <Show when={isConnected()}>
-        <For each={studies()}>
-          {study => <StudyCard study={study} />}
-        </For>
+        <For each={studies()}>{study => <StudyCard study={study} />}</For>
       </Show>
     </div>
   );
@@ -430,10 +433,10 @@ import { createResource } from 'solid-js';
 export function useData(id) {
   const [data, { refetch }] = createResource(
     () => id(),
-    async (id) => {
+    async id => {
       const response = await fetch(`/api/data/${id}`);
       return response.json();
-    }
+    },
   );
 
   return {
@@ -490,7 +493,7 @@ export function useConnection(url) {
 
   return {
     connected,
-    send: (data) => ws?.send(JSON.stringify(data)),
+    send: data => ws?.send(JSON.stringify(data)),
   };
 }
 ```

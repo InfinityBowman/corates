@@ -204,6 +204,7 @@ refactor: simplify error handling
 ### Issue: Tests failing with database errors
 
 **Solution:** Ensure database is reset between tests:
+
 ```js
 beforeEach(async () => {
   await resetTestDatabase();
@@ -225,6 +226,7 @@ beforeEach(async () => {
 ### Issue: Build errors after dependency updates
 
 **Solution:** Clear node_modules and reinstall:
+
 ```bash
 rm -rf node_modules packages/*/node_modules
 pnpm install

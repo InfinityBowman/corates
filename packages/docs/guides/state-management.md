@@ -106,7 +106,7 @@ function createMyStore() {
         if (item) {
           Object.assign(item, updates);
         }
-      })
+      }),
     );
   }
 
@@ -143,7 +143,7 @@ function createMyActionsStore() {
           body: JSON.stringify(data),
           credentials: 'include',
         }),
-        { showToast: true }
+        { showToast: true },
       );
 
       const newItem = await response.json();
@@ -168,7 +168,7 @@ function createMyActionsStore() {
           body: JSON.stringify(updates),
           credentials: 'include',
         }),
-        { showToast: true }
+        { showToast: true },
       );
 
       const updatedItem = await response.json();
@@ -256,9 +256,7 @@ function MyComponent() {
 
   return (
     <div>
-      <For each={projects()}>
-        {project => <ProjectCard project={project} />}
-      </For>
+      <For each={projects()}>{project => <ProjectCard project={project} />}</For>
     </div>
   );
 }
@@ -283,11 +281,7 @@ function CreateProjectForm() {
     // Store updates automatically, UI re-renders
   }
 
-  return (
-    <form onSubmit={handleSubmit}>
-      {/* form fields */}
-    </form>
-  );
+  return <form onSubmit={handleSubmit}>{/* form fields */}</form>;
 }
 ```
 
