@@ -29,10 +29,7 @@ export default function AMSTAR2ResultsTable(props) {
         const reconciledChecklist = study.checklists.find(
           c => c.id === study.reconciliation.reconciledChecklistId && c.type === 'AMSTAR2',
         );
-        if (
-          reconciledChecklist &&
-          reconciledChecklist.status === CHECKLIST_STATUS.COMPLETED
-        ) {
+        if (reconciledChecklist && reconciledChecklist.status === CHECKLIST_STATUS.COMPLETED) {
           checklistToScore = reconciledChecklist;
         }
       }
@@ -164,13 +161,13 @@ export default function AMSTAR2ResultsTable(props) {
               <tr>
                 <th
                   scope='col'
-                  class='px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500'
+                  class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'
                 >
                   Study
                 </th>
                 <th
                   scope='col'
-                  class='px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500'
+                  class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'
                 >
                   Score
                 </th>
@@ -180,10 +177,10 @@ export default function AMSTAR2ResultsTable(props) {
               <For each={studyScores()}>
                 {item => (
                   <tr class='hover:bg-gray-50'>
-                    <td class='whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900'>
+                    <td class='px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900'>
                       {item.studyName}
                     </td>
-                    <td class='whitespace-nowrap px-6 py-4 text-sm text-gray-500'>
+                    <td class='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
                       <ScoreTag currentScore={item.score} checklistType='AMSTAR2' />
                     </td>
                   </tr>
