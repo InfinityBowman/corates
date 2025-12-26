@@ -136,6 +136,7 @@ function buildStudyFromYMap(studyId, studyData, studyYMap) {
       study.reconciliation = {
         checklist1Id: reconciliationData.checklist1Id,
         checklist2Id: reconciliationData.checklist2Id,
+        reconciledChecklistId: reconciliationData.reconciledChecklistId || null,
         currentPage: reconciliationData.currentPage || 0,
         viewMode: reconciliationData.viewMode || 'questions',
         updatedAt: reconciliationData.updatedAt,
