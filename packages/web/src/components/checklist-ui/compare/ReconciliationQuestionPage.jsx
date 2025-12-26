@@ -51,8 +51,14 @@ function SingleQuestionPage(props) {
   // Local state for the final/merged answer that user can edit
   const [localFinal, setLocalFinal] = createSignal(null);
   const [selectedSource, setSelectedSource] = createSignal(null); // 'reviewer1' | 'reviewer2' | 'custom'
+  const [hasAutoFilled, setHasAutoFilled] = createSignal(false);
 
-  // Check if both reviewers have the same answers
+  // Reset auto-fill tracking when question changes
+  createEffect(() => {
+    props.questionKey;
+    setHasAutoFilled(false);
+  });
+
   const reviewersAgree = () => answersEqual(props.reviewer1Answers, props.reviewer2Answers);
 
   // Initialize local final from props or default to reviewer1
@@ -68,9 +74,38 @@ function SingleQuestionPage(props) {
         setSelectedSource('custom');
       }
     } else if (props.reviewer1Answers) {
-      // Default to reviewer1
+      // Default to reviewer1 for local state
       setLocalFinal(JSON.parse(JSON.stringify(props.reviewer1Answers)));
       setSelectedSource('reviewer1');
+    }
+  });
+
+  // Check if the final answer last column has at least one part as true
+  function hasValidFinalAnswer(finalAnswers) {
+    if (
+      !finalAnswers?.answers ||
+      !Array.isArray(finalAnswers.answers) ||
+      finalAnswers.answers.length === 0
+    )
+      return false;
+    const lastCol = finalAnswers.answers[finalAnswers.answers.length - 1];
+    return Array.isArray(lastCol) && lastCol.some(v => v === true);
+  }
+
+  // Auto-fill when reviewers agree and no final answer exists
+  createEffect(() => {
+    let hasFinalAnswer = hasValidFinalAnswer(props.finalAnswers);
+    // Only auto-fill if: reviewers agree, no final answer exists, we have reviewer1's answer, and we haven't auto-filled yet
+    if (
+      props.isAgreement &&
+      !hasFinalAnswer &&
+      props.reviewer1Answers &&
+      !hasAutoFilled() &&
+      props.onFinalChange
+    ) {
+      const newFinal = JSON.parse(JSON.stringify(props.reviewer1Answers));
+      props.onFinalChange(newFinal);
+      setHasAutoFilled(true);
     }
   });
 
