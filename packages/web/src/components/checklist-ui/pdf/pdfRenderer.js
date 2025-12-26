@@ -355,7 +355,7 @@ export function createPdfRenderer(document, scrollHandler) {
             textSelectionLayers.delete(pageNum);
           }
 
-              // Update existing selection layer or create new one
+          // Update existing selection layer or create new one
           if (textSelectionLayers.has(pageNum)) {
             const existingLayer = textSelectionLayers.get(pageNum);
             existingLayer.updateViewport(viewport);
