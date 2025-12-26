@@ -202,3 +202,36 @@ export function getInProgressReconciledChecklists(study) {
     c => isReconciledChecklist(c) && c.status !== CHECKLIST_STATUS.COMPLETED,
   );
 }
+
+/**
+ * Determines if a study has dual reviewers
+ * @param {Object} study - The study object
+ * @returns {boolean} True if study has both reviewer1 and reviewer2
+ */
+export function isDualReviewerStudy(study) {
+  if (!study) return false;
+  return !!(study.reviewer1 && study.reviewer2);
+}
+
+/**
+ * Gets the original reviewer checklists that were reconciled
+ * @param {Object} study - The study object
+ * @param {Object} reconciliationProgress - Reconciliation progress data with checklist1Id and checklist2Id
+ * @returns {Array} Array of original reviewer checklists (metadata only)
+ */
+export function getOriginalReviewerChecklists(study, reconciliationProgress) {
+  if (!study || !study.checklists || !reconciliationProgress) return [];
+
+  const { checklist1Id, checklist2Id } = reconciliationProgress;
+  if (!checklist1Id || !checklist2Id) return [];
+
+  const checklists = study.checklists || [];
+  const checklist1 = checklists.find(c => c.id === checklist1Id);
+  const checklist2 = checklists.find(c => c.id === checklist2Id);
+
+  const result = [];
+  if (checklist1) result.push(checklist1);
+  if (checklist2) result.push(checklist2);
+
+  return result;
+}

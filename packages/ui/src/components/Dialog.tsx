@@ -20,7 +20,7 @@ export interface DialogProps {
   /** Dialog content */
   children?: JSX.Element;
   /** Dialog size */
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }
 
 /**
@@ -47,6 +47,8 @@ const DialogComponent: Component<DialogProps> = props => {
         return 'max-w-lg';
       case 'xl':
         return 'max-w-xl';
+      case '2xl':
+        return 'max-w-6xl';
       default:
         return 'max-w-md';
     }
