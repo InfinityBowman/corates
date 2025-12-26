@@ -252,13 +252,13 @@ async function revokeAccess(userId) {
 }
 
 /**
- * Fetch storage documents with pagination
+ * Fetch storage documents with cursor-based pagination
  */
-async function fetchStorageDocuments({ page = 1, limit = 50, prefix = '', search = '' } = {}) {
+async function fetchStorageDocuments({ cursor, limit = 50, prefix = '', search = '' } = {}) {
   const params = new URLSearchParams({
-    page: page.toString(),
     limit: limit.toString(),
   });
+  if (cursor) params.set('cursor', cursor);
   if (prefix) params.set('prefix', prefix);
   if (search) params.set('search', search);
 

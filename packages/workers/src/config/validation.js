@@ -150,12 +150,10 @@ export const subscriptionSchemas = {
  */
 export const storageSchemas = {
   listDocuments: z.object({
-    page: z
+    cursor: z
       .string()
       .optional()
-      .default('1')
-      .transform(val => parseInt(val, 10))
-      .pipe(z.number().int('Page must be an integer').min(1, 'Page must be at least 1')),
+      .transform(val => (val ? val.trim() : undefined)),
     limit: z
       .string()
       .optional()

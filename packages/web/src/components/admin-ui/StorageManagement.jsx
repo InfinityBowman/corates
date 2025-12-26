@@ -46,7 +46,8 @@ export default function StorageManagement() {
   const navigate = useNavigate();
   const [search, setSearch] = createSignal('');
   const [prefix, setPrefix] = createSignal('');
-  const [page, setPage] = createSignal(1);
+  const [cursor, setCursor] = createSignal(null);
+  const [cursorHistory, setCursorHistory] = createSignal([]);
   const [debouncedSearch, setDebouncedSearch] = createSignal('');
   const [selectedKeys, setSelectedKeys] = createSignal(new Set());
   const [deleteDialog, setDeleteDialog] = createSignal(null);
@@ -62,9 +63,9 @@ export default function StorageManagement() {
     }
   });
 
-  // Fetch documents with pagination
+  // Fetch documents with cursor-based pagination
   const [documentsData, { refetch: refetchDocuments }] = createResource(
-    () => ({ page: page(), limit, prefix: prefix(), search: debouncedSearch() }),
+    () => ({ cursor: cursor(), limit, prefix: prefix(), search: debouncedSearch() }),
     fetchStorageDocuments,
   );
 
@@ -75,15 +76,36 @@ export default function StorageManagement() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
       setDebouncedSearch(e.target.value);
-      setPage(1);
+      setCursor(null);
+      setCursorHistory([]);
       setSelectedKeys(new Set());
     }, 300);
   };
 
   const handlePrefixChange = e => {
     setPrefix(e.target.value);
-    setPage(1);
+    setCursor(null);
+    setCursorHistory([]);
     setSelectedKeys(new Set());
+  };
+
+  const handleNextPage = () => {
+    const data = documentsData();
+    if (data?.nextCursor) {
+      setCursorHistory(prev => [...prev, cursor()]);
+      setCursor(data.nextCursor);
+    }
+  };
+
+  const handlePrevPage = () => {
+    const history = cursorHistory();
+    if (history.length > 0) {
+      const prevCursor = history[history.length - 1];
+      setCursorHistory(prev => prev.slice(0, -1));
+      setCursor(prevCursor);
+    } else {
+      setCursor(null);
+    }
   };
 
   const toggleSelect = key => {
@@ -141,8 +163,6 @@ export default function StorageManagement() {
   const handleSingleDelete = key => {
     setDeleteDialog([key]);
   };
-
-  const pagination = () => documentsData()?.pagination;
 
   return (
     <Show
@@ -364,31 +384,34 @@ export default function StorageManagement() {
             </div>
 
             {/* Pagination */}
-            <Show when={pagination()}>
+            <Show when={documentsData()}>
               <div class='flex items-center justify-between border-t border-gray-200 px-6 py-4'>
-                <p class='text-sm text-gray-500'>
-                  Showing {(page() - 1) * limit + 1} to{' '}
-                  {Math.min(page() * limit, pagination()?.total || 0)} of {pagination()?.total || 0}{' '}
-                  documents
-                </p>
+                <div class='flex flex-col gap-1'>
+                  <p class='text-sm text-gray-500'>
+                    Showing {documentsData()?.documents?.length || 0} document
+                    {documentsData()?.documents?.length === 1 ? '' : 's'}
+                  </p>
+                  <Show when={documentsData()?.truncated}>
+                    <p class='text-xs text-orange-600'>
+                      Results truncated after processing 10,000 objects. Use pagination to continue.
+                    </p>
+                  </Show>
+                </div>
                 <div class='flex items-center space-x-2'>
                   <button
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page() === 1}
+                    onClick={handlePrevPage}
+                    disabled={cursorHistory().length === 0}
                     class='rounded-lg border border-gray-300 p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
                   >
                     <FiChevronLeft class='h-4 w-4' />
                   </button>
                   <span class='text-sm text-gray-600'>
-                    Page {page()} of {Math.ceil((pagination()?.total || 0) / limit) || 1}
+                    {cursorHistory().length + 1}
+                    {documentsData()?.nextCursor ? ' →' : ''}
                   </span>
                   <button
-                    onClick={() =>
-                      setPage(p =>
-                        Math.min(Math.ceil((pagination()?.total || 0) / limit) || 1, p + 1),
-                      )
-                    }
-                    disabled={page() >= Math.ceil((pagination()?.total || 0) / limit) || 0}
+                    onClick={handleNextPage}
+                    disabled={!documentsData()?.nextCursor}
                     class='rounded-lg border border-gray-300 p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
                   >
                     <FiChevronRight class='h-4 w-4' />

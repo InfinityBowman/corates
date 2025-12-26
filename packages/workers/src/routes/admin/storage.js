@@ -29,33 +29,40 @@ function parseKey(key) {
 
 /**
  * GET /api/admin/storage/documents
- * List all documents with pagination
+ * List documents with cursor-based pagination
  * Query params:
- *   - page: page number (default 1)
+ *   - cursor: optional cursor token from previous response to continue pagination
  *   - limit: results per page (default 50, max 1000)
  *   - prefix: filter by prefix (e.g., "projects/{projectId}/")
  *   - search: filter by file name (case-insensitive substring match)
+ *
+ * Returns:
+ *   - documents: array of matching documents
+ *   - nextCursor: cursor token for next page (if more results available)
+ *   - truncated: true if processing was stopped due to cap (10k objects processed)
  */
 storageRoutes.get(
   '/storage/documents',
   validateQueryParams(storageSchemas.listDocuments),
   async c => {
     try {
-      const { page, limit, prefix, search } = c.get('validatedQuery');
+      const { cursor: requestCursor, limit, prefix, search } = c.get('validatedQuery');
 
-      // R2 doesn't support offset, so we need to fetch and filter all matching items
-      // For large datasets, this could be expensive, but it's necessary for accurate results
-      let cursor = undefined;
-      let allObjects = [];
+      const PROCESSING_CAP = 10000;
+      const matchingObjects = [];
+      let currentCursor = requestCursor;
+      let objectsProcessed = 0;
+      let hasMore = false;
+      let truncated = false;
 
-      // Fetch all matching objects (with prefix/search filtering)
-      do {
+      // Process batches until we have enough matching results or hit the cap
+      while (matchingObjects.length < limit && objectsProcessed < PROCESSING_CAP) {
         const listOptions = {
           limit: 1000,
           prefix: prefix || undefined,
         };
-        if (cursor) {
-          listOptions.cursor = cursor;
+        if (currentCursor) {
+          listOptions.cursor = currentCursor;
         }
 
         const listed = await c.env.PDF_BUCKET.list(listOptions);
@@ -64,40 +71,54 @@ storageRoutes.get(
           break;
         }
 
+        objectsProcessed += listed.objects.length;
+
         // Parse metadata for each object and apply filters
-        const parsedObjects = listed.objects
-          .map(obj => {
-            const parsed = parseKey(obj.key);
-            if (!parsed) {
-              return null;
-            }
+        for (const obj of listed.objects) {
+          const parsed = parseKey(obj.key);
+          if (!parsed) {
+            continue;
+          }
 
-            // Apply search filter if provided
-            if (search && !parsed.fileName.toLowerCase().includes(search)) {
-              return null;
-            }
+          // Apply search filter if provided
+          if (search && !parsed.fileName.toLowerCase().includes(search)) {
+            continue;
+          }
 
-            return {
-              key: obj.key,
-              fileName: parsed.fileName,
-              projectId: parsed.projectId,
-              studyId: parsed.studyId,
-              size: obj.size,
-              uploaded: obj.uploaded,
-              etag: obj.etag,
-            };
-          })
-          .filter(Boolean);
+          matchingObjects.push({
+            key: obj.key,
+            fileName: parsed.fileName,
+            projectId: parsed.projectId,
+            studyId: parsed.studyId,
+            size: obj.size,
+            uploaded: obj.uploaded,
+            etag: obj.etag,
+          });
 
-        allObjects.push(...parsedObjects);
+          // Stop if we have enough results
+          if (matchingObjects.length >= limit) {
+            break;
+          }
+        }
 
-        cursor = listed.truncated ? listed.cursor : undefined;
-      } while (cursor);
+        // Check if there are more objects available from R2
+        if (listed.truncated) {
+          currentCursor = listed.cursor;
+          hasMore = true;
+        } else {
+          hasMore = false;
+          break;
+        }
 
-      // Apply pagination to filtered results
-      const total = allObjects.length;
-      const skip = (page - 1) * limit;
-      const paginatedObjects = allObjects.slice(skip, skip + limit);
+        // Stop if we hit the processing cap
+        if (objectsProcessed >= PROCESSING_CAP) {
+          truncated = true;
+          break;
+        }
+      }
+
+      // Limit results to requested limit
+      const paginatedObjects = matchingObjects.slice(0, limit);
 
       // Check which projects exist in the database to identify orphaned PDFs
       const uniqueProjectIds = [...new Set(paginatedObjects.map(doc => doc.projectId))];
@@ -115,15 +136,22 @@ storageRoutes.get(
         orphaned: !existingProjectIds.has(doc.projectId),
       }));
 
-      return c.json({
+      const response = {
         documents: documentsWithOrphanStatus,
-        pagination: {
-          page,
-          limit,
-          total,
-          hasMore: skip + paginatedObjects.length < total,
-        },
-      });
+        limit,
+      };
+
+      // Include nextCursor if there are more results available
+      if (hasMore && currentCursor) {
+        response.nextCursor = currentCursor;
+      }
+
+      // Include truncated flag if we hit the processing cap
+      if (truncated) {
+        response.truncated = true;
+      }
+
+      return c.json(response);
     } catch (error) {
       console.error('Error listing storage documents:', error);
       const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
@@ -152,15 +180,19 @@ storageRoutes.delete(
 
       const deleted = deleteResults.filter(r => r.status === 'fulfilled').length;
       const failed = deleteResults.filter(r => r.status === 'rejected').length;
-      const errors =
-        failed > 0 ?
-          deleteResults
-            .filter(r => r.status === 'rejected')
-            .map((r, i) => ({
+
+      let errors;
+      if (failed > 0) {
+        errors = [];
+        deleteResults.forEach((result, i) => {
+          if (result.status === 'rejected') {
+            errors.push({
               key: keys[i],
-              error: r.reason?.message || 'Unknown error',
-            }))
-        : undefined;
+              error: result.reason?.message || 'Unknown error',
+            });
+          }
+        });
+      }
 
       return c.json({
         deleted,
