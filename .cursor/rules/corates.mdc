@@ -18,6 +18,7 @@ The project is split into multiple packages under the `packages/` directory:
 - `/ui`: Shared UI component library built with Ark UI
 - `/shared`: Shared TypeScript utilities and error definitions
 - `/mcp`: MCP server for development tools and documentation
+- `/docs`: Vitepress docs site containing internal documentation
 
 The web package is copied into the landing package during build and deployed as a single site on one worker.
 
@@ -112,10 +113,20 @@ See `solidjs.mdc` for detailed reactivity patterns and examples.
 
 ## Documentation
 
+- **Primary source**: Comprehensive guides are in the docs site (`packages/docs/`) - run `pnpm docs` to view
 - **ALWAYS use Corates MCP tools or other MCP** for Better-Auth, Drizzle, Icons, linting, and Ark UI documentation
-- Reference `style-guide.md` for UI styling guidelines
-- Reference `docs/error-handling-guide.md` for error handling patterns
-- See `TESTING.md` for testing guidelines (do NOT add tests unless asked)
+- **For comprehensive documentation**, see the docs site guides:
+  - [Testing Guide](/guides/testing) - Frontend and backend testing patterns, setup, and best practices
+  - [Authentication Guide](/guides/authentication) - Setup, configuration, API endpoints, and usage patterns
+  - [Database Guide](/guides/database) - Schema management, Drizzle ORM patterns, migrations, and test helpers
+  - [State Management](/guides/state-management) - SolidJS store patterns
+  - [Primitives](/guides/primitives) - Reusable hooks and primitives
+  - [Components](/guides/components) - Component development patterns
+  - [API Development](/guides/api-development) - Backend API route patterns
+  - [Error Handling](/guides/error-handling) - Error handling patterns
+  - [Style Guide](/guides/style-guide) - UI styling guidelines
+  - [Configuration](/guides/configuration) - Configuration files and environment variables
+  - [Development Workflow](/guides/development-workflow) - Getting started and common tasks
 
 ## Specialized Rule Files
 

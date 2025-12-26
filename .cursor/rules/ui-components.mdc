@@ -6,6 +6,9 @@ globs: packages/web/**, packages/ui/**
 
 # UI Components
 
+> **For comprehensive UI component patterns**, see the [Components Guide](/guides/components) and [Style Guide](/guides/style-guide) in the docs site.
+> This file provides quick reference patterns for AI agents.
+
 ## Ark UI Components
 
 **UI components are in `@corates/ui` package, built with Ark UI (and some remaining Zag.js components). NOT in local components.**
@@ -121,3 +124,8 @@ import projectStore from '../../stores/projectStore.js';
 - `packages/web/src/components/admin-ui/UserTable.jsx` - Avatar, Dialog usage
 - `packages/web/src/components/auth-ui/SignIn.jsx` - PasswordInput usage
 - `packages/ui/README.md` - Component library documentation
+
+## Related Documentation
+
+- [Components Guide](/guides/components) - Comprehensive component development patterns
+- [Style Guide](/guides/style-guide) - UI/UX guidelines and design system

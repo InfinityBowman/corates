@@ -40,7 +40,7 @@ Use Zag.js for UI components and design system.
 
 ## Documentation Tool
 
-PLEASE USE THE CORATES MCP tools to explore local documentation sources. Use this MCP for all Better-Auth, Drizzle, Icons, and Zag documentation.
+PLEASE USE THE CORATES MCP tools to explore local documentation sources. Use this MCP for all Better-Auth, Drizzle, Icons, and Zag documentation. For comprehensive development guides, see the docs site (`packages/docs/`) - run `pnpm docs` to view.
 
 ## Zag.js
 
@@ -48,12 +48,13 @@ Zag component exist in `packages/web/src/components/zag/*` and should be reused,
 
 ## Additional References
 
-- The style-guide.md file contains additional style and formatting guidelines.
+- The [Style Guide](/guides/style-guide) in the docs site contains additional style and formatting guidelines.
 - See vite.config.js or jsconfig.json for path aliases and build configurations.
-- See TESTING.md for testing guidelines and best practices, do NOT add tests unless asked.
+- See the [Testing Guide](/guides/testing) in the docs site for testing guidelines and best practices, do NOT add tests unless asked.
 - Cloudflare Pages is not used in this project; only Cloudflare Workers is used for backend services and frontend deployments.
 - This project is split into multiple packages under the `packages/` directory. Each package may have its own dependencies and configurations. The landing/marketing site, the main app, and the backend services.
 - Use the Corates MCP for documentation.
+- For comprehensive documentation, see the docs site (`packages/docs/`) - run `pnpm docs` to view guides.
 
 ## Database Migrations
 

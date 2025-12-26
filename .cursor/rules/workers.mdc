@@ -6,6 +6,9 @@ globs: packages/workers/src/**
 
 # Workers Package Rules
 
+> **For comprehensive database patterns**, see the [Database Guide](/guides/database) in the docs site.
+> This file provides quick reference patterns for AI agents.
+
 ## Drizzle Transactions
 
 **ALWAYS use `db.batch()` for multiple related database operations** to ensure atomicity:
@@ -50,3 +53,8 @@ projectRoutes.post('/', async c => {
 
 - See `src/routes/account-merge.js` for batch usage
 - See `src/routes/projects.js` for validation patterns
+
+## Related Documentation
+
+- [Database Guide](/guides/database) - Comprehensive Drizzle ORM patterns, migrations, and schema management
+- [API Development Guide](/guides/api-development) - API route patterns and validation

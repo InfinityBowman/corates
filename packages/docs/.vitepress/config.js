@@ -38,8 +38,34 @@ export default withMermaid({
         {
           text: 'Guides',
           items: [
-            { text: 'Error Handling', link: '/guides/error-handling' },
-            { text: 'Style Guide', link: '/guides/style-guide' },
+            { text: 'Overview', link: '/guides/' },
+            {
+              text: 'Core Development',
+              items: [
+                { text: 'State Management', link: '/guides/state-management' },
+                { text: 'Primitives', link: '/guides/primitives' },
+                { text: 'Components', link: '/guides/components' },
+                { text: 'API Development', link: '/guides/api-development' },
+              ],
+            },
+            {
+              text: 'System-Specific',
+              items: [
+                { text: 'Authentication', link: '/guides/authentication' },
+                { text: 'Yjs Sync', link: '/guides/yjs-sync' },
+                { text: 'Database', link: '/guides/database' },
+              ],
+            },
+            {
+              text: 'Supporting',
+              items: [
+                { text: 'Configuration', link: '/guides/configuration' },
+                { text: 'Testing', link: '/guides/testing' },
+                { text: 'Development Workflow', link: '/guides/development-workflow' },
+                { text: 'Error Handling', link: '/guides/error-handling' },
+                { text: 'Style Guide', link: '/guides/style-guide' },
+              ],
+            },
           ],
         },
       ],
@@ -67,8 +93,33 @@ export default withMermaid({
           text: 'Guides',
           items: [
             { text: 'Overview', link: '/guides/' },
-            { text: 'Error Handling', link: '/guides/error-handling' },
-            { text: 'Style Guide', link: '/guides/style-guide' },
+            {
+              text: 'Core Development',
+              items: [
+                { text: 'State Management', link: '/guides/state-management' },
+                { text: 'Primitives', link: '/guides/primitives' },
+                { text: 'Components', link: '/guides/components' },
+                { text: 'API Development', link: '/guides/api-development' },
+              ],
+            },
+            {
+              text: 'System-Specific',
+              items: [
+                { text: 'Authentication', link: '/guides/authentication' },
+                { text: 'Yjs Sync', link: '/guides/yjs-sync' },
+                { text: 'Database', link: '/guides/database' },
+              ],
+            },
+            {
+              text: 'Supporting',
+              items: [
+                { text: 'Configuration', link: '/guides/configuration' },
+                { text: 'Testing', link: '/guides/testing' },
+                { text: 'Development Workflow', link: '/guides/development-workflow' },
+                { text: 'Error Handling', link: '/guides/error-handling' },
+                { text: 'Style Guide', link: '/guides/style-guide' },
+              ],
+            },
           ],
         },
       ],
