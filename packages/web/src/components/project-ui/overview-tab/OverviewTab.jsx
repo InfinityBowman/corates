@@ -15,6 +15,10 @@ import { Avatar, useConfirmDialog, showToast, Progress, Collapsible } from '@cor
 import { API_BASE } from '@config/api.js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 import { shouldShowInTab } from '@/lib/checklist-domain.js';
+import {
+  calculateInterRaterReliability,
+  getKappaInterpretation,
+} from '@/lib/inter-rater-reliability.js';
 import CircularProgress from './CircularProgress.jsx';
 
 /**
@@ -149,6 +153,11 @@ export default function OverviewTab() {
     return projectActionsStore.checklist.getData(studyId, checklistId);
   };
 
+  // Calculate inter-rater reliability metrics
+  const interRaterMetrics = createMemo(() => {
+    return calculateInterRaterReliability(studies(), getChecklistData);
+  });
+
   // Calculate unassigned studies for Reviewer Assignment visibility
   const unassignedStudies = createMemo(() => studies().filter(s => !s.reviewer1 && !s.reviewer2));
 
@@ -206,6 +215,37 @@ export default function OverviewTab() {
             </div>
           </div>
         </div>
+
+        {/* Inter-rater Reliability Section */}
+        <Show when={interRaterMetrics().studyCount > 0}>
+          <div class='mt-6 rounded-lg border border-purple-200 bg-purple-50 p-5'>
+            <h3 class='mb-4 text-base font-semibold text-gray-900'>Inter-rater Reliability</h3>
+            <div class='grid grid-cols-1 gap-4 md:grid-cols-3'>
+              <div class='text-center'>
+                <p class='text-2xl font-bold text-gray-900'>{interRaterMetrics().studyCount}</p>
+                <p class='mt-1 text-sm text-gray-600'>Studies Included</p>
+              </div>
+              <div class='text-center'>
+                <p class='text-2xl font-bold text-gray-900'>
+                  {interRaterMetrics().percentAgreement != null ?
+                    `${interRaterMetrics().percentAgreement.toFixed(1)}%`
+                  : 'N/A'}
+                </p>
+                <p class='mt-1 text-sm text-gray-600'>Percent Agreement</p>
+              </div>
+              <div class='text-center'>
+                <p class='text-2xl font-bold text-gray-900'>
+                  {interRaterMetrics().cohensKappa != null ?
+                    interRaterMetrics().cohensKappa.toFixed(3)
+                  : 'N/A'}
+                </p>
+                <p class='mt-1 text-xs text-gray-600'>
+                  Cohen's Kappa ({getKappaInterpretation(interRaterMetrics().cohensKappa)})
+                </p>
+              </div>
+            </div>
+          </div>
+        </Show>
       </div>
 
       {/* Section 2: Team & Collaboration */}
