@@ -4,6 +4,10 @@
       "type": "stdio",
       "command": "node",
       "args": ["${workspaceFolder}/packages/mcp/dist/server.js"]
+    },
+    "ark-ui": {
+      "command": "npx",
+      "args": ["-y", "@ark-ui/mcp"]
     }
     // "stripe": {
     //   "type": "http",
