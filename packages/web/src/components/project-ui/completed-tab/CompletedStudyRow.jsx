@@ -58,7 +58,9 @@ export default function CompletedStudyRow(props) {
 
   // Check if we have previous reviewers to show
   const hasPreviousReviewers = () => {
-    return !!props.reconciliationProgress?.checklist1Id && !!props.reconciliationProgress?.checklist2Id;
+    return (
+      !!props.reconciliationProgress?.checklist1Id && !!props.reconciliationProgress?.checklist2Id
+    );
   };
 
   return (
