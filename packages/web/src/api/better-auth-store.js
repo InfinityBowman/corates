@@ -195,10 +195,34 @@ function createBetterAuthStore() {
 
   // Listen for tab visibility changes to refresh session
   if (typeof document !== 'undefined') {
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible' && !authLoading() && isOnline()) {
         // Refresh session when tab becomes visible (user might have verified email in another tab)
-        session().refetch?.();
+        try {
+          await session().refetch?.();
+
+          // Wait a bit for session to update
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+          // Validate and refresh project list if user is authenticated
+          const currentUser = user();
+          if (currentUser?.id) {
+            // Validate project list cache against current user
+            projectStore.validateProjectListCache(currentUser.id);
+
+            // Refresh project list to ensure it's current
+            try {
+              await projectStore.refreshProjectList(currentUser.id);
+            } catch (err) {
+              console.warn('[auth] Failed to refresh project list after visibility change:', err);
+            }
+          } else {
+            // User is not authenticated, clear project list
+            projectStore.clearProjectList();
+          }
+        } catch (err) {
+          console.warn('[auth] Failed to refresh session on visibility change:', err);
+        }
       }
     };
 
@@ -652,6 +676,20 @@ function createBetterAuthStore() {
     }
   }
 
+  /**
+   * Force refresh the auth session
+   * Used when page is restored from bfcache to ensure session is current
+   * Always refreshes, even if session is already loaded
+   */
+  async function forceRefreshSession() {
+    try {
+      await session().refetch?.();
+    } catch (err) {
+      console.warn('Force session refresh failed:', err);
+      throw err;
+    }
+  }
+
   async function deleteAccount() {
     try {
       setAuthError(null);
@@ -718,6 +756,7 @@ function createBetterAuthStore() {
     // Utility/compatibility methods
     getCurrentUser,
     refreshAccessToken,
+    forceRefreshSession,
     sendEmailVerification,
     getPendingEmail,
     getAccessToken,
