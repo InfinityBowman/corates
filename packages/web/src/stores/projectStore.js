@@ -506,9 +506,7 @@ function createProjectStore() {
         cachedUserId: null,
       });
       // Clear localStorage cache
-      localStorage.removeItem(PROJECT_LIST_CACHE_KEY);
-      localStorage.removeItem(PROJECT_LIST_CACHE_TIMESTAMP_KEY);
-      localStorage.removeItem(PROJECT_LIST_CACHE_USER_ID_KEY);
+      saveCachedProjectList(null, null);
       return;
     }
 
@@ -525,9 +523,7 @@ function createProjectStore() {
         cachedUserId: null,
       });
       // Clear localStorage cache
-      localStorage.removeItem(PROJECT_LIST_CACHE_KEY);
-      localStorage.removeItem(PROJECT_LIST_CACHE_TIMESTAMP_KEY);
-      localStorage.removeItem(PROJECT_LIST_CACHE_USER_ID_KEY);
+      saveCachedProjectList(null, null);
     }
   }
 
