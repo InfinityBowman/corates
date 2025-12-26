@@ -7,6 +7,7 @@ import { CgArrowsExchange } from 'solid-icons/cg';
 import ChartSection from './ChartSection.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
 import ReviewerAssignment from './ReviewerAssignment.jsx';
+import AMSTAR2ResultsTable from './AMSTAR2ResultsTable.jsx';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
@@ -397,7 +398,7 @@ export default function OverviewTab() {
             }
           >
             <div class='border-t border-gray-200 px-6 py-6'>
-              <p class='text-gray-500'>No tables to display.</p>
+              <AMSTAR2ResultsTable studies={studies} getChecklistData={getChecklistData} />
             </div>
           </Collapsible>
         </div>
