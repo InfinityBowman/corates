@@ -76,7 +76,7 @@ export function SignallingQuestion(props) {
             value={props.answer?.comment || ''}
             onInput={handleCommentChange}
             disabled={props.disabled}
-            class='w-full rounded border border-gray-200 px-2 py-1 text-xs focus:ring-1 focus:ring-blue-400 focus:outline-none'
+            class='w-full rounded border border-gray-200 px-2 py-1 text-xs focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
           />
         </div>
       )}

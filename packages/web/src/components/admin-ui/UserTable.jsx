@@ -232,7 +232,10 @@ export default function UserTable(props) {
       <Show when={error()}>
         <div class='mx-6 mt-4 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
           <span>{error()}</span>
-          <button onClick={() => setError(null)} class='text-red-500 hover:text-red-700'>
+          <button
+            onClick={() => setError(null)}
+            class='text-red-600 hover:text-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+          >
             <FiXCircle class='h-4 w-4' />
           </button>
         </div>
@@ -487,7 +490,7 @@ export default function UserTable(props) {
             <button
               onClick={handleBan}
               disabled={loading()}
-              class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
+              class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
             >
               {loading() ? 'Banning...' : 'Ban User'}
             </button>
@@ -602,7 +605,7 @@ export default function UserTable(props) {
             <button
               onClick={handleConfirm}
               disabled={loading()}
-              class={`rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 ${
+              class={`rounded-lg px-4 py-2 text-sm font-medium text-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50 ${
                 confirmDialog()?.type === 'delete' ?
                   'bg-red-600 hover:bg-red-700'
                 : 'bg-blue-600 hover:bg-blue-700'

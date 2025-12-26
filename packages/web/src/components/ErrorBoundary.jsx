@@ -149,7 +149,7 @@ export function SectionErrorBoundary(props) {
           {reset && (
             <button
               onClick={reset}
-              class='rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700'
+              class='rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
             >
               Try Again
             </button>

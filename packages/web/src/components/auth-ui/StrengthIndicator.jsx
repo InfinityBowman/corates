@@ -54,7 +54,7 @@ export default function StrengthIndicator(props) {
                     class={`ml-1 flex h-3.5 w-3.5 items-center justify-center rounded-full ${
                       met() ?
                         'border-[1.5px] border-green-500 bg-white text-green-500'
-                      : 'border-[1.5px] border-red-500 text-red-500'
+                      : 'border-[1.5px] border-red-600 text-red-600'
                     }`}
                     aria-hidden='true'
                   >
@@ -62,7 +62,7 @@ export default function StrengthIndicator(props) {
                       <FiCheck class='h-3 w-3' />
                     : <FiX class='h-3 w-3' />}
                   </span>
-                  <span class={met() ? 'text-green-500' : 'text-red-500'}>{req.label}</span>
+                  <span class={met() ? 'text-green-500' : 'text-red-600'}>{req.label}</span>
                 </li>
               );
             }}

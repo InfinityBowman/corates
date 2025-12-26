@@ -143,11 +143,13 @@ export default function PricingTable(props) {
                 {/* CTA Button */}
                 <button
                   type='button'
-                  class={`w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+                  class={`w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none ${
                     plan.tier === currentTier() ? 'cursor-not-allowed bg-gray-100 text-gray-500'
-                    : plan.tier === 'pro' ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : plan.tier === 'enterprise' ? 'bg-gray-900 text-white hover:bg-gray-800'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : plan.tier === 'pro' ?
+                      'bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500'
+                    : plan.tier === 'enterprise' ?
+                      'bg-gray-900 text-white hover:bg-gray-800 focus:ring-2 focus:ring-gray-500'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-2 focus:ring-gray-500'
                   }`}
                   onClick={() => handleUpgrade(plan.tier)}
                   disabled={isButtonDisabled(plan.tier)}

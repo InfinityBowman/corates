@@ -43,7 +43,7 @@ export default function DoiLookupSection() {
           type='button'
           onClick={() => studies.handleLookup()}
           disabled={studies.lookingUp() || !studies.identifierInput().trim()}
-          class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400'
+          class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
         >
           <Show
             when={!studies.lookingUp()}
@@ -252,7 +252,7 @@ export default function DoiLookupSection() {
                         e.stopPropagation();
                         studies.removeLookupRef(ref._id);
                       }}
-                      class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500'
+                      class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                     >
                       <BiRegularTrash class='h-4 w-4' />
                     </button>
@@ -304,7 +304,7 @@ export default function DoiLookupSection() {
                           e.stopPropagation();
                           studies.removeLookupRef(ref._id);
                         }}
-                        class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500'
+                        class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                       >
                         <BiRegularTrash class='h-4 w-4' />
                       </button>

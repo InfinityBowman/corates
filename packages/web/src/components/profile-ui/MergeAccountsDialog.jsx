@@ -426,7 +426,7 @@ export default function MergeAccountsDialog(props) {
             <button
               onClick={handleCompleteMerge}
               disabled={loading()}
-              class='inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50'
+              class='inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
             >
               {loading() ?
                 <FiLoader class='h-4 w-4 animate-spin' />

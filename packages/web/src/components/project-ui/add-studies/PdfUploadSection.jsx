@@ -46,14 +46,14 @@ export default function PdfUploadSection() {
                   class='h-5 w-5 shrink-0'
                   classList={{
                     'text-gray-500': !pdf.error,
-                    'text-red-500': pdf.error,
+                    'text-red-600': pdf.error,
                   }}
                 />
                 <div class='min-w-0 flex-1'>
                   {/* Error state */}
                   <Show when={pdf.error}>
                     <div class='flex items-center gap-2'>
-                      <VsWarning class='h-4 w-4 shrink-0 text-red-500' />
+                      <VsWarning class='h-4 w-4 shrink-0 text-red-600' />
                       <span class='text-sm font-medium text-red-600'>{pdf.error}</span>
                       <button
                         type='button'
@@ -64,7 +64,7 @@ export default function PdfUploadSection() {
                         Retry
                       </button>
                     </div>
-                    <p class='mt-1 truncate text-xs text-red-500'>{pdf.file.name}</p>
+                    <p class='mt-1 truncate text-xs text-red-600'>{pdf.file.name}</p>
                   </Show>
 
                   {/* Extracting state */}
@@ -130,7 +130,7 @@ export default function PdfUploadSection() {
                 <button
                   type='button'
                   onClick={() => studies.removePdf(pdf.id)}
-                  class='rounded p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500'
+                  class='rounded p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 >
                   <BiRegularTrash class='h-4 w-4' />
                 </button>

@@ -56,7 +56,7 @@ export default function ProjectCard(props) {
       <div class='flex gap-2'>
         <button
           onClick={() => props.onOpen?.(project().id)}
-          class='flex-1 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700'
+          class='flex-1 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
         >
           Open Project
         </button>
@@ -66,7 +66,7 @@ export default function ProjectCard(props) {
               e.stopPropagation();
               props.onDelete?.(project().id);
             }}
-            class='rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600'
+            class='rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
             title='Delete Project'
           >
             <FiTrash2 class='h-5 w-5' />

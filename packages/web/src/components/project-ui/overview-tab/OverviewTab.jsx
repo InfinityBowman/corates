@@ -260,7 +260,7 @@ export default function OverviewTab() {
             <Show when={isOwner()}>
               <button
                 onClick={() => setShowAddMemberModal(true)}
-                class='inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
+                class='inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
               >
                 <FiPlus class='h-4 w-4' />
                 Add Member
@@ -314,7 +314,7 @@ export default function OverviewTab() {
                                   member.displayName || member.name || member.email,
                                 )
                               }
-                              class='rounded p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600'
+                              class='rounded p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                               title={isSelf ? 'Leave project' : 'Remove member'}
                             >
                               <FiTrash2 class='h-4 w-4' />

@@ -74,7 +74,7 @@ export default function SubscriptionCard(props) {
         <Show when={status() === 'past_due'}>
           <div class='mt-4 rounded-lg border border-red-200 bg-red-50 p-3'>
             <div class='flex items-center'>
-              <FiAlertCircle class='mr-2 h-5 w-5 text-red-500' />
+              <FiAlertCircle class='mr-2 h-5 w-5 text-red-600' />
               <div>
                 <p class='text-sm font-medium text-red-800'>Payment Failed</p>
                 <p class='text-sm text-red-600'>

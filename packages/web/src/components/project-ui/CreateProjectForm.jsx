@@ -217,13 +217,13 @@ export default function CreateProjectForm(props) {
         <button
           onClick={handleSubmit}
           disabled={isCreating() || !projectName().trim()}
-          class='inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400'
+          class='inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
         >
           {isCreating() ? 'Creating...' : 'Create Project'}
         </button>
         <button
           onClick={handleCancel}
-          class='rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 transition-colors hover:border-blue-300 hover:text-blue-600'
+          class='rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 transition-colors hover:border-blue-300 hover:text-blue-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
         >
           Cancel
         </button>

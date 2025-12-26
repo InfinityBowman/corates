@@ -102,7 +102,7 @@ export function SectionB(props) {
                   value={props.sectionBState?.[key]?.comment || ''}
                   onInput={e => handleCommentChange(key, e.target.value)}
                   disabled={props.disabled}
-                  class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:ring-2 focus:ring-blue-400 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm'
+                  class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm'
                 />
               </div>
             </div>

@@ -214,7 +214,7 @@ export default function SignIn() {
                     spellCheck='false'
                     value={email()}
                     onInput={e => setEmail(e.target.value)}
-                    class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:ring-2 focus:ring-blue-400 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
+                    class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
                     required
                     id='email-input'
                     placeholder='you@example.com'

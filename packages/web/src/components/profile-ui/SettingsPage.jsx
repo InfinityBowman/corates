@@ -227,7 +227,7 @@ export default function SettingsPage() {
                   }
                 }}
                 disabled={addPasswordLoading()}
-                class='flex items-center space-x-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50'
+                class='flex items-center space-x-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
               >
                 <FiMail class='h-4 w-4' />
                 <span>{addPasswordLoading() ? 'Sending...' : 'Send Setup Email'}</span>
@@ -325,7 +325,7 @@ export default function SettingsPage() {
                 <button
                   type='submit'
                   disabled={changingPassword()}
-                  class='rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50'
+                  class='rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
                 >
                   {changingPassword() ? 'Changing...' : 'Update Password'}
                 </button>

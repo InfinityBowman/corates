@@ -339,7 +339,7 @@ export default function ProfilePage() {
                         type='text'
                         value={editFirstName()}
                         onInput={e => setEditFirstName(e.target.value)}
-                        class='block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-400 focus:outline-none'
+                        class='block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
                         placeholder='First name'
                       />
                     </div>
@@ -351,7 +351,7 @@ export default function ProfilePage() {
                         type='text'
                         value={editLastName()}
                         onInput={e => setEditLastName(e.target.value)}
-                        class='block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-400 focus:outline-none'
+                        class='block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
                         placeholder='Last name'
                       />
                     </div>
@@ -373,7 +373,7 @@ export default function ProfilePage() {
                   <button
                     onClick={saveName}
                     disabled={saving()}
-                    class='rounded-lg bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50'
+                    class='rounded-lg bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
                   >
                     Save
                   </button>
@@ -425,7 +425,7 @@ export default function ProfilePage() {
                   <button
                     onClick={saveRole}
                     disabled={saving()}
-                    class='rounded-lg bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50'
+                    class='rounded-lg bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
                   >
                     Save
                   </button>
@@ -484,7 +484,7 @@ export default function ProfilePage() {
                     </div>
                     <button
                       onClick={() => setShowDeleteConfirm(true)}
-                      class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700'
+                      class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                     >
                       Delete Account
                     </button>
@@ -512,7 +512,7 @@ export default function ProfilePage() {
                       type='text'
                       value={deleteConfirmText()}
                       onInput={e => setDeleteConfirmText(e.target.value)}
-                      class='block w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-red-400 focus:outline-none'
+                      class='block w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
                       placeholder='DELETE'
                     />
                   </div>
@@ -521,7 +521,7 @@ export default function ProfilePage() {
                     <button
                       onClick={handleDeleteAccount}
                       disabled={deletingAccount() || deleteConfirmText() !== 'DELETE'}
-                      class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50'
+                      class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
                     >
                       {deletingAccount() ? 'Deleting...' : 'Permanently Delete Account'}
                     </button>

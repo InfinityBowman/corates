@@ -280,7 +280,7 @@ export default function AddMemberModal(props) {
             <button
               onClick={handleAddMember}
               disabled={!selectedUser() || adding()}
-              class='rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400'
+              class='rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
             >
               {adding() ? 'Adding...' : 'Add Member'}
             </button>

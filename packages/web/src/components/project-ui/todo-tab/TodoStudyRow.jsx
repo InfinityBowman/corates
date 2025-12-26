@@ -126,7 +126,7 @@ export default function TodoStudyRow(props) {
                   e.stopPropagation();
                   props.onOpenChecklist?.(checklist().id);
                 }}
-                class='shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
+                class='shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
               >
                 Open
               </button>
@@ -139,7 +139,7 @@ export default function TodoStudyRow(props) {
                   e.stopPropagation();
                   props.onToggleChecklistForm?.();
                 }}
-                class='shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
+                class='shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
               >
                 Select Checklist
               </button>

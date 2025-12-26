@@ -44,7 +44,7 @@ export default function ContactPrompt(props) {
             href={contactUrl()}
             target='_blank'
             rel='noopener noreferrer'
-            class='mt-3 inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
+            class='mt-3 inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
           >
             <FiMail class='mr-1 h-4 w-4' />
             Request Early Access

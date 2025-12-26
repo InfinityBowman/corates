@@ -46,7 +46,7 @@ export default function RoleSelector(props) {
           <button
             type='button'
             onClick={() => props.onSelect(roleOption.id)}
-            class={`rounded-xl border-2 p-3 text-left transition-all hover:border-blue-400 hover:bg-blue-50 focus:ring-2 focus:ring-blue-400 focus:outline-none sm:p-4 ${
+            class={`rounded-xl border-2 p-3 text-left transition-all hover:border-blue-400 hover:bg-blue-50 focus:ring-2 focus:ring-blue-500 focus:outline-none sm:p-4 ${
               props.selectedRole === roleOption.id ?
                 'border-blue-600 bg-blue-50'
               : 'border-gray-200'
