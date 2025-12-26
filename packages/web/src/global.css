@@ -219,3 +219,31 @@
 .pdf-text-layer ::selection {
   background: rgba(0, 100, 255, 0.3) !important;
 }
+
+/* Native text selection layer - invisible text elements for browser selection */
+.pdf-text-layer-native {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  user-select: text;
+  cursor: text;
+  pointer-events: auto;
+  z-index: 3;
+}
+
+.pdf-text-layer-native > span {
+  position: absolute;
+  color: transparent;
+  white-space: pre;
+  user-select: text;
+  pointer-events: auto;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+}
+
+.pdf-text-layer-native ::selection {
+  background: rgba(0, 100, 255, 0.3) !important;
+  color: transparent;
+}

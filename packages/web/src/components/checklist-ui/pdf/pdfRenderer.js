@@ -4,6 +4,7 @@
  */
 
 import { createSignal, createEffect } from 'solid-js';
+import { createTextSelectionLayer } from './pdfTextSelection.js';
 
 /**
  * Creates PDF rendering module
@@ -20,6 +21,8 @@ export function createPdfRenderer(document, scrollHandler) {
   let renderingPages = new Set();
   let pendingRenders = new Map();
   let renderedPages = new Set();
+  let renderedTextLayers = new Set();
+  let textSelectionLayers = new Map();
   let containerRef = null;
   let resizeObserver = null;
   let resizeRafId = null;
@@ -61,9 +64,16 @@ export function createPdfRenderer(document, scrollHandler) {
       const visiblePages =
         scrollHandler.getVisiblePages ? scrollHandler.getVisiblePages() : new Set();
       if (visiblePages.size > 0) {
-        visiblePages.forEach(pageNum => renderedPages.delete(pageNum));
+        visiblePages.forEach(pageNum => {
+          renderedPages.delete(pageNum);
+          renderedTextLayers.delete(pageNum);
+        });
       } else {
         renderedPages.clear();
+        renderedTextLayers.clear();
+        // Clean up all text selection layers
+        textSelectionLayers.forEach(layer => layer.cleanup());
+        textSelectionLayers.clear();
       }
       renderAllPages();
     }
@@ -149,6 +159,14 @@ export function createPdfRenderer(document, scrollHandler) {
     renderingPages.delete(pageNum);
     pendingRenders.delete(pageNum);
     renderedPages.delete(pageNum);
+    renderedTextLayers.delete(pageNum);
+
+    // Clean up text selection layer
+    if (textSelectionLayers.has(pageNum)) {
+      const layer = textSelectionLayers.get(pageNum);
+      layer.cleanup();
+      textSelectionLayers.delete(pageNum);
+    }
 
     // Schedule canvas clearing after delay
     if (canvasClearTimeouts.has(pageNum)) {
@@ -318,42 +336,27 @@ export function createPdfRenderer(document, scrollHandler) {
       // If we preserved old content during resize, it's now been overwritten by the new render
       // No need to do anything - the new render is complete
 
-      // Render text layer for text selection - only for visible pages
-      // Defer to requestIdleCallback for low-priority work
-      const isVisible = scrollHandler.isPageVisible ? scrollHandler.isPageVisible(pageNum) : true;
-      if (isVisible) {
-        const textLayers = pageTextLayers();
-        const textLayerDiv = textLayers[pageNum - 1];
-        if (textLayerDiv && pdfjsLib.TextLayer) {
-          // Use requestIdleCallback to defer text layer rendering
-          const renderTextLayer = async () => {
-            try {
-              // Clear existing text layer content
-              textLayerDiv.innerHTML = '';
-              textLayerDiv.style.width = `${viewport.width}px`;
-              textLayerDiv.style.height = `${viewport.height}px`;
+      // Create custom text selection layer - works reliably at any zoom level
+      const textLayers = pageTextLayers();
+      const textLayerDiv = textLayers[pageNum - 1];
+      if (textLayerDiv) {
+        try {
+          // Clean up existing selection layer if it exists (e.g., on zoom/viewport change)
+          // This ensures selections are cleared when viewport changes rather than becoming misaligned
+          if (textSelectionLayers.has(pageNum)) {
+            const oldLayer = textSelectionLayers.get(pageNum);
+            oldLayer.cleanup();
+            textSelectionLayers.delete(pageNum);
+          }
 
-              const textContent = await page.getTextContent();
-              const textLayer = new pdfjsLib.TextLayer({
-                textContentSource: textContent,
-                container: textLayerDiv,
-                viewport: viewport,
-              });
-              await textLayer.render();
-            } catch (err) {
-              // Ignore errors if page is no longer visible
-              if (err.name !== 'RenderingCancelledException') {
-                console.error('Error rendering text layer:', pageNum, err);
-              }
-            }
-          };
-
-          // Defer text layer rendering to idle time
-          if (window.requestIdleCallback) {
-            requestIdleCallback(renderTextLayer, { timeout: 2000 });
-          } else {
-            // Fallback for browsers without requestIdleCallback
-            setTimeout(renderTextLayer, 0);
+          // Create new text selection layer with current viewport
+          const selectionLayer = createTextSelectionLayer(textLayerDiv, page, viewport);
+          textSelectionLayers.set(pageNum, selectionLayer);
+          renderedTextLayers.add(pageNum);
+        } catch (err) {
+          // Ignore errors if page is no longer visible or rendering was cancelled
+          if (err.name !== 'RenderingCancelledException') {
+            console.error('Error creating text selection layer:', pageNum, err);
           }
         }
       }
@@ -394,6 +397,7 @@ export function createPdfRenderer(document, scrollHandler) {
 
   function clearRenderedTracking() {
     renderedPages.clear();
+    renderedTextLayers.clear();
   }
 
   function cancelAllRenders() {
@@ -418,6 +422,17 @@ export function createPdfRenderer(document, scrollHandler) {
         canvas.height = 0;
       }
     });
+    // Clear text layers when clearing canvases
+    const textLayers = pageTextLayers();
+    textLayers.forEach(textLayerDiv => {
+      if (textLayerDiv) {
+        textLayerDiv.innerHTML = '';
+      }
+    });
+    // Clean up all text selection layers
+    textSelectionLayers.forEach(layer => layer.cleanup());
+    textSelectionLayers.clear();
+    renderedTextLayers.clear();
   }
 
   function initializeCanvasArrays(numPages) {
@@ -440,6 +455,10 @@ export function createPdfRenderer(document, scrollHandler) {
     if (resizeObserver) {
       resizeObserver.disconnect();
     }
+
+    // Clean up all text selection layers
+    textSelectionLayers.forEach(layer => layer.cleanup());
+    textSelectionLayers.clear();
 
     clearAllCanvases();
   }
