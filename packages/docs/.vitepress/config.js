@@ -1,6 +1,6 @@
-import { defineConfig } from 'vitepress';
+import { withMermaid } from 'vitepress-plugin-mermaid';
 
-export default defineConfig({
+export default withMermaid({
   title: 'CoRATES Documentation',
   description: 'Collaborative Research Appraisal Tool for Evidence Synthesis - Documentation',
   base: '/',
@@ -89,6 +89,18 @@ export default defineConfig({
     theme: {
       light: 'github-light',
       dark: 'github-dark',
+    },
+  },
+
+  vite: {
+    optimizeDeps: {
+      include: ['mermaid', 'dayjs'],
+    },
+    ssr: {
+      noExternal: ['mermaid'],
+    },
+    define: {
+      'import.meta.vitest': 'undefined',
     },
   },
 });

@@ -1,8 +1,6 @@
 import js from '@eslint/js';
 import solid from 'eslint-plugin-solid/configs/recommended';
 import * as tsParser from '@typescript-eslint/parser';
-// import eslintPluginUnicorn from 'eslint-plugin-unicorn';
-// import sonarjs from 'eslint-plugin-sonarjs';
 
 export default [
   js.configs.recommended,
@@ -176,6 +174,8 @@ export default [
       '**/.output/**',
       '**/coverage/**',
       'packages/learn/.astro/**',
+      '**/.vitepress/cache/**',
+      '**/.vitepress/dist/**',
     ],
   },
 ];
