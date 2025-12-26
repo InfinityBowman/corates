@@ -120,10 +120,22 @@ export default function StorageManagement() {
 
   const toggleSelectAll = () => {
     const docs = documentsData()?.documents || [];
-    if (selectedKeys().size === docs.length) {
-      setSelectedKeys(new Set());
+    const currentKeys = new Set(docs.map(d => d.key));
+    const selected = selectedKeys();
+
+    // Check if all current page documents are selected
+    const allCurrentPageSelected = docs.length > 0 && docs.every(doc => selected.has(doc.key));
+
+    if (allCurrentPageSelected) {
+      // Deselect only current page documents, keep other selections
+      const newSet = new Set(selected);
+      currentKeys.forEach(key => newSet.delete(key));
+      setSelectedKeys(newSet);
     } else {
-      setSelectedKeys(new Set(docs.map(d => d.key)));
+      // Select all current page documents, keep other selections
+      const newSet = new Set(selected);
+      currentKeys.forEach(key => newSet.add(key));
+      setSelectedKeys(newSet);
     }
   };
 
@@ -273,10 +285,11 @@ export default function StorageManagement() {
                         title='Select all'
                       >
                         <Show
-                          when={
-                            selectedKeys().size === (documentsData()?.documents?.length || 0) &&
-                            (documentsData()?.documents?.length || 0) > 0
-                          }
+                          when={() => {
+                            const docs = documentsData()?.documents || [];
+                            const selected = selectedKeys();
+                            return docs.length > 0 && docs.every(doc => selected.has(doc.key));
+                          }}
                           fallback={<FiSquare class='h-4 w-4' />}
                         >
                           <FiCheckSquare class='h-4 w-4 text-blue-600' />

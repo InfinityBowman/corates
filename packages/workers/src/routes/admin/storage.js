@@ -73,7 +73,8 @@ storageRoutes.get(
 
         objectsProcessed += listed.objects.length;
 
-        // Parse metadata for each object and apply filters
+        // Process the entire batch to avoid skipping objects when we hit the limit
+        // We'll collect all matching objects in this batch, then slice to limit later
         for (const obj of listed.objects) {
           const parsed = parseKey(obj.key);
           if (!parsed) {
@@ -94,11 +95,18 @@ storageRoutes.get(
             uploaded: obj.uploaded,
             etag: obj.etag,
           });
+        }
 
-          // Stop if we have enough results
-          if (matchingObjects.length >= limit) {
-            break;
+        // After processing the entire batch, check if we have enough results
+        if (matchingObjects.length >= limit) {
+          // We've collected enough matches. Set cursor for next batch if available
+          if (listed.truncated) {
+            currentCursor = listed.cursor;
+            hasMore = true;
+          } else {
+            hasMore = false;
           }
+          break;
         }
 
         // Check if there are more objects available from R2
@@ -122,13 +130,19 @@ storageRoutes.get(
 
       // Check which projects exist in the database to identify orphaned PDFs
       const uniqueProjectIds = [...new Set(paginatedObjects.map(doc => doc.projectId))];
-      const db = createDb(c.env.DB);
-      const existingProjects = await db
-        .select({ id: projects.id })
-        .from(projects)
-        .where(inArray(projects.id, uniqueProjectIds));
+      let existingProjectIds = new Set();
 
-      const existingProjectIds = new Set(existingProjects.map(p => p.id));
+      // Only query database if there are project IDs to check
+      // inArray with empty array generates invalid SQL (WHERE id IN ())
+      if (uniqueProjectIds.length > 0) {
+        const db = createDb(c.env.DB);
+        const existingProjects = await db
+          .select({ id: projects.id })
+          .from(projects)
+          .where(inArray(projects.id, uniqueProjectIds));
+
+        existingProjectIds = new Set(existingProjects.map(p => p.id));
+      }
 
       // Mark documents as orphaned if their project doesn't exist
       const documentsWithOrphanStatus = paginatedObjects.map(doc => ({
