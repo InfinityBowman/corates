@@ -1,0 +1,214 @@
+---
+alwaysApply: false
+description: "Form state persistence across OAuth redirects and page navigation"
+globs: packages/web/src/lib/formStatePersistence.js, packages/web/src/components/project-ui/AddStudiesForm.jsx, packages/web/src/components/project-ui/CreateProjectForm.jsx
+---
+
+# Form State Persistence Patterns
+
+> This file provides quick reference patterns for AI agents working with form state persistence across OAuth redirects.
+
+## Overview
+
+Form state persistence saves form data to IndexedDB before OAuth redirects (Google Drive, ORCID) and restores it after the redirect completes.
+
+## When to Use
+
+### OAuth Redirects
+
+Save state before OAuth redirects:
+
+- Google Drive file picker (requires OAuth)
+- ORCID authentication
+- Any external authentication flow
+
+### Form Types
+
+Supported form types:
+
+- `'createProject'` - Project creation form
+- `'addStudies'` - Add studies form (requires projectId)
+
+## Saving State
+
+### Save Before OAuth
+
+Save state before initiating OAuth flow:
+
+```js
+import { saveFormState } from '@/lib/formStatePersistence.js';
+
+// Before OAuth redirect
+await saveFormState('addStudies', {
+  studiesState: studies.getSerializableState(),
+  activeTab: 'drive',
+  // ... other serializable state
+}, projectId);
+```
+
+### Serializable State Only
+
+Only save serializable data (no File objects, ArrayBuffers, functions):
+
+```js
+// CORRECT - Serializable state
+await saveFormState('addStudies', {
+  studiesState: {
+    pdfs: pdfs.map(p => ({
+      name: p.name,
+      size: p.size,
+      // Don't include File object or ArrayBuffer
+    })),
+    references: references.map(r => ({ text: r.text })),
+  }
+}, projectId);
+
+// WRONG - Non-serializable data
+await saveFormState('addStudies', {
+  pdfFiles: [file1, file2], // File objects can't be serialized
+  pdfData: arrayBuffer, // ArrayBuffer can't be serialized
+}, projectId);
+```
+
+## Restoring State
+
+### Restore After Redirect
+
+Restore state after OAuth redirect completes:
+
+```js
+import { getFormState, clearFormState, getRestoreParamsFromUrl, clearRestoreParamsFromUrl } from '@/lib/formStatePersistence.js';
+
+// Check for restore params in URL
+onMount(async () => {
+  const restoreParams = getRestoreParamsFromUrl();
+  if (restoreParams?.type === 'addStudies' && restoreParams.projectId === projectId) {
+    try {
+      const savedState = await getFormState('addStudies', projectId);
+      if (savedState) {
+        // Restore state
+        studies.restoreState(savedState.studiesState);
+        setActiveTab(savedState.activeTab || 'drive');
+
+        // Clear saved state
+        await clearFormState('addStudies', projectId);
+      }
+    } catch (err) {
+      console.error('Failed to restore form state:', err);
+    }
+    clearRestoreParamsFromUrl();
+  }
+});
+```
+
+### Restore Pattern
+
+1. Check URL for restore params
+2. Get saved state from IndexedDB
+3. Restore state to form
+4. Clear saved state
+5. Clear URL params
+
+## URL Parameters
+
+### Restore Params
+
+Restore params are added to URL after OAuth:
+
+```
+/project/123/add-studies?restore=addStudies&projectId=123
+```
+
+### Reading Params
+
+Use `getRestoreParamsFromUrl`:
+
+```js
+const params = getRestoreParamsFromUrl();
+// Returns: { type: 'addStudies', projectId: '123' } or null
+```
+
+### Clearing Params
+
+Clear params after restore:
+
+```js
+clearRestoreParamsFromUrl();
+// Removes ?restore=... from URL
+```
+
+## State Serialization
+
+### Handling Files
+
+Files must be converted to metadata before saving:
+
+```js
+// Before save - convert Files to metadata
+const pdfsMetadata = pdfs.map(pdf => ({
+  name: pdf.name,
+  size: pdf.size,
+  type: pdf.type,
+  // Don't include File object
+}));
+
+// After restore - Files are lost, user must re-upload
+// Or use pendingPdfs in projectStore for temporary storage
+```
+
+### Pending PDFs Pattern
+
+For PDFs during project creation, use `projectStore.setPendingProjectData`:
+
+```js
+// Before OAuth redirect
+projectStore.setPendingProjectData(projectId, {
+  pendingPdfs: pdfFiles, // Store File objects temporarily
+  pendingRefs: references,
+});
+
+// After redirect - retrieve from store
+const pendingData = projectStore.getPendingProjectData(projectId);
+if (pendingData?.pendingPdfs) {
+  // Process pending PDFs
+}
+```
+
+## Form State Lifecycle
+
+### Complete Flow
+
+1. User fills form
+2. User clicks "Import from Google Drive"
+3. Form state saved to IndexedDB
+4. OAuth redirect occurs
+5. User authenticates
+6. Redirect back to app
+7. Form state restored from IndexedDB
+8. Form continues from where user left off
+
+## Best Practices
+
+### DO
+
+- Save state before OAuth redirects
+- Only save serializable data
+- Restore state on mount after redirect
+- Clear saved state after restore
+- Use pendingPdfs for temporary File storage
+- Clear URL params after restore
+
+### DON'T
+
+- Don't save File objects or ArrayBuffers
+- Don't forget to restore state after redirect
+- Don't leave stale state in IndexedDB
+- Don't forget to clear URL params
+- Don't save functions or non-serializable objects
+
+## Examples from Codebase
+
+- `packages/web/src/lib/formStatePersistence.js` - State persistence utilities
+- `packages/web/src/components/project-ui/AddStudiesForm.jsx` - Add studies form with state persistence
+- `packages/web/src/components/project-ui/CreateProjectForm.jsx` - Project creation with state persistence
+- `packages/web/src/components/project-ui/all-studies-tab/AllStudiesTab.jsx` - State restoration example

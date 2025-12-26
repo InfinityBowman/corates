@@ -1,0 +1,268 @@
+---
+alwaysApply: false
+description: "PDF upload, caching, Google Drive integration, and PDF operations"
+globs: packages/web/src/api/pdf-api.js, packages/web/src/primitives/pdfCache.js, packages/web/src/api/google-drive.js, packages/web/src/components/**/pdf/**
+---
+
+# PDF Handling Patterns
+
+> This file provides quick reference patterns for AI agents working with PDF operations.
+
+## PDF Upload
+
+### Upload Pattern
+
+Always use `uploadPdf` from `@api/pdf-api.js`:
+
+```js
+import { uploadPdf } from '@api/pdf-api.js';
+
+// CORRECT - Use uploadPdf utility
+const result = await uploadPdf(file, {
+  projectId,
+  studyId,
+  tag: 'primary', // or 'supplementary'
+  name: fileName,
+});
+
+// Returns: { id, url, name, size, tag, uploadedAt }
+```
+
+### File Validation
+
+PDF files are validated on the backend. Frontend should check:
+
+```js
+// Basic validation (backend does full validation)
+if (!file.type.includes('pdf')) {
+  throw new Error('File must be a PDF');
+}
+if (file.size > MAX_PDF_SIZE) {
+  throw new Error('File too large');
+}
+```
+
+## PDF Caching
+
+### Cache Pattern
+
+Use `pdfCache` primitive for caching PDFs:
+
+```js
+import { cachePdf, getCachedPdf } from '@primitives/pdfCache.js';
+
+// Cache a PDF
+await cachePdf(projectId, studyId, pdfId, arrayBuffer);
+
+// Get cached PDF (returns ArrayBuffer or null)
+const cached = await getCachedPdf(projectId, studyId, pdfId);
+if (cached) {
+  // Use cached PDF
+} else {
+  // Download from server
+}
+```
+
+### Cache Strategy
+
+1. Check cache first
+2. If not cached, download from server
+3. Cache after download
+4. Cache persists in IndexedDB
+
+```js
+// CORRECT - Check cache first
+const cached = await getCachedPdf(projectId, studyId, pdfId);
+if (cached) {
+  setPdfData(cached);
+} else {
+  const pdfData = await downloadPdf(projectId, studyId, pdfId);
+  await cachePdf(projectId, studyId, pdfId, pdfData);
+  setPdfData(pdfData);
+}
+```
+
+## PDF Storage in Yjs
+
+### PDF Metadata
+
+PDF metadata is stored in study's Y.Map:
+
+```js
+// PDF metadata structure in Yjs
+study.pdfs = Y.Array([
+  {
+    id: 'uuid',
+    name: 'filename.pdf',
+    size: 1234567,
+    tag: 'primary', // or 'supplementary'
+    uploadedAt: timestamp,
+    uploadedBy: userId,
+  }
+]);
+```
+
+### PDF Binary Data
+
+PDF binary data is NOT stored in Yjs (too large). Only metadata is in Yjs:
+
+```js
+// CORRECT - Only metadata in Yjs
+study.pdfs.push({
+  id, name, size, tag, uploadedAt, uploadedBy
+});
+
+// WRONG - Don't store binary in Yjs
+study.pdfs.push({
+  id, name, data: arrayBuffer // Too large!
+});
+```
+
+## Google Drive Integration
+
+### Importing from Google Drive
+
+Use `importFromGoogleDrive` utility:
+
+```js
+import { importFromGoogleDrive } from '@api/google-drive.js';
+
+// CORRECT - Import from Google Drive
+const result = await importFromGoogleDrive({
+  fileId: googleDriveFileId,
+  projectId,
+  studyId,
+  tag: 'primary',
+});
+
+// Returns: { id, name, size, tag, uploadedAt }
+```
+
+### Google Drive OAuth Flow
+
+1. User clicks "Import from Google Drive"
+2. Opens Google Picker (if not authenticated)
+3. User selects file
+4. OAuth redirect may occur
+5. File is imported after redirect
+
+### State Persistence During OAuth
+
+Form state must be saved before OAuth redirect:
+
+```js
+import { saveFormState } from '@/lib/formStatePersistence.js';
+
+// Before OAuth redirect
+await saveFormState('addStudies', {
+  studiesState: studies.getSerializableState(),
+  // ... other state
+}, projectId);
+```
+
+## PDF Operations via Yjs
+
+### Adding PDF to Study
+
+Use `addPdfToStudy` operation:
+
+```js
+const { addPdfToStudy } = useProject(projectId);
+
+await addPdfToStudy(studyId, {
+  id: pdfId,
+  name: fileName,
+  size: fileSize,
+  tag: 'primary',
+  uploadedAt: Date.now(),
+  uploadedBy: userId,
+});
+```
+
+### Removing PDF from Study
+
+Use `removePdfFromStudy` operation:
+
+```js
+const { removePdfFromStudy } = useProject(projectId);
+
+await removePdfFromStudy(studyId, pdfId);
+```
+
+## PDF Preview
+
+### PDF Preview Store
+
+Use `pdfPreviewStore` for preview state:
+
+```js
+import pdfPreviewStore from '@/stores/pdfPreviewStore.js';
+
+// Open preview
+pdfPreviewStore.openPreview(projectId, studyId, pdfInfo);
+
+// Close preview
+pdfPreviewStore.closePreview();
+
+// Get preview state
+const preview = pdfPreviewStore.getPreview();
+```
+
+### PDF Viewer Component
+
+Use `PdfViewer` component:
+
+```jsx
+import PdfViewer from '@/components/checklist-ui/pdf/PdfViewer.jsx';
+
+<PdfViewer
+  pdfData={arrayBuffer}
+  fileName="study.pdf"
+  readOnly={true}
+  onPageChange={(page) => {}}
+/>
+```
+
+## PDF Download
+
+### Download Pattern
+
+Use `downloadPdf` utility:
+
+```js
+import { downloadPdf } from '@api/pdf-api.js';
+
+// CORRECT - Download PDF
+const arrayBuffer = await downloadPdf(projectId, studyId, pdfId);
+
+// Cache after download
+await cachePdf(projectId, studyId, pdfId, arrayBuffer);
+```
+
+## Best Practices
+
+### DO
+
+- Cache PDFs after download
+- Check cache before downloading
+- Store only metadata in Yjs (not binary)
+- Use PDF operations from useProject
+- Save form state before OAuth redirects
+- Use pdfPreviewStore for preview state
+
+### DON'T
+
+- Don't store PDF binary data in Yjs
+- Don't download PDFs without checking cache
+- Don't forget to cache after download
+- Don't bypass PDF operations (use useProject)
+- Don't lose form state during OAuth redirects
+
+## Examples from Codebase
+
+- `packages/web/src/api/pdf-api.js` - PDF API utilities
+- `packages/web/src/primitives/pdfCache.js` - PDF caching
+- `packages/web/src/api/google-drive.js` - Google Drive integration
+- `packages/web/src/components/checklist-ui/pdf/PdfViewer.jsx` - PDF viewer
+- `packages/web/src/stores/pdfPreviewStore.js` - Preview state
+- `packages/web/src/primitives/useProject/pdfs.js` - PDF operations

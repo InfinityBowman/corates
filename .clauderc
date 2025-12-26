@@ -33,18 +33,28 @@ Do not worry about migrations either client side or backend unless specifically 
 
 ## Libraries
 
-Use Zod for schema and input validation.
+Use Zod for schema and input validation (backend).
 Use Drizzle ORM for database interactions and migrations.
 Use Better-Auth for authentication and user management.
-Use Zag.js for UI components and design system.
+Use Ark UI components from `@corates/ui` package (built with Ark UI and some remaining Zag.js components).
 
 ## Documentation Tool
 
-PLEASE USE THE CORATES MCP tools to explore local documentation sources. Use this MCP for all Better-Auth, Drizzle, Icons, and Zag documentation. For comprehensive development guides, see the docs site (`packages/docs/`) - run `pnpm docs` to view.
+PLEASE USE THE CORATES MCP tools to explore local documentation sources. Use this MCP for all Better-Auth, Drizzle, Icons, and Ark UI documentation. For comprehensive development guides, see the docs site (`packages/docs/`) - run `pnpm docs` to view.
 
-## Zag.js
+## UI Components
 
-Zag component exist in `packages/web/src/components/zag/*` and should be reused, see the README.md in that folder for a list of existing components. BE SURE TO CHECK THAT LIST AND REFERENCE EXISTING COMPONENTS AS WELL AS THE DOCS MCP BEFORE ADDING NEW COMPONENTS AND WHEN DEBUGGING.
+UI components are in `@corates/ui` package, built with Ark UI (and some remaining Zag.js components). NOT in local components.
+
+```js
+// CORRECT - Import from @corates/ui
+import { Dialog, Select, Toast, showToast, Avatar } from '@corates/ui';
+
+// WRONG - Don't import from local components
+import { Dialog } from '@/components/zag/Dialog.jsx';
+```
+
+See `packages/ui/src/components/index.ts` for all available components. Most components have been migrated to Ark UI. Common ones include Dialog, Select, Toast, Avatar, Tabs, Checkbox, Switch, RadioGroup, Tooltip, Popover, Menu, FileUpload, PasswordInput, and more.
 
 ## Additional References
 

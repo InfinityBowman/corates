@@ -1,0 +1,214 @@
+---
+alwaysApply: false
+description: "Durable Objects patterns for Yjs synchronization and WebSocket handling"
+globs: packages/workers/src/durable-objects/**
+---
+
+# Durable Objects Patterns
+
+> This file provides quick reference patterns for AI agents working with Durable Objects in the Workers package.
+
+## Durable Objects Overview
+
+Durable Objects provide stateful, single-instance objects for each project. They hold the authoritative Y.Doc and manage WebSocket connections.
+
+### Available Durable Objects
+
+- **ProjectDoc**: Manages project Y.Doc and WebSocket connections
+- **UserSession**: Manages user session state
+- **EmailQueue**: Manages email sending queue
+
+## ProjectDoc Pattern
+
+### Y.Doc Structure
+
+ProjectDoc holds the authoritative Y.Doc:
+
+```js
+// Y.Doc structure in ProjectDoc
+{
+  meta: Y.Map, // Project metadata
+  members: Y.Map, // userId => { role, joinedAt }
+  reviews: Y.Map, // studyId => {
+    // study data
+    checklists: Y.Map, // checklistId => checklist data
+    pdfs: Y.Array, // PDF metadata
+    reconciliation: Y.Map // reconciliation progress
+  }
+}
+```
+
+### WebSocket Handling
+
+ProjectDoc handles WebSocket connections:
+
+```js
+// WebSocket upgrade in fetch()
+const upgradeHeader = request.headers.get('Upgrade');
+if (upgradeHeader === 'websocket') {
+  return await this.handleWebSocket(request);
+}
+```
+
+### Authentication
+
+WebSocket connections require authentication:
+
+```js
+// Auth is verified before WebSocket upgrade
+const { user } = await verifyAuth(request, this.env);
+if (!user) {
+  return new Response('Unauthorized', { status: 401 });
+}
+```
+
+## Internal Sync Endpoints
+
+### Internal Requests
+
+Internal requests (from worker routes) use `X-Internal-Request` header:
+
+```js
+const isInternalRequest = request.headers.get('X-Internal-Request') === 'true';
+
+if (isInternalRequest) {
+  // Handle internal sync endpoints
+  if (url.pathname === '/sync') {
+    return await this.handleSync(request);
+  }
+}
+```
+
+### Sync Endpoints
+
+- `/sync` - Sync study/checklist data from D1
+- `/sync-member` - Sync member data from D1
+- `/sync-pdf` - Sync PDF metadata from D1
+- `/disconnect-all` - Disconnect all WebSocket clients
+
+## WebSocket Protocol
+
+### Message Types
+
+WebSocket uses y-websocket protocol:
+
+```js
+const messageSync = 0; // Yjs sync messages
+const messageAwareness = 1; // Awareness (presence) messages
+```
+
+### Message Handling
+
+```js
+// Handle sync messages
+if (messageType === messageSync) {
+  // Forward to Y.Doc
+  syncProtocol.readSyncMessage(message, ws, this.doc, ws);
+}
+
+// Handle awareness messages
+if (messageType === messageAwareness) {
+  // Forward to awareness
+  awarenessProtocol.applyAwarenessUpdate(
+    this.awareness,
+    message,
+    ws
+  );
+}
+```
+
+## Access Control
+
+### Member Verification
+
+Verify user is a project member before allowing connection:
+
+```js
+// Check membership
+const member = await db
+  .select()
+  .from(projectMembers)
+  .where(
+    and(
+      eq(projectMembers.projectId, projectId),
+      eq(projectMembers.userId, user.id)
+    )
+  )
+  .get();
+
+if (!member) {
+  // Access denied - close connection
+  ws.close(1008, 'Access denied');
+  return;
+}
+```
+
+### Access Denied Handling
+
+When access is denied:
+
+1. Close WebSocket connection
+2. Client receives access denied error
+3. Client cleans up local data
+4. Client redirects to dashboard
+
+## Session Management
+
+### Session Tracking
+
+Track active WebSocket sessions:
+
+```js
+// Map<WebSocket, { user, awarenessClientId }>
+this.sessions = new Map();
+
+// Add session on connect
+this.sessions.set(ws, { user, awarenessClientId });
+
+// Remove session on disconnect
+this.sessions.delete(ws);
+```
+
+## Y.Doc Persistence
+
+### Durable Object Storage
+
+Y.Doc is stored in Durable Object's persistent storage:
+
+```js
+// Load Y.Doc from storage
+const stored = await this.state.storage.get('ydoc');
+if (stored) {
+  this.doc = Y.decodeStateAsUpdate(stored);
+}
+
+// Save Y.Doc to storage on updates
+this.doc.on('update', async (update) => {
+  await this.state.storage.put('ydoc', Y.encodeStateAsUpdate(this.doc));
+});
+```
+
+## Best Practices
+
+### DO
+
+- Verify authentication before WebSocket upgrade
+- Check membership before allowing connection
+- Use internal request header for sync endpoints
+- Track sessions for cleanup
+- Persist Y.Doc state to storage
+- Handle errors gracefully (close connections)
+
+### DON'T
+
+- Don't allow unauthenticated WebSocket connections
+- Don't bypass membership checks
+- Don't forget to clean up sessions on disconnect
+- Don't store large binary data in Y.Doc
+- Don't expose internal sync endpoints publicly
+
+## Examples from Codebase
+
+- `packages/workers/src/durable-objects/ProjectDoc.js` - Main ProjectDoc implementation
+- `packages/workers/src/durable-objects/UserSession.js` - User session management
+- `packages/workers/src/durable-objects/EmailQueue.js` - Email queue management

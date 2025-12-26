@@ -137,6 +137,16 @@ For detailed patterns, see:
 - `ui-components.mdc` - UI component imports and usage
 - `workers.mdc` - Workers package specific patterns
 
+### Complex Area Rules
+
+For specific complex areas, see:
+- `yjs-sync.mdc` - Yjs synchronization, connection management, sync operations
+- `reconciliation.mdc` - Checklist reconciliation, multi-part questions, comparison logic
+- `pdf-handling.mdc` - PDF upload, caching, Google Drive integration
+- `form-state.mdc` - Form state persistence across OAuth redirects
+- `durable-objects.mdc` - Durable Objects patterns for Yjs and WebSocket handling
+- `checklist-operations.mdc` - Checklist-specific patterns (AMSTAR2, ROBINS-I)
+
 ## Additional Notes
 
 - Cloudflare Pages is NOT used; only Cloudflare Workers
