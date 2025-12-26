@@ -264,7 +264,7 @@ async function fetchApp(path, init = {}) {
 }
 
 beforeAll(async () => {
-  const { adminRoutes } = await import('../routes/admin.js');
+  const { adminRoutes } = await import('../routes/admin/index.js');
   app = new Hono();
   app.route('/api/admin', adminRoutes);
 });

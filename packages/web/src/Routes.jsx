@@ -16,6 +16,7 @@ import SettingsPage from '@components/profile-ui/SettingsPage.jsx';
 import BillingPage from '@components/billing/BillingPage.jsx';
 import NotFoundPage from '@components/NotFoundPage.jsx';
 import { AdminDashboard } from '@components/admin-ui/index.js';
+import StorageManagement from '@components/admin-ui/StorageManagement.jsx';
 import { BASEPATH } from '@config/api.js';
 import ProtectedGuard from '@/components/auth-ui/ProtectedGuard.jsx';
 
@@ -40,6 +41,7 @@ export default function AppRoutes() {
           <Route path='/profile' component={ProfilePage} />
           <Route path='/settings' component={SettingsPage} />
           <Route path='/admin' component={AdminDashboard} />
+          <Route path='/admin/storage' component={StorageManagement} />
           <Route path='/settings/billing' component={BillingPage} />
         </Route>
         <Route path='/checklist/*' component={LocalChecklistView} />

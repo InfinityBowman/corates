@@ -255,13 +255,15 @@ async function generate() {
     { file: 'src/routes/users.js', basePath: '/api/users' },
     { file: 'src/routes/pdfs.js', basePath: '/api/projects/{projectId}/studies/{studyId}/pdfs' },
     { file: 'src/routes/billing/index.js', basePath: '/api/billing' },
-    { file: 'src/routes/admin.js', basePath: '/api/admin' },
+    { file: 'src/routes/admin/index.js', basePath: '/api/admin' },
     { file: 'src/routes/contact.js', basePath: '/api/contact' },
     { file: 'src/routes/avatars.js', basePath: '/api/users/avatar' },
     { file: 'src/routes/google-drive.js', basePath: '/api/google-drive' },
     { file: 'src/routes/account-merge.js', basePath: '/api/accounts/merge' },
     { file: 'src/routes/email.js', basePath: '/api/email' },
     { file: 'src/routes/database.js', basePath: '/api/db' },
+    { file: 'src/routes/admin/users.js', basePath: '/api/admin' },
+    { file: 'src/routes/admin/storage.js', basePath: '/api/admin' },
   ];
 
   // Parse all route files

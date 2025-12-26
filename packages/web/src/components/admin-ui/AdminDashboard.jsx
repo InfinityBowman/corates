@@ -3,7 +3,7 @@
  */
 
 import { createSignal, createResource, Show, onMount } from 'solid-js';
-import { useNavigate } from '@solidjs/router';
+import { useNavigate, A } from '@solidjs/router';
 import {
   FiUsers,
   FiFolder,
@@ -14,6 +14,7 @@ import {
   FiChevronRight,
   FiShield,
   FiAlertCircle,
+  FiDatabase,
 } from 'solid-icons/fi';
 import {
   isAdmin,
@@ -94,6 +95,13 @@ export default function AdminDashboard() {
                 <p class='text-sm text-gray-500'>Manage users and monitor activity</p>
               </div>
             </div>
+            <A
+              href='/admin/storage'
+              class='flex items-center space-x-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+            >
+              <FiDatabase class='h-4 w-4' />
+              <span>Storage Management</span>
+            </A>
           </div>
 
           {/* Stats Grid */}

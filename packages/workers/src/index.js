@@ -24,7 +24,7 @@ import { emailRoutes } from './routes/email.js';
 import { billingRoutes } from './routes/billing/index.js';
 import { googleDriveRoutes } from './routes/google-drive.js';
 import { avatarRoutes } from './routes/avatars.js';
-import { adminRoutes } from './routes/admin.js';
+import { adminRoutes } from './routes/admin/index.js';
 import { accountMergeRoutes } from './routes/account-merge.js';
 import { contactRoutes } from './routes/contact.js';
 

@@ -90,6 +90,18 @@ export const userSchemas = {
         return Math.min(Math.max(1, num), 20);
       }),
   }),
+  ban: z.object({
+    reason: z.string().optional(),
+    expiresAt: z
+      .union([
+        z
+          .string()
+          .datetime('expiresAt must be a valid ISO datetime string')
+          .transform(val => new Date(val)),
+        z.null(),
+      ])
+      .optional(),
+  }),
 };
 
 /**
@@ -130,6 +142,50 @@ export const subscriptionSchemas = {
       .positive('Current period end must be a positive number')
       .nullable()
       .optional(),
+  }),
+};
+
+/**
+ * Storage management schemas
+ */
+export const storageSchemas = {
+  listDocuments: z.object({
+    cursor: z
+      .string()
+      .optional()
+      .transform(val => (val ? val.trim() : undefined)),
+    limit: z
+      .string()
+      .optional()
+      .default('50')
+      .transform(val => parseInt(val, 10))
+      .pipe(
+        z
+          .number()
+          .int('Limit must be an integer')
+          .min(1, 'Limit must be at least 1')
+          .max(1000, 'Limit must be at most 1000'),
+      ),
+    prefix: z
+      .string()
+      .optional()
+      .transform(val => (val ? val.trim() : '')),
+    search: z
+      .string()
+      .optional()
+      .transform(val => (val ? val.trim().toLowerCase() : '')),
+  }),
+  deleteDocuments: z.object({
+    keys: z
+      .array(
+        z
+          .string()
+          .min(1, 'Key cannot be empty')
+          .refine(key => /^projects\/[^/]+\/studies\/[^/]+\/.+$/.test(key), {
+            message: 'Key must match pattern: projects/{projectId}/studies/{studyId}/{fileName}',
+          }),
+      )
+      .min(1, 'At least one key is required'),
   }),
 };
 
