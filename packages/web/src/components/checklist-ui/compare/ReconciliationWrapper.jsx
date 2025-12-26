@@ -35,7 +35,6 @@ export default function ReconciliationWrapper() {
     getReconciliationProgress,
     getQuestionNote,
     saveReconciliationProgress,
-    clearReconciliationProgress,
     connect,
   } = useProject(params.projectId);
 
@@ -365,8 +364,16 @@ export default function ReconciliationWrapper() {
         title: reconciledName || 'Reconciled Checklist',
       });
 
-      // Clear the reconciliation progress since we've completed it
-      clearReconciliationProgress(params.studyId);
+      // Mark the individual reviewer checklists as completed
+      updateChecklist(params.studyId, params.checklist1Id, {
+        status: CHECKLIST_STATUS.COMPLETED,
+      });
+      updateChecklist(params.studyId, params.checklist2Id, {
+        status: CHECKLIST_STATUS.COMPLETED,
+      });
+
+      // Keep reconciliation progress (checklist1Id and checklist2Id) so users can view previous reviewers
+      // The progress data is needed for the "View Previous" button in the completed tab
 
       // Navigate back to the project view (completed tab)
       navigate(`/projects/${params.projectId}?tab=completed`);

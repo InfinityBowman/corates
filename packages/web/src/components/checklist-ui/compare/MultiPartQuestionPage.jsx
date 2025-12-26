@@ -17,8 +17,14 @@ export default function MultiPartQuestionPage(props) {
   // Local state for each part
   const [localFinal, setLocalFinal] = createSignal({});
   const [selectedSource, setSelectedSource] = createSignal(null);
+  const [hasAutoFilled, setHasAutoFilled] = createSignal(false);
 
-  // Check if both reviewers have the same answers
+  // Reset auto-fill tracking when question changes
+  createEffect(() => {
+    props.questionKey;
+    setHasAutoFilled(false);
+  });
+
   const reviewersAgree = () =>
     multiPartAnswersEqual(props.reviewer1Answers, props.reviewer2Answers);
 
@@ -48,6 +54,40 @@ export default function MultiPartQuestionPage(props) {
     if (props.reviewer1Answers && keys.some(dk => props.reviewer1Answers[dk])) {
       setLocalFinal(JSON.parse(JSON.stringify(props.reviewer1Answers)));
       setSelectedSource('reviewer1');
+    }
+  });
+
+  // Check if the final answer last column has at least one part as true
+  function hasValidFinalAnswer(finalAnswers, partKeys) {
+    if (!finalAnswers || !Array.isArray(partKeys) || partKeys.length === 0) return false;
+    return partKeys.some(dk => {
+      const part = finalAnswers[dk];
+      if (!part?.answers || !Array.isArray(part.answers) || part.answers.length === 0) return false;
+      const lastCol = part.answers[part.answers.length - 1];
+      return Array.isArray(lastCol) && lastCol.some(v => v === true);
+    });
+  }
+
+  // Auto-fill when reviewers agree and no final answer exists
+  createEffect(() => {
+    const keys = dataKeys();
+    if (!keys || keys.length === 0) return;
+
+    // Check if we have a valid final answer (has at least one part)
+    let hasFinalAnswer = hasValidFinalAnswer(props.finalAnswers, keys);
+
+    // Only auto-fill if: reviewers agree, no final answer exists, we have reviewer1's answer, and we haven't auto-filled yet
+    if (
+      props.isAgreement &&
+      !hasFinalAnswer &&
+      props.reviewer1Answers &&
+      keys.some(dk => props.reviewer1Answers[dk]) &&
+      !hasAutoFilled() &&
+      props.onFinalChange
+    ) {
+      const newFinal = JSON.parse(JSON.stringify(props.reviewer1Answers));
+      props.onFinalChange(newFinal);
+      setHasAutoFilled(true);
     }
   });
 
