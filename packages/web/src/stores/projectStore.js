@@ -516,9 +516,7 @@ function createProjectStore() {
 
     // If cached user ID doesn't match current user, clear the cache
     if (cachedUserId && cachedUserId !== currentUserId) {
-      console.log(
-        '[projectStore] Cached project list belongs to different user, clearing cache',
-      );
+      console.log('[projectStore] Cached project list belongs to different user, clearing cache');
       setStore('projectList', {
         items: [],
         loaded: false,
