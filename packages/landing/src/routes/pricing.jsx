@@ -127,7 +127,7 @@ export default function Pricing() {
             </p>
           </div>
 
-          <div class='mt-10 flex hidden justify-center'>
+          <div class='mt-10 hidden justify-center'>
             <div class='inline-flex rounded-lg bg-gray-100 p-1'>
               <button
                 type='button'
@@ -155,7 +155,7 @@ export default function Pricing() {
             </div>
           </div>
 
-          <div class='mt-10 grid hidden grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
+          <div class='mt-10 hidden grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
             <For each={plans()}>
               {(plan, index) => (
                 <div

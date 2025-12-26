@@ -13,7 +13,7 @@ import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
  * @param {Function} isSynced - Function that returns sync status
  * @returns {Object} Checklist operations
  */
-export function createChecklistOperations(projectId, getYDoc, isSynced) {
+export function createChecklistOperations(projectId, getYDoc, _isSynced) {
   /**
    * Create a checklist in a study
    * @param {string} studyId - The study ID

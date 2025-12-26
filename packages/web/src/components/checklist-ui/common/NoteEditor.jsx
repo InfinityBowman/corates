@@ -29,7 +29,6 @@ export default function NoteEditor(props) {
   const initialExpanded = props.readOnly ? true : !props.collapsed;
   const [expanded, setExpanded] = createSignal(initialExpanded);
   const [localValue, setLocalValue] = createSignal('');
-  const [hasBeenManuallyToggled, setHasBeenManuallyToggled] = createSignal(false);
   let textareaRef;
 
   // Initialize from Y.Text and set up observer
@@ -136,7 +135,6 @@ export default function NoteEditor(props) {
           <Collapsible
             open={expanded()}
             onOpenChange={({ open }) => {
-              setHasBeenManuallyToggled(true);
               setExpanded(open);
             }}
             trigger={

@@ -110,6 +110,8 @@ export default function CircularProgress(props) {
 
     // Center text - label (if provided, show below value)
     if (label()) {
+      const currentLabel = label();
+      const currentSize = size();
       const labelY = showValue() ? centerY + 28 : centerY;
       svg
         .append('text')
@@ -119,7 +121,7 @@ export default function CircularProgress(props) {
         .attr('dominant-baseline', 'middle')
         .attr('font-size', '11px')
         .attr('fill', '#6b7280') // gray-500
-        .text(label())
+        .text(currentLabel)
         .attr('opacity', 0)
         .transition()
         .duration(800)
@@ -127,10 +129,10 @@ export default function CircularProgress(props) {
         .attr('opacity', 1)
         .call(text => {
           // Truncate text if too long
-          const maxLength = Math.floor((size() * 0.75) / 6); // Approximate chars that fit
+          const maxLength = Math.floor((currentSize * 0.75) / 6); // Approximate chars that fit
           const textElement = text.node();
-          if (textElement && label().length > maxLength) {
-            textElement.textContent = label().substring(0, maxLength - 3) + '...';
+          if (textElement && currentLabel.length > maxLength) {
+            textElement.textContent = currentLabel.substring(0, maxLength - 3) + '...';
           }
         });
     }
