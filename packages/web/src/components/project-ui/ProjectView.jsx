@@ -200,6 +200,14 @@ export default function ProjectView() {
     return getChecklistCount(studies(), 'reconcile', null);
   };
 
+  const getAllStudiesCount = () => {
+    return studies().length;
+  };
+
+  const getCompletedCount = () => {
+    return getChecklistCount(studies(), 'completed', null);
+  };
+
   // Tab configuration
   const tabDefinitions = [
     { value: 'overview', label: 'Overview', icon: <BiRegularHome class='h-4 w-4' /> },
@@ -207,6 +215,7 @@ export default function ProjectView() {
       value: 'all-studies',
       label: 'All Studies',
       icon: <AiOutlineBook class='h-4 w-4' />,
+      getCount: getAllStudiesCount,
     },
     {
       value: 'todo',
@@ -224,6 +233,7 @@ export default function ProjectView() {
       value: 'completed',
       label: 'Completed',
       icon: <AiFillCheckCircle class='h-4 w-4' />,
+      getCount: getCompletedCount,
     },
   ];
 

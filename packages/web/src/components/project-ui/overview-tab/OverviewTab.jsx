@@ -2,7 +2,7 @@ import { For, Show, createSignal, createMemo } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { FiPlus, FiTrash2 } from 'solid-icons/fi';
 import { AiOutlineBook } from 'solid-icons/ai';
-import { BiRegularCheckCircle, BiRegularTimeFive } from 'solid-icons/bi';
+import { BiRegularCheckCircle } from 'solid-icons/bi';
 import { CgArrowsExchange } from 'solid-icons/cg';
 import ChartSection from './ChartSection.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
@@ -24,6 +24,7 @@ import CircularProgress from './CircularProgress.jsx';
 export default function OverviewTab() {
   const [showAddMemberModal, setShowAddMemberModal] = createSignal(false);
   const [chartsExpanded, setChartsExpanded] = createSignal(false);
+  const [tablesExpanded, setTablesExpanded] = createSignal(false);
 
   const { user } = useBetterAuth();
   const { projectId, isOwner } = useProjectContext();
@@ -36,11 +37,6 @@ export default function OverviewTab() {
   const currentUserId = () => user()?.id;
 
   // Calculate additional stats
-  const inProgressStudies = () =>
-    studies().filter(s => {
-      const checklists = s.checklists || [];
-      return checklists.some(c => c.status === CHECKLIST_STATUS.IN_PROGRESS);
-    }).length;
 
   const readyToReconcile = () =>
     studies().filter(s => {
@@ -65,21 +61,29 @@ export default function OverviewTab() {
     const progressMap = new Map();
 
     studies().forEach(study => {
-      const checklists = study.checklists || [];
-      checklists.forEach(checklist => {
-        const userId = checklist.assignedTo;
-        if (!userId) return;
+      // Get all user IDs assigned to this study
+      const assignedUserIds = [];
+      if (study.reviewer1) assignedUserIds.push(study.reviewer1);
+      if (study.reviewer2) assignedUserIds.push(study.reviewer2);
 
+      assignedUserIds.forEach(userId => {
         if (!progressMap.has(userId)) {
           progressMap.set(userId, { completed: 0, total: 0 });
         }
 
         const progress = progressMap.get(userId);
-        progress.total++;
-        if (
-          checklist.status === CHECKLIST_STATUS.AWAITING_RECONCILE ||
-          checklist.status === CHECKLIST_STATUS.COMPLETED
-        ) {
+        progress.total++; // Count this study as assigned
+
+        // Check if user has a completed checklist in this study
+        const checklists = study.checklists || [];
+        const userChecklists = checklists.filter(c => c.assignedTo === userId);
+        const hasCompleted = userChecklists.some(
+          c =>
+            c.status === CHECKLIST_STATUS.COMPLETED ||
+            c.status === CHECKLIST_STATUS.AWAITING_RECONCILE,
+        );
+
+        if (hasCompleted) {
           progress.completed++;
         }
       });
@@ -156,7 +160,7 @@ export default function OverviewTab() {
     <>
       {/* Section 1: Project Progress - Hero Section */}
       <div class='mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
-        <h2 class='mb-6 text-lg font-semibold text-gray-900'>Project Progress</h2>
+        <h2 class='mb-6 text-lg font-semibold text-gray-900'>Team Progress</h2>
 
         <div class='mb-6 flex flex-col items-center md:flex-row md:items-start md:gap-8'>
           {/* Overall Progress - Circular */}
@@ -178,20 +182,13 @@ export default function OverviewTab() {
           </div>
 
           {/* Enhanced Stats Grid */}
-          <div class='grid flex-1 grid-cols-2 gap-4 md:grid-cols-4'>
+          <div class='grid flex-1 grid-cols-2 gap-4 md:grid-cols-3'>
             <div class='rounded-lg border border-gray-200 bg-gray-50 p-5 text-center'>
               <div class='mb-2 flex justify-center'>
                 <AiOutlineBook class='h-6 w-6 text-gray-600' />
               </div>
               <p class='text-3xl font-bold text-gray-900'>{studies().length}</p>
               <p class='mt-1 text-sm font-medium text-gray-600'>Total Studies</p>
-            </div>
-            <div class='rounded-lg border border-amber-200 bg-amber-50 p-5 text-center'>
-              <div class='mb-2 flex justify-center'>
-                <BiRegularTimeFive class='h-6 w-6 text-amber-700' />
-              </div>
-              <p class='text-3xl font-bold text-amber-900'>{inProgressStudies()}</p>
-              <p class='mt-1 text-sm font-medium text-amber-700'>In Progress</p>
             </div>
             <div class='rounded-lg border border-green-200 bg-green-50 p-5 text-center'>
               <div class='mb-2 flex justify-center'>
@@ -288,7 +285,7 @@ export default function OverviewTab() {
                         <div class='mt-4'>
                           <Progress
                             value={userProgress().percentage}
-                            label={`${userProgress().completed} of ${userProgress().total} appraisals completed`}
+                            label={`${userProgress().completed} of ${userProgress().total} studies appraised`}
                             showValue={true}
                             size='sm'
                             variant={
@@ -318,15 +315,18 @@ export default function OverviewTab() {
         </Show>
       </div>
 
-      {/* Section 3: Quality Assessment - Collapsible */}
-      <div class='mb-8'>
+      {/* Section 3: Results */}
+      <div class='mb-8 space-y-6'>
+        <h2 class='text-lg font-semibold text-gray-900'>Results</h2>
+
+        {/* Figures Section - Collapsible */}
         <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
           <Collapsible
             open={chartsExpanded()}
             onOpenChange={({ open }) => setChartsExpanded(open)}
             trigger={
               <div class='flex w-full cursor-pointer items-center justify-between px-6 py-4 transition-colors select-none hover:bg-gray-50'>
-                <h2 class='text-lg font-semibold text-gray-900'>Quality Assessment</h2>
+                <h2 class='text-lg font-semibold text-gray-900'>Figures</h2>
                 <div class='text-sm text-gray-500'>
                   {chartsExpanded() ? 'Click to collapse' : 'Click to expand charts'}
                 </div>
@@ -339,6 +339,25 @@ export default function OverviewTab() {
                 members={members}
                 getChecklistData={getChecklistData}
               />
+            </div>
+          </Collapsible>
+        </div>
+        {/* Tables Section - Collapsible */}
+        <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
+          <Collapsible
+            open={tablesExpanded()}
+            onOpenChange={({ open }) => setTablesExpanded(open)}
+            trigger={
+              <div class='flex w-full cursor-pointer items-center justify-between px-6 py-4 transition-colors select-none hover:bg-gray-50'>
+                <h2 class='text-lg font-semibold text-gray-900'>Tables</h2>
+                <div class='text-sm text-gray-500'>
+                  {tablesExpanded() ? 'Click to collapse' : 'Click to expand tables'}
+                </div>
+              </div>
+            }
+          >
+            <div class='border-t border-gray-200 px-6 py-6'>
+              <p class='text-gray-500'>No tables to display.</p>
             </div>
           </Collapsible>
         </div>
