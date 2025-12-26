@@ -285,11 +285,11 @@ export default function StorageManagement() {
                         title='Select all'
                       >
                         <Show
-                          when={() => {
+                          when={(() => {
                             const docs = documentsData()?.documents || [];
                             const selected = selectedKeys();
                             return docs.length > 0 && docs.every(doc => selected.has(doc.key));
-                          }}
+                          })()}
                           fallback={<FiSquare class='h-4 w-4' />}
                         >
                           <FiCheckSquare class='h-4 w-4 text-blue-600' />

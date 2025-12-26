@@ -48,15 +48,34 @@ storageRoutes.get(
     try {
       const { cursor: requestCursor, limit, prefix, search } = c.get('validatedQuery');
 
+      // Decode composite cursor: {r2Cursor: string | undefined, skipCount: number}
+      let r2Cursor = undefined;
+      let skipCount = 0;
+      if (requestCursor) {
+        try {
+          const decoded = JSON.parse(requestCursor);
+          r2Cursor = decoded.r2Cursor;
+          skipCount = Math.max(0, decoded.skipCount || 0);
+          // If r2Cursor is undefined, we're starting from beginning of R2, so reset skipCount
+          if (!r2Cursor) {
+            skipCount = 0;
+          }
+        } catch {
+          // Invalid cursor format, treat as first request
+          r2Cursor = requestCursor;
+          skipCount = 0;
+        }
+      }
+
       const PROCESSING_CAP = 10000;
       const matchingObjects = [];
-      let currentCursor = requestCursor;
+      let currentCursor = r2Cursor;
       let objectsProcessed = 0;
-      let hasMore = false;
       let truncated = false;
+      let listedTruncated = false;
 
-      // Process batches until we have enough matching results or hit the cap
-      while (matchingObjects.length < limit && objectsProcessed < PROCESSING_CAP) {
+      // Process batches until we have enough matching results (skipCount + limit) or hit the cap
+      while (matchingObjects.length < skipCount + limit && objectsProcessed < PROCESSING_CAP) {
         const listOptions = {
           limit: 1000,
           prefix: prefix || undefined,
@@ -68,13 +87,13 @@ storageRoutes.get(
         const listed = await c.env.PDF_BUCKET.list(listOptions);
 
         if (listed.objects.length === 0) {
+          listedTruncated = false;
           break;
         }
 
         objectsProcessed += listed.objects.length;
 
         // Process the entire batch to avoid skipping objects when we hit the limit
-        // We'll collect all matching objects in this batch, then slice to limit later
         for (const obj of listed.objects) {
           const parsed = parseKey(obj.key);
           if (!parsed) {
@@ -97,24 +116,12 @@ storageRoutes.get(
           });
         }
 
-        // After processing the entire batch, check if we have enough results
-        if (matchingObjects.length >= limit) {
-          // We've collected enough matches. Set cursor for next batch if available
-          if (listed.truncated) {
-            currentCursor = listed.cursor;
-            hasMore = true;
-          } else {
-            hasMore = false;
-          }
-          break;
-        }
-
-        // Check if there are more objects available from R2
+        // Update cursor for next batch
         if (listed.truncated) {
           currentCursor = listed.cursor;
-          hasMore = true;
+          listedTruncated = true;
         } else {
-          hasMore = false;
+          listedTruncated = false;
           break;
         }
 
@@ -125,8 +132,11 @@ storageRoutes.get(
         }
       }
 
-      // Limit results to requested limit
-      const paginatedObjects = matchingObjects.slice(0, limit);
+      // Guard against skipCount exceeding matchingObjects.length
+      skipCount = Math.min(skipCount, matchingObjects.length);
+
+      // Slice with offset to get the correct page
+      const paginatedObjects = matchingObjects.slice(skipCount, skipCount + limit);
 
       // Check which projects exist in the database to identify orphaned PDFs
       const uniqueProjectIds = [...new Set(paginatedObjects.map(doc => doc.projectId))];
@@ -155,9 +165,23 @@ storageRoutes.get(
         limit,
       };
 
-      // Include nextCursor if there are more results available
-      if (hasMore && currentCursor) {
-        response.nextCursor = currentCursor;
+      // Determine if there are more results available
+      // Return nextCursor only if:
+      // 1. There are more R2 objects to process (listedTruncated && currentCursor), OR
+      // 2. We hit the processing cap AND have a cursor to continue from
+      // Note: If R2 is exhausted (listedTruncated = false), we can't persist cached matches
+      // across requests, so we don't return a nextCursor even if we have cached matches
+      const hasMoreR2Objects = listedTruncated && currentCursor;
+      const canContinueAfterCap = truncated && currentCursor;
+
+      // Include nextCursor if there are more results available and we have a cursor to continue from
+      if (hasMoreR2Objects || canContinueAfterCap) {
+        const nextSkipCount = Math.max(0, skipCount + paginatedObjects.length);
+        const nextCursorData = {
+          r2Cursor: currentCursor,
+          skipCount: nextSkipCount,
+        };
+        response.nextCursor = JSON.stringify(nextCursorData);
       }
 
       // Include truncated flag if we hit the processing cap
