@@ -1,7 +1,7 @@
 import { For, Show, createMemo } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { CgArrowsExchange } from 'solid-icons/cg';
-import ReconcileStudyCard from './ReconcileStudyCard.jsx';
+import ReconcileStudyRow from './ReconcileStudyRow.jsx';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useProjectContext } from '../ProjectContext.jsx';
@@ -33,8 +33,12 @@ export default function ReconcileTab() {
     projectActionsStore.pdf.view(studyId, pdf);
   };
 
+  const handleDownloadPdf = (studyId, pdf) => {
+    projectActionsStore.pdf.download(studyId, pdf);
+  };
+
   return (
-    <div class='space-y-6'>
+    <div class='space-y-2'>
       <Show
         when={studiesInReconciliation().length > 0}
         fallback={
@@ -48,15 +52,16 @@ export default function ReconcileTab() {
           </div>
         }
       >
-        <div class='space-y-4'>
+        <div class='space-y-2'>
           <For each={studiesInReconciliation()}>
             {study => (
-              <ReconcileStudyCard
+              <ReconcileStudyRow
                 study={study}
                 onReconcile={(checklist1Id, checklist2Id) =>
                   openReconciliation(study.id, checklist1Id, checklist2Id)
                 }
                 onViewPdf={pdf => handleViewPdf(study.id, pdf)}
+                onDownloadPdf={pdf => handleDownloadPdf(study.id, pdf)}
                 getAssigneeName={getAssigneeName}
               />
             )}

@@ -1,20 +1,18 @@
 /**
- * PdfPreviewPanel - Slide-in drawer for previewing PDFs
+ * PdfPreviewPanel - Slide-in panel for previewing PDFs
  *
  * Reads from pdfPreviewStore to show/hide and display PDF content.
  * Used across project views to preview PDFs without leaving context.
  */
 
 import { Show } from 'solid-js';
-import { Drawer } from '@corates/ui';
+import SlidingPanel from './SlidingPanel.jsx';
 import PdfViewer from '@/components/checklist-ui/pdf/PdfViewer.jsx';
 import pdfPreviewStore from '@/stores/pdfPreviewStore.js';
 
 export default function PdfPreviewPanel() {
-  const handleOpenChange = open => {
-    if (!open) {
-      pdfPreviewStore.closePreview();
-    }
+  const handleClose = () => {
+    pdfPreviewStore.closePreview();
   };
 
   // Format title with filename
@@ -25,13 +23,11 @@ export default function PdfPreviewPanel() {
   };
 
   return (
-    <Drawer
+    <SlidingPanel
       open={pdfPreviewStore.isOpen()}
-      onOpenChange={handleOpenChange}
+      onClose={handleClose}
       title={title()}
-      side='right'
-      size='lg'
-      showBackdrop={false}
+      size='2xl'
       closeOnOutsideClick={true}
     >
       <div class='flex h-full min-h-0 flex-col'>
@@ -70,6 +66,6 @@ export default function PdfPreviewPanel() {
           />
         </Show>
       </div>
-    </Drawer>
+    </SlidingPanel>
   );
 }

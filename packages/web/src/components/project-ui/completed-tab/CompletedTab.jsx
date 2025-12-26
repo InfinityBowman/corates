@@ -4,16 +4,18 @@ import { AiFillCheckCircle } from 'solid-icons/ai';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useProjectContext } from '@project-ui/ProjectContext.jsx';
-import { getStudiesForTab } from '@/lib/checklist-domain.js';
-import CompletedStudyCard from './CompletedStudyCard.jsx';
+import { getStudiesForTab, isDualReviewerStudy } from '@/lib/checklist-domain.js';
+import useProject from '@/primitives/useProject/index.js';
+import CompletedStudyRow from './CompletedStudyRow.jsx';
 
 /**
  * CompletedTab - Shows studies that have completed review
  * Uses projectActionsStore directly for mutations.
  */
 export default function CompletedTab() {
-  const { projectId } = useProjectContext();
+  const { projectId, getAssigneeName } = useProjectContext();
   const navigate = useNavigate();
+  const { getReconciliationProgress } = useProject(projectId);
 
   const studies = () => projectStore.getStudies(projectId);
 
@@ -30,8 +32,19 @@ export default function CompletedTab() {
     projectActionsStore.pdf.view(studyId, pdf);
   };
 
+  const handleDownloadPdf = (studyId, pdf) => {
+    projectActionsStore.pdf.download(studyId, pdf);
+  };
+
+  // Get reconciliation progress for a study
+  const getReconciliationProgressForStudy = study => {
+    // Only get reconciliation progress for dual-reviewer studies
+    if (!isDualReviewerStudy(study)) return null;
+    return getReconciliationProgress(study.id);
+  };
+
   return (
-    <div class='space-y-6'>
+    <div class='space-y-2'>
       <Show
         when={completedStudies().length > 0}
         fallback={
@@ -44,17 +57,18 @@ export default function CompletedTab() {
           </div>
         }
       >
-        <div class='space-y-4'>
-          <For each={completedStudies()}>
-            {study => (
-              <CompletedStudyCard
-                study={study}
-                onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
-                onViewPdf={pdf => handleViewPdf(study.id, pdf)}
-              />
-            )}
-          </For>
-        </div>
+        <For each={completedStudies()}>
+          {study => (
+            <CompletedStudyRow
+              study={study}
+              onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
+              onViewPdf={pdf => handleViewPdf(study.id, pdf)}
+              onDownloadPdf={pdf => handleDownloadPdf(study.id, pdf)}
+              reconciliationProgress={getReconciliationProgressForStudy(study)}
+              getAssigneeName={getAssigneeName}
+            />
+          )}
+        </For>
       </Show>
     </div>
   );
