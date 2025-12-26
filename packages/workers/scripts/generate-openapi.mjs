@@ -262,6 +262,8 @@ async function generate() {
     { file: 'src/routes/account-merge.js', basePath: '/api/accounts/merge' },
     { file: 'src/routes/email.js', basePath: '/api/email' },
     { file: 'src/routes/database.js', basePath: '/api/db' },
+    { file: 'src/routes/admin/users.js', basePath: '/api/admin' },
+    { file: 'src/routes/admin/storage.js', basePath: '/api/admin' },
   ];
 
   // Parse all route files
