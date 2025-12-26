@@ -15,7 +15,7 @@ import * as Y from 'yjs';
  * @param {Function} isSynced - Function that returns sync status
  * @returns {Object} Reconciliation operations
  */
-export function createReconciliationOperations(projectId, getYDoc, isSynced) {
+export function createReconciliationOperations(projectId, getYDoc, _isSynced) {
   /**
    * Save reconciliation progress for a study
    * Stores only metadata references - finalAnswers are in the reconciled checklist
@@ -42,6 +42,12 @@ export function createReconciliationOperations(projectId, getYDoc, isSynced) {
     reconciliationMap.set('checklist2Id', progressData.checklist2Id);
     if (progressData.reconciledChecklistId) {
       reconciliationMap.set('reconciledChecklistId', progressData.reconciledChecklistId);
+    }
+    if (progressData.currentPage !== undefined) {
+      reconciliationMap.set('currentPage', progressData.currentPage);
+    }
+    if (progressData.viewMode !== undefined) {
+      reconciliationMap.set('viewMode', progressData.viewMode);
     }
     reconciliationMap.set('updatedAt', Date.now());
 
@@ -72,6 +78,8 @@ export function createReconciliationOperations(projectId, getYDoc, isSynced) {
       checklist1Id,
       checklist2Id,
       reconciledChecklistId: reconciliationMap.get('reconciledChecklistId') || null,
+      currentPage: reconciliationMap.get('currentPage'),
+      viewMode: reconciliationMap.get('viewMode'),
       updatedAt: reconciliationMap.get('updatedAt'),
     };
   }

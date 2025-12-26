@@ -15,7 +15,6 @@ import { registerLintTools } from './tools/lint.js';
 import { registerLocalDocsTools } from './tools/local-docs.js';
 import { registerBetterAuthTools } from './tools/better-auth.js';
 import { registerDrizzleTools } from './tools/drizzle.js';
-import { registerZagTools } from './tools/zag.js';
 import { registerCodeReviewTools } from './tools/code-review.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -35,7 +34,6 @@ registerLintTools(server, repoRoot);
 registerLocalDocsTools(server, docsRoot);
 registerBetterAuthTools(server);
 registerDrizzleTools(server);
-registerZagTools(server);
 registerCodeReviewTools(server, repoRoot);
 
 // Start the server with stdio transport

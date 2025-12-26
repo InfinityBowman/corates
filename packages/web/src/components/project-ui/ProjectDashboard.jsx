@@ -10,6 +10,7 @@ import { useSubscription } from '@primitives/useSubscription.js';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import CreateProjectForm from './CreateProjectForm.jsx';
 import ProjectCard from './ProjectCard.jsx';
+import ContactPrompt from './ContactPrompt.jsx';
 import { getRestoreParamsFromUrl } from '@lib/formStatePersistence.js';
 
 export default function ProjectDashboard(props) {
@@ -39,6 +40,16 @@ export default function ProjectDashboard(props) {
       hasEntitlement('project.create') &&
       hasQuota('projects.max', { used: projectCount(), requested: 1 })
     );
+  };
+
+  // Determine restriction type and quota limit for ContactPrompt
+  const restrictionType = () => {
+    return !hasEntitlement('project.create') ? 'entitlement' : 'quota';
+  };
+
+  const quotaLimit = () => {
+    const limit = quotas()['projects.max'];
+    return isUnlimitedQuota(limit) ? -1 : limit;
   };
 
   // Check if error is due to offline state
@@ -135,7 +146,7 @@ export default function ProjectDashboard(props) {
   return (
     <div class='space-y-6'>
       {/* Header */}
-      <div class='flex items-center justify-between'>
+      <div class='flex flex-wrap items-center justify-between gap-4'>
         <div>
           <h1 class='text-2xl font-bold text-gray-900'>My Projects</h1>
           <p class='mt-1 text-gray-500'>Manage your research projects</p>
@@ -143,13 +154,12 @@ export default function ProjectDashboard(props) {
         <Show
           when={canCreateProject()}
           fallback={
-            <div class='flex flex-col items-end gap-1'>
-              <div class='text-sm text-gray-600'>
-                {!hasEntitlement('project.create') ?
-                  'Project creation not available on your plan'
-                : `Project limit reached (${projectCount()}/${isUnlimitedQuota(quotas()['projects.max']) ? '∞' : quotas()['projects.max']})`
-                }
-              </div>
+            <div class='max-w-sm'>
+              <ContactPrompt
+                restrictionType={restrictionType()}
+                projectCount={projectCount()}
+                quotaLimit={quotaLimit()}
+              />
             </div>
           }
         >
@@ -190,16 +200,17 @@ export default function ProjectDashboard(props) {
           when={projects()?.length > 0}
           fallback={
             <Show when={!isLoading()}>
-              <div class='col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-white py-12 text-center'>
+              <div class='col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12'>
                 <div class='mb-4 text-gray-500'>No projects yet</div>
                 <Show
                   when={canCreateProject()}
                   fallback={
-                    <div class='text-sm text-gray-600'>
-                      {!hasEntitlement('project.create') ?
-                        'Project creation not available on your plan'
-                      : `Project limit reached (${projectCount()}/${isUnlimitedQuota(quotas()['projects.max']) ? '∞' : quotas()['projects.max']})`
-                      }
+                    <div class='mx-auto max-w-md'>
+                      <ContactPrompt
+                        restrictionType={restrictionType()}
+                        projectCount={projectCount()}
+                        quotaLimit={quotaLimit()}
+                      />
                     </div>
                   }
                 >

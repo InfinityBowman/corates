@@ -241,11 +241,18 @@ export default function ChartSection(props) {
       }
     >
       <div class='flex flex-col gap-6'>
-        {/* Settings button */}
-        <div class='flex justify-end'>
+        {/* Section Header with Description and Settings */}
+        <div class='flex items-start justify-between gap-4'>
+          <div class='flex-1'>
+            <p class='text-sm text-gray-600'>
+              Visual representation of AMSTAR-2 quality assessment ratings across completed
+              checklists. Use the settings to customize chart appearance, labels, and export
+              options.
+            </p>
+          </div>
           <button
             onClick={() => setShowSettingsModal(true)}
-            class='inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900'
+            class='inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900'
             title='Chart Settings'
           >
             <BiRegularCog class='h-4 w-4' />

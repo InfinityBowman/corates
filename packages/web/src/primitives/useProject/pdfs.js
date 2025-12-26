@@ -16,7 +16,7 @@ import * as Y from 'yjs';
  * @param {Function} isSynced - Function that returns sync status
  * @returns {Object} PDF operations
  */
-export function createPdfOperations(projectId, getYDoc, isSynced) {
+export function createPdfOperations(projectId, getYDoc, _isSynced) {
   /**
    * Get the pdfs Y.Map for a study, creating it if needed
    * @private
