@@ -255,7 +255,7 @@ async function generate() {
     { file: 'src/routes/users.js', basePath: '/api/users' },
     { file: 'src/routes/pdfs.js', basePath: '/api/projects/{projectId}/studies/{studyId}/pdfs' },
     { file: 'src/routes/billing/index.js', basePath: '/api/billing' },
-    { file: 'src/routes/admin.js', basePath: '/api/admin' },
+    { file: 'src/routes/admin/index.js', basePath: '/api/admin' },
     { file: 'src/routes/contact.js', basePath: '/api/contact' },
     { file: 'src/routes/avatars.js', basePath: '/api/users/avatar' },
     { file: 'src/routes/google-drive.js', basePath: '/api/google-drive' },
