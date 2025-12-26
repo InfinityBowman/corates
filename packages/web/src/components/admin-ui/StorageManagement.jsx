@@ -176,6 +176,24 @@ export default function StorageManagement() {
     setDeleteDialog([key]);
   };
 
+  const handleRowClick = (e, key) => {
+    // Don't toggle if user is selecting text
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) {
+      return;
+    }
+
+    // Don't toggle if clicking on interactive elements
+    const target = e.target;
+    const interactive = target.closest('button, input, textarea, [role="button"]');
+    if (interactive) {
+      return;
+    }
+
+    // Toggle selection
+    toggleSelect(key);
+  };
+
   return (
     <Show
       when={isAdminChecked()}
@@ -340,10 +358,16 @@ export default function StorageManagement() {
                       }
                     >
                       {doc => (
-                        <tr class={`hover:bg-gray-50 ${doc.orphaned ? 'bg-orange-50' : ''}`}>
+                        <tr
+                          class={`hover:bg-gray-50 ${doc.orphaned ? 'bg-orange-50' : ''}`}
+                          onClick={e => handleRowClick(e, doc.key)}
+                        >
                           <td class='px-6 py-4'>
                             <button
-                              onClick={() => toggleSelect(doc.key)}
+                              onClick={e => {
+                                e.stopPropagation();
+                                toggleSelect(doc.key);
+                              }}
                               class='text-gray-400 hover:text-gray-600'
                             >
                               <Show
@@ -381,7 +405,10 @@ export default function StorageManagement() {
                           </td>
                           <td class='px-6 py-4 text-right'>
                             <button
-                              onClick={() => handleSingleDelete(doc.key)}
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleSingleDelete(doc.key);
+                              }}
                               class='rounded-lg p-2 text-red-600 hover:bg-red-50'
                               title='Delete'
                             >
