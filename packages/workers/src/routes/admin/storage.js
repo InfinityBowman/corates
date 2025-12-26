@@ -180,21 +180,19 @@ storageRoutes.delete('/storage/documents', async c => {
     }
 
     // Delete all keys in parallel
-    const deleteResults = await Promise.allSettled(
-      keys.map(key => c.env.PDF_BUCKET.delete(key)),
-    );
+    const deleteResults = await Promise.allSettled(keys.map(key => c.env.PDF_BUCKET.delete(key)));
 
     const deleted = deleteResults.filter(r => r.status === 'fulfilled').length;
     const failed = deleteResults.filter(r => r.status === 'rejected').length;
     const errors =
-      failed > 0
-        ? deleteResults
-            .filter(r => r.status === 'rejected')
-            .map((r, i) => ({
-              key: keys[i],
-              error: r.reason?.message || 'Unknown error',
-            }))
-        : undefined;
+      failed > 0 ?
+        deleteResults
+          .filter(r => r.status === 'rejected')
+          .map((r, i) => ({
+            key: keys[i],
+            error: r.reason?.message || 'Unknown error',
+          }))
+      : undefined;
 
     return c.json({
       deleted,

@@ -252,7 +252,13 @@ export default function StorageManagement() {
                         class='flex items-center text-gray-400 hover:text-gray-600'
                         title='Select all'
                       >
-                        <Show when={selectedKeys().size === (documentsData()?.documents?.length || 0) && (documentsData()?.documents?.length || 0) > 0} fallback={<FiSquare class='h-4 w-4' />}>
+                        <Show
+                          when={
+                            selectedKeys().size === (documentsData()?.documents?.length || 0) &&
+                            (documentsData()?.documents?.length || 0) > 0
+                          }
+                          fallback={<FiSquare class='h-4 w-4' />}
+                        >
                           <FiCheckSquare class='h-4 w-4 text-blue-600' />
                         </Show>
                       </button>
@@ -307,7 +313,10 @@ export default function StorageManagement() {
                               onClick={() => toggleSelect(doc.key)}
                               class='text-gray-400 hover:text-gray-600'
                             >
-                              <Show when={selectedKeys().has(doc.key)} fallback={<FiSquare class='h-4 w-4' />}>
+                              <Show
+                                when={selectedKeys().has(doc.key)}
+                                fallback={<FiSquare class='h-4 w-4' />}
+                              >
                                 <FiCheckSquare class='h-4 w-4 text-blue-600' />
                               </Show>
                             </button>
@@ -325,7 +334,9 @@ export default function StorageManagement() {
                               </Show>
                             </div>
                           </td>
-                          <td class='px-6 py-4 text-sm text-gray-600'>{formatFileSize(doc.size)}</td>
+                          <td class='px-6 py-4 text-sm text-gray-600'>
+                            {formatFileSize(doc.size)}
+                          </td>
                           <td class='px-6 py-4'>
                             <span class='font-mono text-xs text-gray-600'>{doc.projectId}</span>
                           </td>
@@ -357,8 +368,8 @@ export default function StorageManagement() {
               <div class='flex items-center justify-between border-t border-gray-200 px-6 py-4'>
                 <p class='text-sm text-gray-500'>
                   Showing {(page() - 1) * limit + 1} to{' '}
-                  {Math.min(page() * limit, pagination()?.total || 0)} of{' '}
-                  {pagination()?.total || 0} documents
+                  {Math.min(page() * limit, pagination()?.total || 0)} of {pagination()?.total || 0}{' '}
+                  documents
                 </p>
                 <div class='flex items-center space-x-2'>
                   <button
