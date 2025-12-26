@@ -16,15 +16,16 @@ export default withMermaid({
       '/': [
         {
           text: 'Getting Started',
-          items: [
-            { text: 'Home', link: '/' },
-          ],
+          items: [{ text: 'Home', link: '/' }],
         },
         {
           text: 'Architecture',
           items: [
             { text: 'Overview', link: '/architecture/' },
-            { text: 'Package Architecture', link: '/architecture/diagrams/01-package-architecture' },
+            {
+              text: 'Package Architecture',
+              link: '/architecture/diagrams/01-package-architecture',
+            },
             { text: 'System Architecture', link: '/architecture/diagrams/02-system-architecture' },
             { text: 'Sync Flow', link: '/architecture/diagrams/03-sync-flow' },
             { text: 'Data Model', link: '/architecture/diagrams/04-data-model' },
@@ -47,7 +48,10 @@ export default withMermaid({
           text: 'Architecture',
           items: [
             { text: 'Overview', link: '/architecture/' },
-            { text: 'Package Architecture', link: '/architecture/diagrams/01-package-architecture' },
+            {
+              text: 'Package Architecture',
+              link: '/architecture/diagrams/01-package-architecture',
+            },
             { text: 'System Architecture', link: '/architecture/diagrams/02-system-architecture' },
             { text: 'Sync Flow', link: '/architecture/diagrams/03-sync-flow' },
             { text: 'Data Model', link: '/architecture/diagrams/04-data-model' },
