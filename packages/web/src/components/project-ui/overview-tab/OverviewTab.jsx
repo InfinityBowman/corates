@@ -24,6 +24,7 @@ import CircularProgress from './CircularProgress.jsx';
 export default function OverviewTab() {
   const [showAddMemberModal, setShowAddMemberModal] = createSignal(false);
   const [chartsExpanded, setChartsExpanded] = createSignal(false);
+  const [tablesExpanded, setTablesExpanded] = createSignal(false);
 
   const { user } = useBetterAuth();
   const { projectId, isOwner } = useProjectContext();
@@ -314,15 +315,18 @@ export default function OverviewTab() {
         </Show>
       </div>
 
-      {/* Section 3: Quality Assessment - Collapsible */}
-      <div class='mb-8'>
+      {/* Section 3: Results */}
+      <div class='mb-8 space-y-6'>
+        <h2 class='text-lg font-semibold text-gray-900'>Results</h2>
+
+        {/* Figures Section - Collapsible */}
         <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
           <Collapsible
             open={chartsExpanded()}
             onOpenChange={({ open }) => setChartsExpanded(open)}
             trigger={
               <div class='flex w-full cursor-pointer items-center justify-between px-6 py-4 transition-colors select-none hover:bg-gray-50'>
-                <h2 class='text-lg font-semibold text-gray-900'>Quality Assessment</h2>
+                <h2 class='text-lg font-semibold text-gray-900'>Figures</h2>
                 <div class='text-sm text-gray-500'>
                   {chartsExpanded() ? 'Click to collapse' : 'Click to expand charts'}
                 </div>
@@ -335,6 +339,25 @@ export default function OverviewTab() {
                 members={members}
                 getChecklistData={getChecklistData}
               />
+            </div>
+          </Collapsible>
+        </div>
+        {/* Tables Section - Collapsible */}
+        <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
+          <Collapsible
+            open={tablesExpanded()}
+            onOpenChange={({ open }) => setTablesExpanded(open)}
+            trigger={
+              <div class='flex w-full cursor-pointer items-center justify-between px-6 py-4 transition-colors select-none hover:bg-gray-50'>
+                <h2 class='text-lg font-semibold text-gray-900'>Tables</h2>
+                <div class='text-sm text-gray-500'>
+                  {tablesExpanded() ? 'Click to collapse' : 'Click to expand tables'}
+                </div>
+              </div>
+            }
+          >
+            <div class='border-t border-gray-200 px-6 py-6'>
+              <p class='text-gray-500'>No tables to display.</p>
             </div>
           </Collapsible>
         </div>
