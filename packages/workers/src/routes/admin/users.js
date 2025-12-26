@@ -1,10 +1,10 @@
 /**
- * Admin routes for Hono
- * Provides admin dashboard API endpoints for user management
+ * Admin user management routes
+ * Handles user CRUD operations, bans, impersonation, subscriptions, and stats
  */
 
 import { Hono } from 'hono';
-import { createDb } from '../db/client.js';
+import { createDb } from '../../db/client.js';
 import {
   user,
   session,
@@ -14,11 +14,9 @@ import {
   verification,
   twoFactor,
   subscriptions,
-} from '../db/schema.js';
+} from '../../db/schema.js';
 import { eq, desc, sql, like, or, count } from 'drizzle-orm';
-import { requireAdmin } from '../middleware/requireAdmin.js';
-import { requireTrustedOrigin } from '../middleware/csrf.js';
-import { createAuth } from '../auth/config.js';
+import { createAuth } from '../../auth/config.js';
 import {
   createDomainError,
   createValidationError,
@@ -26,21 +24,17 @@ import {
   USER_ERRORS,
   SYSTEM_ERRORS,
 } from '@corates/shared';
-import { upsertSubscription, getSubscriptionByUserId } from '../db/subscriptions.js';
+import { upsertSubscription, getSubscriptionByUserId } from '../../db/subscriptions.js';
 import { getPlan } from '@corates/shared/plans';
-import { subscriptionSchemas, validateRequest } from '../config/validation.js';
-const adminRoutes = new Hono();
+import { subscriptionSchemas, validateRequest } from '../../config/validation.js';
 
-// Apply admin middleware to all routes
-adminRoutes.use('*', requireAdmin);
-// CSRF guard for all state-changing admin routes
-adminRoutes.use('*', requireTrustedOrigin);
+const userRoutes = new Hono();
 
 /**
  * GET /api/admin/stats
  * Get dashboard statistics
  */
-adminRoutes.get('/stats', async c => {
+userRoutes.get('/stats', async c => {
   const db = createDb(c.env.DB);
 
   try {
@@ -84,7 +78,7 @@ adminRoutes.get('/stats', async c => {
  *   - sort: field to sort by (default createdAt)
  *   - order: asc or desc (default desc)
  */
-adminRoutes.get('/users', async c => {
+userRoutes.get('/users', async c => {
   const db = createDb(c.env.DB);
 
   const page = Math.max(1, parseInt(c.req.query('page') || '1', 10));
@@ -215,7 +209,7 @@ adminRoutes.get('/users', async c => {
  * GET /api/admin/users/:userId
  * Get detailed user info
  */
-adminRoutes.get('/users/:userId', async c => {
+userRoutes.get('/users/:userId', async c => {
   const userId = c.req.param('userId');
   const db = createDb(c.env.DB);
 
@@ -292,7 +286,7 @@ adminRoutes.get('/users/:userId', async c => {
  * POST /api/admin/users/:userId/ban
  * Ban a user
  */
-adminRoutes.post('/users/:userId/ban', async c => {
+userRoutes.post('/users/:userId/ban', async c => {
   const userId = c.req.param('userId');
   const { reason, expiresAt } = await c.req.json();
   const db = createDb(c.env.DB);
@@ -339,7 +333,7 @@ adminRoutes.post('/users/:userId/ban', async c => {
  * POST /api/admin/users/:userId/unban
  * Unban a user
  */
-adminRoutes.post('/users/:userId/unban', async c => {
+userRoutes.post('/users/:userId/unban', async c => {
   const userId = c.req.param('userId');
   const db = createDb(c.env.DB);
 
@@ -370,7 +364,7 @@ adminRoutes.post('/users/:userId/unban', async c => {
  * Start impersonating a user (creates a new session)
  * Requires user to have 'admin' role in database
  */
-adminRoutes.post('/users/:userId/impersonate', async c => {
+userRoutes.post('/users/:userId/impersonate', async c => {
   const userId = c.req.param('userId');
   const adminUser = c.get('user');
 
@@ -430,15 +424,11 @@ adminRoutes.post('/users/:userId/impersonate', async c => {
   }
 });
 
-// Note: stop-impersonation is defined in index.js separately
-// because it needs to bypass the requireAdmin middleware
-// (the impersonated user won't have admin role)
-
 /**
  * DELETE /api/admin/users/:userId/sessions
  * Revoke all sessions for a user
  */
-adminRoutes.delete('/users/:userId/sessions', async c => {
+userRoutes.delete('/users/:userId/sessions', async c => {
   const userId = c.req.param('userId');
   const db = createDb(c.env.DB);
 
@@ -460,7 +450,7 @@ adminRoutes.delete('/users/:userId/sessions', async c => {
  * DELETE /api/admin/users/:userId
  * Delete a user and all their data
  */
-adminRoutes.delete('/users/:userId', async c => {
+userRoutes.delete('/users/:userId', async c => {
   const userId = c.req.param('userId');
   const adminUser = c.get('user');
   const db = createDb(c.env.DB);
@@ -515,7 +505,7 @@ adminRoutes.delete('/users/:userId', async c => {
  * GET /api/admin/check
  * Check if current user is admin
  */
-adminRoutes.get('/check', async c => {
+userRoutes.get('/check', async c => {
   const adminUser = c.get('user');
   return c.json({
     isAdmin: true,
@@ -533,7 +523,7 @@ adminRoutes.get('/check', async c => {
  * Body: { tier: 'free'|'pro'|'unlimited', status: 'active', currentPeriodStart?: timestamp, currentPeriodEnd?: timestamp }
  * Admins select the plan (tier), which determines entitlements/quotas via configuration
  */
-adminRoutes.post(
+userRoutes.post(
   '/users/:userId/subscription',
   validateRequest(subscriptionSchemas.grant),
   async c => {
@@ -609,7 +599,7 @@ adminRoutes.post(
  * DELETE /api/admin/users/:userId/subscription
  * Revoke subscription for a user (sets status to inactive)
  */
-adminRoutes.delete('/users/:userId/subscription', async c => {
+userRoutes.delete('/users/:userId/subscription', async c => {
   const userId = c.req.param('userId');
   const db = createDb(c.env.DB);
 
@@ -649,4 +639,4 @@ adminRoutes.delete('/users/:userId/subscription', async c => {
   }
 });
 
-export { adminRoutes };
+export { userRoutes };

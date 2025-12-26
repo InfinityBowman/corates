@@ -251,6 +251,62 @@ async function revokeAccess(userId) {
   return response.json();
 }
 
+/**
+ * Fetch storage documents with pagination
+ */
+async function fetchStorageDocuments({ page = 1, limit = 50, prefix = '', search = '' } = {}) {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+  if (prefix) params.set('prefix', prefix);
+  if (search) params.set('search', search);
+
+  const response = await fetch(`${API_BASE}/api/admin/storage/documents?${params}`, {
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'Failed to fetch storage documents');
+  }
+  return response.json();
+}
+
+/**
+ * Delete storage documents (bulk)
+ */
+async function deleteStorageDocuments(keys) {
+  if (!Array.isArray(keys) || keys.length === 0) {
+    throw new Error('Keys array is required');
+  }
+
+  const response = await fetch(`${API_BASE}/api/admin/storage/documents`, {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keys }),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'Failed to delete storage documents');
+  }
+  return response.json();
+}
+
+/**
+ * Fetch storage statistics
+ */
+async function fetchStorageStats() {
+  const response = await fetch(`${API_BASE}/api/admin/storage/stats`, {
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'Failed to fetch storage stats');
+  }
+  return response.json();
+}
+
 export {
   isAdmin,
   isAdminChecked,
@@ -269,4 +325,7 @@ export {
   deleteUser,
   grantAccess,
   revokeAccess,
+  fetchStorageDocuments,
+  deleteStorageDocuments,
+  fetchStorageStats,
 };
