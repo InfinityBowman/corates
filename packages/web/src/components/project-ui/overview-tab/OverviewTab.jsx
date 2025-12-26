@@ -288,7 +288,7 @@ export default function OverviewTab() {
                         <div class='mt-4'>
                           <Progress
                             value={userProgress().percentage}
-                            label={`${userProgress().completed} of ${userProgress().total} appraisals completed`}
+                            label={`${userProgress().completed} of ${userProgress().total} studies appraised`}
                             showValue={true}
                             size='sm'
                             variant={

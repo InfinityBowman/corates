@@ -26,7 +26,7 @@ import {
 } from '@corates/shared';
 import { upsertSubscription, getSubscriptionByUserId } from '../../db/subscriptions.js';
 import { getPlan } from '@corates/shared/plans';
-import { subscriptionSchemas, validateRequest } from '../../config/validation.js';
+import { subscriptionSchemas, userSchemas, validateRequest } from '../../config/validation.js';
 
 const userRoutes = new Hono();
 
@@ -286,9 +286,9 @@ userRoutes.get('/users/:userId', async c => {
  * POST /api/admin/users/:userId/ban
  * Ban a user
  */
-userRoutes.post('/users/:userId/ban', async c => {
+userRoutes.post('/users/:userId/ban', validateRequest(userSchemas.ban), async c => {
   const userId = c.req.param('userId');
-  const { reason, expiresAt } = await c.req.json();
+  const { reason, expiresAt } = c.get('validatedBody');
   const db = createDb(c.env.DB);
 
   try {
@@ -311,7 +311,7 @@ userRoutes.post('/users/:userId/ban', async c => {
         .set({
           banned: true,
           banReason: reason || 'Banned by administrator',
-          banExpires: expiresAt ? new Date(expiresAt) : null,
+          banExpires: expiresAt ?? null,
           updatedAt: new Date(),
         })
         .where(eq(user.id, userId)),
