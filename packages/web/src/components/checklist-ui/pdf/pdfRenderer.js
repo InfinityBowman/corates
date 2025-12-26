@@ -67,13 +67,6 @@ export function createPdfRenderer(document, scrollHandler) {
         visiblePages.forEach(pageNum => {
           renderedPages.delete(pageNum);
           renderedTextLayers.delete(pageNum);
-          // Update text selection layer viewport for visible pages
-          if (textSelectionLayers.has(pageNum)) {
-            const layer = textSelectionLayers.get(pageNum);
-            const currentScale = scrollHandler.scale();
-            // Get updated viewport - we'll update it in renderPage
-            // For now, just mark it as needing update
-          }
         });
       } else {
         renderedPages.clear();
@@ -348,22 +341,17 @@ export function createPdfRenderer(document, scrollHandler) {
       const textLayerDiv = textLayers[pageNum - 1];
       if (textLayerDiv) {
         try {
-          // Clean up existing selection layer if it exists
+          // Clean up existing selection layer if it exists (e.g., on zoom/viewport change)
+          // This ensures selections are cleared when viewport changes rather than becoming misaligned
           if (textSelectionLayers.has(pageNum)) {
             const oldLayer = textSelectionLayers.get(pageNum);
             oldLayer.cleanup();
             textSelectionLayers.delete(pageNum);
           }
 
-          // Update existing selection layer or create new one
-          if (textSelectionLayers.has(pageNum)) {
-            const existingLayer = textSelectionLayers.get(pageNum);
-            existingLayer.updateViewport(viewport);
-          } else {
-            // Create new text selection layer with current viewport
-            const selectionLayer = createTextSelectionLayer(textLayerDiv, page, viewport);
-            textSelectionLayers.set(pageNum, selectionLayer);
-          }
+          // Create new text selection layer with current viewport
+          const selectionLayer = createTextSelectionLayer(textLayerDiv, page, viewport);
+          textSelectionLayers.set(pageNum, selectionLayer);
           renderedTextLayers.add(pageNum);
         } catch (err) {
           // Ignore errors if page is no longer visible or rendering was cancelled
