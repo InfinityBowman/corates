@@ -1,7 +1,7 @@
 import { For, Show, createMemo } from 'solid-js';
 import { scoreChecklist } from '@/AMSTAR2/checklist.js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
-import ScoreTag, { ScoreTooltip } from '@/components/checklist-ui/ScoreTag.jsx';
+import ScoreTag, { ScoreTooltip } from '@/components/checklist/ScoreTag.jsx';
 
 /**
  * AMSTAR2ResultsTable - Displays AMSTAR 2 quality scores for each study

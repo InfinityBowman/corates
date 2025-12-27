@@ -6,10 +6,10 @@
 import { Show, createMemo } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { AiOutlineArrowLeft } from 'solid-icons/ai';
-import PdfViewer from '@/components/checklist-ui/pdf/PdfViewer.jsx';
+import PdfViewer from '@/components/checklist/pdf/PdfViewer.jsx';
 import ChecklistReconciliation from './ChecklistReconciliation.jsx';
 import Navbar from './Navbar.jsx';
-import SplitScreenLayout from '@/components/checklist-ui/SplitScreenLayout.jsx';
+import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx';
 
 export default function ReconciliationWithPdf(props) {
   // props.checklist1 - First reviewer's checklist data

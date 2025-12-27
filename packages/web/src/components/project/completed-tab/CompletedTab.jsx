@@ -3,7 +3,7 @@ import { useNavigate } from '@solidjs/router';
 import { AiFillCheckCircle } from 'solid-icons/ai';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
-import { useProjectContext } from '@project-ui/ProjectContext.jsx';
+import { useProjectContext } from '@/components/project/ProjectContext.jsx';
 import { getStudiesForTab, isDualReviewerStudy } from '@/lib/checklist-domain.js';
 import useProject from '@/primitives/useProject/index.js';
 import CompletedStudyRow from './CompletedStudyRow.jsx';

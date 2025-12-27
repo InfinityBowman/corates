@@ -7,7 +7,7 @@
 
 import { Show } from 'solid-js';
 import SlidingPanel from './SlidingPanel.jsx';
-import PdfViewer from '@/components/checklist-ui/pdf/PdfViewer.jsx';
+import PdfViewer from '@/components/checklist/pdf/PdfViewer.jsx';
 import pdfPreviewStore from '@/stores/pdfPreviewStore.js';
 
 export default function PdfPreviewPanel() {

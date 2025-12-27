@@ -5,9 +5,9 @@
  * Supports multiple checklist types via the GenericChecklist component.
  */
 
-import GenericChecklist from '@checklist-ui/GenericChecklist.jsx';
-import PdfViewer from '@/components/checklist-ui/pdf/PdfViewer.jsx';
-import SplitScreenLayout from '@checklist-ui/SplitScreenLayout.jsx';
+import GenericChecklist from '@/components/checklist/GenericChecklist.jsx';
+import PdfViewer from '@/components/checklist/pdf/PdfViewer.jsx';
+import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx';
 
 export default function ChecklistWithPdf(props) {
   // props.checklistType - the type of checklist ('AMSTAR2', 'ROBINS_I', etc.)

@@ -3,7 +3,7 @@ import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
 import { createChecklist as createAMSTAR2Checklist } from '@/AMSTAR2/checklist.js';
 import { FaSolidCircleInfo } from 'solid-icons/fa';
 import { Tooltip } from '@corates/ui';
-import NoteEditor from '@checklist-ui/common/NoteEditor.jsx';
+import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
 
 export function Question1(props) {
   const state = () => props.checklistState().q1;

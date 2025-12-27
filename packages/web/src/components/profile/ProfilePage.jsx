@@ -3,7 +3,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import { FiCamera } from 'solid-icons/fi';
 import { showToast } from '@corates/ui';
 import { LANDING_URL, API_BASE } from '@config/api.js';
-import { ROLES, getRoleLabel } from '@components/auth-ui/RoleSelector.jsx';
+import { ROLES, getRoleLabel } from '@/components/auth/RoleSelector.jsx';
 import { compressImageFile } from '@lib/imageUtils.js';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];

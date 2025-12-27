@@ -11,8 +11,8 @@ import {
   DEFAULT_CHECKLIST_TYPE,
   CHECKLIST_TYPES,
 } from '@/checklist-registry';
-import AMSTAR2Checklist from '@checklist-ui/AMSTAR2Checklist.jsx';
-import { ROBINSIChecklist } from '@checklist-ui/ROBINSIChecklist/index.js';
+import AMSTAR2Checklist from '@/components/checklist/AMSTAR2Checklist.jsx';
+import { ROBINSIChecklist } from '@/components/checklist/ROBINSIChecklist/index.js';
 
 /**
  * GenericChecklist Component

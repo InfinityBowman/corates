@@ -8,7 +8,7 @@ import { createSignal, createEffect, onCleanup, Show } from 'solid-js';
 import { BiRegularChevronRight } from 'solid-icons/bi';
 import { BsJournalText, BsClipboard2 } from 'solid-icons/bs';
 import { Collapsible } from '@corates/ui';
-import NoteEditor from '@checklist-ui/common/NoteEditor.jsx';
+import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
 
 const MAX_LENGTH = 2000;
 

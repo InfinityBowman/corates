@@ -1,6 +1,6 @@
 import { Show } from 'solid-js';
-import ProjectDashboard from '@project-ui/ProjectDashboard.jsx';
-import ChecklistsDashboard from '@checklist-ui/ChecklistsDashboard.jsx';
+import ProjectDashboard from '@/components/project/ProjectDashboard.jsx';
+import ChecklistsDashboard from '@/components/checklist/ChecklistsDashboard.jsx';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { API_BASE } from '@config/api.js';
 

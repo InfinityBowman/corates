@@ -1,6 +1,6 @@
 import { createSignal, createEffect, createMemo, Show } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
-import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
+import ChecklistWithPdf from '@/components/checklist/ChecklistWithPdf.jsx';
 import useProject from '@/primitives/useProject/index.js';
 import projectStore from '@/stores/projectStore.js';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
@@ -12,7 +12,7 @@ import { showToast, useConfirmDialog } from '@corates/ui';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry';
 import { IoChevronBack } from 'solid-icons/io';
-import ScoreTag from '@/components/checklist-ui/ScoreTag.jsx';
+import ScoreTag from '@/components/checklist/ScoreTag.jsx';
 import { isAMSTAR2Complete } from '@/AMSTAR2/checklist.js';
 
 export default function ChecklistYjsWrapper() {

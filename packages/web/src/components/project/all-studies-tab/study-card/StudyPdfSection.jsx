@@ -8,8 +8,8 @@
 import { createSignal, createMemo, Show, For } from 'solid-js';
 import { FaBrandsGoogleDrive, FaSolidPlus } from 'solid-icons/fa';
 import { showToast } from '@corates/ui';
-import PdfListItem from '@/components/checklist-ui/pdf/PdfListItem.jsx';
-import EditPdfMetadataModal from '@/components/project-ui/all-studies-tab/EditPdfMetadataModal.jsx';
+import PdfListItem from '@/components/checklist/pdf/PdfListItem.jsx';
+import EditPdfMetadataModal from '@/components/project/all-studies-tab/EditPdfMetadataModal.jsx';
 import projectActionsStore from '@/stores/projectActionsStore';
 
 export default function StudyPdfSection(props) {

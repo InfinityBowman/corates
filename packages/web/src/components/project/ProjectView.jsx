@@ -24,11 +24,11 @@ import { getChecklistCount } from '@/lib/checklist-domain.js';
 import { ProjectProvider } from './ProjectContext.jsx';
 import ProjectHeader from './ProjectHeader.jsx';
 import PdfPreviewPanel from './PdfPreviewPanel.jsx';
-import { OverviewTab } from './overview-tab';
-import { AllStudiesTab } from './all-studies-tab';
-import { ToDoTab } from './todo-tab';
-import { ReconcileTab } from './reconcile-tab';
-import { CompletedTab } from './completed-tab';
+import { OverviewTab } from './overview-tab/index.js';
+import { AllStudiesTab } from './all-studies-tab/index.js';
+import { ToDoTab } from './todo-tab/index.js';
+import { ReconcileTab } from './reconcile-tab/index.js';
+import { CompletedTab } from './completed-tab/index.js';
 
 export default function ProjectView() {
   const params = useParams();

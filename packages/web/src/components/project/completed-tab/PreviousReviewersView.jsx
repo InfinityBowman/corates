@@ -7,11 +7,11 @@
 
 import { Show, createMemo, createSignal, createEffect } from 'solid-js';
 import { Dialog, Tabs } from '@corates/ui';
-import { useProjectContext } from '@project-ui/ProjectContext.jsx';
+import { useProjectContext } from '@/components/project/ProjectContext.jsx';
 import useProject from '@/primitives/useProject/index.js';
 import { getOriginalReviewerChecklists } from '@/lib/checklist-domain.js';
 import { getChecklistMetadata } from '@/checklist-registry';
-import GenericChecklist from '@/components/checklist-ui/GenericChecklist.jsx';
+import GenericChecklist from '@/components/checklist/GenericChecklist.jsx';
 
 export default function PreviousReviewersView(props) {
   // props.study: Study object

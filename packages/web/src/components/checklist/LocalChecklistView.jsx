@@ -8,12 +8,12 @@
 
 import { createSignal, createEffect, Show, onCleanup, createMemo } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
-import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
-import CreateLocalChecklist from '@checklist-ui/CreateLocalChecklist.jsx';
+import ChecklistWithPdf from '@/components/checklist/ChecklistWithPdf.jsx';
+import CreateLocalChecklist from '@/components/checklist/CreateLocalChecklist.jsx';
 import useLocalChecklists from '@primitives/useLocalChecklists.js';
 import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry';
 import { IoChevronBack } from 'solid-icons/io';
-import ScoreTag from '@/components/checklist-ui/ScoreTag.jsx';
+import ScoreTag from '@/components/checklist/ScoreTag.jsx';
 
 export default function LocalChecklistView() {
   const params = useParams();
