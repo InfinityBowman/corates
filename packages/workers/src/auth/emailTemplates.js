@@ -193,8 +193,18 @@ export function getAccountMergeEmailText({ code, expiryMinutes = 15 }) {
   `;
 }
 
-export function getProjectInvitationEmailHtml({ projectName, inviterName, invitationUrl, role, expiryDays = 7 }) {
-  const roleText = role === 'owner' ? 'Owner' : role === 'collaborator' ? 'Collaborator' : role === 'viewer' ? 'Viewer' : 'Member';
+export function getProjectInvitationEmailHtml({
+  projectName,
+  inviterName,
+  invitationUrl,
+  role,
+  expiryDays = 7,
+}) {
+  const roleText =
+    role === 'owner' ? 'Owner'
+    : role === 'collaborator' ? 'Collaborator'
+    : role === 'viewer' ? 'Viewer'
+    : 'Member';
 
   return `
     <!DOCTYPE html>
@@ -231,8 +241,18 @@ export function getProjectInvitationEmailHtml({ projectName, inviterName, invita
   `;
 }
 
-export function getProjectInvitationEmailText({ projectName, inviterName, invitationUrl, role, expiryDays = 7 }) {
-  const roleText = role === 'owner' ? 'Owner' : role === 'collaborator' ? 'Collaborator' : role === 'viewer' ? 'Viewer' : 'Member';
+export function getProjectInvitationEmailText({
+  projectName,
+  inviterName,
+  invitationUrl,
+  role,
+  expiryDays = 7,
+}) {
+  const roleText =
+    role === 'owner' ? 'Owner'
+    : role === 'collaborator' ? 'Collaborator'
+    : role === 'viewer' ? 'Viewer'
+    : 'Member';
 
   return `
     Hi there,
