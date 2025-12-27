@@ -8,6 +8,7 @@ import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import {
   resetTestDatabase,
+  clearProjectDOs,
   seedUser,
   seedProject,
   seedProjectMember,
@@ -60,6 +61,8 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await resetTestDatabase();
+  // Clear ProjectDoc DOs to prevent invalidation errors between tests
+  await clearProjectDOs(['project-1', 'project-2']);
 });
 
 async function fetchProjects(path, init = {}) {
