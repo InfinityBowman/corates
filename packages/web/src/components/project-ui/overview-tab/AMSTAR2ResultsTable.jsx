@@ -9,10 +9,13 @@ import ScoreTag from '@/components/checklist-ui/ScoreTag.jsx';
  * Props:
  * - studies: signal returning array of studies with checklists
  * - getChecklistData: function (studyId, checklistId) => checklist with answers
+ * - synced: signal returning boolean indicating if Y.Doc data is ready
  */
 export default function AMSTAR2ResultsTable(props) {
   // Process studies and calculate scores
   const studyScores = createMemo(() => {
+    // Track synced state to ensure memo re-runs when data becomes available
+    const _isSynced = props.synced?.() ?? false;
     const studiesList = props.studies?.() || [];
     if (studiesList.length === 0) return [];
 
