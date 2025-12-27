@@ -13,6 +13,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry';
 import { IoChevronBack } from 'solid-icons/io';
 import ScoreTag from '@/components/checklist-ui/ScoreTag.jsx';
+import { isAMSTAR2Complete } from '@/AMSTAR2/checklist.js';
 
 export default function ChecklistYjsWrapper() {
   const params = useParams();
@@ -262,6 +263,15 @@ export default function ChecklistYjsWrapper() {
       return;
     }
 
+    // Safety check: validate checklist before allowing completion
+    if (!isChecklistValid()) {
+      showToast.error(
+        'Incomplete Checklist',
+        'All questions must have a final answer before marking the checklist as complete.',
+      );
+      return;
+    }
+
     // Show confirmation dialog before marking complete
     const confirmed = await confirmDialog.open({
       title: 'Mark Checklist as Complete?',
@@ -301,6 +311,19 @@ export default function ChecklistYjsWrapper() {
     const type = checklistType();
     if (!checklist || !type) return null;
     return scoreChecklistOfType(type, checklist);
+  });
+
+  // Validate checklist completion - only for AMSTAR2 checklists
+  const isChecklistValid = createMemo(() => {
+    const type = checklistType();
+    const checklist = checklistForUI();
+
+    // For non-AMSTAR2 checklists, allow completion (no validation)
+    if (type !== 'AMSTAR2') return true;
+
+    // For AMSTAR2, check if all questions have final answers
+    if (!checklist) return false;
+    return isAMSTAR2Complete(checklist);
   });
 
   // Determine back button navigation based on checklist status
@@ -357,9 +380,16 @@ export default function ChecklistYjsWrapper() {
         >
           <button
             onClick={handleToggleComplete}
+            disabled={!isChecklistValid()}
+            title={
+              !isChecklistValid() ?
+                'All questions must have a final answer before marking complete'
+              : undefined
+            }
             class={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               currentChecklist()?.status === CHECKLIST_STATUS.COMPLETED ?
                 'bg-green-100 text-green-700 hover:bg-green-200'
+              : !isChecklistValid() ? 'cursor-not-allowed bg-gray-300 text-gray-500 opacity-60'
               : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}
           >
