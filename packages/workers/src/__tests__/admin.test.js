@@ -93,7 +93,7 @@ async function resetSchema() {
   for (const table of tablesToDrop) {
     try {
       await run(`DROP TABLE IF EXISTS \`${table}\``);
-    } catch (error) {
+    } catch (_error) {
       // Ignore all errors during drop - tables might not exist or have constraint issues
       // This is safe because we're recreating the schema anyway
     }

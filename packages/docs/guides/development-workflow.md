@@ -257,7 +257,6 @@ pnpm install
 
 ## Resources
 
-- [Contributing Guide](/.github/Contributing.md) - Detailed contribution guidelines
 - [Architecture Diagrams](/architecture/) - System architecture
 - [Error Handling Guide](/guides/error-handling) - Error handling patterns
 - [Style Guide](/guides/style-guide) - UI/UX guidelines
