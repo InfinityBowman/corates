@@ -83,7 +83,7 @@ export default function ReconciliationWithPdf(props) {
       <SplitScreenLayout
         defaultLayout='vertical'
         defaultRatio={60}
-        showSecondPanel={hasPdf()}
+        showSecondPanel={false}
         headerContent={headerContent}
         secondPanelLabel='PDF viewer'
       >
