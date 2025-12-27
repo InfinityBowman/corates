@@ -2,7 +2,12 @@
  * Shared test utilities for workers tests
  */
 
-import { env, createExecutionContext, waitOnExecutionContext, runInDurableObject } from 'cloudflare:test';
+import {
+  env,
+  createExecutionContext,
+  waitOnExecutionContext,
+  runInDurableObject,
+} from 'cloudflare:test';
 import { createDb } from '../db/client.js';
 import { user, projects, projectMembers, session, subscriptions } from '../db/schema.js';
 import {
