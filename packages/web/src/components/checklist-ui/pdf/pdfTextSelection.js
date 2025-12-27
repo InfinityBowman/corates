@@ -37,6 +37,10 @@ export function createTextSelectionLayer(container, page, initialViewport) {
 
     try {
       const textContent = await page.getTextContent();
+
+      // Check again after async operation - cleanup may have run
+      if (!textLayerDiv) return;
+
       textItems = textContent.items;
 
       // Clear existing content
@@ -92,6 +96,8 @@ export function createTextSelectionLayer(container, page, initialViewport) {
         span.style.height = `${itemHeight * viewport.scale}px`;
         span.style.display = 'inline-block';
 
+        // Check again before appending - cleanup may have run during loop
+        if (!textLayerDiv) return;
         textLayerDiv.appendChild(span);
       }
     } catch (err) {
