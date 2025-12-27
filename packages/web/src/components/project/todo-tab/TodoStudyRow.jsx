@@ -10,7 +10,7 @@ import { BiRegularChevronRight } from 'solid-icons/bi';
 import { Collapsible } from '@corates/ui';
 import { getChecklistMetadata } from '@/checklist-registry';
 import PdfListItem from '@/components/checklist/pdf/PdfListItem.jsx';
-import ChecklistForm from '../ChecklistForm.jsx';
+import ChecklistForm from './ChecklistForm.jsx';
 import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status.js';
 
 export default function TodoStudyRow(props) {
