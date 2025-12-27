@@ -13,34 +13,12 @@ import { requireQuota } from '../middleware/requireQuota.js';
 import { projectSchemas, validateRequest } from '../config/validation.js';
 import { EDIT_ROLES } from '../config/constants.js';
 import { createDomainError, PROJECT_ERRORS, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import { syncProjectToDO } from '../lib/project-sync.js';
 
 const projectRoutes = new Hono();
 
 // Apply auth middleware to all routes
 projectRoutes.use('*', requireAuth);
-
-/**
- * Sync project metadata and members to the Durable Object
- */
-async function syncProjectToDO(env, projectId, meta, members) {
-  try {
-    const doId = env.PROJECT_DOC.idFromName(projectId);
-    const projectDoc = env.PROJECT_DOC.get(doId);
-
-    await projectDoc.fetch(
-      new Request('https://internal/sync', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Internal-Request': 'true',
-        },
-        body: JSON.stringify({ meta, members }),
-      }),
-    );
-  } catch (err) {
-    console.error('Failed to sync project to DO:', err);
-  }
-}
 
 /**
  * GET /api/projects/:id
@@ -150,27 +128,31 @@ projectRoutes.post(
         .get();
 
       // Sync to Durable Object
-      await syncProjectToDO(
-        c.env,
-        projectId,
-        {
-          name: name.trim(),
-          description: description?.trim() || null,
-          createdAt: now.getTime(),
-          updatedAt: now.getTime(),
-        },
-        [
+      try {
+        await syncProjectToDO(
+          c.env,
+          projectId,
           {
-            userId: authUser.id,
-            role: 'owner',
-            joinedAt: now.getTime(),
-            name: creator?.name || null,
-            email: creator?.email || null,
-            displayName: creator?.displayName || null,
-            image: creator?.image || null,
+            name: name.trim(),
+            description: description?.trim() || null,
+            createdAt: now.getTime(),
+            updatedAt: now.getTime(),
           },
-        ],
-      );
+          [
+            {
+              userId: authUser.id,
+              role: 'owner',
+              joinedAt: now.getTime(),
+              name: creator?.name || null,
+              email: creator?.email || null,
+              displayName: creator?.displayName || null,
+              image: creator?.image || null,
+            },
+          ],
+        );
+      } catch (err) {
+        console.error('Failed to sync project to DO:', err);
+      }
 
       const newProject = {
         id: projectId,
@@ -234,7 +216,11 @@ projectRoutes.put('/:id', validateRequest(projectSchemas.update), async c => {
     if (name !== undefined) metaUpdate.name = name;
     if (description !== undefined) metaUpdate.description = description;
 
-    await syncProjectToDO(c.env, projectId, metaUpdate, null);
+    try {
+      await syncProjectToDO(c.env, projectId, metaUpdate, null);
+    } catch (err) {
+      console.error('Failed to sync project update to DO:', err);
+    }
 
     return c.json({ success: true, projectId });
   } catch (error) {

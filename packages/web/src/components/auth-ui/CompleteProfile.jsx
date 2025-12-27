@@ -138,7 +138,7 @@ export default function CompleteProfile() {
 
       const invitationToken =
         urlParams.get('invitation') || localStorage.getItem('pendingInvitationToken');
-      console.log('invitationToken', invitationToken);
+
       if (invitationToken) {
         try {
           const response = await handleFetchError(

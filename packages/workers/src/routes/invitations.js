@@ -16,31 +16,9 @@ import {
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
+import { syncMemberToDO } from '../lib/project-sync.js';
 
 const invitationRoutes = new Hono();
-
-/**
- * Sync a member change to the Durable Object
- */
-async function syncMemberToDO(env, projectId, action, memberData) {
-  try {
-    const doId = env.PROJECT_DOC.idFromName(projectId);
-    const projectDoc = env.PROJECT_DOC.get(doId);
-
-    await projectDoc.fetch(
-      new Request('https://internal/sync-member', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Internal-Request': 'true',
-        },
-        body: JSON.stringify({ action, member: memberData }),
-      }),
-    );
-  } catch (err) {
-    console.error('Failed to sync member to DO:', err);
-  }
-}
 
 /**
  * POST /api/invitations/accept
@@ -211,15 +189,19 @@ invitationRoutes.post(
       }
 
       // Sync member to DO
-      await syncMemberToDO(c.env, invitation.projectId, 'add', {
-        userId: authUser.id,
-        role: invitation.role,
-        joinedAt: nowDate.getTime(),
-        name: currentUser.name,
-        email: currentUser.email,
-        displayName: currentUser.displayName,
-        image: currentUser.image,
-      });
+      try {
+        await syncMemberToDO(c.env, invitation.projectId, 'add', {
+          userId: authUser.id,
+          role: invitation.role,
+          joinedAt: nowDate.getTime(),
+          name: currentUser.name,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+          image: currentUser.image,
+        });
+      } catch (err) {
+        console.error('Failed to sync member to DO:', err);
+      }
 
       return c.json({
         success: true,

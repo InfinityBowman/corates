@@ -17,34 +17,12 @@ import {
   USER_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
+import { syncMemberToDO } from '../lib/project-sync.js';
 
 const memberRoutes = new Hono();
 
 // Apply auth middleware to all routes
 memberRoutes.use('*', requireAuth);
-
-/**
- * Sync a member change to the Durable Object
- */
-async function syncMemberToDO(env, projectId, action, memberData) {
-  try {
-    const doId = env.PROJECT_DOC.idFromName(projectId);
-    const projectDoc = env.PROJECT_DOC.get(doId);
-
-    await projectDoc.fetch(
-      new Request('https://internal/sync-member', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Internal-Request': 'true',
-        },
-        body: JSON.stringify({ action, member: memberData }),
-      }),
-    );
-  } catch (err) {
-    console.error('Failed to sync member to DO:', err);
-  }
-}
 
 /**
  * Middleware to verify project membership and set context
@@ -434,15 +412,19 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
     }
 
     // Sync member to DO
-    await syncMemberToDO(c.env, projectId, 'add', {
-      userId: userToAdd.id,
-      role,
-      joinedAt: now.getTime(),
-      name: userToAdd.name,
-      email: userToAdd.email,
-      displayName: userToAdd.displayName,
-      image: userToAdd.image,
-    });
+    try {
+      await syncMemberToDO(c.env, projectId, 'add', {
+        userId: userToAdd.id,
+        role,
+        joinedAt: now.getTime(),
+        name: userToAdd.name,
+        email: userToAdd.email,
+        displayName: userToAdd.displayName,
+        image: userToAdd.image,
+      });
+    } catch (err) {
+      console.error('Failed to sync member to DO:', err);
+    }
 
     return c.json(
       {
@@ -519,10 +501,14 @@ memberRoutes.put('/:userId', validateRequest(memberSchemas.updateRole), async c 
       .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
 
     // Sync role update to DO
-    await syncMemberToDO(c.env, projectId, 'update', {
-      userId: memberId,
-      role,
-    });
+    try {
+      await syncMemberToDO(c.env, projectId, 'update', {
+        userId: memberId,
+        role,
+      });
+    } catch (err) {
+      console.error('Failed to sync member update to DO:', err);
+    }
 
     return c.json({ success: true, userId: memberId, role });
   } catch (error) {
@@ -598,9 +584,13 @@ memberRoutes.delete('/:userId', async c => {
       .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
 
     // Sync member removal to DO (this also forces disconnect)
-    await syncMemberToDO(c.env, projectId, 'remove', {
-      userId: memberId,
-    });
+    try {
+      await syncMemberToDO(c.env, projectId, 'remove', {
+        userId: memberId,
+      });
+    } catch (err) {
+      console.error('Failed to sync member removal to DO:', err);
+    }
 
     // Send notification to removed user (if not self-removal)
     if (!isSelfRemoval) {
