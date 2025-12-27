@@ -584,12 +584,7 @@ if (!userToAdd && email) {
   const existingInvitation = await db
     .select()
     .from(projectInvitations)
-    .where(
-      and(
-        eq(projectInvitations.projectId, projectId),
-        eq(projectInvitations.email, email.toLowerCase()),
-      ),
-    )
+    .where(and(eq(projectInvitations.projectId, projectId), eq(projectInvitations.email, email.toLowerCase())))
     .get();
 
   if (existingInvitation && !existingInvitation.acceptedAt) {

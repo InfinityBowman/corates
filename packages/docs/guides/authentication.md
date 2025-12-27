@@ -432,6 +432,7 @@ Project invitations allow project owners to invite users who don't have accounts
 ### Email Matching Security
 
 For security, the authenticated user's email must match the invitation email. The comparison is:
+
 - Case-insensitive
 - Trimmed (whitespace removed)
 - Normalized before comparison
@@ -455,6 +456,7 @@ if (normalizedUserEmail !== normalizedInvitationEmail) {
 ### Resending Invitations
 
 If an invitation is pending (not expired or accepted), it can be resent by:
+
 - Updating the role if changed
 - Extending the expiration date
 - Resending the email with the same token
