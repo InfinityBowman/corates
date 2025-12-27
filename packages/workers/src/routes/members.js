@@ -5,7 +5,7 @@
 
 import { Hono } from 'hono';
 import { createDb } from '../db/client.js';
-import { projectMembers, user, projects } from '../db/schema.js';
+import { projectMembers, user, projects, projectInvitations } from '../db/schema.js';
 import { eq, and, count } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { memberSchemas, validateRequest } from '../config/validation.js';
@@ -141,6 +141,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
 
   const db = createDb(c.env.DB);
   const { userId, email, role } = c.get('validatedBody');
+  const { user: authUser } = getAuth(c);
 
   try {
     // Find user by userId or email
@@ -171,6 +172,145 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         .from(user)
         .where(eq(user.email, email.toLowerCase()))
         .get();
+    }
+
+    // If user doesn't exist and email was provided, create or resend an invitation
+    if (!userToAdd && email) {
+      // Check for existing pending invitation for this email/project
+      const existingInvitation = await db
+        .select({
+          id: projectInvitations.id,
+          token: projectInvitations.token,
+          acceptedAt: projectInvitations.acceptedAt,
+        })
+        .from(projectInvitations)
+        .where(
+          and(
+            eq(projectInvitations.projectId, projectId),
+            eq(projectInvitations.email, email.toLowerCase()),
+          ),
+        )
+        .get();
+
+      let token;
+      let invitationId;
+
+      if (existingInvitation && !existingInvitation.acceptedAt) {
+        // Resend existing invitation - update role and extend expiration
+        invitationId = existingInvitation.id;
+        token = existingInvitation.token;
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+        await db
+          .update(projectInvitations)
+          .set({
+            role,
+            expiresAt,
+          })
+          .where(eq(projectInvitations.id, existingInvitation.id));
+      } else if (existingInvitation && existingInvitation.acceptedAt) {
+        // Invitation was already accepted, can't resend
+        return c.json(
+          {
+            success: false,
+            invitation: true,
+            message: 'Invitation has already been accepted',
+          },
+          400,
+        );
+      } else {
+        // Create new invitation
+        invitationId = crypto.randomUUID();
+        token = crypto.randomUUID();
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+        await db.insert(projectInvitations).values({
+          id: invitationId,
+          projectId,
+          email: email.toLowerCase(),
+          role,
+          token,
+          invitedBy: authUser.id,
+          expiresAt,
+          createdAt: new Date(),
+        });
+      }
+
+      // Get project name and inviter name
+      const project = await db
+        .select({ name: projects.name })
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .get();
+
+      const inviter = await db
+        .select({ name: user.name, displayName: user.displayName, email: user.email })
+        .from(user)
+        .where(eq(user.id, authUser.id))
+        .get();
+
+      // Send invitation email via queue
+      try {
+        const appUrl = c.env.APP_URL || 'https://corates.org';
+        // Include basepath if set (for apps deployed at non-root paths)
+        const basepath = c.env.BASEPATH || '';
+        const basepathNormalized = basepath ? basepath.replace(/\/$/, '') : '';
+        const signupPath = `${basepathNormalized}/signup`;
+        const invitationUrl = `${appUrl}${signupPath}?invitation=${token}`;
+
+        // Log invitation URL in development (similar to magic link)
+        if (c.env.ENVIRONMENT !== 'production') {
+          console.log('[Email] Project invitation URL:', invitationUrl);
+        }
+
+        const { getProjectInvitationEmailHtml, getProjectInvitationEmailText } =
+          await import('../auth/emailTemplates.js');
+
+        const projectName = project?.name || 'Unknown Project';
+        const inviterName = inviter?.displayName || inviter?.name || inviter?.email || 'Someone';
+
+        const emailHtml = getProjectInvitationEmailHtml({
+          projectName,
+          inviterName,
+          invitationUrl,
+          role,
+        });
+        const emailText = getProjectInvitationEmailText({
+          projectName,
+          inviterName,
+          invitationUrl,
+          role,
+        });
+
+        // Queue email via EMAIL_QUEUE DO
+        const queueId = c.env.EMAIL_QUEUE.idFromName('default');
+        const queue = c.env.EMAIL_QUEUE.get(queueId);
+        await queue.fetch(
+          new Request('https://internal/enqueue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: email,
+              subject: `You're Invited to "${projectName}" - CoRATES`,
+              html: emailHtml,
+              text: emailText,
+            }),
+          }),
+        );
+      } catch (err) {
+        console.error('Failed to queue invitation email:', err);
+        // Continue anyway - invitation is created
+      }
+
+      return c.json(
+        {
+          success: true,
+          invitation: true,
+          message: 'Invitation sent successfully',
+          email,
+        },
+        201,
+      );
     }
 
     if (!userToAdd) {

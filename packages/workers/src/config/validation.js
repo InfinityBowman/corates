@@ -76,6 +76,15 @@ export const memberSchemas = {
 };
 
 /**
+ * Invitation schemas
+ */
+export const invitationSchemas = {
+  accept: z.object({
+    token: z.string().min(1, 'Token is required'),
+  }),
+};
+
+/**
  * User schemas
  */
 export const userSchemas = {

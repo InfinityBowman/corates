@@ -135,6 +135,23 @@ export const twoFactor = sqliteTable('twoFactor', {
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 
+// Project invitations table (for inviting users who don't have accounts yet)
+export const projectInvitations = sqliteTable('project_invitations', {
+  id: text('id').primaryKey(),
+  projectId: text('projectId')
+    .notNull()
+    .references(() => projects.id, { onDelete: 'cascade' }),
+  email: text('email').notNull(),
+  role: text('role').default('member'),
+  token: text('token').notNull().unique(),
+  invitedBy: text('invitedBy')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
+  acceptedAt: integer('acceptedAt', { mode: 'timestamp' }),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+});
+
 // Export all tables
 export const dbSchema = {
   user,
@@ -146,4 +163,5 @@ export const dbSchema = {
   projectMembers,
   mediaFiles,
   subscriptions,
+  projectInvitations,
 };

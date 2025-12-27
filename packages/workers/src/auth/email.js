@@ -11,6 +11,8 @@ import {
   getPasswordResetEmailText,
   getMagicLinkEmailHtml,
   getMagicLinkEmailText,
+  getProjectInvitationEmailHtml,
+  getProjectInvitationEmailText,
 } from './emailTemplates.js';
 
 /**
@@ -101,11 +103,27 @@ export function createEmailService(env) {
     return sendEmail({ to, subject, html, text });
   }
 
+  /**
+   * Send project invitation email
+   */
+  async function sendProjectInvitation(to, projectName, inviterName, invitationUrl, role) {
+    if (env.SEND_EMAILS_IN_DEV !== 'true' && !isProduction) {
+      console.log('[Email] Development environment - email sending is DISABLED');
+      console.log('[Email] Project invitation URL:', invitationUrl);
+      return { success: true, id: 'dev-id' };
+    }
+    const subject = `You're Invited to "${projectName}" - CoRATES`;
+    const html = getProjectInvitationEmailHtml({ projectName, inviterName, invitationUrl, role });
+    const text = getProjectInvitationEmailText({ projectName, inviterName, invitationUrl, role });
+    return sendEmail({ to, subject, html, text });
+  }
+
   return {
     sendEmail,
     sendEmailVerification,
     sendPasswordReset,
     sendMagicLink,
+    sendProjectInvitation,
     isProduction,
   };
 }

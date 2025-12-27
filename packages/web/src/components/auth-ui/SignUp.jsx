@@ -37,6 +37,13 @@ export default function SignUp() {
     clearAuthError();
     resetSocialLoading();
 
+    // Check for invitation token in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const invitationToken = urlParams.get('invitation');
+    if (invitationToken) {
+      localStorage.setItem('pendingInvitationToken', invitationToken);
+    }
+
     // If the user clicks OAuth and then uses browser Back,
     // the page can be restored from bfcache with stale state.
     const handleReturn = () => resetSocialLoading();

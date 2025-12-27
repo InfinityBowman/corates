@@ -54,7 +54,8 @@
   // Environment variables (non-sensitive only)
   "vars": {
     "ENVIRONMENT": "development",
-    "AUTH_BASE_URL": "http://localhost:8787"
+    "AUTH_BASE_URL": "http://localhost:8787",
+    "APP_URL": "http://localhost:5173"
   },
 
   "observability": {
@@ -98,6 +99,7 @@
       "vars": {
         "ENVIRONMENT": "production",
         "AUTH_BASE_URL": "https://api.corates.org",
+        "APP_URL": "https://corates.org",
         "COOKIE_DOMAIN": ".corates.org"
       },
       // Production secrets are managed via `wrangler secret put` command

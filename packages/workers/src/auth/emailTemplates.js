@@ -192,3 +192,60 @@ export function getAccountMergeEmailText({ code, expiryMinutes = 15 }) {
     The CoRATES Team
   `;
 }
+
+export function getProjectInvitationEmailHtml({ projectName, inviterName, invitationUrl, role, expiryDays = 7 }) {
+  const roleText = role === 'owner' ? 'Owner' : role === 'collaborator' ? 'Collaborator' : role === 'viewer' ? 'Viewer' : 'Member';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Project Invitation - CoRATES</title>
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #eff6ff;">
+      <div style="background: #2563eb; color: white; padding: 32px; text-align: center; border-radius: 12px 12px 0 0;">
+        <h1 style="margin: 0; font-size: 28px; font-weight: 700;">You're Invited to a Project</h1>
+      </div>
+      <div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb; border-top: none;">
+        <p style="font-size: 18px; margin-bottom: 20px; color: #1f2937;">Hi there,</p>
+        <p style="color: #4b5563; margin-bottom: 20px;">
+          <strong>${inviterName}</strong> has invited you to collaborate on the project <strong>"${projectName}"</strong> as a <strong>${roleText}</strong>.
+        </p>
+        <p style="color: #4b5563; margin-bottom: 32px;">
+          To accept this invitation and join the project, please click the button below to create your account:
+        </p>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${invitationUrl}" style="background: #2563eb; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">Accept Invitation & Sign Up</a>
+        </div>
+        <p style="color: #4b5563;">If the button doesn't work, you can copy and paste this link into your browser:</p>
+        <p style="word-break: break-all; color: #6b7280; background: #f3f4f6; padding: 12px; border-radius: 8px; font-size: 14px;">${invitationUrl}</p>
+        <p style="color: #4b5563; margin-top: 24px;">
+          This invitation will expire in ${expiryDays} days. If you don't want to join this project, you can safely ignore this email.
+        </p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
+        <p style="color: #6b7280; font-size: 14px;">Best regards,<br>The CoRATES Team</p>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+export function getProjectInvitationEmailText({ projectName, inviterName, invitationUrl, role, expiryDays = 7 }) {
+  const roleText = role === 'owner' ? 'Owner' : role === 'collaborator' ? 'Collaborator' : role === 'viewer' ? 'Viewer' : 'Member';
+
+  return `
+    Hi there,
+
+    ${inviterName} has invited you to collaborate on the project "${projectName}" as a ${roleText}.
+
+    To accept this invitation and join the project, please visit this link to create your account:
+
+    ${invitationUrl}
+
+    This invitation will expire in ${expiryDays} days. If you don't want to join this project, you can safely ignore this email.
+
+    Best regards,
+    The CoRATES Team
+  `;
+}
