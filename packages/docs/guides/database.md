@@ -322,6 +322,7 @@ pnpm db:generate
 ```
 
 This will:
+
 - Compare the current schema with existing migrations
 - Generate new migration file(s) in `migrations/` directory
 - Update migration metadata in `migrations/meta/`
