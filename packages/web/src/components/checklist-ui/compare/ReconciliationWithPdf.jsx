@@ -22,6 +22,7 @@ export default function ReconciliationWithPdf(props) {
   // props.reviewer2Name - Display name for second reviewer
   // props.pdfData - ArrayBuffer of the study PDF (optional)
   // props.pdfFileName - Name of the PDF file (optional)
+  // props.pdfUrl - URL for the PDF (optional, for server-hosted PDFs)
   // props.pdfLoading - Whether PDF is still loading
   // props.pdfs - Array of PDFs for multi-PDF selection
   // props.selectedPdfId - Currently selected PDF ID
@@ -86,6 +87,8 @@ export default function ReconciliationWithPdf(props) {
         showSecondPanel={false}
         headerContent={headerContent}
         secondPanelLabel='PDF viewer'
+        pdfUrl={props.pdfUrl}
+        pdfData={props.pdfData}
       >
         {/* First panel: Reconciliation view */}
         <ChecklistReconciliation

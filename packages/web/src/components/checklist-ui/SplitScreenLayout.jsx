@@ -12,6 +12,8 @@ export default function SplitScreenLayout(props) {
   // props.defaultRatio - default split ratio (default: 50)
   // props.showSecondPanel - external control for second panel visibility
   // props.secondPanelLabel - label for toggle button (e.g., "PDF viewer")
+  // props.pdfUrl - optional PDF URL (for server-hosted PDFs)
+  // props.pdfData - optional PDF ArrayBuffer (for local PDFs)
   // Layout: 'vertical' = side by side, 'horizontal' = stacked
   const [layout, setLayout] = createSignal(props.defaultLayout || 'vertical');
   const [splitRatio, setSplitRatio] = createSignal(props.defaultRatio || 50);
@@ -92,6 +94,8 @@ export default function SplitScreenLayout(props) {
           defaultRatioLabel={
             props.defaultRatio ? `${props.defaultRatio}/${100 - props.defaultRatio}` : '50/50'
           }
+          pdfUrl={props.pdfUrl}
+          pdfData={props.pdfData}
         />
       </div>
 

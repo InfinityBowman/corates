@@ -24,6 +24,7 @@ export default function ChecklistWithPdf(props) {
   // props.selectedPdfId - currently selected PDF ID
   // props.onPdfSelect - handler for PDF selection change
   // props.getQuestionNote - function to get Y.Text for a question note
+  // props.pdfUrl - optional PDF URL (for server-hosted PDFs)
 
   return (
     <div class='flex h-full flex-col bg-blue-50'>
@@ -33,6 +34,8 @@ export default function ChecklistWithPdf(props) {
         defaultRatio={50}
         showSecondPanel={false}
         headerContent={props.headerContent}
+        pdfUrl={props.pdfUrl}
+        pdfData={props.pdfData}
       >
         {/* First panel: Checklist (type-aware) */}
         <GenericChecklist

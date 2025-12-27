@@ -6,7 +6,7 @@ import projectStore from '@/stores/projectStore.js';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import { CHECKLIST_STATUS, isEditable } from '@/constants/checklist-status.js';
 import { getNextStatusForCompletion } from '@/lib/checklist-domain.js';
-import { downloadPdf, uploadPdf, deletePdf } from '@api/pdf-api.js';
+import { downloadPdf, uploadPdf, deletePdf, getPdfUrl } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
 import { showToast, useConfirmDialog } from '@corates/ui';
 import { useBetterAuth } from '@api/better-auth-store.js';
@@ -327,6 +327,13 @@ export default function ChecklistYjsWrapper() {
     return isAMSTAR2Complete(checklist);
   });
 
+  // Generate PDF URL for opening in new tab
+  const pdfUrl = createMemo(() => {
+    const fileName = pdfFileName();
+    if (!fileName) return null;
+    return getPdfUrl(params.projectId, params.studyId, fileName);
+  });
+
   // Determine back button navigation from tab query param
   const getBackTab = () => {
     // console.log('location', location.search);
@@ -415,6 +422,7 @@ export default function ChecklistYjsWrapper() {
           headerContent={headerContent}
           pdfData={pdfData()}
           pdfFileName={pdfFileName()}
+          pdfUrl={pdfUrl()}
           onPdfChange={handlePdfChange}
           readOnly={isReadOnly()}
           allowDelete={false}

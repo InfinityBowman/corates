@@ -13,7 +13,7 @@ import {
   findReconciledChecklist,
   getInProgressReconciledChecklists,
 } from '@/lib/checklist-domain.js';
-import { downloadPdf } from '@api/pdf-api.js';
+import { downloadPdf, getPdfUrl } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
 import { showToast } from '@corates/ui';
 import ReconciliationWithPdf from './ReconciliationWithPdf.jsx';
@@ -149,6 +149,13 @@ export default function ReconciliationWrapper() {
     // Reset attempted file to trigger reload
     setAttemptedPdfFile(null);
   };
+
+  // Generate PDF URL for opening in new tab
+  const pdfUrl = createMemo(() => {
+    const fileName = pdfFileName();
+    if (!fileName) return null;
+    return getPdfUrl(params.projectId, params.studyId, fileName);
+  });
 
   // Get checklist metadata from store
   const checklist1Meta = createMemo(() => {
@@ -445,6 +452,7 @@ export default function ReconciliationWrapper() {
           onCancel={handleCancel}
           pdfData={pdfData()}
           pdfFileName={pdfFileName()}
+          pdfUrl={pdfUrl()}
           pdfLoading={pdfLoading()}
           pdfs={studyPdfs()}
           selectedPdfId={selectedPdfId()}
