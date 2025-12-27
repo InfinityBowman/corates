@@ -52,7 +52,7 @@ async function resetSchema() {
   const run = sql => env.DB.prepare(sql).run();
 
   // Helper to safely create a table (handles "already exists" errors)
-  const createTable = async (sql) => {
+  const createTable = async sql => {
     try {
       await run(sql);
     } catch (error) {
