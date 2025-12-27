@@ -3,16 +3,16 @@
  * Supports multiple reviewers in each role with customizable distribution percentages
  */
 
-import { createSignal, createMemo, For, Show } from 'solid-js';
-import { createStore, produce } from 'solid-js/store';
-import { showToast, Collapsible } from '@corates/ui';
+import { createSignal, createMemo, For, Show } from 'solid-js'
+import { createStore, produce } from 'solid-js/store'
+import { showToast, Collapsible } from '@corates/ui'
 import {
   BiRegularShuffle,
   BiRegularCheck,
   BiRegularX,
   BiRegularChevronRight,
-} from 'solid-icons/bi';
-import { FiUsers } from 'solid-icons/fi';
+} from 'solid-icons/bi'
+import { FiUsers } from 'solid-icons/fi'
 
 /**
  * @param {Object} props
@@ -22,213 +22,234 @@ import { FiUsers } from 'solid-icons/fi';
  */
 export default function ReviewerAssignment(props) {
   // Expanded state
-  const [isExpanded, setIsExpanded] = createSignal(false);
+  const [isExpanded, setIsExpanded] = createSignal(false)
 
   // Reviewer pools with percentages
   // Each pool item: { userId: string, percent: number }
-  const [reviewer1Pool, setReviewer1Pool] = createStore([]);
-  const [reviewer2Pool, setReviewer2Pool] = createStore([]);
+  const [reviewer1Pool, setReviewer1Pool] = createStore([])
+  const [reviewer2Pool, setReviewer2Pool] = createStore([])
 
   // Preview state
-  const [showPreview, setShowPreview] = createSignal(false);
-  const [previewAssignments, setPreviewAssignments] = createSignal([]);
+  const [showPreview, setShowPreview] = createSignal(false)
+  const [previewAssignments, setPreviewAssignments] = createSignal([])
 
-  const members = () => props.members() || [];
-  const studies = () => props.studies() || [];
+  const members = () => props.members() || []
+  const studies = () => props.studies() || []
 
   // Studies that don't have reviewers assigned yet
-  const unassignedStudies = createMemo(() => studies().filter(s => !s.reviewer1 && !s.reviewer2));
+  const unassignedStudies = createMemo(() =>
+    studies().filter((s) => !s.reviewer1 && !s.reviewer2),
+  )
 
   // Get member name by userId
-  const getMemberName = userId => {
-    if (!userId) return 'Unknown';
-    const member = members().find(m => m.userId === userId);
-    return member?.displayName || member?.name || member?.email || 'Unknown';
-  };
+  const getMemberName = (userId) => {
+    if (!userId) return 'Unknown'
+    const member = members().find((m) => m.userId === userId)
+    return member?.displayName || member?.name || member?.email || 'Unknown'
+  }
 
   // Get members not in a specific pool
   const availableForPool1 = createMemo(() => {
-    const usedIds = new Set(reviewer1Pool.map(r => r.userId));
-    return members().filter(m => !usedIds.has(m.userId));
-  });
+    const usedIds = new Set(reviewer1Pool.map((r) => r.userId))
+    return members().filter((m) => !usedIds.has(m.userId))
+  })
 
   const availableForPool2 = createMemo(() => {
-    const usedIds = new Set(reviewer2Pool.map(r => r.userId));
-    return members().filter(m => !usedIds.has(m.userId));
-  });
+    const usedIds = new Set(reviewer2Pool.map((r) => r.userId))
+    return members().filter((m) => !usedIds.has(m.userId))
+  })
 
   // Calculate total percentages
-  const pool1Total = createMemo(() => reviewer1Pool.reduce((sum, r) => sum + r.percent, 0));
-  const pool2Total = createMemo(() => reviewer2Pool.reduce((sum, r) => sum + r.percent, 0));
+  const pool1Total = createMemo(() =>
+    reviewer1Pool.reduce((sum, r) => sum + r.percent, 0),
+  )
+  const pool2Total = createMemo(() =>
+    reviewer2Pool.reduce((sum, r) => sum + r.percent, 0),
+  )
 
   // Check if pools are valid (total = 100% and at least one reviewer in each)
-  const isPool1Valid = createMemo(() => reviewer1Pool.length > 0 && pool1Total() === 100);
-  const isPool2Valid = createMemo(() => reviewer2Pool.length > 0 && pool2Total() === 100);
-  const canGenerate = createMemo(() => isPool1Valid() && isPool2Valid());
+  const isPool1Valid = createMemo(
+    () => reviewer1Pool.length > 0 && pool1Total() === 100,
+  )
+  const isPool2Valid = createMemo(
+    () => reviewer2Pool.length > 0 && pool2Total() === 100,
+  )
+  const canGenerate = createMemo(() => isPool1Valid() && isPool2Valid())
 
   // Add reviewer to pool
-  const addToPool1 = userId => {
-    if (!userId) return;
+  const addToPool1 = (userId) => {
+    if (!userId) return
     setReviewer1Pool(
-      produce(pool => {
-        pool.push({ userId, percent: 0 });
+      produce((pool) => {
+        pool.push({ userId, percent: 0 })
       }),
-    );
-    setShowPreview(false);
-  };
+    )
+    setShowPreview(false)
+  }
 
-  const addToPool2 = userId => {
-    if (!userId) return;
+  const addToPool2 = (userId) => {
+    if (!userId) return
     setReviewer2Pool(
-      produce(pool => {
-        pool.push({ userId, percent: 0 });
+      produce((pool) => {
+        pool.push({ userId, percent: 0 })
       }),
-    );
-    setShowPreview(false);
-  };
+    )
+    setShowPreview(false)
+  }
 
   // Remove reviewer from pool
-  const removeFromPool1 = userId => {
+  const removeFromPool1 = (userId) => {
     setReviewer1Pool(
-      produce(pool => {
-        const idx = pool.findIndex(r => r.userId === userId);
-        if (idx !== -1) pool.splice(idx, 1);
+      produce((pool) => {
+        const idx = pool.findIndex((r) => r.userId === userId)
+        if (idx !== -1) pool.splice(idx, 1)
       }),
-    );
-    setShowPreview(false);
-  };
+    )
+    setShowPreview(false)
+  }
 
-  const removeFromPool2 = userId => {
+  const removeFromPool2 = (userId) => {
     setReviewer2Pool(
-      produce(pool => {
-        const idx = pool.findIndex(r => r.userId === userId);
-        if (idx !== -1) pool.splice(idx, 1);
+      produce((pool) => {
+        const idx = pool.findIndex((r) => r.userId === userId)
+        if (idx !== -1) pool.splice(idx, 1)
       }),
-    );
-    setShowPreview(false);
-  };
+    )
+    setShowPreview(false)
+  }
 
   // Update percentage for a reviewer in pool
   const updatePool1Percent = (userId, percent) => {
-    const val = Math.max(0, Math.min(100, parseInt(percent) || 0));
+    const val = Math.max(0, Math.min(100, parseInt(percent) || 0))
     setReviewer1Pool(
-      produce(pool => {
-        const item = pool.find(r => r.userId === userId);
-        if (item) item.percent = val;
+      produce((pool) => {
+        const item = pool.find((r) => r.userId === userId)
+        if (item) item.percent = val
       }),
-    );
-    setShowPreview(false);
-  };
+    )
+    setShowPreview(false)
+  }
 
   const updatePool2Percent = (userId, percent) => {
-    const val = Math.max(0, Math.min(100, parseInt(percent) || 0));
+    const val = Math.max(0, Math.min(100, parseInt(percent) || 0))
     setReviewer2Pool(
-      produce(pool => {
-        const item = pool.find(r => r.userId === userId);
-        if (item) item.percent = val;
+      produce((pool) => {
+        const item = pool.find((r) => r.userId === userId)
+        if (item) item.percent = val
       }),
-    );
-    setShowPreview(false);
-  };
+    )
+    setShowPreview(false)
+  }
 
   // Auto-distribute percentages evenly
   const distributeEvenly1 = () => {
-    if (reviewer1Pool.length === 0) return;
-    const each = Math.floor(100 / reviewer1Pool.length);
-    const remainder = 100 - each * reviewer1Pool.length;
+    if (reviewer1Pool.length === 0) return
+    const each = Math.floor(100 / reviewer1Pool.length)
+    const remainder = 100 - each * reviewer1Pool.length
     setReviewer1Pool(
-      produce(pool => {
+      produce((pool) => {
         pool.forEach((r, i) => {
-          r.percent = each + (i < remainder ? 1 : 0);
-        });
+          r.percent = each + (i < remainder ? 1 : 0)
+        })
       }),
-    );
-    setShowPreview(false);
-  };
+    )
+    setShowPreview(false)
+  }
 
   const distributeEvenly2 = () => {
-    if (reviewer2Pool.length === 0) return;
-    const each = Math.floor(100 / reviewer2Pool.length);
-    const remainder = 100 - each * reviewer2Pool.length;
+    if (reviewer2Pool.length === 0) return
+    const each = Math.floor(100 / reviewer2Pool.length)
+    const remainder = 100 - each * reviewer2Pool.length
     setReviewer2Pool(
-      produce(pool => {
+      produce((pool) => {
         pool.forEach((r, i) => {
-          r.percent = each + (i < remainder ? 1 : 0);
-        });
+          r.percent = each + (i < remainder ? 1 : 0)
+        })
       }),
-    );
-    setShowPreview(false);
-  };
+    )
+    setShowPreview(false)
+  }
 
   // Shuffle array using Fisher-Yates algorithm
-  const shuffleArray = array => {
-    const shuffled = [...array];
+  const shuffleArray = (array) => {
+    const shuffled = [...array]
     for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
     }
-    return shuffled;
-  };
+    return shuffled
+  }
 
   // Generate random assignments based on percentages
   const generateAssignments = () => {
     if (!canGenerate()) {
       if (!isPool1Valid()) {
-        showToast.warning('Invalid 1st Reviewer Pool', 'Percentages must add up to 100%.');
+        showToast.warning(
+          'Invalid 1st Reviewer Pool',
+          'Percentages must add up to 100%.',
+        )
       } else if (!isPool2Valid()) {
-        showToast.warning('Invalid 2nd Reviewer Pool', 'Percentages must add up to 100%.');
+        showToast.warning(
+          'Invalid 2nd Reviewer Pool',
+          'Percentages must add up to 100%.',
+        )
       }
-      return null;
+      return null
     }
 
-    const studiesToAssign = unassignedStudies();
+    const studiesToAssign = unassignedStudies()
     if (studiesToAssign.length === 0) {
-      showToast.info('No Studies', 'All studies already have reviewers assigned.');
-      return null;
+      showToast.info(
+        'No Studies',
+        'All studies already have reviewers assigned.',
+      )
+      return null
     }
 
     // Calculate how many studies each reviewer should get based on percentages
-    const totalStudies = studiesToAssign.length;
+    const totalStudies = studiesToAssign.length
 
     // Build assignment arrays based on percentages
-    const pool1Assignments = [];
-    const pool2Assignments = [];
+    const pool1Assignments = []
+    const pool2Assignments = []
 
     // For pool 1, calculate study counts
-    let remaining1 = totalStudies;
+    let remaining1 = totalStudies
     reviewer1Pool.forEach((r, i) => {
       const count =
-        i === reviewer1Pool.length - 1 ?
-          remaining1 // Last one gets remainder to ensure exact total
-        : Math.round((r.percent / 100) * totalStudies);
-      remaining1 -= count;
+        i === reviewer1Pool.length - 1
+          ? remaining1 // Last one gets remainder to ensure exact total
+          : Math.round((r.percent / 100) * totalStudies)
+      remaining1 -= count
       for (let j = 0; j < count; j++) {
-        pool1Assignments.push(r.userId);
+        pool1Assignments.push(r.userId)
       }
-    });
+    })
 
     // For pool 2, calculate study counts
-    let remaining2 = totalStudies;
+    let remaining2 = totalStudies
     reviewer2Pool.forEach((r, i) => {
       const count =
-        i === reviewer2Pool.length - 1 ? remaining2 : Math.round((r.percent / 100) * totalStudies);
-      remaining2 -= count;
+        i === reviewer2Pool.length - 1
+          ? remaining2
+          : Math.round((r.percent / 100) * totalStudies)
+      remaining2 -= count
       for (let j = 0; j < count; j++) {
-        pool2Assignments.push(r.userId);
+        pool2Assignments.push(r.userId)
       }
-    });
+    })
 
     // Shuffle both pools
-    const shuffled1 = shuffleArray(pool1Assignments);
-    const shuffled2 = shuffleArray(pool2Assignments);
+    const shuffled1 = shuffleArray(pool1Assignments)
+    const shuffled2 = shuffleArray(pool2Assignments)
 
     // Shuffle studies too
-    const shuffledStudies = shuffleArray(studiesToAssign);
+    const shuffledStudies = shuffleArray(studiesToAssign)
 
     // Create assignments, avoiding same reviewer for both roles where possible
     const assignments = shuffledStudies.map((study, index) => {
-      let r1 = shuffled1[index];
-      let r2 = shuffled2[index];
+      let r1 = shuffled1[index]
+      let r2 = shuffled2[index]
 
       return {
         studyId: study.id,
@@ -238,8 +259,8 @@ export default function ReviewerAssignment(props) {
         reviewer1Name: getMemberName(r1),
         reviewer2Name: getMemberName(r2),
         sameReviewer: r1 === r2,
-      };
-    });
+      }
+    })
 
     // Try to resolve conflicts by swapping
     for (let i = 0; i < assignments.length; i++) {
@@ -249,70 +270,76 @@ export default function ReviewerAssignment(props) {
           if (i !== j && !assignments[j].sameReviewer) {
             const canSwap =
               assignments[j].reviewer2 !== assignments[i].reviewer1 &&
-              assignments[i].reviewer2 !== assignments[j].reviewer1;
+              assignments[i].reviewer2 !== assignments[j].reviewer1
 
             if (canSwap) {
               // Swap reviewer2
-              const temp = assignments[i].reviewer2;
-              assignments[i].reviewer2 = assignments[j].reviewer2;
-              assignments[i].reviewer2Name = assignments[j].reviewer2Name;
-              assignments[j].reviewer2 = temp;
-              assignments[j].reviewer2Name = getMemberName(temp);
+              const temp = assignments[i].reviewer2
+              assignments[i].reviewer2 = assignments[j].reviewer2
+              assignments[i].reviewer2Name = assignments[j].reviewer2Name
+              assignments[j].reviewer2 = temp
+              assignments[j].reviewer2Name = getMemberName(temp)
 
-              assignments[i].sameReviewer = assignments[i].reviewer1 === assignments[i].reviewer2;
-              assignments[j].sameReviewer = assignments[j].reviewer1 === assignments[j].reviewer2;
-              break;
+              assignments[i].sameReviewer =
+                assignments[i].reviewer1 === assignments[i].reviewer2
+              assignments[j].sameReviewer =
+                assignments[j].reviewer1 === assignments[j].reviewer2
+              break
             }
           }
         }
       }
     }
 
-    return assignments;
-  };
+    return assignments
+  }
 
   // Preview the assignments
   const handlePreview = () => {
-    const assignments = generateAssignments();
+    const assignments = generateAssignments()
     if (assignments) {
-      setPreviewAssignments(assignments);
-      setShowPreview(true);
+      setPreviewAssignments(assignments)
+      setShowPreview(true)
     }
-  };
+  }
 
   // Re-shuffle the preview
   const handleReshuffle = () => {
-    const assignments = generateAssignments();
+    const assignments = generateAssignments()
     if (assignments) {
-      setPreviewAssignments(assignments);
+      setPreviewAssignments(assignments)
     }
-  };
+  }
 
   // Apply the assignments
   const handleApply = () => {
-    const assignments = previewAssignments();
-    if (assignments.length === 0) return;
+    const assignments = previewAssignments()
+    if (assignments.length === 0) return
 
     // Check for conflicts
-    const conflicts = assignments.filter(a => a.sameReviewer);
+    const conflicts = assignments.filter((a) => a.sameReviewer)
     if (conflicts.length > 0) {
       showToast.warning(
         'Conflicts Detected',
         `${conflicts.length} ${conflicts.length === 1 ? 'study has' : 'studies have'} the same reviewer for both roles. Try reshuffling or adjusting pools.`,
-      );
-      return;
+      )
+      return
     }
 
-    let successCount = 0;
+    let successCount = 0
     for (const assignment of assignments) {
       try {
         props.onAssignReviewers(assignment.studyId, {
           reviewer1: assignment.reviewer1,
           reviewer2: assignment.reviewer2,
-        });
-        successCount++;
+        })
+        successCount++
       } catch (err) {
-        console.error('Error assigning reviewers to study:', assignment.studyId, err);
+        console.error(
+          'Error assigning reviewers to study:',
+          assignment.studyId,
+          err,
+        )
       }
     }
 
@@ -320,35 +347,35 @@ export default function ReviewerAssignment(props) {
       showToast.success(
         'Reviewers Assigned',
         `Successfully assigned reviewers to ${successCount} ${successCount === 1 ? 'study' : 'studies'}.`,
-      );
+      )
     }
 
-    setShowPreview(false);
-    setPreviewAssignments([]);
-  };
+    setShowPreview(false)
+    setPreviewAssignments([])
+  }
 
   // Cancel preview
   const handleCancel = () => {
-    setShowPreview(false);
-    setPreviewAssignments([]);
-  };
+    setShowPreview(false)
+    setPreviewAssignments([])
+  }
 
   // Render a reviewer pool section
-  const ReviewerPoolSection = poolProps => {
-    const pool = () => poolProps.pool;
-    const available = () => poolProps.available;
-    const total = () => poolProps.total;
-    const isValid = () => poolProps.isValid;
+  const ReviewerPoolSection = (poolProps) => {
+    const pool = () => poolProps.pool
+    const available = () => poolProps.available
+    const total = () => poolProps.total
+    const isValid = () => poolProps.isValid
 
     return (
-      <div class='rounded-lg bg-gray-50 p-4'>
-        <div class='mb-3 flex items-center justify-between'>
-          <h4 class='text-sm font-semibold text-gray-700'>{poolProps.title}</h4>
+      <div class="rounded-lg bg-gray-50 p-4">
+        <div class="mb-3 flex items-center justify-between">
+          <h4 class="text-sm font-semibold text-gray-700">{poolProps.title}</h4>
           <Show when={pool().length > 1}>
             <button
-              type='button'
+              type="button"
               onClick={() => poolProps.onDistributeEvenly()}
-              class='text-xs font-medium text-blue-600 hover:text-blue-800'
+              class="text-xs font-medium text-blue-600 hover:text-blue-800"
             >
               Distribute evenly
             </button>
@@ -356,30 +383,32 @@ export default function ReviewerAssignment(props) {
         </div>
 
         {/* Current reviewers in pool */}
-        <div class='mb-3 space-y-2'>
+        <div class="mb-3 space-y-2">
           <For each={pool()}>
-            {reviewer => (
-              <div class='flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-2'>
-                <div class='flex-1 truncate text-sm text-gray-900'>
+            {(reviewer) => (
+              <div class="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-2">
+                <div class="flex-1 truncate text-sm text-gray-900">
                   {getMemberName(reviewer.userId)}
                 </div>
-                <div class='flex items-center gap-1'>
+                <div class="flex items-center gap-1">
                   <input
-                    type='number'
-                    min='0'
-                    max='100'
+                    type="number"
+                    min="0"
+                    max="100"
                     value={reviewer.percent}
-                    onInput={e => poolProps.onUpdatePercent(reviewer.userId, e.target.value)}
-                    class='w-16 rounded border border-gray-300 px-2 py-1 text-center text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                    onInput={(e) =>
+                      poolProps.onUpdatePercent(reviewer.userId, e.target.value)
+                    }
+                    class="w-16 rounded border border-gray-300 px-2 py-1 text-center text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
-                  <span class='text-sm text-gray-500'>%</span>
+                  <span class="text-sm text-gray-500">%</span>
                 </div>
                 <button
-                  type='button'
+                  type="button"
                   onClick={() => poolProps.onRemove(reviewer.userId)}
-                  class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class="rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
-                  <BiRegularX class='h-4 w-4' />
+                  <BiRegularX class="h-4 w-4" />
                 </button>
               </div>
             )}
@@ -388,19 +417,22 @@ export default function ReviewerAssignment(props) {
 
         {/* Add reviewer dropdown */}
         <Show when={available().length > 0}>
-          <div class='flex items-center gap-2'>
+          <div class="flex items-center gap-2">
             <select
-              onChange={e => {
-                poolProps.onAdd(e.target.value);
-                e.target.value = '';
+              onChange={(e) => {
+                poolProps.onAdd(e.target.value)
+                e.target.value = ''
               }}
-              class='flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              class="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
-              <option value=''>Add reviewer...</option>
+              <option value="">Add reviewer...</option>
               <For each={available()}>
-                {member => (
+                {(member) => (
                   <option value={member.userId}>
-                    {member.displayName || member.name || member.email || 'Unknown'}
+                    {member.displayName ||
+                      member.name ||
+                      member.email ||
+                      'Unknown'}
                   </option>
                 )}
               </For>
@@ -409,46 +441,51 @@ export default function ReviewerAssignment(props) {
         </Show>
 
         {/* Total percentage indicator */}
-        <div class={`mt-3 text-xs font-medium ${isValid() ? 'text-green-600' : 'text-amber-600'}`}>
-          Total: {total()}%{!isValid() && pool().length > 0 && ' (must equal 100%)'}
+        <div
+          class={`mt-3 text-xs font-medium ${isValid() ? 'text-green-600' : 'text-amber-600'}`}
+        >
+          Total: {total()}%
+          {!isValid() && pool().length > 0 && ' (must equal 100%)'}
           {pool().length === 0 && ' (add at least one reviewer)'}
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   // Collapse and reset state
   const handleCollapse = () => {
-    setIsExpanded(false);
-    setShowPreview(false);
-    setPreviewAssignments([]);
-  };
+    setIsExpanded(false)
+    setShowPreview(false)
+    setPreviewAssignments([])
+  }
 
   return (
-    <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
+    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
       <Collapsible
         open={isExpanded()}
         onOpenChange={({ open }) => setIsExpanded(open)}
         trigger={
-          <div class='flex w-full cursor-pointer items-center gap-3 px-4 py-3 select-none'>
+          <div class="flex w-full cursor-pointer items-center gap-3 px-4 py-3 select-none">
             {/* Chevron indicator */}
-            <div class='shrink-0'>
+            <div class="shrink-0">
               <BiRegularChevronRight
                 class={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isExpanded() ? 'rotate-90' : ''}`}
               />
             </div>
-            <div class='flex items-center gap-2'>
-              <FiUsers class='h-4 w-4 text-blue-600' />
-              <span class='text-sm font-medium text-gray-900'>Assign Reviewers to Studies</span>
+            <div class="flex items-center gap-2">
+              <FiUsers class="h-4 w-4 text-blue-600" />
+              <span class="text-sm font-medium text-gray-900">
+                Assign Reviewers to Studies
+              </span>
             </div>
           </div>
         }
       >
-        <div class='border-t border-gray-200 px-4 pb-4'>
+        <div class="border-t border-gray-200 px-4 pb-4">
           <Show
             when={members().length >= 2}
             fallback={
-              <p class='mt-4 text-sm text-gray-500'>
+              <p class="mt-4 text-sm text-gray-500">
                 At least 2 project members are required to assign reviewers.
               </p>
             }
@@ -456,22 +493,23 @@ export default function ReviewerAssignment(props) {
             <Show
               when={unassignedStudies().length > 0 || showPreview()}
               fallback={
-                <div class='mt-4 flex items-center gap-2 text-green-600'>
-                  <BiRegularCheck class='h-5 w-5' />
-                  <p class='text-sm'>All studies have reviewers assigned.</p>
+                <div class="mt-4 flex items-center gap-2 text-green-600">
+                  <BiRegularCheck class="h-5 w-5" />
+                  <p class="text-sm">All studies have reviewers assigned.</p>
                 </div>
               }
             >
-              <div class='space-y-4'>
-                <p class='mt-4 text-sm text-gray-600'>
-                  Add reviewers to each pool and set their percentage. Studies will be randomly
-                  assigned one reviewer from each pool based on the percentages.
+              <div class="space-y-4">
+                <p class="mt-4 text-sm text-gray-600">
+                  Add reviewers to each pool and set their percentage. Studies
+                  will be randomly assigned one reviewer from each pool based on
+                  the percentages.
                 </p>
 
                 {/* Reviewer Pools */}
-                <div class='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <ReviewerPoolSection
-                    title='1st Reviewer Pool'
+                    title="1st Reviewer Pool"
                     pool={reviewer1Pool}
                     available={availableForPool1()}
                     total={pool1Total()}
@@ -482,7 +520,7 @@ export default function ReviewerAssignment(props) {
                     onDistributeEvenly={distributeEvenly1}
                   />
                   <ReviewerPoolSection
-                    title='2nd Reviewer Pool'
+                    title="2nd Reviewer Pool"
                     pool={reviewer2Pool}
                     available={availableForPool2()}
                     total={pool2Total()}
@@ -494,61 +532,69 @@ export default function ReviewerAssignment(props) {
                   />
                 </div>
 
-                <p class='text-xs text-gray-500'>
+                <p class="text-xs text-gray-500">
                   {unassignedStudies().length}{' '}
-                  {unassignedStudies().length === 1 ? 'study' : 'studies'} without reviewers
+                  {unassignedStudies().length === 1 ? 'study' : 'studies'}{' '}
+                  without reviewers
                 </p>
 
                 {/* Preview Button */}
                 <Show when={!showPreview()}>
                   <button
                     onClick={handlePreview}
-                    disabled={!canGenerate() || unassignedStudies().length === 0}
-                    class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+                    disabled={
+                      !canGenerate() || unassignedStudies().length === 0
+                    }
+                    class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <BiRegularShuffle class='h-4 w-4' />
+                    <BiRegularShuffle class="h-4 w-4" />
                     Generate Random Assignments
                   </button>
                 </Show>
 
                 {/* Preview Section */}
                 <Show when={showPreview()}>
-                  <div class='overflow-hidden rounded-lg border border-blue-200'>
-                    <div class='flex items-center justify-between border-b border-blue-200 bg-blue-50 px-4 py-2'>
-                      <h4 class='text-sm font-semibold text-blue-900'>
-                        Preview Assignments ({previewAssignments().length} studies)
+                  <div class="overflow-hidden rounded-lg border border-blue-200">
+                    <div class="flex items-center justify-between border-b border-blue-200 bg-blue-50 px-4 py-2">
+                      <h4 class="text-sm font-semibold text-blue-900">
+                        Preview Assignments ({previewAssignments().length}{' '}
+                        studies)
                       </h4>
                       <button
                         onClick={handleReshuffle}
-                        class='inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100'
+                        class="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100"
                       >
-                        <BiRegularShuffle class='h-3 w-3' />
+                        <BiRegularShuffle class="h-3 w-3" />
                         Reshuffle
                       </button>
                     </div>
-                    <div class='max-h-64 overflow-y-auto'>
-                      <table class='w-full text-sm'>
-                        <thead class='sticky top-0 bg-gray-50'>
+                    <div class="max-h-64 overflow-y-auto">
+                      <table class="w-full text-sm">
+                        <thead class="sticky top-0 bg-gray-50">
                           <tr>
-                            <th class='px-4 py-2 text-left font-medium text-gray-700'>Study</th>
-                            <th class='px-4 py-2 text-left font-medium text-gray-700'>
+                            <th class="px-4 py-2 text-left font-medium text-gray-700">
+                              Study
+                            </th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-700">
                               1st Reviewer
                             </th>
-                            <th class='px-4 py-2 text-left font-medium text-gray-700'>
+                            <th class="px-4 py-2 text-left font-medium text-gray-700">
                               2nd Reviewer
                             </th>
                           </tr>
                         </thead>
-                        <tbody class='divide-y divide-gray-200'>
+                        <tbody class="divide-y divide-gray-200">
                           <For each={previewAssignments()}>
-                            {assignment => (
+                            {(assignment) => (
                               <tr
                                 class={`hover:bg-gray-50 ${assignment.sameReviewer ? 'bg-red-50' : ''}`}
                               >
-                                <td class='max-w-xs truncate px-4 py-2 text-gray-900'>
+                                <td class="max-w-xs truncate px-4 py-2 text-gray-900">
                                   {assignment.studyName}
                                 </td>
-                                <td class='px-4 py-2 text-gray-600'>{assignment.reviewer1Name}</td>
+                                <td class="px-4 py-2 text-gray-600">
+                                  {assignment.reviewer1Name}
+                                </td>
                                 <td
                                   class={`px-4 py-2 ${assignment.sameReviewer ? 'font-medium text-red-600' : 'text-gray-600'}`}
                                 >
@@ -561,21 +607,23 @@ export default function ReviewerAssignment(props) {
                         </tbody>
                       </table>
                     </div>
-                    <div class='flex gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3'>
+                    <div class="flex gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3">
                       <button
                         onClick={() => {
-                          handleApply();
-                          handleCollapse();
+                          handleApply()
+                          handleCollapse()
                         }}
-                        disabled={previewAssignments().some(a => a.sameReviewer)}
-                        class='inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+                        disabled={previewAssignments().some(
+                          (a) => a.sameReviewer,
+                        )}
+                        class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <BiRegularCheck class='h-4 w-4' />
+                        <BiRegularCheck class="h-4 w-4" />
                         Apply Assignments
                       </button>
                       <button
                         onClick={handleCancel}
-                        class='rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400'
+                        class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400"
                       >
                         Cancel
                       </button>
@@ -588,5 +636,5 @@ export default function ReviewerAssignment(props) {
         </div>
       </Collapsible>
     </div>
-  );
+  )
 }

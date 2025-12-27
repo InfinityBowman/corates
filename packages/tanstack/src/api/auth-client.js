@@ -1,29 +1,34 @@
-import { createAuthClient } from 'better-auth/solid';
+import { createAuthClient } from 'better-auth/solid'
 import {
   genericOAuthClient,
   magicLinkClient,
   twoFactorClient,
   adminClient,
-} from 'better-auth/client/plugins';
-import { API_BASE } from '@config/api.js';
-import { parseError } from '@/lib/error-utils.js';
+} from 'better-auth/client/plugins'
+import { API_BASE } from '@config/api.js'
+import { parseError } from '@/lib/error-utils.js'
 
 export const authClient = createAuthClient({
   baseURL: API_BASE,
 
-  plugins: [genericOAuthClient(), magicLinkClient(), twoFactorClient(), adminClient()],
+  plugins: [
+    genericOAuthClient(),
+    magicLinkClient(),
+    twoFactorClient(),
+    adminClient(),
+  ],
 
   fetchOptions: {
     credentials: 'include',
     onError(error) {
-      const parsedError = parseError(error);
-      console.error('Auth error:', parsedError.code, parsedError.message);
+      const parsedError = parseError(error)
+      console.error('Auth error:', parsedError.code, parsedError.message)
     },
     onSuccess() {
       // Auth action successful
     },
   },
-});
+})
 
 // Export Better Auth methods for easy access
 export const {
@@ -38,4 +43,4 @@ export const {
   requestPasswordReset,
   verifyEmail,
   admin,
-} = authClient;
+} = authClient

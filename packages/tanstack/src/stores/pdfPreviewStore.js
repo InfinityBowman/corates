@@ -5,16 +5,16 @@
  * opening them in a new browser tab.
  */
 
-import { createSignal } from 'solid-js';
+import { createSignal } from 'solid-js'
 
 // State signals
-const [isOpen, setIsOpen] = createSignal(false);
-const [projectId, setProjectId] = createSignal(null);
-const [studyId, setStudyId] = createSignal(null);
-const [pdf, setPdf] = createSignal(null); // { id, fileName, tag, ... }
-const [pdfData, setPdfData] = createSignal(null); // ArrayBuffer
-const [loading, setLoading] = createSignal(false);
-const [error, setError] = createSignal(null);
+const [isOpen, setIsOpen] = createSignal(false)
+const [projectId, setProjectId] = createSignal(null)
+const [studyId, setStudyId] = createSignal(null)
+const [pdf, setPdf] = createSignal(null) // { id, fileName, tag, ... }
+const [pdfData, setPdfData] = createSignal(null) // ArrayBuffer
+const [loading, setLoading] = createSignal(false)
+const [error, setError] = createSignal(null)
 
 /**
  * Open the PDF preview drawer
@@ -23,29 +23,29 @@ const [error, setError] = createSignal(null);
  * @param {Object} pdfInfo - PDF object { id, fileName, tag, ... }
  */
 function openPreview(projId, stId, pdfInfo) {
-  setProjectId(projId);
-  setStudyId(stId);
-  setPdf(pdfInfo);
-  setPdfData(null);
-  setError(null);
-  setLoading(true);
-  setIsOpen(true);
+  setProjectId(projId)
+  setStudyId(stId)
+  setPdf(pdfInfo)
+  setPdfData(null)
+  setError(null)
+  setLoading(true)
+  setIsOpen(true)
 }
 
 /**
  * Close the PDF preview drawer
  */
 function closePreview() {
-  setIsOpen(false);
+  setIsOpen(false)
   // Clear state after animation completes
   setTimeout(() => {
-    setProjectId(null);
-    setStudyId(null);
-    setPdf(null);
-    setPdfData(null);
-    setLoading(false);
-    setError(null);
-  }, 300);
+    setProjectId(null)
+    setStudyId(null)
+    setPdf(null)
+    setPdfData(null)
+    setLoading(false)
+    setError(null)
+  }, 300)
 }
 
 /**
@@ -53,8 +53,8 @@ function closePreview() {
  * @param {ArrayBuffer} data - PDF file data
  */
 function setData(data) {
-  setPdfData(data);
-  setLoading(false);
+  setPdfData(data)
+  setLoading(false)
 }
 
 /**
@@ -62,8 +62,8 @@ function setData(data) {
  * @param {string} errorMsg - Error message
  */
 function setErrorState(errorMsg) {
-  setError(errorMsg);
-  setLoading(false);
+  setError(errorMsg)
+  setLoading(false)
 }
 
 const pdfPreviewStore = {
@@ -81,6 +81,6 @@ const pdfPreviewStore = {
   closePreview,
   setData,
   setError: setErrorState,
-};
+}
 
-export default pdfPreviewStore;
+export default pdfPreviewStore

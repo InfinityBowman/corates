@@ -5,14 +5,14 @@
  * adapting props to match each component's expected interface.
  */
 
-import { createMemo, Show } from 'solid-js';
+import { createMemo, Show } from 'solid-js'
 import {
   getChecklistTypeFromState,
   DEFAULT_CHECKLIST_TYPE,
   CHECKLIST_TYPES,
-} from '@/checklist-registry';
-import AMSTAR2Checklist from '@/components/checklist/AMSTAR2Checklist.jsx';
-import { ROBINSIChecklist } from '@/components/checklist/ROBINSIChecklist/index.js';
+} from '@/checklist-registry'
+import AMSTAR2Checklist from '@/components/checklist/AMSTAR2Checklist.jsx'
+import { ROBINSIChecklist } from '@/components/checklist/ROBINSIChecklist/index.js'
 
 /**
  * GenericChecklist Component
@@ -30,16 +30,16 @@ export default function GenericChecklist(props) {
   // Determine the checklist type from props or state
   const checklistType = createMemo(() => {
     if (props.checklistType) {
-      return props.checklistType;
+      return props.checklistType
     }
     if (props.checklist) {
-      return getChecklistTypeFromState(props.checklist);
+      return getChecklistTypeFromState(props.checklist)
     }
-    return DEFAULT_CHECKLIST_TYPE;
-  });
+    return DEFAULT_CHECKLIST_TYPE
+  })
 
   return (
-    <div class='h-full'>
+    <div class="h-full">
       <Show when={checklistType() === CHECKLIST_TYPES.AMSTAR2}>
         <AMSTAR2Checklist
           externalChecklist={props.checklist}
@@ -58,5 +58,5 @@ export default function GenericChecklist(props) {
         />
       </Show>
     </div>
-  );
+  )
 }

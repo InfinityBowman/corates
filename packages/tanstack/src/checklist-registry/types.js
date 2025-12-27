@@ -1,4 +1,4 @@
-import { LANDING_URL } from '@/config/api.js';
+import { LANDING_URL } from '@/config/api.js'
 
 /**
  * Checklist Type Constants and Metadata
@@ -17,7 +17,7 @@ export const CHECKLIST_TYPES = {
   // ROBINS_E: 'ROBINS_E',
   // ROB2: 'ROB2',
   // GRADE: 'GRADE',
-};
+}
 
 /**
  * Metadata for each checklist type
@@ -52,12 +52,12 @@ export const CHECKLIST_METADATA = {
       Incomplete: { bg: 'bg-gray-100', text: 'text-gray-600' },
     },
   },
-};
+}
 
 /**
  * Default checklist type when none is specified
  */
-export const DEFAULT_CHECKLIST_TYPE = CHECKLIST_TYPES.AMSTAR2;
+export const DEFAULT_CHECKLIST_TYPE = CHECKLIST_TYPES.AMSTAR2
 
 /**
  * Get metadata for a checklist type
@@ -65,7 +65,7 @@ export const DEFAULT_CHECKLIST_TYPE = CHECKLIST_TYPES.AMSTAR2;
  * @returns {Object} The metadata for the type, or AMSTAR2 metadata as default
  */
 export function getChecklistMetadata(type) {
-  return CHECKLIST_METADATA[type] || CHECKLIST_METADATA[DEFAULT_CHECKLIST_TYPE];
+  return CHECKLIST_METADATA[type] || CHECKLIST_METADATA[DEFAULT_CHECKLIST_TYPE]
 }
 
 /**
@@ -77,5 +77,5 @@ export function getChecklistTypeOptions() {
     value: type,
     label: meta.name,
     description: meta.description,
-  }));
+  }))
 }

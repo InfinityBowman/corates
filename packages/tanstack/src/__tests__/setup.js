@@ -3,7 +3,7 @@
  * Global configuration and utilities for testing
  */
 
-import { vi } from 'vitest';
+import { vi } from 'vitest'
 
 // Mock import.meta.env for tests
 vi.stubGlobal('import.meta', {
@@ -11,12 +11,12 @@ vi.stubGlobal('import.meta', {
     VITE_API_URL: 'http://localhost:8787',
     VITE_BASEPATH: '/',
   },
-});
+})
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -26,38 +26,40 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
-});
+})
 
 // Mock ResizeObserver
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
-}));
+}))
 
 // Mock IntersectionObserver
 global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
-}));
+}))
 
 // Mock crypto.randomUUID
 if (!global.crypto) {
-  global.crypto = {};
+  global.crypto = {}
 }
-global.crypto.randomUUID = vi.fn(() => 'test-uuid-' + Math.random().toString(36).slice(2));
+global.crypto.randomUUID = vi.fn(
+  () => 'test-uuid-' + Math.random().toString(36).slice(2),
+)
 
 // Helper to create mock IndexedDB for testing
 export function createMockIndexedDB() {
-  const _stores = new Map();
+  const _stores = new Map()
 
   return {
     open: vi.fn(() => {
       const request = {
         result: {
           transaction: vi.fn((_storeNames, _mode) => ({
-            objectStore: vi.fn(_name => ({
+            objectStore: vi.fn((_name) => ({
               add: vi.fn(),
               put: vi.fn(),
               get: vi.fn(),
@@ -73,14 +75,14 @@ export function createMockIndexedDB() {
         onsuccess: null,
         onerror: null,
         onupgradeneeded: null,
-      };
+      }
 
       // Simulate async success
       setTimeout(() => {
-        if (request.onsuccess) request.onsuccess({ target: request });
-      }, 0);
+        if (request.onsuccess) request.onsuccess({ target: request })
+      }, 0)
 
-      return request;
+      return request
     }),
-  };
+  }
 }

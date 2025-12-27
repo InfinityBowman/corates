@@ -3,15 +3,20 @@
  * Contains file controls, page navigation, and zoom controls
  */
 
-import { Show, createSignal } from 'solid-js';
-import { AiOutlineUpload, AiOutlineClose, AiOutlineMinus, AiOutlinePlus } from 'solid-icons/ai';
+import { Show, createSignal } from 'solid-js'
+import {
+  AiOutlineUpload,
+  AiOutlineClose,
+  AiOutlineMinus,
+  AiOutlinePlus,
+} from 'solid-icons/ai'
 import {
   BiRegularChevronLeft,
   BiRegularChevronRight,
   BiRegularExpandHorizontal,
-} from 'solid-icons/bi';
-import { useConfirmDialog } from '@corates/ui';
-import PdfSelector from './PdfSelector.jsx';
+} from 'solid-icons/bi'
+import { useConfirmDialog } from '@corates/ui'
+import PdfSelector from './PdfSelector.jsx'
 
 export default function PdfToolbar(props) {
   // props.readOnly - If true, hides upload/change/clear buttons
@@ -39,52 +44,52 @@ export default function PdfToolbar(props) {
   // props.onPdfSelect - Handler for PDF selection change
 
   // Local state for page input
-  const [pageInput, setPageInput] = createSignal('');
-  const [zoomInput, setZoomInput] = createSignal('');
+  const [pageInput, setPageInput] = createSignal('')
+  const [zoomInput, setZoomInput] = createSignal('')
 
-  const confirmRemovePdf = useConfirmDialog();
+  const confirmRemovePdf = useConfirmDialog()
 
   // Handle page input submission
   function handlePageSubmit(e) {
-    e.preventDefault();
-    const pageNum = parseInt(pageInput(), 10);
+    e.preventDefault()
+    const pageNum = parseInt(pageInput(), 10)
     if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= props.totalPages) {
-      props.onGoToPage?.(pageNum);
+      props.onGoToPage?.(pageNum)
     }
-    setPageInput('');
-    e.target.querySelector('input')?.blur();
+    setPageInput('')
+    e.target.querySelector('input')?.blur()
   }
 
   // Handle zoom input submission
   function handleZoomSubmit(e) {
-    e.preventDefault();
-    const zoomPercent = parseInt(zoomInput(), 10);
+    e.preventDefault()
+    const zoomPercent = parseInt(zoomInput(), 10)
     if (!isNaN(zoomPercent) && zoomPercent >= 50 && zoomPercent <= 300) {
-      props.onSetScale?.(zoomPercent / 100);
+      props.onSetScale?.(zoomPercent / 100)
     }
-    setZoomInput('');
-    e.target.querySelector('input')?.blur();
+    setZoomInput('')
+    e.target.querySelector('input')?.blur()
   }
 
   return (
-    <div class='flex shrink-0 items-center justify-between gap-4 border-b border-gray-200 bg-white px-4 py-2'>
+    <div class="flex shrink-0 items-center justify-between gap-4 border-b border-gray-200 bg-white px-4 py-2">
       <confirmRemovePdf.ConfirmDialogComponent />
       {/* File upload and info */}
-      <div class='flex min-w-0 items-center gap-2'>
+      <div class="flex min-w-0 items-center gap-2">
         <Show when={!props.readOnly && !props.pdfDoc}>
           <input
             ref={props.fileInputRef}
-            type='file'
-            accept='application/pdf'
-            onChange={e => props.onFileUpload?.(e)}
-            class='hidden'
+            type="file"
+            accept="application/pdf"
+            onChange={(e) => props.onFileUpload?.(e)}
+            class="hidden"
           />
           <button
             onClick={() => props.onOpenFile?.()}
             disabled={!props.libReady}
-            class='inline-flex shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+            class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <AiOutlineUpload class='h-4 w-4' />
+            <AiOutlineUpload class="h-4 w-4" />
             Open PDF
           </button>
         </Show>
@@ -100,7 +105,10 @@ export default function PdfToolbar(props) {
 
         {/* Show file name if PDF is loaded (only when not using multi-PDF selector) */}
         <Show when={props.fileName && (props.pdfs?.length ?? 0) <= 1}>
-          <span class='max-w-40 truncate text-sm text-gray-600' title={props.fileName}>
+          <span
+            class="max-w-40 truncate text-sm text-gray-600"
+            title={props.fileName}
+          >
             {props.fileName}
           </span>
         </Show>
@@ -116,89 +124,92 @@ export default function PdfToolbar(props) {
                 confirmText: 'Remove',
                 cancelText: 'Cancel',
                 variant: 'danger',
-              });
+              })
 
-              if (didConfirm) props.onClearPdf?.();
+              if (didConfirm) props.onClearPdf?.()
             }}
-            class='shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
-            title='Clear PDF'
+            class="shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            title="Clear PDF"
           >
-            <AiOutlineClose class='h-4 w-4' />
+            <AiOutlineClose class="h-4 w-4" />
           </button>
         </Show>
       </div>
 
       {/* Page navigation */}
       <Show when={props.pdfDoc}>
-        <div class='flex items-center gap-2'>
+        <div class="flex items-center gap-2">
           <button
             onClick={() => props.onPrevPage?.()}
             disabled={props.currentPage <= 1}
-            class='rounded p-1.5 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'
-            title='Scroll to previous page'
+            class="rounded p-1.5 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+            title="Scroll to previous page"
           >
-            <BiRegularChevronLeft class='h-5 w-5' />
+            <BiRegularChevronLeft class="h-5 w-5" />
           </button>
-          <form onSubmit={handlePageSubmit} class='flex items-center gap-1 whitespace-nowrap'>
+          <form
+            onSubmit={handlePageSubmit}
+            class="flex items-center gap-1 whitespace-nowrap"
+          >
             <input
-              type='text'
-              inputmode='numeric'
+              type="text"
+              inputmode="numeric"
               value={pageInput()}
-              onInput={e => setPageInput(e.target.value)}
+              onInput={(e) => setPageInput(e.target.value)}
               placeholder={String(props.currentPage)}
-              class='w-10 rounded border border-gray-200 px-1 py-0.5 text-center text-sm text-gray-600 focus:border-blue-400 focus:outline-none'
-              title='Enter page number'
+              class="w-10 rounded border border-gray-200 px-1 py-0.5 text-center text-sm text-gray-600 focus:border-blue-400 focus:outline-none"
+              title="Enter page number"
             />
-            <span class='text-sm text-gray-600'>/ {props.totalPages}</span>
+            <span class="text-sm text-gray-600">/ {props.totalPages}</span>
           </form>
           <button
             onClick={() => props.onNextPage?.()}
             disabled={props.currentPage >= props.totalPages}
-            class='rounded p-1.5 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'
-            title='Scroll to next page'
+            class="rounded p-1.5 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+            title="Scroll to next page"
           >
-            <BiRegularChevronRight class='h-5 w-5' />
+            <BiRegularChevronRight class="h-5 w-5" />
           </button>
         </div>
 
         {/* Zoom controls */}
-        <div class='flex items-center gap-1'>
+        <div class="flex items-center gap-1">
           <button
             onClick={() => props.onZoomOut?.()}
             disabled={props.scale <= 0.5}
-            class='rounded p-1.5 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'
-            title='Zoom out'
+            class="rounded p-1.5 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+            title="Zoom out"
           >
-            <AiOutlineMinus class='h-5 w-5' />
+            <AiOutlineMinus class="h-5 w-5" />
           </button>
-          <form onSubmit={handleZoomSubmit} class='flex items-center'>
+          <form onSubmit={handleZoomSubmit} class="flex items-center">
             <input
-              type='text'
-              inputmode='numeric'
+              type="text"
+              inputmode="numeric"
               value={zoomInput()}
-              onInput={e => setZoomInput(e.target.value)}
+              onInput={(e) => setZoomInput(e.target.value)}
               placeholder={`${Math.round(props.scale * 100)}%`}
-              class='w-14 rounded border border-gray-200 px-1 py-0.5 text-center text-sm text-gray-600 focus:border-blue-400 focus:outline-none'
-              title='Enter zoom percentage (50-300)'
+              class="w-14 rounded border border-gray-200 px-1 py-0.5 text-center text-sm text-gray-600 focus:border-blue-400 focus:outline-none"
+              title="Enter zoom percentage (50-300)"
             />
           </form>
           <button
             onClick={() => props.onZoomIn?.()}
             disabled={props.scale >= 3.0}
-            class='rounded p-1.5 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'
-            title='Zoom in'
+            class="rounded p-1.5 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+            title="Zoom in"
           >
-            <AiOutlinePlus class='h-5 w-5' />
+            <AiOutlinePlus class="h-5 w-5" />
           </button>
           <button
             onClick={() => props.onFitToWidth?.()}
-            class='rounded p-1.5 transition-colors hover:bg-gray-100'
-            title='Fit to width'
+            class="rounded p-1.5 transition-colors hover:bg-gray-100"
+            title="Fit to width"
           >
-            <BiRegularExpandHorizontal class='h-5 w-5' />
+            <BiRegularExpandHorizontal class="h-5 w-5" />
           </button>
         </div>
       </Show>
     </div>
-  );
+  )
 }

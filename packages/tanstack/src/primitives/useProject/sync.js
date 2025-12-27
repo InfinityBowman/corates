@@ -3,7 +3,7 @@
  * Handles syncing Y.Doc state to the project store
  */
 
-import projectStore from '@/stores/projectStore.js';
+import projectStore from '@/stores/projectStore.js'
 
 /**
  * Creates sync utilities for syncing Y.Doc to store
@@ -16,40 +16,40 @@ export function createSyncManager(projectId, getYDoc) {
    * Sync the Y.Doc state to the project store
    */
   function syncFromYDoc() {
-    const ydoc = getYDoc();
-    if (!ydoc) return;
+    const ydoc = getYDoc()
+    if (!ydoc) return
 
-    const studiesMap = ydoc.getMap('reviews');
-    const studiesList = [];
+    const studiesMap = ydoc.getMap('reviews')
+    const studiesList = []
 
     for (const [studyId, studyYMap] of studiesMap.entries()) {
-      const studyData = studyYMap.toJSON ? studyYMap.toJSON() : studyYMap;
-      const study = buildStudyFromYMap(studyId, studyData, studyYMap);
-      studiesList.push(study);
+      const studyData = studyYMap.toJSON ? studyYMap.toJSON() : studyYMap
+      const study = buildStudyFromYMap(studyId, studyData, studyYMap)
+      studiesList.push(study)
     }
 
     // Sort by createdAt
-    studiesList.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    studiesList.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
 
     // Sync meta
-    const metaMap = ydoc.getMap('meta');
-    const metaData = metaMap.toJSON ? metaMap.toJSON() : {};
+    const metaMap = ydoc.getMap('meta')
+    const metaData = metaMap.toJSON ? metaMap.toJSON() : {}
 
     // Sync members
-    const membersMap = ydoc.getMap('members');
-    const membersList = buildMembersList(membersMap);
+    const membersMap = ydoc.getMap('members')
+    const membersList = buildMembersList(membersMap)
 
     // Update store with all data
     projectStore.setProjectData(projectId, {
       studies: studiesList,
       meta: metaData,
       members: membersList,
-    });
+    })
   }
 
   return {
     syncFromYDoc,
-  };
+  }
 }
 
 /**
@@ -85,13 +85,15 @@ function buildStudyFromYMap(studyId, studyData, studyYMap) {
     updatedAt: studyData.updatedAt,
     checklists: [],
     pdfs: [],
-  };
+  }
 
   // Get checklists from nested Y.Map
-  const checklistsMap = studyYMap.get ? studyYMap.get('checklists') : null;
+  const checklistsMap = studyYMap.get ? studyYMap.get('checklists') : null
   if (checklistsMap && typeof checklistsMap.entries === 'function') {
     for (const [checklistId, checklistYMap] of checklistsMap.entries()) {
-      const checklistData = checklistYMap.toJSON ? checklistYMap.toJSON() : checklistYMap;
+      const checklistData = checklistYMap.toJSON
+        ? checklistYMap.toJSON()
+        : checklistYMap
       study.checklists.push({
         id: checklistId,
         type: checklistData.type || 'AMSTAR2',
@@ -100,15 +102,15 @@ function buildStudyFromYMap(studyId, studyData, studyYMap) {
         status: checklistData.status || 'pending',
         createdAt: checklistData.createdAt,
         updatedAt: checklistData.updatedAt,
-      });
+      })
     }
   }
 
   // Get PDFs from nested Y.Map
-  const pdfsMap = studyYMap.get ? studyYMap.get('pdfs') : null;
+  const pdfsMap = studyYMap.get ? studyYMap.get('pdfs') : null
   if (pdfsMap && typeof pdfsMap.entries === 'function') {
     for (const [pdfId, pdfYMap] of pdfsMap.entries()) {
-      const pdfData = pdfYMap.toJSON ? pdfYMap.toJSON() : pdfYMap;
+      const pdfData = pdfYMap.toJSON ? pdfYMap.toJSON() : pdfYMap
       study.pdfs.push({
         id: pdfData.id || pdfId,
         fileName: pdfData.fileName || pdfId, // fallback for old structure where pdfId was fileName
@@ -123,15 +125,18 @@ function buildStudyFromYMap(studyId, studyData, studyYMap) {
         publicationYear: pdfData.publicationYear || null,
         journal: pdfData.journal || null,
         doi: pdfData.doi || null,
-      });
+      })
     }
   }
 
   // Get reconciliation progress if any
-  const reconciliationMap = studyYMap.get ? studyYMap.get('reconciliation') : null;
+  const reconciliationMap = studyYMap.get
+    ? studyYMap.get('reconciliation')
+    : null
   if (reconciliationMap) {
-    const reconciliationData =
-      reconciliationMap.toJSON ? reconciliationMap.toJSON() : reconciliationMap;
+    const reconciliationData = reconciliationMap.toJSON
+      ? reconciliationMap.toJSON()
+      : reconciliationMap
     if (reconciliationData.checklist1Id && reconciliationData.checklist2Id) {
       study.reconciliation = {
         checklist1Id: reconciliationData.checklist1Id,
@@ -140,20 +145,20 @@ function buildStudyFromYMap(studyId, studyData, studyYMap) {
         currentPage: reconciliationData.currentPage || 0,
         viewMode: reconciliationData.viewMode || 'questions',
         updatedAt: reconciliationData.updatedAt,
-      };
+      }
     }
   }
 
-  return study;
+  return study
 }
 
 /**
  * Build members list from Y.Map
  */
 function buildMembersList(membersMap) {
-  const membersList = [];
+  const membersList = []
   for (const [userId, memberYMap] of membersMap.entries()) {
-    const memberData = memberYMap.toJSON ? memberYMap.toJSON() : memberYMap;
+    const memberData = memberYMap.toJSON ? memberYMap.toJSON() : memberYMap
     membersList.push({
       userId,
       role: memberData.role,
@@ -162,7 +167,7 @@ function buildMembersList(membersMap) {
       email: memberData.email,
       displayName: memberData.displayName,
       image: memberData.image,
-    });
+    })
   }
-  return membersList;
+  return membersList
 }

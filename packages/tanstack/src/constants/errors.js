@@ -4,7 +4,10 @@
  * This file provides frontend-specific utilities and constants
  */
 
-import { getErrorMessage as getSharedErrorMessage, PROJECT_ERRORS } from '@corates/shared';
+import {
+  getErrorMessage as getSharedErrorMessage,
+  PROJECT_ERRORS,
+} from '@corates/shared'
 
 /**
  * Re-export getErrorMessage from shared package for backward compatibility
@@ -12,7 +15,7 @@ import { getErrorMessage as getSharedErrorMessage, PROJECT_ERRORS } from '@corat
  * @returns {string} User-friendly error message
  */
 export function getErrorMessage(errorCode) {
-  return getSharedErrorMessage(errorCode);
+  return getSharedErrorMessage(errorCode)
 }
 
 /**
@@ -27,4 +30,4 @@ export const ACCESS_DENIED_ERRORS = [
   'Unable to connect to project. It may have been deleted or you may not have access.',
   PROJECT_ERRORS.NOT_FOUND.defaultMessage,
   PROJECT_ERRORS.ACCESS_DENIED.defaultMessage,
-];
+]

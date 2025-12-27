@@ -11,49 +11,53 @@
  *   import projectActionsStore from '@/stores/projectActionsStore.js';
  */
 
-import { createContext, useContext, createMemo } from 'solid-js';
-import projectStore from '@/stores/projectStore.js';
-import { useBetterAuth } from '@api/better-auth-store.js';
+import { createContext, useContext, createMemo } from 'solid-js'
+import projectStore from '@/stores/projectStore.js'
+import { useBetterAuth } from '@api/better-auth-store.js'
 
-const ProjectContext = createContext();
+const ProjectContext = createContext()
 
 export function ProjectProvider(props) {
-  const { user } = useBetterAuth();
+  const { user } = useBetterAuth()
 
   // Derive commonly used values
-  const members = () => projectStore.getMembers(props.projectId);
+  const members = () => projectStore.getMembers(props.projectId)
 
   const userRole = createMemo(() => {
-    const currentUser = user();
-    if (!currentUser) return null;
-    const member = members().find(m => m.userId === currentUser.id);
-    return member?.role || null;
-  });
+    const currentUser = user()
+    if (!currentUser) return null
+    const member = members().find((m) => m.userId === currentUser.id)
+    return member?.role || null
+  })
 
-  const isOwner = () => userRole() === 'owner';
+  const isOwner = () => userRole() === 'owner'
 
-  const getAssigneeName = userId => {
-    if (!userId) return 'Unassigned';
-    const member = members().find(m => m.userId === userId);
-    return member?.displayName || member?.name || member?.email || 'Unknown';
-  };
+  const getAssigneeName = (userId) => {
+    if (!userId) return 'Unassigned'
+    const member = members().find((m) => m.userId === userId)
+    return member?.displayName || member?.name || member?.email || 'Unknown'
+  }
 
   const value = {
     get projectId() {
-      return props.projectId;
+      return props.projectId
     },
     userRole,
     isOwner,
     getAssigneeName,
-  };
+  }
 
-  return <ProjectContext.Provider value={value}>{props.children}</ProjectContext.Provider>;
+  return (
+    <ProjectContext.Provider value={value}>
+      {props.children}
+    </ProjectContext.Provider>
+  )
 }
 
 export function useProjectContext() {
-  const context = useContext(ProjectContext);
+  const context = useContext(ProjectContext)
   if (!context) {
-    throw new Error('useProjectContext must be used within ProjectProvider');
+    throw new Error('useProjectContext must be used within ProjectProvider')
   }
-  return context;
+  return context
 }

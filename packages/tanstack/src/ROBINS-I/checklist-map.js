@@ -11,7 +11,7 @@ export const RESPONSE_TYPES = {
   WEAK_STRONG_NO_NA: ['NA', 'Y', 'PY', 'WN', 'SN', 'NI'],
   WEAK_STRONG_YES: ['SY', 'WY', 'PN', 'N', 'NI'], // Strong Yes, Weak Yes
   WEAK_STRONG_YES_NA: ['NA', 'SY', 'WY', 'PN', 'N', 'NI'],
-};
+}
 
 // Human-readable labels for response options
 export const RESPONSE_LABELS = {
@@ -25,7 +25,7 @@ export const RESPONSE_LABELS = {
   SN: 'No, and probably substantial',
   SY: 'Yes, substantially',
   WY: 'Yes, but not substantially',
-};
+}
 
 // Risk of bias judgement options
 export const ROB_JUDGEMENTS = [
@@ -34,7 +34,7 @@ export const ROB_JUDGEMENTS = [
   'Moderate',
   'Serious',
   'Critical',
-];
+]
 
 // Overall ROB includes special option for confounding
 export const OVERALL_ROB_JUDGEMENTS = [
@@ -42,7 +42,7 @@ export const OVERALL_ROB_JUDGEMENTS = [
   'Moderate risk',
   'Serious risk',
   'Critical risk',
-];
+]
 
 // Bias direction options
 export const BIAS_DIRECTIONS = [
@@ -53,14 +53,14 @@ export const BIAS_DIRECTIONS = [
   'Towards null',
   'Away from null',
   'Unpredictable',
-];
+]
 
 // Domain 1 specific directions (subset)
 export const DOMAIN1_DIRECTIONS = [
   'Upward bias (overestimate the effect)',
   'Downward bias (underestimate the effect)',
   'Unpredictable',
-];
+]
 
 // Information sources for Section D
 export const INFORMATION_SOURCES = [
@@ -77,7 +77,7 @@ export const INFORMATION_SOURCES = [
   'Grant database summary (e.g. NIH RePORTER, Research Councils UK Gateway to Research)',
   'Personal communication with investigator',
   'Personal communication with sponsor',
-];
+]
 
 // Section D: Information sources
 export const SECTION_D = {
@@ -87,19 +87,21 @@ export const SECTION_D = {
   otherField: {
     id: 'otherSpecify',
     label: 'Please specify any additional sources not listed above',
-    placeholder: 'e.g., Additional data sources, correspondence, supplementary materials...',
+    placeholder:
+      'e.g., Additional data sources, correspondence, supplementary materials...',
     type: 'textarea',
     stateKey: 'otherSpecify',
   },
-};
+}
 
 // Checklist type definition
 export const CHECKLIST_TYPES = {
   ROBINS_I: {
     name: 'ROBINS-I V2',
-    description: 'Risk Of Bias In Non-randomized Studies – of Interventions (Version 2)',
+    description:
+      'Risk Of Bias In Non-randomized Studies – of Interventions (Version 2)',
   },
-};
+}
 
 // Planning Stage: List confounding factors
 export const PLANNING_SECTION = {
@@ -114,7 +116,7 @@ export const PLANNING_SECTION = {
     type: 'textarea',
     stateKey: 'confoundingFactors',
   },
-};
+}
 
 // Section A: Specify the result being assessed for risk of bias
 export const SECTION_A = {
@@ -143,7 +145,7 @@ export const SECTION_A = {
     type: 'textarea',
     stateKey: 'outcome',
   },
-};
+}
 
 // Section B: Decide whether to proceed with a risk-of-bias assessment
 export const SECTION_B = {
@@ -164,7 +166,7 @@ export const SECTION_B = {
     responseType: 'STANDARD',
     info: "If the answer to B3 is 'Yes' or 'Probably yes', the result should be considered to be at 'Critical risk of bias' and no further assessment is required.",
   },
-};
+}
 
 // Section C: Specify the (hypothetical) target randomized trial specific to the study
 export const SECTION_C = {
@@ -174,7 +176,8 @@ export const SECTION_C = {
     id: 'c1',
     label: 'C1',
     text: 'Specify the participants and eligibility criteria',
-    placeholder: 'e.g., Adults aged 18+ with type 2 diabetes, no prior cardiovascular disease',
+    placeholder:
+      'e.g., Adults aged 18+ with type 2 diabetes, no prior cardiovascular disease',
     type: 'textarea',
     stateKey: 'participants',
   },
@@ -201,11 +204,17 @@ export const SECTION_C = {
     type: 'radio',
     stateKey: 'isPerProtocol',
     options: [
-      { value: false, label: 'No (the analysis is estimating the intention-to-treat effect)' },
-      { value: true, label: 'Yes (the analysis is estimating the per-protocol effect)' },
+      {
+        value: false,
+        label: 'No (the analysis is estimating the intention-to-treat effect)',
+      },
+      {
+        value: true,
+        label: 'Yes (the analysis is estimating the per-protocol effect)',
+      },
     ],
   },
-};
+}
 
 // Domain 1A: Bias due to confounding (Intention-to-Treat Effect)
 export const DOMAIN_1A = {
@@ -241,7 +250,7 @@ export const DOMAIN_1A = {
   },
   hasDirection: true,
   directionOptions: DOMAIN1_DIRECTIONS,
-};
+}
 
 // Domain 1B: Bias due to confounding (Per-Protocol Effect)
 export const DOMAIN_1B = {
@@ -283,7 +292,7 @@ export const DOMAIN_1B = {
   },
   hasDirection: true,
   directionOptions: DOMAIN1_DIRECTIONS,
-};
+}
 
 // Domain 2: Bias in classification of interventions
 export const DOMAIN_2 = {
@@ -323,7 +332,7 @@ export const DOMAIN_2 = {
   },
   hasDirection: true,
   directionOptions: BIAS_DIRECTIONS,
-};
+}
 
 // Domain 3: Bias in selection of participants into the study (or into the analysis)
 export const DOMAIN_3 = {
@@ -396,7 +405,7 @@ export const DOMAIN_3 = {
   },
   hasDirection: true,
   directionOptions: BIAS_DIRECTIONS,
-};
+}
 
 // Domain 4: Bias due to missing data
 export const DOMAIN_4 = {
@@ -474,7 +483,7 @@ export const DOMAIN_4 = {
   },
   hasDirection: true,
   directionOptions: BIAS_DIRECTIONS,
-};
+}
 
 // Domain 5: Bias in measurement of the outcome
 export const DOMAIN_5 = {
@@ -502,7 +511,7 @@ export const DOMAIN_5 = {
   },
   hasDirection: true,
   directionOptions: BIAS_DIRECTIONS,
-};
+}
 
 // Domain 6: Bias in selection of the reported result
 export const DOMAIN_6 = {
@@ -536,7 +545,7 @@ export const DOMAIN_6 = {
   },
   hasDirection: true,
   directionOptions: BIAS_DIRECTIONS,
-};
+}
 
 // Complete ROBINS-I checklist structure
 export const ROBINS_I_CHECKLIST = {
@@ -548,37 +557,45 @@ export const ROBINS_I_CHECKLIST = {
   domain4: DOMAIN_4,
   domain5: DOMAIN_5,
   domain6: DOMAIN_6,
-};
+}
 
 // Get all domain keys (for iteration)
 export function getDomainKeys() {
-  return ['domain1a', 'domain1b', 'domain2', 'domain3', 'domain4', 'domain5', 'domain6'];
+  return [
+    'domain1a',
+    'domain1b',
+    'domain2',
+    'domain3',
+    'domain4',
+    'domain5',
+    'domain6',
+  ]
 }
 
 // Get domains that should be displayed based on C4 answer
 export function getActiveDomainKeys(isPerProtocol) {
-  const base = ['domain2', 'domain3', 'domain4', 'domain5', 'domain6'];
-  return isPerProtocol ? ['domain1b', ...base] : ['domain1a', ...base];
+  const base = ['domain2', 'domain3', 'domain4', 'domain5', 'domain6']
+  return isPerProtocol ? ['domain1b', ...base] : ['domain1a', ...base]
 }
 
 // Get all questions for a domain (flattened)
 export function getDomainQuestions(domainKey) {
-  const domain = ROBINS_I_CHECKLIST[domainKey];
-  if (!domain) return {};
+  const domain = ROBINS_I_CHECKLIST[domainKey]
+  if (!domain) return {}
 
   if (domain.subsections) {
     // Domain 3 has subsections
-    let allQuestions = {};
-    Object.values(domain.subsections).forEach(subsection => {
-      allQuestions = { ...allQuestions, ...subsection.questions };
-    });
-    return allQuestions;
+    let allQuestions = {}
+    Object.values(domain.subsections).forEach((subsection) => {
+      allQuestions = { ...allQuestions, ...subsection.questions }
+    })
+    return allQuestions
   }
 
-  return domain.questions || {};
+  return domain.questions || {}
 }
 
 // Get response options array for a response type
 export function getResponseOptions(responseType) {
-  return RESPONSE_TYPES[responseType] || RESPONSE_TYPES.WITH_NI;
+  return RESPONSE_TYPES[responseType] || RESPONSE_TYPES.WITH_NI
 }

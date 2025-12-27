@@ -30,7 +30,7 @@ export const Route = createFileRoute('/about')({
     }
   },
   component: () => (
-    <div class='min-h-screen bg-linear-to-b from-blue-50 to-white'>
+    <div class="min-h-screen bg-linear-to-b from-blue-50 to-white">
       <Navbar />
       <main>
         <AboutHero />

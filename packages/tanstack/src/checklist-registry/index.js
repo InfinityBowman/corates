@@ -11,17 +11,17 @@
  * 4. Register it in CHECKLIST_REGISTRY below
  */
 
-import { CHECKLIST_TYPES, DEFAULT_CHECKLIST_TYPE } from './types.js';
+import { CHECKLIST_TYPES, DEFAULT_CHECKLIST_TYPE } from './types.js'
 import {
   createChecklist as createAMSTAR2,
   scoreChecklist as scoreAMSTAR2,
   getAnswers as getAMSTAR2Answers,
-} from '@/AMSTAR2/checklist.js';
+} from '@/AMSTAR2/checklist.js'
 import {
   createChecklist as createROBINSI,
   scoreChecklist as scoreROBINSI,
   getAnswers as getROBINSIAnswers,
-} from '@/ROBINS-I/checklist.js';
+} from '@/ROBINS-I/checklist.js'
 
 /**
  * Registry mapping checklist types to their implementations
@@ -35,7 +35,7 @@ export const CHECKLIST_REGISTRY = {
   [CHECKLIST_TYPES.AMSTAR2]: {
     createChecklist: createAMSTAR2,
     scoreChecklist: scoreAMSTAR2,
-    getAnswers: getAMSTAR2Answers || (state => state),
+    getAnswers: getAMSTAR2Answers || ((state) => state),
   },
 
   [CHECKLIST_TYPES.ROBINS_I]: {
@@ -43,7 +43,7 @@ export const CHECKLIST_REGISTRY = {
     scoreChecklist: scoreROBINSI,
     getAnswers: getROBINSIAnswers,
   },
-};
+}
 
 /**
  * Get the configuration for a checklist type
@@ -51,12 +51,14 @@ export const CHECKLIST_REGISTRY = {
  * @returns {Object} The registry entry for the type
  */
 export function getChecklistConfig(type) {
-  const config = CHECKLIST_REGISTRY[type];
+  const config = CHECKLIST_REGISTRY[type]
   if (!config) {
-    console.warn(`Unknown checklist type: ${type}, falling back to ${DEFAULT_CHECKLIST_TYPE}`);
-    return CHECKLIST_REGISTRY[DEFAULT_CHECKLIST_TYPE];
+    console.warn(
+      `Unknown checklist type: ${type}, falling back to ${DEFAULT_CHECKLIST_TYPE}`,
+    )
+    return CHECKLIST_REGISTRY[DEFAULT_CHECKLIST_TYPE]
   }
-  return config;
+  return config
 }
 
 /**
@@ -66,10 +68,10 @@ export function getChecklistConfig(type) {
  * @returns {Object} The new checklist state
  */
 export function createChecklistOfType(type, options) {
-  const config = getChecklistConfig(type);
-  const checklist = config.createChecklist(options);
+  const config = getChecklistConfig(type)
+  const checklist = config.createChecklist(options)
   // Ensure the type is stored in the checklist
-  return { ...checklist, checklistType: type };
+  return { ...checklist, checklistType: type }
 }
 
 /**
@@ -79,8 +81,8 @@ export function createChecklistOfType(type, options) {
  * @returns {string} The score/rating
  */
 export function scoreChecklistOfType(type, state) {
-  const config = getChecklistConfig(type);
-  return config.scoreChecklist(state);
+  const config = getChecklistConfig(type)
+  return config.scoreChecklist(state)
 }
 
 /**
@@ -91,24 +93,32 @@ export function scoreChecklistOfType(type, state) {
 export function getChecklistTypeFromState(checklistState) {
   // Check explicit type field
   if (checklistState?.checklistType) {
-    return checklistState.checklistType;
+    return checklistState.checklistType
   }
   // Check for type field (alternative naming)
   if (checklistState?.type) {
-    return checklistState.type;
+    return checklistState.type
   }
   // Detect ROBINS-I by structure
-  if (checklistState?.sectionB || checklistState?.domain1a || checklistState?.domain1b) {
-    return CHECKLIST_TYPES.ROBINS_I;
+  if (
+    checklistState?.sectionB ||
+    checklistState?.domain1a ||
+    checklistState?.domain1b
+  ) {
+    return CHECKLIST_TYPES.ROBINS_I
   }
   // Detect AMSTAR2 by structure
   if (checklistState?.q1 || checklistState?.q2) {
-    return CHECKLIST_TYPES.AMSTAR2;
+    return CHECKLIST_TYPES.AMSTAR2
   }
   // Default to AMSTAR2 for backwards compatibility
-  return DEFAULT_CHECKLIST_TYPE;
+  return DEFAULT_CHECKLIST_TYPE
 }
 
 // Re-export types for convenience
-export { CHECKLIST_TYPES, DEFAULT_CHECKLIST_TYPE, getChecklistTypeOptions } from './types.js';
-export { getChecklistMetadata } from './types.js';
+export {
+  CHECKLIST_TYPES,
+  DEFAULT_CHECKLIST_TYPE,
+  getChecklistTypeOptions,
+} from './types.js'
+export { getChecklistMetadata } from './types.js'

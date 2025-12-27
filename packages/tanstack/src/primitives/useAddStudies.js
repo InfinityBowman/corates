@@ -3,26 +3,26 @@
  * Manages PDF uploads, reference imports, DOI/PMID lookups, and Google Drive files
  */
 
-import { createSignal, createMemo, createEffect } from 'solid-js';
-import { createStore, produce } from 'solid-js/store';
-import { showToast } from '@corates/ui';
+import { createSignal, createMemo, createEffect } from 'solid-js'
+import { createStore, produce } from 'solid-js/store'
+import { showToast } from '@corates/ui'
 import {
   extractPdfTitle,
   extractPdfDoi,
   normalizeTitle,
   readFileAsArrayBuffer,
   withTimeout,
-} from '@/lib/pdfUtils.js';
-import { parseReferenceFile, separateFileTypes } from '@/lib/referenceParser.js';
+} from '@/lib/pdfUtils.js'
+import { parseReferenceFile, separateFileTypes } from '@/lib/referenceParser.js'
 import {
   fetchReferenceByIdentifier,
   parseIdentifiers,
   checkPdfAvailability,
   fetchFromDOI,
-} from '@/lib/referenceLookup.js';
+} from '@/lib/referenceLookup.js'
 
 // Timeout for fetching DOI metadata from CrossRef
-const DOI_FETCH_TIMEOUT = 10000; // 10 seconds
+const DOI_FETCH_TIMEOUT = 10000 // 10 seconds
 
 /**
  * @param {Object} options
@@ -31,35 +31,36 @@ const DOI_FETCH_TIMEOUT = 10000; // 10 seconds
  */
 export function useAddStudies(options = {}) {
   // PDF upload state
-  const [uploadedPdfs, setUploadedPdfs] = createStore([]);
+  const [uploadedPdfs, setUploadedPdfs] = createStore([])
 
   // Reference import state
-  const [importedRefs, setImportedRefs] = createSignal([]);
-  const [selectedRefIds, setSelectedRefIds] = createSignal(new Set());
-  const [refFileName, setRefFileName] = createSignal('');
-  const [parsingRefs, setParsingRefs] = createSignal(false);
-  const [refPdfFiles, setRefPdfFiles] = createSignal([]);
-  const [lookingUpRefPdfs, setLookingUpRefPdfs] = createSignal(false);
+  const [importedRefs, setImportedRefs] = createSignal([])
+  const [selectedRefIds, setSelectedRefIds] = createSignal(new Set())
+  const [refFileName, setRefFileName] = createSignal('')
+  const [parsingRefs, setParsingRefs] = createSignal(false)
+  const [refPdfFiles, setRefPdfFiles] = createSignal([])
+  const [lookingUpRefPdfs, setLookingUpRefPdfs] = createSignal(false)
 
   // DOI/PMID lookup state
-  const [identifierInput, setIdentifierInput] = createSignal('');
-  const [lookupRefs, setLookupRefs] = createSignal([]);
-  const [selectedLookupIds, setSelectedLookupIds] = createSignal(new Set());
-  const [lookingUp, setLookingUp] = createSignal(false);
-  const [lookupErrors, setLookupErrors] = createSignal([]);
+  const [identifierInput, setIdentifierInput] = createSignal('')
+  const [lookupRefs, setLookupRefs] = createSignal([])
+  const [selectedLookupIds, setSelectedLookupIds] = createSignal(new Set())
+  const [lookingUp, setLookingUp] = createSignal(false)
+  const [lookupErrors, setLookupErrors] = createSignal([])
 
   // Google Drive state
-  const [selectedDriveFiles, setSelectedDriveFiles] = createSignal([]);
+  const [selectedDriveFiles, setSelectedDriveFiles] = createSignal([])
 
   // Computed values
-  const pdfCount = () => uploadedPdfs.filter(p => p.title?.trim() && !p.extracting).length;
-  const refCount = () => selectedRefIds().size;
-  const lookupCount = () => selectedLookupIds().size;
-  const driveCount = () => selectedDriveFiles().length;
+  const pdfCount = () =>
+    uploadedPdfs.filter((p) => p.title?.trim() && !p.extracting).length
+  const refCount = () => selectedRefIds().size
+  const lookupCount = () => selectedLookupIds().size
+  const driveCount = () => selectedDriveFiles().length
 
   const totalStudyCount = createMemo(() => {
-    return pdfCount() + refCount() + lookupCount() + driveCount();
-  });
+    return pdfCount() + refCount() + lookupCount() + driveCount()
+  })
 
   const hasAnyStudies = () => {
     return (
@@ -67,36 +68,42 @@ export function useAddStudies(options = {}) {
       selectedRefIds().size > 0 ||
       selectedLookupIds().size > 0 ||
       selectedDriveFiles().length > 0
-    );
-  };
+    )
+  }
 
-  const matchedRefPdfCount = () => refPdfFiles().filter(p => p.matched).length;
-  const unmatchedRefPdfCount = () => refPdfFiles().filter(p => !p.matched).length;
-  const foundPdfCount = () => importedRefs().filter(r => r.pdfAvailable && !r.pdfData).length;
+  const matchedRefPdfCount = () => refPdfFiles().filter((p) => p.matched).length
+  const unmatchedRefPdfCount = () =>
+    refPdfFiles().filter((p) => !p.matched).length
+  const foundPdfCount = () =>
+    importedRefs().filter((r) => r.pdfAvailable && !r.pdfData).length
 
   // Helper to check collectMode (can be function or value)
   const isCollectMode = () =>
-    typeof options.collectMode === 'function' ? options.collectMode() : options.collectMode;
+    typeof options.collectMode === 'function'
+      ? options.collectMode()
+      : options.collectMode
 
   // Collect mode effect - notify parent of study changes
   // Uses getStudiesToSubmit() to get deduplicated, merged studies
   createEffect(() => {
-    if (!isCollectMode() || !options.onStudiesChange) return;
+    if (!isCollectMode() || !options.onStudiesChange) return
 
     // Trigger reactivity on all relevant signals
-    const _pdfs = uploadedPdfs.filter(p => p.title?.trim() && !p.extracting && p.data);
-    const _selectedRefIds = selectedRefIds();
-    const _selectedLookupIds = selectedLookupIds();
-    const _driveFiles = selectedDriveFiles();
+    const _pdfs = uploadedPdfs.filter(
+      (p) => p.title?.trim() && !p.extracting && p.data,
+    )
+    const _selectedRefIds = selectedRefIds()
+    const _selectedLookupIds = selectedLookupIds()
+    const _driveFiles = selectedDriveFiles()
 
     // Get deduplicated, merged studies
-    const mergedStudies = getStudiesToSubmit();
+    const mergedStudies = getStudiesToSubmit()
 
     // Separate into categories for backward compatibility with ProjectView processing
     // but now they are deduplicated
-    const pdfs = [];
-    const refs = [];
-    const driveFiles = [];
+    const pdfs = []
+    const refs = []
+    const driveFiles = []
 
     for (const study of mergedStudies) {
       // If it has direct PDF data (from upload), treat as PDF
@@ -118,7 +125,7 @@ export function useAddStudies(options = {}) {
             pdfAccessible: study.pdfAccessible,
             importSource: study.importSource,
           },
-        });
+        })
       }
       // If it has Google Drive info, treat as drive file
       else if (study.googleDriveFileId) {
@@ -140,7 +147,7 @@ export function useAddStudies(options = {}) {
             pdfAccessible: study.pdfAccessible,
             importSource: study.importSource,
           },
-        });
+        })
       }
       // Otherwise treat as reference (metadata only, may have pdfUrl)
       else {
@@ -160,22 +167,22 @@ export function useAddStudies(options = {}) {
             pdfAccessible: study.pdfAccessible,
             importSource: study.importSource,
           },
-        });
+        })
       }
     }
 
-    options.onStudiesChange({ pdfs, refs, lookups: [], driveFiles });
-  });
+    options.onStudiesChange({ pdfs, refs, lookups: [], driveFiles })
+  })
 
   // ===================
   // PDF Handlers
   // ===================
 
-  const handlePdfSelect = async files => {
-    const pdfFiles = files.filter(f => f.type === 'application/pdf');
-    if (pdfFiles.length === 0) return;
+  const handlePdfSelect = async (files) => {
+    const pdfFiles = files.filter((f) => f.type === 'application/pdf')
+    if (pdfFiles.length === 0) return
 
-    const newPdfs = pdfFiles.map(file => ({
+    const newPdfs = pdfFiles.map((file) => ({
       id: crypto.randomUUID(),
       file,
       title: null,
@@ -184,66 +191,65 @@ export function useAddStudies(options = {}) {
       doi: null,
       error: null, // Error message if extraction failed
       metadataLoading: false, // True while fetching DOI metadata
-    }));
+    }))
 
-    setUploadedPdfs(produce(pdfs => pdfs.push(...newPdfs)));
+    setUploadedPdfs(produce((pdfs) => pdfs.push(...newPdfs)))
 
     for (const pdf of newPdfs) {
-      let arrayBuffer = null;
-      let title = null;
-      let doi = null;
-      let extractionError = null;
+      let arrayBuffer = null
+      let title = null
+      let doi = null
+      let extractionError = null
 
       // Step 1: Read the file
       try {
-        arrayBuffer = await readFileAsArrayBuffer(pdf.file);
+        arrayBuffer = await readFileAsArrayBuffer(pdf.file)
       } catch (error) {
-        console.error('Error reading PDF file:', pdf.file.name, error);
-        setUploadedPdfs(p => p.id === pdf.id, {
+        console.error('Error reading PDF file:', pdf.file.name, error)
+        setUploadedPdfs((p) => p.id === pdf.id, {
           title: pdf.file.name.replace(/\.pdf$/i, ''),
           extracting: false,
           data: null,
           error: 'Failed to read file',
-        });
-        continue;
+        })
+        continue
       }
 
       // Step 2: Extract title and DOI (with timeout handling)
       try {
-        [title, doi] = await Promise.all([
-          extractPdfTitle(arrayBuffer.slice(0)).catch(err => {
-            console.warn('Title extraction failed:', pdf.file.name, err.message);
-            return null;
+        ;[title, doi] = await Promise.all([
+          extractPdfTitle(arrayBuffer.slice(0)).catch((err) => {
+            console.warn('Title extraction failed:', pdf.file.name, err.message)
+            return null
           }),
-          extractPdfDoi(arrayBuffer.slice(0)).catch(err => {
-            console.warn('DOI extraction failed:', pdf.file.name, err.message);
-            return null;
+          extractPdfDoi(arrayBuffer.slice(0)).catch((err) => {
+            console.warn('DOI extraction failed:', pdf.file.name, err.message)
+            return null
           }),
-        ]);
+        ])
       } catch (error) {
-        console.error('Error extracting PDF metadata:', pdf.file.name, error);
-        extractionError =
-          error.message?.includes('timed out') ?
-            'Extraction timed out'
-          : 'Failed to extract metadata';
+        console.error('Error extracting PDF metadata:', pdf.file.name, error)
+        extractionError = error.message?.includes('timed out')
+          ? 'Extraction timed out'
+          : 'Failed to extract metadata'
       }
 
       // Step 3: Update PDF with extraction results (show immediately)
-      setUploadedPdfs(p => p.id === pdf.id, {
+      setUploadedPdfs((p) => p.id === pdf.id, {
         title: title || pdf.file.name.replace(/\.pdf$/i, ''),
         extracting: false,
         data: arrayBuffer,
         doi: doi || null,
         error: extractionError,
         metadataLoading: !!doi, // Show loading if we have a DOI to fetch
-      });
+      })
 
       // Step 4: Fetch DOI metadata in background (non-blocking)
       if (doi) {
         withTimeout(fetchFromDOI(doi), DOI_FETCH_TIMEOUT, 'DOI metadata fetch')
-          .then(refData => {
+          .then((refData) => {
             if (refData) {
-              setUploadedPdfs(p => p.id === pdf.id, {
+              setUploadedPdfs((p) => p.id === pdf.id, {
                 metadata: {
                   firstAuthor: refData.firstAuthor || null,
                   publicationYear: refData.publicationYear || null,
@@ -252,47 +258,51 @@ export function useAddStudies(options = {}) {
                   abstract: refData.abstract || null,
                 },
                 metadataLoading: false,
-              });
+              })
             } else {
-              setUploadedPdfs(p => p.id === pdf.id, { metadataLoading: false });
+              setUploadedPdfs((p) => p.id === pdf.id, {
+                metadataLoading: false,
+              })
             }
           })
-          .catch(err => {
-            console.warn('Could not fetch metadata for DOI:', doi, err.message);
-            setUploadedPdfs(p => p.id === pdf.id, { metadataLoading: false });
-          });
+          .catch((err) => {
+            console.warn('Could not fetch metadata for DOI:', doi, err.message)
+            setUploadedPdfs((p) => p.id === pdf.id, { metadataLoading: false })
+          })
       }
     }
-  };
+  }
 
   /**
    * Retry extraction for a PDF that failed
    */
-  const retryPdfExtraction = async id => {
-    const pdf = uploadedPdfs.find(p => p.id === id);
-    if (!pdf || !pdf.file) return;
+  const retryPdfExtraction = async (id) => {
+    const pdf = uploadedPdfs.find((p) => p.id === id)
+    if (!pdf || !pdf.file) return
 
     // Reset state for retry
-    setUploadedPdfs(p => p.id === id, {
+    setUploadedPdfs((p) => p.id === id, {
       extracting: true,
       error: null,
       title: null,
       doi: null,
       metadata: null,
       metadataLoading: false,
-    });
+    })
 
     // Re-run extraction
-    await handlePdfSelect([pdf.file]);
+    await handlePdfSelect([pdf.file])
     // Remove the duplicate entry that handlePdfSelect creates
     setUploadedPdfs(
-      produce(pdfs => {
+      produce((pdfs) => {
         // Find the new duplicate (same file, different id)
-        const dupeIdx = pdfs.findIndex(p => p.id !== id && p.file === pdf.file);
+        const dupeIdx = pdfs.findIndex(
+          (p) => p.id !== id && p.file === pdf.file,
+        )
         if (dupeIdx !== -1) {
           // Copy data from duplicate to original
-          const dupe = pdfs[dupeIdx];
-          const origIdx = pdfs.findIndex(p => p.id === id);
+          const dupe = pdfs[dupeIdx]
+          const origIdx = pdfs.findIndex((p) => p.id === id)
           if (origIdx !== -1) {
             Object.assign(pdfs[origIdx], {
               title: dupe.title,
@@ -302,96 +312,104 @@ export function useAddStudies(options = {}) {
               error: dupe.error,
               metadata: dupe.metadata,
               metadataLoading: dupe.metadataLoading,
-            });
+            })
           }
-          pdfs.splice(dupeIdx, 1);
+          pdfs.splice(dupeIdx, 1)
         }
       }),
-    );
-  };
+    )
+  }
 
-  const removePdf = id => {
+  const removePdf = (id) => {
     setUploadedPdfs(
-      produce(pdfs => {
-        const idx = pdfs.findIndex(p => p.id === id);
-        if (idx !== -1) pdfs.splice(idx, 1);
+      produce((pdfs) => {
+        const idx = pdfs.findIndex((p) => p.id === id)
+        if (idx !== -1) pdfs.splice(idx, 1)
       }),
-    );
-  };
+    )
+  }
 
   const updatePdfTitle = (id, newTitle) => {
-    setUploadedPdfs(p => p.id === id, 'title', newTitle);
-  };
+    setUploadedPdfs((p) => p.id === id, 'title', newTitle)
+  }
 
   // Effect to match uploaded PDFs with lookup refs that need PDFs
   createEffect(() => {
-    const pdfs = uploadedPdfs.filter(p => !p.extracting && p.data);
-    const refs = lookupRefs();
+    const pdfs = uploadedPdfs.filter((p) => !p.extracting && p.data)
+    const refs = lookupRefs()
 
-    if (pdfs.length === 0 || refs.length === 0) return;
+    if (pdfs.length === 0 || refs.length === 0) return
 
     const refsNeedingPdf = refs.filter(
-      r => !r.manualPdfData && (!r.pdfAvailable || !r.pdfAccessible),
-    );
-    if (refsNeedingPdf.length === 0) return;
+      (r) => !r.manualPdfData && (!r.pdfAvailable || !r.pdfAccessible),
+    )
+    if (refsNeedingPdf.length === 0) return
 
-    let matchCount = 0;
+    let matchCount = 0
 
     for (const ref of refsNeedingPdf) {
       const refDoi = ref.doi
         ?.toLowerCase()
         .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
-        .trim();
-      const refTitleNorm = normalizeTitle(ref.title);
+        .trim()
+      const refTitleNorm = normalizeTitle(ref.title)
 
       for (const pdf of pdfs) {
         if (refDoi && pdf.doi && refDoi === pdf.doi) {
-          setLookupRefs(prev =>
-            prev.map(r =>
-              r._id === ref._id ?
-                {
-                  ...r,
-                  pdfAvailable: true,
-                  manualPdfData: pdf.data,
-                  manualPdfFileName: pdf.file?.name || 'matched.pdf',
-                  matchedFromUpload: true,
-                }
-              : r,
+          setLookupRefs((prev) =>
+            prev.map((r) =>
+              r._id === ref._id
+                ? {
+                    ...r,
+                    pdfAvailable: true,
+                    manualPdfData: pdf.data,
+                    manualPdfFileName: pdf.file?.name || 'matched.pdf',
+                    matchedFromUpload: true,
+                  }
+                : r,
             ),
-          );
-          setUploadedPdfs(p => p.id === pdf.id, 'matchedToRef', ref.title || 'DOI reference');
-          setSelectedLookupIds(prev => {
-            const next = new Set(prev);
-            next.add(ref._id);
-            return next;
-          });
-          matchCount++;
-          break;
+          )
+          setUploadedPdfs(
+            (p) => p.id === pdf.id,
+            'matchedToRef',
+            ref.title || 'DOI reference',
+          )
+          setSelectedLookupIds((prev) => {
+            const next = new Set(prev)
+            next.add(ref._id)
+            return next
+          })
+          matchCount++
+          break
         }
 
-        const pdfTitleNorm = normalizeTitle(pdf.title);
+        const pdfTitleNorm = normalizeTitle(pdf.title)
         if (refTitleNorm && pdfTitleNorm && refTitleNorm === pdfTitleNorm) {
-          setLookupRefs(prev =>
-            prev.map(r =>
-              r._id === ref._id ?
-                {
-                  ...r,
-                  pdfAvailable: true,
-                  manualPdfData: pdf.data,
-                  manualPdfFileName: pdf.file?.name || 'matched.pdf',
-                  matchedFromUpload: true,
-                }
-              : r,
+          setLookupRefs((prev) =>
+            prev.map((r) =>
+              r._id === ref._id
+                ? {
+                    ...r,
+                    pdfAvailable: true,
+                    manualPdfData: pdf.data,
+                    manualPdfFileName: pdf.file?.name || 'matched.pdf',
+                    matchedFromUpload: true,
+                  }
+                : r,
             ),
-          );
-          setUploadedPdfs(p => p.id === pdf.id, 'matchedToRef', ref.title || 'Title reference');
-          setSelectedLookupIds(prev => {
-            const next = new Set(prev);
-            next.add(ref._id);
-            return next;
-          });
-          matchCount++;
-          break;
+          )
+          setUploadedPdfs(
+            (p) => p.id === pdf.id,
+            'matchedToRef',
+            ref.title || 'Title reference',
+          )
+          setSelectedLookupIds((prev) => {
+            const next = new Set(prev)
+            next.add(ref._id)
+            return next
+          })
+          matchCount++
+          break
         }
       }
     }
@@ -400,83 +418,93 @@ export function useAddStudies(options = {}) {
       showToast.success(
         'PDFs Matched',
         `Automatically matched ${matchCount} uploaded PDF${matchCount > 1 ? 's' : ''} with DOI/PMID references.`,
-      );
+      )
     }
-  });
+  })
 
   // ===================
   // Reference Import Handlers
   // ===================
 
-  const handleRefFileSelect = async files => {
-    if (!files || files.length === 0) return;
+  const handleRefFileSelect = async (files) => {
+    if (!files || files.length === 0) return
 
-    const { referenceFiles, pdfFiles } = separateFileTypes(files);
+    const { referenceFiles, pdfFiles } = separateFileTypes(files)
 
-    if (referenceFiles.length === 0 && pdfFiles.length > 0 && importedRefs().length > 0) {
-      await processRefPdfs(pdfFiles);
-      return;
+    if (
+      referenceFiles.length === 0 &&
+      pdfFiles.length > 0 &&
+      importedRefs().length > 0
+    ) {
+      await processRefPdfs(pdfFiles)
+      return
     }
 
     if (referenceFiles.length === 0) {
       showToast.warning(
         'No Reference File',
         'Please include a reference file (.ris, .bib, .enw, or .bibtex) along with your PDFs.',
-      );
-      return;
+      )
+      return
     }
 
-    const file = referenceFiles[0];
-    setRefFileName(file.name);
-    setParsingRefs(true);
+    const file = referenceFiles[0]
+    setRefFileName(file.name)
+    setParsingRefs(true)
 
     try {
-      const refs = await parseReferenceFile(file);
+      const refs = await parseReferenceFile(file)
       if (refs.length === 0) {
-        showToast.warning('No References Found', 'The file does not contain any valid references.');
-        setImportedRefs([]);
-        setSelectedRefIds(new Set());
-        setRefPdfFiles([]);
-        return;
+        showToast.warning(
+          'No References Found',
+          'The file does not contain any valid references.',
+        )
+        setImportedRefs([])
+        setSelectedRefIds(new Set())
+        setRefPdfFiles([])
+        return
       }
 
-      const refsWithIds = refs.map((ref, index) => ({ ...ref, _id: `ref-${index}` }));
-      setImportedRefs(refsWithIds);
-      setSelectedRefIds(new Set(refsWithIds.map(r => r._id)));
+      const refsWithIds = refs.map((ref, index) => ({
+        ...ref,
+        _id: `ref-${index}`,
+      }))
+      setImportedRefs(refsWithIds)
+      setSelectedRefIds(new Set(refsWithIds.map((r) => r._id)))
 
       if (pdfFiles.length > 0) {
-        await processRefPdfs(pdfFiles);
+        await processRefPdfs(pdfFiles)
       } else {
-        setRefPdfFiles([]);
+        setRefPdfFiles([])
       }
 
       showToast.success(
         'References Parsed',
         `Found ${refs.length} reference${refs.length === 1 ? '' : 's'}.${pdfFiles.length > 0 ? ` Processing ${pdfFiles.length} PDF${pdfFiles.length > 1 ? 's' : ''}...` : ''}`,
-      );
+      )
 
-      lookupPdfsForRefs(refsWithIds);
+      lookupPdfsForRefs(refsWithIds)
     } catch (error) {
-      console.error('Error parsing reference file:', error);
-      showToast.error('Parse Error', 'Failed to parse the reference file.');
-      setImportedRefs([]);
-      setSelectedRefIds(new Set());
-      setRefPdfFiles([]);
+      console.error('Error parsing reference file:', error)
+      showToast.error('Parse Error', 'Failed to parse the reference file.')
+      setImportedRefs([])
+      setSelectedRefIds(new Set())
+      setRefPdfFiles([])
     } finally {
-      setParsingRefs(false);
+      setParsingRefs(false)
     }
-  };
+  }
 
-  const processRefPdfs = async pdfFiles => {
-    const processedPdfs = [];
+  const processRefPdfs = async (pdfFiles) => {
+    const processedPdfs = []
 
     for (const file of pdfFiles) {
       try {
-        const arrayBuffer = await readFileAsArrayBuffer(file);
+        const arrayBuffer = await readFileAsArrayBuffer(file)
         const [title, doi] = await Promise.all([
           extractPdfTitle(arrayBuffer.slice(0)),
           extractPdfDoi(arrayBuffer.slice(0)),
-        ]);
+        ])
 
         processedPdfs.push({
           id: crypto.randomUUID(),
@@ -487,11 +515,11 @@ export function useAddStudies(options = {}) {
           doi: doi || null,
           matched: false,
           matchedRefId: null,
-        });
+        })
       } catch (error) {
-        console.error('Error processing PDF:', file.name, error);
+        console.error('Error processing PDF:', file.name, error)
         try {
-          const arrayBuffer = await readFileAsArrayBuffer(file);
+          const arrayBuffer = await readFileAsArrayBuffer(file)
           processedPdfs.push({
             id: crypto.randomUUID(),
             file,
@@ -501,60 +529,60 @@ export function useAddStudies(options = {}) {
             doi: null,
             matched: false,
             matchedRefId: null,
-          });
+          })
         } catch (e) {
-          console.error('Could not read PDF file:', file.name, e);
+          console.error('Could not read PDF file:', file.name, e)
         }
       }
     }
 
-    setRefPdfFiles(prev => [...prev, ...processedPdfs]);
-  };
+    setRefPdfFiles((prev) => [...prev, ...processedPdfs])
+  }
 
-  const lookupPdfsForRefs = async refs => {
-    const refsWithDois = refs.filter(r => r.doi && !r.pdfData && !r.pdfUrl);
-    if (refsWithDois.length === 0) return;
+  const lookupPdfsForRefs = async (refs) => {
+    const refsWithDois = refs.filter((r) => r.doi && !r.pdfData && !r.pdfUrl)
+    if (refsWithDois.length === 0) return
 
-    setLookingUpRefPdfs(true);
-    let foundCount = 0;
+    setLookingUpRefPdfs(true)
+    let foundCount = 0
 
     try {
-      const batchSize = 5;
+      const batchSize = 5
       for (let i = 0; i < refsWithDois.length; i += batchSize) {
-        const batch = refsWithDois.slice(i, i + batchSize);
+        const batch = refsWithDois.slice(i, i + batchSize)
 
         const results = await Promise.all(
-          batch.map(async ref => {
+          batch.map(async (ref) => {
             try {
-              const pdfInfo = await checkPdfAvailability(ref.doi);
-              return { refId: ref._id, pdfInfo };
+              const pdfInfo = await checkPdfAvailability(ref.doi)
+              return { refId: ref._id, pdfInfo }
             } catch (error) {
-              console.error('PDF lookup failed for', ref.doi, error);
-              return { refId: ref._id, pdfInfo: null };
+              console.error('PDF lookup failed for', ref.doi, error)
+              return { refId: ref._id, pdfInfo: null }
             }
           }),
-        );
+        )
 
-        setImportedRefs(prev => {
-          const updated = prev.map(ref => {
-            const result = results.find(r => r.refId === ref._id);
+        setImportedRefs((prev) => {
+          const updated = prev.map((ref) => {
+            const result = results.find((r) => r.refId === ref._id)
             if (result?.pdfInfo?.available) {
-              foundCount++;
+              foundCount++
               return {
                 ...ref,
                 pdfUrl: result.pdfInfo.url,
                 pdfSource: result.pdfInfo.source,
                 pdfAccessible: result.pdfInfo.accessible,
                 pdfAvailable: true,
-              };
+              }
             }
-            return ref;
-          });
-          return updated;
-        });
+            return ref
+          })
+          return updated
+        })
 
         if (i + batchSize < refsWithDois.length) {
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise((resolve) => setTimeout(resolve, 200))
         }
       }
 
@@ -562,49 +590,53 @@ export function useAddStudies(options = {}) {
         showToast.success(
           'PDFs Found',
           `Found ${foundCount} open access PDF${foundCount > 1 ? 's' : ''} via Unpaywall.`,
-        );
+        )
       }
     } catch (error) {
-      console.error('Error looking up PDFs:', error);
+      console.error('Error looking up PDFs:', error)
     } finally {
-      setLookingUpRefPdfs(false);
+      setLookingUpRefPdfs(false)
     }
-  };
+  }
 
   // Effect to match PDFs with imported references
   createEffect(() => {
-    const pdfs = refPdfFiles();
-    const refs = importedRefs();
+    const pdfs = refPdfFiles()
+    const refs = importedRefs()
 
-    if (pdfs.length === 0 || refs.length === 0) return;
+    if (pdfs.length === 0 || refs.length === 0) return
 
-    const unmatchedPdfs = pdfs.filter(p => !p.matched);
-    if (unmatchedPdfs.length === 0) return;
+    const unmatchedPdfs = pdfs.filter((p) => !p.matched)
+    if (unmatchedPdfs.length === 0) return
 
-    let matchCount = 0;
-    const updatedPdfs = [...pdfs];
-    const updatedRefs = refs.map(ref => ({ ...ref }));
+    let matchCount = 0
+    const updatedPdfs = [...pdfs]
+    const updatedRefs = refs.map((ref) => ({ ...ref }))
 
     for (const pdf of unmatchedPdfs) {
-      const pdfDoi = pdf.doi?.toLowerCase().trim();
-      const pdfTitleNorm = normalizeTitle(pdf.title);
+      const pdfDoi = pdf.doi?.toLowerCase().trim()
+      const pdfTitleNorm = normalizeTitle(pdf.title)
 
       for (let i = 0; i < updatedRefs.length; i++) {
-        const ref = updatedRefs[i];
-        if (ref.pdfData) continue;
+        const ref = updatedRefs[i]
+        if (ref.pdfData) continue
 
         const refDoi = ref.doi
           ?.toLowerCase()
           .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
-          .trim();
-        const refTitleNorm = normalizeTitle(ref.title);
+          .trim()
+        const refTitleNorm = normalizeTitle(ref.title)
 
-        let isMatch = false;
+        let isMatch = false
 
         if (pdfDoi && refDoi && pdfDoi === refDoi) {
-          isMatch = true;
-        } else if (pdfTitleNorm && refTitleNorm && pdfTitleNorm === refTitleNorm) {
-          isMatch = true;
+          isMatch = true
+        } else if (
+          pdfTitleNorm &&
+          refTitleNorm &&
+          pdfTitleNorm === refTitleNorm
+        ) {
+          isMatch = true
         }
 
         if (isMatch) {
@@ -612,170 +644,180 @@ export function useAddStudies(options = {}) {
             ...ref,
             pdfData: pdf.data,
             pdfFileName: pdf.fileName,
-          };
-
-          const pdfIdx = updatedPdfs.findIndex(p => p.id === pdf.id);
-          if (pdfIdx !== -1) {
-            updatedPdfs[pdfIdx] = { ...updatedPdfs[pdfIdx], matched: true, matchedRefId: ref._id };
           }
 
-          matchCount++;
-          break;
+          const pdfIdx = updatedPdfs.findIndex((p) => p.id === pdf.id)
+          if (pdfIdx !== -1) {
+            updatedPdfs[pdfIdx] = {
+              ...updatedPdfs[pdfIdx],
+              matched: true,
+              matchedRefId: ref._id,
+            }
+          }
+
+          matchCount++
+          break
         }
       }
     }
 
     if (matchCount > 0) {
-      setImportedRefs(updatedRefs);
-      setRefPdfFiles(updatedPdfs);
+      setImportedRefs(updatedRefs)
+      setRefPdfFiles(updatedPdfs)
       showToast.success(
         'PDFs Matched',
         `Automatically matched ${matchCount} PDF${matchCount > 1 ? 's' : ''} with imported references.`,
-      );
+      )
     }
-  });
+  })
 
-  const toggleRefSelection = id => {
-    setSelectedRefIds(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
+  const toggleRefSelection = (id) => {
+    setSelectedRefIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
 
   const toggleSelectAllRefs = () => {
     setSelectedRefIds(
-      selectedRefIds().size === importedRefs().length ?
-        new Set()
-      : new Set(importedRefs().map(r => r._id)),
-    );
-  };
+      selectedRefIds().size === importedRefs().length
+        ? new Set()
+        : new Set(importedRefs().map((r) => r._id)),
+    )
+  }
 
   const clearImportedRefs = () => {
-    setImportedRefs([]);
-    setSelectedRefIds(new Set());
-    setRefFileName('');
-    setRefPdfFiles([]);
-  };
+    setImportedRefs([])
+    setSelectedRefIds(new Set())
+    setRefFileName('')
+    setRefPdfFiles([])
+  }
 
   // ===================
   // DOI/PMID Lookup Handlers
   // ===================
 
   const handleLookup = async () => {
-    const input = identifierInput().trim();
-    if (!input) return;
+    const input = identifierInput().trim()
+    if (!input) return
 
-    const identifiers = parseIdentifiers(input);
+    const identifiers = parseIdentifiers(input)
     if (identifiers.length === 0) {
-      showToast.warning('No Identifiers', 'Could not find any valid DOIs or PMIDs in the input.');
-      return;
+      showToast.warning(
+        'No Identifiers',
+        'Could not find any valid DOIs or PMIDs in the input.',
+      )
+      return
     }
 
-    setLookingUp(true);
-    setLookupErrors([]);
+    setLookingUp(true)
+    setLookupErrors([])
 
     try {
-      const newRefs = [];
-      const errors = [];
+      const newRefs = []
+      const errors = []
 
       for (const id of identifiers) {
         try {
-          const ref = await fetchReferenceByIdentifier(id);
+          const ref = await fetchReferenceByIdentifier(id)
           if (ref) {
-            newRefs.push({ ...ref, _id: `lookup-${crypto.randomUUID()}` });
+            newRefs.push({ ...ref, _id: `lookup-${crypto.randomUUID()}` })
           }
         } catch (error) {
-          errors.push({ identifier: id, error: error.message || 'Lookup failed' });
+          errors.push({
+            identifier: id,
+            error: error.message || 'Lookup failed',
+          })
         }
       }
 
       if (newRefs.length > 0) {
-        setLookupRefs(prev => [...prev, ...newRefs]);
-        setSelectedLookupIds(prev => {
-          const next = new Set(prev);
-          newRefs.filter(r => r.pdfAvailable).forEach(r => next.add(r._id));
-          return next;
-        });
-        setIdentifierInput('');
+        setLookupRefs((prev) => [...prev, ...newRefs])
+        setSelectedLookupIds((prev) => {
+          const next = new Set(prev)
+          newRefs.filter((r) => r.pdfAvailable).forEach((r) => next.add(r._id))
+          return next
+        })
+        setIdentifierInput('')
       }
 
-      if (errors.length > 0) setLookupErrors(errors);
+      if (errors.length > 0) setLookupErrors(errors)
     } catch (error) {
-      console.error('Lookup error:', error);
-      showToast.error('Lookup Failed', 'An error occurred during lookup.');
+      console.error('Lookup error:', error)
+      showToast.error('Lookup Failed', 'An error occurred during lookup.')
     } finally {
-      setLookingUp(false);
+      setLookingUp(false)
     }
-  };
+  }
 
-  const toggleLookupSelection = id => {
-    const ref = lookupRefs().find(r => r._id === id);
-    if (!ref?.pdfAvailable) return;
+  const toggleLookupSelection = (id) => {
+    const ref = lookupRefs().find((r) => r._id === id)
+    if (!ref?.pdfAvailable) return
 
-    setSelectedLookupIds(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
+    setSelectedLookupIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
 
   const toggleSelectAllLookup = () => {
-    const refsWithPdf = lookupRefs().filter(r => r.pdfAvailable);
+    const refsWithPdf = lookupRefs().filter((r) => r.pdfAvailable)
     setSelectedLookupIds(
-      selectedLookupIds().size === refsWithPdf.length ?
-        new Set()
-      : new Set(refsWithPdf.map(r => r._id)),
-    );
-  };
+      selectedLookupIds().size === refsWithPdf.length
+        ? new Set()
+        : new Set(refsWithPdf.map((r) => r._id)),
+    )
+  }
 
-  const removeLookupRef = id => {
-    setLookupRefs(prev => prev.filter(r => r._id !== id));
-    setSelectedLookupIds(prev => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
-  };
+  const removeLookupRef = (id) => {
+    setLookupRefs((prev) => prev.filter((r) => r._id !== id))
+    setSelectedLookupIds((prev) => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }
 
   const clearLookupRefs = () => {
-    setLookupRefs([]);
-    setSelectedLookupIds(new Set());
-    setLookupErrors([]);
-  };
+    setLookupRefs([])
+    setSelectedLookupIds(new Set())
+    setLookupErrors([])
+  }
 
   const attachPdfToLookupRef = (refId, fileName, arrayBuffer) => {
-    setLookupRefs(prev =>
-      prev.map(ref =>
-        ref._id === refId ?
-          { ...ref, manualPdfData: arrayBuffer, manualPdfFileName: fileName }
-        : ref,
+    setLookupRefs((prev) =>
+      prev.map((ref) =>
+        ref._id === refId
+          ? { ...ref, manualPdfData: arrayBuffer, manualPdfFileName: fileName }
+          : ref,
       ),
-    );
-  };
+    )
+  }
 
   // ===================
   // Google Drive Handlers
   // ===================
 
-  const toggleDriveFile = file => {
-    setSelectedDriveFiles(prev => {
-      const exists = prev.some(f => f.id === file.id);
+  const toggleDriveFile = (file) => {
+    setSelectedDriveFiles((prev) => {
+      const exists = prev.some((f) => f.id === file.id)
       if (exists) {
-        return prev.filter(f => f.id !== file.id);
+        return prev.filter((f) => f.id !== file.id)
       } else {
-        return [...prev, file];
+        return [...prev, file]
       }
-    });
-  };
+    })
+  }
 
-  const removeDriveFile = fileId => {
-    setSelectedDriveFiles(prev => prev.filter(f => f.id !== fileId));
-  };
+  const removeDriveFile = (fileId) => {
+    setSelectedDriveFiles((prev) => prev.filter((f) => f.id !== fileId))
+  }
 
   const clearDriveFiles = () => {
-    setSelectedDriveFiles([]);
-  };
+    setSelectedDriveFiles([])
+  }
 
   // ===================
   // Submit/Clear
@@ -788,7 +830,7 @@ export function useAddStudies(options = {}) {
    */
   function getStudiesToSubmit() {
     // Collect all study candidates with their source type
-    const candidates = [];
+    const candidates = []
 
     // Add uploaded PDFs
     for (const pdf of uploadedPdfs) {
@@ -800,12 +842,14 @@ export function useAddStudies(options = {}) {
           pdfData: pdf.data,
           pdfFileName: pdf.file?.name || null,
           metadata: pdf.metadata || null,
-        });
+        })
       }
     }
 
     // Add selected imported refs
-    const selectedRefs = importedRefs().filter(r => selectedRefIds().has(r._id));
+    const selectedRefs = importedRefs().filter((r) =>
+      selectedRefIds().has(r._id),
+    )
     for (const ref of selectedRefs) {
       candidates.push({
         type: 'ref',
@@ -830,13 +874,13 @@ export function useAddStudies(options = {}) {
           type: ref.type || null,
           importSource: ref.importSource || 'reference-file',
         },
-      });
+      })
     }
 
     // Add selected DOI/PMID lookups (only those with PDF available)
     const selectedLookups = lookupRefs().filter(
-      r => selectedLookupIds().has(r._id) && r.pdfAvailable,
-    );
+      (r) => selectedLookupIds().has(r._id) && r.pdfAvailable,
+    )
     for (const ref of selectedLookups) {
       candidates.push({
         type: 'lookup',
@@ -861,7 +905,7 @@ export function useAddStudies(options = {}) {
           type: ref.type || null,
           importSource: ref.importSource || 'identifier-lookup',
         },
-      });
+      })
     }
 
     // Add Google Drive files
@@ -873,51 +917,55 @@ export function useAddStudies(options = {}) {
         googleDriveFileId: file.id,
         googleDriveFileName: file.name,
         metadata: null,
-      });
+      })
     }
 
     // Deduplicate by DOI or normalized title
-    const merged = [];
-    const usedIndices = new Set();
+    const merged = []
+    const usedIndices = new Set()
 
     for (let i = 0; i < candidates.length; i++) {
-      if (usedIndices.has(i)) continue;
+      if (usedIndices.has(i)) continue
 
-      const base = candidates[i];
+      const base = candidates[i]
       const baseDoi = base.doi
         ?.toLowerCase()
         .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
-        .trim();
-      const baseTitleNorm = normalizeTitle(base.title);
+        .trim()
+      const baseTitleNorm = normalizeTitle(base.title)
 
       // Find all matching candidates
-      const matches = [base];
-      usedIndices.add(i);
+      const matches = [base]
+      usedIndices.add(i)
 
       for (let j = i + 1; j < candidates.length; j++) {
-        if (usedIndices.has(j)) continue;
+        if (usedIndices.has(j)) continue
 
-        const other = candidates[j];
+        const other = candidates[j]
         const otherDoi = other.doi
           ?.toLowerCase()
           .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
-          .trim();
-        const otherTitleNorm = normalizeTitle(other.title);
+          .trim()
+        const otherTitleNorm = normalizeTitle(other.title)
 
-        let isMatch = false;
+        let isMatch = false
 
         // Match by DOI (if both have DOI)
         if (baseDoi && otherDoi && baseDoi === otherDoi) {
-          isMatch = true;
+          isMatch = true
         }
         // Match by normalized title
-        else if (baseTitleNorm && otherTitleNorm && baseTitleNorm === otherTitleNorm) {
-          isMatch = true;
+        else if (
+          baseTitleNorm &&
+          otherTitleNorm &&
+          baseTitleNorm === otherTitleNorm
+        ) {
+          isMatch = true
         }
 
         if (isMatch) {
-          matches.push(other);
-          usedIndices.add(j);
+          matches.push(other)
+          usedIndices.add(j)
         }
       }
 
@@ -939,78 +987,86 @@ export function useAddStudies(options = {}) {
         journal: null,
         abstract: null,
         importSource:
-          base.type === 'pdf' ? 'pdf'
-          : base.type === 'drive' ? 'google-drive'
-          : base.type === 'ref' ? 'reference-file'
-          : 'identifier-lookup',
-      };
+          base.type === 'pdf'
+            ? 'pdf'
+            : base.type === 'drive'
+              ? 'google-drive'
+              : base.type === 'ref'
+                ? 'reference-file'
+                : 'identifier-lookup',
+      }
 
       // Merge data from all matches
       for (const match of matches) {
         // Prefer richer title (from metadata sources)
         if (match.metadata && match.title) {
-          mergedStudy.title = match.title;
+          mergedStudy.title = match.title
         }
 
         // Take DOI from any source
         if (match.doi && !mergedStudy.doi) {
-          mergedStudy.doi = match.doi;
+          mergedStudy.doi = match.doi
         }
 
         // Take PDF data from any source
         if (match.pdfData && !mergedStudy.pdfData) {
-          mergedStudy.pdfData = match.pdfData;
-          mergedStudy.pdfFileName = match.pdfFileName;
+          mergedStudy.pdfData = match.pdfData
+          mergedStudy.pdfFileName = match.pdfFileName
         }
 
         // Take PDF URL if no direct data
         if (match.pdfUrl && !mergedStudy.pdfUrl) {
-          mergedStudy.pdfUrl = match.pdfUrl;
-          mergedStudy.pdfSource = match.pdfSource;
-          mergedStudy.pdfAccessible = match.pdfAccessible;
+          mergedStudy.pdfUrl = match.pdfUrl
+          mergedStudy.pdfSource = match.pdfSource
+          mergedStudy.pdfAccessible = match.pdfAccessible
         }
 
         // Take Google Drive info
         if (match.googleDriveFileId) {
-          mergedStudy.googleDriveFileId = match.googleDriveFileId;
-          mergedStudy.googleDriveFileName = match.googleDriveFileName;
+          mergedStudy.googleDriveFileId = match.googleDriveFileId
+          mergedStudy.googleDriveFileName = match.googleDriveFileName
         }
 
         // Merge metadata from refs/lookups
         if (match.metadata) {
-          if (match.metadata.firstAuthor) mergedStudy.firstAuthor = match.metadata.firstAuthor;
+          if (match.metadata.firstAuthor)
+            mergedStudy.firstAuthor = match.metadata.firstAuthor
           if (match.metadata.publicationYear)
-            mergedStudy.publicationYear = match.metadata.publicationYear;
-          if (match.metadata.authors) mergedStudy.authors = match.metadata.authors;
-          if (match.metadata.journal) mergedStudy.journal = match.metadata.journal;
-          if (match.metadata.abstract) mergedStudy.abstract = match.metadata.abstract;
+            mergedStudy.publicationYear = match.metadata.publicationYear
+          if (match.metadata.authors)
+            mergedStudy.authors = match.metadata.authors
+          if (match.metadata.journal)
+            mergedStudy.journal = match.metadata.journal
+          if (match.metadata.abstract)
+            mergedStudy.abstract = match.metadata.abstract
 
           // Update import source to reflect we have metadata
-          if (match.type === 'ref') mergedStudy.importSource = 'reference-file';
-          else if (match.type === 'lookup') mergedStudy.importSource = 'identifier-lookup';
+          if (match.type === 'ref') mergedStudy.importSource = 'reference-file'
+          else if (match.type === 'lookup')
+            mergedStudy.importSource = 'identifier-lookup'
         }
       }
 
       // If we merged multiple sources, note it
       if (matches.length > 1) {
-        const types = [...new Set(matches.map(m => m.type))];
+        const types = [...new Set(matches.map((m) => m.type))]
         if (types.length > 1) {
-          mergedStudy.importSource = 'merged';
+          mergedStudy.importSource = 'merged'
         }
       }
 
-      merged.push(mergedStudy);
+      merged.push(mergedStudy)
     }
 
-    return merged;
+    return merged
   }
 
   const clearAll = () => {
-    setUploadedPdfs([]);
-    clearImportedRefs();
-    clearLookupRefs();
-    clearDriveFiles();
-  };
+    setUploadedPdfs([])
+    clearImportedRefs()
+    clearLookupRefs()
+    clearDriveFiles()
+  }
 
   // ===================
   // State Serialization (for persistence across OAuth redirects)
@@ -1021,22 +1077,22 @@ export function useAddStudies(options = {}) {
    * @param {ArrayBuffer} buffer
    * @returns {ArrayBuffer|null}
    */
-  const cloneArrayBuffer = buffer => {
-    if (!buffer || !(buffer instanceof ArrayBuffer)) return null;
+  const cloneArrayBuffer = (buffer) => {
+    if (!buffer || !(buffer instanceof ArrayBuffer)) return null
     try {
       // Check if buffer is detached by trying to access byteLength
       if (buffer.byteLength === 0 && buffer.maxByteLength === undefined) {
-        return null;
+        return null
       }
       // Create a new ArrayBuffer copy
-      const copy = new ArrayBuffer(buffer.byteLength);
-      new Uint8Array(copy).set(new Uint8Array(buffer));
-      return copy;
+      const copy = new ArrayBuffer(buffer.byteLength)
+      new Uint8Array(copy).set(new Uint8Array(buffer))
+      return copy
     } catch {
       // Buffer is likely detached
-      return null;
+      return null
     }
-  };
+  }
 
   /**
    * Get all state in a serializable format for IndexedDB storage.
@@ -1045,7 +1101,7 @@ export function useAddStudies(options = {}) {
    */
   const getSerializableState = () => {
     // Serialize uploaded PDFs - convert File objects and clone ArrayBuffers
-    const serializedPdfs = uploadedPdfs.map(pdf => ({
+    const serializedPdfs = uploadedPdfs.map((pdf) => ({
       id: pdf.id,
       title: pdf.title,
       extracting: pdf.extracting,
@@ -1057,10 +1113,10 @@ export function useAddStudies(options = {}) {
       fileName: pdf.file?.name || null,
       fileType: pdf.file?.type || null,
       fileSize: pdf.file?.size || null,
-    }));
+    }))
 
     // Serialize ref PDF files
-    const serializedRefPdfs = refPdfFiles().map(pdf => ({
+    const serializedRefPdfs = refPdfFiles().map((pdf) => ({
       id: pdf.id,
       fileName: pdf.fileName,
       title: pdf.title,
@@ -1071,10 +1127,10 @@ export function useAddStudies(options = {}) {
       // Serialize File object
       fileType: pdf.file?.type || null,
       fileSize: pdf.file?.size || null,
-    }));
+    }))
 
     // Serialize imported refs - ensure plain objects only
-    const serializedImportedRefs = importedRefs().map(ref => ({
+    const serializedImportedRefs = importedRefs().map((ref) => ({
       _id: ref._id,
       title: ref.title,
       doi: ref.doi,
@@ -1089,10 +1145,10 @@ export function useAddStudies(options = {}) {
       pdfAvailable: ref.pdfAvailable,
       pdfData: cloneArrayBuffer(ref.pdfData),
       pdfFileName: ref.pdfFileName,
-    }));
+    }))
 
     // Serialize lookup refs - ensure plain objects and clone ArrayBuffers
-    const serializedLookupRefs = lookupRefs().map(ref => ({
+    const serializedLookupRefs = lookupRefs().map((ref) => ({
       _id: ref._id,
       title: ref.title,
       doi: ref.doi,
@@ -1108,7 +1164,7 @@ export function useAddStudies(options = {}) {
       manualPdfData: cloneArrayBuffer(ref.manualPdfData),
       manualPdfFileName: ref.manualPdfFileName,
       matchedFromUpload: ref.matchedFromUpload,
-    }));
+    }))
 
     return {
       // PDF state
@@ -1126,20 +1182,23 @@ export function useAddStudies(options = {}) {
       selectedLookupIds: Array.from(selectedLookupIds()),
 
       // Google Drive state
-      selectedDriveFiles: selectedDriveFiles().map(f => ({ id: f.id, name: f.name })),
-    };
-  };
+      selectedDriveFiles: selectedDriveFiles().map((f) => ({
+        id: f.id,
+        name: f.name,
+      })),
+    }
+  }
 
   /**
    * Restore state from a previously serialized state object.
    * @param {Object} savedState - State object from getSerializableState()
    */
-  const restoreState = savedState => {
-    if (!savedState) return;
+  const restoreState = (savedState) => {
+    if (!savedState) return
 
     // Restore uploaded PDFs - reconstruct minimal file-like objects
     if (savedState.uploadedPdfs?.length > 0) {
-      const restoredPdfs = savedState.uploadedPdfs.map(pdf => ({
+      const restoredPdfs = savedState.uploadedPdfs.map((pdf) => ({
         id: pdf.id,
         title: pdf.title,
         extracting: false, // Don't restore extracting state
@@ -1148,30 +1207,29 @@ export function useAddStudies(options = {}) {
         metadata: pdf.metadata,
         matchedToRef: pdf.matchedToRef,
         // Create a minimal file-like object for display purposes
-        file:
-          pdf.fileName ?
-            {
+        file: pdf.fileName
+          ? {
               name: pdf.fileName,
               type: pdf.fileType || 'application/pdf',
               size: pdf.fileSize || pdf.data?.byteLength || 0,
             }
           : null,
-      }));
-      setUploadedPdfs(restoredPdfs);
+      }))
+      setUploadedPdfs(restoredPdfs)
     }
 
     // Restore reference import state
     if (savedState.importedRefs?.length > 0) {
-      setImportedRefs(savedState.importedRefs);
+      setImportedRefs(savedState.importedRefs)
     }
     if (savedState.selectedRefIds?.length > 0) {
-      setSelectedRefIds(new Set(savedState.selectedRefIds));
+      setSelectedRefIds(new Set(savedState.selectedRefIds))
     }
     if (savedState.refFileName) {
-      setRefFileName(savedState.refFileName);
+      setRefFileName(savedState.refFileName)
     }
     if (savedState.refPdfFiles?.length > 0) {
-      const restoredRefPdfs = savedState.refPdfFiles.map(pdf => ({
+      const restoredRefPdfs = savedState.refPdfFiles.map((pdf) => ({
         id: pdf.id,
         fileName: pdf.fileName,
         title: pdf.title,
@@ -1179,34 +1237,33 @@ export function useAddStudies(options = {}) {
         doi: pdf.doi,
         matched: pdf.matched,
         matchedRefId: pdf.matchedRefId,
-        file:
-          pdf.fileName ?
-            {
+        file: pdf.fileName
+          ? {
               name: pdf.fileName,
               type: pdf.fileType || 'application/pdf',
               size: pdf.fileSize || pdf.data?.byteLength || 0,
             }
           : null,
-      }));
-      setRefPdfFiles(restoredRefPdfs);
+      }))
+      setRefPdfFiles(restoredRefPdfs)
     }
 
     // Restore DOI/PMID lookup state
     if (savedState.identifierInput) {
-      setIdentifierInput(savedState.identifierInput);
+      setIdentifierInput(savedState.identifierInput)
     }
     if (savedState.lookupRefs?.length > 0) {
-      setLookupRefs(savedState.lookupRefs);
+      setLookupRefs(savedState.lookupRefs)
     }
     if (savedState.selectedLookupIds?.length > 0) {
-      setSelectedLookupIds(new Set(savedState.selectedLookupIds));
+      setSelectedLookupIds(new Set(savedState.selectedLookupIds))
     }
 
     // Restore Google Drive state
     if (savedState.selectedDriveFiles?.length > 0) {
-      setSelectedDriveFiles(savedState.selectedDriveFiles);
+      setSelectedDriveFiles(savedState.selectedDriveFiles)
     }
-  };
+  }
 
   return {
     // PDF state & handlers
@@ -1265,5 +1322,5 @@ export function useAddStudies(options = {}) {
     // State persistence (for OAuth redirect recovery)
     getSerializableState,
     restoreState,
-  };
+  }
 }

@@ -7,7 +7,7 @@
  * - 'secondary': Additional supplementary PDFs (default)
  */
 
-import * as Y from 'yjs';
+import * as Y from 'yjs'
 
 /**
  * Creates PDF operations
@@ -22,19 +22,19 @@ export function createPdfOperations(projectId, getYDoc, _isSynced) {
    * @private
    */
   function getPdfsMap(studyId, create = false) {
-    const ydoc = getYDoc();
-    if (!ydoc) return null;
+    const ydoc = getYDoc()
+    if (!ydoc) return null
 
-    const studiesMap = ydoc.getMap('reviews');
-    const studyYMap = studiesMap.get(studyId);
-    if (!studyYMap) return null;
+    const studiesMap = ydoc.getMap('reviews')
+    const studyYMap = studiesMap.get(studyId)
+    if (!studyYMap) return null
 
-    let pdfsMap = studyYMap.get('pdfs');
+    let pdfsMap = studyYMap.get('pdfs')
     if (!pdfsMap && create) {
-      pdfsMap = new Y.Map();
-      studyYMap.set('pdfs', pdfsMap);
+      pdfsMap = new Y.Map()
+      studyYMap.set('pdfs', pdfsMap)
     }
-    return pdfsMap;
+    return pdfsMap
   }
 
   /**
@@ -42,12 +42,12 @@ export function createPdfOperations(projectId, getYDoc, _isSynced) {
    * @private
    */
   function clearTag(studyId, tag) {
-    const pdfsMap = getPdfsMap(studyId);
-    if (!pdfsMap) return;
+    const pdfsMap = getPdfsMap(studyId)
+    if (!pdfsMap) return
 
     for (const [_pdfId, pdfYMap] of pdfsMap.entries()) {
       if (pdfYMap.get('tag') === tag) {
-        pdfYMap.set('tag', 'secondary');
+        pdfYMap.set('tag', 'secondary')
       }
     }
   }
@@ -60,41 +60,42 @@ export function createPdfOperations(projectId, getYDoc, _isSynced) {
    * @returns {string|null} The generated PDF ID or null if YDoc is not ready or study doesn't exist
    */
   function addPdfToStudy(studyId, pdfInfo, tag = 'secondary') {
-    const ydoc = getYDoc();
-    if (!ydoc) return null;
+    const ydoc = getYDoc()
+    if (!ydoc) return null
 
-    const studiesMap = ydoc.getMap('reviews');
-    const studyYMap = studiesMap.get(studyId);
-    if (!studyYMap) return null;
+    const studiesMap = ydoc.getMap('reviews')
+    const studyYMap = studiesMap.get(studyId)
+    if (!studyYMap) return null
 
-    const pdfsMap = getPdfsMap(studyId, true);
+    const pdfsMap = getPdfsMap(studyId, true)
 
     // If setting as primary or protocol, clear existing tag first
     if (tag === 'primary' || tag === 'protocol') {
-      clearTag(studyId, tag);
+      clearTag(studyId, tag)
     }
 
-    const pdfId = crypto.randomUUID();
-    const pdfYMap = new Y.Map();
-    pdfYMap.set('id', pdfId);
-    pdfYMap.set('key', pdfInfo.key);
-    pdfYMap.set('fileName', pdfInfo.fileName);
-    pdfYMap.set('size', pdfInfo.size);
-    pdfYMap.set('uploadedBy', pdfInfo.uploadedBy);
-    pdfYMap.set('uploadedAt', pdfInfo.uploadedAt || Date.now());
-    pdfYMap.set('tag', tag);
+    const pdfId = crypto.randomUUID()
+    const pdfYMap = new Y.Map()
+    pdfYMap.set('id', pdfId)
+    pdfYMap.set('key', pdfInfo.key)
+    pdfYMap.set('fileName', pdfInfo.fileName)
+    pdfYMap.set('size', pdfInfo.size)
+    pdfYMap.set('uploadedBy', pdfInfo.uploadedBy)
+    pdfYMap.set('uploadedAt', pdfInfo.uploadedAt || Date.now())
+    pdfYMap.set('tag', tag)
 
     // Citation metadata (optional, can be added later via updatePdfMetadata)
-    if (pdfInfo.title) pdfYMap.set('title', pdfInfo.title);
-    if (pdfInfo.firstAuthor) pdfYMap.set('firstAuthor', pdfInfo.firstAuthor);
-    if (pdfInfo.publicationYear) pdfYMap.set('publicationYear', pdfInfo.publicationYear);
-    if (pdfInfo.journal) pdfYMap.set('journal', pdfInfo.journal);
-    if (pdfInfo.doi) pdfYMap.set('doi', pdfInfo.doi);
+    if (pdfInfo.title) pdfYMap.set('title', pdfInfo.title)
+    if (pdfInfo.firstAuthor) pdfYMap.set('firstAuthor', pdfInfo.firstAuthor)
+    if (pdfInfo.publicationYear)
+      pdfYMap.set('publicationYear', pdfInfo.publicationYear)
+    if (pdfInfo.journal) pdfYMap.set('journal', pdfInfo.journal)
+    if (pdfInfo.doi) pdfYMap.set('doi', pdfInfo.doi)
 
-    pdfsMap.set(pdfId, pdfYMap);
+    pdfsMap.set(pdfId, pdfYMap)
 
-    studyYMap.set('updatedAt', Date.now());
-    return pdfId;
+    studyYMap.set('updatedAt', Date.now())
+    return pdfId
   }
 
   /**
@@ -103,19 +104,19 @@ export function createPdfOperations(projectId, getYDoc, _isSynced) {
    * @param {string} pdfId - The PDF ID
    */
   function removePdfFromStudy(studyId, pdfId) {
-    const ydoc = getYDoc();
-    if (!ydoc) return;
+    const ydoc = getYDoc()
+    if (!ydoc) return
 
-    const studiesMap = ydoc.getMap('reviews');
-    const studyYMap = studiesMap.get(studyId);
-    if (!studyYMap) return;
+    const studiesMap = ydoc.getMap('reviews')
+    const studyYMap = studiesMap.get(studyId)
+    if (!studyYMap) return
 
-    const pdfsMap = studyYMap.get('pdfs');
+    const pdfsMap = studyYMap.get('pdfs')
     if (pdfsMap) {
-      pdfsMap.delete(pdfId);
+      pdfsMap.delete(pdfId)
     }
 
-    studyYMap.set('updatedAt', Date.now());
+    studyYMap.set('updatedAt', Date.now())
   }
 
   /**
@@ -124,13 +125,13 @@ export function createPdfOperations(projectId, getYDoc, _isSynced) {
    * @param {string} fileName - The PDF file name
    */
   function removePdfByFileName(studyId, fileName) {
-    const pdfsMap = getPdfsMap(studyId);
-    if (!pdfsMap) return;
+    const pdfsMap = getPdfsMap(studyId)
+    if (!pdfsMap) return
 
     for (const [pdfId, pdfYMap] of pdfsMap.entries()) {
       if (pdfYMap.get('fileName') === fileName) {
-        removePdfFromStudy(studyId, pdfId);
-        return;
+        removePdfFromStudy(studyId, pdfId)
+        return
       }
     }
   }
@@ -142,26 +143,26 @@ export function createPdfOperations(projectId, getYDoc, _isSynced) {
    * @param {string} tag - New tag: 'primary' | 'protocol' | 'secondary'
    */
   function updatePdfTag(studyId, pdfId, tag) {
-    const ydoc = getYDoc();
-    if (!ydoc) return;
+    const ydoc = getYDoc()
+    if (!ydoc) return
 
-    const pdfsMap = getPdfsMap(studyId);
-    if (!pdfsMap) return;
+    const pdfsMap = getPdfsMap(studyId)
+    if (!pdfsMap) return
 
-    const pdfYMap = pdfsMap.get(pdfId);
-    if (!pdfYMap) return;
+    const pdfYMap = pdfsMap.get(pdfId)
+    if (!pdfYMap) return
 
     // If setting as primary or protocol, clear existing tag first
     if (tag === 'primary' || tag === 'protocol') {
-      clearTag(studyId, tag);
+      clearTag(studyId, tag)
     }
 
-    pdfYMap.set('tag', tag);
+    pdfYMap.set('tag', tag)
 
-    const studiesMap = ydoc.getMap('reviews');
-    const studyYMap = studiesMap.get(studyId);
+    const studiesMap = ydoc.getMap('reviews')
+    const studyYMap = studiesMap.get(studyId)
     if (studyYMap) {
-      studyYMap.set('updatedAt', Date.now());
+      studyYMap.set('updatedAt', Date.now())
     }
   }
 
@@ -172,31 +173,35 @@ export function createPdfOperations(projectId, getYDoc, _isSynced) {
    * @param {Object} metadata - Citation metadata { title?, firstAuthor?, publicationYear?, journal?, doi? }
    */
   function updatePdfMetadata(studyId, pdfId, metadata) {
-    const ydoc = getYDoc();
-    if (!ydoc) return;
+    const ydoc = getYDoc()
+    if (!ydoc) return
 
-    const pdfsMap = getPdfsMap(studyId);
-    if (!pdfsMap) return;
+    const pdfsMap = getPdfsMap(studyId)
+    if (!pdfsMap) return
 
-    const pdfYMap = pdfsMap.get(pdfId);
-    if (!pdfYMap) return;
+    const pdfYMap = pdfsMap.get(pdfId)
+    if (!pdfYMap) return
 
     // Update each metadata field
-    const fields = ['title', 'firstAuthor', 'publicationYear', 'journal', 'doi'];
+    const fields = ['title', 'firstAuthor', 'publicationYear', 'journal', 'doi']
     for (const field of fields) {
       if (field in metadata) {
-        if (metadata[field] !== undefined && metadata[field] !== null && metadata[field] !== '') {
-          pdfYMap.set(field, metadata[field]);
+        if (
+          metadata[field] !== undefined &&
+          metadata[field] !== null &&
+          metadata[field] !== ''
+        ) {
+          pdfYMap.set(field, metadata[field])
         } else {
-          pdfYMap.delete(field);
+          pdfYMap.delete(field)
         }
       }
     }
 
-    const studiesMap = ydoc.getMap('reviews');
-    const studyYMap = studiesMap.get(studyId);
+    const studiesMap = ydoc.getMap('reviews')
+    const studyYMap = studiesMap.get(studyId)
     if (studyYMap) {
-      studyYMap.set('updatedAt', Date.now());
+      studyYMap.set('updatedAt', Date.now())
     }
   }
 
@@ -206,7 +211,7 @@ export function createPdfOperations(projectId, getYDoc, _isSynced) {
    * @param {string} pdfId - The PDF ID
    */
   function setPdfAsPrimary(studyId, pdfId) {
-    updatePdfTag(studyId, pdfId, 'primary');
+    updatePdfTag(studyId, pdfId, 'primary')
   }
 
   /**
@@ -215,7 +220,7 @@ export function createPdfOperations(projectId, getYDoc, _isSynced) {
    * @param {string} pdfId - The PDF ID
    */
   function setPdfAsProtocol(studyId, pdfId) {
-    updatePdfTag(studyId, pdfId, 'protocol');
+    updatePdfTag(studyId, pdfId, 'protocol')
   }
 
   return {
@@ -226,5 +231,5 @@ export function createPdfOperations(projectId, getYDoc, _isSynced) {
     updatePdfMetadata,
     setPdfAsPrimary,
     setPdfAsProtocol,
-  };
+  }
 }

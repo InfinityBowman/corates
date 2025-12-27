@@ -2,8 +2,8 @@
  * Google Drive API - Interact with user's connected Google Drive
  */
 
-import { API_BASE } from '@config/api.js';
-import { parseApiError } from '@/lib/error-utils.js';
+import { API_BASE } from '@config/api.js'
+import { parseApiError } from '@/lib/error-utils.js'
 
 /**
  * Check if the user has connected their Google account
@@ -13,14 +13,14 @@ export async function getGoogleDriveStatus() {
   const response = await fetch(`${API_BASE}/api/google-drive/status`, {
     method: 'GET',
     credentials: 'include',
-  });
+  })
 
   if (!response.ok) {
-    const parsedError = await parseApiError(response);
-    throw new Error(parsedError.message);
+    const parsedError = await parseApiError(response)
+    throw new Error(parsedError.message)
   }
 
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -31,14 +31,14 @@ export async function disconnectGoogleDrive() {
   const response = await fetch(`${API_BASE}/api/google-drive/disconnect`, {
     method: 'DELETE',
     credentials: 'include',
-  });
+  })
 
   if (!response.ok) {
-    const parsedError = await parseApiError(response);
-    throw new Error(parsedError.message);
+    const parsedError = await parseApiError(response)
+    throw new Error(parsedError.message)
   }
 
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -49,7 +49,7 @@ export async function disconnectGoogleDrive() {
  * @returns {Promise<{success: boolean, file: Object}>}
  */
 export async function importFromGoogleDrive(fileId, projectId, studyId) {
-  console.log('importing from google drive', fileId, projectId, studyId);
+  console.log('importing from google drive', fileId, projectId, studyId)
   const response = await fetch(`${API_BASE}/api/google-drive/import`, {
     method: 'POST',
     credentials: 'include',
@@ -57,14 +57,14 @@ export async function importFromGoogleDrive(fileId, projectId, studyId) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ fileId, projectId, studyId }),
-  });
+  })
 
   if (!response.ok) {
-    const parsedError = await parseApiError(response);
-    throw new Error(parsedError.message);
+    const parsedError = await parseApiError(response)
+    throw new Error(parsedError.message)
   }
 
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -75,14 +75,14 @@ export async function getGoogleDrivePickerToken() {
   const response = await fetch(`${API_BASE}/api/google-drive/picker-token`, {
     method: 'GET',
     credentials: 'include',
-  });
+  })
 
   if (!response.ok) {
-    const parsedError = await parseApiError(response);
-    throw new Error(parsedError.message);
+    const parsedError = await parseApiError(response)
+    throw new Error(parsedError.message)
   }
 
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -101,20 +101,20 @@ export async function connectGoogleAccount(callbackUrl) {
       provider: 'google',
       callbackURL: callbackUrl || window.location.href,
     }),
-  });
+  })
 
   if (!response.ok) {
-    const parsedError = await parseApiError(response);
-    throw new Error(parsedError.message);
+    const parsedError = await parseApiError(response)
+    throw new Error(parsedError.message)
   }
 
-  const data = await response.json();
+  const data = await response.json()
 
   // BetterAuth returns { url, redirect: true } - we need to redirect to the URL
   if (data.url) {
-    window.location.href = data.url;
+    window.location.href = data.url
   } else {
-    throw new Error('No redirect URL received from auth server');
+    throw new Error('No redirect URL received from auth server')
   }
 }
 
@@ -122,16 +122,18 @@ export async function connectGoogleAccount(callbackUrl) {
  * @deprecated Use connectGoogleAccount() instead
  */
 export function getGoogleConnectUrl(callbackUrl) {
-  console.warn('getGoogleConnectUrl is deprecated, use connectGoogleAccount() instead');
+  console.warn(
+    'getGoogleConnectUrl is deprecated, use connectGoogleAccount() instead',
+  )
   const params = new URLSearchParams({
     provider: 'google',
-  });
+  })
 
   if (callbackUrl) {
-    params.set('callbackURL', callbackUrl);
+    params.set('callbackURL', callbackUrl)
   }
 
-  return `${API_BASE}/api/auth/sign-in/social?${params}`;
+  return `${API_BASE}/api/auth/sign-in/social?${params}`
 }
 
 /**
@@ -140,16 +142,16 @@ export function getGoogleConnectUrl(callbackUrl) {
  * @returns {string}
  */
 export function formatFileSize(bytes) {
-  if (!bytes) return 'Unknown size';
+  if (!bytes) return 'Unknown size'
 
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let size = bytes;
-  let unitIndex = 0;
+  const units = ['B', 'KB', 'MB', 'GB']
+  let size = bytes
+  let unitIndex = 0
 
   while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
+    size /= 1024
+    unitIndex++
   }
 
-  return `${size.toFixed(1)} ${units[unitIndex]}`;
+  return `${size.toFixed(1)} ${units[unitIndex]}`
 }

@@ -2,14 +2,14 @@
  * Admin store for managing admin state and API calls
  */
 
-import { createSignal } from 'solid-js';
-import { API_BASE } from '@config/api.js';
+import { createSignal } from 'solid-js'
+import { API_BASE } from '@config/api.js'
 
 // Admin state
-const [isAdminChecked, setIsAdminChecked] = createSignal(false);
-const [isAdmin, setIsAdmin] = createSignal(false);
-const [isImpersonating, setIsImpersonating] = createSignal(false);
-const [impersonatedBy, setImpersonatedBy] = createSignal(null);
+const [isAdminChecked, setIsAdminChecked] = createSignal(false)
+const [isAdmin, setIsAdmin] = createSignal(false)
+const [isImpersonating, setIsImpersonating] = createSignal(false)
+const [impersonatedBy, setImpersonatedBy] = createSignal(null)
 
 /**
  * Check if current user is admin and if currently impersonating
@@ -18,19 +18,19 @@ async function checkAdminStatus() {
   try {
     const response = await fetch(`${API_BASE}/api/admin/check`, {
       credentials: 'include',
-    });
+    })
     if (response.ok) {
-      const data = await response.json();
-      setIsAdmin(data.isAdmin);
+      const data = await response.json()
+      setIsAdmin(data.isAdmin)
     } else {
-      setIsAdmin(false);
+      setIsAdmin(false)
     }
   } catch {
-    setIsAdmin(false);
+    setIsAdmin(false)
   } finally {
-    setIsAdminChecked(true);
+    setIsAdminChecked(true)
   }
-  return isAdmin();
+  return isAdmin()
 }
 
 /**
@@ -40,26 +40,26 @@ async function checkImpersonationStatus() {
   try {
     const response = await fetch(`${API_BASE}/api/auth/get-session`, {
       credentials: 'include',
-    });
+    })
     if (!response.ok) {
-      setIsImpersonating(false);
-      setImpersonatedBy(null);
-      return;
+      setIsImpersonating(false)
+      setImpersonatedBy(null)
+      return
     }
 
-    const data = await response.json().catch(() => null);
+    const data = await response.json().catch(() => null)
     if (data?.session?.impersonatedBy) {
-      setIsImpersonating(true);
-      setImpersonatedBy(data.session.impersonatedBy);
-      return;
+      setIsImpersonating(true)
+      setImpersonatedBy(data.session.impersonatedBy)
+      return
     }
 
-    setIsImpersonating(false);
-    setImpersonatedBy(null);
+    setIsImpersonating(false)
+    setImpersonatedBy(null)
   } catch (err) {
-    setIsImpersonating(false);
-    setImpersonatedBy(null);
-    console.error('[Admin] Error checking impersonation status:', err);
+    setIsImpersonating(false)
+    setImpersonatedBy(null)
+    console.error('[Admin] Error checking impersonation status:', err)
   }
 }
 
@@ -69,9 +69,9 @@ async function checkImpersonationStatus() {
 async function fetchStats() {
   const response = await fetch(`${API_BASE}/api/admin/stats`, {
     credentials: 'include',
-  });
-  if (!response.ok) throw new Error('Failed to fetch stats');
-  return response.json();
+  })
+  if (!response.ok) throw new Error('Failed to fetch stats')
+  return response.json()
 }
 
 /**
@@ -81,14 +81,14 @@ async function fetchUsers({ page = 1, limit = 20, search = '' } = {}) {
   const params = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),
-  });
-  if (search) params.set('search', search);
+  })
+  if (search) params.set('search', search)
 
   const response = await fetch(`${API_BASE}/api/admin/users?${params}`, {
     credentials: 'include',
-  });
-  if (!response.ok) throw new Error('Failed to fetch users');
-  return response.json();
+  })
+  if (!response.ok) throw new Error('Failed to fetch users')
+  return response.json()
 }
 
 /**
@@ -97,9 +97,9 @@ async function fetchUsers({ page = 1, limit = 20, search = '' } = {}) {
 async function fetchUserDetails(userId) {
   const response = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
     credentials: 'include',
-  });
-  if (!response.ok) throw new Error('Failed to fetch user details');
-  return response.json();
+  })
+  if (!response.ok) throw new Error('Failed to fetch user details')
+  return response.json()
 }
 
 /**
@@ -111,12 +111,12 @@ async function banUser(userId, reason, expiresAt = null) {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ reason, expiresAt }),
-  });
+  })
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to ban user');
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to ban user')
   }
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -126,12 +126,12 @@ async function unbanUser(userId) {
   const response = await fetch(`${API_BASE}/api/admin/users/${userId}/unban`, {
     method: 'POST',
     credentials: 'include',
-  });
+  })
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to unban user');
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to unban user')
   }
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -139,18 +139,21 @@ async function unbanUser(userId) {
  * Uses Better Auth's admin client for proper cookie handling
  */
 async function impersonateUser(userId) {
-  const response = await fetch(`${API_BASE}/api/admin/users/${userId}/impersonate`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-  });
+  const response = await fetch(
+    `${API_BASE}/api/admin/users/${userId}/impersonate`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    },
+  )
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to impersonate user');
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.error || 'Failed to impersonate user')
   }
-  setIsImpersonating(true);
+  setIsImpersonating(true)
   // Refresh the page to load as the impersonated user
-  window.location.href = '/';
+  window.location.href = '/'
 }
 
 /**
@@ -162,29 +165,32 @@ async function stopImpersonation() {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-  });
+  })
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to stop impersonation');
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.error || 'Failed to stop impersonation')
   }
-  setIsImpersonating(false);
+  setIsImpersonating(false)
   // Refresh the page to return to admin
-  window.location.href = '/admin';
+  window.location.href = '/admin'
 }
 
 /**
  * Revoke all sessions for a user
  */
 async function revokeUserSessions(userId) {
-  const response = await fetch(`${API_BASE}/api/admin/users/${userId}/sessions`, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
+  const response = await fetch(
+    `${API_BASE}/api/admin/users/${userId}/sessions`,
+    {
+      method: 'DELETE',
+      credentials: 'include',
+    },
+  )
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to revoke sessions');
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to revoke sessions')
   }
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -194,12 +200,12 @@ async function deleteUser(userId) {
   const response = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
     method: 'DELETE',
     credentials: 'include',
-  });
+  })
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to delete user');
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to delete user')
   }
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -210,66 +216,80 @@ async function deleteUser(userId) {
  * @param {number} [options.currentPeriodEnd] - Expiration timestamp in seconds (optional, null = no expiration)
  */
 async function grantAccess(userId, options = {}) {
-  const { tier, currentPeriodEnd } = options;
+  const { tier, currentPeriodEnd } = options
   if (!tier) {
-    throw new Error('Tier is required');
+    throw new Error('Tier is required')
   }
   const body = {
     tier,
     status: 'active',
     currentPeriodStart: Math.floor(Date.now() / 1000),
-  };
+  }
   if (currentPeriodEnd) {
-    body.currentPeriodEnd = currentPeriodEnd;
+    body.currentPeriodEnd = currentPeriodEnd
   }
 
-  const response = await fetch(`${API_BASE}/api/admin/users/${userId}/subscription`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  const response = await fetch(
+    `${API_BASE}/api/admin/users/${userId}/subscription`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  )
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to grant subscription');
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to grant subscription')
   }
-  return response.json();
+  return response.json()
 }
 
 /**
  * Revoke subscription from a user
  */
 async function revokeAccess(userId) {
-  const response = await fetch(`${API_BASE}/api/admin/users/${userId}/subscription`, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
+  const response = await fetch(
+    `${API_BASE}/api/admin/users/${userId}/subscription`,
+    {
+      method: 'DELETE',
+      credentials: 'include',
+    },
+  )
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to revoke subscription');
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to revoke subscription')
   }
-  return response.json();
+  return response.json()
 }
 
 /**
  * Fetch storage documents with cursor-based pagination
  */
-async function fetchStorageDocuments({ cursor, limit = 50, prefix = '', search = '' } = {}) {
+async function fetchStorageDocuments({
+  cursor,
+  limit = 50,
+  prefix = '',
+  search = '',
+} = {}) {
   const params = new URLSearchParams({
     limit: limit.toString(),
-  });
-  if (cursor) params.set('cursor', cursor);
-  if (prefix) params.set('prefix', prefix);
-  if (search) params.set('search', search);
+  })
+  if (cursor) params.set('cursor', cursor)
+  if (prefix) params.set('prefix', prefix)
+  if (search) params.set('search', search)
 
-  const response = await fetch(`${API_BASE}/api/admin/storage/documents?${params}`, {
-    credentials: 'include',
-  });
+  const response = await fetch(
+    `${API_BASE}/api/admin/storage/documents?${params}`,
+    {
+      credentials: 'include',
+    },
+  )
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to fetch storage documents');
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.error || 'Failed to fetch storage documents')
   }
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -277,7 +297,7 @@ async function fetchStorageDocuments({ cursor, limit = 50, prefix = '', search =
  */
 async function deleteStorageDocuments(keys) {
   if (!Array.isArray(keys) || keys.length === 0) {
-    throw new Error('Keys array is required');
+    throw new Error('Keys array is required')
   }
 
   const response = await fetch(`${API_BASE}/api/admin/storage/documents`, {
@@ -285,12 +305,12 @@ async function deleteStorageDocuments(keys) {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ keys }),
-  });
+  })
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to delete storage documents');
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.error || 'Failed to delete storage documents')
   }
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -299,12 +319,12 @@ async function deleteStorageDocuments(keys) {
 async function fetchStorageStats() {
   const response = await fetch(`${API_BASE}/api/admin/storage/stats`, {
     credentials: 'include',
-  });
+  })
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to fetch storage stats');
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.error || 'Failed to fetch storage stats')
   }
-  return response.json();
+  return response.json()
 }
 
 export {
@@ -328,4 +348,4 @@ export {
   fetchStorageDocuments,
   deleteStorageDocuments,
   fetchStorageStats,
-};
+}

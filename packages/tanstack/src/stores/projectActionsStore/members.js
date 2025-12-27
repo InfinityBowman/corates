@@ -2,8 +2,8 @@
  * Member operations for projectActionsStore
  */
 
-import { API_BASE } from '@config/api.js';
-import projectStore from '../projectStore.js';
+import { API_BASE } from '@config/api.js'
+import projectStore from '../projectStore.js'
 
 /**
  * Creates member operations
@@ -18,32 +18,35 @@ export function createMemberActions(getActiveProjectId, getCurrentUserId) {
    * @returns {Promise<{isSelf: boolean}>}
    */
   async function remove(memberId) {
-    const projectId = getActiveProjectId();
-    const currentUserId = getCurrentUserId();
-    const isSelf = currentUserId === memberId;
+    const projectId = getActiveProjectId()
+    const currentUserId = getCurrentUserId()
+    const isSelf = currentUserId === memberId
 
     try {
-      const response = await fetch(`${API_BASE}/api/projects/${projectId}/members/${memberId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `${API_BASE}/api/projects/${projectId}/members/${memberId}`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+        },
+      )
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to remove member');
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to remove member')
       }
 
       if (isSelf) {
-        projectStore.removeProjectFromList(projectId);
+        projectStore.removeProjectFromList(projectId)
       }
 
-      return { isSelf };
+      return { isSelf }
     } catch (err) {
-      console.error('Error removing member:', err);
-      throw err;
+      console.error('Error removing member:', err)
+      throw err
     }
   }
 
   return {
     remove,
-  };
+  }
 }

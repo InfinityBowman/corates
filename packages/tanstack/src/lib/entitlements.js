@@ -3,7 +3,7 @@
  * Computes effective entitlements and quotas from subscription at request time
  */
 
-import { getPlan, DEFAULT_PLAN, isUnlimitedQuota } from '@corates/shared/plans';
+import { getPlan, DEFAULT_PLAN, isUnlimitedQuota } from '@corates/shared/plans'
 
 /**
  * Check if subscription is active
@@ -11,16 +11,16 @@ import { getPlan, DEFAULT_PLAN, isUnlimitedQuota } from '@corates/shared/plans';
  * @returns {boolean} True if subscription is active
  */
 export function isSubscriptionActive(subscription) {
-  if (!subscription) return false;
-  if (subscription.status !== 'active') return false;
-  if (!subscription.currentPeriodEnd) return true;
-  const now = Math.floor(Date.now() / 1000);
+  if (!subscription) return false
+  if (subscription.status !== 'active') return false
+  if (!subscription.currentPeriodEnd) return true
+  const now = Math.floor(Date.now() / 1000)
 
   const endTime =
-    typeof subscription.currentPeriodEnd === 'number' ?
-      subscription.currentPeriodEnd
-    : parseInt(subscription.currentPeriodEnd);
-  return endTime > now;
+    typeof subscription.currentPeriodEnd === 'number'
+      ? subscription.currentPeriodEnd
+      : parseInt(subscription.currentPeriodEnd)
+  return endTime > now
 }
 
 /**
@@ -29,12 +29,12 @@ export function isSubscriptionActive(subscription) {
  * @returns {Object} Entitlements object
  */
 export function getEffectiveEntitlements(subscription) {
-  const planId = subscription?.tier || DEFAULT_PLAN;
-  const plan = getPlan(planId);
+  const planId = subscription?.tier || DEFAULT_PLAN
+  const plan = getPlan(planId)
   if (!isSubscriptionActive(subscription)) {
-    return getPlan(DEFAULT_PLAN).entitlements;
+    return getPlan(DEFAULT_PLAN).entitlements
   }
-  return plan.entitlements;
+  return plan.entitlements
 }
 
 /**
@@ -43,12 +43,12 @@ export function getEffectiveEntitlements(subscription) {
  * @returns {Object} Quotas object
  */
 export function getEffectiveQuotas(subscription) {
-  const planId = subscription?.tier || DEFAULT_PLAN;
-  const plan = getPlan(planId);
+  const planId = subscription?.tier || DEFAULT_PLAN
+  const plan = getPlan(planId)
   if (!isSubscriptionActive(subscription)) {
-    return getPlan(DEFAULT_PLAN).quotas;
+    return getPlan(DEFAULT_PLAN).quotas
   }
-  return plan.quotas;
+  return plan.quotas
 }
 
 /**
@@ -58,8 +58,8 @@ export function getEffectiveQuotas(subscription) {
  * @returns {boolean} True if user has the entitlement
  */
 export function hasEntitlement(subscription, entitlement) {
-  const entitlements = getEffectiveEntitlements(subscription);
-  return entitlements[entitlement] === true;
+  const entitlements = getEffectiveEntitlements(subscription)
+  return entitlements[entitlement] === true
 }
 
 /**
@@ -72,8 +72,8 @@ export function hasEntitlement(subscription, entitlement) {
  * @returns {boolean} True if quota allows the request
  */
 export function hasQuota(subscription, quotaKey, { used, requested = 1 }) {
-  const quotas = getEffectiveQuotas(subscription);
-  const limit = quotas[quotaKey];
-  if (isUnlimitedQuota(limit)) return true;
-  return used + requested <= limit;
+  const quotas = getEffectiveQuotas(subscription)
+  const limit = quotas[quotaKey]
+  if (isUnlimitedQuota(limit)) return true
+  return used + requested <= limit
 }

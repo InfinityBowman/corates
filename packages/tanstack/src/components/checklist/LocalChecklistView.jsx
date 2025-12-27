@@ -6,197 +6,207 @@
  * Supports multiple checklist types via the registry
  */
 
-import { createSignal, createEffect, Show, onCleanup, createMemo } from 'solid-js';
-import { useParams, useNavigate } from '@tanstack/solid-router';
-import ChecklistWithPdf from '@/components/checklist/ChecklistWithPdf.jsx';
-import CreateLocalChecklist from '@/components/checklist/CreateLocalChecklist.jsx';
-import useLocalChecklists from '@primitives/useLocalChecklists.js';
-import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry';
-import { IoChevronBack } from 'solid-icons/io';
-import ScoreTag from '@/components/checklist/ScoreTag.jsx';
+import {
+  createSignal,
+  createEffect,
+  Show,
+  onCleanup,
+  createMemo,
+} from 'solid-js'
+import { useParams, useNavigate } from '@tanstack/solid-router'
+import ChecklistWithPdf from '@/components/checklist/ChecklistWithPdf.jsx'
+import CreateLocalChecklist from '@/components/checklist/CreateLocalChecklist.jsx'
+import useLocalChecklists from '@primitives/useLocalChecklists.js'
+import {
+  getChecklistTypeFromState,
+  scoreChecklistOfType,
+} from '@/checklist-registry'
+import { IoChevronBack } from 'solid-icons/io'
+import ScoreTag from '@/components/checklist/ScoreTag.jsx'
 
 export default function LocalChecklistView() {
-  const params = useParams();
-  const navigate = useNavigate();
-  const { getChecklist, updateChecklist, getPdf, savePdf, deletePdf } = useLocalChecklists();
+  const params = useParams()
+  const navigate = useNavigate()
+  const { getChecklist, updateChecklist, getPdf, savePdf, deletePdf } =
+    useLocalChecklists()
 
-  const [checklist, setChecklist] = createSignal(null);
-  const [pdfData, setPdfData] = createSignal(null);
-  const [pdfFileName, setPdfFileName] = createSignal(null);
-  const [loading, setLoading] = createSignal(true);
-  const [error, setError] = createSignal(null);
+  const [checklist, setChecklist] = createSignal(null)
+  const [pdfData, setPdfData] = createSignal(null)
+  const [pdfFileName, setPdfFileName] = createSignal(null)
+  const [loading, setLoading] = createSignal(true)
+  const [error, setError] = createSignal(null)
 
   // Debounce timer for auto-save
-  let saveTimeout = null;
+  let saveTimeout = null
 
   // Load the checklist and PDF on mount
   createEffect(() => {
-    const checklistId = params.checklistId;
+    const checklistId = params.checklistId
 
     // If no checklistId, show create form (handled in render)
     if (!checklistId) {
-      setLoading(false);
-      return;
+      setLoading(false)
+      return
     }
 
     // Handle async loading inside the effect
-    (async () => {
+    ;(async () => {
       try {
-        setLoading(true);
+        setLoading(true)
 
         // Load checklist and PDF in parallel
         const [loaded, pdfRecord] = await Promise.all([
           getChecklist(checklistId),
           getPdf(checklistId),
-        ]);
+        ])
 
         if (!loaded) {
-          setError('Checklist not found');
-          setLoading(false);
-          return;
+          setError('Checklist not found')
+          setLoading(false)
+          return
         }
 
-        setChecklist(loaded);
+        setChecklist(loaded)
 
         // Load saved PDF if exists
         if (pdfRecord) {
-          setPdfData(pdfRecord.data);
-          setPdfFileName(pdfRecord.fileName);
+          setPdfData(pdfRecord.data)
+          setPdfFileName(pdfRecord.fileName)
         }
 
-        setLoading(false);
+        setLoading(false)
       } catch (err) {
-        const { handleError } = await import('@/lib/error-utils.js');
+        const { handleError } = await import('@/lib/error-utils.js')
         await handleError(err, {
           setError,
           showToast: false,
-        });
-        setLoading(false);
+        })
+        setLoading(false)
       }
-    })();
-  });
+    })()
+  })
 
   // Cleanup on unmount
   onCleanup(() => {
     if (saveTimeout) {
-      clearTimeout(saveTimeout);
+      clearTimeout(saveTimeout)
     }
-  });
+  })
 
   // Handle updates from the AMSTAR2Checklist component
-  const handleUpdate = updates => {
+  const handleUpdate = (updates) => {
     // Optimistically update local state
-    setChecklist(prev => {
-      if (!prev) return prev;
-      return { ...prev, ...updates };
-    });
+    setChecklist((prev) => {
+      if (!prev) return prev
+      return { ...prev, ...updates }
+    })
 
     // Debounce the save to IndexedDB
     if (saveTimeout) {
-      clearTimeout(saveTimeout);
+      clearTimeout(saveTimeout)
     }
 
     saveTimeout = setTimeout(async () => {
       try {
-        const checklistId = params.checklistId;
-        await updateChecklist(checklistId, updates);
+        const checklistId = params.checklistId
+        await updateChecklist(checklistId, updates)
       } catch (err) {
-        console.error('Error saving checklist:', err);
+        console.error('Error saving checklist:', err)
       }
-    }, 500);
-  };
+    }, 500)
+  }
 
   // Handle PDF change
   const handlePdfChange = async (data, fileName) => {
-    const checklistId = params.checklistId;
-    if (!checklistId) return;
+    const checklistId = params.checklistId
+    if (!checklistId) return
 
     // Update local state immediately
-    setPdfData(data);
-    setPdfFileName(fileName);
+    setPdfData(data)
+    setPdfFileName(fileName)
 
     // Save to IndexedDB
     try {
-      await savePdf(checklistId, data, fileName);
+      await savePdf(checklistId, data, fileName)
     } catch (err) {
-      console.error('Error saving PDF:', err);
+      console.error('Error saving PDF:', err)
     }
-  };
+  }
 
   // Handle PDF clear
   const handlePdfClear = async () => {
-    const checklistId = params.checklistId;
-    if (!checklistId) return;
+    const checklistId = params.checklistId
+    if (!checklistId) return
 
     // Update local state immediately
-    setPdfData(null);
-    setPdfFileName(null);
+    setPdfData(null)
+    setPdfFileName(null)
 
     // Delete from IndexedDB
     try {
-      await deletePdf(checklistId);
+      await deletePdf(checklistId)
     } catch (err) {
-      console.error('Error deleting PDF:', err);
+      console.error('Error deleting PDF:', err)
     }
-  };
+  }
 
   const handleBack = () => {
-    navigate({ to: '/dashboard' });
-  };
+    navigate({ to: '/dashboard' })
+  }
 
   // Get the checklist type from the loaded checklist
   const checklistType = () => {
-    const curr = checklist();
-    if (!curr) return null;
-    return getChecklistTypeFromState(curr);
-  };
+    const curr = checklist()
+    if (!curr) return null
+    return getChecklistTypeFromState(curr)
+  }
 
   // Compute the current score based on checklist answers
   const currentScore = createMemo(() => {
-    const curr = checklist();
-    const type = checklistType();
-    if (!curr || !type) return null;
-    return scoreChecklistOfType(type, curr);
-  });
+    const curr = checklist()
+    const type = checklistType()
+    if (!curr || !type) return null
+    return scoreChecklistOfType(type, curr)
+  })
 
   // Header content for the toolbar
   const headerContent = (
     <>
       <button
         onClick={handleBack}
-        class='inline-flex items-center gap-2 text-gray-600 transition-colors hover:text-gray-900'
+        class="inline-flex items-center gap-2 text-gray-600 transition-colors hover:text-gray-900"
       >
         <IoChevronBack size={20} />
         Back
       </button>
 
-      <div class='h-4 w-px bg-gray-300' />
+      <div class="h-4 w-px bg-gray-300" />
 
-      <span class='inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600'>
+      <span class="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
         Local Only
       </span>
       <ScoreTag currentScore={currentScore()} checklistType={checklistType()} />
     </>
-  );
+  )
 
   return (
     <Show when={params.checklistId} fallback={<CreateLocalChecklist />}>
       <Show
         when={!loading()}
         fallback={
-          <div class='flex min-h-screen items-center justify-center bg-blue-50'>
-            <div class='text-gray-500'>Loading checklist...</div>
+          <div class="flex min-h-screen items-center justify-center bg-blue-50">
+            <div class="text-gray-500">Loading checklist...</div>
           </div>
         }
       >
         <Show
           when={!error()}
           fallback={
-            <div class='flex min-h-screen flex-col items-center justify-center gap-4 bg-blue-50'>
-              <div class='text-red-600'>{error()}</div>
+            <div class="flex min-h-screen flex-col items-center justify-center gap-4 bg-blue-50">
+              <div class="text-red-600">{error()}</div>
               <button
                 onClick={handleBack}
-                class='rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700'
+                class="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
               >
                 Go Back
               </button>
@@ -219,5 +229,5 @@ export default function LocalChecklistView() {
         </Show>
       </Show>
     </Show>
-  );
+  )
 }

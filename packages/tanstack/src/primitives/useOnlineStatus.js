@@ -1,10 +1,10 @@
-import { createSignal, createEffect, onCleanup } from 'solid-js';
+import { createSignal, createEffect, onCleanup } from 'solid-js'
 
 // Debounce delay to prevent thrashing on flaky networks
-const DEBOUNCE_MS = 1000;
+const DEBOUNCE_MS = 1000
 
 // How long to wait before confirming we're back online
-const ONLINE_CONFIRM_DELAY_MS = 500;
+const ONLINE_CONFIRM_DELAY_MS = 500
 
 /**
  * Smart online status hook with debouncing to handle flaky networks.
@@ -15,11 +15,11 @@ const ONLINE_CONFIRM_DELAY_MS = 500;
  * This prevents rapid toggling when the network is unstable.
  */
 export default function useOnlineStatus() {
-  const [isOnline, setIsOnline] = createSignal(navigator.onLine);
+  const [isOnline, setIsOnline] = createSignal(navigator.onLine)
 
   createEffect(() => {
-    let onlineDebounceTimer = null;
-    let offlineDebounceTimer = null;
+    let onlineDebounceTimer = null
+    let offlineDebounceTimer = null
 
     /**
      * Verify connectivity by making a lightweight request.
@@ -29,77 +29,77 @@ export default function useOnlineStatus() {
       try {
         // Use a lightweight endpoint - just check if we can reach our API
         // Falls back to checking if fetch works at all
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 3000)
 
         try {
           await fetch('/api/health', {
             method: 'HEAD',
             signal: controller.signal,
             cache: 'no-store',
-          });
-          return true;
+          })
+          return true
         } finally {
-          clearTimeout(timeoutId);
+          clearTimeout(timeoutId)
         }
       } catch {
-        return false;
+        return false
       }
     }
 
     async function handleOnline() {
       // Clear any pending offline timer
       if (offlineDebounceTimer) {
-        clearTimeout(offlineDebounceTimer);
-        offlineDebounceTimer = null;
+        clearTimeout(offlineDebounceTimer)
+        offlineDebounceTimer = null
       }
 
       // Debounce going online to prevent thrashing
       if (onlineDebounceTimer) {
-        clearTimeout(onlineDebounceTimer);
+        clearTimeout(onlineDebounceTimer)
       }
 
       onlineDebounceTimer = setTimeout(async () => {
         // Verify we're actually online before updating state
-        const actuallyOnline = await verifyConnectivity();
+        const actuallyOnline = await verifyConnectivity()
         if (actuallyOnline) {
-          setIsOnline(true);
+          setIsOnline(true)
         }
-        onlineDebounceTimer = null;
-      }, ONLINE_CONFIRM_DELAY_MS);
+        onlineDebounceTimer = null
+      }, ONLINE_CONFIRM_DELAY_MS)
     }
 
     function handleOffline() {
       // Clear any pending online timer
       if (onlineDebounceTimer) {
-        clearTimeout(onlineDebounceTimer);
-        onlineDebounceTimer = null;
+        clearTimeout(onlineDebounceTimer)
+        onlineDebounceTimer = null
       }
 
       // Small debounce for offline too, but shorter since we want to react faster
       if (offlineDebounceTimer) {
-        clearTimeout(offlineDebounceTimer);
+        clearTimeout(offlineDebounceTimer)
       }
 
       offlineDebounceTimer = setTimeout(() => {
         // Double-check browser still thinks we're offline
         if (!navigator.onLine) {
-          setIsOnline(false);
+          setIsOnline(false)
         }
-        offlineDebounceTimer = null;
-      }, DEBOUNCE_MS);
+        offlineDebounceTimer = null
+      }, DEBOUNCE_MS)
     }
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
 
     onCleanup(() => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      if (onlineDebounceTimer) clearTimeout(onlineDebounceTimer);
-      if (offlineDebounceTimer) clearTimeout(offlineDebounceTimer);
-    });
-  });
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+      if (onlineDebounceTimer) clearTimeout(onlineDebounceTimer)
+      if (offlineDebounceTimer) clearTimeout(offlineDebounceTimer)
+    })
+  })
 
-  return isOnline;
+  return isOnline
 }

@@ -10,63 +10,63 @@
  * @returns {Object} File handling operations
  */
 export function createPdfFileHandler(document, options = {}) {
-  let blobUrl = null;
-  let fileInputRef = null;
+  let blobUrl = null
+  let fileInputRef = null
 
   async function handleFile(file) {
-    if (!file) return;
+    if (!file) return
 
     if (file.type !== 'application/pdf') {
-      document.setError('Please select a PDF file');
-      return;
+      document.setError('Please select a PDF file')
+      return
     }
 
     if (blobUrl) {
-      URL.revokeObjectURL(blobUrl);
-      blobUrl = null;
+      URL.revokeObjectURL(blobUrl)
+      blobUrl = null
     }
 
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      document.setFileName(file.name);
+      const arrayBuffer = await file.arrayBuffer()
+      document.setFileName(file.name)
       // Clone the buffer for internal use since PDF.js will detach it
-      document.setPdfSourceAndName({ data: arrayBuffer.slice(0) }, file.name);
+      document.setPdfSourceAndName({ data: arrayBuffer.slice(0) }, file.name)
 
       if (options.onPdfChange) {
         // Clone again for the callback so parent has a usable copy
-        options.onPdfChange(arrayBuffer.slice(0), file.name);
+        options.onPdfChange(arrayBuffer.slice(0), file.name)
       }
     } catch (err) {
-      console.error('Error reading PDF file:', err);
-      document.setError('Failed to read PDF file');
+      console.error('Error reading PDF file:', err)
+      document.setError('Failed to read PDF file')
     }
   }
 
   async function handleFileUpload(event) {
-    const file = event.target.files[0];
-    await handleFile(file);
-    event.target.value = '';
+    const file = event.target.files[0]
+    await handleFile(file)
+    event.target.value = ''
   }
 
   function clearPdf() {
     if (blobUrl) {
-      URL.revokeObjectURL(blobUrl);
-      blobUrl = null;
+      URL.revokeObjectURL(blobUrl)
+      blobUrl = null
     }
 
-    document.clearPdf();
+    document.clearPdf()
 
     if (options.onPdfClear) {
-      options.onPdfClear();
+      options.onPdfClear()
     }
   }
 
   function openFilePicker() {
-    fileInputRef?.click();
+    fileInputRef?.click()
   }
 
   function setFileInputRef(ref) {
-    fileInputRef = ref;
+    fileInputRef = ref
   }
 
   return {
@@ -75,5 +75,5 @@ export function createPdfFileHandler(document, options = {}) {
     clearPdf,
     openFilePicker,
     setFileInputRef,
-  };
+  }
 }

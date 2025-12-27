@@ -2,13 +2,18 @@
  * Study operations for projectActionsStore
  */
 
-import { uploadPdf, fetchPdfViaProxy, downloadPdf, deletePdf } from '@api/pdf-api.js';
-import { cachePdf, clearStudyCache } from '@primitives/pdfCache.js';
-import { showToast } from '@corates/ui';
-import { importFromGoogleDrive } from '@api/google-drive.js';
-import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
-import { fetchFromDOI } from '@/lib/referenceLookup.js';
-import projectStore from '../projectStore.js';
+import {
+  uploadPdf,
+  fetchPdfViaProxy,
+  downloadPdf,
+  deletePdf,
+} from '@api/pdf-api.js'
+import { cachePdf, clearStudyCache } from '@primitives/pdfCache.js'
+import { showToast } from '@corates/ui'
+import { importFromGoogleDrive } from '@api/google-drive.js'
+import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js'
+import { fetchFromDOI } from '@/lib/referenceLookup.js'
+import projectStore from '../projectStore.js'
 
 // ============================================================================
 // Helpers
@@ -18,8 +23,8 @@ import projectStore from '../projectStore.js';
  * Get study name from PDF filename (without .pdf extension)
  */
 function getStudyNameFromFilename(pdfFileName) {
-  if (!pdfFileName) return 'Untitled Study';
-  return pdfFileName.replace(/\.pdf$/i, '');
+  if (!pdfFileName) return 'Untitled Study'
+  return pdfFileName.replace(/\.pdf$/i, '')
 }
 
 /**
@@ -27,69 +32,76 @@ function getStudyNameFromFilename(pdfFileName) {
  * @returns {Object} Updates to apply to study metadata
  */
 async function extractPdfMetadata(arrayBuffer, existingDoi, existingTitle) {
-  const updates = {};
+  const updates = {}
 
   const [extractedTitle, extractedDoi] = await Promise.all([
     extractPdfTitle(arrayBuffer.slice(0)),
     extractPdfDoi(arrayBuffer.slice(0)),
-  ]);
+  ])
 
-  const resolvedTitle = extractedTitle || existingTitle;
+  const resolvedTitle = extractedTitle || existingTitle
   if (resolvedTitle && resolvedTitle !== existingTitle) {
-    updates.originalTitle = resolvedTitle;
+    updates.originalTitle = resolvedTitle
   }
 
-  const resolvedDoi = extractedDoi || existingDoi;
+  const resolvedDoi = extractedDoi || existingDoi
   if (extractedDoi && !existingDoi) {
-    updates.doi = extractedDoi;
+    updates.doi = extractedDoi
   }
 
   // Fetch additional metadata from DOI if available
   if (resolvedDoi) {
     try {
-      const refData = await fetchFromDOI(resolvedDoi);
+      const refData = await fetchFromDOI(resolvedDoi)
       if (refData) {
-        if (!updates.doi) updates.doi = refData.doi || resolvedDoi;
-        if (refData.firstAuthor) updates.firstAuthor = refData.firstAuthor;
-        if (refData.publicationYear) updates.publicationYear = refData.publicationYear;
-        if (refData.authors) updates.authors = refData.authors;
-        if (refData.journal) updates.journal = refData.journal;
-        if (refData.abstract !== undefined) updates.abstract = refData.abstract;
-        updates.importSource = 'pdf';
+        if (!updates.doi) updates.doi = refData.doi || resolvedDoi
+        if (refData.firstAuthor) updates.firstAuthor = refData.firstAuthor
+        if (refData.publicationYear)
+          updates.publicationYear = refData.publicationYear
+        if (refData.authors) updates.authors = refData.authors
+        if (refData.journal) updates.journal = refData.journal
+        if (refData.abstract !== undefined) updates.abstract = refData.abstract
+        updates.importSource = 'pdf'
       }
     } catch (err) {
-      console.warn('Failed to fetch DOI metadata:', err);
+      console.warn('Failed to fetch DOI metadata:', err)
     }
   }
 
-  return updates;
+  return updates
 }
 
 /**
  * Filter updates object to only include defined values
  */
 function filterDefinedUpdates(updates) {
-  const filtered = {};
+  const filtered = {}
   for (const [key, value] of Object.entries(updates)) {
     if (value !== undefined) {
-      filtered[key] = value;
+      filtered[key] = value
     }
   }
-  return filtered;
+  return filtered
 }
 
 /**
  * Add PDF metadata to study, rolling back upload on failure
  */
-async function addPdfMetadataToStudy(ops, studyId, pdfInfo, projectId, tag = 'primary') {
+async function addPdfMetadataToStudy(
+  ops,
+  studyId,
+  pdfInfo,
+  projectId,
+  tag = 'primary',
+) {
   try {
-    ops.addPdfToStudy(studyId, pdfInfo, tag);
-    return true;
+    ops.addPdfToStudy(studyId, pdfInfo, tag)
+    return true
   } catch (err) {
-    console.error('Failed to add PDF metadata:', err);
+    console.error('Failed to add PDF metadata:', err)
     // Rollback: delete the uploaded PDF
-    deletePdf(projectId, studyId, pdfInfo.fileName).catch(console.warn);
-    throw err;
+    deletePdf(projectId, studyId, pdfInfo.fileName).catch(console.warn)
+    throw err
   }
 }
 
@@ -98,12 +110,16 @@ async function addPdfMetadataToStudy(ops, studyId, pdfInfo, projectId, tag = 'pr
  * @returns {boolean} True if PDF was successfully imported
  */
 async function handleGoogleDrivePdf(ops, study, studyId, projectId, userId) {
-  if (!study.googleDriveFileId) return false;
+  if (!study.googleDriveFileId) return false
 
   try {
-    const result = await importFromGoogleDrive(study.googleDriveFileId, projectId, studyId);
-    const importedFile = result?.file;
-    if (!importedFile?.fileName) return false;
+    const result = await importFromGoogleDrive(
+      study.googleDriveFileId,
+      projectId,
+      studyId,
+    )
+    const importedFile = result?.file
+    if (!importedFile?.fileName) return false
 
     await addPdfMetadataToStudy(
       ops,
@@ -117,32 +133,43 @@ async function handleGoogleDrivePdf(ops, study, studyId, projectId, userId) {
         source: 'google-drive',
       },
       projectId,
-    );
+    )
 
     // Extract and apply metadata from the PDF
     try {
-      const arrayBuffer = await downloadPdf(projectId, studyId, importedFile.fileName);
-      cachePdf(projectId, studyId, importedFile.fileName, arrayBuffer).catch(err =>
-        console.warn('Failed to cache Google Drive PDF:', err),
-      );
+      const arrayBuffer = await downloadPdf(
+        projectId,
+        studyId,
+        importedFile.fileName,
+      )
+      cachePdf(projectId, studyId, importedFile.fileName, arrayBuffer).catch(
+        (err) => console.warn('Failed to cache Google Drive PDF:', err),
+      )
 
-      const metadataUpdates = await extractPdfMetadata(arrayBuffer, study.doi, study.title);
+      const metadataUpdates = await extractPdfMetadata(
+        arrayBuffer,
+        study.doi,
+        study.title,
+      )
       if (importedFile.fileName) {
-        metadataUpdates.fileName = importedFile.fileName;
+        metadataUpdates.fileName = importedFile.fileName
       }
 
-      const filtered = filterDefinedUpdates(metadataUpdates);
+      const filtered = filterDefinedUpdates(metadataUpdates)
       if (Object.keys(filtered).length > 0) {
-        ops.updateStudy(studyId, filtered);
+        ops.updateStudy(studyId, filtered)
       }
     } catch (extractErr) {
-      console.warn('Failed to extract metadata for Google Drive PDF:', extractErr);
+      console.warn(
+        'Failed to extract metadata for Google Drive PDF:',
+        extractErr,
+      )
     }
 
-    return true;
+    return true
   } catch (err) {
-    console.error('Error importing PDF from Google Drive:', err);
-    return false;
+    console.error('Error importing PDF from Google Drive:', err)
+    return false
   }
 }
 
@@ -151,17 +178,17 @@ async function handleGoogleDrivePdf(ops, study, studyId, projectId, userId) {
  * @returns {{pdfData: ArrayBuffer, pdfFileName: string} | null}
  */
 async function fetchPdfFromUrl(study) {
-  if (!study.pdfUrl || !study.pdfAccessible) return null;
+  if (!study.pdfUrl || !study.pdfAccessible) return null
 
   try {
-    const pdfData = await fetchPdfViaProxy(study.pdfUrl);
+    const pdfData = await fetchPdfViaProxy(study.pdfUrl)
     const safeName = (study.doi || study.title || 'document')
       .replace(/[^a-zA-Z0-9.-]/g, '_')
-      .substring(0, 50);
-    return { pdfData, pdfFileName: `${safeName}.pdf` };
+      .substring(0, 50)
+    return { pdfData, pdfFileName: `${safeName}.pdf` }
   } catch (err) {
-    console.warn('Failed to fetch PDF from URL:', err);
-    return null;
+    console.warn('Failed to fetch PDF from URL:', err)
+    return null
   }
 }
 
@@ -169,26 +196,35 @@ async function fetchPdfFromUrl(study) {
  * Upload PDF data and attach to study
  * @returns {boolean} True if upload succeeded
  */
-async function uploadAndAttachPdf(ops, pdfData, pdfFileName, studyId, projectId, userId) {
+async function uploadAndAttachPdf(
+  ops,
+  pdfData,
+  pdfFileName,
+  studyId,
+  projectId,
+  userId,
+) {
   try {
-    const result = await uploadPdf(projectId, studyId, pdfData, pdfFileName);
-    cachePdf(projectId, studyId, result.fileName, pdfData).catch(err =>
+    const result = await uploadPdf(projectId, studyId, pdfData, pdfFileName)
+    cachePdf(projectId, studyId, result.fileName, pdfData).catch((err) =>
       console.warn('Failed to cache PDF:', err),
-    );
+    )
 
     // Extract PDF metadata (title, DOI, and fetch DOI metadata if available)
-    let pdfMetadata = {};
+    let pdfMetadata = {}
     try {
-      const metadataUpdates = await extractPdfMetadata(pdfData, null, null);
+      const metadataUpdates = await extractPdfMetadata(pdfData, null, null)
       // Map study metadata fields to PDF metadata fields
-      if (metadataUpdates.originalTitle) pdfMetadata.title = metadataUpdates.originalTitle;
-      if (metadataUpdates.firstAuthor) pdfMetadata.firstAuthor = metadataUpdates.firstAuthor;
+      if (metadataUpdates.originalTitle)
+        pdfMetadata.title = metadataUpdates.originalTitle
+      if (metadataUpdates.firstAuthor)
+        pdfMetadata.firstAuthor = metadataUpdates.firstAuthor
       if (metadataUpdates.publicationYear)
-        pdfMetadata.publicationYear = metadataUpdates.publicationYear;
-      if (metadataUpdates.journal) pdfMetadata.journal = metadataUpdates.journal;
-      if (metadataUpdates.doi) pdfMetadata.doi = metadataUpdates.doi;
+        pdfMetadata.publicationYear = metadataUpdates.publicationYear
+      if (metadataUpdates.journal) pdfMetadata.journal = metadataUpdates.journal
+      if (metadataUpdates.doi) pdfMetadata.doi = metadataUpdates.doi
     } catch (extractErr) {
-      console.warn('Failed to extract PDF metadata:', extractErr);
+      console.warn('Failed to extract PDF metadata:', extractErr)
     }
 
     await addPdfMetadataToStudy(
@@ -208,11 +244,11 @@ async function uploadAndAttachPdf(ops, pdfData, pdfFileName, studyId, projectId,
         doi: pdfMetadata.doi || null,
       },
       projectId,
-    );
-    return true;
+    )
+    return true
   } catch (err) {
-    console.error('Error uploading PDF:', err);
-    return false;
+    console.error('Error uploading PDF:', err)
+    return false
   }
 }
 
@@ -223,35 +259,39 @@ async function uploadAndAttachPdf(ops, pdfData, pdfFileName, studyId, projectId,
  * @param {Function} getCurrentUserId - Function to get current user ID
  * @returns {Object} Study operations
  */
-export function createStudyActions(getActiveConnection, getActiveProjectId, getCurrentUserId) {
+export function createStudyActions(
+  getActiveConnection,
+  getActiveProjectId,
+  getCurrentUserId,
+) {
   /**
    * Create a new study (uses active project)
    * @returns {string|null} The study ID or null if failed
    */
   function create(name, description = '', metadata = {}) {
-    const ops = getActiveConnection();
+    const ops = getActiveConnection()
     if (!ops?.createStudy) {
-      console.error('No connection for active project');
-      return null;
+      console.error('No connection for active project')
+      return null
     }
-    return ops.createStudy(name, description, metadata);
+    return ops.createStudy(name, description, metadata)
   }
 
   /**
    * Update a study's properties (uses active project)
    */
   function update(studyId, updates) {
-    const ops = getActiveConnection();
+    const ops = getActiveConnection()
     if (!ops?.updateStudy) {
-      console.error('No connection for active project');
-      showToast.error('Update Failed', 'Not connected to project');
-      return;
+      console.error('No connection for active project')
+      showToast.error('Update Failed', 'Not connected to project')
+      return
     }
     try {
-      ops.updateStudy(studyId, updates);
+      ops.updateStudy(studyId, updates)
     } catch (err) {
-      console.error('Error updating study:', err);
-      showToast.error('Update Failed', 'Failed to update study');
+      console.error('Error updating study:', err)
+      showToast.error('Update Failed', 'Failed to update study')
     }
   }
 
@@ -260,42 +300,42 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
    * Cleans up all associated PDFs from R2 and IndexedDB before deleting from Y.js
    */
   async function deleteStudy(studyId) {
-    const projectId = getActiveProjectId();
-    const ops = getActiveConnection();
+    const projectId = getActiveProjectId()
+    const ops = getActiveConnection()
     if (!ops?.deleteStudy) {
-      console.error('No connection for active project');
-      showToast.error('Delete Failed', 'Not connected to project');
-      return;
+      console.error('No connection for active project')
+      showToast.error('Delete Failed', 'Not connected to project')
+      return
     }
 
     try {
       // Get study data to access PDFs before deletion
-      const study = projectStore.getStudy(projectId, studyId);
-      const pdfs = study?.pdfs || [];
+      const study = projectStore.getStudy(projectId, studyId)
+      const pdfs = study?.pdfs || []
 
       // Delete each PDF from R2 storage
       if (pdfs.length > 0) {
-        const deletePromises = pdfs.map(pdf => {
-          if (!pdf?.fileName) return Promise.resolve();
-          return deletePdf(projectId, studyId, pdf.fileName).catch(err => {
+        const deletePromises = pdfs.map((pdf) => {
+          if (!pdf?.fileName) return Promise.resolve()
+          return deletePdf(projectId, studyId, pdf.fileName).catch((err) => {
             // Log but don't block - continue with other PDFs
-            console.warn(`Failed to delete PDF ${pdf.fileName} from R2:`, err);
-          });
-        });
-        await Promise.all(deletePromises);
+            console.warn(`Failed to delete PDF ${pdf.fileName} from R2:`, err)
+          })
+        })
+        await Promise.all(deletePromises)
       }
 
       // Clear all PDFs for this study from IndexedDB
-      await clearStudyCache(projectId, studyId).catch(err => {
+      await clearStudyCache(projectId, studyId).catch((err) => {
         // Log but don't block - continue with Y.js deletion
-        console.warn('Failed to clear study PDF cache from IndexedDB:', err);
-      });
+        console.warn('Failed to clear study PDF cache from IndexedDB:', err)
+      })
 
       // Finally, delete the study from Y.js
-      ops.deleteStudy(studyId);
+      ops.deleteStudy(studyId)
     } catch (err) {
-      console.error('Error deleting study:', err);
-      showToast.error('Delete Failed', 'Failed to delete study');
+      console.error('Error deleting study:', err)
+      showToast.error('Delete Failed', 'Failed to delete study')
     }
   }
 
@@ -307,45 +347,51 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
    * @returns {Promise<{successCount: number, manualPdfCount: number}>}
    */
   async function addBatch(studiesToAdd) {
-    const projectId = getActiveProjectId();
-    const userId = getCurrentUserId();
-    const ops = getActiveConnection();
+    const projectId = getActiveProjectId()
+    const userId = getCurrentUserId()
+    const ops = getActiveConnection()
 
     if (!ops?.createStudy) {
-      showToast.error('Add Failed', 'Not connected to project');
-      throw new Error('Not connected to project');
+      showToast.error('Add Failed', 'Not connected to project')
+      throw new Error('Not connected to project')
     }
 
-    let successCount = 0;
-    let manualPdfCount = 0;
+    let successCount = 0
+    let manualPdfCount = 0
 
     try {
       for (const study of studiesToAdd) {
         try {
           // Create study with initial metadata
-          const studyId = createStudyFromInput(ops, study);
-          if (!studyId) continue;
+          const studyId = createStudyFromInput(ops, study)
+          if (!studyId) continue
 
           // Handle PDF attachment (three possible sources)
-          const pdfAttached = await attachPdfToStudy(ops, study, studyId, projectId, userId);
+          const pdfAttached = await attachPdfToStudy(
+            ops,
+            study,
+            studyId,
+            projectId,
+            userId,
+          )
 
           // Track if user needs to manually download PDF
           if (!pdfAttached && study.pdfUrl && !study.pdfAccessible) {
-            manualPdfCount++;
+            manualPdfCount++
           }
 
-          successCount++;
+          successCount++
         } catch (err) {
-          console.error('Error adding study:', err);
+          console.error('Error adding study:', err)
         }
       }
 
-      showBatchResultToast(successCount, manualPdfCount);
-      return { successCount, manualPdfCount };
+      showBatchResultToast(successCount, manualPdfCount)
+      return { successCount, manualPdfCount }
     } catch (err) {
-      console.error('Error adding studies:', err);
-      showToast.error('Addition Failed', 'Failed to add studies');
-      throw err;
+      console.error('Error adding studies:', err)
+      showToast.error('Addition Failed', 'Failed to add studies')
+      throw err
     }
   }
 
@@ -365,10 +411,10 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
       importSource: study.importSource,
       pdfUrl: study.pdfUrl,
       pdfSource: study.pdfSource,
-    };
+    }
 
-    const studyName = getStudyNameFromFilename(study.pdfFileName);
-    return ops.createStudy(studyName, study.abstract || '', metadata);
+    const studyName = getStudyNameFromFilename(study.pdfFileName)
+    return ops.createStudy(studyName, study.abstract || '', metadata)
   }
 
   /**
@@ -379,18 +425,31 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
   async function attachPdfToStudy(ops, study, studyId, projectId, userId) {
     // Source 1: Direct PDF data (from file upload)
     if (study.pdfData) {
-      return uploadAndAttachPdf(ops, study.pdfData, study.pdfFileName, studyId, projectId, userId);
+      return uploadAndAttachPdf(
+        ops,
+        study.pdfData,
+        study.pdfFileName,
+        studyId,
+        projectId,
+        userId,
+      )
     }
 
     // Source 2: Google Drive import
     if (study.googleDriveFileId) {
-      const imported = await handleGoogleDrivePdf(ops, study, studyId, projectId, userId);
-      if (imported) return true;
+      const imported = await handleGoogleDrivePdf(
+        ops,
+        study,
+        studyId,
+        projectId,
+        userId,
+      )
+      if (imported) return true
     }
 
     // Source 3: Fetch from URL
     if (study.pdfUrl && study.pdfAccessible) {
-      const fetched = await fetchPdfFromUrl(study);
+      const fetched = await fetchPdfFromUrl(study)
       if (fetched) {
         return uploadAndAttachPdf(
           ops,
@@ -399,29 +458,32 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
           studyId,
           projectId,
           userId,
-        );
+        )
       }
     }
 
-    return false;
+    return false
   }
 
   /**
    * Show appropriate toast for batch add results
    */
   function showBatchResultToast(successCount, manualPdfCount) {
-    if (successCount === 0) return;
+    if (successCount === 0) return
 
-    const studyWord = successCount === 1 ? 'study' : 'studies';
+    const studyWord = successCount === 1 ? 'study' : 'studies'
 
     if (manualPdfCount > 0) {
-      const pdfWord = manualPdfCount === 1 ? 'PDF requires' : 'PDFs require';
+      const pdfWord = manualPdfCount === 1 ? 'PDF requires' : 'PDFs require'
       showToast.info(
         'Studies Added',
         `Added ${successCount} ${studyWord}. ${manualPdfCount} ${pdfWord} manual download from the publisher.`,
-      );
+      )
     } else {
-      showToast.success('Studies Added', `Successfully added ${successCount} ${studyWord}.`);
+      showToast.success(
+        'Studies Added',
+        `Successfully added ${successCount} ${studyWord}.`,
+      )
     }
   }
 
@@ -429,20 +491,19 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
    * Import references from Zotero/EndNote files (uses active project)
    */
   function importReferences(references) {
-    const ops = getActiveConnection();
+    const ops = getActiveConnection()
     if (!ops?.createStudy) {
-      showToast.error('Import Failed', 'Not connected to project');
-      return 0;
+      showToast.error('Import Failed', 'Not connected to project')
+      return 0
     }
 
-    let successCount = 0;
+    let successCount = 0
 
     for (const ref of references) {
       try {
-        const studyName =
-          ref.pdfFileName ?
-            getStudyNameFromFilename(ref.pdfFileName)
-          : ref.title || 'Untitled Study';
+        const studyName = ref.pdfFileName
+          ? getStudyNameFromFilename(ref.pdfFileName)
+          : ref.title || 'Untitled Study'
 
         ops.createStudy(studyName, ref.abstract || '', {
           originalTitle: ref.title || null,
@@ -453,10 +514,10 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
           doi: ref.doi,
           abstract: ref.abstract,
           importSource: 'reference-file',
-        });
-        successCount++;
+        })
+        successCount++
       } catch (err) {
-        console.error('Error importing reference:', err);
+        console.error('Error importing reference:', err)
       }
     }
 
@@ -464,9 +525,9 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
       showToast.success(
         'Import Complete',
         `Successfully imported ${successCount} ${successCount === 1 ? 'study' : 'studies'}.`,
-      );
+      )
     }
-    return successCount;
+    return successCount
   }
 
   return {
@@ -475,5 +536,5 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
     delete: deleteStudy,
     addBatch,
     importReferences,
-  };
+  }
 }

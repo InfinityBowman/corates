@@ -15,43 +15,43 @@
  */
 export function handleFormError(error, setFieldError, setGlobalError) {
   if (!error || !error.code) {
-    return false;
+    return false
   }
 
   // Handle validation errors with field details
   if (error.code.startsWith('VALIDATION_')) {
-    const details = error.details;
+    const details = error.details
 
     // Single field error
     if (details?.field) {
-      setFieldError(details.field, error.message);
-      return true;
+      setFieldError(details.field, error.message)
+      return true
     }
 
     // Multi-field errors
     if (details?.fields && Array.isArray(details.fields)) {
       details.fields.forEach(({ field, message }) => {
         if (field && message) {
-          setFieldError(field, message);
+          setFieldError(field, message)
         }
-      });
-      return true;
+      })
+      return true
     }
 
     // Validation error without field details - show as global error
-    setGlobalError(error.message);
-    return true;
+    setGlobalError(error.message)
+    return true
   }
 
   // Other domain errors - show as global error
   if (error.statusCode) {
-    setGlobalError(error.message);
-    return true;
+    setGlobalError(error.message)
+    return true
   }
 
   // Transport errors - show as global error
-  setGlobalError(error.message);
-  return true;
+  setGlobalError(error.message)
+  return true
 }
 
 /**
@@ -60,7 +60,7 @@ export function handleFormError(error, setFieldError, setGlobalError) {
  * @returns {Object} Form error state manager
  */
 export function createFormErrorState() {
-  const fieldErrors = new Map();
+  const fieldErrors = new Map()
 
   return {
     /**
@@ -70,7 +70,7 @@ export function createFormErrorState() {
      */
     setFieldError(field, message) {
       if (field && message) {
-        fieldErrors.set(field, message);
+        fieldErrors.set(field, message)
       }
     },
 
@@ -80,7 +80,7 @@ export function createFormErrorState() {
      * @returns {string|undefined} Error message or undefined
      */
     getFieldError(field) {
-      return fieldErrors.get(field);
+      return fieldErrors.get(field)
     },
 
     /**
@@ -88,14 +88,14 @@ export function createFormErrorState() {
      * @param {string} field - Field name
      */
     clearFieldError(field) {
-      fieldErrors.delete(field);
+      fieldErrors.delete(field)
     },
 
     /**
      * Clear all field errors
      */
     clearAll() {
-      fieldErrors.clear();
+      fieldErrors.clear()
     },
 
     /**
@@ -104,7 +104,7 @@ export function createFormErrorState() {
      * @returns {boolean}
      */
     hasFieldError(field) {
-      return fieldErrors.has(field);
+      return fieldErrors.has(field)
     },
 
     /**
@@ -112,7 +112,7 @@ export function createFormErrorState() {
      * @returns {Record<string, string>} Object mapping field names to error messages
      */
     getAllErrors() {
-      return Object.fromEntries(fieldErrors);
+      return Object.fromEntries(fieldErrors)
     },
 
     /**
@@ -120,9 +120,9 @@ export function createFormErrorState() {
      * @returns {boolean}
      */
     hasErrors() {
-      return fieldErrors.size > 0;
+      return fieldErrors.size > 0
     },
-  };
+  }
 }
 
 /**
@@ -133,8 +133,8 @@ export function createFormErrorState() {
  * @returns {Object} Object with fieldErrors signal, globalError signal, and helper functions
  */
 export function createFormErrorSignals(createSignal) {
-  const [fieldErrors, setFieldErrors] = createSignal({});
-  const [globalError, _setGlobalErrorSignal] = createSignal('');
+  const [fieldErrors, setFieldErrors] = createSignal({})
+  const [globalError, _setGlobalErrorSignal] = createSignal('')
 
   return {
     /**
@@ -154,7 +154,7 @@ export function createFormErrorSignals(createSignal) {
      */
     setFieldError(field, message) {
       if (field && message) {
-        setFieldErrors(prev => ({ ...prev, [field]: message }));
+        setFieldErrors((prev) => ({ ...prev, [field]: message }))
       }
     },
 
@@ -163,18 +163,18 @@ export function createFormErrorSignals(createSignal) {
      * @param {string} field - Field name
      */
     clearFieldError(field) {
-      setFieldErrors(prev => {
-        const next = { ...prev };
-        delete next[field];
-        return next;
-      });
+      setFieldErrors((prev) => {
+        const next = { ...prev }
+        delete next[field]
+        return next
+      })
     },
 
     /**
      * Clear all field errors
      */
     clearFieldErrors() {
-      setFieldErrors({});
+      setFieldErrors({})
     },
 
     /**
@@ -182,22 +182,22 @@ export function createFormErrorSignals(createSignal) {
      * @param {string} message - Error message
      */
     setGlobalError(message) {
-      _setGlobalErrorSignal(message || '');
+      _setGlobalErrorSignal(message || '')
     },
 
     /**
      * Clear global error
      */
     clearGlobalError() {
-      _setGlobalErrorSignal('');
+      _setGlobalErrorSignal('')
     },
 
     /**
      * Clear all errors (both field and global)
      */
     clearAll() {
-      setFieldErrors({});
-      _setGlobalErrorSignal('');
+      setFieldErrors({})
+      _setGlobalErrorSignal('')
     },
 
     /**
@@ -208,8 +208,8 @@ export function createFormErrorSignals(createSignal) {
       handleFormError(
         error,
         (field, message) => this.setFieldError(field, message),
-        message => this.setGlobalError(message),
-      );
+        (message) => this.setGlobalError(message),
+      )
     },
-  };
+  }
 }

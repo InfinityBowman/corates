@@ -7,8 +7,8 @@
  * For write operations (createStudy, updateChecklist, etc.), use useProject instead.
  */
 
-import projectStore from '../stores/projectStore.js';
-import { useProject } from './useProject/index.js';
+import projectStore from '../stores/projectStore.js'
+import { useProject } from './useProject/index.js'
 
 /**
  * Get reactive project data from the store
@@ -20,18 +20,19 @@ import { useProject } from './useProject/index.js';
  * @returns {Object} Reactive project data
  */
 export function useProjectData(projectId, options = {}) {
-  const { autoConnect = true } = options;
+  const { autoConnect = true } = options
 
   // If autoConnect is enabled and we don't have a connection, establish one
   // This ensures the store gets populated
-  let projectHook = null;
+  let projectHook = null
   if (autoConnect) {
     // Only create connection if we need one
-    const connectionState = () => projectStore.getConnectionState(projectId);
-    const needsConnection = () => !connectionState().connected && !connectionState().connecting;
+    const connectionState = () => projectStore.getConnectionState(projectId)
+    const needsConnection = () =>
+      !connectionState().connected && !connectionState().connecting
 
     if (needsConnection()) {
-      projectHook = useProject(projectId);
+      projectHook = useProject(projectId)
     }
   }
 
@@ -50,13 +51,13 @@ export function useProjectData(projectId, options = {}) {
 
     // Helpers
     hasData: () => projectStore.hasProject(projectId),
-    getStudy: studyId => projectStore.getStudy(projectId, studyId),
+    getStudy: (studyId) => projectStore.getStudy(projectId, studyId),
     getChecklist: (studyId, checklistId) =>
       projectStore.getChecklist(projectId, studyId, checklistId),
 
     // If we created a connection, expose disconnect
     disconnect: projectHook?.disconnect,
-  };
+  }
 }
 
-export default useProjectData;
+export default useProjectData

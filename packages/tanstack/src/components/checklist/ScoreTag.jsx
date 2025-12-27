@@ -1,7 +1,10 @@
-import { Show, createMemo } from 'solid-js';
-import { FaSolidCircleInfo } from 'solid-icons/fa';
-import { Tooltip } from '@corates/ui';
-import { getChecklistMetadata, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
+import { Show, createMemo } from 'solid-js'
+import { FaSolidCircleInfo } from 'solid-icons/fa'
+import { Tooltip } from '@corates/ui'
+import {
+  getChecklistMetadata,
+  DEFAULT_CHECKLIST_TYPE,
+} from '@/checklist-registry'
 
 /**
  * Get the style classes for a score based on checklist type
@@ -10,15 +13,15 @@ import { getChecklistMetadata, DEFAULT_CHECKLIST_TYPE } from '@/checklist-regist
  * @returns {string} Tailwind classes for styling
  */
 function getScoreStyle(score, checklistType) {
-  const metadata = getChecklistMetadata(checklistType);
-  const colorConfig = metadata.scoreColors?.[score];
+  const metadata = getChecklistMetadata(checklistType)
+  const colorConfig = metadata.scoreColors?.[score]
 
   if (colorConfig) {
-    return `${colorConfig.bg} ${colorConfig.text}`;
+    return `${colorConfig.bg} ${colorConfig.text}`
   }
 
   // Fallback for unknown scores
-  return 'bg-gray-100 text-gray-600';
+  return 'bg-gray-100 text-gray-600'
 }
 
 /**
@@ -27,8 +30,8 @@ function getScoreStyle(score, checklistType) {
  * @returns {string} URL to the checklist guidance
  */
 function getInfoUrl(checklistType) {
-  const metadata = getChecklistMetadata(checklistType);
-  return metadata.url;
+  const metadata = getChecklistMetadata(checklistType)
+  return metadata.url
 }
 
 /**
@@ -37,8 +40,8 @@ function getInfoUrl(checklistType) {
  * @returns {string} Tooltip content
  */
 function getTooltipContent(checklistType) {
-  const metadata = getChecklistMetadata(checklistType);
-  return `See ${metadata.shortName || metadata.name} resources`;
+  const metadata = getChecklistMetadata(checklistType)
+  return `See ${metadata.shortName || metadata.name} resources`
 }
 
 /**
@@ -50,39 +53,46 @@ function getTooltipContent(checklistType) {
  * @param {boolean} [props.showRatingOnly] - Whether to only show the rating text and info icon
  */
 export default function ScoreTag(props) {
-  const showRatingOnly = () => props.showRatingOnly ?? false;
-  const checklistType = () => props.checklistType || DEFAULT_CHECKLIST_TYPE;
+  const showRatingOnly = () => props.showRatingOnly ?? false
+  const checklistType = () => props.checklistType || DEFAULT_CHECKLIST_TYPE
 
-  const styleClass = createMemo(() => getScoreStyle(props.currentScore, checklistType()));
+  const styleClass = createMemo(() =>
+    getScoreStyle(props.currentScore, checklistType()),
+  )
   return (
     <Show when={props.currentScore}>
       <span
         class={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${styleClass()}`}
       >
-        <Show when={!showRatingOnly()} fallback={<span>{props.currentScore}</span>}>
+        <Show
+          when={!showRatingOnly()}
+          fallback={<span>{props.currentScore}</span>}
+        >
           <span>Rating: {props.currentScore}</span>
           <ScoreTooltip checklistType={checklistType()} />
         </Show>
       </span>
     </Show>
-  );
+  )
 }
 
 export function ScoreTooltip(props) {
-  const infoUrl = createMemo(() => getInfoUrl(props.checklistType));
-  const tooltipContent = createMemo(() => getTooltipContent(props.checklistType));
+  const infoUrl = createMemo(() => getInfoUrl(props.checklistType))
+  const tooltipContent = createMemo(() =>
+    getTooltipContent(props.checklistType),
+  )
 
   return (
-    <Tooltip content={tooltipContent()} placement='bottom' openDelay={200}>
+    <Tooltip content={tooltipContent()} placement="bottom" openDelay={200}>
       <a
         href={infoUrl()}
-        target='_blank'
-        rel='noreferrer'
-        class='mt-0.5 inline-flex items-center justify-center rounded-full p-0.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+        target="_blank"
+        rel="noreferrer"
+        class="mt-0.5 inline-flex items-center justify-center rounded-full p-0.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:outline-none"
         aria-label={`Open ${getChecklistMetadata(props.checklistType).name} guidance in a new tab`}
       >
         <FaSolidCircleInfo size={12} />
       </a>
     </Tooltip>
-  );
+  )
 }

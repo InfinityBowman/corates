@@ -6,7 +6,7 @@
  * for automatic Yjs sync. Reconciliation progress only stores metadata references.
  */
 
-import * as Y from 'yjs';
+import * as Y from 'yjs'
 
 /**
  * Creates reconciliation operations
@@ -23,35 +23,38 @@ export function createReconciliationOperations(projectId, getYDoc, _isSynced) {
    * @param {Object} progressData - Progress data { checklist1Id, checklist2Id, reconciledChecklistId }
    */
   function saveReconciliationProgress(studyId, progressData) {
-    const ydoc = getYDoc();
-    if (!ydoc) return;
+    const ydoc = getYDoc()
+    if (!ydoc) return
 
-    const studiesMap = ydoc.getMap('reviews');
-    const studyYMap = studiesMap.get(studyId);
-    if (!studyYMap) return;
+    const studiesMap = ydoc.getMap('reviews')
+    const studyYMap = studiesMap.get(studyId)
+    if (!studyYMap) return
 
     // Store reconciliation progress as a Y.Map
-    let reconciliationMap = studyYMap.get('reconciliation');
+    let reconciliationMap = studyYMap.get('reconciliation')
     if (!reconciliationMap) {
-      reconciliationMap = new Y.Map();
-      studyYMap.set('reconciliation', reconciliationMap);
+      reconciliationMap = new Y.Map()
+      studyYMap.set('reconciliation', reconciliationMap)
     }
 
     // Save the progress data (minimal - just references)
-    reconciliationMap.set('checklist1Id', progressData.checklist1Id);
-    reconciliationMap.set('checklist2Id', progressData.checklist2Id);
+    reconciliationMap.set('checklist1Id', progressData.checklist1Id)
+    reconciliationMap.set('checklist2Id', progressData.checklist2Id)
     if (progressData.reconciledChecklistId) {
-      reconciliationMap.set('reconciledChecklistId', progressData.reconciledChecklistId);
+      reconciliationMap.set(
+        'reconciledChecklistId',
+        progressData.reconciledChecklistId,
+      )
     }
     if (progressData.currentPage !== undefined) {
-      reconciliationMap.set('currentPage', progressData.currentPage);
+      reconciliationMap.set('currentPage', progressData.currentPage)
     }
     if (progressData.viewMode !== undefined) {
-      reconciliationMap.set('viewMode', progressData.viewMode);
+      reconciliationMap.set('viewMode', progressData.viewMode)
     }
-    reconciliationMap.set('updatedAt', Date.now());
+    reconciliationMap.set('updatedAt', Date.now())
 
-    studyYMap.set('updatedAt', Date.now());
+    studyYMap.set('updatedAt', Date.now())
   }
 
   /**
@@ -60,28 +63,29 @@ export function createReconciliationOperations(projectId, getYDoc, _isSynced) {
    * @returns {Object|null} Progress data or null
    */
   function getReconciliationProgress(studyId) {
-    const ydoc = getYDoc();
-    if (!ydoc) return null;
+    const ydoc = getYDoc()
+    if (!ydoc) return null
 
-    const studiesMap = ydoc.getMap('reviews');
-    const studyYMap = studiesMap.get(studyId);
-    if (!studyYMap) return null;
+    const studiesMap = ydoc.getMap('reviews')
+    const studyYMap = studiesMap.get(studyId)
+    if (!studyYMap) return null
 
-    const reconciliationMap = studyYMap.get('reconciliation');
-    if (!reconciliationMap) return null;
+    const reconciliationMap = studyYMap.get('reconciliation')
+    if (!reconciliationMap) return null
 
-    const checklist1Id = reconciliationMap.get('checklist1Id');
-    const checklist2Id = reconciliationMap.get('checklist2Id');
-    if (!checklist1Id || !checklist2Id) return null;
+    const checklist1Id = reconciliationMap.get('checklist1Id')
+    const checklist2Id = reconciliationMap.get('checklist2Id')
+    if (!checklist1Id || !checklist2Id) return null
 
     return {
       checklist1Id,
       checklist2Id,
-      reconciledChecklistId: reconciliationMap.get('reconciledChecklistId') || null,
+      reconciledChecklistId:
+        reconciliationMap.get('reconciledChecklistId') || null,
       currentPage: reconciliationMap.get('currentPage'),
       viewMode: reconciliationMap.get('viewMode'),
       updatedAt: reconciliationMap.get('updatedAt'),
-    };
+    }
   }
 
   /**
@@ -89,20 +93,20 @@ export function createReconciliationOperations(projectId, getYDoc, _isSynced) {
    * @param {string} studyId - The study ID
    */
   function clearReconciliationProgress(studyId) {
-    const ydoc = getYDoc();
-    if (!ydoc) return;
+    const ydoc = getYDoc()
+    if (!ydoc) return
 
-    const studiesMap = ydoc.getMap('reviews');
-    const studyYMap = studiesMap.get(studyId);
-    if (!studyYMap) return;
+    const studiesMap = ydoc.getMap('reviews')
+    const studyYMap = studiesMap.get(studyId)
+    if (!studyYMap) return
 
-    studyYMap.delete('reconciliation');
-    studyYMap.set('updatedAt', Date.now());
+    studyYMap.delete('reconciliation')
+    studyYMap.set('updatedAt', Date.now())
   }
 
   return {
     saveReconciliationProgress,
     getReconciliationProgress,
     clearReconciliationProgress,
-  };
+  }
 }

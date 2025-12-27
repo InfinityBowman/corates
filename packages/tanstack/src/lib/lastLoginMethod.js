@@ -3,7 +3,7 @@
  * Stores in localStorage so it persists across sessions
  */
 
-const STORAGE_KEY = 'lastLoginMethod';
+const STORAGE_KEY = 'lastLoginMethod'
 
 /**
  * Login method types
@@ -13,7 +13,7 @@ export const LOGIN_METHODS = {
   GOOGLE: 'google',
   ORCID: 'orcid',
   MAGIC_LINK: 'magic_link',
-};
+}
 
 /**
  * Human-readable labels for login methods
@@ -23,7 +23,7 @@ export const LOGIN_METHOD_LABELS = {
   [LOGIN_METHODS.GOOGLE]: 'Google',
   [LOGIN_METHODS.ORCID]: 'ORCID',
   [LOGIN_METHODS.MAGIC_LINK]: 'email link',
-};
+}
 
 /**
  * Save the login method used
@@ -31,10 +31,10 @@ export const LOGIN_METHOD_LABELS = {
  */
 export function saveLastLoginMethod(method) {
   try {
-    localStorage.setItem(STORAGE_KEY, method);
+    localStorage.setItem(STORAGE_KEY, method)
   } catch (e) {
     // localStorage might not be available
-    console.warn('Could not save login method:', e);
+    console.warn('Could not save login method:', e)
   }
 }
 
@@ -44,9 +44,9 @@ export function saveLastLoginMethod(method) {
  */
 export function getLastLoginMethod() {
   try {
-    return localStorage.getItem(STORAGE_KEY);
+    return localStorage.getItem(STORAGE_KEY)
   } catch {
-    return null;
+    return null
   }
 }
 
@@ -55,8 +55,8 @@ export function getLastLoginMethod() {
  * @returns {string|null} - The label or null if none saved
  */
 export function getLastLoginMethodLabel() {
-  const method = getLastLoginMethod();
-  return method ? LOGIN_METHOD_LABELS[method] || null : null;
+  const method = getLastLoginMethod()
+  return method ? LOGIN_METHOD_LABELS[method] || null : null
 }
 
 /**
@@ -64,7 +64,7 @@ export function getLastLoginMethodLabel() {
  */
 export function clearLastLoginMethod() {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_KEY)
   } catch {
     // ignore
   }

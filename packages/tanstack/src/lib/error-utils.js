@@ -11,8 +11,8 @@ import {
   isTransportError,
   AUTH_ERRORS,
   USER_ERRORS,
-} from '@corates/shared';
-import { showToast } from '@corates/ui';
+} from '@corates/shared'
+import { showToast } from '@corates/ui'
 
 /**
  * Parse API error response - only returns DomainError
@@ -22,9 +22,9 @@ import { showToast } from '@corates/ui';
  */
 export async function parseApiError(response) {
   try {
-    const data = await response.json();
+    const data = await response.json()
     // Validate the error response matches DomainError shape
-    return validateErrorResponse(data);
+    return validateErrorResponse(data)
   } catch (_err) {
     // If response body can't be parsed, create unknown error
     return {
@@ -32,7 +32,7 @@ export async function parseApiError(response) {
       message: 'Invalid error response format',
       statusCode: response.status || 500,
       timestamp: new Date().toISOString(),
-    };
+    }
   }
 }
 
@@ -49,36 +49,36 @@ export async function parseApiError(response) {
  */
 export async function handleFetchError(fetchPromise, options = {}) {
   try {
-    const response = await fetchPromise;
+    const response = await fetchPromise
 
     if (!response.ok) {
       // Parse domain error from API response
-      const domainError = await parseApiError(response);
-      await handleDomainError(domainError, options);
-      throw domainError;
+      const domainError = await parseApiError(response)
+      await handleDomainError(domainError, options)
+      throw domainError
     }
 
-    return response;
+    return response
   } catch (error) {
     // If already a domain error, re-throw
     if (isDomainError(error)) {
-      throw error;
+      throw error
     }
 
     // Normalize the error once
-    const normalizedError = normalizeError(error);
+    const normalizedError = normalizeError(error)
 
     // Branch based on error type
     if (isTransportError(normalizedError)) {
-      await handleTransportError(normalizedError, options);
-      throw normalizedError;
+      await handleTransportError(normalizedError, options)
+      throw normalizedError
     } else if (isDomainError(normalizedError)) {
-      await handleDomainError(normalizedError, options);
-      throw normalizedError;
+      await handleDomainError(normalizedError, options)
+      throw normalizedError
     } else {
       // Fallback: treat as transport error
-      await handleTransportError(normalizedError, options);
-      throw normalizedError;
+      await handleTransportError(normalizedError, options)
+      throw normalizedError
     }
   }
 }
@@ -94,34 +94,43 @@ export async function handleFetchError(fetchPromise, options = {}) {
  * @param {Function} [options.navigate] - Navigation function
  */
 export async function handleDomainError(error, options = {}) {
-  const { setError, showToast: showToastOption = true, toastTitle, onError, navigate } = options;
+  const {
+    setError,
+    showToast: showToastOption = true,
+    toastTitle,
+    onError,
+    navigate,
+  } = options
 
   // Call custom error handler if provided
   if (onError) {
-    onError(error);
+    onError(error)
   }
 
   // Handle navigation-required errors
   if (navigate) {
-    if (error.code === AUTH_ERRORS.REQUIRED.code || error.code === AUTH_ERRORS.EXPIRED.code) {
-      navigate({ to: '/signin', replace: true });
-      return;
+    if (
+      error.code === AUTH_ERRORS.REQUIRED.code ||
+      error.code === AUTH_ERRORS.EXPIRED.code
+    ) {
+      navigate({ to: '/signin', replace: true })
+      return
     }
     if (error.code === USER_ERRORS.EMAIL_NOT_VERIFIED.code) {
-      navigate({ to: '/verify-email', replace: true });
-      return;
+      navigate({ to: '/verify-email', replace: true })
+      return
     }
   }
 
   // Update error state if setter provided
   if (setError) {
-    setError(error.message);
+    setError(error.message)
   }
 
   // Show toast for user-facing errors
   if (showToastOption) {
-    const title = toastTitle || error.message;
-    showToast.error(title, error.details || '');
+    const title = toastTitle || error.message
+    showToast.error(title, error.details || '')
   }
 }
 
@@ -135,22 +144,27 @@ export async function handleDomainError(error, options = {}) {
  * @param {Function} [options.onError] - Callback function
  */
 export async function handleTransportError(error, options = {}) {
-  const { setError, showToast: showToastOption = true, toastTitle, onError } = options;
+  const {
+    setError,
+    showToast: showToastOption = true,
+    toastTitle,
+    onError,
+  } = options
 
   // Call custom error handler if provided
   if (onError) {
-    onError(error);
+    onError(error)
   }
 
   // Update error state if setter provided
   if (setError) {
-    setError(error.message);
+    setError(error.message)
   }
 
   // Show toast for transport errors
   if (showToastOption) {
-    const title = toastTitle || 'Connection Error';
-    showToast.error(title, error.message);
+    const title = toastTitle || 'Connection Error'
+    showToast.error(title, error.message)
   }
 }
 
@@ -164,32 +178,32 @@ export async function handleTransportError(error, options = {}) {
 export async function handleError(error, options = {}) {
   // If already a domain error, handle as domain error
   if (isDomainError(error)) {
-    await handleDomainError(error, options);
-    return error;
+    await handleDomainError(error, options)
+    return error
   }
 
   // If already a transport error, handle as transport error
   if (isTransportError(error)) {
-    await handleTransportError(error, options);
-    return error;
+    await handleTransportError(error, options)
+    return error
   }
 
   // If Response object, parse as domain error
   if (error instanceof Response) {
-    const domainError = await parseApiError(error);
-    await handleDomainError(domainError, options);
-    return domainError;
+    const domainError = await parseApiError(error)
+    await handleDomainError(domainError, options)
+    return domainError
   }
 
   // Otherwise, normalize and handle
-  const normalizedError = normalizeError(error);
+  const normalizedError = normalizeError(error)
   if (isTransportError(normalizedError)) {
-    await handleTransportError(normalizedError, options);
+    await handleTransportError(normalizedError, options)
   } else {
-    await handleDomainError(normalizedError, options);
+    await handleDomainError(normalizedError, options)
   }
 
-  return normalizedError;
+  return normalizedError
 }
 
 /**
@@ -198,7 +212,7 @@ export async function handleError(error, options = {}) {
  * @returns {DomainError|TransportError} Normalized error
  */
 export function parseError(error) {
-  return normalizeError(error);
+  return normalizeError(error)
 }
 
 /**
@@ -208,5 +222,5 @@ export function parseError(error) {
  * @returns {boolean}
  */
 export function isErrorCode(error, code) {
-  return error?.code === code;
+  return error?.code === code
 }

@@ -5,9 +5,9 @@
  * Supports multiple checklist types via the GenericChecklist component.
  */
 
-import GenericChecklist from '@/components/checklist/GenericChecklist.jsx';
-import PdfViewer from '@/components/checklist/pdf/PdfViewer.jsx';
-import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx';
+import GenericChecklist from '@/components/checklist/GenericChecklist.jsx'
+import PdfViewer from '@/components/checklist/pdf/PdfViewer.jsx'
+import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx'
 
 export default function ChecklistWithPdf(props) {
   // props.checklistType - the type of checklist ('AMSTAR2', 'ROBINS_I', etc.)
@@ -27,10 +27,10 @@ export default function ChecklistWithPdf(props) {
   // props.pdfUrl - optional PDF URL (for server-hosted PDFs)
 
   return (
-    <div class='flex h-full flex-col bg-blue-50'>
+    <div class="flex h-full flex-col bg-blue-50">
       {/* Split screen with checklist and PDF */}
       <SplitScreenLayout
-        defaultLayout='vertical'
+        defaultLayout="vertical"
         defaultRatio={50}
         showSecondPanel={false}
         headerContent={props.headerContent}
@@ -60,5 +60,5 @@ export default function ChecklistWithPdf(props) {
         />
       </SplitScreenLayout>
     </div>
-  );
+  )
 }

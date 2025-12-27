@@ -3,11 +3,11 @@
  * Coordinates between pdfDocument, pdfRenderer, pdfScrollHandler, and pdfFileHandler
  */
 
-import { createSignal, createEffect, onCleanup } from 'solid-js';
-import { createPdfDocument } from './pdfDocument.js';
-import { createPdfRenderer } from './pdfRenderer.js';
-import { createPdfScrollHandler } from './pdfScrollHandler.js';
-import { createPdfFileHandler } from './pdfFileHandler.js';
+import { createSignal, createEffect, onCleanup } from 'solid-js'
+import { createPdfDocument } from './pdfDocument.js'
+import { createPdfRenderer } from './pdfRenderer.js'
+import { createPdfScrollHandler } from './pdfScrollHandler.js'
+import { createPdfFileHandler } from './pdfFileHandler.js'
 
 /**
  * Hook for managing PDF.js document state with continuous scrolling support
@@ -19,43 +19,43 @@ import { createPdfFileHandler } from './pdfFileHandler.js';
  */
 export default function usePdfJs(options = {}) {
   // Create modules
-  const document = createPdfDocument();
-  const scrollHandler = createPdfScrollHandler(document);
-  const renderer = createPdfRenderer(document, scrollHandler);
+  const document = createPdfDocument()
+  const scrollHandler = createPdfScrollHandler(document)
+  const renderer = createPdfRenderer(document, scrollHandler)
   const fileHandler = createPdfFileHandler(document, {
     onPdfChange: options.onPdfChange,
     onPdfClear: options.onPdfClear,
-  });
+  })
 
   // Connect renderer to scroll handler for IntersectionObserver callbacks
   scrollHandler.setRendererCallbacks({
-    schedulePageRender: pageNum => renderer.schedulePageRender(pageNum),
-    cancelPageRender: pageNum => renderer.cancelPageRender(pageNum),
-  });
+    schedulePageRender: (pageNum) => renderer.schedulePageRender(pageNum),
+    cancelPageRender: (pageNum) => renderer.cancelPageRender(pageNum),
+  })
 
   // Setup callback to clear canvases before loading new PDF
   document.setOnBeforeLoad(() => {
-    renderer.clearAllCanvases();
-    renderer.cancelAllRenders();
-  });
+    renderer.clearAllCanvases()
+    renderer.cancelAllRenders()
+  })
 
   // Track currently loaded filename to detect when props change to a different PDF
-  const [loadedPdfName, setLoadedPdfName] = createSignal(null);
+  const [loadedPdfName, setLoadedPdfName] = createSignal(null)
 
   // Load saved PDF data when provided via props
   // NOTE: We intentionally do NOT clear state when props become null.
   // This allows the old PDF to stay visible during transitions while the new one loads.
   // Clearing is only done via explicit clearPdf() call (e.g., for local checklist deletion).
   createEffect(() => {
-    const ready = document.libReady();
-    const savedData = options.pdfData?.();
-    const savedName = options.pdfFileName?.();
+    const ready = document.libReady()
+    const savedData = options.pdfData?.()
+    const savedName = options.pdfFileName?.()
 
     // Only proceed if we have data and a name
-    if (!ready || !savedData || !savedName) return;
+    if (!ready || !savedData || !savedName) return
 
     // Skip if we've already loaded this exact file
-    if (loadedPdfName() === savedName) return;
+    if (loadedPdfName() === savedName) return
 
     // If user cleared but now we have a DIFFERENT file, accept it
     // (This handles the case where parent sends new data after clear)
@@ -65,37 +65,37 @@ export default function usePdfJs(options = {}) {
     }
 
     // Load the new PDF (old one stays visible until this completes)
-    const clonedData = savedData.slice(0);
-    setLoadedPdfName(savedName);
-    document.setPdfSourceAndName({ data: clonedData }, savedName);
-  });
+    const clonedData = savedData.slice(0)
+    setLoadedPdfName(savedName)
+    document.setPdfSourceAndName({ data: clonedData }, savedName)
+  })
 
   // Initialize canvas arrays when PDF loads
   createEffect(() => {
-    const doc = document.pdfDoc();
-    const totalPages = document.totalPages();
-    const docId = document.docId();
+    const doc = document.pdfDoc()
+    const totalPages = document.totalPages()
+    const docId = document.docId()
     if (doc && totalPages > 0 && docId > 0) {
-      renderer.initializeCanvasArrays(totalPages);
-      scrollHandler.setCurrentPage(1);
+      renderer.initializeCanvasArrays(totalPages)
+      scrollHandler.setCurrentPage(1)
     }
-  });
+  })
 
   // Clear rendered tracking when PDF changes
   createEffect(() => {
-    const docId = document.docId();
+    const docId = document.docId()
     if (docId > 0) {
-      renderer.clearRenderedTracking();
-      renderer.clearAllCanvases();
+      renderer.clearRenderedTracking()
+      renderer.clearAllCanvases()
     }
-  });
+  })
 
   // Cleanup
   onCleanup(() => {
-    renderer.cleanup();
-    scrollHandler.cleanup();
-    renderer.cancelAllRenders();
-  });
+    renderer.cleanup()
+    scrollHandler.cleanup()
+    renderer.cancelAllRenders()
+  })
 
   return {
     // State
@@ -132,5 +132,5 @@ export default function usePdfJs(options = {}) {
     resetZoom: scrollHandler.resetZoom,
     setScale: scrollHandler.setScale,
     fitToWidth: scrollHandler.fitToWidth,
-  };
+  }
 }

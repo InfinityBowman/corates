@@ -2,24 +2,24 @@
  * ReconciliationQuestionPage - Full page view for a single question during reconciliation
  * Shows Reviewer 1, Reviewer 2, and Final (editable) answer panels side by side
  */
-import AnswerPanel from './AnswerPanel.jsx';
-import NotesCompareSection from './NotesCompareSection.jsx';
-import { createSignal, createEffect, Show } from 'solid-js';
-import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
-import MultiPartQuestionPage from './MultiPartQuestionPage.jsx';
+import AnswerPanel from './AnswerPanel.jsx'
+import NotesCompareSection from './NotesCompareSection.jsx'
+import { createSignal, createEffect, Show } from 'solid-js'
+import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js'
+import MultiPartQuestionPage from './MultiPartQuestionPage.jsx'
 /**
  * Get the final answer from the last column
  */
 function getFinalAnswerFromAnswers(answers, questionKey) {
-  if (!Array.isArray(answers) || answers.length === 0) return null;
-  const lastCol = answers[answers.length - 1];
-  if (!Array.isArray(lastCol)) return null;
-  const idx = lastCol.findIndex(v => v === true);
-  if (idx === -1) return null;
+  if (!Array.isArray(answers) || answers.length === 0) return null
+  const lastCol = answers[answers.length - 1]
+  if (!Array.isArray(lastCol)) return null
+  const idx = lastCol.findIndex((v) => v === true)
+  if (idx === -1) return null
 
-  const question = AMSTAR_CHECKLIST[questionKey];
-  const lastColumn = question?.columns?.[question.columns.length - 1];
-  return lastColumn?.options?.[idx] || null;
+  const question = AMSTAR_CHECKLIST[questionKey]
+  const lastColumn = question?.columns?.[question.columns.length - 1]
+  return lastColumn?.options?.[idx] || null
 }
 
 export default function ReconciliationQuestionPage(props) {
@@ -42,43 +42,44 @@ export default function ReconciliationQuestionPage(props) {
     <Show when={props.isMultiPart} fallback={<SingleQuestionPage {...props} />}>
       <MultiPartQuestionPage {...props} />
     </Show>
-  );
+  )
 }
 
 function SingleQuestionPage(props) {
-  const question = () => AMSTAR_CHECKLIST[props.questionKey];
+  const question = () => AMSTAR_CHECKLIST[props.questionKey]
 
   // Local state for the final/merged answer that user can edit
-  const [localFinal, setLocalFinal] = createSignal(null);
-  const [selectedSource, setSelectedSource] = createSignal(null); // 'reviewer1' | 'reviewer2' | 'custom'
-  const [hasAutoFilled, setHasAutoFilled] = createSignal(false);
+  const [localFinal, setLocalFinal] = createSignal(null)
+  const [selectedSource, setSelectedSource] = createSignal(null) // 'reviewer1' | 'reviewer2' | 'custom'
+  const [hasAutoFilled, setHasAutoFilled] = createSignal(false)
 
   // Reset auto-fill tracking when question changes
   createEffect(() => {
-    props.questionKey;
-    setHasAutoFilled(false);
-  });
+    props.questionKey
+    setHasAutoFilled(false)
+  })
 
-  const reviewersAgree = () => answersEqual(props.reviewer1Answers, props.reviewer2Answers);
+  const reviewersAgree = () =>
+    answersEqual(props.reviewer1Answers, props.reviewer2Answers)
 
   // Initialize local final from props or default to reviewer1
   createEffect(() => {
     if (props.finalAnswers) {
-      setLocalFinal(JSON.parse(JSON.stringify(props.finalAnswers)));
+      setLocalFinal(JSON.parse(JSON.stringify(props.finalAnswers)))
       // Determine which source it matches
       if (answersEqual(props.finalAnswers, props.reviewer1Answers)) {
-        setSelectedSource('reviewer1');
+        setSelectedSource('reviewer1')
       } else if (answersEqual(props.finalAnswers, props.reviewer2Answers)) {
-        setSelectedSource('reviewer2');
+        setSelectedSource('reviewer2')
       } else {
-        setSelectedSource('custom');
+        setSelectedSource('custom')
       }
     } else if (props.reviewer1Answers) {
       // Default to reviewer1 for local state
-      setLocalFinal(JSON.parse(JSON.stringify(props.reviewer1Answers)));
-      setSelectedSource('reviewer1');
+      setLocalFinal(JSON.parse(JSON.stringify(props.reviewer1Answers)))
+      setSelectedSource('reviewer1')
     }
-  });
+  })
 
   // Check if the final answer last column has at least one part as true
   function hasValidFinalAnswer(finalAnswers) {
@@ -87,14 +88,14 @@ function SingleQuestionPage(props) {
       !Array.isArray(finalAnswers.answers) ||
       finalAnswers.answers.length === 0
     )
-      return false;
-    const lastCol = finalAnswers.answers[finalAnswers.answers.length - 1];
-    return Array.isArray(lastCol) && lastCol.some(v => v === true);
+      return false
+    const lastCol = finalAnswers.answers[finalAnswers.answers.length - 1]
+    return Array.isArray(lastCol) && lastCol.some((v) => v === true)
   }
 
   // Auto-fill when reviewers agree and no final answer exists
   createEffect(() => {
-    let hasFinalAnswer = hasValidFinalAnswer(props.finalAnswers);
+    let hasFinalAnswer = hasValidFinalAnswer(props.finalAnswers)
     // Only auto-fill if: reviewers agree, no final answer exists, we have reviewer1's answer, and we haven't auto-filled yet
     if (
       props.isAgreement &&
@@ -103,110 +104,119 @@ function SingleQuestionPage(props) {
       !hasAutoFilled() &&
       props.onFinalChange
     ) {
-      const newFinal = JSON.parse(JSON.stringify(props.reviewer1Answers));
-      props.onFinalChange(newFinal);
-      setHasAutoFilled(true);
+      const newFinal = JSON.parse(JSON.stringify(props.reviewer1Answers))
+      props.onFinalChange(newFinal)
+      setHasAutoFilled(true)
     }
-  });
+  })
 
   // Check if two answer objects are equal
   function answersEqual(a, b) {
-    if (!a || !b) return false;
-    if (a.critical !== b.critical) return false;
-    if (!Array.isArray(a.answers) || !Array.isArray(b.answers)) return false;
-    if (a.answers.length !== b.answers.length) return false;
+    if (!a || !b) return false
+    if (a.critical !== b.critical) return false
+    if (!Array.isArray(a.answers) || !Array.isArray(b.answers)) return false
+    if (a.answers.length !== b.answers.length) return false
     for (let i = 0; i < a.answers.length; i++) {
-      if (a.answers[i].length !== b.answers[i].length) return false;
+      if (a.answers[i].length !== b.answers[i].length) return false
       for (let j = 0; j < a.answers[i].length; j++) {
-        if (a.answers[i][j] !== b.answers[i][j]) return false;
+        if (a.answers[i][j] !== b.answers[i][j]) return false
       }
     }
-    return true;
+    return true
   }
 
   // Apply reviewer 1's answers as final
   function useReviewer1() {
-    if (!props.reviewer1Answers) return;
-    const newFinal = JSON.parse(JSON.stringify(props.reviewer1Answers));
-    setLocalFinal(newFinal);
-    setSelectedSource('reviewer1');
-    props.onFinalChange?.(newFinal);
+    if (!props.reviewer1Answers) return
+    const newFinal = JSON.parse(JSON.stringify(props.reviewer1Answers))
+    setLocalFinal(newFinal)
+    setSelectedSource('reviewer1')
+    props.onFinalChange?.(newFinal)
   }
 
   // Apply reviewer 2's answers as final
   function useReviewer2() {
-    if (!props.reviewer2Answers) return;
-    const newFinal = JSON.parse(JSON.stringify(props.reviewer2Answers));
-    setLocalFinal(newFinal);
-    setSelectedSource('reviewer2');
-    props.onFinalChange?.(newFinal);
+    if (!props.reviewer2Answers) return
+    const newFinal = JSON.parse(JSON.stringify(props.reviewer2Answers))
+    setLocalFinal(newFinal)
+    setSelectedSource('reviewer2')
+    props.onFinalChange?.(newFinal)
   }
 
   // Handle checkbox change in final panel
   function handleFinalCheckboxChange(colIdx, optIdx) {
-    const current = localFinal();
-    if (!current) return;
+    const current = localFinal()
+    if (!current) return
 
-    const newAnswers = current.answers.map(arr => [...arr]);
-    newAnswers[colIdx][optIdx] = !newAnswers[colIdx][optIdx];
+    const newAnswers = current.answers.map((arr) => [...arr])
+    newAnswers[colIdx][optIdx] = !newAnswers[colIdx][optIdx]
 
-    const newFinal = { ...current, answers: newAnswers };
-    setLocalFinal(newFinal);
-    setSelectedSource('custom');
-    props.onFinalChange?.(newFinal);
+    const newFinal = { ...current, answers: newAnswers }
+    setLocalFinal(newFinal)
+    setSelectedSource('custom')
+    props.onFinalChange?.(newFinal)
   }
 
   // Handle radio change in final panel (last column)
   function handleFinalRadioChange(colIdx, optIdx) {
-    const current = localFinal();
-    if (!current) return;
+    const current = localFinal()
+    if (!current) return
 
-    const newAnswers = current.answers.map(arr => [...arr]);
+    const newAnswers = current.answers.map((arr) => [...arr])
     // Set all options in this column to false, then set selected to true
-    newAnswers[colIdx] = newAnswers[colIdx].map(() => false);
-    newAnswers[colIdx][optIdx] = true;
+    newAnswers[colIdx] = newAnswers[colIdx].map(() => false)
+    newAnswers[colIdx][optIdx] = true
 
-    const newFinal = { ...current, answers: newAnswers };
-    setLocalFinal(newFinal);
-    setSelectedSource('custom');
-    props.onFinalChange?.(newFinal);
+    const newFinal = { ...current, answers: newAnswers }
+    setLocalFinal(newFinal)
+    setSelectedSource('custom')
+    props.onFinalChange?.(newFinal)
   }
 
   const reviewer1FinalAnswer = () =>
-    getFinalAnswerFromAnswers(props.reviewer1Answers?.answers, props.questionKey);
+    getFinalAnswerFromAnswers(
+      props.reviewer1Answers?.answers,
+      props.questionKey,
+    )
   const reviewer2FinalAnswer = () =>
-    getFinalAnswerFromAnswers(props.reviewer2Answers?.answers, props.questionKey);
+    getFinalAnswerFromAnswers(
+      props.reviewer2Answers?.answers,
+      props.questionKey,
+    )
   const finalFinalAnswer = () =>
-    getFinalAnswerFromAnswers(localFinal()?.answers, props.questionKey);
+    getFinalAnswerFromAnswers(localFinal()?.answers, props.questionKey)
 
-  const isCritical = () => props.reviewer1Answers?.critical || props.reviewer2Answers?.critical;
+  const isCritical = () =>
+    props.reviewer1Answers?.critical || props.reviewer2Answers?.critical
 
   return (
-    <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
+    <div class="overflow-hidden rounded-lg bg-white shadow-lg">
       {/* Question Header */}
       <div
         class={`p-4 ${props.isAgreement ? 'border-b border-green-200 bg-green-50' : 'border-b border-amber-200 bg-amber-50'}`}
       >
-        <h2 class='text-md font-medium text-gray-900'>
+        <h2 class="text-md font-medium text-gray-900">
           {question()?.text}
           <Show when={isCritical()}>
-            <span class='ml-2 text-sm font-medium text-red-600'>(Critical)</span>
+            <span class="ml-2 text-sm font-medium text-red-600">
+              (Critical)
+            </span>
           </Show>
         </h2>
-        <div class='mt-2 flex items-center gap-3'>
+        <div class="mt-2 flex items-center gap-3">
           <span
             class={`text-xs font-medium ${props.isAgreement ? 'text-green-700' : 'text-amber-700'}`}
           >
             {props.isAgreement ? 'Reviewers Agree' : 'Requires Reconciliation'}
           </span>
           <Show when={question()?.subtitle}>
-            <span class='text-sm text-gray-500'>({question().subtitle})</span>
+            <span class="text-sm text-gray-500">({question().subtitle})</span>
           </Show>
         </div>
       </div>
 
       {/* Three Column Layout */}
-      <div class='grid grid-cols-3 divide-x divide-gray-200'>
+      <div class="grid grid-cols-3 divide-x divide-gray-200">
         {/* Reviewer 1 Panel */}
         <AnswerPanel
           title={props.reviewer1Name || 'Reviewer 1'}
@@ -216,7 +226,7 @@ function SingleQuestionPage(props) {
           isSelected={selectedSource() === 'reviewer1'}
           onUseThis={useReviewer1}
           readOnly={true}
-          highlightColor='blue'
+          highlightColor="blue"
           hideSelectButtons={reviewersAgree()}
         />
 
@@ -229,13 +239,13 @@ function SingleQuestionPage(props) {
           isSelected={selectedSource() === 'reviewer2'}
           onUseThis={useReviewer2}
           readOnly={true}
-          highlightColor='purple'
+          highlightColor="purple"
           hideSelectButtons={reviewersAgree()}
         />
 
         {/* Final/Merged Panel */}
         <AnswerPanel
-          title='Final Answer'
+          title="Final Answer"
           answers={localFinal()}
           questionKey={props.questionKey}
           finalAnswer={finalFinalAnswer()}
@@ -244,13 +254,13 @@ function SingleQuestionPage(props) {
           readOnly={false}
           onCheckboxChange={handleFinalCheckboxChange}
           onRadioChange={handleFinalRadioChange}
-          highlightColor='green'
+          highlightColor="green"
           selectedSource={selectedSource()}
         />
       </div>
 
       {/* Notes Section */}
-      <div class='px-4 pb-4'>
+      <div class="px-4 pb-4">
         <NotesCompareSection
           reviewer1Note={props.reviewer1Note}
           reviewer2Note={props.reviewer2Note}
@@ -261,5 +271,5 @@ function SingleQuestionPage(props) {
         />
       </div>
     </div>
-  );
+  )
 }

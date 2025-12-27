@@ -2,7 +2,7 @@
  * PDF API - Upload, download, and manage PDFs via R2 storage
  */
 
-import { API_BASE } from '@config/api.js';
+import { API_BASE } from '@config/api.js'
 
 /**
  * Fetch a PDF from an external URL via the backend proxy (avoids CORS issues)
@@ -10,7 +10,7 @@ import { API_BASE } from '@config/api.js';
  * @returns {Promise<ArrayBuffer>} - The PDF data as ArrayBuffer
  */
 export async function fetchPdfViaProxy(url) {
-  const proxyUrl = `${API_BASE}/api/pdf-proxy`;
+  const proxyUrl = `${API_BASE}/api/pdf-proxy`
 
   const response = await fetch(proxyUrl, {
     method: 'POST',
@@ -19,14 +19,16 @@ export async function fetchPdfViaProxy(url) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ url }),
-  });
+  })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Proxy fetch failed' }));
-    throw new Error(error.error || 'Failed to fetch PDF from external URL');
+    const error = await response
+      .json()
+      .catch(() => ({ error: 'Proxy fetch failed' }))
+    throw new Error(error.error || 'Failed to fetch PDF from external URL')
   }
 
-  return response.arrayBuffer();
+  return response.arrayBuffer()
 }
 
 /**
@@ -38,19 +40,21 @@ export async function fetchPdfViaProxy(url) {
  * @returns {Promise<{success: boolean, key: string, fileName: string, size: number}>}
  */
 export async function uploadPdf(projectId, studyId, file, fileName = null) {
-  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs`;
+  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs`
 
   // Always use FormData for consistency and better browser streaming support
   // This works for both File objects and ArrayBuffers (by converting ArrayBuffer to Blob)
-  const formData = new FormData();
+  const formData = new FormData()
 
   if (file instanceof File) {
-    formData.append('file', file);
+    formData.append('file', file)
   } else {
     // Convert ArrayBuffer to Blob so we can use FormData
-    const blob = new Blob([file], { type: 'application/pdf' });
-    const fileObj = new File([blob], fileName || 'document.pdf', { type: 'application/pdf' });
-    formData.append('file', fileObj);
+    const blob = new Blob([file], { type: 'application/pdf' })
+    const fileObj = new File([blob], fileName || 'document.pdf', {
+      type: 'application/pdf',
+    })
+    formData.append('file', fileObj)
   }
 
   // Don't set Content-Type - browser will set it automatically with boundary for multipart/form-data
@@ -59,14 +63,16 @@ export async function uploadPdf(projectId, studyId, file, fileName = null) {
     method: 'POST',
     credentials: 'include',
     body: formData,
-  });
+  })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Upload failed' }));
-    throw new Error(error.error || 'Failed to upload PDF');
+    const error = await response
+      .json()
+      .catch(() => ({ error: 'Upload failed' }))
+    throw new Error(error.error || 'Failed to upload PDF')
   }
 
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -77,19 +83,21 @@ export async function uploadPdf(projectId, studyId, file, fileName = null) {
  * @returns {Promise<ArrayBuffer>}
  */
 export async function downloadPdf(projectId, studyId, fileName) {
-  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs/${encodeURIComponent(fileName)}`;
+  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs/${encodeURIComponent(fileName)}`
 
   const response = await fetch(url, {
     method: 'GET',
     credentials: 'include',
-  });
+  })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Download failed' }));
-    throw new Error(error.error || 'Failed to download PDF');
+    const error = await response
+      .json()
+      .catch(() => ({ error: 'Download failed' }))
+    throw new Error(error.error || 'Failed to download PDF')
   }
 
-  return response.arrayBuffer();
+  return response.arrayBuffer()
 }
 
 /**
@@ -100,7 +108,7 @@ export async function downloadPdf(projectId, studyId, fileName) {
  * @returns {string}
  */
 export function getPdfUrl(projectId, studyId, fileName) {
-  return `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs/${encodeURIComponent(fileName)}`;
+  return `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs/${encodeURIComponent(fileName)}`
 }
 
 /**
@@ -111,19 +119,21 @@ export function getPdfUrl(projectId, studyId, fileName) {
  * @returns {Promise<{success: boolean}>}
  */
 export async function deletePdf(projectId, studyId, fileName) {
-  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs/${encodeURIComponent(fileName)}`;
+  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs/${encodeURIComponent(fileName)}`
 
   const response = await fetch(url, {
     method: 'DELETE',
     credentials: 'include',
-  });
+  })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Delete failed' }));
-    throw new Error(error.error || 'Failed to delete PDF');
+    const error = await response
+      .json()
+      .catch(() => ({ error: 'Delete failed' }))
+    throw new Error(error.error || 'Failed to delete PDF')
   }
 
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -133,17 +143,17 @@ export async function deletePdf(projectId, studyId, fileName) {
  * @returns {Promise<{pdfs: Array<{key: string, fileName: string, size: number, uploaded: string}>}>}
  */
 export async function listPdfs(projectId, studyId) {
-  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs`;
+  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs`
 
   const response = await fetch(url, {
     method: 'GET',
     credentials: 'include',
-  });
+  })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'List failed' }));
-    throw new Error(error.error || 'Failed to list PDFs');
+    const error = await response.json().catch(() => ({ error: 'List failed' }))
+    throw new Error(error.error || 'Failed to list PDFs')
   }
 
-  return response.json();
+  return response.json()
 }

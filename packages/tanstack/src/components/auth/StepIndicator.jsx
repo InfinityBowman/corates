@@ -4,20 +4,22 @@
  * @param {number} props.currentStep - Current step (1-indexed)
  * @param {number} props.totalSteps - Total number of steps
  */
-import { For, Show } from 'solid-js';
+import { For, Show } from 'solid-js'
 
 export default function StepIndicator(props) {
-  const steps = () => Array.from({ length: props.totalSteps }, (_, i) => i + 1);
+  const steps = () => Array.from({ length: props.totalSteps }, (_, i) => i + 1)
 
   return (
-    <div class='mb-5 flex items-center justify-center'>
-      <div class='flex items-center space-x-2'>
+    <div class="mb-5 flex items-center justify-center">
+      <div class="flex items-center space-x-2">
         <For each={steps()}>
           {(step, index) => (
             <>
               <div
                 class={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-colors sm:h-8 sm:w-8 sm:text-sm ${
-                  props.currentStep >= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
+                  props.currentStep >= step
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-500'
                 }`}
               >
                 {step}
@@ -34,5 +36,5 @@ export default function StepIndicator(props) {
         </For>
       </div>
     </div>
-  );
+  )
 }

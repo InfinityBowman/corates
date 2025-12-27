@@ -1,29 +1,34 @@
-import { splitProps } from 'solid-js';
+import { splitProps } from 'solid-js'
 
-const prefetched = new Set();
+const prefetched = new Set()
 
 function prefetch(href) {
-  if (prefetched.has(href) || !href.startsWith('/')) return;
-  prefetched.add(href);
+  if (prefetched.has(href) || !href.startsWith('/')) return
+  prefetched.add(href)
 
-  const link = document.createElement('link');
-  link.rel = 'prefetch';
-  link.href = href;
-  document.head.appendChild(link);
+  const link = document.createElement('link')
+  link.rel = 'prefetch'
+  link.href = href
+  document.head.appendChild(link)
 }
 
 export default function PrefetchLink(props) {
-  const [local, others] = splitProps(props, ['href', 'children', 'class']);
+  const [local, others] = splitProps(props, ['href', 'children', 'class'])
 
   const handleMouseEnter = () => {
     if (local.href) {
-      prefetch(local.href);
+      prefetch(local.href)
     }
-  };
+  }
 
   return (
-    <a href={local.href} class={local.class} onMouseEnter={handleMouseEnter} {...others}>
+    <a
+      href={local.href}
+      class={local.class}
+      onMouseEnter={handleMouseEnter}
+      {...others}
+    >
       {local.children}
     </a>
-  );
+  )
 }

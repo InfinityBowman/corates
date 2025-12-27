@@ -3,7 +3,7 @@ import {
   INFORMATION_SOURCES,
   getActiveDomainKeys,
   getDomainQuestions,
-} from './checklist-map.js';
+} from './checklist-map.js'
 
 /**
  * Creates a new ROBINS-I V2 checklist object with default empty answers.
@@ -25,17 +25,17 @@ export function createChecklist({
   reviewerName = '',
 }) {
   if (!id || typeof id !== 'string' || !id.trim()) {
-    throw new Error('ROBINS-I Checklist requires a non-empty string id.');
+    throw new Error('ROBINS-I Checklist requires a non-empty string id.')
   }
   if (!name || typeof name !== 'string' || !name.trim()) {
-    throw new Error('ROBINS-I Checklist requires a non-empty string name.');
+    throw new Error('ROBINS-I Checklist requires a non-empty string name.')
   }
 
-  let d = new Date(createdAt);
-  if (isNaN(d)) d = new Date();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  const formattedDate = `${d.getFullYear()}-${mm}-${dd}`;
+  let d = new Date(createdAt)
+  if (isNaN(d)) d = new Date()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  const formattedDate = `${d.getFullYear()}-${mm}-${dd}`
 
   return {
     // Metadata
@@ -76,8 +76,8 @@ export function createChecklist({
     // Section D: Information sources
     sectionD: {
       sources: INFORMATION_SOURCES.reduce((acc, source) => {
-        acc[source] = false;
-        return acc;
+        acc[source] = false
+        return acc
       }, {}),
       otherSpecify: '',
     },
@@ -114,7 +114,7 @@ export function createChecklist({
       judgement: null, // 'Low (except confounding)', 'Moderate', 'Serious', 'Critical'
       direction: null,
     },
-  };
+  }
 }
 
 /**
@@ -123,20 +123,20 @@ export function createChecklist({
  * @returns {Object} Domain state object
  */
 function createDomainState(domainKey) {
-  const questions = getDomainQuestions(domainKey);
-  const answers = {};
+  const questions = getDomainQuestions(domainKey)
+  const answers = {}
 
-  Object.keys(questions).forEach(qKey => {
-    answers[qKey] = { answer: null, comment: '' };
-  });
+  Object.keys(questions).forEach((qKey) => {
+    answers[qKey] = { answer: null, comment: '' }
+  })
 
-  const domain = ROBINS_I_CHECKLIST[domainKey];
+  const domain = ROBINS_I_CHECKLIST[domainKey]
 
   return {
     answers,
     judgement: null, // 'Low', 'Moderate', 'Serious', 'Critical'
     direction: domain?.hasDirection ? null : undefined,
-  };
+  }
 }
 
 /**
@@ -145,13 +145,18 @@ function createDomainState(domainKey) {
  * @returns {boolean} True if assessment should stop
  */
 export function shouldStopAssessment(sectionB) {
-  if (!sectionB) return false;
+  if (!sectionB) return false
 
-  const b2Answer = sectionB.b2?.answer;
-  const b3Answer = sectionB.b3?.answer;
+  const b2Answer = sectionB.b2?.answer
+  const b3Answer = sectionB.b3?.answer
 
   // Stop if B2 or B3 is Yes or Probably Yes
-  return b2Answer === 'Y' || b2Answer === 'PY' || b3Answer === 'Y' || b3Answer === 'PY';
+  return (
+    b2Answer === 'Y' ||
+    b2Answer === 'PY' ||
+    b3Answer === 'Y' ||
+    b3Answer === 'PY'
+  )
 }
 
 /**
@@ -160,45 +165,45 @@ export function shouldStopAssessment(sectionB) {
  * @returns {string} Overall risk of bias: 'Low', 'Moderate', 'Serious', 'Critical', or 'Incomplete'
  */
 export function scoreChecklist(state) {
-  if (!state || typeof state !== 'object') return 'Error';
+  if (!state || typeof state !== 'object') return 'Error'
 
   // Check if assessment was stopped early
   if (shouldStopAssessment(state.sectionB)) {
-    return 'Critical';
+    return 'Critical'
   }
 
   // Determine which Domain 1 variant to use
-  const isPerProtocol = state.sectionC?.isPerProtocol || false;
-  const activeDomains = getActiveDomainKeys(isPerProtocol);
+  const isPerProtocol = state.sectionC?.isPerProtocol || false
+  const activeDomains = getActiveDomainKeys(isPerProtocol)
 
-  const judgements = [];
+  const judgements = []
 
   for (const domainKey of activeDomains) {
-    const domain = state[domainKey];
+    const domain = state[domainKey]
     if (!domain?.judgement) {
-      return 'Incomplete';
+      return 'Incomplete'
     }
-    judgements.push(domain.judgement);
+    judgements.push(domain.judgement)
   }
 
   // Scoring algorithm
   // Critical: At least one domain is Critical
   if (judgements.includes('Critical')) {
-    return 'Critical';
+    return 'Critical'
   }
 
   // Serious: At least one domain is Serious
   if (judgements.includes('Serious')) {
-    return 'Serious';
+    return 'Serious'
   }
 
   // Moderate: Highest domain judgement is Moderate
   if (judgements.includes('Moderate')) {
-    return 'Moderate';
+    return 'Moderate'
   }
 
   // Low: All domains are Low
-  return 'Low';
+  return 'Low'
 }
 
 /**
@@ -209,37 +214,39 @@ export function scoreChecklist(state) {
  * @returns {string|null} Suggested judgement or null if incomplete
  */
 export function suggestDomainJudgement(domainKey, answers) {
-  if (!answers) return null;
+  if (!answers) return null
 
-  const questionKeys = Object.keys(answers);
-  if (questionKeys.length === 0) return null;
+  const questionKeys = Object.keys(answers)
+  if (questionKeys.length === 0) return null
 
   // Check if all questions are answered
-  const answeredQuestions = questionKeys.filter(k => answers[k]?.answer !== null);
-  if (answeredQuestions.length === 0) return null;
+  const answeredQuestions = questionKeys.filter(
+    (k) => answers[k]?.answer !== null,
+  )
+  if (answeredQuestions.length === 0) return null
 
   // Count different response types
-  let hasNo = false;
-  let hasProbablyNo = false;
-  let hasStrongNo = false;
-  let hasWeakNo = false;
-  let hasNI = false;
+  let hasNo = false
+  let hasProbablyNo = false
+  let hasStrongNo = false
+  let hasWeakNo = false
+  let hasNI = false
 
-  questionKeys.forEach(qKey => {
-    const answer = answers[qKey]?.answer;
-    if (answer === 'N') hasNo = true;
-    if (answer === 'PN') hasProbablyNo = true;
-    if (answer === 'SN') hasStrongNo = true;
-    if (answer === 'WN') hasWeakNo = true;
-    if (answer === 'NI') hasNI = true;
-  });
+  questionKeys.forEach((qKey) => {
+    const answer = answers[qKey]?.answer
+    if (answer === 'N') hasNo = true
+    if (answer === 'PN') hasProbablyNo = true
+    if (answer === 'SN') hasStrongNo = true
+    if (answer === 'WN') hasWeakNo = true
+    if (answer === 'NI') hasNI = true
+  })
 
   // Simple heuristic (actual algorithms are domain-specific in ROBINS-I guidance)
-  if (hasNo || hasStrongNo) return 'Serious';
-  if (hasProbablyNo || hasWeakNo) return 'Moderate';
-  if (hasNI) return 'Moderate';
+  if (hasNo || hasStrongNo) return 'Serious'
+  if (hasProbablyNo || hasWeakNo) return 'Moderate'
+  if (hasNI) return 'Moderate'
 
-  return 'Low';
+  return 'Low'
 }
 
 /**
@@ -250,7 +257,7 @@ export function suggestDomainJudgement(domainKey, answers) {
  * @returns {string|null} The selected answer or null
  */
 export function getSelectedAnswer(domainKey, questionKey, state) {
-  return state?.[domainKey]?.answers?.[questionKey]?.answer || null;
+  return state?.[domainKey]?.answers?.[questionKey]?.answer || null
 }
 
 /**
@@ -259,7 +266,7 @@ export function getSelectedAnswer(domainKey, questionKey, state) {
  * @returns {Object} Flat object with all answers
  */
 export function getAnswers(checklist) {
-  if (!checklist || typeof checklist !== 'object') return null;
+  if (!checklist || typeof checklist !== 'object') return null
 
   const result = {
     metadata: {
@@ -271,33 +278,34 @@ export function getAnswers(checklist) {
     sectionB: {},
     domains: {},
     overall: checklist.overall,
-  };
+  }
 
   // Section B
-  Object.keys(ROBINS_I_CHECKLIST.sectionB).forEach(key => {
-    result.sectionB[key] = checklist.sectionB?.[key]?.answer || null;
-  });
+  Object.keys(ROBINS_I_CHECKLIST.sectionB).forEach((key) => {
+    result.sectionB[key] = checklist.sectionB?.[key]?.answer || null
+  })
 
   // Domains
-  const isPerProtocol = checklist.sectionC?.isPerProtocol || false;
-  const activeDomains = getActiveDomainKeys(isPerProtocol);
+  const isPerProtocol = checklist.sectionC?.isPerProtocol || false
+  const activeDomains = getActiveDomainKeys(isPerProtocol)
 
-  activeDomains.forEach(domainKey => {
-    const domain = checklist[domainKey];
-    if (!domain) return;
+  activeDomains.forEach((domainKey) => {
+    const domain = checklist[domainKey]
+    if (!domain) return
 
     result.domains[domainKey] = {
       judgement: domain.judgement,
       direction: domain.direction,
       questions: {},
-    };
+    }
 
-    Object.keys(domain.answers || {}).forEach(qKey => {
-      result.domains[domainKey].questions[qKey] = domain.answers[qKey]?.answer || null;
-    });
-  });
+    Object.keys(domain.answers || {}).forEach((qKey) => {
+      result.domains[domainKey].questions[qKey] =
+        domain.answers[qKey]?.answer || null
+    })
+  })
 
-  return result;
+  return result
 }
 
 /**
@@ -306,23 +314,23 @@ export function getAnswers(checklist) {
  * @returns {Object} Summary of domain judgements
  */
 export function getDomainSummary(checklist) {
-  if (!checklist) return null;
+  if (!checklist) return null
 
-  const isPerProtocol = checklist.sectionC?.isPerProtocol || false;
-  const activeDomains = getActiveDomainKeys(isPerProtocol);
+  const isPerProtocol = checklist.sectionC?.isPerProtocol || false
+  const activeDomains = getActiveDomainKeys(isPerProtocol)
 
-  const summary = {};
+  const summary = {}
 
-  activeDomains.forEach(domainKey => {
-    const domain = checklist[domainKey];
+  activeDomains.forEach((domainKey) => {
+    const domain = checklist[domainKey]
     summary[domainKey] = {
       judgement: domain?.judgement || null,
       direction: domain?.direction || null,
       complete: isQuestionnaireComplete(domainKey, domain?.answers),
-    };
-  });
+    }
+  })
 
-  return summary;
+  return summary
 }
 
 /**
@@ -332,12 +340,12 @@ export function getDomainSummary(checklist) {
  * @returns {boolean} True if all questions have answers
  */
 function isQuestionnaireComplete(domainKey, answers) {
-  if (!answers) return false;
+  if (!answers) return false
 
-  const questions = getDomainQuestions(domainKey);
-  const requiredKeys = Object.keys(questions);
+  const questions = getDomainQuestions(domainKey)
+  const requiredKeys = Object.keys(questions)
 
-  return requiredKeys.every(key => answers[key]?.answer !== null);
+  return requiredKeys.every((key) => answers[key]?.answer !== null)
 }
 
 /**
@@ -346,7 +354,7 @@ function isQuestionnaireComplete(domainKey, answers) {
  * @returns {string} CSV string
  */
 export function exportChecklistsToCSV(checklists) {
-  const list = Array.isArray(checklists) ? checklists : [checklists];
+  const list = Array.isArray(checklists) ? checklists : [checklists]
 
   const headers = [
     'Checklist Name',
@@ -360,18 +368,18 @@ export function exportChecklistsToCSV(checklists) {
     'Domain Direction',
     'Overall Judgement',
     'Overall Direction',
-  ];
+  ]
 
-  const rows = [];
+  const rows = []
 
-  list.forEach(cl => {
-    const isPerProtocol = cl.sectionC?.isPerProtocol || false;
-    const activeDomains = getActiveDomainKeys(isPerProtocol);
-    const overallScore = scoreChecklist(cl);
+  list.forEach((cl) => {
+    const isPerProtocol = cl.sectionC?.isPerProtocol || false
+    const activeDomains = getActiveDomainKeys(isPerProtocol)
+    const overallScore = scoreChecklist(cl)
 
     // Section B
     Object.entries(ROBINS_I_CHECKLIST.sectionB).forEach(([key, def]) => {
-      const ans = cl.sectionB?.[key];
+      const ans = cl.sectionB?.[key]
       rows.push([
         cl.name || '',
         cl.reviewerName || '',
@@ -384,17 +392,17 @@ export function exportChecklistsToCSV(checklists) {
         '',
         overallScore,
         cl.overall?.direction || '',
-      ]);
-    });
+      ])
+    })
 
     // Domains
-    activeDomains.forEach(domainKey => {
-      const domainDef = ROBINS_I_CHECKLIST[domainKey];
-      const domain = cl[domainKey];
-      const questions = getDomainQuestions(domainKey);
+    activeDomains.forEach((domainKey) => {
+      const domainDef = ROBINS_I_CHECKLIST[domainKey]
+      const domain = cl[domainKey]
+      const questions = getDomainQuestions(domainKey)
 
       Object.entries(questions).forEach(([qKey, qDef]) => {
-        const ans = domain?.answers?.[qKey];
+        const ans = domain?.answers?.[qKey]
         rows.push([
           cl.name || '',
           cl.reviewerName || '',
@@ -407,17 +415,18 @@ export function exportChecklistsToCSV(checklists) {
           domain?.direction || '',
           overallScore,
           cl.overall?.direction || '',
-        ]);
-      });
-    });
-  });
+        ])
+      })
+    })
+  })
 
   // CSV encode
-  const csvEscape = val => `"${String(val).replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+  const csvEscape = (val) =>
+    `"${String(val).replace(/"/g, '""').replace(/\n/g, ' ')}"`
   const csv =
     headers.map(csvEscape).join(',') +
     '\n' +
-    rows.map(row => row.map(csvEscape).join(',')).join('\n');
+    rows.map((row) => row.map(csvEscape).join(',')).join('\n')
 
-  return csv;
+  return csv
 }

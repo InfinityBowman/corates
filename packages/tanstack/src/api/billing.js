@@ -3,7 +3,7 @@
  * Handles all billing-related API calls
  */
 
-import { API_BASE } from '@config/api.js';
+import { API_BASE } from '@config/api.js'
 
 /**
  * Fetch options with credentials
@@ -13,7 +13,7 @@ const fetchOptions = {
   headers: {
     'Content-Type': 'application/json',
   },
-};
+}
 
 /**
  * Get the current user's subscription
@@ -23,14 +23,16 @@ export async function getSubscription() {
   const response = await fetch(`${API_BASE}/api/billing/subscription`, {
     ...fetchOptions,
     method: 'GET',
-  });
+  })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch subscription' }));
-    throw new Error(error.error || 'Failed to fetch subscription');
+    const error = await response
+      .json()
+      .catch(() => ({ error: 'Failed to fetch subscription' }))
+    throw new Error(error.error || 'Failed to fetch subscription')
   }
 
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -41,14 +43,16 @@ export async function getPlans() {
   const response = await fetch(`${API_BASE}/api/billing/plans`, {
     ...fetchOptions,
     method: 'GET',
-  });
+  })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch plans' }));
-    throw new Error(error.error || 'Failed to fetch plans');
+    const error = await response
+      .json()
+      .catch(() => ({ error: 'Failed to fetch plans' }))
+    throw new Error(error.error || 'Failed to fetch plans')
   }
 
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -62,16 +66,16 @@ export async function createCheckoutSession(tier, interval = 'monthly') {
     ...fetchOptions,
     method: 'POST',
     body: JSON.stringify({ tier, interval }),
-  });
+  })
 
   if (!response.ok) {
     const error = await response
       .json()
-      .catch(() => ({ error: 'Failed to create checkout session' }));
-    throw new Error(error.error || 'Failed to create checkout session');
+      .catch(() => ({ error: 'Failed to create checkout session' }))
+    throw new Error(error.error || 'Failed to create checkout session')
   }
 
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -82,14 +86,16 @@ export async function createPortalSession() {
   const response = await fetch(`${API_BASE}/api/billing/portal`, {
     ...fetchOptions,
     method: 'POST',
-  });
+  })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to create portal session' }));
-    throw new Error(error.error || 'Failed to create portal session');
+    const error = await response
+      .json()
+      .catch(() => ({ error: 'Failed to create portal session' }))
+    throw new Error(error.error || 'Failed to create portal session')
   }
 
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -98,14 +104,14 @@ export async function createPortalSession() {
  * @param {'monthly' | 'yearly'} interval - Billing interval
  */
 export async function redirectToCheckout(tier, interval = 'monthly') {
-  const { url } = await createCheckoutSession(tier, interval);
-  window.location.href = url;
+  const { url } = await createCheckoutSession(tier, interval)
+  window.location.href = url
 }
 
 /**
  * Redirect to Stripe Customer Portal
  */
 export async function redirectToPortal() {
-  const { url } = await createPortalSession();
-  window.location.href = url;
+  const { url } = await createPortalSession()
+  window.location.href = url
 }

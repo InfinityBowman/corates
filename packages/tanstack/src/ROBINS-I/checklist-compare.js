@@ -3,8 +3,12 @@
  * Compares two reviewer checklists and helps create a finalized consensus version
  */
 
-import { ROBINS_I_CHECKLIST, getDomainQuestions, getActiveDomainKeys } from './checklist-map.js';
-import { CHECKLIST_TYPES } from '@/checklist-registry/types.js';
+import {
+  ROBINS_I_CHECKLIST,
+  getDomainQuestions,
+  getActiveDomainKeys,
+} from './checklist-map.js'
+import { CHECKLIST_TYPES } from '@/checklist-registry/types.js'
 
 /**
  * Deep clone a plain object/array via JSON serialization
@@ -12,7 +16,7 @@ import { CHECKLIST_TYPES } from '@/checklist-registry/types.js';
  * @returns {*} Deep cloned value
  */
 function deepClone(value) {
-  return JSON.parse(JSON.stringify(value));
+  return JSON.parse(JSON.stringify(value))
 }
 
 /**
@@ -20,7 +24,7 @@ function deepClone(value) {
  * @returns {string[]} Array of section B question keys
  */
 export function getSectionBKeys() {
-  return Object.keys(ROBINS_I_CHECKLIST.sectionB);
+  return Object.keys(ROBINS_I_CHECKLIST.sectionB)
 }
 
 /**
@@ -29,7 +33,7 @@ export function getSectionBKeys() {
  * @returns {string[]} Array of domain keys
  */
 export function getDomainKeysForComparison(isPerProtocol = false) {
-  return getActiveDomainKeys(isPerProtocol);
+  return getActiveDomainKeys(isPerProtocol)
 }
 
 /**
@@ -44,60 +48,62 @@ export function compareChecklists(checklist1, checklist2) {
       sectionB: { agreements: [], disagreements: [] },
       domains: {},
       stats: { total: 0, agreed: 0, disagreed: 0 },
-    };
+    }
   }
 
   // Use the same protocol type for comparison (prefer checklist1's setting)
-  const isPerProtocol = checklist1.sectionC?.isPerProtocol || false;
+  const isPerProtocol = checklist1.sectionC?.isPerProtocol || false
 
   const result = {
     sectionB: compareSectionB(checklist1.sectionB, checklist2.sectionB),
     domains: {},
     overall: compareOverall(checklist1.overall, checklist2.overall),
     stats: { total: 0, agreed: 0, disagreed: 0 },
-  };
+  }
 
   // Compare each active domain
-  const activeDomains = getActiveDomainKeys(isPerProtocol);
+  const activeDomains = getActiveDomainKeys(isPerProtocol)
 
   for (const domainKey of activeDomains) {
     result.domains[domainKey] = compareDomain(
       domainKey,
       checklist1[domainKey],
       checklist2[domainKey],
-    );
+    )
   }
 
   // Calculate overall stats
-  let totalQuestions = 0;
-  let agreements = 0;
+  let totalQuestions = 0
+  let agreements = 0
 
   // Section B stats
-  totalQuestions += result.sectionB.agreements.length + result.sectionB.disagreements.length;
-  agreements += result.sectionB.agreements.length;
+  totalQuestions +=
+    result.sectionB.agreements.length + result.sectionB.disagreements.length
+  agreements += result.sectionB.agreements.length
 
   // Domain stats
-  Object.values(result.domains).forEach(domain => {
-    totalQuestions += domain.questions.agreements.length + domain.questions.disagreements.length;
-    agreements += domain.questions.agreements.length;
+  Object.values(result.domains).forEach((domain) => {
+    totalQuestions +=
+      domain.questions.agreements.length + domain.questions.disagreements.length
+    agreements += domain.questions.agreements.length
 
     // Count judgement agreement
     if (domain.judgementMatch) {
-      totalQuestions += 1;
-      agreements += 1;
+      totalQuestions += 1
+      agreements += 1
     } else if (domain.reviewer1?.judgement || domain.reviewer2?.judgement) {
-      totalQuestions += 1;
+      totalQuestions += 1
     }
-  });
+  })
 
   result.stats = {
     total: totalQuestions,
     agreed: agreements,
     disagreed: totalQuestions - agreements,
     agreementRate: totalQuestions > 0 ? agreements / totalQuestions : 0,
-  };
+  }
 
-  return result;
+  return result
 }
 
 /**
@@ -107,28 +113,28 @@ export function compareChecklists(checklist1, checklist2) {
  * @returns {Object} Comparison result
  */
 function compareSectionB(sectionB1, sectionB2) {
-  const keys = getSectionBKeys();
-  const agreements = [];
-  const disagreements = [];
+  const keys = getSectionBKeys()
+  const agreements = []
+  const disagreements = []
 
   for (const key of keys) {
-    const ans1 = sectionB1?.[key]?.answer;
-    const ans2 = sectionB2?.[key]?.answer;
+    const ans1 = sectionB1?.[key]?.answer
+    const ans2 = sectionB2?.[key]?.answer
 
     const comparison = {
       key,
       reviewer1: { answer: ans1, comment: sectionB1?.[key]?.comment || '' },
       reviewer2: { answer: ans2, comment: sectionB2?.[key]?.comment || '' },
-    };
+    }
 
     if (ans1 === ans2) {
-      agreements.push({ ...comparison, isAgreement: true });
+      agreements.push({ ...comparison, isAgreement: true })
     } else {
-      disagreements.push({ ...comparison, isAgreement: false });
+      disagreements.push({ ...comparison, isAgreement: false })
     }
   }
 
-  return { agreements, disagreements };
+  return { agreements, disagreements }
 }
 
 /**
@@ -139,15 +145,15 @@ function compareSectionB(sectionB1, sectionB2) {
  * @returns {Object} Comparison result
  */
 export function compareDomain(domainKey, domain1, domain2) {
-  const questions = getDomainQuestions(domainKey);
-  const questionKeys = Object.keys(questions);
+  const questions = getDomainQuestions(domainKey)
+  const questionKeys = Object.keys(questions)
 
-  const agreements = [];
-  const disagreements = [];
+  const agreements = []
+  const disagreements = []
 
   for (const qKey of questionKeys) {
-    const ans1 = domain1?.answers?.[qKey]?.answer;
-    const ans2 = domain2?.answers?.[qKey]?.answer;
+    const ans1 = domain1?.answers?.[qKey]?.answer
+    const ans2 = domain2?.answers?.[qKey]?.answer
 
     const comparison = {
       key: qKey,
@@ -160,18 +166,18 @@ export function compareDomain(domainKey, domain1, domain2) {
         answer: ans2,
         comment: domain2?.answers?.[qKey]?.comment || '',
       },
-    };
+    }
 
     if (ans1 === ans2) {
-      agreements.push({ ...comparison, isAgreement: true });
+      agreements.push({ ...comparison, isAgreement: true })
     } else {
-      disagreements.push({ ...comparison, isAgreement: false });
+      disagreements.push({ ...comparison, isAgreement: false })
     }
   }
 
   // Compare domain-level judgement
-  const judgementMatch = domain1?.judgement === domain2?.judgement;
-  const directionMatch = domain1?.direction === domain2?.direction;
+  const judgementMatch = domain1?.judgement === domain2?.judgement
+  const directionMatch = domain1?.direction === domain2?.direction
 
   return {
     questions: { agreements, disagreements },
@@ -185,7 +191,7 @@ export function compareDomain(domainKey, domain1, domain2) {
       judgement: domain2?.judgement,
       direction: domain2?.direction,
     },
-  };
+  }
 }
 
 /**
@@ -200,7 +206,7 @@ function compareOverall(overall1, overall2) {
     directionMatch: overall1?.direction === overall2?.direction,
     reviewer1: overall1,
     reviewer2: overall2,
-  };
+  }
 }
 
 /**
@@ -211,8 +217,13 @@ function compareOverall(overall1, overall2) {
  * @param {Object} metadata - Metadata for the reconciled checklist
  * @returns {Object} The reconciled checklist
  */
-export function createReconciledChecklist(checklist1, checklist2, selections, metadata = {}) {
-  const isPerProtocol = checklist1.sectionC?.isPerProtocol || false;
+export function createReconciledChecklist(
+  checklist1,
+  checklist2,
+  selections,
+  metadata = {},
+) {
+  const isPerProtocol = checklist1.sectionC?.isPerProtocol || false
 
   const reconciled = {
     name: metadata.name || 'Reconciled Checklist',
@@ -228,7 +239,7 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
     sectionC: deepClone(checklist1.sectionC || {}),
     sectionD: deepClone(checklist1.sectionD || {}),
     confoundingEvaluation: deepClone(checklist1.confoundingEvaluation || {}),
-  };
+  }
 
   // Reconcile Section B
   reconciled.sectionB = reconcileSection(
@@ -236,10 +247,10 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
     checklist2.sectionB,
     selections.sectionB || {},
     getSectionBKeys(),
-  );
+  )
 
   // Reconcile domains
-  const activeDomains = getActiveDomainKeys(isPerProtocol);
+  const activeDomains = getActiveDomainKeys(isPerProtocol)
 
   for (const domainKey of activeDomains) {
     reconciled[domainKey] = reconcileDomain(
@@ -247,21 +258,21 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
       checklist1[domainKey],
       checklist2[domainKey],
       selections[domainKey] || {},
-    );
+    )
   }
 
   // Copy inactive domain from checklist1 (for completeness)
-  const inactiveDomain = isPerProtocol ? 'domain1a' : 'domain1b';
-  reconciled[inactiveDomain] = deepClone(checklist1[inactiveDomain] || {});
+  const inactiveDomain = isPerProtocol ? 'domain1a' : 'domain1b'
+  reconciled[inactiveDomain] = deepClone(checklist1[inactiveDomain] || {})
 
   // Reconcile overall
   reconciled.overall = reconcileOverall(
     checklist1.overall,
     checklist2.overall,
     selections.overall || {},
-  );
+  )
 
-  return reconciled;
+  return reconciled
 }
 
 /**
@@ -273,25 +284,25 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
  * @returns {Object} Reconciled section
  */
 function reconcileSection(section1, section2, selections, keys) {
-  const reconciled = {};
+  const reconciled = {}
 
   for (const key of keys) {
-    const selection = selections[key];
+    const selection = selections[key]
 
     if (!selection || selection === 'reviewer1') {
       reconciled[key] = JSON.parse(
         JSON.stringify(section1?.[key] || { answer: null, comment: '' }),
-      );
+      )
     } else if (selection === 'reviewer2') {
       reconciled[key] = JSON.parse(
         JSON.stringify(section2?.[key] || { answer: null, comment: '' }),
-      );
+      )
     } else if (typeof selection === 'object') {
-      reconciled[key] = JSON.parse(JSON.stringify(selection));
+      reconciled[key] = JSON.parse(JSON.stringify(selection))
     }
   }
 
-  return reconciled;
+  return reconciled
 }
 
 /**
@@ -303,52 +314,52 @@ function reconcileSection(section1, section2, selections, keys) {
  * @returns {Object} Reconciled domain
  */
 function reconcileDomain(domainKey, domain1, domain2, selections) {
-  const questions = getDomainQuestions(domainKey);
-  const questionKeys = Object.keys(questions);
+  const questions = getDomainQuestions(domainKey)
+  const questionKeys = Object.keys(questions)
 
-  const reconciledAnswers = {};
+  const reconciledAnswers = {}
 
   for (const qKey of questionKeys) {
-    const selection = selections.answers?.[qKey];
+    const selection = selections.answers?.[qKey]
 
     if (!selection || selection === 'reviewer1') {
       reconciledAnswers[qKey] = deepClone(
         domain1?.answers?.[qKey] || { answer: null, comment: '' },
-      );
+      )
     } else if (selection === 'reviewer2') {
       reconciledAnswers[qKey] = deepClone(
         domain2?.answers?.[qKey] || { answer: null, comment: '' },
-      );
+      )
     } else if (typeof selection === 'object') {
-      reconciledAnswers[qKey] = deepClone(selection);
+      reconciledAnswers[qKey] = deepClone(selection)
     }
   }
 
   // Handle judgement selection
-  let judgement;
+  let judgement
   if (!selections.judgement || selections.judgement === 'reviewer1') {
-    judgement = domain1?.judgement;
+    judgement = domain1?.judgement
   } else if (selections.judgement === 'reviewer2') {
-    judgement = domain2?.judgement;
+    judgement = domain2?.judgement
   } else {
-    judgement = selections.judgement;
+    judgement = selections.judgement
   }
 
   // Handle direction selection
-  let direction;
+  let direction
   if (!selections.direction || selections.direction === 'reviewer1') {
-    direction = domain1?.direction;
+    direction = domain1?.direction
   } else if (selections.direction === 'reviewer2') {
-    direction = domain2?.direction;
+    direction = domain2?.direction
   } else {
-    direction = selections.direction;
+    direction = selections.direction
   }
 
   return {
     answers: reconciledAnswers,
     judgement,
     direction,
-  };
+  }
 }
 
 /**
@@ -359,25 +370,25 @@ function reconcileDomain(domainKey, domain1, domain2, selections) {
  * @returns {Object} Reconciled overall
  */
 function reconcileOverall(overall1, overall2, selections) {
-  let judgement;
+  let judgement
   if (!selections.judgement || selections.judgement === 'reviewer1') {
-    judgement = overall1?.judgement;
+    judgement = overall1?.judgement
   } else if (selections.judgement === 'reviewer2') {
-    judgement = overall2?.judgement;
+    judgement = overall2?.judgement
   } else {
-    judgement = selections.judgement;
+    judgement = selections.judgement
   }
 
-  let direction;
+  let direction
   if (!selections.direction || selections.direction === 'reviewer1') {
-    direction = overall1?.direction;
+    direction = overall1?.direction
   } else if (selections.direction === 'reviewer2') {
-    direction = overall2?.direction;
+    direction = overall2?.direction
   } else {
-    direction = selections.direction;
+    direction = selections.direction
   }
 
-  return { judgement, direction };
+  return { judgement, direction }
 }
 
 /**
@@ -386,24 +397,27 @@ function reconcileOverall(overall1, overall2, selections) {
  * @returns {Object} Summary with counts and lists
  */
 export function getReconciliationSummary(comparison) {
-  const { stats, sectionB, domains, overall } = comparison;
+  const { stats, sectionB, domains, overall } = comparison
 
-  const domainDisagreements = [];
-  const judgementDisagreements = [];
+  const domainDisagreements = []
+  const judgementDisagreements = []
 
   Object.entries(domains).forEach(([domainKey, domain]) => {
     if (domain.questions.disagreements.length > 0) {
       domainDisagreements.push({
         domain: domainKey,
         count: domain.questions.disagreements.length,
-        questions: domain.questions.disagreements.map(d => d.key),
-      });
+        questions: domain.questions.disagreements.map((d) => d.key),
+      })
     }
 
-    if (!domain.judgementMatch && (domain.reviewer1?.judgement || domain.reviewer2?.judgement)) {
-      judgementDisagreements.push(domainKey);
+    if (
+      !domain.judgementMatch &&
+      (domain.reviewer1?.judgement || domain.reviewer2?.judgement)
+    ) {
+      judgementDisagreements.push(domainKey)
     }
-  });
+  })
 
   return {
     totalQuestions: stats.total,
@@ -415,7 +429,7 @@ export function getReconciliationSummary(comparison) {
     judgementDisagreements,
     overallDisagreement: !overall.judgementMatch,
     needsReconciliation: stats.disagreed > 0 || !overall.judgementMatch,
-  };
+  }
 }
 
 /**
@@ -425,9 +439,9 @@ export function getReconciliationSummary(comparison) {
  * @returns {string} The question text
  */
 export function getQuestionText(domainKey, questionKey) {
-  const questions = getDomainQuestions(domainKey);
-  const q = questions[questionKey];
-  return q ? `${q.number}: ${q.text}` : questionKey;
+  const questions = getDomainQuestions(domainKey)
+  const q = questions[questionKey]
+  return q ? `${q.number}: ${q.text}` : questionKey
 }
 
 /**
@@ -436,7 +450,7 @@ export function getQuestionText(domainKey, questionKey) {
  * @returns {Object} The domain definition
  */
 export function getDomainDef(domainKey) {
-  return ROBINS_I_CHECKLIST[domainKey];
+  return ROBINS_I_CHECKLIST[domainKey]
 }
 
 /**
@@ -445,5 +459,5 @@ export function getDomainDef(domainKey) {
  * @returns {string} The domain name
  */
 export function getDomainName(domainKey) {
-  return ROBINS_I_CHECKLIST[domainKey]?.name || domainKey;
+  return ROBINS_I_CHECKLIST[domainKey]?.name || domainKey
 }

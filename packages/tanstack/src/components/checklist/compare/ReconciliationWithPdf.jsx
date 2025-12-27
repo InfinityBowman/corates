@@ -3,13 +3,13 @@
  * in a split-screen layout. The PDF is read-only during reconciliation.
  */
 
-import { Show, createMemo } from 'solid-js';
-import { createStore } from 'solid-js/store';
-import { AiOutlineArrowLeft } from 'solid-icons/ai';
-import PdfViewer from '@/components/checklist/pdf/PdfViewer.jsx';
-import ChecklistReconciliation from './ChecklistReconciliation.jsx';
-import Navbar from './Navbar.jsx';
-import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx';
+import { Show, createMemo } from 'solid-js'
+import { createStore } from 'solid-js/store'
+import { AiOutlineArrowLeft } from 'solid-icons/ai'
+import PdfViewer from '@/components/checklist/pdf/PdfViewer.jsx'
+import ChecklistReconciliation from './ChecklistReconciliation.jsx'
+import Navbar from './Navbar.jsx'
+import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx'
 
 export default function ReconciliationWithPdf(props) {
   // props.checklist1 - First reviewer's checklist data
@@ -43,10 +43,10 @@ export default function ReconciliationWithPdf(props) {
     setViewMode: null,
     goToQuestion: null,
     onReset: null,
-  });
+  })
 
   // Check if we have PDF to show (reactive)
-  const hasPdf = createMemo(() => !!(props.pdfData || props.pdfLoading));
+  const hasPdf = createMemo(() => !!(props.pdfData || props.pdfLoading))
 
   // Build header content with back button, title, and navbar
   const headerContent = (
@@ -54,39 +54,40 @@ export default function ReconciliationWithPdf(props) {
       {/* Back button */}
       <button
         onClick={() => props.onCancel?.()}
-        class='shrink-0 rounded-lg p-2 transition-colors hover:bg-gray-100'
-        title='Go back'
+        class="shrink-0 rounded-lg p-2 transition-colors hover:bg-gray-100"
+        title="Go back"
       >
-        <AiOutlineArrowLeft class='h-5 w-5 text-gray-600' />
+        <AiOutlineArrowLeft class="h-5 w-5 text-gray-600" />
       </button>
 
       {/* Title */}
-      <div class='shrink-0'>
-        <h1 class='text-lg font-bold text-gray-900'>Reconciliation</h1>
-        <p class='text-xs text-gray-500'>
-          {props.reviewer1Name || 'Reviewer 1'} vs {props.reviewer2Name || 'Reviewer 2'}
+      <div class="shrink-0">
+        <h1 class="text-lg font-bold text-gray-900">Reconciliation</h1>
+        <p class="text-xs text-gray-500">
+          {props.reviewer1Name || 'Reviewer 1'} vs{' '}
+          {props.reviewer2Name || 'Reviewer 2'}
         </p>
       </div>
 
-      <div class='h-8 w-px shrink-0 bg-gray-200' />
+      <div class="h-8 w-px shrink-0 bg-gray-200" />
 
       {/* Navbar - question navigation pills */}
       <Show when={navbarStore.questionKeys.length > 0}>
-        <div class='flex flex-1 items-center gap-4 overflow-x-auto'>
+        <div class="flex flex-1 items-center gap-4 overflow-x-auto">
           <Navbar store={navbarStore} />
         </div>
       </Show>
     </>
-  );
+  )
 
   return (
-    <div class='flex h-full flex-col bg-blue-50'>
+    <div class="flex h-full flex-col bg-blue-50">
       <SplitScreenLayout
-        defaultLayout='vertical'
+        defaultLayout="vertical"
         defaultRatio={60}
         showSecondPanel={false}
         headerContent={headerContent}
-        secondPanelLabel='PDF viewer'
+        secondPanelLabel="PDF viewer"
         pdfUrl={props.pdfUrl}
         pdfData={props.pdfData}
       >
@@ -112,9 +113,9 @@ export default function ReconciliationWithPdf(props) {
           <Show
             when={!props.pdfLoading}
             fallback={
-              <div class='flex h-full items-center justify-center bg-gray-100'>
-                <div class='flex items-center gap-3 text-gray-500'>
-                  <div class='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
+              <div class="flex h-full items-center justify-center bg-gray-100">
+                <div class="flex items-center gap-3 text-gray-500">
+                  <div class="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
                   Loading PDF...
                 </div>
               </div>
@@ -132,5 +133,5 @@ export default function ReconciliationWithPdf(props) {
         </Show>
       </SplitScreenLayout>
     </div>
-  );
+  )
 }

@@ -3,9 +3,9 @@
  * Eliminates prop drilling for PDF, Reference, DOI, and Google Drive sections
  */
 
-import { createContext, useContext } from 'solid-js';
+import { createContext, useContext } from 'solid-js'
 
-const AddStudiesContext = createContext();
+const AddStudiesContext = createContext()
 
 /**
  * @param {Object} props
@@ -20,28 +20,32 @@ export function AddStudiesProvider(props) {
   // Using a getter satisfies the linter while preserving the same behavior
   const value = {
     get studies() {
-      return props.studies;
+      return props.studies
     },
     get formType() {
-      return props.formType;
+      return props.formType
     },
     get projectId() {
-      return props.projectId;
+      return props.projectId
     },
     get onSaveFormState() {
-      return props.onSaveFormState;
+      return props.onSaveFormState
     },
-  };
+  }
 
-  return <AddStudiesContext.Provider value={value}>{props.children}</AddStudiesContext.Provider>;
+  return (
+    <AddStudiesContext.Provider value={value}>
+      {props.children}
+    </AddStudiesContext.Provider>
+  )
 }
 
 export function useStudiesContext() {
-  const context = useContext(AddStudiesContext);
+  const context = useContext(AddStudiesContext)
   if (!context) {
-    throw new Error('useStudiesContext must be used within AddStudiesProvider');
+    throw new Error('useStudiesContext must be used within AddStudiesProvider')
   }
-  return context.studies;
+  return context.studies
 }
 
 /**
@@ -49,13 +53,15 @@ export function useStudiesContext() {
  * @returns {{ formType?: string, projectId?: string, onSaveFormState?: () => Promise<void> }}
  */
 export function useFormPersistenceContext() {
-  const context = useContext(AddStudiesContext);
+  const context = useContext(AddStudiesContext)
   if (!context) {
-    throw new Error('useFormPersistenceContext must be used within AddStudiesProvider');
+    throw new Error(
+      'useFormPersistenceContext must be used within AddStudiesProvider',
+    )
   }
   return {
     formType: context.formType,
     projectId: context.projectId,
     onSaveFormState: context.onSaveFormState,
-  };
+  }
 }

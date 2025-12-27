@@ -1,11 +1,11 @@
-import { For } from 'solid-js';
-import { AiOutlineCheck, AiOutlineMail, AiOutlineLink } from 'solid-icons/ai';
-import { HiOutlineDocumentText, HiOutlineShieldCheck } from 'solid-icons/hi';
-import { BsLightningChargeFill } from 'solid-icons/bs';
-import { FiLock, FiKey, FiShield } from 'solid-icons/fi';
-import { BiRegularComment } from 'solid-icons/bi';
-import { RiDeviceWifiOffLine } from 'solid-icons/ri';
-import { IoTimerOutline } from 'solid-icons/io';
+import { For } from 'solid-js'
+import { AiOutlineCheck, AiOutlineMail, AiOutlineLink } from 'solid-icons/ai'
+import { HiOutlineDocumentText, HiOutlineShieldCheck } from 'solid-icons/hi'
+import { BsLightningChargeFill } from 'solid-icons/bs'
+import { FiLock, FiKey, FiShield } from 'solid-icons/fi'
+import { BiRegularComment } from 'solid-icons/bi'
+import { RiDeviceWifiOffLine } from 'solid-icons/ri'
+import { IoTimerOutline } from 'solid-icons/io'
 
 // Reusable illustration components
 function IllustrationWrapper(props) {
@@ -13,15 +13,17 @@ function IllustrationWrapper(props) {
     <div
       class={`bg-linear-to-br ${props.gradient} rounded-xl border ${props.border} overflow-hidden p-8`}
     >
-      <div class='relative flex aspect-4/3 items-center justify-center'>{props.children}</div>
+      <div class="relative flex aspect-4/3 items-center justify-center">
+        {props.children}
+      </div>
     </div>
-  );
+  )
 }
 
 function UserAvatar(props) {
   return (
     <div class={`absolute ${props.position}`}>
-      <div class='relative'>
+      <div class="relative">
         <div
           class={`h-8 w-8 rounded-full bg-linear-to-br ${props.gradient} flex items-center justify-center font-bold text-white shadow-lg`}
         >
@@ -32,7 +34,7 @@ function UserAvatar(props) {
         />
       </div>
     </div>
-  );
+  )
 }
 
 function FloatingBadge(props) {
@@ -44,7 +46,7 @@ function FloatingBadge(props) {
         {props.children}
       </div>
     </div>
-  );
+  )
 }
 
 function AnimatedCursor(props) {
@@ -56,16 +58,21 @@ function AnimatedCursor(props) {
         'animation-delay': props.delay || '0s',
       }}
     >
-      <svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+      >
         <path
-          fill='#FFF'
+          fill="#FFF"
           stroke={props.stroke}
-          stroke-width='2'
-          d='M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.35Z'
+          stroke-width="2"
+          d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.35Z"
         />
       </svg>
     </div>
-  );
+  )
 }
 
 // Real-time Collaboration Illustration
@@ -88,305 +95,332 @@ function CollaborationIllustration() {
           }
         `}
       </style>
-      <IllustrationWrapper gradient='from-blue-50 to-indigo-50' border='border-blue-200'>
+      <IllustrationWrapper
+        gradient="from-blue-50 to-indigo-50"
+        border="border-blue-200"
+      >
         {/* Reconcile image */}
-        <div class='absolute inset-0 flex items-center justify-center'>
-          <div class='relative rounded-lg border border-blue-200 bg-white p-1 shadow-lg'>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="relative rounded-lg border border-blue-200 bg-white p-1 shadow-lg">
             <picture>
-              <source srcset='/assets/corates_reconcile_progress.webp' type='image/webp' />
+              <source
+                srcset="/assets/corates_reconcile_progress.webp"
+                type="image/webp"
+              />
               <img
-                src='/assets/corates_reconcile_progress.png'
-                alt='Real-time collaboration and reconciliation progress'
-                class='h-auto w-full max-w-md rounded'
-                loading='lazy'
-                decoding='async'
+                src="/assets/corates_reconcile_progress.png"
+                alt="Real-time collaboration and reconciliation progress"
+                class="h-auto w-full max-w-md rounded"
+                loading="lazy"
+                decoding="async"
               />
             </picture>
             {/* Animated cursors */}
             <AnimatedCursor
-              path='1'
-              duration='10s'
-              delay='0s'
-              class='top-[60%] left-[50%] -translate-x-1/2 -translate-y-1/2'
-              stroke='#f6339a'
+              path="1"
+              duration="10s"
+              delay="0s"
+              class="top-[60%] left-[50%] -translate-x-1/2 -translate-y-1/2"
+              stroke="#f6339a"
             />
             <AnimatedCursor
-              path='2'
-              duration='12s'
-              delay='2s'
-              class='top-[50%] left-[20%] -translate-x-1/2 -translate-y-1/2'
-              stroke='#2b7fff'
+              path="2"
+              duration="12s"
+              delay="2s"
+              class="top-[50%] left-[20%] -translate-x-1/2 -translate-y-1/2"
+              stroke="#2b7fff"
             />
           </div>
         </div>
 
         {/* User avatars with activity indicators */}
         <UserAvatar
-          position='-top-2 -right-2'
-          gradient='from-pink-400 to-pink-600'
-          letter='B'
-          statusColor='bg-green-500'
+          position="-top-2 -right-2"
+          gradient="from-pink-400 to-pink-600"
+          letter="B"
+          statusColor="bg-green-500"
         />
         <UserAvatar
-          position='-top-2 right-4'
-          gradient='from-blue-400 to-blue-600'
-          letter='J'
-          statusColor='bg-green-500'
+          position="-top-2 right-4"
+          gradient="from-blue-400 to-blue-600"
+          letter="J"
+          statusColor="bg-green-500"
         />
 
         {/* Activity indicators */}
-        <FloatingBadge position='-left-4 -bottom-2' border='border-green-200'>
-          <div class='h-2 w-2 animate-pulse rounded-full bg-green-500' />
-          <span class='text-xs font-medium text-gray-700'>Live</span>
+        <FloatingBadge position="-left-4 -bottom-2" border="border-green-200">
+          <div class="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+          <span class="text-xs font-medium text-gray-700">Live</span>
         </FloatingBadge>
       </IllustrationWrapper>
     </>
-  );
+  )
 }
 
 // Security Illustration
 function SecurityIllustration() {
   return (
-    <IllustrationWrapper gradient='from-emerald-50 to-teal-50' border='border-emerald-200'>
+    <IllustrationWrapper
+      gradient="from-emerald-50 to-teal-50"
+      border="border-emerald-200"
+    >
       {/* Central shield */}
-      <div class='absolute inset-0 flex items-center justify-center'>
-        <div class='relative'>
-          <div class='flex h-36 w-32 items-center justify-center rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 shadow-xl'>
-            <HiOutlineShieldCheck class='h-16 w-16 text-white' />
+      <div class="absolute inset-0 flex items-center justify-center">
+        <div class="relative">
+          <div class="flex h-36 w-32 items-center justify-center rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 shadow-xl">
+            <HiOutlineShieldCheck class="h-16 w-16 text-white" />
           </div>
-          <div class='absolute -inset-4 animate-pulse rounded-lg border-2 border-emerald-300 opacity-50' />
+          <div class="absolute -inset-4 animate-pulse rounded-lg border-2 border-emerald-300 opacity-50" />
         </div>
       </div>
 
       {/* Auth method badges */}
-      <FloatingBadge position='top-4 left-4' border='border-emerald-200'>
-        <FiKey class='h-4 w-4 text-emerald-600' />
-        <span class='text-xs font-medium text-gray-700'>OAuth</span>
+      <FloatingBadge position="top-4 left-4" border="border-emerald-200">
+        <FiKey class="h-4 w-4 text-emerald-600" />
+        <span class="text-xs font-medium text-gray-700">OAuth</span>
       </FloatingBadge>
 
-      <FloatingBadge position='top-4 right-4' border='border-blue-200'>
-        <FiLock class='h-4 w-4 text-blue-600' />
-        <span class='text-xs font-medium text-gray-700'>2FA</span>
+      <FloatingBadge position="top-4 right-4" border="border-blue-200">
+        <FiLock class="h-4 w-4 text-blue-600" />
+        <span class="text-xs font-medium text-gray-700">2FA</span>
       </FloatingBadge>
 
-      <FloatingBadge position='bottom-6 left-6' border='border-purple-200'>
-        <AiOutlineMail class='h-4 w-4 text-purple-600' />
-        <span class='text-xs font-medium text-gray-700'>Passwordless</span>
+      <FloatingBadge position="bottom-6 left-6" border="border-purple-200">
+        <AiOutlineMail class="h-4 w-4 text-purple-600" />
+        <span class="text-xs font-medium text-gray-700">Passwordless</span>
       </FloatingBadge>
 
-      <FloatingBadge position='bottom-6 right-6' border='border-indigo-200'>
-        <FiShield class='h-4 w-4 text-indigo-600' />
-        <span class='text-xs font-medium text-gray-700'>SSO</span>
+      <FloatingBadge position="bottom-6 right-6" border="border-indigo-200">
+        <FiShield class="h-4 w-4 text-indigo-600" />
+        <span class="text-xs font-medium text-gray-700">SSO</span>
       </FloatingBadge>
     </IllustrationWrapper>
-  );
+  )
 }
 
 // Automatic Scoring Illustration
 function ScoringIllustration() {
   return (
-    <IllustrationWrapper gradient='from-sky-50 to-blue-100' border='border-blue-200'>
+    <IllustrationWrapper
+      gradient="from-sky-50 to-blue-100"
+      border="border-blue-200"
+    >
       {/* Scoring image */}
-      <div class='flex items-center justify-center'>
-        <div class='relative rounded-lg border border-blue-200 bg-white p-1 shadow-lg'>
+      <div class="flex items-center justify-center">
+        <div class="relative rounded-lg border border-blue-200 bg-white p-1 shadow-lg">
           <picture>
-            <source srcset='/assets/corates_scoring.webp' type='image/webp' />
+            <source srcset="/assets/corates_scoring.webp" type="image/webp" />
             <img
-              src='/assets/corates_scoring.png'
-              alt='Automatic scoring visualization'
-              class='h-auto w-full max-w-md rounded'
-              loading='lazy'
-              decoding='async'
+              src="/assets/corates_scoring.png"
+              alt="Automatic scoring visualization"
+              class="h-auto w-full max-w-md rounded"
+              loading="lazy"
+              decoding="async"
             />
           </picture>
         </div>
       </div>
     </IllustrationWrapper>
-  );
+  )
 }
 
 // PDF Annotation Illustration
 function PDFAnnotationIllustration() {
   return (
-    <IllustrationWrapper gradient='from-rose-50 to-pink-50' border='border-rose-200'>
+    <IllustrationWrapper
+      gradient="from-rose-50 to-pink-50"
+      border="border-rose-200"
+    >
       {/* PDF document */}
-      <div class='w-52 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg'>
+      <div class="w-52 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
         {/* PDF header bar */}
-        <div class='flex items-center gap-2 border-b border-gray-200 bg-gray-100 px-3 py-1.5'>
-          <HiOutlineDocumentText class='h-4 w-4 text-rose-500' />
-          <span class='truncate text-xs text-gray-600'>study_2025.pdf</span>
+        <div class="flex items-center gap-2 border-b border-gray-200 bg-gray-100 px-3 py-1.5">
+          <HiOutlineDocumentText class="h-4 w-4 text-rose-500" />
+          <span class="truncate text-xs text-gray-600">study_2025.pdf</span>
         </div>
 
         {/* PDF content */}
-        <div class='space-y-2 p-3'>
-          <div class='h-2 w-full rounded bg-gray-200' />
-          <div class='h-2 w-5/6 rounded bg-gray-200' />
+        <div class="space-y-2 p-3">
+          <div class="h-2 w-full rounded bg-gray-200" />
+          <div class="h-2 w-5/6 rounded bg-gray-200" />
 
           {/* Highlighted text */}
-          <div class='relative'>
-            <div class='h-2 w-4/5 rounded bg-yellow-300' />
-            <div class='absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-yellow-500 shadow-sm'>
-              <span class='text-xs font-bold text-white'>1</span>
+          <div class="relative">
+            <div class="h-2 w-4/5 rounded bg-yellow-300" />
+            <div class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-yellow-500 shadow-sm">
+              <span class="text-xs font-bold text-white">1</span>
             </div>
           </div>
 
-          <div class='h-2 w-full rounded bg-gray-200' />
-          <div class='h-2 w-3/4 rounded bg-gray-200' />
+          <div class="h-2 w-full rounded bg-gray-200" />
+          <div class="h-2 w-3/4 rounded bg-gray-200" />
 
           {/* Another highlight */}
-          <div class='relative'>
-            <div class='h-2 w-2/3 rounded bg-blue-300' />
-            <div class='absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 shadow-sm'>
-              <span class='text-xs font-bold text-white'>2</span>
+          <div class="relative">
+            <div class="h-2 w-2/3 rounded bg-blue-300" />
+            <div class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 shadow-sm">
+              <span class="text-xs font-bold text-white">2</span>
             </div>
           </div>
 
-          <div class='h-2 w-full rounded bg-gray-200' />
-          <div class='h-2 w-4/6 rounded bg-gray-200' />
+          <div class="h-2 w-full rounded bg-gray-200" />
+          <div class="h-2 w-4/6 rounded bg-gray-200" />
         </div>
       </div>
 
       {/* Annotation comment bubble */}
-      <div class='absolute -top-2 -right-4'>
-        <div class='w-32 rounded-lg border border-rose-200 bg-white p-3 shadow-lg'>
-          <div class='mb-1.5 flex items-center gap-1.5'>
-            <div class='flex h-5 w-5 items-center justify-center rounded-full bg-linear-to-br from-rose-400 to-pink-500 text-xs font-bold text-white'>
+      <div class="absolute -top-2 -right-4">
+        <div class="w-32 rounded-lg border border-rose-200 bg-white p-3 shadow-lg">
+          <div class="mb-1.5 flex items-center gap-1.5">
+            <div class="flex h-5 w-5 items-center justify-center rounded-full bg-linear-to-br from-rose-400 to-pink-500 text-xs font-bold text-white">
               R
             </div>
-            <span class='text-xs font-medium text-gray-700'>Note</span>
+            <span class="text-xs font-medium text-gray-700">Note</span>
           </div>
-          <p class='text-xs leading-tight text-gray-500'>Key finding for Q7...</p>
+          <p class="text-xs leading-tight text-gray-500">
+            Key finding for Q7...
+          </p>
         </div>
       </div>
 
       {/* Link indicator */}
-      <FloatingBadge position='-bottom-2 -left-2' border='border-rose-200'>
-        <AiOutlineLink class='h-4 w-4 text-rose-500' />
-        <span class='text-xs font-medium text-gray-700'>Linked</span>
+      <FloatingBadge position="-bottom-2 -left-2" border="border-rose-200">
+        <AiOutlineLink class="h-4 w-4 text-rose-500" />
+        <span class="text-xs font-medium text-gray-700">Linked</span>
       </FloatingBadge>
 
       {/* Toolbar floating */}
-      <div class='absolute top-1/2 -left-4 -translate-y-1/2 transform'>
-        <div class='flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-1.5 shadow-md'>
-          <div class='flex h-6 w-6 items-center justify-center rounded bg-yellow-100'>
-            <div class='h-3 w-3 rounded-sm bg-yellow-400' />
+      <div class="absolute top-1/2 -left-4 -translate-y-1/2 transform">
+        <div class="flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-1.5 shadow-md">
+          <div class="flex h-6 w-6 items-center justify-center rounded bg-yellow-100">
+            <div class="h-3 w-3 rounded-sm bg-yellow-400" />
           </div>
-          <div class='flex h-6 w-6 items-center justify-center rounded bg-blue-100'>
-            <div class='h-3 w-3 rounded-sm bg-blue-400' />
+          <div class="flex h-6 w-6 items-center justify-center rounded bg-blue-100">
+            <div class="h-3 w-3 rounded-sm bg-blue-400" />
           </div>
-          <div class='flex h-6 w-6 items-center justify-center rounded bg-rose-100'>
-            <BiRegularComment class='h-3 w-3 text-rose-500' />
+          <div class="flex h-6 w-6 items-center justify-center rounded bg-rose-100">
+            <BiRegularComment class="h-3 w-3 text-rose-500" />
           </div>
         </div>
       </div>
     </IllustrationWrapper>
-  );
+  )
 }
 
 // Speed & Productivity Illustration
 function SpeedIllustration() {
   return (
-    <IllustrationWrapper gradient='from-amber-50 to-orange-50' border='border-amber-200'>
+    <IllustrationWrapper
+      gradient="from-amber-50 to-orange-50"
+      border="border-amber-200"
+    >
       {/* Central speedometer */}
-      <div class='absolute inset-0 flex items-center justify-center'>
-        <div class='relative'>
-          <div class='flex h-36 w-36 items-center justify-center rounded-full border-4 border-amber-200 bg-white shadow-lg'>
-            <div class='text-center'>
-              <BsLightningChargeFill class='mx-auto h-12 w-12 text-amber-500' />
-              <div class='mt-1 text-xs font-semibold text-gray-500'>Streamlined</div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <div class="relative">
+          <div class="flex h-36 w-36 items-center justify-center rounded-full border-4 border-amber-200 bg-white shadow-lg">
+            <div class="text-center">
+              <BsLightningChargeFill class="mx-auto h-12 w-12 text-amber-500" />
+              <div class="mt-1 text-xs font-semibold text-gray-500">
+                Streamlined
+              </div>
             </div>
           </div>
-          <div class='absolute -inset-2 animate-pulse rounded-full border-2 border-amber-300 opacity-40' />
+          <div class="absolute -inset-2 animate-pulse rounded-full border-2 border-amber-300 opacity-40" />
         </div>
       </div>
 
       {/* Time saved badges */}
-      <FloatingBadge position='-top-2 -left-2' border='border-green-200'>
-        <IoTimerOutline class='h-4 w-4 text-green-600' />
-        <span class='text-xs font-medium text-gray-700'>Save hours</span>
+      <FloatingBadge position="-top-2 -left-2" border="border-green-200">
+        <IoTimerOutline class="h-4 w-4 text-green-600" />
+        <span class="text-xs font-medium text-gray-700">Save hours</span>
       </FloatingBadge>
 
-      <FloatingBadge position='-top-2 -right-2' border='border-amber-200'>
-        <AiOutlineCheck class='h-4 w-4 text-amber-600' />
-        <span class='text-xs font-medium text-gray-700'>Automated</span>
+      <FloatingBadge position="-top-2 -right-2" border="border-amber-200">
+        <AiOutlineCheck class="h-4 w-4 text-amber-600" />
+        <span class="text-xs font-medium text-gray-700">Automated</span>
       </FloatingBadge>
 
-      <FloatingBadge position='top-[40%] -right-2' border='border-blue-200'>
-        <RiDeviceWifiOffLine class='h-4 w-4 text-blue-600' />
-        <span class='text-xs font-medium text-gray-700'>Works offline</span>
+      <FloatingBadge position="top-[40%] -right-2" border="border-blue-200">
+        <RiDeviceWifiOffLine class="h-4 w-4 text-blue-600" />
+        <span class="text-xs font-medium text-gray-700">Works offline</span>
       </FloatingBadge>
 
       {/* Productivity metrics */}
-      <div class='absolute -bottom-2 left-1/2 -translate-x-1/2'>
-        <div class='flex items-center gap-3 rounded-lg border border-amber-200 bg-white px-4 py-2 shadow-md'>
-          <div class='text-center'>
-            <div class='text-lg font-bold text-amber-600'>Fewer</div>
-            <div class='text-xs text-gray-500'>Emails</div>
+      <div class="absolute -bottom-2 left-1/2 -translate-x-1/2">
+        <div class="flex items-center gap-3 rounded-lg border border-amber-200 bg-white px-4 py-2 shadow-md">
+          <div class="text-center">
+            <div class="text-lg font-bold text-amber-600">Fewer</div>
+            <div class="text-xs text-gray-500">Emails</div>
           </div>
-          <div class='h-8 w-px bg-gray-200' />
-          <div class='text-center'>
-            <div class='text-lg font-bold text-green-600'>0</div>
-            <div class='text-xs text-gray-500'>Spreadsheets</div>
+          <div class="h-8 w-px bg-gray-200" />
+          <div class="text-center">
+            <div class="text-lg font-bold text-green-600">0</div>
+            <div class="text-xs text-gray-500">Spreadsheets</div>
           </div>
         </div>
       </div>
     </IllustrationWrapper>
-  );
+  )
 }
 
 // Data Visualizations Illustration
 function DataVisualizationIllustration() {
   return (
-    <IllustrationWrapper gradient='from-emerald-50 to-teal-50' border='border-emerald-200'>
+    <IllustrationWrapper
+      gradient="from-emerald-50 to-teal-50"
+      border="border-emerald-200"
+    >
       {/* Data visualization images */}
-      <div class='flex flex-col items-center justify-center gap-4'>
+      <div class="flex flex-col items-center justify-center gap-4">
         {/* ROBVIS visualization */}
-        <div class='relative rounded-lg border border-emerald-200 bg-white p-3 shadow-lg'>
+        <div class="relative rounded-lg border border-emerald-200 bg-white p-3 shadow-lg">
           <picture>
-            <source srcset='/assets/corates_robvis.webp' type='image/webp' />
+            <source srcset="/assets/corates_robvis.webp" type="image/webp" />
             <img
-              src='/assets/corates_robvis.png'
-              alt='ROBVIS risk of bias visualization'
-              class='h-auto w-full max-w-md rounded'
-              loading='lazy'
-              decoding='async'
+              src="/assets/corates_robvis.png"
+              alt="ROBVIS risk of bias visualization"
+              class="h-auto w-full max-w-md rounded"
+              loading="lazy"
+              decoding="async"
             />
           </picture>
         </div>
 
         {/* Distribution plot */}
-        <div class='relative rounded-lg border border-emerald-200 bg-white p-3 shadow-lg'>
+        <div class="relative rounded-lg border border-emerald-200 bg-white p-3 shadow-lg">
           <picture>
-            <source srcset='/assets/corates_dist.webp' type='image/webp' />
+            <source srcset="/assets/corates_dist.webp" type="image/webp" />
             <img
-              src='/assets/corates_dist.png'
-              alt='Distribution plot visualization'
-              class='h-auto w-full max-w-md rounded'
-              loading='lazy'
-              decoding='async'
+              src="/assets/corates_dist.png"
+              alt="Distribution plot visualization"
+              class="h-auto w-full max-w-md rounded"
+              loading="lazy"
+              decoding="async"
             />
           </picture>
         </div>
       </div>
 
       {/* Export options floating */}
-      <div class='absolute -top-2 -right-2'>
-        <div class='flex gap-1 rounded-lg border border-sky-200 bg-white p-2 shadow-md'>
-          <div class='flex items-center justify-center rounded bg-sky-100 px-2 py-1'>
-            <span class='text-xs font-bold text-blue-600'>PNG</span>
+      <div class="absolute -top-2 -right-2">
+        <div class="flex gap-1 rounded-lg border border-sky-200 bg-white p-2 shadow-md">
+          <div class="flex items-center justify-center rounded bg-sky-100 px-2 py-1">
+            <span class="text-xs font-bold text-blue-600">PNG</span>
           </div>
-          <div class='flex items-center justify-center rounded bg-sky-100 px-2 py-1'>
-            <span class='text-xs font-bold text-blue-600'>SVG</span>
+          <div class="flex items-center justify-center rounded bg-sky-100 px-2 py-1">
+            <span class="text-xs font-bold text-blue-600">SVG</span>
           </div>
         </div>
       </div>
 
       {/* Publication ready badge */}
-      <FloatingBadge position='-bottom-2 -left-2' border='border-sky-200'>
-        <span class='text-xs font-medium text-gray-700'>Publication Ready!</span>
+      <FloatingBadge position="-bottom-2 -left-2" border="border-sky-200">
+        <span class="text-xs font-medium text-gray-700">
+          Publication Ready!
+        </span>
       </FloatingBadge>
     </IllustrationWrapper>
-  );
+  )
 }
 
 function FeatureSection(props) {
@@ -394,23 +428,29 @@ function FeatureSection(props) {
     <div
       class={`grid items-center gap-8 md:grid-cols-2 md:gap-12 ${props.reversed ? 'md:flex-row-reverse' : ''}`}
     >
-      <div class={props.reversed ? 'md:order-2' : ''}>{props.feature.illustration}</div>
+      <div class={props.reversed ? 'md:order-2' : ''}>
+        {props.feature.illustration}
+      </div>
       <div class={props.reversed ? 'md:order-1' : ''}>
-        <h3 class='mb-4 text-2xl font-bold text-gray-900 md:text-3xl'>{props.feature.title}</h3>
-        <p class='mb-6 text-lg leading-relaxed text-gray-600'>{props.feature.description}</p>
-        <ul class='space-y-3'>
+        <h3 class="mb-4 text-2xl font-bold text-gray-900 md:text-3xl">
+          {props.feature.title}
+        </h3>
+        <p class="mb-6 text-lg leading-relaxed text-gray-600">
+          {props.feature.description}
+        </p>
+        <ul class="space-y-3">
           <For each={props.feature.bullets}>
-            {bullet => (
-              <li class='flex items-start gap-3'>
-                <AiOutlineCheck class='mt-0.5 h-5 w-5 shrink-0 text-blue-700' />
-                <span class='text-gray-700'>{bullet}</span>
+            {(bullet) => (
+              <li class="flex items-start gap-3">
+                <AiOutlineCheck class="mt-0.5 h-5 w-5 shrink-0 text-blue-700" />
+                <span class="text-gray-700">{bullet}</span>
               </li>
             )}
           </For>
         </ul>
       </div>
     </div>
-  );
+  )
 }
 
 export default function FeatureShowcase() {
@@ -483,24 +523,27 @@ export default function FeatureShowcase() {
         'Single Sign-On (SSO) support (coming soon)',
       ],
     },
-  ];
+  ]
 
   return (
-    <section class='mx-auto max-w-6xl px-6 py-16 md:py-24'>
-      <div class='mb-16 text-center'>
-        <h2 class='mb-4 text-3xl font-bold text-gray-900 md:text-4xl'>
+    <section class="mx-auto max-w-6xl px-6 py-16 md:py-24">
+      <div class="mb-16 text-center">
+        <h2 class="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">
           Everything you need for rigorous study appraisal
         </h2>
-        <p class='mx-auto max-w-2xl text-lg text-gray-600'>
-          Built specifically for researchers conducting systematic reviews and evidence synthesis.
+        <p class="mx-auto max-w-2xl text-lg text-gray-600">
+          Built specifically for researchers conducting systematic reviews and
+          evidence synthesis.
         </p>
       </div>
 
-      <div class='space-y-16 md:space-y-24'>
+      <div class="space-y-16 md:space-y-24">
         <For each={features}>
-          {(feature, index) => <FeatureSection feature={feature} reversed={index() % 2 === 1} />}
+          {(feature, index) => (
+            <FeatureSection feature={feature} reversed={index() % 2 === 1} />
+          )}
         </For>
       </div>
     </section>
-  );
+  )
 }

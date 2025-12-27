@@ -1,216 +1,232 @@
-import { createSignal, createEffect, createMemo, For, Show } from 'solid-js';
-import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
-import { getDataKeysForQuestion, getFinalAnswer } from '@/AMSTAR2/checklist-compare.js';
-import AnswerPanel from './AnswerPanel.jsx';
-import NotesCompareSection from './NotesCompareSection.jsx';
+import { createSignal, createEffect, createMemo, For, Show } from 'solid-js'
+import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js'
+import {
+  getDataKeysForQuestion,
+  getFinalAnswer,
+} from '@/AMSTAR2/checklist-compare.js'
+import AnswerPanel from './AnswerPanel.jsx'
+import NotesCompareSection from './NotesCompareSection.jsx'
 
 /**
  * MultiPartQuestionPage - Handles q9 and q11 which have a/b parts
  * Styled to match SingleQuestionPage in ReconciliationQuestionPage
  */
 export default function MultiPartQuestionPage(props) {
-  const questionKey = () => props.questionKey;
-  const question = () => AMSTAR_CHECKLIST[questionKey()];
+  const questionKey = () => props.questionKey
+  const question = () => AMSTAR_CHECKLIST[questionKey()]
 
-  const dataKeys = createMemo(() => getDataKeysForQuestion(questionKey()));
+  const dataKeys = createMemo(() => getDataKeysForQuestion(questionKey()))
 
   // Local state for each part
-  const [localFinal, setLocalFinal] = createSignal({});
-  const [selectedSource, setSelectedSource] = createSignal(null);
-  const [hasAutoFilled, setHasAutoFilled] = createSignal(false);
+  const [localFinal, setLocalFinal] = createSignal({})
+  const [selectedSource, setSelectedSource] = createSignal(null)
+  const [hasAutoFilled, setHasAutoFilled] = createSignal(false)
 
   // Reset auto-fill tracking when question changes
   createEffect(() => {
-    props.questionKey;
-    setHasAutoFilled(false);
-  });
+    props.questionKey
+    setHasAutoFilled(false)
+  })
 
   const reviewersAgree = () =>
-    multiPartAnswersEqual(props.reviewer1Answers, props.reviewer2Answers);
+    multiPartAnswersEqual(props.reviewer1Answers, props.reviewer2Answers)
 
   // Initialize from props or default to reviewer1
   createEffect(() => {
-    const keys = dataKeys();
-    if (!keys || keys.length === 0) return;
+    const keys = dataKeys()
+    if (!keys || keys.length === 0) return
 
     // If we have valid finalAnswers, use them
     if (props.finalAnswers && typeof props.finalAnswers === 'object') {
-      const hasParts = keys.some(dk => props.finalAnswers[dk]);
+      const hasParts = keys.some((dk) => props.finalAnswers[dk])
       if (hasParts) {
-        setLocalFinal(JSON.parse(JSON.stringify(props.finalAnswers)));
+        setLocalFinal(JSON.parse(JSON.stringify(props.finalAnswers)))
         // Determine source
         if (multiPartAnswersEqual(props.finalAnswers, props.reviewer1Answers)) {
-          setSelectedSource('reviewer1');
-        } else if (multiPartAnswersEqual(props.finalAnswers, props.reviewer2Answers)) {
-          setSelectedSource('reviewer2');
+          setSelectedSource('reviewer1')
+        } else if (
+          multiPartAnswersEqual(props.finalAnswers, props.reviewer2Answers)
+        ) {
+          setSelectedSource('reviewer2')
         } else {
-          setSelectedSource('custom');
+          setSelectedSource('custom')
         }
-        return;
+        return
       }
     }
 
     // Default to reviewer1 if available
-    if (props.reviewer1Answers && keys.some(dk => props.reviewer1Answers[dk])) {
-      setLocalFinal(JSON.parse(JSON.stringify(props.reviewer1Answers)));
-      setSelectedSource('reviewer1');
+    if (
+      props.reviewer1Answers &&
+      keys.some((dk) => props.reviewer1Answers[dk])
+    ) {
+      setLocalFinal(JSON.parse(JSON.stringify(props.reviewer1Answers)))
+      setSelectedSource('reviewer1')
     }
-  });
+  })
 
   // Check if the final answer last column has at least one part as true
   function hasValidFinalAnswer(finalAnswers, partKeys) {
-    if (!finalAnswers || !Array.isArray(partKeys) || partKeys.length === 0) return false;
-    return partKeys.some(dk => {
-      const part = finalAnswers[dk];
-      if (!part?.answers || !Array.isArray(part.answers) || part.answers.length === 0) return false;
-      const lastCol = part.answers[part.answers.length - 1];
-      return Array.isArray(lastCol) && lastCol.some(v => v === true);
-    });
+    if (!finalAnswers || !Array.isArray(partKeys) || partKeys.length === 0)
+      return false
+    return partKeys.some((dk) => {
+      const part = finalAnswers[dk]
+      if (
+        !part?.answers ||
+        !Array.isArray(part.answers) ||
+        part.answers.length === 0
+      )
+        return false
+      const lastCol = part.answers[part.answers.length - 1]
+      return Array.isArray(lastCol) && lastCol.some((v) => v === true)
+    })
   }
 
   // Auto-fill when reviewers agree and no final answer exists
   createEffect(() => {
-    const keys = dataKeys();
-    if (!keys || keys.length === 0) return;
+    const keys = dataKeys()
+    if (!keys || keys.length === 0) return
 
     // Check if we have a valid final answer (has at least one part)
-    let hasFinalAnswer = hasValidFinalAnswer(props.finalAnswers, keys);
+    let hasFinalAnswer = hasValidFinalAnswer(props.finalAnswers, keys)
 
     // Only auto-fill if: reviewers agree, no final answer exists, we have reviewer1's answer, and we haven't auto-filled yet
     if (
       props.isAgreement &&
       !hasFinalAnswer &&
       props.reviewer1Answers &&
-      keys.some(dk => props.reviewer1Answers[dk]) &&
+      keys.some((dk) => props.reviewer1Answers[dk]) &&
       !hasAutoFilled() &&
       props.onFinalChange
     ) {
-      const newFinal = JSON.parse(JSON.stringify(props.reviewer1Answers));
-      props.onFinalChange(newFinal);
-      setHasAutoFilled(true);
+      const newFinal = JSON.parse(JSON.stringify(props.reviewer1Answers))
+      props.onFinalChange(newFinal)
+      setHasAutoFilled(true)
     }
-  });
+  })
 
   function multiPartAnswersEqual(a, b) {
-    if (!a || !b) return false;
+    if (!a || !b) return false
     for (const dk of dataKeys()) {
-      if (!singleAnswerEqual(a[dk], b[dk])) return false;
+      if (!singleAnswerEqual(a[dk], b[dk])) return false
     }
-    return true;
+    return true
   }
 
   function singleAnswerEqual(a, b) {
-    if (!a || !b) return false;
-    if (a.critical !== b.critical) return false;
-    if (!Array.isArray(a.answers) || !Array.isArray(b.answers)) return false;
-    if (a.answers.length !== b.answers.length) return false;
+    if (!a || !b) return false
+    if (a.critical !== b.critical) return false
+    if (!Array.isArray(a.answers) || !Array.isArray(b.answers)) return false
+    if (a.answers.length !== b.answers.length) return false
     for (let i = 0; i < a.answers.length; i++) {
-      if (a.answers[i].length !== b.answers[i].length) return false;
+      if (a.answers[i].length !== b.answers[i].length) return false
       for (let j = 0; j < a.answers[i].length; j++) {
-        if (a.answers[i][j] !== b.answers[i][j]) return false;
+        if (a.answers[i][j] !== b.answers[i][j]) return false
       }
     }
-    return true;
+    return true
   }
 
   function useReviewer1() {
-    if (!props.reviewer1Answers) return;
-    const newFinal = JSON.parse(JSON.stringify(props.reviewer1Answers));
-    setLocalFinal(newFinal);
-    setSelectedSource('reviewer1');
-    props.onFinalChange?.(newFinal);
+    if (!props.reviewer1Answers) return
+    const newFinal = JSON.parse(JSON.stringify(props.reviewer1Answers))
+    setLocalFinal(newFinal)
+    setSelectedSource('reviewer1')
+    props.onFinalChange?.(newFinal)
   }
 
   function useReviewer2() {
-    if (!props.reviewer2Answers) return;
-    const newFinal = JSON.parse(JSON.stringify(props.reviewer2Answers));
-    setLocalFinal(newFinal);
-    setSelectedSource('reviewer2');
-    props.onFinalChange?.(newFinal);
+    if (!props.reviewer2Answers) return
+    const newFinal = JSON.parse(JSON.stringify(props.reviewer2Answers))
+    setLocalFinal(newFinal)
+    setSelectedSource('reviewer2')
+    props.onFinalChange?.(newFinal)
   }
 
   // Handle changes to a specific part
   function handlePartCheckboxChange(partKey, colIdx, optIdx) {
-    const current = localFinal();
-    if (!current || !current[partKey]) return;
+    const current = localFinal()
+    if (!current || !current[partKey]) return
 
-    const newAnswers = current[partKey].answers.map(arr => [...arr]);
-    newAnswers[colIdx][optIdx] = !newAnswers[colIdx][optIdx];
+    const newAnswers = current[partKey].answers.map((arr) => [...arr])
+    newAnswers[colIdx][optIdx] = !newAnswers[colIdx][optIdx]
 
     const newFinal = {
       ...current,
       [partKey]: { ...current[partKey], answers: newAnswers },
-    };
-    setLocalFinal(newFinal);
-    setSelectedSource('custom');
-    props.onFinalChange?.(newFinal);
+    }
+    setLocalFinal(newFinal)
+    setSelectedSource('custom')
+    props.onFinalChange?.(newFinal)
   }
 
   function handlePartRadioChange(partKey, colIdx, optIdx) {
-    const current = localFinal();
-    if (!current || !current[partKey]) return;
+    const current = localFinal()
+    if (!current || !current[partKey]) return
 
-    const newAnswers = current[partKey].answers.map(arr => [...arr]);
-    newAnswers[colIdx] = newAnswers[colIdx].map(() => false);
-    newAnswers[colIdx][optIdx] = true;
+    const newAnswers = current[partKey].answers.map((arr) => [...arr])
+    newAnswers[colIdx] = newAnswers[colIdx].map(() => false)
+    newAnswers[colIdx][optIdx] = true
 
     const newFinal = {
       ...current,
       [partKey]: { ...current[partKey], answers: newAnswers },
-    };
-    setLocalFinal(newFinal);
-    setSelectedSource('custom');
-    props.onFinalChange?.(newFinal);
+    }
+    setLocalFinal(newFinal)
+    setSelectedSource('custom')
+    props.onFinalChange?.(newFinal)
   }
 
   // Get columns for each part
-  const getColumnsForPart = partKey => {
+  const getColumnsForPart = (partKey) => {
     if (props.questionKey === 'q9') {
-      return partKey === 'q9a' ? question()?.columns : question()?.columns2;
+      return partKey === 'q9a' ? question()?.columns : question()?.columns2
     }
     if (props.questionKey === 'q11') {
-      return partKey === 'q11a' ? question()?.columns : question()?.columns2;
+      return partKey === 'q11a' ? question()?.columns : question()?.columns2
     }
-    return question()?.columns;
-  };
+    return question()?.columns
+  }
 
-  const getSubtitleForPart = partKey => {
+  const getSubtitleForPart = (partKey) => {
     if (props.questionKey === 'q9') {
-      return partKey === 'q9a' ? question()?.subtitle : question()?.subtitle2;
+      return partKey === 'q9a' ? question()?.subtitle : question()?.subtitle2
     }
     if (props.questionKey === 'q11') {
-      return partKey === 'q11a' ? question()?.subtitle : question()?.subtitle2;
+      return partKey === 'q11a' ? question()?.subtitle : question()?.subtitle2
     }
-    return null;
-  };
+    return null
+  }
 
   // Get final answer for a part
   const getFinalAnswerForPart = (answers, partKey) => {
-    if (!answers?.[partKey]?.answers) return null;
-    return getFinalAnswer(answers[partKey].answers, partKey);
-  };
+    if (!answers?.[partKey]?.answers) return null
+    return getFinalAnswer(answers[partKey].answers, partKey)
+  }
 
   const isCritical = () => {
-    const firstPartKey = dataKeys()[0];
+    const firstPartKey = dataKeys()[0]
     return (
       props.reviewer1Answers?.[firstPartKey]?.critical ||
       props.reviewer2Answers?.[firstPartKey]?.critical
-    );
-  };
+    )
+  }
 
   return (
-    <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
+    <div class="overflow-hidden rounded-lg bg-white shadow-lg">
       {/* Question Header */}
       <div
         class={`p-4 ${props.isAgreement ? 'border-b border-green-200 bg-green-50' : 'border-b border-amber-200 bg-amber-50'}`}
       >
-        <h2 class='text-lg font-semibold text-gray-900'>
+        <h2 class="text-lg font-semibold text-gray-900">
           {question()?.text}
           <Show when={isCritical()}>
-            <span class='ml-2 text-sm font-medium text-red-600'>(Critical)</span>
+            <span class="ml-2 text-sm font-medium text-red-600">
+              (Critical)
+            </span>
           </Show>
         </h2>
-        <div class='mt-2 flex items-center gap-3'>
+        <div class="mt-2 flex items-center gap-3">
           <span
             class={`text-sm font-medium ${props.isAgreement ? 'text-green-700' : 'text-amber-700'}`}
           >
@@ -220,19 +236,21 @@ export default function MultiPartQuestionPage(props) {
       </div>
 
       {/* Three Column Layout - matches SingleQuestionPage */}
-      <div class='grid grid-cols-3 divide-x divide-gray-200'>
+      <div class="grid grid-cols-3 divide-x divide-gray-200">
         {/* Reviewer 1 Panel */}
-        <div class='p-4'>
+        <div class="p-4">
           {/* Panel Header */}
-          <div class='mb-4 flex items-center justify-between'>
-            <h3 class='font-semibold text-gray-900'>{props.reviewer1Name || 'Reviewer 1'}</h3>
+          <div class="mb-4 flex items-center justify-between">
+            <h3 class="font-semibold text-gray-900">
+              {props.reviewer1Name || 'Reviewer 1'}
+            </h3>
             <Show when={!reviewersAgree()}>
               <button
                 onClick={useReviewer1}
                 class={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  selectedSource() === 'reviewer1' ? 'bg-blue-600 text-white' : (
-                    'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
-                  )
+                  selectedSource() === 'reviewer1'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
                 }`}
               >
                 {selectedSource() === 'reviewer1' ? 'Selected' : 'Use This'}
@@ -242,15 +260,16 @@ export default function MultiPartQuestionPage(props) {
 
           {/* Parts */}
           <For each={dataKeys()}>
-            {partKey => (
-              <div class='mb-6 last:mb-0'>
-                <div class='mb-2 flex flex-wrap items-center gap-2'>
-                  <span class='text-xs font-semibold text-gray-700'>
+            {(partKey) => (
+              <div class="mb-6 last:mb-0">
+                <div class="mb-2 flex flex-wrap items-center gap-2">
+                  <span class="text-xs font-semibold text-gray-700">
                     {getSubtitleForPart(partKey)}
                   </span>
-                  <span class='text-xs text-gray-500'>Result:</span>
-                  <span class='inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600'>
-                    {getFinalAnswerForPart(props.reviewer1Answers, partKey) || 'Not selected'}
+                  <span class="text-xs text-gray-500">Result:</span>
+                  <span class="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+                    {getFinalAnswerForPart(props.reviewer1Answers, partKey) ||
+                      'Not selected'}
                   </span>
                 </div>
                 <AnswerPanel
@@ -259,7 +278,7 @@ export default function MultiPartQuestionPage(props) {
                   columns={getColumnsForPart(partKey)}
                   readOnly={true}
                   compact={true}
-                  panelId='reviewer1'
+                  panelId="reviewer1"
                 />
               </div>
             )}
@@ -267,17 +286,19 @@ export default function MultiPartQuestionPage(props) {
         </div>
 
         {/* Reviewer 2 Panel */}
-        <div class='p-4'>
+        <div class="p-4">
           {/* Panel Header */}
-          <div class='mb-4 flex items-center justify-between'>
-            <h3 class='font-semibold text-gray-900'>{props.reviewer2Name || 'Reviewer 2'}</h3>
+          <div class="mb-4 flex items-center justify-between">
+            <h3 class="font-semibold text-gray-900">
+              {props.reviewer2Name || 'Reviewer 2'}
+            </h3>
             <Show when={!reviewersAgree()}>
               <button
                 onClick={useReviewer2}
                 class={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  selectedSource() === 'reviewer2' ? 'bg-blue-600 text-white' : (
-                    'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
-                  )
+                  selectedSource() === 'reviewer2'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
                 }`}
               >
                 {selectedSource() === 'reviewer2' ? 'Selected' : 'Use This'}
@@ -287,15 +308,16 @@ export default function MultiPartQuestionPage(props) {
 
           {/* Parts */}
           <For each={dataKeys()}>
-            {partKey => (
-              <div class='mb-6 last:mb-0'>
-                <div class='mb-2 flex flex-wrap items-center gap-2'>
-                  <span class='text-xs font-semibold text-gray-700'>
+            {(partKey) => (
+              <div class="mb-6 last:mb-0">
+                <div class="mb-2 flex flex-wrap items-center gap-2">
+                  <span class="text-xs font-semibold text-gray-700">
                     {getSubtitleForPart(partKey)}
                   </span>
-                  <span class='text-xs text-gray-500'>Result:</span>
-                  <span class='inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600'>
-                    {getFinalAnswerForPart(props.reviewer2Answers, partKey) || 'Not selected'}
+                  <span class="text-xs text-gray-500">Result:</span>
+                  <span class="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+                    {getFinalAnswerForPart(props.reviewer2Answers, partKey) ||
+                      'Not selected'}
                   </span>
                 </div>
                 <AnswerPanel
@@ -304,7 +326,7 @@ export default function MultiPartQuestionPage(props) {
                   columns={getColumnsForPart(partKey)}
                   readOnly={true}
                   compact={true}
-                  panelId='reviewer2'
+                  panelId="reviewer2"
                 />
               </div>
             )}
@@ -312,16 +334,16 @@ export default function MultiPartQuestionPage(props) {
         </div>
 
         {/* Final/Merged Panel */}
-        <div class='bg-green-50/30 p-4'>
+        <div class="bg-green-50/30 p-4">
           {/* Panel Header */}
-          <div class='mb-4 flex items-center justify-between'>
+          <div class="mb-4 flex items-center justify-between">
             <div>
-              <h3 class='font-semibold text-gray-900'>Final Answer</h3>
+              <h3 class="font-semibold text-gray-900">Final Answer</h3>
               <Show when={selectedSource()}>
-                <span class='text-xs text-gray-500'>
-                  {selectedSource() === 'custom' ?
-                    'Custom selection'
-                  : `Based on ${selectedSource() === 'reviewer1' ? 'Reviewer 1' : 'Reviewer 2'}`}
+                <span class="text-xs text-gray-500">
+                  {selectedSource() === 'custom'
+                    ? 'Custom selection'
+                    : `Based on ${selectedSource() === 'reviewer1' ? 'Reviewer 1' : 'Reviewer 2'}`}
                 </span>
               </Show>
             </div>
@@ -329,15 +351,16 @@ export default function MultiPartQuestionPage(props) {
 
           {/* Parts */}
           <For each={dataKeys()}>
-            {partKey => (
-              <div class='mb-6 last:mb-0'>
-                <div class='mb-2 flex flex-wrap items-center gap-2'>
-                  <span class='text-xs font-semibold text-gray-700'>
+            {(partKey) => (
+              <div class="mb-6 last:mb-0">
+                <div class="mb-2 flex flex-wrap items-center gap-2">
+                  <span class="text-xs font-semibold text-gray-700">
                     {getSubtitleForPart(partKey)}
                   </span>
-                  <span class='text-xs text-gray-500'>Result:</span>
-                  <span class='inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2 py-1 text-xs font-medium text-green-800'>
-                    {getFinalAnswerForPart(localFinal(), partKey) || 'Not selected'}
+                  <span class="text-xs text-gray-500">Result:</span>
+                  <span class="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
+                    {getFinalAnswerForPart(localFinal(), partKey) ||
+                      'Not selected'}
                   </span>
                 </div>
                 <AnswerPanel
@@ -346,11 +369,13 @@ export default function MultiPartQuestionPage(props) {
                   columns={getColumnsForPart(partKey)}
                   readOnly={false}
                   compact={true}
-                  panelId='final'
+                  panelId="final"
                   onCheckboxChange={(colIdx, optIdx) =>
                     handlePartCheckboxChange(partKey, colIdx, optIdx)
                   }
-                  onRadioChange={(colIdx, optIdx) => handlePartRadioChange(partKey, colIdx, optIdx)}
+                  onRadioChange={(colIdx, optIdx) =>
+                    handlePartRadioChange(partKey, colIdx, optIdx)
+                  }
                 />
               </div>
             )}
@@ -359,7 +384,7 @@ export default function MultiPartQuestionPage(props) {
       </div>
 
       {/* Notes Section - One note for the entire multi-part question */}
-      <div class='px-4 pb-4'>
+      <div class="px-4 pb-4">
         <NotesCompareSection
           reviewer1Note={props.reviewer1Note}
           reviewer2Note={props.reviewer2Note}
@@ -370,5 +395,5 @@ export default function MultiPartQuestionPage(props) {
         />
       </div>
     </div>
-  );
+  )
 }

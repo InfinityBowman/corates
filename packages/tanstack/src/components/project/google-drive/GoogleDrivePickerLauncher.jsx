@@ -4,17 +4,17 @@
  * Used by both the add-studies flow and the import modal to avoid UI duplication.
  */
 
-import { createEffect, Show } from 'solid-js';
-import { createSignal } from 'solid-js';
+import { createEffect, Show } from 'solid-js'
+import { createSignal } from 'solid-js'
 
 import {
   getGoogleDriveStatus,
   getGoogleDrivePickerToken,
   connectGoogleAccount,
-} from '@/api/google-drive.js';
-import { GOOGLE_PICKER_API_KEY, GOOGLE_PICKER_APP_ID } from '@config/google.js';
-import { pickGooglePdfFiles } from '@lib/googlePicker.js';
-import { buildRestoreCallbackUrl } from '@lib/formStatePersistence.js';
+} from '@/api/google-drive.js'
+import { GOOGLE_PICKER_API_KEY, GOOGLE_PICKER_APP_ID } from '@config/google.js'
+import { pickGooglePdfFiles } from '@lib/googlePicker.js'
+import { buildRestoreCallbackUrl } from '@lib/formStatePersistence.js'
 
 /**
  * @param {Object} props
@@ -29,146 +29,156 @@ import { buildRestoreCallbackUrl } from '@lib/formStatePersistence.js';
  * @param {() => Promise<void>} [props.onSaveFormState] - Called before OAuth redirect to save form state
  */
 export default function GoogleDrivePickerLauncher(props) {
-  const [loading, setLoading] = createSignal(true);
-  const [connected, setConnected] = createSignal(null);
-  const [error, setError] = createSignal(null);
+  const [loading, setLoading] = createSignal(true)
+  const [connected, setConnected] = createSignal(null)
+  const [error, setError] = createSignal(null)
   // eslint-disable-next-line solid/reactivity
-  let studyId = props.studyId;
+  let studyId = props.studyId
 
-  const pickerConfigured = () => !!GOOGLE_PICKER_API_KEY;
+  const pickerConfigured = () => !!GOOGLE_PICKER_API_KEY
 
   const checkConnectionStatus = async () => {
-    setError(null);
-    setLoading(true);
+    setError(null)
+    setLoading(true)
 
     try {
-      const status = await getGoogleDriveStatus();
-      setConnected(status.connected);
+      const status = await getGoogleDriveStatus()
+      setConnected(status.connected)
     } catch (err) {
-      const { handleError } = await import('@/lib/error-utils.js');
+      const { handleError } = await import('@/lib/error-utils.js')
       await handleError(err, {
         setError,
         showToast: false,
-      });
-      setConnected(false);
+      })
+      setConnected(false)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const connect = async () => {
-    setError(null);
+    setError(null)
     try {
       // Save form state before OAuth redirect if handler provided
       if (props.onSaveFormState) {
-        await props.onSaveFormState();
+        await props.onSaveFormState()
       }
 
       // Build callback URL with restore params if form type is provided
-      let callbackUrl = window.location.href;
+      let callbackUrl = window.location.href
       if (props.formType) {
-        callbackUrl = buildRestoreCallbackUrl(props.formType, props.projectId);
+        callbackUrl = buildRestoreCallbackUrl(props.formType, props.projectId)
       }
 
-      await connectGoogleAccount(callbackUrl);
+      await connectGoogleAccount(callbackUrl)
     } catch (err) {
-      const { handleError } = await import('@/lib/error-utils.js');
+      const { handleError } = await import('@/lib/error-utils.js')
       await handleError(err, {
         setError,
         showToast: false,
-      });
-      throw err;
+      })
+      throw err
     }
-  };
+  }
 
-  const openPicker = async options => {
-    const multiselect = !!options?.multiselect;
+  const openPicker = async (options) => {
+    const multiselect = !!options?.multiselect
 
     if (!pickerConfigured()) {
-      throw new Error('Google Picker is not configured. Set VITE_GOOGLE_PICKER_API_KEY.');
+      throw new Error(
+        'Google Picker is not configured. Set VITE_GOOGLE_PICKER_API_KEY.',
+      )
     }
 
     if (!connected()) {
-      await connect();
-      return null;
+      await connect()
+      return null
     }
 
-    setError(null);
+    setError(null)
 
     try {
-      const { accessToken } = await getGoogleDrivePickerToken();
+      const { accessToken } = await getGoogleDrivePickerToken()
 
       return await pickGooglePdfFiles({
         oauthToken: accessToken,
         developerKey: GOOGLE_PICKER_API_KEY,
         appId: GOOGLE_PICKER_APP_ID,
         multiselect,
-      });
+      })
     } catch (err) {
-      const { handleError } = await import('@/lib/error-utils.js');
+      const { handleError } = await import('@/lib/error-utils.js')
       await handleError(err, {
         setError,
         showToast: false,
-      });
-      throw err;
+      })
+      throw err
     }
-  };
+  }
 
   createEffect(() => {
-    if (props.active === false) return;
-    checkConnectionStatus();
-  });
+    if (props.active === false) return
+    checkConnectionStatus()
+  })
 
   const handleConnectGoogle = async () => {
     try {
-      await connect();
+      await connect()
     } catch {
       // primitive sets error
     }
-  };
+  }
 
   const handleOpenPicker = async () => {
-    if (props.disabled || props.busy) return;
+    if (props.disabled || props.busy) return
 
     try {
-      props.onBeforeOpenPicker?.();
+      props.onBeforeOpenPicker?.()
       // Give the UI a tick to remove any wrapping overlays (e.g. Dialog backdrop)
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0))
 
-      const picked = await openPicker({ multiselect: !!props.multiselect });
-      if (!picked || picked.length === 0) return;
-      console.log('picked', picked, studyId);
-      await props.onPick?.(picked, studyId);
+      const picked = await openPicker({ multiselect: !!props.multiselect })
+      if (!picked || picked.length === 0) return
+      console.log('picked', picked, studyId)
+      await props.onPick?.(picked, studyId)
     } catch {
       // primitive sets error
     }
-  };
+  }
 
   return (
-    <div class='space-y-3'>
+    <div class="space-y-3">
       <Show when={!pickerConfigured()}>
-        <div class='rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800'>
+        <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
           Google Picker is not configured. Set VITE_GOOGLE_PICKER_API_KEY.
         </div>
       </Show>
 
       <Show when={error()}>
-        <div class='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
+        <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {error()}
         </div>
       </Show>
 
       <Show when={connected() === false}>
-        <div class='rounded-lg border border-gray-200 px-4 py-4 text-center'>
-          <img src='/logos/drive.svg' alt='Google Drive' class='mx-auto mb-3 h-10 w-10' />
-          <h4 class='mb-1 text-sm font-medium text-gray-900'>Connect Google Drive</h4>
-          <p class='mb-4 text-xs text-gray-500'>Connect your Google account to select PDFs.</p>
+        <div class="rounded-lg border border-gray-200 px-4 py-4 text-center">
+          <img
+            src="/logos/drive.svg"
+            alt="Google Drive"
+            class="mx-auto mb-3 h-10 w-10"
+          />
+          <h4 class="mb-1 text-sm font-medium text-gray-900">
+            Connect Google Drive
+          </h4>
+          <p class="mb-4 text-xs text-gray-500">
+            Connect your Google account to select PDFs.
+          </p>
           <button
-            type='button'
+            type="button"
             onClick={handleConnectGoogle}
-            class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
+            class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
           >
-            <img src='/logos/drive.svg' alt='' class='h-4 w-4' />
+            <img src="/logos/drive.svg" alt="" class="h-4 w-4" />
             Connect Google Account
           </button>
         </div>
@@ -176,21 +186,27 @@ export default function GoogleDrivePickerLauncher(props) {
 
       <Show when={connected()}>
         <button
-          type='button'
+          type="button"
           onClick={handleOpenPicker}
-          disabled={loading() || !!props.disabled || !!props.busy || !pickerConfigured()}
-          class='mx-auto flex w-full max-w-xl items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-white transition-colors hover:bg-blue-700 disabled:opacity-50'
+          disabled={
+            loading() || !!props.disabled || !!props.busy || !pickerConfigured()
+          }
+          class="mx-auto flex w-full max-w-xl items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
         >
           <Show
             when={!loading() && !props.busy}
             fallback={
-              <div class='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+              <div class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             }
           />
-          <img src='/logos/drive.svg' alt='' class='h-6 w-6 rounded-sm bg-white p-0.5' />
-          <span class='text-sm font-medium'>Select from Google Drive</span>
+          <img
+            src="/logos/drive.svg"
+            alt=""
+            class="h-6 w-6 rounded-sm bg-white p-0.5"
+          />
+          <span class="text-sm font-medium">Select from Google Drive</span>
         </button>
       </Show>
     </div>
-  );
+  )
 }

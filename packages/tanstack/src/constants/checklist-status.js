@@ -10,7 +10,7 @@ export const CHECKLIST_STATUS = {
   IN_PROGRESS: 'in-progress',
   COMPLETED: 'completed',
   AWAITING_RECONCILE: 'awaiting-reconcile',
-};
+}
 
 /**
  * Determines if a checklist can be edited based on its status
@@ -18,7 +18,10 @@ export const CHECKLIST_STATUS = {
  * @returns {boolean} True if the checklist can be edited
  */
 export function isEditable(status) {
-  return status !== CHECKLIST_STATUS.COMPLETED && status !== CHECKLIST_STATUS.AWAITING_RECONCILE;
+  return (
+    status !== CHECKLIST_STATUS.COMPLETED &&
+    status !== CHECKLIST_STATUS.AWAITING_RECONCILE
+  )
 }
 
 /**
@@ -29,15 +32,15 @@ export function isEditable(status) {
 export function getStatusLabel(status) {
   switch (status) {
     case CHECKLIST_STATUS.PENDING:
-      return 'Pending';
+      return 'Pending'
     case CHECKLIST_STATUS.IN_PROGRESS:
-      return 'In Progress';
+      return 'In Progress'
     case CHECKLIST_STATUS.COMPLETED:
-      return 'Completed';
+      return 'Completed'
     case CHECKLIST_STATUS.AWAITING_RECONCILE:
-      return 'Awaiting Reconcile';
+      return 'Awaiting Reconcile'
     default:
-      return status || 'Pending';
+      return status || 'Pending'
   }
 }
 
@@ -49,14 +52,14 @@ export function getStatusLabel(status) {
 export function getStatusStyle(status) {
   switch (status) {
     case CHECKLIST_STATUS.COMPLETED:
-      return 'bg-green-100 text-green-800';
+      return 'bg-green-100 text-green-800'
     case CHECKLIST_STATUS.IN_PROGRESS:
-      return 'bg-yellow-100 text-yellow-800';
+      return 'bg-yellow-100 text-yellow-800'
     case CHECKLIST_STATUS.AWAITING_RECONCILE:
-      return 'bg-blue-100 text-blue-800';
+      return 'bg-blue-100 text-blue-800'
     case CHECKLIST_STATUS.PENDING:
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-gray-100 text-gray-800'
   }
 }
 
@@ -68,18 +71,22 @@ export function getStatusStyle(status) {
  */
 export function canTransitionTo(currentStatus, newStatus) {
   // Can always stay in the same state
-  if (currentStatus === newStatus) return true;
+  if (currentStatus === newStatus) return true
 
   // Can transition from pending to in-progress (automatic on first edit)
-  if (currentStatus === CHECKLIST_STATUS.PENDING && newStatus === CHECKLIST_STATUS.IN_PROGRESS) {
-    return true;
+  if (
+    currentStatus === CHECKLIST_STATUS.PENDING &&
+    newStatus === CHECKLIST_STATUS.IN_PROGRESS
+  ) {
+    return true
   }
 
   // Can transition from in-progress to completed or awaiting-reconcile
   if (currentStatus === CHECKLIST_STATUS.IN_PROGRESS) {
     return (
-      newStatus === CHECKLIST_STATUS.COMPLETED || newStatus === CHECKLIST_STATUS.AWAITING_RECONCILE
-    );
+      newStatus === CHECKLIST_STATUS.COMPLETED ||
+      newStatus === CHECKLIST_STATUS.AWAITING_RECONCILE
+    )
   }
 
   // Can transition from awaiting-reconcile to completed (after reconciliation)
@@ -87,14 +94,14 @@ export function canTransitionTo(currentStatus, newStatus) {
     currentStatus === CHECKLIST_STATUS.AWAITING_RECONCILE &&
     newStatus === CHECKLIST_STATUS.COMPLETED
   ) {
-    return true;
+    return true
   }
 
   // Cannot transition from completed to anything else (locked)
   if (currentStatus === CHECKLIST_STATUS.COMPLETED) {
-    return false;
+    return false
   }
 
   // Default: disallow unknown transitions
-  return false;
+  return false
 }

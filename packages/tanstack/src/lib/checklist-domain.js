@@ -5,7 +5,7 @@
  * UI components should use these functions instead of implementing filtering logic inline.
  */
 
-import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status.js'
 
 /**
  * Checks if a checklist is a reconciled checklist
@@ -14,9 +14,9 @@ import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
  * @returns {boolean} True if the checklist is a reconciled checklist
  */
 export function isReconciledChecklist(checklist) {
-  if (!checklist) return false;
+  if (!checklist) return false
   // Reconciled checklists are created with assignedTo: null
-  return checklist.assignedTo === null;
+  return checklist.assignedTo === null
 }
 
 /**
@@ -26,14 +26,14 @@ export function isReconciledChecklist(checklist) {
  * @returns {Array} Array of checklists for todo tab
  */
 export function getTodoChecklists(study, userId) {
-  if (!study || !userId) return [];
-  const checklists = study.checklists || [];
+  if (!study || !userId) return []
+  const checklists = study.checklists || []
   return checklists.filter(
-    c =>
+    (c) =>
       c.assignedTo === userId &&
       c.status !== CHECKLIST_STATUS.COMPLETED &&
       c.status !== CHECKLIST_STATUS.AWAITING_RECONCILE,
-  );
+  )
 }
 
 /**
@@ -42,9 +42,9 @@ export function getTodoChecklists(study, userId) {
  * @returns {Array} Array of checklists for completed tab
  */
 export function getCompletedChecklists(study) {
-  if (!study) return [];
-  const checklists = study.checklists || [];
-  return checklists.filter(c => c.status === CHECKLIST_STATUS.COMPLETED);
+  if (!study) return []
+  const checklists = study.checklists || []
+  return checklists.filter((c) => c.status === CHECKLIST_STATUS.COMPLETED)
 }
 
 /**
@@ -53,10 +53,12 @@ export function getCompletedChecklists(study) {
  * @returns {Array} Array of checklists in reconciliation workflow
  */
 export function getReconciliationChecklists(study) {
-  if (!study) return [];
-  const checklists = study.checklists || [];
+  if (!study) return []
+  const checklists = study.checklists || []
   // Return checklists that are awaiting reconciliation
-  return checklists.filter(c => c.status === CHECKLIST_STATUS.AWAITING_RECONCILE);
+  return checklists.filter(
+    (c) => c.status === CHECKLIST_STATUS.AWAITING_RECONCILE,
+  )
 }
 
 /**
@@ -67,49 +69,51 @@ export function getReconciliationChecklists(study) {
  * @returns {boolean} True if study should appear in the tab
  */
 export function shouldShowInTab(study, tab, userId) {
-  if (!study) return false;
+  if (!study) return false
 
   switch (tab) {
     case 'todo': {
-      if (!userId) return false;
+      if (!userId) return false
       // Must be assigned to user
-      if (study.reviewer1 !== userId && study.reviewer2 !== userId) return false;
-      const checklists = study.checklists || [];
-      const userChecklists = checklists.filter(c => c.assignedTo === userId);
+      if (study.reviewer1 !== userId && study.reviewer2 !== userId) return false
+      const checklists = study.checklists || []
+      const userChecklists = checklists.filter((c) => c.assignedTo === userId)
       // Show if user has no checklist yet OR has a non-completed/awaiting-reconcile checklist
       return (
         userChecklists.length === 0 ||
         userChecklists.some(
-          c =>
+          (c) =>
             c.status !== CHECKLIST_STATUS.COMPLETED &&
             c.status !== CHECKLIST_STATUS.AWAITING_RECONCILE,
         )
-      );
+      )
     }
 
     case 'reconcile': {
       // Must have both reviewers assigned (single reviewer studies never go to reconcile tab)
-      if (!study.reviewer1 || !study.reviewer2) return false;
+      if (!study.reviewer1 || !study.reviewer2) return false
 
-      const checklists = study.checklists || [];
+      const checklists = study.checklists || []
 
       // Check for individual reviewer checklists awaiting reconciliation
       // (not reconciled checklists - those are identified by assignedTo === null)
       const awaitingReconcile = checklists.filter(
-        c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.AWAITING_RECONCILE,
-      );
+        (c) =>
+          !isReconciledChecklist(c) &&
+          c.status === CHECKLIST_STATUS.AWAITING_RECONCILE,
+      )
 
       // Show if there are 1 or 2 individual checklists awaiting reconciliation
-      return awaitingReconcile.length >= 1 && awaitingReconcile.length <= 2;
+      return awaitingReconcile.length >= 1 && awaitingReconcile.length <= 2
     }
 
     case 'completed': {
-      const checklists = study.checklists || [];
-      return checklists.some(c => c.status === CHECKLIST_STATUS.COMPLETED);
+      const checklists = study.checklists || []
+      return checklists.some((c) => c.status === CHECKLIST_STATUS.COMPLETED)
     }
 
     default:
-      return false;
+      return false
   }
 }
 
@@ -121,27 +125,29 @@ export function shouldShowInTab(study, tab, userId) {
  * @returns {Array} Filtered array of studies
  */
 export function getStudiesForTab(studies, tab, userId) {
-  if (!studies || !Array.isArray(studies)) return [];
+  if (!studies || !Array.isArray(studies)) return []
 
   if (tab === 'todo') {
     // For todo tab, also transform studies to include filtered checklists
     return studies
-      .filter(study => shouldShowInTab(study, tab, userId))
-      .map(study => {
-        const originalChecklists = study.checklists || [];
-        const todoChecklists = getTodoChecklists(study, userId);
-        const userHasChecklist = originalChecklists.some(c => c.assignedTo === userId);
+      .filter((study) => shouldShowInTab(study, tab, userId))
+      .map((study) => {
+        const originalChecklists = study.checklists || []
+        const todoChecklists = getTodoChecklists(study, userId)
+        const userHasChecklist = originalChecklists.some(
+          (c) => c.assignedTo === userId,
+        )
         return {
           ...study,
           checklists: todoChecklists,
           _needsChecklist: !userHasChecklist,
-        };
+        }
       })
-      .filter(study => study.checklists.length > 0 || study._needsChecklist);
+      .filter((study) => study.checklists.length > 0 || study._needsChecklist)
   }
 
   // For other tabs, just filter studies
-  return studies.filter(study => shouldShowInTab(study, tab, userId));
+  return studies.filter((study) => shouldShowInTab(study, tab, userId))
 }
 
 /**
@@ -152,8 +158,8 @@ export function getStudiesForTab(studies, tab, userId) {
  * @returns {number} Count for the tab badge
  */
 export function getChecklistCount(studies, tab, userId) {
-  if (!studies || !Array.isArray(studies)) return 0;
-  return getStudiesForTab(studies, tab, userId).length;
+  if (!studies || !Array.isArray(studies)) return 0
+  return getStudiesForTab(studies, tab, userId).length
 }
 
 /**
@@ -162,16 +168,16 @@ export function getChecklistCount(studies, tab, userId) {
  * @returns {string} The status to set (COMPLETED or AWAITING_RECONCILE)
  */
 export function getNextStatusForCompletion(study) {
-  if (!study) return CHECKLIST_STATUS.COMPLETED;
+  if (!study) return CHECKLIST_STATUS.COMPLETED
 
-  const isSingleReviewer = study.reviewer1 && !study.reviewer2;
+  const isSingleReviewer = study.reviewer1 && !study.reviewer2
   if (isSingleReviewer) {
     // Single reviewer: goes directly to completed
-    return CHECKLIST_STATUS.COMPLETED;
+    return CHECKLIST_STATUS.COMPLETED
   }
 
   // Dual reviewer: goes to awaiting-reconcile
-  return CHECKLIST_STATUS.AWAITING_RECONCILE;
+  return CHECKLIST_STATUS.AWAITING_RECONCILE
 }
 
 /**
@@ -181,13 +187,13 @@ export function getNextStatusForCompletion(study) {
  * @returns {Object|null} The reconciled checklist or null if not found
  */
 export function findReconciledChecklist(study, excludeId = null) {
-  if (!study || !study.checklists) return null;
+  if (!study || !study.checklists) return null
 
   const reconciled = study.checklists.find(
-    c => isReconciledChecklist(c) && (!excludeId || c.id !== excludeId),
-  );
+    (c) => isReconciledChecklist(c) && (!excludeId || c.id !== excludeId),
+  )
 
-  return reconciled || null;
+  return reconciled || null
 }
 
 /**
@@ -196,11 +202,11 @@ export function findReconciledChecklist(study, excludeId = null) {
  * @returns {Array} Array of in-progress reconciled checklists
  */
 export function getInProgressReconciledChecklists(study) {
-  if (!study || !study.checklists) return [];
+  if (!study || !study.checklists) return []
 
   return study.checklists.filter(
-    c => isReconciledChecklist(c) && c.status !== CHECKLIST_STATUS.COMPLETED,
-  );
+    (c) => isReconciledChecklist(c) && c.status !== CHECKLIST_STATUS.COMPLETED,
+  )
 }
 
 /**
@@ -209,8 +215,8 @@ export function getInProgressReconciledChecklists(study) {
  * @returns {boolean} True if study has both reviewer1 and reviewer2
  */
 export function isDualReviewerStudy(study) {
-  if (!study) return false;
-  return !!(study.reviewer1 && study.reviewer2);
+  if (!study) return false
+  return !!(study.reviewer1 && study.reviewer2)
 }
 
 /**
@@ -220,18 +226,18 @@ export function isDualReviewerStudy(study) {
  * @returns {Array} Array of original reviewer checklists (metadata only)
  */
 export function getOriginalReviewerChecklists(study, reconciliationProgress) {
-  if (!study || !study.checklists || !reconciliationProgress) return [];
+  if (!study || !study.checklists || !reconciliationProgress) return []
 
-  const { checklist1Id, checklist2Id } = reconciliationProgress;
-  if (!checklist1Id || !checklist2Id) return [];
+  const { checklist1Id, checklist2Id } = reconciliationProgress
+  if (!checklist1Id || !checklist2Id) return []
 
-  const checklists = study.checklists || [];
-  const checklist1 = checklists.find(c => c.id === checklist1Id);
-  const checklist2 = checklists.find(c => c.id === checklist2Id);
+  const checklists = study.checklists || []
+  const checklist1 = checklists.find((c) => c.id === checklist1Id)
+  const checklist2 = checklists.find((c) => c.id === checklist2Id)
 
-  const result = [];
-  if (checklist1) result.push(checklist1);
-  if (checklist2) result.push(checklist2);
+  const result = []
+  if (checklist1) result.push(checklist1)
+  if (checklist2) result.push(checklist2)
 
-  return result;
+  return result
 }

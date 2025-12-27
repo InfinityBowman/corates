@@ -2,7 +2,7 @@
  * Stats Card component for admin dashboard
  */
 
-import { Show } from 'solid-js';
+import { Show } from 'solid-js'
 
 const colorMap = {
   blue: {
@@ -25,27 +25,31 @@ const colorMap = {
     icon: 'bg-orange-100 text-orange-600',
     text: 'text-orange-600',
   },
-};
+}
 
 export default function StatsCard(props) {
-  const colors = () => colorMap[props.color] || colorMap.blue;
+  const colors = () => colorMap[props.color] || colorMap.blue
 
   return (
     <div class={`rounded-lg border border-gray-200 p-5 ${colors().bg}`}>
-      <div class='flex items-center justify-between'>
+      <div class="flex items-center justify-between">
         <div>
-          <p class='text-sm font-medium text-gray-600'>{props.title}</p>
+          <p class="text-sm font-medium text-gray-600">{props.title}</p>
           <Show
             when={!props.loading}
-            fallback={<div class='mt-1 h-8 w-16 animate-pulse rounded bg-gray-200' />}
+            fallback={
+              <div class="mt-1 h-8 w-16 animate-pulse rounded bg-gray-200" />
+            }
           >
-            <p class={`mt-1 text-2xl font-bold ${colors().text}`}>{props.value}</p>
+            <p class={`mt-1 text-2xl font-bold ${colors().text}`}>
+              {props.value}
+            </p>
           </Show>
         </div>
         <div class={`rounded-lg p-3 ${colors().icon}`}>
-          <props.icon class='h-6 w-6' />
+          <props.icon class="h-6 w-6" />
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -2,9 +2,9 @@
  * Project-level operations for projectActionsStore
  */
 
-import { showToast } from '@corates/ui';
-import { API_BASE } from '@config/api.js';
-import projectStore from '../projectStore.js';
+import { showToast } from '@corates/ui'
+import { API_BASE } from '@config/api.js'
+import projectStore from '../projectStore.js'
 
 /**
  * Creates project operations
@@ -17,16 +17,19 @@ export function createProjectActions(getActiveConnection, getActiveProjectId) {
    * Rename a project (uses active project)
    */
   async function rename(newName) {
-    const ops = getActiveConnection();
+    const ops = getActiveConnection()
     if (!ops?.renameProject) {
-      showToast.error('Rename Failed', 'Not connected to project');
-      return;
+      showToast.error('Rename Failed', 'Not connected to project')
+      return
     }
     try {
-      await ops.renameProject(newName);
+      await ops.renameProject(newName)
     } catch (err) {
-      console.error('Error renaming project:', err);
-      showToast.error('Rename Failed', err.message || 'Failed to rename project');
+      console.error('Error renaming project:', err)
+      showToast.error(
+        'Rename Failed',
+        err.message || 'Failed to rename project',
+      )
     }
   }
 
@@ -34,16 +37,19 @@ export function createProjectActions(getActiveConnection, getActiveProjectId) {
    * Update project description (uses active project)
    */
   async function updateDescription(newDescription) {
-    const ops = getActiveConnection();
+    const ops = getActiveConnection()
     if (!ops?.updateDescription) {
-      showToast.error('Update Failed', 'Not connected to project');
-      return;
+      showToast.error('Update Failed', 'Not connected to project')
+      return
     }
     try {
-      await ops.updateDescription(newDescription);
+      await ops.updateDescription(newDescription)
     } catch (err) {
-      console.error('Error updating description:', err);
-      showToast.error('Update Failed', err.message || 'Failed to update description');
+      console.error('Error updating description:', err)
+      showToast.error(
+        'Update Failed',
+        err.message || 'Failed to update description',
+      )
     }
   }
 
@@ -55,18 +61,21 @@ export function createProjectActions(getActiveConnection, getActiveProjectId) {
    */
   async function deleteById(targetProjectId) {
     try {
-      const response = await fetch(`${API_BASE}/api/projects/${targetProjectId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `${API_BASE}/api/projects/${targetProjectId}`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+        },
+      )
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || 'Failed to delete project');
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to delete project')
       }
-      projectStore.removeProjectFromList(targetProjectId);
+      projectStore.removeProjectFromList(targetProjectId)
     } catch (err) {
-      console.error('Error deleting project:', err);
-      throw err;
+      console.error('Error deleting project:', err)
+      throw err
     }
   }
 
@@ -74,8 +83,8 @@ export function createProjectActions(getActiveConnection, getActiveProjectId) {
    * Delete the active project
    */
   async function deleteProject(shouldNavigate = true) {
-    const projectId = getActiveProjectId();
-    return deleteById(projectId, shouldNavigate);
+    const projectId = getActiveProjectId()
+    return deleteById(projectId, shouldNavigate)
   }
 
   return {
@@ -83,5 +92,5 @@ export function createProjectActions(getActiveConnection, getActiveProjectId) {
     updateDescription,
     delete: deleteProject,
     deleteById,
-  };
+  }
 }

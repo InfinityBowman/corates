@@ -6,7 +6,7 @@ export const CHECKLIST_TYPES = {
     name: 'AMSTAR 2',
     description: 'A MeaSurement Tool to Assess systematic Reviews (version 2)',
   },
-};
+}
 
 export const AMSTAR_CHECKLIST = {
   q1: {
@@ -150,7 +150,9 @@ export const AMSTAR_CHECKLIST = {
       },
       {
         label: 'For Yes, must also have:',
-        options: ['Justified the exclusion from the review of each potentially relevant study'],
+        options: [
+          'Justified the exclusion from the review of each potentially relevant study',
+        ],
       },
       {
         label: '',
@@ -367,4 +369,4 @@ export const AMSTAR_CHECKLIST = {
       },
     ],
   },
-};
+}

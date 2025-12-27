@@ -1,4 +1,4 @@
-import { createSignal, createEffect, onCleanup, Show } from 'solid-js';
+import { createSignal, createEffect, onCleanup, Show } from 'solid-js'
 
 /**
  * AnimatedShow
@@ -13,39 +13,39 @@ import { createSignal, createEffect, onCleanup, Show } from 'solid-js';
  * @returns {JSX.Element}
  */
 export function AnimatedShow(props) {
-  const [isVisible, setIsVisible] = createSignal(false);
-  const [shouldRender, setShouldRender] = createSignal(false);
-  let elementRef = null;
-  let timeoutId = null;
+  const [isVisible, setIsVisible] = createSignal(false)
+  const [shouldRender, setShouldRender] = createSignal(false)
+  let elementRef = null
+  let timeoutId = null
 
-  const duration = () => props.duration ?? 300;
-  const timingFunction = () => props.timingFunction ?? 'ease-in-out';
+  const duration = () => props.duration ?? 300
+  const timingFunction = () => props.timingFunction ?? 'ease-in-out'
 
-  const when = () => props.when;
+  const when = () => props.when
 
   createEffect(() => {
     if (when()) {
       // Ensure no pending timeout that could trigger after animation frame
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId)
       // Show: first render, then fade in
-      setShouldRender(true);
+      setShouldRender(true)
       // Use requestAnimationFrame to ensure element is rendered before starting animation
       requestAnimationFrame(() => {
-        setIsVisible(true);
-      });
+        setIsVisible(true)
+      })
     } else {
       // Hide: first fade out, then stop rendering
-      setIsVisible(false);
-      clearTimeout(timeoutId);
+      setIsVisible(false)
+      clearTimeout(timeoutId)
       timeoutId = setTimeout(() => {
-        setShouldRender(false);
-      }, duration());
+        setShouldRender(false)
+      }, duration())
     }
-  });
+  })
 
   onCleanup(() => {
-    clearTimeout(timeoutId);
-  });
+    clearTimeout(timeoutId)
+  })
 
   return (
     <Show when={shouldRender()} fallback={props.fallback}>
@@ -62,5 +62,5 @@ export function AnimatedShow(props) {
         {props.children}
       </div>
     </Show>
-  );
+  )
 }

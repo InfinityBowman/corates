@@ -3,7 +3,7 @@
  * Compares two reviewer checklists and helps create a finalized consensus version
  */
 
-import { AMSTAR_CHECKLIST } from './checklist-map.js';
+import { AMSTAR_CHECKLIST } from './checklist-map.js'
 
 /**
  * Get all question keys for display in reconciliation.
@@ -12,7 +12,7 @@ import { AMSTAR_CHECKLIST } from './checklist-map.js';
  * @returns {string[]} Array of question keys for UI display
  */
 export function getQuestionKeys() {
-  return Object.keys(AMSTAR_CHECKLIST);
+  return Object.keys(AMSTAR_CHECKLIST)
 }
 
 /**
@@ -23,12 +23,12 @@ export function getQuestionKeys() {
  */
 export function getDataKeysForQuestion(questionKey) {
   if (questionKey === 'q9') {
-    return ['q9a', 'q9b'];
+    return ['q9a', 'q9b']
   }
   if (questionKey === 'q11') {
-    return ['q11a', 'q11b'];
+    return ['q11a', 'q11b']
   }
-  return [questionKey];
+  return [questionKey]
 }
 
 /**
@@ -37,7 +37,7 @@ export function getDataKeysForQuestion(questionKey) {
  * @returns {boolean}
  */
 export function isMultiPartQuestion(questionKey) {
-  return questionKey === 'q9' || questionKey === 'q11';
+  return questionKey === 'q9' || questionKey === 'q11'
 }
 
 /**
@@ -48,42 +48,51 @@ export function isMultiPartQuestion(questionKey) {
  */
 export function compareChecklists(checklist1, checklist2) {
   if (!checklist1 || !checklist2) {
-    return { agreements: [], disagreements: [], stats: { total: 0, agreed: 0, disagreed: 0 } };
+    return {
+      agreements: [],
+      disagreements: [],
+      stats: { total: 0, agreed: 0, disagreed: 0 },
+    }
   }
 
-  const questionKeys = getQuestionKeys();
-  const agreements = [];
-  const disagreements = [];
+  const questionKeys = getQuestionKeys()
+  const agreements = []
+  const disagreements = []
 
   for (const key of questionKeys) {
     // Handle multi-part questions (q9 and q11)
     if (isMultiPartQuestion(key)) {
-      const dataKeys = getDataKeysForQuestion(key);
-      const q1Parts = dataKeys.map(dk => checklist1[dk]);
-      const q2Parts = dataKeys.map(dk => checklist2[dk]);
+      const dataKeys = getDataKeysForQuestion(key)
+      const q1Parts = dataKeys.map((dk) => checklist1[dk])
+      const q2Parts = dataKeys.map((dk) => checklist2[dk])
 
       // Skip if any part is missing
-      if (q1Parts.some(p => !p) || q2Parts.some(p => !p)) continue;
+      if (q1Parts.some((p) => !p) || q2Parts.some((p) => !p)) continue
 
-      const comparison = compareMultiPartQuestion(key, q1Parts, q2Parts, dataKeys);
+      const comparison = compareMultiPartQuestion(
+        key,
+        q1Parts,
+        q2Parts,
+        dataKeys,
+      )
 
       if (comparison.isAgreement) {
-        agreements.push({ key, ...comparison });
+        agreements.push({ key, ...comparison })
       } else {
-        disagreements.push({ key, ...comparison });
+        disagreements.push({ key, ...comparison })
       }
     } else {
-      const q1 = checklist1[key];
-      const q2 = checklist2[key];
+      const q1 = checklist1[key]
+      const q2 = checklist2[key]
 
-      if (!q1 || !q2) continue;
+      if (!q1 || !q2) continue
 
-      const comparison = compareQuestion(key, q1, q2);
+      const comparison = compareQuestion(key, q1, q2)
 
       if (comparison.isAgreement) {
-        agreements.push({ key, ...comparison });
+        agreements.push({ key, ...comparison })
       } else {
-        disagreements.push({ key, ...comparison });
+        disagreements.push({ key, ...comparison })
       }
     }
   }
@@ -95,9 +104,10 @@ export function compareChecklists(checklist1, checklist2) {
       total: agreements.length + disagreements.length,
       agreed: agreements.length,
       disagreed: disagreements.length,
-      agreementRate: agreements.length / (agreements.length + disagreements.length) || 0,
+      agreementRate:
+        agreements.length / (agreements.length + disagreements.length) || 0,
     },
-  };
+  }
 }
 
 /**
@@ -108,16 +118,21 @@ export function compareChecklists(checklist1, checklist2) {
  * @param {string[]} dataKeys - The data keys ['q9a', 'q9b'] or ['q11a', 'q11b']
  * @returns {Object} Comparison result for this question
  */
-export function compareMultiPartQuestion(questionKey, q1Parts, q2Parts, dataKeys) {
+export function compareMultiPartQuestion(
+  questionKey,
+  q1Parts,
+  q2Parts,
+  dataKeys,
+) {
   // Compare each part
-  let allPartsAgree = true;
-  const partComparisons = [];
+  let allPartsAgree = true
+  const partComparisons = []
 
   for (let i = 0; i < q1Parts.length; i++) {
-    const partComparison = compareQuestion(dataKeys[i], q1Parts[i], q2Parts[i]);
-    partComparisons.push(partComparison);
+    const partComparison = compareQuestion(dataKeys[i], q1Parts[i], q2Parts[i])
+    partComparisons.push(partComparison)
     if (!partComparison.isAgreement) {
-      allPartsAgree = false;
+      allPartsAgree = false
     }
   }
 
@@ -133,7 +148,7 @@ export function compareMultiPartQuestion(questionKey, q1Parts, q2Parts, dataKeys
     // For compatibility, also include combined info
     reviewer1Answer: q1Parts,
     reviewer2Answer: q2Parts,
-  };
+  }
 }
 
 /**
@@ -144,21 +159,21 @@ export function compareMultiPartQuestion(questionKey, q1Parts, q2Parts, dataKeys
  * @returns {Object} Comparison result for this question
  */
 export function compareQuestion(questionKey, q1, q2) {
-  const answers1 = q1.answers;
-  const answers2 = q2.answers;
+  const answers1 = q1.answers
+  const answers2 = q2.answers
 
   // Get the final answer (last column) for each
-  const finalAnswer1 = getFinalAnswer(answers1, questionKey);
-  const finalAnswer2 = getFinalAnswer(answers2, questionKey);
+  const finalAnswer1 = getFinalAnswer(answers1, questionKey)
+  const finalAnswer2 = getFinalAnswer(answers2, questionKey)
 
   // Check if all individual checkboxes match
-  const detailedMatch = answersMatch(answers1, answers2);
+  const detailedMatch = answersMatch(answers1, answers2)
 
   // Check if final answers match (main agreement criterion)
-  const finalMatch = finalAnswer1 === finalAnswer2;
+  const finalMatch = finalAnswer1 === finalAnswer2
 
   // Check if critical assessment matches
-  const criticalMatch = q1.critical === q2.critical;
+  const criticalMatch = q1.critical === q2.critical
 
   return {
     isAgreement: finalMatch && criticalMatch,
@@ -175,7 +190,7 @@ export function compareQuestion(questionKey, q1, q2) {
       finalAnswer: finalAnswer2,
       critical: q2.critical,
     },
-  };
+  }
 }
 
 /**
@@ -185,29 +200,29 @@ export function compareQuestion(questionKey, q1, q2) {
  * @returns {string|null} The selected final answer or null
  */
 export function getFinalAnswer(answers, questionKey) {
-  if (!Array.isArray(answers) || answers.length === 0) return null;
+  if (!Array.isArray(answers) || answers.length === 0) return null
 
-  const lastCol = answers[answers.length - 1];
-  if (!Array.isArray(lastCol)) return null;
+  const lastCol = answers[answers.length - 1]
+  if (!Array.isArray(lastCol)) return null
 
-  const idx = lastCol.findIndex(v => v === true);
-  if (idx === -1) return null;
+  const idx = lastCol.findIndex((v) => v === true)
+  if (idx === -1) return null
 
   // Determine the label based on question type and column length
-  const customPatternQuestions = ['q11a', 'q11b', 'q12', 'q15'];
-  const customLabels = ['Yes', 'No', 'No MA'];
-  const defaultLabels = ['Yes', 'Partial Yes', 'No', 'No MA'];
+  const customPatternQuestions = ['q11a', 'q11b', 'q12', 'q15']
+  const customLabels = ['Yes', 'No', 'No MA']
+  const defaultLabels = ['Yes', 'Partial Yes', 'No', 'No MA']
 
   if (customPatternQuestions.includes(questionKey)) {
-    return customLabels[idx] || null;
+    return customLabels[idx] || null
   }
   if (lastCol.length === 2) {
-    return idx === 0 ? 'Yes' : 'No';
+    return idx === 0 ? 'Yes' : 'No'
   }
   if (lastCol.length >= 3) {
-    return defaultLabels[idx] || null;
+    return defaultLabels[idx] || null
   }
-  return null;
+  return null
 }
 
 /**
@@ -217,19 +232,19 @@ export function getFinalAnswer(answers, questionKey) {
  * @returns {boolean} True if all answers match
  */
 export function answersMatch(answers1, answers2) {
-  if (!Array.isArray(answers1) || !Array.isArray(answers2)) return false;
-  if (answers1.length !== answers2.length) return false;
+  if (!Array.isArray(answers1) || !Array.isArray(answers2)) return false
+  if (answers1.length !== answers2.length) return false
 
   for (let i = 0; i < answers1.length; i++) {
-    if (!Array.isArray(answers1[i]) || !Array.isArray(answers2[i])) return false;
-    if (answers1[i].length !== answers2[i].length) return false;
+    if (!Array.isArray(answers1[i]) || !Array.isArray(answers2[i])) return false
+    if (answers1[i].length !== answers2[i].length) return false
 
     for (let j = 0; j < answers1[i].length; j++) {
-      if (answers1[i][j] !== answers2[i][j]) return false;
+      if (answers1[i][j] !== answers2[i][j]) return false
     }
   }
 
-  return true;
+  return true
 }
 
 /**
@@ -240,8 +255,13 @@ export function answersMatch(answers1, answers2) {
  * @param {Object} metadata - Metadata for the reconciled checklist
  * @returns {Object} The reconciled checklist
  */
-export function createReconciledChecklist(checklist1, checklist2, selections, metadata = {}) {
-  const questionKeys = getQuestionKeys();
+export function createReconciledChecklist(
+  checklist1,
+  checklist2,
+  selections,
+  metadata = {},
+) {
+  const questionKeys = getQuestionKeys()
 
   const reconciled = {
     name: metadata.name || 'Reconciled Checklist',
@@ -249,37 +269,37 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
     createdAt: metadata.createdAt || new Date().toISOString().split('T')[0],
     id: metadata.id || `reconciled-${Date.now()}`,
     sourceChecklists: [checklist1.id, checklist2.id],
-  };
+  }
 
   for (const key of questionKeys) {
-    const selection = selections[key];
-    const dataKeys = getDataKeysForQuestion(key);
+    const selection = selections[key]
+    const dataKeys = getDataKeysForQuestion(key)
 
     // Handle multi-part questions (q9 and q11)
     if (isMultiPartQuestion(key)) {
       for (const dataKey of dataKeys) {
         if (!selection || selection === 'reviewer1') {
-          reconciled[dataKey] = JSON.parse(JSON.stringify(checklist1[dataKey]));
+          reconciled[dataKey] = JSON.parse(JSON.stringify(checklist1[dataKey]))
         } else if (selection === 'reviewer2') {
-          reconciled[dataKey] = JSON.parse(JSON.stringify(checklist2[dataKey]));
+          reconciled[dataKey] = JSON.parse(JSON.stringify(checklist2[dataKey]))
         } else if (typeof selection === 'object' && selection[dataKey]) {
-          reconciled[dataKey] = JSON.parse(JSON.stringify(selection[dataKey]));
+          reconciled[dataKey] = JSON.parse(JSON.stringify(selection[dataKey]))
         }
       }
     } else {
       if (!selection || selection === 'reviewer1') {
         // Default to reviewer 1 if no selection
-        reconciled[key] = JSON.parse(JSON.stringify(checklist1[key]));
+        reconciled[key] = JSON.parse(JSON.stringify(checklist1[key]))
       } else if (selection === 'reviewer2') {
-        reconciled[key] = JSON.parse(JSON.stringify(checklist2[key]));
+        reconciled[key] = JSON.parse(JSON.stringify(checklist2[key]))
       } else if (typeof selection === 'object') {
         // Custom merged answer
-        reconciled[key] = JSON.parse(JSON.stringify(selection));
+        reconciled[key] = JSON.parse(JSON.stringify(selection))
       }
     }
   }
 
-  return reconciled;
+  return reconciled
 }
 
 /**
@@ -288,24 +308,28 @@ export function createReconciledChecklist(checklist1, checklist2, selections, me
  * @returns {Object} Summary with counts and lists
  */
 export function getReconciliationSummary(comparison) {
-  const { disagreements, stats } = comparison;
+  const { disagreements, stats } = comparison
 
-  const criticalDisagreements = disagreements.filter(d => {
+  const criticalDisagreements = disagreements.filter((d) => {
     // Handle multi-part questions
     if (d.isMultiPart && d.parts) {
-      return d.parts.some(part => part.reviewer1?.critical || part.reviewer2?.critical);
+      return d.parts.some(
+        (part) => part.reviewer1?.critical || part.reviewer2?.critical,
+      )
     }
     // Check if either reviewer marked as critical or it's a critical question
-    return d.reviewer1?.critical || d.reviewer2?.critical;
-  });
+    return d.reviewer1?.critical || d.reviewer2?.critical
+  })
 
-  const nonCriticalDisagreements = disagreements.filter(d => {
+  const nonCriticalDisagreements = disagreements.filter((d) => {
     // Handle multi-part questions
     if (d.isMultiPart && d.parts) {
-      return !d.parts.some(part => part.reviewer1?.critical || part.reviewer2?.critical);
+      return !d.parts.some(
+        (part) => part.reviewer1?.critical || part.reviewer2?.critical,
+      )
     }
-    return !d.reviewer1?.critical && !d.reviewer2?.critical;
-  });
+    return !d.reviewer1?.critical && !d.reviewer2?.critical
+  })
 
   return {
     totalQuestions: stats.total,
@@ -315,8 +339,8 @@ export function getReconciliationSummary(comparison) {
     criticalDisagreements: criticalDisagreements.length,
     nonCriticalDisagreements: nonCriticalDisagreements.length,
     needsReconciliation: disagreements.length > 0,
-    disagreementsByQuestion: disagreements.map(d => d.key),
-  };
+    disagreementsByQuestion: disagreements.map((d) => d.key),
+  }
 }
 
 /**
@@ -325,7 +349,7 @@ export function getReconciliationSummary(comparison) {
  * @returns {string} The question text
  */
 export function getQuestionText(questionKey) {
-  return AMSTAR_CHECKLIST[questionKey]?.text || questionKey;
+  return AMSTAR_CHECKLIST[questionKey]?.text || questionKey
 }
 
 /**
@@ -334,5 +358,5 @@ export function getQuestionText(questionKey) {
  * @returns {Object} The question definition
  */
 export function getQuestionDef(questionKey) {
-  return AMSTAR_CHECKLIST[questionKey];
+  return AMSTAR_CHECKLIST[questionKey]
 }

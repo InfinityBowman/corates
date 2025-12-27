@@ -5,9 +5,9 @@
  * multiple accounts and wants to combine them.
  */
 
-import { parseApiError } from '@/lib/error-utils.js';
+import { parseApiError } from '@/lib/error-utils.js'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8787';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8787'
 
 /**
  * Initiate a merge request
@@ -16,13 +16,13 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8787';
  * @returns {Promise<{ success: boolean, mergeToken: string, targetEmail: string, targetOrcidId?: string, preview: { currentProviders: string[] } }>}
  */
 export async function initiateMerge(targetEmail, targetOrcidId) {
-  const body = {};
+  const body = {}
   if (targetEmail) {
-    body.targetEmail = targetEmail;
+    body.targetEmail = targetEmail
   } else if (targetOrcidId) {
-    body.targetOrcidId = targetOrcidId;
+    body.targetOrcidId = targetOrcidId
   } else {
-    throw new Error('Either targetEmail or targetOrcidId must be provided');
+    throw new Error('Either targetEmail or targetOrcidId must be provided')
   }
 
   const response = await fetch(`${API_BASE}/api/accounts/merge/initiate`, {
@@ -30,15 +30,15 @@ export async function initiateMerge(targetEmail, targetOrcidId) {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  });
+  })
 
   if (!response.ok) {
-    const error = await parseApiError(response);
-    throw error;
+    const error = await parseApiError(response)
+    throw error
   }
 
-  const data = await response.json();
-  return data;
+  const data = await response.json()
+  return data
 }
 
 /**
@@ -53,15 +53,15 @@ export async function verifyMergeCode(mergeToken, code) {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ mergeToken, code }),
-  });
+  })
 
   if (!response.ok) {
-    const error = await parseApiError(response);
-    throw error;
+    const error = await parseApiError(response)
+    throw error
   }
 
-  const data = await response.json();
-  return data;
+  const data = await response.json()
+  return data
 }
 
 /**
@@ -75,15 +75,15 @@ export async function completeMerge(mergeToken) {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ mergeToken }),
-  });
+  })
 
   if (!response.ok) {
-    const error = await parseApiError(response);
-    throw error;
+    const error = await parseApiError(response)
+    throw error
   }
 
-  const data = await response.json();
-  return data;
+  const data = await response.json()
+  return data
 }
 
 /**
@@ -98,15 +98,15 @@ export async function getMergeStatus(mergeToken) {
       method: 'GET',
       credentials: 'include',
     },
-  );
+  )
 
   if (!response.ok) {
-    const error = await parseApiError(response);
-    throw error;
+    const error = await parseApiError(response)
+    throw error
   }
 
-  const data = await response.json();
-  return data;
+  const data = await response.json()
+  return data
 }
 
 /**
@@ -120,13 +120,13 @@ export async function cancelMerge(mergeToken) {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ mergeToken }),
-  });
+  })
 
   if (!response.ok) {
-    const error = await parseApiError(response);
-    throw error;
+    const error = await parseApiError(response)
+    throw error
   }
 
-  const data = await response.json();
-  return data;
+  const data = await response.json()
+  return data
 }

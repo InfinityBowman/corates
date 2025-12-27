@@ -2,7 +2,7 @@
  * Store for reconciliation navbar state
  * Using a store provides deep reactivity for nested state updates
  */
-import { createStore } from 'solid-js/store';
+import { createStore } from 'solid-js/store'
 
 /**
  * Create a reconciliation navbar store
@@ -22,7 +22,7 @@ export function createNavbarStore() {
     setViewMode: null,
     goToQuestion: null,
     onReset: null,
-  });
+  })
 
-  return [store, setStore];
+  return [store, setStore]
 }

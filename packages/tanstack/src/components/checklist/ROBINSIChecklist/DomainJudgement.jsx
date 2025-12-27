@@ -1,5 +1,9 @@
-import { For } from 'solid-js';
-import { ROB_JUDGEMENTS, BIAS_DIRECTIONS, DOMAIN1_DIRECTIONS } from '@/ROBINS-I/checklist-map.js';
+import { For } from 'solid-js'
+import {
+  ROB_JUDGEMENTS,
+  BIAS_DIRECTIONS,
+  DOMAIN1_DIRECTIONS,
+} from '@/ROBINS-I/checklist-map.js'
 
 /**
  * Domain judgement selector with risk of bias level and optional direction
@@ -14,52 +18,55 @@ import { ROB_JUDGEMENTS, BIAS_DIRECTIONS, DOMAIN1_DIRECTIONS } from '@/ROBINS-I/
  * @param {boolean} [props.disabled] - Whether the selector is disabled
  */
 export function DomainJudgement(props) {
-  const directionOptions = () => (props.isDomain1 ? DOMAIN1_DIRECTIONS : BIAS_DIRECTIONS);
+  const directionOptions = () =>
+    props.isDomain1 ? DOMAIN1_DIRECTIONS : BIAS_DIRECTIONS
 
-  const getJudgementColor = judgement => {
+  const getJudgementColor = (judgement) => {
     switch (judgement) {
       case 'Low':
-        return 'bg-green-100 border-green-400 text-green-800';
+        return 'bg-green-100 border-green-400 text-green-800'
       case 'Low (except for concerns about uncontrolled confounding)':
-        return 'bg-green-100 border-green-400 text-green-800';
+        return 'bg-green-100 border-green-400 text-green-800'
       case 'Moderate':
-        return 'bg-yellow-100 border-yellow-400 text-yellow-800';
+        return 'bg-yellow-100 border-yellow-400 text-yellow-800'
       case 'Serious':
-        return 'bg-orange-100 border-orange-400 text-orange-800';
+        return 'bg-orange-100 border-orange-400 text-orange-800'
       case 'Critical':
-        return 'bg-red-100 border-red-400 text-red-800';
+        return 'bg-red-100 border-red-400 text-red-800'
       default:
-        return 'bg-gray-50 border-gray-200 text-gray-600';
+        return 'bg-gray-50 border-gray-200 text-gray-600'
     }
-  };
+  }
 
   return (
-    <div class='mt-4 rounded-lg bg-gray-50 p-4'>
+    <div class="mt-4 rounded-lg bg-gray-50 p-4">
       {/* Risk of bias judgement */}
-      <div class='mb-3'>
-        <div class='mb-2 text-sm font-medium text-gray-700'>Risk of bias judgement</div>
-        <div class='flex flex-wrap gap-2'>
+      <div class="mb-3">
+        <div class="mb-2 text-sm font-medium text-gray-700">
+          Risk of bias judgement
+        </div>
+        <div class="flex flex-wrap gap-2">
           <For each={ROB_JUDGEMENTS}>
-            {judgement => {
-              const isSelected = () => props.judgement === judgement;
+            {(judgement) => {
+              const isSelected = () => props.judgement === judgement
               return (
                 <button
-                  type='button'
+                  type="button"
                   onClick={() => {
-                    if (props.disabled) return;
+                    if (props.disabled) return
                     // Toggle: deselect if already selected, otherwise select
-                    props.onJudgementChange(isSelected() ? null : judgement);
+                    props.onJudgementChange(isSelected() ? null : judgement)
                   }}
                   disabled={props.disabled}
                   class={`inline-flex items-center justify-center rounded-md border-2 px-3 py-1.5 text-sm font-medium transition-colors ${props.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${
-                    isSelected() ?
-                      getJudgementColor(judgement)
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                    isSelected()
+                      ? getJudgementColor(judgement)
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                   } `}
                 >
                   {judgement}
                 </button>
-              );
+              )
             }}
           </For>
         </div>
@@ -68,39 +75,39 @@ export function DomainJudgement(props) {
       {/* Direction of bias (optional) */}
       {props.showDirection && (
         <div>
-          <div class='mb-2 text-sm font-medium text-gray-700'>
+          <div class="mb-2 text-sm font-medium text-gray-700">
             Predicted direction of bias
-            <span class='ml-1 font-normal text-gray-400'>(optional)</span>
+            <span class="ml-1 font-normal text-gray-400">(optional)</span>
           </div>
-          <div class='flex flex-wrap gap-2'>
+          <div class="flex flex-wrap gap-2">
             <For each={directionOptions()}>
-              {direction => {
-                const isSelected = () => props.direction === direction;
+              {(direction) => {
+                const isSelected = () => props.direction === direction
                 return (
                   <button
-                    type='button'
+                    type="button"
                     onClick={() => {
-                      if (props.disabled) return;
+                      if (props.disabled) return
                       // Toggle: deselect if already selected, otherwise select
-                      props.onDirectionChange?.(isSelected() ? null : direction);
+                      props.onDirectionChange?.(isSelected() ? null : direction)
                     }}
                     disabled={props.disabled}
                     class={`inline-flex items-center justify-center rounded border px-2 py-1 text-xs font-medium transition-colors ${props.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${
-                      isSelected() ?
-                        'border-blue-400 bg-blue-100 text-blue-800'
-                      : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
+                      isSelected()
+                        ? 'border-blue-400 bg-blue-100 text-blue-800'
+                        : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
                     } `}
                   >
                     {direction}
                   </button>
-                );
+                )
               }}
             </For>
           </div>
         </div>
       )}
     </div>
-  );
+  )
 }
 
 /**
@@ -110,26 +117,28 @@ export function JudgementBadge(props) {
   const getColor = () => {
     switch (props.judgement) {
       case 'Low':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800'
       case 'Low (except for concerns about uncontrolled confounding)':
       case 'Low (except confounding)':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800'
       case 'Moderate':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800'
       case 'Serious':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-orange-100 text-orange-800'
       case 'Critical':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800'
       default:
-        return 'bg-gray-100 text-gray-600';
+        return 'bg-gray-100 text-gray-600'
     }
-  };
+  }
 
   return (
-    <span class={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${getColor()}`}>
+    <span
+      class={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${getColor()}`}
+    >
       {props.judgement || 'Not assessed'}
     </span>
-  );
+  )
 }
 
-export default DomainJudgement;
+export default DomainJudgement

@@ -1,4 +1,4 @@
-import { AMSTAR_CHECKLIST } from './checklist-map.js';
+import { AMSTAR_CHECKLIST } from './checklist-map.js'
 
 /**
  * Creates a new AMSTAR2 checklist object with default empty answers for all questions.
@@ -23,25 +23,28 @@ export function createChecklist({
   reviewerName = '',
 }) {
   if (!id || typeof id !== 'string' || !id.trim()) {
-    throw new Error('AMSTAR2Checklist requires a non-empty string id.');
+    throw new Error('AMSTAR2Checklist requires a non-empty string id.')
   }
   if (!name || typeof name !== 'string' || !name.trim()) {
-    throw new Error('AMSTAR2Checklist requires a non-empty string name.');
+    throw new Error('AMSTAR2Checklist requires a non-empty string name.')
   }
 
-  let d = new Date(createdAt);
-  if (isNaN(d)) d = Date.now();
+  let d = new Date(createdAt)
+  if (isNaN(d)) d = Date.now()
   // Pad month and day
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  createdAt = `${d.getFullYear()}-${mm}-${dd}`;
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  createdAt = `${d.getFullYear()}-${mm}-${dd}`
 
   return {
     name: name,
     reviewerName: reviewerName || '',
     createdAt: createdAt,
     id: id,
-    q1: { answers: [[false, false, false, false], [false], [false, false]], critical: false },
+    q1: {
+      answers: [[false, false, false, false], [false], [false, false]],
+      critical: false,
+    },
     q2: {
       answers: [
         [false, false, false, false],
@@ -148,54 +151,55 @@ export function createChecklist({
       ],
       critical: false,
     },
-  };
+  }
 }
 
 // Score checklist using the last column of each question taking into account critical vs non-critical
 export function scoreChecklist(state) {
-  if (!state || typeof state !== 'object') return 'Error';
+  if (!state || typeof state !== 'object') return 'Error'
 
-  let criticalFlaws = 0;
-  let nonCriticalFlaws = 0;
+  let criticalFlaws = 0
+  let nonCriticalFlaws = 0
 
   // Partial yes is scored same as yes
   // No MA is not counted as a flaw
 
   Object.entries(state).forEach(([question, obj]) => {
-    if (!/^q\d+[a-z]*$/i.test(question)) return;
-    if (!obj || !Array.isArray(obj.answers)) return;
-    const selected = getSelectedAnswer(obj.answers, question);
+    if (!/^q\d+[a-z]*$/i.test(question)) return
+    if (!obj || !Array.isArray(obj.answers)) return
+    const selected = getSelectedAnswer(obj.answers, question)
     if (!selected || selected === 'No') {
       if (obj.critical) {
-        criticalFlaws++;
+        criticalFlaws++
       } else {
-        nonCriticalFlaws++;
+        nonCriticalFlaws++
       }
     }
-  });
+  })
 
-  if (criticalFlaws > 1) return 'Critically Low';
-  if (criticalFlaws === 1) return 'Low';
-  if (nonCriticalFlaws > 1) return 'Moderate';
-  return 'High';
+  if (criticalFlaws > 1) return 'Critically Low'
+  if (criticalFlaws === 1) return 'Low'
+  if (nonCriticalFlaws > 1) return 'Moderate'
+  return 'High'
 }
 
 // Helper to get the selected answer from the last column of a question
 function getSelectedAnswer(answers, question) {
   // Question patterns
-  const customPatternQuestions = ['q11a', 'q11b', 'q12', 'q15'];
-  const customLabels = ['Yes', 'No', 'No MA'];
-  const defaultLabels = ['Yes', 'Partial Yes', 'No', 'No MA'];
+  const customPatternQuestions = ['q11a', 'q11b', 'q12', 'q15']
+  const customLabels = ['Yes', 'No', 'No MA']
+  const defaultLabels = ['Yes', 'Partial Yes', 'No', 'No MA']
 
-  if (!Array.isArray(answers) || answers.length === 0) return null;
-  const lastCol = answers[answers.length - 1];
-  if (!Array.isArray(lastCol)) return null;
-  const idx = lastCol.findIndex(v => v === true);
-  if (idx === -1) return null;
-  if (customPatternQuestions.includes(question)) return customLabels[idx] || null;
-  if (lastCol.length === 2) return idx === 0 ? 'Yes' : 'No';
-  if (lastCol.length >= 3) return defaultLabels[idx] || null;
-  return null;
+  if (!Array.isArray(answers) || answers.length === 0) return null
+  const lastCol = answers[answers.length - 1]
+  if (!Array.isArray(lastCol)) return null
+  const idx = lastCol.findIndex((v) => v === true)
+  if (idx === -1) return null
+  if (customPatternQuestions.includes(question))
+    return customLabels[idx] || null
+  if (lastCol.length === 2) return idx === 0 ? 'Yes' : 'No'
+  if (lastCol.length >= 3) return defaultLabels[idx] || null
+  return null
 }
 
 /**
@@ -206,7 +210,7 @@ function getSelectedAnswer(answers, question) {
  * @returns {boolean} True if all questions have final answers, false otherwise
  */
 export function isAMSTAR2Complete(checklist) {
-  if (!checklist || typeof checklist !== 'object') return false;
+  if (!checklist || typeof checklist !== 'object') return false
 
   // All required AMSTAR2 questions
   const requiredQuestions = [
@@ -228,66 +232,66 @@ export function isAMSTAR2Complete(checklist) {
     'q14',
     'q15',
     'q16',
-  ];
+  ]
 
   // Check each required question has a final answer
   for (const questionKey of requiredQuestions) {
-    const question = checklist[questionKey];
-    if (!question || !Array.isArray(question.answers)) return false;
+    const question = checklist[questionKey]
+    if (!question || !Array.isArray(question.answers)) return false
 
     // Check if the last column has at least one option selected
-    const lastCol = question.answers[question.answers.length - 1];
-    if (!Array.isArray(lastCol)) return false;
-    const hasAnswer = lastCol.some(v => v === true);
-    if (!hasAnswer) return false;
+    const lastCol = question.answers[question.answers.length - 1]
+    if (!Array.isArray(lastCol)) return false
+    const hasAnswer = lastCol.some((v) => v === true)
+    if (!hasAnswer) return false
   }
 
-  return true;
+  return true
 }
 
 export function getAnswers(checklist) {
-  if (!checklist || typeof checklist !== 'object') return null;
-  const result = {};
+  if (!checklist || typeof checklist !== 'object') return null
+  const result = {}
 
   Object.entries(checklist).forEach(([key, value]) => {
-    if (!/^q\d+[a-z]*$/i.test(key)) return;
-    if (!value || !Array.isArray(value.answers)) return;
+    if (!/^q\d+[a-z]*$/i.test(key)) return
+    if (!value || !Array.isArray(value.answers)) return
 
-    const selected = getSelectedAnswer(value.answers, key);
-    result[key] = selected;
-  });
+    const selected = getSelectedAnswer(value.answers, key)
+    result[key] = selected
+  })
 
   // Consolidate q9a and q9b into q9 by taking the lower score
   if ('q9a' in result && 'q9b' in result) {
     if (result.q9a === null || result.q9b === null) {
-      result.q9 = null;
+      result.q9 = null
     } else if (result.q9a === 'No' || result.q9b === 'No') {
-      result.q9 = 'No';
+      result.q9 = 'No'
     } else if (result.q9a === 'No MA' && result.q9b === 'No MA') {
-      result.q9 = 'No MA';
+      result.q9 = 'No MA'
     } else {
-      result.q9 = 'Yes';
+      result.q9 = 'Yes'
     }
   }
-  delete result.q9a;
-  delete result.q9b;
+  delete result.q9a
+  delete result.q9b
 
   // Consolidate q11a and q11b into q11 by taking the lower score
   if ('q11a' in result && 'q11b' in result) {
     if (result.q11a === null || result.q11b === null) {
-      result.q11 = null;
+      result.q11 = null
     } else if (result.q11a === 'No' || result.q11b === 'No') {
-      result.q11 = 'No';
+      result.q11 = 'No'
     } else if (result.q11a === 'No MA' && result.q11b === 'No MA') {
-      result.q11 = 'No MA';
+      result.q11 = 'No MA'
     } else {
-      result.q11 = 'Yes';
+      result.q11 = 'Yes'
     }
   }
-  delete result.q11a;
-  delete result.q11b;
+  delete result.q11a
+  delete result.q11b
 
-  return result;
+  return result
 }
 
 /**
@@ -296,8 +300,8 @@ export function getAnswers(checklist) {
  * @returns {string} CSV string.
  */
 export function exportChecklistsToCSV(checklists) {
-  const list = Array.isArray(checklists) ? checklists : [checklists];
-  const questionKeys = Object.keys(AMSTAR_CHECKLIST);
+  const list = Array.isArray(checklists) ? checklists : [checklists]
+  const questionKeys = Object.keys(AMSTAR_CHECKLIST)
 
   // CSV headers
   const headers = [
@@ -311,25 +315,25 @@ export function exportChecklistsToCSV(checklists) {
     'Option Text',
     'Selected',
     'Selected Answer',
-  ];
+  ]
 
-  const rows = [];
+  const rows = []
 
-  list.forEach(cl => {
-    questionKeys.forEach(q => {
-      const question = AMSTAR_CHECKLIST[q];
-      const questionText = question?.text || q;
-      const columns = question?.columns || [];
-      const answers = cl[q]?.answers || [];
-      const critical = cl[q]?.critical || false;
-      const selectedAnswer = getSelectedAnswer(answers, q) || '';
+  list.forEach((cl) => {
+    questionKeys.forEach((q) => {
+      const question = AMSTAR_CHECKLIST[q]
+      const questionText = question?.text || q
+      const columns = question?.columns || []
+      const answers = cl[q]?.answers || []
+      const critical = cl[q]?.critical || false
+      const selectedAnswer = getSelectedAnswer(answers, q) || ''
 
       columns.forEach((col, colIdx) => {
-        const colLabel = col.label || '';
-        const options = col.options || [];
-        const ansArr = answers[colIdx] || [];
+        const colLabel = col.label || ''
+        const options = col.options || []
+        const ansArr = answers[colIdx] || []
         options.forEach((optText, optIdx) => {
-          const selected = ansArr[optIdx] === true ? 'TRUE' : 'FALSE';
+          const selected = ansArr[optIdx] === true ? 'TRUE' : 'FALSE'
           rows.push([
             cl.name || '',
             cl.reviewerName || '',
@@ -342,17 +346,20 @@ export function exportChecklistsToCSV(checklists) {
             optText,
             selected,
             selectedAnswer,
-          ]);
-        });
-      });
-    });
-  });
+          ])
+        })
+      })
+    })
+  })
 
   // CSV encode
-  const escape = val => `"${String(val).replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+  const escape = (val) =>
+    `"${String(val).replace(/"/g, '""').replace(/\n/g, ' ')}"`
   const csv =
-    headers.map(escape).join(',') + '\n' + rows.map(row => row.map(escape).join(',')).join('\n');
-  return csv;
+    headers.map(escape).join(',') +
+    '\n' +
+    rows.map((row) => row.map(escape).join(',')).join('\n')
+  return csv
 }
 
 /**

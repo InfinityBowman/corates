@@ -1,14 +1,14 @@
-import { createSignal, For, Show, createMemo } from 'solid-js';
-import { getActiveDomainKeys } from '@/ROBINS-I/checklist-map.js';
-import { shouldStopAssessment } from '@/ROBINS-I/checklist.js';
-import { PlanningSection } from './PlanningSection.jsx';
-import { SectionA } from './SectionA.jsx';
-import { SectionB } from './SectionB.jsx';
-import { SectionC } from './SectionC.jsx';
-import { SectionD } from './SectionD.jsx';
-import { DomainSection } from './DomainSection.jsx';
-import { OverallSection } from './OverallSection.jsx';
-import { ResponseLegend } from './SignallingQuestion.jsx';
+import { createSignal, For, Show, createMemo } from 'solid-js'
+import { getActiveDomainKeys } from '@/ROBINS-I/checklist-map.js'
+import { shouldStopAssessment } from '@/ROBINS-I/checklist.js'
+import { PlanningSection } from './PlanningSection.jsx'
+import { SectionA } from './SectionA.jsx'
+import { SectionB } from './SectionB.jsx'
+import { SectionC } from './SectionC.jsx'
+import { SectionD } from './SectionD.jsx'
+import { DomainSection } from './DomainSection.jsx'
+import { OverallSection } from './OverallSection.jsx'
+import { ResponseLegend } from './SignallingQuestion.jsx'
 
 /**
  * Main ROBINS-I V2 Checklist Component
@@ -21,59 +21,63 @@ import { ResponseLegend } from './SignallingQuestion.jsx';
  * @param {boolean} [props.readOnly] - Whether the checklist is read-only (disables all inputs)
  */
 export function ROBINSIChecklist(props) {
-  const isReadOnly = () => !!props.readOnly;
+  const isReadOnly = () => !!props.readOnly
 
   // Track collapsed state for each domain
-  const [collapsedDomains, setCollapsedDomains] = createSignal({});
+  const [collapsedDomains, setCollapsedDomains] = createSignal({})
 
   // Determine if assessment should stop based on Section B
-  const stopAssessment = createMemo(() => shouldStopAssessment(props.checklistState?.sectionB));
+  const stopAssessment = createMemo(() =>
+    shouldStopAssessment(props.checklistState?.sectionB),
+  )
 
   // Get active domains based on protocol type (ITT vs Per-Protocol)
-  const isPerProtocol = createMemo(() => props.checklistState?.sectionC?.isPerProtocol || false);
+  const isPerProtocol = createMemo(
+    () => props.checklistState?.sectionC?.isPerProtocol || false,
+  )
 
-  const activeDomains = createMemo(() => getActiveDomainKeys(isPerProtocol()));
+  const activeDomains = createMemo(() => getActiveDomainKeys(isPerProtocol()))
 
   // Update handlers - use object-style API like AMSTAR2: onUpdate({ key: value })
   function handlePlanningUpdate(newPlanning) {
-    props.onUpdate({ planning: newPlanning });
+    props.onUpdate({ planning: newPlanning })
   }
 
   function handleSectionAUpdate(newSectionA) {
-    props.onUpdate({ sectionA: newSectionA });
+    props.onUpdate({ sectionA: newSectionA })
   }
 
   function handleSectionBUpdate(newSectionB) {
-    props.onUpdate({ sectionB: newSectionB });
+    props.onUpdate({ sectionB: newSectionB })
   }
 
   function handleSectionCUpdate(newSectionC) {
-    props.onUpdate({ sectionC: newSectionC });
+    props.onUpdate({ sectionC: newSectionC })
   }
 
   function handleSectionDUpdate(newSectionD) {
-    props.onUpdate({ sectionD: newSectionD });
+    props.onUpdate({ sectionD: newSectionD })
   }
 
   function handleDomainUpdate(domainKey, newDomainState) {
-    props.onUpdate({ [domainKey]: newDomainState });
+    props.onUpdate({ [domainKey]: newDomainState })
   }
 
   function handleOverallUpdate(newOverall) {
-    props.onUpdate({ overall: newOverall });
+    props.onUpdate({ overall: newOverall })
   }
 
   function toggleDomainCollapse(domainKey) {
-    setCollapsedDomains(prev => ({
+    setCollapsedDomains((prev) => ({
       ...prev,
       [domainKey]: !prev[domainKey],
-    }));
+    }))
   }
 
   return (
-    <div class='bg-blue-50'>
-      <div class='container mx-auto max-w-5xl space-y-4 px-4 py-6'>
-        <div class='mb-6 text-left text-lg font-semibold text-gray-900 sm:text-center'>
+    <div class="bg-blue-50">
+      <div class="container mx-auto max-w-5xl space-y-4 px-4 py-6">
+        <div class="mb-6 text-left text-lg font-semibold text-gray-900 sm:text-center">
           {props.checklistState.name || 'ROBINS-I Checklist'}
         </div>
         {/* Response Legend */}
@@ -89,8 +93,8 @@ export function ROBINSIChecklist(props) {
         />
 
         {/* Preliminary Considerations Header */}
-        <div class='rounded-lg border border-blue-200 bg-blue-100 px-6 py-4'>
-          <h2 class='text-lg font-semibold text-blue-900'>
+        <div class="rounded-lg border border-blue-200 bg-blue-100 px-6 py-4">
+          <h2 class="text-lg font-semibold text-blue-900">
             For Each Study Result: Preliminary Considerations (Parts A to D)
           </h2>
         </div>
@@ -125,13 +129,15 @@ export function ROBINSIChecklist(props) {
 
         {/* Domain sections - hidden entirely if assessment should stop */}
         <Show when={!stopAssessment()}>
-          <div class='space-y-4'>
+          <div class="space-y-4">
             <For each={activeDomains()}>
-              {domainKey => (
+              {(domainKey) => (
                 <DomainSection
                   domainKey={domainKey}
                   domainState={props.checklistState?.[domainKey]}
-                  onUpdate={newState => handleDomainUpdate(domainKey, newState)}
+                  onUpdate={(newState) =>
+                    handleDomainUpdate(domainKey, newState)
+                  }
                   disabled={isReadOnly()}
                   showComments={props.showComments}
                   collapsed={collapsedDomains()[domainKey]}
@@ -151,17 +157,19 @@ export function ROBINSIChecklist(props) {
 
         {/* Critical risk message when stopped */}
         <Show when={stopAssessment()}>
-          <div class='rounded-lg border-2 border-red-200 bg-red-50 p-6 text-center'>
-            <div class='mb-2 text-lg font-semibold text-red-800'>Critical Risk of Bias</div>
-            <p class='text-sm text-red-600'>
-              Based on Section B responses, this result has been classified as Critical risk of
-              bias. Domain assessment is not required.
+          <div class="rounded-lg border-2 border-red-200 bg-red-50 p-6 text-center">
+            <div class="mb-2 text-lg font-semibold text-red-800">
+              Critical Risk of Bias
+            </div>
+            <p class="text-sm text-red-600">
+              Based on Section B responses, this result has been classified as
+              Critical risk of bias. Domain assessment is not required.
             </p>
           </div>
         </Show>
       </div>
     </div>
-  );
+  )
 }
 
-export default ROBINSIChecklist;
+export default ROBINSIChecklist

@@ -3,17 +3,17 @@
  * Manages subscription state and provides permission helpers
  */
 
-import { createResource, createMemo } from 'solid-js';
-import { API_BASE } from '@config/api.js';
-import { handleFetchError } from '@/lib/error-utils.js';
-import { hasActiveAccess as checkActiveAccess } from '@/lib/access.js';
+import { createResource, createMemo } from 'solid-js'
+import { API_BASE } from '@config/api.js'
+import { handleFetchError } from '@/lib/error-utils.js'
+import { hasActiveAccess as checkActiveAccess } from '@/lib/access.js'
 import {
   hasEntitlement as checkEntitlement,
   getEffectiveEntitlements,
   getEffectiveQuotas,
   hasQuota as checkQuota,
-} from '@/lib/entitlements.js';
-import { useBetterAuth } from '@/api/better-auth-store.js';
+} from '@/lib/entitlements.js'
+import { useBetterAuth } from '@/api/better-auth-store.js'
 
 const DEFAULT_SUBSCRIPTION = {
   tier: 'free',
@@ -22,7 +22,7 @@ const DEFAULT_SUBSCRIPTION = {
   stripeSubscriptionId: null,
   currentPeriodEnd: null,
   cancelAtPeriodEnd: false,
-};
+}
 
 /**
  * Wrapper for getSubscription that handles errors gracefully
@@ -39,12 +39,12 @@ async function getSubscriptionSafe() {
         method: 'GET',
       }),
       { showToast: false },
-    ).then(res => res.json());
+    ).then((res) => res.json())
   } catch (error) {
     // Silently return default subscription on error
     // This prevents error boundary from catching network/auth errors during signout
-    console.warn('Failed to fetch subscription:', error.message);
-    return DEFAULT_SUBSCRIPTION;
+    console.warn('Failed to fetch subscription:', error.message)
+    return DEFAULT_SUBSCRIPTION
   }
 }
 
@@ -53,7 +53,7 @@ async function getSubscriptionSafe() {
  * @returns {Object} Subscription state and helper functions
  */
 export function useSubscription() {
-  const { isLoggedIn } = useBetterAuth();
+  const { isLoggedIn } = useBetterAuth()
 
   // Only fetch subscription when user is logged in
   // This prevents errors during signout when component is still mounted
@@ -62,47 +62,52 @@ export function useSubscription() {
     {
       initialValue: DEFAULT_SUBSCRIPTION,
     },
-  );
+  )
 
   /**
    * Current subscription tier
    */
-  const tier = createMemo(() => subscription()?.tier ?? 'free');
+  const tier = createMemo(() => subscription()?.tier ?? 'free')
 
   /**
    * Whether the subscription is active
    */
   const isActive = createMemo(() => {
-    const status = subscription()?.status;
-    return status === 'active' || status === 'trialing';
-  });
+    const status = subscription()?.status
+    return status === 'active' || status === 'trialing'
+  })
 
   /**
    * Whether the subscription is set to cancel at period end
    */
-  const willCancel = createMemo(() => subscription()?.cancelAtPeriodEnd ?? false);
+  const willCancel = createMemo(
+    () => subscription()?.cancelAtPeriodEnd ?? false,
+  )
 
   /**
    * Check if user has active access (time-limited access check)
    */
-  const hasActiveAccess = createMemo(() => checkActiveAccess(subscription()));
+  const hasActiveAccess = createMemo(() => checkActiveAccess(subscription()))
 
   /**
    * Effective entitlements for the user
    */
-  const entitlements = createMemo(() => getEffectiveEntitlements(subscription()));
+  const entitlements = createMemo(() =>
+    getEffectiveEntitlements(subscription()),
+  )
 
   /**
    * Effective quotas for the user
    */
-  const quotas = createMemo(() => getEffectiveQuotas(subscription()));
+  const quotas = createMemo(() => getEffectiveQuotas(subscription()))
 
   /**
    * Check if user has a specific entitlement
    * @param {string} entitlement - Entitlement key (e.g., 'project.create')
    * @returns {boolean}
    */
-  const hasEntitlement = entitlement => checkEntitlement(subscription(), entitlement);
+  const hasEntitlement = (entitlement) =>
+    checkEntitlement(subscription(), entitlement)
 
   /**
    * Check if user has quota available
@@ -113,23 +118,26 @@ export function useSubscription() {
    * @returns {boolean}
    */
   const hasQuota = (quotaKey, { used, requested = 1 }) =>
-    checkQuota(subscription(), quotaKey, { used, requested });
+    checkQuota(subscription(), quotaKey, { used, requested })
 
   /**
    * Formatted renewal/expiration date
    */
   const periodEndDate = createMemo(() => {
-    const endDate = subscription()?.currentPeriodEnd;
-    if (!endDate) return null;
+    const endDate = subscription()?.currentPeriodEnd
+    if (!endDate) return null
     // Handle both seconds and milliseconds timestamps
-    const timestamp = typeof endDate === 'number' ? endDate : parseInt(endDate);
-    const date = timestamp > 1000000000000 ? new Date(timestamp) : new Date(timestamp * 1000);
+    const timestamp = typeof endDate === 'number' ? endDate : parseInt(endDate)
+    const date =
+      timestamp > 1000000000000
+        ? new Date(timestamp)
+        : new Date(timestamp * 1000)
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-    });
-  });
+    })
+  })
 
   return {
     // Resource
@@ -158,5 +166,5 @@ export function useSubscription() {
     willCancel,
     periodEndDate,
     stripeSubscriptionId: () => subscription()?.stripeSubscriptionId,
-  };
+  }
 }
