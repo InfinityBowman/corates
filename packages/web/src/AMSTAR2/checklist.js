@@ -198,6 +198,53 @@ function getSelectedAnswer(answers, question) {
   return null;
 }
 
+/**
+ * Check if an AMSTAR2 checklist is complete (all questions have final answers).
+ * A question has a final answer if the last column has at least one option selected.
+ *
+ * @param {Object} checklist - The checklist object to validate
+ * @returns {boolean} True if all questions have final answers, false otherwise
+ */
+export function isAMSTAR2Complete(checklist) {
+  if (!checklist || typeof checklist !== 'object') return false;
+
+  // All required AMSTAR2 questions
+  const requiredQuestions = [
+    'q1',
+    'q2',
+    'q3',
+    'q4',
+    'q5',
+    'q6',
+    'q7',
+    'q8',
+    'q9a',
+    'q9b',
+    'q10',
+    'q11a',
+    'q11b',
+    'q12',
+    'q13',
+    'q14',
+    'q15',
+    'q16',
+  ];
+
+  // Check each required question has a final answer
+  for (const questionKey of requiredQuestions) {
+    const question = checklist[questionKey];
+    if (!question || !Array.isArray(question.answers)) return false;
+
+    // Check if the last column has at least one option selected
+    const lastCol = question.answers[question.answers.length - 1];
+    if (!Array.isArray(lastCol)) return false;
+    const hasAnswer = lastCol.some(v => v === true);
+    if (!hasAnswer) return false;
+  }
+
+  return true;
+}
+
 export function getAnswers(checklist) {
   if (!checklist || typeof checklist !== 'object') return null;
   const result = {};

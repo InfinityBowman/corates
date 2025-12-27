@@ -1,24 +1,24 @@
 import { Router, Route } from '@solidjs/router';
 import Dashboard from './components/Dashboard.jsx';
-import SignIn from '@auth-ui/SignIn.jsx';
-import SignUp from '@auth-ui/SignUp.jsx';
-import CheckEmail from '@auth-ui/CheckEmail.jsx';
-import CompleteProfile from '@auth-ui/CompleteProfile.jsx';
-import ResetPassword from '@auth-ui/ResetPassword.jsx';
-import AuthLayout from '@auth-ui/AuthLayout.jsx';
+import SignIn from '@/components/auth/SignIn.jsx';
+import SignUp from '@/components/auth/SignUp.jsx';
+import CheckEmail from '@/components/auth/CheckEmail.jsx';
+import CompleteProfile from '@/components/auth/CompleteProfile.jsx';
+import ResetPassword from '@/components/auth/ResetPassword.jsx';
+import AuthLayout from '@/components/auth/AuthLayout.jsx';
 import Layout from '@/Layout.jsx';
-import ChecklistYjsWrapper from '@checklist-ui/ChecklistYjsWrapper.jsx';
-import ReconciliationWrapper from '@/components/checklist-ui/compare/ReconciliationWrapper.jsx';
-import ProjectView from '@project-ui/ProjectView.jsx';
-import LocalChecklistView from '@checklist-ui/LocalChecklistView.jsx';
-import ProfilePage from '@components/profile-ui/ProfilePage.jsx';
-import SettingsPage from '@components/profile-ui/SettingsPage.jsx';
+import ChecklistYjsWrapper from '@/components/checklist/ChecklistYjsWrapper.jsx';
+import ReconciliationWrapper from '@/components/checklist/compare/ReconciliationWrapper.jsx';
+import ProjectView from '@/components/project/ProjectView.jsx';
+import LocalChecklistView from '@/components/checklist/LocalChecklistView.jsx';
+import ProfilePage from '@/components/profile/ProfilePage.jsx';
+import SettingsPage from '@/components/profile/SettingsPage.jsx';
 import BillingPage from '@components/billing/BillingPage.jsx';
 import NotFoundPage from '@components/NotFoundPage.jsx';
-import { AdminDashboard } from '@components/admin-ui/index.js';
-import StorageManagement from '@components/admin-ui/StorageManagement.jsx';
+import { AdminDashboard } from '@/components/admin/index.js';
+import StorageManagement from '@/components/admin/StorageManagement.jsx';
 import { BASEPATH } from '@config/api.js';
-import ProtectedGuard from '@/components/auth-ui/ProtectedGuard.jsx';
+import ProtectedGuard from '@/components/auth/ProtectedGuard.jsx';
 
 export default function AppRoutes() {
   return (
