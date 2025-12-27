@@ -380,7 +380,7 @@ describe('Member Routes - POST /api/projects/:projectId/members', () => {
     expect(body.email).toBe('new@example.com');
   });
 
-  it('should return 404 if user not found', async () => {
+  it('should create invitation when user not found', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
 
     await seedUser({
@@ -416,11 +416,10 @@ describe('Member Routes - POST /api/projects/:projectId/members', () => {
       }),
     });
 
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(201);
     const body = await json(res);
-    // Domain errors have 'code' field, not 'error'
-    expect(body.code || body.error).toBeDefined();
-    expect(body.code).toMatch(/NOT_FOUND/);
+    expect(body.success).toBe(true);
+    expect(body.invitation).toBe(true);
   });
 
   it('should return 409 if user is already a member', async () => {

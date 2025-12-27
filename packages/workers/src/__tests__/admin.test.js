@@ -50,16 +50,37 @@ async function resetSchema() {
   // NOTE: Avoid D1Database.exec() here; it can surface internal meta aggregation errors.
   const run = sql => env.DB.prepare(sql).run();
 
-  await run('PRAGMA foreign_keys = ON');
+  // Disable foreign keys before dropping to avoid constraint errors
+  await run('PRAGMA foreign_keys = OFF');
 
-  await run('DROP TABLE IF EXISTS subscriptions');
-  await run('DROP TABLE IF EXISTS twoFactor');
-  await run('DROP TABLE IF EXISTS verification');
-  await run('DROP TABLE IF EXISTS account');
-  await run('DROP TABLE IF EXISTS project_members');
-  await run('DROP TABLE IF EXISTS projects');
-  await run('DROP TABLE IF EXISTS session');
-  await run('DROP TABLE IF EXISTS user');
+  // Drop tables in reverse dependency order (child tables first, then parent tables)
+  // This order matches the reverse of table creation order
+  // Wrap in try-catch to handle cases where tables don't exist
+  const tablesToDrop = [
+    'subscriptions',
+    'twoFactor',
+    'verification',
+    'account',
+    'project_members',
+    'projects',
+    'session',
+    'user',
+  ];
+
+  for (const table of tablesToDrop) {
+    try {
+      await run(`DROP TABLE IF EXISTS \`${table}\``);
+    } catch (error) {
+      // Ignore "no such table" errors - table might not exist
+      // Re-throw other errors as they indicate real problems
+      if (!error.message?.includes('no such table')) {
+        throw error;
+      }
+    }
+  }
+
+  // Re-enable foreign keys after dropping tables
+  await run('PRAGMA foreign_keys = ON');
 
   await run(`
     CREATE TABLE user (

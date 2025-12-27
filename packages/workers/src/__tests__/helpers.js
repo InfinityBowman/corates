@@ -2,7 +2,7 @@
  * Shared test utilities for workers tests
  */
 
-import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
+import { env, createExecutionContext, waitOnExecutionContext, runInDurableObject } from 'cloudflare:test';
 import { createDb } from '../db/client.js';
 import { user, projects, projectMembers, session, subscriptions } from '../db/schema.js';
 import {
@@ -63,12 +63,80 @@ function parseSqlStatements(sqlContent) {
 }
 
 /**
+ * Clear ProjectDoc Durable Objects for test project IDs
+ * This prevents DO invalidation errors between tests
+ */
+export async function clearProjectDOs(projectIds = []) {
+  // Common test project IDs that might have DOs
+  const defaultProjectIds = ['project-1', 'project-2', 'p1', 'p2'];
+  const allProjectIds = [...new Set([...defaultProjectIds, ...projectIds])];
+
+  for (const projectId of allProjectIds) {
+    try {
+      const doId = env.PROJECT_DOC.idFromName(projectId);
+      const stub = env.PROJECT_DOC.get(doId);
+      await runInDurableObject(stub, async (instance, state) => {
+        // Clear all storage
+        const keys = await state.storage.list();
+        for (const [key] of keys) {
+          await state.storage.delete(key);
+        }
+      });
+    } catch (error) {
+      // Ignore errors - DO might not exist or be invalid
+      // This is expected when DOs are invalidated between test runs
+      const isInvalidationError =
+        error?.message?.includes('invalidating this Durable Object') ||
+        error?.message?.includes('inputGateBroken') ||
+        error?.remote === true ||
+        error?.durableObjectReset === true;
+      if (!isInvalidationError) {
+        // Only log non-invalidation errors for debugging
+        console.warn(`Failed to clear ProjectDoc DO for ${projectId}:`, error.message);
+      }
+    }
+  }
+}
+
+/**
  * Reset database schema for tests using Drizzle migrations
+ * This function safely drops all tables and recreates the schema from migrations
  */
 export async function resetTestDatabase() {
   const run = sql => env.DB.prepare(sql).run();
 
-  // Enable foreign keys
+  // Disable foreign keys before dropping to avoid constraint errors
+  await run('PRAGMA foreign_keys = OFF');
+
+  // Drop tables in reverse dependency order (child tables first, then parent tables)
+  // This order matches the reverse of table creation order in migrations
+  // Wrap each drop in try-catch to handle cases where tables don't exist
+  const tablesToDrop = [
+    'project_invitations',
+    'subscriptions',
+    'twoFactor',
+    'verification',
+    'mediaFiles',
+    'project_members',
+    'projects',
+    'session',
+    'account',
+    'user',
+  ];
+
+  for (const table of tablesToDrop) {
+    try {
+      await run(`DROP TABLE IF EXISTS \`${table}\``);
+    } catch (error) {
+      // Ignore "no such table" errors - table might not exist
+      // Re-throw other errors as they indicate real problems
+      if (!error.message?.includes('no such table')) {
+        throw error;
+      }
+    }
+  }
+
+  // Re-enable foreign keys after dropping tables
   await run('PRAGMA foreign_keys = ON');
 
   // Parse and execute the migration SQL
@@ -77,7 +145,17 @@ export async function resetTestDatabase() {
   // Execute each migration statement
   for (const statement of statements) {
     if (statement.trim()) {
-      await run(statement);
+      try {
+        await run(statement);
+      } catch (error) {
+        // Ignore "table already exists" errors during creation
+        // This can happen if a previous test run didn't clean up properly
+        if (error.message?.includes('already exists')) {
+          // Table exists, skip creation
+          continue;
+        }
+        throw error;
+      }
     }
   }
 }

@@ -33,21 +33,58 @@ vi.mock('../../auth/email.js', () => {
 });
 
 describe('EmailQueue Durable Object', () => {
+  // Helper to retry DO operations on invalidation errors
+  async function runInDurableObjectWithRetry(stub, fn, maxRetries = 5) {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        return await runInDurableObject(stub, fn);
+      } catch (error) {
+        const errorMessage = error?.message || String(error) || '';
+        const isInvalidationError =
+          errorMessage.includes('invalidating this Durable Object') ||
+          errorMessage.includes('inputGateBroken') ||
+          errorMessage.includes('invalidating') ||
+          error?.remote === true ||
+          error?.durableObjectReset === true;
+        if (isInvalidationError && attempt < maxRetries - 1) {
+          // Wait longer before retrying (exponential backoff with longer base delay)
+          const delay = 100 * Math.pow(2, attempt);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        throw error;
+      }
+    }
+  }
+
   beforeEach(async () => {
     vi.clearAllMocks();
     // Clear storage between tests
-    const stub = await getEmailQueueStub();
-    await runInDurableObject(stub, async (instance, state) => {
-      const emails = await state.storage.list({ prefix: 'email:' });
-      for (const [key] of emails) {
-        await state.storage.delete(key);
+    // Use try-catch to handle DO invalidation gracefully
+    try {
+      const stub = await getEmailQueueStub();
+      await runInDurableObject(stub, async (instance, state) => {
+        const emails = await state.storage.list({ prefix: 'email:' });
+        for (const [key] of emails) {
+          await state.storage.delete(key);
+        }
+        const deadLetters = await state.storage.list({ prefix: 'dead-letter:' });
+        for (const [key] of deadLetters) {
+          await state.storage.delete(key);
+        }
+        await state.storage.deleteAlarm();
+      });
+    } catch (error) {
+      // Ignore DO invalidation errors in cleanup - test will create fresh DO
+      const isInvalidationError =
+        error?.message?.includes('invalidating this Durable Object') ||
+        error?.message?.includes('inputGateBroken') ||
+        error?.remote === true ||
+        error?.durableObjectReset === true;
+      if (!isInvalidationError) {
+        throw error;
       }
-      const deadLetters = await state.storage.list({ prefix: 'dead-letter:' });
-      for (const [key] of deadLetters) {
-        await state.storage.delete(key);
-      }
-      await state.storage.deleteAlarm();
-    });
+    }
   });
 
   async function getEmailQueueStub() {
@@ -181,7 +218,7 @@ describe('EmailQueue Durable Object', () => {
 
       // Verify email was stored for retry
       const stub = await getEmailQueueStub();
-      await runInDurableObject(stub, async (instance, state) => {
+      await runInDurableObjectWithRetry(stub, async (instance, state) => {
         const emails = await state.storage.list({ prefix: 'email:' });
         expect(emails.size).toBeGreaterThan(0);
 
@@ -209,7 +246,7 @@ describe('EmailQueue Durable Object', () => {
       const stub = await getEmailQueueStub();
 
       // Simulate max retries
-      await runInDurableObject(stub, async (instance, state) => {
+      await runInDurableObjectWithRetry(stub, async (instance, state) => {
         const emails = await state.storage.list({ prefix: 'email:' });
         if (emails.size > 0) {
           const emailEntries = Array.from(emails.entries());
@@ -250,7 +287,7 @@ describe('EmailQueue Durable Object', () => {
       const stub = await getEmailQueueStub();
 
       // Set up retry-pending email
-      await runInDurableObject(stub, async (instance, state) => {
+      await runInDurableObjectWithRetry(stub, async (instance, state) => {
         const emails = await state.storage.list({ prefix: 'email:' });
         if (emails.size > 0) {
           const emailEntries = Array.from(emails.entries());
@@ -280,7 +317,7 @@ describe('EmailQueue Durable Object', () => {
       await queueEmail(payload);
 
       const stub = await getEmailQueueStub();
-      await runInDurableObject(stub, async (instance, state) => {
+      await runInDurableObjectWithRetry(stub, async (instance, state) => {
         const emails = await state.storage.list({ prefix: 'email:' });
         expect(emails.size).toBeGreaterThan(0);
 
@@ -312,7 +349,7 @@ describe('EmailQueue Durable Object', () => {
       await queueEmail(payload);
 
       const stub = await getEmailQueueStub();
-      await runInDurableObject(stub, async (instance, state) => {
+      await runInDurableObjectWithRetry(stub, async (instance, state) => {
         const emails = await state.storage.list({ prefix: 'email:' });
         if (emails.size > 0) {
           const emailEntries = Array.from(emails.entries());
@@ -345,7 +382,7 @@ describe('EmailQueue Durable Object', () => {
       await queueEmail(payload);
 
       const stub = await getEmailQueueStub();
-      await runInDurableObject(stub, async (instance, state) => {
+      await runInDurableObjectWithRetry(stub, async (instance, state) => {
         // Manually trigger max retries scenario
         const emails = await state.storage.list({ prefix: 'email:' });
         if (emails.size > 0) {
@@ -379,7 +416,7 @@ describe('EmailQueue Durable Object', () => {
       await queueEmail(payload);
 
       const stub = await getEmailQueueStub();
-      await runInDurableObject(stub, async (instance, state) => {
+      await runInDurableObjectWithRetry(stub, async (instance, state) => {
         const alarm = await state.storage.getAlarm();
         expect(alarm).toBeGreaterThan(Date.now());
       });
@@ -404,13 +441,13 @@ describe('EmailQueue Durable Object', () => {
       const stub = await getEmailQueueStub();
 
       let firstAlarm;
-      await runInDurableObject(stub, async (instance, state) => {
+      await runInDurableObjectWithRetry(stub, async (instance, state) => {
         firstAlarm = await state.storage.getAlarm();
       });
 
       await queueEmail(payload2);
 
-      await runInDurableObject(stub, async (instance, state) => {
+      await runInDurableObjectWithRetry(stub, async (instance, state) => {
         const secondAlarm = await state.storage.getAlarm();
         // Should be the same alarm (not duplicated)
         expect(secondAlarm).toBe(firstAlarm);

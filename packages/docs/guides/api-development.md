@@ -565,6 +565,181 @@ routes.delete('/:id', requireAuth, async c => {
 });
 ```
 
+## Project Invitations
+
+The invitation system allows project owners to invite users who don't have accounts yet. Invitations are created automatically when adding members by email if the user doesn't exist.
+
+### Creating Invitations
+
+When adding a member via `POST /api/projects/{projectId}/members`, if the user doesn't exist and an email is provided:
+
+1. Check for existing pending invitation for the email/project
+2. If pending invitation exists: resend it (update role, extend expiration)
+3. If invitation already accepted: return `PROJECT_INVITATION_ALREADY_ACCEPTED` error
+4. If no invitation exists: create new invitation with 7-day expiration
+
+```js
+// Example: Creating invitation when user doesn't exist
+if (!userToAdd && email) {
+  const existingInvitation = await db
+    .select()
+    .from(projectInvitations)
+    .where(
+      and(
+        eq(projectInvitations.projectId, projectId),
+        eq(projectInvitations.email, email.toLowerCase()),
+      ),
+    )
+    .get();
+
+  if (existingInvitation && !existingInvitation.acceptedAt) {
+    // Resend existing invitation
+    await db
+      .update(projectInvitations)
+      .set({
+        role,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      })
+      .where(eq(projectInvitations.id, existingInvitation.id));
+  } else {
+    // Create new invitation
+    const token = crypto.randomUUID();
+    await db.insert(projectInvitations).values({
+      id: crypto.randomUUID(),
+      projectId,
+      email: email.toLowerCase(),
+      role,
+      token,
+      invitedBy: authUser.id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      createdAt: new Date(),
+    });
+  }
+}
+```
+
+### Magic Link Generation
+
+Invitations use Better Auth's magic link system. The magic link URL is generated using Better Auth's API with a custom `sendMagicLink` hook to capture the URL without sending email:
+
+```js
+import { betterAuth } from 'better-auth';
+import { magicLink } from 'better-auth/plugins';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { drizzle } from 'drizzle-orm/d1';
+
+// Create temporary auth instance with custom hook
+const tempAuth = betterAuth({
+  database: drizzleAdapter(db, { provider: 'sqlite', schema }),
+  baseURL: authBaseUrl,
+  secret: authSecret,
+  plugins: [
+    magicLink({
+      sendMagicLink: async ({ url }) => {
+        // Capture URL instead of sending email
+        capturedMagicLinkUrl = url;
+      },
+      expiresIn: 60 * MAGIC_LINK_EXPIRY_MINUTES,
+    }),
+  ],
+});
+
+// Generate magic link
+await tempAuth.api.signInMagicLink({
+  body: {
+    email: email.toLowerCase(),
+    callbackURL: `${appUrl}/complete-profile?invitation=${token}`,
+    newUserCallbackURL: `${appUrl}/complete-profile?invitation=${token}`,
+  },
+  headers: new Headers(),
+});
+```
+
+### Sending Invitation Emails
+
+Invitation emails are sent via the EMAIL_QUEUE Durable Object:
+
+```js
+import { getProjectInvitationEmailHtml, getProjectInvitationEmailText } from '../auth/emailTemplates.js';
+import { escapeHtml } from '../lib/escapeHtml.js';
+
+const emailHtml = getProjectInvitationEmailHtml({
+  projectName: escapeHtml(project.name),
+  inviterName: escapeHtml(inviter.displayName || inviter.name),
+  invitationUrl: magicLinkUrl,
+  role,
+});
+
+const queueId = c.env.EMAIL_QUEUE.idFromName('default');
+const queue = c.env.EMAIL_QUEUE.get(queueId);
+await queue.fetch(
+  new Request('https://internal/enqueue', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to: email,
+      subject: `You're Invited to "${escapeHtml(project.name)}" - CoRATES`,
+      html: emailHtml,
+      text: getProjectInvitationEmailText({ ... }),
+    }),
+  }),
+);
+```
+
+### Accepting Invitations
+
+The invitation acceptance endpoint (`POST /api/invitations/accept`) validates:
+
+1. Token exists and is valid
+2. Invitation hasn't expired
+3. Invitation hasn't been accepted
+4. Authenticated user's email matches invitation email (case-insensitive, trimmed)
+
+```js
+// Email normalization for security
+const normalizedUserEmail = (currentUser.email || '').trim().toLowerCase();
+const normalizedInvitationEmail = (invitation.email || '').trim().toLowerCase();
+
+if (normalizedUserEmail !== normalizedInvitationEmail) {
+  const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+    reason: 'email_mismatch',
+  });
+  return c.json(error, error.statusCode);
+}
+```
+
+### Syncing to Durable Objects
+
+After accepting an invitation or adding a member, sync the change to the ProjectDoc Durable Object:
+
+```js
+import { syncMemberToDO } from '../lib/project-sync.js';
+
+await syncMemberToDO(c.env, projectId, 'add', {
+  userId: authUser.id,
+  role: invitation.role,
+  joinedAt: nowDate.getTime(),
+  name: currentUser.name,
+  email: currentUser.email,
+  displayName: currentUser.displayName,
+  image: currentUser.image,
+});
+```
+
+The `syncMemberToDO` utility centralizes Durable Object synchronization and handles errors gracefully.
+
+### Error Handling
+
+Common invitation errors:
+
+- `VALIDATION_FIELD_INVALID_FORMAT` - Invalid or expired token
+- `PROJECT_MEMBER_ALREADY_EXISTS` - Invitation already accepted
+- `PROJECT_INVITATION_ALREADY_ACCEPTED` - Trying to resend an accepted invitation
+- `AUTH_FORBIDDEN` - Email mismatch (security check)
+- `SYSTEM_DB_ERROR` - Database operation failed
+
+Always use `createDomainError` with appropriate error codes from `@corates/shared`.
+
 ## Best Practices
 
 ### DO

@@ -18,7 +18,7 @@
     "db:generate:test": "node ./scripts/generate-test-sql.mjs",
     "db:migrate": "y | wrangler d1 migrations apply corates-db --local",
     "db:migrate:prod": "wrangler d1 migrations apply corates-db --remote",
-    "db:setup:prod": "wrangler d1 execute corates-db-prod --remote --file=migrations/0001_init.sql",
+    "db:setup:prod": "wrangler d1 migrations apply corates-db-prod --remote",
     "db:reset:prod": "node ./scripts/reset-db-prod.mjs",
     "user:make-admin:local": "node ./scripts/make-admin-local.mjs",
     "user:make-admin:prod": "node ./scripts/make-admin-prod.mjs",

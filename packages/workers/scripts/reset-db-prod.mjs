@@ -55,18 +55,16 @@ function runWranglerD1Execute(command, options = {}) {
   return runCommand('pnpm', args, options);
 }
 
-function runWranglerD1ExecuteFile(filePath) {
+function runWranglerD1MigrationsApply() {
   const args = [
     'wrangler',
     'd1',
-    'execute',
+    'migrations',
+    'apply',
     DB_NAME,
     '--remote',
     '--env',
     'production',
-    '--yes',
-    '--file',
-    filePath,
   ];
 
   return runCommand('pnpm', args);
@@ -124,12 +122,11 @@ async function main() {
     //   console.log('    Bucket created');
     // }
 
-    // Step 3: Run migration
+    // Step 3: Run migrations
     console.log('');
-    console.log('Step 3: Running migration...');
-    const migrationPath = join(ROOT, 'migrations', '0001_init.sql');
-    runWranglerD1ExecuteFile(migrationPath);
-    console.log('  Migration completed');
+    console.log('Step 3: Running migrations...');
+    runWranglerD1MigrationsApply();
+    console.log('  Migrations completed');
 
     // Step 4: Deploy workers
     console.log('');
