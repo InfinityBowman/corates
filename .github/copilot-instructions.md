@@ -58,12 +58,12 @@ Comments should not repeat what the code is saying. Instead, reserve comments fo
 
 ```js
 // Bad - narrates what the code does
-retries += 1
+retries += 1;
 
 // Good - explains why
 // Some APIs occasionally return 500s on valid requests. We retry up to 3 times
 // before surfacing an error.
-retries += 1
+retries += 1;
 ```
 
 **When to Comment:**
@@ -93,6 +93,7 @@ import { Dialog } from '@/components/ark/Dialog.jsx';
 ```
 
 See `ui-components.mdc` for detailed component usage patterns.
+
 ### Database Migrations
 
 - Use DrizzleKit to generate new migrations when necessary
@@ -131,6 +132,7 @@ See `solidjs.mdc` for detailed reactivity patterns and examples.
 ## Specialized Rule Files
 
 For detailed patterns, see:
+
 - `solidjs.mdc` - Reactivity patterns, props, stores, primitives
 - `api-routes.mdc` - API route patterns, validation, database operations
 - `error-handling.mdc` - Error handling patterns (frontend + backend)
@@ -140,6 +142,7 @@ For detailed patterns, see:
 ### Complex Area Rules
 
 For specific complex areas, see:
+
 - `yjs-sync.mdc` - Yjs synchronization, connection management, sync operations
 - `reconciliation.mdc` - Checklist reconciliation, multi-part questions, comparison logic
 - `pdf-handling.mdc` - PDF upload, caching, Google Drive integration

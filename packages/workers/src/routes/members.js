@@ -255,67 +255,67 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         const callbackPath = `${basepathNormalized}/complete-profile?invitation=${token}`;
         const callbackURL = `${appUrl}${callbackPath}`;
 
-      // Generate magic link using Better Auth's API
-      // We'll use Better Auth's signInMagicLink but intercept sendMagicLink to capture the URL
-      const authBaseUrl = c.env.AUTH_BASE_URL || c.env.APP_URL || 'https://api.corates.org';
-      let capturedMagicLinkUrl = null;
+        // Generate magic link using Better Auth's API
+        // We'll use Better Auth's signInMagicLink but intercept sendMagicLink to capture the URL
+        const authBaseUrl = c.env.AUTH_BASE_URL || c.env.APP_URL || 'https://api.corates.org';
+        let capturedMagicLinkUrl = null;
 
-      // Import required modules
-      const { betterAuth } = await import('better-auth');
-      const { magicLink } = await import('better-auth/plugins');
-      const { drizzleAdapter } = await import('better-auth/adapters/drizzle');
-      const { drizzle } = await import('drizzle-orm/d1');
-      const schema = await import('../db/schema.js');
-      const { MAGIC_LINK_EXPIRY_MINUTES } = await import('../auth/emailTemplates.js');
+        // Import required modules
+        const { betterAuth } = await import('better-auth');
+        const { magicLink } = await import('better-auth/plugins');
+        const { drizzleAdapter } = await import('better-auth/adapters/drizzle');
+        const { drizzle } = await import('drizzle-orm/d1');
+        const schema = await import('../db/schema.js');
+        const { MAGIC_LINK_EXPIRY_MINUTES } = await import('../auth/emailTemplates.js');
 
-      // Get auth secret from environment (same logic as getAuthSecret)
-      const authSecret = c.env.AUTH_SECRET || c.env.SECRET;
-      if (!authSecret) {
-        throw new Error('AUTH_SECRET must be configured');
-      }
+        // Get auth secret from environment (same logic as getAuthSecret)
+        const authSecret = c.env.AUTH_SECRET || c.env.SECRET;
+        if (!authSecret) {
+          throw new Error('AUTH_SECRET must be configured');
+        }
 
-      // Create a temporary auth instance with a custom sendMagicLink that captures the URL
-      // Dynamic import returns module namespace, exports are directly on the object
-      const tempDb = drizzle(c.env.DB, { schema });
-      const tempAuth = betterAuth({
-        database: drizzleAdapter(tempDb, {
-          provider: 'sqlite',
-          schema: {
-            user: schema.user,
-            session: schema.session,
-            account: schema.account,
-            verification: schema.verification,
-            twoFactor: schema.twoFactor,
-          },
-        }),
-        baseURL: authBaseUrl,
-        secret: authSecret,
-        plugins: [
-          magicLink({
-            sendMagicLink: async ({ url }) => {
-              // Capture the URL instead of sending email
-              capturedMagicLinkUrl = url;
+        // Create a temporary auth instance with a custom sendMagicLink that captures the URL
+        // Dynamic import returns module namespace, exports are directly on the object
+        const tempDb = drizzle(c.env.DB, { schema });
+        const tempAuth = betterAuth({
+          database: drizzleAdapter(tempDb, {
+            provider: 'sqlite',
+            schema: {
+              user: schema.user,
+              session: schema.session,
+              account: schema.account,
+              verification: schema.verification,
+              twoFactor: schema.twoFactor,
             },
-            expiresIn: 60 * MAGIC_LINK_EXPIRY_MINUTES,
           }),
-        ],
-      });
+          baseURL: authBaseUrl,
+          secret: authSecret,
+          plugins: [
+            magicLink({
+              sendMagicLink: async ({ url }) => {
+                // Capture the URL instead of sending email
+                capturedMagicLinkUrl = url;
+              },
+              expiresIn: 60 * MAGIC_LINK_EXPIRY_MINUTES,
+            }),
+          ],
+        });
 
-      // Call Better Auth's signInMagicLink API
-      await tempAuth.api.signInMagicLink({
-        body: {
-          email: email.toLowerCase(),
-          callbackURL: callbackURL,
-          newUserCallbackURL: callbackURL,
-        },
-        headers: new Headers(),
-      });
+        // Call Better Auth's signInMagicLink API
+        await tempAuth.api.signInMagicLink({
+          body: {
+            email: email.toLowerCase(),
+            callbackURL: callbackURL,
+            newUserCallbackURL: callbackURL,
+          },
+          headers: new Headers(),
+        });
 
-      if (!capturedMagicLinkUrl) {
-        throw new Error('Failed to generate magic link URL');
-      }
+        if (!capturedMagicLinkUrl) {
+          throw new Error('Failed to generate magic link URL');
+        }
 
-      const magicLinkUrl = capturedMagicLinkUrl;
+        const magicLinkUrl = capturedMagicLinkUrl;
 
         // Log magic link URL in development
         if (c.env.ENVIRONMENT !== 'production') {
