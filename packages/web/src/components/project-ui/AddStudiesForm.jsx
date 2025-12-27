@@ -310,7 +310,7 @@ export default function AddStudiesForm(props) {
                     type='button'
                     onClick={handleSubmit}
                     disabled={isSubmitting() || studies.totalStudyCount() === 0}
-                    class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400'
+                    class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
                   >
                     <Show
                       when={!isSubmitting()}

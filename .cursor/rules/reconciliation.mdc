@@ -1,0 +1,272 @@
+---
+alwaysApply: false
+description: "Checklist reconciliation patterns, multi-part questions, and comparison logic"
+globs: packages/web/src/components/checklist-ui/compare/**, packages/web/src/lib/checklist-domain.js, packages/web/src/AMSTAR2/checklist-compare.js
+---
+
+# Checklist Reconciliation Patterns
+
+> **For comprehensive reconciliation documentation**, see the reconciliation components and checklist-domain utilities.
+> This file provides quick reference patterns for AI agents working with checklist reconciliation.
+
+## Reconciliation Overview
+
+Reconciliation allows two reviewers to compare their independent checklist assessments and create a final reconciled version.
+
+### Reconciliation Structure
+
+- **checklist1**: First reviewer's checklist
+- **checklist2**: Second reviewer's checklist
+- **reconciledChecklist**: Third checklist that both reviewers edit (final answer)
+- **reconciliation progress**: Metadata stored in study's reconciliation Y.Map
+
+## Reconciliation Progress Storage
+
+### Progress Metadata
+
+Reconciliation progress is stored in the study's Y.Map:
+
+```js
+study.reconciliation = {
+  checklist1Id: 'uuid-1',
+  checklist2Id: 'uuid-2',
+  reconciledChecklistId: 'uuid-3',
+  currentPage: 0, // Optional: last viewed page
+}
+```
+
+### Final Answers Storage
+
+**Final answers are stored in the reconciled checklist itself**, not in progress metadata:
+
+```js
+// CORRECT - Final answers are in the reconciled checklist
+const reconciledChecklist = getChecklistData(studyId, reconciledChecklistId);
+const finalAnswer = reconciledChecklist.answers[questionKey];
+
+// WRONG - Don't look for final answers in reconciliation progress
+const progress = getReconciliationProgress(studyId);
+// progress doesn't contain final answers
+```
+
+## Multi-Part Questions
+
+### Questions with Parts
+
+Questions q9 and q11 have multiple parts (a/b):
+
+- **q9**: Has q9a and q9b parts
+- **q11**: Has q11a and q11b parts
+
+### Handling Multi-Part Questions
+
+Use `MultiPartQuestionPage` component for q9 and q11:
+
+```jsx
+// CORRECT - Use MultiPartQuestionPage for multi-part questions
+<Show when={props.isMultiPart} fallback={<SingleQuestionPage {...props} />}>
+  <MultiPartQuestionPage {...props} />
+</Show>
+```
+
+### Multi-Part Answer Structure
+
+Multi-part answers are stored as objects with part keys:
+
+```js
+// Multi-part answer structure
+{
+  q9a: {
+    answers: [[...], [...]], // Answer matrix
+    critical: boolean
+  },
+  q9b: {
+    answers: [[...], [...]],
+    critical: boolean
+  }
+}
+```
+
+### Comparing Multi-Part Answers
+
+Use `multiPartAnswersEqual` helper:
+
+```js
+import { multiPartAnswersEqual } from './MultiPartQuestionPage.jsx';
+
+const agree = multiPartAnswersEqual(reviewer1Answers, reviewer2Answers);
+```
+
+## Single-Part Questions
+
+### Standard Questions
+
+All other questions (q1-q8, q10, q12-q16) are single-part:
+
+```jsx
+// Use SingleQuestionPage for standard questions
+<SingleQuestionPage
+  questionKey="q1"
+  reviewer1Answers={checklist1.answers.q1}
+  reviewer2Answers={checklist2.answers.q1}
+  finalAnswers={reconciledChecklist.answers.q1}
+  onFinalChange={(newAnswer) => updateFinalAnswer('q1', newAnswer)}
+/>
+```
+
+## Answer Comparison
+
+### Comparing Checklists
+
+Use `compareChecklists` utility:
+
+```js
+import { compareChecklists } from '@/AMSTAR2/checklist-compare.js';
+
+const comparison = compareChecklists(checklist1, checklist2);
+// Returns: { agreements: [...], disagreements: [...] }
+```
+
+### Agreement Detection
+
+Check if reviewers agree on a question:
+
+```js
+// For single-part questions
+const agree = singleAnswerEqual(
+  checklist1.answers[questionKey],
+  checklist2.answers[questionKey]
+);
+
+// For multi-part questions
+const agree = multiPartAnswersEqual(
+  checklist1.answers, // Contains q9a, q9b, etc.
+  checklist2.answers
+);
+```
+
+## Reconciliation Workflow
+
+### Starting Reconciliation
+
+1. Find or create reconciled checklist
+2. Load both reviewer checklists
+3. Compare answers
+4. Display reconciliation UI
+
+```js
+// Find existing reconciled checklist
+const reconciled = findReconciledChecklist(study, checklist1Id, checklist2Id);
+
+// Or create new one
+if (!reconciled) {
+  const newReconciled = await createChecklist({
+    studyId,
+    type: 'AMSTAR2',
+    title: 'Reconciled',
+    // ... other fields
+  });
+
+  // Save progress
+  saveReconciliationProgress(studyId, {
+    checklist1Id,
+    checklist2Id,
+    reconciledChecklistId: newReconciled.id,
+  });
+}
+```
+
+### Updating Final Answers
+
+Update final answers in the reconciled checklist:
+
+```js
+// CORRECT - Update reconciled checklist directly
+updateChecklistAnswer(
+  studyId,
+  reconciledChecklistId,
+  questionKey,
+  finalAnswerData
+);
+
+// WRONG - Don't update reconciliation progress with answers
+saveReconciliationProgress(studyId, {
+  finalAnswers: {...} // Don't do this
+});
+```
+
+### Auto-Fill on Agreement
+
+When reviewers agree, auto-fill final answer:
+
+```js
+// Auto-fill logic (handled in MultiPartQuestionPage/SingleQuestionPage)
+if (reviewersAgree && !hasFinalAnswer) {
+  // Use reviewer1's answer as starting point
+  const finalAnswer = reviewer1Answers;
+  onFinalChange(finalAnswer);
+}
+```
+
+## Notes Reconciliation
+
+### Question Notes
+
+Each question can have notes from both reviewers and a final note:
+
+```js
+// Get notes for a question
+const reviewer1Note = getQuestionNote(studyId, checklist1Id, questionKey);
+const reviewer2Note = getQuestionNote(studyId, checklist2Id, questionKey);
+const finalNote = getQuestionNote(studyId, reconciledChecklistId, questionKey);
+
+// Notes are Y.Text objects for collaborative editing
+// Final note is editable by both reviewers
+```
+
+## Navigation State
+
+### Page Tracking
+
+Track current page in reconciliation:
+
+```js
+// Save current page in reconciliation progress
+saveReconciliationProgress(studyId, {
+  checklist1Id,
+  checklist2Id,
+  reconciledChecklistId,
+  currentPage: 5, // Optional
+});
+
+// Or use localStorage for UI state
+localStorage.setItem(`reconciliation-${studyId}`, JSON.stringify({
+  currentPage: 5,
+  viewMode: 'questions'
+}));
+```
+
+## Best Practices
+
+### DO
+
+- Store final answers in the reconciled checklist
+- Use reconciliation progress only for metadata (IDs, page)
+- Handle multi-part questions with MultiPartQuestionPage
+- Auto-fill final answers when reviewers agree
+- Use comparison utilities for agreement detection
+
+### DON'T
+
+- Don't store final answers in reconciliation progress
+- Don't manually compare answers (use utilities)
+- Don't mix single-part and multi-part question handling
+- Don't forget to save reconciliation progress after creating reconciled checklist
+
+## Examples from Codebase
+
+- `packages/web/src/components/checklist-ui/compare/ReconciliationWrapper.jsx` - Main reconciliation component
+- `packages/web/src/components/checklist-ui/compare/MultiPartQuestionPage.jsx` - Multi-part question handling
+- `packages/web/src/components/checklist-ui/compare/ReconciliationQuestionPage.jsx` - Single question page
+- `packages/web/src/lib/checklist-domain.js` - Reconciliation utilities
+- `packages/web/src/AMSTAR2/checklist-compare.js` - Comparison logic

@@ -240,7 +240,7 @@ export default function LinkedAccountsSection() {
         <Show when={accounts.error}>
           <div class='rounded-lg border border-red-200 bg-red-50 p-4'>
             <div class='flex items-start gap-3'>
-              <FiAlertCircle class='mt-0.5 h-5 w-5 text-red-500' />
+              <FiAlertCircle class='mt-0.5 h-5 w-5 text-red-600' />
               <div>
                 <p class='font-medium text-red-800'>Failed to load linked accounts</p>
                 <p class='mt-1 text-sm text-red-600'>{accounts.error.message}</p>
@@ -378,7 +378,7 @@ export default function LinkedAccountsSection() {
             <button
               onClick={confirmUnlink}
               disabled={unlinkingId() !== null}
-              class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50'
+              class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
             >
               {unlinkingId() ? 'Unlinking...' : 'Unlink'}
             </button>

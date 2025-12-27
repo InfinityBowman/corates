@@ -198,7 +198,7 @@ export default function CompleteProfile() {
                       setHasEditedName(true);
                       setFirstName(e.target.value);
                     }}
-                    class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm transition focus:ring-2 focus:ring-blue-400 focus:outline-none'
+                    class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
                     required
                     id='first-name-input'
                     placeholder='First'
@@ -221,7 +221,7 @@ export default function CompleteProfile() {
                       setHasEditedName(true);
                       setLastName(e.target.value);
                     }}
-                    class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm transition focus:ring-2 focus:ring-blue-400 focus:outline-none'
+                    class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
                     required
                     id='last-name-input'
                     placeholder='Last'

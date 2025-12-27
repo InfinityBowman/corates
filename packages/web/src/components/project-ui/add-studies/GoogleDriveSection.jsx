@@ -45,7 +45,7 @@ export default function GoogleDriveSection() {
             <For each={studies.selectedDriveFiles()}>
               {file => (
                 <div class='flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-2'>
-                  <FiFile class='h-4 w-4 shrink-0 text-red-500' />
+                  <FiFile class='h-4 w-4 shrink-0 text-red-600' />
                   <div class='min-w-0 flex-1'>
                     <p class='truncate text-sm font-medium text-gray-900'>{file.name}</p>
                     <p class='text-xs text-gray-500'>{formatFileSize(file.size)}</p>
@@ -53,7 +53,7 @@ export default function GoogleDriveSection() {
                   <button
                     type='button'
                     onClick={() => studies.removeDriveFile(file.id)}
-                    class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500'
+                    class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                   >
                     <BiRegularTrash class='h-4 w-4' />
                   </button>

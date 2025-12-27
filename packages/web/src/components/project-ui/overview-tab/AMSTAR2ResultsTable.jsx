@@ -74,7 +74,7 @@ export default function AMSTAR2ResultsTable(props) {
     };
 
     scores.forEach(item => {
-      if (counts.hasOwnProperty(item.score)) {
+      if (Object.prototype.hasOwnProperty.call(counts, item.score)) {
         counts[item.score]++;
       }
     });

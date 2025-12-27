@@ -143,7 +143,7 @@ export default function ReconcileStudyRow(props) {
               disabled={!isReady()}
               class={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                 isReady() ?
-                  'bg-blue-600 text-white hover:bg-blue-700'
+                  'bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 : 'cursor-not-allowed bg-gray-200 text-gray-500'
               }`}
             >

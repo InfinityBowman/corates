@@ -6,7 +6,8 @@ globs: packages/web/**, packages/workers/**
 
 # Error Handling Patterns
 
-See `docs/error-handling-guide.md` for comprehensive error handling documentation.
+> **For comprehensive error handling documentation**, see the [Error Handling Guide](/guides/error-handling) in the docs site.
+> This file provides quick reference patterns for AI agents.
 
 ## Backend (Workers) Error Handling
 
@@ -178,3 +179,7 @@ if (isErrorCode(error, 'PROJECT_NOT_FOUND')) {
 - `packages/web/src/lib/error-utils.js` - Frontend error utilities
 - `packages/web/src/lib/form-errors.js` - Form error handling
 - `packages/web/src/components/project-ui/CreateProjectForm.jsx` - Form error usage
+
+## Related Documentation
+
+- [Error Handling Guide](/guides/error-handling) - Comprehensive error handling patterns and examples

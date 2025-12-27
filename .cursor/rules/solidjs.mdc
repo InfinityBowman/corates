@@ -5,6 +5,9 @@ globs: packages/web/**, packages/landing/**
 ---
 # SolidJS Patterns
 
+> **For comprehensive SolidJS patterns**, see the [State Management Guide](/guides/state-management), [Primitives Guide](/guides/primitives), and [Components Guide](/guides/components) in the docs site.
+> This file provides quick reference patterns for AI agents.
+
 ## Props - Critical Reactivity Rules
 
 **NEVER destructure props** - it breaks reactivity:
@@ -231,3 +234,9 @@ See these files for reference:
 - `packages/web/src/components/checklist-ui/compare/ReconciliationWrapper.jsx` - createMemo, effects
 - `packages/web/src/stores/projectStore.js` - Store implementation
 - `packages/web/src/primitives/useProject/index.js` - Primitive pattern
+
+## Related Documentation
+
+- [State Management Guide](/guides/state-management) - Comprehensive store patterns and state architecture
+- [Primitives Guide](/guides/primitives) - Reusable hooks and primitives patterns
+- [Components Guide](/guides/components) - Component development patterns and best practices

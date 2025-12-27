@@ -370,14 +370,14 @@ export default function ReviewerAssignment(props) {
                     max='100'
                     value={reviewer.percent}
                     onInput={e => poolProps.onUpdatePercent(reviewer.userId, e.target.value)}
-                    class='w-16 rounded border border-gray-300 px-2 py-1 text-center text-sm focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                    class='w-16 rounded border border-gray-300 px-2 py-1 text-center text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
                   />
                   <span class='text-sm text-gray-500'>%</span>
                 </div>
                 <button
                   type='button'
                   onClick={() => poolProps.onRemove(reviewer.userId)}
-                  class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600'
+                  class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 >
                   <BiRegularX class='h-4 w-4' />
                 </button>
@@ -504,7 +504,7 @@ export default function ReviewerAssignment(props) {
                   <button
                     onClick={handlePreview}
                     disabled={!canGenerate() || unassignedStudies().length === 0}
-                    class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400'
+                    class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
                   >
                     <BiRegularShuffle class='h-4 w-4' />
                     Generate Random Assignments
@@ -568,7 +568,7 @@ export default function ReviewerAssignment(props) {
                           handleCollapse();
                         }}
                         disabled={previewAssignments().some(a => a.sameReviewer)}
-                        class='inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-400'
+                        class='inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
                       >
                         <BiRegularCheck class='h-4 w-4' />
                         Apply Assignments

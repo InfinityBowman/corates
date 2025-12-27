@@ -1,0 +1,275 @@
+---
+alwaysApply: false
+description: "Checklist-specific patterns for AMSTAR2, ROBINS-I, and checklist operations"
+globs: packages/web/src/components/checklist-ui/**, packages/web/src/AMSTAR2/**, packages/web/src/ROBINS-I/**, packages/web/src/lib/checklist-domain.js
+---
+
+# Checklist Operations Patterns
+
+> This file provides quick reference patterns for AI agents working with checklist operations.
+
+## Checklist Types
+
+### Supported Checklists
+
+- **AMSTAR2**: 16-question quality assessment
+- **ROBINS-I**: Risk of bias assessment
+- **Generic**: Framework for custom checklists
+
+### Checklist Registry
+
+Checklists are registered in `checklist-registry`:
+
+```js
+import { getChecklistType, getChecklistComponent } from '@/checklist-registry';
+
+const type = getChecklistType(checklistId);
+const Component = getChecklistComponent(type);
+```
+
+## Checklist Structure
+
+### Checklist Data Model
+
+```js
+{
+  id: 'uuid',
+  type: 'AMSTAR2' | 'ROBINS-I' | 'Generic',
+  title: 'Checklist Title',
+  assignedTo: userId,
+  status: 'in_progress' | 'completed' | 'reconciled',
+  createdAt: timestamp,
+  updatedAt: timestamp,
+  answers: {
+    // Question key => answer data
+    q1: { answers: [[...]], critical: boolean },
+    q2: { answers: [[...]], critical: boolean },
+    // ...
+  }
+}
+```
+
+### Answer Structure
+
+Answers vary by checklist type:
+
+```js
+// AMSTAR2 answer structure
+{
+  answers: [
+    [true, false, false], // Column 1 options
+    [false, true, false], // Column 2 options
+    // ...
+  ],
+  critical: boolean // Whether question is critical
+}
+
+// ROBINS-I answer structure
+{
+  answer: 'Y' | 'PY' | 'PN' | 'N' | 'NI' | 'NA',
+  comment: string // Optional comment
+}
+```
+
+## Checklist Operations
+
+### Creating Checklists
+
+Use `createChecklist` operation:
+
+```js
+const { createChecklist } = useProject(projectId);
+
+const checklist = await createChecklist(studyId, {
+  type: 'AMSTAR2',
+  title: 'Reviewer 1 Assessment',
+  assignedTo: userId,
+});
+```
+
+### Updating Checklist Answers
+
+Use `updateChecklistAnswer` operation:
+
+```js
+const { updateChecklistAnswer } = useProject(projectId);
+
+await updateChecklistAnswer(studyId, checklistId, 'q1', {
+  answers: [[true, false], [false, true]],
+  critical: false,
+});
+```
+
+### Getting Checklist Data
+
+Use `getChecklistData` operation:
+
+```js
+const { getChecklistData } = useProject(projectId);
+
+const checklist = getChecklistData(studyId, checklistId);
+// Returns full checklist with answers
+```
+
+## AMSTAR2 Specific
+
+### Question Structure
+
+AMSTAR2 has 16 questions, some with parts:
+
+- q1-q8: Single-part questions
+- q9: Multi-part (q9a, q9b)
+- q10: Single-part
+- q11: Multi-part (q11a, q11b)
+- q12-q16: Single-part questions
+
+### Answer Matrix
+
+AMSTAR2 uses answer matrices:
+
+```js
+// Each question has columns (e.g., "Yes", "Partial Yes", "No", "No Meta-analysis")
+// Each column has options (checkboxes)
+answers: [
+  [true, false, false],  // Column 1: Yes selected
+  [false, true, false],  // Column 2: Partial Yes selected
+  [false, false, true],  // Column 3: No selected
+]
+```
+
+### Scoring
+
+Use `scoreChecklist` utility:
+
+```js
+import { scoreChecklist } from '@/AMSTAR2/checklist.js';
+
+const score = scoreChecklist(checklist.answers);
+// Returns: 'High' | 'Moderate' | 'Low' | 'Critically Low'
+```
+
+## ROBINS-I Specific
+
+### Section Structure
+
+ROBINS-I has sections:
+
+- **Section B**: Pre-assessment (decide whether to proceed)
+- **Domains**: D1-D7 (risk of bias domains)
+
+### Section B
+
+Section B determines if assessment should stop:
+
+```js
+import { shouldStopAssessment } from '@/ROBINS-I/checklist.js';
+
+const stop = shouldStopAssessment(sectionBState);
+// If true, assessment should stop (critical risk of bias)
+```
+
+### Domain Judgements
+
+Each domain has a judgement:
+
+```js
+// Domain judgement options
+'Low' | 'Moderate' | 'Serious' | 'Critical' | 'No Information'
+
+// Get domain judgement
+const judgement = domain.judgement;
+```
+
+### Scoring
+
+Use `scoreChecklist` utility:
+
+```js
+import { scoreChecklist } from '@/ROBINS-I/checklist.js';
+
+const score = scoreChecklist(checklistState);
+// Returns: 'Low' | 'Moderate' | 'Serious' | 'Critical'
+```
+
+## Checklist Status
+
+### Status Values
+
+```js
+const CHECKLIST_STATUS = {
+  IN_PROGRESS: 'in_progress',
+  COMPLETED: 'completed',
+  RECONCILED: 'reconciled',
+};
+```
+
+### Status Transitions
+
+- `in_progress` → `completed`: When all questions answered
+- `completed` → `reconciled`: When reconciliation is complete
+
+### Checking Status
+
+Use `getChecklistStatus` utility:
+
+```js
+import { getChecklistStatus } from '@/lib/checklist-domain.js';
+
+const status = getChecklistStatus(checklist);
+```
+
+## Checklist Notes
+
+### Question Notes
+
+Each question can have notes (Y.Text for collaborative editing):
+
+```js
+const { getQuestionNote } = useProject(projectId);
+
+const note = getQuestionNote(studyId, checklistId, questionKey);
+// Returns: Y.Text object
+```
+
+### Note Editor Component
+
+Use `NoteEditor` component:
+
+```jsx
+import NoteEditor from '@/components/checklist-ui/common/NoteEditor.jsx';
+
+<NoteEditor
+  yText={note}
+  readOnly={false}
+  collapsed={false}
+  maxLength={2000}
+/>
+```
+
+## Best Practices
+
+### DO
+
+- Use checklist operations from useProject
+- Handle multi-part questions correctly (q9, q11)
+- Use scoring utilities for AMSTAR2/ROBINS-I
+- Check checklist status before operations
+- Use NoteEditor for question notes
+- Store answers in correct format for checklist type
+
+### DON'T
+
+- Don't manually update checklist structure
+- Don't mix answer formats between checklist types
+- Don't forget to handle multi-part questions
+- Don't bypass checklist operations
+- Don't store notes outside of Y.Text
+
+## Examples from Codebase
+
+- `packages/web/src/components/checklist-ui/AMSTAR2Checklist.jsx` - AMSTAR2 checklist component
+- `packages/web/src/components/checklist-ui/ROBINSIChecklist/ROBINSIChecklist.jsx` - ROBINS-I checklist component
+- `packages/web/src/lib/checklist-domain.js` - Checklist utilities
+- `packages/web/src/AMSTAR2/checklist.js` - AMSTAR2 scoring logic
+- `packages/web/src/ROBINS-I/checklist.js` - ROBINS-I scoring logic
+- `packages/web/src/primitives/useProject/checklists.js` - Checklist operations

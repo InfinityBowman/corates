@@ -149,7 +149,7 @@ export default function CompletedStudyRow(props) {
                     e.stopPropagation();
                     props.onOpenChecklist?.(completedChecklists()[0].id);
                   }}
-                  class='shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
+                  class='shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 >
                   Open
                 </button>

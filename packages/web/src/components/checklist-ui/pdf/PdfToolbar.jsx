@@ -82,7 +82,7 @@ export default function PdfToolbar(props) {
           <button
             onClick={() => props.onOpenFile?.()}
             disabled={!props.libReady}
-            class='inline-flex shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400'
+            class='inline-flex shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
           >
             <AiOutlineUpload class='h-4 w-4' />
             Open PDF

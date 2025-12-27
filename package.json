@@ -32,7 +32,9 @@
     "user:make-admin:prod": "pnpm --filter @corates/workers run user:make-admin:prod",
     "user:make-admin:local": "pnpm --filter @corates/workers run user:make-admin:local",
     "loc": "node ./scripts/loc-report.mjs",
-    "docs": "npx serve ./docs/architecture -l 3020",
+    "docs": "pnpm --filter @corates/docs dev",
+    "docs:build": "pnpm --filter @corates/docs build",
+    "docs:preview": "pnpm --filter @corates/docs preview",
     "openapi": "pnpm --filter @corates/workers run openapi:generate"
   },
   "keywords": [

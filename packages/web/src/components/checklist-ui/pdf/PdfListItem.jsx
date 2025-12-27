@@ -159,7 +159,7 @@ export default function PdfListItem(props) {
             <button
               type='button'
               onClick={() => setShowDeleteConfirm(true)}
-              class='rounded-md p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600'
+              class='rounded-md p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
               title='Delete PDF'
             >
               <FiTrash2 class='h-4 w-4' />
@@ -186,7 +186,7 @@ export default function PdfListItem(props) {
             <button
               type='button'
               onClick={handleDelete}
-              class='rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700'
+              class='rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
             >
               Delete
             </button>

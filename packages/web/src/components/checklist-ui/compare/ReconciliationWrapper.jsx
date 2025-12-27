@@ -405,7 +405,7 @@ export default function ReconciliationWrapper() {
             <p class='text-gray-600'>{error()}</p>
             <button
               onClick={handleCancel}
-              class='mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
+              class='mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
             >
               Go Back
             </button>

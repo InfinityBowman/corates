@@ -6,6 +6,9 @@ globs: packages/workers/**
 
 # API Route Patterns
 
+> **For comprehensive API development patterns**, see the [API Development Guide](/guides/api-development) in the docs site.
+> This file provides quick reference patterns for AI agents.
+
 ## Request Validation
 
 **ALWAYS use `validateRequest` middleware** for request body validation:
@@ -212,3 +215,9 @@ See these files for reference:
 - `packages/workers/src/routes/members.js` - Validation, error handling
 - `packages/workers/src/routes/account-merge.js` - Complex batch operations
 - `packages/workers/src/config/validation.js` - Schema definitions
+
+## Related Documentation
+
+- [API Development Guide](/guides/api-development) - Comprehensive API development patterns
+- [Database Guide](/guides/database) - Drizzle ORM patterns and batch operations
+- [Error Handling Guide](/guides/error-handling) - Error handling patterns

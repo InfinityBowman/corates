@@ -133,10 +133,6 @@ function main() {
     }
   }
 
-  // Total (tracked files)
-  printHeader('Total (Git-tracked files)');
-  runCloc(trackedFiles);
-
   // Per-package breakdown (packages/*)
   const packageFiles = trackedFiles.filter(file => file.startsWith('packages/'));
   if (packageFiles.length > 0) {
@@ -165,6 +161,10 @@ function main() {
     console.log('');
     console.log('No packages/ directory detected or no tracked files under packages/.');
   }
+
+  // Total (tracked files)
+  printHeader('Total (Git-tracked files)');
+  runCloc(trackedFiles);
 }
 
 try {

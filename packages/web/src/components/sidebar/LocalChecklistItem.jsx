@@ -39,7 +39,7 @@ export default function LocalChecklistItem(props) {
       </button>
       <button
         onClick={e => props.onDelete(e, props.checklist?.id)}
-        class='mr-1 rounded p-1.5 text-gray-400 opacity-0 transition-colors group-hover:opacity-100 hover:bg-red-50 hover:text-red-600'
+        class='mr-1 rounded p-1.5 text-gray-400 opacity-0 transition-colors group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'
         aria-label='Delete checklist'
       >
         <BiRegularTrash class='h-4 w-4' />

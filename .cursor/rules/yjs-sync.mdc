@@ -1,0 +1,228 @@
+---
+alwaysApply: false
+description: "Yjs synchronization patterns, connection management, and sync operations"
+globs: packages/web/src/primitives/useProject/**, packages/web/src/stores/projectStore.js, packages/workers/src/durable-objects/ProjectDoc.js
+---
+
+# Yjs Synchronization Patterns
+
+> **For comprehensive Yjs documentation**, see the [Yjs Sync Guide](/guides/yjs-sync) in the docs site.
+> This file provides quick reference patterns for AI agents working with Yjs synchronization.
+
+## Connection Management
+
+### useProject Hook Pattern
+
+The `useProject` hook manages Yjs connections with reference counting to prevent duplicate connections:
+
+```js
+// CORRECT - Use useProject hook
+import useProject from '@/primitives/useProject/index.js';
+
+function MyComponent() {
+  const { studies, connect, disconnect } = useProject(projectId);
+
+  createEffect(() => {
+    if (projectId) {
+      connect();
+    }
+  });
+
+  onCleanup(() => {
+    disconnect();
+  });
+}
+```
+
+### Connection Registry
+
+Connections are shared via a global registry with reference counting. Never create Y.Doc instances directly:
+
+```js
+// WRONG - Don't create Y.Doc directly
+const ydoc = new Y.Doc(); // This won't be synced
+
+// CORRECT - Use useProject which manages connections
+const { ydoc } = useProject(projectId);
+```
+
+### Connection States
+
+Check connection state from the store:
+
+```js
+import projectStore from '@/stores/projectStore.js';
+
+const connectionState = () => projectStore.getConnectionState(projectId);
+const connected = () => connectionState().connected;
+const synced = () => connectionState().synced;
+const error = () => connectionState().error;
+```
+
+## Y.Doc Structure
+
+### Project Data Hierarchy
+
+Y.Doc structure in ProjectDoc (Durable Object):
+
+```
+Project (Y.Doc)
+  - meta: Y.Map (project metadata)
+  - members: Y.Map (userId => { role, joinedAt })
+  - reviews: Y.Map (studyId => {
+      id, name, description, createdAt, updatedAt,
+      checklists: Y.Map (checklistId => {
+        id, title, assignedTo, status, createdAt, updatedAt,
+        answers: Y.Map (questionKey => { value, notes, updatedAt, updatedBy })
+      }),
+      pdfs: Y.Array (PDF metadata),
+      reconciliation: Y.Map (reconciliation progress)
+    })
+```
+
+### Accessing Y.Doc Data
+
+Always access Y.Doc through the hook, never directly:
+
+```js
+// CORRECT - Use hook operations
+const { getChecklistData, updateChecklistAnswer } = useProject(projectId);
+const checklist = getChecklistData(studyId, checklistId);
+
+// WRONG - Don't access Y.Doc directly
+const ydoc = getYDoc();
+const studiesMap = ydoc.getMap('reviews'); // This breaks encapsulation
+```
+
+## Sync Operations
+
+### Reading from Store (After Sync)
+
+Yjs updates are automatically synced to `projectStore`. Read from the store, not Y.Doc:
+
+```js
+// CORRECT - Read from store (synced from Y.Doc)
+const studies = () => projectStore.getStudies(projectId);
+const checklist = () => projectStore.getChecklist(projectId, studyId, checklistId);
+
+// WRONG - Don't read directly from Y.Doc
+const ydoc = getYDoc();
+const studiesMap = ydoc.getMap('reviews'); // Use store instead
+```
+
+### Writing via Operations
+
+Use operation functions from `useProject` or `projectActionsStore`:
+
+```js
+// CORRECT - Use operations
+const { updateChecklistAnswer } = useProject(projectId);
+updateChecklistAnswer(studyId, checklistId, questionKey, answerData);
+
+// Or via actions store
+import projectActionsStore from '@/stores/projectActionsStore';
+projectActionsStore.checklist.updateAnswer(studyId, checklistId, questionKey, answerData);
+```
+
+### Sync Manager Pattern
+
+The sync manager converts Y.Doc state to store format:
+
+```js
+// Sync happens automatically via ydoc.on('update')
+// Sync manager converts Y.Map/Y.Array to plain objects for the store
+// Never manually call syncFromYDoc() - it's handled internally
+```
+
+## Local Projects
+
+### Local-Only Projects
+
+Projects with IDs starting with `local-` skip WebSocket connection:
+
+```js
+const isLocalProject = () => projectId && projectId.startsWith('local-');
+
+// Local projects:
+// - Use IndexedDB persistence only
+// - No WebSocket connection
+// - Still use Y.Doc for structure
+// - Sync to store normally
+```
+
+## IndexedDB Persistence
+
+### Persistence Setup
+
+IndexedDB persistence is handled automatically by `useProject`:
+
+```js
+// Persistence is set up automatically
+// Database name: `corates-project-${projectId}`
+// Don't manually create IndexedDB providers
+```
+
+### Persistence Lifecycle
+
+- Persistence is created when connection is established
+- Data is loaded from IndexedDB on connection
+- Changes are persisted automatically
+- Cleanup happens on disconnect (when refCount reaches 0)
+
+## WebSocket Connection
+
+### Connection Manager
+
+WebSocket connections are managed by `createConnectionManager`:
+
+```js
+// Connection is established automatically for non-local projects
+// Handles:
+// - Reconnection with exponential backoff
+// - Access denied errors
+// - Sync status updates
+// - Online/offline detection
+```
+
+### Access Denied Handling
+
+When access is denied (user removed, project deleted):
+
+```js
+// Access denied triggers cleanup:
+// 1. All local IndexedDB data is cleared
+// 2. Connection is closed
+// 3. Store is cleared
+// 4. User is redirected to dashboard
+```
+
+## Best Practices
+
+### DO
+
+- Use `useProject` hook for all Yjs operations
+- Read from `projectStore` after sync
+- Use operation functions for writes
+- Let the connection registry manage connections
+- Handle connection states reactively
+
+### DON'T
+
+- Don't create Y.Doc instances directly
+- Don't access Y.Doc maps/arrays directly
+- Don't manually call sync functions
+- Don't bypass the connection registry
+- Don't store Y.Doc references in components
+
+## Examples from Codebase
+
+- `packages/web/src/primitives/useProject/index.js` - Connection management
+- `packages/web/src/primitives/useProject/sync.js` - Sync manager
+- `packages/web/src/primitives/useProject/connection.js` - WebSocket connection
+- `packages/workers/src/durable-objects/ProjectDoc.js` - Server-side Y.Doc
+- `packages/web/src/stores/projectStore.js` - Store sync target
+
+## Related Documentation
+
+- [Yjs Sync Guide](/guides/yjs-sync) - Comprehensive Yjs synchronization patterns
+- [State Management Guide](/guides/state-management) - Store patterns that receive Yjs updates

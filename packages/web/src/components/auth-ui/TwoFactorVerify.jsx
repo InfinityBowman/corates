@@ -87,7 +87,7 @@ export default function TwoFactorVerify(props) {
             onInput={e =>
               setCode(useBackupCode() ? e.target.value : e.target.value.replace(/\D/g, ''))
             }
-            class='w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-mono text-xl tracking-widest focus:ring-2 focus:ring-blue-400 focus:outline-none'
+            class='w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-mono text-xl tracking-widest focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
             placeholder={useBackupCode() ? 'XXXX-XXXX-XXXX' : '000000'}
             disabled={loading()}
             id='2fa-code'
