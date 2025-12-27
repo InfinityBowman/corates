@@ -37,7 +37,9 @@ export default function SignUp() {
     clearAuthError();
     resetSocialLoading();
 
-    // Check for invitation token in URL
+    // Note: Invitation tokens are now handled via magic link callback URLs
+    // The token is passed directly to /complete-profile?invitation=TOKEN
+    // This code is kept for backwards compatibility if users land on /signup?invitation=TOKEN
     const urlParams = new URLSearchParams(window.location.search);
     const invitationToken = urlParams.get('invitation');
     if (invitationToken) {

@@ -95,9 +95,9 @@ import { Dialog } from '@/components/ark/Dialog.jsx';
 See `ui-components.mdc` for detailed component usage patterns.
 ### Database Migrations
 
-- All migrations go in a single file: `packages/workers/migrations/0001_init.sql`
-- Do NOT create separate migration files (0002_xxx.sql, etc.)
-- Edit the existing 0001_init.sql file directly
+- Use DrizzleKit to generate new migrations when necessary
+- Do NOT create separate migration files manually (0002_xxx.sql, etc.)
+- You must use DrizzleKit, the workers package has a script to generate migrations
 
 ### SolidJS Critical Patterns
 

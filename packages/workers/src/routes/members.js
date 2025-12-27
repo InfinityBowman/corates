@@ -210,14 +210,10 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
           .where(eq(projectInvitations.id, existingInvitation.id));
       } else if (existingInvitation && existingInvitation.acceptedAt) {
         // Invitation was already accepted, can't resend
-        return c.json(
-          {
-            success: false,
-            invitation: true,
-            message: 'Invitation has already been accepted',
-          },
-          400,
-        );
+        const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
+          invitationId: existingInvitation.id,
+        });
+        return c.json(error, error.statusCode);
       } else {
         // Create new invitation
         invitationId = crypto.randomUUID();
@@ -249,22 +245,86 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         .where(eq(user.id, authUser.id))
         .get();
 
-      // Send invitation email via queue
+      // Generate magic link URL for invitation
       try {
         const appUrl = c.env.APP_URL || 'https://corates.org';
-        // Include basepath if set (for apps deployed at non-root paths)
         const basepath = c.env.BASEPATH || '';
         const basepathNormalized = basepath ? basepath.replace(/\/$/, '') : '';
-        const signupPath = `${basepathNormalized}/signup`;
-        const invitationUrl = `${appUrl}${signupPath}?invitation=${token}`;
 
-        // Log invitation URL in development (similar to magic link)
+        // Create callback URL with invitation token
+        const callbackPath = `${basepathNormalized}/complete-profile?invitation=${token}`;
+        const callbackURL = `${appUrl}${callbackPath}`;
+
+      // Generate magic link using Better Auth's API
+      // We'll use Better Auth's signInMagicLink but intercept sendMagicLink to capture the URL
+      const authBaseUrl = c.env.AUTH_BASE_URL || c.env.APP_URL || 'https://api.corates.org';
+      let capturedMagicLinkUrl = null;
+
+      // Import required modules
+      const { betterAuth } = await import('better-auth');
+      const { magicLink } = await import('better-auth/plugins');
+      const { drizzleAdapter } = await import('better-auth/adapters/drizzle');
+      const { drizzle } = await import('drizzle-orm/d1');
+      const schema = await import('../db/schema.js');
+      const { MAGIC_LINK_EXPIRY_MINUTES } = await import('../auth/emailTemplates.js');
+
+      // Get auth secret from environment (same logic as getAuthSecret)
+      const authSecret = c.env.AUTH_SECRET || c.env.SECRET;
+      if (!authSecret) {
+        throw new Error('AUTH_SECRET must be configured');
+      }
+
+      // Create a temporary auth instance with a custom sendMagicLink that captures the URL
+      // Dynamic import returns module namespace, exports are directly on the object
+      const tempDb = drizzle(c.env.DB, { schema });
+      const tempAuth = betterAuth({
+        database: drizzleAdapter(tempDb, {
+          provider: 'sqlite',
+          schema: {
+            user: schema.user,
+            session: schema.session,
+            account: schema.account,
+            verification: schema.verification,
+            twoFactor: schema.twoFactor,
+          },
+        }),
+        baseURL: authBaseUrl,
+        secret: authSecret,
+        plugins: [
+          magicLink({
+            sendMagicLink: async ({ url }) => {
+              // Capture the URL instead of sending email
+              capturedMagicLinkUrl = url;
+            },
+            expiresIn: 60 * MAGIC_LINK_EXPIRY_MINUTES,
+          }),
+        ],
+      });
+
+      // Call Better Auth's signInMagicLink API
+      await tempAuth.api.signInMagicLink({
+        body: {
+          email: email.toLowerCase(),
+          callbackURL: callbackURL,
+          newUserCallbackURL: callbackURL,
+        },
+        headers: new Headers(),
+      });
+
+      if (!capturedMagicLinkUrl) {
+        throw new Error('Failed to generate magic link URL');
+      }
+
+      const magicLinkUrl = capturedMagicLinkUrl;
+
+        // Log magic link URL in development
         if (c.env.ENVIRONMENT !== 'production') {
-          console.log('[Email] Project invitation URL:', invitationUrl);
+          console.log('[Email] Project invitation magic link URL:', magicLinkUrl);
         }
 
         const { getProjectInvitationEmailHtml, getProjectInvitationEmailText } =
           await import('../auth/emailTemplates.js');
+        const { escapeHtml } = await import('../lib/escapeHtml.js');
 
         const projectName = project?.name || 'Unknown Project';
         const inviterName = inviter?.displayName || inviter?.name || inviter?.email || 'Someone';
@@ -272,15 +332,18 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         const emailHtml = getProjectInvitationEmailHtml({
           projectName,
           inviterName,
-          invitationUrl,
+          invitationUrl: magicLinkUrl, // Use magic link URL instead of signup link
           role,
         });
         const emailText = getProjectInvitationEmailText({
           projectName,
           inviterName,
-          invitationUrl,
+          invitationUrl: magicLinkUrl,
           role,
         });
+
+        // Escape projectName for email subject (plain text, but sanitize for safety)
+        const safeProjectName = escapeHtml(projectName);
 
         // Queue email via EMAIL_QUEUE DO
         const queueId = c.env.EMAIL_QUEUE.idFromName('default');
@@ -291,7 +354,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               to: email,
-              subject: `You're Invited to "${projectName}" - CoRATES`,
+              subject: `You're Invited to "${safeProjectName}" - CoRATES`,
               html: emailHtml,
               text: emailText,
             }),

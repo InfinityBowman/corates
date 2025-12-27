@@ -112,7 +112,11 @@ export function createEmailService(env) {
       console.log('[Email] Project invitation URL:', invitationUrl);
       return { success: true, id: 'dev-id' };
     }
-    const subject = `You're Invited to "${projectName}" - CoRATES`;
+    // Note: Email subjects are plain text, not HTML, so we don't need HTML escaping
+    // However, we should still sanitize to prevent issues with email clients
+    const { escapeHtml } = await import('../lib/escapeHtml.js');
+    const safeProjectName = escapeHtml(projectName);
+    const subject = `You're Invited to "${safeProjectName}" - CoRATES`;
     const html = getProjectInvitationEmailHtml({ projectName, inviterName, invitationUrl, role });
     const text = getProjectInvitationEmailText({ projectName, inviterName, invitationUrl, role });
     return sendEmail({ to, subject, html, text });

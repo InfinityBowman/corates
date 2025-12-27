@@ -1,5 +1,7 @@
 // Email HTML and text templates for BetterAuth
 
+import { escapeHtml } from '../lib/escapeHtml.js';
+
 export function getVerificationEmailHtml({ name, subject, verificationUrl }) {
   return `
     <!DOCTYPE html>
@@ -13,7 +15,7 @@ export function getVerificationEmailHtml({ name, subject, verificationUrl }) {
         <h1 style="margin: 0; font-size: 28px; font-weight: 700;">Welcome to CoRATES!</h1>
       </div>
       <div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb; border-top: none;">
-        <p style="font-size: 18px; margin-bottom: 20px; color: #1f2937;">Hi ${name},</p>
+        <p style="font-size: 18px; margin-bottom: 20px; color: #1f2937;">Hi ${escapeHtml(name)},</p>
         <p style="color: #4b5563;">Thank you for signing up for CoRATES! To complete your registration and verify your email address, please click the button below:</p>
         <div style="text-align: center; margin: 32px 0;">
           <a href="${verificationUrl}" style="background: #2563eb; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">Verify Email Address</a>
@@ -60,7 +62,7 @@ export function getPasswordResetEmailHtml({ name, subject, resetUrl }) {
         <h1 style="margin: 0; font-size: 28px; font-weight: 700;">Password Reset Request</h1>
       </div>
       <div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb; border-top: none;">
-        <p style="font-size: 18px; margin-bottom: 20px; color: #1f2937;">Hi ${name},</p>
+        <p style="font-size: 18px; margin-bottom: 20px; color: #1f2937;">Hi ${escapeHtml(name)},</p>
         <p style="color: #4b5563;">We received a request to reset your password for your CoRATES account. If you made this request, click the button below to reset your password:</p>
         <div style="text-align: center; margin: 32px 0;">
           <a href="${resetUrl}" style="background: #2563eb; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">Reset Password</a>
@@ -210,7 +212,7 @@ export function getProjectInvitationEmailHtml({ projectName, inviterName, invita
       <div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb; border-top: none;">
         <p style="font-size: 18px; margin-bottom: 20px; color: #1f2937;">Hi there,</p>
         <p style="color: #4b5563; margin-bottom: 20px;">
-          <strong>${inviterName}</strong> has invited you to collaborate on the project <strong>"${projectName}"</strong> as a <strong>${roleText}</strong>.
+          <strong>${escapeHtml(inviterName)}</strong> has invited you to collaborate on the project <strong>"${escapeHtml(projectName)}"</strong> as a <strong>${escapeHtml(roleText)}</strong>.
         </p>
         <p style="color: #4b5563; margin-bottom: 32px;">
           To accept this invitation and join the project, please click the button below to create your account:

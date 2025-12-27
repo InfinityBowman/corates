@@ -117,6 +117,9 @@ export default function CompleteProfile() {
     setLoading(true);
     setError('');
 
+    // Check for invitation token in URL params (from magic link callback) or localStorage (fallback)
+    const urlParams = new URLSearchParams(window.location.search);
+
     try {
       const fullName = `${firstName().trim()} ${lastName().trim()}`;
 
@@ -133,8 +136,9 @@ export default function CompleteProfile() {
       localStorage.removeItem('pendingName');
       localStorage.removeItem('pendingPersona');
 
-      // Check for invitation token and accept it
-      const invitationToken = localStorage.getItem('pendingInvitationToken');
+      const invitationToken =
+        urlParams.get('invitation') || localStorage.getItem('pendingInvitationToken');
+      console.log('invitationToken', invitationToken);
       if (invitationToken) {
         try {
           const response = await handleFetchError(

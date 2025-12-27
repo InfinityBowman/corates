@@ -105,9 +105,25 @@ invitationRoutes.post('/accept', requireAuth, validateRequest(invitationSchemas.
       .where(eq(user.id, authUser.id))
       .get();
 
-    if (!currentUser || currentUser.email.toLowerCase() !== invitation.email.toLowerCase()) {
+    if (!currentUser) {
+      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+        reason: 'user_not_found',
+      });
+      return c.json(error, error.statusCode);
+    }
+
+    // Normalize both emails for comparison (trim and lowercase)
+    const normalizedUserEmail = (currentUser.email || '').trim().toLowerCase();
+    const normalizedInvitationEmail = (invitation.email || '').trim().toLowerCase();
+
+    if (normalizedUserEmail !== normalizedInvitationEmail) {
+      console.error(
+        `[Invitation] Email mismatch: user email="${currentUser.email}" (normalized="${normalizedUserEmail}"), invitation email="${invitation.email}" (normalized="${normalizedInvitationEmail}")`,
+      );
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'email_mismatch',
+        userEmail: currentUser.email,
+        invitationEmail: invitation.email,
       });
       return c.json(error, error.statusCode);
     }
@@ -141,21 +157,21 @@ invitationRoutes.post('/accept', requireAuth, validateRequest(invitationSchemas.
       });
     }
 
-    // Add user to project
+    // Add user to project and mark invitation as accepted atomically
     const nowDate = new Date();
-    await db.insert(projectMembers).values({
-      id: crypto.randomUUID(),
-      projectId: invitation.projectId,
-      userId: authUser.id,
-      role: invitation.role,
-      joinedAt: nowDate,
-    });
-
-    // Mark invitation as accepted
-    await db
-      .update(projectInvitations)
-      .set({ acceptedAt: nowDate })
-      .where(eq(projectInvitations.id, invitation.id));
+    await db.batch([
+      db.insert(projectMembers).values({
+        id: crypto.randomUUID(),
+        projectId: invitation.projectId,
+        userId: authUser.id,
+        role: invitation.role,
+        joinedAt: nowDate,
+      }),
+      db
+        .update(projectInvitations)
+        .set({ acceptedAt: nowDate })
+        .where(eq(projectInvitations.id, invitation.id)),
+    ]);
 
     // Get project name for notification
     const project = await db
