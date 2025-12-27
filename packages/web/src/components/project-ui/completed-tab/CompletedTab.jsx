@@ -25,7 +25,7 @@ export default function CompletedTab() {
 
   // Navigation helpers
   const openChecklist = (studyId, checklistId) => {
-    navigate(`/projects/${projectId}/studies/${studyId}/checklists/${checklistId}`);
+    navigate(`/projects/${projectId}/studies/${studyId}/checklists/${checklistId}?tab=completed`);
   };
 
   const handleViewPdf = (studyId, pdf) => {

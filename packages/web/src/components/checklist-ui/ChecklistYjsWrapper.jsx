@@ -1,5 +1,5 @@
 import { createSignal, createEffect, createMemo, Show } from 'solid-js';
-import { useParams, useNavigate } from '@solidjs/router';
+import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import ChecklistWithPdf from '@checklist-ui/ChecklistWithPdf.jsx';
 import useProject from '@/primitives/useProject/index.js';
 import projectStore from '@/stores/projectStore.js';
@@ -18,6 +18,7 @@ import { isAMSTAR2Complete } from '@/AMSTAR2/checklist.js';
 export default function ChecklistYjsWrapper() {
   const params = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useBetterAuth();
   const confirmDialog = useConfirmDialog();
 
@@ -326,23 +327,11 @@ export default function ChecklistYjsWrapper() {
     return isAMSTAR2Complete(checklist);
   });
 
-  // Determine back button navigation based on checklist status
+  // Determine back button navigation from tab query param
   const getBackTab = () => {
-    const checklist = currentChecklist();
-    const study = currentStudy();
-    if (!checklist) return 'todo';
-
-    if (checklist.status === CHECKLIST_STATUS.COMPLETED) {
-      // Completed checklist: navigate to appropriate tab
-      const isSingleReviewer = study?.reviewer1 && !study?.reviewer2;
-      return isSingleReviewer ? 'completed' : 'reconcile';
-    }
-
-    if (checklist.status === CHECKLIST_STATUS.AWAITING_RECONCILE) {
-      return 'reconcile';
-    }
-
-    return 'todo';
+    // console.log('location', location.search);
+    const tabFromUrl = new URLSearchParams(location.search).get('tab');
+    return tabFromUrl || 'overview';
   };
 
   // Header content for the split screen toolbar (left side)

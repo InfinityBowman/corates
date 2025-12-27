@@ -47,7 +47,7 @@ function getTooltipContent(checklistType) {
  * @param {Object} props
  * @param {string} props.currentScore - The current score value
  * @param {string} [props.checklistType] - The checklist type (defaults to AMSTAR2)
- * @param {string} [props.showRatingOnly] - Whether to only show the rating text and info icon
+ * @param {boolean} [props.showRatingOnly] - Whether to only show the rating text and info icon
  */
 export default function ScoreTag(props) {
   const showRatingOnly = () => props.showRatingOnly ?? false;

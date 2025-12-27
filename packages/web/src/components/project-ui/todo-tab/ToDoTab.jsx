@@ -48,7 +48,7 @@ export default function ToDoTab() {
   };
 
   const openChecklist = (studyId, checklistId) => {
-    navigate(`/projects/${projectId}/studies/${studyId}/checklists/${checklistId}`);
+    navigate(`/projects/${projectId}/studies/${studyId}/checklists/${checklistId}?tab=todo`);
   };
 
   const handleViewPdf = (studyId, pdf) => {
