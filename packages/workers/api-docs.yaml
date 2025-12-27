@@ -19,6 +19,8 @@ tags:
     description: Administrative operations (requires admin role)
   - name: Contact
     description: Public contact form
+  - name: Invitations
+    description: Project invitation management
   - name: PDFs
     description: PDF storage for project studies
 
@@ -128,7 +130,12 @@ paths:
 
     post:
       summary: Add a member to project
-      description: Invite a user to the project by userId or email. Owner only.
+      description: |
+        Invite a user to the project by userId or email. Owner only.
+
+        If the user exists, they are added immediately. If the user doesn't exist and an email is provided,
+        an invitation is created and sent via email with a magic link. Existing pending invitations are
+        resent with updated role and extended expiration. Already-accepted invitations cannot be resent.
       tags: [Members]
       requestBody:
         content:
@@ -137,9 +144,12 @@ paths:
               $ref: '#/components/schemas/AddMember'
       responses:
         201:
-          description: Member added successfully
+          description: |
+            Member added successfully or invitation sent. Response includes:
+            - For existing users: member details (userId, name, email, role, joinedAt)
+            - For invitations: { success: true, invitation: true, message: string, email: string }
         409:
-          description: User is already a member
+          description: User is already a member or invitation already accepted
 
   /api/projects/{projectId}/members/{userId}:
     put:
@@ -314,6 +324,85 @@ paths:
       description: Handles Stripe webhook events for subscription updates
       tags: [Billing]
       public: true
+
+  # === Invitations ===
+  /api/invitations/accept:
+    post:
+      summary: Accept project invitation
+      description: |
+        Accept a project invitation by token. Requires authentication and the authenticated user's email
+        must match the invitation email (case-insensitive, trimmed comparison). Returns project details
+        on success. If the user is already a member, the invitation is marked as accepted and a success
+        response is returned with `alreadyMember: true`.
+      tags: [Invitations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                  description: Invitation token
+      responses:
+        200:
+          description: Invitation accepted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  projectId:
+                    type: string
+                    format: uuid
+                  projectName:
+                    type: string
+                  role:
+                    type: string
+                    enum: [owner, collaborator, member, viewer]
+                  alreadyMember:
+                    type: boolean
+                    description: True if user was already a member
+        400:
+          description: Invalid, expired, or already accepted token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: VALIDATION_FIELD_INVALID_FORMAT
+                  message:
+                    type: string
+        403:
+          description: Email mismatch - authenticated user's email doesn't match invitation email
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: AUTH_FORBIDDEN
+                  message:
+                    type: string
+        500:
+          description: Database error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: SYSTEM_DB_ERROR
+                  message:
+                    type: string
 
   # === Contact ===
   /api/contact:

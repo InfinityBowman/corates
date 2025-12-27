@@ -27,6 +27,7 @@ import { avatarRoutes } from './routes/avatars.js';
 import { adminRoutes } from './routes/admin/index.js';
 import { accountMergeRoutes } from './routes/account-merge.js';
 import { contactRoutes } from './routes/contact.js';
+import { invitationRoutes } from './routes/invitations.js';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc, EmailQueue };
@@ -190,6 +191,9 @@ app.route('/api/projects', projectRoutes);
 
 // Mount project member routes: /api/projects/:projectId/members
 app.route('/api/projects/:projectId/members', memberRoutes);
+
+// Mount invitation routes: /api/invitations
+app.route('/api/invitations', invitationRoutes);
 
 // Mount PDF routes: /api/projects/:projectId/studies/:studyId/pdfs
 app.route('/api/projects/:projectId/studies/:studyId/pdfs', pdfRoutes);

@@ -96,6 +96,7 @@ function exportChart(svgElement, filename, format, transparent = false) {
  * - studies: signal returning array of studies with checklists
  * - members: signal returning array of project members
  * - getChecklistData: function (studyId, checklistId) => checklist with answers
+ * - synced: signal returning boolean indicating if Y.Doc data is ready
  */
 export default function ChartSection(props) {
   const [showSettingsModal, setShowSettingsModal] = createSignal(false);
@@ -149,6 +150,8 @@ export default function ChartSection(props) {
   // Build raw chart data from studies and their checklists
   // Only includes checklists from the completed tab (status === COMPLETED)
   const rawChecklistData = createMemo(() => {
+    // Track synced state to ensure memo re-runs when data becomes available
+    const _isSynced = props.synced?.() ?? false;
     const studiesList = props.studies?.() || [];
     const membersList = props.members?.() || [];
     if (studiesList.length === 0) return [];

@@ -398,6 +398,71 @@ Password reset flow:
 3. User clicks link and enters new password
 4. Password is reset (`POST /api/auth/reset-password`)
 
+## Project Invitations
+
+Project invitations allow project owners to invite users who don't have accounts yet. Invitations use Better Auth's magic link system for seamless account creation and project access.
+
+### Invitation Flow
+
+1. **Invitation Creation**: When a project owner adds a member by email and the user doesn't exist, an invitation is created with:
+   - Unique invitation token (UUID)
+   - 7-day expiration
+   - Project role assignment
+   - Inviter information
+
+2. **Magic Link Generation**: The invitation email contains a Better Auth magic link that:
+   - Points to `/complete-profile?invitation={token}`
+   - Uses Better Auth's `signInMagicLink` API
+   - Creates a magic link token in the verification table
+   - Expires after the configured magic link expiry time
+
+3. **Account Creation**: When the invited user clicks the magic link:
+   - Better Auth handles authentication/account creation
+   - User is redirected to `/complete-profile` with the invitation token
+   - Frontend extracts the token and calls `POST /api/invitations/accept`
+
+4. **Invitation Acceptance**: The acceptance endpoint:
+   - Validates the invitation token
+   - Checks expiration and acceptance status
+   - Verifies email match (case-insensitive, trimmed)
+   - Adds user to project as a member
+   - Syncs member data to ProjectDoc Durable Object
+   - Sends notification via UserSession Durable Object
+
+### Email Matching Security
+
+For security, the authenticated user's email must match the invitation email. The comparison is:
+
+- Case-insensitive
+- Trimmed (whitespace removed)
+- Normalized before comparison
+
+```js
+const normalizedUserEmail = (currentUser.email || '').trim().toLowerCase();
+const normalizedInvitationEmail = (invitation.email || '').trim().toLowerCase();
+
+if (normalizedUserEmail !== normalizedInvitationEmail) {
+  // Email mismatch - reject invitation
+}
+```
+
+### Invitation Endpoints
+
+- `POST /api/invitations/accept` - Accept a project invitation by token
+  - Requires authentication
+  - Validates email match
+  - Returns project details on success
+
+### Resending Invitations
+
+If an invitation is pending (not expired or accepted), it can be resent by:
+
+- Updating the role if changed
+- Extending the expiration date
+- Resending the email with the same token
+
+Already-accepted invitations cannot be resent and will return a `PROJECT_INVITATION_ALREADY_ACCEPTED` error.
+
 ## Database Schema
 
 The authentication system uses these tables (managed by Better Auth with Drizzle ORM):

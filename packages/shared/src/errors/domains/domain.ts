@@ -98,6 +98,11 @@ export const PROJECT_ERRORS = {
     defaultMessage: 'Invalid role specified',
     statusCode: 400,
   },
+  INVITATION_ALREADY_ACCEPTED: {
+    code: 'PROJECT_INVITATION_ALREADY_ACCEPTED',
+    defaultMessage: 'Invitation has already been accepted',
+    statusCode: 400,
+  },
 } as const;
 
 export type ProjectErrorCode = (typeof PROJECT_ERRORS)[keyof typeof PROJECT_ERRORS]['code'];

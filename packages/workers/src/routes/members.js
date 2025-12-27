@@ -5,7 +5,7 @@
 
 import { Hono } from 'hono';
 import { createDb } from '../db/client.js';
-import { projectMembers, user, projects } from '../db/schema.js';
+import { projectMembers, user, projects, projectInvitations } from '../db/schema.js';
 import { eq, and, count } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { memberSchemas, validateRequest } from '../config/validation.js';
@@ -17,34 +17,12 @@ import {
   USER_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
+import { syncMemberToDO } from '../lib/project-sync.js';
 
 const memberRoutes = new Hono();
 
 // Apply auth middleware to all routes
 memberRoutes.use('*', requireAuth);
-
-/**
- * Sync a member change to the Durable Object
- */
-async function syncMemberToDO(env, projectId, action, memberData) {
-  try {
-    const doId = env.PROJECT_DOC.idFromName(projectId);
-    const projectDoc = env.PROJECT_DOC.get(doId);
-
-    await projectDoc.fetch(
-      new Request('https://internal/sync-member', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Internal-Request': 'true',
-        },
-        body: JSON.stringify({ action, member: memberData }),
-      }),
-    );
-  } catch (err) {
-    console.error('Failed to sync member to DO:', err);
-  }
-}
 
 /**
  * Middleware to verify project membership and set context
@@ -141,6 +119,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
 
   const db = createDb(c.env.DB);
   const { userId, email, role } = c.get('validatedBody');
+  const { user: authUser } = getAuth(c);
 
   try {
     // Find user by userId or email
@@ -171,6 +150,208 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         .from(user)
         .where(eq(user.email, email.toLowerCase()))
         .get();
+    }
+
+    // If user doesn't exist and email was provided, create or resend an invitation
+    if (!userToAdd && email) {
+      // Check for existing pending invitation for this email/project
+      const existingInvitation = await db
+        .select({
+          id: projectInvitations.id,
+          token: projectInvitations.token,
+          acceptedAt: projectInvitations.acceptedAt,
+        })
+        .from(projectInvitations)
+        .where(
+          and(
+            eq(projectInvitations.projectId, projectId),
+            eq(projectInvitations.email, email.toLowerCase()),
+          ),
+        )
+        .get();
+
+      let token;
+      let invitationId;
+
+      if (existingInvitation && !existingInvitation.acceptedAt) {
+        // Resend existing invitation - update role and extend expiration
+        invitationId = existingInvitation.id;
+        token = existingInvitation.token;
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+        await db
+          .update(projectInvitations)
+          .set({
+            role,
+            expiresAt,
+          })
+          .where(eq(projectInvitations.id, existingInvitation.id));
+      } else if (existingInvitation && existingInvitation.acceptedAt) {
+        // Invitation was already accepted, can't resend
+        const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
+          invitationId: existingInvitation.id,
+        });
+        return c.json(error, error.statusCode);
+      } else {
+        // Create new invitation
+        invitationId = crypto.randomUUID();
+        token = crypto.randomUUID();
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+        await db.insert(projectInvitations).values({
+          id: invitationId,
+          projectId,
+          email: email.toLowerCase(),
+          role,
+          token,
+          invitedBy: authUser.id,
+          expiresAt,
+          createdAt: new Date(),
+        });
+      }
+
+      // Get project name and inviter name
+      const project = await db
+        .select({ name: projects.name })
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .get();
+
+      const inviter = await db
+        .select({ name: user.name, displayName: user.displayName, email: user.email })
+        .from(user)
+        .where(eq(user.id, authUser.id))
+        .get();
+
+      // Generate magic link URL for invitation
+      try {
+        const appUrl = c.env.APP_URL || 'https://corates.org';
+        const basepath = c.env.BASEPATH || '';
+        const basepathNormalized = basepath ? basepath.replace(/\/$/, '') : '';
+
+        // Create callback URL with invitation token
+        const callbackPath = `${basepathNormalized}/complete-profile?invitation=${token}`;
+        const callbackURL = `${appUrl}${callbackPath}`;
+
+        // Generate magic link using Better Auth's API
+        // We'll use Better Auth's signInMagicLink but intercept sendMagicLink to capture the URL
+        const authBaseUrl = c.env.AUTH_BASE_URL || c.env.APP_URL || 'https://api.corates.org';
+        let capturedMagicLinkUrl = null;
+
+        // Import required modules
+        const { betterAuth } = await import('better-auth');
+        const { magicLink } = await import('better-auth/plugins');
+        const { drizzleAdapter } = await import('better-auth/adapters/drizzle');
+        const { drizzle } = await import('drizzle-orm/d1');
+        const schema = await import('../db/schema.js');
+        const { MAGIC_LINK_EXPIRY_MINUTES } = await import('../auth/emailTemplates.js');
+
+        // Get auth secret from environment (same logic as getAuthSecret)
+        const authSecret = c.env.AUTH_SECRET || c.env.SECRET;
+        if (!authSecret) {
+          throw new Error('AUTH_SECRET must be configured');
+        }
+
+        // Create a temporary auth instance with a custom sendMagicLink that captures the URL
+        // Dynamic import returns module namespace, exports are directly on the object
+        const tempDb = drizzle(c.env.DB, { schema });
+        const tempAuth = betterAuth({
+          database: drizzleAdapter(tempDb, {
+            provider: 'sqlite',
+            schema: {
+              user: schema.user,
+              session: schema.session,
+              account: schema.account,
+              verification: schema.verification,
+              twoFactor: schema.twoFactor,
+            },
+          }),
+          baseURL: authBaseUrl,
+          secret: authSecret,
+          plugins: [
+            magicLink({
+              sendMagicLink: async ({ url }) => {
+                // Capture the URL instead of sending email
+                capturedMagicLinkUrl = url;
+              },
+              expiresIn: 60 * MAGIC_LINK_EXPIRY_MINUTES,
+            }),
+          ],
+        });
+
+        // Call Better Auth's signInMagicLink API
+        await tempAuth.api.signInMagicLink({
+          body: {
+            email: email.toLowerCase(),
+            callbackURL: callbackURL,
+            newUserCallbackURL: callbackURL,
+          },
+          headers: new Headers(),
+        });
+
+        if (!capturedMagicLinkUrl) {
+          throw new Error('Failed to generate magic link URL');
+        }
+
+        const magicLinkUrl = capturedMagicLinkUrl;
+
+        // Log magic link URL in development
+        if (c.env.ENVIRONMENT !== 'production') {
+          console.log('[Email] Project invitation magic link URL:', magicLinkUrl);
+        }
+
+        const { getProjectInvitationEmailHtml, getProjectInvitationEmailText } =
+          await import('../auth/emailTemplates.js');
+        const { escapeHtml } = await import('../lib/escapeHtml.js');
+
+        const projectName = project?.name || 'Unknown Project';
+        const inviterName = inviter?.displayName || inviter?.name || inviter?.email || 'Someone';
+
+        const emailHtml = getProjectInvitationEmailHtml({
+          projectName,
+          inviterName,
+          invitationUrl: magicLinkUrl, // Use magic link URL instead of signup link
+          role,
+        });
+        const emailText = getProjectInvitationEmailText({
+          projectName,
+          inviterName,
+          invitationUrl: magicLinkUrl,
+          role,
+        });
+
+        // Escape projectName for email subject (plain text, but sanitize for safety)
+        const safeProjectName = escapeHtml(projectName);
+
+        // Queue email via EMAIL_QUEUE DO
+        const queueId = c.env.EMAIL_QUEUE.idFromName('default');
+        const queue = c.env.EMAIL_QUEUE.get(queueId);
+        await queue.fetch(
+          new Request('https://internal/enqueue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: email,
+              subject: `You're Invited to "${safeProjectName}" - CoRATES`,
+              html: emailHtml,
+              text: emailText,
+            }),
+          }),
+        );
+      } catch (err) {
+        console.error('Failed to queue invitation email:', err);
+        // Continue anyway - invitation is created
+      }
+
+      return c.json(
+        {
+          success: true,
+          invitation: true,
+          message: 'Invitation sent successfully',
+          email,
+        },
+        201,
+      );
     }
 
     if (!userToAdd) {
@@ -231,15 +412,19 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
     }
 
     // Sync member to DO
-    await syncMemberToDO(c.env, projectId, 'add', {
-      userId: userToAdd.id,
-      role,
-      joinedAt: now.getTime(),
-      name: userToAdd.name,
-      email: userToAdd.email,
-      displayName: userToAdd.displayName,
-      image: userToAdd.image,
-    });
+    try {
+      await syncMemberToDO(c.env, projectId, 'add', {
+        userId: userToAdd.id,
+        role,
+        joinedAt: now.getTime(),
+        name: userToAdd.name,
+        email: userToAdd.email,
+        displayName: userToAdd.displayName,
+        image: userToAdd.image,
+      });
+    } catch (err) {
+      console.error('Failed to sync member to DO:', err);
+    }
 
     return c.json(
       {
@@ -316,10 +501,14 @@ memberRoutes.put('/:userId', validateRequest(memberSchemas.updateRole), async c 
       .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
 
     // Sync role update to DO
-    await syncMemberToDO(c.env, projectId, 'update', {
-      userId: memberId,
-      role,
-    });
+    try {
+      await syncMemberToDO(c.env, projectId, 'update', {
+        userId: memberId,
+        role,
+      });
+    } catch (err) {
+      console.error('Failed to sync member update to DO:', err);
+    }
 
     return c.json({ success: true, userId: memberId, role });
   } catch (error) {
@@ -395,9 +584,13 @@ memberRoutes.delete('/:userId', async c => {
       .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
 
     // Sync member removal to DO (this also forces disconnect)
-    await syncMemberToDO(c.env, projectId, 'remove', {
-      userId: memberId,
-    });
+    try {
+      await syncMemberToDO(c.env, projectId, 'remove', {
+        userId: memberId,
+      });
+    } catch (err) {
+      console.error('Failed to sync member removal to DO:', err);
+    }
 
     // Send notification to removed user (if not self-removal)
     if (!isSelfRemoval) {

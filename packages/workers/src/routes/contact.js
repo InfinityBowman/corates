@@ -178,18 +178,6 @@ contact.post('/', async c => {
   }
 });
 
-/**
- * Escape HTML to prevent XSS in email content
- */
-function escapeHtml(text) {
-  const map = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-  };
-  return String(text).replace(/[&<>"']/g, m => map[m]);
-}
+import { escapeHtml } from '../lib/escapeHtml.js';
 
 export { contact as contactRoutes };

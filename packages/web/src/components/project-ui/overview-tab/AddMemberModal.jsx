@@ -1,7 +1,7 @@
 import { createSignal, For, Show, createEffect, onCleanup } from 'solid-js';
 import { API_BASE } from '@config/api.js';
 import { FiX } from 'solid-icons/fi';
-import { Select, Avatar } from '@corates/ui';
+import { Select, Avatar, showToast } from '@corates/ui';
 import { handleFetchError } from '@/lib/error-utils.js';
 
 /**
@@ -82,23 +82,30 @@ export default function AddMemberModal(props) {
 
   const handleAddMember = async () => {
     const user = selectedUser();
-    if (!user) return;
+    if (!user && !isValidEmail(searchQuery())) return;
 
     setAdding(true);
     setError(null);
 
     try {
-      await handleFetchError(
+      const response = await handleFetchError(
         fetch(`${API_BASE}/api/projects/${props.projectId}/members`, {
           method: 'POST',
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            userId: user.id,
-            role: selectedRole(),
-          }),
+          body: JSON.stringify(
+            user ?
+              {
+                userId: user.id,
+                role: selectedRole(),
+              }
+            : {
+                email: searchQuery().trim(),
+                role: selectedRole(),
+              },
+          ),
         }),
         {
           setError,
@@ -106,12 +113,33 @@ export default function AddMemberModal(props) {
         },
       );
 
-      handleClose();
+      const result = await response.json();
+
+      // Check if invitation was sent
+      if (result.invitation) {
+        showToast.success('Invitation Sent', `Invitation sent to ${result.email || searchQuery()}`);
+        handleClose();
+      } else {
+        // User was added directly
+        handleClose();
+      }
     } catch (_err) {
       // Error already handled by handleFetchError
     } finally {
       setAdding(false);
     }
+  };
+
+  // Helper to check if string looks like an email
+  const isValidEmail = str => {
+    if (!str || str.length < 3) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str.trim());
+  };
+
+  // Check if we can add by email (no user selected, but query looks like email)
+  const canAddByEmail = () => {
+    const query = searchQuery().trim();
+    return !selectedUser() && isValidEmail(query) && query.length >= 3;
   };
 
   const handleClose = () => {
@@ -161,6 +189,7 @@ export default function AddMemberModal(props) {
               <input
                 ref={inputRef}
                 type='text'
+                autocomplete='off'
                 value={searchQuery()}
                 onInput={e => handleSearchInput(e.target.value)}
                 placeholder='Type at least 2 characters...'
@@ -209,10 +238,21 @@ export default function AddMemberModal(props) {
                 searchQuery().length >= 2 &&
                 !searching() &&
                 searchResults().length === 0 &&
-                !selectedUser()
+                !selectedUser() &&
+                !canAddByEmail()
               }
             >
               <p class='text-sm text-gray-500'>No users found matching "{searchQuery()}"</p>
+            </Show>
+
+            {/* Email invitation prompt */}
+            <Show when={canAddByEmail()}>
+              <div class='rounded-lg border border-blue-200 bg-blue-50 p-3'>
+                <p class='text-sm text-gray-700'>
+                  No user found with this email. You can send an invitation to{' '}
+                  <span class='font-medium'>{searchQuery().trim()}</span> to join the project.
+                </p>
+              </div>
             </Show>
 
             {/* Selected User Display */}
@@ -245,7 +285,7 @@ export default function AddMemberModal(props) {
             </Show>
 
             {/* Role Selection */}
-            <Show when={selectedUser()}>
+            <Show when={selectedUser() || canAddByEmail()}>
               <Select
                 label='Role'
                 items={[
@@ -279,10 +319,16 @@ export default function AddMemberModal(props) {
             </button>
             <button
               onClick={handleAddMember}
-              disabled={!selectedUser() || adding()}
+              disabled={(!selectedUser() && !canAddByEmail()) || adding()}
               class='rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
             >
-              {adding() ? 'Adding...' : 'Add Member'}
+              {adding() ?
+                canAddByEmail() ?
+                  'Sending Invitation...'
+                : 'Adding...'
+              : canAddByEmail() ?
+                'Send Invitation'
+              : 'Add Member'}
             </button>
           </div>
         </div>

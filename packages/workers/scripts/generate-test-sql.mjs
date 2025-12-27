@@ -1,22 +1,41 @@
 #!/usr/bin/env node
 /**
- * Generate test SQL constant from migration file
- * Reads the migration SQL and creates a JS file that exports it for test helpers
+ * Generate test SQL constant from migration files
+ * Reads all migration SQL files and creates a JS file that exports the combined SQL for test helpers
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const MIGRATION_FILE = join(__dirname, '..', 'migrations', '0001_init.sql');
+const MIGRATIONS_DIR = join(__dirname, '..', 'migrations');
 const OUTPUT_FILE = join(__dirname, '..', 'src', '__tests__', 'migration-sql.js');
 
 try {
-  // Read the migration SQL file
-  const migrationSql = readFileSync(MIGRATION_FILE, 'utf-8');
+  // Read all .sql files from migrations directory
+  const migrationFiles = readdirSync(MIGRATIONS_DIR)
+    .filter(file => {
+      // Filter for .sql files and exclude the meta subdirectory
+      const filePath = join(MIGRATIONS_DIR, file);
+      return file.endsWith('.sql') && statSync(filePath).isFile();
+    })
+    .sort(); // Sort alphabetically (numeric prefixes ensure correct order)
+
+  if (migrationFiles.length === 0) {
+    throw new Error('No migration files found in migrations directory');
+  }
+
+  // Read and combine all migration files
+  const migrationSqls = migrationFiles.map(file => {
+    const filePath = join(MIGRATIONS_DIR, file);
+    return readFileSync(filePath, 'utf-8');
+  });
+
+  // Join all migrations with newlines to preserve structure
+  const combinedSql = migrationSqls.join('\n\n');
 
   // Generate the JS file with the SQL as an exported constant
   const jsContent = `/**
@@ -27,14 +46,16 @@ try {
  * To regenerate: pnpm db:generate:test
  */
 
-export const MIGRATION_SQL = \`${migrationSql.replace(/`/g, '\\`').replace(/\${/g, '\\${')}\`;
+export const MIGRATION_SQL = \`${combinedSql.replace(/`/g, '\\`').replace(/\${/g, '\\${')}\`;
 `;
 
   // Write the generated file
   writeFileSync(OUTPUT_FILE, jsContent, 'utf-8');
 
   // eslint-disable-next-line no-undef
-  console.log(`Generated test SQL constant: ${OUTPUT_FILE}`);
+  console.log(
+    `Generated test SQL constant from ${migrationFiles.length} migration file(s): ${OUTPUT_FILE}`,
+  );
 } catch (error) {
   // eslint-disable-next-line no-undef
   console.error('Error generating test SQL constant:', error.message);

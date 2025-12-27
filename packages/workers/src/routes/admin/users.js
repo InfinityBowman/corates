@@ -24,6 +24,7 @@ import {
   USER_ERRORS,
   SYSTEM_ERRORS,
 } from '@corates/shared';
+import { syncMemberToDO } from '../../lib/project-sync.js';
 import { upsertSubscription, getSubscriptionByUserId } from '../../db/subscriptions.js';
 import { getPlan } from '@corates/shared/plans';
 import { subscriptionSchemas, userSchemas, validateRequest } from '../../config/validation.js';
@@ -477,6 +478,18 @@ userRoutes.delete('/users/:userId', async c => {
       return c.json(error, error.statusCode);
     }
 
+    // Fetch all projects the user is a member of before any deletions
+    const userProjects = await db
+      .select({ projectId: projectMembers.projectId })
+      .from(projectMembers)
+      .where(eq(projectMembers.userId, userId));
+
+    // Sync all member removals to DOs atomically (fail fast if any fails)
+    await Promise.all(
+      userProjects.map(({ projectId }) => syncMemberToDO(c.env, projectId, 'remove', { userId })),
+    );
+
+    // Only proceed with database deletions if all DO syncs succeeded
     // Delete all user data atomically using batch transaction
     // Order matters for foreign key constraints
     await db.batch([

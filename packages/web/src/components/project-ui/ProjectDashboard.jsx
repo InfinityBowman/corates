@@ -201,25 +201,16 @@ export default function ProjectDashboard(props) {
           fallback={
             <Show when={!isLoading()}>
               <div class='col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12'>
-                <div class='mb-4 text-gray-500'>No projects yet</div>
-                <Show
-                  when={canCreateProject()}
-                  fallback={
-                    <div class='mx-auto max-w-md'>
-                      <ContactPrompt
-                        restrictionType={restrictionType()}
-                        projectCount={projectCount()}
-                        quotaLimit={quotaLimit()}
-                      />
-                    </div>
-                  }
-                >
-                  <button
-                    onClick={() => setShowCreateForm(true)}
-                    class='font-medium text-blue-600 hover:text-blue-700'
-                  >
-                    Create your first project
-                  </button>
+                <div class='text-center text-gray-500'>No projects yet</div>
+                <Show when={canCreateProject()}>
+                  <div class='flex justify-center'>
+                    <button
+                      onClick={() => setShowCreateForm(true)}
+                      class='mt-4 font-medium text-blue-600 hover:text-blue-700'
+                    >
+                      Create your first project
+                    </button>
+                  </div>
                 </Show>
               </div>
             </Show>

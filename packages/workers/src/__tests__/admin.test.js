@@ -22,6 +22,7 @@ vi.mock('postmark', () => {
 });
 import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
+import { clearProjectDOs } from './helpers.js';
 
 // Mock admin auth middleware so we can focus on admin route behavior.
 // We still test CSRF/trusted-origin behavior using the real middleware.
@@ -50,18 +51,59 @@ async function resetSchema() {
   // NOTE: Avoid D1Database.exec() here; it can surface internal meta aggregation errors.
   const run = sql => env.DB.prepare(sql).run();
 
+  // Helper to safely create a table (handles "already exists" errors)
+  const createTable = async sql => {
+    try {
+      await run(sql);
+    } catch (error) {
+      // Ignore "already exists" errors - table might exist from previous test run
+      if (!error.message?.includes('already exists')) {
+        throw error;
+      }
+    }
+  };
+
+  // Disable foreign keys before dropping to avoid constraint errors
+  await run('PRAGMA foreign_keys = OFF');
+
+  // Drop tables in reverse dependency order (child tables first, then parent tables)
+  // This order matches the reverse of table creation order
+  // Wrap in try-catch to handle cases where tables don't exist
+  const tablesToDrop = [
+    'subscriptions',
+    'twoFactor',
+    'verification',
+    'account',
+    'project_members',
+    'projects',
+    'session',
+    'user',
+  ];
+
+  // First, try to delete all data from tables (in case DROP fails)
+  for (const table of tablesToDrop) {
+    try {
+      await run(`DELETE FROM \`${table}\``);
+    } catch {
+      // Ignore - table might not exist
+    }
+  }
+
+  // Then drop tables
+  for (const table of tablesToDrop) {
+    try {
+      await run(`DROP TABLE IF EXISTS \`${table}\``);
+    } catch (error) {
+      // Ignore all errors during drop - tables might not exist or have constraint issues
+      // This is safe because we're recreating the schema anyway
+    }
+  }
+
+  // Re-enable foreign keys after dropping tables
   await run('PRAGMA foreign_keys = ON');
 
-  await run('DROP TABLE IF EXISTS subscriptions');
-  await run('DROP TABLE IF EXISTS twoFactor');
-  await run('DROP TABLE IF EXISTS verification');
-  await run('DROP TABLE IF EXISTS account');
-  await run('DROP TABLE IF EXISTS project_members');
-  await run('DROP TABLE IF EXISTS projects');
-  await run('DROP TABLE IF EXISTS session');
-  await run('DROP TABLE IF EXISTS user');
-
-  await run(`
+  // Create tables, handling "already exists" errors
+  await createTable(`
     CREATE TABLE user (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -81,7 +123,7 @@ async function resetSchema() {
     )
   `);
 
-  await run(`
+  await createTable(`
     CREATE TABLE account (
       id TEXT PRIMARY KEY,
       userId TEXT NOT NULL,
@@ -100,7 +142,7 @@ async function resetSchema() {
     )
   `);
 
-  await run(`
+  await createTable(`
     CREATE TABLE projects (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -112,7 +154,7 @@ async function resetSchema() {
     )
   `);
 
-  await run(`
+  await createTable(`
     CREATE TABLE project_members (
       id TEXT PRIMARY KEY,
       projectId TEXT NOT NULL,
@@ -124,7 +166,7 @@ async function resetSchema() {
     )
   `);
 
-  await run(`
+  await createTable(`
     CREATE TABLE session (
       id TEXT PRIMARY KEY,
       expiresAt INTEGER NOT NULL,
@@ -140,7 +182,7 @@ async function resetSchema() {
     )
   `);
 
-  await run(`
+  await createTable(`
     CREATE TABLE verification (
       id TEXT PRIMARY KEY,
       identifier TEXT NOT NULL,
@@ -151,7 +193,7 @@ async function resetSchema() {
     )
   `);
 
-  await run(`
+  await createTable(`
     CREATE TABLE twoFactor (
       id TEXT PRIMARY KEY,
       secret TEXT NOT NULL,
@@ -163,7 +205,7 @@ async function resetSchema() {
     )
   `);
 
-  await run(`
+  await createTable(`
     CREATE TABLE subscriptions (
       id TEXT PRIMARY KEY,
       userId TEXT NOT NULL,
@@ -271,6 +313,8 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await resetSchema();
+  // Clear ProjectDoc DOs to prevent invalidation errors between tests
+  await clearProjectDOs(['p1']);
 });
 
 describe('Admin API routes', () => {

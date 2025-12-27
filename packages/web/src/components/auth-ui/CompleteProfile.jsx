@@ -6,7 +6,9 @@ import { PrimaryButton } from './AuthButtons.jsx';
 import RoleSelector from './RoleSelector.jsx';
 import StepIndicator from './StepIndicator.jsx';
 import { FiChevronLeft } from 'solid-icons/fi';
-import { handleError } from '@/lib/error-utils.js';
+import { handleError, handleFetchError } from '@/lib/error-utils.js';
+import { API_BASE } from '@config/api.js';
+import { showToast } from '@corates/ui';
 
 /**
  * Complete Profile page - shown after email verification or OAuth signup
@@ -115,6 +117,9 @@ export default function CompleteProfile() {
     setLoading(true);
     setError('');
 
+    // Check for invitation token in URL params (from magic link callback) or localStorage (fallback)
+    const urlParams = new URLSearchParams(window.location.search);
+
     try {
       const fullName = `${firstName().trim()} ${lastName().trim()}`;
 
@@ -130,6 +135,45 @@ export default function CompleteProfile() {
       localStorage.removeItem('magicLinkSignup');
       localStorage.removeItem('pendingName');
       localStorage.removeItem('pendingPersona');
+
+      const invitationToken =
+        urlParams.get('invitation') || localStorage.getItem('pendingInvitationToken');
+
+      if (invitationToken) {
+        try {
+          const response = await handleFetchError(
+            fetch(`${API_BASE}/api/invitations/accept`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ token: invitationToken }),
+            }),
+            {
+              showToast: false,
+            },
+          );
+
+          const result = await response.json();
+          localStorage.removeItem('pendingInvitationToken');
+
+          // Redirect to the project
+          if (result.projectId) {
+            showToast.success(
+              'Invitation Accepted',
+              `You've been added to "${result.projectName}"`,
+            );
+            navigate(`/projects/${result.projectId}`, { replace: true });
+            return;
+          }
+        } catch (inviteErr) {
+          // Log error but don't block profile completion
+          console.error('Failed to accept invitation:', inviteErr);
+          localStorage.removeItem('pendingInvitationToken');
+          // Continue to dashboard
+        }
+      }
 
       await new Promise(resolve => setTimeout(resolve, 200));
       navigate('/dashboard', { replace: true });

@@ -178,7 +178,7 @@ refactor: simplify error handling
 ### Adding Database Schema Changes
 
 1. Update schema in `packages/workers/src/db/schema.js`
-2. Update migration SQL in `packages/workers/migrations/0001_init.sql`
+2. Generate migrations: `pnpm db:generate` (creates new migration files)
 3. Regenerate test SQL: `pnpm db:generate:test`
 4. Run migrations locally: `pnpm db:migrate`
 5. Test changes with database operations
