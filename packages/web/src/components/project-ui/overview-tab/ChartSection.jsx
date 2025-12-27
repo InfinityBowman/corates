@@ -104,7 +104,7 @@ export default function ChartSection(props) {
   const [greyscale, setGreyscale] = createSignal(false);
   const [robvisTitle, setRobvisTitle] = createSignal('AMSTAR-2 Quality Assessment');
   const [distributionTitle, setDistributionTitle] = createSignal(
-    'Distribution of AMSTAR Ratings on Each Item Across Included Reviews',
+    'Distribution of AMSTAR2 Ratings on Each Item Across Included Reviews',
   );
   const [transparentExport, setTransparentExport] = createSignal(false);
 

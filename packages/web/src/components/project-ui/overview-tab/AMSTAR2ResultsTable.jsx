@@ -1,7 +1,7 @@
 import { For, Show, createMemo } from 'solid-js';
 import { scoreChecklist } from '@/AMSTAR2/checklist.js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
-import ScoreTag from '@/components/checklist-ui/ScoreTag.jsx';
+import ScoreTag, { ScoreTooltip } from '@/components/checklist-ui/ScoreTag.jsx';
 
 /**
  * AMSTAR2ResultsTable - Displays AMSTAR 2 quality scores for each study
@@ -172,7 +172,9 @@ export default function AMSTAR2ResultsTable(props) {
                   scope='col'
                   class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'
                 >
-                  Score
+                  <div class='flex items-center gap-1'>
+                    Rating <ScoreTooltip checklistType='AMSTAR2' />
+                  </div>
                 </th>
               </tr>
             </thead>
@@ -184,7 +186,7 @@ export default function AMSTAR2ResultsTable(props) {
                       {item.studyName}
                     </td>
                     <td class='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
-                      <ScoreTag currentScore={item.score} checklistType='AMSTAR2' />
+                      <ScoreTag currentScore={item.score} checklistType='AMSTAR2' showRatingOnly />
                     </td>
                   </tr>
                 )}

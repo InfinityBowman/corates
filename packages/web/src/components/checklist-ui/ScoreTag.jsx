@@ -47,32 +47,42 @@ function getTooltipContent(checklistType) {
  * @param {Object} props
  * @param {string} props.currentScore - The current score value
  * @param {string} [props.checklistType] - The checklist type (defaults to AMSTAR2)
+ * @param {string} [props.showRatingOnly] - Whether to only show the rating text and info icon
  */
 export default function ScoreTag(props) {
+  const showRatingOnly = () => props.showRatingOnly ?? false;
   const checklistType = () => props.checklistType || DEFAULT_CHECKLIST_TYPE;
 
   const styleClass = createMemo(() => getScoreStyle(props.currentScore, checklistType()));
-  const infoUrl = createMemo(() => getInfoUrl(checklistType()));
-  const tooltipContent = createMemo(() => getTooltipContent(checklistType()));
-
   return (
     <Show when={props.currentScore}>
       <span
         class={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${styleClass()}`}
       >
-        <span>Score: {props.currentScore}</span>
-        <Tooltip content={tooltipContent()} placement='bottom' openDelay={200}>
-          <a
-            href={infoUrl()}
-            target='_blank'
-            rel='noreferrer'
-            class='mt-0.5 inline-flex items-center justify-center rounded-full p-0.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-            aria-label={`Open ${getChecklistMetadata(checklistType()).name} guidance in a new tab`}
-          >
-            <FaSolidCircleInfo size={12} />
-          </a>
-        </Tooltip>
+        <Show when={!showRatingOnly()} fallback={<span>{props.currentScore}</span>}>
+          <span>Rating: {props.currentScore}</span>
+          <ScoreTooltip checklistType={checklistType()} />
+        </Show>
       </span>
     </Show>
+  );
+}
+
+export function ScoreTooltip(props) {
+  const infoUrl = createMemo(() => getInfoUrl(props.checklistType));
+  const tooltipContent = createMemo(() => getTooltipContent(props.checklistType));
+
+  return (
+    <Tooltip content={tooltipContent()} placement='bottom' openDelay={200}>
+      <a
+        href={infoUrl()}
+        target='_blank'
+        rel='noreferrer'
+        class='mt-0.5 inline-flex items-center justify-center rounded-full p-0.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+        aria-label={`Open ${getChecklistMetadata(props.checklistType).name} guidance in a new tab`}
+      >
+        <FaSolidCircleInfo size={12} />
+      </a>
+    </Tooltip>
   );
 }
