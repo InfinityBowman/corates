@@ -34,7 +34,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "@testing-library/jest-dom": "^6.9.1",
     "@vitest/ui": "^4.0.16",
-    "jsdom": "^27.3.0",
+    "jsdom": "^27.4.0",
     "prettier": "^3.7.4",
     "puppeteer": "^24.34.0",
     "rollup-plugin-visualizer": "^6.0.5",
