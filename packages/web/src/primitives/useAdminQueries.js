@@ -1,0 +1,114 @@
+/**
+ * Admin queries using TanStack Query
+ * Provides hooks for admin dashboard data fetching
+ */
+
+import { useQuery } from '@tanstack/solid-query';
+import { API_BASE } from '@config/api.js';
+import { queryKeys } from '@lib/queryKeys.js';
+
+/**
+ * Helper for admin fetch calls
+ */
+async function adminFetch(path, options = {}) {
+  const response = await fetch(`${API_BASE}/api/admin/${path}`, {
+    credentials: 'include',
+    ...options,
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || `Failed to fetch ${path}`);
+  }
+  return response.json();
+}
+
+/**
+ * Hook to fetch admin dashboard stats
+ */
+export function useAdminStats() {
+  return useQuery(() => ({
+    queryKey: queryKeys.admin.stats,
+    queryFn: () => adminFetch('stats'),
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
+  }));
+}
+
+/**
+ * Hook to fetch users with pagination and search
+ * @param {() => {page: number, limit: number, search: string}} getParams - Function returning params
+ */
+export function useAdminUsers(getParams) {
+  return useQuery(() => {
+    const params = typeof getParams === 'function' ? getParams() : getParams;
+    const page = params?.page ?? 1;
+    const limit = params?.limit ?? 20;
+    const search = params?.search ?? '';
+    return {
+      queryKey: queryKeys.admin.users(page, limit, search),
+      queryFn: () => {
+        const searchParams = new URLSearchParams({
+          page: page.toString(),
+          limit: limit.toString(),
+        });
+        if (search) searchParams.set('search', search);
+        return adminFetch(`users?${searchParams.toString()}`);
+      },
+      staleTime: 1000 * 60 * 1, // 1 minute
+      gcTime: 1000 * 60 * 5, // 5 minutes
+    };
+  });
+}
+
+/**
+ * Hook to fetch single user details
+ */
+export function useAdminUserDetails(userId) {
+  return useQuery(() => ({
+    queryKey: queryKeys.admin.userDetails(userId),
+    queryFn: () => adminFetch(`users/${userId}`),
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
+  }));
+}
+
+/**
+ * Hook to fetch storage documents with cursor-based pagination
+ * @param {() => {cursor: string|null, limit: number, prefix: string, search: string}} getParams - Function returning params
+ */
+export function useStorageDocuments(getParams) {
+  return useQuery(() => {
+    const params = typeof getParams === 'function' ? getParams() : getParams;
+    const cursor = params?.cursor ?? null;
+    const limit = params?.limit ?? 50;
+    const prefix = params?.prefix ?? '';
+    const search = params?.search ?? '';
+    return {
+      queryKey: queryKeys.admin.storageDocuments(cursor, limit, prefix, search),
+      queryFn: () => {
+        const searchParams = new URLSearchParams({
+          limit: limit.toString(),
+        });
+        if (cursor) searchParams.set('cursor', cursor);
+        if (prefix) searchParams.set('prefix', prefix);
+        if (search) searchParams.set('search', search);
+        return adminFetch(`storage/documents?${searchParams.toString()}`);
+      },
+      staleTime: 1000 * 60 * 1, // 1 minute
+      gcTime: 1000 * 60 * 5, // 5 minutes
+    };
+  });
+}
+
+/**
+ * Hook to fetch storage statistics
+ */
+export function useStorageStats() {
+  return useQuery(() => ({
+    queryKey: queryKeys.admin.storageStats,
+    queryFn: () => adminFetch('storage/stats'),
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
+  }));
+}

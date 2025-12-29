@@ -3,7 +3,8 @@
  */
 
 import { API_BASE } from '@config/api.js';
-import projectStore from '../projectStore.js';
+import { queryClient } from '@lib/queryClient.js';
+import { queryKeys } from '@lib/queryKeys.js';
 
 /**
  * Creates member operations
@@ -33,7 +34,8 @@ export function createMemberActions(getActiveProjectId, getCurrentUserId) {
       }
 
       if (isSelf) {
-        projectStore.removeProjectFromList(projectId);
+        // Invalidate project list query since user was removed
+        queryClient.invalidateQueries({ queryKey: queryKeys.projects.list(currentUserId) });
       }
 
       return { isSelf };

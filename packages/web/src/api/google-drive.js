@@ -49,7 +49,6 @@ export async function disconnectGoogleDrive() {
  * @returns {Promise<{success: boolean, file: Object}>}
  */
 export async function importFromGoogleDrive(fileId, projectId, studyId) {
-  console.log('importing from google drive', fileId, projectId, studyId);
   const response = await fetch(`${API_BASE}/api/google-drive/import`, {
     method: 'POST',
     credentials: 'include',

@@ -153,7 +153,7 @@ export default function ProfilePage() {
         maxSize: AVATAR_MAX_SIZE,
         quality: AVATAR_QUALITY,
       });
-      console.log(
+      console.info(
         `Image compressed: ${(file.size / 1024).toFixed(1)}KB -> ${(compressedFile.size / 1024).toFixed(1)}KB`,
       );
 

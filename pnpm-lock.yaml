@@ -172,12 +172,18 @@ importers:
       '@solidjs/router':
         specifier: ^0.15.4
         version: 0.15.4(solid-js@1.9.10)
+      '@tanstack/solid-query':
+        specifier: ^5.90.18
+        version: 5.90.18(solid-js@1.9.10)
       better-auth:
         specifier: ^1.4.9
         version: 1.4.9(drizzle-kit@0.31.8)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20251229.0)(gel@2.2.0)(kysely@0.28.9))(solid-js@1.9.10)(vitest@4.0.16)(vue@3.5.26(typescript@5.9.3))
       d3:
         specifier: ^7.9.0
         version: 7.9.0
+      idb:
+        specifier: ^8.0.3
+        version: 8.0.3
       pdfjs-dist:
         specifier: ^5.4.530
         version: 5.4.530
@@ -3504,6 +3510,12 @@ packages:
     peerDependencies:
       vite: '>=6.0.0'
 
+  '@tanstack/query-core@5.90.15':
+    resolution:
+      {
+        integrity: sha512-mInIZNUZftbERE+/Hbtswfse49uUQwch46p+27gP9DWJL927UjnaWEF2t3RMOqBcXbfMdcNkPe06VyUIAZTV1g==,
+      }
+
   '@tanstack/router-utils@1.143.11':
     resolution:
       {
@@ -3517,6 +3529,14 @@ packages:
         integrity: sha512-a05fzK+jBGacsSAc1vE8an7lpBh4H0PyIEcivtEyHLomgSeElAJxm9E2It/0nYRZ5Lh23m0okbhzJNaYWZpAOg==,
       }
     engines: { node: '>=12' }
+
+  '@tanstack/solid-query@5.90.18':
+    resolution:
+      {
+        integrity: sha512-ee1b1zmCndDehTHtLGl0+JeaV0+N3BYYD3464udWfzH3PAbIgjAUm5dtUpLOse9253XVyGpB5X3sMn6frWepMA==,
+      }
+    peerDependencies:
+      solid-js: ^1.6.0
 
   '@testing-library/dom@10.4.1':
     resolution:
@@ -7373,6 +7393,12 @@ packages:
         integrity: sha512-2Tth85cXwGFHfvRgZWszZSvdo+0Xsqmw8k8ZwxScfcBneNUraK+dxRxRm24nszx80Y0TVio8kKLt5sLE7ZCLlw==,
       }
     engines: { node: '>=0.10.0' }
+
+  idb@8.0.3:
+    resolution:
+      {
+        integrity: sha512-LtwtVyVYO5BqRvcsKuB2iUMnHwPVByPCXFXOpuU96IZPPoPN6xjOGxZQ74pgSVVLQWtUOYgyeL4GE98BY5D3wg==,
+      }
 
   ieee754@1.2.1:
     resolution:
@@ -12858,6 +12884,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@tanstack/query-core@5.90.15': {}
+
   '@tanstack/router-utils@1.143.11':
     dependencies:
       '@babel/core': 7.28.5
@@ -12885,6 +12913,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - vite
+
+  '@tanstack/solid-query@5.90.18(solid-js@1.9.10)':
+    dependencies:
+      '@tanstack/query-core': 5.90.15
+      solid-js: 1.9.10
 
   '@testing-library/dom@10.4.1':
     dependencies:
@@ -15674,6 +15707,8 @@ snapshots:
   iconv-lite@0.7.1:
     dependencies:
       safer-buffer: 2.1.2
+
+  idb@8.0.3: {}
 
   ieee754@1.2.1: {}
 

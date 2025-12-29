@@ -2,7 +2,7 @@
  * Admin Dashboard - Main admin panel page
  */
 
-import { createSignal, createResource, Show, onMount } from 'solid-js';
+import { createSignal, Show, onMount } from 'solid-js';
 import { useNavigate, A } from '@solidjs/router';
 import {
   FiUsers,
@@ -16,13 +16,8 @@ import {
   FiAlertCircle,
   FiDatabase,
 } from 'solid-icons/fi';
-import {
-  isAdmin,
-  isAdminChecked,
-  checkAdminStatus,
-  fetchStats,
-  fetchUsers,
-} from '@/stores/adminStore.js';
+import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.js';
+import { useAdminStats, useAdminUsers } from '@primitives/useAdminQueries.js';
 import UserTable from './UserTable.jsx';
 import StatsCard from './StatsCard.jsx';
 
@@ -40,14 +35,17 @@ export default function AdminDashboard() {
     }
   });
 
-  // Fetch stats
-  const [stats] = createResource(fetchStats);
+  // Fetch stats using TanStack Query
+  const statsQuery = useAdminStats();
+  const stats = () => statsQuery.data;
 
-  // Fetch users with pagination and search
-  const [usersData, { refetch: refetchUsers }] = createResource(
-    () => ({ page: page(), search: debouncedSearch() }),
-    fetchUsers,
-  );
+  // Fetch users with pagination and search using TanStack Query
+  const usersDataQuery = useAdminUsers(() => ({
+    page: page(),
+    limit: 20,
+    search: debouncedSearch(),
+  }));
+  const usersData = () => usersDataQuery.data;
 
   // Debounce search
   let searchTimeout;
@@ -61,7 +59,7 @@ export default function AdminDashboard() {
   };
 
   const handleRefresh = () => {
-    refetchUsers();
+    usersDataQuery.refetch();
   };
 
   return (
@@ -111,28 +109,28 @@ export default function AdminDashboard() {
               value={stats()?.users ?? '-'}
               icon={FiUsers}
               color='blue'
-              loading={stats.loading}
+              loading={statsQuery.isLoading}
             />
             <StatsCard
               title='Projects'
               value={stats()?.projects ?? '-'}
               icon={FiFolder}
               color='green'
-              loading={stats.loading}
+              loading={statsQuery.isLoading}
             />
             <StatsCard
               title='Active Sessions'
               value={stats()?.activeSessions ?? '-'}
               icon={FiActivity}
               color='purple'
-              loading={stats.loading}
+              loading={statsQuery.isLoading}
             />
             <StatsCard
               title='New This Week'
               value={stats()?.recentSignups ?? '-'}
               icon={FiUserPlus}
               color='orange'
-              loading={stats.loading}
+              loading={statsQuery.isLoading}
             />
           </div>
 

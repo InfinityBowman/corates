@@ -5,6 +5,8 @@
 import * as Y from 'yjs';
 import { API_BASE } from '@config/api.js';
 import projectStore from '@/stores/projectStore.js';
+import { queryClient } from '@lib/queryClient.js';
+import { queryKeys } from '@lib/queryKeys.js';
 
 /**
  * Creates study operations
@@ -174,10 +176,8 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
     projectStore.setProjectData(projectId, {
       meta: { ...existingMeta, name: trimmed, updatedAt: now },
     });
-    projectStore.updateProjectInList(projectId, {
-      name: trimmed,
-      updatedAt: new Date(now),
-    });
+    // Invalidate project list query to refetch with updated name
+    queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
 
     return trimmed;
   }

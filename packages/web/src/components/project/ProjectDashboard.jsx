@@ -7,6 +7,9 @@ import projectActionsStore from '@/stores/projectActionsStore';
 import { useConfirmDialog, showToast } from '@corates/ui';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useSubscription } from '@primitives/useSubscription.js';
+import { useProjectList } from '@primitives/useProjectList.js';
+import { useQueryClient } from '@tanstack/solid-query';
+import { queryKeys } from '@lib/queryKeys.js';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import CreateProjectForm from './CreateProjectForm.jsx';
 import ProjectCard from './ProjectCard.jsx';
@@ -26,16 +29,22 @@ export default function ProjectDashboard(props) {
   const { hasEntitlement, hasQuota, quotas, loading: subscriptionLoading } = useSubscription();
 
   const userId = () => props.userId;
+  const queryClient = useQueryClient();
 
-  // Read from store
-  const projects = () => projectStore.getProjectList();
+  // Use TanStack Query for project list
+  const projectListQuery = useProjectList(userId);
+  const projects = () => projectListQuery.projects();
   const projectCount = () => projects()?.length || 0;
-  const isLoading = () => projectStore.isProjectListLoading();
-  const isLoaded = () => projectStore.isProjectListLoaded();
-  const error = () => projectStore.getProjectListError();
+  const isLoading = () => projectListQuery.isLoading();
+  // isLoaded is true when we have successfully fetched data (not just when not loading)
+  const isLoaded = () => projectListQuery.query.isSuccess;
+  const error = () => projectListQuery.error();
 
   // Check both entitlement and quota
+  // Return null while loading to avoid UI flicker (neither show button nor ContactPrompt)
   const canCreateProject = () => {
+    // While loading, return null to indicate indeterminate state
+    if (subscriptionLoading()) return null;
     return (
       hasEntitlement('project.create') &&
       hasQuota('projects.max', { used: projectCount(), requested: 1 })
@@ -43,7 +52,10 @@ export default function ProjectDashboard(props) {
   };
 
   // Determine restriction type and quota limit for ContactPrompt
+  // Only show ContactPrompt if subscription has loaded and user doesn't have entitlement
   const restrictionType = () => {
+    // Don't show prompt while loading (prevents showing default 'free' tier data)
+    if (subscriptionLoading()) return null;
     return !hasEntitlement('project.create') ? 'entitlement' : 'quota';
   };
 
@@ -58,19 +70,14 @@ export default function ProjectDashboard(props) {
     return err && (err.includes('No internet connection') || err.includes('connection error'));
   };
 
-  // Fetch on mount if not already loaded
-  createEffect(() => {
-    if (userId()) {
-      projectStore.fetchProjectList(userId());
-    }
-  });
+  // Project list is automatically fetched by useProjectList hook
 
   // Connect to notifications for real-time project updates
   const { connect, disconnect } = useNotifications(userId(), {
     onNotification: async notification => {
       if (notification.type === 'project-invite') {
-        // Refresh to get the new project
-        projectStore.refreshProjectList(userId());
+        // Invalidate project list query to refetch
+        queryClient.invalidateQueries({ queryKey: queryKeys.projects.list(userId()) });
       } else if (notification.type === 'removed-from-project') {
         // Clean up local data for the project we were removed from
         await cleanupProjectLocalData(notification.projectId);
@@ -107,7 +114,8 @@ export default function ProjectDashboard(props) {
     pendingRefs = [],
     driveFiles = [],
   ) => {
-    projectStore.addProjectToList(newProject);
+    // Invalidate project list query to refetch with new project
+    queryClient.invalidateQueries({ queryKey: queryKeys.projects.list(userId()) });
     // Store non-serializable data in projectStore instead of router state
     if (pendingPdfs.length > 0 || pendingRefs.length > 0 || driveFiles.length > 0) {
       projectStore.setPendingProjectData(newProject.id, { pendingPdfs, pendingRefs, driveFiles });
@@ -151,35 +159,41 @@ export default function ProjectDashboard(props) {
           <h1 class='text-2xl font-bold text-gray-900'>My Projects</h1>
           <p class='mt-1 text-gray-500'>Manage your research projects</p>
         </div>
+        {/* Show loading skeleton while subscription loads, then show button or ContactPrompt */}
         <Show
-          when={canCreateProject()}
-          fallback={
-            <div class='max-w-sm'>
-              <ContactPrompt
-                restrictionType={restrictionType()}
-                projectCount={projectCount()}
-                quotaLimit={quotaLimit()}
-              />
-            </div>
-          }
+          when={canCreateProject() !== null}
+          fallback={<div class='h-10 w-32 animate-pulse rounded-lg bg-gray-200' />}
         >
-          <button
-            class='inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
-            onClick={() => setShowCreateForm(!showCreateForm())}
-            disabled={!isOnline() || subscriptionLoading()}
-            title={!isOnline() ? 'Cannot create projects while offline' : ''}
+          <Show
+            when={canCreateProject()}
+            fallback={
+              <div class='max-w-sm'>
+                <ContactPrompt
+                  restrictionType={restrictionType()}
+                  projectCount={projectCount()}
+                  quotaLimit={quotaLimit()}
+                />
+              </div>
+            }
           >
-            <span class='text-lg'>+</span>
-            New Project
-          </button>
+            <button
+              class='inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
+              onClick={() => setShowCreateForm(!showCreateForm())}
+              disabled={!isOnline()}
+              title={!isOnline() ? 'Cannot create projects while offline' : ''}
+            >
+              <span class='text-lg'>+</span>
+              New Project
+            </button>
+          </Show>
         </Show>
       </div>
 
       {/* Error display */}
       <Show when={error() && !isOfflineError()}>
         <div class='rounded-lg border border-red-200 bg-red-50 p-4 text-red-700'>
-          {error()}
-          <button onClick={() => projectStore.refreshProjectList(userId())} class='ml-2 underline'>
+          {error()?.message || 'An error occurred'}
+          <button onClick={() => projectListQuery.refetch()} class='ml-2 underline'>
             Retry
           </button>
         </div>

@@ -6,7 +6,8 @@
  */
 
 import { useBetterAuth } from '@api/better-auth-store.js';
-import projectStore from '@/stores/projectStore.js';
+import { queryClient } from '@lib/queryClient.js';
+import { queryKeys } from '@lib/queryKeys.js';
 
 /**
  * Initialize bfcache restoration handler
@@ -22,7 +23,7 @@ export function initBfcacheHandler() {
     // event.persisted === true means the page was restored from bfcache
     if (!event.persisted) return;
 
-    console.log('[bfcache] Page restored from back-forward cache, refreshing state...');
+    console.info('[bfcache] Page restored from back-forward cache, refreshing state...');
 
     // Wait for auth to finish loading if it's currently loading
     // This ensures we have the current user before validating project cache
@@ -58,21 +59,18 @@ export function initBfcacheHandler() {
     // Wait a bit for session to update
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Validate and refresh project list if user is authenticated
+    // Invalidate project list query if user is authenticated
     const currentUser = auth.user();
     if (currentUser?.id) {
-      // Validate project list cache against current user
-      projectStore.validateProjectListCache(currentUser.id);
-
-      // Refresh project list to ensure it's current
+      // Invalidate and refetch project list query to ensure it's current
       try {
-        await projectStore.refreshProjectList(currentUser.id);
+        await queryClient.invalidateQueries({ queryKey: queryKeys.projects.list(currentUser.id) });
       } catch (err) {
         console.warn('[bfcache] Failed to refresh project list:', err);
       }
     } else {
-      // User is not authenticated, clear project list
-      projectStore.clearProjectList();
+      // User is not authenticated, clear query cache for all projects
+      queryClient.removeQueries({ queryKey: queryKeys.projects.all });
     }
   };
 

@@ -14,7 +14,7 @@ try {
   const buildTime = Date.now().toString(36); // Short, unique identifier
   const updated = content.replace(/__BUILD_TIME__/g, buildTime);
   writeFileSync(swPath, updated);
-  console.log(`[version-sw] Updated sw.js with build version: ${buildTime}`);
+  console.info(`[version-sw] Updated sw.js with build version: ${buildTime}`);
 } catch (error) {
   console.error('[version-sw] Failed to update sw.js:', error.message);
   process.exit(1);

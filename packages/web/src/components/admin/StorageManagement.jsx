@@ -2,7 +2,7 @@
  * Storage Management - Admin interface for managing R2 documents
  */
 
-import { createSignal, createResource, Show, For, onMount } from 'solid-js';
+import { createSignal, Show, For, onMount } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import {
   FiTrash2,
@@ -18,9 +18,9 @@ import {
   isAdmin,
   isAdminChecked,
   checkAdminStatus,
-  fetchStorageDocuments,
   deleteStorageDocuments,
 } from '@/stores/adminStore.js';
+import { useStorageDocuments } from '@primitives/useAdminQueries.js';
 import { Dialog, showToast } from '@corates/ui';
 
 function formatFileSize(bytes) {
@@ -63,11 +63,14 @@ export default function StorageManagement() {
     }
   });
 
-  // Fetch documents with cursor-based pagination
-  const [documentsData, { refetch: refetchDocuments }] = createResource(
-    () => ({ cursor: cursor(), limit, prefix: prefix(), search: debouncedSearch() }),
-    fetchStorageDocuments,
-  );
+  // Fetch documents with cursor-based pagination using TanStack Query
+  const documentsDataQuery = useStorageDocuments(() => ({
+    cursor: cursor(),
+    limit,
+    prefix: prefix(),
+    search: debouncedSearch(),
+  }));
+  const documentsData = () => documentsDataQuery.data;
 
   // Debounce search
   let searchTimeout;
@@ -158,7 +161,7 @@ export default function StorageManagement() {
         showToast.success('Documents Deleted', `Successfully deleted ${result.deleted} documents.`);
       }
 
-      refetchDocuments();
+      documentsDataQuery.refetch();
     } catch (error) {
       showToast.error('Delete Failed', error.message || 'Failed to delete documents');
     } finally {
@@ -336,7 +339,7 @@ export default function StorageManagement() {
                 </thead>
                 <tbody class='divide-y divide-gray-200'>
                   <Show
-                    when={!documentsData.loading}
+                    when={!documentsDataQuery.isLoading}
                     fallback={
                       <tr>
                         <td colspan='7' class='px-6 py-12 text-center'>

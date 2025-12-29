@@ -4,6 +4,8 @@ import Routes from './Routes.jsx';
 import { cleanupExpiredStates } from '@lib/formStatePersistence.js';
 import { initBfcacheHandler } from '@lib/bfcache-handler.js';
 import AppErrorBoundary from './components/ErrorBoundary.jsx';
+import { QueryClientProvider } from '@tanstack/solid-query';
+import { queryClient } from '@lib/queryClient.js';
 
 // Clean up any expired form state entries from IndexedDB on app load
 cleanupExpiredStates().catch(() => {
@@ -17,9 +19,11 @@ initBfcacheHandler();
 
 function Root() {
   return (
-    <AppErrorBoundary>
-      <Routes />
-    </AppErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AppErrorBoundary>
+        <Routes />
+      </AppErrorBoundary>
+    </QueryClientProvider>
   );
 }
 

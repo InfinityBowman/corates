@@ -3,8 +3,10 @@
  * Manages subscription state and provides permission helpers
  */
 
-import { createResource, createMemo } from 'solid-js';
+import { createMemo } from 'solid-js';
+import { useQuery, useQueryClient } from '@tanstack/solid-query';
 import { API_BASE } from '@config/api.js';
+import { queryKeys } from '@lib/queryKeys.js';
 import { handleFetchError } from '@/lib/error-utils.js';
 import { hasActiveAccess as checkActiveAccess } from '@/lib/access.js';
 import {
@@ -55,14 +57,19 @@ async function getSubscriptionSafe() {
 export function useSubscription() {
   const { isLoggedIn } = useBetterAuth();
 
-  // Only fetch subscription when user is logged in
-  // This prevents errors during signout when component is still mounted
-  const [subscription, { refetch, mutate }] = createResource(
-    () => (isLoggedIn() ? getSubscriptionSafe() : null),
-    {
-      initialValue: DEFAULT_SUBSCRIPTION,
-    },
-  );
+  // Use TanStack Query for subscription data with persistence
+  const query = useQuery(() => ({
+    queryKey: queryKeys.subscription.current,
+    queryFn: getSubscriptionSafe,
+    enabled: isLoggedIn(),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+    // Use placeholderData so components can check loading state
+    // placeholderData is only used while loading, not as initial data
+    placeholderData: undefined,
+  }));
+
+  const subscription = () => query.data || DEFAULT_SUBSCRIPTION;
 
   /**
    * Current subscription tier
@@ -131,13 +138,18 @@ export function useSubscription() {
     });
   });
 
+  const queryClient = useQueryClient();
+
   return {
-    // Resource
+    // Query state
     subscription,
-    loading: () => subscription.loading,
-    error: () => subscription.error,
-    refetch,
-    mutate,
+    loading: () => query.isLoading || query.isFetching,
+    error: () => query.error,
+    refetch: () => query.refetch(),
+    mutate: data => {
+      // Optimistic update - set query data via queryClient
+      queryClient.setQueryData(queryKeys.subscription.current, data);
+    },
 
     // Tier info
     tier,
