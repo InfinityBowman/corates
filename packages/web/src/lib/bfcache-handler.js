@@ -23,7 +23,7 @@ export function initBfcacheHandler() {
     // event.persisted === true means the page was restored from bfcache
     if (!event.persisted) return;
 
-    console.log('[bfcache] Page restored from back-forward cache, refreshing state...');
+    console.info('[bfcache] Page restored from back-forward cache, refreshing state...');
 
     // Wait for auth to finish loading if it's currently loading
     // This ensures we have the current user before validating project cache

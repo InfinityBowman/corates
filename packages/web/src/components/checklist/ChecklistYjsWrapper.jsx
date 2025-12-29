@@ -336,7 +336,6 @@ export default function ChecklistYjsWrapper() {
 
   // Determine back button navigation from tab query param
   const getBackTab = () => {
-    // console.log('location', location.search);
     const tabFromUrl = new URLSearchParams(location.search).get('tab');
     return tabFromUrl || 'overview';
   };

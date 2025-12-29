@@ -137,7 +137,6 @@ export default function GoogleDrivePickerLauncher(props) {
 
       const picked = await openPicker({ multiselect: !!props.multiselect });
       if (!picked || picked.length === 0) return;
-      console.log('picked', picked, studyId);
       await props.onPick?.(picked, studyId);
     } catch {
       // primitive sets error

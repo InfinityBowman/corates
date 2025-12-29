@@ -74,7 +74,7 @@ self.addEventListener('install', event => {
       }
 
       const buildAssets = Array.from(discovered);
-      console.log('[SW] Caching', buildAssets.length, 'build assets');
+      console.info('[SW] Caching', buildAssets.length, 'build assets');
 
       for (const url of buildAssets) {
         try {

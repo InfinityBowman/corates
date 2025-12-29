@@ -27,7 +27,6 @@ export default function GoogleDrivePickerModal(props) {
 
     (async () => {
       try {
-        console.log('importing from google drive', file.id, projectId(), studyId);
         setImporting(true);
         const result = await importFromGoogleDrive(file.id, projectId(), studyId);
         showToast.success(

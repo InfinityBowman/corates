@@ -32,7 +32,7 @@ async function setupPersistence(queryClient) {
 
       // Validate cache age - skip if older than 24 hours
       if (now - cacheTimestamp > MAX_CACHE_AGE_MS) {
-        console.log('[queryClient] Persisted cache expired, skipping restoration');
+        console.info('[queryClient] Persisted cache expired, skipping restoration');
         await persister.removeClient();
       } else if (persistedClient.clientState?.queries) {
         // Restore queries, validating each query's data age
@@ -50,7 +50,7 @@ async function setupPersistence(queryClient) {
             queryClient.setQueryData(query.queryKey, query.state.data);
           }
         }
-        console.log(
+        console.info(
           '[queryClient] Restored persisted cache from',
           new Date(cacheTimestamp).toISOString(),
         );
