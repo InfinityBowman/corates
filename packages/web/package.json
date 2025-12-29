@@ -22,7 +22,7 @@
     "@solidjs/router": "^0.15.4",
     "better-auth": "^1.4.5",
     "d3": "^7.9.0",
-    "pdfjs-dist": "^5.4.449",
+    "pdfjs-dist": "^5.4.530",
     "solid-icons": "^1.1.0",
     "solid-js": "^1.9.10",
     "y-indexeddb": "^9.0.12",
