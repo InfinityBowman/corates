@@ -39,8 +39,6 @@ export default function OverviewTab() {
   // Read from store directly
   const studies = () => projectStore.getStudies(projectId);
   const members = () => projectStore.getMembers(projectId);
-  const connectionState = () => projectStore.getConnectionState(projectId);
-  const synced = () => connectionState().synced;
   const currentUserId = () => user()?.id;
 
   // Calculate additional stats
@@ -380,8 +378,6 @@ export default function OverviewTab() {
               <ChartSection
                 studies={studies}
                 members={members}
-                getChecklistData={getChecklistData}
-                synced={synced}
               />
             </div>
           </Collapsible>
@@ -403,8 +399,6 @@ export default function OverviewTab() {
             <div class='border-t border-gray-200 px-6 py-6'>
               <AMSTAR2ResultsTable
                 studies={studies}
-                getChecklistData={getChecklistData}
-                synced={synced}
               />
             </div>
           </Collapsible>

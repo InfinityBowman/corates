@@ -4,6 +4,9 @@
  */
 
 import projectStore from '@/stores/projectStore.js';
+import { scoreChecklistOfType } from '@/checklist-registry/index.js';
+import { getAnswers as getAMSTAR2Answers } from '@/AMSTAR2/checklist.js';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 
 /**
  * Creates sync utilities for syncing Y.Doc to store
@@ -92,15 +95,42 @@ function buildStudyFromYMap(studyId, studyData, studyYMap) {
   if (checklistsMap && typeof checklistsMap.entries === 'function') {
     for (const [checklistId, checklistYMap] of checklistsMap.entries()) {
       const checklistData = checklistYMap.toJSON ? checklistYMap.toJSON() : checklistYMap;
-      study.checklists.push({
+      const checklistType = checklistData.type || 'AMSTAR2';
+      const status = checklistData.status || 'pending';
+
+      const checklistEntry = {
         id: checklistId,
-        type: checklistData.type || 'AMSTAR2',
+        type: checklistType,
         title: checklistData.title || null,
         assignedTo: checklistData.assignedTo || null,
-        status: checklistData.status || 'pending',
+        status: status,
         createdAt: checklistData.createdAt,
         updatedAt: checklistData.updatedAt,
-      });
+        score: null,
+        answers: null,
+      };
+
+      // Extract answers and compute score for completed checklists
+      if (status === CHECKLIST_STATUS.COMPLETED) {
+        const answersMap = checklistYMap.get('answers');
+        if (answersMap && typeof answersMap.entries === 'function') {
+          const answers = extractAnswersFromYMap(answersMap, checklistType);
+          checklistEntry.answers = answers;
+
+          // Compute score from answers
+          const score = scoreChecklistOfType(checklistType, answers);
+          if (score && score !== 'Error') {
+            checklistEntry.score = score;
+          }
+
+          // For AMSTAR2, also compute the consolidated answers for charts
+          if (checklistType === 'AMSTAR2') {
+            checklistEntry.consolidatedAnswers = getAMSTAR2Answers(answers);
+          }
+        }
+      }
+
+      study.checklists.push(checklistEntry);
     }
   }
 
@@ -165,4 +195,74 @@ function buildMembersList(membersMap) {
     });
   }
   return membersList;
+}
+
+/**
+ * Extract answers from Y.Map into a plain object suitable for scoring
+ * @param {Y.Map} answersMap - The answers Y.Map from a checklist
+ * @param {string} checklistType - The checklist type (AMSTAR2, ROBINS_I, etc.)
+ * @returns {Object} Plain object with answers
+ */
+function extractAnswersFromYMap(answersMap, checklistType) {
+  const answers = {};
+
+  for (const [key, sectionYMap] of answersMap.entries()) {
+    if (checklistType === 'ROBINS_I' && sectionYMap && typeof sectionYMap.get === 'function') {
+      // ROBINS-I: Reconstruct nested structure
+      if (key.startsWith('domain')) {
+        const sectionData = {
+          judgement: sectionYMap.get('judgement') ?? null,
+          answers: {},
+        };
+        const direction = sectionYMap.get('direction');
+        if (direction !== undefined) {
+          sectionData.direction = direction;
+        }
+
+        const answersNestedYMap = sectionYMap.get('answers');
+        if (answersNestedYMap && typeof answersNestedYMap.entries === 'function') {
+          for (const [qKey, questionYMap] of answersNestedYMap.entries()) {
+            if (questionYMap && typeof questionYMap.get === 'function') {
+              sectionData.answers[qKey] = {
+                answer: questionYMap.get('answer') ?? null,
+                comment: questionYMap.get('comment') ?? '',
+              };
+            } else {
+              sectionData.answers[qKey] = questionYMap;
+            }
+          }
+        }
+        answers[key] = sectionData;
+      } else if (key === 'overall') {
+        const sectionData = {
+          judgement: sectionYMap.get('judgement') ?? null,
+        };
+        const direction = sectionYMap.get('direction');
+        if (direction !== undefined) {
+          sectionData.direction = direction;
+        }
+        answers[key] = sectionData;
+      } else if (key === 'sectionB') {
+        const sectionData = {};
+        for (const [subKey, subValue] of sectionYMap.entries()) {
+          if (subValue && typeof subValue.get === 'function') {
+            sectionData[subKey] = {
+              answer: subValue.get('answer') ?? null,
+              comment: subValue.get('comment') ?? '',
+            };
+          } else {
+            sectionData[subKey] = subValue;
+          }
+        }
+        answers[key] = sectionData;
+      } else {
+        answers[key] = sectionYMap.toJSON ? sectionYMap.toJSON() : sectionYMap;
+      }
+    } else {
+      // AMSTAR2 and other types: simple toJSON conversion
+      answers[key] = sectionYMap.toJSON ? sectionYMap.toJSON() : sectionYMap;
+    }
+  }
+
+  return answers;
 }

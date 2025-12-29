@@ -1,5 +1,4 @@
 import { For, Show, createMemo } from 'solid-js';
-import { scoreChecklist } from '@/AMSTAR2/checklist.js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 import ScoreTag, { ScoreTooltip } from '@/components/checklist/ScoreTag.jsx';
 
@@ -7,29 +6,27 @@ import ScoreTag, { ScoreTooltip } from '@/components/checklist/ScoreTag.jsx';
  * AMSTAR2ResultsTable - Displays AMSTAR 2 quality scores for each study
  *
  * Props:
- * - studies: signal returning array of studies with checklists
- * - getChecklistData: function (studyId, checklistId) => checklist with answers
- * - synced: signal returning boolean indicating if Y.Doc data is ready
+ * - studies: signal returning array of studies with checklists (includes score from store)
  */
 export default function AMSTAR2ResultsTable(props) {
-  // Process studies and calculate scores
+  // Process studies and extract scores from store data
+  // Scores are computed during sync and stored on checklist objects
   const studyScores = createMemo(() => {
-    // Track synced state to ensure memo re-runs when data becomes available
-    const _isSynced = props.synced?.() ?? false;
     const studiesList = props.studies?.() || [];
     if (studiesList.length === 0) return [];
 
     const results = [];
 
     for (const study of studiesList) {
-      if (!study.checklists || study.checklists.length === 0) continue;
+      const checklists = study.checklists || [];
+      if (checklists.length === 0) continue;
 
-      // Find the checklist to score for this study
+      // Find the checklist to display score for
       let checklistToScore = null;
 
       // First, check for reconciled checklist
       if (study.reconciliation?.reconciledChecklistId) {
-        const reconciledChecklist = study.checklists.find(
+        const reconciledChecklist = checklists.find(
           c => c.id === study.reconciliation.reconciledChecklistId && c.type === 'AMSTAR2',
         );
         if (reconciledChecklist && reconciledChecklist.status === CHECKLIST_STATUS.COMPLETED) {
@@ -39,20 +36,16 @@ export default function AMSTAR2ResultsTable(props) {
 
       // If no reconciled checklist, use first completed AMSTAR2 checklist
       if (!checklistToScore) {
-        checklistToScore = study.checklists.find(
+        checklistToScore = checklists.find(
           c => c.type === 'AMSTAR2' && c.status === CHECKLIST_STATUS.COMPLETED,
         );
       }
 
       if (!checklistToScore) continue;
 
-      // Get full checklist data with answers
-      const fullChecklist = props.getChecklistData?.(study.id, checklistToScore.id);
-      if (!fullChecklist?.answers) continue;
-
-      // Calculate score
-      const score = scoreChecklist(fullChecklist.answers);
-      if (!score || score === 'Error') continue;
+      // Score is pre-computed during sync and stored on the checklist
+      const score = checklistToScore.score;
+      if (!score) continue;
 
       results.push({
         studyId: study.id,
@@ -101,10 +94,11 @@ export default function AMSTAR2ResultsTable(props) {
     <Show
       when={studyScores().length > 0}
       fallback={
-        <div class='rounded-lg border border-gray-200 bg-white py-8 text-center'>
-          <p class='text-gray-500'>No completed AMSTAR 2 appraisals to display.</p>
-          <p class='mt-1 text-sm text-gray-400'>
-            Complete AMSTAR 2 checklists to see quality assessment results.
+        <div class='rounded-lg border border-gray-200 bg-white px-4 py-8 text-center'>
+          <p class='text-gray-500'>
+            Once appraisals are completed, this section will display tables summarizing the
+            distribution of overall confidence ratings (critically low, low, moderate, high) and the
+            overall confidence rating for each included review.
           </p>
         </div>
       }

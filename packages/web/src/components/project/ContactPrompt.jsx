@@ -15,14 +15,14 @@ export default function ContactPrompt(props) {
 
   const getTitle = () => {
     if (restrictionType() === 'entitlement') {
-      return 'Project Creation Not Available';
+      return 'Early Access Testing';
     }
     return 'Project Limit Reached';
   };
 
   const getMessage = () => {
     if (restrictionType() === 'entitlement') {
-      return 'CoRATES is in early access. Request access to create projects by contacting us.';
+      return `CoRATES is currently in early access testing as we test and refine project-based features in collaboration with early users. If you're interested in creating a project and sharing feedback, please contact us to request access. Individual appraisals are always available and free to use.`;
     }
     const limit = quotaLimit();
     const limitText = limit === null || limit === -1 ? '∞' : limit;
@@ -38,8 +38,8 @@ export default function ContactPrompt(props) {
           </div>
         </div>
         <div class='min-w-0 flex-1'>
-          <h3 class='text-sm font-medium text-gray-900'>{getTitle()}</h3>
-          <p class='mt-1 text-sm text-gray-600'>{getMessage()}</p>
+          <h3 class='text-sm font-medium text-blue-800'>{getTitle()}</h3>
+          <p class='mt-1 text-sm text-blue-600'>{getMessage()}</p>
           <a
             href={contactUrl()}
             target='_blank'

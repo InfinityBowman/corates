@@ -1,7 +1,6 @@
 import AMSTARRobvis from '@components/charts/AMSTARRobvis';
 import AMSTARDistribution from '@components/charts/AMSTARDistribution';
 import ChartSettingsModal from '@components/charts/ChartSettingsModal';
-import { getAnswers } from '@/AMSTAR2/checklist.js';
 import { createMemo, createSignal, createEffect, Show } from 'solid-js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 import { createStore } from 'solid-js/store';
@@ -93,10 +92,8 @@ function exportChart(svgElement, filename, format, transparent = false) {
  * ChartSection - Displays AMSTAR charts for a project's checklists
  *
  * Props:
- * - studies: signal returning array of studies with checklists
+ * - studies: signal returning array of studies with checklists (includes consolidatedAnswers from store)
  * - members: signal returning array of project members
- * - getChecklistData: function (studyId, checklistId) => checklist with answers
- * - synced: signal returning boolean indicating if Y.Doc data is ready
  */
 export default function ChartSection(props) {
   const [showSettingsModal, setShowSettingsModal] = createSignal(false);
@@ -148,10 +145,8 @@ export default function ChartSection(props) {
   };
 
   // Build raw chart data from studies and their checklists
-  // Only includes checklists from the completed tab (status === COMPLETED)
+  // Answers are pre-computed during sync and stored on checklist objects
   const rawChecklistData = createMemo(() => {
-    // Track synced state to ensure memo re-runs when data becomes available
-    const _isSynced = props.synced?.() ?? false;
     const studiesList = props.studies?.() || [];
     const membersList = props.members?.() || [];
     if (studiesList.length === 0) return [];
@@ -159,18 +154,16 @@ export default function ChartSection(props) {
     const data = [];
 
     for (const study of studiesList) {
-      if (!study.checklists || study.checklists.length === 0) continue;
+      const checklists = study.checklists || [];
+      if (checklists.length === 0) continue;
 
-      for (const checklist of study.checklists) {
-        // Filter: only include completed checklists (getCompletedChecklists handles single/dual logic)
+      for (const checklist of checklists) {
+        // Only include completed AMSTAR2 checklists
         if (checklist.status !== CHECKLIST_STATUS.COMPLETED) continue;
+        if (checklist.type !== 'AMSTAR2') continue;
 
-        // Get full checklist data with answers
-        const fullChecklist = props.getChecklistData?.(study.id, checklist.id);
-        if (!fullChecklist?.answers) continue;
-
-        // Get the properly formatted answers using the AMSTAR2 getAnswers function
-        const answersObj = getAnswers(fullChecklist.answers);
+        // Answers are pre-computed during sync and stored on the checklist
+        const answersObj = checklist.consolidatedAnswers;
         if (!answersObj) continue;
 
         const reviewerName = getAssigneeName(checklist.assignedTo, membersList);
@@ -235,10 +228,11 @@ export default function ChartSection(props) {
     <Show
       when={checklistData().length > 0}
       fallback={
-        <div class='rounded-lg border border-gray-200 bg-white py-8 text-center'>
-          <p class='text-gray-500'>No completed checklists to display charts.</p>
-          <p class='mt-1 text-sm text-gray-400'>
-            Add studies and complete checklists to see quality assessment charts.
+        <div class='rounded-lg border border-gray-200 bg-white px-4 py-8 text-center'>
+          <p class='text-gray-500'>
+            Once appraisals are completed, this section will display domain-level judgments by
+            review and across reviews, along with a figure summarizing the ratings of overall
+            confidence in the results of the included reviews.
           </p>
         </div>
       }

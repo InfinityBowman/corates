@@ -232,6 +232,22 @@ function createProjectStore() {
     return study.checklists.find(c => c.id === checklistId) || null;
   }
 
+  /**
+   * Get the score for a specific checklist (computed during sync)
+   */
+  function getChecklistScore(projectId, studyId, checklistId) {
+    const checklist = getChecklist(projectId, studyId, checklistId);
+    return checklist?.score || null;
+  }
+
+  /**
+   * Get the consolidated answers for a checklist (for charts, computed during sync)
+   */
+  function getChecklistAnswers(projectId, studyId, checklistId) {
+    const checklist = getChecklist(projectId, studyId, checklistId);
+    return checklist?.consolidatedAnswers || checklist?.answers || null;
+  }
+
   // ============ PDF Selectors ============
 
   /**
@@ -560,6 +576,8 @@ function createProjectStore() {
     getMeta,
     getStudy,
     getChecklist,
+    getChecklistScore,
+    getChecklistAnswers,
 
     // Getters - PDF Data
     getStudyPdfs,
