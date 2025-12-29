@@ -16,6 +16,9 @@ import { registerLocalDocsTools } from './tools/local-docs.js';
 import { registerBetterAuthTools } from './tools/better-auth.js';
 import { registerDrizzleTools } from './tools/drizzle.js';
 import { registerCodeReviewTools } from './tools/code-review.js';
+import { registerTanStackRouterTools } from './tools/tanstack-router.js';
+import { registerTanStackStartTools } from './tools/tanstack-start.js';
+import { registerTanStackQueryTools } from './tools/tanstack-query.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,6 +38,9 @@ registerLocalDocsTools(server, docsRoot);
 registerBetterAuthTools(server);
 registerDrizzleTools(server);
 registerCodeReviewTools(server, repoRoot);
+registerTanStackRouterTools(server);
+registerTanStackStartTools(server);
+registerTanStackQueryTools(server);
 
 // Start the server with stdio transport
 async function main(): Promise<void> {
