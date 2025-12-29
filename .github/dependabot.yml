@@ -175,6 +175,8 @@ updates:
       prefix-development: 'chore'
       include: 'scope'
     rebase-strategy: 'auto'
+    ignore:
+      - dependency-name: 'vitest'
     groups:
       workers-dependencies:
         patterns:
