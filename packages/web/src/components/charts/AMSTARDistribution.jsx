@@ -63,7 +63,7 @@ export default function AMSTARDistribution(props) {
   const width = () => props.width ?? containerSize().width;
   const height = () => props.height ?? containerSize().width / 1.5;
   const title = () =>
-    props.title ?? 'Distribution of AMSTAR Ratings on Each Item Across Included Reviews';
+    props.title ?? 'Level Judgments Across Included Reviews';
   const greyscale = () => props.greyscale ?? false;
 
   const margin = { top: 50, right: 150, bottom: 60, left: 80 };

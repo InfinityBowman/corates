@@ -99,9 +99,9 @@ export default function ChartSection(props) {
   const [showSettingsModal, setShowSettingsModal] = createSignal(false);
   const [customLabels, setCustomLabels] = createStore([]);
   const [greyscale, setGreyscale] = createSignal(false);
-  const [robvisTitle, setRobvisTitle] = createSignal('AMSTAR-2 Quality Assessment');
+  const [robvisTitle, setRobvisTitle] = createSignal('AMSTAR 2 Item-Level Judgments by Review');
   const [distributionTitle, setDistributionTitle] = createSignal(
-    'Distribution of AMSTAR2 Ratings on Each Item Across Included Reviews',
+    'Level Judgments Across Included Reviews',
   );
   const [transparentExport, setTransparentExport] = createSignal(false);
 

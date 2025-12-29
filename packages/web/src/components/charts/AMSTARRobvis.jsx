@@ -6,7 +6,7 @@ import * as d3 from 'd3';
  * - data: Array of { label: string, questions: Array<"yes"|"partial yes"|"no"|"no ma"> }
  * - width: number (default: 900)
  * - height: number (default: 600)
- * - title: string (default: "AMSTAR-2 Quality Assessment")
+ * - title: string (default: "AMSTAR 2 Item-Level Judgments by Review")
  * - greyscale: boolean (default: false) - use greyscale colors
  * - ref: (el) => void - optional ref callback for accessing the SVG element
  */
@@ -63,7 +63,7 @@ export default function AMSTARRobvis(props) {
   const nQuestions = 16;
   const width = () => props.width ?? containerSize().width;
   const height = () => props.height ?? containerSize().height;
-  const title = () => props.title ?? 'AMSTAR-2 Quality Assessment';
+  const title = () => props.title ?? 'AMSTAR 2 Item-Level Judgments by Review';
   const greyscale = () => props.greyscale ?? false;
 
   // Dynamically calculate left margin based on label width
