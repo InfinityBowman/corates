@@ -375,10 +375,7 @@ export default function OverviewTab() {
             }
           >
             <div class='border-t border-gray-200 px-6 py-6'>
-              <ChartSection
-                studies={studies}
-                members={members}
-              />
+              <ChartSection studies={studies} members={members} />
             </div>
           </Collapsible>
         </div>
@@ -397,9 +394,7 @@ export default function OverviewTab() {
             }
           >
             <div class='border-t border-gray-200 px-6 py-6'>
-              <AMSTAR2ResultsTable
-                studies={studies}
-              />
+              <AMSTAR2ResultsTable studies={studies} />
             </div>
           </Collapsible>
         </div>
