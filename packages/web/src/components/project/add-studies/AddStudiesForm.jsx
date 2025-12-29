@@ -12,11 +12,11 @@ import { Tabs, showToast } from '@corates/ui';
 import projectStore from '@/stores/projectStore.js';
 
 import { useAddStudies } from '@primitives/useAddStudies.js';
-import { AddStudiesProvider } from './add-studies/AddStudiesContext.jsx';
-import PdfUploadSection from './add-studies/PdfUploadSection.jsx';
-import ReferenceImportSection from './add-studies/ReferenceImportSection.jsx';
-import DoiLookupSection from './add-studies/DoiLookupSection.jsx';
-import GoogleDriveSection from './add-studies/GoogleDriveSection.jsx';
+import { AddStudiesProvider } from './AddStudiesContext.jsx';
+import PdfUploadSection from './PdfUploadSection.jsx';
+import ReferenceImportSection from './ReferenceImportSection.jsx';
+import DoiLookupSection from './DoiLookupSection.jsx';
+import GoogleDriveSection from './GoogleDriveSection.jsx';
 
 /**
  * @param {Object} props

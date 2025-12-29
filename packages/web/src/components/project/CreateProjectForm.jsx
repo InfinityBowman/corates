@@ -1,5 +1,5 @@
 import { createSignal, Show, onMount } from 'solid-js';
-import AddStudiesForm from './AddStudiesForm.jsx';
+import AddStudiesForm from './add-studies/AddStudiesForm.jsx';
 import { showToast } from '@corates/ui';
 import { AUTH_ERRORS } from '@corates/shared';
 import { isUnlimitedQuota } from '@corates/shared/plans';

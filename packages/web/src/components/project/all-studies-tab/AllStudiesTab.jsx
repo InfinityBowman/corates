@@ -6,7 +6,7 @@
 
 import { For, Show, createSignal, onMount } from 'solid-js';
 import { AiOutlineBook } from 'solid-icons/ai';
-import AddStudiesForm from '../AddStudiesForm.jsx';
+import AddStudiesForm from '../add-studies/AddStudiesForm.jsx';
 import GoogleDrivePickerModal from '../google-drive/GoogleDrivePickerModal.jsx';
 import { StudyCard } from './study-card/index.js';
 import AssignReviewersModal from './AssignReviewersModal.jsx';
