@@ -2,7 +2,7 @@
  * PDF upload operations for useAddStudies
  */
 
-import { createStore, produce } from 'solid-js/store';
+import { createStore, produce, reconcile } from 'solid-js/store';
 import {
   extractPdfTitle,
   extractPdfDoi,
@@ -27,9 +27,13 @@ export function createPdfOperations() {
     const pdfFiles = files.filter(f => f.type === 'application/pdf');
     if (pdfFiles.length === 0) return;
 
-    // Filter out duplicates by name and size
-    const existingFiles = new Set(uploadedPdfs.map(pdf => `${pdf.file.name}:${pdf.file.size}`));
-    const newFiles = pdfFiles.filter(file => !existingFiles.has(`${file.name}:${file.size}`));
+    // Filter out duplicates by name and size (handle null file objects from restored state)
+    const existingFiles = new Set(
+      uploadedPdfs
+        .filter(pdf => pdf.file?.name)
+        .map(pdf => `${pdf.file.name}:${pdf.file.size || 0}`),
+    );
+    const newFiles = pdfFiles.filter(file => !existingFiles.has(`${file.name}:${file.size || 0}`));
 
     if (newFiles.length === 0) return;
 
@@ -162,10 +166,13 @@ export function createPdfOperations() {
   };
 
   const removePdf = id => {
+    // Find the index and splice directly with produce for immediate reactivity
     setUploadedPdfs(
       produce(pdfs => {
         const idx = pdfs.findIndex(p => p.id === id);
-        if (idx !== -1) pdfs.splice(idx, 1);
+        if (idx !== -1) {
+          pdfs.splice(idx, 1);
+        }
       }),
     );
   };
@@ -179,7 +186,7 @@ export function createPdfOperations() {
   };
 
   const clearPdfs = () => {
-    setUploadedPdfs([]);
+    setUploadedPdfs(reconcile([]));
   };
 
   // Serialization helpers

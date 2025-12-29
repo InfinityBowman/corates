@@ -9,10 +9,9 @@ import { CgFileDocument } from 'solid-icons/cg';
 import { FiLink, FiRefreshCw } from 'solid-icons/fi';
 import { VsWarning } from 'solid-icons/vs';
 import { FileUpload } from '@corates/ui';
-import { useStudiesContext } from './AddStudiesContext.jsx';
 
-export default function PdfUploadSection() {
-  const studies = useStudiesContext();
+export default function PdfUploadSection(props) {
+  const studies = () => props.studies;
 
   return (
     <div class='space-y-3'>
@@ -27,13 +26,13 @@ export default function PdfUploadSection() {
         allowDirectories={false}
         helpText='PDF files only'
         showFileList={false}
-        onFilesChange={studies.handlePdfSelect}
+        onFilesChange={studies().handlePdfSelect}
         compact
       />
 
-      <Show when={studies.uploadedPdfs.length > 0}>
+      <Show when={studies().uploadedPdfs.length > 0}>
         <div class='space-y-2'>
-          <For each={studies.uploadedPdfs}>
+          <For each={studies().uploadedPdfs}>
             {pdf => (
               <div
                 class='flex items-center gap-3 rounded-lg border p-3'
@@ -57,7 +56,7 @@ export default function PdfUploadSection() {
                       <span class='text-sm font-medium text-red-600'>{pdf.error}</span>
                       <button
                         type='button'
-                        onClick={() => studies.retryPdfExtraction?.(pdf.id)}
+                        onClick={() => studies().retryPdfExtraction?.(pdf.id)}
                         class='inline-flex items-center gap-1 rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-200'
                       >
                         <FiRefreshCw class='h-3 w-3' />
@@ -82,7 +81,7 @@ export default function PdfUploadSection() {
                       <input
                         type='text'
                         value={pdf.title || ''}
-                        onInput={e => studies.updatePdfTitle(pdf.id, e.target.value)}
+                        onInput={e => studies().updatePdfTitle(pdf.id, e.target.value)}
                         class='flex-1 border-none bg-transparent p-0 text-sm font-medium text-gray-900 focus:ring-0 focus:outline-none'
                         placeholder='Study title'
                       />
@@ -129,7 +128,7 @@ export default function PdfUploadSection() {
                 </div>
                 <button
                   type='button'
-                  onClick={() => studies.removePdf(pdf.id)}
+                  onClick={() => studies().removePdf(pdf.id)}
                   class='rounded p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 >
                   <BiRegularTrash class='h-4 w-4' />
