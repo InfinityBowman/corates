@@ -27,11 +27,11 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@cloudflare/workers-types": "^4.20251224.0",
+    "@cloudflare/workers-types": "^4.20251229.0",
     "@corates/shared": "workspace:*",
     "better-auth": "^1.4.9",
     "drizzle-orm": "^0.45.1",
-    "hono": "^4.11.1",
+    "hono": "^4.11.3",
     "lib0": "^0.2.116",
     "postmark": "^4.0.5",
     "stripe": "^20.1.0",
