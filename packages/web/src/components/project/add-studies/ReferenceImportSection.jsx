@@ -14,26 +14,25 @@ import {
   SUPPORTED_FORMATS,
   MIXED_IMPORT_ACCEPT,
 } from '@/lib/referenceParser.js';
-import { useStudiesContext } from './AddStudiesContext.jsx';
 
-export default function ReferenceImportSection() {
-  const studies = useStudiesContext();
+export default function ReferenceImportSection(props) {
+  const studies = () => props.studies;
 
   return (
     <div class='space-y-3'>
       <Show
-        when={studies.importedRefs().length === 0}
+        when={studies().importedRefs().length === 0}
         fallback={
           <div class='space-y-3'>
             <div class='flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2'>
               <div class='flex items-center gap-2 text-sm text-gray-600'>
                 <AiOutlineFileText class='h-4 w-4' />
-                <span class='max-w-48 truncate'>{studies.refFileName()}</span>
-                <span class='text-gray-400'>({studies.importedRefs().length} references)</span>
+                <span class='max-w-48 truncate'>{studies().refFileName()}</span>
+                <span class='text-gray-400'>({studies().importedRefs().length} references)</span>
               </div>
               <button
                 type='button'
-                onClick={studies.clearImportedRefs}
+                onClick={studies().clearImportedRefs}
                 class='text-xs font-medium text-blue-600 hover:text-blue-700'
               >
                 Change file
@@ -43,37 +42,37 @@ export default function ReferenceImportSection() {
             {/* PDF matching status */}
             <Show
               when={
-                studies.matchedRefPdfCount() > 0 ||
-                studies.unmatchedRefPdfCount() > 0 ||
-                studies.lookingUpRefPdfs() ||
-                studies.foundPdfCount() > 0
+                studies().matchedRefPdfCount() > 0 ||
+                studies().unmatchedRefPdfCount() > 0 ||
+                studies().lookingUpRefPdfs() ||
+                studies().foundPdfCount() > 0
               }
             >
               <div class='flex flex-wrap items-center gap-3 text-xs'>
-                <Show when={studies.lookingUpRefPdfs()}>
+                <Show when={studies().lookingUpRefPdfs()}>
                   <span class='inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-blue-700'>
                     <div class='h-3 w-3 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
                     Looking up PDFs...
                   </span>
                 </Show>
-                <Show when={studies.matchedRefPdfCount() > 0}>
+                <Show when={studies().matchedRefPdfCount() > 0}>
                   <span class='inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-green-700'>
                     <BiRegularLinkAlt class='h-3 w-3' />
-                    {studies.matchedRefPdfCount()} PDF{studies.matchedRefPdfCount() > 1 ? 's' : ''}{' '}
-                    matched
+                    {studies().matchedRefPdfCount()} PDF
+                    {studies().matchedRefPdfCount() > 1 ? 's' : ''} matched
                   </span>
                 </Show>
-                <Show when={studies.foundPdfCount() > 0}>
+                <Show when={studies().foundPdfCount() > 0}>
                   <span class='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-emerald-700'>
                     <CgFileDocument class='h-3 w-3' />
-                    {studies.foundPdfCount()} open access
+                    {studies().foundPdfCount()} open access
                   </span>
                 </Show>
-                <Show when={studies.unmatchedRefPdfCount() > 0}>
+                <Show when={studies().unmatchedRefPdfCount() > 0}>
                   <span class='inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-amber-700'>
                     <CgFileDocument class='h-3 w-3' />
-                    {studies.unmatchedRefPdfCount()} PDF
-                    {studies.unmatchedRefPdfCount() > 1 ? 's' : ''} unmatched
+                    {studies().unmatchedRefPdfCount()} PDF
+                    {studies().unmatchedRefPdfCount() > 1 ? 's' : ''} unmatched
                   </span>
                 </Show>
               </div>
@@ -81,30 +80,30 @@ export default function ReferenceImportSection() {
 
             <div class='flex items-center gap-2 border-b border-gray-200 pb-2'>
               <Checkbox
-                checked={studies.selectedRefIds().size === studies.importedRefs().length}
+                checked={studies().selectedRefIds().size === studies().importedRefs().length}
                 indeterminate={
-                  studies.selectedRefIds().size > 0 &&
-                  studies.selectedRefIds().size < studies.importedRefs().length
+                  studies().selectedRefIds().size > 0 &&
+                  studies().selectedRefIds().size < studies().importedRefs().length
                 }
-                onChange={studies.toggleSelectAllRefs}
-                label={`Select all (${studies.selectedRefIds().size}/${studies.importedRefs().length})`}
+                onChange={studies().toggleSelectAllRefs}
+                label={`Select all (${studies().selectedRefIds().size}/${studies().importedRefs().length})`}
               />
             </div>
 
             <div class='max-h-48 space-y-1 overflow-y-auto pr-1'>
-              <For each={studies.importedRefs()}>
+              <For each={studies().importedRefs()}>
                 {ref => (
                   <div
                     class={`flex cursor-pointer items-start gap-3 rounded-lg p-2 transition-colors ${
-                      studies.selectedRefIds().has(ref._id) ?
+                      studies().selectedRefIds().has(ref._id) ?
                         'bg-blue-50 hover:bg-blue-100'
                       : 'bg-gray-50 hover:bg-gray-100'
                     }`}
-                    onClick={() => studies.toggleRefSelection(ref._id)}
+                    onClick={() => studies().toggleRefSelection(ref._id)}
                   >
                     <Checkbox
-                      checked={studies.selectedRefIds().has(ref._id)}
-                      onChange={() => studies.toggleRefSelection(ref._id)}
+                      checked={studies().selectedRefIds().has(ref._id)}
+                      onChange={() => studies().toggleRefSelection(ref._id)}
                       class='mt-0.5'
                     />
                     <div class='min-w-0 flex-1'>
@@ -169,7 +168,7 @@ export default function ReferenceImportSection() {
         <FileUpload
           accept={MIXED_IMPORT_ACCEPT}
           multiple={true}
-          onFilesChange={studies.handleRefFileSelect}
+          onFilesChange={studies().handleRefFileSelect}
           showFileList={false}
           helpText='RIS, EndNote, BibTeX, or PDF files'
           compact
@@ -191,7 +190,7 @@ export default function ReferenceImportSection() {
           </p>
         </div>
 
-        <Show when={studies.parsingRefs()}>
+        <Show when={studies().parsingRefs()}>
           <div class='flex items-center justify-center gap-2 py-4 text-gray-500'>
             <div class='h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
             <span>Parsing references...</span>

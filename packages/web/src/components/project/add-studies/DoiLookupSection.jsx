@@ -15,15 +15,21 @@ import {
 import { FiFile, FiFileText, FiAlertCircle, FiCheck, FiDownload } from 'solid-icons/fi';
 import { Checkbox, Tooltip, showToast } from '@corates/ui';
 import { getRefDisplayName } from '@/lib/referenceParser.js';
-import { useStudiesContext } from './AddStudiesContext.jsx';
 
-export default function DoiLookupSection() {
-  const studies = useStudiesContext();
+export default function DoiLookupSection(props) {
+  const studies = () => props.studies;
 
   // Count refs with PDFs available
-  const refsWithPdf = createMemo(() => studies.lookupRefs().filter(r => r.pdfAvailable));
-  const refsWithoutPdf = createMemo(() => studies.lookupRefs().filter(r => !r.pdfAvailable));
-
+  const refsWithPdf = createMemo(() =>
+    studies()
+      .lookupRefs()
+      .filter(r => r.pdfAvailable),
+  );
+  const refsWithoutPdf = createMemo(() =>
+    studies()
+      .lookupRefs()
+      .filter(r => !r.pdfAvailable),
+  );
   return (
     <div class='space-y-3'>
       <p class='text-sm text-gray-500'>
@@ -34,19 +40,19 @@ export default function DoiLookupSection() {
       <div class='space-y-2'>
         <textarea
           placeholder='10.1000/xyz123&#10;32615397&#10;10.1016/j.example.2023.01.001'
-          value={studies.identifierInput()}
-          onInput={e => studies.setIdentifierInput(e.target.value)}
+          value={studies().identifierInput()}
+          onInput={e => studies().setIdentifierInput(e.target.value)}
           rows='4'
           class='w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm text-gray-900 placeholder-gray-400 transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
         />
         <button
           type='button'
-          onClick={() => studies.handleLookup()}
-          disabled={studies.lookingUp() || !studies.identifierInput().trim()}
+          onClick={() => studies().handleLookup()}
+          disabled={studies().lookingUp() || !studies().identifierInput().trim()}
           class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
         >
           <Show
-            when={!studies.lookingUp()}
+            when={!studies().lookingUp()}
             fallback={
               <>
                 <div class='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
@@ -60,11 +66,11 @@ export default function DoiLookupSection() {
         </button>
       </div>
 
-      <Show when={studies.lookupErrors().length > 0}>
+      <Show when={studies().lookupErrors().length > 0}>
         <div class='rounded-lg border border-red-200 bg-red-50 p-3'>
           <p class='mb-1 text-sm font-medium text-red-700'>Some lookups failed:</p>
           <ul class='list-inside list-disc text-xs text-red-600'>
-            <For each={studies.lookupErrors()}>
+            <For each={studies().lookupErrors()}>
               {err => (
                 <li>
                   <code class='font-mono'>{err.identifier}</code>: {err.error}
@@ -75,7 +81,7 @@ export default function DoiLookupSection() {
         </div>
       </Show>
 
-      <Show when={studies.lookupRefs().length > 0}>
+      <Show when={studies().lookupRefs().length > 0}>
         <div class='space-y-2'>
           <div class='flex items-center justify-between'>
             <span class='text-sm text-gray-600'>
@@ -88,7 +94,7 @@ export default function DoiLookupSection() {
             </span>
             <button
               type='button'
-              onClick={() => studies.clearLookupRefs()}
+              onClick={() => studies().clearLookupRefs()}
               class='text-xs text-red-600 hover:text-red-700 hover:underline'
             >
               Clear all
@@ -98,13 +104,13 @@ export default function DoiLookupSection() {
           <Show when={refsWithPdf().length > 0}>
             <div class='flex items-center gap-2 border-b border-gray-200 pb-2'>
               <Checkbox
-                checked={studies.selectedLookupIds().size === refsWithPdf().length}
+                checked={studies().selectedLookupIds().size === refsWithPdf().length}
                 indeterminate={
-                  studies.selectedLookupIds().size > 0 &&
-                  studies.selectedLookupIds().size < refsWithPdf().length
+                  studies().selectedLookupIds().size > 0 &&
+                  studies().selectedLookupIds().size < refsWithPdf().length
                 }
-                onChange={studies.toggleSelectAllLookup}
-                label={`Select all with PDF (${studies.selectedLookupIds().size}/${refsWithPdf().length})`}
+                onChange={studies().toggleSelectAllLookup}
+                label={`Select all with PDF (${studies().selectedLookupIds().size}/${refsWithPdf().length})`}
               />
             </div>
           </Show>
@@ -126,7 +132,7 @@ export default function DoiLookupSection() {
 
                   try {
                     const arrayBuffer = await file.arrayBuffer();
-                    studies.attachPdfToLookupRef?.(ref._id, file.name, arrayBuffer);
+                    studies().attachPdfToLookupRef?.(ref._id, file.name, arrayBuffer);
                     showToast.success('PDF Attached', `Attached ${file.name}`);
                   } catch (err) {
                     const { handleError } = await import('@/lib/error-utils.js');
@@ -141,11 +147,11 @@ export default function DoiLookupSection() {
                 return (
                   <div
                     class={`flex cursor-pointer items-start gap-3 rounded-lg p-2 transition-colors ${
-                      studies.selectedLookupIds().has(ref._id) ?
+                      studies().selectedLookupIds().has(ref._id) ?
                         'border border-green-200 bg-green-50 hover:bg-green-100'
                       : 'border border-transparent bg-gray-50 hover:bg-gray-100'
                     }`}
-                    onClick={() => studies.toggleLookupSelection(ref._id)}
+                    onClick={() => studies().toggleLookupSelection(ref._id)}
                   >
                     {/* Hidden file input for manual PDF upload */}
                     <input
@@ -156,8 +162,8 @@ export default function DoiLookupSection() {
                       onChange={handleManualPdfSelect}
                     />
                     <Checkbox
-                      checked={studies.selectedLookupIds().has(ref._id)}
-                      onChange={() => studies.toggleLookupSelection(ref._id)}
+                      checked={studies().selectedLookupIds().has(ref._id)}
+                      onChange={() => studies().toggleLookupSelection(ref._id)}
                       class='mt-0.5'
                     />
                     <div class='min-w-0 flex-1'>
@@ -250,7 +256,7 @@ export default function DoiLookupSection() {
                       type='button'
                       onClick={e => {
                         e.stopPropagation();
-                        studies.removeLookupRef(ref._id);
+                        studies().removeLookupRef(ref._id);
                       }}
                       class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                     >
@@ -302,7 +308,7 @@ export default function DoiLookupSection() {
                         type='button'
                         onClick={e => {
                           e.stopPropagation();
-                          studies.removeLookupRef(ref._id);
+                          studies().removeLookupRef(ref._id);
                         }}
                         class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                       >

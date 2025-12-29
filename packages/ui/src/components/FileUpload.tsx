@@ -69,11 +69,12 @@ const FileUploadComponent: Component<FileUploadProps> = props => {
   const { isDraggingOverWindow } = useWindowDrag();
 
   const handleFileChange = (details: { acceptedFiles: File[] }) => {
+    // Pass files to callback
     merged.onFilesChange?.(details.acceptedFiles);
   };
 
-  const handleFileAccept = (_details: { files: File[] }) => {
-    merged.onFileAccept?.(_details);
+  const handleFileAccept = (details: { files: File[] }) => {
+    merged.onFileAccept?.(details);
   };
 
   const handleFileReject = (details: { files: unknown[] }) => {
@@ -86,6 +87,7 @@ const FileUploadComponent: Component<FileUploadProps> = props => {
       maxFiles={merged.multiple ? 100 : 1}
       directory={allowDirs()}
       disabled={merged.disabled}
+      acceptedFiles={[]}
       onFileChange={handleFileChange}
       onFileAccept={handleFileAccept}
       onFileReject={handleFileReject}

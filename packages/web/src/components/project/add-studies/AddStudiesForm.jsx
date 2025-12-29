@@ -12,7 +12,6 @@ import { Tabs, showToast } from '@corates/ui';
 import projectStore from '@/stores/projectStore.js';
 
 import { useAddStudies } from '@primitives/useAddStudies.js';
-import { AddStudiesProvider } from './AddStudiesContext.jsx';
 import PdfUploadSection from './PdfUploadSection.jsx';
 import ReferenceImportSection from './ReferenceImportSection.jsx';
 import DoiLookupSection from './DoiLookupSection.jsx';
@@ -249,30 +248,28 @@ export default function AddStudiesForm(props) {
             }))}
           />
 
-          <AddStudiesProvider
-            studies={studies}
-            formType={props.formType}
-            projectId={props.projectId}
-            onSaveFormState={handleSaveFormState}
-          >
-            <div class='mt-4'>
-              <Show when={activeTab() === 'pdfs'}>
-                <PdfUploadSection />
-              </Show>
+          <div class='mt-4'>
+            <Show when={activeTab() === 'pdfs'}>
+              <PdfUploadSection studies={studies} />
+            </Show>
 
-              <Show when={activeTab() === 'references'}>
-                <ReferenceImportSection />
-              </Show>
+            <Show when={activeTab() === 'references'}>
+              <ReferenceImportSection studies={studies} onSaveFormState={handleSaveFormState} />
+            </Show>
 
-              <Show when={activeTab() === 'lookup'}>
-                <DoiLookupSection />
-              </Show>
+            <Show when={activeTab() === 'lookup'}>
+              <DoiLookupSection studies={studies} onSaveFormState={handleSaveFormState} />
+            </Show>
 
-              <Show when={activeTab() === 'drive'}>
-                <GoogleDriveSection />
-              </Show>
-            </div>
-          </AddStudiesProvider>
+            <Show when={activeTab() === 'drive'}>
+              <GoogleDriveSection
+                studies={studies}
+                formType={props.formType}
+                projectId={props.projectId}
+                onSaveFormState={handleSaveFormState}
+              />
+            </Show>
+          </div>
 
           {/* Summary and Actions - hidden in collect mode since parent handles submission */}
           <Show when={studies.totalStudyCount() > 0 && !props.collectMode}>

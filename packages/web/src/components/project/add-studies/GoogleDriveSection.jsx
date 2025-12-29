@@ -8,17 +8,18 @@ import { BiRegularTrash } from 'solid-icons/bi';
 import { FiFile } from 'solid-icons/fi';
 import { formatFileSize } from '@/api/google-drive.js';
 import GoogleDrivePickerLauncher from '../google-drive/GoogleDrivePickerLauncher.jsx';
-import { useStudiesContext, useFormPersistenceContext } from './AddStudiesContext.jsx';
 
-export default function GoogleDriveSection() {
-  const studies = useStudiesContext();
-  const { formType, projectId, onSaveFormState } = useFormPersistenceContext();
+export default function GoogleDriveSection(props) {
+  const studies = () => props.studies;
+  const onSaveFormState = () => props.onSaveFormState;
 
   const isFileSelected = fileId => {
-    return studies.selectedDriveFiles().some(f => f.id === fileId);
+    return studies()
+      .selectedDriveFiles()
+      .some(f => f.id === fileId);
   };
 
-  const selectedCount = () => studies.selectedDriveFiles().length;
+  const selectedCount = () => studies().selectedDriveFiles().length;
 
   return (
     <div class='space-y-3'>
@@ -35,14 +36,14 @@ export default function GoogleDriveSection() {
             </span>
             <button
               type='button'
-              onClick={() => studies.clearDriveFiles()}
+              onClick={() => studies().clearDriveFiles()}
               class='text-xs text-gray-500 transition-colors hover:text-red-600'
             >
               Clear all
             </button>
           </div>
           <div class='max-h-40 space-y-2 overflow-y-auto'>
-            <For each={studies.selectedDriveFiles()}>
+            <For each={studies().selectedDriveFiles()}>
               {file => (
                 <div class='flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-2'>
                   <FiFile class='h-4 w-4 shrink-0 text-red-600' />
@@ -52,7 +53,7 @@ export default function GoogleDriveSection() {
                   </div>
                   <button
                     type='button'
-                    onClick={() => studies.removeDriveFile(file.id)}
+                    onClick={() => studies().removeDriveFile(file.id)}
                     class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                   >
                     <BiRegularTrash class='h-4 w-4' />
@@ -67,13 +68,13 @@ export default function GoogleDriveSection() {
       <GoogleDrivePickerLauncher
         active={true}
         multiselect={true}
-        formType={formType}
-        projectId={projectId}
-        onSaveFormState={onSaveFormState}
+        formType={props.formType}
+        projectId={props.projectId}
+        onSaveFormState={onSaveFormState()}
         onPick={picked => {
           for (const file of picked) {
             if (!isFileSelected(file.id)) {
-              studies.toggleDriveFile({ id: file.id, name: file.name });
+              studies().toggleDriveFile({ id: file.id, name: file.name });
             }
           }
         }}
