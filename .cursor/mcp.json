@@ -7,10 +7,7 @@
     },
     "ark-ui": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@ark-ui/mcp"
-      ]
+      "args": ["-y", "@ark-ui/mcp"]
     }
   }
 }

@@ -8,8 +8,10 @@ import type { McpServerType } from '../types.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const ROUTER_BASE_URL = 'https://raw.githubusercontent.com/TanStack/router/main/docs/router/framework';
-const ROUTER_START_BASE_URL = 'https://raw.githubusercontent.com/TanStack/router/main/docs/start/framework';
+const ROUTER_BASE_URL =
+  'https://raw.githubusercontent.com/TanStack/router/main/docs/router/framework';
+const ROUTER_START_BASE_URL =
+  'https://raw.githubusercontent.com/TanStack/router/main/docs/start/framework';
 
 interface DocsManifest {
   [framework: string]: string[];
@@ -132,9 +134,7 @@ export function registerTanStackRouterTools(server: McpServerType): void {
           matchedPath = docPath;
         } else {
           // Partial match - find paths that include the search term
-          const matches = frameworkPaths.filter(
-            p => p.includes(docPath) || p.startsWith(docPath),
-          );
+          const matches = frameworkPaths.filter(p => p.includes(docPath) || p.startsWith(docPath));
 
           if (matches.length === 1) {
             matchedPath = matches[0];

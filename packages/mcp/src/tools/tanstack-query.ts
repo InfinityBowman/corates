@@ -131,9 +131,7 @@ export function registerTanStackQueryTools(server: McpServerType): void {
           matchedPath = docPath;
         } else {
           // Partial match - find paths that include the search term
-          const matches = frameworkPaths.filter(
-            p => p.includes(docPath) || p.startsWith(docPath),
-          );
+          const matches = frameworkPaths.filter(p => p.includes(docPath) || p.startsWith(docPath));
 
           if (matches.length === 1) {
             matchedPath = matches[0];
