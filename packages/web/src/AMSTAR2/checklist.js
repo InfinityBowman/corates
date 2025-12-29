@@ -160,6 +160,7 @@ export function scoreChecklist(state) {
 
   // Partial yes is scored same as yes
   // No MA is not counted as a flaw
+  state = consolidateAnswers(state);
 
   Object.entries(state).forEach(([question, obj]) => {
     if (!/^q\d+[a-z]*$/i.test(question)) return;
@@ -248,6 +249,7 @@ export function isAMSTAR2Complete(checklist) {
 export function getAnswers(checklist) {
   if (!checklist || typeof checklist !== 'object') return null;
   const result = {};
+  checklist = consolidateAnswers(checklist);
 
   Object.entries(checklist).forEach(([key, value]) => {
     if (!/^q\d+[a-z]*$/i.test(key)) return;
@@ -257,37 +259,45 @@ export function getAnswers(checklist) {
     result[key] = selected;
   });
 
+  return result;
+}
+
+function consolidateAnswers(prevChecklist) {
+  const checklist = { ...prevChecklist };
+
   // Consolidate q9a and q9b into q9 by taking the lower score
-  if ('q9a' in result && 'q9b' in result) {
-    if (result.q9a === null || result.q9b === null) {
-      result.q9 = null;
-    } else if (result.q9a === 'No' || result.q9b === 'No') {
-      result.q9 = 'No';
-    } else if (result.q9a === 'No MA' && result.q9b === 'No MA') {
-      result.q9 = 'No MA';
-    } else {
-      result.q9 = 'Yes';
-    }
+  const q9a = getSelectedAnswer(checklist.q9a.answers, 'q9a');
+  const q9b = getSelectedAnswer(checklist.q9b.answers, 'q9b');
+  if (q9a === null || q9b === null) {
+    checklist.q9 = checklist.q9a;
+  } else if (q9a === 'No' || q9b === 'No') {
+    checklist.q9 = q9a === 'No' ? checklist.q9a : checklist.q9b;
+  } else if (q9a === 'No MA' && q9b === 'No MA') {
+    checklist.q9 = checklist.q9a;
+  } else {
+    // Both are Yes or Partial Yes
+    checklist.q9 = checklist.q9a;
   }
-  delete result.q9a;
-  delete result.q9b;
+  delete checklist.q9a;
+  delete checklist.q9b;
 
   // Consolidate q11a and q11b into q11 by taking the lower score
-  if ('q11a' in result && 'q11b' in result) {
-    if (result.q11a === null || result.q11b === null) {
-      result.q11 = null;
-    } else if (result.q11a === 'No' || result.q11b === 'No') {
-      result.q11 = 'No';
-    } else if (result.q11a === 'No MA' && result.q11b === 'No MA') {
-      result.q11 = 'No MA';
-    } else {
-      result.q11 = 'Yes';
-    }
+  const q11a = getSelectedAnswer(checklist.q11a.answers, 'q11a');
+  const q11b = getSelectedAnswer(checklist.q11b.answers, 'q11b');
+  if (q11a === null || q11b === null) {
+    checklist.q11 = checklist.q11a;
+  } else if (q11a === 'No' || q11b === 'No') {
+    checklist.q11 = q11a === 'No' ? checklist.q11a : checklist.q11b;
+  } else if (q11a === 'No MA' && q11b === 'No MA') {
+    checklist.q11 = checklist.q11a;
+  } else {
+    // Both are Yes or Partial Yes
+    checklist.q11 = checklist.q11a;
   }
-  delete result.q11a;
-  delete result.q11b;
+  delete checklist.q11a;
+  delete checklist.q11b;
 
-  return result;
+  return checklist;
 }
 
 /**
