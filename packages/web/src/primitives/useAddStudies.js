@@ -175,7 +175,14 @@ export function useAddStudies(options = {}) {
     const pdfFiles = files.filter(f => f.type === 'application/pdf');
     if (pdfFiles.length === 0) return;
 
-    const newPdfs = pdfFiles.map(file => ({
+    // Filter out files that are already in the uploadedPdfs array
+    // Compare by file name and size to detect duplicates
+    const existingFiles = new Set(uploadedPdfs.map(pdf => `${pdf.file.name}:${pdf.file.size}`));
+    const newFiles = pdfFiles.filter(file => !existingFiles.has(`${file.name}:${file.size}`));
+
+    if (newFiles.length === 0) return;
+
+    const newPdfs = newFiles.map(file => ({
       id: crypto.randomUUID(),
       file,
       title: null,
