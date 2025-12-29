@@ -3,8 +3,7 @@
     "corates": {
       "type": "stdio",
       "command": "node",
-      "args": ["/Users/jacobmaynard/Documents/Repos/corates/packages/mcp/dist/server.js"],
-      "env": {}
+      "args": ["${workspaceFolder}/packages/mcp/dist/server.js"]
     },
     "ark-ui": {
       "command": "npx",

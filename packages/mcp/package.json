@@ -14,6 +14,7 @@
     "start": "nohup node dist/server.js > /dev/null 2>&1 & echo 'MCP server started in background'",
     "stop": "pkill -f 'node.*server.js' || echo 'No MCP server running'",
     "scrape": "tsx src/scrape-icons.ts",
+    "scrape-tanstack-docs": "tsx src/scrape-tanstack-docs.ts",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest"
