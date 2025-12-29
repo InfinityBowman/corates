@@ -1,8 +1,8 @@
-import { Show, For, createSignal, createEffect } from 'solid-js';
+import { Show, For, createSignal } from 'solid-js';
 import { useNavigate, useLocation } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useLocalChecklists } from '@primitives/useLocalChecklists.js';
-import projectStore from '@/stores/projectStore.js';
+import { useProjectList } from '@primitives/useProjectList.js';
 import { useConfirmDialog } from '@corates/ui';
 import { AiOutlineFolder } from 'solid-icons/ai';
 import { AiOutlineCloud } from 'solid-icons/ai';
@@ -26,23 +26,16 @@ export default function Sidebar(props) {
   const [expandedProjects, setExpandedProjects] = createSignal({});
   const [expandedStudies, setExpandedStudies] = createSignal({});
 
-  // Read cloud projects from the store (same data as dashboard)
-  const cloudProjects = () => projectStore.getProjectList();
-  const isProjectsLoading = () => projectStore.isProjectListLoading();
+  // Use TanStack Query for project list
+  const projectListQuery = useProjectList(currentUserId, {
+    enabled: () => isLoggedIn(),
+  });
+  const cloudProjects = () => projectListQuery.projects();
+  const isProjectsLoading = () => projectListQuery.isLoading();
 
   // Confirm dialog for delete actions
   const confirmDialog = useConfirmDialog();
   const [_pendingDeleteId, setPendingDeleteId] = createSignal(null);
-
-  // Fetch projects if user is logged in
-  createEffect(() => {
-    const userId = user()?.id;
-    // Only fetch if logged in AND userId exists
-    if (!isLoggedIn() || !userId) {
-      return;
-    }
-    projectStore.fetchProjectList(userId);
-  });
 
   const toggleProject = projectId => {
     setExpandedProjects(prev => ({

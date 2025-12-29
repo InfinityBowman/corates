@@ -1,0 +1,238 @@
+/**
+ * TanStack Query Client Configuration
+ * Configured with offline-first defaults and IndexedDB persistence
+ */
+
+import { QueryClient } from '@tanstack/solid-query';
+import { createIDBPersister } from './queryPersister.js';
+
+let queryClientInstance = null;
+
+// Maximum age for persisted cache data (24 hours)
+const MAX_CACHE_AGE_MS = 24 * 60 * 60 * 1000;
+
+// LocalStorage key for critical cache state (fallback for beforeunload)
+const CACHE_SNAPSHOT_KEY = 'corates-query-cache-snapshot';
+
+/**
+ * Initialize persistence for the query client
+ * Sets up automatic persistence of the query cache to IndexedDB
+ * @param {QueryClient} queryClient - The QueryClient instance to persist
+ * @returns {Function} Cleanup function (intentionally not called since client is singleton)
+ */
+async function setupPersistence(queryClient) {
+  const persister = createIDBPersister();
+
+  // Restore cache on initialization
+  try {
+    const persistedClient = await persister.restoreClient();
+    if (persistedClient) {
+      const now = Date.now();
+      const cacheTimestamp = persistedClient.timestamp || 0;
+
+      // Validate cache age - skip if older than 24 hours
+      if (now - cacheTimestamp > MAX_CACHE_AGE_MS) {
+        console.log('[queryClient] Persisted cache expired, skipping restoration');
+        await persister.removeClient();
+      } else if (persistedClient.clientState?.queries) {
+        // Restore queries, validating each query's data age
+        for (const query of persistedClient.clientState.queries) {
+          const queryAge = now - (query.state?.dataUpdatedAt || 0);
+
+          // Skip queries older than max age or with error status
+          if (queryAge > MAX_CACHE_AGE_MS || query.state?.status === 'error') {
+            continue;
+          }
+
+          // Only restore if query doesn't already have fresher data
+          const existingQuery = queryClient.getQueryData(query.queryKey);
+          if (!existingQuery) {
+            queryClient.setQueryData(query.queryKey, query.state.data);
+          }
+        }
+        console.log(
+          '[queryClient] Restored persisted cache from',
+          new Date(cacheTimestamp).toISOString(),
+        );
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to restore persisted query cache:', error);
+  }
+
+  // Set up periodic persistence (debounced)
+  let persistTimeout = null;
+  const persistCache = async () => {
+    if (persistTimeout) {
+      clearTimeout(persistTimeout);
+    }
+    persistTimeout = setTimeout(async () => {
+      try {
+        const queryCache = queryClient.getQueryCache();
+        const mutationCache = queryClient.getMutationCache();
+
+        // Build persisted client state
+        const persistedClient = {
+          clientState: {
+            queries: Array.from(queryCache.getAll()).map(query => ({
+              queryKey: query.queryKey,
+              queryHash: query.queryHash,
+              state: {
+                data: query.state.data,
+                dataUpdatedAt: query.state.dataUpdatedAt,
+                error: query.state.error,
+                errorUpdatedAt: query.state.errorUpdatedAt,
+                status: query.state.status,
+                fetchStatus: query.state.fetchStatus,
+              },
+            })),
+            mutations: Array.from(mutationCache.getAll()).map(mutation => ({
+              mutationKey: mutation.options.mutationKey,
+              state: {
+                status: mutation.state.status,
+                data: mutation.state.data,
+                error: mutation.state.error,
+              },
+            })),
+          },
+          timestamp: Date.now(),
+        };
+
+        await persister.persistClient(persistedClient);
+      } catch (error) {
+        console.error('Failed to persist query cache:', error);
+      }
+    }, 1000); // Debounce by 1 second
+  };
+
+  // Persist on cache updates
+  const unsubscribeQueries = queryClient.getQueryCache().subscribe(() => {
+    persistCache();
+  });
+
+  const unsubscribeMutations = queryClient.getMutationCache().subscribe(() => {
+    persistCache();
+  });
+
+  // Persist on window unload
+  // Use synchronous localStorage as fallback since async IndexedDB may not complete
+  const handleBeforeUnload = () => {
+    persistTimeout && clearTimeout(persistTimeout);
+
+    // Synchronous localStorage write as fallback for critical data
+    // IndexedDB async write may not complete before page unload
+    try {
+      const queryCache = queryClient.getQueryCache();
+      const criticalQueries = Array.from(queryCache.getAll())
+        .filter(q => q.state.status === 'success' && q.state.data)
+        .slice(0, 10) // Limit to avoid localStorage quota issues
+        .map(q => ({
+          queryKey: q.queryKey,
+          data: q.state.data,
+          dataUpdatedAt: q.state.dataUpdatedAt,
+        }));
+
+      localStorage.setItem(
+        CACHE_SNAPSHOT_KEY,
+        JSON.stringify({ queries: criticalQueries, timestamp: Date.now() }),
+      );
+    } catch {
+      // Silently fail - localStorage may be full or unavailable
+    }
+
+    // Still try async persist (may complete if unload is slow)
+    persistCache();
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Try to restore from localStorage snapshot on init (covers cases where IndexedDB didn't persist)
+    try {
+      const snapshot = localStorage.getItem(CACHE_SNAPSHOT_KEY);
+      if (snapshot) {
+        const { queries, timestamp } = JSON.parse(snapshot);
+        const now = Date.now();
+        if (now - timestamp < MAX_CACHE_AGE_MS) {
+          for (const q of queries) {
+            if (!queryClient.getQueryData(q.queryKey)) {
+              queryClient.setQueryData(q.queryKey, q.data);
+            }
+          }
+        }
+        // Clear snapshot after restoration
+        localStorage.removeItem(CACHE_SNAPSHOT_KEY);
+      }
+    } catch {
+      // Silently fail
+    }
+  }
+
+  // Return cleanup function
+  // Note: This cleanup is intentionally not called since queryClient is a singleton
+  // that lives for the entire app lifecycle. The subscriptions and event listeners
+  // are only cleaned up when the browser tab/window is closed.
+  return () => {
+    unsubscribeQueries();
+    unsubscribeMutations();
+    if (persistTimeout) {
+      clearTimeout(persistTimeout);
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    }
+  };
+}
+
+/**
+ * Create and configure QueryClient instance (singleton)
+ * @returns {QueryClient} Configured QueryClient
+ */
+export function getQueryClient() {
+  if (queryClientInstance) {
+    return queryClientInstance;
+  }
+
+  queryClientInstance = new QueryClient({
+    defaultOptions: {
+      queries: {
+        // Offline-first: try cache first, then network
+        networkMode: 'offlineFirst',
+        // Stale time: data is considered fresh for 5 minutes
+        staleTime: 1000 * 60 * 5,
+        // Cache time: unused data is kept in cache for 10 minutes
+        gcTime: 1000 * 60 * 10,
+        // Retry failed requests up to 3 times
+        retry: 3,
+        // Retry delay with exponential backoff
+        retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+        // Refetch on window focus (helps keep data fresh)
+        refetchOnWindowFocus: true,
+        // Refetch on reconnect (important for offline support)
+        refetchOnReconnect: true,
+        // Refetch on mount if data is stale
+        refetchOnMount: true,
+      },
+      mutations: {
+        // Retry mutations once
+        retry: 1,
+        // Network mode for mutations: always try network
+        networkMode: 'online',
+      },
+    },
+  });
+
+  // Set up persistence (async, but don't block)
+  if (typeof window !== 'undefined') {
+    setupPersistence(queryClientInstance).catch(err => {
+      console.warn('Failed to set up query persistence:', err);
+    });
+  }
+
+  return queryClientInstance;
+}
+
+/**
+ * Export the singleton queryClient instance
+ */
+export const queryClient = getQueryClient();

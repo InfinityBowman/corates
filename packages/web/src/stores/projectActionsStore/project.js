@@ -4,7 +4,8 @@
 
 import { showToast } from '@corates/ui';
 import { API_BASE } from '@config/api.js';
-import projectStore from '../projectStore.js';
+import { queryClient } from '@lib/queryClient.js';
+import { queryKeys } from '@lib/queryKeys.js';
 
 /**
  * Creates project operations
@@ -63,7 +64,8 @@ export function createProjectActions(getActiveConnection, getActiveProjectId) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || 'Failed to delete project');
       }
-      projectStore.removeProjectFromList(targetProjectId);
+      // Invalidate project list query to refetch without deleted project
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
     } catch (err) {
       console.error('Error deleting project:', err);
       throw err;

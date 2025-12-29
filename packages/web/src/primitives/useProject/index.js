@@ -7,7 +7,9 @@
 import { createEffect, onCleanup, createMemo } from 'solid-js';
 import * as Y from 'yjs';
 import { IndexeddbPersistence } from 'y-indexeddb';
-import projectStore, { registerStaleProjectCleanup } from '@/stores/projectStore.js';
+import projectStore from '@/stores/projectStore.js';
+import { queryClient } from '@lib/queryClient.js';
+import { queryKeys } from '@lib/queryKeys.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import useOnlineStatus from '../useOnlineStatus.js';
 import { createConnectionManager } from './connection.js';
@@ -131,14 +133,12 @@ export async function cleanupProjectLocalData(projectId) {
     console.error('Failed to delete IndexedDB for project:', projectId, err);
   }
 
-  // 3. Clear from projectStore (in-memory + localStorage cache)
+  // 3. Clear from projectStore (in-memory cache)
   projectStore.clearProject(projectId);
-  projectStore.removeProjectFromList(projectId);
-}
 
-// Register the cleanup function with projectStore for stale project reconciliation
-// This happens at module load time to avoid circular dependency issues
-registerStaleProjectCleanup(cleanupProjectLocalData);
+  // 4. Invalidate project list query
+  queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+}
 
 /**
  * Hook to connect to a project's Y.Doc and manage studies/checklists
