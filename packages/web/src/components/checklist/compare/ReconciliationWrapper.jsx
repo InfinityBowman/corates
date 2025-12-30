@@ -40,7 +40,6 @@ export default function ReconciliationWrapper() {
     getReconciliationProgress,
     getQuestionNote,
     saveReconciliationProgress,
-    connect,
   } = useProject(params.projectId);
 
   // Set active project for action store
@@ -49,7 +48,6 @@ export default function ReconciliationWrapper() {
     const oid = orgId();
     if (pid && oid) {
       projectActionsStore._setActiveProject(pid, oid);
-      connect();
     }
   });
 
@@ -374,11 +372,7 @@ export default function ReconciliationWrapper() {
 
   // Build org-scoped project path
   const getProjectPath = () => {
-    const slug = orgSlug();
-    if (slug) {
-      return `/orgs/${slug}/projects/${params.projectId}`;
-    }
-    return `/projects/${params.projectId}`;
+    return `/orgs/${orgSlug()}/projects/${params.projectId}`;
   };
 
   // Handle saving the reconciled checklist

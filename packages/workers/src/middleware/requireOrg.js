@@ -4,7 +4,7 @@
  */
 
 import { createDb } from '../db/client.js';
-import { member, organization, projects } from '../db/schema.js';
+import { member, organization, projects, projectMembers } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { getAuth } from './auth.js';
 import { createDomainError, AUTH_ERRORS, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
@@ -106,7 +106,6 @@ export function requireProjectAccess(minRole) {
     }
 
     const db = createDb(c.env.DB);
-    const { projectMembers } = await import('../db/schema.js');
 
     // First check if project exists and get its org
     let projectData;

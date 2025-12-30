@@ -15,7 +15,7 @@ import {
   member,
   organization,
 } from '../../db/schema.js';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, isNull } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../../middleware/auth.js';
 import {
   requireOrgMembership,
@@ -59,7 +59,7 @@ orgInvitationRoutes.get('/', requireOrgMembership(), requireProjectAccess(), asy
         invitedBy: projectInvitations.invitedBy,
       })
       .from(projectInvitations)
-      .where(eq(projectInvitations.projectId, projectId))
+      .where(and(eq(projectInvitations.projectId, projectId), isNull(projectInvitations.acceptedAt)))
       .orderBy(desc(projectInvitations.createdAt));
 
     return c.json(invitations);
