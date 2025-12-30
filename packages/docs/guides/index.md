@@ -13,6 +13,7 @@ Practical guides for common development tasks and patterns in CoRATES.
 
 ### System-Specific
 
+- [Organizations](/guides/organizations) - Organization model, routes, roles, and membership patterns
 - [Authentication](/guides/authentication) - Authentication setup, configuration, and usage with Better Auth
 - [Yjs Sync](/guides/yjs-sync) - Collaborative editing and synchronization with Yjs
 - [Database](/guides/database) - Database schema, Drizzle ORM patterns, and migration workflow

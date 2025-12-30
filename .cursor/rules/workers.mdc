@@ -49,12 +49,30 @@ projectRoutes.post('/', async c => {
 
 **Add new schemas to `config/validation.js`** and reuse `commonFields` when possible. Use `validateQueryParams` for query parameters.
 
+## Organization-Scoped Routes
+
+All project routes are org-scoped under `/api/orgs/:orgId/...`. Use `requireOrgMembership` and `requireProjectAccess` middleware instead of manual membership checks.
+
+```js
+import { requireOrgMembership, requireProjectAccess, getOrgContext } from '../middleware/requireOrg.js';
+
+// Org membership is checked by middleware - don't duplicate in handler
+orgProjectRoutes.post('/', requireOrgMembership(), validateRequest(schema), async c => {
+  const { orgId } = getOrgContext(c);
+  // orgId is guaranteed valid and user has access
+});
+```
+
+See `organizations.mdc` for detailed org/project patterns.
+
 ## Examples
 
+- See `src/routes/orgs/projects.js` for org-scoped project routes
+- See `src/routes/orgs/members.js` for project member management
 - See `src/routes/account-merge.js` for batch usage
-- See `src/routes/projects.js` for validation patterns
 
 ## Related Documentation
 
+- [Organizations Guide](/guides/organizations) - Org model, routes, and middleware
 - [Database Guide](/guides/database) - Comprehensive Drizzle ORM patterns, migrations, and schema management
 - [API Development Guide](/guides/api-development) - API route patterns and validation

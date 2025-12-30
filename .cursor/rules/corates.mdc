@@ -116,6 +116,7 @@ See `solidjs.mdc` for detailed reactivity patterns and examples.
 - **Primary source**: Comprehensive guides are in the docs site (`packages/docs/`) - run `pnpm docs` to view
 - **ALWAYS use Corates MCP tools or other MCP** for Better-Auth, Drizzle, Icons, linting, and Ark UI documentation
 - **For comprehensive documentation**, see the docs site guides:
+  - [Organizations Guide](/guides/organizations) - Org model, routes, roles, and membership patterns
   - [Testing Guide](/guides/testing) - Frontend and backend testing patterns, setup, and best practices
   - [Authentication Guide](/guides/authentication) - Setup, configuration, API endpoints, and usage patterns
   - [Database Guide](/guides/database) - Schema management, Drizzle ORM patterns, migrations, and test helpers
@@ -133,6 +134,7 @@ See `solidjs.mdc` for detailed reactivity patterns and examples.
 For detailed patterns, see:
 - `solidjs.mdc` - Reactivity patterns, props, stores, primitives
 - `api-routes.mdc` - API route patterns, validation, database operations
+- `organizations.mdc` - Org model, routes, middleware, role hierarchies
 - `error-handling.mdc` - Error handling patterns (frontend + backend)
 - `ui-components.mdc` - UI component imports and usage
 - `workers.mdc` - Workers package specific patterns
@@ -153,3 +155,11 @@ For specific complex areas, see:
 - Packages are under `packages/` directory with their own dependencies
 - Path aliases are defined in `packages/web/jsconfig.json`
 - Adjust documentation if your changes would affect any existing documentation
+
+### Organization-Scoped Architecture
+
+- **All project routes are org-scoped** - Routes use `/api/orgs/:orgId/projects/...` pattern
+- **Frontend uses orgSlug** in URLs (`/orgs/:orgSlug/...`) for readability
+- **Backend uses orgId** (UUID) for all API operations
+- Use `requireOrgMembership` and `requireProjectAccess` middleware for auth
+- See `organizations.mdc` for detailed org patterns and middleware usage

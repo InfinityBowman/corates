@@ -57,19 +57,127 @@ export { routes as projectRoutes };
 Order matters when applying middleware:
 
 1. **Authentication** (`requireAuth`) - Verify user is logged in
-2. **Authorization** (`requireEntitlement`, `requireQuota`) - Check permissions
-3. **Validation** (`validateRequest`, `validateQueryParams`) - Validate input
-4. **Route handler** - Business logic
+2. **Organization membership** (`requireOrgMembership`) - Check org access and role
+3. **Project access** (`requireProjectAccess`) - Check project access and role
+4. **Authorization** (`requireEntitlement`, `requireQuota`) - Check subscription permissions
+5. **Validation** (`validateRequest`, `validateQueryParams`) - Validate input
+6. **Route handler** - Business logic
 
 ```js
 routes.post(
   '/',
   requireAuth,
-  requireEntitlement('project.create'),
-  requireQuota('projects.max', getProjectCount, 1),
-  validateRequest(projectSchemas.create),
+  requireOrgMembership(),                   // Check org membership
+  requireProjectAccess('collaborator'),     // Check project access with min role
+  requireEntitlement('project.update'),
+  validateRequest(projectSchemas.update),
   async c => {
     // Handler
+  },
+);
+```
+
+## Organization-Scoped Routes
+
+All project routes are now scoped under organizations. See the [Organizations Guide](/guides/organizations) for complete details.
+
+### Route Structure
+
+```
+/api/orgs/:orgId/projects/:projectId/...
+```
+
+### Org Membership Middleware
+
+Use `requireOrgMembership` to verify org access:
+
+```js
+import { requireOrgMembership, getOrgContext } from '../middleware/requireOrg.js';
+
+// Any org member
+orgRoutes.get('/', requireOrgMembership(), async c => {
+  const { orgId, orgRole, org } = getOrgContext(c);
+  // ...
+});
+
+// Minimum role required
+orgRoutes.put('/:orgId', requireOrgMembership('admin'), async c => {
+  // Only org admins and owners
+});
+```
+
+### Project Access Middleware
+
+Use `requireProjectAccess` after `requireOrgMembership`:
+
+```js
+import { requireOrgMembership, requireProjectAccess, getProjectContext } from '../middleware/requireOrg.js';
+
+// Any project member
+projectRoutes.get('/:projectId', requireOrgMembership(), requireProjectAccess(), async c => {
+  const { projectId, projectRole, project } = getProjectContext(c);
+  // ...
+});
+
+// Minimum role required
+projectRoutes.delete('/:projectId', requireOrgMembership(), requireProjectAccess('owner'), async c => {
+  // Only project owners
+});
+```
+
+### Org-Scoped Route Example
+
+```js
+import { Hono } from 'hono';
+import { requireAuth, getAuth } from '../middleware/auth.js';
+import { requireOrgMembership, requireProjectAccess, getOrgContext, getProjectContext } from '../middleware/requireOrg.js';
+import { validateRequest, projectSchemas } from '../config/validation.js';
+import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import { createDb } from '../db/client.js';
+
+const orgProjectRoutes = new Hono();
+
+// Auth middleware for all routes
+orgProjectRoutes.use('*', requireAuth);
+
+// Create project in org
+orgProjectRoutes.post(
+  '/',
+  requireOrgMembership(),
+  requireEntitlement('project.create'),
+  validateRequest(projectSchemas.create),
+  async c => {
+    const { user } = getAuth(c);
+    const { orgId } = getOrgContext(c);
+    const db = createDb(c.env.DB);
+    const { name, description } = c.get('validatedBody');
+
+    try {
+      const projectId = crypto.randomUUID();
+      await db.batch([
+        db.insert(projects).values({
+          id: projectId,
+          name,
+          description,
+          orgId,  // Project belongs to org
+          createdBy: user.id,
+        }),
+        db.insert(projectMembers).values({
+          id: crypto.randomUUID(),
+          projectId,
+          userId: user.id,
+          role: 'owner',
+        }),
+      ]);
+
+      return c.json({ id: projectId, name, orgId }, 201);
+    } catch (error) {
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'create_project',
+        originalError: error.message,
+      });
+      return c.json(dbError, dbError.statusCode);
+    }
   },
 );
 ```
@@ -567,11 +675,11 @@ routes.delete('/:id', requireAuth, async c => {
 
 ## Project Invitations
 
-The invitation system allows project owners to invite users who don't have accounts yet. Invitations are created automatically when adding members by email if the user doesn't exist.
+The invitation system allows project owners to invite users who don't have accounts yet. Invitations use a combined flow that ensures org membership before project membership.
 
 ### Creating Invitations
 
-When adding a member via `POST /api/projects/{projectId}/members`, if the user doesn't exist and an email is provided:
+When adding a member via `POST /api/orgs/{orgId}/projects/{projectId}/members`, if the user doesn't exist and an email is provided:
 
 1. Check for existing pending invitation for the email/project
 2. If pending invitation exists: resend it (update role, extend expiration)
@@ -761,6 +869,7 @@ Always use `createDomainError` with appropriate error codes from `@corates/share
 
 ## Related Guides
 
+- [Organizations Guide](/guides/organizations) - For org model, routes, and middleware patterns
 - [Error Handling Guide](/guides/error-handling) - For error handling patterns
 - [Database Guide](/guides/database) - For database schema and patterns
 - [Authentication Guide](/guides/authentication) - For auth setup and patterns

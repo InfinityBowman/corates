@@ -1,6 +1,6 @@
 # Frontend Route Structure
 
-Application routing and page hierarchy.
+Application routing and page hierarchy with organization-scoped routes.
 
 ```mermaid
 flowchart TD
@@ -23,16 +23,23 @@ flowchart TD
             admin["/admin"]
         end
 
-        subgraph Project["Project Routes"]
-            projectview["/projects/:projectId"]
-            checklistview["/projects/:projectId/studies/:studyId/checklists/:checklistId"]
-            reconcile["/projects/:projectId/studies/:studyId/reconcile/:checklist1Id/:checklist2Id"]
+        subgraph OrgRoutes["Organization Routes"]
+            createorg["/orgs/new"]
+            orgdash["/orgs/:orgSlug"]
+
+            subgraph ProjectRoutes["Project Routes"]
+                projectview["/orgs/:orgSlug/projects/:projectId"]
+                checklistview["/.../checklists/:checklistId"]
+                reconcile["/.../reconcile/:c1/:c2"]
+            end
         end
     end
 
     signin --> dashboard
     signup --> dashboard
-    dashboard --> projectview
+    dashboard --> orgdash
+    createorg --> orgdash
+    orgdash --> projectview
     projectview --> checklistview
     checklistview --> reconcile
 ```
@@ -62,13 +69,22 @@ Requires authentication. Redirects to signin if not logged in.
 | `/settings/billing` | BillingPage    | Subscription management |
 | `/admin`            | AdminDashboard | Admin-only features     |
 
-### Project Routes
+### Organization Routes
 
-| Route                                        | Component             | Purpose                        |
-| -------------------------------------------- | --------------------- | ------------------------------ |
-| `/projects/:projectId`                       | ProjectView           | Project overview, studies list |
-| `/.../checklists/:checklistId`               | ChecklistYjsWrapper   | Checklist assessment           |
-| `/.../reconcile/:checklist1Id/:checklist2Id` | ReconciliationWrapper | Compare two checklists         |
+| Route            | Component       | Purpose                         |
+| ---------------- | --------------- | ------------------------------- |
+| `/orgs/new`      | CreateOrgPage   | Create new organization         |
+| `/orgs/:orgSlug` | OrgProjectsPage | Organization dashboard, projects list |
+
+### Project Routes (Org-Scoped)
+
+All project routes are scoped under organizations using `orgSlug` in the URL.
+
+| Route                                                        | Component             | Purpose                        |
+| ------------------------------------------------------------ | --------------------- | ------------------------------ |
+| `/orgs/:orgSlug/projects/:projectId`                         | ProjectView           | Project overview, studies list |
+| `/orgs/:orgSlug/projects/:projectId/studies/:studyId/checklists/:checklistId` | ChecklistYjsWrapper   | Checklist assessment           |
+| `/orgs/:orgSlug/projects/:projectId/studies/:studyId/reconcile/:c1/:c2` | ReconciliationWrapper | Compare two checklists         |
 
 ### Local Routes
 
@@ -77,3 +93,11 @@ Routes for local-only checklists (no authentication required, stored in IndexedD
 | Route                     | Component          | Purpose                     |
 | ------------------------- | ------------------ | --------------------------- |
 | `/checklist/:checklistId` | LocalChecklistView | Local-only checklist editor |
+
+## Organization Context
+
+Frontend routes use `orgSlug` (e.g., `my-lab`) for human-readable URLs. The backend API uses `orgId` (UUID).
+
+The `useOrgContext` primitive resolves `orgSlug` from URL params to the current organization object. The `useOrgProjectContext` primitive combines org context with project context for project-level routes.
+
+See the [Organizations Guide](/guides/organizations) for details on these primitives.
