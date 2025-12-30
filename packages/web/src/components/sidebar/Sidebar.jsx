@@ -1,5 +1,6 @@
 import { Show, For, createSignal, createEffect, onCleanup } from 'solid-js';
 import { useNavigate, useLocation } from '@solidjs/router';
+import { Portal } from 'solid-js/web';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useLocalChecklists } from '@primitives/useLocalChecklists.js';
 import { useOrgContext } from '@primitives/useOrgContext.js';
@@ -43,6 +44,10 @@ export default function Sidebar(props) {
   // Resize state
   const [isResizing, setIsResizing] = createSignal(false);
 
+  // Mobile overlay mount/animate state (so we can animate closed)
+  const [mobileMounted, setMobileMounted] = createSignal(false);
+  const [mobileVisible, setMobileVisible] = createSignal(false);
+
   // Use TanStack Query for org-scoped project list
   const projectListQuery = useOrgProjectList(orgId, {
     enabled: () => isLoggedIn() && !!orgId(),
@@ -55,6 +60,9 @@ export default function Sidebar(props) {
   const [_pendingDeleteId, setPendingDeleteId] = createSignal(null);
 
   const isExpanded = () => props.desktopMode === 'expanded';
+
+  // When mobile overlay is mounted, we always render expanded content inside it.
+  const showExpandedContent = () => isExpanded() || mobileMounted();
 
   // Track recent navigation
   const { recents } = useRecentsNav();
@@ -160,57 +168,61 @@ export default function Sidebar(props) {
   });
 
   // Close mobile sidebar when route changes
+  let lastPathname = location.pathname;
   createEffect(() => {
-    location.pathname;
-    if (props.mobileOpen) props.onCloseMobile?.();
+    const currentPathname = location.pathname;
+    if (props.mobileOpen && currentPathname !== lastPathname) {
+      props.onCloseMobile?.();
+    }
+    lastPathname = currentPathname;
+  });
+
+  // Sync mobile overlay mount/visible state to the controlled prop
+  createEffect(() => {
+    if (props.mobileOpen) {
+      setMobileMounted(true);
+      requestAnimationFrame(() => setMobileVisible(true));
+      return;
+    }
+
+    setMobileVisible(false);
+    const timer = setTimeout(() => setMobileMounted(false), 200);
+    onCleanup(() => clearTimeout(timer));
   });
 
   return (
     <>
-      {/* Mobile backdrop */}
-      <Show when={props.mobileOpen}>
-        <div
-          class='fixed inset-0 z-40 bg-black/30 md:hidden'
-          onClick={() => props.onCloseMobile?.()}
-        />
-      </Show>
-
-      {/* Sidebar container */}
+      {/* Desktop sidebar (in layout). Hidden on mobile to avoid pushing content. */}
       <div
-        class={`
-          relative h-full shrink-0 border-r border-gray-200 bg-white
-          ${isResizing() ? '' : 'transition-all duration-200 ease-in-out'}
-          ${isExpanded() ? '' : 'md:w-12'}
-          fixed top-12 left-0 z-50 w-64 md:static md:top-0 md:z-auto
-          ${props.mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        `}
-        style={{
-          'max-width': '100vw',
-          ...(isExpanded() ? { width: `${props.width}px` } : {}),
-        }}
+        class={`sidebar-container relative hidden h-full shrink-0 border-r border-gray-200 bg-white md:block ${isResizing() ? '' : 'transition-all duration-200 ease-in-out'} ${isExpanded() ? '' : 'md:w-12'}`}
+        style={{ 'max-width': '100vw', '--sidebar-expanded-width': `${props.width}px` }}
+        data-expanded={isExpanded() ? 'true' : 'false'}
       >
         <div class='flex h-full flex-col'>
           {/* Sidebar Header with toggle */}
           <div class='flex shrink-0 items-center border-b border-gray-100 p-2'>
-            <Show
-              when={isExpanded()}
-              fallback={
-                /* Collapsed rail: just the expand button */
-                <Tooltip content='Expand sidebar' positioning={{ placement: 'right' }}>
-                  <button
-                    onClick={() => props.onToggleDesktop?.()}
-                    class='hidden h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 md:flex'
-                    aria-label='Expand sidebar'
-                  >
-                    <FiChevronsRight class='h-4 w-4' />
-                  </button>
-                </Tooltip>
-              }
-            >
-              {/* Expanded: workspace name + collapse button */}
+            {/* Desktop collapsed: just the expand button */}
+            <Show when={!isExpanded()}>
+              <Tooltip content='Expand sidebar' positioning={{ placement: 'right' }}>
+                <button
+                  onClick={() => props.onToggleDesktop?.()}
+                  class='hidden h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 md:flex'
+                  aria-label='Expand sidebar'
+                >
+                  <FiChevronsRight class='h-4 w-4' />
+                </button>
+              </Tooltip>
+            </Show>
+
+            {/* Expanded or mobile: workspace name */}
+            <Show when={showExpandedContent()}>
               <span class='flex-1 truncate px-2 text-sm font-semibold text-gray-700'>
                 {orgName() || 'CoRATES'}
               </span>
+            </Show>
+
+            {/* Desktop expanded: collapse button */}
+            <Show when={isExpanded()}>
               <Tooltip content='Collapse sidebar' positioning={{ placement: 'right' }}>
                 <button
                   onClick={() => props.onToggleDesktop?.()}
@@ -222,18 +234,18 @@ export default function Sidebar(props) {
               </Tooltip>
             </Show>
 
-            {/* Mobile close button (always visible on mobile when open) */}
+            {/* Mobile close button */}
             <button
               onClick={() => props.onCloseMobile?.()}
-              class='ml-auto flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 md:hidden'
+              class='flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 md:hidden'
               aria-label='Close sidebar'
             >
               <FiX class='h-4 w-4' />
             </button>
           </div>
 
-          {/* Expanded content */}
-          <Show when={isExpanded()}>
+          {/* Expanded content (always show on mobile when open) */}
+          <Show when={showExpandedContent()}>
             <div class='sidebar-scrollbar flex-1 overflow-x-hidden overflow-y-auto'>
               {/* Dashboard/Workspace Link */}
               <div class='p-2 pt-3'>
@@ -441,6 +453,191 @@ export default function Sidebar(props) {
           />
         </Show>
       </div>
+
+      {/* Mobile overlay (portal) */}
+      <Show when={mobileMounted()}>
+        <Portal>
+          {/* Backdrop */}
+          <div
+            class={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-200 md:hidden ${
+              mobileVisible() ? 'opacity-100' : 'opacity-0'
+            }`}
+            onClick={() => props.onCloseMobile?.()}
+          />
+
+          {/* Panel */}
+          <div
+            class='sidebar-container fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl md:hidden'
+            style={{
+              transform: mobileVisible() ? 'translateX(0)' : 'translateX(-100%)',
+              transition: 'transform 200ms cubic-bezier(0.32, 0.72, 0, 1)',
+              'padding-top': '36px',
+            }}
+            data-expanded='false'
+          >
+            {/* Reuse the same sidebar content. Desktop-only controls remain hidden via md:* classes. */}
+            <div class='flex h-full flex-col'>
+              {/* Sidebar Header with toggle */}
+              <div class='flex shrink-0 items-center border-b border-gray-100 bg-white p-2'>
+                <span class='flex-1 truncate px-2 text-sm font-semibold text-gray-700'>
+                  {orgName() || 'CoRATES'}
+                </span>
+                <button
+                  onClick={() => props.onCloseMobile?.()}
+                  class='flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
+                  aria-label='Close sidebar'
+                >
+                  <FiX class='h-4 w-4' />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div class='sidebar-scrollbar flex-1 overflow-x-hidden overflow-y-auto'>
+                {/* Dashboard/Workspace Link */}
+                <div class='p-2 pt-3'>
+                  <button
+                    onClick={() => navigate(getWorkspacePath())}
+                    class={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                      isCurrentPath(getWorkspacePath()) || isCurrentPath('/dashboard') ?
+                        'bg-blue-100 text-blue-700'
+                      : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <AiOutlineHome class='h-4 w-4 shrink-0' />
+                    <span class='truncate'>{orgName() || 'Workspace'}</span>
+                  </button>
+                </div>
+
+                {/* Recents Section */}
+                <Show when={recents().length > 0}>
+                  <div class='px-3 pt-4 pb-2'>
+                    <h3 class='flex items-center gap-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase'>
+                      <FiClock class='h-3 w-3' />
+                      Recent
+                    </h3>
+                  </div>
+                  <div class='space-y-0.5 px-2'>
+                    <For each={recents().slice(0, 5)}>
+                      {item => (
+                        <button
+                          onClick={() => navigate(item.path)}
+                          class={`flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                            isCurrentPath(item.path) ?
+                              'bg-blue-100 text-blue-700'
+                            : 'text-gray-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          <Show
+                            when={item.type === 'project'}
+                            fallback={
+                              <Show
+                                when={item.type === 'study'}
+                                fallback={
+                                  <HiOutlineDocumentCheck class='h-3.5 w-3.5 shrink-0 text-gray-400' />
+                                }
+                              >
+                                <AiOutlineFolder class='h-3.5 w-3.5 shrink-0 text-gray-400' />
+                              </Show>
+                            }
+                          >
+                            <AiOutlineCloud class='h-3.5 w-3.5 shrink-0 text-gray-400' />
+                          </Show>
+                          <span class='truncate text-xs'>{getRecentItemLabel(item)}</span>
+                        </button>
+                      )}
+                    </For>
+                  </div>
+                </Show>
+
+                {/* Cloud Projects Section */}
+                <Show when={isLoggedIn() && orgSlug()}>
+                  <div class='px-3 pt-4 pb-2'>
+                    <h3 class='flex items-center gap-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase'>
+                      <AiOutlineCloud class='h-3 w-3' />
+                      Projects
+                    </h3>
+                  </div>
+                  <div class='space-y-0.5 px-2'>
+                    <Show
+                      when={cloudProjects()?.length > 0}
+                      fallback={
+                        <Show when={!isProjectsLoading()}>
+                          <div class='px-2 py-4 text-center'>
+                            <div class='mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100'>
+                              <AiOutlineFolder class='h-4 w-4 text-gray-400' />
+                            </div>
+                            <p class='text-xs font-medium text-gray-500'>No projects yet</p>
+                            <button
+                              onClick={() => navigate(getWorkspacePath())}
+                              class='mt-1 text-xs text-blue-600 hover:text-blue-700'
+                            >
+                              Create a project
+                            </button>
+                          </div>
+                        </Show>
+                      }
+                    >
+                      <For each={cloudProjects()}>
+                        {project => (
+                          <ProjectTreeItem
+                            project={project}
+                            orgSlug={orgSlug()}
+                            isExpanded={expandedProjects()[project.id]}
+                            onToggle={() => toggleProject(project.id)}
+                            userId={currentUserId()}
+                            currentPath={location.pathname}
+                            isStudyExpanded={isStudyExpanded}
+                            onToggleStudy={toggleStudy}
+                          />
+                        )}
+                      </For>
+                    </Show>
+                  </div>
+                </Show>
+
+                {/* Local Checklists Section */}
+                <div class='px-3 pt-6 pb-2'>
+                  <h3 class='flex items-center gap-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase'>
+                    <HiOutlineDocumentCheck class='h-3 w-3' />
+                    Appraisals
+                  </h3>
+                </div>
+                <div class='space-y-0.5 px-2'>
+                  <Show
+                    when={checklists()?.length > 0}
+                    fallback={
+                      <div class='px-2 py-4 text-center'>
+                        <div class='mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100'>
+                          <HiOutlineDocumentCheck class='h-4 w-4 text-gray-400' />
+                        </div>
+                        <p class='text-xs font-medium text-gray-500'>No appraisals</p>
+                        <button
+                          onClick={() => navigate('/checklist')}
+                          class='mt-1 text-xs text-blue-600 hover:text-blue-700'
+                        >
+                          Create one
+                        </button>
+                      </div>
+                    }
+                  >
+                    <For each={checklists()?.filter(c => c?.id)}>
+                      {checklist => (
+                        <LocalChecklistItem
+                          checklist={checklist}
+                          isSelected={location.pathname === `/checklist/${checklist.id}`}
+                          onDelete={handleDeleteLocalChecklist}
+                        />
+                      )}
+                    </For>
+                  </Show>
+                </div>
+
+                <div class='h-8' />
+              </div>
+            </div>
+          </div>
+        </Portal>
+      </Show>
     </>
   );
 }

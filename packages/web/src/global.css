@@ -38,6 +38,13 @@
   background: #f9fafb;
 }
 
+/* Sidebar custom width (desktop only, when expanded) */
+@media (min-width: 768px) {
+  .sidebar-container[data-expanded='true'] {
+    width: var(--sidebar-expanded-width, 256px);
+  }
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;

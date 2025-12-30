@@ -2,7 +2,7 @@ import { Show, For, createEffect, createSignal, onMount, onCleanup } from 'solid
 import { A, useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useOrgContext } from '@primitives/useOrgContext.js';
-import { FiMenu, FiWifiOff, FiChevronDown, FiPlus } from 'solid-icons/fi';
+import { FiMenu, FiWifiOff, FiChevronDown, FiPlus, FiX } from 'solid-icons/fi';
 import { BiRegularBuildings } from 'solid-icons/bi';
 import { LANDING_URL } from '@config/api.js';
 import useOnlineStatus from '@primitives/useOnlineStatus.js';
@@ -72,16 +72,28 @@ export default function Navbar(props) {
         {/* Mobile sidebar toggle button (hidden on desktop where sidebar has its own toggle) */}
         <button
           class='-ml-1.5 rounded-full border border-blue-200 bg-white/80 p-1.5 text-blue-700 shadow transition-all duration-200 hover:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none md:hidden'
-          onClick={() => props.openMobileSidebar?.()}
-          aria-label='Open sidebar'
+          onClick={() => props.toggleMobileSidebar?.()}
+          aria-label={props.mobileSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
         >
-          <FiMenu class='h-4 w-4' />
+          <Show when={props.mobileSidebarOpen} fallback={<FiMenu class='h-4 w-4' />}>
+            <FiX class='h-4 w-4' />
+          </Show>
         </button>
         <a
           href={LANDING_URL}
           rel='external'
-          class='text-base font-extrabold tracking-tight drop-shadow sm:text-lg'
+          class='inline-flex items-center gap-2 text-base font-extrabold tracking-tight drop-shadow sm:text-lg'
         >
+          <div class='flex items-center justify-center rounded bg-white p-0.5'>
+            <img
+              src='/logo.svg'
+              alt='CoRATES Logo'
+              aria-hidden='true'
+              class='h-5 w-5 rounded-sm'
+              width='20'
+              height='20'
+            />
+          </div>
           CoRATES
         </a>
         {/* Workspace switcher - only show when logged in */}

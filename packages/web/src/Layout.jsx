@@ -49,7 +49,7 @@ export default function MainLayout(props) {
     localStorage.setItem(SIDEBAR_MODE_KEY, newMode);
   };
 
-  const openMobileSidebar = () => setMobileSidebarOpen(true);
+  const toggleMobileSidebar = () => setMobileSidebarOpen(open => !open);
   const closeMobileSidebar = () => setMobileSidebarOpen(false);
 
   return (
@@ -57,7 +57,7 @@ export default function MainLayout(props) {
       class={`flex h-screen flex-col overflow-hidden bg-blue-50 ${isImpersonating() ? 'pt-10' : ''}`}
     >
       <ImpersonationBanner />
-      <Navbar openMobileSidebar={openMobileSidebar} />
+      <Navbar mobileSidebarOpen={mobileSidebarOpen()} toggleMobileSidebar={toggleMobileSidebar} />
       <div class='flex flex-1 overflow-hidden'>
         <Sidebar
           desktopMode={desktopSidebarMode()}
