@@ -14,7 +14,7 @@ import LocalChecklistItem from './LocalChecklistItem.jsx';
 
 /**
  * Sidebar component with cloud projects and local checklists.
- * Desktop: always visible as expanded (w-64) or collapsed rail (w-12).
+ * Desktop: always visible as expanded (resizable) or collapsed rail (w-12).
  * Mobile: overlay that slides in when mobileOpen is true.
  *
  * @param {Object} props
@@ -22,6 +22,8 @@ import LocalChecklistItem from './LocalChecklistItem.jsx';
  * @param {boolean} props.mobileOpen - Whether mobile overlay is open
  * @param {() => void} props.onToggleDesktop - Toggle desktop mode
  * @param {() => void} props.onCloseMobile - Close mobile overlay
+ * @param {number} props.width - Sidebar width in pixels (when expanded)
+ * @param {(width: number) => void} props.onWidthChange - Callback when width changes
  */
 export default function Sidebar(props) {
   const navigate = useNavigate();
@@ -38,6 +40,9 @@ export default function Sidebar(props) {
   const [expandedProjects, setExpandedProjects] = createSignal({});
   const [expandedStudies, setExpandedStudies] = createSignal({});
 
+  // Resize state
+  const [isResizing, setIsResizing] = createSignal(false);
+
   // Use TanStack Query for org-scoped project list
   const projectListQuery = useOrgProjectList(orgId, {
     enabled: () => isLoggedIn() && !!orgId(),
@@ -53,6 +58,33 @@ export default function Sidebar(props) {
 
   // Track recent navigation
   const { recents } = useRecentsNav();
+
+  // Handle resize drag
+  const handleResizeStart = e => {
+    e.preventDefault();
+    setIsResizing(true);
+
+    const startX = e.clientX;
+    const startWidth = props.width;
+
+    const handleMouseMove = moveEvent => {
+      const delta = moveEvent.clientX - startX;
+      props.onWidthChange?.(startWidth + delta);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
 
   const toggleProject = projectId => {
     setExpandedProjects(prev => ({
@@ -146,12 +178,16 @@ export default function Sidebar(props) {
       {/* Sidebar container */}
       <div
         class={`
-          h-full shrink-0 border-r border-gray-200 bg-white transition-all duration-200 ease-in-out
-          ${isExpanded() ? 'md:w-64' : 'md:w-12'}
+          relative h-full shrink-0 border-r border-gray-200 bg-white
+          ${isResizing() ? '' : 'transition-all duration-200 ease-in-out'}
+          ${isExpanded() ? '' : 'md:w-12'}
           fixed top-12 left-0 z-50 w-64 md:static md:top-0 md:z-auto
           ${props.mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
-        style={{ 'max-width': '100vw' }}
+        style={{
+          'max-width': '100vw',
+          ...(isExpanded() ? { width: `${props.width}px` } : {}),
+        }}
       >
         <div class='flex h-full flex-col'>
           {/* Sidebar Header with toggle */}
@@ -393,6 +429,17 @@ export default function Sidebar(props) {
         </div>
 
         <confirmDialog.ConfirmDialogComponent />
+
+        {/* Resize handle (desktop only, when expanded) */}
+        <Show when={isExpanded()}>
+          <div
+            class='absolute top-0 right-0 hidden h-full w-1 cursor-col-resize bg-transparent transition-colors hover:bg-blue-400 md:block'
+            onMouseDown={handleResizeStart}
+            role='separator'
+            aria-orientation='vertical'
+            aria-label='Resize sidebar'
+          />
+        </Show>
       </div>
     </>
   );

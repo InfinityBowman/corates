@@ -6,33 +6,42 @@ import { ImpersonationBanner } from '@/components/admin/index.js';
 import { isImpersonating } from '@/stores/adminStore.js';
 
 const SIDEBAR_MODE_KEY = 'corates-sidebar-mode';
-const LEGACY_SIDEBAR_KEY = 'corates-sidebar-open';
+const SIDEBAR_WIDTH_KEY = 'corates-sidebar-width';
+
+const DEFAULT_SIDEBAR_WIDTH = 256;
+const MIN_SIDEBAR_WIDTH = 200;
+const MAX_SIDEBAR_WIDTH = 480;
 
 export default function MainLayout(props) {
   // Desktop sidebar mode: 'expanded' or 'collapsed' (rail)
   const [desktopSidebarMode, setDesktopSidebarMode] = createSignal('collapsed');
   // Mobile sidebar open state (overlay behavior)
   const [mobileSidebarOpen, setMobileSidebarOpen] = createSignal(false);
+  // Sidebar width (only applies when expanded)
+  const [sidebarWidth, setSidebarWidth] = createSignal(DEFAULT_SIDEBAR_WIDTH);
 
   onMount(() => {
-    // Try new key first, fall back to legacy key for migration
+    // Load sidebar width
+    const storedWidth = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+    if (storedWidth) {
+      const parsed = parseInt(storedWidth, 10);
+      if (!isNaN(parsed) && parsed >= MIN_SIDEBAR_WIDTH && parsed <= MAX_SIDEBAR_WIDTH) {
+        setSidebarWidth(parsed);
+      }
+    }
+
+    // Load sidebar mode
     const storedMode = localStorage.getItem(SIDEBAR_MODE_KEY);
     if (storedMode === 'expanded' || storedMode === 'collapsed') {
       setDesktopSidebarMode(storedMode);
-    } else {
-      // Migrate from legacy boolean key
-      const legacyValue = localStorage.getItem(LEGACY_SIDEBAR_KEY);
-      if (legacyValue === 'true') {
-        setDesktopSidebarMode('expanded');
-        localStorage.setItem(SIDEBAR_MODE_KEY, 'expanded');
-      } else {
-        setDesktopSidebarMode('collapsed');
-        localStorage.setItem(SIDEBAR_MODE_KEY, 'collapsed');
-      }
-      // Clean up legacy key
-      localStorage.removeItem(LEGACY_SIDEBAR_KEY);
     }
   });
+
+  const handleWidthChange = newWidth => {
+    const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, newWidth));
+    setSidebarWidth(clamped);
+    localStorage.setItem(SIDEBAR_WIDTH_KEY, String(clamped));
+  };
 
   const toggleDesktopSidebar = () => {
     const newMode = desktopSidebarMode() === 'expanded' ? 'collapsed' : 'expanded';
@@ -55,6 +64,8 @@ export default function MainLayout(props) {
           mobileOpen={mobileSidebarOpen()}
           onToggleDesktop={toggleDesktopSidebar}
           onCloseMobile={closeMobileSidebar}
+          width={sidebarWidth()}
+          onWidthChange={handleWidthChange}
         />
         <main class='flex-1 overflow-auto text-gray-900'>{props.children}</main>
       </div>
