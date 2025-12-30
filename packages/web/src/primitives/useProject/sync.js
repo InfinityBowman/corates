@@ -110,8 +110,8 @@ function buildStudyFromYMap(studyId, studyData, studyYMap) {
         answers: null,
       };
 
-      // Extract answers and compute score for completed checklists
-      if (status === CHECKLIST_STATUS.COMPLETED) {
+      // Extract answers and compute score for finalized checklists
+      if (status === CHECKLIST_STATUS.FINALIZED) {
         const answersMap = checklistYMap.get('answers');
         if (answersMap && typeof answersMap.entries === 'function') {
           const answers = extractAnswersFromYMap(answersMap, checklistType);

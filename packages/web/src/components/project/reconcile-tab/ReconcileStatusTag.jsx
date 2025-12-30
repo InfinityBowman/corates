@@ -12,7 +12,7 @@ import { isReconciledChecklist } from '@/lib/checklist-domain.js';
 export default function ReconcileStatusTag(props) {
   const awaitingReconcileChecklists = () =>
     (props.study.checklists || []).filter(
-      c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.AWAITING_RECONCILE,
+      c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
     );
 
   const isReady = () => awaitingReconcileChecklists().length === 2;

@@ -20,7 +20,7 @@ export function isReconciledChecklist(checklist) {
 }
 
 /**
- * Gets checklists for the todo tab (assigned to user, not completed/awaiting-reconcile)
+ * Gets checklists for the todo tab (assigned to user, not finalized or reviewer-completed)
  * @param {Object} study - The study object
  * @param {string} userId - The current user ID
  * @returns {Array} Array of checklists for todo tab
@@ -31,32 +31,51 @@ export function getTodoChecklists(study, userId) {
   return checklists.filter(
     c =>
       c.assignedTo === userId &&
-      c.status !== CHECKLIST_STATUS.COMPLETED &&
-      c.status !== CHECKLIST_STATUS.AWAITING_RECONCILE,
+      c.status !== CHECKLIST_STATUS.FINALIZED &&
+      c.status !== CHECKLIST_STATUS.REVIEWER_COMPLETED,
   );
 }
 
 /**
- * Gets checklists for the completed tab
+ * Gets checklists for the completed tab (finalized checklists)
  * @param {Object} study - The study object
  * @returns {Array} Array of checklists for completed tab
  */
 export function getCompletedChecklists(study) {
   if (!study) return [];
   const checklists = study.checklists || [];
-  return checklists.filter(c => c.status === CHECKLIST_STATUS.COMPLETED);
+  return checklists.filter(c => c.status === CHECKLIST_STATUS.FINALIZED);
 }
 
 /**
- * Gets checklists in the reconciliation workflow
+ * Gets the finalized checklist for a study (the authoritative version for tables/charts)
+ * @param {Object} study - The study object
+ * @returns {Object|null} The finalized checklist or null if not found
+ */
+export function getFinalizedChecklist(study) {
+  if (!study || !study.checklists) return null;
+  const checklists = study.checklists || [];
+  // Prefer reconciled checklist if it's finalized
+  const reconciled = checklists.find(
+    c => isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.FINALIZED,
+  );
+  if (reconciled) return reconciled;
+  // Otherwise, find any finalized checklist
+  return checklists.find(c => c.status === CHECKLIST_STATUS.FINALIZED) || null;
+}
+
+/**
+ * Gets checklists in the reconciliation workflow (individual reviewer checklists that are completed)
  * @param {Object} study - The study object
  * @returns {Array} Array of checklists in reconciliation workflow
  */
 export function getReconciliationChecklists(study) {
   if (!study) return [];
   const checklists = study.checklists || [];
-  // Return checklists that are awaiting reconciliation
-  return checklists.filter(c => c.status === CHECKLIST_STATUS.AWAITING_RECONCILE);
+  // Return individual reviewer checklists that are completed (awaiting reconciliation)
+  return checklists.filter(
+    c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
+  );
 }
 
 /**
@@ -76,13 +95,13 @@ export function shouldShowInTab(study, tab, userId) {
       if (study.reviewer1 !== userId && study.reviewer2 !== userId) return false;
       const checklists = study.checklists || [];
       const userChecklists = checklists.filter(c => c.assignedTo === userId);
-      // Show if user has no checklist yet OR has a non-completed/awaiting-reconcile checklist
+      // Show if user has no checklist yet OR has a non-finalized/reviewer-completed checklist
       return (
         userChecklists.length === 0 ||
         userChecklists.some(
           c =>
-            c.status !== CHECKLIST_STATUS.COMPLETED &&
-            c.status !== CHECKLIST_STATUS.AWAITING_RECONCILE,
+            c.status !== CHECKLIST_STATUS.FINALIZED &&
+            c.status !== CHECKLIST_STATUS.REVIEWER_COMPLETED,
         )
       );
     }
@@ -93,10 +112,16 @@ export function shouldShowInTab(study, tab, userId) {
 
       const checklists = study.checklists || [];
 
+      // If there's a finalized reconciled checklist, reconciliation is complete - don't show in reconcile tab
+      const hasFinalizedReconciled = checklists.some(
+        c => isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.FINALIZED,
+      );
+      if (hasFinalizedReconciled) return false;
+
       // Check for individual reviewer checklists awaiting reconciliation
       // (not reconciled checklists - those are identified by assignedTo === null)
       const awaitingReconcile = checklists.filter(
-        c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.AWAITING_RECONCILE,
+        c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
       );
 
       // Show if there are 1 or 2 individual checklists awaiting reconciliation
@@ -105,7 +130,7 @@ export function shouldShowInTab(study, tab, userId) {
 
     case 'completed': {
       const checklists = study.checklists || [];
-      return checklists.some(c => c.status === CHECKLIST_STATUS.COMPLETED);
+      return checklists.some(c => c.status === CHECKLIST_STATUS.FINALIZED);
     }
 
     default:
@@ -159,19 +184,19 @@ export function getChecklistCount(studies, tab, userId) {
 /**
  * Determines the next status when a reviewer marks their checklist as complete
  * @param {Object} study - The study object
- * @returns {string} The status to set (COMPLETED or AWAITING_RECONCILE)
+ * @returns {string} The status to set (FINALIZED for single reviewer, REVIEWER_COMPLETED for dual reviewer)
  */
 export function getNextStatusForCompletion(study) {
-  if (!study) return CHECKLIST_STATUS.COMPLETED;
+  if (!study) return CHECKLIST_STATUS.FINALIZED;
 
   const isSingleReviewer = study.reviewer1 && !study.reviewer2;
   if (isSingleReviewer) {
-    // Single reviewer: goes directly to completed
-    return CHECKLIST_STATUS.COMPLETED;
+    // Single reviewer: goes directly to finalized
+    return CHECKLIST_STATUS.FINALIZED;
   }
 
-  // Dual reviewer: goes to awaiting-reconcile
-  return CHECKLIST_STATUS.AWAITING_RECONCILE;
+  // Dual reviewer: goes to reviewer-completed (awaiting reconciliation)
+  return CHECKLIST_STATUS.REVIEWER_COMPLETED;
 }
 
 /**
@@ -191,15 +216,15 @@ export function findReconciledChecklist(study, excludeId = null) {
 }
 
 /**
- * Gets all reconciled checklists for a study that are not yet completed
+ * Gets all reconciled checklists for a study that are not yet finalized
  * @param {Object} study - The study object
- * @returns {Array} Array of in-progress reconciled checklists
+ * @returns {Array} Array of in-progress or reconciling checklists
  */
 export function getInProgressReconciledChecklists(study) {
   if (!study || !study.checklists) return [];
 
   return study.checklists.filter(
-    c => isReconciledChecklist(c) && c.status !== CHECKLIST_STATUS.COMPLETED,
+    c => isReconciledChecklist(c) && c.status !== CHECKLIST_STATUS.FINALIZED,
   );
 }
 

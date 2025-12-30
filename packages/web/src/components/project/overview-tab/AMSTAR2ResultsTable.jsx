@@ -29,15 +29,15 @@ export default function AMSTAR2ResultsTable(props) {
         const reconciledChecklist = checklists.find(
           c => c.id === study.reconciliation.reconciledChecklistId && c.type === 'AMSTAR2',
         );
-        if (reconciledChecklist && reconciledChecklist.status === CHECKLIST_STATUS.COMPLETED) {
+        if (reconciledChecklist && reconciledChecklist.status === CHECKLIST_STATUS.FINALIZED) {
           checklistToScore = reconciledChecklist;
         }
       }
 
-      // If no reconciled checklist, use first completed AMSTAR2 checklist
+      // If no reconciled checklist, use first finalized AMSTAR2 checklist
       if (!checklistToScore) {
         checklistToScore = checklists.find(
-          c => c.type === 'AMSTAR2' && c.status === CHECKLIST_STATUS.COMPLETED,
+          c => c.type === 'AMSTAR2' && c.status === CHECKLIST_STATUS.FINALIZED,
         );
       }
 

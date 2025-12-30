@@ -258,8 +258,8 @@ export default function ChecklistYjsWrapper() {
     const study = currentStudy();
     if (!checklist || !study) return;
 
-    // If already completed, don't allow toggle back (checklist is locked)
-    if (checklist.status === CHECKLIST_STATUS.COMPLETED) {
+    // If already finalized, don't allow toggle back (checklist is locked)
+    if (checklist.status === CHECKLIST_STATUS.FINALIZED) {
       showToast.info('Checklist Locked', 'Completed checklists cannot be edited.');
       return;
     }
@@ -290,7 +290,7 @@ export default function ChecklistYjsWrapper() {
     updateChecklist(params.studyId, params.checklistId, { status: nextStatus });
 
     const statusLabel =
-      nextStatus === CHECKLIST_STATUS.COMPLETED ? 'completed' : 'awaiting reconciliation';
+      nextStatus === CHECKLIST_STATUS.FINALIZED ? 'completed' : 'awaiting reconciliation';
     showToast.success(
       'Checklist Completed',
       `This checklist has been marked as ${statusLabel} and is now locked.`,
@@ -362,12 +362,12 @@ export default function ChecklistYjsWrapper() {
           fallback={
             <span
               class={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                currentChecklist()?.status === CHECKLIST_STATUS.COMPLETED ?
+                currentChecklist()?.status === CHECKLIST_STATUS.FINALIZED ?
                   'bg-green-100 text-green-700'
                 : 'bg-gray-100 text-gray-700'
               }`}
             >
-              {currentChecklist()?.status === CHECKLIST_STATUS.COMPLETED ?
+              {currentChecklist()?.status === CHECKLIST_STATUS.FINALIZED ?
                 'Completed'
               : 'Read-only'}
             </span>
@@ -382,13 +382,13 @@ export default function ChecklistYjsWrapper() {
               : undefined
             }
             class={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              currentChecklist()?.status === CHECKLIST_STATUS.COMPLETED ?
+              currentChecklist()?.status === CHECKLIST_STATUS.FINALIZED ?
                 'bg-green-100 text-green-700 hover:bg-green-200'
               : !isChecklistValid() ? 'cursor-not-allowed bg-gray-300 text-gray-500 opacity-60'
               : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}
           >
-            {currentChecklist()?.status === CHECKLIST_STATUS.COMPLETED ?
+            {currentChecklist()?.status === CHECKLIST_STATUS.FINALIZED ?
               'Completed'
             : 'Mark Complete'}
           </button>

@@ -236,9 +236,9 @@ export default function ReconciliationWrapper() {
       progress.checklist2Id === params.checklist2Id &&
       progress.reconciledChecklistId
     ) {
-      // Verify it still exists and is not completed
+      // Verify it still exists and is not finalized
       const existingChecklist = study.checklists?.find(
-        c => c.id === progress.reconciledChecklistId && c.status !== CHECKLIST_STATUS.COMPLETED,
+        c => c.id === progress.reconciledChecklistId && c.status !== CHECKLIST_STATUS.FINALIZED,
       );
       if (existingChecklist) {
         setReconciledChecklistId(progress.reconciledChecklistId);
@@ -249,7 +249,7 @@ export default function ReconciliationWrapper() {
 
     // Check if a reconciled checklist already exists (another client may have created it)
     const existingReconciled = findReconciledChecklist(study);
-    if (existingReconciled && existingReconciled.status !== CHECKLIST_STATUS.COMPLETED) {
+    if (existingReconciled && existingReconciled.status !== CHECKLIST_STATUS.FINALIZED) {
       // Found existing - save reference in progress and use it
       saveReconciliationProgress(params.studyId, {
         checklist1Id: params.checklist1Id,
@@ -273,9 +273,9 @@ export default function ReconciliationWrapper() {
       return;
     }
 
-    // Mark it as in-progress (reconciled checklist starts as in-progress)
+    // Mark it as reconciling (reconciled checklist starts as reconciling)
     updateChecklist(params.studyId, newChecklistId, {
-      status: CHECKLIST_STATUS.IN_PROGRESS,
+      status: CHECKLIST_STATUS.RECONCILING,
       title: 'Reconciled Checklist',
     });
 
@@ -365,19 +365,14 @@ export default function ReconciliationWrapper() {
         throw new Error('No reconciled checklist found');
       }
 
-      // Mark the reconciled checklist as completed
+      // Mark the reconciled checklist as finalized
       updateChecklist(params.studyId, id, {
-        status: CHECKLIST_STATUS.COMPLETED,
+        status: CHECKLIST_STATUS.FINALIZED,
         title: reconciledName || 'Reconciled Checklist',
       });
 
-      // Mark the individual reviewer checklists as completed
-      updateChecklist(params.studyId, params.checklist1Id, {
-        status: CHECKLIST_STATUS.COMPLETED,
-      });
-      updateChecklist(params.studyId, params.checklist2Id, {
-        status: CHECKLIST_STATUS.COMPLETED,
-      });
+      // Individual reviewer checklists remain as REVIEWER_COMPLETED (they were already set when reviewers completed them)
+      // No need to update them - they're historical records
 
       // Keep reconciliation progress (checklist1Id and checklist2Id) so users can view previous reviewers
       // The progress data is needed for the "View Previous" button in the completed tab
