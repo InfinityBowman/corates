@@ -59,13 +59,10 @@ export function createProjectActions(getActiveConnection, getActiveProjectId, ge
     const orgId = targetOrgId || getActiveOrgId();
 
     try {
-      const response = await fetch(
-        `${API_BASE}/api/orgs/${orgId}/projects/${targetProjectId}`,
-        {
-          method: 'DELETE',
-          credentials: 'include',
-        },
-      );
+      const response = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${targetProjectId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || 'Failed to delete project');

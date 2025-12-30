@@ -9,7 +9,15 @@ import {
   runInDurableObject,
 } from 'cloudflare:test';
 import { createDb } from '../db/client.js';
-import { user, projects, projectMembers, session, subscriptions, organization, member } from '../db/schema.js';
+import {
+  user,
+  projects,
+  projectMembers,
+  session,
+  subscriptions,
+  organization,
+  member,
+} from '../db/schema.js';
 import {
   seedUserSchema,
   seedProjectSchema,

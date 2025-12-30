@@ -102,7 +102,13 @@ export function useOrgProjectContext() {
   };
 
   const getReconcilePath = (studyId, checklist1Id, checklist2Id) => {
-    return buildReconcilePath(orgContext.orgSlug(), projectId(), studyId, checklist1Id, checklist2Id);
+    return buildReconcilePath(
+      orgContext.orgSlug(),
+      projectId(),
+      studyId,
+      checklist1Id,
+      checklist2Id,
+    );
   };
 
   return {

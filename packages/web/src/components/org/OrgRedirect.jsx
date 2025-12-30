@@ -34,32 +34,31 @@ export default function OrgRedirect() {
     const orgsList = orgs();
     if (orgsList && orgsList.length > 0) {
       const lastSlug = getLastOrgSlug();
-      const targetOrg = lastSlug
-        ? orgsList.find(o => o.slug === lastSlug) || orgsList[0]
-        : orgsList[0];
+      const targetOrg =
+        lastSlug ? orgsList.find(o => o.slug === lastSlug) || orgsList[0] : orgsList[0];
 
       navigate(`/orgs/${targetOrg.slug}`, { replace: true });
     }
   });
 
   return (
-    <div class="flex min-h-[60vh] items-center justify-center">
+    <div class='flex min-h-[60vh] items-center justify-center'>
       <Show
         when={!authLoading() && !isLoading()}
         fallback={
-          <div class="text-center">
-            <div class="mb-4 h-8 w-8 mx-auto animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-            <p class="text-gray-500">Loading...</p>
+          <div class='text-center'>
+            <div class='mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent' />
+            <p class='text-gray-500'>Loading...</p>
           </div>
         }
       >
         <Show when={!isLoggedIn()}>
-          <div class="text-center">
-            <h2 class="text-xl font-semibold text-gray-900 mb-2">Welcome to CoRATES</h2>
-            <p class="text-gray-600 mb-4">Sign in to access your workspaces</p>
+          <div class='text-center'>
+            <h2 class='mb-2 text-xl font-semibold text-gray-900'>Welcome to CoRATES</h2>
+            <p class='mb-4 text-gray-600'>Sign in to access your workspaces</p>
             <a
-              href="/signin"
-              class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
+              href='/signin'
+              class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700'
             >
               Sign In
             </a>

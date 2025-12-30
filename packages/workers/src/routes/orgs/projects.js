@@ -8,7 +8,12 @@ import { createDb } from '../../db/client.js';
 import { projects, projectMembers, user } from '../../db/schema.js';
 import { eq, and, count, desc } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../../middleware/auth.js';
-import { requireOrgMembership, requireProjectAccess, getOrgContext, getProjectContext } from '../../middleware/requireOrg.js';
+import {
+  requireOrgMembership,
+  requireProjectAccess,
+  getOrgContext,
+  getProjectContext,
+} from '../../middleware/requireOrg.js';
 import { requireEntitlement } from '../../middleware/requireEntitlement.js';
 import { requireQuota } from '../../middleware/requireQuota.js';
 import { projectSchemas, validateRequest } from '../../config/validation.js';
