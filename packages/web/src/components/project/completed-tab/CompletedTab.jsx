@@ -13,9 +13,10 @@ import CompletedStudyRow from './CompletedStudyRow.jsx';
  * Uses projectActionsStore directly for mutations.
  */
 export default function CompletedTab() {
-  const { projectId, getAssigneeName, getChecklistPath } = useProjectContext();
+  const { projectId, orgId, getAssigneeName, getChecklistPath } = useProjectContext();
   const navigate = useNavigate();
-  const { getReconciliationProgress } = useProject(projectId);
+  // orgId is required for remote projects' WebSocket connection
+  const { getReconciliationProgress } = useProject(orgId(), projectId);
 
   const studies = () => projectStore.getStudies(projectId);
 

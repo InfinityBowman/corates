@@ -233,8 +233,17 @@ describe('Main App - PDF Proxy Endpoint', () => {
 });
 
 describe('Main App - Durable Object Routes', () => {
-  it('should handle project DO routes', async () => {
+  it('should return 410 Gone for legacy /api/project/:projectId route', async () => {
     const res = await fetchApp(app, '/api/project/test-project-id');
+    // Legacy routes now return 410 Gone
+    expect(res.status).toBe(410);
+    const body = await json(res);
+    expect(body.error).toBe('ENDPOINT_MOVED');
+    expect(body.message).toContain('/api/orgs/:orgId/project-doc/:projectId');
+  });
+
+  it('should handle org-scoped project DO routes', async () => {
+    const res = await fetchApp(app, '/api/orgs/test-org-id/project-doc/test-project-id');
     // Should return 200, 400, or 401 (auth required)
     expect([200, 400, 401]).toContain(res.status);
   });

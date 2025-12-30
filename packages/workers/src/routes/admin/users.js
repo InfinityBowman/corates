@@ -479,15 +479,21 @@ userRoutes.delete('/users/:userId', async c => {
       return c.json(error, error.statusCode);
     }
 
-    // Fetch all projects the user is a member of before any deletions
+    // Fetch all projects the user is a member of before any deletions (with orgId)
     const userProjects = await db
-      .select({ projectId: projectMembers.projectId })
+      .select({
+        projectId: projectMembers.projectId,
+        orgId: projects.orgId,
+      })
       .from(projectMembers)
+      .innerJoin(projects, eq(projectMembers.projectId, projects.id))
       .where(eq(projectMembers.userId, userId));
 
     // Sync all member removals to DOs atomically (fail fast if any fails)
     await Promise.all(
-      userProjects.map(({ projectId }) => syncMemberToDO(c.env, projectId, 'remove', { userId })),
+      userProjects.map(({ orgId, projectId }) =>
+        syncMemberToDO(c.env, orgId, projectId, 'remove', { userId }),
+      ),
     );
 
     // Only proceed with database deletions if all DO syncs succeeded

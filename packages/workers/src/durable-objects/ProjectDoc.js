@@ -353,10 +353,20 @@ export class ProjectDoc {
       return new Response('Authentication required', { status: 401 });
     }
 
-    // Extract projectId from URL: /api/project/:projectId/...
+    // Extract orgId and projectId from URL: /api/orgs/:orgId/project-doc/:projectId
+    // y-websocket appends the room name as the last path segment
     const url = new URL(request.url);
     const pathParts = url.pathname.split('/');
-    const projectId = pathParts[3]; // /api/project/{projectId}/...
+    // pathParts: ["", "api", "orgs", orgId, "project-doc", projectId]
+    const orgIdFromUrl = pathParts[3];
+    const projectId = pathParts[5];
+
+    if (!orgIdFromUrl || !projectId) {
+      return new Response('Invalid URL: orgId and projectId required', {
+        status: 400,
+        headers: { 'X-Close-Reason': 'invalid-url' },
+      });
+    }
 
     // ALWAYS verify org membership + project membership against D1
     // Do NOT trust Yjs members map for authorization (it can be stale)
@@ -367,20 +377,20 @@ export class ProjectDoc {
 
     const db = createDb(this.env.DB);
 
-    // Use cached orgId if available, otherwise query and cache it
+    // Use cached orgId if available, otherwise validate and cache it
     // This reduces D1 pressure on hot path while keeping membership checks fresh
     let orgId = this.cachedOrgId;
 
     if (!orgId) {
-      // First connection for this DO instance - query and cache orgId
+      // First connection for this DO instance - validate project belongs to org from URL
       const project = await db
         .select({ orgId: projects.orgId })
         .from(projects)
-        .where(eq(projects.id, projectId))
+        .where(and(eq(projects.id, projectId), eq(projects.orgId, orgIdFromUrl)))
         .get();
 
       if (!project) {
-        return new Response('Project not found', {
+        return new Response('Project not found in organization', {
           status: 404,
           headers: { 'X-Close-Reason': 'project-not-found' },
         });
@@ -391,6 +401,13 @@ export class ProjectDoc {
 
       // Persist to DO storage so it survives DO restarts
       await this.state.storage.put('cached-org-id', orgId);
+    } else if (orgId !== orgIdFromUrl) {
+      // Cached orgId doesn't match URL - this shouldn't happen with org-scoped DO IDs
+      // but check anyway for safety
+      return new Response('Organization mismatch', {
+        status: 403,
+        headers: { 'X-Close-Reason': 'org-mismatch' },
+      });
     }
 
     // ALWAYS verify org membership on connect/reconnect (fresh D1 check)

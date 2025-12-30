@@ -77,15 +77,17 @@ export const memberSchemas = {
 
 /**
  * Invitation schemas
+ *
+ * Note: orgRole is intentionally not accepted from request body.
+ * Project owners should not be able to grant org-level roles.
+ * When accepting an invitation, users are added to the org as 'member' (lowest role).
+ * Only org admins/owners can grant higher org roles via org member management endpoints.
  */
 export const invitationSchemas = {
   create: z.object({
     email: z.string().email('Invalid email address'),
     role: z.enum(PROJECT_ROLES, {
       error: `Role must be one of: ${PROJECT_ROLES.join(', ')}`,
-    }),
-    orgRole: z.enum(['member', 'admin', 'owner'], {
-      error: "Org role must be one of: 'member', 'admin', 'owner'",
     }),
   }),
   accept: z.object({

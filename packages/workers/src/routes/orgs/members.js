@@ -182,7 +182,7 @@ orgProjectMemberRoutes.post(
 
       // Sync member to DO
       try {
-        await syncMemberToDO(c.env, projectId, 'add', {
+        await syncMemberToDO(c.env, orgId, projectId, 'add', {
           userId: userToAdd.id,
           role,
           joinedAt: now.getTime(),
@@ -229,6 +229,7 @@ orgProjectMemberRoutes.put(
   requireProjectAccess('owner'),
   validateRequest(memberSchemas.updateRole),
   async c => {
+    const { orgId } = getOrgContext(c);
     const { projectId } = getProjectContext(c);
     const memberId = c.req.param('userId');
     const db = createDb(c.env.DB);
@@ -266,7 +267,7 @@ orgProjectMemberRoutes.put(
 
       // Sync role update to DO
       try {
-        await syncMemberToDO(c.env, projectId, 'update', {
+        await syncMemberToDO(c.env, orgId, projectId, 'update', {
           userId: memberId,
           role,
         });
@@ -296,6 +297,7 @@ orgProjectMemberRoutes.delete(
   requireProjectAccess(),
   async c => {
     const { user: authUser } = getAuth(c);
+    const { orgId } = getOrgContext(c);
     const { projectId, projectRole } = getProjectContext(c);
     const memberId = c.req.param('userId');
     const db = createDb(c.env.DB);
@@ -353,7 +355,7 @@ orgProjectMemberRoutes.delete(
 
       // Sync member removal to DO
       try {
-        await syncMemberToDO(c.env, projectId, 'remove', {
+        await syncMemberToDO(c.env, orgId, projectId, 'remove', {
           userId: memberId,
         });
       } catch (err) {

@@ -309,16 +309,19 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
   }
 });
 
-// Project Document Durable Object routes
-// Handler function shared between both route patterns
-const handleProjectDoc = async c => {
+// Org-scoped Project Document Durable Object routes
+// DO instance is identified by orgId:projectId for org isolation
+const handleOrgProjectDoc = async c => {
+  const orgId = c.req.param('orgId');
   const projectId = c.req.param('projectId');
 
-  if (!projectId) {
-    return c.json({ error: 'Project ID required' }, 400);
+  if (!orgId || !projectId) {
+    return c.json({ error: 'Organization ID and Project ID required' }, 400);
   }
 
-  const id = c.env.PROJECT_DOC.idFromName(projectId);
+  // Compute org-scoped DO instance name
+  const projectDocName = `${orgId}:${projectId}`;
+  const id = c.env.PROJECT_DOC.idFromName(projectDocName);
   const projectDoc = c.env.PROJECT_DOC.get(id);
   const response = await projectDoc.fetch(c.req.raw);
 
@@ -330,10 +333,22 @@ const handleProjectDoc = async c => {
   return response;
 };
 
-// Route without trailing path (for WebSocket connections from y-websocket)
-app.all('/api/project/:projectId', handleProjectDoc);
-// Route with trailing path (for any sub-resource requests)
-app.all('/api/project/:projectId/*', handleProjectDoc);
+// Org-scoped routes for WebSocket connections (y-websocket appends room as final segment)
+app.all('/api/orgs/:orgId/project-doc/:projectId', handleOrgProjectDoc);
+app.all('/api/orgs/:orgId/project-doc/:projectId/*', handleOrgProjectDoc);
+
+// Legacy project WebSocket endpoint - return 410 Gone
+const legacyProjectDocHandler = c =>
+  c.json(
+    {
+      error: 'ENDPOINT_MOVED',
+      message: 'This endpoint has been moved. Use /api/orgs/:orgId/project-doc/:projectId instead.',
+      statusCode: 410,
+    },
+    410,
+  );
+app.all('/api/project/:projectId', legacyProjectDocHandler);
+app.all('/api/project/:projectId/*', legacyProjectDocHandler);
 
 // User Session Durable Object routes
 // Handler function shared between both route patterns

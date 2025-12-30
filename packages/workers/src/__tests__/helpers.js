@@ -80,17 +80,34 @@ function parseSqlStatements(sqlContent) {
 }
 
 /**
- * Clear ProjectDoc Durable Objects for test project IDs
- * This prevents DO invalidation errors between tests
+ * Get the org-scoped DO name for a project
+ * @param {string} orgId - Organization ID
+ * @param {string} projectId - Project ID
+ * @returns {string} The DO instance name in format "orgId:projectId"
  */
-export async function clearProjectDOs(projectIds = []) {
-  // Common test project IDs that might have DOs
-  const defaultProjectIds = ['project-1', 'project-2', 'p1', 'p2'];
-  const allProjectIds = [...new Set([...defaultProjectIds, ...projectIds])];
+export function getProjectDocName(orgId, projectId) {
+  return `${orgId}:${projectId}`;
+}
 
-  for (const projectId of allProjectIds) {
+/**
+ * Clear ProjectDoc Durable Objects for test org/project combinations
+ * This prevents DO invalidation errors between tests
+ * @param {Array<{orgId: string, projectId: string}>} orgProjects - Array of org/project pairs
+ */
+export async function clearProjectDOs(orgProjects = []) {
+  // Common test org/project combinations that might have DOs
+  const defaultOrgProjects = [
+    { orgId: 'org-1', projectId: 'project-1' },
+    { orgId: 'org-1', projectId: 'project-2' },
+    { orgId: 'org-1', projectId: 'p1' },
+    { orgId: 'org-1', projectId: 'p2' },
+  ];
+  const allOrgProjects = [...defaultOrgProjects, ...orgProjects];
+
+  for (const { orgId, projectId } of allOrgProjects) {
     try {
-      const doId = env.PROJECT_DOC.idFromName(projectId);
+      const doName = getProjectDocName(orgId, projectId);
+      const doId = env.PROJECT_DOC.idFromName(doName);
       const stub = env.PROJECT_DOC.get(doId);
       await runInDurableObject(stub, async (instance, state) => {
         // Clear all storage
@@ -109,7 +126,7 @@ export async function clearProjectDOs(projectIds = []) {
         error?.durableObjectReset === true;
       if (!isInvalidationError) {
         // Only log non-invalidation errors for debugging
-        console.warn(`Failed to clear ProjectDoc DO for ${projectId}:`, error.message);
+        console.warn(`Failed to clear ProjectDoc DO for ${orgId}:${projectId}:`, error.message);
       }
     }
   }

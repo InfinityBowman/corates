@@ -19,6 +19,7 @@ import { requireQuota } from '../../middleware/requireQuota.js';
 import { projectSchemas, validateRequest } from '../../config/validation.js';
 import { createDomainError, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { syncProjectToDO } from '../../lib/project-sync.js';
+import { getProjectDocStub } from '../../lib/project-doc-id.js';
 import { orgProjectMemberRoutes } from './members.js';
 import { orgPdfRoutes } from './pdfs.js';
 import { orgInvitationRoutes } from './invitations.js';
@@ -137,6 +138,7 @@ orgProjectRoutes.post(
       try {
         await syncProjectToDO(
           c.env,
+          orgId,
           projectId,
           {
             name: name.trim(),
@@ -236,6 +238,7 @@ orgProjectRoutes.put(
   requireProjectAccess('collaborator'),
   validateRequest(projectSchemas.update),
   async c => {
+    const { orgId } = getOrgContext(c);
     const { projectId } = getProjectContext(c);
     const db = createDb(c.env.DB);
     const { name, description } = c.get('validatedBody');
@@ -255,7 +258,7 @@ orgProjectRoutes.put(
       if (description !== undefined) metaUpdate.description = description;
 
       try {
-        await syncProjectToDO(c.env, projectId, metaUpdate, null);
+        await syncProjectToDO(c.env, orgId, projectId, metaUpdate, null);
       } catch (err) {
         console.error('Failed to sync project update to DO:', err);
       }
@@ -282,6 +285,7 @@ orgProjectRoutes.delete(
   requireProjectAccess('owner'),
   async c => {
     const { user: authUser } = getAuth(c);
+    const { orgId } = getOrgContext(c);
     const { projectId } = getProjectContext(c);
     const db = createDb(c.env.DB);
 
@@ -301,8 +305,7 @@ orgProjectRoutes.delete(
 
       // Disconnect all connected users from the ProjectDoc DO
       try {
-        const doId = c.env.PROJECT_DOC.idFromName(projectId);
-        const projectDoc = c.env.PROJECT_DOC.get(doId);
+        const projectDoc = getProjectDocStub(c.env, orgId, projectId);
         await projectDoc.fetch(
           new Request('https://internal/disconnect-all', {
             method: 'POST',

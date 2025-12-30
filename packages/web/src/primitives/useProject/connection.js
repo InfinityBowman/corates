@@ -19,6 +19,7 @@ export const CLOSE_REASONS = {
 
 /**
  * Creates a connection manager for WebSocket sync
+ * @param {string} orgId - The organization ID
  * @param {string} projectId - The project ID
  * @param {Y.Doc} ydoc - The Y.js document
  * @param {Object} options - Configuration options
@@ -27,7 +28,7 @@ export const CLOSE_REASONS = {
  * @param {Function} options.onAccessDenied - Called when access is denied (removed, deleted, not a member)
  * @returns {Object} Connection manager API
  */
-export function createConnectionManager(projectId, ydoc, options) {
+export function createConnectionManager(orgId, projectId, ydoc, options) {
   const { onSync, isLocalProject, onAccessDenied } = options;
 
   let provider = null;
@@ -69,9 +70,16 @@ export function createConnectionManager(projectId, ydoc, options) {
       return;
     }
 
+    // orgId is required for remote projects
+    if (!orgId) {
+      console.error('orgId is required for remote project WebSocket connection');
+      return;
+    }
+
     shouldBeConnected = true;
 
-    const wsUrl = `${getWsBaseUrl()}/api/project`;
+    // Org-scoped WebSocket URL: y-websocket appends room (projectId) as last segment
+    const wsUrl = `${getWsBaseUrl()}/api/orgs/${orgId}/project-doc`;
 
     provider = new WebsocketProvider(wsUrl, projectId, ydoc, {
       connect: false, // Don't connect until listeners are attached

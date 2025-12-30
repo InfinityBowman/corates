@@ -90,7 +90,7 @@ orgInvitationRoutes.post(
     const db = createDb(c.env.DB);
 
     try {
-      const { email, role, orgRole } = c.get('validatedBody');
+      const { email, role } = c.get('validatedBody');
 
       // Check for existing pending invitation
       const existingInvitation = await db
@@ -113,13 +113,14 @@ orgInvitationRoutes.post(
 
       if (existingInvitation && !existingInvitation.acceptedAt) {
         // Resend existing invitation - update role and extend expiration
+        // Note: orgRole is always 'member' - project owners cannot grant org roles
         invitationId = existingInvitation.id;
         token = existingInvitation.token;
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
         await db
           .update(projectInvitations)
-          .set({ role, orgRole, expiresAt })
+          .set({ role, orgRole: 'member', expiresAt })
           .where(eq(projectInvitations.id, existingInvitation.id));
       } else if (existingInvitation && existingInvitation.acceptedAt) {
         const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
@@ -128,6 +129,7 @@ orgInvitationRoutes.post(
         return c.json(error, error.statusCode);
       } else {
         // Create new invitation with orgId
+        // Note: orgRole is always 'member' - project owners cannot grant org roles
         invitationId = crypto.randomUUID();
         token = crypto.randomUUID();
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -138,7 +140,7 @@ orgInvitationRoutes.post(
           projectId,
           email: email.toLowerCase(),
           role,
-          orgRole,
+          orgRole: 'member',
           token,
           invitedBy: authUser.id,
           expiresAt,
@@ -547,7 +549,7 @@ orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), a
 
     // Sync member to DO
     try {
-      await syncMemberToDO(c.env, invitation.projectId, 'add', {
+      await syncMemberToDO(c.env, invitation.orgId, invitation.projectId, 'add', {
         userId: authUser.id,
         role: invitation.role,
         joinedAt: nowDate.getTime(),

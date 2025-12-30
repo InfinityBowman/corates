@@ -143,10 +143,11 @@ export async function cleanupProjectLocalData(projectId) {
 /**
  * Hook to connect to a project's Y.Doc and manage studies/checklists
  * Note: Y.js map key remains 'reviews' for backward compatibility with existing data
+ * @param {string} orgId - The organization ID (required for remote projects)
  * @param {string} projectId - The project ID to connect to
  * @returns {Object} Project state and operations
  */
-export function useProject(projectId) {
+export function useProject(orgId, projectId) {
   // Check if this is a local-only project
   const isLocalProject = () => projectId && projectId.startsWith('local-');
 
@@ -261,10 +262,16 @@ export function useProject(projectId) {
       return;
     }
 
+    // orgId is required for remote projects
+    if (!orgId) {
+      console.warn('useProject: orgId is required for remote projects, skipping WebSocket connection');
+      return;
+    }
+
     // Create and connect WebSocket manager
     // onSync is called when WebSocket has synced with server
     // onAccessDenied is called when connection is rejected due to access issues
-    connectionEntry.connectionManager = createConnectionManager(projectId, ydoc, {
+    connectionEntry.connectionManager = createConnectionManager(orgId, projectId, ydoc, {
       onSync: () => {
         // Mark as synced only after WebSocket has synced with server
         projectStore.setConnectionState(projectId, { synced: true });

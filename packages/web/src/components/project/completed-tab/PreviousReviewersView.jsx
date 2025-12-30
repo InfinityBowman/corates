@@ -19,8 +19,9 @@ export default function PreviousReviewersView(props) {
   // props.getAssigneeName: (userId) => string
   // props.onClose: () => void
 
-  const { projectId } = useProjectContext();
-  const { getChecklistData, getQuestionNote } = useProject(projectId);
+  const { projectId, orgId } = useProjectContext();
+  // orgId is required for remote projects' WebSocket connection
+  const { getChecklistData, getQuestionNote } = useProject(orgId(), projectId);
 
   const [checklist1Data, setChecklist1Data] = createSignal(null);
   const [checklist2Data, setChecklist2Data] = createSignal(null);

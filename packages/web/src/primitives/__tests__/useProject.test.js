@@ -92,7 +92,8 @@ describe('useProject - Local Project Mode', () => {
   it('should identify local projects correctly', () => {
     createRoot(dispose => {
       cleanup = dispose;
-      const project = useProject('local-test-project');
+      // Local projects don't need orgId
+      const project = useProject(null, 'local-test-project');
 
       expect(project.isLocalProject()).toBe(true);
     });
@@ -101,7 +102,8 @@ describe('useProject - Local Project Mode', () => {
   it('should identify remote projects correctly', () => {
     createRoot(dispose => {
       cleanup = dispose;
-      const project = useProject('remote-project-123');
+      // Remote projects need orgId
+      const project = useProject('test-org-id', 'remote-project-123');
 
       expect(project.isLocalProject()).toBe(false);
     });
@@ -126,7 +128,8 @@ describe('useProject - Study CRUD Operations', () => {
     await new Promise(resolveTest => {
       createRoot(async dispose => {
         cleanup = dispose;
-        const project = useProject('local-test');
+        // Local projects don't need orgId
+        const project = useProject(null, 'local-test');
 
         await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -143,7 +146,7 @@ describe('useProject - Study CRUD Operations', () => {
     await new Promise(resolveTest => {
       createRoot(async dispose => {
         cleanup = dispose;
-        const project = useProject('local-test');
+        const project = useProject(null, 'local-test');
 
         await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -196,7 +199,7 @@ describe('useProject - Study CRUD Operations', () => {
       createRoot(async dispose => {
         cleanup = dispose;
         try {
-          const project = useProject('local-test');
+          const project = useProject(null, 'local-test');
 
           await new Promise(resolve => setTimeout(resolve, 50));
 
@@ -228,7 +231,7 @@ describe('useProject - Study CRUD Operations', () => {
       createRoot(async dispose => {
         cleanup = dispose;
         try {
-          const project = useProject('local-test');
+          const project = useProject(null, 'local-test');
 
           await new Promise(resolve => setTimeout(resolve, 50));
 
@@ -268,7 +271,7 @@ describe('useProject - PDF Operations', () => {
     await new Promise(resolveTest => {
       createRoot(async dispose => {
         cleanup = dispose;
-        const project = useProject('local-test');
+        const project = useProject(null, 'local-test');
 
         await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -298,7 +301,7 @@ describe('useProject - PDF Operations', () => {
     await new Promise(resolveTest => {
       createRoot(async dispose => {
         cleanup = dispose;
-        const project = useProject('local-test');
+        const project = useProject(null, 'local-test');
 
         await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -349,7 +352,7 @@ describe('useProject - Checklist Operations', () => {
   it('should create AMSTAR2 checklist', async () => {
     createRoot(async dispose => {
       cleanup = dispose;
-      const project = useProject('local-test');
+      const project = useProject(null, 'local-test');
 
       await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -365,7 +368,7 @@ describe('useProject - Checklist Operations', () => {
     await new Promise(resolveTest => {
       createRoot(async dispose => {
         cleanup = dispose;
-        const project = useProject('local-test');
+        const project = useProject(null, 'local-test');
 
         await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -392,7 +395,7 @@ describe('useProject - Checklist Operations', () => {
     await new Promise(resolveTest => {
       createRoot(async dispose => {
         cleanup = dispose;
-        const project = useProject('local-test');
+        const project = useProject(null, 'local-test');
 
         await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -416,7 +419,7 @@ describe('useProject - Checklist Operations', () => {
     await new Promise(resolveTest => {
       createRoot(async dispose => {
         cleanup = dispose;
-        const project = useProject('local-test');
+        const project = useProject(null, 'local-test');
 
         await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -442,7 +445,7 @@ describe('useProject - Checklist Operations', () => {
   it('should get checklist data with answers', async () => {
     createRoot(async dispose => {
       cleanup = dispose;
-      const project = useProject('local-test');
+      const project = useProject(null, 'local-test');
 
       await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -463,7 +466,7 @@ describe('useProject - Checklist Operations', () => {
   it('should get checklist answers map for real-time updates', async () => {
     createRoot(async dispose => {
       cleanup = dispose;
-      const project = useProject('local-test');
+      const project = useProject(null, 'local-test');
 
       await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -497,7 +500,7 @@ describe('useProject - Reconciliation Operations', () => {
     await new Promise(resolveTest => {
       createRoot(async dispose => {
         cleanup = dispose;
-        const project = useProject('local-test');
+        const project = useProject(null, 'local-test');
 
         await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -525,7 +528,7 @@ describe('useProject - Reconciliation Operations', () => {
     await new Promise(resolveTest => {
       createRoot(async dispose => {
         cleanup = dispose;
-        const project = useProject('local-test');
+        const project = useProject(null, 'local-test');
 
         await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -558,7 +561,7 @@ describe('useProject - Reconciliation Operations', () => {
   it('should return null for non-existent reconciliation progress', async () => {
     createRoot(async dispose => {
       cleanup = dispose;
-      const project = useProject('local-test');
+      const project = useProject(null, 'local-test');
 
       await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -573,7 +576,7 @@ describe('useProject - Reconciliation Operations', () => {
   it('should clear reconciliation progress', async () => {
     createRoot(async dispose => {
       cleanup = dispose;
-      const project = useProject('local-test');
+      const project = useProject(null, 'local-test');
 
       await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -612,7 +615,7 @@ describe('useProject - Project Settings', () => {
     await new Promise(resolveTest => {
       createRoot(async dispose => {
         cleanup = dispose;
-        const project = useProject('local-test');
+        const project = useProject(null, 'local-test');
 
         await new Promise(resolve => setTimeout(resolve, 10));
 

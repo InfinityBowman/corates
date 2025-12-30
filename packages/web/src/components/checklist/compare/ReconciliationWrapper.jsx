@@ -32,6 +32,7 @@ export default function ReconciliationWrapper() {
   const [error, setError] = createSignal(null);
 
   // Use project hook for Y.js operations
+  // orgId() is required for remote projects' WebSocket connection
   const {
     createChecklist: createProjectChecklist,
     updateChecklistAnswer,
@@ -40,7 +41,7 @@ export default function ReconciliationWrapper() {
     getReconciliationProgress,
     getQuestionNote,
     saveReconciliationProgress,
-  } = useProject(params.projectId);
+  } = useProject(orgId(), params.projectId);
 
   // Set active project for action store
   createEffect(() => {

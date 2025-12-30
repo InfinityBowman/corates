@@ -195,7 +195,7 @@ export const projectInvitations = sqliteTable('project_invitations', {
     .references(() => projects.id, { onDelete: 'cascade' }),
   email: text('email').notNull(),
   role: text('role').default('member'), // project role
-  orgRole: text('orgRole').default('member'), // org role to assign if user isn't already a member
+  orgRole: text('orgRole').default('member'), // always 'member' - project owners cannot grant org roles
   token: text('token').notNull().unique(),
   invitedBy: text('invitedBy')
     .notNull()

@@ -335,6 +335,7 @@ export default function Sidebar(props) {
                       {project => (
                         <ProjectTreeItem
                           project={project}
+                          orgId={orgId()}
                           orgSlug={orgSlug()}
                           isExpanded={expandedProjects()[project.id]}
                           onToggle={() => toggleProject(project.id)}
@@ -581,6 +582,7 @@ export default function Sidebar(props) {
                         {project => (
                           <ProjectTreeItem
                             project={project}
+                            orgId={orgId()}
                             orgSlug={orgSlug()}
                             isExpanded={expandedProjects()[project.id]}
                             onToggle={() => toggleProject(project.id)}

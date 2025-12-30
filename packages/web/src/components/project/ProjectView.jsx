@@ -43,7 +43,8 @@ export default function ProjectView() {
   const { orgSlug, orgId } = useOrgContext();
 
   // Y.js hook - connection is also registered with projectActionsStore
-  const projectConnection = useProject(params.projectId);
+  // orgId() is required for remote projects' WebSocket connection
+  const projectConnection = useProject(orgId(), params.projectId);
   const { connect, disconnect } = projectConnection;
 
   // Read data from store (only what's needed at this level)

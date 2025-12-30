@@ -29,7 +29,8 @@ export default function ProjectTreeItem(props) {
         const isSelected = () => props.currentPath === projectPath();
 
         // Use lightweight hook to read project data from store
-        const projectData = useProjectData(projectId);
+        // orgId is required for remote projects' WebSocket connection
+        const projectData = useProjectData(props.orgId, projectId);
 
         return (
           <Collapsible

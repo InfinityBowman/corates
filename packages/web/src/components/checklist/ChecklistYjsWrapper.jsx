@@ -33,6 +33,7 @@ export default function ChecklistYjsWrapper() {
   const [selectedPdfId, setSelectedPdfId] = createSignal(null);
 
   // Use full hook for write operations
+  // orgId() is required for remote projects' WebSocket connection
   const {
     connect,
     updateChecklistAnswer,
@@ -40,7 +41,7 @@ export default function ChecklistYjsWrapper() {
     getChecklistData,
     addPdfToStudy,
     getQuestionNote,
-  } = useProject(params.projectId);
+  } = useProject(orgId(), params.projectId);
 
   // Set active project for action store
   createEffect(() => {
