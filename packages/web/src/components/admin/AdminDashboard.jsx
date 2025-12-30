@@ -15,6 +15,7 @@ import {
   FiShield,
   FiAlertCircle,
   FiDatabase,
+  FiLoader,
 } from 'solid-icons/fi';
 import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.js';
 import { useAdminStats, useAdminUsers } from '@primitives/useAdminQueries.js';
@@ -67,7 +68,7 @@ export default function AdminDashboard() {
       when={isAdminChecked()}
       fallback={
         <div class='flex min-h-100 items-center justify-center'>
-          <div class='h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600' />
+          <FiLoader class='h-8 w-8 animate-spin text-blue-600' />
         </div>
       }
     >
@@ -157,7 +158,7 @@ export default function AdminDashboard() {
               when={!usersData.loading}
               fallback={
                 <div class='flex items-center justify-center py-12'>
-                  <div class='h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600' />
+                  <FiLoader class='h-8 w-8 animate-spin text-blue-600' />
                 </div>
               }
             >

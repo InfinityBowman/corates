@@ -13,6 +13,7 @@ import {
   FiAlertCircle,
   FiCheckSquare,
   FiSquare,
+  FiLoader,
 } from 'solid-icons/fi';
 import {
   isAdmin,
@@ -202,7 +203,7 @@ export default function StorageManagement() {
       when={isAdminChecked()}
       fallback={
         <div class='flex min-h-100 items-center justify-center'>
-          <div class='h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600' />
+          <FiLoader class='h-8 w-8 animate-spin text-blue-600' />
         </div>
       }
     >
@@ -344,7 +345,7 @@ export default function StorageManagement() {
                       <tr>
                         <td colspan='7' class='px-6 py-12 text-center'>
                           <div class='flex items-center justify-center'>
-                            <div class='h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600' />
+                            <FiLoader class='h-8 w-8 animate-spin text-blue-600' />
                           </div>
                         </td>
                       </tr>
