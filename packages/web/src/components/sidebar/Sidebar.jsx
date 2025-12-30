@@ -145,12 +145,7 @@ export default function Sidebar(props) {
 
       {/* Sidebar container */}
       <div
-        class={`
-          h-full shrink-0 border-r border-gray-200 bg-white transition-all duration-200 ease-in-out
-          ${isExpanded() ? 'md:w-64' : 'md:w-12'}
-          fixed top-12 left-0 z-50 w-64 md:static md:top-0 md:z-auto
-          ${props.mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        `}
+        class={`h-full shrink-0 border-r border-gray-200 bg-white transition-all duration-200 ease-in-out ${isExpanded() ? 'md:w-64' : 'md:w-12'} fixed top-12 left-0 z-50 w-64 md:static md:top-0 md:z-auto ${props.mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} `}
         style={{ 'max-width': '100vw' }}
       >
         <div class='flex h-full flex-col'>
@@ -198,15 +193,15 @@ export default function Sidebar(props) {
 
           {/* Expanded content */}
           <Show when={isExpanded()}>
-            <div class='sidebar-scrollbar flex-1 overflow-y-auto overflow-x-hidden'>
+            <div class='sidebar-scrollbar flex-1 overflow-x-hidden overflow-y-auto'>
               {/* Dashboard/Workspace Link */}
               <div class='p-2 pt-3'>
                 <button
                   onClick={() => navigate(getWorkspacePath())}
                   class={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    isCurrentPath(getWorkspacePath()) || isCurrentPath('/dashboard')
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-100'
+                    isCurrentPath(getWorkspacePath()) || isCurrentPath('/dashboard') ?
+                      'bg-blue-100 text-blue-700'
+                    : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
                   <AiOutlineHome class='h-4 w-4 shrink-0' />
@@ -228,9 +223,9 @@ export default function Sidebar(props) {
                       <button
                         onClick={() => navigate(item.path)}
                         class={`flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors ${
-                          isCurrentPath(item.path)
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'text-gray-600 hover:bg-gray-100'
+                          isCurrentPath(item.path) ?
+                            'bg-blue-100 text-blue-700'
+                          : 'text-gray-600 hover:bg-gray-100'
                         }`}
                       >
                         <Show
@@ -238,7 +233,9 @@ export default function Sidebar(props) {
                           fallback={
                             <Show
                               when={item.type === 'study'}
-                              fallback={<HiOutlineDocumentCheck class='h-3.5 w-3.5 shrink-0 text-gray-400' />}
+                              fallback={
+                                <HiOutlineDocumentCheck class='h-3.5 w-3.5 shrink-0 text-gray-400' />
+                              }
                             >
                               <AiOutlineFolder class='h-3.5 w-3.5 shrink-0 text-gray-400' />
                             </Show>
@@ -246,9 +243,7 @@ export default function Sidebar(props) {
                         >
                           <AiOutlineCloud class='h-3.5 w-3.5 shrink-0 text-gray-400' />
                         </Show>
-                        <span class='truncate text-xs'>
-                          {getRecentItemLabel(item)}
-                        </span>
+                        <span class='truncate text-xs'>{getRecentItemLabel(item)}</span>
                       </button>
                     )}
                   </For>
@@ -351,9 +346,9 @@ export default function Sidebar(props) {
                 <button
                   onClick={() => navigate(getWorkspacePath())}
                   class={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
-                    isCurrentPath(getWorkspacePath()) || isCurrentPath('/dashboard')
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                    isCurrentPath(getWorkspacePath()) || isCurrentPath('/dashboard') ?
+                      'bg-blue-100 text-blue-700'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                   }`}
                   aria-label={orgName() || 'Workspace'}
                 >
