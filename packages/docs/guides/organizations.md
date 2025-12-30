@@ -200,12 +200,12 @@ The frontend uses `orgSlug` in URLs for readability, but the API uses `orgId` fo
 
 ### PDF Routes (Org-Scoped)
 
-| Method   | Endpoint                                                               | Description  | Required Role               |
-| -------- | ---------------------------------------------------------------------- | ------------ | --------------------------- |
-| `GET`    | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs`           | List PDFs    | Project member              |
-| `POST`   | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs`           | Upload PDF   | Project member              |
-| `GET`    | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` | Download PDF | Project member              |
-| `DELETE` | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` | Delete PDF   | Project member              |
+| Method   | Endpoint                                                               | Description  | Required Role  |
+| -------- | ---------------------------------------------------------------------- | ------------ | -------------- |
+| `GET`    | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs`           | List PDFs    | Project member |
+| `POST`   | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs`           | Upload PDF   | Project member |
+| `GET`    | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` | Download PDF | Project member |
+| `DELETE` | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` | Delete PDF   | Project member |
 
 ## Backend Middleware
 
