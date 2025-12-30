@@ -5,7 +5,14 @@
 
 import { Hono } from 'hono';
 import { createDb } from '../db/client.js';
-import { projectInvitations, projectMembers, projects, user, member } from '../db/schema.js';
+import {
+  projectInvitations,
+  projectMembers,
+  projects,
+  user,
+  member,
+  organization,
+} from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { invitationSchemas, validateRequest } from '../config/validation.js';
@@ -193,12 +200,23 @@ invitationRoutes.post(
 
       await db.batch(batchOps);
 
-      // Get project name for notification
+      // Get project name and org slug for notification/response
       const project = await db
         .select({ name: projects.name })
         .from(projects)
         .where(eq(projects.id, invitation.projectId))
         .get();
+
+      // Get org slug for navigation
+      let orgSlug = null;
+      if (invitation.orgId) {
+        const org = await db
+          .select({ slug: organization.slug })
+          .from(organization)
+          .where(eq(organization.id, invitation.orgId))
+          .get();
+        orgSlug = org?.slug;
+      }
 
       // Send notification to the added user via their UserSession DO
       try {
@@ -239,6 +257,7 @@ invitationRoutes.post(
       return c.json({
         success: true,
         orgId: invitation.orgId,
+        orgSlug,
         projectId: invitation.projectId,
         projectName: project?.name || 'Unknown Project',
         role: invitation.role,

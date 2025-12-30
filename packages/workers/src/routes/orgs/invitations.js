@@ -13,6 +13,7 @@ import {
   projects,
   user,
   member,
+  organization,
 } from '../../db/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../../middleware/auth.js';
@@ -521,12 +522,23 @@ orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), a
     // Execute atomically
     await db.batch(batchOps);
 
-    // Get project name for response
+    // Get project name and org slug for response
     const project = await db
       .select({ name: projects.name })
       .from(projects)
       .where(eq(projects.id, invitation.projectId))
       .get();
+
+    // Get org slug for navigation
+    let orgSlug = null;
+    if (invitation.orgId) {
+      const org = await db
+        .select({ slug: organization.slug })
+        .from(organization)
+        .where(eq(organization.id, invitation.orgId))
+        .get();
+      orgSlug = org?.slug;
+    }
 
     // Send notification to the added user via their UserSession DO
     try {
@@ -567,6 +579,7 @@ orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), a
     return c.json({
       success: true,
       orgId: invitation.orgId,
+      orgSlug,
       projectId: invitation.projectId,
       projectName: project?.name || 'Unknown Project',
       role: invitation.role,

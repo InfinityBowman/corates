@@ -48,9 +48,7 @@ vi.mock('@primitives/useOnlineStatus.js', () => ({
 }));
 
 vi.mock('@/stores/projectStore.js', () => ({
-  default: {
-    clearProjectList: vi.fn(),
-  },
+  default: {},
 }));
 
 vi.mock('@lib/lastLoginMethod.js', () => ({
@@ -289,19 +287,17 @@ describe('better-auth-store - Social Auth', () => {
 describe('better-auth-store - Signout', () => {
   let authStore;
   let authClient;
-  let projectStore;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
     authClient = (await import('@api/auth-client.js')).authClient;
-    projectStore = (await import('@/stores/projectStore.js')).default;
 
     const { useBetterAuth } = await import('../better-auth-store.js');
     authStore = useBetterAuth();
   });
 
-  it('should signout successfully and clear data', async () => {
+  it('should signout successfully', async () => {
     authClient.signOut.mockResolvedValue({
       error: null,
     });
@@ -309,7 +305,6 @@ describe('better-auth-store - Signout', () => {
     await authStore.signout();
 
     expect(authClient.signOut).toHaveBeenCalled();
-    expect(projectStore.clearProjectList).toHaveBeenCalled();
   });
 
   it('should handle signout errors', async () => {
@@ -526,14 +521,12 @@ describe('better-auth-store - Profile Management', () => {
 describe('better-auth-store - Account Deletion', () => {
   let authStore;
   let authClient;
-  let projectStore;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     localStorage.clear();
 
     authClient = (await import('@api/auth-client.js')).authClient;
-    projectStore = (await import('@/stores/projectStore.js')).default;
     authClient.signOut.mockResolvedValue({ error: null });
 
     global.fetch = vi.fn();
@@ -560,7 +553,6 @@ describe('better-auth-store - Account Deletion', () => {
       }),
     );
 
-    expect(projectStore.clearProjectList).toHaveBeenCalled();
     expect(localStorage.getItem('pendingEmail')).toBeNull();
     expect(authClient.signOut).toHaveBeenCalled();
     expect(result.success).toBe(true);

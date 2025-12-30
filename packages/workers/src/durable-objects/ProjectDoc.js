@@ -36,10 +36,21 @@ export class ProjectDoc {
     this.sessions = new Map();
     this.doc = null;
     this.awareness = null;
+    // Cache projectId → orgId to reduce D1 pressure on hot path
+    // Populated on first connection and persisted in DO storage
+    this.cachedOrgId = null;
   }
 
   async fetch(request) {
     const url = new URL(request.url);
+
+    // Load cached orgId from storage if not already loaded
+    if (this.cachedOrgId === null) {
+      const stored = await this.state.storage.get('cached-org-id');
+      if (stored) {
+        this.cachedOrgId = stored;
+      }
+    }
 
     // Note: CORS headers are added by the main worker (index.js) when wrapping responses
     // Do NOT add them here to avoid duplicate headers
@@ -356,25 +367,37 @@ export class ProjectDoc {
 
     const db = createDb(this.env.DB);
 
-    // Get project and its org
-    const project = await db
-      .select({ orgId: projects.orgId })
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .get();
+    // Use cached orgId if available, otherwise query and cache it
+    // This reduces D1 pressure on hot path while keeping membership checks fresh
+    let orgId = this.cachedOrgId;
 
-    if (!project) {
-      return new Response('Project not found', {
-        status: 404,
-        headers: { 'X-Close-Reason': 'project-not-found' },
-      });
+    if (!orgId) {
+      // First connection for this DO instance - query and cache orgId
+      const project = await db
+        .select({ orgId: projects.orgId })
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .get();
+
+      if (!project) {
+        return new Response('Project not found', {
+          status: 404,
+          headers: { 'X-Close-Reason': 'project-not-found' },
+        });
+      }
+
+      orgId = project.orgId;
+      this.cachedOrgId = orgId;
+
+      // Persist to DO storage so it survives DO restarts
+      await this.state.storage.put('cached-org-id', orgId);
     }
 
-    // Verify org membership (always check D1, no Yjs bypass)
+    // ALWAYS verify org membership on connect/reconnect (fresh D1 check)
     const orgMembership = await db
       .select({ id: member.id, role: member.role })
       .from(member)
-      .where(and(eq(member.organizationId, project.orgId), eq(member.userId, user.id)))
+      .where(and(eq(member.organizationId, orgId), eq(member.userId, user.id)))
       .get();
 
     if (!orgMembership) {
@@ -384,7 +407,7 @@ export class ProjectDoc {
       });
     }
 
-    // Verify project membership (always check D1, no Yjs bypass)
+    // ALWAYS verify project membership on connect/reconnect (fresh D1 check)
     const projectMembership = await db
       .select({ role: projectMembers.role })
       .from(projectMembers)

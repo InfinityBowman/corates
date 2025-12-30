@@ -1,18 +1,25 @@
-import { Show, createEffect, createSignal, onMount, onCleanup } from 'solid-js';
+import { Show, For, createEffect, createSignal, onMount, onCleanup } from 'solid-js';
 import { A, useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { FiMenu, FiWifiOff, FiChevronDown } from 'solid-icons/fi';
+import { useOrgContext } from '@primitives/useOrgContext.js';
+import { FiMenu, FiWifiOff, FiChevronDown, FiPlus } from 'solid-icons/fi';
+import { BiRegularBuildings } from 'solid-icons/bi';
 import { LANDING_URL } from '@config/api.js';
 import useOnlineStatus from '@primitives/useOnlineStatus.js';
 import { Avatar } from '@corates/ui';
 
 export default function Navbar(props) {
-  const { user, signout, authLoading } = useBetterAuth();
+  const { user, signout, authLoading, isLoggedIn } = useBetterAuth();
   const navigate = useNavigate();
   const isOnline = useOnlineStatus();
 
+  // Org context for workspace switcher
+  const { orgs, currentOrg, orgSlug, isLoading: orgsLoading } = useOrgContext();
+
   const [showUserMenu, setShowUserMenu] = createSignal(false);
+  const [showOrgMenu, setShowOrgMenu] = createSignal(false);
   let userMenuRef;
+  let orgMenuRef;
 
   // Read from localStorage on render to avoid layout shift on refresh
   const storedName = localStorage.getItem('userName');
@@ -27,11 +34,14 @@ export default function Navbar(props) {
     }
   });
 
-  // Close user menu when clicking outside
+  // Close menus when clicking outside
   onMount(() => {
     const handleClickOutside = event => {
       if (userMenuRef && !userMenuRef.contains(event.target)) {
         setShowUserMenu(false);
+      }
+      if (orgMenuRef && !orgMenuRef.contains(event.target)) {
+        setShowOrgMenu(false);
       }
     };
 
@@ -45,10 +55,15 @@ export default function Navbar(props) {
     try {
       await signout();
       // Use replace: true to avoid back button issues
-      navigate('/dashboard', { replace: true });
+      navigate('/signin', { replace: true });
     } catch (error) {
       console.error('Sign out failed:', error);
     }
+  };
+
+  const handleOrgSwitch = orgSlugValue => {
+    setShowOrgMenu(false);
+    navigate(`/orgs/${orgSlugValue}`);
   };
 
   return (
@@ -78,6 +93,69 @@ export default function Navbar(props) {
         >
           CoRATES
         </a>
+
+        {/* Workspace switcher - only show when logged in */}
+        <Show when={isLoggedIn() && !authLoading()}>
+          <div class='relative' ref={orgMenuRef}>
+            <button
+              onClick={() => setShowOrgMenu(!showOrgMenu())}
+              class='flex h-8 items-center gap-2 rounded-lg bg-white/10 px-3 text-sm font-medium transition hover:bg-white/20'
+            >
+              <BiRegularBuildings class='h-4 w-4' />
+              <span class='max-w-32 truncate'>
+                {currentOrg()?.name || 'Select workspace'}
+              </span>
+              <FiChevronDown
+                class={`h-3 w-3 transition-transform ${showOrgMenu() ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            <Show when={showOrgMenu()}>
+              <div class='absolute left-0 z-50 mt-2 w-56 rounded-md border border-gray-200 bg-white py-1 text-gray-700 shadow-lg'>
+                <div class='border-b border-gray-200 px-3 py-2'>
+                  <p class='text-xs font-medium text-gray-500 uppercase'>Workspaces</p>
+                </div>
+
+                <Show when={orgsLoading()}>
+                  <div class='px-3 py-2 text-sm text-gray-400'>Loading...</div>
+                </Show>
+
+                <Show when={!orgsLoading() && orgs().length === 0}>
+                  <div class='px-3 py-2 text-sm text-gray-500'>No workspaces</div>
+                </Show>
+
+                <For each={orgs()}>
+                  {org => (
+                    <button
+                      onClick={() => handleOrgSwitch(org.slug)}
+                      class={`flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 ${
+                        orgSlug() === org.slug ? 'bg-blue-50 text-blue-700' : ''
+                      }`}
+                    >
+                      <BiRegularBuildings class='h-4 w-4 text-gray-400' />
+                      <span class='truncate'>{org.name}</span>
+                      <Show when={orgSlug() === org.slug}>
+                        <span class='ml-auto text-xs text-blue-600'>Current</span>
+                      </Show>
+                    </button>
+                  )}
+                </For>
+
+                <div class='border-t border-gray-200 mt-1 pt-1'>
+                  <A
+                    href='/orgs/new'
+                    class='flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-gray-100'
+                    onClick={() => setShowOrgMenu(false)}
+                  >
+                    <FiPlus class='h-4 w-4' />
+                    Create workspace
+                  </A>
+                </div>
+              </div>
+            </Show>
+          </div>
+        </Show>
+
         {/* Offline indicator */}
         <Show when={!isOnline()}>
           <div class='flex items-center gap-1 rounded-full bg-amber-500/90 px-2 py-1 text-xs text-white'>
@@ -88,12 +166,6 @@ export default function Navbar(props) {
       </div>
 
       <div class='text-2xs flex items-center space-x-4 sm:text-xs'>
-        <A
-          href='/dashboard'
-          class='flex h-9 items-center rounded px-2 font-medium transition hover:bg-blue-600'
-        >
-          Dashboard
-        </A>
         <Show
           when={user() || (authLoading() && isLikelyLoggedIn)}
           fallback={

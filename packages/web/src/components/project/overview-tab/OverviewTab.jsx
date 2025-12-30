@@ -32,7 +32,7 @@ export default function OverviewTab() {
   const [tablesExpanded, setTablesExpanded] = createSignal(false);
 
   const { user } = useBetterAuth();
-  const { projectId, isOwner } = useProjectContext();
+  const { projectId, orgSlug, orgId, isOwner } = useProjectContext();
   const confirmDialog = useConfirmDialog();
   const navigate = useNavigate();
 
@@ -139,7 +139,8 @@ export default function OverviewTab() {
     try {
       const result = await projectActionsStore.member.remove(memberId);
       if (result.isSelf) {
-        navigate('/dashboard', { replace: true });
+        const slug = orgSlug();
+        navigate(slug ? `/orgs/${slug}` : '/dashboard', { replace: true });
         showToast.success('Left Project', 'You have left the project');
       } else {
         showToast.success('Member Removed', `${memberName} has been removed from the project`);
@@ -405,6 +406,7 @@ export default function OverviewTab() {
         isOpen={showAddMemberModal()}
         onClose={() => setShowAddMemberModal(false)}
         projectId={projectId}
+        orgId={orgId()}
       />
       <confirmDialog.ConfirmDialogComponent />
     </>

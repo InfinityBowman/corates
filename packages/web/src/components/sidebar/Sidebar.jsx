@@ -2,7 +2,8 @@ import { Show, For, createSignal } from 'solid-js';
 import { useNavigate, useLocation } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useLocalChecklists } from '@primitives/useLocalChecklists.js';
-import { useProjectList } from '@primitives/useProjectList.js';
+import { useOrgContext } from '@primitives/useOrgContext.js';
+import { useOrgProjectList } from '@primitives/useOrgProjectList.js';
 import { useConfirmDialog } from '@corates/ui';
 import { AiOutlineFolder } from 'solid-icons/ai';
 import { AiOutlineCloud } from 'solid-icons/ai';
@@ -20,15 +21,18 @@ export default function Sidebar(props) {
   const { user, isLoggedIn } = useBetterAuth();
   const { checklists, deleteChecklist } = useLocalChecklists();
 
+  // Get org context for org-scoped paths
+  const { orgId, orgSlug, orgName } = useOrgContext();
+
   const currentUserId = () => user()?.id;
 
   // Track expanded projects and studies
   const [expandedProjects, setExpandedProjects] = createSignal({});
   const [expandedStudies, setExpandedStudies] = createSignal({});
 
-  // Use TanStack Query for project list
-  const projectListQuery = useProjectList(currentUserId, {
-    enabled: () => isLoggedIn(),
+  // Use TanStack Query for org-scoped project list
+  const projectListQuery = useOrgProjectList(orgId, {
+    enabled: () => isLoggedIn() && !!orgId(),
   });
   const cloudProjects = () => projectListQuery.projects();
   const isProjectsLoading = () => projectListQuery.isLoading();
@@ -55,6 +59,12 @@ export default function Sidebar(props) {
 
   const isCurrentPath = path => location.pathname === path;
 
+  // Build dashboard/workspace path based on org context
+  const getWorkspacePath = () => {
+    const slug = orgSlug();
+    return slug ? `/orgs/${slug}` : '/dashboard';
+  };
+
   const handleDeleteLocalChecklist = async (e, checklistId) => {
     e.stopPropagation();
     setPendingDeleteId(checklistId);
@@ -80,27 +90,27 @@ export default function Sidebar(props) {
       >
         {/* Main Content */}
         <div class='sidebar-scrollbar flex-1 overflow-y-auto'>
-          {/* Dashboard Link */}
+          {/* Dashboard/Workspace Link */}
           <div class='p-2 pt-4'>
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate(getWorkspacePath())}
               class={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isCurrentPath('/dashboard') ?
+                isCurrentPath(getWorkspacePath()) || isCurrentPath('/dashboard') ?
                   'bg-blue-100 text-blue-700'
                 : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
               <AiOutlineHome class='h-4 w-4' />
-              Dashboard
+              {orgName() || 'Workspace'}
             </button>
           </div>
 
-          {/* Cloud Projects Section - Only show when logged in */}
-          <Show when={isLoggedIn()}>
+          {/* Cloud Projects Section - Only show when logged in and have an org */}
+          <Show when={isLoggedIn() && orgSlug()}>
             <div class='px-3 pt-4 pb-2'>
               <h3 class='flex items-center gap-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase'>
                 <AiOutlineCloud class='h-3 w-3' />
-                Cloud Projects
+                Projects
               </h3>
             </div>
             <div class='space-y-0.5 px-2'>
@@ -114,7 +124,7 @@ export default function Sidebar(props) {
                       </div>
                       <p class='text-xs font-medium text-gray-500'>No projects yet</p>
                       <button
-                        onClick={() => navigate('/dashboard')}
+                        onClick={() => navigate(getWorkspacePath())}
                         class='mt-1 text-xs text-blue-600 hover:text-blue-700'
                       >
                         Create a project
@@ -127,6 +137,7 @@ export default function Sidebar(props) {
                   {project => (
                     <ProjectTreeItem
                       project={project}
+                      orgSlug={orgSlug()}
                       isExpanded={expandedProjects()[project.id]}
                       onToggle={() => toggleProject(project.id)}
                       userId={currentUserId()}

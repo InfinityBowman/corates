@@ -9,6 +9,7 @@ import ChecklistTreeItem from './ChecklistTreeItem.jsx';
  * @param {Object} props
  * @param {Object} props.study - The study data
  * @param {string} props.projectId - The project ID
+ * @param {string} props.orgSlug - The organization slug (for org-scoped paths)
  * @param {string} props.userId - Current user ID for filtering
  * @param {string} props.currentPath - Current route path
  * @param {boolean} props.isExpanded - Whether the study is expanded (controlled)
@@ -61,6 +62,7 @@ export default function StudyTreeItem(props) {
                 checklist={checklist}
                 projectId={props.projectId}
                 studyId={props.study.id}
+                orgSlug={props.orgSlug}
                 currentPath={props.currentPath}
               />
             )}

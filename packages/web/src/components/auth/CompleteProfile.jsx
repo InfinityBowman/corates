@@ -158,13 +158,17 @@ export default function CompleteProfile() {
           const result = await response.json();
           localStorage.removeItem('pendingInvitationToken');
 
-          // Redirect to the project
+          // Redirect to the project (use org-scoped path when available)
           if (result.projectId) {
             showToast.success(
               'Invitation Accepted',
               `You've been added to "${result.projectName}"`,
             );
-            navigate(`/projects/${result.projectId}`, { replace: true });
+            const projectPath =
+              result.orgSlug ?
+                `/orgs/${result.orgSlug}/projects/${result.projectId}`
+              : `/projects/${result.projectId}`;
+            navigate(projectPath, { replace: true });
             return;
           }
         } catch (inviteErr) {

@@ -83,13 +83,17 @@ export default function AddMemberModal(props) {
   const handleAddMember = async () => {
     const user = selectedUser();
     if (!user && !isValidEmail(searchQuery())) return;
+    if (!props.orgId) {
+      setError('No organization context');
+      return;
+    }
 
     setAdding(true);
     setError(null);
 
     try {
       const response = await handleFetchError(
-        fetch(`${API_BASE}/api/projects/${props.projectId}/members`, {
+        fetch(`${API_BASE}/api/orgs/${props.orgId}/projects/${props.projectId}/members`, {
           method: 'POST',
           credentials: 'include',
           headers: {

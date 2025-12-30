@@ -6,12 +6,20 @@
  */
 
 export const queryKeys = {
+  // Organization queries
+  orgs: {
+    /** All orgs for current user */
+    list: ['orgs'],
+  },
+
   // Project queries
   projects: {
     /** All projects (for removal operations) */
     all: ['projects'],
-    /** Projects for a specific user */
+    /** Projects for a specific user (legacy, use byOrg instead) */
     list: userId => ['projects', userId],
+    /** Projects within an organization */
+    byOrg: orgId => ['projects', 'org', orgId],
   },
 
   // Subscription queries

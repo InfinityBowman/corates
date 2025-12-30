@@ -9,8 +9,16 @@ import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status.js'
  */
 export default function ChecklistTreeItem(props) {
   const navigate = useNavigate();
-  const checklistPath = () =>
-    `/projects/${props.projectId}/studies/${props.studyId}/checklists/${props.checklist.id}`;
+
+  const checklistPath = () => {
+    const slug = props.orgSlug;
+    if (slug) {
+      return `/orgs/${slug}/projects/${props.projectId}/studies/${props.studyId}/checklists/${props.checklist.id}`;
+    }
+    // Fallback for legacy routes
+    return `/projects/${props.projectId}/studies/${props.studyId}/checklists/${props.checklist.id}`;
+  };
+
   const isSelected = () => props.currentPath === checklistPath();
 
   return (
