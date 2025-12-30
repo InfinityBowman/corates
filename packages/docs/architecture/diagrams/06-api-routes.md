@@ -39,14 +39,14 @@ flowchart LR
 
 ## Middleware Stack
 
-| Middleware               | Purpose                                    |
-| ------------------------ | ------------------------------------------ |
-| `CORS`                   | Cross-origin request handling              |
-| `securityHeaders`        | Security headers (CSP, etc.)               |
-| `requireAuth`            | Session validation                         |
-| `requireOrgMembership`   | Org membership + role check                |
-| `requireProjectAccess`   | Project membership + role check            |
-| `requireTrustedOrigin`   | CSRF protection                            |
+| Middleware             | Purpose                         |
+| ---------------------- | ------------------------------- |
+| `CORS`                 | Cross-origin request handling   |
+| `securityHeaders`      | Security headers (CSP, etc.)    |
+| `requireAuth`          | Session validation              |
+| `requireOrgMembership` | Org membership + role check     |
+| `requireProjectAccess` | Project membership + role check |
+| `requireTrustedOrigin` | CSRF protection                 |
 
 ## API Endpoints
 

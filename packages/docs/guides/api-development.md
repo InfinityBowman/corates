@@ -67,8 +67,8 @@ Order matters when applying middleware:
 routes.post(
   '/',
   requireAuth,
-  requireOrgMembership(),                   // Check org membership
-  requireProjectAccess('collaborator'),     // Check project access with min role
+  requireOrgMembership(), // Check org membership
+  requireProjectAccess('collaborator'), // Check project access with min role
   requireEntitlement('project.update'),
   validateRequest(projectSchemas.update),
   async c => {
@@ -130,7 +130,12 @@ projectRoutes.delete('/:projectId', requireOrgMembership(), requireProjectAccess
 ```js
 import { Hono } from 'hono';
 import { requireAuth, getAuth } from '../middleware/auth.js';
-import { requireOrgMembership, requireProjectAccess, getOrgContext, getProjectContext } from '../middleware/requireOrg.js';
+import {
+  requireOrgMembership,
+  requireProjectAccess,
+  getOrgContext,
+  getProjectContext,
+} from '../middleware/requireOrg.js';
 import { validateRequest, projectSchemas } from '../config/validation.js';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { createDb } from '../db/client.js';
@@ -159,7 +164,7 @@ orgProjectRoutes.post(
           id: projectId,
           name,
           description,
-          orgId,  // Project belongs to org
+          orgId, // Project belongs to org
           createdBy: user.id,
         }),
         db.insert(projectMembers).values({

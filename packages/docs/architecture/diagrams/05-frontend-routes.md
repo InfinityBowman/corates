@@ -71,20 +71,20 @@ Requires authentication. Redirects to signin if not logged in.
 
 ### Organization Routes
 
-| Route            | Component       | Purpose                         |
-| ---------------- | --------------- | ------------------------------- |
-| `/orgs/new`      | CreateOrgPage   | Create new organization         |
+| Route            | Component       | Purpose                               |
+| ---------------- | --------------- | ------------------------------------- |
+| `/orgs/new`      | CreateOrgPage   | Create new organization               |
 | `/orgs/:orgSlug` | OrgProjectsPage | Organization dashboard, projects list |
 
 ### Project Routes (Org-Scoped)
 
 All project routes are scoped under organizations using `orgSlug` in the URL.
 
-| Route                                                        | Component             | Purpose                        |
-| ------------------------------------------------------------ | --------------------- | ------------------------------ |
-| `/orgs/:orgSlug/projects/:projectId`                         | ProjectView           | Project overview, studies list |
+| Route                                                                         | Component             | Purpose                        |
+| ----------------------------------------------------------------------------- | --------------------- | ------------------------------ |
+| `/orgs/:orgSlug/projects/:projectId`                                          | ProjectView           | Project overview, studies list |
 | `/orgs/:orgSlug/projects/:projectId/studies/:studyId/checklists/:checklistId` | ChecklistYjsWrapper   | Checklist assessment           |
-| `/orgs/:orgSlug/projects/:projectId/studies/:studyId/reconcile/:c1/:c2` | ReconciliationWrapper | Compare two checklists         |
+| `/orgs/:orgSlug/projects/:projectId/studies/:studyId/reconcile/:c1/:c2`       | ReconciliationWrapper | Compare two checklists         |
 
 ### Local Routes
 

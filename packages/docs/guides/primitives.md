@@ -512,20 +512,20 @@ import { useOrgContext } from '@primitives/useOrgContext.js';
 function MyOrgComponent() {
   const {
     // Data
-    orgSlug,        // () => string - slug from URL
-    currentOrg,     // () => org object or null
-    orgs,           // () => array of user's orgs
-    orgId,          // () => string - resolved org ID
-    orgName,        // () => string - org name
+    orgSlug, // () => string - slug from URL
+    currentOrg, // () => org object or null
+    orgs, // () => array of user's orgs
+    orgId, // () => string - resolved org ID
+    orgName, // () => string - org name
 
     // Guard states
-    isLoading,      // () => boolean
-    isError,        // () => boolean
-    hasNoOrgs,      // () => boolean - user has no orgs
-    orgNotFound,    // () => boolean - slug doesn't match any org
+    isLoading, // () => boolean
+    isError, // () => boolean
+    hasNoOrgs, // () => boolean - user has no orgs
+    orgNotFound, // () => boolean - slug doesn't match any org
 
     // Actions
-    refetchOrgs,    // () => void
+    refetchOrgs, // () => void
   } = useOrgContext();
 
   return (
@@ -546,21 +546,26 @@ import { useOrgProjectContext } from '@primitives/useOrgProjectContext.js';
 function ProjectComponent() {
   const {
     // From org context
-    orgSlug, orgId, orgName, currentOrg,
-    isLoadingOrg, orgNotFound, hasNoOrgs,
+    orgSlug,
+    orgId,
+    orgName,
+    currentOrg,
+    isLoadingOrg,
+    orgNotFound,
+    hasNoOrgs,
 
     // Project context
-    projectId,      // () => string from URL
-    basePath,       // () => string - /orgs/:slug/projects/:id
+    projectId, // () => string from URL
+    basePath, // () => string - /orgs/:slug/projects/:id
     projectIdMissing, // () => boolean
 
     // Combined state
-    isReady,        // () => boolean - org resolved and project ID exists
+    isReady, // () => boolean - org resolved and project ID exists
 
     // Path builders
-    getStudyPath,       // (studyId) => string
-    getChecklistPath,   // (studyId, checklistId) => string
-    getReconcilePath,   // (studyId, c1Id, c2Id) => string
+    getStudyPath, // (studyId) => string
+    getChecklistPath, // (studyId, checklistId) => string
+    getReconcilePath, // (studyId, c1Id, c2Id) => string
   } = useOrgProjectContext();
 
   return (
@@ -576,11 +581,7 @@ function ProjectComponent() {
 Build org-scoped URLs outside components:
 
 ```js
-import {
-  buildOrgProjectPath,
-  buildStudyPath,
-  buildChecklistPath,
-} from '@primitives/useOrgProjectContext.js';
+import { buildOrgProjectPath, buildStudyPath, buildChecklistPath } from '@primitives/useOrgProjectContext.js';
 
 // /orgs/my-lab/projects/proj-123
 buildOrgProjectPath('my-lab', 'proj-123');
