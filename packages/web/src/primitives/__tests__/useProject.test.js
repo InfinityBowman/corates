@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createRoot } from 'solid-js';
 import { useProject } from '../useProject/index.js';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 import * as Y from 'yjs';
 
 // Mock dependencies
@@ -374,7 +375,7 @@ describe('useProject - Checklist Operations', () => {
         projectStore.setProjectData.mockClear();
 
         project.updateChecklist(studyId, checklistId, {
-          status: 'completed',
+          status: CHECKLIST_STATUS.FINALIZED,
           assignedTo: 'user-2',
         });
 

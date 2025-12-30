@@ -52,7 +52,7 @@ export default function ReconcileStudyRow(props) {
   // Get the individual reviewer checklists awaiting reconciliation
   const awaitingReconcileChecklists = () => {
     return (study().checklists || []).filter(
-      c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.AWAITING_RECONCILE,
+      c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
     );
   };
 

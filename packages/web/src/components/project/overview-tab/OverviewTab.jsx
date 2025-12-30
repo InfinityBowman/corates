@@ -46,7 +46,9 @@ export default function OverviewTab() {
   const readyToReconcile = () =>
     studies().filter(s => {
       const checklists = s.checklists || [];
-      const completedChecklists = checklists.filter(c => c.status === CHECKLIST_STATUS.COMPLETED);
+      const completedChecklists = checklists.filter(
+        c => c.status === CHECKLIST_STATUS.FINALIZED,
+      );
       return completedChecklists.length === 2;
     }).length;
 
@@ -84,8 +86,8 @@ export default function OverviewTab() {
         const userChecklists = checklists.filter(c => c.assignedTo === userId);
         const hasCompleted = userChecklists.some(
           c =>
-            c.status === CHECKLIST_STATUS.COMPLETED ||
-            c.status === CHECKLIST_STATUS.AWAITING_RECONCILE,
+            c.status === CHECKLIST_STATUS.FINALIZED ||
+            c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
         );
 
         if (hasCompleted) {

@@ -158,8 +158,8 @@ export default function ChartSection(props) {
       if (checklists.length === 0) continue;
 
       for (const checklist of checklists) {
-        // Only include completed AMSTAR2 checklists
-        if (checklist.status !== CHECKLIST_STATUS.COMPLETED) continue;
+        // Only include finalized AMSTAR2 checklists
+        if (checklist.status !== CHECKLIST_STATUS.FINALIZED) continue;
         if (checklist.type !== 'AMSTAR2') continue;
 
         // Answers are pre-computed during sync and stored on the checklist

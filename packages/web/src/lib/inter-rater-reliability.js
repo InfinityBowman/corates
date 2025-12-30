@@ -44,9 +44,9 @@ export function calculateInterRaterReliability(studies, getChecklistData) {
   for (const study of dualReviewerStudies) {
     const checklists = study.checklists || [];
 
-    // Find 2 completed AMSTAR2 checklists (one per reviewer)
+    // Find 2 reviewer-completed AMSTAR2 checklists (one per reviewer)
     const completedChecklists = checklists.filter(
-      c => c.status === CHECKLIST_STATUS.COMPLETED && c.type === 'AMSTAR2',
+      c => c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED && c.type === 'AMSTAR2',
     );
 
     // Must have exactly 2 completed checklists
