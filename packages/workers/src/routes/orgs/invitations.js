@@ -59,7 +59,9 @@ orgInvitationRoutes.get('/', requireOrgMembership(), requireProjectAccess(), asy
         invitedBy: projectInvitations.invitedBy,
       })
       .from(projectInvitations)
-      .where(and(eq(projectInvitations.projectId, projectId), isNull(projectInvitations.acceptedAt)))
+      .where(
+        and(eq(projectInvitations.projectId, projectId), isNull(projectInvitations.acceptedAt)),
+      )
       .orderBy(desc(projectInvitations.createdAt));
 
     return c.json(invitations);
