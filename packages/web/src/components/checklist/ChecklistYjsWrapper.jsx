@@ -367,7 +367,9 @@ export default function ChecklistYjsWrapper() {
                 : 'bg-gray-100 text-gray-700'
               }`}
             >
-              {currentChecklist()?.status === CHECKLIST_STATUS.FINALIZED ? 'Completed' : 'Read-only'}
+              {currentChecklist()?.status === CHECKLIST_STATUS.FINALIZED ?
+                'Completed'
+              : 'Read-only'}
             </span>
           }
         >
@@ -386,7 +388,9 @@ export default function ChecklistYjsWrapper() {
               : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}
           >
-            {currentChecklist()?.status === CHECKLIST_STATUS.FINALIZED ? 'Completed' : 'Mark Complete'}
+            {currentChecklist()?.status === CHECKLIST_STATUS.FINALIZED ?
+              'Completed'
+            : 'Mark Complete'}
           </button>
         </Show>
       </div>
