@@ -177,13 +177,7 @@ export default function Sidebar(props) {
 
       {/* Sidebar container */}
       <div
-        class={`
-          relative h-full shrink-0 border-r border-gray-200 bg-white
-          ${isResizing() ? '' : 'transition-all duration-200 ease-in-out'}
-          ${isExpanded() ? '' : 'md:w-12'}
-          fixed top-12 left-0 z-50 w-64 md:static md:top-0 md:z-auto
-          ${props.mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        `}
+        class={`relative h-full shrink-0 border-r border-gray-200 bg-white ${isResizing() ? '' : 'transition-all duration-200 ease-in-out'} ${isExpanded() ? '' : 'md:w-12'} fixed top-12 left-0 z-50 w-64 md:static md:top-0 md:z-auto ${props.mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} `}
         style={{
           'max-width': '100vw',
           ...(isExpanded() ? { width: `${props.width}px` } : {}),
