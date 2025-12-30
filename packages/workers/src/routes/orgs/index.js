@@ -249,6 +249,7 @@ orgRoutes.post('/:orgId/members', requireOrgMembership('admin'), async c => {
         userId,
         role,
       },
+      headers: c.req.raw.headers,
     });
 
     return c.json({ success: true, ...result }, 201);

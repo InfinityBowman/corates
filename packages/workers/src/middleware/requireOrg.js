@@ -7,7 +7,7 @@ import { createDb } from '../db/client.js';
 import { member, organization, projects } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { getAuth } from './auth.js';
-import { createDomainError, AUTH_ERRORS, PROJECT_ERRORS } from '@corates/shared';
+import { createDomainError, AUTH_ERRORS, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 
 /**
  * Middleware that requires organization membership
@@ -109,15 +109,27 @@ export function requireProjectAccess(minRole) {
     const { projectMembers } = await import('../db/schema.js');
 
     // First check if project exists and get its org
-    const projectData = await db
-      .select({
-        id: projects.id,
-        name: projects.name,
-        orgId: projects.orgId,
-      })
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .get();
+    let projectData;
+    try {
+      projectData = await db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          orgId: projects.orgId,
+        })
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .get();
+    } catch (error) {
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'fetch_project_for_access_check',
+        projectId,
+        orgId,
+        userId: user.id,
+        originalError: error.message,
+      });
+      return c.json(dbError, dbError.statusCode);
+    }
 
     if (!projectData) {
       const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
@@ -135,13 +147,25 @@ export function requireProjectAccess(minRole) {
     }
 
     // Check if user has project membership
-    const projectMembership = await db
-      .select({
-        role: projectMembers.role,
-      })
-      .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, user.id)))
-      .get();
+    let projectMembership;
+    try {
+      projectMembership = await db
+        .select({
+          role: projectMembers.role,
+        })
+        .from(projectMembers)
+        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, user.id)))
+        .get();
+    } catch (error) {
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'check_project_membership',
+        projectId,
+        orgId,
+        userId: user.id,
+        originalError: error.message,
+      });
+      return c.json(dbError, dbError.statusCode);
+    }
 
     if (!projectMembership) {
       const error = createDomainError(PROJECT_ERRORS.ACCESS_DENIED, {
@@ -217,6 +241,9 @@ const PROJECT_ROLE_HIERARCHY = ['viewer', 'member', 'collaborator', 'owner'];
 function hasMinimumOrgRole(actualRole, minRole) {
   const actualIndex = ORG_ROLE_HIERARCHY.indexOf(actualRole);
   const minIndex = ORG_ROLE_HIERARCHY.indexOf(minRole);
+  if (actualIndex === -1 || minIndex === -1) {
+    return false;
+  }
   return actualIndex >= minIndex;
 }
 
@@ -226,5 +253,8 @@ function hasMinimumOrgRole(actualRole, minRole) {
 function hasMinimumProjectRole(actualRole, minRole) {
   const actualIndex = PROJECT_ROLE_HIERARCHY.indexOf(actualRole);
   const minIndex = PROJECT_ROLE_HIERARCHY.indexOf(minRole);
+  if (actualIndex === -1 || minIndex === -1) {
+    return false;
+  }
   return actualIndex >= minIndex;
 }

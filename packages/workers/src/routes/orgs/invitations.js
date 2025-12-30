@@ -87,6 +87,7 @@ orgInvitationRoutes.post(
   '/',
   requireOrgMembership(),
   requireProjectAccess('owner'),
+  validateRequest(invitationSchemas.create),
   async c => {
     const { user: authUser } = getAuth(c);
     const { orgId } = getOrgContext(c);
@@ -94,15 +95,7 @@ orgInvitationRoutes.post(
     const db = createDb(c.env.DB);
 
     try {
-      const body = await c.req.json();
-      const { email, role = 'member', orgRole = 'member' } = body;
-
-      if (!email) {
-        const error = createDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, {
-          field: 'email',
-        });
-        return c.json(error, error.statusCode);
-      }
+      const { email, role, orgRole } = c.get('validatedBody');
 
       // Check for existing pending invitation
       const existingInvitation = await db

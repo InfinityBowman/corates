@@ -18,6 +18,7 @@ import { isUnlimitedQuota } from '@corates/shared/plans';
 import ProjectCard from '@/components/project/ProjectCard.jsx';
 import CreateProjectForm from '@/components/project/CreateProjectForm.jsx';
 import ContactPrompt from '@/components/project/ContactPrompt.jsx';
+import LocalAppraisalsPanel from '@/components/checklist/LocalAppraisalsPanel.jsx';
 import projectStore from '@/stores/projectStore.js';
 
 export default function OrgProjectsPage() {
@@ -27,7 +28,14 @@ export default function OrgProjectsPage() {
   const { isOnline } = useBetterAuth();
 
   // Org context from URL
-  const { orgId, orgSlug, orgName, currentOrg, isLoading: orgLoading, orgNotFound } = useOrgContext();
+  const {
+    orgId,
+    orgSlug,
+    orgName,
+    currentOrg,
+    isLoading: orgLoading,
+    orgNotFound,
+  } = useOrgContext();
 
   // Projects for this org
   const projectListQuery = useOrgProjectList(orgId);
@@ -35,7 +43,14 @@ export default function OrgProjectsPage() {
   const projectCount = () => projects()?.length || 0;
 
   // Subscription/quota checks
-  const { hasEntitlement, hasQuota, quotas, loading: subscriptionLoading } = useSubscription();
+  const {
+    hasEntitlement,
+    hasQuota,
+    quotas,
+    loading: subscriptionLoading,
+    subscriptionFetchFailed,
+    refetch: refetchSubscription,
+  } = useSubscription();
 
   const [showCreateForm, setShowCreateForm] = createSignal(false);
 
@@ -59,7 +74,12 @@ export default function OrgProjectsPage() {
   };
 
   // Handle project creation
-  const handleProjectCreated = (newProject, pendingPdfs = [], pendingRefs = [], driveFiles = []) => {
+  const handleProjectCreated = (
+    newProject,
+    pendingPdfs = [],
+    pendingRefs = [],
+    driveFiles = [],
+  ) => {
     // Invalidate project list for this org
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.byOrg(orgId()) });
 
@@ -110,18 +130,18 @@ export default function OrgProjectsPage() {
   const isLoading = () => orgLoading() || projectListQuery.isLoading();
 
   return (
-    <div class="p-6">
-      <div class="mx-auto max-w-7xl space-y-6">
+    <div class='p-6'>
+      <div class='mx-auto max-w-7xl space-y-6'>
         {/* Org not found */}
         <Show when={orgNotFound() && !orgLoading()}>
-          <div class="rounded-lg border border-amber-200 bg-amber-50 p-6 text-center">
-            <h2 class="text-lg font-semibold text-amber-800">Organization Not Found</h2>
-            <p class="mt-2 text-amber-700">
+          <div class='rounded-lg border border-amber-200 bg-amber-50 p-6 text-center'>
+            <h2 class='text-lg font-semibold text-amber-800'>Organization Not Found</h2>
+            <p class='mt-2 text-amber-700'>
               The organization you're looking for doesn't exist or you don't have access.
             </p>
             <button
               onClick={() => navigate('/dashboard')}
-              class="mt-4 rounded-lg bg-amber-600 px-4 py-2 font-medium text-white hover:bg-amber-700"
+              class='mt-4 rounded-lg bg-amber-600 px-4 py-2 font-medium text-white hover:bg-amber-700'
             >
               Go to Dashboard
             </button>
@@ -131,12 +151,10 @@ export default function OrgProjectsPage() {
         {/* Main content */}
         <Show when={!orgNotFound()}>
           {/* Header */}
-          <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class='flex flex-wrap items-center justify-between gap-4'>
             <div>
-              <h1 class="text-2xl font-bold text-gray-900">
-                {orgName() || 'Projects'}
-              </h1>
-              <p class="mt-1 text-gray-500">
+              <h1 class='text-2xl font-bold text-gray-900'>{orgName() || 'Projects'}</h1>
+              <p class='mt-1 text-gray-500'>
                 {currentOrg()?.slug ? `@${currentOrg().slug}` : 'Manage your research projects'}
               </p>
             </div>
@@ -144,12 +162,12 @@ export default function OrgProjectsPage() {
             {/* Create button or quota prompt */}
             <Show
               when={canCreateProject() !== null}
-              fallback={<div class="h-10 w-32 animate-pulse rounded-lg bg-gray-200" />}
+              fallback={<div class='h-10 w-32 animate-pulse rounded-lg bg-gray-200' />}
             >
               <Show
                 when={canCreateProject()}
                 fallback={
-                  <div class="max-w-sm">
+                  <div class='max-w-sm'>
                     <ContactPrompt
                       restrictionType={restrictionType()}
                       projectCount={projectCount()}
@@ -159,23 +177,39 @@ export default function OrgProjectsPage() {
                 }
               >
                 <button
-                  class="inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+                  class='inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
                   onClick={() => setShowCreateForm(!showCreateForm())}
                   disabled={!isOnline()}
                   title={!isOnline() ? 'Cannot create projects while offline' : ''}
                 >
-                  <span class="text-lg">+</span>
+                  <span class='text-lg'>+</span>
                   New Project
                 </button>
               </Show>
             </Show>
           </div>
 
-          {/* Error display */}
+          {/* Subscription fetch error banner */}
+          <Show when={subscriptionFetchFailed()}>
+            <div class='flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800'>
+              <div>
+                <span class='font-medium'>Unable to verify subscription.</span>{' '}
+                <span class='text-amber-700'>Some features may be restricted.</span>
+              </div>
+              <button
+                onClick={() => refetchSubscription()}
+                class='rounded bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700'
+              >
+                Retry
+              </button>
+            </div>
+          </Show>
+
+          {/* Project list error display */}
           <Show when={projectListQuery.isError()}>
-            <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+            <div class='rounded-lg border border-red-200 bg-red-50 p-4 text-red-700'>
               {projectListQuery.error()?.message || 'An error occurred'}
-              <button onClick={() => projectListQuery.refetch()} class="ml-2 underline">
+              <button onClick={() => projectListQuery.refetch()} class='ml-2 underline'>
                 Retry
               </button>
             </div>
@@ -192,18 +226,18 @@ export default function OrgProjectsPage() {
           </Show>
 
           {/* Projects Grid */}
-          <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div class='grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
             <Show
               when={projects()?.length > 0}
               fallback={
                 <Show when={!isLoading()}>
-                  <div class="col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12">
-                    <div class="text-center text-gray-500">No projects yet</div>
+                  <div class='col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12'>
+                    <div class='text-center text-gray-500'>No projects yet</div>
                     <Show when={canCreateProject()}>
-                      <div class="flex justify-center">
+                      <div class='flex justify-center'>
                         <button
                           onClick={() => setShowCreateForm(true)}
-                          class="mt-4 font-medium text-blue-600 hover:text-blue-700"
+                          class='mt-4 font-medium text-blue-600 hover:text-blue-700'
                         >
                           Create your first project
                         </button>
@@ -215,17 +249,26 @@ export default function OrgProjectsPage() {
             >
               <For each={projects()}>
                 {project => (
-                  <ProjectCard project={project} onOpen={openProject} onDelete={handleDeleteProject} />
+                  <ProjectCard
+                    project={project}
+                    onOpen={openProject}
+                    onDelete={handleDeleteProject}
+                  />
                 )}
               </For>
             </Show>
 
             {/* Loading state */}
             <Show when={isLoading()}>
-              <div class="col-span-full py-12 text-center">
-                <div class="text-gray-400">Loading projects...</div>
+              <div class='col-span-full py-12 text-center'>
+                <div class='text-gray-400'>Loading projects...</div>
               </div>
             </Show>
+          </div>
+
+          {/* Local Appraisals Section */}
+          <div class='mt-10 border-t border-gray-200 pt-8'>
+            <LocalAppraisalsPanel compact={true} showHeader={true} showSignInPrompt={false} />
           </div>
         </Show>
 
