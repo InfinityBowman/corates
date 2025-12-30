@@ -30,15 +30,16 @@ export default function PrivacyPolicy() {
 
             <div class='space-y-6 leading-relaxed text-gray-700'>
               <p>
-                At CoRATES ("CoRATES"), we take your privacy seriously. Please read this Privacy
-                Policy to learn how we treat your personal data. By using or accessing our Services
-                in any manner, you acknowledge that you accept the practices and policies outlined
-                below, and you hereby consent that we will collect, use and share your information
-                as described in this Privacy Policy.
+                At Syntch LLC, doing business as CoRATES ("Syntch LLC" or "we"), we take your
+                privacy seriously. Please read this Privacy Policy to learn how we treat your
+                personal data. By using or accessing our Services in any manner, you acknowledge
+                that you accept the practices and policies outlined below, and you hereby consent
+                that we will collect, use and share your information as described in this Privacy
+                Policy.
               </p>
 
               <p>
-                Remember that your use of CoRATES's Services is at all times subject to our{' '}
+                Remember that your use of the Services is at all times subject to our{' '}
                 <a href='/terms' class='text-blue-600 hover:text-blue-700'>
                   Terms of Service
                 </a>
@@ -308,7 +309,7 @@ export default function PrivacyPolicy() {
                       or other legal process
                     </li>
                     <li>
-                      Protecting the rights, property or safety of you, CoRATES or another party
+                      Protecting the rights, property or safety of you, Syntch LLC or another party
                     </li>
                     <li>Enforcing any agreements with you</li>
                     <li>Resolving disputes</li>
@@ -385,8 +386,8 @@ export default function PrivacyPolicy() {
 
               <p>
                 If you choose to sign in with Google or connect your Google account to use Google
-                Drive features, CoRATES will process certain information from your Google account to
-                provide the Services.
+                Drive features, Syntch LLC will process certain information from your Google account
+                to provide the Services.
               </p>
 
               <ul class='ml-6 list-outside list-disc space-y-2 text-gray-600'>
@@ -421,8 +422,8 @@ export default function PrivacyPolicy() {
               </ul>
 
               <p>
-                CoRATES's use of information received from Google APIs will comply with the Google
-                API Services User Data Policy, including the Limited Use requirements. In
+                Syntch LLC's use of information received from Google APIs will comply with the
+                Google API Services User Data Policy, including the Limited Use requirements. In
                 particular, we use Google Drive data only to provide the user-requested
                 functionality (such as importing a selected PDF into your project) and do not use
                 Google Drive data for advertising.
@@ -577,7 +578,7 @@ export default function PrivacyPolicy() {
                 defined in the GDPR, but "Personal Data" generally means information that can be
                 used to individually identify a person, and "processing" generally covers actions
                 that can be performed in connection with data such as collection, use, storage and
-                disclosure. CoRATES will be the controller of your Personal Data processed in
+                disclosure. Syntch LLC will be the controller of your Personal Data processed in
                 connection with the Services.
               </p>
 
@@ -626,21 +627,21 @@ export default function PrivacyPolicy() {
                 </li>
                 <li>
                   <strong>Right to File Complaint:</strong> You have the right to lodge a complaint
-                  about CoRATES's practices with respect to your Personal Data with the supervisory
-                  authority of your country or EU Member State.
+                  about Syntch LLC's practices with respect to your Personal Data with the
+                  supervisory authority of your country or EU Member State.
                 </li>
               </ul>
 
               <h3 class='pt-4 text-lg font-medium text-gray-900'>Transfers of Personal Data</h3>
 
               <p>
-                The Services are hosted and operated in the United States ("U.S.") through CoRATES
-                and its service providers, and if you do not reside in the U.S., laws in the U.S.
-                may differ from the laws where you reside. By using the Services, you acknowledge
-                that any Personal Data about you, regardless of whether provided by you or obtained
-                from a third party, is being provided to CoRATES in the U.S. and will be hosted on
-                U.S. servers, and you authorize CoRATES to transfer, store and process your
-                information to and in the U.S., and possibly other countries.
+                The Services are hosted and operated in the United States ("U.S.") through Syntch
+                LLC and its service providers, and if you do not reside in the U.S., laws in the
+                U.S. may differ from the laws where you reside. By using the Services, you
+                acknowledge that any Personal Data about you, regardless of whether provided by you
+                or obtained from a third party, is being provided to Syntch LLC in the U.S. and will
+                be hosted on U.S. servers, and you authorize Syntch LLC to transfer, store and
+                process your information to and in the U.S., and possibly other countries.
               </p>
 
               {/* Changes to this Privacy Policy */}

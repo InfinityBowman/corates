@@ -114,7 +114,7 @@ export default function Footer() {
         </div>
 
         <div class='flex flex-col items-center justify-between gap-4 border-t border-gray-200 pt-8 sm:flex-row'>
-          <p class='text-sm text-gray-400'>{year} CoRATES. All rights reserved.</p>
+          <p class='text-sm text-gray-400'>{year} Syntch LLC. All rights reserved.</p>
           <div class='flex gap-4'>
             <a
               href={urls.signIn()}
