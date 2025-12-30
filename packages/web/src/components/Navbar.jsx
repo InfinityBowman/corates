@@ -102,9 +102,7 @@ export default function Navbar(props) {
               class='flex h-8 items-center gap-2 rounded-lg bg-white/10 px-3 text-sm font-medium transition hover:bg-white/20'
             >
               <BiRegularBuildings class='h-4 w-4' />
-              <span class='max-w-32 truncate'>
-                {currentOrg()?.name || 'Select workspace'}
-              </span>
+              <span class='max-w-32 truncate'>{currentOrg()?.name || 'Select workspace'}</span>
               <FiChevronDown
                 class={`h-3 w-3 transition-transform ${showOrgMenu() ? 'rotate-180' : ''}`}
               />
@@ -141,7 +139,7 @@ export default function Navbar(props) {
                   )}
                 </For>
 
-                <div class='border-t border-gray-200 mt-1 pt-1'>
+                <div class='mt-1 border-t border-gray-200 pt-1'>
                   <A
                     href='/orgs/new'
                     class='flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-gray-100'

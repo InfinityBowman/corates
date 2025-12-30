@@ -185,7 +185,11 @@ export function requireProjectAccess(minRole) {
     if (minRole && !hasMinimumProjectRole(projectAccess.projectRole, minRole)) {
       const error = createDomainError(
         AUTH_ERRORS.FORBIDDEN,
-        { reason: 'insufficient_project_role', required: minRole, actual: projectAccess.projectRole },
+        {
+          reason: 'insufficient_project_role',
+          required: minRole,
+          actual: projectAccess.projectRole,
+        },
         `This action requires ${minRole} role or higher`,
       );
       return c.json(error, error.statusCode);

@@ -90,69 +90,67 @@ export default function CreateOrgPage() {
   };
 
   return (
-    <div class="flex min-h-[70vh] items-center justify-center p-6">
-      <div class="w-full max-w-md">
-        <div class="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
-          <div class="mb-6 text-center">
-            <h1 class="text-2xl font-bold text-gray-900">Create Your Workspace</h1>
-            <p class="mt-2 text-gray-500">
+    <div class='flex min-h-[70vh] items-center justify-center p-6'>
+      <div class='w-full max-w-md'>
+        <div class='rounded-lg border border-gray-200 bg-white p-8 shadow-sm'>
+          <div class='mb-6 text-center'>
+            <h1 class='text-2xl font-bold text-gray-900'>Create Your Workspace</h1>
+            <p class='mt-2 text-gray-500'>
               Organizations help you collaborate with your team on research projects.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} class="space-y-4">
+          <form onSubmit={handleSubmit} class='space-y-4'>
             {/* Error message */}
             <Show when={error()}>
-              <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <div class='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
                 {error()}
               </div>
             </Show>
 
             {/* Organization name */}
             <div>
-              <label for="org-name" class="block text-sm font-medium text-gray-700">
+              <label for='org-name' class='block text-sm font-medium text-gray-700'>
                 Organization Name
               </label>
               <input
-                id="org-name"
-                type="text"
+                id='org-name'
+                type='text'
                 value={name()}
                 onInput={handleNameChange}
-                placeholder="My Research Lab"
-                class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                placeholder='My Research Lab'
+                class='mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                 disabled={isSubmitting()}
               />
             </div>
 
             {/* Organization slug */}
             <div>
-              <label for="org-slug" class="block text-sm font-medium text-gray-700">
+              <label for='org-slug' class='block text-sm font-medium text-gray-700'>
                 URL Slug
               </label>
-              <div class="mt-1 flex rounded-lg border border-gray-300 shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
-                <span class="inline-flex items-center rounded-l-lg border-r border-gray-300 bg-gray-50 px-3 text-sm text-gray-500">
+              <div class='mt-1 flex rounded-lg border border-gray-300 shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500'>
+                <span class='inline-flex items-center rounded-l-lg border-r border-gray-300 bg-gray-50 px-3 text-sm text-gray-500'>
                   /orgs/
                 </span>
                 <input
-                  id="org-slug"
-                  type="text"
+                  id='org-slug'
+                  type='text'
                   value={slug()}
                   onInput={e => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                  placeholder="my-research-lab"
-                  class="block w-full rounded-r-lg border-0 px-3 py-2 focus:outline-none"
+                  placeholder='my-research-lab'
+                  class='block w-full rounded-r-lg border-0 px-3 py-2 focus:outline-none'
                   disabled={isSubmitting()}
                 />
               </div>
-              <p class="mt-1 text-xs text-gray-500">
-                Lowercase letters, numbers, and hyphens only
-              </p>
+              <p class='mt-1 text-xs text-gray-500'>Lowercase letters, numbers, and hyphens only</p>
             </div>
 
             {/* Submit button */}
             <button
-              type="submit"
+              type='submit'
               disabled={isSubmitting() || !name().trim() || !slug().trim()}
-              class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              class='w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
             >
               {isSubmitting() ? 'Creating...' : 'Create Organization'}
             </button>

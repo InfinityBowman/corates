@@ -376,7 +376,10 @@ export default function ChecklistYjsWrapper() {
   const headerContent = (
     <>
       <confirmDialog.ConfirmDialogComponent />
-      <button onClick={() => navigate(getBackPath())} class='text-gray-400 transition-colors hover:text-gray-700'>
+      <button
+        onClick={() => navigate(getBackPath())}
+        class='text-gray-400 transition-colors hover:text-gray-700'
+      >
         <IoChevronBack size={20} />
       </button>
       <div class='truncate text-sm text-gray-600'>
