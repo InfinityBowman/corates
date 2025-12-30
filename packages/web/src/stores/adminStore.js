@@ -237,8 +237,9 @@ async function grantAccess(userId, options = {}) {
   );
   const result = await response.json();
 
-  // Invalidate subscription cache so frontend immediately reflects the change
-  queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current });
+  // Invalidate user-specific caches so frontend immediately reflects the change
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.userDetails(userId) });
+  queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
 
   return result;
 }
@@ -256,8 +257,9 @@ async function revokeAccess(userId) {
   );
   const result = await response.json();
 
-  // Invalidate subscription cache so frontend immediately reflects the change
-  queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current });
+  // Invalidate user-specific caches so frontend immediately reflects the change
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.userDetails(userId) });
+  queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
 
   return result;
 }

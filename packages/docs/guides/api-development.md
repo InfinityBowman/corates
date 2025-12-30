@@ -83,7 +83,7 @@ All project routes are now scoped under organizations. See the [Organizations Gu
 
 ### Route Structure
 
-```
+```text
 /api/orgs/:orgId/projects/:projectId/...
 ```
 
