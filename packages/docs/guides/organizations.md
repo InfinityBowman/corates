@@ -35,15 +35,15 @@ Organization
 
 ### Storage Split
 
-| Entity | Storage | Purpose |
-|--------|---------|---------|
-| Organizations | D1 (SQLite) | Org metadata, Better Auth plugin |
-| Org Members | D1 (SQLite) | Org membership, roles |
-| Projects (metadata) | D1 (SQLite) | Project info, access control |
-| Project Members | D1 (SQLite) | Project-level access control |
-| Project Invitations | D1 (SQLite) | Pending invitations with tokens |
-| Studies, Checklists, Answers | Durable Objects (Yjs) | Real-time collaborative content |
-| PDFs | R2 | Large binary files |
+| Entity                       | Storage               | Purpose                          |
+| ---------------------------- | --------------------- | -------------------------------- |
+| Organizations                | D1 (SQLite)           | Org metadata, Better Auth plugin |
+| Org Members                  | D1 (SQLite)           | Org membership, roles            |
+| Projects (metadata)          | D1 (SQLite)           | Project info, access control     |
+| Project Members              | D1 (SQLite)           | Project-level access control     |
+| Project Invitations          | D1 (SQLite)           | Pending invitations with tokens  |
+| Studies, Checklists, Answers | Durable Objects (Yjs) | Real-time collaborative content  |
+| PDFs                         | R2                    | Large binary files               |
 
 ### Database Schema
 
@@ -65,8 +65,12 @@ export const organization = sqliteTable('organization', {
 ```js
 export const member = sqliteTable('member', {
   id: text('id').primaryKey(),
-  userId: text('userId').notNull().references(() => user.id),
-  organizationId: text('organizationId').notNull().references(() => organization.id),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id),
+  organizationId: text('organizationId')
+    .notNull()
+    .references(() => organization.id),
   role: text('role').notNull().default('member'), // owner, admin, member
   createdAt: integer('createdAt', { mode: 'timestamp' }),
 });
@@ -79,8 +83,12 @@ export const projects = sqliteTable('projects', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
-  orgId: text('orgId').notNull().references(() => organization.id, { onDelete: 'cascade' }),
-  createdBy: text('createdBy').notNull().references(() => user.id),
+  orgId: text('orgId')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  createdBy: text('createdBy')
+    .notNull()
+    .references(() => user.id),
   createdAt: integer('createdAt', { mode: 'timestamp' }),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }),
 });
@@ -91,13 +99,19 @@ export const projects = sqliteTable('projects', {
 ```js
 export const projectInvitations = sqliteTable('project_invitations', {
   id: text('id').primaryKey(),
-  orgId: text('orgId').notNull().references(() => organization.id),
-  projectId: text('projectId').notNull().references(() => projects.id),
+  orgId: text('orgId')
+    .notNull()
+    .references(() => organization.id),
+  projectId: text('projectId')
+    .notNull()
+    .references(() => projects.id),
   email: text('email').notNull(),
-  role: text('role').default('member'),        // project role to assign
-  orgRole: text('orgRole').default('member'),  // org role if user isn't already a member
+  role: text('role').default('member'), // project role to assign
+  orgRole: text('orgRole').default('member'), // org role if user isn't already a member
   token: text('token').notNull().unique(),
-  invitedBy: text('invitedBy').notNull().references(() => user.id),
+  invitedBy: text('invitedBy')
+    .notNull()
+    .references(() => user.id),
   expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
   acceptedAt: integer('acceptedAt', { mode: 'timestamp' }),
   createdAt: integer('createdAt', { mode: 'timestamp' }),
@@ -108,22 +122,22 @@ export const projectInvitations = sqliteTable('project_invitations', {
 
 ### Organization Roles
 
-| Role | Permissions |
-|------|-------------|
-| `owner` | Full control: delete org, manage all members, change any role |
-| `admin` | Manage members (except owners), update org settings |
-| `member` | View org, access assigned projects, create projects |
+| Role     | Permissions                                                   |
+| -------- | ------------------------------------------------------------- |
+| `owner`  | Full control: delete org, manage all members, change any role |
+| `admin`  | Manage members (except owners), update org settings           |
+| `member` | View org, access assigned projects, create projects           |
 
 **Hierarchy:** `owner > admin > member`
 
 ### Project Roles
 
-| Role | Permissions |
-|------|-------------|
-| `owner` | Full control: delete project, manage all members |
+| Role           | Permissions                                      |
+| -------------- | ------------------------------------------------ |
+| `owner`        | Full control: delete project, manage all members |
 | `collaborator` | Edit project settings, manage studies/checklists |
-| `member` | Create/edit checklists, upload PDFs |
-| `viewer` | Read-only access to project content |
+| `member`       | Create/edit checklists, upload PDFs              |
+| `viewer`       | Read-only access to project content              |
 
 **Hierarchy:** `owner > collaborator > member > viewer`
 
@@ -141,59 +155,59 @@ The frontend uses `orgSlug` in URLs for readability, but the API uses `orgId` fo
 
 ### Organization Routes
 
-| Method | Endpoint | Description | Required Role |
-|--------|----------|-------------|---------------|
-| `GET` | `/api/orgs` | List user's organizations | Auth |
-| `POST` | `/api/orgs` | Create organization | Auth |
-| `GET` | `/api/orgs/:orgId` | Get org details | Org member |
-| `PUT` | `/api/orgs/:orgId` | Update org | Org admin |
-| `DELETE` | `/api/orgs/:orgId` | Delete org | Org owner |
-| `POST` | `/api/orgs/:orgId/set-active` | Set active org | Org member |
+| Method   | Endpoint                      | Description               | Required Role |
+| -------- | ----------------------------- | ------------------------- | ------------- |
+| `GET`    | `/api/orgs`                   | List user's organizations | Auth          |
+| `POST`   | `/api/orgs`                   | Create organization       | Auth          |
+| `GET`    | `/api/orgs/:orgId`            | Get org details           | Org member    |
+| `PUT`    | `/api/orgs/:orgId`            | Update org                | Org admin     |
+| `DELETE` | `/api/orgs/:orgId`            | Delete org                | Org owner     |
+| `POST`   | `/api/orgs/:orgId/set-active` | Set active org            | Org member    |
 
 ### Organization Member Routes
 
-| Method | Endpoint | Description | Required Role |
-|--------|----------|-------------|---------------|
-| `GET` | `/api/orgs/:orgId/members` | List org members | Org member |
-| `POST` | `/api/orgs/:orgId/members` | Add member | Org admin |
-| `PUT` | `/api/orgs/:orgId/members/:memberId` | Update role | Org admin |
-| `DELETE` | `/api/orgs/:orgId/members/:memberId` | Remove member | Org admin (or self) |
+| Method   | Endpoint                             | Description      | Required Role       |
+| -------- | ------------------------------------ | ---------------- | ------------------- |
+| `GET`    | `/api/orgs/:orgId/members`           | List org members | Org member          |
+| `POST`   | `/api/orgs/:orgId/members`           | Add member       | Org admin           |
+| `PUT`    | `/api/orgs/:orgId/members/:memberId` | Update role      | Org admin           |
+| `DELETE` | `/api/orgs/:orgId/members/:memberId` | Remove member    | Org admin (or self) |
 
 ### Project Routes (Org-Scoped)
 
-| Method | Endpoint | Description | Required Role |
-|--------|----------|-------------|---------------|
-| `GET` | `/api/orgs/:orgId/projects` | List projects | Org member |
-| `POST` | `/api/orgs/:orgId/projects` | Create project | Org member + entitlement |
-| `GET` | `/api/orgs/:orgId/projects/:projectId` | Get project | Project member |
-| `PUT` | `/api/orgs/:orgId/projects/:projectId` | Update project | Project collaborator |
-| `DELETE` | `/api/orgs/:orgId/projects/:projectId` | Delete project | Project owner |
+| Method   | Endpoint                               | Description    | Required Role            |
+| -------- | -------------------------------------- | -------------- | ------------------------ |
+| `GET`    | `/api/orgs/:orgId/projects`            | List projects  | Org member               |
+| `POST`   | `/api/orgs/:orgId/projects`            | Create project | Org member + entitlement |
+| `GET`    | `/api/orgs/:orgId/projects/:projectId` | Get project    | Project member           |
+| `PUT`    | `/api/orgs/:orgId/projects/:projectId` | Update project | Project collaborator     |
+| `DELETE` | `/api/orgs/:orgId/projects/:projectId` | Delete project | Project owner            |
 
 ### Project Member Routes
 
-| Method | Endpoint | Description | Required Role |
-|--------|----------|-------------|---------------|
-| `GET` | `/api/orgs/:orgId/projects/:projectId/members` | List members | Project member |
-| `POST` | `/api/orgs/:orgId/projects/:projectId/members` | Add member | Project owner |
-| `PATCH` | `/api/orgs/:orgId/projects/:projectId/members/:userId` | Update role | Project owner |
-| `DELETE` | `/api/orgs/:orgId/projects/:projectId/members/:userId` | Remove member | Project owner |
+| Method   | Endpoint                                               | Description   | Required Role  |
+| -------- | ------------------------------------------------------ | ------------- | -------------- |
+| `GET`    | `/api/orgs/:orgId/projects/:projectId/members`         | List members  | Project member |
+| `POST`   | `/api/orgs/:orgId/projects/:projectId/members`         | Add member    | Project owner  |
+| `PATCH`  | `/api/orgs/:orgId/projects/:projectId/members/:userId` | Update role   | Project owner  |
+| `DELETE` | `/api/orgs/:orgId/projects/:projectId/members/:userId` | Remove member | Project owner  |
 
 ### Project Invitation Routes
 
-| Method | Endpoint | Description | Required Role |
-|--------|----------|-------------|---------------|
-| `GET` | `/api/orgs/:orgId/projects/:projectId/invitations` | List invitations | Project member |
-| `POST` | `/api/orgs/:orgId/projects/:projectId/invitations` | Create invitation | Project owner |
-| `DELETE` | `/api/orgs/:orgId/projects/:projectId/invitations/:id` | Cancel invitation | Project owner |
+| Method   | Endpoint                                               | Description       | Required Role  |
+| -------- | ------------------------------------------------------ | ----------------- | -------------- |
+| `GET`    | `/api/orgs/:orgId/projects/:projectId/invitations`     | List invitations  | Project member |
+| `POST`   | `/api/orgs/:orgId/projects/:projectId/invitations`     | Create invitation | Project owner  |
+| `DELETE` | `/api/orgs/:orgId/projects/:projectId/invitations/:id` | Cancel invitation | Project owner  |
 
 ### PDF Routes (Org-Scoped)
 
-| Method | Endpoint | Description | Required Role |
-|--------|----------|-------------|---------------|
-| `GET` | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs` | List PDFs | Project member |
-| `POST` | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs` | Upload PDF | Project member (not viewer) |
-| `GET` | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` | Download PDF | Project member |
-| `DELETE` | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` | Delete PDF | Project collaborator |
+| Method   | Endpoint                                                               | Description  | Required Role               |
+| -------- | ---------------------------------------------------------------------- | ------------ | --------------------------- |
+| `GET`    | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs`           | List PDFs    | Project member              |
+| `POST`   | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs`           | Upload PDF   | Project member (not viewer) |
+| `GET`    | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` | Download PDF | Project member              |
+| `DELETE` | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` | Delete PDF   | Project collaborator        |
 
 ## Backend Middleware
 
@@ -240,12 +254,14 @@ projectRoutes.put('/:projectId', requireOrgMembership(), requireProjectAccess('c
 ```js
 routes.post(
   '/',
-  requireAuth,                              // 1. Verify logged in
-  requireOrgMembership('admin'),            // 2. Check org membership + role
-  requireProjectAccess('owner'),            // 3. Check project access + role
-  requireEntitlement('project.update'),     // 4. Check subscription entitlement
-  validateRequest(projectSchemas.update),   // 5. Validate request body
-  async c => { /* handler */ }
+  requireAuth, // 1. Verify logged in
+  requireOrgMembership('admin'), // 2. Check org membership + role
+  requireProjectAccess('owner'), // 3. Check project access + role
+  requireEntitlement('project.update'), // 4. Check subscription entitlement
+  validateRequest(projectSchemas.update), // 5. Validate request body
+  async c => {
+    /* handler */
+  },
 );
 ```
 
@@ -259,13 +275,13 @@ Frontend routes use `orgSlug` for human-readable URLs:
 /orgs/:orgSlug/...
 ```
 
-| Route | Component | Purpose |
-|-------|-----------|---------|
-| `/orgs/new` | CreateOrgPage | Create new organization |
-| `/orgs/:orgSlug` | OrgProjectsPage | Organization dashboard, project list |
-| `/orgs/:orgSlug/projects/:projectId` | ProjectView | Project overview |
-| `/orgs/:orgSlug/projects/:projectId/studies/:studyId/checklists/:checklistId` | ChecklistYjsWrapper | Checklist editor |
-| `/orgs/:orgSlug/projects/:projectId/studies/:studyId/reconcile/:c1/:c2` | ReconciliationWrapper | Compare checklists |
+| Route                                                                         | Component             | Purpose                              |
+| ----------------------------------------------------------------------------- | --------------------- | ------------------------------------ |
+| `/orgs/new`                                                                   | CreateOrgPage         | Create new organization              |
+| `/orgs/:orgSlug`                                                              | OrgProjectsPage       | Organization dashboard, project list |
+| `/orgs/:orgSlug/projects/:projectId`                                          | ProjectView           | Project overview                     |
+| `/orgs/:orgSlug/projects/:projectId/studies/:studyId/checklists/:checklistId` | ChecklistYjsWrapper   | Checklist editor                     |
+| `/orgs/:orgSlug/projects/:projectId/studies/:studyId/reconcile/:c1/:c2`       | ReconciliationWrapper | Compare checklists                   |
 
 ### useOrgContext Primitive
 
@@ -277,20 +293,20 @@ import { useOrgContext } from '@primitives/useOrgContext.js';
 function MyComponent() {
   const {
     // Data
-    orgSlug,        // () => string - slug from URL
-    currentOrg,     // () => org object or null
-    orgs,           // () => array of user's orgs
-    orgId,          // () => string - resolved org ID
-    orgName,        // () => string - org name
+    orgSlug, // () => string - slug from URL
+    currentOrg, // () => org object or null
+    orgs, // () => array of user's orgs
+    orgId, // () => string - resolved org ID
+    orgName, // () => string - org name
 
     // Guard states
-    isLoading,      // () => boolean
-    isError,        // () => boolean
-    hasNoOrgs,      // () => boolean - user has no orgs
-    orgNotFound,    // () => boolean - slug doesn't match any org
+    isLoading, // () => boolean
+    isError, // () => boolean
+    hasNoOrgs, // () => boolean - user has no orgs
+    orgNotFound, // () => boolean - slug doesn't match any org
 
     // Actions
-    refetchOrgs,    // () => void
+    refetchOrgs, // () => void
   } = useOrgContext();
 
   return (
@@ -311,21 +327,26 @@ import { useOrgProjectContext } from '@primitives/useOrgProjectContext.js';
 function ProjectComponent() {
   const {
     // From org context
-    orgSlug, orgId, orgName, currentOrg,
-    isLoadingOrg, orgNotFound, hasNoOrgs,
+    orgSlug,
+    orgId,
+    orgName,
+    currentOrg,
+    isLoadingOrg,
+    orgNotFound,
+    hasNoOrgs,
 
     // Project context
-    projectId,      // () => string from URL
-    basePath,       // () => string - /orgs/:slug/projects/:id
+    projectId, // () => string from URL
+    basePath, // () => string - /orgs/:slug/projects/:id
     projectIdMissing, // () => boolean
 
     // Combined state
-    isReady,        // () => boolean - org resolved and project ID exists
+    isReady, // () => boolean - org resolved and project ID exists
 
     // Path builders
-    getStudyPath,       // (studyId) => string
-    getChecklistPath,   // (studyId, checklistId) => string
-    getReconcilePath,   // (studyId, c1Id, c2Id) => string
+    getStudyPath, // (studyId) => string
+    getChecklistPath, // (studyId, checklistId) => string
+    getReconcilePath, // (studyId, c1Id, c2Id) => string
   } = useOrgProjectContext();
 
   return (

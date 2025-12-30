@@ -56,8 +56,12 @@ export const organization = sqliteTable('organization', {
 ```js
 export const member = sqliteTable('member', {
   id: text('id').primaryKey(),
-  userId: text('userId').notNull().references(() => user.id, { onDelete: 'cascade' }),
-  organizationId: text('organizationId').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  organizationId: text('organizationId')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
   role: text('role').notNull().default('member'), // owner, admin, member
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
@@ -71,8 +75,12 @@ export const member = sqliteTable('member', {
 export const invitation = sqliteTable('invitation', {
   id: text('id').primaryKey(),
   email: text('email').notNull(),
-  inviterId: text('inviterId').notNull().references(() => user.id, { onDelete: 'cascade' }),
-  organizationId: text('organizationId').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  inviterId: text('inviterId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  organizationId: text('organizationId')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
   role: text('role').notNull().default('member'),
   status: text('status').notNull().default('pending'), // pending, accepted, rejected, canceled
   expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
@@ -89,8 +97,12 @@ export const projects = sqliteTable('projects', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
-  orgId: text('orgId').notNull().references(() => organization.id, { onDelete: 'cascade' }),
-  createdBy: text('createdBy').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  orgId: text('orgId')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  createdBy: text('createdBy')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
@@ -101,8 +113,12 @@ export const projects = sqliteTable('projects', {
 ```js
 export const projectMembers = sqliteTable('project_members', {
   id: text('id').primaryKey(),
-  projectId: text('projectId').notNull().references(() => projects.id, { onDelete: 'cascade' }),
-  userId: text('userId').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  projectId: text('projectId')
+    .notNull()
+    .references(() => projects.id, { onDelete: 'cascade' }),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
   role: text('role').default('member'), // owner, collaborator, member, viewer
   joinedAt: integer('joinedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
@@ -117,13 +133,19 @@ Project invitations include org context for combined membership flow:
 ```js
 export const projectInvitations = sqliteTable('project_invitations', {
   id: text('id').primaryKey(),
-  orgId: text('orgId').notNull().references(() => organization.id, { onDelete: 'cascade' }),
-  projectId: text('projectId').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  orgId: text('orgId')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  projectId: text('projectId')
+    .notNull()
+    .references(() => projects.id, { onDelete: 'cascade' }),
   email: text('email').notNull(),
-  role: text('role').default('member'),        // project role to assign
-  orgRole: text('orgRole').default('member'),  // org role if user isn't already a member
+  role: text('role').default('member'), // project role to assign
+  orgRole: text('orgRole').default('member'), // org role if user isn't already a member
   token: text('token').notNull().unique(),
-  invitedBy: text('invitedBy').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  invitedBy: text('invitedBy')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
   expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
   acceptedAt: integer('acceptedAt', { mode: 'timestamp' }),
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),

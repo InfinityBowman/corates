@@ -96,18 +96,18 @@ Individual response to a checklist question. Stored entirely in Durable Objects 
 
 ## Storage Split
 
-| Entity                          | Storage                        | Reason                                                                                                 |
-| ------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| Users                           | D1 (SQLite)                    | User accounts, authentication                                                                          |
-| Organizations                   | D1 (SQLite)                    | Org metadata, Better Auth plugin                                                                       |
-| Org Members                     | D1 (SQLite)                    | Org membership and roles                                                                               |
-| Projects (metadata)             | D1 (SQLite)                    | Basic project info (id, name, description, orgId, createdBy) - source of truth for access control      |
-| Project Members                 | D1 (SQLite)                    | Project-level access control (who can access which projects)                                           |
-| Project Invitations             | D1 (SQLite)                    | Pending invitations with org and project context                                                       |
-| Studies, Checklists, Answers    | Durable Objects (Yjs Document) | All project content - real-time sync, offline collaboration                                            |
-| Project Metadata (synced)       | Durable Objects (Yjs Document) | Synced copy from D1 for real-time access                                                               |
-| Project Members (synced)        | Durable Objects (Yjs Document) | Synced copy from D1 for real-time access                                                               |
-| PDFs                            | R2                             | Large binary files                                                                                     |
+| Entity                       | Storage                        | Reason                                                                                            |
+| ---------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------- |
+| Users                        | D1 (SQLite)                    | User accounts, authentication                                                                     |
+| Organizations                | D1 (SQLite)                    | Org metadata, Better Auth plugin                                                                  |
+| Org Members                  | D1 (SQLite)                    | Org membership and roles                                                                          |
+| Projects (metadata)          | D1 (SQLite)                    | Basic project info (id, name, description, orgId, createdBy) - source of truth for access control |
+| Project Members              | D1 (SQLite)                    | Project-level access control (who can access which projects)                                      |
+| Project Invitations          | D1 (SQLite)                    | Pending invitations with org and project context                                                  |
+| Studies, Checklists, Answers | Durable Objects (Yjs Document) | All project content - real-time sync, offline collaboration                                       |
+| Project Metadata (synced)    | Durable Objects (Yjs Document) | Synced copy from D1 for real-time access                                                          |
+| Project Members (synced)     | Durable Objects (Yjs Document) | Synced copy from D1 for real-time access                                                          |
+| PDFs                         | R2                             | Large binary files                                                                                |
 
 ## Architecture Notes
 
