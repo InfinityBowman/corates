@@ -52,24 +52,36 @@ describe('Main App - Route Mounting', () => {
     expect(text).toContain('Corates Workers API');
   });
 
-  it('should mount project routes', async () => {
+  it('should return 410 Gone for legacy project routes', async () => {
     const res = await fetchApp(app, '/api/projects/nonexistent', {
       headers: {
         'x-test-user-id': 'user-1',
       },
     });
-    // Should return 401 (auth required) or 404 (not found), not 404 from app
-    expect([401, 404]).toContain(res.status);
+    // Legacy routes now return 410 Gone
+    expect(res.status).toBe(410);
+    const body = await json(res);
+    expect(body.error).toBe('ENDPOINT_MOVED');
   });
 
-  it('should mount member routes', async () => {
+  it('should return 410 Gone for legacy member routes', async () => {
     const res = await fetchApp(app, '/api/projects/test-project/members', {
       headers: {
         'x-test-user-id': 'user-1',
       },
     });
-    // Should return 401 or 404
-    expect([401, 404]).toContain(res.status);
+    // Legacy routes now return 410 Gone
+    expect(res.status).toBe(410);
+  });
+
+  it('should mount org-scoped project routes', async () => {
+    const res = await fetchApp(app, '/api/orgs/test-org/projects/nonexistent', {
+      headers: {
+        'x-test-user-id': 'user-1',
+      },
+    });
+    // Should return 401 (auth required) or 403 (not org member) or 404 (not found)
+    expect([401, 403, 404]).toContain(res.status);
   });
 
   it('should mount user routes', async () => {
@@ -162,7 +174,7 @@ describe('Main App - Error Handling', () => {
   it('should handle errors gracefully', async () => {
     // Test error handler by making a request that might fail
     // The app has an error handler that returns 500
-    const res = await fetchApp(app, '/api/projects', {
+    const res = await fetchApp(app, '/api/orgs/test-org/projects', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -171,8 +183,8 @@ describe('Main App - Error Handling', () => {
       body: JSON.stringify({}),
     });
 
-    // Should return 401 (auth required) or 500 (error)
-    expect([401, 500]).toContain(res.status);
+    // Should return 401 (auth required) or 403 (not org member) or 500 (error)
+    expect([401, 403, 500]).toContain(res.status);
   });
 });
 

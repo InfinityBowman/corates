@@ -78,6 +78,11 @@ export const PROJECT_ERRORS = {
     defaultMessage: 'Project not found',
     statusCode: 404,
   },
+  NOT_IN_ORG: {
+    code: 'PROJECT_NOT_IN_ORG',
+    defaultMessage: 'Project does not belong to this organization',
+    statusCode: 403,
+  },
   ACCESS_DENIED: {
     code: 'PROJECT_ACCESS_DENIED',
     defaultMessage: 'You do not have access to this project',

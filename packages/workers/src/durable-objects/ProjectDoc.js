@@ -5,7 +5,7 @@ import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
 import { verifyAuth } from '../auth/config.js';
 import { createDb } from '../db/client.js';
-import { projectMembers } from '../db/schema.js';
+import { projectMembers, projects, member } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 
 // y-websocket message types
@@ -342,46 +342,70 @@ export class ProjectDoc {
       return new Response('Authentication required', { status: 401 });
     }
 
-    // Verify project membership
     // Extract projectId from URL: /api/project/:projectId/...
     const url = new URL(request.url);
     const pathParts = url.pathname.split('/');
     const projectId = pathParts[3]; // /api/project/{projectId}/...
 
-    // Check if user is in the members map
-    await this.initializeDoc();
-    const membersMap = this.doc.getMap('members');
-    let isMember = membersMap.has(user.id);
-
-    // Fallback to D1 if not found in Y.Doc (handles stale state, etc.)
-    if (!isMember && this.env.DB) {
-      try {
-        const db = createDb(this.env.DB);
-        const membership = await db
-          .select({ role: projectMembers.role })
-          .from(projectMembers)
-          .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, user.id)))
-          .get();
-
-        if (membership) {
-          isMember = true;
-          // Sync this member to the Y.Doc for future checks
-          const memberYMap = new Y.Map();
-          memberYMap.set('role', membership.role);
-          memberYMap.set('joinedAt', Date.now());
-          membersMap.set(user.id, memberYMap);
-        }
-      } catch (err) {
-        console.error('D1 membership fallback error:', err);
-      }
+    // ALWAYS verify org membership + project membership against D1
+    // Do NOT trust Yjs members map for authorization (it can be stale)
+    if (!this.env.DB) {
+      console.error('No DB binding available for WebSocket auth check');
+      return new Response('Server configuration error', { status: 500 });
     }
 
-    if (!isMember) {
-      // Use 1008 (Policy Violation) close code so client can detect membership issue
+    const db = createDb(this.env.DB);
+
+    // Get project and its org
+    const project = await db
+      .select({ orgId: projects.orgId })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .get();
+
+    if (!project) {
+      return new Response('Project not found', {
+        status: 404,
+        headers: { 'X-Close-Reason': 'project-not-found' },
+      });
+    }
+
+    // Verify org membership (always check D1, no Yjs bypass)
+    const orgMembership = await db
+      .select({ id: member.id, role: member.role })
+      .from(member)
+      .where(and(eq(member.organizationId, project.orgId), eq(member.userId, user.id)))
+      .get();
+
+    if (!orgMembership) {
+      return new Response('Not an organization member', {
+        status: 403,
+        headers: { 'X-Close-Reason': 'not-org-member' },
+      });
+    }
+
+    // Verify project membership (always check D1, no Yjs bypass)
+    const projectMembership = await db
+      .select({ role: projectMembers.role })
+      .from(projectMembers)
+      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, user.id)))
+      .get();
+
+    if (!projectMembership) {
       return new Response('Not a project member', {
         status: 403,
         headers: { 'X-Close-Reason': 'not-a-member' },
       });
+    }
+
+    // Now that we've verified auth, sync member to Yjs if not present (for awareness)
+    await this.initializeDoc();
+    const membersMap = this.doc.getMap('members');
+    if (!membersMap.has(user.id)) {
+      const memberYMap = new Y.Map();
+      memberYMap.set('role', projectMembership.role);
+      memberYMap.set('joinedAt', Date.now());
+      membersMap.set(user.id, memberYMap);
     }
 
     const webSocketPair = new WebSocketPair();
