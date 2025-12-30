@@ -235,8 +235,8 @@ export function getProjectContext(c) {
 // Org role hierarchy: owner > admin > member
 const ORG_ROLE_HIERARCHY = ['member', 'admin', 'owner'];
 
-// Project role hierarchy: viewer > member > collaborator > owner
-const PROJECT_ROLE_HIERARCHY = ['viewer', 'member', 'collaborator', 'owner'];
+// Project role hierarchy: member > owner
+const PROJECT_ROLE_HIERARCHY = ['member', 'owner'];
 
 /**
  * Check if a role meets or exceeds the minimum required org role

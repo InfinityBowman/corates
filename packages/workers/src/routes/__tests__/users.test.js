@@ -417,7 +417,7 @@ describe('User Routes - GET /api/users/:userId/projects', () => {
       id: 'pm-2',
       projectId: 'project-2',
       userId: 'user-1',
-      role: 'collaborator',
+      role: 'member',
       joinedAt: nowSec,
     });
 

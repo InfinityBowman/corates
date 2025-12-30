@@ -154,7 +154,7 @@ paths:
   /api/projects/{projectId}/members/{userId}:
     put:
       summary: Update member role
-      description: Change a member's role (owner, collaborator, member, viewer). Owner only.
+      description: Change a member's role (owner, member). Owner only.
       tags: [Members]
       requestBody:
         content:
@@ -363,7 +363,7 @@ paths:
                     type: string
                   role:
                     type: string
-                    enum: [owner, collaborator, member, viewer]
+                    enum: [owner, member]
                   alreadyMember:
                     type: boolean
                     description: True if user was already a member
@@ -535,7 +535,7 @@ components:
           nullable: true
         role:
           type: string
-          enum: [owner, collaborator, member, viewer]
+          enum: [owner, member]
         createdAt:
           type: string
           format: date-time
@@ -552,7 +552,7 @@ components:
           type: string
         role:
           type: string
-          enum: [owner, collaborator, member, viewer]
+          enum: [owner, member]
         joinedAt:
           type: string
           format: date-time
@@ -579,7 +579,7 @@ components:
           description: User email (provide either userId or email)
         role:
           type: string
-          enum: [owner, collaborator, member, viewer]
+          enum: [owner, member]
           default: member
 
     UpdateMemberRole:
@@ -588,7 +588,7 @@ components:
       properties:
         role:
           type: string
-          enum: [owner, collaborator, member, viewer]
+          enum: [owner, member]
 
     UserSearchResult:
       type: object

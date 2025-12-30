@@ -541,7 +541,7 @@ describe('Org-Scoped Project Routes - PUT /api/orgs/:orgId/projects/:id', () => 
     expect(project.description).toBe('Updated description');
   });
 
-  it('should allow collaborator to update project', async () => {
+  it('should allow member to update project', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
 
     await seedUser({
@@ -604,7 +604,7 @@ describe('Org-Scoped Project Routes - PUT /api/orgs/:orgId/projects/:id', () => 
       id: 'pm-2',
       projectId: 'project-1',
       userId: 'user-2',
-      role: 'collaborator',
+      role: 'member',
       joinedAt: nowSec,
     });
 
@@ -615,94 +615,11 @@ describe('Org-Scoped Project Routes - PUT /api/orgs/:orgId/projects/:id', () => 
         'x-test-user-id': 'user-2',
       },
       body: JSON.stringify({
-        name: 'Updated by Collaborator',
+        name: 'Updated by Member',
       }),
     });
 
     expect(res.status).toBe(200);
-  });
-
-  it('should deny viewer from updating project', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-2',
-      organizationId: 'org-1',
-      userId: 'user-2',
-      role: 'member',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-2',
-      projectId: 'project-1',
-      userId: 'user-2',
-      role: 'viewer',
-      joinedAt: nowSec,
-    });
-
-    const res = await fetchProjects('org-1', '/project-1', {
-      method: 'PUT',
-      headers: {
-        'content-type': 'application/json',
-        'x-test-user-id': 'user-2',
-      },
-      body: JSON.stringify({
-        name: 'Updated by Viewer',
-      }),
-    });
-
-    expect(res.status).toBe(403);
-    const body = await json(res);
-    expect(body.code).toMatch(/FORBIDDEN/);
   });
 
   it('should return 403 for non-project-members in same org', async () => {
@@ -848,7 +765,7 @@ describe('Org-Scoped Project Routes - DELETE /api/orgs/:orgId/projects/:id', () 
     expect(members.results).toHaveLength(0);
   });
 
-  it('should deny collaborator from deleting project', async () => {
+  it('should deny member from deleting project', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
 
     await seedUser({
@@ -911,7 +828,7 @@ describe('Org-Scoped Project Routes - DELETE /api/orgs/:orgId/projects/:id', () 
       id: 'pm-2',
       projectId: 'project-1',
       userId: 'user-2',
-      role: 'collaborator',
+      role: 'member',
       joinedAt: nowSec,
     });
 
@@ -925,82 +842,5 @@ describe('Org-Scoped Project Routes - DELETE /api/orgs/:orgId/projects/:id', () 
     expect(res.status).toBe(403);
     const body = await json(res);
     expect(body.code).toMatch(/FORBIDDEN/);
-  });
-
-  it('should deny viewer from deleting project', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-2',
-      organizationId: 'org-1',
-      userId: 'user-2',
-      role: 'member',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-2',
-      projectId: 'project-1',
-      userId: 'user-2',
-      role: 'viewer',
-      joinedAt: nowSec,
-    });
-
-    const res = await fetchProjects('org-1', '/project-1', {
-      method: 'DELETE',
-      headers: {
-        'x-test-user-id': 'user-2',
-      },
-    });
-
-    expect(res.status).toBe(403);
   });
 });

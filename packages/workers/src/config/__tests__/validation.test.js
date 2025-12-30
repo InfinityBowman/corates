@@ -146,7 +146,7 @@ describe('memberSchemas', () => {
     });
 
     it('should accept email instead of userId', () => {
-      const data = { email: 'test@example.com', role: 'collaborator' };
+      const data = { email: 'test@example.com', role: 'member' };
       const result = validateBody(memberSchemas.add, data);
 
       expect(result.success).toBe(true);
@@ -187,7 +187,7 @@ describe('memberSchemas', () => {
 
   describe('updateRole', () => {
     it('should accept valid role update', () => {
-      const data = { role: 'collaborator' };
+      const data = { role: 'member' };
       const result = validateBody(memberSchemas.updateRole, data);
 
       expect(result.success).toBe(true);

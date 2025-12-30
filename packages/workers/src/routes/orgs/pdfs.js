@@ -17,7 +17,6 @@ import {
   createDomainError,
   FILE_ERRORS,
   VALIDATION_ERRORS,
-  AUTH_ERRORS,
   SYSTEM_ERRORS,
 } from '@corates/shared';
 
@@ -89,18 +88,8 @@ orgPdfRoutes.get('/', requireOrgMembership(), requireProjectAccess(), extractStu
  */
 orgPdfRoutes.post('/', requireOrgMembership(), requireProjectAccess(), extractStudyId, async c => {
   const { user } = getAuth(c);
-  const { projectId, projectRole } = getProjectContext(c);
+  const { projectId } = getProjectContext(c);
   const studyId = c.get('studyId');
-
-  // Enforce read-only access for viewers
-  if (projectRole === 'viewer') {
-    const error = createDomainError(
-      AUTH_ERRORS.FORBIDDEN,
-      { reason: 'upload_pdf' },
-      'Insufficient permissions',
-    );
-    return c.json(error, error.statusCode);
-  }
 
   // Check Content-Length header first for early rejection
   const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
@@ -306,19 +295,8 @@ orgPdfRoutes.delete(
   requireProjectAccess(),
   extractStudyId,
   async c => {
-    const { projectId, projectRole } = getProjectContext(c);
+    const { projectId } = getProjectContext(c);
     const studyId = c.get('studyId');
-
-    // Verify user has edit permissions
-    if (projectRole === 'viewer') {
-      const error = createDomainError(
-        AUTH_ERRORS.FORBIDDEN,
-        { reason: 'delete_pdf' },
-        'Insufficient permissions',
-      );
-      return c.json(error, error.statusCode);
-    }
-
     const fileName = decodeURIComponent(c.req.param('fileName'));
 
     if (!fileName) {

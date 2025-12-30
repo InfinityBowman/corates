@@ -137,7 +137,7 @@ export const projectMembers = sqliteTable('project_members', {
   userId: text('userId')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  role: text('role').default('member'), // owner, collaborator, member, viewer
+  role: text('role').default('member'), // owner, member
   joinedAt: integer('joinedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 

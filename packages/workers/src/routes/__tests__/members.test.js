@@ -98,7 +98,7 @@ describe('Org-Scoped Member Routes - GET /api/orgs/:orgId/projects/:projectId/me
 
     await seedUser({
       id: 'user-2',
-      name: 'Collaborator User',
+      name: 'Test User 2',
       email: 'collab@example.com',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -148,7 +148,7 @@ describe('Org-Scoped Member Routes - GET /api/orgs/:orgId/projects/:projectId/me
       id: 'pm-2',
       projectId: 'project-1',
       userId: 'user-2',
-      role: 'collaborator',
+      role: 'member',
       joinedAt: nowSec + 1,
     });
 
@@ -161,7 +161,7 @@ describe('Org-Scoped Member Routes - GET /api/orgs/:orgId/projects/:projectId/me
     expect(body[0].role).toBe('owner');
     expect(body[0].name).toBe('Owner User');
     expect(body[1].userId).toBe('user-2');
-    expect(body[1].role).toBe('collaborator');
+    expect(body[1].role).toBe('member');
   });
 
   it('should order members by join date', async () => {
@@ -227,7 +227,7 @@ describe('Org-Scoped Member Routes - GET /api/orgs/:orgId/projects/:projectId/me
       id: 'pm-2',
       projectId: 'project-1',
       userId: 'user-2',
-      role: 'collaborator',
+      role: 'member',
       joinedAt: nowSec + 10,
     });
 
@@ -375,14 +375,14 @@ describe('Org-Scoped Member Routes - POST /api/orgs/:orgId/projects/:projectId/m
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         userId: 'user-2',
-        role: 'collaborator',
+        role: 'member',
       }),
     });
 
     expect(res.status).toBe(201);
     const body = await json(res);
     expect(body.userId).toBe('user-2');
-    expect(body.role).toBe('collaborator');
+    expect(body.role).toBe('member');
     expect(body.name).toBe('New User');
   });
 
@@ -663,7 +663,7 @@ describe('Org-Scoped Member Routes - POST /api/orgs/:orgId/projects/:projectId/m
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         userId: 'user-2',
-        role: 'collaborator',
+        role: 'member',
       }),
     });
 
@@ -685,7 +685,7 @@ describe('Org-Scoped Member Routes - POST /api/orgs/:orgId/projects/:projectId/m
 
     await seedUser({
       id: 'user-2',
-      name: 'Collaborator',
+      name: 'Test User 2',
       email: 'collab@example.com',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -751,7 +751,7 @@ describe('Org-Scoped Member Routes - POST /api/orgs/:orgId/projects/:projectId/m
       id: 'pm-2',
       projectId: 'project-1',
       userId: 'user-2',
-      role: 'collaborator',
+      role: 'member',
       joinedAt: nowSec,
     });
 
@@ -917,14 +917,14 @@ describe('Org-Scoped Member Routes - PUT /api/orgs/:orgId/projects/:projectId/me
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        role: 'collaborator',
+        role: 'member',
       }),
     });
 
     expect(res.status).toBe(200);
     const body = await json(res);
     expect(body.success).toBe(true);
-    expect(body.role).toBe('collaborator');
+    expect(body.role).toBe('member');
 
     // Verify update in DB
     const member = await env.DB.prepare(
@@ -932,7 +932,7 @@ describe('Org-Scoped Member Routes - PUT /api/orgs/:orgId/projects/:projectId/me
     )
       .bind('project-1', 'user-2')
       .first();
-    expect(member.role).toBe('collaborator');
+    expect(member.role).toBe('member');
   });
 
   it('should prevent removing the last owner', async () => {
@@ -982,7 +982,7 @@ describe('Org-Scoped Member Routes - PUT /api/orgs/:orgId/projects/:projectId/me
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        role: 'collaborator',
+        role: 'member',
       }),
     });
 
@@ -1062,7 +1062,7 @@ describe('Org-Scoped Member Routes - PUT /api/orgs/:orgId/projects/:projectId/me
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        role: 'collaborator',
+        role: 'member',
       }),
     });
 
@@ -1134,7 +1134,7 @@ describe('Org-Scoped Member Routes - DELETE /api/orgs/:orgId/projects/:projectId
       id: 'pm-2',
       projectId: 'project-1',
       userId: 'user-2',
-      role: 'collaborator',
+      role: 'member',
       joinedAt: nowSec,
     });
 

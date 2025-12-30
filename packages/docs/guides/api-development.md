@@ -68,7 +68,7 @@ routes.post(
   '/',
   requireAuth,
   requireOrgMembership(), // Check org membership
-  requireProjectAccess('collaborator'), // Check project access with min role
+  requireProjectAccess('member'), // Check project access with min role
   requireEntitlement('project.update'),
   validateRequest(projectSchemas.update),
   async c => {

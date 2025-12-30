@@ -5,13 +5,14 @@
 
 /**
  * Valid project member roles
+ * Simplified to owner (full access) and member (can edit)
  */
-export const PROJECT_ROLES = ['owner', 'collaborator', 'member', 'viewer'];
+export const PROJECT_ROLES = ['owner', 'member'];
 
 /**
  * Roles that can edit project content
  */
-export const EDIT_ROLES = ['owner', 'collaborator', 'member'];
+export const EDIT_ROLES = ['owner', 'member'];
 
 /**
  * Roles that can manage project members

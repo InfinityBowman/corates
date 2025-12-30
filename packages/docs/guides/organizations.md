@@ -132,14 +132,12 @@ export const projectInvitations = sqliteTable('project_invitations', {
 
 ### Project Roles
 
-| Role           | Permissions                                      |
-| -------------- | ------------------------------------------------ |
-| `owner`        | Full control: delete project, manage all members |
-| `collaborator` | Edit project settings, manage studies/checklists |
-| `member`       | Create/edit checklists, upload PDFs              |
-| `viewer`       | Read-only access to project content              |
+| Role     | Permissions                                      |
+| -------- | ------------------------------------------------ |
+| `owner`  | Full control: delete project, manage all members |
+| `member` | Edit project content, upload PDFs                |
 
-**Hierarchy:** `owner > collaborator > member > viewer`
+**Hierarchy:** `owner > member`
 
 ## API Routes
 
@@ -180,7 +178,7 @@ The frontend uses `orgSlug` in URLs for readability, but the API uses `orgId` fo
 | `GET`    | `/api/orgs/:orgId/projects`            | List projects  | Org member               |
 | `POST`   | `/api/orgs/:orgId/projects`            | Create project | Org member + entitlement |
 | `GET`    | `/api/orgs/:orgId/projects/:projectId` | Get project    | Project member           |
-| `PUT`    | `/api/orgs/:orgId/projects/:projectId` | Update project | Project collaborator     |
+| `PUT`    | `/api/orgs/:orgId/projects/:projectId` | Update project | Project member           |
 | `DELETE` | `/api/orgs/:orgId/projects/:projectId` | Delete project | Project owner            |
 
 ### Project Member Routes
@@ -205,9 +203,9 @@ The frontend uses `orgSlug` in URLs for readability, but the API uses `orgId` fo
 | Method   | Endpoint                                                               | Description  | Required Role               |
 | -------- | ---------------------------------------------------------------------- | ------------ | --------------------------- |
 | `GET`    | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs`           | List PDFs    | Project member              |
-| `POST`   | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs`           | Upload PDF   | Project member (not viewer) |
+| `POST`   | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs`           | Upload PDF   | Project member              |
 | `GET`    | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` | Download PDF | Project member              |
-| `DELETE` | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` | Delete PDF   | Project collaborator        |
+| `DELETE` | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` | Delete PDF   | Project member              |
 
 ## Backend Middleware
 
@@ -244,8 +242,8 @@ projectRoutes.get('/:projectId', requireOrgMembership(), requireProjectAccess(),
 });
 
 // With minimum role requirement
-projectRoutes.put('/:projectId', requireOrgMembership(), requireProjectAccess('collaborator'), async c => {
-  // Only project collaborators and owners can access
+projectRoutes.put('/:projectId', requireOrgMembership(), requireProjectAccess('member'), async c => {
+  // Only project members and owners can access
 });
 ```
 

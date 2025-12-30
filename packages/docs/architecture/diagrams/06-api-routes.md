@@ -79,7 +79,7 @@ Project management (requires org membership):
 - `GET /api/orgs/:orgId/projects` - List projects in org
 - `POST /api/orgs/:orgId/projects` - Create new project
 - `GET /api/orgs/:orgId/projects/:projectId` - Get project (requires project access)
-- `PUT /api/orgs/:orgId/projects/:projectId` - Update project (requires collaborator)
+- `PUT /api/orgs/:orgId/projects/:projectId` - Update project (requires member)
 - `DELETE /api/orgs/:orgId/projects/:projectId` - Delete project (requires owner)
 
 ### Project Members (`/api/orgs/:orgId/projects/:projectId/members`)

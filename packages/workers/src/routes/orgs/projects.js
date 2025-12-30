@@ -235,7 +235,7 @@ orgProjectRoutes.get('/:projectId', requireOrgMembership(), requireProjectAccess
 orgProjectRoutes.put(
   '/:projectId',
   requireOrgMembership(),
-  requireProjectAccess('collaborator'),
+  requireProjectAccess('member'),
   validateRequest(projectSchemas.update),
   async c => {
     const { orgId } = getOrgContext(c);

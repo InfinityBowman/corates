@@ -40,7 +40,7 @@ erDiagram
         string id PK
         string projectId FK
         string userId FK
-        string role "owner, collaborator, member, viewer"
+        string role "owner, member"
         date joinedAt
     }
 
@@ -80,7 +80,7 @@ Top-level workspace container. Organizations group projects and team members. Ma
 
 Research project container belonging to an organization. Basic metadata (id, name, description, orgId, createdBy) stored in D1 for authorization. Content stored in Durable Objects via Yjs.
 
-**Role hierarchy:** `owner > collaborator > member > viewer`
+**Role hierarchy:** `owner > member`
 
 ### Study
 
