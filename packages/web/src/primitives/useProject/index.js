@@ -264,7 +264,9 @@ export function useProject(orgId, projectId) {
 
     // orgId is required for remote projects
     if (!orgId) {
-      console.warn('useProject: orgId is required for remote projects, skipping WebSocket connection');
+      console.warn(
+        'useProject: orgId is required for remote projects, skipping WebSocket connection',
+      );
       return;
     }
 
