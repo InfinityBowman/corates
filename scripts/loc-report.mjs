@@ -7,6 +7,8 @@
  *   node scripts/loc-report.mjs           # total + per package in packages/
  *   node scripts/loc-report.mjs packages  # only packages/* breakdown
  *   node scripts/loc-report.mjs web       # only the "web" top-level dir
+ *   node scripts/loc-report.mjs --code-only  # only count code files (js, jsx, ts, tsx, css, sql)
+ *   node scripts/loc-report.mjs packages --code-only  # code-only for packages
  */
 
 import { spawnSync } from 'node:child_process';
@@ -53,16 +55,29 @@ function runCommand(command, args, options = {}) {
   };
 }
 
-function getTrackedFiles() {
+// Code file extensions to include when --code-only is used
+const CODE_EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx', '.css', '.sql']);
+
+function isCodeFile(file) {
+  const ext = file.substring(file.lastIndexOf('.'));
+  return CODE_EXTENSIONS.has(ext.toLowerCase());
+}
+
+function getTrackedFiles(codeOnly = false) {
   // Get tracked files, excluding lock files
   const result = runCommand('git', ['ls-files', '-z']);
-  const files = result.stdout
+  let files = result.stdout
     .split('\0')
     .filter(file => {
       // Exclude lock files
       return !/^(.+\/)?(pnpm-lock\.yaml|package-lock\.json|yarn\.lock)$/.test(file);
     })
     .filter(Boolean);
+
+  // Filter to code files only if requested
+  if (codeOnly) {
+    files = files.filter(isCodeFile);
+  }
 
   return files;
 }
@@ -114,10 +129,11 @@ function main() {
   checkCommand('cloc');
 
   const args = process.argv.slice(2);
-  const filter = args[0]; // Optional filter: 'packages' or specific dir
+  const codeOnly = args.includes('--code-only') || args.includes('-c');
+  const filter = args.find(arg => arg !== '--code-only' && arg !== '-c'); // Optional filter: 'packages' or specific dir
 
   // Get tracked files
-  let trackedFiles = getTrackedFiles();
+  let trackedFiles = getTrackedFiles(codeOnly);
 
   if (trackedFiles.length === 0) {
     console.error('No tracked files found.');
@@ -136,7 +152,9 @@ function main() {
   // Per-package breakdown (packages/*)
   const packageFiles = trackedFiles.filter(file => file.startsWith('packages/'));
   if (packageFiles.length > 0) {
-    printHeader('Per package (packages/*)');
+    const header =
+      codeOnly ? 'Per package (packages/*) - Code files only' : 'Per package (packages/*)';
+    printHeader(header);
 
     // Group files by package
     const packages = new Map();
@@ -163,7 +181,9 @@ function main() {
   }
 
   // Total (tracked files)
-  printHeader('Total (Git-tracked files)');
+  const totalHeader =
+    codeOnly ? 'Total (Git-tracked files - Code files only)' : 'Total (Git-tracked files)';
+  printHeader(totalHeader);
   runCloc(trackedFiles);
 }
 
