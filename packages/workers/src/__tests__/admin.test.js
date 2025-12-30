@@ -660,6 +660,45 @@ describe('Admin API routes', () => {
     expect(remainingProjects.c).toBe(0);
   });
 
+  it('DELETE /api/admin/users/:userId should set mediaFiles.uploadedBy to null', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    await seedUser({
+      id: 'admin-user',
+      name: 'Admin',
+      email: 'admin@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+    await seedUser({
+      id: 'u1',
+      name: 'Target',
+      email: 'target@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    // Create a media file owned by the user to be deleted
+    await env.DB.prepare(
+      'INSERT INTO mediaFiles (id, filename, bucketKey, uploadedBy, createdAt) VALUES (?1, ?2, ?3, ?4, ?5)',
+    )
+      .bind('media-1', 'test.pdf', 'bucket-key-1', 'u1', nowSec)
+      .run();
+
+    const del = await fetchApp('/api/admin/users/u1', {
+      method: 'DELETE',
+      headers: { origin: 'http://localhost:5173' },
+    });
+    expect(del.status).toBe(200);
+
+    // Verify media file still exists but uploadedBy is null
+    const mediaFile = await env.DB.prepare('SELECT * FROM mediaFiles WHERE id = ?1')
+      .bind('media-1')
+      .first();
+    expect(mediaFile).not.toBeNull();
+    expect(mediaFile.uploadedBy).toBeNull();
+  });
+
   it('POST /api/admin/users/:userId/subscription grants subscription (never 404)', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
 

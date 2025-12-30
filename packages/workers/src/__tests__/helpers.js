@@ -17,6 +17,7 @@ import {
   subscriptions,
   organization,
   member,
+  mediaFiles,
 } from '../db/schema.js';
 import {
   seedUserSchema,
@@ -26,6 +27,7 @@ import {
   seedSubscriptionSchema,
   seedOrganizationSchema,
   seedOrgMemberSchema,
+  seedMediaFileSchema,
 } from './seed-schemas.js';
 import { MIGRATION_SQL } from './migration-sql.js';
 
@@ -306,6 +308,25 @@ export async function seedSubscription(params) {
     cancelAtPeriodEnd: validated.cancelAtPeriodEnd === 1,
     createdAt: new Date(validated.createdAt * 1000),
     updatedAt: new Date(validated.updatedAt * 1000),
+  });
+}
+
+/**
+ * Seed a media file into the test database
+ */
+export async function seedMediaFile(params) {
+  const validated = seedMediaFileSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(mediaFiles).values({
+    id: validated.id,
+    filename: validated.filename,
+    originalName: validated.originalName,
+    fileType: validated.fileType,
+    fileSize: validated.fileSize,
+    uploadedBy: validated.uploadedBy,
+    bucketKey: validated.bucketKey,
+    createdAt: new Date(validated.createdAt * 1000),
   });
 }
 

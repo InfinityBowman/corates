@@ -147,7 +147,7 @@ export const mediaFiles = sqliteTable('mediaFiles', {
   originalName: text('originalName'),
   fileType: text('fileType'),
   fileSize: integer('fileSize'),
-  uploadedBy: text('uploadedBy').references(() => user.id),
+  uploadedBy: text('uploadedBy').references(() => user.id, { onDelete: 'set null' }),
   bucketKey: text('bucketKey').notNull(),
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });

@@ -93,7 +93,6 @@ export default function Navbar(props) {
         >
           CoRATES
         </a>
-
         {/* Workspace switcher - only show when logged in */}
         <Show when={isLoggedIn() && !authLoading()}>
           <div class='relative' ref={orgMenuRef}>
@@ -164,6 +163,12 @@ export default function Navbar(props) {
       </div>
 
       <div class='text-2xs flex items-center space-x-4 sm:text-xs'>
+        <A
+          href='/dashboard'
+          class='flex h-9 items-center rounded px-2 font-medium transition hover:bg-blue-600'
+        >
+          Dashboard
+        </A>
         <Show
           when={user() || (authLoading() && isLikelyLoggedIn)}
           fallback={

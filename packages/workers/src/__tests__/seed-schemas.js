@@ -154,3 +154,17 @@ export const seedSubscriptionSchema = z.object({
   createdAt: dateOrTimestampToNumber,
   updatedAt: dateOrTimestampToNumber,
 });
+
+/**
+ * Schema for seeding a media file
+ */
+export const seedMediaFileSchema = z.object({
+  id: z.string().min(1, 'Media file ID is required'),
+  filename: z.string().min(1, 'Filename is required'),
+  originalName: z.string().nullable().optional().default(null),
+  fileType: z.string().nullable().optional().default(null),
+  fileSize: z.number().int().nullable().optional().default(null),
+  uploadedBy: z.string().nullable().optional().default(null),
+  bucketKey: z.string().min(1, 'Bucket key is required'),
+  createdAt: dateOrTimestampToNumber,
+});

@@ -14,6 +14,7 @@ import {
   verification,
   twoFactor,
   subscriptions,
+  mediaFiles,
 } from '../db/schema.js';
 import { eq, desc, or, like, sql } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
@@ -197,7 +198,9 @@ userRoutes.delete('/me', async c => {
     // Only proceed with database deletions if all DO syncs succeeded
     // Delete all user data atomically using batch transaction
     // Order matters for foreign key constraints
+    // Update mediaFiles.uploadedBy to null before deleting user (following account-merge pattern)
     await db.batch([
+      db.update(mediaFiles).set({ uploadedBy: null }).where(eq(mediaFiles.uploadedBy, userId)),
       db.delete(projectMembers).where(eq(projectMembers.userId, userId)),
       db.delete(projects).where(eq(projects.createdBy, userId)),
       db.delete(subscriptions).where(eq(subscriptions.userId, userId)),
