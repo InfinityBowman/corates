@@ -81,14 +81,14 @@ function filterDefinedUpdates(updates) {
 /**
  * Add PDF metadata to study, rolling back upload on failure
  */
-async function addPdfMetadataToStudy(ops, studyId, pdfInfo, projectId, tag = 'primary') {
+async function addPdfMetadataToStudy(ops, studyId, pdfInfo, orgId, projectId, tag = 'primary') {
   try {
     ops.addPdfToStudy(studyId, pdfInfo, tag);
     return true;
   } catch (err) {
     console.error('Failed to add PDF metadata:', err);
     // Rollback: delete the uploaded PDF
-    deletePdf(projectId, studyId, pdfInfo.fileName).catch(console.warn);
+    deletePdf(orgId, projectId, studyId, pdfInfo.fileName).catch(console.warn);
     throw err;
   }
 }
@@ -97,11 +97,11 @@ async function addPdfMetadataToStudy(ops, studyId, pdfInfo, projectId, tag = 'pr
  * Handle Google Drive PDF import for a study
  * @returns {boolean} True if PDF was successfully imported
  */
-async function handleGoogleDrivePdf(ops, study, studyId, projectId, userId) {
+async function handleGoogleDrivePdf(ops, study, studyId, orgId, projectId, userId) {
   if (!study.googleDriveFileId) return false;
 
   try {
-    const result = await importFromGoogleDrive(study.googleDriveFileId, projectId, studyId);
+    const result = await importFromGoogleDrive(study.googleDriveFileId, orgId, projectId, studyId);
     const importedFile = result?.file;
     if (!importedFile?.fileName) return false;
 
@@ -116,12 +116,13 @@ async function handleGoogleDrivePdf(ops, study, studyId, projectId, userId) {
         uploadedAt: Date.now(),
         source: 'google-drive',
       },
+      orgId,
       projectId,
     );
 
     // Extract and apply metadata from the PDF
     try {
-      const arrayBuffer = await downloadPdf(projectId, studyId, importedFile.fileName);
+      const arrayBuffer = await downloadPdf(orgId, projectId, studyId, importedFile.fileName);
       cachePdf(projectId, studyId, importedFile.fileName, arrayBuffer).catch(err =>
         console.warn('Failed to cache Google Drive PDF:', err),
       );
@@ -169,9 +170,9 @@ async function fetchPdfFromUrl(study) {
  * Upload PDF data and attach to study
  * @returns {boolean} True if upload succeeded
  */
-async function uploadAndAttachPdf(ops, pdfData, pdfFileName, studyId, projectId, userId) {
+async function uploadAndAttachPdf(ops, pdfData, pdfFileName, studyId, orgId, projectId, userId) {
   try {
-    const result = await uploadPdf(projectId, studyId, pdfData, pdfFileName);
+    const result = await uploadPdf(orgId, projectId, studyId, pdfData, pdfFileName);
     cachePdf(projectId, studyId, result.fileName, pdfData).catch(err =>
       console.warn('Failed to cache PDF:', err),
     );
@@ -207,6 +208,7 @@ async function uploadAndAttachPdf(ops, pdfData, pdfFileName, studyId, projectId,
         journal: pdfMetadata.journal || null,
         doi: pdfMetadata.doi || null,
       },
+      orgId,
       projectId,
     );
     return true;
@@ -220,10 +222,16 @@ async function uploadAndAttachPdf(ops, pdfData, pdfFileName, studyId, projectId,
  * Creates study operations
  * @param {Function} getActiveConnection - Function to get current Y.js connection
  * @param {Function} getActiveProjectId - Function to get current project ID
+ * @param {Function} getActiveOrgId - Function to get current org ID
  * @param {Function} getCurrentUserId - Function to get current user ID
  * @returns {Object} Study operations
  */
-export function createStudyActions(getActiveConnection, getActiveProjectId, getCurrentUserId) {
+export function createStudyActions(
+  getActiveConnection,
+  getActiveProjectId,
+  getActiveOrgId,
+  getCurrentUserId,
+) {
   /**
    * Create a new study (uses active project)
    * @returns {string|null} The study ID or null if failed
@@ -261,6 +269,7 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
    */
   async function deleteStudy(studyId) {
     const projectId = getActiveProjectId();
+    const orgId = getActiveOrgId();
     const ops = getActiveConnection();
     if (!ops?.deleteStudy) {
       console.error('No connection for active project');
@@ -277,7 +286,7 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
       if (pdfs.length > 0) {
         const deletePromises = pdfs.map(pdf => {
           if (!pdf?.fileName) return Promise.resolve();
-          return deletePdf(projectId, studyId, pdf.fileName).catch(err => {
+          return deletePdf(orgId, projectId, studyId, pdf.fileName).catch(err => {
             // Log but don't block - continue with other PDFs
             console.warn(`Failed to delete PDF ${pdf.fileName} from R2:`, err);
           });
@@ -308,6 +317,7 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
    */
   async function addBatch(studiesToAdd) {
     const projectId = getActiveProjectId();
+    const orgId = getActiveOrgId();
     const userId = getCurrentUserId();
     const ops = getActiveConnection();
 
@@ -327,7 +337,7 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
           if (!studyId) continue;
 
           // Handle PDF attachment (three possible sources)
-          const pdfAttached = await attachPdfToStudy(ops, study, studyId, projectId, userId);
+          const pdfAttached = await attachPdfToStudy(ops, study, studyId, orgId, projectId, userId);
 
           // Track if user needs to manually download PDF
           if (!pdfAttached && study.pdfUrl && !study.pdfAccessible) {
@@ -376,15 +386,23 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
    * Priority: 1) Direct PDF data, 2) Google Drive, 3) URL fetch
    * @returns {Promise<boolean>} True if PDF was attached
    */
-  async function attachPdfToStudy(ops, study, studyId, projectId, userId) {
+  async function attachPdfToStudy(ops, study, studyId, orgId, projectId, userId) {
     // Source 1: Direct PDF data (from file upload)
     if (study.pdfData) {
-      return uploadAndAttachPdf(ops, study.pdfData, study.pdfFileName, studyId, projectId, userId);
+      return uploadAndAttachPdf(
+        ops,
+        study.pdfData,
+        study.pdfFileName,
+        studyId,
+        orgId,
+        projectId,
+        userId,
+      );
     }
 
     // Source 2: Google Drive import
     if (study.googleDriveFileId) {
-      const imported = await handleGoogleDrivePdf(ops, study, studyId, projectId, userId);
+      const imported = await handleGoogleDrivePdf(ops, study, studyId, orgId, projectId, userId);
       if (imported) return true;
     }
 
@@ -397,6 +415,7 @@ export function createStudyActions(getActiveConnection, getActiveProjectId, getC
           fetched.pdfData,
           fetched.pdfFileName,
           studyId,
+          orgId,
           projectId,
           userId,
         );

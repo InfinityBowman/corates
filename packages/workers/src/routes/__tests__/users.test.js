@@ -11,6 +11,8 @@ import {
   seedUser,
   seedProject,
   seedProjectMember,
+  seedOrganization,
+  seedOrgMember,
   json,
 } from '../../__tests__/helpers.js';
 
@@ -239,9 +241,25 @@ describe('User Routes - GET /api/users/search', () => {
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Test Project',
+      orgId: 'org-1',
       createdBy: 'user-1',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -354,9 +372,25 @@ describe('User Routes - GET /api/users/:userId/projects', () => {
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Project 1',
+      orgId: 'org-1',
       createdBy: 'user-1',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -365,6 +399,7 @@ describe('User Routes - GET /api/users/:userId/projects', () => {
     await seedProject({
       id: 'project-2',
       name: 'Project 2',
+      orgId: 'org-1',
       createdBy: 'user-1',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -437,9 +472,25 @@ describe('User Routes - DELETE /api/users/me', () => {
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Project 1',
+      orgId: 'org-1',
       createdBy: 'user-1',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -470,5 +521,37 @@ describe('User Routes - DELETE /api/users/me', () => {
       .bind('user-1')
       .all();
     expect(members.results).toHaveLength(0);
+  });
+
+  it('should set mediaFiles.uploadedBy to null when deleting user', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    await seedUser({
+      id: 'user-1',
+      name: 'User 1',
+      email: 'user1@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    // Create a media file owned by the user
+    await env.DB.prepare(
+      'INSERT INTO mediaFiles (id, filename, bucketKey, uploadedBy, createdAt) VALUES (?1, ?2, ?3, ?4, ?5)',
+    )
+      .bind('media-1', 'test.pdf', 'bucket-key-1', 'user-1', nowSec)
+      .run();
+
+    const res = await fetchUsers('/api/users/me', {
+      method: 'DELETE',
+    });
+
+    expect(res.status).toBe(200);
+
+    // Verify media file still exists but uploadedBy is null
+    const mediaFile = await env.DB.prepare('SELECT * FROM mediaFiles WHERE id = ?1')
+      .bind('media-1')
+      .first();
+    expect(mediaFile).not.toBeNull();
+    expect(mediaFile.uploadedBy).toBeNull();
   });
 });

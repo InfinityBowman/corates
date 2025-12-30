@@ -9,13 +9,25 @@ import {
   runInDurableObject,
 } from 'cloudflare:test';
 import { createDb } from '../db/client.js';
-import { user, projects, projectMembers, session, subscriptions } from '../db/schema.js';
+import {
+  user,
+  projects,
+  projectMembers,
+  session,
+  subscriptions,
+  organization,
+  member,
+  mediaFiles,
+} from '../db/schema.js';
 import {
   seedUserSchema,
   seedProjectSchema,
   seedProjectMemberSchema,
   seedSessionSchema,
   seedSubscriptionSchema,
+  seedOrganizationSchema,
+  seedOrgMemberSchema,
+  seedMediaFileSchema,
 } from './seed-schemas.js';
 import { MIGRATION_SQL } from './migration-sql.js';
 
@@ -124,8 +136,11 @@ export async function resetTestDatabase() {
     'mediaFiles',
     'project_members',
     'projects',
+    'invitation',
+    'member',
     'session',
     'account',
+    'organization',
     'user',
   ];
 
@@ -189,6 +204,39 @@ export async function seedUser(params) {
 }
 
 /**
+ * Seed an organization into the test database
+ */
+export async function seedOrganization(params) {
+  const validated = seedOrganizationSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(organization).values({
+    id: validated.id,
+    name: validated.name,
+    slug: validated.slug,
+    logo: validated.logo,
+    metadata: validated.metadata,
+    createdAt: new Date(validated.createdAt * 1000),
+  });
+}
+
+/**
+ * Seed an organization member into the test database
+ */
+export async function seedOrgMember(params) {
+  const validated = seedOrgMemberSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(member).values({
+    id: validated.id,
+    userId: validated.userId,
+    organizationId: validated.organizationId,
+    role: validated.role,
+    createdAt: new Date(validated.createdAt * 1000),
+  });
+}
+
+/**
  * Seed a project into the test database
  */
 export async function seedProject(params) {
@@ -199,6 +247,7 @@ export async function seedProject(params) {
     id: validated.id,
     name: validated.name,
     description: validated.description,
+    orgId: validated.orgId,
     createdBy: validated.createdBy,
     createdAt: new Date(validated.createdAt * 1000),
     updatedAt: new Date(validated.updatedAt * 1000),
@@ -259,6 +308,25 @@ export async function seedSubscription(params) {
     cancelAtPeriodEnd: validated.cancelAtPeriodEnd === 1,
     createdAt: new Date(validated.createdAt * 1000),
     updatedAt: new Date(validated.updatedAt * 1000),
+  });
+}
+
+/**
+ * Seed a media file into the test database
+ */
+export async function seedMediaFile(params) {
+  const validated = seedMediaFileSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(mediaFiles).values({
+    id: validated.id,
+    filename: validated.filename,
+    originalName: validated.originalName,
+    fileType: validated.fileType,
+    fileSize: validated.fileSize,
+    uploadedBy: validated.uploadedBy,
+    bucketKey: validated.bucketKey,
+    createdAt: new Date(validated.createdAt * 1000),
   });
 }
 

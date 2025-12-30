@@ -18,6 +18,7 @@ import { isErrorCode, handleFetchError, handleError } from '@/lib/error-utils.js
  *
  * @param {Object} props
  * @param {string} props.apiBase - API base URL
+ * @param {string} props.orgId - Organization ID (for org-scoped project creation)
  * @param {Function} props.onProjectCreated - Called with (project, pendingPdfs, allRefs)
  * @param {Function} props.onCancel - Called when form is cancelled
  */
@@ -93,10 +94,16 @@ export default function CreateProjectForm(props) {
   const handleSubmit = async () => {
     if (!projectName().trim()) return;
 
+    // Require orgId for project creation
+    if (!props.orgId) {
+      showToast.error('Error', 'No organization context. Please select a workspace.');
+      return;
+    }
+
     setIsCreating(true);
     try {
       const response = await handleFetchError(
-        fetch(`${props.apiBase}/api/projects`, {
+        fetch(`${props.apiBase}/api/orgs/${props.orgId}/projects`, {
           method: 'POST',
           credentials: 'include',
           headers: {

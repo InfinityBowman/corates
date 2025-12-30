@@ -6,7 +6,9 @@
 import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import useProject from '@/primitives/useProject/index.js';
+import { useOrgContext } from '@primitives/useOrgContext.js';
 import projectStore from '@/stores/projectStore.js';
+import projectActionsStore from '@/stores/projectActionsStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 import {
@@ -21,6 +23,9 @@ import ReconciliationWithPdf from './ReconciliationWithPdf.jsx';
 export default function ReconciliationWrapper() {
   const params = useParams();
   const navigate = useNavigate();
+
+  // Get org context for navigation and API calls
+  const { orgSlug, orgId } = useOrgContext();
 
   // params.projectId, params.studyId, params.checklist1Id, params.checklist2Id
 
@@ -38,15 +43,26 @@ export default function ReconciliationWrapper() {
     connect,
   } = useProject(params.projectId);
 
+  // Set active project for action store
+  createEffect(() => {
+    const pid = params.projectId;
+    const oid = orgId();
+    if (pid && oid) {
+      projectActionsStore._setActiveProject(pid, oid);
+      connect();
+    }
+  });
+
   // Read data from store
   const connectionState = () => projectStore.getConnectionState(params.projectId);
 
-  // Watch for access-denied errors and redirect to dashboard
+  // Watch for access-denied errors and redirect to org projects
   createEffect(() => {
     const state = connectionState();
     if (state.error && ACCESS_DENIED_ERRORS.includes(state.error)) {
       showToast.error('Access Denied', state.error);
-      navigate('/dashboard', { replace: true });
+      const slug = orgSlug();
+      navigate(slug ? `/orgs/${slug}` : '/dashboard', { replace: true });
     }
   });
 
@@ -101,14 +117,12 @@ export default function ReconciliationWrapper() {
   createEffect(() => {
     const pdf = currentPdf();
     const fileName = pdf?.fileName;
+    const oid = orgId();
 
-    // Skip if no PDF, already loaded this file, or currently loading
-    if (!fileName || attemptedPdfFile() === fileName || pdfLoading()) {
+    // Skip if no PDF, no orgId, already loaded this file, or currently loading
+    if (!fileName || !oid || attemptedPdfFile() === fileName || pdfLoading()) {
       return;
     }
-
-    // Don't clear previous PDF - keep it visible until new one loads
-    // This prevents flashing empty state during transitions
 
     setAttemptedPdfFile(fileName);
     setPdfLoading(true);
@@ -123,8 +137,8 @@ export default function ReconciliationWrapper() {
           setPdfLoading(false);
           return null; // Skip cloud fetch
         }
-        // Not in cache - fetch from cloud
-        return downloadPdf(params.projectId, params.studyId, fileName);
+        // Not in cache - fetch from cloud with orgId
+        return downloadPdf(oid, params.projectId, params.studyId, fileName);
       })
       .then(cloudData => {
         if (cloudData) {
@@ -153,8 +167,9 @@ export default function ReconciliationWrapper() {
   // Generate PDF URL for opening in new tab
   const pdfUrl = createMemo(() => {
     const fileName = pdfFileName();
-    if (!fileName) return null;
-    return getPdfUrl(params.projectId, params.studyId, fileName);
+    const oid = orgId();
+    if (!fileName || !oid) return null;
+    return getPdfUrl(oid, params.projectId, params.studyId, fileName);
   });
 
   // Get checklist metadata from store
@@ -357,6 +372,15 @@ export default function ReconciliationWrapper() {
     return member?.displayName || member?.name || member?.email || 'Unknown';
   }
 
+  // Build org-scoped project path
+  const getProjectPath = () => {
+    const slug = orgSlug();
+    if (slug) {
+      return `/orgs/${slug}/projects/${params.projectId}`;
+    }
+    return `/projects/${params.projectId}`;
+  };
+
   // Handle saving the reconciled checklist
   async function handleSaveReconciled(reconciledName) {
     try {
@@ -371,14 +395,8 @@ export default function ReconciliationWrapper() {
         title: reconciledName || 'Reconciled Checklist',
       });
 
-      // Individual reviewer checklists remain as REVIEWER_COMPLETED (they were already set when reviewers completed them)
-      // No need to update them - they're historical records
-
-      // Keep reconciliation progress (checklist1Id and checklist2Id) so users can view previous reviewers
-      // The progress data is needed for the "View Previous" button in the completed tab
-
       // Navigate back to the project view (completed tab)
-      navigate(`/projects/${params.projectId}?tab=completed`);
+      navigate(`${getProjectPath()}?tab=completed`);
     } catch (err) {
       console.error('Error saving reconciled checklist:', err);
       setError(err.message);
@@ -387,15 +405,8 @@ export default function ReconciliationWrapper() {
 
   // Handle cancel
   function handleCancel() {
-    navigate(`/projects/${params.projectId}?tab=reconcile`);
+    navigate(`${getProjectPath()}?tab=reconcile`);
   }
-
-  // Connect on mount
-  createEffect(() => {
-    if (params.projectId) {
-      connect();
-    }
-  });
 
   return (
     <Show

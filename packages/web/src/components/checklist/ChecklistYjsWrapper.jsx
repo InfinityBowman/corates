@@ -2,7 +2,9 @@ import { createSignal, createEffect, createMemo, Show } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import ChecklistWithPdf from '@/components/checklist/ChecklistWithPdf.jsx';
 import useProject from '@/primitives/useProject/index.js';
+import { useOrgContext } from '@primitives/useOrgContext.js';
 import projectStore from '@/stores/projectStore.js';
+import projectActionsStore from '@/stores/projectActionsStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import { CHECKLIST_STATUS, isEditable } from '@/constants/checklist-status.js';
 import { getNextStatusForCompletion } from '@/lib/checklist-domain.js';
@@ -22,6 +24,9 @@ export default function ChecklistYjsWrapper() {
   const { user } = useBetterAuth();
   const confirmDialog = useConfirmDialog();
 
+  // Get org context for navigation and API calls
+  const { orgSlug, orgId } = useOrgContext();
+
   const [pdfData, setPdfData] = createSignal(null);
   const [pdfFileName, setPdfFileName] = createSignal(null);
   const [pdfLoading, setPdfLoading] = createSignal(false);
@@ -29,6 +34,7 @@ export default function ChecklistYjsWrapper() {
 
   // Use full hook for write operations
   const {
+    connect,
     updateChecklistAnswer,
     updateChecklist,
     getChecklistData,
@@ -36,15 +42,26 @@ export default function ChecklistYjsWrapper() {
     getQuestionNote,
   } = useProject(params.projectId);
 
+  // Set active project for action store
+  createEffect(() => {
+    const pid = params.projectId;
+    const oid = orgId();
+    if (pid && oid) {
+      projectActionsStore._setActiveProject(pid, oid);
+      connect();
+    }
+  });
+
   // Read data directly from store for faster reactivity
   const connectionState = () => projectStore.getConnectionState(params.projectId);
 
-  // Watch for access-denied errors and redirect to dashboard
+  // Watch for access-denied errors and redirect to org projects
   createEffect(() => {
     const state = connectionState();
     if (state.error && ACCESS_DENIED_ERRORS.includes(state.error)) {
       showToast.error('Access Denied', state.error);
-      navigate('/dashboard', { replace: true });
+      const slug = orgSlug();
+      navigate(slug ? `/orgs/${slug}` : '/dashboard', { replace: true });
     }
   });
 
@@ -104,15 +121,13 @@ export default function ChecklistYjsWrapper() {
   createEffect(() => {
     const pdf = currentPdf();
     const fileName = pdf?.fileName;
+    const oid = orgId();
     selectedPdfId(); // Explicitly track selection changes
 
-    // Skip if no PDF, already loaded this file, or currently loading
-    if (!fileName || attemptedPdfFile() === fileName || pdfLoading()) {
+    // Skip if no PDF, no orgId, already loaded this file, or currently loading
+    if (!fileName || !oid || attemptedPdfFile() === fileName || pdfLoading()) {
       return;
     }
-
-    // Don't clear previous PDF - keep it visible until new one loads
-    // This prevents flashing empty state during transitions
 
     setAttemptedPdfFile(fileName);
     setPdfLoading(true);
@@ -127,8 +142,8 @@ export default function ChecklistYjsWrapper() {
           setPdfLoading(false);
           return null; // Skip cloud fetch
         }
-        // Not in cache - fetch from cloud
-        return downloadPdf(params.projectId, params.studyId, fileName);
+        // Not in cache - fetch from cloud with orgId
+        return downloadPdf(oid, params.projectId, params.studyId, fileName);
       })
       .then(cloudData => {
         if (cloudData) {
@@ -156,13 +171,19 @@ export default function ChecklistYjsWrapper() {
 
   // Handle PDF change (upload new PDF)
   const handlePdfChange = async (data, fileName) => {
+    const oid = orgId();
+    if (!oid) {
+      showToast.error('Error', 'No organization context');
+      return;
+    }
+
     let uploadResult = null;
     try {
       // Determine tag: if no PDFs exist, set as primary
       const hasPdfs = studyPdfs().length > 0;
       const tag = hasPdfs ? 'secondary' : 'primary';
 
-      uploadResult = await uploadPdf(params.projectId, params.studyId, data, fileName);
+      uploadResult = await uploadPdf(oid, params.projectId, params.studyId, data, fileName);
       // Update Y.js with PDF metadata
       const pdfId = addPdfToStudy(
         params.studyId,
@@ -185,7 +206,7 @@ export default function ChecklistYjsWrapper() {
       console.error('Failed to upload PDF:', err);
       // Clean up uploaded file if metadata save failed
       if (uploadResult?.fileName) {
-        deletePdf(params.projectId, params.studyId, uploadResult.fileName).catch(cleanupErr =>
+        deletePdf(oid, params.projectId, params.studyId, uploadResult.fileName).catch(cleanupErr =>
           console.warn('Failed to clean up orphaned PDF:', cleanupErr),
         );
       }
@@ -330,8 +351,9 @@ export default function ChecklistYjsWrapper() {
   // Generate PDF URL for opening in new tab
   const pdfUrl = createMemo(() => {
     const fileName = pdfFileName();
-    if (!fileName) return null;
-    return getPdfUrl(params.projectId, params.studyId, fileName);
+    const oid = orgId();
+    if (!fileName || !oid) return null;
+    return getPdfUrl(oid, params.projectId, params.studyId, fileName);
   });
 
   // Determine back button navigation from tab query param
@@ -340,12 +362,22 @@ export default function ChecklistYjsWrapper() {
     return tabFromUrl || 'overview';
   };
 
+  // Build back path with org context
+  const getBackPath = () => {
+    const slug = orgSlug();
+    const tab = getBackTab();
+    if (slug) {
+      return `/orgs/${slug}/projects/${params.projectId}?tab=${tab}`;
+    }
+    return `/projects/${params.projectId}?tab=${tab}`;
+  };
+
   // Header content for the split screen toolbar (left side)
   const headerContent = (
     <>
       <confirmDialog.ConfirmDialogComponent />
       <button
-        onClick={() => navigate(`/projects/${params.projectId}?tab=${getBackTab()}`)}
+        onClick={() => navigate(getBackPath())}
         class='text-gray-400 transition-colors hover:text-gray-700'
       >
         <IoChevronBack size={20} />

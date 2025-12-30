@@ -1,7 +1,9 @@
 import { betterAuth } from 'better-auth';
+import { createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { genericOAuth, magicLink, twoFactor, admin } from 'better-auth/plugins';
+import { genericOAuth, magicLink, twoFactor, admin, organization } from 'better-auth/plugins';
 import { drizzle } from 'drizzle-orm/d1';
+import { eq } from 'drizzle-orm';
 import * as schema from '../db/schema.js';
 import { createEmailService } from './email.js';
 import { getAllowedOrigins } from '../config/origins.js';
@@ -122,6 +124,15 @@ export function createAuth(env, ctx) {
     }),
   );
 
+  // Organization plugin for multi-tenant support
+  plugins.push(
+    organization({
+      allowUserToCreateOrganization: true,
+      creatorRole: 'owner',
+      membershipLimit: 100,
+    }),
+  );
+
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: 'sqlite',
@@ -131,6 +142,9 @@ export function createAuth(env, ctx) {
         account: schema.account,
         verification: schema.verification,
         twoFactor: schema.twoFactor,
+        organization: schema.organization,
+        member: schema.member,
+        invitation: schema.invitation,
       },
     }),
 
@@ -298,6 +312,67 @@ export function createAuth(env, ctx) {
     },
 
     secret: getAuthSecret(env),
+
+    // Hooks for custom auth behavior
+    hooks: {
+      // After hook: bootstrap personal org on first successful authentication
+      after: createAuthMiddleware(async ctx => {
+        const newSession = ctx.context.newSession;
+        if (!newSession) return;
+
+        const userId = newSession.user.id;
+        const userName = newSession.user.name || newSession.user.email?.split('@')[0] || 'User';
+
+        try {
+          // Check if user has any org memberships
+          const existingMembership = await db
+            .select({ id: schema.member.id })
+            .from(schema.member)
+            .where(eq(schema.member.userId, userId))
+            .limit(1)
+            .get();
+
+          if (existingMembership) {
+            // User already has at least one org, no bootstrap needed
+            return;
+          }
+
+          // Create personal org for the user
+          const orgId = crypto.randomUUID();
+          const memberId = crypto.randomUUID();
+          const now = new Date();
+          const slug = `${userName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${orgId.slice(0, 8)}`;
+
+          // Insert org and membership
+          await db.insert(schema.organization).values({
+            id: orgId,
+            name: `${userName}'s Workspace`,
+            slug,
+            metadata: JSON.stringify({ type: 'personal' }),
+            createdAt: now,
+          });
+
+          await db.insert(schema.member).values({
+            id: memberId,
+            userId,
+            organizationId: orgId,
+            role: 'owner',
+            createdAt: now,
+          });
+
+          // Update the session to set activeOrganizationId
+          await db
+            .update(schema.session)
+            .set({ activeOrganizationId: orgId })
+            .where(eq(schema.session.id, newSession.session.id));
+
+          console.log(`[Auth] Created personal org ${orgId} for user ${userId}`);
+        } catch (err) {
+          // Log but don't fail the auth - user can create org later
+          console.error('[Auth] Failed to bootstrap personal org:', err);
+        }
+      }),
+    },
   });
 }
 

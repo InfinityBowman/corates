@@ -13,7 +13,7 @@ import CompletedStudyRow from './CompletedStudyRow.jsx';
  * Uses projectActionsStore directly for mutations.
  */
 export default function CompletedTab() {
-  const { projectId, getAssigneeName } = useProjectContext();
+  const { projectId, getAssigneeName, getChecklistPath } = useProjectContext();
   const navigate = useNavigate();
   const { getReconciliationProgress } = useProject(projectId);
 
@@ -25,7 +25,7 @@ export default function CompletedTab() {
 
   // Navigation helpers
   const openChecklist = (studyId, checklistId) => {
-    navigate(`/projects/${projectId}/studies/${studyId}/checklists/${checklistId}?tab=completed`);
+    navigate(getChecklistPath(studyId, checklistId, 'completed'));
   };
 
   const handleViewPdf = (studyId, pdf) => {

@@ -7,10 +7,9 @@ import CompleteProfile from '@/components/auth/CompleteProfile.jsx';
 import ResetPassword from '@/components/auth/ResetPassword.jsx';
 import AuthLayout from '@/components/auth/AuthLayout.jsx';
 import Layout from '@/Layout.jsx';
+import LocalChecklistView from '@/components/checklist/LocalChecklistView.jsx';
 import ChecklistYjsWrapper from '@/components/checklist/ChecklistYjsWrapper.jsx';
 import ReconciliationWrapper from '@/components/checklist/compare/ReconciliationWrapper.jsx';
-import ProjectView from '@/components/project/ProjectView.jsx';
-import LocalChecklistView from '@/components/checklist/LocalChecklistView.jsx';
 import ProfilePage from '@/components/profile/ProfilePage.jsx';
 import SettingsPage from '@/components/profile/SettingsPage.jsx';
 import BillingPage from '@components/billing/BillingPage.jsx';
@@ -19,6 +18,7 @@ import { AdminDashboard } from '@/components/admin/index.js';
 import StorageManagement from '@/components/admin/StorageManagement.jsx';
 import { BASEPATH } from '@config/api.js';
 import ProtectedGuard from '@/components/auth/ProtectedGuard.jsx';
+import { OrgProjectsPage, ProjectView, CreateOrgPage } from '@/components/org/index.js';
 
 export default function AppRoutes() {
   return (
@@ -34,27 +34,38 @@ export default function AppRoutes() {
 
       {/* Main app routes */}
       <Route path='/' component={Layout}>
+        {/* Dashboard redirects to org context */}
         <Route path='/' component={Dashboard} />
         <Route path='/dashboard' component={Dashboard} />
+
         {/* Protected routes - requires login */}
         <Route path='/' component={ProtectedGuard}>
+          {/* Global user routes (outside org context) */}
           <Route path='/profile' component={ProfilePage} />
           <Route path='/settings' component={SettingsPage} />
           <Route path='/admin' component={AdminDashboard} />
           <Route path='/admin/storage' component={StorageManagement} />
           <Route path='/settings/billing' component={BillingPage} />
+
+          {/* Organization routes */}
+          <Route path='/orgs/new' component={CreateOrgPage} />
+          <Route path='/orgs/:orgSlug' component={OrgProjectsPage} />
+          <Route path='/orgs/:orgSlug/projects/:projectId' component={ProjectView} />
+
+          {/* Org-scoped checklist routes */}
+          <Route
+            path='/orgs/:orgSlug/projects/:projectId/studies/:studyId/checklists/:checklistId'
+            component={ChecklistYjsWrapper}
+          />
+          <Route
+            path='/orgs/:orgSlug/projects/:projectId/studies/:studyId/reconcile/:checklist1Id/:checklist2Id'
+            component={ReconciliationWrapper}
+          />
         </Route>
+
+        {/* Local checklists (not org-scoped, work offline) */}
         <Route path='/checklist/*' component={LocalChecklistView} />
         <Route path='/checklist/:checklistId' component={LocalChecklistView} />
-        <Route path='/projects/:projectId' component={ProjectView} />
-        <Route
-          path='/projects/:projectId/studies/:studyId/checklists/:checklistId'
-          component={ChecklistYjsWrapper}
-        />
-        <Route
-          path='/projects/:projectId/studies/:studyId/reconcile/:checklist1Id/:checklist2Id'
-          component={ReconciliationWrapper}
-        />
       </Route>
       <Route path='*' component={NotFoundPage} />
     </Router>

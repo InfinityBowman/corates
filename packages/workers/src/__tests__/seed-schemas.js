@@ -49,12 +49,36 @@ export const seedUserSchema = z.object({
 });
 
 /**
+ * Schema for seeding an organization
+ */
+export const seedOrganizationSchema = z.object({
+  id: z.string().min(1, 'Organization ID is required'),
+  name: z.string().min(1, 'Organization name is required'),
+  slug: z.string().nullable().optional().default(null),
+  logo: z.string().nullable().optional().default(null),
+  metadata: z.string().nullable().optional().default(null),
+  createdAt: dateOrTimestampToNumber,
+});
+
+/**
+ * Schema for seeding an organization member
+ */
+export const seedOrgMemberSchema = z.object({
+  id: z.string().min(1, 'Member ID is required'),
+  userId: z.string().min(1, 'User ID is required'),
+  organizationId: z.string().min(1, 'Organization ID is required'),
+  role: z.enum(['owner', 'admin', 'member']).default('member'),
+  createdAt: dateOrTimestampToNumber,
+});
+
+/**
  * Schema for seeding a project
  */
 export const seedProjectSchema = z.object({
   id: z.string().min(1, 'Project ID is required'),
   name: z.string().min(1, 'Project name is required'),
   description: z.string().nullable().optional().default(null),
+  orgId: z.string().nullable().optional().default(null),
   createdBy: z.string().min(1, 'Created by user ID is required'),
   createdAt: dateOrTimestampToNumber,
   updatedAt: dateOrTimestampToNumber,
@@ -129,4 +153,18 @@ export const seedSubscriptionSchema = z.object({
     .default(0),
   createdAt: dateOrTimestampToNumber,
   updatedAt: dateOrTimestampToNumber,
+});
+
+/**
+ * Schema for seeding a media file
+ */
+export const seedMediaFileSchema = z.object({
+  id: z.string().min(1, 'Media file ID is required'),
+  filename: z.string().min(1, 'Filename is required'),
+  originalName: z.string().nullable().optional().default(null),
+  fileType: z.string().nullable().optional().default(null),
+  fileSize: z.number().int().nullable().optional().default(null),
+  uploadedBy: z.string().nullable().optional().default(null),
+  bucketKey: z.string().min(1, 'Bucket key is required'),
+  createdAt: dateOrTimestampToNumber,
 });

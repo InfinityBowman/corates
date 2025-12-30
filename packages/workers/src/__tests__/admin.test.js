@@ -659,4 +659,124 @@ describe('Admin API routes', () => {
       .first();
     expect(remainingProjects.c).toBe(0);
   });
+
+  it('DELETE /api/admin/users/:userId should set mediaFiles.uploadedBy to null', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    await seedUser({
+      id: 'admin-user',
+      name: 'Admin',
+      email: 'admin@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+    await seedUser({
+      id: 'u1',
+      name: 'Target',
+      email: 'target@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    // Create a media file owned by the user to be deleted
+    await env.DB.prepare(
+      'INSERT INTO mediaFiles (id, filename, bucketKey, uploadedBy, createdAt) VALUES (?1, ?2, ?3, ?4, ?5)',
+    )
+      .bind('media-1', 'test.pdf', 'bucket-key-1', 'u1', nowSec)
+      .run();
+
+    const del = await fetchApp('/api/admin/users/u1', {
+      method: 'DELETE',
+      headers: { origin: 'http://localhost:5173' },
+    });
+    expect(del.status).toBe(200);
+
+    // Verify media file still exists but uploadedBy is null
+    const mediaFile = await env.DB.prepare('SELECT * FROM mediaFiles WHERE id = ?1')
+      .bind('media-1')
+      .first();
+    expect(mediaFile).not.toBeNull();
+    expect(mediaFile.uploadedBy).toBeNull();
+  });
+
+  it('POST /api/admin/users/:userId/subscription grants subscription (never 404)', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    await seedUser({
+      id: 'u1',
+      name: 'Target',
+      email: 'target@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    // Test the subscription grant endpoint
+    const res = await fetchApp('/api/admin/users/u1/subscription', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: 'http://localhost:5173',
+      },
+      body: JSON.stringify({
+        tier: 'pro',
+        status: 'active',
+        currentPeriodStart: nowSec,
+      }),
+    });
+
+    // Should never be 404 - route should be registered
+    expect(res.status).not.toBe(404);
+    expect(res.status).toBe(200);
+
+    const body = await json(res);
+    expect(body.success).toBe(true);
+    expect(body.subscription).toBeDefined();
+    expect(body.subscription.tier).toBe('pro');
+
+    // Verify subscription was created in DB
+    const sub = await env.DB.prepare('SELECT * FROM subscriptions WHERE userId = ?1')
+      .bind('u1')
+      .first();
+    expect(sub).toBeDefined();
+    expect(sub.tier).toBe('pro');
+    expect(sub.status).toBe('active');
+  });
+
+  it('DELETE /api/admin/users/:userId/subscription revokes subscription', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    await seedUser({
+      id: 'u1',
+      name: 'Target',
+      email: 'target@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    // First grant a subscription
+    await env.DB.prepare(
+      `INSERT INTO subscriptions (id, userId, tier, status, createdAt, updatedAt)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
+    )
+      .bind('sub1', 'u1', 'pro', 'active', nowSec, nowSec)
+      .run();
+
+    // Now revoke it
+    const res = await fetchApp('/api/admin/users/u1/subscription', {
+      method: 'DELETE',
+      headers: {
+        origin: 'http://localhost:5173',
+      },
+    });
+
+    expect(res.status).toBe(200);
+    const body = await json(res);
+    expect(body.success).toBe(true);
+
+    // Verify subscription status was updated
+    const sub = await env.DB.prepare('SELECT status FROM subscriptions WHERE userId = ?1')
+      .bind('u1')
+      .first();
+    expect(sub.status).toBe('inactive');
+  });
 });

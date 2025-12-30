@@ -4,6 +4,9 @@
 
 import { createSignal } from 'solid-js';
 import { API_BASE } from '@config/api.js';
+import { handleFetchError } from '@/lib/error-utils.js';
+import { queryClient } from '@lib/queryClient.js';
+import { queryKeys } from '@lib/queryKeys.js';
 
 // Admin state
 const [isAdminChecked, setIsAdminChecked] = createSignal(false);
@@ -223,32 +226,42 @@ async function grantAccess(userId, options = {}) {
     body.currentPeriodEnd = currentPeriodEnd;
   }
 
-  const response = await fetch(`${API_BASE}/api/admin/users/${userId}/subscription`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to grant subscription');
-  }
-  return response.json();
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/users/${userId}/subscription`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+
+  // Invalidate user-specific caches so frontend immediately reflects the change
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.userDetails(userId) });
+  queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+
+  return result;
 }
 
 /**
  * Revoke subscription from a user
  */
 async function revokeAccess(userId) {
-  const response = await fetch(`${API_BASE}/api/admin/users/${userId}/subscription`, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to revoke subscription');
-  }
-  return response.json();
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/users/${userId}/subscription`, {
+      method: 'DELETE',
+      credentials: 'include',
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+
+  // Invalidate user-specific caches so frontend immediately reflects the change
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.userDetails(userId) });
+  queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+
+  return result;
 }
 
 /**

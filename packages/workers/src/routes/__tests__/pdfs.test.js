@@ -1,5 +1,5 @@
 /**
- * Integration tests for PDF routes
+ * Integration tests for org-scoped PDF routes
  * Tests PDF upload/download/delete with R2 storage and project membership
  */
 
@@ -11,6 +11,8 @@ import {
   seedUser,
   seedProject,
   seedProjectMember,
+  seedOrganization,
+  seedOrgMember,
   json,
 } from '../../__tests__/helpers.js';
 import { FILE_SIZE_LIMITS } from '../../config/constants.js';
@@ -54,9 +56,9 @@ let app;
 let mockR2Bucket;
 
 beforeAll(async () => {
-  const { pdfRoutes } = await import('../pdfs.js');
+  const { orgPdfRoutes } = await import('../orgs/pdfs.js');
   app = new Hono();
-  app.route('/api/projects/:projectId/studies/:studyId/pdfs', pdfRoutes);
+  app.route('/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', orgPdfRoutes);
 });
 
 beforeEach(async () => {
@@ -131,13 +133,13 @@ beforeEach(async () => {
   env.PDF_BUCKET = mockR2Bucket;
 });
 
-async function fetchPdf(projectId, studyId, path = '', init = {}) {
+async function fetchPdf(orgId, projectId, studyId, path = '', init = {}) {
   const ctx = createExecutionContext();
-  // Route is mounted at /api/projects/:projectId/studies/:studyId/pdfs
+  // Route is mounted at /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs
   // For list endpoint, path should be empty or '/'
   const routePath = path === 's' ? '' : path;
   const req = new Request(
-    `http://localhost/api/projects/${projectId}/studies/${studyId}/pdfs${routePath}`,
+    `http://localhost/api/orgs/${orgId}/projects/${projectId}/studies/${studyId}/pdfs${routePath}`,
     {
       ...init,
       headers: {
@@ -152,7 +154,7 @@ async function fetchPdf(projectId, studyId, path = '', init = {}) {
   return res;
 }
 
-describe('PDF Routes - GET /api/projects/:projectId/studies/:studyId/pdfs', () => {
+describe('Org-Scoped PDF Routes - GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () => {
   it('should list PDFs for a study', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
     await seedUser({
@@ -163,9 +165,25 @@ describe('PDF Routes - GET /api/projects/:projectId/studies/:studyId/pdfs', () =
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Test Project',
+      orgId: 'org-1',
       createdBy: 'user-1',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -185,7 +203,7 @@ describe('PDF Routes - GET /api/projects/:projectId/studies/:studyId/pdfs', () =
       httpMetadata: { contentType: 'application/pdf' },
     });
 
-    const res = await fetchPdf('project-1', 'study-1', 's');
+    const res = await fetchPdf('org-1', 'project-1', 'study-1', 's');
 
     expect(res.status).toBe(200);
     const body = await json(res);
@@ -212,26 +230,58 @@ describe('PDF Routes - GET /api/projects/:projectId/studies/:studyId/pdfs', () =
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    // user-1 is an org member but NOT a project member
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'member',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-2',
+      organizationId: 'org-1',
+      userId: 'user-2',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Test Project',
+      orgId: 'org-1',
       createdBy: 'user-2',
       createdAt: nowSec,
       updatedAt: nowSec,
     });
 
-    const res = await fetchPdf('project-1', 'study-1', 's');
+    // Only user-2 is a project member
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-2',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
 
-    // Route returns 403 for access denied (when user is not a member)
-    expect([403, 404]).toContain(res.status);
-    if (res.status === 403) {
-      const body = await json(res);
-      expect(body.code).toBe('PROJECT_ACCESS_DENIED');
-    }
+    const res = await fetchPdf('org-1', 'project-1', 'study-1', 's');
+
+    // Route returns 403 for access denied (when user is not a project member)
+    expect(res.status).toBe(403);
+    const body = await json(res);
+    expect(body.code).toBe('PROJECT_ACCESS_DENIED');
   });
 });
 
-describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdfs', () => {
+describe('Org-Scoped PDF Routes - POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () => {
   it('should upload PDF successfully', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
     await seedUser({
@@ -242,9 +292,25 @@ describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdfs', () 
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Test Project',
+      orgId: 'org-1',
       createdBy: 'user-1',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -263,7 +329,7 @@ describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdfs', () 
     const formData = new FormData();
     formData.append('file', file);
 
-    const res = await fetchPdf('project-1', 'study-1', '', {
+    const res = await fetchPdf('org-1', 'project-1', 'study-1', '', {
       method: 'POST',
       body: formData,
     });
@@ -285,9 +351,25 @@ describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdfs', () 
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Test Project',
+      orgId: 'org-1',
       createdBy: 'user-1',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -307,7 +389,7 @@ describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdfs', () 
     const formData = new FormData();
     formData.append('file', largeFile);
 
-    const res = await fetchPdf('project-1', 'study-1', '', {
+    const res = await fetchPdf('org-1', 'project-1', 'study-1', '', {
       method: 'POST',
       headers: {
         'Content-Length': String(FILE_SIZE_LIMITS.PDF + 1),
@@ -330,9 +412,25 @@ describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdfs', () 
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Test Project',
+      orgId: 'org-1',
       createdBy: 'user-1',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -350,7 +448,7 @@ describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdfs', () 
     const formData = new FormData();
     formData.append('file', file);
 
-    const res = await fetchPdf('project-1', 'study-1', '', {
+    const res = await fetchPdf('org-1', 'project-1', 'study-1', '', {
       method: 'POST',
       body: formData,
     });
@@ -370,9 +468,25 @@ describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdfs', () 
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Test Project',
+      orgId: 'org-1',
       createdBy: 'user-1',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -397,7 +511,7 @@ describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdfs', () 
     const formData = new FormData();
     formData.append('file', file);
 
-    const res = await fetchPdf('project-1', 'study-1', '', {
+    const res = await fetchPdf('org-1', 'project-1', 'study-1', '', {
       method: 'POST',
       body: formData,
     });
@@ -425,9 +539,33 @@ describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdfs', () 
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'member',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-2',
+      organizationId: 'org-1',
+      userId: 'user-2',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Test Project',
+      orgId: 'org-1',
       createdBy: 'user-2',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -441,12 +579,20 @@ describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdfs', () 
       joinedAt: nowSec,
     });
 
+    await seedProjectMember({
+      id: 'pm-2',
+      projectId: 'project-1',
+      userId: 'user-2',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
     const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]);
     const file = new File([pdfData], 'document.pdf', { type: 'application/pdf' });
     const formData = new FormData();
     formData.append('file', file);
 
-    const res = await fetchPdf('project-1', 'study-1', '', {
+    const res = await fetchPdf('org-1', 'project-1', 'study-1', '', {
       method: 'POST',
       body: formData,
     });
@@ -466,9 +612,25 @@ describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdfs', () 
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Test Project',
+      orgId: 'org-1',
       createdBy: 'user-1',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -484,7 +646,7 @@ describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdfs', () 
 
     const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]);
 
-    const res = await fetchPdf('project-1', 'study-1', '', {
+    const res = await fetchPdf('org-1', 'project-1', 'study-1', '', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/pdf',
@@ -500,7 +662,7 @@ describe('PDF Routes - POST /api/projects/:projectId/studies/:studyId/pdfs', () 
   });
 });
 
-describe('PDF Routes - GET /api/projects/:projectId/studies/:studyId/pdfs/:fileName', () => {
+describe('Org-Scoped PDF Routes - GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName', () => {
   it('should download PDF successfully', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
     await seedUser({
@@ -511,9 +673,25 @@ describe('PDF Routes - GET /api/projects/:projectId/studies/:studyId/pdfs/:fileN
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Test Project',
+      orgId: 'org-1',
       createdBy: 'user-1',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -532,7 +710,7 @@ describe('PDF Routes - GET /api/projects/:projectId/studies/:studyId/pdfs/:fileN
       httpMetadata: { contentType: 'application/pdf' },
     });
 
-    const res = await fetchPdf('project-1', 'study-1', '/document.pdf');
+    const res = await fetchPdf('org-1', 'project-1', 'study-1', '/document.pdf');
 
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('application/pdf');
@@ -551,9 +729,25 @@ describe('PDF Routes - GET /api/projects/:projectId/studies/:studyId/pdfs/:fileN
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Test Project',
+      orgId: 'org-1',
       createdBy: 'user-1',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -567,7 +761,7 @@ describe('PDF Routes - GET /api/projects/:projectId/studies/:studyId/pdfs/:fileN
       joinedAt: nowSec,
     });
 
-    const res = await fetchPdf('project-1', 'study-1', '/nonexistent.pdf');
+    const res = await fetchPdf('org-1', 'project-1', 'study-1', '/nonexistent.pdf');
 
     expect(res.status).toBe(404);
     const body = await json(res);
@@ -575,7 +769,7 @@ describe('PDF Routes - GET /api/projects/:projectId/studies/:studyId/pdfs/:fileN
   });
 });
 
-describe('PDF Routes - DELETE /api/projects/:projectId/studies/:studyId/pdfs/:fileName', () => {
+describe('Org-Scoped PDF Routes - DELETE /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName', () => {
   it('should delete PDF successfully', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
     await seedUser({
@@ -586,9 +780,25 @@ describe('PDF Routes - DELETE /api/projects/:projectId/studies/:studyId/pdfs/:fi
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Test Project',
+      orgId: 'org-1',
       createdBy: 'user-1',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -607,7 +817,7 @@ describe('PDF Routes - DELETE /api/projects/:projectId/studies/:studyId/pdfs/:fi
       httpMetadata: { contentType: 'application/pdf' },
     });
 
-    const res = await fetchPdf('project-1', 'study-1', '/document.pdf', {
+    const res = await fetchPdf('org-1', 'project-1', 'study-1', '/document.pdf', {
       method: 'DELETE',
     });
 
@@ -638,9 +848,33 @@ describe('PDF Routes - DELETE /api/projects/:projectId/studies/:studyId/pdfs/:fi
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'member',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-2',
+      organizationId: 'org-1',
+      userId: 'user-2',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Test Project',
+      orgId: 'org-1',
       createdBy: 'user-2',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -654,12 +888,20 @@ describe('PDF Routes - DELETE /api/projects/:projectId/studies/:studyId/pdfs/:fi
       joinedAt: nowSec,
     });
 
+    await seedProjectMember({
+      id: 'pm-2',
+      projectId: 'project-1',
+      userId: 'user-2',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
     const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]);
     await mockR2Bucket.put('projects/project-1/studies/study-1/document.pdf', pdfData, {
       httpMetadata: { contentType: 'application/pdf' },
     });
 
-    const res = await fetchPdf('project-1', 'study-1', '/document.pdf', {
+    const res = await fetchPdf('org-1', 'project-1', 'study-1', '/document.pdf', {
       method: 'DELETE',
     });
 

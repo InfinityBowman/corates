@@ -1,11 +1,14 @@
 /**
  * ProjectView - Main view for a single project
  * Displays tabs for overview, all studies, to-do, reconciliation, and completed
+ *
+ * This component uses org-scoped routes and APIs.
  */
 
 import { createSignal, createEffect, Show, onCleanup, batch } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import useProject from '@/primitives/useProject/index.js';
+import { useOrgContext } from '@primitives/useOrgContext.js';
 import projectStore from '@/stores/projectStore.js';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import projectActionsStore from '@/stores/projectActionsStore';
@@ -36,6 +39,9 @@ export default function ProjectView() {
   const location = useLocation();
   const { user } = useBetterAuth();
 
+  // Get org context for navigation and API calls
+  const { orgSlug, orgId } = useOrgContext();
+
   // Y.js hook - connection is also registered with projectActionsStore
   const projectConnection = useProject(params.projectId);
   const { connect, disconnect } = projectConnection;
@@ -45,10 +51,12 @@ export default function ProjectView() {
   const meta = () => projectStore.getMeta(params.projectId);
   const connectionState = () => projectStore.getConnectionState(params.projectId);
 
-  // Set active project for action store (so methods don't need projectId)
+  // Set active project for action store (so methods don't need projectId/orgId)
   createEffect(() => {
-    if (params.projectId) {
-      projectActionsStore._setActiveProject(params.projectId);
+    const pid = params.projectId;
+    const oid = orgId();
+    if (pid && oid) {
+      projectActionsStore._setActiveProject(pid, oid);
       connect();
     }
   });
@@ -59,15 +67,18 @@ export default function ProjectView() {
     disconnect();
   });
 
-  // Watch for access-denied errors and redirect to dashboard
-  // These errors occur when: project deleted, user removed, or user never had access
+  // Watch for access-denied errors and redirect to org projects page
   createEffect(() => {
     const state = connectionState();
     if (state.error && ACCESS_DENIED_ERRORS.includes(state.error)) {
-      // Show appropriate toast message
       showToast.error('Access Denied', state.error);
-      // Navigate to dashboard
-      navigate('/dashboard', { replace: true });
+      // Navigate back to org projects page
+      const slug = orgSlug();
+      if (slug) {
+        navigate(`/orgs/${slug}`, { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     }
   });
 
@@ -81,7 +92,9 @@ export default function ProjectView() {
   createEffect(() => {
     const state = connectionState();
     const pdfs = pendingPdfs();
-    if (!state.synced || !params.projectId || !Array.isArray(pdfs) || pdfs.length === 0) return;
+    const oid = orgId();
+    if (!state.synced || !params.projectId || !oid || !Array.isArray(pdfs) || pdfs.length === 0)
+      return;
 
     batch(() => {
       setPendingPdfs(null);
@@ -101,7 +114,7 @@ export default function ProjectView() {
       const studyId = projectActionsStore.study.create(studyName, abstract, metadata);
       if (studyId && pdf.data) {
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
-        uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName)
+        uploadPdf(oid, params.projectId, studyId, arrayBuffer, pdf.fileName)
           .then(result => {
             cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(console.warn);
             try {
@@ -123,7 +136,7 @@ export default function ProjectView() {
             } catch (metaErr) {
               console.error('Failed to add PDF metadata:', metaErr);
               // Clean up orphaned file
-              deletePdf(params.projectId, studyId, result.fileName).catch(console.warn);
+              deletePdf(oid, params.projectId, studyId, result.fileName).catch(console.warn);
             }
           })
           .catch(err => console.error('Error uploading PDF for new study:', err));
@@ -150,7 +163,14 @@ export default function ProjectView() {
   createEffect(() => {
     const state = connectionState();
     const driveFiles = pendingDriveFiles();
-    if (!state.synced || !params.projectId || !Array.isArray(driveFiles) || driveFiles.length === 0)
+    const oid = orgId();
+    if (
+      !state.synced ||
+      !params.projectId ||
+      !oid ||
+      !Array.isArray(driveFiles) ||
+      driveFiles.length === 0
+    )
       return;
 
     batch(() => {
@@ -167,7 +187,7 @@ export default function ProjectView() {
       };
       const studyId = projectActionsStore.study.create(title, abstract, metadata);
       if (studyId && file.id) {
-        importFromGoogleDrive(file.id, params.projectId, studyId)
+        importFromGoogleDrive(file.id, oid, params.projectId, studyId)
           .then(result => {
             try {
               projectActionsStore.pdf.addToStudy(studyId, {
@@ -181,7 +201,7 @@ export default function ProjectView() {
             } catch (metaErr) {
               console.error('Failed to add PDF metadata:', metaErr);
               // Clean up orphaned file
-              deletePdf(params.projectId, studyId, result.file.fileName).catch(console.warn);
+              deletePdf(oid, params.projectId, studyId, result.file.fileName).catch(console.warn);
             }
           })
           .catch(err => console.error('Error importing Google Drive file:', err));
@@ -252,6 +272,12 @@ export default function ProjectView() {
     });
   };
 
+  // Build back navigation path
+  const backPath = () => {
+    const slug = orgSlug();
+    return slug ? `/orgs/${slug}` : '/dashboard';
+  };
+
   return (
     <div class='mx-auto max-w-7xl p-6'>
       <ProjectProvider projectId={params.projectId}>
@@ -260,7 +286,7 @@ export default function ProjectView() {
           description={() => meta()?.description}
           onRename={newName => projectActionsStore.project.rename(newName)}
           onUpdateDescription={desc => projectActionsStore.project.updateDescription(desc)}
-          onBack={() => navigate('/dashboard')}
+          onBack={() => navigate(backPath())}
         />
 
         <Tabs tabs={tabDefinitions} value={tabFromUrl()} onValueChange={handleTabChange}>

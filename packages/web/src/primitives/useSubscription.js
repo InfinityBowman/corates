@@ -27,27 +27,21 @@ const DEFAULT_SUBSCRIPTION = {
 };
 
 /**
- * Wrapper for getSubscription that handles errors gracefully
- * Returns default subscription on error to prevent error boundary from catching it
+ * Fetch subscription from API
+ * Throws on error instead of silently returning default
  */
-async function getSubscriptionSafe() {
-  try {
-    return await handleFetchError(
-      fetch(`${API_BASE}/api/billing/subscription`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'GET',
-      }),
-      { showToast: false },
-    ).then(res => res.json());
-  } catch (error) {
-    // Silently return default subscription on error
-    // This prevents error boundary from catching network/auth errors during signout
-    console.warn('Failed to fetch subscription:', error.message);
-    return DEFAULT_SUBSCRIPTION;
-  }
+async function fetchSubscription() {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/billing/subscription`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    }),
+    { showToast: false },
+  );
+  return response.json();
 }
 
 /**
@@ -60,16 +54,24 @@ export function useSubscription() {
   // Use TanStack Query for subscription data with persistence
   const query = useQuery(() => ({
     queryKey: queryKeys.subscription.current,
-    queryFn: getSubscriptionSafe,
+    queryFn: fetchSubscription,
     enabled: isLoggedIn(),
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
+    retry: 1, // Retry once on failure
     // Use placeholderData so components can check loading state
     // placeholderData is only used while loading, not as initial data
     placeholderData: undefined,
   }));
 
+  // Return default subscription when not logged in or when query fails
+  // This prevents breaking the UI while still exposing the error for components that care
   const subscription = () => query.data || DEFAULT_SUBSCRIPTION;
+
+  /**
+   * Whether subscription fetch failed (only meaningful when logged in)
+   */
+  const subscriptionFetchFailed = createMemo(() => isLoggedIn() && query.isError);
 
   /**
    * Current subscription tier
@@ -145,6 +147,7 @@ export function useSubscription() {
     subscription,
     loading: () => query.isLoading || query.isFetching,
     error: () => query.error,
+    subscriptionFetchFailed, // True when logged in and fetch failed
     refetch: () => query.refetch(),
     mutate: data => {
       // Optimistic update - set query data via queryClient

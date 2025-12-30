@@ -193,31 +193,58 @@ routes.post('/', validateRequest(projectSchemas.create), async c => {
 
 Order matters:
 1. Authentication (`requireAuth`)
-2. Authorization (`requireEntitlement`, `requireQuota`)
-3. Validation (`validateRequest`, `validateQueryParams`)
-4. Route handler
+2. Organization membership (`requireOrgMembership`)
+3. Project access (`requireProjectAccess`)
+4. Authorization (`requireEntitlement`, `requireQuota`)
+5. Validation (`validateRequest`, `validateQueryParams`)
+6. Route handler
 
 ```js
 routes.post(
   '/',
   requireAuth,
-  requireEntitlement('project.create'),
-  requireQuota('projects.max', getProjectCount, 1),
-  validateRequest(projectSchemas.create),
+  requireOrgMembership(),                   // Check org membership
+  requireProjectAccess('collaborator'),     // Check project access with min role
+  requireEntitlement('project.update'),
+  validateRequest(projectSchemas.update),
   async c => { /* handler */ }
 );
+```
+
+## Organization-Scoped Routes
+
+All project routes are org-scoped. See `organizations.mdc` for detailed patterns.
+
+**Route structure:** `/api/orgs/:orgId/projects/:projectId/...`
+
+```js
+import { requireOrgMembership, requireProjectAccess, getOrgContext, getProjectContext } from '../middleware/requireOrg.js';
+
+orgProjectRoutes.post('/', requireOrgMembership(), validateRequest(schema), async c => {
+  const { orgId } = getOrgContext(c);
+  // Create project with orgId
+});
+
+orgProjectRoutes.get('/:projectId', requireOrgMembership(), requireProjectAccess(), async c => {
+  const { projectId, projectRole } = getProjectContext(c);
+  // Access project data
+});
 ```
 
 ## Examples from Codebase
 
 See these files for reference:
-- `packages/workers/src/routes/projects.js` - Full CRUD with validation, batch operations
-- `packages/workers/src/routes/members.js` - Validation, error handling
+- `packages/workers/src/routes/orgs/index.js` - Org routes with Better Auth integration
+- `packages/workers/src/routes/orgs/projects.js` - Org-scoped project routes
+- `packages/workers/src/routes/orgs/members.js` - Project member management
+- `packages/workers/src/routes/orgs/invitations.js` - Project invitation flow
+- `packages/workers/src/middleware/requireOrg.js` - Org/project middleware
 - `packages/workers/src/routes/account-merge.js` - Complex batch operations
 - `packages/workers/src/config/validation.js` - Schema definitions
 
 ## Related Documentation
 
+- [Organizations Guide](/guides/organizations) - Org model, routes, and middleware
 - [API Development Guide](/guides/api-development) - Comprehensive API development patterns
 - [Database Guide](/guides/database) - Drizzle ORM patterns and batch operations
 - [Error Handling Guide](/guides/error-handling) - Error handling patterns

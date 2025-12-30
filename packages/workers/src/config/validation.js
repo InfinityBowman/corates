@@ -79,6 +79,15 @@ export const memberSchemas = {
  * Invitation schemas
  */
 export const invitationSchemas = {
+  create: z.object({
+    email: z.string().email('Invalid email address'),
+    role: z.enum(PROJECT_ROLES, {
+      error: `Role must be one of: ${PROJECT_ROLES.join(', ')}`,
+    }),
+    orgRole: z.enum(['member', 'admin', 'owner'], {
+      error: "Org role must be one of: 'member', 'admin', 'owner'",
+    }),
+  }),
   accept: z.object({
     token: z.string().min(1, 'Token is required'),
   }),

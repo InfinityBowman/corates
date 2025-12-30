@@ -12,6 +12,8 @@ import {
   seedProject,
   seedProjectMember,
   seedSubscription,
+  seedOrganization,
+  seedOrgMember,
   json,
 } from '../../__tests__/helpers.js';
 
@@ -441,9 +443,33 @@ describe('Account Merge Routes - POST /api/accounts/merge/complete', () => {
     await seedAccount('user-1', 'google');
     await seedAccount('user-2', 'github');
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'member',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-2',
+      organizationId: 'org-1',
+      userId: 'user-2',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Project 1',
+      orgId: 'org-1',
       createdBy: 'user-2',
       createdAt: nowSec,
       updatedAt: nowSec,

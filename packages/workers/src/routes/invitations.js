@@ -1,11 +1,18 @@
 /**
  * Invitation routes for Hono
- * Handles project invitation acceptance
+ * Handles project invitation acceptance with combined org + project flow
  */
 
 import { Hono } from 'hono';
 import { createDb } from '../db/client.js';
-import { projectInvitations, projectMembers, projects, user } from '../db/schema.js';
+import {
+  projectInvitations,
+  projectMembers,
+  projects,
+  user,
+  member,
+  organization,
+} from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { invitationSchemas, validateRequest } from '../config/validation.js';
@@ -34,13 +41,15 @@ invitationRoutes.post(
     const { token } = c.get('validatedBody');
 
     try {
-      // Find invitation by token
+      // Find invitation by token (including org fields for combined flow)
       const invitation = await db
         .select({
           id: projectInvitations.id,
+          orgId: projectInvitations.orgId,
           projectId: projectInvitations.projectId,
           email: projectInvitations.email,
           role: projectInvitations.role,
+          orgRole: projectInvitations.orgRole,
           expiresAt: projectInvitations.expiresAt,
           acceptedAt: projectInvitations.acceptedAt,
         })
@@ -144,9 +153,34 @@ invitationRoutes.post(
         });
       }
 
-      // Add user to project and mark invitation as accepted atomically
+      // Combined flow: ensure org membership, then add project membership
       const nowDate = new Date();
-      await db.batch([
+      const batchOps = [];
+
+      // Check if user is already an org member
+      if (invitation.orgId) {
+        const existingOrgMembership = await db
+          .select({ id: member.id })
+          .from(member)
+          .where(and(eq(member.organizationId, invitation.orgId), eq(member.userId, authUser.id)))
+          .get();
+
+        if (!existingOrgMembership) {
+          // Add user to org with orgRole from invitation
+          batchOps.push(
+            db.insert(member).values({
+              id: crypto.randomUUID(),
+              userId: authUser.id,
+              organizationId: invitation.orgId,
+              role: invitation.orgRole || 'member',
+              createdAt: nowDate,
+            }),
+          );
+        }
+      }
+
+      // Add user to project
+      batchOps.push(
         db.insert(projectMembers).values({
           id: crypto.randomUUID(),
           projectId: invitation.projectId,
@@ -154,18 +188,35 @@ invitationRoutes.post(
           role: invitation.role,
           joinedAt: nowDate,
         }),
+      );
+
+      // Mark invitation as accepted
+      batchOps.push(
         db
           .update(projectInvitations)
           .set({ acceptedAt: nowDate })
           .where(eq(projectInvitations.id, invitation.id)),
-      ]);
+      );
 
-      // Get project name for notification
+      await db.batch(batchOps);
+
+      // Get project name and org slug for notification/response
       const project = await db
         .select({ name: projects.name })
         .from(projects)
         .where(eq(projects.id, invitation.projectId))
         .get();
+
+      // Get org slug for navigation
+      let orgSlug = null;
+      if (invitation.orgId) {
+        const org = await db
+          .select({ slug: organization.slug })
+          .from(organization)
+          .where(eq(organization.id, invitation.orgId))
+          .get();
+        orgSlug = org?.slug;
+      }
 
       // Send notification to the added user via their UserSession DO
       try {
@@ -205,6 +256,8 @@ invitationRoutes.post(
 
       return c.json({
         success: true,
+        orgId: invitation.orgId,
+        orgSlug,
         projectId: invitation.projectId,
         projectName: project?.name || 'Unknown Project',
         role: invitation.role,

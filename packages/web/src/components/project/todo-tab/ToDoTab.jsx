@@ -13,7 +13,7 @@ import { getStudiesForTab } from '@/lib/checklist-domain.js';
  * Uses projectActionsStore directly for mutations.
  */
 export default function ToDoTab() {
-  const { projectId } = useProjectContext();
+  const { projectId, getChecklistPath } = useProjectContext();
   const { user } = useBetterAuth();
   const navigate = useNavigate();
 
@@ -48,7 +48,7 @@ export default function ToDoTab() {
   };
 
   const openChecklist = (studyId, checklistId) => {
-    navigate(`/projects/${projectId}/studies/${studyId}/checklists/${checklistId}?tab=todo`);
+    navigate(getChecklistPath(studyId, checklistId, 'todo'));
   };
 
   const handleViewPdf = (studyId, pdf) => {

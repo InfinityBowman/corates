@@ -100,9 +100,11 @@ CoRATES supports multiple authentication methods:
 
 The following endpoints require authentication:
 
-- `/api/projects/*` - Project management (requires auth)
-- `/api/projects/:projectId/members/*` - Project member management (requires auth)
-- `/api/projects/:projectId/studies/:studyId/pdfs/*` - PDF management (requires auth)
+- `/api/orgs/*` - Organization management (requires auth + org membership)
+- `/api/orgs/:orgId/projects/*` - Project management (requires auth + org membership)
+- `/api/orgs/:orgId/projects/:projectId/members/*` - Project member management (requires project access)
+- `/api/orgs/:orgId/projects/:projectId/invitations/*` - Project invitations (requires project access)
+- `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/*` - PDF management (requires project access)
 - `/api/users/*` - User management (requires auth)
 - `/api/sessions/:sessionId/*` - User session Durable Object (requires auth)
 - `/api/project/:projectId/*` - Project Document Durable Object (requires auth)
@@ -110,6 +112,9 @@ The following endpoints require authentication:
 - `/api/billing/*` - Billing endpoints (requires auth)
 - `/api/google-drive/*` - Google Drive integration (requires auth)
 - `/api/accounts/merge/*` - Account merging (requires auth)
+- `/api/invitations/accept` - Accept project invitations (requires auth)
+
+See the [Organizations Guide](/guides/organizations) for detailed org/project route patterns.
 
 ## Frontend Usage
 
@@ -398,16 +403,46 @@ Password reset flow:
 3. User clicks link and enters new password
 4. Password is reset (`POST /api/auth/reset-password`)
 
+## Better Auth Organization Plugin
+
+CoRATES uses the Better Auth organization plugin for multi-tenant workspace support. Organizations are the top-level container for projects and team collaboration.
+
+### Organization Features
+
+- **Multi-org support** - Users can belong to multiple organizations
+- **Role-based access** - Org roles: `owner > admin > member`
+- **Active organization** - Session tracks user's current active org
+- **Org invitations** - Better Auth handles org-level invitations
+
+### Frontend Organization Client
+
+```js
+import { authClient } from '@api/auth-client.js';
+
+// List user's organizations
+const { data: orgs } = await authClient.organization.list();
+
+// Create organization
+await authClient.organization.create({ name: 'My Lab', slug: 'my-lab' });
+
+// Set active organization
+await authClient.organization.setActive({ organizationId: orgId });
+```
+
+See the [Organizations Guide](/guides/organizations) for complete organization patterns.
+
 ## Project Invitations
 
 Project invitations allow project owners to invite users who don't have accounts yet. Invitations use Better Auth's magic link system for seamless account creation and project access.
 
-### Invitation Flow
+### Combined Org + Project Flow
 
-1. **Invitation Creation**: When a project owner adds a member by email and the user doesn't exist, an invitation is created with:
+Project invitations now use a **combined flow** that ensures org membership before granting project access:
+
+1. **Invitation Creation**: When a project owner creates an invitation via `POST /api/orgs/:orgId/projects/:projectId/invitations`:
+   - Invitation includes `orgId`, `projectId`, `role` (project), `orgRole` (org)
    - Unique invitation token (UUID)
    - 7-day expiration
-   - Project role assignment
    - Inviter information
 
 2. **Magic Link Generation**: The invitation email contains a Better Auth magic link that:
@@ -425,7 +460,8 @@ Project invitations allow project owners to invite users who don't have accounts
    - Validates the invitation token
    - Checks expiration and acceptance status
    - Verifies email match (case-insensitive, trimmed)
-   - Adds user to project as a member
+   - **Ensures org membership** (adds with `orgRole` if not already a member)
+   - Adds user to project as a member with specified `role`
    - Syncs member data to ProjectDoc Durable Object
    - Sends notification via UserSession Durable Object
 
@@ -448,9 +484,13 @@ if (normalizedUserEmail !== normalizedInvitationEmail) {
 
 ### Invitation Endpoints
 
+- `POST /api/orgs/:orgId/projects/:projectId/invitations` - Create invitation (project owner)
+- `GET /api/orgs/:orgId/projects/:projectId/invitations` - List invitations (project member)
+- `DELETE /api/orgs/:orgId/projects/:projectId/invitations/:id` - Cancel invitation (project owner)
 - `POST /api/invitations/accept` - Accept a project invitation by token
   - Requires authentication
   - Validates email match
+  - Ensures org membership before project membership
   - Returns project details on success
 
 ### Resending Invitations
@@ -631,6 +671,7 @@ Google OAuth is used to allow users to connect their Google account and access t
 
 ## Related Guides
 
+- [Organizations Guide](/guides/organizations) - For org model, routes, and middleware
 - [API Development Guide](/guides/api-development) - For protected route patterns
 - [Error Handling Guide](/guides/error-handling) - For auth error handling
 - [State Management Guide](/guides/state-management) - For auth store patterns
