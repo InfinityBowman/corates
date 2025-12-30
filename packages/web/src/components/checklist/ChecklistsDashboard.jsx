@@ -11,10 +11,6 @@ export default function ChecklistsDashboard(props) {
   const isLoggedIn = () => props.isLoggedIn ?? false;
 
   return (
-    <LocalAppraisalsPanel
-      compact={false}
-      showSignInPrompt={!isLoggedIn()}
-      showHeader={true}
-    />
+    <LocalAppraisalsPanel compact={false} showSignInPrompt={!isLoggedIn()} showHeader={true} />
   );
 }
