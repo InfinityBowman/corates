@@ -268,7 +268,7 @@ export default function OrgProjectsPage() {
 
           {/* Local Appraisals Section */}
           <div class='mt-10 border-t border-gray-200 pt-8'>
-            <LocalAppraisalsPanel compact={true} showHeader={true} showSignInPrompt={false} />
+            <LocalAppraisalsPanel showHeader={true} showSignInPrompt={false} />
           </div>
         </Show>
 

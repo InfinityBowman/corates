@@ -18,7 +18,6 @@ import { Editable } from '@corates/ui';
 export default function LocalAppraisalsPanel(props) {
   const navigate = useNavigate();
 
-  const compact = () => props.compact ?? false;
   const showSignInPrompt = () => props.showSignInPrompt ?? false;
   const showHeader = () => props.showHeader ?? true;
 
@@ -45,34 +44,21 @@ export default function LocalAppraisalsPanel(props) {
   };
 
   return (
-    <div class={compact() ? 'space-y-4' : 'space-y-6'}>
+    <div class={'space-y-6'}>
       {/* Header - optional */}
       <Show when={showHeader()}>
         <div class='flex items-center justify-between'>
           <div>
-            <h2
-              class={
-                compact() ?
-                  'text-lg font-semibold text-gray-900'
-                : 'text-2xl font-bold text-gray-900'
-              }
-            >
-              Local Appraisals
-            </h2>
-            <Show when={!compact()}>
-              <p class='mt-1 text-gray-500'>Create and manage appraisals locally on this device</p>
-            </Show>
+            <h2 class='text-2xl font-bold text-gray-900'>Local Appraisals</h2>
+
+            <p class='mt-1 text-gray-500'>Create and manage appraisals locally on this device</p>
           </div>
           <button
-            class={
-              compact() ?
-                'inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
-              : 'inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg'
-            }
+            class='inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg'
             onClick={() => navigate('/checklist')}
           >
-            <span class={compact() ? 'text-sm' : 'text-lg'}>+</span>
-            {compact() ? 'New' : 'New Appraisal'}
+            <span class='text-lg'>+</span>
+            New Appraisal
           </button>
         </div>
       </Show>
@@ -96,16 +82,12 @@ export default function LocalAppraisalsPanel(props) {
       </Show>
 
       {/* Checklists Grid */}
-      <div
-        class={compact() ? 'grid gap-3 md:grid-cols-2' : 'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}
-      >
+      <div class='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
         <Show
           when={checklists().length > 0}
           fallback={
             <Show when={!loading()}>
-              <div
-                class={`col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-white text-center ${compact() ? 'py-6' : 'py-12'}`}
-              >
+              <div class='col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-white py-12 text-center'>
                 <div class='mb-2 text-sm text-gray-500'>No local appraisals</div>
                 <button
                   onClick={() => navigate('/checklist')}
@@ -119,24 +101,18 @@ export default function LocalAppraisalsPanel(props) {
         >
           <For each={checklists()}>
             {checklist => (
-              <div
-                class={`group relative rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-200 hover:border-gray-300 hover:shadow-md ${compact() ? 'p-4' : 'p-6'}`}
-              >
+              <div class='group relative rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 hover:border-gray-300 hover:shadow-md'>
                 {/* Local badge */}
                 <div class='absolute top-2 right-2'>
                   <span class='inline-flex items-center rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600'>
                     Local
                   </span>
                 </div>
-                <div class={compact() ? 'mb-3 pr-12' : 'mb-4'}>
+                <div class='mb-4'>
                   <Editable
                     activationMode='click'
                     variant='heading'
-                    class={
-                      compact() ?
-                        'text-base font-semibold text-gray-900'
-                      : 'text-lg font-semibold text-gray-900'
-                    }
+                    class='text-lg font-semibold text-gray-900'
                     value={checklist.name}
                     showEditIcon={true}
                     onSubmit={newName => updateChecklist(checklist.id, { name: newName })}
@@ -146,9 +122,7 @@ export default function LocalAppraisalsPanel(props) {
                   </p>
                 </div>
 
-                <div
-                  class={`flex items-center justify-between text-xs text-gray-500 ${compact() ? 'mb-3' : 'mb-4'}`}
-                >
+                <div class='mb-4 flex items-center justify-between text-xs text-gray-500'>
                   <span>
                     Updated{' '}
                     {new Date(checklist.updatedAt || checklist.createdAt).toLocaleDateString()}
@@ -158,7 +132,7 @@ export default function LocalAppraisalsPanel(props) {
                 <div class='flex gap-2'>
                   <button
                     onClick={() => openChecklist(checklist.id)}
-                    class={`flex-1 rounded-lg font-medium text-white transition-colors ${compact() ? 'bg-gray-700 px-3 py-1.5 text-sm hover:bg-gray-800' : 'bg-blue-600 px-4 py-2 hover:bg-blue-700'}`}
+                    class='flex-1 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700'
                   >
                     Open
                   </button>
@@ -167,7 +141,7 @@ export default function LocalAppraisalsPanel(props) {
                     class='rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                     title='Delete appraisal'
                   >
-                    <FiTrash2 class={compact() ? 'h-4 w-4' : 'h-5 w-5'} />
+                    <FiTrash2 class='h-5 w-5' />
                   </button>
                 </div>
               </div>
