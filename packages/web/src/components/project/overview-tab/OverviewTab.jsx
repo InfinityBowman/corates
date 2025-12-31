@@ -175,7 +175,7 @@ export default function OverviewTab() {
       <div class='mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
         <h2 class='mb-6 text-lg font-semibold text-gray-900'>Team Progress</h2>
 
-        <div class='mb-6 flex flex-col items-center md:flex-row md:items-start md:gap-8'>
+        <div class='flex flex-col items-center md:flex-row md:items-start md:gap-8'>
           {/* Overall Progress - Circular */}
           <div class='mb-6 md:mb-0'>
             <CircularProgress
