@@ -18,8 +18,7 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./zag": "./src/zag/index.ts",
-    "./zag/*": "./src/zag/*.tsx"
+    "./components.css": "./src/components.css"
   },
   "dependencies": {
     "@ark-ui/solid": "^5.30.0",

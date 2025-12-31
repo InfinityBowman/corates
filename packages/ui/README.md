@@ -17,12 +17,6 @@ pnpm add @corates/ui --workspace
 Import components from the package:
 
 ```jsx
-import { Dialog, Select, Toast, toaster } from '@corates/ui/zag';
-```
-
-Or import from the main entry point:
-
-```jsx
 import { Dialog, Select, Toast, toaster } from '@corates/ui';
 ```
 
