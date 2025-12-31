@@ -280,7 +280,7 @@ export default function ProjectView() {
   };
 
   return (
-    <div class='mx-auto max-w-7xl p-6'>
+    <div class='mx-auto max-w-7xl p-6 pt-4'>
       <ProjectProvider projectId={params.projectId}>
         <ProjectHeader
           name={() => meta()?.name}

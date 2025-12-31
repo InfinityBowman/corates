@@ -23,7 +23,7 @@ export default function Navbar() {
         class='sticky top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-sm'
         aria-label='Primary'
       >
-        <div class='mx-auto flex w-full items-center justify-between px-6 py-4'>
+        <div class='mx-auto flex w-full items-center justify-between px-6 py-2'>
           <div class='flex items-center gap-8'>
             <PrefetchLink
               href='/'
@@ -58,14 +58,14 @@ export default function Navbar() {
                   <a
                     href={urls.signIn()}
                     rel='external'
-                    class='hidden items-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
+                    class='hidden items-center rounded-lg border border-gray-200 bg-white px-4 py-1.5 text-gray-700 transition-colors hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
                   >
                     Sign In
                   </a>
                   <a
                     href={urls.signUp()}
                     rel='external'
-                    class='hidden items-center gap-2 rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
+                    class='hidden items-center gap-2 rounded-lg border border-transparent bg-blue-600 px-4 py-1.5 text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
                   >
                     Sign Up
                   </a>
@@ -79,7 +79,7 @@ export default function Navbar() {
                 <a
                   href={urls.dashboard()}
                   rel='external'
-                  class='hidden items-center gap-2 rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
+                  class='hidden items-center gap-2 rounded-lg border border-transparent bg-blue-600 px-4 py-1.5 text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
                 >
                   My Dashboard
                 </a>
