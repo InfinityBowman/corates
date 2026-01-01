@@ -80,33 +80,27 @@ function parseSqlStatements(sqlContent) {
 }
 
 /**
- * Get the org-scoped DO name for a project
- * @param {string} orgId - Organization ID
+ * Get the project-scoped DO name for a project
  * @param {string} projectId - Project ID
- * @returns {string} The DO instance name in format "orgId:projectId"
+ * @returns {string} The DO instance name in format "project:${projectId}"
  */
-export function getProjectDocName(orgId, projectId) {
-  return `${orgId}:${projectId}`;
+export function getProjectDocName(projectId) {
+  return `project:${projectId}`;
 }
 
 /**
- * Clear ProjectDoc Durable Objects for test org/project combinations
+ * Clear ProjectDoc Durable Objects for test projects
  * This prevents DO invalidation errors between tests
- * @param {Array<{orgId: string, projectId: string}>} orgProjects - Array of org/project pairs
+ * @param {Array<string>} projectIds - Array of project IDs
  */
-export async function clearProjectDOs(orgProjects = []) {
-  // Common test org/project combinations that might have DOs
-  const defaultOrgProjects = [
-    { orgId: 'org-1', projectId: 'project-1' },
-    { orgId: 'org-1', projectId: 'project-2' },
-    { orgId: 'org-1', projectId: 'p1' },
-    { orgId: 'org-1', projectId: 'p2' },
-  ];
-  const allOrgProjects = [...defaultOrgProjects, ...orgProjects];
+export async function clearProjectDOs(projectIds = []) {
+  // Common test project IDs that might have DOs
+  const defaultProjectIds = ['project-1', 'project-2', 'p1', 'p2'];
+  const allProjectIds = [...defaultProjectIds, ...projectIds];
 
-  for (const { orgId, projectId } of allOrgProjects) {
+  for (const projectId of allProjectIds) {
     try {
-      const doName = getProjectDocName(orgId, projectId);
+      const doName = getProjectDocName(projectId);
       const doId = env.PROJECT_DOC.idFromName(doName);
       const stub = env.PROJECT_DOC.get(doId);
       await runInDurableObject(stub, async (instance, state) => {
@@ -126,7 +120,7 @@ export async function clearProjectDOs(orgProjects = []) {
         error?.durableObjectReset === true;
       if (!isInvalidationError) {
         // Only log non-invalidation errors for debugging
-        console.warn(`Failed to clear ProjectDoc DO for ${orgId}:${projectId}:`, error.message);
+        console.warn(`Failed to clear ProjectDoc DO for ${projectId}:`, error.message);
       }
     }
   }

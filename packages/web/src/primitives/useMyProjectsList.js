@@ -1,26 +1,22 @@
 /**
- * useOrgProjectList - Fetches projects for an organization
+ * useMyProjectsList - Fetches all projects the current user is a member of
  *
- * Uses the org-scoped API endpoint: GET /api/orgs/:orgId/projects
+ * Uses the user-scoped API endpoint: GET /api/users/me/projects
  */
 
 import { useQuery } from '@tanstack/solid-query';
 import { API_BASE } from '@config/api.js';
 import { queryKeys } from '@lib/queryKeys.js';
 import { handleFetchError } from '@/lib/error-utils.js';
+import { useBetterAuth } from '@api/better-auth-store.js';
 
 /**
- * Fetch projects for an organization
- * @param {string} orgId - Organization ID
- * @returns {Promise<Array>} Array of projects
+ * Fetch all projects for the current authenticated user
+ * @returns {Promise<Array>} Array of projects with orgId
  */
-async function fetchOrgProjects(orgId) {
-  if (!orgId) {
-    return [];
-  }
-
+async function fetchMyProjects() {
   const response = await handleFetchError(
-    fetch(`${API_BASE}/api/orgs/${orgId}/projects`, {
+    fetch(`${API_BASE}/api/users/me/projects`, {
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
     }),
@@ -31,25 +27,26 @@ async function fetchOrgProjects(orgId) {
 }
 
 /**
- * Hook to fetch and manage project list for an organization
+ * Hook to fetch and manage project list for the current user
  *
- * @param {() => string | null | undefined} orgId - Reactive org ID signal/function
  * @param {Object} options - Query options
  * @param {boolean | (() => boolean)} options.enabled - Whether the query should be enabled
  * @returns {Object} Query state and helpers
  */
-export function useOrgProjectList(orgId, options = {}) {
+export function useMyProjectsList(options = {}) {
+  const { isLoggedIn, authLoading } = useBetterAuth();
+
   const query = useQuery(() => {
-    const currentOrgId = typeof orgId === 'function' ? orgId() : orgId;
     const enabledOption =
       typeof options.enabled === 'function' ? options.enabled() : options.enabled;
 
     return {
-      queryKey: queryKeys.projects.byOrg(currentOrgId),
-      queryFn: () => fetchOrgProjects(currentOrgId),
-      enabled: enabledOption !== false && !!currentOrgId,
+      queryKey: queryKeys.projects.all,
+      queryFn: fetchMyProjects,
+      enabled: enabledOption !== false && isLoggedIn() && !authLoading(),
       staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 1000 * 60 * 10, // 10 minutes
+      refetchOnMount: 'always', // Always refetch on mount to catch membership changes that occurred while app was closed
     };
   });
 
@@ -64,4 +61,4 @@ export function useOrgProjectList(orgId, options = {}) {
   };
 }
 
-export default useOrgProjectList;
+export default useMyProjectsList;

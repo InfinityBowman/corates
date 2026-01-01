@@ -11,11 +11,6 @@ export default function ChecklistTreeItem(props) {
   const navigate = useNavigate();
 
   const checklistPath = () => {
-    const slug = props.orgSlug;
-    if (slug) {
-      return `/orgs/${slug}/projects/${props.projectId}/studies/${props.studyId}/checklists/${props.checklist.id}`;
-    }
-    // Fallback for legacy routes
     return `/projects/${props.projectId}/studies/${props.studyId}/checklists/${props.checklist.id}`;
   };
 

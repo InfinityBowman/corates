@@ -113,16 +113,28 @@ orgInvitationRoutes.post(
       let token;
       let invitationId;
 
+      // Check if user is org admin/owner to allow grantOrgMembership
+      const { orgRole } = getOrgContext(c);
+      const canGrantOrgMembership = orgRole === 'admin' || orgRole === 'owner';
+      const { grantOrgMembership = false } = c.get('validatedBody');
+
+      // Only org admins/owners can set grantOrgMembership to true
+      const finalGrantOrgMembership = canGrantOrgMembership ? grantOrgMembership : false;
+
       if (existingInvitation && !existingInvitation.acceptedAt) {
         // Resend existing invitation - update role and extend expiration
-        // Note: orgRole is always 'member' - project owners cannot grant org roles
         invitationId = existingInvitation.id;
         token = existingInvitation.token;
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
         await db
           .update(projectInvitations)
-          .set({ role, orgRole: 'member', expiresAt })
+          .set({
+            role,
+            orgRole: 'member', // org role is always 'member' if granted
+            grantOrgMembership: finalGrantOrgMembership,
+            expiresAt,
+          })
           .where(eq(projectInvitations.id, existingInvitation.id));
       } else if (existingInvitation && existingInvitation.acceptedAt) {
         const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
@@ -131,7 +143,6 @@ orgInvitationRoutes.post(
         return c.json(error, error.statusCode);
       } else {
         // Create new invitation with orgId
-        // Note: orgRole is always 'member' - project owners cannot grant org roles
         invitationId = crypto.randomUUID();
         token = crypto.randomUUID();
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -142,7 +153,8 @@ orgInvitationRoutes.post(
           projectId,
           email: email.toLowerCase(),
           role,
-          orgRole: 'member',
+          orgRole: 'member', // org role is always 'member' if granted
+          grantOrgMembership: finalGrantOrgMembership,
           token,
           invitedBy: authUser.id,
           expiresAt,
@@ -341,7 +353,7 @@ orgInvitationRoutes.delete(
 /**
  * POST /api/orgs/:orgId/projects/:projectId/invitations/accept
  * Accept a project invitation by token
- * Combined flow: ensures org membership first, then adds project membership
+ * Hybrid flow: always adds project membership (invite-only), optionally adds org membership if grantOrgMembership is true
  * Uses db.batch() for atomicity
  */
 orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), async c => {
@@ -350,7 +362,7 @@ orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), a
   const { token } = c.get('validatedBody');
 
   try {
-    // Find invitation by token (includes org fields for combined flow)
+    // Find invitation by token (includes org fields for hybrid flow)
     const invitation = await db
       .select({
         id: projectInvitations.id,
@@ -359,6 +371,7 @@ orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), a
         email: projectInvitations.email,
         role: projectInvitations.role,
         orgRole: projectInvitations.orgRole,
+        grantOrgMembership: projectInvitations.grantOrgMembership,
         expiresAt: projectInvitations.expiresAt,
         acceptedAt: projectInvitations.acceptedAt,
       })
@@ -462,12 +475,23 @@ orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), a
       });
     }
 
-    // Combined flow: ensure org membership, then add project membership
+    // Hybrid flow: always add project membership, optionally add org membership
     const nowDate = new Date();
     const batchOps = [];
 
-    // Check if user is already an org member
-    if (invitation.orgId) {
+    // Always add user to project (projects are invite-only)
+    batchOps.push(
+      db.insert(projectMembers).values({
+        id: crypto.randomUUID(),
+        projectId: invitation.projectId,
+        userId: authUser.id,
+        role: invitation.role,
+        joinedAt: nowDate,
+      }),
+    );
+
+    // Optionally add user to org if grantOrgMembership is true
+    if (invitation.grantOrgMembership && invitation.orgId) {
       const existingOrgMembership = await db
         .select({ id: member.id })
         .from(member)
@@ -487,17 +511,6 @@ orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), a
         );
       }
     }
-
-    // Add user to project
-    batchOps.push(
-      db.insert(projectMembers).values({
-        id: crypto.randomUUID(),
-        projectId: invitation.projectId,
-        userId: authUser.id,
-        role: invitation.role,
-        joinedAt: nowDate,
-      }),
-    );
 
     // Mark invitation as accepted
     batchOps.push(
@@ -551,7 +564,7 @@ orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), a
 
     // Sync member to DO
     try {
-      await syncMemberToDO(c.env, invitation.orgId, invitation.projectId, 'add', {
+      await syncMemberToDO(c.env, invitation.projectId, 'add', {
         userId: authUser.id,
         role: invitation.role,
         joinedAt: nowDate.getTime(),

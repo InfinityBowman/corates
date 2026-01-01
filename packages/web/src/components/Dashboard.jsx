@@ -1,21 +1,21 @@
 import { Show } from 'solid-js';
-import ChecklistsDashboard from '@/components/checklist/ChecklistsDashboard.jsx';
-import { OrgRedirect } from '@/components/org/index.js';
+import ProjectsPanel from '@/components/project/ProjectsPanel.jsx';
+import LocalAppraisalsPanel from '@/components/checklist/LocalAppraisalsPanel.jsx';
 import { useBetterAuth } from '@api/better-auth-store.js';
 
 export default function Dashboard() {
-  const { isLoggedIn } = useBetterAuth();
+  const { isLoggedIn, authLoading } = useBetterAuth();
 
   return (
     <div class='p-6'>
       <div class='mx-auto max-w-7xl space-y-8'>
-        {/* Logged-in users are redirected to their org context */}
-        <Show when={isLoggedIn()}>
-          <OrgRedirect />
+        {/* Projects section - only shown when logged in */}
+        <Show when={isLoggedIn() && !authLoading()}>
+          <ProjectsPanel />
         </Show>
 
-        {/* Local checklists work offline and don't need org context */}
-        <ChecklistsDashboard isLoggedIn={isLoggedIn()} />
+        {/* Local Appraisals Section - always shown */}
+        <LocalAppraisalsPanel showHeader={true} showSignInPrompt={!isLoggedIn()} />
       </div>
     </div>
   );

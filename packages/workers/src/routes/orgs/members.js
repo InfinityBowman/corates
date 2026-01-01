@@ -168,7 +168,8 @@ orgProjectMemberRoutes.post(
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              type: 'project-invite',
+              type: 'project-membership-added',
+              orgId,
               projectId,
               projectName: project?.name || 'Unknown Project',
               role,
@@ -177,12 +178,12 @@ orgProjectMemberRoutes.post(
           }),
         );
       } catch (err) {
-        console.error('Failed to send project invite notification:', err);
+        console.error('Failed to send project membership notification:', err);
       }
 
       // Sync member to DO
       try {
-        await syncMemberToDO(c.env, orgId, projectId, 'add', {
+        await syncMemberToDO(c.env, projectId, 'add', {
           userId: userToAdd.id,
           role,
           joinedAt: now.getTime(),
@@ -267,12 +268,33 @@ orgProjectMemberRoutes.put(
 
       // Sync role update to DO
       try {
-        await syncMemberToDO(c.env, orgId, projectId, 'update', {
+        await syncMemberToDO(c.env, projectId, 'update', {
           userId: memberId,
           role,
         });
       } catch (err) {
         console.error('Failed to sync member update to DO:', err);
+      }
+
+      // Send notification to the user whose role was updated
+      try {
+        const userSessionId = c.env.USER_SESSION.idFromName(memberId);
+        const userSession = c.env.USER_SESSION.get(userSessionId);
+        await userSession.fetch(
+          new Request('https://internal/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'project-membership-updated',
+              orgId,
+              projectId,
+              role,
+              timestamp: Date.now(),
+            }),
+          }),
+        );
+      } catch (err) {
+        console.error('Failed to send role update notification:', err);
       }
 
       return c.json({ success: true, userId: memberId, role });
@@ -355,7 +377,7 @@ orgProjectMemberRoutes.delete(
 
       // Sync member removal to DO
       try {
-        await syncMemberToDO(c.env, orgId, projectId, 'remove', {
+        await syncMemberToDO(c.env, projectId, 'remove', {
           userId: memberId,
         });
       } catch (err) {
@@ -378,7 +400,8 @@ orgProjectMemberRoutes.delete(
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                type: 'removed-from-project',
+                type: 'project-membership-removed',
+                orgId,
                 projectId,
                 projectName: project?.name || 'Unknown Project',
                 removedBy: authUser.name || authUser.email,

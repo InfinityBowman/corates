@@ -6,7 +6,7 @@
 import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import useProject from '@/primitives/useProject/index.js';
-import { useOrgContext } from '@primitives/useOrgContext.js';
+import { useProjectOrgId } from '@primitives/useProjectOrgId.js';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
@@ -24,15 +24,14 @@ export default function ReconciliationWrapper() {
   const params = useParams();
   const navigate = useNavigate();
 
-  // Get org context for navigation and API calls
-  const { orgSlug, orgId } = useOrgContext();
+  // Get orgId from project data (for API calls)
+  const orgId = useProjectOrgId(params.projectId);
 
   // params.projectId, params.studyId, params.checklist1Id, params.checklist2Id
 
   const [error, setError] = createSignal(null);
 
   // Use project hook for Y.js operations
-  // orgId() is required for remote projects' WebSocket connection
   const {
     createChecklist: createProjectChecklist,
     updateChecklistAnswer,
@@ -41,27 +40,28 @@ export default function ReconciliationWrapper() {
     getReconciliationProgress,
     getQuestionNote,
     saveReconciliationProgress,
-  } = useProject(orgId(), params.projectId);
+  } = useProject(params.projectId);
 
   // Set active project for action store
   createEffect(() => {
     const pid = params.projectId;
     const oid = orgId();
-    if (pid && oid) {
-      projectActionsStore._setActiveProject(pid, oid);
+    if (pid) {
+      if (oid) {
+        projectActionsStore._setActiveProject(pid, oid);
+      }
     }
   });
 
   // Read data from store
   const connectionState = () => projectStore.getConnectionState(params.projectId);
 
-  // Watch for access-denied errors and redirect to org projects
+  // Watch for access-denied errors and redirect to projects
   createEffect(() => {
     const state = connectionState();
     if (state.error && ACCESS_DENIED_ERRORS.includes(state.error)) {
       showToast.error('Access Denied', state.error);
-      const slug = orgSlug();
-      navigate(slug ? `/orgs/${slug}` : '/dashboard', { replace: true });
+      navigate('/dashboard', { replace: true });
     }
   });
 
@@ -371,9 +371,9 @@ export default function ReconciliationWrapper() {
     return member?.displayName || member?.name || member?.email || 'Unknown';
   }
 
-  // Build org-scoped project path
+  // Build project path
   const getProjectPath = () => {
-    return `/orgs/${orgSlug()}/projects/${params.projectId}`;
+    return `/projects/${params.projectId}`;
   };
 
   // Handle saving the reconciled checklist

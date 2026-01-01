@@ -138,7 +138,6 @@ orgProjectRoutes.post(
       try {
         await syncProjectToDO(
           c.env,
-          orgId,
           projectId,
           {
             name: name.trim(),
@@ -258,7 +257,7 @@ orgProjectRoutes.put(
       if (description !== undefined) metaUpdate.description = description;
 
       try {
-        await syncProjectToDO(c.env, orgId, projectId, metaUpdate, null);
+        await syncProjectToDO(c.env, projectId, metaUpdate, null);
       } catch (err) {
         console.error('Failed to sync project update to DO:', err);
       }
@@ -305,7 +304,7 @@ orgProjectRoutes.delete(
 
       // Disconnect all connected users from the ProjectDoc DO
       try {
-        const projectDoc = getProjectDocStub(c.env, orgId, projectId);
+        const projectDoc = getProjectDocStub(c.env, projectId);
         await projectDoc.fetch(
           new Request('https://internal/disconnect-all', {
             method: 'POST',

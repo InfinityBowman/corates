@@ -4,6 +4,7 @@ import Sidebar from './components/sidebar/Sidebar.jsx';
 import { Toaster } from '@corates/ui';
 import { ImpersonationBanner } from '@/components/admin/index.js';
 import { isImpersonating } from '@/stores/adminStore.js';
+import { useMembershipSync } from '@/primitives/useMembershipSync.js';
 
 const SIDEBAR_MODE_KEY = 'corates-sidebar-mode';
 const SIDEBAR_WIDTH_KEY = 'corates-sidebar-width';
@@ -13,6 +14,9 @@ const MIN_SIDEBAR_WIDTH = 200;
 const MAX_SIDEBAR_WIDTH = 480;
 
 export default function MainLayout(props) {
+  // Set up real-time membership sync
+  useMembershipSync();
+
   // Desktop sidebar mode: 'expanded' or 'collapsed' (rail)
   const [desktopSidebarMode, setDesktopSidebarMode] = createSignal('collapsed');
   // Mobile sidebar open state (overlay behavior)

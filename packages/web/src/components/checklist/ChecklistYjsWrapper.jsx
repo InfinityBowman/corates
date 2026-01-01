@@ -2,7 +2,7 @@ import { createSignal, createEffect, createMemo, Show } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import ChecklistWithPdf from '@/components/checklist/ChecklistWithPdf.jsx';
 import useProject from '@/primitives/useProject/index.js';
-import { useOrgContext } from '@primitives/useOrgContext.js';
+import { useProjectOrgId } from '@primitives/useProjectOrgId.js';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
@@ -24,8 +24,8 @@ export default function ChecklistYjsWrapper() {
   const { user } = useBetterAuth();
   const confirmDialog = useConfirmDialog();
 
-  // Get org context for navigation and API calls
-  const { orgSlug, orgId } = useOrgContext();
+  // Get orgId from project data (for API calls)
+  const orgId = useProjectOrgId(params.projectId);
 
   const [pdfData, setPdfData] = createSignal(null);
   const [pdfFileName, setPdfFileName] = createSignal(null);
@@ -33,7 +33,6 @@ export default function ChecklistYjsWrapper() {
   const [selectedPdfId, setSelectedPdfId] = createSignal(null);
 
   // Use full hook for write operations
-  // orgId() is required for remote projects' WebSocket connection
   const {
     connect,
     updateChecklistAnswer,
@@ -41,14 +40,16 @@ export default function ChecklistYjsWrapper() {
     getChecklistData,
     addPdfToStudy,
     getQuestionNote,
-  } = useProject(orgId(), params.projectId);
+  } = useProject(params.projectId);
 
   // Set active project for action store
   createEffect(() => {
     const pid = params.projectId;
     const oid = orgId();
-    if (pid && oid) {
-      projectActionsStore._setActiveProject(pid, oid);
+    if (pid) {
+      if (oid) {
+        projectActionsStore._setActiveProject(pid, oid);
+      }
       connect();
     }
   });
@@ -56,13 +57,12 @@ export default function ChecklistYjsWrapper() {
   // Read data directly from store for faster reactivity
   const connectionState = () => projectStore.getConnectionState(params.projectId);
 
-  // Watch for access-denied errors and redirect to org projects
+  // Watch for access-denied errors and redirect to projects
   createEffect(() => {
     const state = connectionState();
     if (state.error && ACCESS_DENIED_ERRORS.includes(state.error)) {
       showToast.error('Access Denied', state.error);
-      const slug = orgSlug();
-      navigate(slug ? `/orgs/${slug}` : '/dashboard', { replace: true });
+      navigate('/dashboard', { replace: true });
     }
   });
 
@@ -363,13 +363,9 @@ export default function ChecklistYjsWrapper() {
     return tabFromUrl || 'overview';
   };
 
-  // Build back path with org context
+  // Build back path
   const getBackPath = () => {
-    const slug = orgSlug();
     const tab = getBackTab();
-    if (slug) {
-      return `/orgs/${slug}/projects/${params.projectId}?tab=${tab}`;
-    }
     return `/projects/${params.projectId}?tab=${tab}`;
   };
 

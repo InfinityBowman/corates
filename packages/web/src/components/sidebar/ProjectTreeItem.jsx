@@ -17,20 +17,13 @@ export default function ProjectTreeItem(props) {
       {project => {
         const projectId = project().id;
 
-        // Build org-scoped project path
-        const projectPath = () => {
-          const slug = props.orgSlug;
-          if (slug) {
-            return `/orgs/${slug}/projects/${projectId}`;
-          }
-          return `/projects/${projectId}`;
-        };
+        // Build project-scoped path
+        const projectPath = () => `/projects/${projectId}`;
 
         const isSelected = () => props.currentPath === projectPath();
 
         // Use lightweight hook to read project data from store
-        // orgId is required for remote projects' WebSocket connection
-        const projectData = useProjectData(props.orgId, projectId);
+        const projectData = useProjectData(projectId);
 
         return (
           <Collapsible
@@ -85,7 +78,6 @@ export default function ProjectTreeItem(props) {
                     <StudyTreeItem
                       study={study}
                       projectId={projectId}
-                      orgSlug={props.orgSlug}
                       userId={props.userId}
                       currentPath={props.currentPath}
                       isExpanded={props.isStudyExpanded?.(study.id)}

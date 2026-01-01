@@ -18,7 +18,8 @@ import { AdminDashboard } from '@/components/admin/index.js';
 import StorageManagement from '@/components/admin/StorageManagement.jsx';
 import { BASEPATH } from '@config/api.js';
 import ProtectedGuard from '@/components/auth/ProtectedGuard.jsx';
-import { OrgProjectsPage, ProjectView, CreateOrgPage } from '@/components/org/index.js';
+import ProjectView from '@/components/project/ProjectView.jsx';
+import { CreateOrgPage } from '@/components/org/index.js';
 
 export default function AppRoutes() {
   return (
@@ -34,31 +35,32 @@ export default function AppRoutes() {
 
       {/* Main app routes */}
       <Route path='/' component={Layout}>
-        {/* Dashboard redirects to org context */}
+        {/* Dashboard - public home for all users */}
         <Route path='/' component={Dashboard} />
         <Route path='/dashboard' component={Dashboard} />
 
         {/* Protected routes - requires login */}
         <Route path='/' component={ProtectedGuard}>
-          {/* Global user routes (outside org context) */}
+          {/* Global user routes */}
           <Route path='/profile' component={ProfilePage} />
           <Route path='/settings' component={SettingsPage} />
           <Route path='/admin' component={AdminDashboard} />
           <Route path='/admin/storage' component={StorageManagement} />
           <Route path='/settings/billing' component={BillingPage} />
 
-          {/* Organization routes */}
+          {/* Organization creation */}
           <Route path='/orgs/new' component={CreateOrgPage} />
-          <Route path='/orgs/:orgSlug' component={OrgProjectsPage} />
-          <Route path='/orgs/:orgSlug/projects/:projectId' component={ProjectView} />
 
-          {/* Org-scoped checklist routes */}
+          {/* Project-scoped routes */}
+          <Route path='/projects/:projectId' component={ProjectView} />
+
+          {/* Project-scoped checklist routes */}
           <Route
-            path='/orgs/:orgSlug/projects/:projectId/studies/:studyId/checklists/:checklistId'
+            path='/projects/:projectId/studies/:studyId/checklists/:checklistId'
             component={ChecklistYjsWrapper}
           />
           <Route
-            path='/orgs/:orgSlug/projects/:projectId/studies/:studyId/reconcile/:checklist1Id/:checklist2Id'
+            path='/projects/:projectId/studies/:studyId/reconcile/:checklist1Id/:checklist2Id'
             component={ReconciliationWrapper}
           />
         </Route>

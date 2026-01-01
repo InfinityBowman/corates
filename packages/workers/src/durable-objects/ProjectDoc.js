@@ -36,21 +36,10 @@ export class ProjectDoc {
     this.sessions = new Map();
     this.doc = null;
     this.awareness = null;
-    // Cache projectId → orgId to reduce D1 pressure on hot path
-    // Populated on first connection and persisted in DO storage
-    this.cachedOrgId = null;
   }
 
   async fetch(request) {
     const url = new URL(request.url);
-
-    // Load cached orgId from storage if not already loaded
-    if (this.cachedOrgId === null) {
-      const stored = await this.state.storage.get('cached-org-id');
-      if (stored) {
-        this.cachedOrgId = stored;
-      }
-    }
 
     // Note: CORS headers are added by the main worker (index.js) when wrapping responses
     // Do NOT add them here to avoid duplicate headers
@@ -353,22 +342,21 @@ export class ProjectDoc {
       return new Response('Authentication required', { status: 401 });
     }
 
-    // Extract orgId and projectId from URL: /api/orgs/:orgId/project-doc/:projectId
+    // Extract projectId from URL: /api/project-doc/:projectId
     // y-websocket appends the room name as the last path segment
     const url = new URL(request.url);
     const pathParts = url.pathname.split('/');
-    // pathParts: ["", "api", "orgs", orgId, "project-doc", projectId]
-    const orgIdFromUrl = pathParts[3];
-    const projectId = pathParts[5];
+    // pathParts: ["", "api", "project-doc", projectId] or ["", "api", "project-doc", projectId, ...]
+    const projectId = pathParts[3];
 
-    if (!orgIdFromUrl || !projectId) {
-      return new Response('Invalid URL: orgId and projectId required', {
+    if (!projectId) {
+      return new Response('Invalid URL: projectId required', {
         status: 400,
         headers: { 'X-Close-Reason': 'invalid-url' },
       });
     }
 
-    // ALWAYS verify org membership + project membership against D1
+    // ALWAYS verify project membership against D1
     // Do NOT trust Yjs members map for authorization (it can be stale)
     if (!this.env.DB) {
       console.error('No DB binding available for WebSocket auth check');
@@ -377,54 +365,22 @@ export class ProjectDoc {
 
     const db = createDb(this.env.DB);
 
-    // Use cached orgId if available, otherwise validate and cache it
-    // This reduces D1 pressure on hot path while keeping membership checks fresh
-    let orgId = this.cachedOrgId;
-
-    if (!orgId) {
-      // First connection for this DO instance - validate project belongs to org from URL
-      const project = await db
-        .select({ orgId: projects.orgId })
-        .from(projects)
-        .where(and(eq(projects.id, projectId), eq(projects.orgId, orgIdFromUrl)))
-        .get();
-
-      if (!project) {
-        return new Response('Project not found in organization', {
-          status: 404,
-          headers: { 'X-Close-Reason': 'project-not-found' },
-        });
-      }
-
-      orgId = project.orgId;
-      this.cachedOrgId = orgId;
-
-      // Persist to DO storage so it survives DO restarts
-      await this.state.storage.put('cached-org-id', orgId);
-    } else if (orgId !== orgIdFromUrl) {
-      // Cached orgId doesn't match URL - this shouldn't happen with org-scoped DO IDs
-      // but check anyway for safety
-      return new Response('Organization mismatch', {
-        status: 403,
-        headers: { 'X-Close-Reason': 'org-mismatch' },
-      });
-    }
-
-    // ALWAYS verify org membership on connect/reconnect (fresh D1 check)
-    const orgMembership = await db
-      .select({ id: member.id, role: member.role })
-      .from(member)
-      .where(and(eq(member.organizationId, orgId), eq(member.userId, user.id)))
+    // Verify project exists
+    const project = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(eq(projects.id, projectId))
       .get();
 
-    if (!orgMembership) {
-      return new Response('Not an organization member', {
-        status: 403,
-        headers: { 'X-Close-Reason': 'not-org-member' },
+    if (!project) {
+      return new Response('Project not found', {
+        status: 404,
+        headers: { 'X-Close-Reason': 'project-not-found' },
       });
     }
 
     // ALWAYS verify project membership on connect/reconnect (fresh D1 check)
+    // Projects are invite-only: org membership does not grant project access
     const projectMembership = await db
       .select({ role: projectMembers.role })
       .from(projectMembers)

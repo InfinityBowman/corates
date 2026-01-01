@@ -14,6 +14,7 @@ import { projectSchemas, validateRequest } from '../config/validation.js';
 import { EDIT_ROLES } from '../config/constants.js';
 import { createDomainError, PROJECT_ERRORS, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { syncProjectToDO } from '../lib/project-sync.js';
+import { getProjectDocStub } from '../lib/project-doc-id.js';
 
 const projectRoutes = new Hono();
 
@@ -274,8 +275,7 @@ projectRoutes.delete('/:id', async c => {
 
     // Disconnect all connected users from the ProjectDoc DO
     try {
-      const doId = c.env.PROJECT_DOC.idFromName(projectId);
-      const projectDoc = c.env.PROJECT_DOC.get(doId);
+      const projectDoc = getProjectDocStub(c.env, projectId);
       await projectDoc.fetch(
         new Request('https://internal/disconnect-all', {
           method: 'POST',

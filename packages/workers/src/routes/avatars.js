@@ -42,9 +42,9 @@ async function syncAvatarToProjects(env, userId, avatarUrl) {
       .where(eq(projectMembers.userId, userId));
 
     // Update each project's Durable Object
-    for (const { orgId, projectId } of memberships) {
+    for (const { projectId } of memberships) {
       try {
-        const projectDoc = getProjectDocStub(env, orgId, projectId);
+        const projectDoc = getProjectDocStub(env, projectId);
 
         await projectDoc.fetch(
           new Request('https://internal/sync-member', {

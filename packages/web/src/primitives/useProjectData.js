@@ -14,13 +14,12 @@ import { useProject } from './useProject/index.js';
  * Get reactive project data from the store
  * Ensures a Y.js connection exists
  *
- * @param {string} orgId - The organization ID (required for remote projects)
  * @param {string} projectId - The project ID
  * @param {Object} options - Options
  * @param {boolean} options.autoConnect - Whether to auto-connect if no connection exists (default: true)
  * @returns {Object} Reactive project data
  */
-export function useProjectData(orgId, projectId, options = {}) {
+export function useProjectData(projectId, options = {}) {
   const { autoConnect = true } = options;
 
   // If autoConnect is enabled and we don't have a connection, establish one
@@ -32,7 +31,7 @@ export function useProjectData(orgId, projectId, options = {}) {
     const needsConnection = () => !connectionState().connected && !connectionState().connecting;
 
     if (needsConnection()) {
-      projectHook = useProject(orgId, projectId);
+      projectHook = useProject(projectId);
     }
   }
 

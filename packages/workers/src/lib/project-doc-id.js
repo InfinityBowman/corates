@@ -1,32 +1,31 @@
 /**
  * Centralized helpers for ProjectDoc Durable Object ID derivation
  *
- * All ProjectDoc DO instances are org-scoped, using the format: `${orgId}:${projectId}`
- * This ensures complete isolation between organizations.
+ * ProjectDoc DO instances are project-scoped, using the format: `project:${projectId}`
+ * This makes project transfers between orgs safe (no DO state migration needed).
+ * Tenant safety is enforced via DB validation of project.orgId against URL orgId.
  */
 
 /**
- * Get the org-scoped name for a ProjectDoc DO instance
- * @param {string} orgId - Organization ID
+ * Get the project-scoped name for a ProjectDoc DO instance
  * @param {string} projectId - Project ID
- * @returns {string} The DO instance name in format "orgId:projectId"
+ * @returns {string} The DO instance name in format "project:${projectId}"
  */
-export function getProjectDocName(orgId, projectId) {
-  if (!orgId || !projectId) {
-    throw new Error('Both orgId and projectId are required for ProjectDoc DO name');
+export function getProjectDocName(projectId) {
+  if (!projectId) {
+    throw new Error('projectId is required for ProjectDoc DO name');
   }
-  return `${orgId}:${projectId}`;
+  return `project:${projectId}`;
 }
 
 /**
- * Get the ProjectDoc DO stub for a given org and project
+ * Get the ProjectDoc DO stub for a given project
  * @param {Object} env - Cloudflare environment with PROJECT_DOC binding
- * @param {string} orgId - Organization ID
  * @param {string} projectId - Project ID
  * @returns {DurableObjectStub} The DO stub
  */
-export function getProjectDocStub(env, orgId, projectId) {
-  const name = getProjectDocName(orgId, projectId);
+export function getProjectDocStub(env, projectId) {
+  const name = getProjectDocName(projectId);
   const id = env.PROJECT_DOC.idFromName(name);
   return env.PROJECT_DOC.get(id);
 }
