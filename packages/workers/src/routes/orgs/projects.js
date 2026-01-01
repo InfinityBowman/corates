@@ -237,7 +237,6 @@ orgProjectRoutes.put(
   requireProjectAccess('member'),
   validateRequest(projectSchemas.update),
   async c => {
-    const { orgId } = getOrgContext(c);
     const { projectId } = getProjectContext(c);
     const db = createDb(c.env.DB);
     const { name, description } = c.get('validatedBody');
@@ -284,7 +283,6 @@ orgProjectRoutes.delete(
   requireProjectAccess('owner'),
   async c => {
     const { user: authUser } = getAuth(c);
-    const { orgId } = getOrgContext(c);
     const { projectId } = getProjectContext(c);
     const db = createDb(c.env.DB);
 

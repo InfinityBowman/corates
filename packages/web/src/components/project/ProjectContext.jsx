@@ -22,8 +22,9 @@ import { useProjectOrgId } from '@primitives/useProjectOrgId.js';
 const ProjectContext = createContext();
 
 export function ProjectProvider(props) {
+  const projectId = () => props.projectId;
   const { user } = useBetterAuth();
-  const orgId = useProjectOrgId(props.projectId);
+  const orgId = useProjectOrgId(projectId());
 
   // Derive commonly used values
   const members = () => projectStore.getMembers(props.projectId);

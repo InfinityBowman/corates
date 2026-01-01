@@ -22,7 +22,15 @@ vi.mock('postmark', () => {
 });
 import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import { clearProjectDOs } from './helpers.js';
+import {
+  clearProjectDOs,
+  resetTestDatabase,
+  seedUser,
+  seedOrganization,
+  seedProject,
+  seedProjectMember,
+  seedSession,
+} from './helpers.js';
 
 // Mock admin auth middleware so we can focus on admin route behavior.
 // We still test CSRF/trusted-origin behavior using the real middleware.
@@ -45,248 +53,6 @@ vi.mock('../middleware/requireAdmin.js', () => {
 });
 
 let app;
-
-async function resetSchema() {
-  // Keep schema minimal but compatible with the Drizzle table definitions used by admin routes.
-  // NOTE: Avoid D1Database.exec() here; it can surface internal meta aggregation errors.
-  const run = sql => env.DB.prepare(sql).run();
-
-  // Helper to safely create a table (handles "already exists" errors)
-  const createTable = async sql => {
-    try {
-      await run(sql);
-    } catch (error) {
-      // Ignore "already exists" errors - table might exist from previous test run
-      if (!error.message?.includes('already exists')) {
-        throw error;
-      }
-    }
-  };
-
-  // Disable foreign keys before dropping to avoid constraint errors
-  await run('PRAGMA foreign_keys = OFF');
-
-  // Drop tables in reverse dependency order (child tables first, then parent tables)
-  // This order matches the reverse of table creation order
-  // Wrap in try-catch to handle cases where tables don't exist
-  const tablesToDrop = [
-    'subscriptions',
-    'twoFactor',
-    'verification',
-    'account',
-    'project_members',
-    'projects',
-    'session',
-    'user',
-  ];
-
-  // First, try to delete all data from tables (in case DROP fails)
-  for (const table of tablesToDrop) {
-    try {
-      await run(`DELETE FROM \`${table}\``);
-    } catch {
-      // Ignore - table might not exist
-    }
-  }
-
-  // Then drop tables
-  for (const table of tablesToDrop) {
-    try {
-      await run(`DROP TABLE IF EXISTS \`${table}\``);
-    } catch (_error) {
-      // Ignore all errors during drop - tables might not exist or have constraint issues
-      // This is safe because we're recreating the schema anyway
-    }
-  }
-
-  // Re-enable foreign keys after dropping tables
-  await run('PRAGMA foreign_keys = ON');
-
-  // Create tables, handling "already exists" errors
-  await createTable(`
-    CREATE TABLE user (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      emailVerified INTEGER DEFAULT 0,
-      image TEXT,
-      createdAt INTEGER DEFAULT (unixepoch()),
-      updatedAt INTEGER DEFAULT (unixepoch()),
-      username TEXT UNIQUE,
-      displayName TEXT,
-      avatarUrl TEXT,
-      role TEXT,
-      twoFactorEnabled INTEGER DEFAULT 0,
-      banned INTEGER DEFAULT 0,
-      banReason TEXT,
-      banExpires INTEGER
-    )
-  `);
-
-  await createTable(`
-    CREATE TABLE account (
-      id TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
-      accountId TEXT NOT NULL,
-      providerId TEXT NOT NULL,
-      accessToken TEXT,
-      refreshToken TEXT,
-      accessTokenExpiresAt INTEGER,
-      refreshTokenExpiresAt INTEGER,
-      scope TEXT,
-      idToken TEXT,
-      password TEXT,
-      createdAt INTEGER DEFAULT (unixepoch()),
-      updatedAt INTEGER DEFAULT (unixepoch()),
-      FOREIGN KEY(userId) REFERENCES user(id) ON DELETE CASCADE
-    )
-  `);
-
-  await createTable(`
-    CREATE TABLE projects (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      description TEXT,
-      createdBy TEXT NOT NULL,
-      createdAt INTEGER DEFAULT (unixepoch()),
-      updatedAt INTEGER DEFAULT (unixepoch()),
-      FOREIGN KEY(createdBy) REFERENCES user(id) ON DELETE CASCADE
-    )
-  `);
-
-  await createTable(`
-    CREATE TABLE project_members (
-      id TEXT PRIMARY KEY,
-      projectId TEXT NOT NULL,
-      userId TEXT NOT NULL,
-      role TEXT DEFAULT 'member',
-      joinedAt INTEGER DEFAULT (unixepoch()),
-      FOREIGN KEY(projectId) REFERENCES projects(id) ON DELETE CASCADE,
-      FOREIGN KEY(userId) REFERENCES user(id) ON DELETE CASCADE
-    )
-  `);
-
-  await createTable(`
-    CREATE TABLE session (
-      id TEXT PRIMARY KEY,
-      expiresAt INTEGER NOT NULL,
-      token TEXT NOT NULL UNIQUE,
-      createdAt INTEGER DEFAULT (unixepoch()),
-      updatedAt INTEGER DEFAULT (unixepoch()),
-      ipAddress TEXT,
-      userAgent TEXT,
-      userId TEXT NOT NULL,
-      impersonatedBy TEXT,
-      FOREIGN KEY(userId) REFERENCES user(id) ON DELETE CASCADE,
-      FOREIGN KEY(impersonatedBy) REFERENCES user(id) ON DELETE SET NULL
-    )
-  `);
-
-  await createTable(`
-    CREATE TABLE verification (
-      id TEXT PRIMARY KEY,
-      identifier TEXT NOT NULL,
-      value TEXT NOT NULL,
-      expiresAt INTEGER NOT NULL,
-      createdAt INTEGER DEFAULT (unixepoch()),
-      updatedAt INTEGER DEFAULT (unixepoch())
-    )
-  `);
-
-  await createTable(`
-    CREATE TABLE twoFactor (
-      id TEXT PRIMARY KEY,
-      secret TEXT NOT NULL,
-      backupCodes TEXT NOT NULL,
-      userId TEXT NOT NULL,
-      createdAt INTEGER DEFAULT (unixepoch()),
-      updatedAt INTEGER DEFAULT (unixepoch()),
-      FOREIGN KEY(userId) REFERENCES user(id) ON DELETE CASCADE
-    )
-  `);
-
-  await createTable(`
-    CREATE TABLE subscriptions (
-      id TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
-      stripeCustomerId TEXT UNIQUE,
-      stripeSubscriptionId TEXT UNIQUE,
-      tier TEXT NOT NULL DEFAULT 'free',
-      status TEXT NOT NULL DEFAULT 'active',
-      currentPeriodStart INTEGER,
-      currentPeriodEnd INTEGER,
-      cancelAtPeriodEnd INTEGER DEFAULT 0,
-      createdAt INTEGER DEFAULT (unixepoch()),
-      updatedAt INTEGER DEFAULT (unixepoch()),
-      UNIQUE(userId),
-      FOREIGN KEY(userId) REFERENCES user(id) ON DELETE CASCADE
-    )
-  `);
-}
-
-async function seedUser({
-  id,
-  name,
-  email,
-  createdAt,
-  updatedAt,
-  role = 'researcher',
-  displayName = null,
-  username = null,
-  banned = 0,
-  banReason = null,
-  banExpires = null,
-  emailVerified = 0,
-}) {
-  await env.DB.prepare(
-    `INSERT INTO user (
-      id, name, email, displayName, username, role,
-      emailVerified, banned, banReason, banExpires, createdAt, updatedAt
-    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)`,
-  )
-    .bind(
-      id,
-      name,
-      email,
-      displayName,
-      username,
-      role,
-      emailVerified,
-      banned,
-      banReason,
-      banExpires,
-      createdAt,
-      updatedAt,
-    )
-    .run();
-}
-
-async function seedProject({ id, name, createdBy, createdAt, updatedAt }) {
-  await env.DB.prepare(
-    `INSERT INTO projects (id, name, createdBy, createdAt, updatedAt)
-     VALUES (?1, ?2, ?3, ?4, ?5)`,
-  )
-    .bind(id, name, createdBy, createdAt, updatedAt)
-    .run();
-}
-
-async function seedProjectMember({ id, projectId, userId, role = 'member', joinedAt }) {
-  await env.DB.prepare(
-    `INSERT INTO project_members (id, projectId, userId, role, joinedAt)
-     VALUES (?1, ?2, ?3, ?4, ?5)`,
-  )
-    .bind(id, projectId, userId, role, joinedAt)
-    .run();
-}
-
-async function seedSession({ id, token, userId, expiresAt, createdAt, updatedAt }) {
-  await env.DB.prepare(
-    `INSERT INTO session (id, token, userId, expiresAt, createdAt, updatedAt)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
-  )
-    .bind(id, token, userId, expiresAt, createdAt, updatedAt)
-    .run();
-}
 
 async function json(res) {
   const text = await res.text();
@@ -312,7 +78,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  await resetSchema();
+  await resetTestDatabase();
   // Clear ProjectDoc DOs to prevent invalidation errors between tests
   await clearProjectDOs(['p1']);
 });
@@ -346,9 +112,17 @@ describe('Admin API routes', () => {
       updatedAt: eightDaysAgo,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'p1',
       name: 'Project 1',
+      orgId: 'org-1',
       createdBy: 'u1',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -472,9 +246,17 @@ describe('Admin API routes', () => {
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'p1',
       name: 'Proj',
+      orgId: 'org-1',
       createdBy: 'u2',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -608,9 +390,18 @@ describe('Admin API routes', () => {
       createdAt: nowSec,
       updatedAt: nowSec,
     });
+
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'p1',
       name: 'Proj',
+      orgId: 'org-1',
       createdBy: 'u1',
       createdAt: nowSec,
       updatedAt: nowSec,

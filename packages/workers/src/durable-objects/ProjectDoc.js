@@ -5,7 +5,7 @@ import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
 import { verifyAuth } from '../auth/config.js';
 import { createDb } from '../db/client.js';
-import { projectMembers, projects, member } from '../db/schema.js';
+import { projectMembers, projects } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 
 // y-websocket message types

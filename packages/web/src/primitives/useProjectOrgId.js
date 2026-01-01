@@ -19,7 +19,7 @@ import { queryKeys } from '@lib/queryKeys.js';
 export function useProjectOrgId(projectId) {
   const queryClient = useQueryClient();
 
-  return createMemo(() => {
+  const orgId = createMemo(() => {
     if (!projectId) return null;
 
     // Try to get from project meta (Y.js synced data)
@@ -39,6 +39,8 @@ export function useProjectOrgId(projectId) {
 
     return null;
   });
+
+  return orgId;
 }
 
 export default useProjectOrgId;
