@@ -209,9 +209,7 @@ export default function Sidebar(props) {
 
             {/* Expanded or mobile: title */}
             <Show when={showExpandedContent()}>
-              <span class='flex-1 truncate px-2 text-sm font-semibold text-gray-700'>
-                CoRATES
-              </span>
+              <span class='flex-1 truncate px-2 text-sm font-semibold text-gray-700'>CoRATES</span>
             </Show>
 
             {/* Desktop expanded: collapse button */}

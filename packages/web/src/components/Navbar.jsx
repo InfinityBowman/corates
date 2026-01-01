@@ -51,7 +51,6 @@ export default function Navbar(props) {
     }
   };
 
-
   return (
     <nav class='sticky top-0 z-50 flex items-center justify-between bg-linear-to-r from-blue-700 to-blue-500 px-4 py-2 text-white shadow-lg'>
       <div class='flex items-center space-x-3'>
