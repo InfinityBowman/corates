@@ -109,7 +109,7 @@ export default function Sidebar(props) {
   const isCurrentPath = path => location.pathname === path;
 
   // Build projects path
-  const getProjectsPath = () => '/projects';
+  const getProjectsPath = () => '/dashboard';
 
   // Get a label for a recent item based on its type and available data
   const getRecentItemLabel = item => {

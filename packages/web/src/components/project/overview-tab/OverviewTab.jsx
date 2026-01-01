@@ -139,7 +139,7 @@ export default function OverviewTab() {
     try {
       const result = await projectActionsStore.member.remove(memberId);
       if (result.isSelf) {
-        navigate('/projects', { replace: true });
+        navigate('/dashboard', { replace: true });
         showToast.success('Left Project', 'You have left the project');
       } else {
         showToast.success('Member Removed', `${memberName} has been removed from the project`);

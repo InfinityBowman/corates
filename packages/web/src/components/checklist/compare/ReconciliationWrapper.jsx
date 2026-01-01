@@ -61,7 +61,7 @@ export default function ReconciliationWrapper() {
     const state = connectionState();
     if (state.error && ACCESS_DENIED_ERRORS.includes(state.error)) {
       showToast.error('Access Denied', state.error);
-      navigate('/projects', { replace: true });
+      navigate('/dashboard', { replace: true });
     }
   });
 

@@ -131,6 +131,12 @@ function createBetterAuthStore() {
   // Combined signals that use cached data when offline
   const isLoggedIn = () => {
     if (isOnline()) {
+      // During auth loading (e.g., visibilitychange refetch), keep previous state stable
+      // to prevent UI thrash. Use cached user if available during loading.
+      if (authLoading()) {
+        const cached = cachedUser();
+        if (cached) return true;
+      }
       return sessionIsLoggedIn();
     }
     // When offline, use cached data

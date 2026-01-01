@@ -75,7 +75,7 @@ export default function ProjectView() {
     const state = connectionState();
     if (state.error && ACCESS_DENIED_ERRORS.includes(state.error)) {
       showToast.error('Access Denied', state.error);
-      navigate('/projects', { replace: true });
+      navigate('/dashboard', { replace: true });
     }
   });
 
@@ -270,7 +270,7 @@ export default function ProjectView() {
   };
 
   // Build back navigation path
-  const backPath = () => '/projects';
+  const backPath = () => '/dashboard';
 
   return (
     <div class='mx-auto max-w-7xl p-6 pt-4'>

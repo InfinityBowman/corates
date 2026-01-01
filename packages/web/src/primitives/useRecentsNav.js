@@ -94,7 +94,7 @@ function parsePathToRecentItem(path) {
   // Legacy: Match old org-scoped paths for backward compatibility
   const legacyProjectMatch = path.match(/^\/orgs\/([^/]+)\/projects\/([^/]+)/);
   if (legacyProjectMatch) {
-    const [, orgSlug, projectId] = legacyProjectMatch;
+    const [, _orgSlug, projectId] = legacyProjectMatch;
     // Check if it's a study page: /orgs/:slug/projects/:projectId/studies/:studyId
     const studyMatch = path.match(/^\/orgs\/([^/]+)\/projects\/([^/]+)\/studies\/([^/]+)/);
     if (studyMatch) {

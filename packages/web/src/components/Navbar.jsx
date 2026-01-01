@@ -1,4 +1,4 @@
-import { Show, For, createEffect, createSignal, onMount, onCleanup } from 'solid-js';
+import { Show, createEffect, createSignal, onMount, onCleanup } from 'solid-js';
 import { A, useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { FiMenu, FiWifiOff, FiChevronDown, FiX } from 'solid-icons/fi';
@@ -7,7 +7,7 @@ import useOnlineStatus from '@primitives/useOnlineStatus.js';
 import { Avatar } from '@corates/ui';
 
 export default function Navbar(props) {
-  const { user, signout, authLoading, isLoggedIn } = useBetterAuth();
+  const { user, signout, authLoading } = useBetterAuth();
   const navigate = useNavigate();
   const isOnline = useOnlineStatus();
 
@@ -44,8 +44,8 @@ export default function Navbar(props) {
   const handleSignOut = async () => {
     try {
       await signout();
-      // Use replace: true to avoid back button issues
-      navigate('/signin', { replace: true });
+      // Navigate to dashboard (public home) after sign out
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       console.error('Sign out failed:', error);
     }
@@ -92,10 +92,10 @@ export default function Navbar(props) {
 
       <div class='text-2xs flex items-center space-x-4 sm:text-xs'>
         <A
-          href='/projects'
+          href='/dashboard'
           class='flex h-9 items-center rounded px-2 font-medium transition hover:bg-blue-600'
         >
-          Projects
+          Dashboard
         </A>
         <Show
           when={user() || (authLoading() && isLikelyLoggedIn)}

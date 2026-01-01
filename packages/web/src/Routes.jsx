@@ -18,7 +18,6 @@ import { AdminDashboard } from '@/components/admin/index.js';
 import StorageManagement from '@/components/admin/StorageManagement.jsx';
 import { BASEPATH } from '@config/api.js';
 import ProtectedGuard from '@/components/auth/ProtectedGuard.jsx';
-import MyProjectsPage from '@/components/project/MyProjectsPage.jsx';
 import ProjectView from '@/components/project/ProjectView.jsx';
 import { CreateOrgPage } from '@/components/org/index.js';
 
@@ -36,7 +35,7 @@ export default function AppRoutes() {
 
       {/* Main app routes */}
       <Route path='/' component={Layout}>
-        {/* Dashboard redirects to projects */}
+        {/* Dashboard - public home for all users */}
         <Route path='/' component={Dashboard} />
         <Route path='/dashboard' component={Dashboard} />
 
@@ -53,7 +52,6 @@ export default function AppRoutes() {
           <Route path='/orgs/new' component={CreateOrgPage} />
 
           {/* Project-scoped routes */}
-          <Route path='/projects' component={MyProjectsPage} />
           <Route path='/projects/:projectId' component={ProjectView} />
 
           {/* Project-scoped checklist routes */}

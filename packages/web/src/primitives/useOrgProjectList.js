@@ -56,6 +56,7 @@ export function useOrgProjectList(orgId, options = {}) {
   return {
     projects: () => query.data || [],
     isLoading: () => query.isLoading || query.isFetching,
+    isInitialLoading: () => query.isLoading && !query.data,
     isError: () => query.isError,
     error: () => query.error,
     refetch: () => query.refetch(),
