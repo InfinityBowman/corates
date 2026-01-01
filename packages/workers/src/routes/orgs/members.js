@@ -182,7 +182,7 @@ orgProjectMemberRoutes.post(
 
       // Sync member to DO
       try {
-        await syncMemberToDO(c.env, orgId, projectId, 'add', {
+        await syncMemberToDO(c.env, projectId, 'add', {
           userId: userToAdd.id,
           role,
           joinedAt: now.getTime(),
@@ -267,7 +267,7 @@ orgProjectMemberRoutes.put(
 
       // Sync role update to DO
       try {
-        await syncMemberToDO(c.env, orgId, projectId, 'update', {
+        await syncMemberToDO(c.env, projectId, 'update', {
           userId: memberId,
           role,
         });
@@ -355,7 +355,7 @@ orgProjectMemberRoutes.delete(
 
       // Sync member removal to DO
       try {
-        await syncMemberToDO(c.env, orgId, projectId, 'remove', {
+        await syncMemberToDO(c.env, projectId, 'remove', {
           userId: memberId,
         });
       } catch (err) {

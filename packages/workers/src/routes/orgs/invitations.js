@@ -551,7 +551,7 @@ orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), a
 
     // Sync member to DO
     try {
-      await syncMemberToDO(c.env, invitation.orgId, invitation.projectId, 'add', {
+      await syncMemberToDO(c.env, invitation.projectId, 'add', {
         userId: authUser.id,
         role: invitation.role,
         joinedAt: nowDate.getTime(),

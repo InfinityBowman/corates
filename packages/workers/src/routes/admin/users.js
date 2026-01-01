@@ -491,8 +491,8 @@ userRoutes.delete('/users/:userId', async c => {
 
     // Sync all member removals to DOs atomically (fail fast if any fails)
     await Promise.all(
-      userProjects.map(({ orgId, projectId }) =>
-        syncMemberToDO(c.env, orgId, projectId, 'remove', { userId }),
+      userProjects.map(({ projectId }) =>
+        syncMemberToDO(c.env, projectId, 'remove', { userId }),
       ),
     );
 

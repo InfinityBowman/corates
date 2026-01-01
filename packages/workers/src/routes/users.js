@@ -197,8 +197,8 @@ userRoutes.delete('/me', async c => {
 
     // Sync all member removals to DOs atomically (fail fast if any fails)
     await Promise.all(
-      userProjects.map(({ orgId, projectId }) =>
-        syncMemberToDO(c.env, orgId, projectId, 'remove', { userId }),
+      userProjects.map(({ projectId }) =>
+        syncMemberToDO(c.env, projectId, 'remove', { userId }),
       ),
     );
 
@@ -268,9 +268,9 @@ userRoutes.post('/sync-profile', async c => {
       .where(eq(projectMembers.userId, currentUser.id));
 
     // Sync to each project's Durable Object
-    const syncPromises = userProjects.map(async ({ orgId, projectId }) => {
+    const syncPromises = userProjects.map(async ({ projectId }) => {
       try {
-        const projectDoc = getProjectDocStub(c.env, orgId, projectId);
+        const projectDoc = getProjectDocStub(c.env, projectId);
 
         await projectDoc.fetch(
           new Request('https://internal/sync-member', {

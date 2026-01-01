@@ -310,7 +310,7 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
 });
 
 // Org-scoped Project Document Durable Object routes
-// DO instance is identified by orgId:projectId for org isolation
+// DO instance is project-scoped (project:${projectId}) but URL includes orgId for validation
 const handleOrgProjectDoc = async c => {
   const orgId = c.req.param('orgId');
   const projectId = c.req.param('projectId');
@@ -319,10 +319,9 @@ const handleOrgProjectDoc = async c => {
     return c.json({ error: 'Organization ID and Project ID required' }, 400);
   }
 
-  // Compute org-scoped DO instance name
-  const projectDocName = `${orgId}:${projectId}`;
-  const id = c.env.PROJECT_DOC.idFromName(projectDocName);
-  const projectDoc = c.env.PROJECT_DOC.get(id);
+  // Compute project-scoped DO instance name (orgId is validated inside DO via DB check)
+  const { getProjectDocStub } = await import('./lib/project-doc-id.js');
+  const projectDoc = getProjectDocStub(c.env, projectId);
   const response = await projectDoc.fetch(c.req.raw);
 
   // Don't wrap WebSocket upgrade responses
