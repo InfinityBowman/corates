@@ -183,10 +183,11 @@ export const twoFactor = sqliteTable('twoFactor', {
 });
 
 // Project invitations table (for inviting users to projects)
-// Combined invite flow: accepting ensures org membership then project membership
+// Projects are always invite-only: accepting grants project membership only by default.
+// Optional: grantOrgMembership can be set to true by org admins/owners for governance/billing.
 export const projectInvitations = sqliteTable('project_invitations', {
   id: text('id').primaryKey(),
-  // Organization for this project invitation (accepting grants org membership if needed)
+  // Organization for this project invitation
   orgId: text('orgId')
     .notNull()
     .references(() => organization.id, { onDelete: 'cascade' }),
@@ -195,7 +196,8 @@ export const projectInvitations = sqliteTable('project_invitations', {
     .references(() => projects.id, { onDelete: 'cascade' }),
   email: text('email').notNull(),
   role: text('role').default('member'), // project role
-  orgRole: text('orgRole').default('member'), // always 'member' - project owners cannot grant org roles
+  orgRole: text('orgRole').default('member'), // org role if grantOrgMembership is true
+  grantOrgMembership: integer('grantOrgMembership', { mode: 'boolean' }).default(false).notNull(), // if true, accepting invite also grants org membership
   token: text('token').notNull().unique(),
   invitedBy: text('invitedBy')
     .notNull()

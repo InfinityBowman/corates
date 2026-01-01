@@ -384,6 +384,7 @@ export class ProjectDoc {
     const orgId = project.orgId;
 
     // ALWAYS verify project membership on connect/reconnect (fresh D1 check)
+    // Projects are invite-only: org membership does not grant project access
     const projectMembership = await db
       .select({ role: projectMembers.role })
       .from(projectMembers)
