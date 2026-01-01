@@ -1,22 +1,25 @@
 /**
- * RealtimeMembershipSync - Handles real-time project membership updates via WebSocket
+ * useMembershipSync primitive - Handles real-time project membership updates via WebSocket
  * Invalidates TanStack Query cache when membership changes occur
  */
 
-import { createEffect, onCleanup, Show } from 'solid-js';
+import { createEffect, onCleanup } from 'solid-js';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { useNotifications } from '@/primitives/useNotifications.js';
+import { useNotifications } from './useNotifications.js';
 import { queryClient } from '@lib/queryClient.js';
 import { queryKeys } from '@lib/queryKeys.js';
 
 /**
- * Internal component that handles notifications for a specific userId
- * This is recreated when userId changes, ensuring the hook uses the correct userId
+ * Sets up real-time membership sync for the current user
+ * Invalidates project queries when membership changes occur
  */
-function MembershipSyncForUser(props) {
+export function useMembershipSync() {
+  const { user, isLoggedIn } = useBetterAuth();
+
   // Create notification handler that invalidates queries
   const handleNotification = notification => {
     const notificationType = notification.type;
+    const userId = user()?.id;
 
     // Handle project membership change events
     if (
@@ -28,9 +31,9 @@ function MembershipSyncForUser(props) {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
 
       // Also invalidate legacy query keys for backward compatibility
-      if (props.userId) {
+      if (userId) {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.projects.list(props.userId),
+          queryKey: queryKeys.projects.list(userId),
         });
       }
 
@@ -43,14 +46,17 @@ function MembershipSyncForUser(props) {
     }
   };
 
-  const notifications = useNotifications(props.userId, {
+  const notifications = useNotifications(() => user()?.id, {
     onNotification: handleNotification,
   });
 
-  // Connect when component mounts
+  // Handle connection lifecycle reactively when user ID changes
   createEffect(() => {
-    if (props.userId) {
+    const userId = user()?.id;
+    if (isLoggedIn() && userId) {
       notifications.connect();
+    } else {
+      notifications.disconnect();
     }
   });
 
@@ -58,18 +64,4 @@ function MembershipSyncForUser(props) {
   onCleanup(() => {
     notifications.disconnect();
   });
-
-  return null;
-}
-
-export default function RealtimeMembershipSync() {
-  const { user, isLoggedIn } = useBetterAuth();
-
-  // This component recreates MembershipSyncForUser when userId changes
-  // This ensures useNotifications is called with the correct userId
-  return (
-    <Show when={isLoggedIn() && user()?.id}>
-      {userId => <MembershipSyncForUser userId={userId()} key={userId()} />}
-    </Show>
-  );
 }
