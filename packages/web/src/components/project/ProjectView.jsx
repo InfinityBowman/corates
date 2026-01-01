@@ -1,11 +1,14 @@
 /**
  * ProjectView - Main view for a single project
  * Displays tabs for overview, all studies, to-do, reconciliation, and completed
+ *
+ * This component uses org-scoped routes and APIs.
  */
 
 import { createSignal, createEffect, Show, onCleanup, batch } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import useProject from '@/primitives/useProject/index.js';
+import { useProjectOrgId } from '@primitives/useProjectOrgId.js';
 import projectStore from '@/stores/projectStore.js';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import projectActionsStore from '@/stores/projectActionsStore';
@@ -36,7 +39,11 @@ export default function ProjectView() {
   const location = useLocation();
   const { user } = useBetterAuth();
 
+  // Get orgId from project data (for API calls)
+  const orgId = useProjectOrgId(params.projectId);
+
   // Y.js hook - connection is also registered with projectActionsStore
+  // No longer requires orgId for WebSocket connection (project-scoped)
   const projectConnection = useProject(params.projectId);
   const { connect, disconnect } = projectConnection;
 
@@ -45,10 +52,14 @@ export default function ProjectView() {
   const meta = () => projectStore.getMeta(params.projectId);
   const connectionState = () => projectStore.getConnectionState(params.projectId);
 
-  // Set active project for action store (so methods don't need projectId)
+  // Set active project for action store (so methods don't need projectId/orgId)
   createEffect(() => {
-    if (params.projectId) {
-      projectActionsStore._setActiveProject(params.projectId);
+    const pid = params.projectId;
+    const oid = orgId();
+    if (pid) {
+      if (oid) {
+        projectActionsStore._setActiveProject(pid, oid);
+      }
       connect();
     }
   });
@@ -59,14 +70,11 @@ export default function ProjectView() {
     disconnect();
   });
 
-  // Watch for access-denied errors and redirect to dashboard
-  // These errors occur when: project deleted, user removed, or user never had access
+  // Watch for access-denied errors and redirect to projects page
   createEffect(() => {
     const state = connectionState();
     if (state.error && ACCESS_DENIED_ERRORS.includes(state.error)) {
-      // Show appropriate toast message
       showToast.error('Access Denied', state.error);
-      // Navigate to dashboard
       navigate('/dashboard', { replace: true });
     }
   });
@@ -81,7 +89,9 @@ export default function ProjectView() {
   createEffect(() => {
     const state = connectionState();
     const pdfs = pendingPdfs();
-    if (!state.synced || !params.projectId || !Array.isArray(pdfs) || pdfs.length === 0) return;
+    const oid = orgId();
+    if (!state.synced || !params.projectId || !oid || !Array.isArray(pdfs) || pdfs.length === 0)
+      return;
 
     batch(() => {
       setPendingPdfs(null);
@@ -101,7 +111,7 @@ export default function ProjectView() {
       const studyId = projectActionsStore.study.create(studyName, abstract, metadata);
       if (studyId && pdf.data) {
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
-        uploadPdf(params.projectId, studyId, arrayBuffer, pdf.fileName)
+        uploadPdf(oid, params.projectId, studyId, arrayBuffer, pdf.fileName)
           .then(result => {
             cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(console.warn);
             try {
@@ -123,7 +133,7 @@ export default function ProjectView() {
             } catch (metaErr) {
               console.error('Failed to add PDF metadata:', metaErr);
               // Clean up orphaned file
-              deletePdf(params.projectId, studyId, result.fileName).catch(console.warn);
+              deletePdf(oid, params.projectId, studyId, result.fileName).catch(console.warn);
             }
           })
           .catch(err => console.error('Error uploading PDF for new study:', err));
@@ -150,7 +160,14 @@ export default function ProjectView() {
   createEffect(() => {
     const state = connectionState();
     const driveFiles = pendingDriveFiles();
-    if (!state.synced || !params.projectId || !Array.isArray(driveFiles) || driveFiles.length === 0)
+    const oid = orgId();
+    if (
+      !state.synced ||
+      !params.projectId ||
+      !oid ||
+      !Array.isArray(driveFiles) ||
+      driveFiles.length === 0
+    )
       return;
 
     batch(() => {
@@ -167,7 +184,7 @@ export default function ProjectView() {
       };
       const studyId = projectActionsStore.study.create(title, abstract, metadata);
       if (studyId && file.id) {
-        importFromGoogleDrive(file.id, params.projectId, studyId)
+        importFromGoogleDrive(file.id, oid, params.projectId, studyId)
           .then(result => {
             try {
               projectActionsStore.pdf.addToStudy(studyId, {
@@ -181,7 +198,7 @@ export default function ProjectView() {
             } catch (metaErr) {
               console.error('Failed to add PDF metadata:', metaErr);
               // Clean up orphaned file
-              deletePdf(params.projectId, studyId, result.file.fileName).catch(console.warn);
+              deletePdf(oid, params.projectId, studyId, result.file.fileName).catch(console.warn);
             }
           })
           .catch(err => console.error('Error importing Google Drive file:', err));
@@ -252,15 +269,18 @@ export default function ProjectView() {
     });
   };
 
+  // Build back navigation path
+  const backPath = () => '/dashboard';
+
   return (
-    <div class='mx-auto max-w-7xl p-6'>
+    <div class='mx-auto max-w-7xl p-6 pt-4'>
       <ProjectProvider projectId={params.projectId}>
         <ProjectHeader
           name={() => meta()?.name}
           description={() => meta()?.description}
           onRename={newName => projectActionsStore.project.rename(newName)}
           onUpdateDescription={desc => projectActionsStore.project.updateDescription(desc)}
-          onBack={() => navigate('/dashboard')}
+          onBack={() => navigate(backPath())}
         />
 
         <Tabs tabs={tabDefinitions} value={tabFromUrl()} onValueChange={handleTabChange}>

@@ -2,6 +2,8 @@
  * Project sync utilities for syncing data to ProjectDoc Durable Objects
  */
 
+import { getProjectDocStub } from './project-doc-id.js';
+
 /**
  * Sync a member change to the Durable Object
  * @param {Env} env - Cloudflare environment
@@ -11,8 +13,7 @@
  * @throws {Error} If sync fails
  */
 export async function syncMemberToDO(env, projectId, action, memberData) {
-  const doId = env.PROJECT_DOC.idFromName(projectId);
-  const projectDoc = env.PROJECT_DOC.get(doId);
+  const projectDoc = getProjectDocStub(env, projectId);
 
   await projectDoc.fetch(
     new Request('https://internal/sync-member', {
@@ -35,8 +36,7 @@ export async function syncMemberToDO(env, projectId, action, memberData) {
  * @throws {Error} If sync fails
  */
 export async function syncProjectToDO(env, projectId, meta, members) {
-  const doId = env.PROJECT_DOC.idFromName(projectId);
-  const projectDoc = env.PROJECT_DOC.get(doId);
+  const projectDoc = getProjectDocStub(env, projectId);
 
   await projectDoc.fetch(
     new Request('https://internal/sync', {

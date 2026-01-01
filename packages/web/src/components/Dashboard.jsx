@@ -1,19 +1,21 @@
 import { Show } from 'solid-js';
-import ProjectDashboard from '@/components/project/ProjectDashboard.jsx';
-import ChecklistsDashboard from '@/components/checklist/ChecklistsDashboard.jsx';
+import ProjectsPanel from '@/components/project/ProjectsPanel.jsx';
+import LocalAppraisalsPanel from '@/components/checklist/LocalAppraisalsPanel.jsx';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { API_BASE } from '@config/api.js';
 
 export default function Dashboard() {
-  const { user, isLoggedIn } = useBetterAuth();
+  const { isLoggedIn, authLoading } = useBetterAuth();
 
   return (
     <div class='p-6'>
       <div class='mx-auto max-w-7xl space-y-8'>
-        <Show when={isLoggedIn()}>
-          <ProjectDashboard apiBase={API_BASE} userId={user()?.id} />
+        {/* Projects section - only shown when logged in */}
+        <Show when={isLoggedIn() && !authLoading()}>
+          <ProjectsPanel />
         </Show>
-        <ChecklistsDashboard isLoggedIn={isLoggedIn()} />
+
+        {/* Local Appraisals Section - always shown */}
+        <LocalAppraisalsPanel showHeader={true} showSignInPrompt={!isLoggedIn()} />
       </div>
     </div>
   );

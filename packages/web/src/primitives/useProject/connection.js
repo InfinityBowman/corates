@@ -71,7 +71,8 @@ export function createConnectionManager(projectId, ydoc, options) {
 
     shouldBeConnected = true;
 
-    const wsUrl = `${getWsBaseUrl()}/api/project`;
+    // Project-scoped WebSocket URL: y-websocket appends room (projectId) as last segment
+    const wsUrl = `${getWsBaseUrl()}/api/project-doc`;
 
     provider = new WebsocketProvider(wsUrl, projectId, ydoc, {
       connect: false, // Don't connect until listeners are attached

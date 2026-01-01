@@ -9,8 +9,9 @@ import { Hono } from 'hono';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { createDomainError, FILE_ERRORS, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { createDb } from '../db/client.js';
-import { projectMembers } from '../db/schema.js';
+import { projectMembers, projects } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
+import { getProjectDocStub } from '../lib/project-doc-id.js';
 
 const avatarRoutes = new Hono();
 
@@ -30,17 +31,20 @@ async function syncAvatarToProjects(env, userId, avatarUrl) {
   try {
     const db = createDb(env.DB);
 
-    // Get all projects the user is a member of
+    // Get all projects the user is a member of (with orgId for DO addressing)
     const memberships = await db
-      .select({ projectId: projectMembers.projectId })
+      .select({
+        projectId: projectMembers.projectId,
+        orgId: projects.orgId,
+      })
       .from(projectMembers)
+      .innerJoin(projects, eq(projectMembers.projectId, projects.id))
       .where(eq(projectMembers.userId, userId));
 
     // Update each project's Durable Object
     for (const { projectId } of memberships) {
       try {
-        const doId = env.PROJECT_DOC.idFromName(projectId);
-        const projectDoc = env.PROJECT_DOC.get(doId);
+        const projectDoc = getProjectDocStub(env, projectId);
 
         await projectDoc.fetch(
           new Request('https://internal/sync-member', {

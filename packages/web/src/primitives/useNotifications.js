@@ -7,7 +7,7 @@ import { API_BASE } from '@config/api.js';
 
 /**
  * Hook to connect to the user's notification WebSocket
- * @param {string} userId - The user ID to connect notifications for
+ * @param {Function} userId - The user ID to connect notifications for
  * @param {Object} options - Configuration options
  * @param {Function} options.onNotification - Callback when a notification is received
  * @returns {Object} Connection state and notifications
@@ -26,7 +26,7 @@ export function useNotifications(userId, options = {}) {
   let shouldConnect = false;
 
   function connect() {
-    if (ws || !userId) return;
+    if (ws || !userId()) return;
 
     // Don't attempt connection when offline
     if (!navigator.onLine) {
@@ -38,7 +38,7 @@ export function useNotifications(userId, options = {}) {
     // Build WebSocket URL
     const wsProtocol = API_BASE.startsWith('https') ? 'wss' : 'ws';
     const wsHost = API_BASE.replace(/^https?:\/\//, '');
-    const wsUrl = `${wsProtocol}://${wsHost}/api/sessions/${userId}`;
+    const wsUrl = `${wsProtocol}://${wsHost}/api/sessions/${userId()}`;
 
     ws = new WebSocket(wsUrl);
 

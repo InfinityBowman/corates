@@ -11,6 +11,8 @@ import {
   seedUser,
   seedProject,
   seedProjectMember,
+  seedOrganization,
+  seedOrgMember,
   json,
 } from '../../__tests__/helpers.js';
 
@@ -297,9 +299,25 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     await seedProject({
       id: 'project-1',
       name: 'Test Project',
+      orgId: 'org-1',
       createdBy: 'user-1',
       createdAt: nowSec,
       updatedAt: nowSec,

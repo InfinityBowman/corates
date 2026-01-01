@@ -92,6 +92,7 @@ describe('useProject - Local Project Mode', () => {
   it('should identify local projects correctly', () => {
     createRoot(dispose => {
       cleanup = dispose;
+      // Local projects are identified by projectId starting with 'local-'
       const project = useProject('local-test-project');
 
       expect(project.isLocalProject()).toBe(true);
@@ -101,6 +102,7 @@ describe('useProject - Local Project Mode', () => {
   it('should identify remote projects correctly', () => {
     createRoot(dispose => {
       cleanup = dispose;
+      // Remote projects don't start with 'local-'
       const project = useProject('remote-project-123');
 
       expect(project.isLocalProject()).toBe(false);
@@ -128,6 +130,8 @@ describe('useProject - Study CRUD Operations', () => {
         cleanup = dispose;
         const project = useProject('local-test');
 
+        // Ensure connection is initialized
+        project.connect();
         await new Promise(resolve => setTimeout(resolve, 10));
 
         const studyId = project.createStudy('Test Study', 'Test description');
@@ -351,6 +355,7 @@ describe('useProject - Checklist Operations', () => {
       cleanup = dispose;
       const project = useProject('local-test');
 
+      project.connect();
       await new Promise(resolve => setTimeout(resolve, 10));
 
       const studyId = project.createStudy('Test Study');
@@ -444,6 +449,7 @@ describe('useProject - Checklist Operations', () => {
       cleanup = dispose;
       const project = useProject('local-test');
 
+      project.connect();
       await new Promise(resolve => setTimeout(resolve, 10));
 
       const studyId = project.createStudy('Test Study');
@@ -465,6 +471,7 @@ describe('useProject - Checklist Operations', () => {
       cleanup = dispose;
       const project = useProject('local-test');
 
+      project.connect();
       await new Promise(resolve => setTimeout(resolve, 10));
 
       const studyId = project.createStudy('Test Study');
@@ -560,6 +567,7 @@ describe('useProject - Reconciliation Operations', () => {
       cleanup = dispose;
       const project = useProject('local-test');
 
+      project.connect();
       await new Promise(resolve => setTimeout(resolve, 10));
 
       const studyId = project.createStudy('Test Study');
@@ -575,6 +583,7 @@ describe('useProject - Reconciliation Operations', () => {
       cleanup = dispose;
       const project = useProject('local-test');
 
+      project.connect();
       await new Promise(resolve => setTimeout(resolve, 10));
 
       const studyId = project.createStudy('Test Study');

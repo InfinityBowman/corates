@@ -56,8 +56,8 @@ const TabsComponent: Component<TabsProps> = props => {
   });
 
   return (
-    <Tabs.Root {...rootProps()}>
-      <Tabs.List class='flex overflow-x-auto rounded-t-lg border-b border-gray-200 bg-white'>
+    <Tabs.Root {...rootProps()} class='rounded-sm'>
+      <Tabs.List class='flex overflow-x-auto rounded-t-lg bg-white'>
         <For each={tabsList()}>
           {tab => (
             <Tabs.Trigger

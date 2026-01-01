@@ -63,7 +63,7 @@ export default function ProjectHeader(props) {
   };
 
   return (
-    <div class='mb-8'>
+    <div class='mb-6'>
       <div class='mb-2 flex items-center gap-4'>
         <button
           onClick={() => props.onBack()}

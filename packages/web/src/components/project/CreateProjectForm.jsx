@@ -1,6 +1,6 @@
-import { createSignal, Show, onMount } from 'solid-js';
+import { createSignal, Show, onMount, createMemo, createEffect } from 'solid-js';
 import AddStudiesForm from './add-studies/AddStudiesForm.jsx';
-import { showToast } from '@corates/ui';
+import { showToast, Select } from '@corates/ui';
 import { AUTH_ERRORS } from '@corates/shared';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import {
@@ -11,6 +11,7 @@ import {
   clearRestoreParamsFromUrl,
 } from '@lib/formStatePersistence.js';
 import { isErrorCode, handleFetchError, handleError } from '@/lib/error-utils.js';
+import { useOrgs } from '@primitives/useOrgs.js';
 
 /**
  * Form for creating a new project with optional study imports
@@ -26,6 +27,27 @@ export default function CreateProjectForm(props) {
   const [projectDescription, setProjectDescription] = createSignal('');
   const [isCreating, setIsCreating] = createSignal(false);
   const [restoredState, setRestoredState] = createSignal(null);
+  const [selectedOrgId, setSelectedOrgId] = createSignal(null);
+
+  // Get orgs list
+  const { orgs, isLoading: orgsLoading } = useOrgs();
+
+  // Default to first org when orgs are loaded (if multiple orgs and none selected)
+  createEffect(() => {
+    const orgsList = orgs();
+    if (orgsList.length > 1 && !selectedOrgId()) {
+      setSelectedOrgId(orgsList[0].id);
+    }
+  });
+
+  // Auto-select org if user has only one, otherwise use selected
+  const resolvedOrgId = createMemo(() => {
+    const orgsList = orgs();
+    if (orgsList.length === 1) {
+      return orgsList[0].id;
+    }
+    return selectedOrgId();
+  });
 
   // Collected studies from AddStudiesForm (via collect mode)
   const [collectedStudies, setCollectedStudies] = createSignal({
@@ -93,10 +115,17 @@ export default function CreateProjectForm(props) {
   const handleSubmit = async () => {
     if (!projectName().trim()) return;
 
+    // Require orgId for project creation
+    const orgId = resolvedOrgId();
+    if (!orgId) {
+      showToast.error('Error', 'Please select an organization.');
+      return;
+    }
+
     setIsCreating(true);
     try {
       const response = await handleFetchError(
-        fetch(`${props.apiBase}/api/projects`, {
+        fetch(`${props.apiBase}/api/orgs/${orgId}/projects`, {
           method: 'POST',
           credentials: 'include',
           headers: {
@@ -173,6 +202,19 @@ export default function CreateProjectForm(props) {
             class='w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
           />
         </div>
+
+        {/* Organization selection - only show if user has multiple orgs */}
+        <Show when={!orgsLoading() && orgs().length > 1}>
+          <div>
+            <label class='mb-2 block text-sm font-semibold text-gray-700'>Organization</label>
+            <Select
+              items={orgs().map(org => ({ value: org.id, label: org.name }))}
+              value={selectedOrgId()}
+              onChange={value => setSelectedOrgId(value)}
+              placeholder='Select an organization'
+            />
+          </div>
+        </Show>
 
         <div>
           <label class='mb-2 block text-sm font-semibold text-gray-700'>

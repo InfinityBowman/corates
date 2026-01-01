@@ -4,7 +4,7 @@ import { FiUsers, FiCode } from 'solid-icons/fi';
 export default function AboutHero() {
   return (
     <section class='relative overflow-hidden'>
-      <div class='mx-auto max-w-4xl px-6 py-20 text-center md:py-28'>
+      <div class='mx-auto max-w-4xl px-6 py-20 text-center'>
         {/* Icon cluster */}
         <div class='mb-8 flex items-center justify-center gap-4'>
           <div class='flex h-14 w-14 -rotate-6 transform items-center justify-center rounded-xl bg-blue-100'>

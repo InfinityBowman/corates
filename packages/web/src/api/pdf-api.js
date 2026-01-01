@@ -1,5 +1,7 @@
 /**
  * PDF API - Upload, download, and manage PDFs via R2 storage
+ *
+ * All endpoints use org-scoped routes: /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs
  */
 
 import { API_BASE } from '@config/api.js';
@@ -30,18 +32,29 @@ export async function fetchPdfViaProxy(url) {
 }
 
 /**
+ * Build the org-scoped PDF base URL
+ * @param {string} orgId - The organization ID
+ * @param {string} projectId - The project ID
+ * @param {string} studyId - The study ID
+ * @returns {string} The base URL for PDF operations
+ */
+function buildPdfBaseUrl(orgId, projectId, studyId) {
+  return `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/studies/${studyId}/pdfs`;
+}
+
+/**
  * Upload a PDF file for a study
+ * @param {string} orgId - The organization ID
  * @param {string} projectId - The project ID
  * @param {string} studyId - The study ID
  * @param {File|ArrayBuffer} file - The PDF file or ArrayBuffer
  * @param {string} [fileName] - Optional filename (required if file is ArrayBuffer)
  * @returns {Promise<{success: boolean, key: string, fileName: string, size: number}>}
  */
-export async function uploadPdf(projectId, studyId, file, fileName = null) {
-  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs`;
+export async function uploadPdf(orgId, projectId, studyId, file, fileName = null) {
+  const url = buildPdfBaseUrl(orgId, projectId, studyId);
 
   // Always use FormData for consistency and better browser streaming support
-  // This works for both File objects and ArrayBuffers (by converting ArrayBuffer to Blob)
   const formData = new FormData();
 
   if (file instanceof File) {
@@ -53,8 +66,6 @@ export async function uploadPdf(projectId, studyId, file, fileName = null) {
     formData.append('file', fileObj);
   }
 
-  // Don't set Content-Type - browser will set it automatically with boundary for multipart/form-data
-  // Don't set Content-Length - browser will calculate it automatically for FormData
   const response = await fetch(url, {
     method: 'POST',
     credentials: 'include',
@@ -71,13 +82,15 @@ export async function uploadPdf(projectId, studyId, file, fileName = null) {
 
 /**
  * Download a PDF file from a study
+ * @param {string} orgId - The organization ID
  * @param {string} projectId - The project ID
  * @param {string} studyId - The study ID
  * @param {string} fileName - The PDF filename
  * @returns {Promise<ArrayBuffer>}
  */
-export async function downloadPdf(projectId, studyId, fileName) {
-  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs/${encodeURIComponent(fileName)}`;
+export async function downloadPdf(orgId, projectId, studyId, fileName) {
+  const baseUrl = buildPdfBaseUrl(orgId, projectId, studyId);
+  const url = `${baseUrl}/${encodeURIComponent(fileName)}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -94,24 +107,28 @@ export async function downloadPdf(projectId, studyId, fileName) {
 
 /**
  * Get the URL for a PDF (for direct embedding/viewing)
+ * @param {string} orgId - The organization ID
  * @param {string} projectId - The project ID
  * @param {string} studyId - The study ID
  * @param {string} fileName - The PDF filename
  * @returns {string}
  */
-export function getPdfUrl(projectId, studyId, fileName) {
-  return `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs/${encodeURIComponent(fileName)}`;
+export function getPdfUrl(orgId, projectId, studyId, fileName) {
+  const baseUrl = buildPdfBaseUrl(orgId, projectId, studyId);
+  return `${baseUrl}/${encodeURIComponent(fileName)}`;
 }
 
 /**
  * Delete a PDF from a study
+ * @param {string} orgId - The organization ID
  * @param {string} projectId - The project ID
  * @param {string} studyId - The study ID
  * @param {string} fileName - The PDF filename
  * @returns {Promise<{success: boolean}>}
  */
-export async function deletePdf(projectId, studyId, fileName) {
-  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs/${encodeURIComponent(fileName)}`;
+export async function deletePdf(orgId, projectId, studyId, fileName) {
+  const baseUrl = buildPdfBaseUrl(orgId, projectId, studyId);
+  const url = `${baseUrl}/${encodeURIComponent(fileName)}`;
 
   const response = await fetch(url, {
     method: 'DELETE',
@@ -128,12 +145,13 @@ export async function deletePdf(projectId, studyId, fileName) {
 
 /**
  * List all PDFs for a study
+ * @param {string} orgId - The organization ID
  * @param {string} projectId - The project ID
  * @param {string} studyId - The study ID
  * @returns {Promise<{pdfs: Array<{key: string, fileName: string, size: number, uploaded: string}>}>}
  */
-export async function listPdfs(projectId, studyId) {
-  const url = `${API_BASE}/api/projects/${projectId}/studies/${studyId}/pdfs`;
+export async function listPdfs(orgId, projectId, studyId) {
+  const url = buildPdfBaseUrl(orgId, projectId, studyId);
 
   const response = await fetch(url, {
     method: 'GET',

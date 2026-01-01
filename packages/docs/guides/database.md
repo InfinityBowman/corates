@@ -14,11 +14,7 @@ The database schema is defined in `packages/workers/src/db/schema.js` using Driz
 
 #### Users
 
-```1:24:packages/workers/src/db/schema.js
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
-import { sql } from 'drizzle-orm';
-
-// Users table
+```js
 export const user = sqliteTable('user', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -32,23 +28,78 @@ export const user = sqliteTable('user', {
   avatarUrl: text('avatarUrl'),
   role: text('role'), // Better Auth admin/plugin role (e.g. 'user', 'admin')
   persona: text('persona'), // optional: researcher, student, librarian, other
-  profileCompletedAt: integer('profileCompletedAt'), // unix timestamp (seconds)
+  profileCompletedAt: integer('profileCompletedAt'),
   twoFactorEnabled: integer('twoFactorEnabled', { mode: 'boolean' }).default(false),
-  // Admin plugin fields
   banned: integer('banned', { mode: 'boolean' }).default(false),
   banReason: text('banReason'),
   banExpires: integer('banExpires', { mode: 'timestamp' }),
 });
 ```
 
+#### Organizations (Better Auth Plugin)
+
+Organizations are managed by the Better Auth organization plugin:
+
+```js
+export const organization = sqliteTable('organization', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  slug: text('slug').unique(),
+  logo: text('logo'),
+  metadata: text('metadata'), // JSON string for additional org data
+  createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+});
+```
+
+#### Organization Members (Better Auth Plugin)
+
+```js
+export const member = sqliteTable('member', {
+  id: text('id').primaryKey(),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  organizationId: text('organizationId')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  role: text('role').notNull().default('member'), // owner, admin, member
+  createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+});
+```
+
+**Org role hierarchy:** `owner > admin > member`
+
+#### Organization Invitations (Better Auth Plugin)
+
+```js
+export const invitation = sqliteTable('invitation', {
+  id: text('id').primaryKey(),
+  email: text('email').notNull(),
+  inviterId: text('inviterId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  organizationId: text('organizationId')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  role: text('role').notNull().default('member'),
+  status: text('status').notNull().default('pending'), // pending, accepted, rejected, canceled
+  expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+});
+```
+
 #### Projects
 
-```72:82:packages/workers/src/db/schema.js
-// Projects table (for user's research projects)
+Projects now belong to an organization:
+
+```js
 export const projects = sqliteTable('projects', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
+  orgId: text('orgId')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
   createdBy: text('createdBy')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
@@ -59,8 +110,7 @@ export const projects = sqliteTable('projects', {
 
 #### Project Members
 
-```84:95:packages/workers/src/db/schema.js
-// Project membership table (which users have access to which projects)
+```js
 export const projectMembers = sqliteTable('project_members', {
   id: text('id').primaryKey(),
   projectId: text('projectId')
@@ -69,16 +119,49 @@ export const projectMembers = sqliteTable('project_members', {
   userId: text('userId')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  role: text('role').default('member'), // owner, collaborator, member, viewer
+  role: text('role').default('member'), // owner, member
   joinedAt: integer('joinedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+});
+```
+
+**Project role hierarchy:** `owner > member`
+
+#### Project Invitations
+
+Project invitations include org context for combined membership flow:
+
+```js
+export const projectInvitations = sqliteTable('project_invitations', {
+  id: text('id').primaryKey(),
+  orgId: text('orgId')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  projectId: text('projectId')
+    .notNull()
+    .references(() => projects.id, { onDelete: 'cascade' }),
+  email: text('email').notNull(),
+  role: text('role').default('member'), // project role to assign
+  orgRole: text('orgRole').default('member'), // org role if user isn't already a member
+  token: text('token').notNull().unique(),
+  invitedBy: text('invitedBy')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
+  acceptedAt: integer('acceptedAt', { mode: 'timestamp' }),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 ```
 
 ### Table Relationships
 
+- **organizations** ↔ **projects**: One-to-many (orgId)
+- **organizations** ↔ **member**: One-to-many (organizationId)
+- **users** ↔ **member**: Many-to-many (through member table)
 - **users** ↔ **projects**: One-to-many (createdBy)
 - **users** ↔ **project_members**: Many-to-many (through projectMembers table)
 - **projects** ↔ **project_members**: One-to-many
+
+See the [Organizations Guide](/guides/organizations) for details on how org and project membership interact.
 
 ## Drizzle ORM Patterns
 
@@ -620,5 +703,6 @@ Check the Zod schema in `src/__tests__/seed-schemas.js`:
 
 ## Related Guides
 
+- [Organizations Guide](/guides/organizations) - For org model and membership patterns
 - [API Development Guide](/guides/api-development) - For database usage in routes
 - [Architecture Diagrams](/architecture/diagrams/04-data-model) - For entity relationships

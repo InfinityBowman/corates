@@ -1,0 +1,171 @@
+---
+alwaysApply: false
+description: "Organization model, routes, middleware, and role hierarchies for multi-tenant workspaces"
+globs: packages/workers/src/routes/orgs/**, packages/web/src/primitives/useOrg*, packages/web/src/components/org/**
+---
+
+# Organization Patterns
+
+> **For comprehensive organization documentation**, see the [Organizations Guide](/guides/organizations) in the docs site.
+> This file provides quick reference patterns for AI agents.
+
+## Data Model
+
+- **Organizations** are the top-level container (Better Auth plugin)
+- **Projects** belong to organizations via `orgId` foreign key
+- **Org membership** is separate from **project membership**
+
+## Role Hierarchies
+
+**Org roles:** `owner > admin > member`
+
+**Project roles:** `owner > collaborator > member > viewer`
+
+## URL Structure
+
+**Backend (API):** `/api/orgs/:orgId/...` - Uses UUID
+
+**Frontend:** `/orgs/:orgSlug/...` - Uses human-readable slug
+
+## Backend Middleware
+
+### requireOrgMembership
+
+Checks org membership and optionally verifies minimum role:
+
+```js
+import { requireOrgMembership, getOrgContext } from '../middleware/requireOrg.js';
+
+// Any org member
+orgRoutes.get('/', requireOrgMembership(), async c => {
+  const { orgId, orgRole, org } = getOrgContext(c);
+});
+
+// Minimum role required
+orgRoutes.put('/:orgId', requireOrgMembership('admin'), async c => {
+  // Only org admins and owners
+});
+```
+
+### requireProjectAccess
+
+Checks project membership. **Must be used after requireOrgMembership:**
+
+```js
+import { requireOrgMembership, requireProjectAccess, getProjectContext } from '../middleware/requireOrg.js';
+
+projectRoutes.get('/:projectId', requireOrgMembership(), requireProjectAccess(), async c => {
+  const { projectId, projectRole, project } = getProjectContext(c);
+});
+
+// Minimum role
+projectRoutes.delete('/:projectId', requireOrgMembership(), requireProjectAccess('owner'), async c => {
+  // Only project owners
+});
+```
+
+### Middleware Chain Order
+
+```js
+routes.post(
+  '/',
+  requireAuth,                      // 1. Verify logged in
+  requireOrgMembership('admin'),    // 2. Check org membership + role
+  requireProjectAccess('owner'),    // 3. Check project access + role
+  requireEntitlement('...'),        // 4. Check subscription
+  validateRequest(schema),          // 5. Validate body
+  async c => { /* handler */ }
+);
+```
+
+## Frontend Primitives
+
+### useOrgContext
+
+Resolves org from URL `orgSlug`:
+
+```js
+import { useOrgContext } from '@primitives/useOrgContext.js';
+
+const {
+  orgSlug,      // () => string from URL
+  currentOrg,   // () => org object or null
+  orgId,        // () => string (UUID)
+  isLoading,    // () => boolean
+  orgNotFound,  // () => boolean
+  hasNoOrgs,    // () => boolean
+} = useOrgContext();
+```
+
+### useOrgProjectContext
+
+Combines org + project context:
+
+```js
+import { useOrgProjectContext } from '@primitives/useOrgProjectContext.js';
+
+const {
+  orgSlug, orgId,
+  projectId,
+  basePath,     // () => /orgs/:slug/projects/:id
+  isReady,      // () => boolean
+  getStudyPath, // (studyId) => string
+  getChecklistPath, // (studyId, checklistId) => string
+} = useOrgProjectContext();
+```
+
+## API Patterns
+
+### Creating Projects (org-scoped)
+
+```js
+// POST /api/orgs/:orgId/projects
+const { orgId } = getOrgContext(c);
+
+await db.batch([
+  db.insert(projects).values({
+    id: projectId,
+    name,
+    orgId,  // Project belongs to org
+    createdBy: user.id,
+  }),
+  db.insert(projectMembers).values({
+    id: crypto.randomUUID(),
+    projectId,
+    userId: user.id,
+    role: 'owner',
+  }),
+]);
+```
+
+### Frontend API Calls
+
+```js
+// Use orgId (UUID) for API calls, not orgSlug
+const response = await fetch(`${API_BASE}/api/orgs/${orgId()}/projects`, {
+  credentials: 'include',
+});
+```
+
+## Combined Invitation Flow
+
+Project invitations ensure org membership before project membership:
+
+1. Invitation created with `orgId`, `projectId`, `role`, `orgRole`
+2. On acceptance: ensure org membership (add with `orgRole` if needed)
+3. Then add project membership with `role`
+
+## Examples from Codebase
+
+- `packages/workers/src/routes/orgs/index.js` - Org CRUD routes
+- `packages/workers/src/routes/orgs/projects.js` - Org-scoped project routes
+- `packages/workers/src/routes/orgs/members.js` - Project member routes
+- `packages/workers/src/middleware/requireOrg.js` - Org/project middleware
+- `packages/web/src/primitives/useOrgContext.js` - Frontend org context
+- `packages/web/src/primitives/useOrgProjectContext.js` - Combined context
+
+## Related Documentation
+
+- [Organizations Guide](/guides/organizations) - Complete documentation
+- [API Development Guide](/guides/api-development) - Route patterns
+- [Database Guide](/guides/database) - Schema details

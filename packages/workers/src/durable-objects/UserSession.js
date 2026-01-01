@@ -1,6 +1,5 @@
 import { verifyAuth } from '../auth/config.js';
 import { getAccessControlOrigin } from '../config/origins.js';
-import { SESSION_CONFIG } from '../config/constants.js';
 
 export class UserSession {
   constructor(state, env) {
@@ -36,166 +35,11 @@ export class UserSession {
       return await this.handleWebSocket(request);
     }
 
-    try {
-      // Verify authentication for all requests
-      const { user } = await verifyAuth(request, this.env);
-      if (!user) {
-        return new Response(JSON.stringify({ error: 'Authentication required' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      // Extract the userId from the URL path
-      // URL pattern: /api/sessions/:sessionId/*
-      const sessionUserId = this.extractUserIdFromPath(path);
-
-      // Ensure user can only access their own session
-      if (!sessionUserId || sessionUserId !== user.id) {
-        return new Response(JSON.stringify({ error: 'Access denied' }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      request.user = user;
-
-      // Get session data
-      if (request.method === 'GET') {
-        return await this.getSession(corsHeaders);
-      }
-
-      // Update session data
-      if (request.method === 'PUT') {
-        return await this.updateSession(request, corsHeaders);
-      }
-
-      // Create new session
-      if (request.method === 'POST') {
-        return await this.createSession(request, corsHeaders);
-      }
-
-      // Delete session
-      if (request.method === 'DELETE') {
-        return await this.deleteSession(corsHeaders);
-      }
-
-      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-        status: 405,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } catch (error) {
-      console.error('UserSession error:', error);
-      return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-  }
-
-  async getSession(corsHeaders) {
-    try {
-      const sessionData = (await this.state.storage.get('session')) || {
-        id: await this.state.id.toString(),
-        createdAt: new Date().toISOString(),
-        lastActive: new Date().toISOString(),
-        data: {},
-      };
-
-      // Update last active
-      sessionData.lastActive = new Date().toISOString();
-      await this.state.storage.put('session', sessionData);
-
-      // Schedule cleanup alarm if not already set
-      await this.scheduleCleanupAlarm();
-
-      return new Response(JSON.stringify(sessionData), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } catch (error) {
-      console.error('Get session error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to retrieve session' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-  }
-
-  async createSession(request, corsHeaders) {
-    try {
-      const body = await request.json();
-
-      const sessionData = {
-        id: await this.state.id.toString(),
-        createdAt: new Date().toISOString(),
-        lastActive: new Date().toISOString(),
-        data: body.data || {},
-      };
-
-      await this.state.storage.put('session', sessionData);
-
-      // Schedule cleanup alarm
-      await this.scheduleCleanupAlarm();
-
-      return new Response(JSON.stringify(sessionData), {
-        status: 201,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } catch (error) {
-      console.error('Create session error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to create session' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-  }
-
-  async updateSession(request, corsHeaders) {
-    try {
-      const body = await request.json();
-      const sessionData = await this.state.storage.get('session');
-
-      if (!sessionData) {
-        return new Response(JSON.stringify({ error: 'Session not found' }), {
-          status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      const updatedSession = {
-        ...sessionData,
-        lastActive: new Date().toISOString(),
-        data: { ...sessionData.data, ...body.data },
-      };
-
-      await this.state.storage.put('session', updatedSession);
-
-      return new Response(JSON.stringify(updatedSession), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } catch (error) {
-      console.error('Update session error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to update session' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-  }
-
-  async deleteSession(corsHeaders) {
-    try {
-      await this.state.storage.deleteAll();
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } catch (error) {
-      console.error('Delete session error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to delete session' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // All other requests are not supported (only WebSocket and /notify are used)
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   /**
@@ -214,6 +58,14 @@ export class UserSession {
     // Require authentication
     if (!user) {
       return new Response('Authentication required', { status: 401 });
+    }
+
+    // Extract userId from URL path and verify it matches authenticated user
+    const url = new URL(request.url);
+    const sessionUserId = this.extractUserIdFromPath(url.pathname);
+
+    if (!sessionUserId || sessionUserId !== user.id) {
+      return new Response('Access denied', { status: 403 });
     }
 
     const webSocketPair = new WebSocketPair();
@@ -297,36 +149,6 @@ export class UserSession {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
-    }
-  }
-
-  // Auto-cleanup expired sessions
-  async alarm() {
-    const sessionData = await this.state.storage.get('session');
-
-    if (sessionData) {
-      const lastActive = new Date(sessionData.lastActive);
-      const now = new Date();
-      const hoursSinceActive = (now - lastActive) / (1000 * 60 * 60);
-
-      // Delete session if inactive for configured hours
-      if (hoursSinceActive > SESSION_CONFIG.CLEANUP_HOURS) {
-        await this.state.storage.deleteAll();
-        console.log('UserSession: cleaned up inactive session');
-      } else {
-        // Schedule next cleanup check
-        await this.state.storage.setAlarm(now.getTime() + SESSION_CONFIG.ALARM_INTERVAL_MS);
-      }
-    }
-  }
-
-  /**
-   * Schedule cleanup alarm if not already set
-   */
-  async scheduleCleanupAlarm() {
-    const currentAlarm = await this.state.storage.getAlarm();
-    if (!currentAlarm) {
-      await this.state.storage.setAlarm(Date.now() + SESSION_CONFIG.ALARM_INTERVAL_MS);
     }
   }
 

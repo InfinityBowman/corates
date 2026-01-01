@@ -202,11 +202,7 @@ export function getProjectInvitationEmailHtml({
   role,
   expiryDays = 7,
 }) {
-  const roleText =
-    role === 'owner' ? 'Owner'
-    : role === 'collaborator' ? 'Collaborator'
-    : role === 'viewer' ? 'Viewer'
-    : 'Member';
+  const roleText = role === 'owner' ? 'Owner' : 'Member';
 
   return `
     <!DOCTYPE html>
@@ -250,11 +246,7 @@ export function getProjectInvitationEmailText({
   role,
   expiryDays = 7,
 }) {
-  const roleText =
-    role === 'owner' ? 'Owner'
-    : role === 'collaborator' ? 'Collaborator'
-    : role === 'viewer' ? 'Viewer'
-    : 'Member';
+  const roleText = role === 'owner' ? 'Owner' : 'Member';
 
   return `
     Hi there,

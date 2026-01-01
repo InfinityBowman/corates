@@ -193,24 +193,27 @@ export function getQueryClient() {
     return queryClientInstance;
   }
 
+  // Disable caching in development
+  const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
+
   queryClientInstance = new QueryClient({
     defaultOptions: {
       queries: {
         // Offline-first: try cache first, then network
         networkMode: 'offlineFirst',
-        // Stale time: data is considered fresh for 5 minutes
-        staleTime: 1000 * 60 * 5,
-        // Cache time: unused data is kept in cache for 10 minutes
-        gcTime: 1000 * 60 * 10,
+        // In development: no caching (always fetch fresh data)
+        // In production: data is considered fresh for 5 minutes
+        staleTime: isDevelopment ? 0 : 1000 * 60 * 5,
+        // In development: immediately garbage collect unused data
+        // In production: unused data is kept in cache for 10 minutes
+        gcTime: isDevelopment ? 0 : 1000 * 60 * 10,
         // Retry failed requests up to 3 times
         retry: 3,
         // Retry delay with exponential backoff
         retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
-        // Refetch on window focus (helps keep data fresh)
-        refetchOnWindowFocus: true,
         // Refetch on reconnect (important for offline support)
         refetchOnReconnect: true,
-        // Refetch on mount if data is stale
+        // Refetch on mount if data is stale (always true in dev with staleTime: 0)
         refetchOnMount: true,
       },
       mutations: {

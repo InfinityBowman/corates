@@ -14,6 +14,7 @@ import {
   verification,
   twoFactor,
   subscriptions,
+  mediaFiles,
 } from '../../db/schema.js';
 import { eq, desc, sql, like, or, count } from 'drizzle-orm';
 import { createAuth } from '../../auth/config.js';
@@ -478,10 +479,14 @@ userRoutes.delete('/users/:userId', async c => {
       return c.json(error, error.statusCode);
     }
 
-    // Fetch all projects the user is a member of before any deletions
+    // Fetch all projects the user is a member of before any deletions (with orgId)
     const userProjects = await db
-      .select({ projectId: projectMembers.projectId })
+      .select({
+        projectId: projectMembers.projectId,
+        orgId: projects.orgId,
+      })
       .from(projectMembers)
+      .innerJoin(projects, eq(projectMembers.projectId, projects.id))
       .where(eq(projectMembers.userId, userId));
 
     // Sync all member removals to DOs atomically (fail fast if any fails)
@@ -492,7 +497,9 @@ userRoutes.delete('/users/:userId', async c => {
     // Only proceed with database deletions if all DO syncs succeeded
     // Delete all user data atomically using batch transaction
     // Order matters for foreign key constraints
+    // Update mediaFiles.uploadedBy to null before deleting user (following account-merge pattern)
     await db.batch([
+      db.update(mediaFiles).set({ uploadedBy: null }).where(eq(mediaFiles.uploadedBy, userId)),
       db.delete(projectMembers).where(eq(projectMembers.userId, userId)),
       db.delete(projects).where(eq(projects.createdBy, userId)),
       db.delete(subscriptions).where(eq(subscriptions.userId, userId)),

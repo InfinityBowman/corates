@@ -77,7 +77,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div class='mx-auto max-w-2xl p-6'>
+    <div class='mx-auto max-w-3xl p-6'>
       <h1 class='mb-6 text-2xl font-bold text-gray-900'>Settings</h1>
 
       {/* Billing Section */}

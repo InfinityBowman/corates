@@ -25,7 +25,6 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [solidPlugin(), tailwindcss()],
   build: {
-    target: ['es2020', 'safari14'],
     minify: mode === 'analyze' ? 'terser' : 'esbuild',
     sourcemap: mode === 'analyze',
     terserOptions: {

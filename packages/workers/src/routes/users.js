@@ -14,6 +14,7 @@ import {
   verification,
   twoFactor,
   subscriptions,
+  mediaFiles,
 } from '../db/schema.js';
 import { eq, desc, or, like, sql } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
@@ -27,6 +28,7 @@ import {
   SYSTEM_ERRORS,
 } from '@corates/shared';
 import { syncMemberToDO } from '../lib/project-sync.js';
+import { getProjectDocStub } from '../lib/project-doc-id.js';
 
 const userRoutes = new Hono();
 
@@ -130,6 +132,41 @@ userRoutes.get('/search', searchRateLimit, async c => {
 });
 
 /**
+ * GET /api/users/me/projects
+ * Get all projects for the current authenticated user (convenience endpoint)
+ */
+userRoutes.get('/me/projects', async c => {
+  const { user: authUser } = getAuth(c);
+  const db = createDb(c.env.DB);
+
+  try {
+    const results = await db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        description: projects.description,
+        orgId: projects.orgId,
+        role: projectMembers.role,
+        createdAt: projects.createdAt,
+        updatedAt: projects.updatedAt,
+      })
+      .from(projects)
+      .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
+      .where(eq(projectMembers.userId, authUser.id))
+      .orderBy(desc(projects.updatedAt));
+
+    return c.json(results);
+  } catch (error) {
+    console.error('Error fetching user projects:', error);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'fetch_user_projects',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
+  }
+});
+
+/**
  * GET /api/users/:userId/projects
  * Get all projects for a user
  */
@@ -153,6 +190,7 @@ userRoutes.get('/:userId/projects', async c => {
         id: projects.id,
         name: projects.name,
         description: projects.description,
+        orgId: projects.orgId,
         role: projectMembers.role,
         createdAt: projects.createdAt,
         updatedAt: projects.updatedAt,
@@ -183,10 +221,14 @@ userRoutes.delete('/me', async c => {
   const userId = currentUser.id;
 
   try {
-    // Fetch all projects the user is a member of before any deletions
+    // Fetch all projects the user is a member of before any deletions (with orgId)
     const userProjects = await db
-      .select({ projectId: projectMembers.projectId })
+      .select({
+        projectId: projectMembers.projectId,
+        orgId: projects.orgId,
+      })
       .from(projectMembers)
+      .innerJoin(projects, eq(projectMembers.projectId, projects.id))
       .where(eq(projectMembers.userId, userId));
 
     // Sync all member removals to DOs atomically (fail fast if any fails)
@@ -197,7 +239,9 @@ userRoutes.delete('/me', async c => {
     // Only proceed with database deletions if all DO syncs succeeded
     // Delete all user data atomically using batch transaction
     // Order matters for foreign key constraints
+    // Update mediaFiles.uploadedBy to null before deleting user (following account-merge pattern)
     await db.batch([
+      db.update(mediaFiles).set({ uploadedBy: null }).where(eq(mediaFiles.uploadedBy, userId)),
       db.delete(projectMembers).where(eq(projectMembers.userId, userId)),
       db.delete(projects).where(eq(projects.createdBy, userId)),
       db.delete(subscriptions).where(eq(subscriptions.userId, userId)),
@@ -247,17 +291,20 @@ userRoutes.post('/sync-profile', async c => {
       return c.json(error, error.statusCode);
     }
 
-    // Get all projects this user is a member of
+    // Get all projects this user is a member of (with orgId for DO addressing)
     const userProjects = await db
-      .select({ projectId: projectMembers.projectId })
+      .select({
+        projectId: projectMembers.projectId,
+        orgId: projects.orgId,
+      })
       .from(projectMembers)
+      .innerJoin(projects, eq(projectMembers.projectId, projects.id))
       .where(eq(projectMembers.userId, currentUser.id));
 
     // Sync to each project's Durable Object
     const syncPromises = userProjects.map(async ({ projectId }) => {
       try {
-        const doId = c.env.PROJECT_DOC.idFromName(projectId);
-        const projectDoc = c.env.PROJECT_DOC.get(doId);
+        const projectDoc = getProjectDocStub(c.env, projectId);
 
         await projectDoc.fetch(
           new Request('https://internal/sync-member', {

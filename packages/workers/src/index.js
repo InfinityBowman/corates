@@ -15,10 +15,8 @@ import { requireTrustedOrigin } from './middleware/csrf.js';
 
 // Route imports
 import { auth } from './auth/routes.js';
-import { projectRoutes } from './routes/projects.js';
-import { memberRoutes } from './routes/members.js';
+import { orgRoutes } from './routes/orgs/index.js';
 import { userRoutes } from './routes/users.js';
-import { pdfRoutes } from './routes/pdfs.js';
 import { dbRoutes } from './routes/database.js';
 import { emailRoutes } from './routes/email.js';
 import { billingRoutes } from './routes/billing/index.js';
@@ -27,7 +25,6 @@ import { avatarRoutes } from './routes/avatars.js';
 import { adminRoutes } from './routes/admin/index.js';
 import { accountMergeRoutes } from './routes/account-merge.js';
 import { contactRoutes } from './routes/contact.js';
-import { invitationRoutes } from './routes/invitations.js';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc, EmailQueue };
@@ -186,20 +183,26 @@ app.route('/api/users/avatar', avatarRoutes);
 // Mount account merge routes
 app.route('/api/accounts/merge', accountMergeRoutes);
 
-// Mount project routes
-app.route('/api/projects', projectRoutes);
-
-// Mount project member routes: /api/projects/:projectId/members
-app.route('/api/projects/:projectId/members', memberRoutes);
-
-// Mount invitation routes: /api/invitations
-app.route('/api/invitations', invitationRoutes);
-
-// Mount PDF routes: /api/projects/:projectId/studies/:studyId/pdfs
-app.route('/api/projects/:projectId/studies/:studyId/pdfs', pdfRoutes);
+// Mount organization routes (all project operations now live under /api/orgs/:orgId/projects/...)
+app.route('/api/orgs', orgRoutes);
 
 // Mount Google Drive routes
 app.route('/api/google-drive', googleDriveRoutes);
+
+// Legacy project endpoints - return 410 Gone to indicate they've moved to org-scoped routes
+const legacyGoneHandler = c =>
+  c.json(
+    {
+      error: 'ENDPOINT_MOVED',
+      message: 'This endpoint has been moved. Use /api/orgs/:orgId/projects/... instead.',
+      statusCode: 410,
+    },
+    410,
+  );
+app.all('/api/projects', legacyGoneHandler);
+app.all('/api/projects/*', legacyGoneHandler);
+app.all('/api/invitations', legacyGoneHandler);
+app.all('/api/invitations/*', legacyGoneHandler);
 
 // PDF proxy endpoint - fetches external PDFs to avoid CORS issues
 // Only requires authentication, not project membership
@@ -306,8 +309,8 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
   }
 });
 
-// Project Document Durable Object routes
-// Handler function shared between both route patterns
+// Project-scoped Project Document Durable Object routes
+// DO instance is project-scoped (project:${projectId})
 const handleProjectDoc = async c => {
   const projectId = c.req.param('projectId');
 
@@ -315,8 +318,9 @@ const handleProjectDoc = async c => {
     return c.json({ error: 'Project ID required' }, 400);
   }
 
-  const id = c.env.PROJECT_DOC.idFromName(projectId);
-  const projectDoc = c.env.PROJECT_DOC.get(id);
+  // Compute project-scoped DO instance name
+  const { getProjectDocStub } = await import('./lib/project-doc-id.js');
+  const projectDoc = getProjectDocStub(c.env, projectId);
   const response = await projectDoc.fetch(c.req.raw);
 
   // Don't wrap WebSocket upgrade responses
@@ -327,10 +331,35 @@ const handleProjectDoc = async c => {
   return response;
 };
 
-// Route without trailing path (for WebSocket connections from y-websocket)
-app.all('/api/project/:projectId', handleProjectDoc);
-// Route with trailing path (for any sub-resource requests)
-app.all('/api/project/:projectId/*', handleProjectDoc);
+// Project-scoped routes for WebSocket connections (y-websocket appends room as final segment)
+app.all('/api/project-doc/:projectId', handleProjectDoc);
+app.all('/api/project-doc/:projectId/*', handleProjectDoc);
+
+// Legacy org-scoped routes - return 410 Gone
+const legacyOrgProjectDocHandler = c =>
+  c.json(
+    {
+      error: 'ENDPOINT_MOVED',
+      message: 'This endpoint has been moved. Use /api/project-doc/:projectId instead.',
+      statusCode: 410,
+    },
+    410,
+  );
+app.all('/api/orgs/:orgId/project-doc/:projectId', legacyOrgProjectDocHandler);
+app.all('/api/orgs/:orgId/project-doc/:projectId/*', legacyOrgProjectDocHandler);
+
+// Legacy project WebSocket endpoint - return 410 Gone
+const legacyProjectDocHandler = c =>
+  c.json(
+    {
+      error: 'ENDPOINT_MOVED',
+      message: 'This endpoint has been moved. Use /api/orgs/:orgId/project-doc/:projectId instead.',
+      statusCode: 410,
+    },
+    410,
+  );
+app.all('/api/project/:projectId', legacyProjectDocHandler);
+app.all('/api/project/:projectId/*', legacyProjectDocHandler);
 
 // User Session Durable Object routes
 // Handler function shared between both route patterns

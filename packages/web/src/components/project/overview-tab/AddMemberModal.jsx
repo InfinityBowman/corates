@@ -83,13 +83,17 @@ export default function AddMemberModal(props) {
   const handleAddMember = async () => {
     const user = selectedUser();
     if (!user && !isValidEmail(searchQuery())) return;
+    if (!props.orgId) {
+      setError('No organization context');
+      return;
+    }
 
     setAdding(true);
     setError(null);
 
     try {
       const response = await handleFetchError(
-        fetch(`${API_BASE}/api/projects/${props.projectId}/members`, {
+        fetch(`${API_BASE}/api/orgs/${props.orgId}/projects/${props.projectId}/members`, {
           method: 'POST',
           credentials: 'include',
           headers: {
@@ -289,10 +293,8 @@ export default function AddMemberModal(props) {
               <Select
                 label='Role'
                 items={[
-                  { label: 'Viewer - Can view only', value: 'viewer' },
-                  { label: 'Member - Can edit checklists', value: 'member' },
-                  { label: 'Collaborator - Can edit project', value: 'collaborator' },
-                  { label: 'Owner - Full access', value: 'owner' },
+                  { label: 'Member - Can edit project content', value: 'member' },
+                  { label: 'Owner - Full access and member management', value: 'owner' },
                 ]}
                 value={selectedRole()}
                 onChange={setSelectedRole}

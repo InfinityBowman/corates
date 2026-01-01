@@ -11,9 +11,10 @@ import { queryKeys } from '@lib/queryKeys.js';
  * Creates project operations
  * @param {Function} getActiveConnection - Function to get current Y.js connection
  * @param {Function} getActiveProjectId - Function to get current project ID
+ * @param {Function} getActiveOrgId - Function to get current org ID
  * @returns {Object} Project operations
  */
-export function createProjectActions(getActiveConnection, getActiveProjectId) {
+export function createProjectActions(getActiveConnection, getActiveProjectId, getActiveOrgId) {
   /**
    * Rename a project (uses active project)
    */
@@ -52,11 +53,13 @@ export function createProjectActions(getActiveConnection, getActiveProjectId) {
    * Delete a project (low-level, no confirmation)
    * Note: This takes an explicit projectId since it may differ from active project
    * @param {string} targetProjectId - Project to delete
-   * @param {boolean} shouldNavigate - Whether to navigate to dashboard after
+   * @param {string} [targetOrgId] - Org ID (optional, uses active org if not provided)
    */
-  async function deleteById(targetProjectId) {
+  async function deleteById(targetProjectId, targetOrgId) {
+    const orgId = targetOrgId || getActiveOrgId();
+
     try {
-      const response = await fetch(`${API_BASE}/api/projects/${targetProjectId}`, {
+      const response = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${targetProjectId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -66,6 +69,7 @@ export function createProjectActions(getActiveConnection, getActiveProjectId) {
       }
       // Invalidate project list query to refetch without deleted project
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.byOrg(orgId) });
     } catch (err) {
       console.error('Error deleting project:', err);
       throw err;
@@ -75,9 +79,10 @@ export function createProjectActions(getActiveConnection, getActiveProjectId) {
   /**
    * Delete the active project
    */
-  async function deleteProject(shouldNavigate = true) {
+  async function deleteProject() {
     const projectId = getActiveProjectId();
-    return deleteById(projectId, shouldNavigate);
+    const orgId = getActiveOrgId();
+    return deleteById(projectId, orgId);
   }
 
   return {

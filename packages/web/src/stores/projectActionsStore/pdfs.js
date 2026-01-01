@@ -13,10 +13,16 @@ import pdfPreviewStore from '../pdfPreviewStore.js';
  * Creates PDF operations
  * @param {Function} getActiveConnection - Function to get current Y.js connection
  * @param {Function} getActiveProjectId - Function to get current project ID
+ * @param {Function} getActiveOrgId - Function to get current org ID
  * @param {Function} getCurrentUserId - Function to get current user ID
  * @returns {Object} PDF operations
  */
-export function createPdfActions(getActiveConnection, getActiveProjectId, getCurrentUserId) {
+export function createPdfActions(
+  getActiveConnection,
+  getActiveProjectId,
+  getActiveOrgId,
+  getCurrentUserId,
+) {
   /**
    * Extract PDF metadata (title, DOI, and fetch DOI reference data)
    * @param {ArrayBuffer} arrayBuffer - PDF file data
@@ -64,6 +70,7 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
   async function view(studyId, pdf) {
     if (!pdf || !pdf.fileName) return;
     const projectId = getActiveProjectId();
+    const orgId = getActiveOrgId();
 
     pdfPreviewStore.openPreview(projectId, studyId, pdf);
 
@@ -71,7 +78,7 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
       let data = await getCachedPdf(projectId, studyId, pdf.fileName);
 
       if (!data) {
-        data = await downloadPdf(projectId, studyId, pdf.fileName);
+        data = await downloadPdf(orgId, projectId, studyId, pdf.fileName);
         await cachePdf(projectId, studyId, pdf.fileName, data).catch(console.warn);
       }
 
@@ -88,12 +95,13 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
   async function download(studyId, pdf) {
     if (!pdf || !pdf.fileName) return;
     const projectId = getActiveProjectId();
+    const orgId = getActiveOrgId();
 
     try {
       let data = await getCachedPdf(projectId, studyId, pdf.fileName);
 
       if (!data) {
-        data = await downloadPdf(projectId, studyId, pdf.fileName);
+        data = await downloadPdf(orgId, projectId, studyId, pdf.fileName);
       }
 
       const blob = new Blob([data], { type: 'application/pdf' });
@@ -120,6 +128,7 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
    */
   async function upload(studyId, file, tag = 'secondary') {
     const projectId = getActiveProjectId();
+    const orgId = getActiveOrgId();
     const userId = getCurrentUserId();
     const ops = getActiveConnection();
 
@@ -141,7 +150,7 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
       const hasPdfs = study?.pdfs?.length > 0;
       const effectiveTag = !hasPdfs ? 'primary' : tag;
 
-      uploadResult = await uploadPdf(projectId, studyId, file, file.name);
+      uploadResult = await uploadPdf(orgId, projectId, studyId, file, file.name);
 
       let arrayBuffer = null;
       try {
@@ -178,7 +187,7 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
     } catch (err) {
       console.error('Error uploading PDF:', err);
       if (uploadResult?.fileName) {
-        deletePdf(projectId, studyId, uploadResult.fileName).catch(cleanupErr =>
+        deletePdf(orgId, projectId, studyId, uploadResult.fileName).catch(cleanupErr =>
           console.warn('Failed to clean up orphaned PDF:', cleanupErr),
         );
       }
@@ -192,6 +201,7 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
    */
   async function deletePdfFromStudy(studyId, pdf) {
     const projectId = getActiveProjectId();
+    const orgId = getActiveOrgId();
     const ops = getActiveConnection();
 
     if (!pdf || !pdf.fileName) return;
@@ -204,7 +214,7 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
     try {
       // Step 1: Delete from R2 storage first
       try {
-        await deletePdf(projectId, studyId, pdf.fileName);
+        await deletePdf(orgId, projectId, studyId, pdf.fileName);
         r2Deleted = true;
       } catch (r2Err) {
         console.error('Failed to delete PDF from R2:', r2Err);
@@ -268,6 +278,7 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
    */
   async function handleGoogleDriveImport(studyId, file, tag = 'secondary') {
     const projectId = getActiveProjectId();
+    const orgId = getActiveOrgId();
     const userId = getCurrentUserId();
     const ops = getActiveConnection();
 
@@ -281,7 +292,7 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
       // Download PDF to extract metadata and cache it
       let arrayBuffer = null;
       try {
-        arrayBuffer = await downloadPdf(projectId, studyId, file.fileName);
+        arrayBuffer = await downloadPdf(orgId, projectId, studyId, file.fileName);
         cachePdf(projectId, studyId, file.fileName, arrayBuffer).catch(err =>
           console.warn('Failed to cache Google Drive PDF:', err),
         );
@@ -316,7 +327,7 @@ export function createPdfActions(getActiveConnection, getActiveProjectId, getCur
       );
     } catch (err) {
       console.error('Failed to add Google Drive PDF metadata:', err);
-      deletePdf(projectId, studyId, file.fileName).catch(console.warn);
+      deletePdf(orgId, projectId, studyId, file.fileName).catch(console.warn);
       throw err;
     }
   }

@@ -1,49 +1,50 @@
-import { createEffect, createSignal, onCleanup, For, Show } from 'solid-js';
+/**
+ * ProjectsPanel - Reusable projects list UI component
+ *
+ * Can be embedded in dashboard or used standalone.
+ * Shows projects grid, create project functionality, and subscription/quota handling.
+ */
+
+import { createSignal, Show, For } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import useNotifications from '@primitives/useNotifications.js';
-import { cleanupProjectLocalData } from '@primitives/useProject/index.js';
-import projectStore from '@/stores/projectStore.js';
-import projectActionsStore from '@/stores/projectActionsStore';
-import { useConfirmDialog, showToast } from '@corates/ui';
+import { useMyProjectsList } from '@primitives/useMyProjectsList.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useSubscription } from '@primitives/useSubscription.js';
-import { useProjectList } from '@primitives/useProjectList.js';
 import { useQueryClient } from '@tanstack/solid-query';
+import { useConfirmDialog, showToast } from '@corates/ui';
+import { API_BASE } from '@config/api.js';
 import { queryKeys } from '@lib/queryKeys.js';
 import { isUnlimitedQuota } from '@corates/shared/plans';
-import CreateProjectForm from './CreateProjectForm.jsx';
-import ProjectCard from './ProjectCard.jsx';
-import ContactPrompt from './ContactPrompt.jsx';
-import { getRestoreParamsFromUrl } from '@lib/formStatePersistence.js';
+import ProjectCard from '@/components/project/ProjectCard.jsx';
+import CreateProjectForm from '@/components/project/CreateProjectForm.jsx';
+import ContactPrompt from '@/components/project/ContactPrompt.jsx';
+import projectStore from '@/stores/projectStore.js';
 
-export default function ProjectDashboard(props) {
+export default function ProjectsPanel() {
   const navigate = useNavigate();
-  const confirmDialog = useConfirmDialog();
-
-  // Check if we're returning from OAuth with state to restore
-  const restoreParams = getRestoreParamsFromUrl();
-  const shouldRestoreCreateProject = restoreParams?.type === 'createProject';
-
-  const [showCreateForm, setShowCreateForm] = createSignal(shouldRestoreCreateProject);
-  const { isOnline } = useBetterAuth();
-  const { hasEntitlement, hasQuota, quotas, loading: subscriptionLoading } = useSubscription();
-
-  const userId = () => props.userId;
   const queryClient = useQueryClient();
+  const confirmDialog = useConfirmDialog();
+  const { isOnline } = useBetterAuth();
 
-  // Use TanStack Query for project list
-  const projectListQuery = useProjectList(userId);
+  // Projects for current user
+  const projectListQuery = useMyProjectsList();
   const projects = () => projectListQuery.projects();
   const projectCount = () => projects()?.length || 0;
-  const isLoading = () => projectListQuery.isLoading();
-  // isLoaded is true when we have successfully fetched data (not just when not loading)
-  const isLoaded = () => projectListQuery.query.isSuccess;
-  const error = () => projectListQuery.error();
+
+  // Subscription/quota checks
+  const {
+    hasEntitlement,
+    hasQuota,
+    quotas,
+    loading: subscriptionLoading,
+    subscriptionFetchFailed,
+    refetch: refetchSubscription,
+  } = useSubscription();
+
+  const [showCreateForm, setShowCreateForm] = createSignal(false);
 
   // Check both entitlement and quota
-  // Return null while loading to avoid UI flicker (neither show button nor ContactPrompt)
   const canCreateProject = () => {
-    // While loading, return null to indicate indeterminate state
     if (subscriptionLoading()) return null;
     return (
       hasEntitlement('project.create') &&
@@ -51,10 +52,7 @@ export default function ProjectDashboard(props) {
     );
   };
 
-  // Determine restriction type and quota limit for ContactPrompt
-  // Only show ContactPrompt if subscription has loaded and user doesn't have entitlement
   const restrictionType = () => {
-    // Don't show prompt while loading (prevents showing default 'free' tier data)
     if (subscriptionLoading()) return null;
     return !hasEntitlement('project.create') ? 'entitlement' : 'quota';
   };
@@ -64,71 +62,31 @@ export default function ProjectDashboard(props) {
     return isUnlimitedQuota(limit) ? -1 : limit;
   };
 
-  // Check if error is due to offline state
-  const isOfflineError = () => {
-    const err = error();
-    return err && (err.includes('No internet connection') || err.includes('connection error'));
-  };
-
-  // Project list is automatically fetched by useProjectList hook
-
-  // Connect to notifications for real-time project updates
-  const { connect, disconnect } = useNotifications(userId(), {
-    onNotification: async notification => {
-      if (notification.type === 'project-invite') {
-        // Invalidate project list query to refetch
-        queryClient.invalidateQueries({ queryKey: queryKeys.projects.list(userId()) });
-      } else if (notification.type === 'removed-from-project') {
-        // Clean up local data for the project we were removed from
-        await cleanupProjectLocalData(notification.projectId);
-        showToast.info(
-          'Removed from Project',
-          `You were removed from "${notification.projectName}"`,
-        );
-      } else if (notification.type === 'project-deleted') {
-        // Clean up local data for the deleted project
-        await cleanupProjectLocalData(notification.projectId);
-        showToast.info('Project Deleted', `"${notification.projectName}" was deleted`);
-      }
-    },
-  });
-
-  // Connect to notifications when component mounts
-  createEffect(() => {
-    const currentUserId = userId();
-    if (!currentUserId) {
-      // Disconnect if userId becomes null (e.g., during signout)
-      disconnect();
-      return;
-    }
-    connect();
-  });
-
-  onCleanup(() => {
-    disconnect();
-  });
-
+  // Handle project creation
   const handleProjectCreated = (
     newProject,
     pendingPdfs = [],
     pendingRefs = [],
     driveFiles = [],
   ) => {
-    // Invalidate project list query to refetch with new project
-    queryClient.invalidateQueries({ queryKey: queryKeys.projects.list(userId()) });
-    // Store non-serializable data in projectStore instead of router state
+    // Invalidate project list
+    queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+
+    // Store pending data for the project view
     if (pendingPdfs.length > 0 || pendingRefs.length > 0 || driveFiles.length > 0) {
       projectStore.setPendingProjectData(newProject.id, { pendingPdfs, pendingRefs, driveFiles });
     }
+
     setShowCreateForm(false);
     navigate(`/projects/${newProject.id}`);
   };
 
+  // Open a project
   const openProject = projectId => {
     navigate(`/projects/${projectId}`);
   };
 
-  // Handler for deleting projects from dashboard
+  // Delete a project
   const handleDeleteProject = async targetProjectId => {
     const confirmed = await confirmDialog.open({
       title: 'Delete Project',
@@ -139,27 +97,48 @@ export default function ProjectDashboard(props) {
     });
     if (!confirmed) return;
 
+    // Find the project to get its orgId
+    const project = projects()?.find(p => p.id === targetProjectId);
+    if (!project?.orgId) {
+      showToast.error('Error', 'Unable to find project organization');
+      return;
+    }
+
     try {
-      // Use deleteById since we're outside the project view (no active project set)
-      await projectActionsStore.project.deleteById(targetProjectId);
+      const response = await fetch(
+        `${API_BASE}/api/orgs/${project.orgId}/projects/${targetProjectId}`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+        },
+      );
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to delete project');
+      }
+
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
       showToast.success('Project Deleted', 'The project has been deleted successfully');
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils.js');
-      await handleError(err, {
-        toastTitle: 'Delete Failed',
-      });
+      await handleError(err, { toastTitle: 'Delete Failed' });
     }
   };
+
+  // Loading state - only true when there's no data yet (initial load)
+  const isLoading = () => projectListQuery.isInitialLoading();
+  const hasData = () => projects()?.length > 0;
 
   return (
     <div class='space-y-6'>
       {/* Header */}
       <div class='flex flex-wrap items-center justify-between gap-4'>
         <div>
-          <h1 class='text-2xl font-bold text-gray-900'>My Projects</h1>
+          <h1 class='text-2xl font-bold text-gray-900'>Projects</h1>
           <p class='mt-1 text-gray-500'>Manage your research projects</p>
         </div>
-        {/* Show loading skeleton while subscription loads, then show button or ContactPrompt */}
+
+        {/* Create button or quota prompt */}
         <Show
           when={canCreateProject() !== null}
           fallback={<div class='h-10 w-32 animate-pulse rounded-lg bg-gray-200' />}
@@ -189,10 +168,26 @@ export default function ProjectDashboard(props) {
         </Show>
       </div>
 
-      {/* Error display */}
-      <Show when={error() && !isOfflineError()}>
+      {/* Subscription fetch error banner */}
+      <Show when={subscriptionFetchFailed()}>
+        <div class='flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800'>
+          <div>
+            <span class='font-medium'>Unable to verify subscription.</span>{' '}
+            <span class='text-amber-700'>Some features may be restricted.</span>
+          </div>
+          <button
+            onClick={() => refetchSubscription()}
+            class='rounded bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700'
+          >
+            Retry
+          </button>
+        </div>
+      </Show>
+
+      {/* Project list error display */}
+      <Show when={projectListQuery.isError()}>
         <div class='rounded-lg border border-red-200 bg-red-50 p-4 text-red-700'>
-          {error()?.message || 'An error occurred'}
+          {projectListQuery.error()?.message || 'An error occurred'}
           <button onClick={() => projectListQuery.refetch()} class='ml-2 underline'>
             Retry
           </button>
@@ -202,7 +197,7 @@ export default function ProjectDashboard(props) {
       {/* Create Project Form */}
       <Show when={showCreateForm()}>
         <CreateProjectForm
-          apiBase={props.apiBase}
+          apiBase={API_BASE}
           onProjectCreated={handleProjectCreated}
           onCancel={() => setShowCreateForm(false)}
         />
@@ -211,7 +206,7 @@ export default function ProjectDashboard(props) {
       {/* Projects Grid */}
       <div class='grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
         <Show
-          when={projects()?.length > 0}
+          when={hasData()}
           fallback={
             <Show when={!isLoading()}>
               <div class='col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12'>
@@ -237,8 +232,8 @@ export default function ProjectDashboard(props) {
           </For>
         </Show>
 
-        {/* Loading state */}
-        <Show when={isLoading() && !isLoaded()}>
+        {/* Loading state - only show when there's no existing data */}
+        <Show when={isLoading() && !hasData()}>
           <div class='col-span-full py-12 text-center'>
             <div class='text-gray-400'>Loading projects...</div>
           </div>

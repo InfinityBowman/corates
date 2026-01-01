@@ -498,8 +498,103 @@ export function useConnection(url) {
 }
 ```
 
+## Organization Context Primitives
+
+CoRATES uses organization-scoped routing. Two primitives help manage org and project context from URL params.
+
+### useOrgContext
+
+Resolves the current organization from URL params (`orgSlug`):
+
+```js
+import { useOrgContext } from '@primitives/useOrgContext.js';
+
+function MyOrgComponent() {
+  const {
+    // Data
+    orgSlug, // () => string - slug from URL
+    currentOrg, // () => org object or null
+    orgs, // () => array of user's orgs
+    orgId, // () => string - resolved org ID
+    orgName, // () => string - org name
+
+    // Guard states
+    isLoading, // () => boolean
+    isError, // () => boolean
+    hasNoOrgs, // () => boolean - user has no orgs
+    orgNotFound, // () => boolean - slug doesn't match any org
+
+    // Actions
+    refetchOrgs, // () => void
+  } = useOrgContext();
+
+  return (
+    <Show when={!isLoading() && !orgNotFound()}>
+      <div>Current org: {orgName()}</div>
+    </Show>
+  );
+}
+```
+
+### useOrgProjectContext
+
+Combines org context with project context for project-level routes:
+
+```js
+import { useOrgProjectContext } from '@primitives/useOrgProjectContext.js';
+
+function ProjectComponent() {
+  const {
+    // From org context
+    orgSlug,
+    orgId,
+    orgName,
+    currentOrg,
+    isLoadingOrg,
+    orgNotFound,
+    hasNoOrgs,
+
+    // Project context
+    projectId, // () => string from URL
+    basePath, // () => string - /orgs/:slug/projects/:id
+    projectIdMissing, // () => boolean
+
+    // Combined state
+    isReady, // () => boolean - org resolved and project ID exists
+
+    // Path builders
+    getStudyPath, // (studyId) => string
+    getChecklistPath, // (studyId, checklistId) => string
+    getReconcilePath, // (studyId, c1Id, c2Id) => string
+  } = useOrgProjectContext();
+
+  return (
+    <Show when={isReady()}>
+      <a href={getStudyPath('study-123')}>View Study</a>
+    </Show>
+  );
+}
+```
+
+### Path Builder Utilities
+
+Build org-scoped URLs outside components:
+
+```js
+import { buildOrgProjectPath, buildStudyPath, buildChecklistPath } from '@primitives/useOrgProjectContext.js';
+
+// /orgs/my-lab/projects/proj-123
+buildOrgProjectPath('my-lab', 'proj-123');
+
+// /orgs/my-lab/projects/proj-123/studies/study-456
+buildStudyPath('my-lab', 'proj-123', 'study-456');
+```
+
+See the [Organizations Guide](/guides/organizations) for the complete org model.
+
 ## Related Guides
 
+- [Organizations Guide](/guides/organizations) - For org model and routing patterns
 - [State Management Guide](/guides/state-management) - For understanding stores vs primitives
 - [Component Development Guide](/guides/components) - For using primitives in components
 - [Yjs Sync Guide](/guides/yjs-sync) - For understanding `useProject` primitive

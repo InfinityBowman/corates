@@ -1,0 +1,1 @@
+ALTER TABLE `project_invitations` ADD `grantOrgMembership` integer DEFAULT false NOT NULL;

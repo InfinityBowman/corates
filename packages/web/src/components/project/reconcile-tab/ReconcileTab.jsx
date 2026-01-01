@@ -13,7 +13,7 @@ import { getStudiesForTab } from '@/lib/checklist-domain.js';
  * Uses projectActionsStore directly for mutations.
  */
 export default function ReconcileTab() {
-  const { projectId, getAssigneeName } = useProjectContext();
+  const { projectId, getAssigneeName, getReconcilePath } = useProjectContext();
   const navigate = useNavigate();
 
   // Read from store directly
@@ -26,7 +26,7 @@ export default function ReconcileTab() {
 
   // Navigation helpers
   const openReconciliation = (studyId, checklist1Id, checklist2Id) => {
-    navigate(`/projects/${projectId}/studies/${studyId}/reconcile/${checklist1Id}/${checklist2Id}`);
+    navigate(getReconcilePath(studyId, checklist1Id, checklist2Id));
   };
 
   const handleViewPdf = (studyId, pdf) => {

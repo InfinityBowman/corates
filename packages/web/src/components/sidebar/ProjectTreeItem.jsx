@@ -16,8 +16,11 @@ export default function ProjectTreeItem(props) {
     <Show when={props.project}>
       {project => {
         const projectId = project().id;
-        const projectPath = `/projects/${projectId}`;
-        const isSelected = () => props.currentPath === projectPath;
+
+        // Build project-scoped path
+        const projectPath = () => `/projects/${projectId}`;
+
+        const isSelected = () => props.currentPath === projectPath();
 
         // Use lightweight hook to read project data from store
         const projectData = useProjectData(projectId);
@@ -42,7 +45,7 @@ export default function ProjectTreeItem(props) {
                 <button
                   onClick={e => {
                     e.stopPropagation();
-                    navigate(projectPath);
+                    navigate(projectPath());
                   }}
                   class='flex flex-1 items-center gap-2 py-2 pr-2 text-left'
                 >

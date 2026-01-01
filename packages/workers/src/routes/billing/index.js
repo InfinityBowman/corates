@@ -45,12 +45,23 @@ billingRoutes.get('/subscription', requireAuth, async c => {
       });
     }
 
+    // Convert Date objects to Unix timestamps (seconds) for JSON serialization
+    // Drizzle timestamp mode returns Date objects, but frontend expects Unix timestamps
+    const currentPeriodEnd =
+      subscription.currentPeriodEnd instanceof Date ?
+        Math.floor(subscription.currentPeriodEnd.getTime() / 1000)
+      : subscription.currentPeriodEnd;
+
+    // Normalize tier to lowercase to match TIER_INFO keys
+    const tier = (subscription.tier || DEFAULT_SUBSCRIPTION_TIER).trim().toLowerCase();
+    const validTier = TIER_INFO[tier] ? tier : DEFAULT_SUBSCRIPTION_TIER;
+
     return c.json({
-      tier: subscription.tier,
+      tier: validTier,
       status: subscription.status,
-      tierInfo: TIER_INFO[subscription.tier] ?? TIER_INFO.free,
+      tierInfo: TIER_INFO[validTier] ?? TIER_INFO.free,
       stripeSubscriptionId: subscription.stripeSubscriptionId,
-      currentPeriodEnd: subscription.currentPeriodEnd,
+      currentPeriodEnd,
       cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
     });
   } catch (error) {

@@ -77,8 +77,20 @@ export const memberSchemas = {
 
 /**
  * Invitation schemas
+ *
+ * Note: grantOrgMembership can only be set to true by org admins/owners.
+ * When accepting an invitation, users always get project membership.
+ * If grantOrgMembership is true, they also get org membership (for governance/billing).
+ * This does not grant project access - projects are always invite-only.
  */
 export const invitationSchemas = {
+  create: z.object({
+    email: z.string().email('Invalid email address'),
+    role: z.enum(PROJECT_ROLES, {
+      error: `Role must be one of: ${PROJECT_ROLES.join(', ')}`,
+    }),
+    grantOrgMembership: z.boolean().optional().default(false), // only org admins/owners can set to true
+  }),
   accept: z.object({
     token: z.string().min(1, 'Token is required'),
   }),

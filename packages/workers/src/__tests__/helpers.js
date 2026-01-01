@@ -9,13 +9,25 @@ import {
   runInDurableObject,
 } from 'cloudflare:test';
 import { createDb } from '../db/client.js';
-import { user, projects, projectMembers, session, subscriptions } from '../db/schema.js';
+import {
+  user,
+  projects,
+  projectMembers,
+  session,
+  subscriptions,
+  organization,
+  member,
+  mediaFiles,
+} from '../db/schema.js';
 import {
   seedUserSchema,
   seedProjectSchema,
   seedProjectMemberSchema,
   seedSessionSchema,
   seedSubscriptionSchema,
+  seedOrganizationSchema,
+  seedOrgMemberSchema,
+  seedMediaFileSchema,
 } from './seed-schemas.js';
 import { MIGRATION_SQL } from './migration-sql.js';
 
@@ -68,17 +80,28 @@ function parseSqlStatements(sqlContent) {
 }
 
 /**
- * Clear ProjectDoc Durable Objects for test project IDs
+ * Get the project-scoped DO name for a project
+ * @param {string} projectId - Project ID
+ * @returns {string} The DO instance name in format "project:${projectId}"
+ */
+export function getProjectDocName(projectId) {
+  return `project:${projectId}`;
+}
+
+/**
+ * Clear ProjectDoc Durable Objects for test projects
  * This prevents DO invalidation errors between tests
+ * @param {Array<string>} projectIds - Array of project IDs
  */
 export async function clearProjectDOs(projectIds = []) {
   // Common test project IDs that might have DOs
   const defaultProjectIds = ['project-1', 'project-2', 'p1', 'p2'];
-  const allProjectIds = [...new Set([...defaultProjectIds, ...projectIds])];
+  const allProjectIds = [...defaultProjectIds, ...projectIds];
 
   for (const projectId of allProjectIds) {
     try {
-      const doId = env.PROJECT_DOC.idFromName(projectId);
+      const doName = getProjectDocName(projectId);
+      const doId = env.PROJECT_DOC.idFromName(doName);
       const stub = env.PROJECT_DOC.get(doId);
       await runInDurableObject(stub, async (instance, state) => {
         // Clear all storage
@@ -124,8 +147,11 @@ export async function resetTestDatabase() {
     'mediaFiles',
     'project_members',
     'projects',
+    'invitation',
+    'member',
     'session',
     'account',
+    'organization',
     'user',
   ];
 
@@ -189,6 +215,39 @@ export async function seedUser(params) {
 }
 
 /**
+ * Seed an organization into the test database
+ */
+export async function seedOrganization(params) {
+  const validated = seedOrganizationSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(organization).values({
+    id: validated.id,
+    name: validated.name,
+    slug: validated.slug,
+    logo: validated.logo,
+    metadata: validated.metadata,
+    createdAt: new Date(validated.createdAt * 1000),
+  });
+}
+
+/**
+ * Seed an organization member into the test database
+ */
+export async function seedOrgMember(params) {
+  const validated = seedOrgMemberSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(member).values({
+    id: validated.id,
+    userId: validated.userId,
+    organizationId: validated.organizationId,
+    role: validated.role,
+    createdAt: new Date(validated.createdAt * 1000),
+  });
+}
+
+/**
  * Seed a project into the test database
  */
 export async function seedProject(params) {
@@ -199,6 +258,7 @@ export async function seedProject(params) {
     id: validated.id,
     name: validated.name,
     description: validated.description,
+    orgId: validated.orgId,
     createdBy: validated.createdBy,
     createdAt: new Date(validated.createdAt * 1000),
     updatedAt: new Date(validated.updatedAt * 1000),
@@ -259,6 +319,25 @@ export async function seedSubscription(params) {
     cancelAtPeriodEnd: validated.cancelAtPeriodEnd === 1,
     createdAt: new Date(validated.createdAt * 1000),
     updatedAt: new Date(validated.updatedAt * 1000),
+  });
+}
+
+/**
+ * Seed a media file into the test database
+ */
+export async function seedMediaFile(params) {
+  const validated = seedMediaFileSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(mediaFiles).values({
+    id: validated.id,
+    filename: validated.filename,
+    originalName: validated.originalName,
+    fileType: validated.fileType,
+    fileSize: validated.fileSize,
+    uploadedBy: validated.uploadedBy,
+    bucketKey: validated.bucketKey,
+    createdAt: new Date(validated.createdAt * 1000),
   });
 }
 
