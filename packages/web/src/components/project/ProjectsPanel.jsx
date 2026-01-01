@@ -227,11 +227,7 @@ export default function ProjectsPanel() {
         >
           <For each={projects()}>
             {project => (
-              <ProjectCard
-                project={project}
-                onOpen={openProject}
-                onDelete={handleDeleteProject}
-              />
+              <ProjectCard project={project} onOpen={openProject} onDelete={handleDeleteProject} />
             )}
           </For>
         </Show>
