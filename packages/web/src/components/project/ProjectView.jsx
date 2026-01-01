@@ -40,7 +40,7 @@ export default function ProjectView() {
   const { user } = useBetterAuth();
 
   // Get orgId from project data (for API calls)
-  const { orgId } = useProjectOrgId(params.projectId);
+  const orgId = useProjectOrgId(params.projectId);
 
   // Y.js hook - connection is also registered with projectActionsStore
   // No longer requires orgId for WebSocket connection (project-scoped)

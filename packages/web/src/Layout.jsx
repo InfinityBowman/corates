@@ -4,6 +4,7 @@ import Sidebar from './components/sidebar/Sidebar.jsx';
 import { Toaster } from '@corates/ui';
 import { ImpersonationBanner } from '@/components/admin/index.js';
 import { isImpersonating } from '@/stores/adminStore.js';
+import RealtimeMembershipSync from './components/RealtimeMembershipSync.jsx';
 
 const SIDEBAR_MODE_KEY = 'corates-sidebar-mode';
 const SIDEBAR_WIDTH_KEY = 'corates-sidebar-width';
@@ -70,6 +71,7 @@ export default function MainLayout(props) {
         <main class='flex-1 overflow-auto text-gray-900'>{props.children}</main>
       </div>
       <Toaster />
+      <RealtimeMembershipSync />
     </div>
   );
 }

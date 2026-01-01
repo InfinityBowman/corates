@@ -46,6 +46,7 @@ export function useMyProjectsList(options = {}) {
       enabled: enabledOption !== false && isLoggedIn() && !authLoading(),
       staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 1000 * 60 * 10, // 10 minutes
+      refetchOnMount: 'always', // Always refetch on mount to catch membership changes that occurred while app was closed
     };
   });
 

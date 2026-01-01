@@ -208,8 +208,12 @@ function createBetterAuthStore() {
           // Invalidate project list query if user is authenticated
           const currentUser = user();
           if (currentUser?.id) {
-            // Invalidate and refetch project list query to ensure it's current
+            // Invalidate and refetch project list queries to ensure they're current
             try {
+              await queryClient.invalidateQueries({
+                queryKey: queryKeys.projects.all,
+              });
+              // Also invalidate legacy query key for backward compatibility
               await queryClient.invalidateQueries({
                 queryKey: queryKeys.projects.list(currentUser.id),
               });
