@@ -14,8 +14,15 @@ export function isSubscriptionActive(subscription) {
   if (!subscription) return false;
   if (subscription.status !== 'active') return false;
   if (!subscription.currentPeriodEnd) return true; // No expiration
+
+  // Handle both Date objects (from Drizzle) and Unix timestamps (seconds)
   const now = Math.floor(Date.now() / 1000);
-  return subscription.currentPeriodEnd > now;
+  const periodEnd =
+    subscription.currentPeriodEnd instanceof Date ?
+      Math.floor(subscription.currentPeriodEnd.getTime() / 1000)
+    : subscription.currentPeriodEnd;
+
+  return periodEnd > now;
 }
 
 /**

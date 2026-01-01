@@ -14,11 +14,11 @@ export const queryKeys = {
 
   // Project queries
   projects: {
-    /** All projects (for removal operations) */
+    /** All projects for current user */
     all: ['projects'],
-    /** Projects for a specific user (legacy, use byOrg instead) */
+    /** Projects for a specific user (legacy) */
     list: userId => ['projects', userId],
-    /** Projects within an organization */
+    /** Projects within an organization (legacy, kept for backward compatibility) */
     byOrg: orgId => ['projects', 'org', orgId],
   },
 

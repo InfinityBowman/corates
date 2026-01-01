@@ -56,10 +56,45 @@ export default function useRecentsNav() {
  * Returns null for generic pages that shouldn't be tracked.
  */
 function parsePathToRecentItem(path) {
-  // Match project pages: /orgs/:slug/projects/:projectId
-  const projectMatch = path.match(/^\/orgs\/([^/]+)\/projects\/([^/]+)/);
+  // Match project pages: /projects/:projectId
+  const projectMatch = path.match(/^\/projects\/([^/]+)/);
   if (projectMatch) {
-    const [, orgSlug, projectId] = projectMatch;
+    const [, projectId] = projectMatch;
+    // Check if it's a study page: /projects/:projectId/studies/:studyId
+    const studyMatch = path.match(/^\/projects\/([^/]+)\/studies\/([^/]+)/);
+    if (studyMatch) {
+      const [, , studyId] = studyMatch;
+      // Check if it's a checklist page
+      const checklistMatch = path.match(
+        /^\/projects\/([^/]+)\/studies\/([^/]+)\/checklists\/([^/]+)/,
+      );
+      if (checklistMatch) {
+        return {
+          type: 'checklist',
+          path,
+          projectId,
+          studyId,
+          checklistId: checklistMatch[3],
+        };
+      }
+      return {
+        type: 'study',
+        path,
+        projectId,
+        studyId,
+      };
+    }
+    return {
+      type: 'project',
+      path,
+      projectId,
+    };
+  }
+
+  // Legacy: Match old org-scoped paths for backward compatibility
+  const legacyProjectMatch = path.match(/^\/orgs\/([^/]+)\/projects\/([^/]+)/);
+  if (legacyProjectMatch) {
+    const [, orgSlug, projectId] = legacyProjectMatch;
     // Check if it's a study page: /orgs/:slug/projects/:projectId/studies/:studyId
     const studyMatch = path.match(/^\/orgs\/([^/]+)\/projects\/([^/]+)\/studies\/([^/]+)/);
     if (studyMatch) {
@@ -69,27 +104,27 @@ function parsePathToRecentItem(path) {
         /^\/orgs\/([^/]+)\/projects\/([^/]+)\/studies\/([^/]+)\/checklists\/([^/]+)/,
       );
       if (checklistMatch) {
+        // Convert to new project-scoped path
         return {
           type: 'checklist',
-          path,
-          orgSlug,
+          path: `/projects/${projectId}/studies/${studyId}/checklists/${checklistMatch[4]}`,
           projectId,
           studyId,
           checklistId: checklistMatch[4],
         };
       }
+      // Convert to new project-scoped path
       return {
         type: 'study',
-        path,
-        orgSlug,
+        path: `/projects/${projectId}/studies/${studyId}`,
         projectId,
         studyId,
       };
     }
+    // Convert to new project-scoped path
     return {
       type: 'project',
-      path,
-      orgSlug,
+      path: `/projects/${projectId}`,
       projectId,
     };
   }

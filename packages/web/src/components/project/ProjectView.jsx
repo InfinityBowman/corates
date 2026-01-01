@@ -8,7 +8,7 @@
 import { createSignal, createEffect, Show, onCleanup, batch } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import useProject from '@/primitives/useProject/index.js';
-import { useOrgContext } from '@primitives/useOrgContext.js';
+import { useProjectOrgId } from '@primitives/useProjectOrgId.js';
 import projectStore from '@/stores/projectStore.js';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import projectActionsStore from '@/stores/projectActionsStore';
@@ -39,12 +39,12 @@ export default function ProjectView() {
   const location = useLocation();
   const { user } = useBetterAuth();
 
-  // Get org context for navigation and API calls
-  const { orgSlug, orgId } = useOrgContext();
+  // Get orgId from project data (for API calls)
+  const { orgId } = useProjectOrgId(params.projectId);
 
   // Y.js hook - connection is also registered with projectActionsStore
-  // orgId() is required for remote projects' WebSocket connection
-  const projectConnection = useProject(orgId(), params.projectId);
+  // No longer requires orgId for WebSocket connection (project-scoped)
+  const projectConnection = useProject(params.projectId);
   const { connect, disconnect } = projectConnection;
 
   // Read data from store (only what's needed at this level)
@@ -56,8 +56,10 @@ export default function ProjectView() {
   createEffect(() => {
     const pid = params.projectId;
     const oid = orgId();
-    if (pid && oid) {
-      projectActionsStore._setActiveProject(pid, oid);
+    if (pid) {
+      if (oid) {
+        projectActionsStore._setActiveProject(pid, oid);
+      }
       connect();
     }
   });
@@ -68,18 +70,12 @@ export default function ProjectView() {
     disconnect();
   });
 
-  // Watch for access-denied errors and redirect to org projects page
+  // Watch for access-denied errors and redirect to projects page
   createEffect(() => {
     const state = connectionState();
     if (state.error && ACCESS_DENIED_ERRORS.includes(state.error)) {
       showToast.error('Access Denied', state.error);
-      // Navigate back to org projects page
-      const slug = orgSlug();
-      if (slug) {
-        navigate(`/orgs/${slug}`, { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+      navigate('/projects', { replace: true });
     }
   });
 
@@ -274,10 +270,7 @@ export default function ProjectView() {
   };
 
   // Build back navigation path
-  const backPath = () => {
-    const slug = orgSlug();
-    return slug ? `/orgs/${slug}` : '/dashboard';
-  };
+  const backPath = () => '/projects';
 
   return (
     <div class='mx-auto max-w-7xl p-6 pt-4'>

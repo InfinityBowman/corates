@@ -3,8 +3,7 @@ import { useNavigate, useLocation } from '@solidjs/router';
 import { Portal } from 'solid-js/web';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useLocalChecklists } from '@primitives/useLocalChecklists.js';
-import { useOrgContext } from '@primitives/useOrgContext.js';
-import { useOrgProjectList } from '@primitives/useOrgProjectList.js';
+import { useMyProjectsList } from '@primitives/useMyProjectsList.js';
 import useRecentsNav from '@primitives/useRecentsNav.js';
 import { useConfirmDialog, Tooltip } from '@corates/ui';
 import { AiOutlineFolder, AiOutlineCloud, AiOutlineHome } from 'solid-icons/ai';
@@ -32,9 +31,6 @@ export default function Sidebar(props) {
   const { user, isLoggedIn } = useBetterAuth();
   const { checklists, deleteChecklist } = useLocalChecklists();
 
-  // Get org context for org-scoped paths
-  const { orgId, orgSlug, orgName } = useOrgContext();
-
   const currentUserId = () => user()?.id;
 
   // Track expanded projects and studies
@@ -48,9 +44,9 @@ export default function Sidebar(props) {
   const [mobileMounted, setMobileMounted] = createSignal(false);
   const [mobileVisible, setMobileVisible] = createSignal(false);
 
-  // Use TanStack Query for org-scoped project list
-  const projectListQuery = useOrgProjectList(orgId, {
-    enabled: () => isLoggedIn() && !!orgId(),
+  // Use TanStack Query for user's project list
+  const projectListQuery = useMyProjectsList({
+    enabled: () => isLoggedIn(),
   });
   const cloudProjects = () => projectListQuery.projects();
   const isProjectsLoading = () => projectListQuery.isLoading();
@@ -112,11 +108,8 @@ export default function Sidebar(props) {
 
   const isCurrentPath = path => location.pathname === path;
 
-  // Build dashboard/workspace path based on org context
-  const getWorkspacePath = () => {
-    const slug = orgSlug();
-    return slug ? `/orgs/${slug}` : '/dashboard';
-  };
+  // Build projects path
+  const getProjectsPath = () => '/projects';
 
   // Get a label for a recent item based on its type and available data
   const getRecentItemLabel = item => {
@@ -214,10 +207,10 @@ export default function Sidebar(props) {
               </Tooltip>
             </Show>
 
-            {/* Expanded or mobile: workspace name */}
+            {/* Expanded or mobile: title */}
             <Show when={showExpandedContent()}>
               <span class='flex-1 truncate px-2 text-sm font-semibold text-gray-700'>
-                {orgName() || 'CoRATES'}
+                CoRATES
               </span>
             </Show>
 
@@ -247,18 +240,18 @@ export default function Sidebar(props) {
           {/* Expanded content (always show on mobile when open) */}
           <Show when={showExpandedContent()}>
             <div class='sidebar-scrollbar flex-1 overflow-x-hidden overflow-y-auto'>
-              {/* Dashboard/Workspace Link */}
+              {/* Projects Link */}
               <div class='p-2 pt-3'>
                 <button
-                  onClick={() => navigate(getWorkspacePath())}
+                  onClick={() => navigate(getProjectsPath())}
                   class={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    isCurrentPath(getWorkspacePath()) || isCurrentPath('/dashboard') ?
+                    isCurrentPath(getProjectsPath()) || isCurrentPath('/dashboard') ?
                       'bg-blue-100 text-blue-700'
                     : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
                   <AiOutlineHome class='h-4 w-4 shrink-0' />
-                  <span class='truncate'>{orgName() || 'Workspace'}</span>
+                  <span class='truncate'>Projects</span>
                 </button>
               </div>
 
@@ -304,7 +297,7 @@ export default function Sidebar(props) {
               </Show>
 
               {/* Cloud Projects Section */}
-              <Show when={isLoggedIn() && orgSlug()}>
+              <Show when={isLoggedIn()}>
                 <div class='px-3 pt-4 pb-2'>
                   <h3 class='flex items-center gap-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase'>
                     <AiOutlineCloud class='h-3 w-3' />
@@ -322,7 +315,7 @@ export default function Sidebar(props) {
                           </div>
                           <p class='text-xs font-medium text-gray-500'>No projects yet</p>
                           <button
-                            onClick={() => navigate(getWorkspacePath())}
+                            onClick={() => navigate(getProjectsPath())}
                             class='mt-1 text-xs text-blue-600 hover:text-blue-700'
                           >
                             Create a project
@@ -335,8 +328,6 @@ export default function Sidebar(props) {
                       {project => (
                         <ProjectTreeItem
                           project={project}
-                          orgId={orgId()}
-                          orgSlug={orgSlug()}
                           isExpanded={expandedProjects()[project.id]}
                           onToggle={() => toggleProject(project.id)}
                           userId={currentUserId()}
@@ -395,23 +386,23 @@ export default function Sidebar(props) {
           {/* Collapsed rail content (desktop only) */}
           <Show when={!isExpanded()}>
             <div class='hidden flex-1 flex-col items-center gap-1 overflow-y-auto py-2 md:flex'>
-              {/* Home/Workspace icon */}
-              <Tooltip content={orgName() || 'Workspace'} positioning={{ placement: 'right' }}>
+              {/* Home/Projects icon */}
+              <Tooltip content='Projects' positioning={{ placement: 'right' }}>
                 <button
-                  onClick={() => navigate(getWorkspacePath())}
+                  onClick={() => navigate(getProjectsPath())}
                   class={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
-                    isCurrentPath(getWorkspacePath()) || isCurrentPath('/dashboard') ?
+                    isCurrentPath(getProjectsPath()) || isCurrentPath('/dashboard') ?
                       'bg-blue-100 text-blue-700'
                     : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                   }`}
-                  aria-label={orgName() || 'Workspace'}
+                  aria-label='Projects'
                 >
                   <AiOutlineHome class='h-4 w-4' />
                 </button>
               </Tooltip>
 
               {/* Projects icon */}
-              <Show when={isLoggedIn() && orgSlug()}>
+              <Show when={isLoggedIn()}>
                 <Tooltip content='Projects' positioning={{ placement: 'right' }}>
                   <button
                     onClick={() => {
@@ -481,7 +472,7 @@ export default function Sidebar(props) {
               {/* Sidebar Header with toggle */}
               <div class='flex shrink-0 items-center border-b border-gray-100 bg-white p-2'>
                 <span class='flex-1 truncate px-2 text-sm font-semibold text-gray-700'>
-                  {orgName() || 'CoRATES'}
+                  CoRATES
                 </span>
                 <button
                   onClick={() => props.onCloseMobile?.()}
@@ -494,18 +485,18 @@ export default function Sidebar(props) {
 
               {/* Body */}
               <div class='sidebar-scrollbar flex-1 overflow-x-hidden overflow-y-auto'>
-                {/* Dashboard/Workspace Link */}
+                {/* Projects Link */}
                 <div class='p-2 pt-3'>
                   <button
-                    onClick={() => navigate(getWorkspacePath())}
+                    onClick={() => navigate(getProjectsPath())}
                     class={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isCurrentPath(getWorkspacePath()) || isCurrentPath('/dashboard') ?
+                      isCurrentPath(getProjectsPath()) || isCurrentPath('/dashboard') ?
                         'bg-blue-100 text-blue-700'
                       : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
                     <AiOutlineHome class='h-4 w-4 shrink-0' />
-                    <span class='truncate'>{orgName() || 'Workspace'}</span>
+                    <span class='truncate'>Projects</span>
                   </button>
                 </div>
 
@@ -551,7 +542,7 @@ export default function Sidebar(props) {
                 </Show>
 
                 {/* Cloud Projects Section */}
-                <Show when={isLoggedIn() && orgSlug()}>
+                <Show when={isLoggedIn()}>
                   <div class='px-3 pt-4 pb-2'>
                     <h3 class='flex items-center gap-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase'>
                       <AiOutlineCloud class='h-3 w-3' />
@@ -569,7 +560,7 @@ export default function Sidebar(props) {
                             </div>
                             <p class='text-xs font-medium text-gray-500'>No projects yet</p>
                             <button
-                              onClick={() => navigate(getWorkspacePath())}
+                              onClick={() => navigate(getProjectsPath())}
                               class='mt-1 text-xs text-blue-600 hover:text-blue-700'
                             >
                               Create a project
@@ -582,8 +573,6 @@ export default function Sidebar(props) {
                         {project => (
                           <ProjectTreeItem
                             project={project}
-                            orgId={orgId()}
-                            orgSlug={orgSlug()}
                             isExpanded={expandedProjects()[project.id]}
                             onToggle={() => toggleProject(project.id)}
                             userId={currentUserId()}

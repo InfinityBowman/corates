@@ -342,22 +342,21 @@ export class ProjectDoc {
       return new Response('Authentication required', { status: 401 });
     }
 
-    // Extract orgId and projectId from URL: /api/orgs/:orgId/project-doc/:projectId
+    // Extract projectId from URL: /api/project-doc/:projectId
     // y-websocket appends the room name as the last path segment
     const url = new URL(request.url);
     const pathParts = url.pathname.split('/');
-    // pathParts: ["", "api", "orgs", orgId, "project-doc", projectId]
-    const orgIdFromUrl = pathParts[3];
-    const projectId = pathParts[5];
+    // pathParts: ["", "api", "project-doc", projectId] or ["", "api", "project-doc", projectId, ...]
+    const projectId = pathParts[3];
 
-    if (!orgIdFromUrl || !projectId) {
-      return new Response('Invalid URL: orgId and projectId required', {
+    if (!projectId) {
+      return new Response('Invalid URL: projectId required', {
         status: 400,
         headers: { 'X-Close-Reason': 'invalid-url' },
       });
     }
 
-    // ALWAYS verify org membership + project membership against D1
+    // ALWAYS verify project membership against D1
     // Do NOT trust Yjs members map for authorization (it can be stale)
     if (!this.env.DB) {
       console.error('No DB binding available for WebSocket auth check');
@@ -366,22 +365,19 @@ export class ProjectDoc {
 
     const db = createDb(this.env.DB);
 
-    // ALWAYS validate project belongs to org from URL (fresh D1 check, transfer-safe)
-    // This ensures tenant safety even if project is transferred between orgs
+    // Verify project exists
     const project = await db
-      .select({ orgId: projects.orgId })
+      .select({ id: projects.id })
       .from(projects)
-      .where(and(eq(projects.id, projectId), eq(projects.orgId, orgIdFromUrl)))
+      .where(eq(projects.id, projectId))
       .get();
 
     if (!project) {
-      return new Response('Project not found in organization', {
+      return new Response('Project not found', {
         status: 404,
         headers: { 'X-Close-Reason': 'project-not-found' },
       });
     }
-
-    const orgId = project.orgId;
 
     // ALWAYS verify project membership on connect/reconnect (fresh D1 check)
     // Projects are invite-only: org membership does not grant project access

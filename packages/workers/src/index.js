@@ -309,17 +309,16 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
   }
 });
 
-// Org-scoped Project Document Durable Object routes
-// DO instance is project-scoped (project:${projectId}) but URL includes orgId for validation
-const handleOrgProjectDoc = async c => {
-  const orgId = c.req.param('orgId');
+// Project-scoped Project Document Durable Object routes
+// DO instance is project-scoped (project:${projectId})
+const handleProjectDoc = async c => {
   const projectId = c.req.param('projectId');
 
-  if (!orgId || !projectId) {
-    return c.json({ error: 'Organization ID and Project ID required' }, 400);
+  if (!projectId) {
+    return c.json({ error: 'Project ID required' }, 400);
   }
 
-  // Compute project-scoped DO instance name (orgId is validated inside DO via DB check)
+  // Compute project-scoped DO instance name
   const { getProjectDocStub } = await import('./lib/project-doc-id.js');
   const projectDoc = getProjectDocStub(c.env, projectId);
   const response = await projectDoc.fetch(c.req.raw);
@@ -332,9 +331,22 @@ const handleOrgProjectDoc = async c => {
   return response;
 };
 
-// Org-scoped routes for WebSocket connections (y-websocket appends room as final segment)
-app.all('/api/orgs/:orgId/project-doc/:projectId', handleOrgProjectDoc);
-app.all('/api/orgs/:orgId/project-doc/:projectId/*', handleOrgProjectDoc);
+// Project-scoped routes for WebSocket connections (y-websocket appends room as final segment)
+app.all('/api/project-doc/:projectId', handleProjectDoc);
+app.all('/api/project-doc/:projectId/*', handleProjectDoc);
+
+// Legacy org-scoped routes - return 410 Gone
+const legacyOrgProjectDocHandler = c =>
+  c.json(
+    {
+      error: 'ENDPOINT_MOVED',
+      message: 'This endpoint has been moved. Use /api/project-doc/:projectId instead.',
+      statusCode: 410,
+    },
+    410,
+  );
+app.all('/api/orgs/:orgId/project-doc/:projectId', legacyOrgProjectDocHandler);
+app.all('/api/orgs/:orgId/project-doc/:projectId/*', legacyOrgProjectDocHandler);
 
 // Legacy project WebSocket endpoint - return 410 Gone
 const legacyProjectDocHandler = c =>
