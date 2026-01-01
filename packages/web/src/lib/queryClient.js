@@ -211,8 +211,6 @@ export function getQueryClient() {
         retry: 3,
         // Retry delay with exponential backoff
         retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
-        // Refetch on window focus (helps keep data fresh)
-        refetchOnWindowFocus: true,
         // Refetch on reconnect (important for offline support)
         refetchOnReconnect: true,
         // Refetch on mount if data is stale (always true in dev with staleTime: 0)

@@ -49,7 +49,7 @@ export default function AppRoutes() {
           <Route path='/admin/storage' component={StorageManagement} />
           <Route path='/settings/billing' component={BillingPage} />
 
-          {/* Organization creation (still needed) */}
+          {/* Organization creation */}
           <Route path='/orgs/new' component={CreateOrgPage} />
 
           {/* Project-scoped routes */}
