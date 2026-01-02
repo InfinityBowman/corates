@@ -14,7 +14,6 @@ import { useQueryClient } from '@tanstack/solid-query';
 import { useConfirmDialog, showToast } from '@corates/ui';
 import { API_BASE } from '@config/api.js';
 import { queryKeys } from '@lib/queryKeys.js';
-import { isUnlimitedQuota } from '@corates/shared/plans';
 import ProjectCard from '@/components/project/ProjectCard.jsx';
 import CreateProjectForm from '@/components/project/CreateProjectForm.jsx';
 import ContactPrompt from '@/components/project/ContactPrompt.jsx';
@@ -35,7 +34,6 @@ export default function ProjectsPanel() {
   const {
     hasEntitlement,
     hasQuota,
-    quotas,
     loading: subscriptionLoading,
     subscriptionFetchFailed,
     refetch: refetchSubscription,
@@ -55,11 +53,6 @@ export default function ProjectsPanel() {
   const restrictionType = () => {
     if (subscriptionLoading()) return null;
     return !hasEntitlement('project.create') ? 'entitlement' : 'quota';
-  };
-
-  const quotaLimit = () => {
-    const limit = quotas()['projects.max'];
-    return isUnlimitedQuota(limit) ? -1 : limit;
   };
 
   // Handle project creation
@@ -143,18 +136,7 @@ export default function ProjectsPanel() {
           when={canCreateProject() !== null}
           fallback={<div class='h-10 w-32 animate-pulse rounded-lg bg-gray-200' />}
         >
-          <Show
-            when={canCreateProject()}
-            fallback={
-              <div class='max-w-sm'>
-                <ContactPrompt
-                  restrictionType={restrictionType()}
-                  projectCount={projectCount()}
-                  quotaLimit={quotaLimit()}
-                />
-              </div>
-            }
-          >
+          <Show when={canCreateProject()}>
             <button
               class='inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
               onClick={() => setShowCreateForm(!showCreateForm())}
@@ -167,6 +149,11 @@ export default function ProjectsPanel() {
           </Show>
         </Show>
       </div>
+
+      {/* Early Access Prompt - show when user can't create projects */}
+      <Show when={canCreateProject() === false}>
+        <ContactPrompt restrictionType={restrictionType()} />
+      </Show>
 
       {/* Subscription fetch error banner */}
       <Show when={subscriptionFetchFailed()}>
