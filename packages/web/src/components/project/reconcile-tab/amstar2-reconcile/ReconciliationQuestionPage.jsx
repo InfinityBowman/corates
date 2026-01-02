@@ -5,7 +5,7 @@
 import AnswerPanel from './AnswerPanel.jsx';
 import NotesCompareSection from './NotesCompareSection.jsx';
 import { createSignal, createEffect, Show } from 'solid-js';
-import { AMSTAR_CHECKLIST } from '@/components/checklist/AMSTAR2/checklist-map.js';
+import { AMSTAR_CHECKLIST } from '@/components/checklist/AMSTAR2Checklist/checklist-map.js';
 import MultiPartQuestionPage from './MultiPartQuestionPage.jsx';
 /**
  * Get the final answer from the last column

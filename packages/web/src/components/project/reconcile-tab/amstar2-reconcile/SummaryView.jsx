@@ -4,7 +4,7 @@ import { For, Show } from 'solid-js';
 import {
   isMultiPartQuestion,
   getDataKeysForQuestion,
-} from '@/components/checklist/AMSTAR2/checklist-compare.js';
+} from '@/components/checklist/AMSTAR2Checklist/checklist-compare.js';
 
 /**
  * Summary view showing all questions and their final answers

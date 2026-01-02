@@ -1,5 +1,5 @@
 import { Show, For } from 'solid-js';
-import { AMSTAR_CHECKLIST } from '@/components/checklist/AMSTAR2/checklist-map.js';
+import { AMSTAR_CHECKLIST } from '@/components/checklist/AMSTAR2Checklist/checklist-map.js';
 
 /**
  * Get badge color for answer type

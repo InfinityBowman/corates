@@ -5,7 +5,7 @@
 import {
   isMultiPartQuestion,
   getDataKeysForQuestion,
-} from '@/components/checklist/AMSTAR2/checklist-compare.js';
+} from '@/components/checklist/AMSTAR2Checklist/checklist-compare.js';
 
 /**
  * Check if a question has been answered in the final answers

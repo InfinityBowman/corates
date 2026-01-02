@@ -6,8 +6,8 @@
  */
 
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
-import { getAnswers } from '@/components/checklist/AMSTAR2/checklist.js';
-import { getQuestionKeys } from '@/components/checklist/AMSTAR2/checklist-compare.js';
+import { getAnswers } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
+import { getQuestionKeys } from '@/components/checklist/AMSTAR2Checklist/checklist-compare.js';
 
 /**
  * Calculate inter-rater reliability metrics for all eligible studies

@@ -1,6 +1,9 @@
 import { createSignal, createEffect, createMemo, For, Show } from 'solid-js';
-import { AMSTAR_CHECKLIST } from '@/components/checklist/AMSTAR2/checklist-map.js';
-import { getDataKeysForQuestion, getFinalAnswer } from '@/components/checklist/AMSTAR2/checklist-compare.js';
+import { AMSTAR_CHECKLIST } from '@/components/checklist/AMSTAR2Checklist/checklist-map.js';
+import {
+  getDataKeysForQuestion,
+  getFinalAnswer,
+} from '@/components/checklist/AMSTAR2Checklist/checklist-compare.js';
 import AnswerPanel from './AnswerPanel.jsx';
 import NotesCompareSection from './NotesCompareSection.jsx';
 

@@ -12,10 +12,10 @@ import {
   getQuestionKeys,
   getDataKeysForQuestion,
   isMultiPartQuestion,
-} from '@/components/checklist/AMSTAR2/checklist-compare.js';
+} from '@/components/checklist/AMSTAR2Checklist/checklist-compare.js';
 import ReconciliationQuestionPage from './ReconciliationQuestionPage.jsx';
 import SummaryView from './SummaryView.jsx';
-import { createChecklist } from '@/components/checklist/AMSTAR2/checklist.js';
+import { createChecklist } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
 
 /**
  * ChecklistReconciliation - Main view for comparing and reconciling two checklists

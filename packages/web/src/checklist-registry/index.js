@@ -16,7 +16,7 @@ import {
   createChecklist as createAMSTAR2,
   scoreChecklist as scoreAMSTAR2,
   getAnswers as getAMSTAR2Answers,
-} from '@/components/checklist/AMSTAR2/checklist.js';
+} from '@/components/checklist/AMSTAR2Checklist/checklist.js';
 import {
   createChecklist as createROBINSI,
   scoreChecklist as scoreROBINSI,
