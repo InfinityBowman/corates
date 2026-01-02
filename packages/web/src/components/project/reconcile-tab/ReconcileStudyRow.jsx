@@ -14,13 +14,18 @@ import { isReconciledChecklist } from '@/lib/checklist-domain.js';
 import PdfListItem from '@/components/checklist/pdf/PdfListItem.jsx';
 import ReconcileStatusTag from './ReconcileStatusTag.jsx';
 
+/**
+ * ReconcileStudyRow - Compact study row for the reconcile tab
+ *
+ * @param {Object} props
+ * @param {Object} props.study - Study object with pdfs and checklists arrays
+ * @param {Function} props.onReconcile - (checklist1Id, checklist2Id) => void
+ * @param {Function} props.onViewPdf - (pdf) => void
+ * @param {Function} props.onDownloadPdf - (pdf) => void
+ * @param {Function} props.getAssigneeName - (userId) => string
+ * @returns {JSX.Element}
+ */
 export default function ReconcileStudyRow(props) {
-  // props.study: Study object with pdfs and checklists arrays
-  // props.onReconcile: (checklist1Id, checklist2Id) => void
-  // props.onViewPdf: (pdf) => void
-  // props.onDownloadPdf: (pdf) => void
-  // props.getAssigneeName: (userId) => string
-
   const [expanded, setExpanded] = createSignal(false);
 
   const study = () => props.study;

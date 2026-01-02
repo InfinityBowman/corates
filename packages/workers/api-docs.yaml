@@ -7,6 +7,8 @@
 tags:
   - name: Health
     description: Health check endpoints
+  - name: Organizations
+    description: Organization management and membership operations
   - name: Projects
     description: Project management operations
   - name: Members
@@ -472,6 +474,446 @@ paths:
         403:
           description: PDF requires authentication
 
+  # === Organizations ===
+  /api/orgs:
+    get:
+      summary: List organizations
+      description: Returns all organizations the authenticated user is a member of
+      tags: [Organizations]
+      responses:
+        200:
+          description: List of organizations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organization'
+
+    post:
+      summary: Create organization
+      description: Creates a new organization and adds the authenticated user as owner
+      tags: [Organizations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrganization'
+      responses:
+        201:
+          description: Organization created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+
+  /api/orgs/{orgId}:
+    get:
+      summary: Get organization
+      description: Returns organization details if the authenticated user is a member
+      tags: [Organizations]
+      responses:
+        200:
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        404:
+          description: Organization not found or user is not a member
+
+    put:
+      summary: Update organization
+      description: Update organization name, slug, logo, or metadata. Requires admin or owner role.
+      tags: [Organizations]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrganization'
+      responses:
+        200:
+          description: Organization updated
+        403:
+          description: Requires admin or owner role
+
+    delete:
+      summary: Delete organization
+      description: Permanently delete an organization. Owner only.
+      tags: [Organizations]
+      responses:
+        200:
+          description: Organization deleted
+        403:
+          description: Only organization owners can delete organizations
+
+  /api/orgs/{orgId}/members:
+    get:
+      summary: List organization members
+      description: Returns all members of the organization with their roles
+      tags: [Organizations]
+      responses:
+        200:
+          description: List of organization members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrgMember'
+
+    post:
+      summary: Add organization member
+      description: Add a user to the organization by userId. Requires admin or owner role.
+      tags: [Organizations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddOrgMember'
+      responses:
+        201:
+          description: Member added successfully
+        409:
+          description: User is already a member
+
+  /api/orgs/{orgId}/members/{memberId}:
+    put:
+      summary: Update organization member role
+      description: Change a member's role (owner, admin, member). Requires admin or owner role.
+      tags: [Organizations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrgMemberRole'
+      responses:
+        200:
+          description: Role updated
+        400:
+          description: Cannot remove last owner
+
+    delete:
+      summary: Remove organization member
+      description: Remove a member from the organization. Admin/owner can remove anyone, users can remove themselves.
+      tags: [Organizations]
+      responses:
+        200:
+          description: Member removed
+        400:
+          description: Cannot remove last owner
+
+  /api/orgs/{orgId}/set-active:
+    post:
+      summary: Set active organization
+      description: Set this organization as the user's active organization for the session
+      tags: [Organizations]
+      responses:
+        200:
+          description: Active organization set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  activeOrganizationId:
+                    type: string
+                    format: uuid
+
+  # === Org-Scoped Projects ===
+  /api/orgs/{orgId}/projects:
+    get:
+      summary: List organization projects
+      description: Returns all projects in the organization that the authenticated user has access to
+      tags: [Projects]
+      responses:
+        200:
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+
+    post:
+      summary: Create project in organization
+      description: Creates a new project in the organization and adds the authenticated user as owner
+      tags: [Projects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProject'
+      responses:
+        201:
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+  /api/orgs/{orgId}/projects/{projectId}:
+    get:
+      summary: Get project
+      description: Returns project details if the authenticated user is a member
+      tags: [Projects]
+      responses:
+        200:
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        404:
+          description: Project not found or user is not a member
+
+    put:
+      summary: Update project
+      description: Update project name and description. Requires owner or member role.
+      tags: [Projects]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProject'
+      responses:
+        200:
+          description: Project updated
+
+    delete:
+      summary: Delete project
+      description: Permanently delete a project. Owner only.
+      tags: [Projects]
+      responses:
+        200:
+          description: Project deleted
+        403:
+          description: Only project owners can delete projects
+
+  # === Org-Scoped Project Members ===
+  /api/orgs/{orgId}/projects/{projectId}/members:
+    get:
+      summary: List project members
+      description: Returns all members of a project with their roles and user info
+      tags: [Members]
+      responses:
+        200:
+          description: List of project members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectMember'
+
+    post:
+      summary: Add project member
+      description: |
+        Invite a user to the project by userId or email. Owner only.
+
+        If the user exists, they are added immediately. If the user doesn't exist and an email is provided,
+        an invitation is created and sent via email with a magic link. Existing pending invitations are
+        resent with updated role and extended expiration. Already-accepted invitations cannot be resent.
+      tags: [Members]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMember'
+      responses:
+        201:
+          description: |
+            Member added successfully or invitation sent. Response includes:
+            - For existing users: member details (userId, name, email, role, joinedAt)
+            - For invitations: { success: true, invitation: true, message: string, email: string }
+        409:
+          description: User is already a member or invitation already accepted
+
+  /api/orgs/{orgId}/projects/{projectId}/members/{userId}:
+    put:
+      summary: Update project member role
+      description: Change a member's role (owner, member). Owner only.
+      tags: [Members]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberRole'
+      responses:
+        200:
+          description: Role updated
+        400:
+          description: Cannot remove last owner
+
+    delete:
+      summary: Remove project member
+      description: Remove a member from the project. Owner can remove anyone, users can remove themselves.
+      tags: [Members]
+      responses:
+        200:
+          description: Member removed
+        400:
+          description: Cannot remove last owner
+
+  # === Org-Scoped Project Invitations ===
+  /api/orgs/{orgId}/projects/{projectId}/invitations:
+    get:
+      summary: List project invitations
+      description: Returns all pending invitations for the project. Owner only.
+      tags: [Invitations]
+      responses:
+        200:
+          description: List of pending invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectInvitation'
+
+    post:
+      summary: Create project invitation
+      description: |
+        Create an invitation for a user to join the project by email. Owner only.
+        Optionally grant organization membership if the user doesn't have it.
+      tags: [Invitations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectInvitation'
+      responses:
+        201:
+          description: Invitation created and sent
+        409:
+          description: User is already a member or invitation already exists
+
+  /api/orgs/{orgId}/projects/{projectId}/invitations/{invitationId}:
+    delete:
+      summary: Cancel project invitation
+      description: Cancel a pending invitation. Owner only.
+      tags: [Invitations]
+      responses:
+        200:
+          description: Invitation cancelled
+
+  /api/orgs/{orgId}/projects/{projectId}/invitations/accept:
+    post:
+      summary: Accept project invitation
+      description: |
+        Accept a project invitation by token. Requires authentication and the authenticated user's email
+        must match the invitation email (case-insensitive, trimmed comparison). Returns project details
+        on success. If the user is already a member, the invitation is marked as accepted and a success
+        response is returned with `alreadyMember: true`.
+      tags: [Invitations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                  description: Invitation token
+      responses:
+        200:
+          description: Invitation accepted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  projectId:
+                    type: string
+                    format: uuid
+                  projectName:
+                    type: string
+                  role:
+                    type: string
+                    enum: [owner, member]
+                  alreadyMember:
+                    type: boolean
+                    description: True if user was already a member
+        400:
+          description: Invalid, expired, or already accepted token
+        403:
+          description: Email mismatch - authenticated user's email doesn't match invitation email
+
+  # === Org-Scoped PDFs ===
+  /api/orgs/{orgId}/projects/{projectId}/studies/{studyId}/pdfs:
+    get:
+      summary: List study PDFs
+      description: Returns all PDFs attached to a study
+      tags: [PDFs]
+      responses:
+        200:
+          description: List of PDFs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudyPDF'
+
+    post:
+      summary: Upload PDF to study
+      description: Upload a PDF file to a study. Requires project membership.
+      tags: [PDFs]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF file to upload
+      responses:
+        201:
+          description: PDF uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyPDF'
+
+  /api/orgs/{orgId}/projects/{projectId}/studies/{studyId}/pdfs/{fileName}:
+    get:
+      summary: Download PDF
+      description: Download a specific PDF file from a study
+      tags: [PDFs]
+      responses:
+        200:
+          description: PDF binary data
+          content:
+            application/pdf: {}
+        404:
+          description: PDF not found
+
+    delete:
+      summary: Delete PDF
+      description: Delete a PDF from the study. Requires project membership.
+      tags: [PDFs]
+      responses:
+        200:
+          description: PDF deleted
+        404:
+          description: PDF not found
+
 # Reusable schemas
 components:
   schemas:
@@ -648,3 +1090,178 @@ components:
           type: string
           minLength: 1
           maxLength: 2000
+
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        logo:
+          type: string
+          format: uri
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        projectCount:
+          type: integer
+          description: Number of projects in the organization
+
+    CreateOrganization:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        slug:
+          type: string
+          description: URL-friendly slug (auto-generated if not provided)
+        logo:
+          type: string
+          format: uri
+        metadata:
+          type: object
+
+    UpdateOrganization:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        slug:
+          type: string
+        logo:
+          type: string
+          format: uri
+        metadata:
+          type: object
+
+    OrgMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [owner, admin, member]
+        createdAt:
+          type: string
+          format: date-time
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+            image:
+              type: string
+              format: uri
+              nullable: true
+
+    AddOrgMember:
+      type: object
+      required: [userId]
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: User ID to add to the organization
+        role:
+          type: string
+          enum: [owner, admin, member]
+          default: member
+
+    UpdateOrgMemberRole:
+      type: object
+      required: [role]
+      properties:
+        role:
+          type: string
+          enum: [owner, admin, member]
+
+    ProjectInvitation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [owner, member]
+        token:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        acceptedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateProjectInvitation:
+      type: object
+      required: [email, role]
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [owner, member]
+          default: member
+        grantOrgMembership:
+          type: boolean
+          default: false
+          description: If true, grant organization membership if user doesn't have it
+
+    StudyPDF:
+      type: object
+      properties:
+        fileName:
+          type: string
+        studyId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        uploadedAt:
+          type: string
+          format: date-time
+        size:
+          type: integer
+          description: File size in bytes

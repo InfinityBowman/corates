@@ -249,15 +249,22 @@ async function generate() {
   const routeMappings = [
     // Main index.js routes
     { file: 'src/index.js', basePath: '' },
-    // Mounted routes
+    // Organization routes (new org-scoped architecture)
+    { file: 'src/routes/orgs/index.js', basePath: '/api/orgs' },
+    { file: 'src/routes/orgs/projects.js', basePath: '/api/orgs/{orgId}/projects' },
+    { file: 'src/routes/orgs/members.js', basePath: '/api/orgs/{orgId}/projects/{projectId}/members' },
+    { file: 'src/routes/orgs/invitations.js', basePath: '/api/orgs/{orgId}/projects/{projectId}/invitations' },
+    { file: 'src/routes/orgs/pdfs.js', basePath: '/api/orgs/{orgId}/projects/{projectId}/studies/{studyId}/pdfs' },
+    // Legacy routes (deprecated, kept for backward compatibility detection)
     { file: 'src/routes/projects.js', basePath: '/api/projects' },
     { file: 'src/routes/members.js', basePath: '/api/projects/{projectId}/members' },
-    { file: 'src/routes/users.js', basePath: '/api/users' },
     { file: 'src/routes/pdfs.js', basePath: '/api/projects/{projectId}/studies/{studyId}/pdfs' },
+    { file: 'src/routes/invitations.js', basePath: '/api/invitations' },
+    // Other routes
+    { file: 'src/routes/users.js', basePath: '/api/users' },
     { file: 'src/routes/billing/index.js', basePath: '/api/billing' },
     { file: 'src/routes/admin/index.js', basePath: '/api/admin' },
     { file: 'src/routes/contact.js', basePath: '/api/contact' },
-    { file: 'src/routes/invitations.js', basePath: '/api/invitations' },
     { file: 'src/routes/avatars.js', basePath: '/api/users/avatar' },
     { file: 'src/routes/google-drive.js', basePath: '/api/google-drive' },
     { file: 'src/routes/account-merge.js', basePath: '/api/accounts/merge' },

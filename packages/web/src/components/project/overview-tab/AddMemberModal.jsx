@@ -6,6 +6,12 @@ import { handleFetchError } from '@/lib/error-utils.js';
 
 /**
  * Modal for searching and adding members to a project
+ * @param {Object} props
+ * @param {boolean} props.isOpen
+ * @param {Function} props.onClose
+ * @param {string} props.projectId
+ * @param {string} props.orgId
+ * @returns {JSX.Element}
  */
 export default function AddMemberModal(props) {
   const [searchQuery, setSearchQuery] = createSignal('');

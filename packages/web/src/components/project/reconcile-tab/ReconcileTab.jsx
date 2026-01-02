@@ -11,6 +11,8 @@ import { getStudiesForTab } from '@/lib/checklist-domain.js';
  * ReconcileTab - Shows studies in reconciliation workflow
  * Displays studies with at least 1 completed checklist (dual reviewer mode)
  * Uses projectActionsStore directly for mutations.
+ *
+ * @returns {JSX.Element}
  */
 export default function ReconcileTab() {
   const { projectId, getAssigneeName, getReconcilePath } = useProjectContext();

@@ -8,6 +8,7 @@ import { isReconciledChecklist } from '@/lib/checklist-domain.js';
  * @param {Object} props
  * @param {Object} props.study - The study object with checklists, reviewer1, reviewer2
  * @param {Function} props.getAssigneeName - Function to get reviewer name from ID
+ * @returns {JSX.Element}
  */
 export default function ReconcileStatusTag(props) {
   const awaitingReconcileChecklists = () =>

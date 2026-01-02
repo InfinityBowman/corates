@@ -5,8 +5,24 @@ import { isMultiPartQuestion, getDataKeysForQuestion } from '@/AMSTAR2/checklist
 
 /**
  * Summary view showing all questions and their final answers
+ * @param {Object} props
+ * @param {Object} props.summary
+ * @param {number} props.summary.totalQuestions
+ * @param {number} props.summary.agreementCount
+ * @param {number} props.summary.disagreementCount
+ * @param {number} props.summary.agreementPercentage
+ * @param {Array} props.questionKeys
+ * @param {Object} props.comparisonByQuestion
+ * @param {Object} props.finalAnswers
+ * @param {Function} props.onGoToQuestion
+ * @param {Function} props.onBack
+ * @param {Function} props.onSave
+ * @param {boolean} props.allAnswered
+ * @param {boolean} props.saving
+ * @returns {JSX.Element}
  */
 export default function SummaryView(props) {
+
   return (
     <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
       {/* Summary Header */}
@@ -28,28 +44,14 @@ export default function SummaryView(props) {
               <div class='text-2xl font-bold text-amber-700'>{props.summary.disagreementCount}</div>
               <div class='text-xs text-amber-600'>Disagreements</div>
             </div>
-            <div class='rounded-lg border border-purple-200 bg-purple-50 p-3 text-center'>
-              <div class='text-2xl font-bold text-purple-700'>
+            <div class='rounded-lg border border-sky-200 bg-sky-50 p-3 text-center'>
+              <div class='text-2xl font-bold text-sky-700'>
                 {props.summary.agreementPercentage}%
               </div>
-              <div class='text-xs text-purple-600'>Agreement Rate</div>
+              <div class='text-xs text-sky-600'>Agreement Rate</div>
             </div>
           </div>
         </Show>
-
-        {/* Checklist Name */}
-        <div>
-          <label class='mb-2 block text-sm font-medium text-gray-700'>
-            Reconciled Checklist Name
-          </label>
-          <input
-            type='text'
-            value={props.reconciledName}
-            onInput={e => props.onReconciledNameChange(e.target.value)}
-            class='w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-            placeholder='Enter name for the reconciled checklist'
-          />
-        </div>
       </div>
 
       {/* Questions List */}
