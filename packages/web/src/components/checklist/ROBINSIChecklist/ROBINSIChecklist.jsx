@@ -19,6 +19,7 @@ import { ResponseLegend } from './SignallingQuestion.jsx';
  * @param {boolean} [props.showComments] - Whether to show comment fields for each question
  * @param {boolean} [props.showLegend] - Whether to show the response legend
  * @param {boolean} [props.readOnly] - Whether the checklist is read-only (disables all inputs)
+ * @param {Function} [props.getRobinsText] - Function to get Y.Text for a ROBINS-I free-text field
  */
 export function ROBINSIChecklist(props) {
   const isReadOnly = () => !!props.readOnly;
@@ -86,6 +87,7 @@ export function ROBINSIChecklist(props) {
           planningState={props.checklistState?.planning}
           onUpdate={handlePlanningUpdate}
           disabled={isReadOnly()}
+          getRobinsText={props.getRobinsText}
         />
 
         {/* Preliminary Considerations Header */}
@@ -100,6 +102,7 @@ export function ROBINSIChecklist(props) {
           sectionAState={props.checklistState?.sectionA}
           onUpdate={handleSectionAUpdate}
           disabled={isReadOnly()}
+          getRobinsText={props.getRobinsText}
         />
 
         {/* Section B: Proceed with assessment */}
@@ -107,6 +110,7 @@ export function ROBINSIChecklist(props) {
           sectionBState={props.checklistState?.sectionB}
           onUpdate={handleSectionBUpdate}
           disabled={isReadOnly()}
+          getRobinsText={props.getRobinsText}
         />
 
         {/* Section C: Target randomized trial */}
@@ -114,6 +118,7 @@ export function ROBINSIChecklist(props) {
           sectionCState={props.checklistState?.sectionC}
           onUpdate={handleSectionCUpdate}
           disabled={isReadOnly()}
+          getRobinsText={props.getRobinsText}
         />
 
         {/* Section D: Information sources */}
@@ -121,6 +126,7 @@ export function ROBINSIChecklist(props) {
           sectionDState={props.checklistState?.sectionD}
           onUpdate={handleSectionDUpdate}
           disabled={isReadOnly()}
+          getRobinsText={props.getRobinsText}
         />
 
         {/* Domain sections - hidden entirely if assessment should stop */}
@@ -136,6 +142,7 @@ export function ROBINSIChecklist(props) {
                   showComments={props.showComments}
                   collapsed={collapsedDomains()[domainKey]}
                   onToggleCollapse={() => toggleDomainCollapse(domainKey)}
+                  getRobinsText={props.getRobinsText}
                 />
               )}
             </For>

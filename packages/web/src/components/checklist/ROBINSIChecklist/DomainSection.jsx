@@ -13,6 +13,7 @@ import { DomainJudgement, JudgementBadge } from './DomainJudgement.jsx';
  * @param {boolean} [props.showComments] - Whether to show comment fields
  * @param {boolean} [props.collapsed] - Whether the domain is collapsed
  * @param {Function} [props.onToggleCollapse] - Callback to toggle collapse
+ * @param {Function} [props.getRobinsText] - Function to get Y.Text for a ROBINS-I free-text field
  */
 export function DomainSection(props) {
   const domain = () => ROBINS_I_CHECKLIST[props.domainKey];
@@ -113,6 +114,9 @@ export function DomainSection(props) {
                       onUpdate={newAnswer => handleQuestionUpdate(qKey, newAnswer)}
                       disabled={props.disabled}
                       showComment={props.showComments}
+                      domainKey={props.domainKey}
+                      questionKey={qKey}
+                      getRobinsText={props.getRobinsText}
                     />
                   )}
                 </For>

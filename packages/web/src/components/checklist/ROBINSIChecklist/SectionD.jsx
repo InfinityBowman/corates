@@ -1,5 +1,6 @@
 import { For } from 'solid-js';
 import { INFORMATION_SOURCES, SECTION_D } from './checklist-map.js';
+import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
 
 /**
  * Section D: Information sources
@@ -7,6 +8,7 @@ import { INFORMATION_SOURCES, SECTION_D } from './checklist-map.js';
  * @param {Object} props.sectionDState - Current section D state { sources: { [sourceName]: boolean }, otherSpecify: string }
  * @param {Function} props.onUpdate - Callback when section D state changes
  * @param {boolean} [props.disabled] - Whether the section is disabled
+ * @param {Function} [props.getRobinsText] - Function to get Y.Text for a ROBINS-I free-text field
  */
 export function SectionD(props) {
   function handleSourceToggle(sourceName) {
@@ -20,14 +22,12 @@ export function SectionD(props) {
     });
   }
 
-  function handleOtherChange(value) {
-    props.onUpdate({
-      ...props.sectionDState,
-      otherSpecify: value,
-    });
-  }
-
   const isSourceChecked = sourceName => props.sectionDState?.sources?.[sourceName] || false;
+
+  const otherSpecifyYText = () => {
+    if (!props.getRobinsText) return null;
+    return props.getRobinsText('sectionD', 'otherSpecify');
+  };
 
   return (
     <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
@@ -61,14 +61,14 @@ export function SectionD(props) {
         <div class='border-t border-gray-200 pt-3'>
           <label class='block'>
             <span class='text-sm font-medium text-gray-700'>{SECTION_D.otherField.label}</span>
-            <textarea
-              value={props.sectionDState?.otherSpecify || ''}
-              disabled={props.disabled}
-              placeholder={SECTION_D.otherField.placeholder}
-              onInput={e => handleOtherChange(e.currentTarget.value)}
-              rows={2}
-              class={`mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none ${props.disabled ? 'cursor-not-allowed bg-gray-100 opacity-60' : 'bg-white'} `}
-            />
+            <div class='mt-2'>
+              <NoteEditor
+                yText={otherSpecifyYText()}
+                placeholder={SECTION_D.otherField.placeholder}
+                readOnly={props.disabled}
+                inline={true}
+              />
+            </div>
           </label>
         </div>
       </div>

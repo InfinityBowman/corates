@@ -15,7 +15,7 @@ import useOnlineStatus from '../useOnlineStatus.js';
 import { createConnectionManager } from './connection.js';
 import { createSyncManager } from './sync.js';
 import { createStudyOperations } from './studies.js';
-import { createChecklistOperations } from './checklists.js';
+import { createChecklistOperations } from './checklists/index.js';
 import { createPdfOperations } from './pdfs.js';
 import { createReconciliationOperations } from './reconciliation.js';
 
@@ -212,6 +212,7 @@ export function useProject(projectId) {
       getChecklistData: connectionEntry.checklistOps.getChecklistData,
       updateChecklistAnswer: connectionEntry.checklistOps.updateChecklistAnswer,
       getQuestionNote: connectionEntry.checklistOps.getQuestionNote,
+      getRobinsText: connectionEntry.checklistOps.getRobinsText,
       // PDF operations
       addPdfToStudy: connectionEntry.pdfOps.addPdfToStudy,
       removePdfFromStudy: connectionEntry.pdfOps.removePdfFromStudy,
@@ -335,6 +336,7 @@ export function useProject(projectId) {
     updateChecklistAnswer: (...args) =>
       connectionEntry?.checklistOps?.updateChecklistAnswer(...args),
     getQuestionNote: (...args) => connectionEntry?.checklistOps?.getQuestionNote(...args),
+    getRobinsText: (...args) => connectionEntry?.checklistOps?.getRobinsText(...args),
 
     // PDF operations
     addPdfToStudy: (...args) => connectionEntry?.pdfOps?.addPdfToStudy(...args),
