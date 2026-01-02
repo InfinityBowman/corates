@@ -2,8 +2,9 @@
  * ChecklistForm component - Form to add a checklist to a study
  */
 
-import { createSignal, For } from 'solid-js';
+import { createSignal } from 'solid-js';
 import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
+import { Select } from '@corates/ui';
 
 export default function ChecklistForm(props) {
   const [type, setType] = createSignal(DEFAULT_CHECKLIST_TYPE);
@@ -19,20 +20,15 @@ export default function ChecklistForm(props) {
     <div class='m-4 rounded-lg border border-blue-200 bg-blue-50 p-4'>
       <div class='space-y-3'>
         <div>
-          <label class='mb-1 block text-sm font-semibold text-gray-700'>Checklist Type</label>
-          <select
+          <Select
+            label='Checklist Type'
             value={type()}
-            onChange={e => setType(e.target.value)}
-            class='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
-          >
-            <For each={typeOptions}>
-              {option => (
-                <option value={option.value}>
-                  {option.label} - {option.description}
-                </option>
-              )}
-            </For>
-          </select>
+            onChange={value => setType(value)}
+            items={typeOptions.map(option => ({
+              label: `${option.label} - ${option.description}`,
+              value: option.value,
+            }))}
+          />
         </div>
       </div>
       <div class='mt-4 flex gap-2'>

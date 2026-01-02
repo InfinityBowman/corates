@@ -157,17 +157,22 @@ const SelectComponent: Component<SelectProps> = props => {
   const positioningOptions = (): {
     placement?: string;
     sameWidth?: boolean;
+    gutter?: number;
     [key: string]: unknown;
   } => {
     const defaultPos = {
       placement: 'bottom-start',
       sameWidth: true,
+      gutter: 4,
     };
     if (!local.positioning) return defaultPos;
     return {
+      ...defaultPos,
       ...local.positioning,
-      placement: local.positioning.placement,
-      sameWidth: local.positioning.sameWidth,
+      placement: local.positioning.placement ?? defaultPos.placement,
+      sameWidth: local.positioning.sameWidth ?? defaultPos.sameWidth,
+      gutter:
+        typeof local.positioning.gutter === 'number' ? local.positioning.gutter : defaultPos.gutter,
     };
   };
 
@@ -187,22 +192,22 @@ const SelectComponent: Component<SelectProps> = props => {
       {...arkProps}
     >
       <Show when={local.label}>
-        <ArkSelect.Label class='mb-1 block text-sm font-medium text-gray-700'>
+        <ArkSelect.Label class='mb-1.5 block text-sm leading-none font-medium text-gray-900'>
           {local.label}
         </ArkSelect.Label>
       </Show>
 
       <ArkSelect.Control>
         <ArkSelect.Trigger
-          class={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+          class={`flex h-10 w-full items-center justify-between rounded-md border bg-white px-3 py-2 text-sm text-gray-900 ring-offset-white transition-colors placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
             disabled() ?
               'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-500'
-            : 'border-gray-300 bg-white hover:border-gray-400'
-          } ${invalid() ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+            : 'border-gray-300 hover:bg-gray-50'
+          } ${invalid() ? 'border-red-500 focus:ring-red-500' : ''}`}
         >
           <ArkSelect.ValueText placeholder={placeholder()} />
           <ArkSelect.Indicator>
-            <BiRegularChevronDown class='h-5 w-5 text-gray-400 transition-transform data-[state=open]:rotate-180' />
+            <BiRegularChevronDown class='h-4 w-4 text-gray-500 opacity-50 transition-transform duration-200' />
           </ArkSelect.Indicator>
         </ArkSelect.Trigger>
       </ArkSelect.Control>
@@ -210,7 +215,7 @@ const SelectComponent: Component<SelectProps> = props => {
       {inDialog() ?
         <ArkSelect.Positioner>
           <ArkSelect.Content
-            class={`${Z_INDEX.SELECT} max-h-60 overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg focus:outline-none`}
+            class={`${Z_INDEX.SELECT} max-h-96 min-w-32 overflow-hidden rounded-md border border-gray-200 bg-white p-1 text-gray-950 shadow-md focus:outline-none`}
           >
             <ArkSelect.ItemGroup>
               <Index each={collection().items}>
@@ -219,15 +224,13 @@ const SelectComponent: Component<SelectProps> = props => {
                   return (
                     <ArkSelect.Item
                       item={item()}
-                      class={`flex cursor-pointer items-center justify-between px-3 py-2 whitespace-nowrap hover:bg-gray-100 data-[highlighted]:bg-blue-50 ${
-                        isDisabled() ?
-                          'cursor-not-allowed text-gray-400 hover:bg-transparent'
-                        : 'text-gray-900'
+                      class={`relative flex w-full cursor-default items-center rounded-sm px-2 py-1.5 text-sm transition-colors outline-none select-none hover:bg-gray-100 focus:bg-gray-100 focus:text-gray-900 data-disabled:pointer-events-none data-disabled:opacity-50 data-highlighted:bg-gray-100 ${
+                        isDisabled() ? 'pointer-events-none opacity-50' : 'text-gray-900'
                       }`}
                     >
-                      <ArkSelect.ItemText>{item().label}</ArkSelect.ItemText>
-                      <ArkSelect.ItemIndicator>
-                        <BiRegularCheck class='h-5 w-5 text-blue-600' />
+                      <ArkSelect.ItemText class='flex-1'>{item().label}</ArkSelect.ItemText>
+                      <ArkSelect.ItemIndicator class='absolute right-2 flex h-3.5 w-3.5 items-center justify-center'>
+                        <BiRegularCheck class='h-4 w-4 text-blue-600' />
                       </ArkSelect.ItemIndicator>
                     </ArkSelect.Item>
                   );
@@ -239,7 +242,7 @@ const SelectComponent: Component<SelectProps> = props => {
       : <Portal>
           <ArkSelect.Positioner>
             <ArkSelect.Content
-              class={`${Z_INDEX.SELECT} max-h-60 overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg focus:outline-none`}
+              class={`${Z_INDEX.SELECT} max-h-96 min-w-32 overflow-hidden rounded-md border border-gray-200 bg-white p-1 text-gray-950 shadow-md focus:outline-none`}
             >
               <ArkSelect.ItemGroup>
                 <Index each={collection().items}>
@@ -248,15 +251,13 @@ const SelectComponent: Component<SelectProps> = props => {
                     return (
                       <ArkSelect.Item
                         item={item()}
-                        class={`flex cursor-pointer items-center justify-between px-3 py-2 whitespace-nowrap hover:bg-gray-100 data-[highlighted]:bg-blue-50 ${
-                          isDisabled() ?
-                            'cursor-not-allowed text-gray-400 hover:bg-transparent'
-                          : 'text-gray-900'
+                        class={`relative flex w-full cursor-default items-center rounded-sm px-2 py-1.5 text-sm transition-colors outline-none select-none hover:bg-gray-100 focus:bg-gray-100 focus:text-gray-900 data-disabled:pointer-events-none data-disabled:opacity-50 data-highlighted:bg-gray-100 ${
+                          isDisabled() ? 'pointer-events-none opacity-50' : 'text-gray-900'
                         }`}
                       >
-                        <ArkSelect.ItemText>{item().label}</ArkSelect.ItemText>
-                        <ArkSelect.ItemIndicator>
-                          <BiRegularCheck class='h-5 w-5 text-blue-600' />
+                        <ArkSelect.ItemText class='flex-1'>{item().label}</ArkSelect.ItemText>
+                        <ArkSelect.ItemIndicator class='absolute right-2 flex h-3.5 w-3.5 items-center justify-center'>
+                          <BiRegularCheck class='h-4 w-4 text-blue-600' />
                         </ArkSelect.ItemIndicator>
                       </ArkSelect.Item>
                     );

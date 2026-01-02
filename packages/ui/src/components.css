@@ -45,3 +45,54 @@
   background-color: rgb(219 234 254) !important; /* blue-100 */
   color: rgb(29 78 216) !important; /* blue-700 */
 }
+
+/* Select - Positioner gap */
+[data-scope='select'][data-part='positioner'] {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* Select - Chevron rotation when open */
+[data-scope='select'][data-part='indicator'][data-state='open'] svg {
+  transform: rotate(180deg);
+}
+
+/* Select - Dropdown animations */
+@keyframes selectFadeSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes selectFadeSlideUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+[data-scope='select'][data-part='content'][data-state='open'] {
+  animation: selectFadeSlideDown 200ms ease-out;
+  transform-origin: var(--transform-origin, top);
+}
+
+[data-scope='select'][data-part='content'][data-state='closed'] {
+  animation: selectFadeSlideUp 150ms ease-in forwards;
+  transform-origin: var(--transform-origin, top);
+}
+
+/* Respect prefers-reduced-motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  [data-scope='select'][data-part='content'] {
+    animation: none;
+  }
+}
