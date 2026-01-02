@@ -24,6 +24,8 @@ export interface TabsProps {
   onValueChange?: (_value: string) => void;
   /** Tab content render function */
   children?: (_tabValue: string) => JSX.Element;
+  /** Visual variant (default: 'bordered') */
+  variant?: 'bordered' | 'underline';
 }
 
 /**
@@ -34,6 +36,7 @@ const TabsComponent: Component<TabsProps> = props => {
   const defaultValue = () => props.defaultValue;
   const tabsList = () => props.tabs;
   const children = () => props.children;
+  const variant = () => props.variant || 'bordered';
 
   const handleValueChange = (details: { value: string }) => {
     if (props.onValueChange) {
@@ -55,9 +58,23 @@ const TabsComponent: Component<TabsProps> = props => {
     };
   });
 
+  const getListClass = () => {
+    if (variant() === 'underline') {
+      return 'flex overflow-x-auto border-b rounded-t-lg border-gray-200 bg-white';
+    }
+    return 'flex overflow-x-auto rounded-t-lg border border-gray-200 bg-white';
+  };
+
+  const getContentClass = () => {
+    if (variant() === 'underline') {
+      return 'bg-white p-6';
+    }
+    return 'rounded-b-lg border border-t-0 border-gray-200 bg-white p-6';
+  };
+
   return (
-    <Tabs.Root {...rootProps()} class='rounded-sm'>
-      <Tabs.List class='flex overflow-x-auto rounded-t-lg bg-white'>
+    <Tabs.Root {...rootProps()} class='rounded-sm!'>
+      <Tabs.List class={getListClass()}>
         <For each={tabsList()}>
           {tab => (
             <Tabs.Trigger
@@ -81,10 +98,7 @@ const TabsComponent: Component<TabsProps> = props => {
       <Show when={children()}>
         <For each={tabsList()}>
           {tab => (
-            <Tabs.Content
-              value={tab.value}
-              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
-            >
+            <Tabs.Content value={tab.value} class={getContentClass()}>
               {children()?.(tab.value)}
             </Tabs.Content>
           )}

@@ -1,6 +1,12 @@
 @import 'tailwindcss';
 @import '@corates/ui/components.css';
 
+/* Tailwind v4 only generates utilities for classnames it can discover.
+   Since `@corates/ui` is a workspace package that exports source TS/TSX,
+   we explicitly include it as a content source so UI component utilities
+   are generated into the web bundle. */
+@source '../../ui/src/**/*.{js,jsx,ts,tsx}';
+
 @theme {
   --text-2xs: 0.625rem; /* 10px */
   --text-3xs: 0.5rem; /* 8px */

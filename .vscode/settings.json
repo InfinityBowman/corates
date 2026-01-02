@@ -31,5 +31,13 @@
   // set prettier as default formatter for json, ts, tsx, js, jsx, html, css
   "[json][jsonc][typescript][typescriptreact][javascript][javascriptreact][html][css]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  },
+
+  // Tailwind v4 is CSS-first; point the IntelliSense extension at the CSS entrypoint.
+  // This enables hover/autocomplete for class strings across the whole monorepo,
+  // including workspace packages like `packages/ui`.
+  "tailwindCSS.experimental.configFile": "packages/web/src/global.css",
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
 }

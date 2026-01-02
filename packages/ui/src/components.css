@@ -45,13 +45,3 @@
   background-color: rgb(219 234 254) !important; /* blue-100 */
   color: rgb(29 78 216) !important; /* blue-700 */
 }
-
-/* Tabs - List container styling */
-[data-scope='tabs'][data-part='list'] {
-  border-radius: 0.5rem 0.5rem 0 0;
-}
-
-/* Tabs - Trigger container styling */
-[data-scope='tabs'][data-part='content'] {
-  border-radius: 0 0 0.5rem 0.5rem;
-}

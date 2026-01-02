@@ -4,7 +4,7 @@ import { Portal } from 'solid-js/web';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useLocalChecklists } from '@primitives/useLocalChecklists.js';
 import { useMyProjectsList } from '@primitives/useMyProjectsList.js';
-import useRecentsNav from '@primitives/useRecentsNav.js';
+// import useRecentsNav from '@primitives/useRecentsNav.js';
 import { useConfirmDialog, Tooltip } from '@corates/ui';
 import { AiOutlineFolder, AiOutlineCloud, AiOutlineHome } from 'solid-icons/ai';
 import { HiOutlineDocumentCheck } from 'solid-icons/hi';
@@ -61,7 +61,8 @@ export default function Sidebar(props) {
   const showExpandedContent = () => isExpanded() || mobileMounted();
 
   // Track recent navigation
-  const { recents } = useRecentsNav();
+  // const { recents } = useRecentsNav();
+  const recents = () => [];
 
   // Handle resize drag
   const handleResizeStart = e => {

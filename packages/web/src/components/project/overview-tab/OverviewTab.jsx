@@ -32,7 +32,7 @@ export default function OverviewTab() {
   const [tablesExpanded, setTablesExpanded] = createSignal(false);
 
   const { user } = useBetterAuth();
-  const { projectId, orgId, isOwner } = useProjectContext();
+  const { projectId, isOwner } = useProjectContext();
   const confirmDialog = useConfirmDialog();
   const navigate = useNavigate();
 
@@ -47,10 +47,10 @@ export default function OverviewTab() {
     studies().filter(s => {
       const checklists = s.checklists || [];
       const completedChecklists = checklists.filter(
-        c => c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
+        c => c.status === CHECKLIST_STATUS.FINALIZED,
       );
       return completedChecklists.length === 2;
-    }).length / 2; // Divide by 2 because we need to count the number of studies that have both reviewers completed, not the number of checklists
+    }).length;
 
   const completedStudies = () =>
     studies().filter(s => shouldShowInTab(s, 'completed', null)).length;
@@ -174,7 +174,7 @@ export default function OverviewTab() {
       <div class='mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
         <h2 class='mb-6 text-lg font-semibold text-gray-900'>Team Progress</h2>
 
-        <div class='flex flex-col items-center md:flex-row md:items-start md:gap-8'>
+        <div class='mb-6 flex flex-col items-center md:flex-row md:items-start md:gap-8'>
           {/* Overall Progress - Circular */}
           <div class='mb-6 md:mb-0'>
             <CircularProgress
@@ -405,7 +405,6 @@ export default function OverviewTab() {
         isOpen={showAddMemberModal()}
         onClose={() => setShowAddMemberModal(false)}
         projectId={projectId}
-        orgId={orgId()}
       />
       <confirmDialog.ConfirmDialogComponent />
     </>
