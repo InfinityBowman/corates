@@ -218,7 +218,7 @@ export default function AddStudiesForm(props) {
           </Show>
 
           <Tabs
-          variant='underline'
+            variant='underline'
             value={activeTab()}
             onValueChange={v => setActiveTab(v)}
             tabs={tabs.map(t => ({

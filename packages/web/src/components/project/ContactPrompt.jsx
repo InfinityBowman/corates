@@ -43,7 +43,7 @@ export default function ContactPrompt(props) {
         href={contactUrl()}
         target='_blank'
         rel='noopener noreferrer'
-        class='whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 ml-4 font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+        class='ml-4 rounded-lg bg-blue-600 px-4 py-2 font-medium whitespace-nowrap text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
       >
         Contact Us
       </a>

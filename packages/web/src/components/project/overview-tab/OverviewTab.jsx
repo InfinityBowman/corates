@@ -46,9 +46,7 @@ export default function OverviewTab() {
   const readyToReconcile = () =>
     studies().filter(s => {
       const checklists = s.checklists || [];
-      const completedChecklists = checklists.filter(
-        c => c.status === CHECKLIST_STATUS.FINALIZED,
-      );
+      const completedChecklists = checklists.filter(c => c.status === CHECKLIST_STATUS.FINALIZED);
       return completedChecklists.length === 2;
     }).length;
 
