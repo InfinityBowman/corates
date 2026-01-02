@@ -39,5 +39,5 @@
   "tailwindCSS.experimental.configFile": "packages/web/src/global.css",
   "files.associations": {
     "*.css": "tailwindcss"
-  },
+  }
 }

@@ -252,9 +252,18 @@ async function generate() {
     // Organization routes (new org-scoped architecture)
     { file: 'src/routes/orgs/index.js', basePath: '/api/orgs' },
     { file: 'src/routes/orgs/projects.js', basePath: '/api/orgs/{orgId}/projects' },
-    { file: 'src/routes/orgs/members.js', basePath: '/api/orgs/{orgId}/projects/{projectId}/members' },
-    { file: 'src/routes/orgs/invitations.js', basePath: '/api/orgs/{orgId}/projects/{projectId}/invitations' },
-    { file: 'src/routes/orgs/pdfs.js', basePath: '/api/orgs/{orgId}/projects/{projectId}/studies/{studyId}/pdfs' },
+    {
+      file: 'src/routes/orgs/members.js',
+      basePath: '/api/orgs/{orgId}/projects/{projectId}/members',
+    },
+    {
+      file: 'src/routes/orgs/invitations.js',
+      basePath: '/api/orgs/{orgId}/projects/{projectId}/invitations',
+    },
+    {
+      file: 'src/routes/orgs/pdfs.js',
+      basePath: '/api/orgs/{orgId}/projects/{projectId}/studies/{studyId}/pdfs',
+    },
     // Legacy routes (deprecated, kept for backward compatibility detection)
     { file: 'src/routes/projects.js', basePath: '/api/projects' },
     { file: 'src/routes/members.js', basePath: '/api/projects/{projectId}/members' },
