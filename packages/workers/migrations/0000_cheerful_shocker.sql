@@ -15,6 +15,19 @@ CREATE TABLE `account` (
 	FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
+CREATE TABLE `invitation` (
+	`id` text PRIMARY KEY NOT NULL,
+	`email` text NOT NULL,
+	`inviterId` text NOT NULL,
+	`organizationId` text NOT NULL,
+	`role` text DEFAULT 'member' NOT NULL,
+	`status` text DEFAULT 'pending' NOT NULL,
+	`expiresAt` integer NOT NULL,
+	`createdAt` integer DEFAULT (unixepoch()),
+	FOREIGN KEY (`inviterId`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`organizationId`) REFERENCES `organization`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
 CREATE TABLE `mediaFiles` (
 	`id` text PRIMARY KEY NOT NULL,
 	`filename` text NOT NULL,
@@ -24,19 +37,43 @@ CREATE TABLE `mediaFiles` (
 	`uploadedBy` text,
 	`bucketKey` text NOT NULL,
 	`createdAt` integer DEFAULT (unixepoch()),
-	FOREIGN KEY (`uploadedBy`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`uploadedBy`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
+CREATE TABLE `member` (
+	`id` text PRIMARY KEY NOT NULL,
+	`userId` text NOT NULL,
+	`organizationId` text NOT NULL,
+	`role` text DEFAULT 'member' NOT NULL,
+	`createdAt` integer DEFAULT (unixepoch()),
+	FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`organizationId`) REFERENCES `organization`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE TABLE `organization` (
+	`id` text PRIMARY KEY NOT NULL,
+	`name` text NOT NULL,
+	`slug` text,
+	`logo` text,
+	`metadata` text,
+	`createdAt` integer DEFAULT (unixepoch())
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `organization_slug_unique` ON `organization` (`slug`);--> statement-breakpoint
 CREATE TABLE `project_invitations` (
 	`id` text PRIMARY KEY NOT NULL,
+	`orgId` text NOT NULL,
 	`projectId` text NOT NULL,
 	`email` text NOT NULL,
 	`role` text DEFAULT 'member',
+	`orgRole` text DEFAULT 'member',
+	`grantOrgMembership` integer DEFAULT false NOT NULL,
 	`token` text NOT NULL,
 	`invitedBy` text NOT NULL,
 	`expiresAt` integer NOT NULL,
 	`acceptedAt` integer,
 	`createdAt` integer DEFAULT (unixepoch()),
+	FOREIGN KEY (`orgId`) REFERENCES `organization`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`projectId`) REFERENCES `projects`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`invitedBy`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
@@ -56,9 +93,11 @@ CREATE TABLE `projects` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
 	`description` text,
+	`orgId` text NOT NULL,
 	`createdBy` text NOT NULL,
 	`createdAt` integer DEFAULT (unixepoch()),
 	`updatedAt` integer DEFAULT (unixepoch()),
+	FOREIGN KEY (`orgId`) REFERENCES `organization`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`createdBy`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
@@ -72,8 +111,10 @@ CREATE TABLE `session` (
 	`userAgent` text,
 	`userId` text NOT NULL,
 	`impersonatedBy` text,
+	`activeOrganizationId` text,
 	FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`impersonatedBy`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE set null
+	FOREIGN KEY (`impersonatedBy`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE set null,
+	FOREIGN KEY (`activeOrganizationId`) REFERENCES `organization`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `session_token_unique` ON `session` (`token`);--> statement-breakpoint

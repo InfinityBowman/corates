@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1766805635744,
-      "tag": "0000_acoustic_power_pack",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1767074323918,
-      "tag": "0001_nice_blonde_phantom",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1767117556513,
-      "tag": "0002_equal_iron_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1767295843655,
-      "tag": "0003_worried_skreet",
+      "when": 1767328134834,
+      "tag": "0000_cheerful_shocker",
       "breakpoints": true
     }
   ]

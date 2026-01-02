@@ -82,13 +82,25 @@ async function main() {
   console.log('');
 
   try {
-    // Step 1: Drop existing tables
+    // Step 1: Drop existing tables (in reverse dependency order to respect foreign keys)
     console.log('');
     console.log('Step 1: Dropping existing tables...');
+
+    // Drop tables in reverse dependency order (children before parents)
+    // This ensures foreign key constraints don't prevent dropping
     const tables = [
-      'mediaFiles',
+      // App-specific tables (children first)
+      'project_invitations',
       'project_members',
+      'mediaFiles',
       'projects',
+      'subscriptions',
+      // Better Auth organization plugin tables
+      'invitation',
+      'member',
+      'organization',
+      // Better Auth core tables
+      'twoFactor',
       'verification',
       'account',
       'session',
@@ -136,7 +148,7 @@ async function main() {
 
     console.log('');
     console.log('==========================================');
-    console.log('  Database reset, R2 cleared, and workers deployed!');
+    console.log('  Database reset and workers deployed!');
     console.log('==========================================');
   } catch (err) {
     console.error('');
