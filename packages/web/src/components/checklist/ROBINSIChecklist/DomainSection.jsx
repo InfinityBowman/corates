@@ -1,5 +1,5 @@
 import { For, Show } from 'solid-js';
-import { ROBINS_I_CHECKLIST, getDomainQuestions } from '@/ROBINS-I/checklist-map.js';
+import { ROBINS_I_CHECKLIST, getDomainQuestions } from './checklist-map.js';
 import { SignallingQuestion } from './SignallingQuestion.jsx';
 import { DomainJudgement, JudgementBadge } from './DomainJudgement.jsx';
 

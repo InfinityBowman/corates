@@ -15,7 +15,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry';
 import { IoChevronBack } from 'solid-icons/io';
 import ScoreTag from '@/components/checklist/ScoreTag.jsx';
-import { isAMSTAR2Complete } from '@/AMSTAR2/checklist.js';
+import { isAMSTAR2Complete } from '@/components/checklist/AMSTAR2/checklist.js';
 
 export default function ChecklistYjsWrapper() {
   const params = useParams();

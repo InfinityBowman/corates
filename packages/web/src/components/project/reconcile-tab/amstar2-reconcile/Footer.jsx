@@ -1,13 +1,16 @@
 import { AiOutlineCheck, AiOutlineArrowLeft } from 'solid-icons/ai';
 import { Show } from 'solid-js';
 
+/**
+ * Footer - Actions for the compare checklist view
+ * @param {Object} props
+ * @param {Function} props.onBack
+ * @param {Function} props.onSave
+ * @param {boolean} props.allAnswered
+ * @param {boolean} props.saving
+ * @returns {JSX.Element}
+ */
 export default function Footer(props) {
-  // Props:
-  // - onBack: function to call when "Back to Questions" is clicked
-  // - onSave: function to call when "Save Reconciled Checklist" is clicked
-  // - allAnswered: boolean indicating if all questions have been answered
-  // - saving: boolean indicating if save operation is in progress
-
   return (
     <div class='flex items-center justify-between border-t border-gray-200 bg-gray-50 p-6'>
       <button

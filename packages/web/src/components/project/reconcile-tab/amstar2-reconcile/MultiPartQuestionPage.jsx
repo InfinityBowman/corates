@@ -1,12 +1,15 @@
 import { createSignal, createEffect, createMemo, For, Show } from 'solid-js';
-import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
-import { getDataKeysForQuestion, getFinalAnswer } from '@/AMSTAR2/checklist-compare.js';
+import { AMSTAR_CHECKLIST } from '@/components/checklist/AMSTAR2/checklist-map.js';
+import { getDataKeysForQuestion, getFinalAnswer } from '@/components/checklist/AMSTAR2/checklist-compare.js';
 import AnswerPanel from './AnswerPanel.jsx';
 import NotesCompareSection from './NotesCompareSection.jsx';
 
 /**
  * MultiPartQuestionPage - Handles q9 and q11 which have a/b parts
  * Styled to match SingleQuestionPage in ReconciliationQuestionPage
+ * @param {Object} props
+ * @param {string} props.questionKey
+ * @returns {JSX.Element}
  */
 export default function MultiPartQuestionPage(props) {
   const questionKey = () => props.questionKey;

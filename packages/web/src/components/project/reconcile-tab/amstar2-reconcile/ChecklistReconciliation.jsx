@@ -12,24 +12,29 @@ import {
   getQuestionKeys,
   getDataKeysForQuestion,
   isMultiPartQuestion,
-} from '@/AMSTAR2/checklist-compare.js';
+} from '@/components/checklist/AMSTAR2/checklist-compare.js';
 import ReconciliationQuestionPage from './ReconciliationQuestionPage.jsx';
 import SummaryView from './SummaryView.jsx';
-import { createChecklist } from '@/AMSTAR2/checklist.js';
+import { createChecklist } from '@/components/checklist/AMSTAR2/checklist.js';
 
+/**
+ * ChecklistReconciliation - Main view for comparing and reconciling two checklists
+ * Shows one question per page with navigation, allowing fine-grained merging of answers
+ * @param {Object} props
+ * @param {Object} props.checklist1 - First reviewer's checklist data
+ * @param {Object} props.checklist2 - Second reviewer's checklist data
+ * @param {Object} props.reconciledChecklist - The reconciled checklist data (read from Yjs, reactive)
+ * @param {string} props.reconciledChecklistId - ID of the reconciled checklist
+ * @param {Function} props.onSaveReconciled - Callback when reconciled checklist is saved (receives reconciledName)
+ * @param {Function} props.onCancel - Callback to cancel and go back
+ * @param {string} props.reviewer1Name - Display name for first reviewer
+ * @param {string} props.reviewer2Name - Display name for second reviewer
+ * @param {Function} props.setNavbarStore - Store setter for navbar state (deep reactivity)
+ * @param {Function} props.getQuestionNote - Function to get Y.Text for a question note (questionKey => Y.Text)
+ * @param {Function} props.updateChecklistAnswer - Function to update a question answer in the reconciled checklist
+ * @returns {JSX.Element}
+ */
 export default function ChecklistReconciliation(props) {
-  // props.checklist1 - First reviewer's checklist data
-  // props.checklist2 - Second reviewer's checklist data
-  // props.reconciledChecklist - The reconciled checklist data (read from Yjs, reactive)
-  // props.reconciledChecklistId - ID of the reconciled checklist
-  // props.onSaveReconciled - Callback when reconciled checklist is saved (receives reconciledName)
-  // props.onCancel - Callback to cancel and go back
-  // props.reviewer1Name - Display name for first reviewer
-  // props.reviewer2Name - Display name for second reviewer
-  // props.setNavbarStore - Store setter for navbar state (deep reactivity)
-  // props.getQuestionNote - Function to get Y.Text for a question note (questionKey => Y.Text)
-  // props.updateChecklistAnswer - Function to update a question answer in the reconciled checklist
-
   // Reconciled checklist metadata
   const [reconciledName, setReconciledName] = createSignal('Reconciled Checklist');
   const [saving, setSaving] = createSignal(false);

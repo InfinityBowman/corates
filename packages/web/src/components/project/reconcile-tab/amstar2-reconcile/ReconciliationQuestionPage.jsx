@@ -5,10 +5,13 @@
 import AnswerPanel from './AnswerPanel.jsx';
 import NotesCompareSection from './NotesCompareSection.jsx';
 import { createSignal, createEffect, Show } from 'solid-js';
-import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
+import { AMSTAR_CHECKLIST } from '@/components/checklist/AMSTAR2/checklist-map.js';
 import MultiPartQuestionPage from './MultiPartQuestionPage.jsx';
 /**
  * Get the final answer from the last column
+ * @param {Array} answers - The answers array
+ * @param {string} questionKey - The question key
+ * @returns {string|null} The final answer
  */
 function getFinalAnswerFromAnswers(answers, questionKey) {
   if (!Array.isArray(answers) || answers.length === 0) return null;
@@ -22,6 +25,24 @@ function getFinalAnswerFromAnswers(answers, questionKey) {
   return lastColumn?.options?.[idx] || null;
 }
 
+/**
+ * ReconciliationQuestionPage - Full page view for a single question during reconciliation
+ * Shows Reviewer 1, Reviewer 2, and Final (editable) answer panels side by side
+ * @param {Object} props
+ * @param {string} props.questionKey
+ * @param {Object} props.reviewer1Answers
+ * @param {Object} props.reviewer2Answers
+ * @param {Object} props.finalAnswers
+ * @param {Function} props.onFinalChange
+ * @param {string} props.reviewer1Name
+ * @param {string} props.reviewer2Name
+ * @param {boolean} props.isAgreement
+ * @param {boolean} props.isMultiPart
+ * @param {string} props.reviewer1Note
+ * @param {string} props.reviewer2Note
+ * @param {Y.Text} props.finalNoteYText
+ * @returns {JSX.Element}
+ */
 export default function ReconciliationQuestionPage(props) {
   // props.questionKey - e.g., 'q1', 'q9', 'q11'
   // props.reviewer1Answers - { answers: [[...], [...]], critical: bool } OR { q9a: {...}, q9b: {...} } for multi-part

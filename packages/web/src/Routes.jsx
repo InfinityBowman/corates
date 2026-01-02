@@ -9,7 +9,7 @@ import AuthLayout from '@/components/auth/AuthLayout.jsx';
 import Layout from '@/Layout.jsx';
 import LocalChecklistView from '@/components/checklist/LocalChecklistView.jsx';
 import ChecklistYjsWrapper from '@/components/checklist/ChecklistYjsWrapper.jsx';
-import ReconciliationWrapper from '@/components/checklist/compare/ReconciliationWrapper.jsx';
+import ReconciliationWrapper from '@/components/project/reconcile-tab/amstar2-reconcile/ReconciliationWrapper.jsx';
 import ProfilePage from '@/components/profile/ProfilePage.jsx';
 import SettingsPage from '@/components/profile/SettingsPage.jsx';
 import BillingPage from '@components/billing/BillingPage.jsx';

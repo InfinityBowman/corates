@@ -1,6 +1,6 @@
 import { For, Show, createMemo, createUniqueId } from 'solid-js';
-import { SECTION_B, RESPONSE_LABELS } from '@/ROBINS-I/checklist-map.js';
-import { shouldStopAssessment } from '@/ROBINS-I/checklist.js';
+import { SECTION_B, RESPONSE_LABELS } from './checklist-map.js';
+import { shouldStopAssessment } from './checklist.js';
 import { FiAlertCircle } from 'solid-icons/fi';
 
 /**

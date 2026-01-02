@@ -1,5 +1,5 @@
 import { For, Show } from 'solid-js';
-import { SECTION_A } from '@/ROBINS-I/checklist-map.js';
+import { SECTION_A } from './checklist-map.js';
 
 /**
  * Section A: Specify the result being assessed for risk of bias

@@ -1,6 +1,6 @@
 import { For } from 'solid-js';
-import { OVERALL_ROB_JUDGEMENTS, BIAS_DIRECTIONS } from '@/ROBINS-I/checklist-map.js';
-import { scoreChecklist } from '@/ROBINS-I/checklist.js';
+import { OVERALL_ROB_JUDGEMENTS, BIAS_DIRECTIONS } from './checklist-map.js';
+import { scoreChecklist } from './checklist.js';
 
 /**
  * Overall risk of bias section with final judgement

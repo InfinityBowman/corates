@@ -20,6 +20,11 @@ import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
 import { showToast } from '@corates/ui';
 import ReconciliationWithPdf from './ReconciliationWithPdf.jsx';
 
+/**
+ * ReconciliationWrapper - Handles loading checklists and managing reconciliation workflow
+ * This component is used both for project-based (Y.js) and local checklists
+ * @returns {JSX.Element}
+ */
 export default function ReconciliationWrapper() {
   const params = useParams();
   const navigate = useNavigate();

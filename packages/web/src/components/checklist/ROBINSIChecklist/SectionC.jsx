@@ -1,5 +1,5 @@
 import { For } from 'solid-js';
-import { SECTION_C } from '@/ROBINS-I/checklist-map.js';
+import { SECTION_C } from './checklist-map.js';
 
 /**
  * Section C: Specify the (hypothetical) target randomized trial specific to the study

@@ -1,8 +1,10 @@
 import { Show, For } from 'solid-js';
-import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
+import { AMSTAR_CHECKLIST } from '@/components/checklist/AMSTAR2/checklist-map.js';
 
 /**
  * Get badge color for answer type
+ * @param {string} answer - The answer type
+ * @returns {string} The badge color style
  */
 function getAnswerBadgeStyle(answer) {
   switch (answer) {
@@ -23,6 +25,22 @@ function getAnswerBadgeStyle(answer) {
 
 /**
  * Panel showing one version of answers (reviewer or final)
+ * @param {Object} props
+ * @param {string} props.questionKey
+ * @param {Array} props.columns
+ * @param {Array} props.answers
+ * @param {boolean} props.compact
+ * @param {boolean} props.isFinal
+ * @param {Function} props.onCheckboxChange
+ * @param {Function} props.onRadioChange
+ * @param {string} props.selectedSource
+ * @param {boolean} props.hideSelectButtons
+ * @param {boolean} props.readOnly
+ * @param {string} props.panelId
+ * @param {string} props.title
+ * @param {string} props.finalAnswer
+ * @param {boolean} props.isSelected
+ * @returns {JSX.Element}
  */
 export default function AnswerPanel(props) {
   const question = () => AMSTAR_CHECKLIST[props.questionKey];

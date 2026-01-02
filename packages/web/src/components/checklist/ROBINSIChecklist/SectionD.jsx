@@ -1,5 +1,5 @@
 import { For } from 'solid-js';
-import { INFORMATION_SOURCES, SECTION_D } from '@/ROBINS-I/checklist-map.js';
+import { INFORMATION_SOURCES, SECTION_D } from './checklist-map.js';
 
 /**
  * Section D: Information sources

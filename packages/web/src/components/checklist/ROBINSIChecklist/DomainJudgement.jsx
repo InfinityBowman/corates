@@ -1,5 +1,5 @@
 import { For } from 'solid-js';
-import { ROB_JUDGEMENTS, BIAS_DIRECTIONS, DOMAIN1_DIRECTIONS } from '@/ROBINS-I/checklist-map.js';
+import { ROB_JUDGEMENTS, BIAS_DIRECTIONS, DOMAIN1_DIRECTIONS } from './checklist-map.js';
 
 /**
  * Domain judgement selector with risk of bias level and optional direction

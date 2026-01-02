@@ -1,7 +1,10 @@
 import Footer from './Footer.jsx';
 import { AiOutlineArrowRight } from 'solid-icons/ai';
 import { For, Show } from 'solid-js';
-import { isMultiPartQuestion, getDataKeysForQuestion } from '@/AMSTAR2/checklist-compare.js';
+import {
+  isMultiPartQuestion,
+  getDataKeysForQuestion,
+} from '@/components/checklist/AMSTAR2/checklist-compare.js';
 
 /**
  * Summary view showing all questions and their final answers
@@ -22,7 +25,6 @@ import { isMultiPartQuestion, getDataKeysForQuestion } from '@/AMSTAR2/checklist
  * @returns {JSX.Element}
  */
 export default function SummaryView(props) {
-
   return (
     <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
       {/* Summary Header */}

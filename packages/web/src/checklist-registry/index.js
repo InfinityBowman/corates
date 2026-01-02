@@ -16,12 +16,12 @@ import {
   createChecklist as createAMSTAR2,
   scoreChecklist as scoreAMSTAR2,
   getAnswers as getAMSTAR2Answers,
-} from '@/AMSTAR2/checklist.js';
+} from '@/components/checklist/AMSTAR2/checklist.js';
 import {
   createChecklist as createROBINSI,
   scoreChecklist as scoreROBINSI,
   getAnswers as getROBINSIAnswers,
-} from '@/ROBINS-I/checklist.js';
+} from '@/components/checklist/ROBINSIChecklist/checklist.js';
 
 /**
  * Registry mapping checklist types to their implementations

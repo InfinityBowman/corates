@@ -1,6 +1,6 @@
 import { createSignal, createEffect, Show, For } from 'solid-js';
-import { AMSTAR_CHECKLIST } from '@/AMSTAR2/checklist-map.js';
-import { createChecklist as createAMSTAR2Checklist } from '@/AMSTAR2/checklist.js';
+import { AMSTAR_CHECKLIST } from './checklist-map.js';
+import { createChecklist as createAMSTAR2Checklist } from './checklist.js';
 import { FaSolidCircleInfo } from 'solid-icons/fa';
 import { Tooltip } from '@corates/ui';
 import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';

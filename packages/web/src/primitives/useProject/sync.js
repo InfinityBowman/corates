@@ -5,7 +5,7 @@
 
 import projectStore from '@/stores/projectStore.js';
 import { scoreChecklistOfType } from '@/checklist-registry/index.js';
-import { getAnswers as getAMSTAR2Answers } from '@/AMSTAR2/checklist.js';
+import { getAnswers as getAMSTAR2Answers } from '@/components/checklist/AMSTAR2/checklist.js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 
 /**

@@ -1,4 +1,4 @@
-import { PLANNING_SECTION } from '@/ROBINS-I/checklist-map.js';
+import { PLANNING_SECTION } from './checklist-map.js';
 
 /**
  * Planning Section: List confounding factors at planning stage

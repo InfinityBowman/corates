@@ -4,7 +4,7 @@ import { Portal } from 'solid-js/web';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useLocalChecklists } from '@primitives/useLocalChecklists.js';
 import { useMyProjectsList } from '@primitives/useMyProjectsList.js';
-// import useRecentsNav from '@primitives/useRecentsNav.js';
+// import useRecentsNav from './useRecentsNav.js';
 import { useConfirmDialog, Tooltip } from '@corates/ui';
 import { AiOutlineFolder, AiOutlineCloud, AiOutlineHome } from 'solid-icons/ai';
 import { HiOutlineDocumentCheck } from 'solid-icons/hi';

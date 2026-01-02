@@ -1,5 +1,5 @@
 import { For, createUniqueId } from 'solid-js';
-import { RESPONSE_LABELS, getResponseOptions } from '@/ROBINS-I/checklist-map.js';
+import { RESPONSE_LABELS, getResponseOptions } from './checklist-map.js';
 
 /**
  * A single signalling question with radio button options

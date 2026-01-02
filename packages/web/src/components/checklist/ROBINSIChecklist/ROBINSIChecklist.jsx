@@ -1,6 +1,6 @@
 import { createSignal, For, Show, createMemo } from 'solid-js';
-import { getActiveDomainKeys } from '@/ROBINS-I/checklist-map.js';
-import { shouldStopAssessment } from '@/ROBINS-I/checklist.js';
+import { getActiveDomainKeys } from './checklist-map.js';
+import { shouldStopAssessment } from './checklist.js';
 import { PlanningSection } from './PlanningSection.jsx';
 import { SectionA } from './SectionA.jsx';
 import { SectionB } from './SectionB.jsx';

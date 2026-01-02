@@ -11,25 +11,29 @@ import ChecklistReconciliation from './ChecklistReconciliation.jsx';
 import Navbar from './Navbar.jsx';
 import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx';
 
+/**
+ * ReconciliationWithPdf - Wrapper that combines ChecklistReconciliation with a PDF viewer
+ * in a split-screen layout. The PDF is read-only during reconciliation.
+ * @param {Object} props
+ * @param {Object} props.checklist1 - First reviewer's checklist data
+ * @param {Object} props.checklist2 - Second reviewer's checklist data
+ * @param {Object} props.reconciledChecklist - The reconciled checklist data (third checklist both reviewers edit)
+ * @param {string} props.reconciledChecklistId - ID of the reconciled checklist
+ * @param {Function} props.onSaveReconciled - Callback when reconciled checklist is saved (receives reconciledName)
+ * @param {Function} props.onCancel - Callback to cancel and go back
+ * @param {string} props.reviewer1Name - Display name for first reviewer
+ * @param {string} props.reviewer2Name - Display name for second reviewer
+ * @param {ArrayBuffer} props.pdfData - ArrayBuffer of the study PDF (optional)
+ * @param {string} props.pdfFileName - Name of the PDF file (optional)
+ * @param {boolean} props.pdfLoading - Whether PDF is still loading
+ * @param {Array} props.pdfs - Array of PDFs for multi-PDF selection
+ * @param {string} props.selectedPdfId - Currently selected PDF ID
+ * @param {Function} props.onPdfSelect - Handler for PDF selection change
+ * @param {Function} props.getQuestionNote - Function to get Y.Text for a question note (questionKey => Y.Text)
+ * @param {Function} props.updateChecklistAnswer - Function to update a question answer (questionKey, questionData)
+ * @returns {JSX.Element}
+ */
 export default function ReconciliationWithPdf(props) {
-  // props.checklist1 - First reviewer's checklist data
-  // props.checklist2 - Second reviewer's checklist data
-  // props.reconciledChecklist - The reconciled checklist data (third checklist both reviewers edit)
-  // props.reconciledChecklistId - ID of the reconciled checklist
-  // props.onSaveReconciled - Callback when reconciled checklist is saved (receives reconciledName)
-  // props.onCancel - Callback to cancel and go back
-  // props.reviewer1Name - Display name for first reviewer
-  // props.reviewer2Name - Display name for second reviewer
-  // props.pdfData - ArrayBuffer of the study PDF (optional)
-  // props.pdfFileName - Name of the PDF file (optional)
-  // props.pdfUrl - URL for the PDF (optional, for server-hosted PDFs)
-  // props.pdfLoading - Whether PDF is still loading
-  // props.pdfs - Array of PDFs for multi-PDF selection
-  // props.selectedPdfId - Currently selected PDF ID
-  // props.onPdfSelect - Handler for PDF selection change
-  // props.getQuestionNote - Function to get Y.Text for a question note (questionKey => Y.Text)
-  // props.updateChecklistAnswer - Function to update a question answer (questionKey, questionData)
-
   // Navbar store for deep reactivity - ChecklistReconciliation will update this
   const [navbarStore, setNavbarStore] = createStore({
     questionKeys: [],

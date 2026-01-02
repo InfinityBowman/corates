@@ -2,7 +2,10 @@
  * Utility functions for Navbar component
  * Handles question state calculations and styling logic
  */
-import { isMultiPartQuestion, getDataKeysForQuestion } from '@/AMSTAR2/checklist-compare.js';
+import {
+  isMultiPartQuestion,
+  getDataKeysForQuestion,
+} from '@/components/checklist/AMSTAR2/checklist-compare.js';
 
 /**
  * Check if a question has been answered in the final answers
