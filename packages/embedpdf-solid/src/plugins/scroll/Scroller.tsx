@@ -52,15 +52,18 @@ export const Scroller: Component<ScrollerProps> = props => {
       // Normalize + reconcile by a stable key so Solid can preserve DOM nodes and avoid flashing.
       const normalized: KeyedScrollerLayout = {
         ...newLayout,
-        items: newLayout.items.map((item): KeyedScrollerItem => ({
-          ...item,
-          __key: item.pageNumbers[0],
-          pageLayouts: item.pageLayouts.map(
-            (pageLayout): KeyedPageLayout => ({
-            ...pageLayout,
-            __key: pageLayout.pageNumber,
-          })),
-        })),
+        items: newLayout.items.map(
+          (item): KeyedScrollerItem => ({
+            ...item,
+            __key: item.pageNumbers[0],
+            pageLayouts: item.pageLayouts.map(
+              (pageLayout): KeyedPageLayout => ({
+                ...pageLayout,
+                __key: pageLayout.pageNumber,
+              }),
+            ),
+          }),
+        ),
       };
 
       setLayoutData('docId', docId);

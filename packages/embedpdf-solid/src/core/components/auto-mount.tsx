@@ -42,16 +42,12 @@ export const AutoMount: Component<AutoMountProps> = props => {
 
   return (
     <>
-      {wrapperList.length > 0 ? (
+      {wrapperList.length > 0 ?
         <NestedWrapper wrappers={wrapperList}>{props.children}</NestedWrapper>
-      ) : (
-        props.children
-      )}
+      : props.children}
 
       {/* Mount all utilities */}
-      <For each={utilities()}>
-        {Utility => <Utility />}
-      </For>
+      <For each={utilities()}>{Utility => <Utility />}</For>
     </>
   );
 };

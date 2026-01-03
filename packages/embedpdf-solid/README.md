@@ -42,10 +42,7 @@ function PDFViewer({ pdfUrl }: { pdfUrl: string }) {
                     documentId={activeDocumentId}
                     renderPage={({ width, height, pageIndex }) => (
                       <div style={{ width, height }}>
-                        <RenderLayer
-                          documentId={activeDocumentId}
-                          pageIndex={pageIndex}
-                        />
+                        <RenderLayer documentId={activeDocumentId} pageIndex={pageIndex} />
                       </div>
                     )}
                   />
