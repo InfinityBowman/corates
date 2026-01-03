@@ -1,6 +1,9 @@
 import { createSignal } from 'solid-js';
 import { A } from '@solidjs/router';
-import { SECTION_B, RESPONSE_LABELS } from '@/components/checklist/ROBINSIChecklist/checklist-map.js';
+import {
+  SECTION_B,
+  RESPONSE_LABELS,
+} from '@/components/checklist/ROBINSIChecklist/checklist-map.js';
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from 'solid-icons/ai';
 
 /**
@@ -16,8 +19,10 @@ export default function RobinsReconcileSectionBQuestionMock() {
   // Mock reviewer answers
   const reviewer1Answer = 'Y';
   const reviewer2Answer = 'PY';
-  const reviewer1Comment = 'Authors used propensity score matching to control for age, sex, and baseline severity.';
-  const reviewer2Comment = 'Propensity score matching was used, but some important confounders may have been omitted (e.g., socioeconomic status).';
+  const reviewer1Comment =
+    'Authors used propensity score matching to control for age, sex, and baseline severity.';
+  const reviewer2Comment =
+    'Propensity score matching was used, but some important confounders may have been omitted (e.g., socioeconomic status).';
 
   // Local state for final answer (visual only)
   const [finalAnswer, setFinalAnswer] = createSignal(reviewer1Answer);
@@ -135,7 +140,7 @@ export default function RobinsReconcileSectionBQuestionMock() {
               <div class='mb-4 flex flex-wrap gap-2'>
                 {responseOptions.map(option => (
                   <label
-                    class={`inline-flex cursor-pointer items-center justify-center rounded-lg border-2 px-4 py-2 text-sm font-medium transition-all hover:border-green-300 focus-within:ring-2 focus-within:ring-green-400 focus-within:ring-offset-1 focus-within:outline-none ${
+                    class={`inline-flex cursor-pointer items-center justify-center rounded-lg border-2 px-4 py-2 text-sm font-medium transition-all focus-within:ring-2 focus-within:ring-green-400 focus-within:ring-offset-1 focus-within:outline-none hover:border-green-300 ${
                       finalAnswer() === option ?
                         'border-green-400 bg-green-50 text-green-800'
                       : 'border-gray-200 bg-white text-gray-700 hover:bg-green-50'
@@ -174,7 +179,7 @@ export default function RobinsReconcileSectionBQuestionMock() {
         <div class='mt-4 flex items-center justify-between'>
           <button
             disabled
-            class='flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors cursor-not-allowed bg-gray-100 text-gray-400'
+            class='flex cursor-not-allowed items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-400 transition-colors'
           >
             <AiOutlineArrowLeft class='h-4 w-4' />
             Previous

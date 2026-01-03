@@ -27,7 +27,8 @@ export default function MockIndex() {
               ROBINS-I Section B Question Reconcile
             </h3>
             <p class='text-sm text-gray-600'>
-              Three-column compare view for a single Section B question with always-visible comments.
+              Three-column compare view for a single Section B question with always-visible
+              comments.
             </p>
           </A>
         </div>

@@ -203,7 +203,13 @@ function scoreDomain2(answers) {
   }
 
   // Rule 6: N/PN/NI, N/PN/NI, Y/PY, WY/NI, Y/PY/NI -> Serious
-  if (isNoPPNNI(q1) && isNoPPNNI(q2) && isYesPY(q3) && inSet(q4, 'WY', 'NI') && inSet(q5, 'Y', 'PY', 'NI')) {
+  if (
+    isNoPPNNI(q1) &&
+    isNoPPNNI(q2) &&
+    isYesPY(q3) &&
+    inSet(q4, 'WY', 'NI') &&
+    inSet(q5, 'Y', 'PY', 'NI')
+  ) {
     return { judgement: JUDGEMENTS.SERIOUS, isComplete: true, ruleId: 'D2.R6' };
   }
 
@@ -618,8 +624,9 @@ export function scoreAllDomains(checklistState) {
   }
 
   const isPerProtocol = checklistState.sectionC?.isPerProtocol || false;
-  const activeDomainKeys = isPerProtocol
-    ? ['domain1b', 'domain2', 'domain3', 'domain4', 'domain5', 'domain6']
+  const activeDomainKeys =
+    isPerProtocol ?
+      ['domain1b', 'domain2', 'domain3', 'domain4', 'domain5', 'domain6']
     : ['domain1a', 'domain2', 'domain3', 'domain4', 'domain5', 'domain6'];
 
   const domains = {};
