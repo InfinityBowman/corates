@@ -17,8 +17,8 @@
     "db:generate": "drizzle-kit generate",
     "db:generate:test": "node ./scripts/generate-test-sql.mjs",
     "db:migrate": "y | wrangler d1 migrations apply corates-db --local",
-    "db:migrate:prod": "wrangler d1 migrations apply corates-db --remote",
-    "db:setup:prod": "wrangler d1 migrations apply corates-db-prod --remote",
+    "db:migrate:prod": "wrangler d1 migrations apply corates-db-prod --remote --env production",
+    "db:setup:prod": "wrangler d1 migrations apply corates-db-prod --remote --env production",
     "db:reset:prod": "node ./scripts/reset-db-prod.mjs",
     "user:make-admin:local": "node ./scripts/make-admin-local.mjs",
     "user:make-admin:prod": "node ./scripts/make-admin-prod.mjs",
@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.11.1",
+    "dotenv": "^16.4.5",
     "drizzle-kit": "^0.31.8",
     "vitest": "3.2.0",
     "wrangler": "^4.56.0",

@@ -1,0 +1,1 @@
+{"version":3,"file":"use-render.d.ts","sourceRoot":"","sources":["../../../../src/plugins/render/hooks/use-render.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,yBAAyB,CAAC;AAE3D,eAAO,MAAM,mBAAmB;;;;CAAqD,CAAC;AAEtF,MAAM,WAAW,eAAe;IAC9B,QAAQ,EAAE,WAAW,GAAG,IAAI,CAAC;CAC9B;AAED;;;GAGG;AACH,wBAAgB,SAAS,CAAC,aAAa,EAAE,MAAM,MAAM,GAAG,IAAI,GAAG,eAAe,CAc7E"}

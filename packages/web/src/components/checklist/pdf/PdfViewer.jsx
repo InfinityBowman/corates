@@ -14,17 +14,21 @@ import usePdfJs from './usePdfJs.js';
 import PdfToolbar from './PdfToolbar.jsx';
 import PdfEmptyState from './PdfEmptyState.jsx';
 
+/**
+ * PdfViewer - Component for viewing PDF files with continuous scrolling
+ * @param {Object} props - Component props
+ * @param {ArrayBuffer} props.pdfData - ArrayBuffer of saved PDF data (optional)
+ * @param {string} props.pdfFileName - Name of the saved PDF file (optional)
+ * @param {Function} props.onPdfChange - Callback when PDF changes: (data: ArrayBuffer, fileName: string) => void
+ * @param {Function} props.onPdfClear - Callback when PDF is cleared: () => void
+ * @param {boolean} props.readOnly - If true, hides upload/change/clear buttons (view only mode)
+ * @param {boolean} props.allowDelete - If true, shows delete button (only applies when !readOnly)
+ * @param {Array} props.pdfs - Array of PDFs for multi-PDF selection
+ * @param {string} props.selectedPdfId - Currently selected PDF ID
+ * @param {Function} props.onPdfSelect - Handler for PDF selection change
+ * @returns {JSX.Element}
+ */
 export default function PdfViewer(props) {
-  // props.pdfData - ArrayBuffer of saved PDF data (optional)
-  // props.pdfFileName - Name of the saved PDF file (optional)
-  // props.onPdfChange - Callback when PDF changes: (data: ArrayBuffer, fileName: string) => void
-  // props.onPdfClear - Callback when PDF is cleared: () => void
-  // props.readOnly - If true, hides upload/change/clear buttons (view only mode)
-  // props.allowDelete - If true, shows delete button (only applies when !readOnly)
-  // props.pdfs - Array of PDFs for multi-PDF selection
-  // props.selectedPdfId - Currently selected PDF ID
-  // props.onPdfSelect - Handler for PDF selection change
-
   // Use the PDF.js primitive
   const pdf = usePdfJs({
     pdfData: () => props.pdfData,

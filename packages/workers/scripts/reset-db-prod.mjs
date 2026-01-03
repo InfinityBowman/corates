@@ -112,6 +112,12 @@ async function main() {
       runWranglerD1Execute(`DROP TABLE IF EXISTS ${table};`);
     }
 
+    // Also drop migration tracking tables if they exist
+    // Wrangler D1 stores migration history in system tables
+    console.log('  Dropping migration tracking tables...');
+    runWranglerD1Execute(`DROP TABLE IF EXISTS __drizzle_migrations;`, { allowFailure: true });
+    runWranglerD1Execute(`DROP TABLE IF EXISTS _cf_KV;`, { allowFailure: true });
+
     // Step 2: Delete and recreate R2 bucket
     // console.log('');
     // console.log('Step 2: Clearing R2 bucket...');
@@ -139,6 +145,19 @@ async function main() {
     console.log('Step 3: Running migrations...');
     runWranglerD1MigrationsApply();
     console.log('  Migrations completed');
+
+    // Verify critical tables were created
+    console.log('  Verifying tables were created...');
+    const verifyResult = runWranglerD1Execute(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='verification';",
+      { allowFailure: true },
+    );
+    if (!verifyResult.stdout || !verifyResult.stdout.includes('verification')) {
+      console.error('  WARNING: verification table was not created!');
+      console.error('  Migration may have failed or been skipped.');
+      throw new Error('Migration verification failed: verification table missing');
+    }
+    console.log('  Verification table exists');
 
     // Step 4: Deploy workers
     console.log('');

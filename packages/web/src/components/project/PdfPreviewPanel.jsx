@@ -5,7 +5,7 @@
  * Used across project views to preview PDFs without leaving context.
  */
 
-import { Show } from 'solid-js';
+import { Show, Switch, Match, createMemo } from 'solid-js';
 import SlidingPanel from './SlidingPanel.jsx';
 import PdfViewer from '@/components/checklist/pdf/PdfViewer.jsx';
 import pdfPreviewStore from '@/stores/pdfPreviewStore.js';
@@ -22,6 +22,14 @@ export default function PdfPreviewPanel() {
     return pdf.fileName || 'PDF Viewer';
   };
 
+  // State machine: loading | error | ready | empty
+  const viewState = createMemo(() => {
+    if (pdfPreviewStore.loading()) return 'loading';
+    if (pdfPreviewStore.error()) return 'error';
+    if (pdfPreviewStore.pdfData()) return 'ready';
+    return 'empty';
+  });
+
   return (
     <SlidingPanel
       open={pdfPreviewStore.isOpen()}
@@ -31,40 +39,47 @@ export default function PdfPreviewPanel() {
       closeOnOutsideClick={true}
     >
       <div class='flex h-full min-h-0 flex-col'>
-        {/* Loading state */}
-        <Show when={pdfPreviewStore.loading()}>
-          <div class='flex h-full flex-1 flex-col bg-gray-100'>
-            <div class='flex flex-1 items-center justify-center'>
-              <div class='flex items-center gap-3 text-gray-500'>
-                <div class='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
-                Loading PDF...
+        <Switch>
+          <Match when={viewState() === 'loading'}>
+            <div class='flex h-full flex-1 flex-col bg-gray-100'>
+              <div class='flex flex-1 items-center justify-center'>
+                <div class='flex items-center gap-3 text-gray-500'>
+                  <div class='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
+                  Loading PDF...
+                </div>
               </div>
             </div>
-          </div>
-        </Show>
+          </Match>
 
-        {/* Error state */}
-        <Show when={pdfPreviewStore.error()}>
-          <div class='flex h-full flex-1 flex-col bg-gray-100'>
-            <div class='flex flex-1 items-center justify-center'>
-              <div class='text-center'>
-                <p class='mb-2 text-red-600'>Failed to load PDF</p>
-                <p class='text-sm text-gray-500'>{pdfPreviewStore.error()}</p>
+          <Match when={viewState() === 'error'}>
+            <div class='flex h-full flex-1 flex-col bg-gray-100'>
+              <div class='flex flex-1 items-center justify-center'>
+                <div class='text-center'>
+                  <p class='mb-2 text-red-600'>Failed to load PDF</p>
+                  <p class='text-sm text-gray-500'>{pdfPreviewStore.error()}</p>
+                </div>
               </div>
             </div>
-          </div>
-        </Show>
+          </Match>
 
-        {/* PDF Viewer */}
-        <Show
-          when={!pdfPreviewStore.loading() && !pdfPreviewStore.error() && pdfPreviewStore.pdfData()}
-        >
-          <PdfViewer
-            pdfData={pdfPreviewStore.pdfData()}
-            pdfFileName={pdfPreviewStore.pdf()?.fileName}
-            readOnly={true}
-          />
-        </Show>
+          <Match when={viewState() === 'ready'}>
+            <PdfViewer
+              pdfData={pdfPreviewStore.pdfData()}
+              pdfFileName={pdfPreviewStore.pdf()?.fileName}
+              readOnly={true}
+            />
+          </Match>
+
+          <Match when={viewState() === 'empty'}>
+            <div class='flex h-full flex-1 flex-col bg-gray-100'>
+              <div class='flex flex-1 items-center justify-center'>
+                <div class='text-center text-gray-500'>
+                  <p>No PDF to display</p>
+                </div>
+              </div>
+            </div>
+          </Match>
+        </Switch>
       </div>
     </SlidingPanel>
   );
