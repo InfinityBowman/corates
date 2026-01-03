@@ -181,6 +181,69 @@ export default function EmbedPdfViewerSnippet(props) {
         currentBlobUrl = url;
         currentReadOnly = readOnly;
         currentCategories = categories;
+
+        // Customize responsive breakpoints after initialization
+        // Adjust mobile view threshold (default is 640px for sm breakpoint)
+        viewerInstance.registry.then(registry => {
+          try {
+            const ui = registry.getPlugin('ui')?.provides();
+            if (ui) {
+              const schema = ui.getSchema();
+              const mainToolbar = schema.toolbars?.['main-toolbar'];
+
+              if (mainToolbar?.responsive?.breakpoints) {
+                const originalBreakpoints = mainToolbar.responsive.breakpoints;
+                // Adjust breakpoints to switch to mobile view at a larger width
+                // Preserve all show/hide arrays, only change the width thresholds
+                ui.mergeSchema({
+                  toolbars: {
+                    'main-toolbar': {
+                      ...mainToolbar,
+                      responsive: {
+                        ...mainToolbar.responsive,
+                        breakpoints: {
+                          ...originalBreakpoints,
+                          // Adjust xs breakpoint: keep original, mobile view will start later
+                          xs:
+                            originalBreakpoints.xs ?
+                              {
+                                ...originalBreakpoints.xs,
+                              }
+                            : originalBreakpoints.xs,
+                          // Adjust sm breakpoint: mobile view now starts at 400px instead of 640px
+                          // This means desktop mode stays active on smaller screens (until < 400px)
+                          sm:
+                            originalBreakpoints.sm ?
+                              {
+                                minWidth: 400, // Changed from 640 to 400 (desktop mode stays on smaller screens)
+                                maxWidth: 768, // Keep maxWidth at 768
+                                // Preserve the original show/hide arrays to keep buttons visible
+                                hide: originalBreakpoints.sm.hide || [],
+                                show: originalBreakpoints.sm.show || [],
+                              }
+                            : originalBreakpoints.sm,
+                          // Adjust md breakpoint: desktop view now starts at 640px instead of 768px
+                          // This means desktop mode comes earlier (at smaller screen sizes)
+                          md:
+                            originalBreakpoints.md ?
+                              {
+                                minWidth: 640, // Changed from 768 to 640 (desktop mode comes earlier)
+                                // Preserve the original show/hide arrays
+                                hide: originalBreakpoints.md.hide || [],
+                                show: originalBreakpoints.md.show || [],
+                              }
+                            : originalBreakpoints.md,
+                        },
+                      },
+                    },
+                  },
+                });
+              }
+            }
+          } catch (err) {
+            console.warn('Failed to customize breakpoints:', err);
+          }
+        });
       } catch (err) {
         console.error('Failed to initialize EmbedPDF viewer:', err);
         viewerInstance = null;
