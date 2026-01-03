@@ -133,15 +133,14 @@ export default function EmbedPdfViewerSnippet(props) {
 
   return (
     <div class='flex h-full flex-1 flex-col bg-gray-100'>
-      {hasPdfData() ? (
+      {hasPdfData() ?
         <div ref={containerRef} class='flex h-full w-full flex-1' />
-      ) : (
-        <div class='flex flex-1 items-center justify-center'>
+      : <div class='flex flex-1 items-center justify-center'>
           <div class='text-center text-gray-500'>
             <p>No PDF selected</p>
           </div>
         </div>
-      )}
+      }
     </div>
   );
 }

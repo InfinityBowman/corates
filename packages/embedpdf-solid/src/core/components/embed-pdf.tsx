@@ -191,11 +191,15 @@ export const EmbedPDF: Component<EmbedPDFProps> = props => {
       <Show
         when={pluginsReady() && props.autoMountDomElements !== false}
         fallback={
-          typeof props.children === 'function' ? props.children(getContextSnapshot()) : props.children
+          typeof props.children === 'function' ?
+            props.children(getContextSnapshot())
+          : props.children
         }
       >
         <AutoMount plugins={props.plugins}>
-          {typeof props.children === 'function' ? props.children(getContextSnapshot()) : props.children}
+          {typeof props.children === 'function' ?
+            props.children(getContextSnapshot())
+          : props.children}
         </AutoMount>
       </Show>
     </PDFContext.Provider>

@@ -24,7 +24,5 @@ export const NestedWrapper: Component<NestedWrapperProps> = props => {
   const [first, ...rest] = wrapperList;
   const FirstWrapper = first;
 
-  return (
-    <FirstWrapper children={<NestedWrapper wrappers={rest} children={props.children} />} />
-  );
+  return <FirstWrapper children={<NestedWrapper wrappers={rest} children={props.children} />} />;
 };

@@ -58,8 +58,8 @@ export const RenderLayer: Component<RenderLayerProps> = props => {
     props.scale !== undefined ? props.scale : (documentStateRef.current?.scale ?? 1),
   );
 
-  const actualDpr = createMemo(() =>
-    props.dpr ?? (typeof window !== 'undefined' ? window.devicePixelRatio : 1),
+  const actualDpr = createMemo(
+    () => props.dpr ?? (typeof window !== 'undefined' ? window.devicePixelRatio : 1),
   );
 
   // Effect: reruns when dependencies change

@@ -2,8 +2,7 @@ import { createSignal, createEffect, onCleanup } from 'solid-js';
 import { ignore, type Logger, type PdfEngine } from '@embedpdf/models';
 import type { FontFallbackConfig } from '@embedpdf/engines';
 
-const defaultWasmUrl =
-  'https://cdn.jsdelivr.net/npm/@embedpdf/pdfium@2.1.1/dist/pdfium.wasm';
+const defaultWasmUrl = 'https://cdn.jsdelivr.net/npm/@embedpdf/pdfium@2.1.1/dist/pdfium.wasm';
 
 export interface CreatePdfiumEngineOptions {
   wasmUrl?: string;
