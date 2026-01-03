@@ -1,7 +1,6 @@
 /**
  * EmbedPdfViewer - Component for viewing PDF files
- * Supports three modes via VITE_PDF_VIEWER_MODE:
- * - 'headless': EmbedPDF Solid adapters without UI
+ * Supports two modes via VITE_PDF_VIEWER_MODE:
  * - 'pdfjs': PDF.js with custom UI (default)
  * - 'snippet': EmbedPDF snippet viewer with full UI
  */
@@ -9,7 +8,6 @@
 import { Switch, Match } from 'solid-js';
 import { PDF_VIEWER_MODE } from '@config/pdfViewer';
 import EmbedPdfViewerSnippet from './EmbedPdfViewerSnippet';
-import EmbedPdfViewerHeadless from './EmbedPdfViewerHeadless';
 import EmbedPdfViewerPdfJs from './EmbedPdfViewerPdfJs';
 
 /**
@@ -24,12 +22,12 @@ import EmbedPdfViewerPdfJs from './EmbedPdfViewerPdfJs';
 export default function EmbedPdfViewer(props) {
   return (
     <Switch>
-      <Match when={PDF_VIEWER_MODE === 'headless'}>
-        <EmbedPdfViewerHeadless pdfData={props.pdfData} pdfFileName={props.pdfFileName} />
-      </Match>
-
       <Match when={PDF_VIEWER_MODE === 'snippet'}>
-        <EmbedPdfViewerSnippet pdfData={props.pdfData} pdfFileName={props.pdfFileName} />
+        <EmbedPdfViewerSnippet
+          pdfData={props.pdfData}
+          pdfFileName={props.pdfFileName}
+          readOnly={props.readOnly}
+        />
       </Match>
 
       <Match when={PDF_VIEWER_MODE === 'pdfjs'}>

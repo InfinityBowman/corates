@@ -1,6 +1,11 @@
 /**
  * EmbedPdfViewerSnippet - Component for viewing PDF files using EmbedPDF snippet viewer
  * Uses the vanilla EmbedPDF snippet with full UI (toolbar, sidebar, etc.)
+ *
+ * Configuration:
+ * - Light theme with blue accent colors matching app design
+ * - Only highlights and free-text comments enabled (no ink/shapes/redaction)
+ * - Read-only mode disables all annotation tools
  */
 
 import { createMemo, createEffect, onCleanup } from 'solid-js';
@@ -9,10 +14,13 @@ import EmbedPDF from '@embedpdf/snippet';
 export default function EmbedPdfViewerSnippet(props) {
   // props.pdfData - ArrayBuffer of PDF data (required for snippet viewer)
   // props.pdfFileName - Name of the PDF file (optional, for display)
+  // props.readOnly - If true, disables all annotation tools (view-only mode)
 
   let containerRef;
   let viewerInstance = null;
   let currentBlobUrl = null;
+  let currentReadOnly = null;
+  let currentCategories = null;
 
   // Create blob URL from pdfData
   const blobUrl = createMemo(() => {
@@ -23,39 +31,85 @@ export default function EmbedPdfViewerSnippet(props) {
     return URL.createObjectURL(blob);
   });
 
-  // Initialize or re-initialize the snippet viewer when blobUrl changes
-  createEffect(() => {
-    const url = blobUrl();
-    const container = containerRef;
-
-    if (!url || !container) {
-      // Clean up existing viewer if URL is removed
-      if (viewerInstance) {
-        try {
-          // Try to destroy the viewer if the API supports it
-          if (typeof viewerInstance.destroy === 'function') {
-            viewerInstance.destroy();
-          } else if (typeof viewerInstance.unmount === 'function') {
-            viewerInstance.unmount();
-          } else if (typeof viewerInstance.dispose === 'function') {
-            viewerInstance.dispose();
-          }
-        } catch (err) {
-          console.warn('Error destroying EmbedPDF viewer:', err);
-        }
-        viewerInstance = null;
-      }
-
-      // Clear container
-      if (container) {
-        container.innerHTML = '';
-      }
-
-      return;
+  // Build disabled categories based on read-only state
+  // When readOnly is true, disable all annotation features
+  // When readOnly is false, only keep highlight and free-text comments
+  const disabledCategories = createMemo(() => {
+    if (props.readOnly) {
+      // Disable all annotation features in read-only mode
+      return [
+        'annotation',
+        'annotation-highlight',
+        'annotation-text',
+        'annotation-ink',
+        'annotation-shape',
+        'annotation-stamp',
+        'annotation-underline',
+        'annotation-strikeout',
+        'annotation-squiggly',
+        'panel-comment',
+        'redaction',
+        'export',
+        'print',
+      ];
     }
+    // In edit mode, only keep highlight and free-text comments
+    return [
+      'annotation-ink',
+      'annotation-shape',
+      'annotation-stamp',
+      'annotation-underline',
+      'annotation-strikeout',
+      'annotation-squiggly',
+      'redaction',
+      'export',
+      'print',
+    ];
+  });
 
-    // Clean up previous viewer instance if URL changed
-    if (viewerInstance && currentBlobUrl !== url) {
+  // Theme configuration: light mode with blue accent colors matching app design
+  const themeConfig = createMemo(() => ({
+    preference: 'light',
+    light: {
+      accent: {
+        primary: '#2563eb', // blue-600
+        primaryHover: '#1d4ed8', // blue-700
+        primaryActive: '#1e40af', // blue-800
+        primaryLight: '#dbeafe', // blue-100
+        primaryForeground: '#ffffff',
+      },
+      background: {
+        app: '#f0f9ff', // blue-50
+        surface: '#ffffff',
+        surfaceAlt: '#f8fafc',
+        elevated: '#ffffff',
+        overlay: 'rgba(0, 0, 0, 0.5)',
+        input: '#ffffff',
+      },
+      foreground: {
+        primary: '#1e293b', // slate-800
+        secondary: '#64748b', // slate-500
+        muted: '#94a3b8', // slate-400
+        disabled: '#cbd5e1', // slate-300
+        onAccent: '#ffffff',
+      },
+      interactive: {
+        hover: '#f1f5f9', // slate-100
+        active: '#e2e8f0', // slate-200
+        selected: '#dbeafe', // blue-100
+        focus: '#2563eb', // blue-600
+      },
+      border: {
+        default: '#e2e8f0', // slate-200
+        subtle: '#f1f5f9', // slate-100
+        strong: '#cbd5e1', // slate-300
+      },
+    },
+  }));
+
+  // Helper function to destroy viewer instance and clean up
+  function destroyViewer() {
+    if (viewerInstance) {
       try {
         if (typeof viewerInstance.destroy === 'function') {
           viewerInstance.destroy();
@@ -65,27 +119,82 @@ export default function EmbedPdfViewerSnippet(props) {
           viewerInstance.dispose();
         }
       } catch (err) {
-        console.warn('Error destroying previous EmbedPDF viewer:', err);
+        console.warn('Error destroying EmbedPDF viewer:', err);
       }
       viewerInstance = null;
-      if (container) {
-        container.innerHTML = '';
+    }
+
+    if (containerRef) {
+      try {
+        containerRef.innerHTML = '';
+      } catch (err) {
+        console.warn('Error clearing container:', err);
       }
     }
 
-    // Initialize new viewer if we don't have one yet
-    if (!viewerInstance && container) {
+    if (currentBlobUrl) {
+      try {
+        URL.revokeObjectURL(currentBlobUrl);
+      } catch (err) {
+        console.warn('Error revoking blob URL:', err);
+      }
+      currentBlobUrl = null;
+    }
+  }
+
+  // Initialize or re-initialize the snippet viewer when dependencies change
+  createEffect(() => {
+    const url = blobUrl();
+    const container = containerRef;
+    const categories = disabledCategories();
+    const readOnly = props.readOnly;
+
+    if (!url || !container) {
+      // Clean up existing viewer if URL is removed
+      destroyViewer();
+      return;
+    }
+
+    // Check if we need to recreate the viewer
+    // Recreate if: URL changed, readOnly changed, or categories changed
+    const needsRecreate =
+      !viewerInstance ||
+      currentBlobUrl !== url ||
+      currentReadOnly !== readOnly ||
+      JSON.stringify(currentCategories) !== JSON.stringify(categories);
+
+    if (needsRecreate) {
+      // Destroy existing viewer before creating new one
+      destroyViewer();
+
+      // Initialize new viewer
       try {
         viewerInstance = EmbedPDF.init({
           type: 'container',
           target: container,
           src: url,
-          theme: { preference: 'system' },
+          theme: themeConfig(),
+          disabledCategories: categories,
         });
         currentBlobUrl = url;
+        currentReadOnly = readOnly;
+        currentCategories = categories;
       } catch (err) {
         console.error('Failed to initialize EmbedPDF viewer:', err);
         viewerInstance = null;
+        currentBlobUrl = null;
+        currentReadOnly = null;
+        currentCategories = null;
+      }
+    } else if (viewerInstance) {
+      // Only theme can be updated without recreating
+      // Update theme if it changed (though themeConfig is stable, this is defensive)
+      try {
+        if (viewerInstance.setTheme) {
+          viewerInstance.setTheme(themeConfig());
+        }
+      } catch (err) {
+        console.warn('Failed to update EmbedPDF theme:', err);
       }
     }
   });
@@ -108,7 +217,16 @@ export default function EmbedPdfViewerSnippet(props) {
       viewerInstance = null;
     }
 
-    // Revoke blob URL
+    // Clear container contents
+    if (containerRef) {
+      try {
+        containerRef.innerHTML = '';
+      } catch (err) {
+        console.warn('Error clearing container:', err);
+      }
+    }
+
+    // Revoke blob URL (only the current one to avoid double-revoking)
     if (currentBlobUrl) {
       try {
         URL.revokeObjectURL(currentBlobUrl);
@@ -118,7 +236,7 @@ export default function EmbedPdfViewerSnippet(props) {
       currentBlobUrl = null;
     }
 
-    // Also revoke the current blobUrl if different
+    // Also revoke the current blobUrl if different (shouldn't happen, but safety check)
     const url = blobUrl();
     if (url && url !== currentBlobUrl) {
       try {

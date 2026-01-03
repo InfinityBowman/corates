@@ -30,11 +30,9 @@ export default function ChecklistWithPdf(props) {
   // props.getRobinsText - function to get Y.Text for a ROBINS-I free-text field
   // props.pdfUrl - optional PDF URL (for server-hosted PDFs)
 
-  // Use EmbedPDF viewer when mode is 'snippet' or 'headless' and we have pdfData
-  // Note: EmbedPDF viewers only work with pdfData (blob URLs), not direct pdfUrl
-  const useEmbedPdf = createMemo(
-    () => (PDF_VIEWER_MODE === 'snippet' || PDF_VIEWER_MODE === 'headless') && !!props.pdfData,
-  );
+  // Use EmbedPDF viewer when mode is 'snippet' and we have pdfData
+  // Note: EmbedPDF viewer only works with pdfData (blob URLs), not direct pdfUrl
+  const useEmbedPdf = createMemo(() => PDF_VIEWER_MODE === 'snippet' && !!props.pdfData);
 
   return (
     <div class='flex h-full flex-col bg-blue-50'>
