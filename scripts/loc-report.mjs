@@ -20,6 +20,7 @@ import { dirname } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
+// const ROOT = '/Users/jacobmaynard/Documents/Repos/Courses/DOSSP/';
 
 function checkCommand(command) {
   const result = spawnSync('which', [command], { encoding: 'utf8' });

@@ -444,6 +444,37 @@ describe('useProject - Checklist Operations', () => {
     });
   });
 
+  it('should persist ROBINS-I manual judgementSource when updating overall section', async () => {
+    await new Promise(resolveTest => {
+      createRoot(async dispose => {
+        cleanup = dispose;
+        const project = useProject('local-test');
+
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        const studyId = project.createStudy('Test Study');
+        const checklistId = project.createChecklist(studyId, 'ROBINS_I');
+
+        project.updateChecklistAnswer(studyId, checklistId, 'overall', {
+          judgement: 'Moderate risk',
+          judgementSource: 'manual',
+          direction: null,
+        });
+
+        // Wait for Y.js update event to trigger sync
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        const checklistData = project.getChecklistData(studyId, checklistId);
+        expect(checklistData).toBeDefined();
+        expect(checklistData.type).toBe('ROBINS_I');
+        expect(checklistData.answers?.overall?.judgementSource).toBe('manual');
+        expect(checklistData.answers?.overall?.judgement).toBe('Moderate risk');
+
+        resolveTest();
+      });
+    });
+  });
+
   it('should get checklist data with answers', async () => {
     createRoot(async dispose => {
       cleanup = dispose;

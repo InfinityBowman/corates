@@ -1,8 +1,10 @@
-import { For } from 'solid-js';
+import { For, Show } from 'solid-js';
 import { ROB_JUDGEMENTS, BIAS_DIRECTIONS, DOMAIN1_DIRECTIONS } from './checklist-map.js';
 
 /**
  * Domain judgement selector with risk of bias level and optional direction
+ * Supports auto-first mode: in auto mode, buttons are visually secondary and clicking switches to manual
+ *
  * @param {Object} props
  * @param {string} props.domainId - Unique domain identifier
  * @param {string} props.judgement - Current judgement value
@@ -12,11 +14,20 @@ import { ROB_JUDGEMENTS, BIAS_DIRECTIONS, DOMAIN1_DIRECTIONS } from './checklist
  * @param {boolean} [props.showDirection] - Whether to show direction selector
  * @param {boolean} [props.isDomain1] - Whether this is Domain 1 (uses limited direction options)
  * @param {boolean} [props.disabled] - Whether the selector is disabled
+ * @param {boolean} [props.isAutoMode] - Whether in auto mode (buttons are secondary, clicking switches to manual)
  */
 export function DomainJudgement(props) {
   const directionOptions = () => (props.isDomain1 ? DOMAIN1_DIRECTIONS : BIAS_DIRECTIONS);
 
-  const getJudgementColor = judgement => {
+  const getJudgementColor = (judgement, isSelected) => {
+    if (!isSelected) {
+      // Unselected state - slightly dimmed in auto mode
+      return props.isAutoMode ?
+          'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300 hover:bg-white'
+        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300';
+    }
+
+    // Selected state
     switch (judgement) {
       case 'Low':
         return 'bg-green-100 border-green-400 text-green-800';
@@ -33,41 +44,42 @@ export function DomainJudgement(props) {
     }
   };
 
+  // Shorten long judgement labels for display
+  const getShortLabel = judgement => {
+    if (judgement === 'Low (except for concerns about uncontrolled confounding)') {
+      return 'Low (except confounding)';
+    }
+    return judgement;
+  };
+
   return (
-    <div class='mt-4 rounded-lg bg-gray-50 p-4'>
-      {/* Risk of bias judgement */}
-      <div class='mb-3'>
-        <div class='mb-2 text-sm font-medium text-gray-700'>Risk of bias judgement</div>
-        <div class='flex flex-wrap gap-2'>
-          <For each={ROB_JUDGEMENTS}>
-            {judgement => {
-              const isSelected = () => props.judgement === judgement;
-              return (
-                <button
-                  type='button'
-                  onClick={() => {
-                    if (props.disabled) return;
-                    // Toggle: deselect if already selected, otherwise select
-                    props.onJudgementChange(isSelected() ? null : judgement);
-                  }}
-                  disabled={props.disabled}
-                  class={`inline-flex items-center justify-center rounded-md border-2 px-3 py-1.5 text-sm font-medium transition-colors ${props.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${
-                    isSelected() ?
-                      getJudgementColor(judgement)
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                  } `}
-                >
-                  {judgement}
-                </button>
-              );
-            }}
-          </For>
-        </div>
+    <div>
+      {/* Risk of bias judgement buttons */}
+      <div class='flex flex-wrap gap-2'>
+        <For each={ROB_JUDGEMENTS}>
+          {judgement => {
+            const isSelected = () => props.judgement === judgement;
+            return (
+              <button
+                type='button'
+                onClick={() => {
+                  if (props.disabled) return;
+                  // In both modes: select the judgement (switches to manual via parent)
+                  props.onJudgementChange(isSelected() ? null : judgement);
+                }}
+                disabled={props.disabled}
+                class={`inline-flex items-center justify-center rounded-md border-2 px-3 py-1.5 text-sm font-medium transition-colors ${props.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${getJudgementColor(judgement, isSelected())}`}
+              >
+                {getShortLabel(judgement)}
+              </button>
+            );
+          }}
+        </For>
       </div>
 
       {/* Direction of bias (optional) */}
-      {props.showDirection && (
-        <div>
+      <Show when={props.showDirection}>
+        <div class='mt-3'>
           <div class='mb-2 text-sm font-medium text-gray-700'>
             Predicted direction of bias
             <span class='ml-1 font-normal text-gray-400'>(optional)</span>
@@ -81,7 +93,6 @@ export function DomainJudgement(props) {
                     type='button'
                     onClick={() => {
                       if (props.disabled) return;
-                      // Toggle: deselect if already selected, otherwise select
                       props.onDirectionChange?.(isSelected() ? null : direction);
                     }}
                     disabled={props.disabled}
@@ -89,7 +100,7 @@ export function DomainJudgement(props) {
                       isSelected() ?
                         'border-blue-400 bg-blue-100 text-blue-800'
                       : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
-                    } `}
+                    }`}
                   >
                     {direction}
                   </button>
@@ -98,7 +109,7 @@ export function DomainJudgement(props) {
             </For>
           </div>
         </div>
-      )}
+      </Show>
     </div>
   );
 }
@@ -125,9 +136,17 @@ export function JudgementBadge(props) {
     }
   };
 
+  // Shorten long judgement labels for badges
+  const getShortLabel = () => {
+    if (props.judgement === 'Low (except for concerns about uncontrolled confounding)') {
+      return 'Low (except confounding)';
+    }
+    return props.judgement || 'Not assessed';
+  };
+
   return (
     <span class={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${getColor()}`}>
-      {props.judgement || 'Not assessed'}
+      {getShortLabel()}
     </span>
   );
 }

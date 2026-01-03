@@ -25,6 +25,7 @@ import { ROBINSIChecklist } from '@/components/checklist/ROBINSIChecklist/index.
  * @param {Function} props.onUpdate - Callback for checklist updates
  * @param {boolean} [props.readOnly] - Whether the checklist is read-only
  * @param {Function} [props.getQuestionNote] - Function to get Y.Text for a question note
+ * @param {Function} [props.getRobinsText] - Function to get Y.Text for a ROBINS-I free-text field
  */
 export default function GenericChecklist(props) {
   // Determine the checklist type from props or state
@@ -55,6 +56,7 @@ export default function GenericChecklist(props) {
           showComments={true}
           showLegend={true}
           readOnly={props.readOnly}
+          getRobinsText={props.getRobinsText}
         />
       </Show>
     </div>

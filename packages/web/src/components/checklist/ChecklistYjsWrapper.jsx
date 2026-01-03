@@ -40,6 +40,7 @@ export default function ChecklistYjsWrapper() {
     getChecklistData,
     addPdfToStudy,
     getQuestionNote,
+    getRobinsText,
   } = useProject(params.projectId);
 
   // Set active project for action store
@@ -459,6 +460,9 @@ export default function ChecklistYjsWrapper() {
           onPdfSelect={handlePdfSelect}
           getQuestionNote={questionKey =>
             getQuestionNote(params.studyId, params.checklistId, questionKey)
+          }
+          getRobinsText={(sectionKey, fieldKey, questionKey) =>
+            getRobinsText(params.studyId, params.checklistId, sectionKey, fieldKey, questionKey)
           }
         />
       </Show>

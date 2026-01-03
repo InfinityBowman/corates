@@ -1,5 +1,6 @@
-import { For, createUniqueId } from 'solid-js';
+import { For, createEffect, createUniqueId } from 'solid-js';
 import { RESPONSE_LABELS, getResponseOptions } from './checklist-map.js';
+import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
 
 /**
  * A single signalling question with radio button options
@@ -9,10 +10,24 @@ import { RESPONSE_LABELS, getResponseOptions } from './checklist-map.js';
  * @param {Function} props.onUpdate - Callback when answer changes
  * @param {boolean} [props.disabled] - Whether the question is disabled
  * @param {boolean} [props.showComment] - Whether to show comment field
+ * @param {string} [props.domainKey] - Domain key (e.g., 'domain1a') for comment Y.Text lookup
+ * @param {string} [props.questionKey] - Question key for comment Y.Text lookup
+ * @param {Function} [props.getRobinsText] - Function to get Y.Text for a ROBINS-I free-text field
  */
 export function SignallingQuestion(props) {
   const uniqueId = createUniqueId();
   const options = () => getResponseOptions(props.question.responseType);
+
+  createEffect(() => {
+    if (props.answer?.answer === 'NA') {
+      // Legacy answer value; NA is not a valid option for ROBINS-I in CoRATES.
+      // We coerce it to NI so the UI remains consistent and scoring doesn't get stuck.
+      props.onUpdate({
+        ...props.answer,
+        answer: 'NI',
+      });
+    }
+  });
 
   function handleAnswerChange(value) {
     props.onUpdate({
@@ -21,12 +36,12 @@ export function SignallingQuestion(props) {
     });
   }
 
-  function handleCommentChange(e) {
-    props.onUpdate({
-      ...props.answer,
-      comment: e.target.value,
-    });
-  }
+  const commentYText = () => {
+    if (!props.showComment || !props.getRobinsText || !props.domainKey || !props.questionKey) {
+      return null;
+    }
+    return props.getRobinsText(props.domainKey, 'comment', props.questionKey);
+  };
 
   return (
     <div class='border-b border-gray-100 py-3 last:border-b-0'>
@@ -70,13 +85,11 @@ export function SignallingQuestion(props) {
       {/* Comment field (optional) */}
       {props.showComment && (
         <div class='mt-2'>
-          <input
-            type='text'
+          <NoteEditor
+            yText={commentYText()}
             placeholder='Comment (optional)'
-            value={props.answer?.comment || ''}
-            onInput={handleCommentChange}
-            disabled={props.disabled}
-            class='w-full rounded border border-gray-200 px-2 py-1 text-xs focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+            readOnly={props.disabled}
+            inline={true}
           />
         </div>
       )}
@@ -88,7 +101,7 @@ export function SignallingQuestion(props) {
  * Response legend component showing what each abbreviation means
  */
 export function ResponseLegend() {
-  const commonResponses = ['Y', 'PY', 'PN', 'N', 'NI', 'NA', 'WN', 'SN', 'SY', 'WY'];
+  const commonResponses = ['Y', 'PY', 'PN', 'N', 'NI', 'WN', 'SN', 'SY', 'WY'];
 
   return (
     <div class='mb-4 rounded-lg bg-gray-50 p-3'>

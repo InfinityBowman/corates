@@ -30,6 +30,7 @@ export function createPdfScrollHandler(document) {
   let lastMousePosition = null; // { x, y } for button-triggered zoom
   let isWheelZooming = false; // Track if we're in an active wheel zoom gesture
   let scrollAdjustRafId = null; // RAF ID for scroll adjustment to prevent multiple queued adjustments
+  let zoomAdjustToken = 0; // Token to coalesce rapid zoom adjustments (latest wins)
 
   // Handle scroll to update current page indicator
   function handleScroll() {
@@ -119,26 +120,13 @@ export function createPdfScrollHandler(document) {
 
     if (newScale === oldScale) return;
 
-    // For wheel zoom, calculate scroll adjustment immediately based on scale ratio
-    // This avoids waiting for DOM updates and prevents jank
-    const scaleRatio = newScale / oldScale;
-    const pointY = cursorPoint.y;
-    const scrollTop = scrollContainerRef.scrollTop;
+    // Store zoom origin before changing scale (same as button zoom)
+    zoomOriginPoint = cursorPoint;
+    zoomOriginScale = oldScale;
+    zoomAdjustToken += 1; // Increment token to invalidate any pending adjustments
 
-    // Calculate the point's position in content space before zoom
-    const pointInContent = scrollTop + pointY;
-
-    // After zoom, the same point in content space will be at a different scroll position
-    // We want to keep the cursor at the same screen position, so:
-    // newScrollTop + pointY = pointInContent * scaleRatio
-    // newScrollTop = pointInContent * scaleRatio - pointY
-    const newScrollTop = pointInContent * scaleRatio - pointY;
-
-    // Update scale
+    // Update scale - the createEffect will handle scroll adjustment
     setScale(newScale);
-
-    // Immediately adjust scroll to prevent jank
-    scrollContainerRef.scrollTop = Math.max(0, newScrollTop);
 
     // Clear wheel zoom flag after a short delay (when gesture ends)
     clearTimeout(handleWheel.zoomEndTimeout);
@@ -285,6 +273,7 @@ export function createPdfScrollHandler(document) {
     // Store zoom origin before changing scale
     zoomOriginPoint = zoomPoint;
     zoomOriginScale = oldScale;
+    zoomAdjustToken += 1; // Increment token to invalidate any pending adjustments
 
     // Calculate new scale
     const newScale = Math.min(Math.max(oldScale + scaleDelta, 0.5), 3.0);
@@ -292,14 +281,9 @@ export function createPdfScrollHandler(document) {
   }
 
   // Adjust scroll position after scale change to maintain zoom origin
-  // Only runs for button-triggered zoom (not wheel zoom, which handles it immediately)
+  // Works for both button-triggered zoom and pinch zoom
   createEffect(() => {
     const currentScale = scale();
-
-    // Skip if we're in a wheel zoom gesture (handled immediately in handleWheel)
-    if (isWheelZooming) {
-      return;
-    }
 
     // Only adjust scroll if we have a stored zoom origin
     if (zoomOriginPoint === null || zoomOriginScale === null || !scrollContainerRef) {
@@ -311,89 +295,187 @@ export function createPdfScrollHandler(document) {
       return;
     }
 
+    // Capture the current token to check if we're still the latest adjustment
+    const currentToken = zoomAdjustToken;
+    const pointX = zoomOriginPoint.x;
+    const pointY = zoomOriginPoint.y;
+
+    // Find which page contains the zoom point
+    let targetPage = null;
+    let targetPageNum = null;
+    let pointOffsetFromPageTop = 0;
+    let pointOffsetFromPageLeft = 0;
+
+    // Calculate the point's position in the scroll container's coordinate space
+    const pointInContainer = {
+      x: scrollContainerRef.scrollLeft + pointX,
+      y: scrollContainerRef.scrollTop + pointY,
+    };
+
+    // Find the page that contains this point
+    pageRefs.forEach((pageEl, pageNum) => {
+      if (!pageEl || targetPage) return;
+
+      const pageTop = pageEl.offsetTop;
+      const pageBottom = pageTop + pageEl.offsetHeight;
+      const pageLeft = pageEl.offsetLeft;
+      const pageRight = pageLeft + pageEl.offsetWidth;
+
+      // Check if point is within this page's bounds (both vertical and horizontal)
+      if (
+        pointInContainer.y >= pageTop &&
+        pointInContainer.y <= pageBottom &&
+        pointInContainer.x >= pageLeft &&
+        pointInContainer.x <= pageRight
+      ) {
+        targetPage = pageEl;
+        targetPageNum = pageNum;
+        pointOffsetFromPageTop = pointInContainer.y - pageTop;
+        pointOffsetFromPageLeft = pointInContainer.x - pageLeft;
+      }
+    });
+
+    // Prioritize rendering the target page if we found it
+    if (targetPageNum !== null && rendererCallbacks && rendererCallbacks.schedulePageRender) {
+      rendererCallbacks.schedulePageRender(targetPageNum);
+    }
+
     // Cancel any pending scroll adjustment
     if (scrollAdjustRafId !== null) {
       cancelAnimationFrame(scrollAdjustRafId);
       scrollAdjustRafId = null;
     }
 
-    // Wait for next frame to ensure DOM has updated with new page sizes
-    scrollAdjustRafId = requestAnimationFrame(() => {
-      scrollAdjustRafId = null;
+    if (!targetPage || targetPageNum === null) {
+      // Fallback: use viewport center calculation
+      const oldScrollHeight = scrollContainerRef.scrollHeight;
+      const oldScrollWidth = scrollContainerRef.scrollWidth;
+      const scrollRatio = oldScrollHeight > 0 ? scrollContainerRef.scrollTop / oldScrollHeight : 0;
+      const scrollLeftRatio =
+        oldScrollWidth > 0 ? scrollContainerRef.scrollLeft / oldScrollWidth : 0;
 
-      if (!scrollContainerRef || zoomOriginPoint === null) return;
+      // Poll for layout update with bounded timeout
+      let pollStartTime = Date.now();
+      const maxPollTime = 400; // Max 400ms to wait for layout
 
-      const pointX = zoomOriginPoint.x;
-      const pointY = zoomOriginPoint.y;
-
-      // Find which page contains the zoom point
-      let targetPage = null;
-      let targetPageNum = null;
-      let pointOffsetFromPageTop = 0;
-
-      // Calculate the point's position in the scroll container's coordinate space
-      const pointInContainer = {
-        x: pointX,
-        y: scrollContainerRef.scrollTop + pointY,
-      };
-
-      // Find the page that contains this point
-      pageRefs.forEach((pageEl, pageNum) => {
-        if (!pageEl || targetPage) return;
-
-        const pageTop = pageEl.offsetTop;
-        const pageBottom = pageTop + pageEl.offsetHeight;
-
-        // Check if point is within this page's vertical bounds
-        if (pointInContainer.y >= pageTop && pointInContainer.y <= pageBottom) {
-          targetPage = pageEl;
-          targetPageNum = pageNum;
-          pointOffsetFromPageTop = pointInContainer.y - pageTop;
+      function pollForLayoutUpdate() {
+        // Check if we're still the latest adjustment
+        if (currentToken !== zoomAdjustToken) {
+          return; // Stale adjustment, abort
         }
-      });
 
-      if (!targetPage || targetPageNum === null) {
-        // Fallback: use viewport center calculation
-        const oldScrollHeight = scrollContainerRef.scrollHeight;
-        const scrollRatio =
-          oldScrollHeight > 0 ? scrollContainerRef.scrollTop / oldScrollHeight : 0;
+        if (!scrollContainerRef) return;
 
-        // Wait for pages to re-render, then adjust scroll
-        setTimeout(() => {
-          if (!scrollContainerRef) return;
-          const newScrollHeight = scrollContainerRef.scrollHeight;
+        const newScrollHeight = scrollContainerRef.scrollHeight;
+        const newScrollWidth = scrollContainerRef.scrollWidth;
+        if (newScrollHeight > 0 && newScrollHeight !== oldScrollHeight) {
+          // Layout has updated
+          scrollContainerRef.scrollTop = scrollRatio * newScrollHeight;
+
+          // Adjust horizontal scroll if container has horizontal overflow
+          if (
+            newScrollWidth > 0 &&
+            newScrollWidth !== oldScrollWidth &&
+            scrollContainerRef.scrollWidth > scrollContainerRef.clientWidth
+          ) {
+            scrollContainerRef.scrollLeft = scrollLeftRatio * newScrollWidth;
+          }
+
+          zoomOriginPoint = null;
+          zoomOriginScale = null;
+        } else if (Date.now() - pollStartTime < maxPollTime) {
+          // Keep polling
+          scrollAdjustRafId = requestAnimationFrame(pollForLayoutUpdate);
+        } else {
+          // Timeout - apply adjustment anyway
           if (newScrollHeight > 0) {
             scrollContainerRef.scrollTop = scrollRatio * newScrollHeight;
           }
+          if (
+            newScrollWidth > 0 &&
+            scrollContainerRef.scrollWidth > scrollContainerRef.clientWidth
+          ) {
+            scrollContainerRef.scrollLeft = scrollLeftRatio * newScrollWidth;
+          }
           zoomOriginPoint = null;
           zoomOriginScale = null;
-        }, 50);
-        return;
+        }
       }
 
-      // Calculate the ratio of the point's position within the page
-      const oldPageHeight = targetPage.offsetHeight;
-      const pointRatio = oldPageHeight > 0 ? pointOffsetFromPageTop / oldPageHeight : 0;
+      scrollAdjustRafId = requestAnimationFrame(pollForLayoutUpdate);
+      return;
+    }
 
-      // Wait a bit more for pages to re-render with new scale
-      // Use a small timeout to ensure canvas rendering has updated page heights
-      setTimeout(() => {
-        if (!scrollContainerRef || !targetPage) return;
+    // Calculate the ratio of the point's position within the page (both vertical and horizontal)
+    const oldPageHeight = targetPage.offsetHeight;
+    const oldPageWidth = targetPage.offsetWidth;
+    const pointRatio = oldPageHeight > 0 ? pointOffsetFromPageTop / oldPageHeight : 0;
+    const pointRatioX = oldPageWidth > 0 ? pointOffsetFromPageLeft / oldPageWidth : 0;
 
-        const newPageHeight = targetPage.offsetHeight;
+    // Poll for page dimensions update with bounded timeout
+    let pollStartTime = Date.now();
+    const maxPollTime = 400; // Max 400ms to wait for layout
+
+    function pollForPageHeightUpdate() {
+      // Check if we're still the latest adjustment
+      if (currentToken !== zoomAdjustToken) {
+        return; // Stale adjustment, abort
+      }
+
+      if (!scrollContainerRef || !targetPage) return;
+
+      const newPageHeight = targetPage.offsetHeight;
+      const newPageWidth = targetPage.offsetWidth;
+
+      if (newPageHeight !== oldPageHeight && newPageHeight > 0) {
+        // Page dimensions have updated - apply scroll adjustment
         const newPointOffsetFromPageTop = pointRatio * newPageHeight;
         const newPageTop = targetPage.offsetTop;
-        const newPointInContainer = newPageTop + newPointOffsetFromPageTop;
+        const newPointInContainerY = newPageTop + newPointOffsetFromPageTop;
 
-        // Adjust scroll to keep the point at the same screen position
-        const newScrollTop = newPointInContainer - pointY;
+        // Adjust vertical scroll to keep the point at the same screen position
+        const newScrollTop = newPointInContainerY - pointY;
         scrollContainerRef.scrollTop = Math.max(0, newScrollTop);
+
+        // Adjust horizontal scroll if container has horizontal overflow
+        if (scrollContainerRef.scrollWidth > scrollContainerRef.clientWidth) {
+          const newPointOffsetFromPageLeft = pointRatioX * newPageWidth;
+          const newPageLeft = targetPage.offsetLeft;
+          const newPointInContainerX = newPageLeft + newPointOffsetFromPageLeft;
+          const newScrollLeft = newPointInContainerX - pointX;
+          scrollContainerRef.scrollLeft = Math.max(0, newScrollLeft);
+        }
 
         // Clear zoom origin tracking
         zoomOriginPoint = null;
         zoomOriginScale = null;
-      }, 50);
-    });
+      } else if (Date.now() - pollStartTime < maxPollTime) {
+        // Keep polling
+        scrollAdjustRafId = requestAnimationFrame(pollForPageHeightUpdate);
+      } else {
+        // Timeout - apply adjustment with current dimensions anyway
+        if (newPageHeight > 0) {
+          const newPointOffsetFromPageTop = pointRatio * newPageHeight;
+          const newPageTop = targetPage.offsetTop;
+          const newPointInContainerY = newPageTop + newPointOffsetFromPageTop;
+          const newScrollTop = newPointInContainerY - pointY;
+          scrollContainerRef.scrollTop = Math.max(0, newScrollTop);
+
+          // Adjust horizontal scroll if container has horizontal overflow
+          if (scrollContainerRef.scrollWidth > scrollContainerRef.clientWidth && newPageWidth > 0) {
+            const newPointOffsetFromPageLeft = pointRatioX * newPageWidth;
+            const newPageLeft = targetPage.offsetLeft;
+            const newPointInContainerX = newPageLeft + newPointOffsetFromPageLeft;
+            const newScrollLeft = newPointInContainerX - pointX;
+            scrollContainerRef.scrollLeft = Math.max(0, newScrollLeft);
+          }
+        }
+        zoomOriginPoint = null;
+        zoomOriginScale = null;
+      }
+    }
+
+    scrollAdjustRafId = requestAnimationFrame(pollForPageHeightUpdate);
   });
 
   function cleanup() {

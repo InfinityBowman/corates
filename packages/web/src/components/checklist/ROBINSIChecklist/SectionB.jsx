@@ -2,6 +2,7 @@ import { For, Show, createMemo, createUniqueId } from 'solid-js';
 import { SECTION_B, RESPONSE_LABELS } from './checklist-map.js';
 import { shouldStopAssessment } from './checklist.js';
 import { FiAlertCircle } from 'solid-icons/fi';
+import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
 
 /**
  * Section B: Decide whether to proceed with risk-of-bias assessment
@@ -9,6 +10,7 @@ import { FiAlertCircle } from 'solid-icons/fi';
  * @param {Object} props.sectionBState - Current section B state
  * @param {Function} props.onUpdate - Callback when section B state changes
  * @param {boolean} [props.disabled] - Whether the section is disabled
+ * @param {Function} [props.getRobinsText] - Function to get Y.Text for a ROBINS-I free-text field
  */
 export function SectionB(props) {
   const uniqueId = createUniqueId();
@@ -25,16 +27,6 @@ export function SectionB(props) {
     // Update stopAssessment flag
     newState.stopAssessment = shouldStopAssessment(newState);
     props.onUpdate(newState);
-  }
-
-  function handleCommentChange(questionKey, value) {
-    props.onUpdate({
-      ...props.sectionBState,
-      [questionKey]: {
-        ...props.sectionBState[questionKey],
-        comment: value,
-      },
-    });
   }
 
   const responseOptions = ['Y', 'PY', 'PN', 'N'];
@@ -96,14 +88,16 @@ export function SectionB(props) {
                 </div>
 
                 {/* Comment field */}
-                <input
-                  type='text'
-                  placeholder='Comment (optional)'
-                  value={props.sectionBState?.[key]?.comment || ''}
-                  onInput={e => handleCommentChange(key, e.target.value)}
-                  disabled={props.disabled}
-                  class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm'
-                />
+                <div class='mt-2'>
+                  <NoteEditor
+                    yText={
+                      props.getRobinsText ? props.getRobinsText('sectionB', 'comment', key) : null
+                    }
+                    placeholder='Comment (optional)'
+                    readOnly={props.disabled}
+                    inline={true}
+                  />
+                </div>
               </div>
             </div>
           )}
