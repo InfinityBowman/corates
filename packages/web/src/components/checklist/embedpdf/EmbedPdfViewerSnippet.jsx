@@ -43,6 +43,7 @@ export default function EmbedPdfViewerSnippet(props) {
         'annotation-text',
         'annotation-ink',
         'annotation-shape',
+        'mode-shapes', // Disable shapes mode button
         'annotation-stamp',
         'annotation-underline',
         'annotation-strikeout',
@@ -57,6 +58,7 @@ export default function EmbedPdfViewerSnippet(props) {
     return [
       'annotation-ink',
       'annotation-shape',
+      'mode-shapes', // Disable shapes mode button
       'annotation-stamp',
       'annotation-underline',
       'annotation-strikeout',
