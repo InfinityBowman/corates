@@ -263,7 +263,8 @@ export class ROBINSIHandler extends ChecklistHandler {
             answersNestedYMap.set(qKey, questionYMap);
           }
           if (qValue.answer !== undefined) questionYMap.set('answer', qValue.answer);
-          if (qValue.comment !== undefined) this.setYTextField(questionYMap, 'comment', qValue.comment);
+          if (qValue.comment !== undefined)
+            this.setYTextField(questionYMap, 'comment', qValue.comment);
         });
       }
     } else if (key === 'sectionB') {
@@ -276,7 +277,8 @@ export class ROBINSIHandler extends ChecklistHandler {
             sectionYMap.set(subKey, questionYMap);
           }
           if (subValue.answer !== undefined) questionYMap.set('answer', subValue.answer);
-          if (subValue.comment !== undefined) this.setYTextField(questionYMap, 'comment', subValue.comment);
+          if (subValue.comment !== undefined)
+            this.setYTextField(questionYMap, 'comment', subValue.comment);
         } else {
           sectionYMap.set(subKey, subValue);
         }

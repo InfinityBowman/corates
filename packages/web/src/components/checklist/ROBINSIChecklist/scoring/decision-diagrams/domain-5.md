@@ -49,4 +49,4 @@ flowchart LR
   %% --------------------
   Q3b -- "WY / N / PN / NI" --> MOD
   Q3b -- "SY" --> SER
-  ```
+```

@@ -68,4 +68,4 @@ flowchart LR
 
   NC3 -- "N / PN" --> SER
   NC3 -- "Y / PY" --> CRIT
-  ```
+```

@@ -73,4 +73,4 @@ flowchart LR
 
   C3 -- "N / PN / NI" --> SER_RISK["SERIOUS RISK OF BIAS"]
   C3 -- "Y / PY" --> CRIT_RISK["CRITICAL RISK OF BIAS"]
-  ```
+```

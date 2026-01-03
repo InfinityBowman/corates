@@ -71,10 +71,7 @@ describe('scoreRobinsDomain', () => {
     });
 
     it('Path: Q1=Y/PY -> Q3a=Y/PY -> NC3=Y/PY -> CRIT', () => {
-      const result = scoreRobinsDomain(
-        'domain1a',
-        answers({ d1a_1: 'Y', d1a_3: 'Y', d1a_4: 'Y' }),
-      );
+      const result = scoreRobinsDomain('domain1a', answers({ d1a_1: 'Y', d1a_3: 'Y', d1a_4: 'Y' }));
       expect(result.judgement).toBe(JUDGEMENTS.CRITICAL);
       expect(result.ruleId).toBe('D1A.R4');
     });
@@ -107,19 +104,13 @@ describe('scoreRobinsDomain', () => {
     });
 
     it('Path: Q1=SN/NI -> NC1=N/PN -> SER', () => {
-      const result = scoreRobinsDomain(
-        'domain1a',
-        answers({ d1a_1: 'SN', d1a_4: 'PN' }),
-      );
+      const result = scoreRobinsDomain('domain1a', answers({ d1a_1: 'SN', d1a_4: 'PN' }));
       expect(result.judgement).toBe(JUDGEMENTS.SERIOUS);
       expect(result.ruleId).toBe('D1A.R8');
     });
 
     it('Path: Q1=SN/NI -> NC1=Y/PY -> CRIT', () => {
-      const result = scoreRobinsDomain(
-        'domain1a',
-        answers({ d1a_1: 'NI', d1a_4: 'Y' }),
-      );
+      const result = scoreRobinsDomain('domain1a', answers({ d1a_1: 'NI', d1a_4: 'Y' }));
       expect(result.judgement).toBe(JUDGEMENTS.CRITICAL);
       expect(result.ruleId).toBe('D1A.R9');
     });

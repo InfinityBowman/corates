@@ -63,5 +63,4 @@ describe('ROBINSIHandler - comment field Y.Text handling', () => {
       expect(comment).toBe(existingText);
     });
   });
-
 });

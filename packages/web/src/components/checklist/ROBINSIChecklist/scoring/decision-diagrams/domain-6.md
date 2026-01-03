@@ -35,4 +35,4 @@ flowchart LR
   SEL -- "At least one NI,\nbut none Y / PY" --> MOD
   SEL -- "One Y / PY,\nor all NI" --> SER
   SEL -- "Two or more Y / PY" --> CRIT
-  ```
+```
