@@ -154,10 +154,10 @@ export default function SplitScreenLayout(props) {
               [layout() === 'vertical' ? 'width' : 'height']:
                 showSecondPanel() ? `${100 - splitRatio()}%` : '0%',
               opacity: showSecondPanel() ? 1 : 0,
-              transform:
-                showSecondPanel() ? 'translateX(0) translateY(0) translateZ(0)'
-                : layout() === 'vertical' ? 'translateX(20px) translateZ(0)'
-                : 'translateY(20px) translateZ(0)',
+              // Only apply transform when hidden to avoid creating containing block for fixed menus
+              transform: showSecondPanel() ? 'none' : (
+                layout() === 'vertical' ? 'translateX(20px)' : 'translateY(20px)'
+              ),
               transition:
                 isDragging() ? 'none' : (
                   `${layout() === 'vertical' ? 'width' : 'height'} 200ms ease-in-out, opacity 200ms ease-in-out, transform 200ms ease-in-out`
@@ -168,7 +168,8 @@ export default function SplitScreenLayout(props) {
                     'width'
                   : 'height'
                 : 'auto',
-              contain: 'layout',
+              // Use contain: style instead of layout to avoid breaking absolutely positioned menus
+              contain: 'style',
             }}
           >
             <div class='h-full w-full overflow-auto'>{secondPanel()}</div>
