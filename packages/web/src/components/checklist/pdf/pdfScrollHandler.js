@@ -350,8 +350,7 @@ export function createPdfScrollHandler(document) {
       // Fallback: use viewport center calculation
       const oldScrollHeight = scrollContainerRef.scrollHeight;
       const oldScrollWidth = scrollContainerRef.scrollWidth;
-      const scrollRatio =
-        oldScrollHeight > 0 ? scrollContainerRef.scrollTop / oldScrollHeight : 0;
+      const scrollRatio = oldScrollHeight > 0 ? scrollContainerRef.scrollTop / oldScrollHeight : 0;
       const scrollLeftRatio =
         oldScrollWidth > 0 ? scrollContainerRef.scrollLeft / oldScrollWidth : 0;
 
@@ -374,7 +373,11 @@ export function createPdfScrollHandler(document) {
           scrollContainerRef.scrollTop = scrollRatio * newScrollHeight;
 
           // Adjust horizontal scroll if container has horizontal overflow
-          if (newScrollWidth > 0 && newScrollWidth !== oldScrollWidth && scrollContainerRef.scrollWidth > scrollContainerRef.clientWidth) {
+          if (
+            newScrollWidth > 0 &&
+            newScrollWidth !== oldScrollWidth &&
+            scrollContainerRef.scrollWidth > scrollContainerRef.clientWidth
+          ) {
             scrollContainerRef.scrollLeft = scrollLeftRatio * newScrollWidth;
           }
 
@@ -388,7 +391,10 @@ export function createPdfScrollHandler(document) {
           if (newScrollHeight > 0) {
             scrollContainerRef.scrollTop = scrollRatio * newScrollHeight;
           }
-          if (newScrollWidth > 0 && scrollContainerRef.scrollWidth > scrollContainerRef.clientWidth) {
+          if (
+            newScrollWidth > 0 &&
+            scrollContainerRef.scrollWidth > scrollContainerRef.clientWidth
+          ) {
             scrollContainerRef.scrollLeft = scrollLeftRatio * newScrollWidth;
           }
           zoomOriginPoint = null;
