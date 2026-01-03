@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, For } from 'solid-js';
 import { A } from '@solidjs/router';
 import {
   SECTION_B,
@@ -76,18 +76,20 @@ export default function RobinsReconcileSectionBQuestionMock() {
 
               {/* Response Options */}
               <div class='mb-4 flex flex-wrap gap-2'>
-                {responseOptions.map(option => (
-                  <div
-                    class={`inline-flex items-center justify-center rounded-lg border-2 px-4 py-2 text-sm font-medium transition-all ${
-                      reviewer1Answer === option ?
-                        'border-blue-400 bg-blue-50 text-blue-800'
-                      : 'border-gray-200 bg-white text-gray-700'
-                    }`}
-                  >
-                    <span class='mr-1'>{option}</span>
-                    <span class='text-xs opacity-70'>({RESPONSE_LABELS[option]})</span>
-                  </div>
-                ))}
+                <For each={responseOptions}>
+                  {option => (
+                    <div
+                      class={`inline-flex items-center justify-center rounded-lg border-2 px-4 py-2 text-sm font-medium transition-all ${
+                        reviewer1Answer === option ?
+                          'border-blue-400 bg-blue-50 text-blue-800'
+                        : 'border-gray-200 bg-white text-gray-700'
+                      }`}
+                    >
+                      <span class='mr-1'>{option}</span>
+                      <span class='text-xs opacity-70'>({RESPONSE_LABELS[option]})</span>
+                    </div>
+                  )}
+                </For>
               </div>
 
               {/* Comment - Always Visible */}
@@ -107,18 +109,20 @@ export default function RobinsReconcileSectionBQuestionMock() {
 
               {/* Response Options */}
               <div class='mb-4 flex flex-wrap gap-2'>
-                {responseOptions.map(option => (
-                  <div
-                    class={`inline-flex items-center justify-center rounded-lg border-2 px-4 py-2 text-sm font-medium transition-all ${
-                      reviewer2Answer === option ?
-                        'border-purple-400 bg-purple-50 text-purple-800'
-                      : 'border-gray-200 bg-white text-gray-700'
-                    }`}
-                  >
-                    <span class='mr-1'>{option}</span>
-                    <span class='text-xs opacity-70'>({RESPONSE_LABELS[option]})</span>
-                  </div>
-                ))}
+                <For each={responseOptions}>
+                  {option => (
+                    <div
+                      class={`inline-flex items-center justify-center rounded-lg border-2 px-4 py-2 text-sm font-medium transition-all ${
+                        reviewer2Answer === option ?
+                          'border-purple-400 bg-purple-50 text-purple-800'
+                        : 'border-gray-200 bg-white text-gray-700'
+                      }`}
+                    >
+                      <span class='mr-1'>{option}</span>
+                      <span class='text-xs opacity-70'>({RESPONSE_LABELS[option]})</span>
+                    </div>
+                  )}
+                </For>
               </div>
 
               {/* Comment - Always Visible */}
@@ -138,26 +142,28 @@ export default function RobinsReconcileSectionBQuestionMock() {
 
               {/* Response Options - Interactive */}
               <div class='mb-4 flex flex-wrap gap-2'>
-                {responseOptions.map(option => (
-                  <label
-                    class={`inline-flex cursor-pointer items-center justify-center rounded-lg border-2 px-4 py-2 text-sm font-medium transition-all focus-within:ring-2 focus-within:ring-green-400 focus-within:ring-offset-1 focus-within:outline-none hover:border-green-300 ${
-                      finalAnswer() === option ?
-                        'border-green-400 bg-green-50 text-green-800'
-                      : 'border-gray-200 bg-white text-gray-700 hover:bg-green-50'
-                    }`}
-                  >
-                    <input
-                      type='radio'
-                      name='final-answer'
-                      value={option}
-                      checked={finalAnswer() === option}
-                      onChange={() => setFinalAnswer(option)}
-                      class='hidden'
-                    />
-                    <span class='mr-1'>{option}</span>
-                    <span class='text-xs opacity-70'>({RESPONSE_LABELS[option]})</span>
-                  </label>
-                ))}
+                <For each={responseOptions}>
+                  {option => (
+                    <label
+                      class={`inline-flex cursor-pointer items-center justify-center rounded-lg border-2 px-4 py-2 text-sm font-medium transition-all focus-within:ring-2 focus-within:ring-green-400 focus-within:ring-offset-1 focus-within:outline-none hover:border-green-300 ${
+                        finalAnswer() === option ?
+                          'border-green-400 bg-green-50 text-green-800'
+                        : 'border-gray-200 bg-white text-gray-700 hover:bg-green-50'
+                      }`}
+                    >
+                      <input
+                        type='radio'
+                        name='final-answer'
+                        value={option}
+                        checked={finalAnswer() === option}
+                        onChange={() => setFinalAnswer(option)}
+                        class='hidden'
+                      />
+                      <span class='mr-1'>{option}</span>
+                      <span class='text-xs opacity-70'>({RESPONSE_LABELS[option]})</span>
+                    </label>
+                  )}
+                </For>
               </div>
 
               {/* Comment - Always Visible, Editable */}
