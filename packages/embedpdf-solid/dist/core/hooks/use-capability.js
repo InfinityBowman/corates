@@ -1,4 +1,4 @@
-import { createSignal, createEffect } from 'solid-js';
+import { createMemo } from 'solid-js';
 import { usePlugin } from './use-plugin';
 /**
  * Hook to access a plugin's capability.
@@ -10,33 +10,34 @@ import { usePlugin } from './use-plugin';
  */
 export function useCapability(pluginId) {
     const p = usePlugin(pluginId);
-    const [provides, setProvides] = createSignal(null);
-    const [isLoading, setIsLoading] = createSignal(true);
-    const [ready, setReady] = createSignal(Promise.resolve());
-    createEffect(() => {
+    // Derive capability state reactively from plugin state
+    const capabilityState = createMemo(() => {
         const pluginInstance = p.plugin;
         if (!pluginInstance) {
-            setProvides(null);
-            setIsLoading(p.isLoading);
-            setReady(p.ready);
-            return;
+            return {
+                provides: null,
+                isLoading: p.isLoading,
+                ready: p.ready,
+            };
         }
         if (!pluginInstance.provides) {
             throw new Error(`Plugin ${pluginId} does not provide a capability`);
         }
-        setProvides(pluginInstance.provides());
-        setIsLoading(p.isLoading);
-        setReady(p.ready);
+        return {
+            provides: pluginInstance.provides(),
+            isLoading: p.isLoading,
+            ready: p.ready,
+        };
     });
     return {
         get provides() {
-            return provides();
+            return capabilityState().provides;
         },
         get isLoading() {
-            return isLoading();
+            return capabilityState().isLoading;
         },
         get ready() {
-            return ready();
+            return capabilityState().ready;
         },
     };
 }

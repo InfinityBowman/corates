@@ -1,4 +1,4 @@
-import { createSignal, createEffect, onCleanup } from 'solid-js';
+import { createSignal, createRenderEffect, onCleanup } from 'solid-js';
 import { useViewportPlugin } from './use-viewport';
 // GateChangeEvent not needed here
 
@@ -10,7 +10,8 @@ export function useViewportRef(getDocumentId: () => string | null) {
   const pluginState = useViewportPlugin();
   const [containerRef, setContainerRef] = createSignal<HTMLDivElement | null>(null);
 
-  createEffect(() => {
+  // Use createRenderEffect (equivalent to Svelte's $effect.pre) for DOM-sensitive work
+  createRenderEffect(() => {
     const plugin = pluginState.plugin;
     const container = containerRef();
     const docId = getDocumentId();
@@ -69,5 +70,10 @@ export function useViewportRef(getDocumentId: () => string | null) {
     });
   });
 
-  return { containerRef, setContainerRef };
+  return {
+    get containerRef() {
+      return containerRef();
+    },
+    setContainerRef,
+  };
 }

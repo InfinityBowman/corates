@@ -1,1 +1,1 @@
-{"version":3,"file":"use-viewport-ref.d.ts","sourceRoot":"","sources":["../../../../src/plugins/viewport/hooks/use-viewport-ref.ts"],"names":[],"mappings":"AAIA;;;GAGG;AACH,wBAAgB,cAAc,CAAC,aAAa,EAAE,MAAM,MAAM,GAAG,IAAI;;;EAgEhE"}
+{"version":3,"file":"use-viewport-ref.d.ts","sourceRoot":"","sources":["../../../../src/plugins/viewport/hooks/use-viewport-ref.ts"],"names":[],"mappings":"AAIA;;;GAGG;AACH,wBAAgB,cAAc,CAAC,aAAa,EAAE,MAAM,MAAM,GAAG,IAAI;;;EAsEhE"}

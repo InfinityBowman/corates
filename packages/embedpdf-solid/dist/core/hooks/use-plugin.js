@@ -1,4 +1,4 @@
-import { createSignal, createEffect } from 'solid-js';
+import { createMemo } from 'solid-js';
 import { useRegistry } from './use-registry';
 /**
  * Hook to access a plugin.
@@ -9,36 +9,37 @@ import { useRegistry } from './use-registry';
  * const zoom = usePlugin<ZoomPlugin>(ZoomPlugin.id);
  */
 export function usePlugin(pluginId) {
-    const [plugin, setPlugin] = createSignal(null);
-    const [isLoading, setIsLoading] = createSignal(true);
-    const [ready, setReady] = createSignal(Promise.resolve());
-    createEffect(() => {
-        // Read from context inside the reactive scope so updates to the provider value
-        // (registry becoming non-null after initialization) retrigger this effect.
-        const registry = useRegistry().registry;
+    // Get context at hook level - the context value contains reactive getters
+    const context = useRegistry();
+    // Derive plugin state reactively from context
+    const pluginState = createMemo(() => {
+        const registry = context.registry;
         if (registry === null) {
-            setPlugin(null);
-            setIsLoading(true);
-            setReady(Promise.resolve());
-            return;
+            return {
+                plugin: null,
+                isLoading: true,
+                ready: Promise.resolve(),
+            };
         }
         const pluginInstance = registry.getPlugin(pluginId);
         if (!pluginInstance) {
             throw new Error(`Plugin ${pluginId} not found`);
         }
-        setPlugin(() => pluginInstance);
-        setIsLoading(false);
-        setReady(pluginInstance.ready());
+        return {
+            plugin: pluginInstance,
+            isLoading: false,
+            ready: pluginInstance.ready(),
+        };
     });
     return {
         get plugin() {
-            return plugin();
+            return pluginState().plugin;
         },
         get isLoading() {
-            return isLoading();
+            return pluginState().isLoading;
         },
         get ready() {
-            return ready();
+            return pluginState().ready;
         },
     };
 }

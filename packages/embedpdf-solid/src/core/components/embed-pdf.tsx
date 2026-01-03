@@ -1,6 +1,6 @@
 import {
   createSignal,
-  onMount,
+  createEffect,
   onCleanup,
   createMemo,
   Show,
@@ -53,11 +53,26 @@ export const EmbedPDF: Component<EmbedPDFProps> = props => {
   const [isInitializing, setIsInitializing] = createSignal(true);
   const [pluginsReady, setPluginsReady] = createSignal(false);
 
-  let unsubscribe: (() => void) | undefined;
+  // Track latest onInitialized callback
+  let latestInit = props.onInitialized;
 
-  onMount(() => {
-    const pdfViewer = new PluginRegistry(props.engine, { logger: props.logger });
-    pdfViewer.registerPluginBatch(props.plugins);
+  createEffect(() => {
+    if (props.onInitialized) {
+      latestInit = props.onInitialized;
+    }
+  });
+
+  createEffect(() => {
+    const engine = props.engine;
+    const plugins = props.plugins;
+    const logger = props.logger;
+
+    if (!engine) {
+      return;
+    }
+
+    const pdfViewer = new PluginRegistry(engine, { logger });
+    pdfViewer.registerPluginBatch(plugins);
 
     const initialize = async () => {
       await pdfViewer.initialize();
@@ -69,17 +84,18 @@ export const EmbedPDF: Component<EmbedPDFProps> = props => {
       const store = pdfViewer.getStore();
       setCoreState(store.getState().core);
 
-      unsubscribe = store.subscribe((_action, newState, oldState) => {
+      const unsubscribe = store.subscribe((_action, newState, oldState) => {
         // Only update if it's a core action and the core state changed
         if (store.isCoreAction(_action) && newState.core !== oldState.core) {
           setCoreState(newState.core);
         }
       });
 
-      await props.onInitialized?.(pdfViewer);
+      // Always call the latest callback
+      await latestInit?.(pdfViewer);
 
       if (pdfViewer.isDestroyed()) {
-        unsubscribe?.();
+        unsubscribe();
         return;
       }
 
@@ -91,12 +107,19 @@ export const EmbedPDF: Component<EmbedPDFProps> = props => {
 
       setRegistry(pdfViewer);
       setIsInitializing(false);
+
+      return unsubscribe;
     };
 
-    initialize().catch(console.error);
+    let cleanup: (() => void) | undefined;
+    initialize()
+      .then(unsub => {
+        cleanup = unsub;
+      })
+      .catch(console.error);
 
     onCleanup(() => {
-      unsubscribe?.();
+      cleanup?.();
       pdfViewer.destroy();
       setRegistry(null);
       setCoreState(null);
@@ -105,44 +128,74 @@ export const EmbedPDF: Component<EmbedPDFProps> = props => {
     });
   });
 
-  // Compute convenience accessors
-  const contextValue = createMemo((): PDFContextState => {
-    const currentCoreState = coreState();
-    const activeDocumentId = currentCoreState?.activeDocumentId ?? null;
-    const documents = currentCoreState?.documents ?? {};
-    const documentOrder = currentCoreState?.documentOrder ?? [];
+  // Compute convenience accessors with individual memos for fine-grained reactivity
+  const activeDocumentId = createMemo(() => coreState()?.activeDocumentId ?? null);
+  const documents = createMemo(() => coreState()?.documents ?? {});
+  const documentOrder = createMemo(() => coreState()?.documentOrder ?? []);
 
-    // Compute active document
-    const activeDocument =
-      activeDocumentId && documents[activeDocumentId] ? documents[activeDocumentId] : null;
+  const activeDocument = createMemo(() => {
+    const docId = activeDocumentId();
+    const docs = documents();
+    return docId && docs[docId] ? docs[docId] : null;
+  });
 
-    // Compute open documents in order
-    const documentStates = documentOrder
-      .map(docId => documents[docId])
-      .filter((doc): doc is DocumentState => doc !== null && doc !== undefined) as DocumentState[];
+  const documentStates = createMemo(() =>
+    documentOrder()
+      .map(docId => documents()[docId])
+      .filter((doc): doc is DocumentState => doc !== null && doc !== undefined),
+  );
 
-    return {
-      registry: registry(),
-      coreState: currentCoreState,
-      isInitializing: isInitializing(),
-      pluginsReady: pluginsReady(),
-      activeDocumentId,
-      activeDocument,
-      documents,
-      documentStates,
-    };
+  // Create a reactive context value object with getters
+  // This ensures consumers can access current values reactively
+  const contextValue: PDFContextState = {
+    get registry() {
+      return registry();
+    },
+    get coreState() {
+      return coreState();
+    },
+    get isInitializing() {
+      return isInitializing();
+    },
+    get pluginsReady() {
+      return pluginsReady();
+    },
+    get activeDocumentId() {
+      return activeDocumentId();
+    },
+    get activeDocument() {
+      return activeDocument();
+    },
+    get documents() {
+      return documents();
+    },
+    get documentStates() {
+      return documentStates();
+    },
+  };
+
+  // For render prop children, create a snapshot function
+  const getContextSnapshot = (): PDFContextState => ({
+    registry: registry(),
+    coreState: coreState(),
+    isInitializing: isInitializing(),
+    pluginsReady: pluginsReady(),
+    activeDocumentId: activeDocumentId(),
+    activeDocument: activeDocument(),
+    documents: documents(),
+    documentStates: documentStates(),
   });
 
   return (
-    <PDFContext.Provider value={contextValue()}>
+    <PDFContext.Provider value={contextValue}>
       <Show
         when={pluginsReady() && props.autoMountDomElements !== false}
         fallback={
-          typeof props.children === 'function' ? props.children(contextValue()) : props.children
+          typeof props.children === 'function' ? props.children(getContextSnapshot()) : props.children
         }
       >
         <AutoMount plugins={props.plugins}>
-          {typeof props.children === 'function' ? props.children(contextValue()) : props.children}
+          {typeof props.children === 'function' ? props.children(getContextSnapshot()) : props.children}
         </AutoMount>
       </Show>
     </PDFContext.Provider>

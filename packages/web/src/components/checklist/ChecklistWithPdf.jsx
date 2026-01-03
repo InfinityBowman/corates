@@ -9,7 +9,7 @@ import GenericChecklist from '@/components/checklist/GenericChecklist.jsx';
 import PdfViewer from '@/components/checklist/pdf/PdfViewer.jsx';
 import EmbedPdfViewer from '@/components/checklist/embedpdf/EmbedPdfViewer.jsx';
 import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx';
-import { PDF_VIEWER_IMPL } from '@config/pdfViewer.js';
+import { PDF_VIEWER_MODE } from '@config/pdfViewer.js';
 import { createMemo, Show } from 'solid-js';
 
 export default function ChecklistWithPdf(props) {
@@ -30,10 +30,10 @@ export default function ChecklistWithPdf(props) {
   // props.getRobinsText - function to get Y.Text for a ROBINS-I free-text field
   // props.pdfUrl - optional PDF URL (for server-hosted PDFs)
 
-  // Enable EmbedPDF when the feature flag is set and we have either pdfData or pdfUrl
-  // pdfData is preferred (creates blob URL, avoids cross-origin credential issues)
+  // Use EmbedPDF viewer when mode is 'snippet' or 'headless' and we have pdfData
+  // Note: EmbedPDF viewers only work with pdfData (blob URLs), not direct pdfUrl
   const useEmbedPdf = createMemo(
-    () => PDF_VIEWER_IMPL === 'embedpdf' && (!!props.pdfData || !!props.pdfUrl),
+    () => (PDF_VIEWER_MODE === 'snippet' || PDF_VIEWER_MODE === 'headless') && !!props.pdfData,
   );
 
   return (
@@ -75,7 +75,6 @@ export default function ChecklistWithPdf(props) {
           }
         >
           <EmbedPdfViewer
-            pdfUrl={props.pdfUrl}
             pdfData={props.pdfData}
             pdfFileName={props.pdfFileName}
             readOnly={props.readOnly}

@@ -1,4 +1,4 @@
-import { createSignal, createEffect } from 'solid-js';
+import { createMemo } from 'solid-js';
 import { useRegistry } from './use-registry';
 import type { BasePlugin } from '@embedpdf/core';
 
@@ -11,20 +11,19 @@ import type { BasePlugin } from '@embedpdf/core';
  * const zoom = usePlugin<ZoomPlugin>(ZoomPlugin.id);
  */
 export function usePlugin<T extends BasePlugin>(pluginId: T['id']) {
-  const [plugin, setPlugin] = createSignal<T | null>(null);
-  const [isLoading, setIsLoading] = createSignal(true);
-  const [ready, setReady] = createSignal<Promise<void>>(Promise.resolve());
+  // Get context at hook level - the context value contains reactive getters
+  const context = useRegistry();
 
-  createEffect(() => {
-    // Read from context inside the reactive scope so updates to the provider value
-    // (registry becoming non-null after initialization) retrigger this effect.
-    const registry = useRegistry().registry;
+  // Derive plugin state reactively from context
+  const pluginState = createMemo(() => {
+    const registry = context.registry;
 
     if (registry === null) {
-      setPlugin(null);
-      setIsLoading(true);
-      setReady(Promise.resolve());
-      return;
+      return {
+        plugin: null as T | null,
+        isLoading: true,
+        ready: Promise.resolve(),
+      };
     }
 
     const pluginInstance = registry.getPlugin<T>(pluginId);
@@ -33,20 +32,22 @@ export function usePlugin<T extends BasePlugin>(pluginId: T['id']) {
       throw new Error(`Plugin ${pluginId} not found`);
     }
 
-    setPlugin(() => pluginInstance);
-    setIsLoading(false);
-    setReady(pluginInstance.ready());
+    return {
+      plugin: pluginInstance,
+      isLoading: false,
+      ready: pluginInstance.ready(),
+    };
   });
 
   return {
     get plugin() {
-      return plugin();
+      return pluginState().plugin;
     },
     get isLoading() {
-      return isLoading();
+      return pluginState().isLoading;
     },
     get ready() {
-      return ready();
+      return pluginState().ready;
     },
   };
 }

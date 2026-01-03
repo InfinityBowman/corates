@@ -1,5 +1,6 @@
 import { createMemo, type Component, type JSX } from 'solid-js';
 import { useViewportRef, useViewportCapability, useIsViewportGated } from './hooks';
+import { ViewportElementProvider } from './context';
 
 export interface ViewportProps {
   /**
@@ -12,7 +13,7 @@ export interface ViewportProps {
 }
 
 export const Viewport: Component<ViewportProps> = props => {
-  const { setContainerRef } = useViewportRef(() => props.documentId);
+  const viewportRef = useViewportRef(() => props.documentId);
   const capabilityState = useViewportCapability();
   const isGated = useIsViewportGated(() => props.documentId);
 
@@ -21,19 +22,28 @@ export const Viewport: Component<ViewportProps> = props => {
     return provides?.getViewportGap() ?? 0;
   });
 
+  // Provide the viewport element to child components via context
+  const viewportElementContext = {
+    get current() {
+      return viewportRef.containerRef;
+    },
+  };
+
   return (
-    <div
-      ref={setContainerRef}
-      style={{
-        width: '100%',
-        height: '100%',
-        overflow: 'auto',
-        padding: `${viewportGap()}px`,
-        ...(typeof props.style === 'string' ? {} : props.style),
-      }}
-      class={props.class}
-    >
-      {!isGated() && props.children}
-    </div>
+    <ViewportElementProvider value={viewportElementContext}>
+      <div
+        ref={viewportRef.setContainerRef}
+        style={{
+          width: '100%',
+          height: '100%',
+          overflow: 'auto',
+          padding: `${viewportGap()}px`,
+          ...(typeof props.style === 'string' ? {} : props.style),
+        }}
+        class={props.class}
+      >
+        {!isGated() && props.children}
+      </div>
+    </ViewportElementProvider>
   );
 };

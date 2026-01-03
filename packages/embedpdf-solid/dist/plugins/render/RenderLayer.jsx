@@ -9,18 +9,25 @@ export const RenderLayer = props => {
     const documentStateRef = useDocumentState(() => props.documentId);
     const [imageUrl, setImageUrl] = createSignal(null);
     let urlRef = null;
+    // Cleanup on component unmount
+    onCleanup(() => {
+        if (urlRef) {
+            URL.revokeObjectURL(urlRef);
+            urlRef = null;
+        }
+    });
     // Track page refreshes from core
     const refreshVersion = createMemo(() => documentStateRef.current?.pageRefreshVersions?.[pageIndex()] ?? 0);
     // Resolve actual scale / dpr (overrides win, otherwise follow document state)
     const actualScale = createMemo(() => props.scale !== undefined ? props.scale : (documentStateRef.current?.scale ?? 1));
-    const actualDpr = createMemo(() => props.dpr ?? window.devicePixelRatio);
+    const actualDpr = createMemo(() => props.dpr ?? (typeof window !== 'undefined' ? window.devicePixelRatio : 1));
     // Effect: reruns when dependencies change
     createEffect(() => {
         const provides = renderCapabilityState.provides;
         const docId = props.documentId;
         const scale = actualScale();
         const dpr = actualDpr();
-        // Track refreshVersion to trigger re-renders (eslint-disable-next-line)
+        // Track refreshVersion to trigger re-renders
         void refreshVersion();
         const page = pageIndex();
         if (!provides || !docId) {
@@ -50,19 +57,17 @@ export const RenderLayer = props => {
             setImageUrl(url);
         }, ignore);
         onCleanup(() => {
-            // Cleanup for this render run
-            if (urlRef) {
-                URL.revokeObjectURL(urlRef);
-                urlRef = null;
-                setImageUrl(null);
-            }
-            else {
-                // If render not finished, abort task
+            // Only abort the task if it hasn't completed yet
+            // Don't clear imageUrl - let the new render replace it to avoid flashing
+            if (!urlRef) {
                 task.abort({
                     code: PdfErrorCode.Cancelled,
                     message: 'canceled render task',
                 });
             }
+            // Note: We intentionally don't revoke urlRef here or clear imageUrl
+            // The new effect run will handle cleanup when setting the new URL
+            // This prevents flashing between page renders
         });
     });
     function handleImageLoad() {
