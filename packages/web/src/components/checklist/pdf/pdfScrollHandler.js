@@ -304,10 +304,11 @@ export function createPdfScrollHandler(document) {
     let targetPage = null;
     let targetPageNum = null;
     let pointOffsetFromPageTop = 0;
+    let pointOffsetFromPageLeft = 0;
 
     // Calculate the point's position in the scroll container's coordinate space
     const pointInContainer = {
-      x: pointX,
+      x: scrollContainerRef.scrollLeft + pointX,
       y: scrollContainerRef.scrollTop + pointY,
     };
 
@@ -317,12 +318,20 @@ export function createPdfScrollHandler(document) {
 
       const pageTop = pageEl.offsetTop;
       const pageBottom = pageTop + pageEl.offsetHeight;
+      const pageLeft = pageEl.offsetLeft;
+      const pageRight = pageLeft + pageEl.offsetWidth;
 
-      // Check if point is within this page's vertical bounds
-      if (pointInContainer.y >= pageTop && pointInContainer.y <= pageBottom) {
+      // Check if point is within this page's bounds (both vertical and horizontal)
+      if (
+        pointInContainer.y >= pageTop &&
+        pointInContainer.y <= pageBottom &&
+        pointInContainer.x >= pageLeft &&
+        pointInContainer.x <= pageRight
+      ) {
         targetPage = pageEl;
         targetPageNum = pageNum;
         pointOffsetFromPageTop = pointInContainer.y - pageTop;
+        pointOffsetFromPageLeft = pointInContainer.x - pageLeft;
       }
     });
 
@@ -340,8 +349,11 @@ export function createPdfScrollHandler(document) {
     if (!targetPage || targetPageNum === null) {
       // Fallback: use viewport center calculation
       const oldScrollHeight = scrollContainerRef.scrollHeight;
+      const oldScrollWidth = scrollContainerRef.scrollWidth;
       const scrollRatio =
         oldScrollHeight > 0 ? scrollContainerRef.scrollTop / oldScrollHeight : 0;
+      const scrollLeftRatio =
+        oldScrollWidth > 0 ? scrollContainerRef.scrollLeft / oldScrollWidth : 0;
 
       // Poll for layout update with bounded timeout
       let pollStartTime = Date.now();
@@ -356,9 +368,16 @@ export function createPdfScrollHandler(document) {
         if (!scrollContainerRef) return;
 
         const newScrollHeight = scrollContainerRef.scrollHeight;
+        const newScrollWidth = scrollContainerRef.scrollWidth;
         if (newScrollHeight > 0 && newScrollHeight !== oldScrollHeight) {
           // Layout has updated
           scrollContainerRef.scrollTop = scrollRatio * newScrollHeight;
+
+          // Adjust horizontal scroll if container has horizontal overflow
+          if (newScrollWidth > 0 && newScrollWidth !== oldScrollWidth && scrollContainerRef.scrollWidth > scrollContainerRef.clientWidth) {
+            scrollContainerRef.scrollLeft = scrollLeftRatio * newScrollWidth;
+          }
+
           zoomOriginPoint = null;
           zoomOriginScale = null;
         } else if (Date.now() - pollStartTime < maxPollTime) {
@@ -369,6 +388,9 @@ export function createPdfScrollHandler(document) {
           if (newScrollHeight > 0) {
             scrollContainerRef.scrollTop = scrollRatio * newScrollHeight;
           }
+          if (newScrollWidth > 0 && scrollContainerRef.scrollWidth > scrollContainerRef.clientWidth) {
+            scrollContainerRef.scrollLeft = scrollLeftRatio * newScrollWidth;
+          }
           zoomOriginPoint = null;
           zoomOriginScale = null;
         }
@@ -378,11 +400,13 @@ export function createPdfScrollHandler(document) {
       return;
     }
 
-    // Calculate the ratio of the point's position within the page
+    // Calculate the ratio of the point's position within the page (both vertical and horizontal)
     const oldPageHeight = targetPage.offsetHeight;
+    const oldPageWidth = targetPage.offsetWidth;
     const pointRatio = oldPageHeight > 0 ? pointOffsetFromPageTop / oldPageHeight : 0;
+    const pointRatioX = oldPageWidth > 0 ? pointOffsetFromPageLeft / oldPageWidth : 0;
 
-    // Poll for page height update with bounded timeout
+    // Poll for page dimensions update with bounded timeout
     let pollStartTime = Date.now();
     const maxPollTime = 400; // Max 400ms to wait for layout
 
@@ -395,16 +419,26 @@ export function createPdfScrollHandler(document) {
       if (!scrollContainerRef || !targetPage) return;
 
       const newPageHeight = targetPage.offsetHeight;
+      const newPageWidth = targetPage.offsetWidth;
 
       if (newPageHeight !== oldPageHeight && newPageHeight > 0) {
-        // Page height has updated - apply scroll adjustment
+        // Page dimensions have updated - apply scroll adjustment
         const newPointOffsetFromPageTop = pointRatio * newPageHeight;
         const newPageTop = targetPage.offsetTop;
-        const newPointInContainer = newPageTop + newPointOffsetFromPageTop;
+        const newPointInContainerY = newPageTop + newPointOffsetFromPageTop;
 
-        // Adjust scroll to keep the point at the same screen position
-        const newScrollTop = newPointInContainer - pointY;
+        // Adjust vertical scroll to keep the point at the same screen position
+        const newScrollTop = newPointInContainerY - pointY;
         scrollContainerRef.scrollTop = Math.max(0, newScrollTop);
+
+        // Adjust horizontal scroll if container has horizontal overflow
+        if (scrollContainerRef.scrollWidth > scrollContainerRef.clientWidth) {
+          const newPointOffsetFromPageLeft = pointRatioX * newPageWidth;
+          const newPageLeft = targetPage.offsetLeft;
+          const newPointInContainerX = newPageLeft + newPointOffsetFromPageLeft;
+          const newScrollLeft = newPointInContainerX - pointX;
+          scrollContainerRef.scrollLeft = Math.max(0, newScrollLeft);
+        }
 
         // Clear zoom origin tracking
         zoomOriginPoint = null;
@@ -413,13 +447,22 @@ export function createPdfScrollHandler(document) {
         // Keep polling
         scrollAdjustRafId = requestAnimationFrame(pollForPageHeightUpdate);
       } else {
-        // Timeout - apply adjustment with current height anyway
+        // Timeout - apply adjustment with current dimensions anyway
         if (newPageHeight > 0) {
           const newPointOffsetFromPageTop = pointRatio * newPageHeight;
           const newPageTop = targetPage.offsetTop;
-          const newPointInContainer = newPageTop + newPointOffsetFromPageTop;
-          const newScrollTop = newPointInContainer - pointY;
+          const newPointInContainerY = newPageTop + newPointOffsetFromPageTop;
+          const newScrollTop = newPointInContainerY - pointY;
           scrollContainerRef.scrollTop = Math.max(0, newScrollTop);
+
+          // Adjust horizontal scroll if container has horizontal overflow
+          if (scrollContainerRef.scrollWidth > scrollContainerRef.clientWidth && newPageWidth > 0) {
+            const newPointOffsetFromPageLeft = pointRatioX * newPageWidth;
+            const newPageLeft = targetPage.offsetLeft;
+            const newPointInContainerX = newPageLeft + newPointOffsetFromPageLeft;
+            const newScrollLeft = newPointInContainerX - pointX;
+            scrollContainerRef.scrollLeft = Math.max(0, newScrollLeft);
+          }
         }
         zoomOriginPoint = null;
         zoomOriginScale = null;
