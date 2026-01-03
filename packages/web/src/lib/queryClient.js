@@ -36,6 +36,7 @@ async function setupPersistence(queryClient) {
         await persister.removeClient();
       } else if (persistedClient.clientState?.queries) {
         // Restore queries, validating each query's data age
+        const restoredQueryKeys = [];
         for (const query of persistedClient.clientState.queries) {
           const queryAge = now - (query.state?.dataUpdatedAt || 0);
 
@@ -47,7 +48,13 @@ async function setupPersistence(queryClient) {
           // Only restore if query doesn't already have fresher data
           const existingQuery = queryClient.getQueryData(query.queryKey);
           if (!existingQuery) {
-            queryClient.setQueryData(query.queryKey, query.state.data);
+            // Preserve the original dataUpdatedAt timestamp to prevent falsely marking data as fresh
+            // This ensures queries will be considered stale and refetch if needed
+            const originalUpdatedAt = query.state?.dataUpdatedAt || now;
+            queryClient.setQueryData(query.queryKey, query.state.data, {
+              updatedAt: originalUpdatedAt,
+            });
+            restoredQueryKeys.push(query.queryKey);
           }
         }
         console.info(
@@ -156,7 +163,11 @@ async function setupPersistence(queryClient) {
         if (now - timestamp < MAX_CACHE_AGE_MS) {
           for (const q of queries) {
             if (!queryClient.getQueryData(q.queryKey)) {
-              queryClient.setQueryData(q.queryKey, q.data);
+              // Preserve the original dataUpdatedAt timestamp
+              const originalUpdatedAt = q.dataUpdatedAt || now;
+              queryClient.setQueryData(q.queryKey, q.data, {
+                updatedAt: originalUpdatedAt,
+              });
             }
           }
         }
@@ -239,3 +250,24 @@ export function getQueryClient() {
  * Export the singleton queryClient instance
  */
 export const queryClient = getQueryClient();
+
+/**
+ * Clear all persisted query cache (IndexedDB and localStorage)
+ * Should be called on sign out to prevent stale data from being restored
+ */
+export async function clearPersistedQueryCache() {
+  try {
+    const persister = createIDBPersister();
+    await persister.removeClient();
+  } catch (error) {
+    console.warn('Failed to clear IndexedDB persisted cache:', error);
+  }
+
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(CACHE_SNAPSHOT_KEY);
+    }
+  } catch (error) {
+    console.warn('Failed to clear localStorage cache snapshot:', error);
+  }
+}

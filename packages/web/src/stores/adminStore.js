@@ -21,6 +21,7 @@ async function checkAdminStatus() {
   try {
     const response = await fetch(`${API_BASE}/api/admin/check`, {
       credentials: 'include',
+      cache: 'no-store',
     });
     if (response.ok) {
       const data = await response.json();
@@ -72,6 +73,7 @@ async function checkImpersonationStatus() {
 async function fetchStats() {
   const response = await fetch(`${API_BASE}/api/admin/stats`, {
     credentials: 'include',
+    cache: 'no-store',
   });
   if (!response.ok) throw new Error('Failed to fetch stats');
   return response.json();
@@ -89,6 +91,7 @@ async function fetchUsers({ page = 1, limit = 20, search = '' } = {}) {
 
   const response = await fetch(`${API_BASE}/api/admin/users?${params}`, {
     credentials: 'include',
+    cache: 'no-store',
   });
   if (!response.ok) throw new Error('Failed to fetch users');
   return response.json();
@@ -100,6 +103,7 @@ async function fetchUsers({ page = 1, limit = 20, search = '' } = {}) {
 async function fetchUserDetails(userId) {
   const response = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
     credentials: 'include',
+    cache: 'no-store',
   });
   if (!response.ok) throw new Error('Failed to fetch user details');
   return response.json();
@@ -277,6 +281,7 @@ async function fetchStorageDocuments({ cursor, limit = 50, prefix = '', search =
 
   const response = await fetch(`${API_BASE}/api/admin/storage/documents?${params}`, {
     credentials: 'include',
+    cache: 'no-store',
   });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
@@ -312,6 +317,7 @@ async function deleteStorageDocuments(keys) {
 async function fetchStorageStats() {
   const response = await fetch(`${API_BASE}/api/admin/storage/stats`, {
     credentials: 'include',
+    cache: 'no-store',
   });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
