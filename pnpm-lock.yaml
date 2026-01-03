@@ -86,6 +86,9 @@ importers:
       '@embedpdf/plugin-viewport':
         specifier: ^2.1.1
         version: 2.1.1(@embedpdf/core@2.1.1(preact@10.28.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(svelte@5.46.1)(vue@3.5.26(typescript@5.9.3)))(preact@10.28.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(svelte@5.46.1)(vue@3.5.26(typescript@5.9.3))
+      '@embedpdf/plugin-zoom':
+        specifier: ^2.1.1
+        version: 2.1.1(b1c8daec8b8248609960e85499d9d470)
     devDependencies:
       solid-js:
         specifier: ^1.9.10

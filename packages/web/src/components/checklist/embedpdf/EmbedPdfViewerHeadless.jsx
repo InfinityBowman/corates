@@ -11,10 +11,12 @@ import { DocumentContent } from '@corates/embedpdf-solid/plugins/document-manage
 import { Viewport } from '@corates/embedpdf-solid/plugins/viewport';
 import { Scroller } from '@corates/embedpdf-solid/plugins/scroll';
 import { RenderLayer } from '@corates/embedpdf-solid/plugins/render';
+import { useZoom, ZoomGestureWrapper } from '@corates/embedpdf-solid/plugins/zoom';
 import { DocumentManagerPluginPackage } from '@embedpdf/plugin-document-manager';
 import { ViewportPluginPackage } from '@embedpdf/plugin-viewport';
 import { ScrollPluginPackage } from '@embedpdf/plugin-scroll';
 import { RenderPluginPackage } from '@embedpdf/plugin-render';
+import { ZoomPluginPackage } from '@embedpdf/plugin-zoom';
 import { EMBEDPDF_PDFIUM_WASM_URL } from '@config/pdfViewer';
 
 /**
@@ -43,6 +45,12 @@ function HeadlessViewerInner(props) {
     createPluginRegistration(ViewportPluginPackage),
     createPluginRegistration(ScrollPluginPackage),
     createPluginRegistration(RenderPluginPackage),
+    createPluginRegistration(ZoomPluginPackage, {
+      defaultZoomLevel: 'automatic',
+      minZoom: 0.25,
+      maxZoom: 4,
+      zoomStep: 0.1,
+    }),
   ];
 
   // Use the documentId we know (from props) rather than relying on context
@@ -85,20 +93,70 @@ function HeadlessViewerInner(props) {
                   </Show>
                 }
               >
-                <Viewport documentId={docId} class='h-full w-full bg-gray-200'>
-                  <Scroller
-                    documentId={docId}
-                    renderPage={pageLayout => (
-                      <RenderLayer documentId={docId} pageIndex={pageLayout.pageIndex} />
-                    )}
-                  />
-                </Viewport>
+                <div class='relative h-full w-full'>
+                  <Viewport documentId={docId} class='h-full w-full bg-gray-200'>
+                    <ZoomGestureWrapper documentId={docId} enablePinch={false} enableWheel={true}>
+                      <Scroller
+                        documentId={docId}
+                        renderPage={pageLayout => (
+                          <RenderLayer documentId={docId} pageIndex={pageLayout.pageIndex} />
+                        )}
+                      />
+                    </ZoomGestureWrapper>
+                  </Viewport>
+                  <ZoomControls documentId={docId} />
+                </div>
               </Show>
             )}
           </DocumentContent>
         </Show>
       )}
     </EmbedPDF>
+  );
+}
+
+/**
+ * Zoom controls overlay component
+ */
+function ZoomControls(props) {
+  const { state, provides } = useZoom(() => props.documentId);
+
+  const zoomPercent = createMemo(() => Math.round(state().currentZoomLevel * 100));
+
+  const handleZoomOut = () => {
+    const zoomScope = provides();
+    if (zoomScope) {
+      zoomScope.zoomOut();
+    }
+  };
+
+  const handleZoomIn = () => {
+    const zoomScope = provides();
+    if (zoomScope) {
+      zoomScope.zoomIn();
+    }
+  };
+
+  return (
+    <div class='absolute right-4 bottom-4 z-10 flex items-center gap-2 rounded-lg bg-white/90 px-3 py-2 shadow-lg backdrop-blur-sm'>
+      <button
+        type='button'
+        onClick={handleZoomOut}
+        class='flex h-8 w-8 items-center justify-center rounded hover:bg-gray-200'
+        aria-label='Zoom out'
+      >
+        <span class='text-lg font-semibold text-gray-700'>−</span>
+      </button>
+      <span class='min-w-12 text-center text-sm font-medium text-gray-700'>{zoomPercent()}%</span>
+      <button
+        type='button'
+        onClick={handleZoomIn}
+        class='flex h-8 w-8 items-center justify-center rounded hover:bg-gray-200'
+        aria-label='Zoom in'
+      >
+        <span class='text-lg font-semibold text-gray-700'>+</span>
+      </button>
+    </div>
   );
 }
 

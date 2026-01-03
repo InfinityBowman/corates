@@ -34,6 +34,10 @@
     "./plugins/render": {
       "types": "./dist/plugins/render/index.d.ts",
       "import": "./dist/plugins/render/index.js"
+    },
+    "./plugins/zoom": {
+      "types": "./dist/plugins/zoom/index.d.ts",
+      "import": "./dist/plugins/zoom/index.js"
     }
   },
   "scripts": {
@@ -51,7 +55,8 @@
     "@embedpdf/plugin-document-manager": "^2.1.1",
     "@embedpdf/plugin-viewport": "^2.1.1",
     "@embedpdf/plugin-scroll": "^2.1.1",
-    "@embedpdf/plugin-render": "^2.1.1"
+    "@embedpdf/plugin-render": "^2.1.1",
+    "@embedpdf/plugin-zoom": "^2.1.1"
   },
   "peerDependencies": {
     "solid-js": "^1.9.10"
