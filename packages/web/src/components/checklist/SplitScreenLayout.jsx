@@ -155,9 +155,10 @@ export default function SplitScreenLayout(props) {
                 showSecondPanel() ? `${100 - splitRatio()}%` : '0%',
               opacity: showSecondPanel() ? 1 : 0,
               // Only apply transform when hidden to avoid creating containing block for fixed menus
-              transform: showSecondPanel() ? 'none' : (
-                layout() === 'vertical' ? 'translateX(20px)' : 'translateY(20px)'
-              ),
+              transform:
+                showSecondPanel() ? 'none'
+                : layout() === 'vertical' ? 'translateX(20px)'
+                : 'translateY(20px)',
               transition:
                 isDragging() ? 'none' : (
                   `${layout() === 'vertical' ? 'width' : 'height'} 200ms ease-in-out, opacity 200ms ease-in-out, transform 200ms ease-in-out`
