@@ -15,10 +15,7 @@ export interface ZoomWheelOptions {
  * @param getDocumentId Function that returns the document ID
  * @param options Configuration options
  */
-export function useZoomWheel(
-  getDocumentId: () => string | null,
-  options: ZoomWheelOptions = {},
-) {
+export function useZoomWheel(getDocumentId: () => string | null, options: ZoomWheelOptions = {}) {
   const { step = 0.1, enableWheel = true } = options;
   const zoomCapability = useZoomCapability();
   let viewportElement: ReturnType<typeof useViewportElement> | null = null;
