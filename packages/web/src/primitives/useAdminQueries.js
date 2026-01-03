@@ -9,10 +9,12 @@ import { queryKeys } from '@lib/queryKeys.js';
 
 /**
  * Helper for admin fetch calls
+ * Uses cache: 'no-store' to prevent browser HTTP caching from serving stale data
  */
 async function adminFetch(path, options = {}) {
   const response = await fetch(`${API_BASE}/api/admin/${path}`, {
     credentials: 'include',
+    cache: 'no-store',
     ...options,
   });
   if (!response.ok) {
@@ -29,8 +31,9 @@ export function useAdminStats() {
   return useQuery(() => ({
     queryKey: queryKeys.admin.stats,
     queryFn: () => adminFetch('stats'),
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 0, // Always consider data stale to force refetch
     gcTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnMount: 'always', // Always refetch on mount, even if data exists
   }));
 }
 
@@ -54,8 +57,9 @@ export function useAdminUsers(getParams) {
         if (search) searchParams.set('search', search);
         return adminFetch(`users?${searchParams.toString()}`);
       },
-      staleTime: 1000 * 60 * 1, // 1 minute
+      staleTime: 0, // Always consider data stale to force refetch
       gcTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnMount: 'always', // Always refetch on mount, even if data exists
     };
   });
 }
@@ -68,8 +72,9 @@ export function useAdminUserDetails(userId) {
     queryKey: queryKeys.admin.userDetails(userId),
     queryFn: () => adminFetch(`users/${userId}`),
     enabled: !!userId,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 0, // Always consider data stale to force refetch
     gcTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnMount: 'always', // Always refetch on mount, even if data exists
   }));
 }
 
@@ -95,8 +100,9 @@ export function useStorageDocuments(getParams) {
         if (search) searchParams.set('search', search);
         return adminFetch(`storage/documents?${searchParams.toString()}`);
       },
-      staleTime: 1000 * 60 * 1, // 1 minute
+      staleTime: 0, // Always consider data stale to force refetch
       gcTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnMount: 'always', // Always refetch on mount, even if data exists
     };
   });
 }
@@ -108,7 +114,8 @@ export function useStorageStats() {
   return useQuery(() => ({
     queryKey: queryKeys.admin.storageStats,
     queryFn: () => adminFetch('storage/stats'),
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 0, // Always consider data stale to force refetch
     gcTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnMount: 'always', // Always refetch on mount, even if data exists
   }));
 }

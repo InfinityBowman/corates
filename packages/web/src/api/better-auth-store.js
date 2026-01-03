@@ -1,6 +1,6 @@
 import { createSignal, createRoot, createEffect } from 'solid-js';
 import { authClient, useSession } from '@api/auth-client.js';
-import { queryClient } from '@lib/queryClient.js';
+import { queryClient, clearPersistedQueryCache } from '@lib/queryClient.js';
 import { queryKeys } from '@lib/queryKeys.js';
 import { API_BASE, BASEPATH } from '@config/api.js';
 import { saveLastLoginMethod, LOGIN_METHODS } from '@lib/lastLoginMethod.js';
@@ -408,8 +408,12 @@ function createBetterAuthStore() {
       // Clear cached avatar from IndexedDB
       clearAvatarCache();
 
-      // Clear query cache for all projects on logout
-      queryClient.removeQueries({ queryKey: queryKeys.projects.all });
+      // Clear all in-memory query cache
+      queryClient.clear();
+
+      // Clear persisted query cache (IndexedDB and localStorage)
+      // This prevents stale data from being restored on next page load
+      await clearPersistedQueryCache();
 
       // Refetch session to immediately clear it in current tab
       // This ensures session().data becomes null right away, preventing components
@@ -714,12 +718,15 @@ function createBetterAuthStore() {
       }
 
       // Clear local data
-      queryClient.removeQueries({ queryKey: queryKeys.projects.all });
+      queryClient.clear();
       localStorage.removeItem('pendingEmail');
       saveCachedAuth(null);
       setCachedUser(null);
       setCachedAvatarUrl(null);
       clearAvatarCache();
+
+      // Clear persisted query cache
+      await clearPersistedQueryCache();
 
       // Sign out after successful deletion
       await authClient.signOut();
