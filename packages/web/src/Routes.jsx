@@ -20,6 +20,8 @@ import { BASEPATH } from '@config/api.js';
 import ProtectedGuard from '@/components/auth/ProtectedGuard.jsx';
 import ProjectView from '@/components/project/ProjectView.jsx';
 import { CreateOrgPage } from '@/components/org/index.js';
+import MockIndex from '@/components/mock/MockIndex.jsx';
+import RobinsReconcileSectionBQuestionMock from '@/components/mock/RobinsReconcileSectionBQuestionMock.jsx';
 
 export default function AppRoutes() {
   return (
@@ -68,6 +70,13 @@ export default function AppRoutes() {
         {/* Local checklists (not org-scoped, work offline) */}
         <Route path='/checklist/*' component={LocalChecklistView} />
         <Route path='/checklist/:checklistId' component={LocalChecklistView} />
+
+        {/* Mock routes - public, visual-only wireframes */}
+        <Route path='/mock' component={MockIndex} />
+        <Route
+          path='/mock/robins-reconcile-section-b-question'
+          component={RobinsReconcileSectionBQuestionMock}
+        />
       </Route>
       <Route path='*' component={NotFoundPage} />
     </Router>

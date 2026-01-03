@@ -1,13 +1,16 @@
-import { For, Show } from 'solid-js';
+import { For, Show, createMemo } from 'solid-js';
 import { ROBINS_I_CHECKLIST, getDomainQuestions } from './checklist-map.js';
 import { SignallingQuestion } from './SignallingQuestion.jsx';
 import { DomainJudgement, JudgementBadge } from './DomainJudgement.jsx';
+import { scoreRobinsDomain, getEffectiveDomainJudgement } from './scoring/robins-scoring.js';
 
 /**
  * A complete domain section with questions and judgement
+ * Now with auto-first scoring: calculated judgements are primary, manual override is explicit
+ *
  * @param {Object} props
  * @param {string} props.domainKey - The domain key (e.g., 'domain1a')
- * @param {Object} props.domainState - Current domain state { answers, judgement, direction }
+ * @param {Object} props.domainState - Current domain state { answers, judgement, judgementSource, direction }
  * @param {Function} props.onUpdate - Callback when domain state changes
  * @param {boolean} [props.disabled] - Whether the domain is disabled
  * @param {boolean} [props.showComments] - Whether to show comment fields
@@ -20,21 +23,54 @@ export function DomainSection(props) {
   const questions = () => getDomainQuestions(props.domainKey);
   const hasSubsections = () => !!domain()?.subsections;
 
+  // Smart scoring: compute auto judgement from answers
+  const autoScore = createMemo(() => {
+    return scoreRobinsDomain(props.domainKey, props.domainState?.answers);
+  });
+
+  // Effective judgement: auto unless manually overridden
+  const effectiveJudgement = createMemo(() => {
+    return getEffectiveDomainJudgement(props.domainState, autoScore());
+  });
+
+  // Check if currently in manual mode (reactive)
+  const isManualMode = createMemo(() => props.domainState?.judgementSource === 'manual');
+
+  // Check if the manual judgement differs from auto (reactive)
+  const isOverridden = createMemo(() => {
+    if (!isManualMode()) return false;
+    return props.domainState?.judgement !== autoScore().judgement;
+  });
+
   function handleQuestionUpdate(questionKey, newAnswer) {
     const newAnswers = {
       ...props.domainState.answers,
       [questionKey]: newAnswer,
     };
-    props.onUpdate({
+
+    // Compute what the auto judgement would be with new answers
+    const newAutoScore = scoreRobinsDomain(props.domainKey, newAnswers);
+
+    // If in auto mode, sync judgement with calculated value
+    const currentSource = props.domainState?.judgementSource || 'auto';
+    const newState = {
       ...props.domainState,
       answers: newAnswers,
-    });
+    };
+
+    if (currentSource === 'auto' && newAutoScore.judgement) {
+      newState.judgement = newAutoScore.judgement;
+    }
+
+    props.onUpdate(newState);
   }
 
   function handleJudgementChange(judgement) {
+    // Clicking a judgement button switches to manual mode
     props.onUpdate({
       ...props.domainState,
       judgement,
+      judgementSource: 'manual',
     });
   }
 
@@ -42,6 +78,26 @@ export function DomainSection(props) {
     props.onUpdate({
       ...props.domainState,
       direction,
+    });
+  }
+
+  function handleRevertToAuto() {
+    // Reset to auto mode with calculated judgement
+    const currentState = props.domainState || {};
+    props.onUpdate({
+      ...currentState,
+      judgement: autoScore().judgement,
+      judgementSource: 'auto',
+    });
+  }
+
+  function handleSwitchToManual() {
+    // Switch to manual mode but keep current judgement (or use current auto if no judgement set)
+    const currentState = props.domainState || {};
+    props.onUpdate({
+      ...currentState,
+      judgement: currentState.judgement || autoScore().judgement,
+      judgementSource: 'manual',
     });
   }
 
@@ -76,9 +132,17 @@ export function DomainSection(props) {
             {completionStatus().answered}/{completionStatus().total}
           </span>
 
-          {/* Judgement badge if set */}
-          <Show when={props.domainState?.judgement}>
-            <JudgementBadge judgement={props.domainState.judgement} />
+          {/* Judgement badge with mode indicator */}
+          <Show when={effectiveJudgement()}>
+            <div class='flex items-center gap-1.5'>
+              <Show when={isManualMode()}>
+                <span class='text-xs text-amber-600'>Manual</span>
+              </Show>
+              <JudgementBadge judgement={effectiveJudgement()} />
+            </div>
+          </Show>
+          <Show when={!effectiveJudgement() && autoScore().isComplete === false}>
+            <span class='text-xs text-gray-400'>Incomplete</span>
           </Show>
 
           {/* Collapse indicator */}
@@ -148,17 +212,86 @@ export function DomainSection(props) {
             </For>
           </Show>
 
-          {/* Domain judgement */}
-          <DomainJudgement
-            domainId={props.domainKey}
-            judgement={props.domainState?.judgement}
-            direction={props.domainState?.direction}
-            onJudgementChange={handleJudgementChange}
-            onDirectionChange={handleDirectionChange}
-            showDirection={domain()?.hasDirection}
-            isDomain1={props.domainKey === 'domain1a' || props.domainKey === 'domain1b'}
-            disabled={props.disabled}
-          />
+          {/* Auto-first judgement section */}
+          <div class='mt-4 rounded-lg bg-gray-50 p-4'>
+            {/* Calculated judgement display */}
+            <div class='mb-3 flex items-center justify-between'>
+              <div class='flex items-center gap-3'>
+                <span class='text-sm font-medium text-gray-700'>Risk of bias judgement</span>
+                <Show when={autoScore().judgement}>
+                  <div class='flex items-center gap-2 rounded-md bg-white px-2.5 py-1 text-xs shadow-sm'>
+                    <span class='text-gray-500'>Calculated:</span>
+                    <JudgementBadge judgement={autoScore().judgement} />
+                  </div>
+                </Show>
+                <Show when={!autoScore().judgement && !autoScore().isComplete}>
+                  <span class='text-xs text-gray-400'>(answer more questions)</span>
+                </Show>
+              </div>
+
+              {/* Mode toggle */}
+              <div class='flex items-center gap-2'>
+                <Show when={isManualMode() && isOverridden()}>
+                  <button
+                    type='button'
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleRevertToAuto();
+                    }}
+                    disabled={props.disabled}
+                    class='text-xs text-blue-600 hover:text-blue-800 hover:underline disabled:opacity-50'
+                  >
+                    Revert to calculated
+                  </button>
+                </Show>
+                <div class='flex rounded-md border border-gray-200 bg-white text-xs'>
+                  <button
+                    type='button'
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleRevertToAuto();
+                    }}
+                    disabled={props.disabled}
+                    class={`rounded-l-md px-2.5 py-1 transition-colors ${
+                      !isManualMode() ?
+                        'bg-blue-100 text-blue-800'
+                      : 'text-gray-600 hover:bg-gray-50'
+                    } ${props.disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                  >
+                    Auto
+                  </button>
+                  <button
+                    type='button'
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleSwitchToManual();
+                    }}
+                    disabled={props.disabled}
+                    class={`rounded-r-md border-l border-gray-200 px-2.5 py-1 transition-colors ${
+                      isManualMode() ?
+                        'bg-amber-100 text-amber-800'
+                      : 'text-gray-600 hover:bg-gray-50'
+                    } ${props.disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                  >
+                    Manual
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Judgement selector - only fully interactive in manual mode */}
+            <DomainJudgement
+              domainId={props.domainKey}
+              judgement={effectiveJudgement()}
+              direction={props.domainState?.direction}
+              onJudgementChange={handleJudgementChange}
+              onDirectionChange={handleDirectionChange}
+              showDirection={domain()?.hasDirection}
+              isDomain1={props.domainKey === 'domain1a' || props.domainKey === 'domain1b'}
+              disabled={props.disabled}
+              isAutoMode={!isManualMode()}
+            />
+          </div>
         </div>
       </Show>
     </div>

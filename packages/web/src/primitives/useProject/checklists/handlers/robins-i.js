@@ -54,6 +54,7 @@ export class ROBINSIHandler extends ChecklistHandler {
       if (key.startsWith('domain') || key === 'overall') {
         // Store judgement and direction at section level
         sectionYMap.set('judgement', value.judgement ?? null);
+        sectionYMap.set('judgementSource', value.judgementSource ?? 'auto');
         if (value.direction !== undefined) {
           sectionYMap.set('direction', value.direction ?? null);
         }
@@ -132,6 +133,7 @@ export class ROBINSIHandler extends ChecklistHandler {
       if (key.startsWith('domain')) {
         const sectionData = {
           judgement: sectionYMap.get('judgement') ?? null,
+          judgementSource: sectionYMap.get('judgementSource') ?? 'auto',
           answers: {}, // Always initialize answers for domains
         };
         const direction = sectionYMap.get('direction');
@@ -159,6 +161,7 @@ export class ROBINSIHandler extends ChecklistHandler {
         // Overall section has judgement and direction but no nested answers
         const sectionData = {
           judgement: sectionYMap.get('judgement') ?? null,
+          judgementSource: sectionYMap.get('judgementSource') ?? 'auto',
         };
         const direction = sectionYMap.get('direction');
         if (direction !== undefined) {
@@ -216,6 +219,9 @@ export class ROBINSIHandler extends ChecklistHandler {
       // Update judgement and direction at section level
       if (data.judgement !== undefined) {
         sectionYMap.set('judgement', data.judgement);
+      }
+      if (data.judgementSource !== undefined) {
+        sectionYMap.set('judgementSource', data.judgementSource);
       }
       if (data.direction !== undefined) {
         sectionYMap.set('direction', data.direction);

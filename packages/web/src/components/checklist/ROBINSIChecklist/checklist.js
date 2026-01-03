@@ -4,6 +4,13 @@ import {
   getActiveDomainKeys,
   getDomainQuestions,
 } from './checklist-map.js';
+import {
+  scoreRobinsDomain,
+  getEffectiveDomainJudgement,
+  scoreAllDomains,
+  mapOverallJudgementToDisplay,
+  JUDGEMENTS,
+} from './scoring/robins-scoring.js';
 
 /**
  * Creates a new ROBINS-I V2 checklist object with default empty answers.
@@ -112,6 +119,7 @@ export function createChecklist({
     // Overall risk of bias
     overall: {
       judgement: null, // 'Low (except confounding)', 'Moderate', 'Serious', 'Critical'
+      judgementSource: 'auto', // 'auto' | 'manual' - tracks whether judgement is auto-calculated or manually set
       direction: null,
     },
   };
@@ -135,6 +143,7 @@ function createDomainState(domainKey) {
   return {
     answers,
     judgement: null, // 'Low', 'Moderate', 'Serious', 'Critical'
+    judgementSource: 'auto', // 'auto' | 'manual' - tracks whether judgement is auto-calculated or manually set
     direction: domain?.hasDirection ? null : undefined,
   };
 }
@@ -155,7 +164,7 @@ export function shouldStopAssessment(sectionB) {
 }
 
 /**
- * Score the overall checklist based on domain judgements
+ * Score the overall checklist based on domain judgements (uses effective judgements from smart scoring)
  * @param {Object} state - The complete checklist state
  * @returns {string} Overall risk of bias: 'Low', 'Moderate', 'Serious', 'Critical', or 'Incomplete'
  */
@@ -167,80 +176,53 @@ export function scoreChecklist(state) {
     return 'Critical';
   }
 
-  // Determine which Domain 1 variant to use
-  const isPerProtocol = state.sectionC?.isPerProtocol || false;
-  const activeDomains = getActiveDomainKeys(isPerProtocol);
+  // Use the smart scoring engine to get all effective judgements
+  const { overall, isComplete } = scoreAllDomains(state);
 
-  const judgements = [];
-
-  for (const domainKey of activeDomains) {
-    const domain = state[domainKey];
-    if (!domain?.judgement) {
-      return 'Incomplete';
-    }
-    judgements.push(domain.judgement);
+  if (!isComplete) {
+    return 'Incomplete';
   }
 
-  // Scoring algorithm
-  // Critical: At least one domain is Critical
-  if (judgements.includes('Critical')) {
-    return 'Critical';
+  return overall || 'Incomplete';
+}
+
+/**
+ * Get detailed scoring information for all domains using the smart scoring engine
+ * @param {Object} state - The complete checklist state
+ * @returns {Object} { domains, overall, isComplete } with auto/effective/source per domain
+ */
+export function getSmartScoring(state) {
+  if (!state || typeof state !== 'object') {
+    return { domains: {}, overall: null, isComplete: false };
   }
 
-  // Serious: At least one domain is Serious
-  if (judgements.includes('Serious')) {
-    return 'Serious';
+  // Check if assessment was stopped early
+  if (shouldStopAssessment(state.sectionB)) {
+    return {
+      domains: {},
+      overall: 'Critical',
+      isComplete: true,
+      stoppedEarly: true,
+    };
   }
 
-  // Moderate: Highest domain judgement is Moderate
-  if (judgements.includes('Moderate')) {
-    return 'Moderate';
-  }
-
-  // Low: All domains are Low
-  return 'Low';
+  return scoreAllDomains(state);
 }
 
 /**
  * Get the algorithmic suggestion for a domain's risk of bias based on signalling questions
- * This is a helper/suggestion - final judgement is made by reviewer
+ * Uses the table-driven smart scoring engine for accurate, deterministic results
  * @param {string} domainKey - The domain key
  * @param {Object} answers - The domain's answers object
  * @returns {string|null} Suggested judgement or null if incomplete
  */
 export function suggestDomainJudgement(domainKey, answers) {
-  if (!answers) return null;
-
-  const questionKeys = Object.keys(answers);
-  if (questionKeys.length === 0) return null;
-
-  // Check if all questions are answered
-  const answeredQuestions = questionKeys.filter(k => answers[k]?.answer !== null);
-  if (answeredQuestions.length === 0) return null;
-
-  // Count different response types
-  let hasNo = false;
-  let hasProbablyNo = false;
-  let hasStrongNo = false;
-  let hasWeakNo = false;
-  let hasNI = false;
-
-  questionKeys.forEach(qKey => {
-    const answer = answers[qKey]?.answer;
-    if (answer === 'N') hasNo = true;
-    if (answer === 'PN') hasProbablyNo = true;
-    if (answer === 'SN') hasStrongNo = true;
-    if (answer === 'WN') hasWeakNo = true;
-    if (answer === 'NI') hasNI = true;
-  });
-
-  // Simple heuristic (actual algorithms are domain-specific in ROBINS-I guidance)
-  if (hasNo || hasStrongNo) return 'Serious';
-  if (hasProbablyNo || hasWeakNo) return 'Moderate';
-  if (hasNI) return 'Moderate';
-
-  return 'Low';
+  const result = scoreRobinsDomain(domainKey, answers);
+  return result.judgement;
 }
+
+// Re-export smart scoring functions for use in components
+export { scoreRobinsDomain, getEffectiveDomainJudgement, mapOverallJudgementToDisplay, JUDGEMENTS };
 
 /**
  * Get the selected answer for a specific question

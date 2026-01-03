@@ -9,6 +9,7 @@ import { SectionD } from './SectionD.jsx';
 import { DomainSection } from './DomainSection.jsx';
 import { OverallSection } from './OverallSection.jsx';
 import { ResponseLegend } from './SignallingQuestion.jsx';
+import { ScoringSummary } from './ScoringSummary.jsx';
 
 /**
  * Main ROBINS-I V2 Checklist Component
@@ -71,12 +72,38 @@ export function ROBINSIChecklist(props) {
     }));
   }
 
+  // Handle domain chip click from summary - expand and scroll to domain
+  function handleDomainClick(domainKey) {
+    // Expand the domain if collapsed
+    setCollapsedDomains(prev => ({
+      ...prev,
+      [domainKey]: false,
+    }));
+
+    // Scroll to domain section after a short delay for DOM update
+    setTimeout(() => {
+      const element = document.getElementById(`domain-section-${domainKey}`);
+      element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
   return (
     <div class='bg-blue-50'>
       <div class='container mx-auto max-w-5xl space-y-4 px-4 py-6'>
         <div class='mb-6 text-left text-lg font-semibold text-gray-900 sm:text-center'>
           {props.checklistState.name || 'ROBINS-I Checklist'}
         </div>
+
+        {/* Scoring Summary Strip - shows overall + domain status */}
+        <Show when={!stopAssessment()}>
+          <div class='sticky z-40' style={{ top: '8px' }}>
+            <ScoringSummary
+              checklistState={props.checklistState}
+              onDomainClick={handleDomainClick}
+            />
+          </div>
+        </Show>
+
         {/* Response Legend */}
         <Show when={props.showLegend !== false}>
           <ResponseLegend />
@@ -134,16 +161,24 @@ export function ROBINSIChecklist(props) {
           <div class='space-y-4'>
             <For each={activeDomains()}>
               {domainKey => (
-                <DomainSection
-                  domainKey={domainKey}
-                  domainState={props.checklistState?.[domainKey]}
-                  onUpdate={newState => handleDomainUpdate(domainKey, newState)}
-                  disabled={isReadOnly()}
-                  showComments={props.showComments}
-                  collapsed={collapsedDomains()[domainKey]}
-                  onToggleCollapse={() => toggleDomainCollapse(domainKey)}
-                  getRobinsText={props.getRobinsText}
-                />
+                <div
+                  id={`domain-section-${domainKey}`}
+                  style={{
+                    'scroll-margin-top':
+                      'calc(var(--app-navbar-height, 56px) + var(--robins-summary-height, 0px) + 8px)',
+                  }}
+                >
+                  <DomainSection
+                    domainKey={domainKey}
+                    domainState={props.checklistState?.[domainKey]}
+                    onUpdate={newState => handleDomainUpdate(domainKey, newState)}
+                    disabled={isReadOnly()}
+                    showComments={props.showComments}
+                    collapsed={collapsedDomains()[domainKey]}
+                    onToggleCollapse={() => toggleDomainCollapse(domainKey)}
+                    getRobinsText={props.getRobinsText}
+                  />
+                </div>
               )}
             </For>
           </div>
