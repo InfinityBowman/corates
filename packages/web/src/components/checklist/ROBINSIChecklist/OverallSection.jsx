@@ -36,12 +36,6 @@ export function OverallSection(props) {
     return calculatedDisplayJudgement();
   });
 
-  // Check if the manual judgement differs from auto (reactive)
-  const isOverridden = createMemo(() => {
-    if (!isManualMode()) return false;
-    return props.overallState?.judgement !== calculatedDisplayJudgement();
-  });
-
   function handleJudgementChange(judgement) {
     // Clicking a judgement button switches to manual mode
     props.onUpdate({
@@ -164,16 +158,6 @@ export function OverallSection(props) {
 
           {/* Mode toggle */}
           <div class='flex items-center gap-2'>
-            <Show when={isManualMode() && isOverridden()}>
-              <button
-                type='button'
-                onClick={handleRevertToAuto}
-                disabled={props.disabled}
-                class='text-xs text-blue-600 hover:text-blue-800 hover:underline disabled:opacity-50'
-              >
-                Revert to calculated
-              </button>
-            </Show>
             <div class='flex rounded-md border border-gray-200 bg-white text-xs'>
               <button
                 type='button'

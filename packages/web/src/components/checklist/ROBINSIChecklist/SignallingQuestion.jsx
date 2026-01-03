@@ -1,4 +1,4 @@
-import { For, createUniqueId } from 'solid-js';
+import { For, createEffect, createUniqueId } from 'solid-js';
 import { RESPONSE_LABELS, getResponseOptions } from './checklist-map.js';
 import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
 
@@ -17,6 +17,17 @@ import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
 export function SignallingQuestion(props) {
   const uniqueId = createUniqueId();
   const options = () => getResponseOptions(props.question.responseType);
+
+  createEffect(() => {
+    if (props.answer?.answer === 'NA') {
+      // Legacy answer value; NA is not a valid option for ROBINS-I in CoRATES.
+      // We coerce it to NI so the UI remains consistent and scoring doesn't get stuck.
+      props.onUpdate({
+        ...props.answer,
+        answer: 'NI',
+      });
+    }
+  });
 
   function handleAnswerChange(value) {
     props.onUpdate({
@@ -90,7 +101,7 @@ export function SignallingQuestion(props) {
  * Response legend component showing what each abbreviation means
  */
 export function ResponseLegend() {
-  const commonResponses = ['Y', 'PY', 'PN', 'N', 'NI', 'NA', 'WN', 'SN', 'SY', 'WY'];
+  const commonResponses = ['Y', 'PY', 'PN', 'N', 'NI', 'WN', 'SN', 'SY', 'WY'];
 
   return (
     <div class='mb-4 rounded-lg bg-gray-50 p-3'>

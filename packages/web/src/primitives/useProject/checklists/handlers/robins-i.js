@@ -200,6 +200,27 @@ export class ROBINSIHandler extends ChecklistHandler {
   }
 
   /**
+   * Set a Y.Text field value, preserving the Y.Text object if it exists
+   * @param {Y.Map} questionYMap - The question Y.Map
+   * @param {string} fieldKey - The field key (e.g., 'comment')
+   * @param {string|null} value - The string value to set (null becomes empty string)
+   */
+  setYTextField(questionYMap, fieldKey, value) {
+    const commentStr = value ?? '';
+    const existing = questionYMap.get(fieldKey);
+    if (existing instanceof Y.Text) {
+      // Replace contents of existing Y.Text to preserve object identity
+      existing.delete(0, existing.length);
+      existing.insert(0, commentStr);
+    } else {
+      // Create new Y.Text if it doesn't exist or was overwritten with a string
+      const newText = new Y.Text();
+      newText.insert(0, commentStr);
+      questionYMap.set(fieldKey, newText);
+    }
+  }
+
+  /**
    * Update a single answer/section in ROBINS-I checklist
    * @param {Y.Map} answersMap - The answers Y.Map
    * @param {string} key - The section key (e.g., 'domain1a', 'sectionB')
@@ -242,7 +263,7 @@ export class ROBINSIHandler extends ChecklistHandler {
             answersNestedYMap.set(qKey, questionYMap);
           }
           if (qValue.answer !== undefined) questionYMap.set('answer', qValue.answer);
-          if (qValue.comment !== undefined) questionYMap.set('comment', qValue.comment);
+          if (qValue.comment !== undefined) this.setYTextField(questionYMap, 'comment', qValue.comment);
         });
       }
     } else if (key === 'sectionB') {
@@ -255,7 +276,7 @@ export class ROBINSIHandler extends ChecklistHandler {
             sectionYMap.set(subKey, questionYMap);
           }
           if (subValue.answer !== undefined) questionYMap.set('answer', subValue.answer);
-          if (subValue.comment !== undefined) questionYMap.set('comment', subValue.comment);
+          if (subValue.comment !== undefined) this.setYTextField(questionYMap, 'comment', subValue.comment);
         } else {
           sectionYMap.set(subKey, subValue);
         }

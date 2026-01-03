@@ -17,7 +17,7 @@ import { ROBINSIHandler } from './handlers/robins-i.js';
  * @param {Function} isSynced - Function that returns sync status
  * @returns {Object} Checklist operations
  */
-export function createChecklistOperations(projectId, getYDoc, _isSynced) {
+export function createChecklistOperations(_projectId, getYDoc, _isSynced) {
   // Initialize common operations
   const commonOps = createCommonOperations(getYDoc);
 

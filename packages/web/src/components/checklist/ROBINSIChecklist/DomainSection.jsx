@@ -36,12 +36,6 @@ export function DomainSection(props) {
   // Check if currently in manual mode (reactive)
   const isManualMode = createMemo(() => props.domainState?.judgementSource === 'manual');
 
-  // Check if the manual judgement differs from auto (reactive)
-  const isOverridden = createMemo(() => {
-    if (!isManualMode()) return false;
-    return props.domainState?.judgement !== autoScore().judgement;
-  });
-
   function handleQuestionUpdate(questionKey, newAnswer) {
     const newAnswers = {
       ...props.domainState.answers,
@@ -231,19 +225,6 @@ export function DomainSection(props) {
 
               {/* Mode toggle */}
               <div class='flex items-center gap-2'>
-                <Show when={isManualMode() && isOverridden()}>
-                  <button
-                    type='button'
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleRevertToAuto();
-                    }}
-                    disabled={props.disabled}
-                    class='text-xs text-blue-600 hover:text-blue-800 hover:underline disabled:opacity-50'
-                  >
-                    Revert to calculated
-                  </button>
-                </Show>
                 <div class='flex rounded-md border border-gray-200 bg-white text-xs'>
                   <button
                     type='button'
