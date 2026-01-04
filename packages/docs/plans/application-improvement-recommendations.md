@@ -1,6 +1,7 @@
 # Application improvement recommendations
 
 This plan collects broad recommendations for improving CoRATES across:
+
 - TypeScript migration strategy
 - code organization
 - testing

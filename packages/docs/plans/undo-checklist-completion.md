@@ -71,12 +71,14 @@ if (checklist.status === 'completed') {
 ```
 
 Update the button text/styling to indicate undo is available:
+
 - When completed (and undo allowed): Show "Revert to In Progress" button
 - When completed (and locked): Show "Completed (Locked)" badge
 
 ### Phase 2: Add undo option in completed/reconcile tabs
 
 Files:
+
 - `packages/web/src/components/project-ui/completed-tab/CompletedChecklistRow.jsx`
 - `packages/web/src/components/project-ui/ReconcileStudyCard.jsx`
 
@@ -123,7 +125,7 @@ export default function CompletedChecklistRow(props) {
   const { canUndo, reason } = () => canUndoChecklistCompletion(props.checklist, props.study);
 
   return (
-    <div class='p-4 transition-colors flex items-center justify-between hover:bg-gray-50'>
+    <div class='flex items-center justify-between p-4 transition-colors hover:bg-gray-50'>
       {/* ... existing content ... */}
 
       <div class='flex items-center gap-2'>
@@ -133,7 +135,7 @@ export default function CompletedChecklistRow(props) {
               e.stopPropagation();
               props.onUndo?.();
             }}
-            class='px-3 py-1.5 text-amber-700 bg-amber-50 text-sm font-medium rounded-lg hover:bg-amber-100 transition-colors border border-amber-200'
+            class='rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100'
             title='Move back to In Progress'
           >
             Undo
@@ -144,7 +146,7 @@ export default function CompletedChecklistRow(props) {
             e.stopPropagation();
             props.onOpen?.();
           }}
-          class='px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors'
+          class='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700'
         >
           Open
         </button>
@@ -163,14 +165,14 @@ Option B: Add a subtle "undo" icon next to each reviewer name
 
 ## File changes summary
 
-| File | Change |
-| --- | --- |
-| `packages/web/src/components/checklist-ui/ChecklistYjsWrapper.jsx` | Modify `handleToggleComplete()` to handle undo flow |
-| `packages/web/src/components/project-ui/completed-tab/CompletedChecklistRow.jsx` | Add `onUndo` prop and Undo button |
-| `packages/web/src/components/project-ui/completed-tab/CompletedStudyCard.jsx` | Pass `onUndo` handler and study to row |
-| `packages/web/src/components/project-ui/ReconcileStudyCard.jsx` | Add per-checklist undo option |
-| `packages/web/src/primitives/useProject/checklists.js` | Add `canUndoChecklistCompletion()` helper |
-| `packages/web/src/components/project-ui/ProjectContext.jsx` | Add `undoChecklistCompletion` handler |
+| File                                                                             | Change                                              |
+| -------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `packages/web/src/components/checklist-ui/ChecklistYjsWrapper.jsx`               | Modify `handleToggleComplete()` to handle undo flow |
+| `packages/web/src/components/project-ui/completed-tab/CompletedChecklistRow.jsx` | Add `onUndo` prop and Undo button                   |
+| `packages/web/src/components/project-ui/completed-tab/CompletedStudyCard.jsx`    | Pass `onUndo` handler and study to row              |
+| `packages/web/src/components/project-ui/ReconcileStudyCard.jsx`                  | Add per-checklist undo option                       |
+| `packages/web/src/primitives/useProject/checklists.js`                           | Add `canUndoChecklistCompletion()` helper           |
+| `packages/web/src/components/project-ui/ProjectContext.jsx`                      | Add `undoChecklistCompletion` handler               |
 
 ## UX considerations
 

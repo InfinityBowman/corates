@@ -28,6 +28,7 @@ The plan is generally well-structured and feasible, but requires several updates
 Issue: The codebase has an inconsistency between `'in-progress'` (hyphen) and `'in_progress'` (underscore).
 
 Current state:
+
 - `checklists.js` line 485 sets status to `'in-progress'` (hyphen)
 - `ReconciliationWrapper.jsx` line 270 sets status to `'in_progress'` (underscore)
 - Most UI checks use `'in-progress'` (hyphen)
@@ -62,6 +63,7 @@ if (hasReconciled) {
 Issue: Phase 1 mentions adding handler to `ProjectContext.jsx`, but ProjectContext only provides read-only context (projectId, userRole, getAssigneeName). It doesn't provide mutation handlers.
 
 Current architecture:
+
 - Read operations: `projectStore` (reactive)
 - Write operations: `projectActionsStore` (actions)
 
@@ -72,11 +74,13 @@ Fix: Remove ProjectContext reference. `updateChecklist` is already available via
 Issue: Phase 5 assumes `ReconcileStudyCard` shows individual checklists, but it actually shows a study card with a "Reconcile" button. Individual checklists aren't displayed in rows.
 
 Current structure:
+
 - `ReconcileStudyCard` shows study info and a single "Reconcile" button
 - Individual checklists are not shown as separate rows
 - Reconciliation happens in a separate view (`ReconciliationWrapper`)
 
 Fix: Phase 5 needs rethinking. Options:
+
 - Option A: Add undo buttons to individual checklist items in the reconciliation view (if they're shown there)
 - Option B: Add a dropdown/menu in `ReconcileStudyCard` to show individual checklists with undo options
 - Option C: Skip per-checklist undo in reconcile tab (undo only in checklist view and completed tab)
@@ -96,6 +100,7 @@ Fix: Ensure all status updates use `'in-progress'` (with hyphen), not `'in_progr
 File: `ChecklistYjsWrapper.jsx`
 
 Changes needed:
+
 1. Fix the `studyHasReconciledChecklist` reference (use inline check)
 2. Use `'in-progress'` status (with hyphen)
 3. Remove ProjectContext reference (already have `updateChecklist` from `useProject()`)
@@ -103,6 +108,7 @@ Changes needed:
 ### Phase 2: Add undo option in completed tab
 
 Files:
+
 - `CompletedChecklistRow.jsx` (add undo button)
 - `CompletedStudyCard.jsx` (wire up handler)
 
@@ -117,6 +123,7 @@ Use `projectActionsStore.checklist.update()` via props handler.
 ### Phase 5: Update `ReconcileStudyCard` (needs rethinking)
 
 Recommended simplified approach: Skip per-checklist undo in reconcile tab. Users can:
+
 1. Navigate to the checklist view and undo there
 2. Use undo from the completed tab (if applicable)
 

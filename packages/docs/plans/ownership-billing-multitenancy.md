@@ -74,6 +74,7 @@ flowchart TD
 ```
 
 Notes:
+
 - The user can have a personal subscription and be a member of one or more enterprise orgs simultaneously.
 - Entitlements can be mixed: some attach to the user, some attach to the org.
 
@@ -88,10 +89,12 @@ Notes:
 ### Data placement rule
 
 Every persisted object must have either:
+
 - a direct `orgId`, or
 - a `projectId` that resolves to `project.orgId`.
 
 This rule is a guardrail against accidental cross-tenant joins and makes it easier to implement:
+
 - auditing
 - export
 - retention policies
@@ -120,6 +123,7 @@ Projects have their own role system independent of org membership.
   - Can collaborate within the project according to their role/permissions.
 
 Notes:
+
 - Project roles control access to project data and actions.
 - Org roles control org administration (billing, org settings, org membership) and do not automatically imply access to every project.
 
@@ -165,6 +169,7 @@ Users can be invited to collaborate on a project even if they are not members of
 ### Ownership visibility
 
 Ownership should be visible in:
+
 - project list items
 - project header
 - project settings
@@ -198,6 +203,7 @@ Personal settings and enterprise org administration are intentionally separate s
 #### User Billing (standard SaaS page)
 
 Available to all users. Shows only:
+
 - user personal plan tier (Free/Basic/Pro/etc.)
 - personal invoices/receipts
 - personal payment method
@@ -208,6 +214,7 @@ User Billing intentionally does not show enterprise billing details or enterpris
 #### Org Admin Billing (enterprise)
 
 Visible only to org owners/admins. Shows:
+
 - org plan tier (enterprise)
 - seats / member counts
 - org invoices
@@ -224,11 +231,13 @@ Visible only to org owners/admins. Shows:
 ### No implicit merging
 
 The system must not silently:
+
 - merge plans
 - apply refunds
 - auto-cancel a personal plan when enterprise entitlements exist
 
 Instead, the product can surface explicit choices (outside the billing page if enterprise details are hidden there), such as:
+
 - a non-financial notice in project context when a feature is controlled by org scope
 - admin-facing prompts in Org Admin if personal purchases are duplicative (optional)
 
@@ -239,6 +248,7 @@ CoRATES supports both user-scoped and org-scoped entitlements.
 ### Org-scoped entitlements (examples)
 
 These should apply only within projects owned by that org:
+
 - collaboration limits and policies
 - audit logs retention and access policies
 - institutional governance features (SSO/policies later)
@@ -247,12 +257,14 @@ These should apply only within projects owned by that org:
 ### User-scoped entitlements (examples)
 
 These should apply to the user regardless of which org owns the project, unless explicitly restricted:
+
 - personal add-ons (if introduced)
 - personal-tier features that are not organization-governance related
 
 ### UX for feature gating
 
 When a user encounters a locked feature:
+
 - If the feature is org-scoped: explain "Org controlled" and guide them to ask an org admin.
 - If the feature is user-scoped: guide them to User Billing upgrade flow.
 - Avoid revealing enterprise pricing or billing details to non-admin members.
@@ -269,6 +281,7 @@ Transfers are explicit, user-initiated operations that change `project.orgId`.
 ### Transfer UX requirements
 
 The transfer flow must clearly communicate:
+
 - the ownership change (OrgA -> OrgB)
 - access changes (who will lose access, who will gain access)
 - billing responsibility change (OrgB becomes responsible for org-scoped billing for that project)
@@ -285,6 +298,7 @@ The transfer flow must clearly communicate:
 ### Transfer audit trail
 
 Every transfer must be recorded as an immutable audit event with:
+
 - actor
 - timestamp
 - source org
