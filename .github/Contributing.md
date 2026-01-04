@@ -176,19 +176,19 @@ pnpm run initialize-mcp
 
 ## Useful Commands
 
-| Command                                           | Description                     |
-| ------------------------------------------------- | ------------------------------- |
-| `pnpm dev:front`                                  | Start frontend (landing + web)  |
-| `pnpm dev:workers`                                | Start backend workers           |
-| `pnpm build`                                      | Build all packages              |
-| `pnpm test`                                       | Run all tests                   |
-| `pnpm lint`                                       | Run ESLint                      |
-| `pnpm format`                                     | Run Prettier                    |
-| `pnpm clear-workers`                              | Clear local worker storage      |
-| `pnpm logs`                                       | View worker logs                |
-| `pnpm docs`                                       | View architecture documentation |
-| `pnpm loc`                                        | Lines of code report            |
-| `pnpm user:make-admin:local -- email@example.com` | Make a user admin (local)       |
+| Command                                           | Description                       |
+| ------------------------------------------------- | --------------------------------- |
+| `pnpm dev:front`                                  | Start frontend (landing + web)    |
+| `pnpm dev:workers`                                | Start backend workers             |
+| `pnpm build`                                      | Build all packages                |
+| `pnpm test`                                       | Run all tests                     |
+| `pnpm lint`                                       | Run ESLint                        |
+| `pnpm format`                                     | Run Prettier                      |
+| `pnpm clear-workers`                              | Clear local worker storage        |
+| `pnpm logs`                                       | View worker logs                  |
+| `pnpm docs`                                       | View architecture documentation   |
+| `pnpm loc`                                        | Lines of code report              |
+| `pnpm user:make-admin:local -- email@example.com` | Make a user admin (local)         |
 | `pnpm stripe:setup`                               | Setup Stripe test products/prices |
 
 ## Code Style

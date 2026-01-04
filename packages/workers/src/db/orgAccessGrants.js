@@ -47,10 +47,10 @@ export async function getActiveGrantsByOrgId(db, orgId, now) {
 
   // Filter by time range (Drizzle doesn't easily support complex timestamp comparisons)
   return results.filter(grant => {
-    const startsAt = grant.startsAt instanceof Date ?
-        Math.floor(grant.startsAt.getTime() / 1000)
-      : grant.startsAt;
-    const expiresAt = grant.expiresAt instanceof Date ?
+    const startsAt =
+      grant.startsAt instanceof Date ? Math.floor(grant.startsAt.getTime() / 1000) : grant.startsAt;
+    const expiresAt =
+      grant.expiresAt instanceof Date ?
         Math.floor(grant.expiresAt.getTime() / 1000)
       : grant.expiresAt;
     return startsAt <= nowTimestamp && nowTimestamp < expiresAt;

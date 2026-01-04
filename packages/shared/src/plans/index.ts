@@ -32,8 +32,5 @@ export type { PlanPricing } from './pricing.js';
 export { getBillingPlanCatalog } from './catalog.js';
 
 // Stripe setup
-export {
-  getStripeProductConfig,
-  getAllStripeProductConfigs,
-} from './stripe.js';
+export { getStripeProductConfig, getAllStripeProductConfigs } from './stripe.js';
 export type { StripeProductConfig } from './stripe.js';

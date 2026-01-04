@@ -7,11 +7,7 @@ import { Hono } from 'hono';
 import { createDb } from '../../db/client.js';
 import { organization, member, projects } from '../../db/schema.js';
 import { eq, count, desc, like, or, sql } from 'drizzle-orm';
-import {
-  createDomainError,
-  VALIDATION_ERRORS,
-  SYSTEM_ERRORS,
-} from '@corates/shared';
+import { createDomainError, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { resolveOrgAccess } from '../../lib/billingResolver.js';
 import { getPlan, getGrantPlan } from '@corates/shared/plans';
 
@@ -52,7 +48,8 @@ orgRoutes.get('/orgs', async c => {
     }
 
     // Get total count for pagination
-    const totalCountQuery = search ?
+    const totalCountQuery =
+      search ?
         db
           .select({ count: count() })
           .from(organization)
@@ -68,7 +65,11 @@ orgRoutes.get('/orgs', async c => {
     const total = totalResult?.count || 0;
 
     // Get paginated results
-    const orgs = await query.orderBy(desc(organization.createdAt)).limit(limit).offset(offset).all();
+    const orgs = await query
+      .orderBy(desc(organization.createdAt))
+      .limit(limit)
+      .offset(offset)
+      .all();
 
     // Get stats for all orgs in parallel
     const orgIds = orgs.map(org => org.id);
@@ -82,7 +83,12 @@ orgRoutes.get('/orgs', async c => {
           count: count(),
         })
         .from(member)
-        .where(sql`${member.organizationId} IN (${sql.join(orgIds.map(id => sql`${id}`), sql`, `)})`)
+        .where(
+          sql`${member.organizationId} IN (${sql.join(
+            orgIds.map(id => sql`${id}`),
+            sql`, `,
+          )})`,
+        )
         .groupBy(member.organizationId)
         .all();
 
@@ -93,7 +99,12 @@ orgRoutes.get('/orgs', async c => {
           count: count(),
         })
         .from(projects)
-        .where(sql`${projects.orgId} IN (${sql.join(orgIds.map(id => sql`${id}`), sql`, `)})`)
+        .where(
+          sql`${projects.orgId} IN (${sql.join(
+            orgIds.map(id => sql`${id}`),
+            sql`, `,
+          )})`,
+        )
         .groupBy(projects.orgId)
         .all();
 

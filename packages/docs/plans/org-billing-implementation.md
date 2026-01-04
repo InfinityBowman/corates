@@ -15,11 +15,12 @@
 
 - Orgs exist (Better Auth organization plugin) and personal org bootstrap already happens in [`packages/workers/src/auth/config.js`](packages/workers/src/auth/config.js).
 - Projects are org-owned (`projects.orgId`) in [`packages/workers/src/db/schema.js`](packages/workers/src/db/schema.js).
-- Project invite acceptance currently *optionally* grants org membership (`grantOrgMembership`). We will remove that optionality and enforce org membership always.
+- Project invite acceptance currently _optionally_ grants org membership (`grantOrgMembership`). We will remove that optionality and enforce org membership always.
 
 ## Core architecture: BillingResolver
 
 Add a single resolver that computes the org's **effective plan** and exposes:
+
 - `effectivePlanId`
 - `entitlements`
 - `quotas`
@@ -71,12 +72,14 @@ Formal precedence rules:
 When an org has read-only access (expired grant or ended subscription), the following applies:
 
 **Allowed actions:**
+
 - View existing projects and their content
 - View project members and settings
 - Export/download project data
 - Read-only API access (GET requests)
 
 **Blocked actions:**
+
 - Create new projects
 - Modify existing projects (edit studies, checklists, notes, etc.)
 - Add or remove project members
@@ -144,6 +147,7 @@ When an org has read-only access (expired grant or ended subscription), the foll
 #### Billing ownership, payer changes, and invoices
 
 **Conceptual ownership**:
+
 - **Access/entitlements** are owned by the **organization** (resolved by `referenceId = orgId`).
 - **Stripe Customer IDs** are owned by a **user** (`user.stripeCustomerId`) and are an implementation detail.
 - **Invoices** are conceptually “owned” by the **organization** for product/accounting purposes, but technically they live under the Stripe customer attached to the active Stripe subscription.
@@ -156,13 +160,16 @@ When an org has read-only access (expired grant or ended subscription), the foll
   - **Billing safety**: Before deletion, we must best-effort cancel any active Stripe subscription for `referenceId = orgId` to avoid post-deletion charges.
 
 **Invoice access in-product**:
+
 - We will treat invoices/portal as **org-owner functionality**.
 - The org `owner` can open the billing portal for the org by using the org `referenceId` (portal session is created for the customer ID attached to the active subscription).
 
 **If the payer leaves the org**:
+
 - Not applicable in the current scope (single-owner personal orgs). If/when institution orgs are introduced, this section will be revisited.
 
 **If multiple admins pay over time**:
+
 - Not applicable in the current scope (single-owner personal orgs). If/when institution orgs are introduced, this section will be revisited.
 
 ### B) Grants (internal, org-scoped)
@@ -217,6 +224,7 @@ Update `@corates/shared/plans` to match the pricing model.
   - `collaborators.org.max` (org-wide accepted collaborators, **excluding the org owner**)
 
 Mapping:
+
 - `starter_team`: projects 3, collaborators 5
 - `team`: projects 10, collaborators 15
 - `unlimited_team`: unlimited projects and collaborators
@@ -235,6 +243,7 @@ Mapping:
 ### 2) Collaborator quota (accepted-only)
 
 Enforce **only** at invitation acceptance:
+
 - Count distinct users with accepted org membership, **excluding the org owner** (role = `owner`).
 - The org owner does not count toward the `collaborators.org.max` quota.
 - Invites do not count toward collaborator limits; enforcement occurs on invite acceptance.
@@ -247,11 +256,13 @@ Enforce **only** at invitation acceptance:
 All code paths that create a `projectMembers` row must also ensure a `member` row exists for `(orgId, userId)`.
 
 Primary path:
+
 - [`packages/workers/src/routes/orgs/invitations.js`](packages/workers/src/routes/orgs/invitations.js) `POST /accept`
   - Remove `grantOrgMembership` optionality.
   - Always upsert org membership with role `member`.
 
 Secondary paths:
+
 - Any "add member" endpoints for projects (e.g. `orgs/projects/:projectId/members`) must also ensure org membership.
 
 ## One-time Single Project purchase (minimal Stripe direct usage)
@@ -270,6 +281,7 @@ Secondary paths:
 **Key principle**: Use a single Stripe customer per user via Better Auth's `user.stripeCustomerId` for both subscriptions and one-time purchases.
 
 **Upgrade flow**:
+
 1. User has a `single_project` grant from a one-time purchase (may have a Stripe customer from that purchase).
 2. User upgrades to a subscription via Better Auth Stripe plugin.
 3. Better Auth Stripe plugin will:
@@ -279,6 +291,7 @@ Secondary paths:
 5. **Grant handling**: The `single_project` grant is ignored while the subscription is active (per resolution rules), but remains stored for fallback.
 
 **Important**:
+
 - We do not attempt to link or merge Stripe customers between one-time purchases and subscriptions because we never create multiple customers per user in the first place.
 - The subscription's `referenceId = orgId` ensures billing is org-scoped.
 

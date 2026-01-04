@@ -82,141 +82,148 @@ orgPdfRoutes.get('/', requireOrgMembership(), requireProjectAccess(), extractStu
  * POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs
  * Upload a PDF for a study
  */
-orgPdfRoutes.post('/', requireOrgMembership(), requireOrgWriteAccess(), requireProjectAccess(), extractStudyId, async c => {
-  const { user } = getAuth(c);
-  const { projectId } = getProjectContext(c);
-  const studyId = c.get('studyId');
+orgPdfRoutes.post(
+  '/',
+  requireOrgMembership(),
+  requireOrgWriteAccess(),
+  requireProjectAccess(),
+  extractStudyId,
+  async c => {
+    const { user } = getAuth(c);
+    const { projectId } = getProjectContext(c);
+    const studyId = c.get('studyId');
 
-  // Check Content-Length header first for early rejection
-  const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
-  if (contentLength > FILE_SIZE_LIMITS.PDF) {
-    const error = createDomainError(
-      FILE_ERRORS.TOO_LARGE,
-      { fileSize: contentLength, maxSize: FILE_SIZE_LIMITS.PDF },
-      `File size exceeds limit of ${FILE_SIZE_LIMITS.PDF / (1024 * 1024)}MB`,
-    );
-    return c.json(error, error.statusCode);
-  }
-
-  const contentType = c.req.header('Content-Type') || '';
-
-  let pdfData;
-  let fileName;
-
-  try {
-    if (contentType.includes('multipart/form-data')) {
-      // Handle multipart form data
-      const formData = await c.req.formData();
-      const file = formData.get('file');
-
-      if (!file || !(file instanceof File)) {
-        const error = createDomainError(
-          VALIDATION_ERRORS.FIELD_REQUIRED,
-          { field: 'file' },
-          'No file provided',
-        );
-        return c.json(error, error.statusCode);
-      }
-
-      // Check file size
-      if (file.size > FILE_SIZE_LIMITS.PDF) {
-        const error = createDomainError(
-          FILE_ERRORS.TOO_LARGE,
-          { fileSize: file.size, maxSize: FILE_SIZE_LIMITS.PDF },
-          `File size (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds limit of ${FILE_SIZE_LIMITS.PDF / (1024 * 1024)}MB`,
-        );
-        return c.json(error, error.statusCode);
-      }
-
-      fileName = file.name || 'document.pdf';
-      pdfData = await file.arrayBuffer();
-    } else if (contentType === 'application/pdf') {
-      // Handle raw PDF upload
-      fileName = c.req.header('X-File-Name') || 'document.pdf';
-      pdfData = await c.req.arrayBuffer();
-
-      // Check size after reading for raw uploads
-      if (pdfData.byteLength > FILE_SIZE_LIMITS.PDF) {
-        const error = createDomainError(
-          FILE_ERRORS.TOO_LARGE,
-          { fileSize: pdfData.byteLength, maxSize: FILE_SIZE_LIMITS.PDF },
-          `File size (${(pdfData.byteLength / (1024 * 1024)).toFixed(2)}MB) exceeds limit of ${FILE_SIZE_LIMITS.PDF / (1024 * 1024)}MB`,
-        );
-        return c.json(error, error.statusCode);
-      }
-    } else {
+    // Check Content-Length header first for early rejection
+    const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
+    if (contentLength > FILE_SIZE_LIMITS.PDF) {
       const error = createDomainError(
-        FILE_ERRORS.INVALID_TYPE,
-        { contentType },
-        'Invalid content type. Expected multipart/form-data or application/pdf',
+        FILE_ERRORS.TOO_LARGE,
+        { fileSize: contentLength, maxSize: FILE_SIZE_LIMITS.PDF },
+        `File size exceeds limit of ${FILE_SIZE_LIMITS.PDF / (1024 * 1024)}MB`,
       );
       return c.json(error, error.statusCode);
     }
 
-    if (!isValidFileName(fileName)) {
-      const error = createDomainError(
-        VALIDATION_ERRORS.FIELD_INVALID_FORMAT,
-        { field: 'fileName', value: fileName },
-        'Invalid file name. Avoid quotes, slashes, control characters, and very long names.',
-      );
-      return c.json(error, error.statusCode);
-    }
+    const contentType = c.req.header('Content-Type') || '';
 
-    // Validate it's a PDF (check magic bytes)
-    const header = new Uint8Array(pdfData.slice(0, 5));
-    const pdfMagic = [0x25, 0x50, 0x44, 0x46, 0x2d]; // %PDF-
-    const isPdf = pdfMagic.every((byte, i) => header[i] === byte);
+    let pdfData;
+    let fileName;
 
-    if (!isPdf) {
-      const error = createDomainError(
-        FILE_ERRORS.INVALID_TYPE,
-        { fileType: 'unknown', expectedType: 'application/pdf' },
-        'File is not a valid PDF',
-      );
-      return c.json(error, error.statusCode);
-    }
+    try {
+      if (contentType.includes('multipart/form-data')) {
+        // Handle multipart form data
+        const formData = await c.req.formData();
+        const file = formData.get('file');
 
-    // Check for duplicate file name
-    const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
-    const existingFile = await c.env.PDF_BUCKET.head(key);
-    if (existingFile) {
-      const error = createDomainError(FILE_ERRORS.ALREADY_EXISTS, {
-        fileName,
-        key,
+        if (!file || !(file instanceof File)) {
+          const error = createDomainError(
+            VALIDATION_ERRORS.FIELD_REQUIRED,
+            { field: 'file' },
+            'No file provided',
+          );
+          return c.json(error, error.statusCode);
+        }
+
+        // Check file size
+        if (file.size > FILE_SIZE_LIMITS.PDF) {
+          const error = createDomainError(
+            FILE_ERRORS.TOO_LARGE,
+            { fileSize: file.size, maxSize: FILE_SIZE_LIMITS.PDF },
+            `File size (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds limit of ${FILE_SIZE_LIMITS.PDF / (1024 * 1024)}MB`,
+          );
+          return c.json(error, error.statusCode);
+        }
+
+        fileName = file.name || 'document.pdf';
+        pdfData = await file.arrayBuffer();
+      } else if (contentType === 'application/pdf') {
+        // Handle raw PDF upload
+        fileName = c.req.header('X-File-Name') || 'document.pdf';
+        pdfData = await c.req.arrayBuffer();
+
+        // Check size after reading for raw uploads
+        if (pdfData.byteLength > FILE_SIZE_LIMITS.PDF) {
+          const error = createDomainError(
+            FILE_ERRORS.TOO_LARGE,
+            { fileSize: pdfData.byteLength, maxSize: FILE_SIZE_LIMITS.PDF },
+            `File size (${(pdfData.byteLength / (1024 * 1024)).toFixed(2)}MB) exceeds limit of ${FILE_SIZE_LIMITS.PDF / (1024 * 1024)}MB`,
+          );
+          return c.json(error, error.statusCode);
+        }
+      } else {
+        const error = createDomainError(
+          FILE_ERRORS.INVALID_TYPE,
+          { contentType },
+          'Invalid content type. Expected multipart/form-data or application/pdf',
+        );
+        return c.json(error, error.statusCode);
+      }
+
+      if (!isValidFileName(fileName)) {
+        const error = createDomainError(
+          VALIDATION_ERRORS.FIELD_INVALID_FORMAT,
+          { field: 'fileName', value: fileName },
+          'Invalid file name. Avoid quotes, slashes, control characters, and very long names.',
+        );
+        return c.json(error, error.statusCode);
+      }
+
+      // Validate it's a PDF (check magic bytes)
+      const header = new Uint8Array(pdfData.slice(0, 5));
+      const pdfMagic = [0x25, 0x50, 0x44, 0x46, 0x2d]; // %PDF-
+      const isPdf = pdfMagic.every((byte, i) => header[i] === byte);
+
+      if (!isPdf) {
+        const error = createDomainError(
+          FILE_ERRORS.INVALID_TYPE,
+          { fileType: 'unknown', expectedType: 'application/pdf' },
+          'File is not a valid PDF',
+        );
+        return c.json(error, error.statusCode);
+      }
+
+      // Check for duplicate file name
+      const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
+      const existingFile = await c.env.PDF_BUCKET.head(key);
+      if (existingFile) {
+        const error = createDomainError(FILE_ERRORS.ALREADY_EXISTS, {
+          fileName,
+          key,
+        });
+        return c.json(error, error.statusCode);
+      }
+
+      // Store in R2
+      await c.env.PDF_BUCKET.put(key, pdfData, {
+        httpMetadata: {
+          contentType: 'application/pdf',
+        },
+        customMetadata: {
+          projectId,
+          studyId,
+          fileName,
+          uploadedBy: user.id,
+          uploadedAt: new Date().toISOString(),
+        },
       });
-      return c.json(error, error.statusCode);
-    }
 
-    // Store in R2
-    await c.env.PDF_BUCKET.put(key, pdfData, {
-      httpMetadata: {
-        contentType: 'application/pdf',
-      },
-      customMetadata: {
-        projectId,
-        studyId,
+      return c.json({
+        success: true,
+        key,
         fileName,
-        uploadedBy: user.id,
-        uploadedAt: new Date().toISOString(),
-      },
-    });
-
-    return c.json({
-      success: true,
-      key,
-      fileName,
-      size: pdfData.byteLength,
-    });
-  } catch (error) {
-    console.error('PDF upload error:', error);
-    const uploadError = createDomainError(
-      FILE_ERRORS.UPLOAD_FAILED,
-      { operation: 'upload_pdf', originalError: error.message },
-      error.message,
-    );
-    return c.json(uploadError, uploadError.statusCode);
-  }
-});
+        size: pdfData.byteLength,
+      });
+    } catch (error) {
+      console.error('PDF upload error:', error);
+      const uploadError = createDomainError(
+        FILE_ERRORS.UPLOAD_FAILED,
+        { operation: 'upload_pdf', originalError: error.message },
+        error.message,
+      );
+      return c.json(uploadError, uploadError.statusCode);
+    }
+  },
+);
 
 /**
  * GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName

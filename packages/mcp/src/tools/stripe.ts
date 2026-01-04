@@ -45,10 +45,7 @@ export function registerStripeTools(server: McpServerType): void {
     },
     async ({ path: docPath }): Promise<{ content: Array<{ type: 'text'; text: string }> }> => {
       try {
-        const url =
-          docPath ?
-            `${STRIPE_BASE_URL}/${docPath}.md`
-          : `${STRIPE_BASE_URL}/llms.txt`;
+        const url = docPath ? `${STRIPE_BASE_URL}/${docPath}.md` : `${STRIPE_BASE_URL}/llms.txt`;
 
         const text = await fetchWithCache(url);
 
