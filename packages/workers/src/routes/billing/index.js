@@ -437,7 +437,7 @@ billingRoutes.post('/single-project/checkout', requireAuth, async c => {
  */
 billingRoutes.post('/purchases/webhook', async c => {
   try {
-    if (!c.env.STRIPE_SECRET_KEY || !c.env.STRIPE_WEBHOOK_SECRET) {
+    if (!c.env.STRIPE_SECRET_KEY || !c.env.STRIPE_WEBHOOK_SECRET_PURCHASES) {
       const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
         operation: 'stripe_not_configured',
       });
@@ -464,7 +464,7 @@ billingRoutes.post('/purchases/webhook', async c => {
       event = await stripe.webhooks.constructEventAsync(
         rawBody,
         signature,
-        c.env.STRIPE_WEBHOOK_SECRET,
+        c.env.STRIPE_WEBHOOK_SECRET_PURCHASES,
       );
     } catch (err) {
       console.error('Webhook signature verification failed:', err);

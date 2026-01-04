@@ -38,7 +38,7 @@ async function createWebhookRequest(eventType, eventData, signature = 'valid-sig
   const testEnv = {
     ...env,
     STRIPE_SECRET_KEY: 'sk_test_123',
-    STRIPE_WEBHOOK_SECRET: 'whsec_test',
+    STRIPE_WEBHOOK_SECRET_PURCHASES: 'whsec_test',
   };
 
   const event = {
@@ -230,7 +230,10 @@ describe('Purchase Webhook Handler', () => {
       : existingExpiresAt;
     const nowTimestamp = Math.floor(Date.now() / 1000);
     const baseExpiresAt = Math.max(nowTimestamp, originalExpiresAt);
-    const expectedExpiresAt = baseExpiresAt + (6 * 30 * 24 * 60 * 60); // 6 months in seconds (approximate)
+    // Expected expiry uses calendar months (Date#setMonth), not fixed 30-day months
+    const expectedDate = new Date(baseExpiresAt * 1000);
+    expectedDate.setMonth(expectedDate.getMonth() + 6);
+    const expectedExpiresAt = Math.floor(expectedDate.getTime() / 1000);
     // Allow some tolerance for test execution time
     expect(newExpiresAt).toBeGreaterThan(originalExpiresAt);
     expect(Math.abs(newExpiresAt - expectedExpiresAt)).toBeLessThan(60); // Within 60 seconds

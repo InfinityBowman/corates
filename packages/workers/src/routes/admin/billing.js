@@ -11,7 +11,6 @@ import {
   createDomainError,
   VALIDATION_ERRORS,
   SYSTEM_ERRORS,
-  AUTH_ERRORS,
 } from '@corates/shared';
 import { resolveOrgAccess } from '../../lib/billingResolver.js';
 import {

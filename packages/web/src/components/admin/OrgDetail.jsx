@@ -8,7 +8,7 @@ import { useNavigate, useParams, A } from '@solidjs/router';
 import {
   FiArrowLeft,
   FiLoader,
-  FiBuilding2,
+  FiHome,
   FiUsers,
   FiFolder,
   FiShield,
@@ -20,6 +20,7 @@ import {
 } from '@primitives/useAdminQueries.js';
 import {
   createOrgSubscription,
+  updateOrgSubscription,
   cancelOrgSubscription,
   createOrgGrant,
   revokeOrgGrant,
@@ -59,12 +60,18 @@ export default function OrgDetail() {
   const [grantDialogOpen, setGrantDialogOpen] = createSignal(false);
   const [confirmDialog, setConfirmDialog] = createSignal(null);
   const [loading, setLoading] = createSignal(false);
+  const [editingSubscription, setEditingSubscription] = createSignal(null);
 
   // Subscription form state
   const [subPlan, setSubPlan] = createSignal('starter_team');
   const [subStatus, setSubStatus] = createSignal('active');
   const [subPeriodStart, setSubPeriodStart] = createSignal('');
   const [subPeriodEnd, setSubPeriodEnd] = createSignal('');
+  const [subCancelAtPeriodEnd, setSubCancelAtPeriodEnd] = createSignal(false);
+  const [subCanceledAt, setSubCanceledAt] = createSignal(null);
+  const [subEndedAt, setSubEndedAt] = createSignal(null);
+  const [subStripeCustomerId, setSubStripeCustomerId] = createSignal('');
+  const [subStripeSubscriptionId, setSubStripeSubscriptionId] = createSignal('');
 
   // Grant form state
   const [grantType, setGrantType] = createSignal('trial');
@@ -95,10 +102,14 @@ export default function OrgDetail() {
       };
       if (subPeriodStart()) data.periodStart = new Date(subPeriodStart());
       if (subPeriodEnd()) data.periodEnd = new Date(subPeriodEnd());
+      if (subStripeCustomerId()) data.stripeCustomerId = subStripeCustomerId();
+      if (subStripeSubscriptionId()) data.stripeSubscriptionId = subStripeSubscriptionId();
+      data.cancelAtPeriodEnd = subCancelAtPeriodEnd();
 
       await createOrgSubscription(orgId(), data);
       showToast({ title: 'Success', description: 'Subscription created successfully' });
       setSubscriptionDialogOpen(false);
+      resetSubscriptionForm();
       billingQuery.refetch();
     } catch (error) {
       await handleError(error, { toastTitle: 'Error creating subscription' });
@@ -107,11 +118,84 @@ export default function OrgDetail() {
     }
   };
 
+  const handleUpdateSubscription = async () => {
+    const subscription = editingSubscription();
+    if (!subscription) return;
+
+    setLoading(true);
+    try {
+      const data = {};
+      if (subPlan() !== subscription.plan) data.plan = subPlan();
+      if (subStatus() !== subscription.status) data.status = subStatus();
+      if (subPeriodStart()) {
+        const newStart = new Date(subPeriodStart());
+        const oldStart = subscription.periodStart ?
+            (subscription.periodStart instanceof Date ?
+                subscription.periodStart
+              : typeof subscription.periodStart === 'string' ?
+                new Date(subscription.periodStart)
+              : new Date(subscription.periodStart * 1000))
+          : null;
+        if (!oldStart || newStart.getTime() !== oldStart.getTime()) {
+          data.periodStart = newStart;
+        }
+      }
+      if (subPeriodEnd()) {
+        const newEnd = new Date(subPeriodEnd());
+        const oldEnd = subscription.periodEnd ?
+            (subscription.periodEnd instanceof Date ?
+                subscription.periodEnd
+              : typeof subscription.periodEnd === 'string' ?
+                new Date(subscription.periodEnd)
+              : new Date(subscription.periodEnd * 1000))
+          : null;
+        if (!oldEnd || newEnd.getTime() !== oldEnd.getTime()) {
+          data.periodEnd = newEnd;
+        }
+      }
+      if (subCancelAtPeriodEnd() !== subscription.cancelAtPeriodEnd) {
+        data.cancelAtPeriodEnd = subCancelAtPeriodEnd();
+      }
+      if (subCanceledAt() !== subscription.canceledAt) {
+        data.canceledAt = subCanceledAt();
+      }
+      if (subEndedAt() !== subscription.endedAt) {
+        data.endedAt = subEndedAt();
+      }
+
+      await updateOrgSubscription(orgId(), subscription.id, data);
+      showToast({ title: 'Success', description: 'Subscription updated successfully' });
+      setSubscriptionDialogOpen(false);
+      setEditingSubscription(null);
+      resetSubscriptionForm();
+      billingQuery.refetch();
+    } catch (error) {
+      await handleError(error, { toastTitle: 'Error updating subscription' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetSubscriptionForm = () => {
+    setSubPlan('starter_team');
+    setSubStatus('active');
+    setSubPeriodStart('');
+    setSubPeriodEnd('');
+    setSubCancelAtPeriodEnd(false);
+    setSubCanceledAt(null);
+    setSubEndedAt(null);
+    setSubStripeCustomerId('');
+    setSubStripeSubscriptionId('');
+  };
+
   const handleCancelSubscription = async subscriptionId => {
     setLoading(true);
     try {
       await cancelOrgSubscription(orgId(), subscriptionId);
-      showToast({ title: 'Success', description: 'Subscription canceled' });
+      showToast({
+        title: 'Success',
+        description: 'Subscription canceled (status=canceled, endedAt=now)',
+      });
       setConfirmDialog(null);
       billingQuery.refetch();
     } catch (error) {
@@ -119,6 +203,20 @@ export default function OrgDetail() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditSubscription = subscription => {
+    setEditingSubscription(subscription);
+    setSubPlan(subscription.plan);
+    setSubStatus(subscription.status);
+    setSubPeriodStart(formatDateInput(subscription.periodStart));
+    setSubPeriodEnd(formatDateInput(subscription.periodEnd));
+    setSubCancelAtPeriodEnd(subscription.cancelAtPeriodEnd || false);
+    setSubCanceledAt(subscription.canceledAt);
+    setSubEndedAt(subscription.endedAt);
+    setSubStripeCustomerId(subscription.stripeCustomerId || '');
+    setSubStripeSubscriptionId(subscription.stripeSubscriptionId || '');
+    setSubscriptionDialogOpen(true);
   };
 
   const handleCreateGrant = async () => {
@@ -185,10 +283,8 @@ export default function OrgDetail() {
   };
 
   const handleOpenSubscriptionDialog = () => {
-    setSubPlan('starter_team');
-    setSubStatus('active');
-    setSubPeriodStart('');
-    setSubPeriodEnd('');
+    setEditingSubscription(null);
+    resetSubscriptionForm();
     setSubscriptionDialogOpen(true);
   };
 
@@ -235,7 +331,7 @@ export default function OrgDetail() {
             </A>
             <div class='flex items-center space-x-3'>
               <div class='flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100'>
-                <FiBuilding2 class='h-6 w-6 text-blue-600' />
+                <FiHome class='h-6 w-6 text-blue-600' />
               </div>
               <div>
                 <h1 class='text-2xl font-bold text-gray-900'>
@@ -296,11 +392,13 @@ export default function OrgDetail() {
           <div class='mb-6'>
             <SubscriptionList
               subscriptions={billing()?.subscriptions}
+              effectiveSubscriptionId={billingData()?.subscription?.id}
               loading={loading()}
               isLoading={billingQuery.isLoading}
               onCancel={subscriptionId =>
                 setConfirmDialog({ type: 'cancel-subscription', subscriptionId })
               }
+              onEdit={handleEditSubscription}
             />
           </div>
 
@@ -314,20 +412,37 @@ export default function OrgDetail() {
             />
           </div>
 
-          {/* Create Subscription Dialog */}
+          {/* Create/Edit Subscription Dialog */}
           <SubscriptionDialog
             open={subscriptionDialogOpen()}
-            onOpenChange={setSubscriptionDialogOpen}
+            onOpenChange={open => {
+              if (!open) {
+                setEditingSubscription(null);
+                resetSubscriptionForm();
+              }
+              setSubscriptionDialogOpen(open);
+            }}
             loading={loading()}
+            isEdit={!!editingSubscription()}
             plan={subPlan()}
             status={subStatus()}
             periodStart={subPeriodStart()}
             periodEnd={subPeriodEnd()}
+            cancelAtPeriodEnd={subCancelAtPeriodEnd()}
+            canceledAt={subCanceledAt()}
+            endedAt={subEndedAt()}
+            stripeCustomerId={subStripeCustomerId()}
+            stripeSubscriptionId={subStripeSubscriptionId()}
             onPlanChange={setSubPlan}
             onStatusChange={setSubStatus}
             onPeriodStartChange={setSubPeriodStart}
             onPeriodEndChange={setSubPeriodEnd}
-            onSubmit={handleCreateSubscription}
+            onCancelAtPeriodEndChange={setSubCancelAtPeriodEnd}
+            onCanceledAtChange={setSubCanceledAt}
+            onEndedAtChange={setSubEndedAt}
+            onStripeCustomerIdChange={setSubStripeCustomerId}
+            onStripeSubscriptionIdChange={setSubStripeSubscriptionId}
+            onSubmit={editingSubscription() ? handleUpdateSubscription : handleCreateSubscription}
           />
 
           {/* Create Grant Dialog */}

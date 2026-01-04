@@ -232,12 +232,12 @@ export async function resolveOrgAccess(db, orgId, now = new Date()) {
     };
   }
 
-  // 4. Default fallback: free tier (read-only access)
+  // 4. Default fallback: free tier (can write to projects they're members of, but cannot create projects)
   const freePlan = getPlan(DEFAULT_PLAN);
   return {
     effectivePlanId: DEFAULT_PLAN,
     source: 'free',
-    accessMode: 'readOnly',
+    accessMode: 'free',
     entitlements: freePlan.entitlements,
     quotas: freePlan.quotas,
     subscription: null,

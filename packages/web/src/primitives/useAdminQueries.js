@@ -6,6 +6,7 @@
 import { useQuery } from '@tanstack/solid-query';
 import { API_BASE } from '@config/api.js';
 import { queryKeys } from '@lib/queryKeys.js';
+import { fetchOrgs, fetchOrgDetails, fetchOrgBilling } from '@/stores/adminStore.js';
 
 /**
  * Helper for admin fetch calls

@@ -136,7 +136,7 @@ export function createAuth(env, ctx) {
   );
 
   // Stripe plugin for org-scoped subscriptions
-  if (env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET) {
+  if (env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET_AUTH) {
     const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
       apiVersion: '2025-11-17.clover',
     });
@@ -144,7 +144,7 @@ export function createAuth(env, ctx) {
     plugins.push(
       stripe({
         stripeClient,
-        stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
+        stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET_AUTH,
         createCustomerOnSignUp: true,
         subscription: {
           enabled: true,
@@ -193,7 +193,7 @@ export function createAuth(env, ctx) {
     );
   } else {
     console.error(
-      '[Auth] Stripe plugin NOT configured - missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET',
+      '[Auth] Stripe plugin NOT configured - missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET_AUTH',
     );
   }
 

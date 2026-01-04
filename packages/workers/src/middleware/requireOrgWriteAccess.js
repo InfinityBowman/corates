@@ -33,12 +33,13 @@ export function requireOrgWriteAccess() {
     const db = createDb(c.env.DB);
     const orgBilling = await resolveOrgAccess(db, orgId);
 
-    // Check if org has read-only access (includes free tier)
-    if (orgBilling.accessMode === 'readOnly' || orgBilling.accessMode === 'free') {
+    // Block writes only for expired grants (readOnly mode)
+    // Free tier users can write to projects they belong to; project creation is gated by entitlements/quotas
+    if (orgBilling.accessMode === 'readOnly') {
       const error = createDomainError(
         AUTH_ERRORS.FORBIDDEN,
         { reason: 'read_only_access', source: orgBilling.source },
-        'This organization has read-only access. Please upgrade your plan or renew your subscription to make changes.',
+        'This organization has read-only access. Please renew your subscription or purchase a plan to make changes.',
       );
       return c.json(error, error.statusCode);
     }

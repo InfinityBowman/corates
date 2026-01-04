@@ -10,7 +10,7 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiLoader,
-  FiBuilding2,
+  FiHome,
   FiUsers,
   FiFolder,
   FiShield,
@@ -85,7 +85,7 @@ export default function OrgList() {
           <div class='mb-8 flex items-center justify-between'>
             <div class='flex items-center space-x-3'>
               <div class='rounded-lg bg-blue-100 p-2'>
-                <FiBuilding2 class='h-6 w-6 text-blue-600' />
+                <FiHome class='h-6 w-6 text-blue-600' />
               </div>
               <div>
                 <h1 class='text-2xl font-bold text-gray-900'>Organizations</h1>
@@ -168,7 +168,7 @@ export default function OrgList() {
                           <td class='px-6 py-4'>
                             <div class='flex items-center space-x-3'>
                               <div class='flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100'>
-                                <FiBuilding2 class='h-5 w-5 text-blue-600' />
+                                <FiHome class='h-5 w-5 text-blue-600' />
                               </div>
                               <div>
                                 <p class='font-medium text-gray-900'>{org.name}</p>

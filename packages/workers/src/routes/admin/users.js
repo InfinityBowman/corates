@@ -104,6 +104,7 @@ userRoutes.get('/users', async c => {
         banned: user.banned,
         banReason: user.banReason,
         banExpires: user.banExpires,
+        stripeCustomerId: user.stripeCustomerId,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       })

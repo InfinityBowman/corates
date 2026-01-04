@@ -64,6 +64,34 @@ This is a pnpm monorepo with the following packages:
    - API: http://localhost:8787
    - Docs: http://localhost:8787/docs [API Docs](#api-documentation)
 
+### Stripe Local Development
+
+For local Stripe webhook testing, the project includes a `@corates/stripe-dev` package that runs two Stripe CLI listeners automatically when you run `turbo dev`:
+
+- **Subscription webhooks** (Better Auth): `http://localhost:8787/api/auth/stripe/webhook`
+- **Purchase webhooks** (one-time): `http://localhost:8787/api/billing/purchases/webhook`
+
+**Setup steps:**
+
+1. Install Stripe CLI: https://stripe.com/docs/stripe-cli
+2. Authenticate: `stripe login`
+3. Run `turbo dev` - the Stripe listeners will start automatically
+4. Copy the two `whsec_...` signing secrets printed by each listener
+5. Add them to `packages/workers/.env`:
+   - `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...` (from the auth listener)
+   - `STRIPE_WEBHOOK_SECRET_PURCHASES=whsec_...` (from the purchases listener)
+6. Also add your Stripe test key and price IDs:
+   - `STRIPE_SECRET_KEY=sk_test_...`
+   - `STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY=price_...`
+   - `STRIPE_PRICE_ID_STARTER_TEAM_YEARLY=price_...`
+   - `STRIPE_PRICE_ID_TEAM_MONTHLY=price_...`
+   - `STRIPE_PRICE_ID_TEAM_YEARLY=price_...`
+   - `STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY=price_...`
+   - `STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY=price_...`
+   - `STRIPE_PRICE_ID_SINGLE_PROJECT=price_...`
+
+**Note:** The webhook signing secrets are printed when the listeners start. You only need to copy them once into `.env` - they remain valid for that Stripe CLI session.
+
 ## Development Workflow
 
 ### Code Quality

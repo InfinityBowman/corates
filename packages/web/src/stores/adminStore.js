@@ -210,62 +210,25 @@ async function deleteUser(userId) {
 }
 
 /**
- * Grant subscription to a user
- * @param {string} userId - User ID
- * @param {Object} options - Subscription options
- * @param {string} options.tier - Plan tier ('free', 'pro', 'unlimited')
- * @param {number} [options.currentPeriodEnd] - Expiration timestamp in seconds (optional, null = no expiration)
+ * @deprecated Billing is now org-scoped, not user-scoped.
+ * Use org-level subscription management via /admin/orgs/:orgId instead.
+ * These functions are kept for backwards compatibility but should not be used.
  */
-async function grantAccess(userId, options = {}) {
-  const { tier, currentPeriodEnd } = options;
-  if (!tier) {
-    throw new Error('Tier is required');
-  }
-  const body = {
-    tier,
-    status: 'active',
-    currentPeriodStart: Math.floor(Date.now() / 1000),
-  };
-  if (currentPeriodEnd) {
-    body.currentPeriodEnd = currentPeriodEnd;
-  }
-
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/admin/users/${userId}/subscription`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    }),
-    { showToast: false },
+async function grantAccess(_userId, _options = {}) {
+  throw new Error(
+    'User-level subscription management is deprecated. Billing is now org-scoped. Use /admin/orgs/:orgId to manage subscriptions.',
   );
-  const result = await response.json();
-
-  // Invalidate user-specific caches so frontend immediately reflects the change
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.userDetails(userId) });
-  queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
-
-  return result;
 }
 
 /**
- * Revoke subscription from a user
+ * @deprecated Billing is now org-scoped, not user-scoped.
+ * Use org-level subscription management via /admin/orgs/:orgId instead.
+ * These functions are kept for backwards compatibility but should not be used.
  */
-async function revokeAccess(userId) {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/admin/users/${userId}/subscription`, {
-      method: 'DELETE',
-      credentials: 'include',
-    }),
-    { showToast: false },
+async function revokeAccess(_userId) {
+  throw new Error(
+    'User-level subscription management is deprecated. Billing is now org-scoped. Use /admin/orgs/:orgId to manage subscriptions.',
   );
-  const result = await response.json();
-
-  // Invalidate user-specific caches so frontend immediately reflects the change
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.userDetails(userId) });
-  queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
-
-  return result;
 }
 
 /**

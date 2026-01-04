@@ -133,7 +133,7 @@ describe('Read-only access enforcement', () => {
     const body = await json(res);
     expect(body.code).toBeDefined();
     expect(body.code).toMatch(/AUTH_FORBIDDEN/);
-    expect(body.reason).toBe('read_only_access');
+    expect(body.details?.reason).toBe('read_only_access');
   });
 
   it('should allow GET requests for read-only org', async () => {

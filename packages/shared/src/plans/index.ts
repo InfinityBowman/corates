@@ -13,6 +13,7 @@ export type {
   Plan,
   Plans,
 } from './types.js';
+export type { GrantType } from './plans.js';
 
 // Plan configuration
-export { PLANS, DEFAULT_PLAN, getPlan, isUnlimitedQuota } from './plans.js';
+export { PLANS, DEFAULT_PLAN, getPlan, isUnlimitedQuota, getGrantPlan } from './plans.js';

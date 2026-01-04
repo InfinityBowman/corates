@@ -70,8 +70,56 @@ orgRoutes.get('/orgs', async c => {
     // Get paginated results
     const orgs = await query.orderBy(desc(organization.createdAt)).limit(limit).offset(offset).all();
 
+    // Get stats for all orgs in parallel
+    const orgIds = orgs.map(org => org.id);
+    const statsMap = {};
+
+    if (orgIds.length > 0) {
+      // Get member counts
+      const memberCounts = await db
+        .select({
+          organizationId: member.organizationId,
+          count: count(),
+        })
+        .from(member)
+        .where(sql`${member.organizationId} IN (${sql.join(orgIds.map(id => sql`${id}`), sql`, `)})`)
+        .groupBy(member.organizationId)
+        .all();
+
+      // Get project counts
+      const projectCounts = await db
+        .select({
+          orgId: projects.orgId,
+          count: count(),
+        })
+        .from(projects)
+        .where(sql`${projects.orgId} IN (${sql.join(orgIds.map(id => sql`${id}`), sql`, `)})`)
+        .groupBy(projects.orgId)
+        .all();
+
+      // Build stats map
+      memberCounts.forEach(({ organizationId, count: cnt }) => {
+        if (!statsMap[organizationId]) statsMap[organizationId] = {};
+        statsMap[organizationId].memberCount = cnt;
+      });
+
+      projectCounts.forEach(({ orgId, count: cnt }) => {
+        if (!statsMap[orgId]) statsMap[orgId] = {};
+        statsMap[orgId].projectCount = cnt;
+      });
+    }
+
+    // Attach stats to each org
+    const orgsWithStats = orgs.map(org => ({
+      ...org,
+      stats: {
+        memberCount: statsMap[org.id]?.memberCount || 0,
+        projectCount: statsMap[org.id]?.projectCount || 0,
+      },
+    }));
+
     return c.json({
-      orgs,
+      orgs: orgsWithStats,
       pagination: {
         page,
         limit,

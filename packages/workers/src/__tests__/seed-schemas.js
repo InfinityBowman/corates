@@ -46,7 +46,8 @@ export const seedUserSchema = z.object({
     .union([z.boolean(), z.number()])
     .transform(val => (val === true || val === 1 ? 1 : 0))
     .default(0),
-  stripeCustomerId: z.string().nullable().optional().default(null),
+  // All accounts should have a Stripe customer ID (Better Auth creates one on signup)
+  stripeCustomerId: z.string().nullable().optional().default('cus_test_default'),
 });
 
 /**

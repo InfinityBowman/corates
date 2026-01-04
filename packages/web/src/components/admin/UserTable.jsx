@@ -20,10 +20,8 @@ import {
   impersonateUser,
   revokeUserSessions,
   deleteUser,
-  grantAccess,
 } from '@/stores/adminStore.js';
 import { Avatar, Dialog, Tooltip } from '@corates/ui';
-import { hasActiveAccess } from '@/lib/access.js';
 
 // Provider display info
 const PROVIDER_INFO = {
@@ -38,9 +36,6 @@ export default function UserTable(props) {
   const [confirmDialog, setConfirmDialog] = createSignal(null);
   const [banDialog, setBanDialog] = createSignal(null);
   const [banReason, setBanReason] = createSignal('');
-  const [accessDialog, setAccessDialog] = createSignal(null);
-  const [selectedPlan, setSelectedPlan] = createSignal('free');
-  const [accessExpiration, setAccessExpiration] = createSignal('');
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal(null);
 
@@ -70,21 +65,6 @@ export default function UserTable(props) {
 
     if (action === 'revoke') {
       setConfirmDialog({ type: 'revoke', user });
-      return;
-    }
-
-    if (action === 'change-access') {
-      // Initialize with user's current plan or 'free' if no subscription
-      const currentPlan = user.subscription?.tier || 'free';
-      setSelectedPlan(currentPlan);
-      // Pre-fill expiration if existing
-      if (user.subscription?.currentPeriodEnd) {
-        const date = new Date(user.subscription.currentPeriodEnd * 1000);
-        setAccessExpiration(date.toISOString().slice(0, 16)); // YYYY-MM-DDTHH:MM
-      } else {
-        setAccessExpiration('');
-      }
-      setAccessDialog(user);
       return;
     }
 
@@ -153,77 +133,10 @@ export default function UserTable(props) {
     }
   };
 
-  const handleChangeAccess = async () => {
-    const user = accessDialog();
-    if (!user) return;
-
-    setLoading(true);
-    try {
-      const expiration = accessExpiration();
-      let currentPeriodEnd = null;
-
-      if (expiration) {
-        // Parse date and convert to seconds timestamp
-        const date = new Date(expiration);
-        currentPeriodEnd = Math.floor(date.getTime() / 1000);
-      }
-
-      await grantAccess(user.id, { tier: selectedPlan(), currentPeriodEnd });
-      setAccessDialog(null);
-      setSelectedPlan('free');
-      setAccessExpiration('');
-      props.onRefresh?.();
-    } catch (err) {
-      const { handleError } = await import('@/lib/error-utils.js');
-      await handleError(err, {
-        setError,
-        showToast: false,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const formatAccessStatus = user => {
-    const subscription = user.subscription;
-    if (!subscription) return { label: 'Free Plan', color: 'gray', plan: 'free' };
-
-    const planNames = { free: 'Free', pro: 'Pro', unlimited: 'Unlimited' };
-    const planName = planNames[subscription.tier] || subscription.tier || 'Free';
-
-    if (hasActiveAccess(subscription)) {
-      if (subscription.currentPeriodEnd) {
-        const date = new Date(subscription.currentPeriodEnd * 1000);
-        return {
-          label: `${planName} (expires ${date.toLocaleDateString()})`,
-          color: 'green',
-          plan: subscription.tier,
-        };
-      }
-      return { label: `${planName} (no expiration)`, color: 'green', plan: subscription.tier };
-    }
-
-    if (subscription.status === 'inactive') {
-      return { label: `${planName} (revoked)`, color: 'red', plan: subscription.tier };
-    }
-
-    if (subscription.currentPeriodEnd) {
-      const date = new Date(subscription.currentPeriodEnd * 1000);
-      const now = Date.now();
-      if (subscription.currentPeriodEnd * 1000 < now) {
-        return {
-          label: `${planName} (expired ${date.toLocaleDateString()})`,
-          color: 'red',
-          plan: subscription.tier,
-        };
-      }
-    }
-
-    return {
-      label: `${planName} (${subscription.status || 'inactive'})`,
-      color: 'gray',
-      plan: subscription.tier,
-    };
+    // Billing is now org-scoped, not user-scoped
+    // Users get access through their org memberships
+    return { label: 'Org-based billing', color: 'gray', plan: 'org' };
   };
 
   return (
@@ -261,6 +174,9 @@ export default function UserTable(props) {
                 Access
               </th>
               <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                Stripe Customer
+              </th>
+              <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
                 Joined
               </th>
               <th class='px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase'>
@@ -273,7 +189,7 @@ export default function UserTable(props) {
               each={props.users}
               fallback={
                 <tr>
-                  <td colspan='7' class='px-6 py-12 text-center text-gray-500'>
+                  <td colspan='8' class='px-6 py-12 text-center text-gray-500'>
                     No users found
                   </td>
                 </tr>
@@ -367,6 +283,16 @@ export default function UserTable(props) {
                       );
                     })()}
                   </td>
+                  <td class='px-6 py-4'>
+                    <Show
+                      when={user.stripeCustomerId}
+                      fallback={<span class='text-sm text-gray-400'>-</span>}
+                    >
+                      <code class='rounded bg-gray-100 px-2 py-1 text-xs text-gray-700'>
+                        {user.stripeCustomerId}
+                      </code>
+                    </Show>
+                  </td>
                   <td class='px-6 py-4 text-sm text-gray-500'>{formatDate(user.createdAt)}</td>
                   <td class='px-6 py-4 text-right'>
                     <div class='relative'>
@@ -433,14 +359,6 @@ export default function UserTable(props) {
                           </button>
                           <hr class='my-1 border-gray-200' />
                           <button
-                            onClick={() => handleAction('change-access', user)}
-                            class='flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100'
-                          >
-                            <FiCheckCircle class='h-4 w-4' />
-                            <span>Change Access</span>
-                          </button>
-                          <hr class='my-1 border-gray-200' />
-                          <button
                             onClick={() => handleAction('delete', user)}
                             class='flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50'
                           >
@@ -493,73 +411,6 @@ export default function UserTable(props) {
               class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
             >
               {loading() ? 'Banning...' : 'Ban User'}
-            </button>
-          </div>
-        </div>
-      </Dialog>
-
-      {/* Change Access Dialog */}
-      <Dialog
-        open={!!accessDialog()}
-        onOpenChange={open => !open && setAccessDialog(null)}
-        title='Change Access'
-      >
-        <div class='space-y-4'>
-          <p class='text-sm text-gray-600'>
-            Change subscription plan for{' '}
-            <strong>
-              {accessDialog()?.displayName || accessDialog()?.name || accessDialog()?.email}
-            </strong>
-            . Plan selection determines entitlements and quotas automatically.
-          </p>
-          <div>
-            <label class='mb-1 block text-sm font-medium text-gray-700'>Plan</label>
-            <select
-              value={selectedPlan()}
-              onInput={e => setSelectedPlan(e.target.value)}
-              class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
-            >
-              <option value='free'>Free</option>
-              <option value='pro'>Pro</option>
-              <option value='unlimited'>Unlimited</option>
-            </select>
-            <p class='mt-1 text-xs text-gray-500'>
-              Select the plan tier. Entitlements and quotas are automatically determined by the
-              plan.
-            </p>
-          </div>
-          <div>
-            <label class='mb-1 block text-sm font-medium text-gray-700'>
-              Expiration Date (Optional)
-            </label>
-            <input
-              type='datetime-local'
-              value={accessExpiration()}
-              onInput={e => setAccessExpiration(e.target.value)}
-              class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
-            />
-            <p class='mt-1 text-xs text-gray-500'>
-              Leave empty for permanent access. Subscription will expire at the specified date and
-              time.
-            </p>
-          </div>
-          <div class='flex justify-end space-x-3'>
-            <button
-              onClick={() => {
-                setAccessDialog(null);
-                setSelectedPlan('free');
-                setAccessExpiration('');
-              }}
-              class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleChangeAccess}
-              disabled={loading()}
-              class='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50'
-            >
-              {loading() ? 'Updating...' : 'Update Plan'}
             </button>
           </div>
         </div>

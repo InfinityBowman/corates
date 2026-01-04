@@ -492,7 +492,6 @@ describe('Billing Routes - POST /api/billing/single-project/checkout', () => {
     const testEnv = {
       ...env,
       STRIPE_SECRET_KEY: 'sk_test_123',
-      STRIPE_WEBHOOK_SECRET: 'whsec_test',
       STRIPE_PRICE_ID_SINGLE_PROJECT: 'price_single_project_test',
       APP_URL: 'http://localhost:5173',
     };
@@ -564,7 +563,6 @@ describe('Billing Routes - POST /api/billing/single-project/checkout', () => {
     const testEnv = {
       ...env,
       STRIPE_SECRET_KEY: 'sk_test_123',
-      STRIPE_WEBHOOK_SECRET: 'whsec_test',
       STRIPE_PRICE_ID_SINGLE_PROJECT: 'price_single_project_test',
       APP_URL: 'http://localhost:5173',
     };
