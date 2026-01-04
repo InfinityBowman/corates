@@ -517,12 +517,15 @@ async function fetchBillingStuckStates({ incompleteThreshold = 30, limit = 50 } 
 /**
  * Fetch org billing reconciliation results
  */
-async function fetchOrgBillingReconcile(orgId, {
-  checkStripe = false,
-  incompleteThreshold = 30,
-  checkoutNoSubThreshold = 15,
-  processingLagThreshold = 5,
-} = {}) {
+async function fetchOrgBillingReconcile(
+  orgId,
+  {
+    checkStripe = false,
+    incompleteThreshold = 30,
+    checkoutNoSubThreshold = 15,
+    processingLagThreshold = 5,
+  } = {},
+) {
   const params = new URLSearchParams({
     incompleteThreshold: incompleteThreshold.toString(),
     checkoutNoSubThreshold: checkoutNoSubThreshold.toString(),
@@ -530,13 +533,10 @@ async function fetchOrgBillingReconcile(orgId, {
   });
   if (checkStripe) params.set('checkStripe', 'true');
 
-  const response = await fetch(
-    `${API_BASE}/api/admin/orgs/${orgId}/billing/reconcile?${params}`,
-    {
-      credentials: 'include',
-      cache: 'no-store',
-    },
-  );
+  const response = await fetch(`${API_BASE}/api/admin/orgs/${orgId}/billing/reconcile?${params}`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(error.error || 'Failed to fetch reconciliation');
