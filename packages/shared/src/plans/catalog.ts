@@ -66,7 +66,7 @@ export function getBillingPlanCatalog(): BillingCatalogResponse {
         description: 'Single-study appraisals, no account required',
         price: getPlanPricing('free'),
         isPopular: false,
-        cta: 'start_trial',
+        cta: 'none',
         trialDays: 14,
         features: [
           'Single-study appraisals (anonymous)',
@@ -81,7 +81,8 @@ export function getBillingPlanCatalog(): BillingCatalogResponse {
         description: 'Full access for 14 days (1 project)',
         price: null,
         isPopular: false,
-        cta: 'none',
+        // Trial is started by selecting the Trial plan card while on Free tier
+        cta: 'start_trial',
         trialDays: 14,
         features: [
           `${quotaLabel(trial.quotas['projects.max'])} project (14 days)`,

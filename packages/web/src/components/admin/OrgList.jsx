@@ -211,7 +211,7 @@ export default function OrgList() {
                               href={`/admin/orgs/${org.id}`}
                               class='inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700'
                             >
-                              View Details
+                              Details
                             </A>
                           </td>
                         </tr>
