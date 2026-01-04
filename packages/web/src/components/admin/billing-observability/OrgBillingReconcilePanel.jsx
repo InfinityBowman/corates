@@ -4,7 +4,13 @@
  */
 
 import { createSignal, Show, For } from 'solid-js';
-import { FiAlertTriangle, FiCheckCircle, FiLoader, FiRefreshCw, FiAlertCircle } from 'solid-icons/fi';
+import {
+  FiAlertTriangle,
+  FiCheckCircle,
+  FiLoader,
+  FiRefreshCw,
+  FiAlertCircle,
+} from 'solid-icons/fi';
 import { useAdminOrgBillingReconcile } from '@primitives/useAdminQueries.js';
 import { A } from '@solidjs/router';
 
@@ -71,11 +77,9 @@ export default function OrgBillingReconcilePanel(props) {
             class='rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
             disabled={reconcileQuery.isFetching}
           >
-            {reconcileQuery.isFetching ? (
+            {reconcileQuery.isFetching ?
               <FiLoader class='h-4 w-4 animate-spin' />
-            ) : (
-              'Refresh'
-            )}
+            : 'Refresh'}
           </button>
         </div>
       </div>
@@ -144,9 +148,7 @@ export default function OrgBillingReconcilePanel(props) {
                     </label>
                   </div>
                   {checkStripe() && (
-                    <p class='mt-1 text-xs text-yellow-600'>
-                      Note: This makes API calls to Stripe
-                    </p>
+                    <p class='mt-1 text-xs text-yellow-600'>Note: This makes API calls to Stripe</p>
                   )}
                 </div>
               </div>
@@ -172,15 +174,11 @@ export default function OrgBillingReconcilePanel(props) {
               </div>
               <div class='rounded-lg border border-gray-200 bg-white p-4'>
                 <p class='text-sm text-gray-500'>Failed Webhooks</p>
-                <p class='text-2xl font-bold text-gray-900'>
-                  {summary().failedWebhooks || 0}
-                </p>
+                <p class='text-2xl font-bold text-gray-900'>{summary().failedWebhooks || 0}</p>
               </div>
               <div class='rounded-lg border border-gray-200 bg-white p-4'>
                 <p class='text-sm text-gray-500'>Ignored Webhooks</p>
-                <p class='text-2xl font-bold text-gray-900'>
-                  {summary().ignoredWebhooks || 0}
-                </p>
+                <p class='text-2xl font-bold text-gray-900'>{summary().ignoredWebhooks || 0}</p>
               </div>
             </div>
 
@@ -202,9 +200,7 @@ export default function OrgBillingReconcilePanel(props) {
                   {state => {
                     const Icon = getSeverityIcon(state.severity);
                     return (
-                      <div
-                        class={`rounded-lg border-2 p-4 ${getSeverityColor(state.severity)}`}
-                      >
+                      <div class={`rounded-lg border-2 p-4 ${getSeverityColor(state.severity)}`}>
                         <div class='flex items-start space-x-3'>
                           <Icon class='mt-0.5 h-5 w-5 shrink-0' />
                           <div class='flex-1'>
@@ -264,11 +260,13 @@ export default function OrgBillingReconcilePanel(props) {
                                 <p class='mb-2 text-xs font-semibold'>Recommended Checks:</p>
                                 <ul class='list-inside list-disc space-y-1 text-xs'>
                                   <li>Verify Better Auth Stripe plugin configuration</li>
-                                  <li>Check authorizeReference function returns true for this org</li>
-                                  <li>Verify referenceId/orgId mapping matches checkout metadata</li>
                                   <li>
-                                    Check Stripe dashboard for subscription creation attempts
+                                    Check authorizeReference function returns true for this org
                                   </li>
+                                  <li>
+                                    Verify referenceId/orgId mapping matches checkout metadata
+                                  </li>
+                                  <li>Check Stripe dashboard for subscription creation attempts</li>
                                 </ul>
                               </div>
                             )}
@@ -286,19 +284,16 @@ export default function OrgBillingReconcilePanel(props) {
               {comparison => (
                 <div class='mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4'>
                   <h3 class='mb-3 font-semibold text-gray-900'>Stripe API Comparison</h3>
-                  {comparison().error ? (
+                  {comparison().error ?
                     <p class='text-sm text-red-600'>Error: {comparison().error}</p>
-                  ) : comparison().noActiveSubscription ? (
+                  : comparison().noActiveSubscription ?
                     <p class='text-sm text-gray-600'>No active subscription to compare</p>
-                  ) : (
-                    <div class='space-y-2 text-sm'>
+                  : <div class='space-y-2 text-sm'>
                       <div class='flex items-center space-x-2'>
                         <span class='font-medium'>Status Match:</span>
-                        {comparison().match ? (
+                        {comparison().match ?
                           <FiCheckCircle class='h-4 w-4 text-green-600' />
-                        ) : (
-                          <FiAlertTriangle class='h-4 w-4 text-red-600' />
-                        )}
+                        : <FiAlertTriangle class='h-4 w-4 text-red-600' />}
                       </div>
                       <div>
                         <span class='font-medium'>Local:</span>{' '}
@@ -309,7 +304,7 @@ export default function OrgBillingReconcilePanel(props) {
                         <code>{comparison().stripeStatus}</code>
                       </div>
                     </div>
-                  )}
+                  }
                 </div>
               )}
             </Show>
