@@ -1,8 +1,9 @@
 /**
  * Admin Dashboard - Main admin panel page
+ * Displays system statistics, user management, and provides navigation to other admin features
  */
 
-import { createSignal, Show, onMount } from 'solid-js';
+import { createSignal, Show, onMount, onCleanup } from 'solid-js';
 import { useNavigate, A } from '@solidjs/router';
 import {
   FiUsers,
@@ -23,6 +24,11 @@ import { useAdminStats, useAdminUsers } from '@primitives/useAdminQueries.js';
 import UserTable from './UserTable.jsx';
 import StatsCard from './StatsCard.jsx';
 
+/**
+ * Admin Dashboard component
+ * Main admin panel displaying statistics and user management
+ * @returns {JSX.Element} - The AdminDashboard component
+ */
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [search, setSearch] = createSignal('');
@@ -59,6 +65,11 @@ export default function AdminDashboard() {
       setPage(1);
     }, 300);
   };
+
+  // Cleanup timeout on unmount
+  onCleanup(() => {
+    clearTimeout(searchTimeout);
+  });
 
   const handleRefresh = () => {
     usersDataQuery.refetch();
@@ -165,7 +176,7 @@ export default function AdminDashboard() {
 
             {/* Users Table */}
             <Show
-              when={!usersData.loading}
+              when={!usersDataQuery.isLoading}
               fallback={
                 <div class='flex items-center justify-center py-12'>
                   <FiLoader class='h-8 w-8 animate-spin text-blue-600' />

@@ -136,6 +136,10 @@ export function createAuth(env, ctx) {
   );
 
   // Stripe plugin for org-scoped subscriptions
+  // IMPORTANT: Stripe price amounts must match prices defined in @corates/shared/plans/pricing.ts
+  // - starter_team: $9.99/month, $100/year
+  // - team: $29/month, $290/year
+  // - unlimited_team: $49/month, $490/year
   if (env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET_AUTH) {
     const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
       apiVersion: '2025-11-17.clover',
@@ -152,7 +156,8 @@ export function createAuth(env, ctx) {
             {
               name: 'starter_team',
               priceId: env.STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY || 'price_starter_team_monthly',
-              annualDiscountPriceId: env.STRIPE_PRICE_ID_STARTER_TEAM_YEARLY || 'price_starter_team_yearly',
+              annualDiscountPriceId:
+                env.STRIPE_PRICE_ID_STARTER_TEAM_YEARLY || 'price_starter_team_yearly',
             },
             {
               name: 'team',
@@ -162,7 +167,8 @@ export function createAuth(env, ctx) {
             {
               name: 'unlimited_team',
               priceId: env.STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY || 'price_unlimited_team_monthly',
-              annualDiscountPriceId: env.STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY || 'price_unlimited_team_yearly',
+              annualDiscountPriceId:
+                env.STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY || 'price_unlimited_team_yearly',
             },
           ],
           authorizeReference: async ({ user, session: _session, referenceId, action }) => {

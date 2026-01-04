@@ -17,6 +17,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import dotenv from 'dotenv';
 import { spawn } from 'node:child_process';
+import { getAllStripeProductConfigs } from '@corates/shared/plans';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -26,55 +27,8 @@ const envPath = join(workersDir, '.env');
 // Load environment variables from .env file
 dotenv.config({ path: envPath });
 
-// Product/Price definitions
-const PRODUCTS = [
-  {
-    name: 'Starter Team',
-    description: 'For small teams',
-    prices: [
-      { type: 'monthly', amount: 2900, currency: 'usd' }, // $29/month
-      { type: 'yearly', amount: 29000, currency: 'usd' }, // $290/year
-    ],
-    envKeys: {
-      monthly: 'STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY',
-      yearly: 'STRIPE_PRICE_ID_STARTER_TEAM_YEARLY',
-    },
-  },
-  {
-    name: 'Team',
-    description: 'For collaborative research teams',
-    prices: [
-      { type: 'monthly', amount: 9900, currency: 'usd' }, // $99/month
-      { type: 'yearly', amount: 99000, currency: 'usd' }, // $990/year
-    ],
-    envKeys: {
-      monthly: 'STRIPE_PRICE_ID_TEAM_MONTHLY',
-      yearly: 'STRIPE_PRICE_ID_TEAM_YEARLY',
-    },
-  },
-  {
-    name: 'Unlimited Team',
-    description: 'For large organizations',
-    prices: [
-      { type: 'monthly', amount: 29900, currency: 'usd' }, // $299/month
-      { type: 'yearly', amount: 299000, currency: 'usd' }, // $2990/year
-    ],
-    envKeys: {
-      monthly: 'STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY',
-      yearly: 'STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY',
-    },
-  },
-  {
-    name: 'Single Project',
-    description: 'One-time purchase for a single project',
-    prices: [
-      { type: 'one-time', amount: 4900, currency: 'usd' }, // $49 one-time
-    ],
-    envKeys: {
-      'one-time': 'STRIPE_PRICE_ID_SINGLE_PROJECT',
-    },
-  },
-];
+// Product/Price definitions from shared plans package
+const PRODUCTS = getAllStripeProductConfigs();
 
 function parseArgs(argv) {
   const args = {

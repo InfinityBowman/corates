@@ -8,21 +8,30 @@ import { FiLoader, FiTrash2, FiEdit, FiCopy, FiCheck } from 'solid-icons/fi';
 import { createSignal } from 'solid-js';
 import { showToast } from '@corates/ui';
 
+/**
+ * Subscription List component for admin dashboard
+ * Displays and manages subscriptions for an organization
+ * @param {object} props - Component props
+ * @param {Array<object>} [props.subscriptions] - Array of subscription objects
+ * @param {string} [props.effectiveSubscriptionId] - The ID of the effective subscription
+ * @param {boolean} [props.loading] - Whether an action is in progress
+ * @param {boolean} [props.isLoading] - Whether the list is being loaded
+ * @param {function(string): void} props.onCancel - Function to cancel a subscription by ID
+ * @param {function(object): void} props.onEdit - Function to edit a subscription
+ * @returns {JSX.Element} - The SubscriptionList component
+ */
 export default function SubscriptionList(props) {
   const subscriptions = () => props.subscriptions || [];
   const effectiveSubscriptionId = () => props.effectiveSubscriptionId;
   const loading = () => props.loading;
   const isLoading = () => props.isLoading;
-  const onCancel = () => props.onCancel;
-  const onEdit = () => props.onEdit;
   const [copiedId, setCopiedId] = createSignal(null);
 
   const formatDate = timestamp => {
     if (!timestamp) return '-';
-    const date = timestamp instanceof Date ?
-        timestamp
-      : typeof timestamp === 'string' ?
-        new Date(timestamp)
+    const date =
+      timestamp instanceof Date ? timestamp
+      : typeof timestamp === 'string' ? new Date(timestamp)
       : new Date(timestamp * 1000);
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -37,10 +46,10 @@ export default function SubscriptionList(props) {
     try {
       await navigator.clipboard.writeText(id);
       setCopiedId(`${type}-${id}`);
-      showToast({ title: 'Copied', description: `${type} ID copied to clipboard` });
+      showToast.success('Copied', `${type} ID copied to clipboard`);
       setTimeout(() => setCopiedId(null), 2000);
-    } catch (error) {
-      showToast({ title: 'Error', description: 'Failed to copy to clipboard' });
+    } catch (_error) {
+      showToast.error('Error', 'Failed to copy to clipboard');
     }
   };
 
@@ -82,7 +91,10 @@ export default function SubscriptionList(props) {
                           <p class='font-medium text-gray-900'>{subscription.plan}</p>
                           <span
                             class={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                              subscription.status === 'active' || subscription.status === 'trialing' ?
+                              (
+                                subscription.status === 'active' ||
+                                subscription.status === 'trialing'
+                              ) ?
                                 'bg-green-100 text-green-800'
                               : 'bg-gray-100 text-gray-800'
                             }`}
@@ -109,7 +121,9 @@ export default function SubscriptionList(props) {
                               <p>Updated: {formatDate(subscription.updatedAt)}</p>
                             )}
                             {subscription.canceledAt && (
-                              <p class='text-red-600'>Canceled: {formatDate(subscription.canceledAt)}</p>
+                              <p class='text-red-600'>
+                                Canceled: {formatDate(subscription.canceledAt)}
+                              </p>
                             )}
                             {subscription.endedAt && (
                               <p class='text-red-600'>Ended: {formatDate(subscription.endedAt)}</p>
@@ -122,26 +136,26 @@ export default function SubscriptionList(props) {
                             {subscription.stripeCustomerId && (
                               <div class='flex items-center space-x-1 rounded bg-gray-100 px-2 py-1'>
                                 <span class='text-xs font-medium text-gray-600'>Customer:</span>
-                                <code class='text-xs font-mono text-gray-800'>
+                                <code class='font-mono text-xs text-gray-800'>
                                   {subscription.stripeCustomerId.slice(0, 12)}...
                                 </code>
                                 <button
-                                  onClick={() => handleCopyId(subscription.stripeCustomerId, 'customer')}
+                                  onClick={() =>
+                                    handleCopyId(subscription.stripeCustomerId, 'customer')
+                                  }
                                   class='ml-1 text-gray-500 hover:text-gray-700'
                                   title='Copy customer ID'
                                 >
-                                  {copiedId() === `customer-${subscription.stripeCustomerId}` ? (
+                                  {copiedId() === `customer-${subscription.stripeCustomerId}` ?
                                     <FiCheck class='h-3 w-3 text-green-600' />
-                                  ) : (
-                                    <FiCopy class='h-3 w-3' />
-                                  )}
+                                  : <FiCopy class='h-3 w-3' />}
                                 </button>
                               </div>
                             )}
                             {subscription.stripeSubscriptionId && (
                               <div class='flex items-center space-x-1 rounded bg-gray-100 px-2 py-1'>
                                 <span class='text-xs font-medium text-gray-600'>Subscription:</span>
-                                <code class='text-xs font-mono text-gray-800'>
+                                <code class='font-mono text-xs text-gray-800'>
                                   {subscription.stripeSubscriptionId.slice(0, 12)}...
                                 </code>
                                 <button
@@ -151,11 +165,12 @@ export default function SubscriptionList(props) {
                                   class='ml-1 text-gray-500 hover:text-gray-700'
                                   title='Copy subscription ID'
                                 >
-                                  {copiedId() === `subscription-${subscription.stripeSubscriptionId}` ? (
+                                  {(
+                                    copiedId() ===
+                                    `subscription-${subscription.stripeSubscriptionId}`
+                                  ) ?
                                     <FiCheck class='h-3 w-3 text-green-600' />
-                                  ) : (
-                                    <FiCopy class='h-3 w-3' />
-                                  )}
+                                  : <FiCopy class='h-3 w-3' />}
                                 </button>
                               </div>
                             )}
@@ -164,7 +179,7 @@ export default function SubscriptionList(props) {
                       </div>
                       <div class='ml-4 flex space-x-2'>
                         <button
-                          onClick={() => onEdit()(subscription)}
+                          onClick={() => props.onEdit?.(subscription)}
                           disabled={loading()}
                           class='rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
                           title='Edit subscription'
@@ -172,7 +187,7 @@ export default function SubscriptionList(props) {
                           <FiEdit class='h-4 w-4' />
                         </button>
                         <button
-                          onClick={() => onCancel()(subscription.id)}
+                          onClick={() => props.onCancel?.(subscription.id)}
                           disabled={loading()}
                           class='rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
                           title='Cancel subscription'

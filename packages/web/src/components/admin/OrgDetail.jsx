@@ -1,23 +1,14 @@
 /**
  * Org Detail component for admin dashboard
- * Shows org info, billing, subscriptions, and grants
+ * Shows organization details, billing summary, subscriptions, and grants.
+ * Allows admins to manage subscriptions, create grants, and view organization statistics.
  */
 
 import { createSignal, Show, onMount } from 'solid-js';
 import { useNavigate, useParams, A } from '@solidjs/router';
-import {
-  FiArrowLeft,
-  FiLoader,
-  FiHome,
-  FiUsers,
-  FiFolder,
-  FiShield,
-} from 'solid-icons/fi';
+import { FiArrowLeft, FiLoader, FiHome, FiUsers, FiFolder, FiShield } from 'solid-icons/fi';
 import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.js';
-import {
-  useAdminOrgDetails,
-  useAdminOrgBilling,
-} from '@primitives/useAdminQueries.js';
+import { useAdminOrgDetails, useAdminOrgBilling } from '@primitives/useAdminQueries.js';
 import {
   createOrgSubscription,
   updateOrgSubscription,
@@ -80,10 +71,9 @@ export default function OrgDetail() {
 
   const formatDateInput = timestamp => {
     if (!timestamp) return '';
-    const date = timestamp instanceof Date ?
-        timestamp
-      : typeof timestamp === 'string' ?
-        new Date(timestamp)
+    const date =
+      timestamp instanceof Date ? timestamp
+      : typeof timestamp === 'string' ? new Date(timestamp)
       : new Date(timestamp * 1000);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -129,12 +119,11 @@ export default function OrgDetail() {
       if (subStatus() !== subscription.status) data.status = subStatus();
       if (subPeriodStart()) {
         const newStart = new Date(subPeriodStart());
-        const oldStart = subscription.periodStart ?
-            (subscription.periodStart instanceof Date ?
-                subscription.periodStart
-              : typeof subscription.periodStart === 'string' ?
-                new Date(subscription.periodStart)
-              : new Date(subscription.periodStart * 1000))
+        const oldStart =
+          subscription.periodStart ?
+            subscription.periodStart instanceof Date ? subscription.periodStart
+            : typeof subscription.periodStart === 'string' ? new Date(subscription.periodStart)
+            : new Date(subscription.periodStart * 1000)
           : null;
         if (!oldStart || newStart.getTime() !== oldStart.getTime()) {
           data.periodStart = newStart;
@@ -142,12 +131,11 @@ export default function OrgDetail() {
       }
       if (subPeriodEnd()) {
         const newEnd = new Date(subPeriodEnd());
-        const oldEnd = subscription.periodEnd ?
-            (subscription.periodEnd instanceof Date ?
-                subscription.periodEnd
-              : typeof subscription.periodEnd === 'string' ?
-                new Date(subscription.periodEnd)
-              : new Date(subscription.periodEnd * 1000))
+        const oldEnd =
+          subscription.periodEnd ?
+            subscription.periodEnd instanceof Date ? subscription.periodEnd
+            : typeof subscription.periodEnd === 'string' ? new Date(subscription.periodEnd)
+            : new Date(subscription.periodEnd * 1000)
           : null;
         if (!oldEnd || newEnd.getTime() !== oldEnd.getTime()) {
           data.periodEnd = newEnd;
@@ -436,7 +424,14 @@ export default function OrgDetail() {
             onEndedAtChange={setSubEndedAt}
             onStripeCustomerIdChange={setSubStripeCustomerId}
             onStripeSubscriptionIdChange={setSubStripeSubscriptionId}
-            onSubmit={editingSubscription() ? handleUpdateSubscription : handleCreateSubscription}
+            onSubmit={() => {
+              const editing = editingSubscription();
+              if (editing) {
+                handleUpdateSubscription();
+              } else {
+                handleCreateSubscription();
+              }
+            }}
           />
 
           {/* Create Grant Dialog */}

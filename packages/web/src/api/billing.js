@@ -34,24 +34,6 @@ export async function getSubscription() {
 }
 
 /**
- * Get available subscription plans
- * @returns {Promise<{ plans: Array }>}
- */
-export async function getPlans() {
-  const response = await fetch(`${API_BASE}/api/billing/plans`, {
-    ...fetchOptions,
-    method: 'GET',
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch plans' }));
-    throw new Error(error.error || 'Failed to fetch plans');
-  }
-
-  return response.json();
-}
-
-/**
  * Create a Stripe Checkout session
  * @param {string} tier - The subscription tier to checkout
  * @param {'monthly' | 'yearly'} interval - Billing interval
@@ -136,4 +118,22 @@ export async function createSingleProjectCheckout() {
 export async function redirectToSingleProjectCheckout() {
   const { url } = await createSingleProjectCheckout();
   window.location.href = url;
+}
+
+/**
+ * Start a 14-day trial grant for the current org (owner-only)
+ * @returns {Promise<{ success: boolean, grantId: string, expiresAt: number }>}
+ */
+export async function startTrial() {
+  const response = await fetch(`${API_BASE}/api/billing/trial/start`, {
+    ...fetchOptions,
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to start trial' }));
+    throw new Error(error.error || error.message || 'Failed to start trial');
+  }
+
+  return response.json();
 }

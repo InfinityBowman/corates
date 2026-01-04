@@ -1,11 +1,21 @@
-/**
- * SubscriptionCard Component
- * Displays current subscription status and details
- */
-
 import { Show } from 'solid-js';
 import { FiCreditCard, FiCalendar, FiAlertCircle, FiCheck } from 'solid-icons/fi';
 
+/**
+ * SubscriptionCard component
+ * Displays current subscription status and details
+ * @param {*} props
+ * @property {Object} props.subscription - Subscription object
+ * @property {string} props.subscription.tier - Subscription tier
+ * @property {Object} props.subscription.tierInfo - Subscription tier information
+ * @property {string} props.subscription.status - Subscription status
+ * @property {boolean} props.subscription.cancelAtPeriodEnd - Whether the subscription will cancel at period end
+ * @property {number} props.subscription.currentPeriodEnd - The end date of the current period
+ * @property {Function} props.onManage - Function to manage the subscription
+ * @property {Function} props.onUpgrade - Function to upgrade the subscription
+ * @property {boolean} props.loading - Whether the subscription is loading
+ * @returns {JSX.Element} - The SubscriptionCard component
+ */
 export default function SubscriptionCard(props) {
   const subscription = () => props.subscription;
   const tier = () => subscription()?.tier ?? 'free';

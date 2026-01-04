@@ -52,7 +52,8 @@ billingRoutes.get('/subscription', requireAuth, async c => {
 
     // Convert to frontend-compatible format
     // Use getGrantPlan for grants, getPlan for subscriptions/free
-    const effectivePlan = orgBilling.source === 'grant' ?
+    const effectivePlan =
+      orgBilling.source === 'grant' ?
         getGrantPlan(orgBilling.effectivePlanId)
       : getPlan(orgBilling.effectivePlanId);
     const currentPeriodEnd =
@@ -84,67 +85,6 @@ billingRoutes.get('/subscription', requireAuth, async c => {
     });
     return c.json(dbError, dbError.statusCode);
   }
-});
-
-/**
- * GET /api/billing/plans
- * Get available subscription plans
- */
-billingRoutes.get('/plans', async c => {
-  // Return available plans with pricing info
-  const { getPlan } = await import('@corates/shared/plans');
-  const freePlan = getPlan('free');
-  const starterTeamPlan = getPlan('starter_team');
-  const teamPlan = getPlan('team');
-  const unlimitedTeamPlan = getPlan('unlimited_team');
-
-  return c.json({
-    plans: [
-      {
-        tier: 'free',
-        name: freePlan.name,
-        description: 'For individuals getting started',
-        price: { monthly: 0, yearly: 0 },
-        features: ['Basic features', 'Limited projects', 'Community support'],
-      },
-      {
-        tier: 'starter_team',
-        name: starterTeamPlan.name,
-        description: 'For small teams',
-        price: { monthly: null, yearly: null }, // TODO: Update with actual prices
-        features: [
-          'Everything in Free',
-          `${starterTeamPlan.quotas['projects.max']} projects`,
-          `${starterTeamPlan.quotas['collaborators.org.max']} collaborators`,
-          'Email support',
-        ],
-      },
-      {
-        tier: 'team',
-        name: teamPlan.name,
-        description: 'For collaborative research teams',
-        price: { monthly: null, yearly: null }, // TODO: Update with actual prices
-        features: [
-          'Everything in Starter Team',
-          `${teamPlan.quotas['projects.max']} projects`,
-          `${teamPlan.quotas['collaborators.org.max']} collaborators`,
-          'Priority support',
-        ],
-      },
-      {
-        tier: 'unlimited_team',
-        name: unlimitedTeamPlan.name,
-        description: 'For organizations with advanced needs',
-        price: { monthly: null, yearly: null }, // TODO: Update with actual prices
-        features: [
-          'Everything in Team',
-          'Unlimited projects',
-          'Unlimited collaborators',
-          'Dedicated support',
-        ],
-      },
-    ],
-  });
 });
 
 /**
@@ -530,7 +470,8 @@ billingRoutes.post('/purchases/webhook', async c => {
 
       if (existingGrant && !existingGrant.revokedAt) {
         // Extension rule: expiresAt = max(now, currentExpiresAt) + 6 months
-        const existingExpiresAtTimestamp = existingGrant.expiresAt instanceof Date ?
+        const existingExpiresAtTimestamp =
+          existingGrant.expiresAt instanceof Date ?
             Math.floor(existingGrant.expiresAt.getTime() / 1000)
           : existingGrant.expiresAt;
 

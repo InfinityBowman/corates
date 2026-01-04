@@ -43,6 +43,12 @@ function formatDate(timestamp) {
   });
 }
 
+/**
+ * Storage Management component for admin dashboard
+ * Manages R2 documents with search, prefix filtering, and pagination
+ * Allows admins to view, filter, and delete PDF documents stored in R2
+ * @returns {JSX.Element} - The StorageManagement component
+ */
 export default function StorageManagement() {
   const navigate = useNavigate();
   const [search, setSearch] = createSignal('');

@@ -3,7 +3,7 @@
  * Lists all organizations with search and pagination
  */
 
-import { createSignal, Show, For, onMount } from 'solid-js';
+import { createSignal, Show, For, onMount, onCleanup } from 'solid-js';
 import { useNavigate, A } from '@solidjs/router';
 import {
   FiSearch,
@@ -18,6 +18,12 @@ import {
 import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.js';
 import { useAdminOrgs } from '@primitives/useAdminQueries.js';
 
+/**
+ * Org List component for admin dashboard
+ * Lists all organizations with search and pagination
+ * Allows admins to view organization details and navigate to organization management
+ * @returns {JSX.Element} - The OrgList component
+ */
 export default function OrgList() {
   const navigate = useNavigate();
   const [search, setSearch] = createSignal('');
@@ -50,6 +56,11 @@ export default function OrgList() {
       setPage(1);
     }, 300);
   };
+
+  // Cleanup timeout on unmount
+  onCleanup(() => {
+    clearTimeout(searchTimeout);
+  });
 
   const formatDate = timestamp => {
     if (!timestamp) return '-';

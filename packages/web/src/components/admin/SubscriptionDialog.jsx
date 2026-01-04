@@ -5,9 +5,37 @@
 
 import { Dialog } from '@corates/ui';
 
+/**
+ * Subscription Dialog component
+ * Dialog for creating and editing subscriptions
+ * @param {object} props - Component props
+ * @param {boolean} props.open - Whether the dialog is open
+ * @param {function(boolean): void} props.onOpenChange - Function to open or close the dialog
+ * @param {boolean} [props.isEdit] - Whether the dialog is in edit mode
+ * @param {string} props.plan - The plan of the subscription (e.g., 'starter_team', 'team', 'unlimited_team')
+ * @param {string} props.status - The status of the subscription
+ * @param {string} [props.periodStart] - The start date and time of the subscription (datetime-local format)
+ * @param {string} [props.periodEnd] - The end date and time of the subscription (datetime-local format)
+ * @param {boolean} [props.cancelAtPeriodEnd] - Whether to cancel at the end of the period
+ * @param {Date|null} [props.canceledAt] - The date and time the subscription was canceled
+ * @param {Date|null} [props.endedAt] - The date and time the subscription ended
+ * @param {string} [props.stripeCustomerId] - The Stripe customer ID
+ * @param {string} [props.stripeSubscriptionId] - The Stripe subscription ID
+ * @param {function(string): void} props.onPlanChange - Function to change the plan
+ * @param {function(string): void} props.onStatusChange - Function to change the status
+ * @param {function(string): void} props.onPeriodStartChange - Function to change the period start
+ * @param {function(string): void} props.onPeriodEndChange - Function to change the period end
+ * @param {function(boolean): void} props.onCancelAtPeriodEndChange - Function to change cancel at period end flag
+ * @param {function(Date|null): void} props.onCanceledAtChange - Function to change canceled at date
+ * @param {function(Date|null): void} props.onEndedAtChange - Function to change ended at date
+ * @param {function(string): void} props.onStripeCustomerIdChange - Function to change the Stripe customer ID
+ * @param {function(string): void} props.onStripeSubscriptionIdChange - Function to change the Stripe subscription ID
+ * @param {function(): void} props.onSubmit - Function to submit the subscription form
+ * @param {boolean} [props.loading] - Whether the subscription is being created or updated
+ * @returns {JSX.Element} - The SubscriptionDialog component
+ */
 export default function SubscriptionDialog(props) {
   const open = () => props.open;
-  const onOpenChange = () => props.onOpenChange;
   const loading = () => props.loading;
   const isEdit = () => props.isEdit || false;
   const plan = () => props.plan;
@@ -19,23 +47,12 @@ export default function SubscriptionDialog(props) {
   const endedAt = () => props.endedAt;
   const stripeCustomerId = () => props.stripeCustomerId || '';
   const stripeSubscriptionId = () => props.stripeSubscriptionId || '';
-  const onPlanChange = () => props.onPlanChange;
-  const onStatusChange = () => props.onStatusChange;
-  const onPeriodStartChange = () => props.onPeriodStartChange;
-  const onPeriodEndChange = () => props.onPeriodEndChange;
-  const onCancelAtPeriodEndChange = () => props.onCancelAtPeriodEndChange;
-  const onCanceledAtChange = () => props.onCanceledAtChange;
-  const onEndedAtChange = () => props.onEndedAtChange;
-  const onStripeCustomerIdChange = () => props.onStripeCustomerIdChange;
-  const onStripeSubscriptionIdChange = () => props.onStripeSubscriptionIdChange;
-  const onSubmit = () => props.onSubmit;
 
   const formatDateInput = timestamp => {
     if (!timestamp) return '';
-    const date = timestamp instanceof Date ?
-        timestamp
-      : typeof timestamp === 'string' ?
-        new Date(timestamp)
+    const date =
+      timestamp instanceof Date ? timestamp
+      : typeof timestamp === 'string' ? new Date(timestamp)
       : new Date(timestamp * 1000);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -48,7 +65,7 @@ export default function SubscriptionDialog(props) {
   return (
     <Dialog
       open={open()}
-      onOpenChange={onOpenChange()}
+      onOpenChange={props.onOpenChange}
       title={isEdit() ? 'Edit Subscription' : 'Create Subscription'}
     >
       <div class='space-y-4'>
@@ -56,7 +73,7 @@ export default function SubscriptionDialog(props) {
           <label class='mb-1 block text-sm font-medium text-gray-700'>Plan</label>
           <select
             value={plan()}
-            onInput={e => onPlanChange()(e.target.value)}
+            onInput={e => props.onPlanChange?.(e.target.value)}
             class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
           >
             <option value='starter_team'>Starter Team</option>
@@ -68,7 +85,7 @@ export default function SubscriptionDialog(props) {
           <label class='mb-1 block text-sm font-medium text-gray-700'>Status</label>
           <select
             value={status()}
-            onInput={e => onStatusChange()(e.target.value)}
+            onInput={e => props.onStatusChange?.(e.target.value)}
             class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
           >
             <option value='active'>Active</option>
@@ -87,7 +104,7 @@ export default function SubscriptionDialog(props) {
           <input
             type='datetime-local'
             value={periodStart()}
-            onInput={e => onPeriodStartChange()(e.target.value)}
+            onInput={e => props.onPeriodStartChange?.(e.target.value)}
             class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
           />
         </div>
@@ -96,7 +113,7 @@ export default function SubscriptionDialog(props) {
           <input
             type='datetime-local'
             value={periodEnd()}
-            onInput={e => onPeriodEndChange()(e.target.value)}
+            onInput={e => props.onPeriodEndChange?.(e.target.value)}
             class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
           />
         </div>
@@ -105,7 +122,7 @@ export default function SubscriptionDialog(props) {
             type='checkbox'
             id='cancelAtPeriodEnd'
             checked={cancelAtPeriodEnd()}
-            onInput={e => onCancelAtPeriodEndChange()(e.target.checked)}
+            onInput={e => props.onCancelAtPeriodEndChange?.(e.target.checked)}
             class='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500'
           />
           <label for='cancelAtPeriodEnd' class='text-sm font-medium text-gray-700'>
@@ -113,13 +130,13 @@ export default function SubscriptionDialog(props) {
           </label>
         </div>
         <div>
-          <label class='mb-1 block text-sm font-medium text-gray-700'>
-            Canceled At (optional)
-          </label>
+          <label class='mb-1 block text-sm font-medium text-gray-700'>Canceled At (optional)</label>
           <input
             type='datetime-local'
             value={canceledAt() ? formatDateInput(canceledAt()) : ''}
-            onInput={e => onCanceledAtChange()(e.target.value ? new Date(e.target.value) : null)}
+            onInput={e =>
+              props.onCanceledAtChange?.(e.target.value ? new Date(e.target.value) : null)
+            }
             class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
           />
         </div>
@@ -128,7 +145,7 @@ export default function SubscriptionDialog(props) {
           <input
             type='datetime-local'
             value={endedAt() ? formatDateInput(endedAt()) : ''}
-            onInput={e => onEndedAtChange()(e.target.value ? new Date(e.target.value) : null)}
+            onInput={e => props.onEndedAtChange?.(e.target.value ? new Date(e.target.value) : null)}
             class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
           />
         </div>
@@ -139,9 +156,9 @@ export default function SubscriptionDialog(props) {
           <input
             type='text'
             value={stripeCustomerId()}
-            onInput={e => onStripeCustomerIdChange()(e.target.value)}
+            onInput={e => props.onStripeCustomerIdChange?.(e.target.value)}
             placeholder='cus_...'
-            class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none'
+            class='w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
           />
         </div>
         <div>
@@ -151,24 +168,30 @@ export default function SubscriptionDialog(props) {
           <input
             type='text'
             value={stripeSubscriptionId()}
-            onInput={e => onStripeSubscriptionIdChange()(e.target.value)}
+            onInput={e => props.onStripeSubscriptionIdChange?.(e.target.value)}
             placeholder='sub_...'
-            class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none'
+            class='w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
           />
         </div>
         <div class='flex justify-end space-x-3'>
           <button
-            onClick={() => onOpenChange()(false)}
+            onClick={() => props.onOpenChange?.(false)}
             class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
           >
             Cancel
           </button>
           <button
-            onClick={onSubmit()}
+            onClick={() => props.onSubmit?.()}
             disabled={loading()}
             class='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50'
           >
-            {loading() ? (isEdit() ? 'Updating...' : 'Creating...') : isEdit() ? 'Update' : 'Create'}
+            {loading() ?
+              isEdit() ?
+                'Updating...'
+              : 'Creating...'
+            : isEdit() ?
+              'Update'
+            : 'Create'}
           </button>
         </div>
       </div>

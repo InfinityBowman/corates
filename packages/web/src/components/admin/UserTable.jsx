@@ -30,7 +30,16 @@ const PROVIDER_INFO = {
   credential: { name: 'Email/Password', icon: null },
 };
 
+/**
+ * User Table component for admin dashboard
+ * Lists all users with search and pagination
+ * @param {object} props - Component props
+ * @param {Array<object>} props.users - Array of user objects
+ * @param {function(): void} props.onRefresh - Function to refresh the user list
+ * @returns {JSX.Element} - The UserTable component
+ */
 export default function UserTable(props) {
+  const users = () => props.users || [];
   const [actionMenuOpen, setActionMenuOpen] = createSignal(null);
   const [menuPosition, setMenuPosition] = createSignal({ top: 0, right: 0 });
   const [confirmDialog, setConfirmDialog] = createSignal(null);
@@ -133,12 +142,6 @@ export default function UserTable(props) {
     }
   };
 
-  const formatAccessStatus = user => {
-    // Billing is now org-scoped, not user-scoped
-    // Users get access through their org memberships
-    return { label: 'Org-based billing', color: 'gray', plan: 'org' };
-  };
-
   return (
     <>
       {/* Error Toast */}
@@ -171,9 +174,6 @@ export default function UserTable(props) {
                 Status
               </th>
               <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                Access
-              </th>
-              <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
                 Stripe Customer
               </th>
               <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
@@ -186,7 +186,7 @@ export default function UserTable(props) {
           </thead>
           <tbody class='divide-y divide-gray-200'>
             <For
-              each={props.users}
+              each={users()}
               fallback={
                 <tr>
                   <td colspan='8' class='px-6 py-12 text-center text-gray-500'>
@@ -264,24 +264,6 @@ export default function UserTable(props) {
                         Banned
                       </span>
                     </Show>
-                  </td>
-                  <td class='px-6 py-4'>
-                    {(() => {
-                      const access = formatAccessStatus(user);
-                      const colorClasses = {
-                        green: 'bg-green-100 text-green-800',
-                        red: 'bg-red-100 text-red-800',
-                        gray: 'bg-gray-100 text-gray-800',
-                      };
-                      return (
-                        <span
-                          class={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${colorClasses[access.color]}`}
-                          title={access.label}
-                        >
-                          {access.label}
-                        </span>
-                      );
-                    })()}
                   </td>
                   <td class='px-6 py-4'>
                     <Show

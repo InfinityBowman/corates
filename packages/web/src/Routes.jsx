@@ -13,6 +13,7 @@ import ReconciliationWrapper from '@/components/project/reconcile-tab/amstar2-re
 import ProfilePage from '@/components/profile/ProfilePage.jsx';
 import SettingsPage from '@/components/profile/SettingsPage.jsx';
 import BillingPage from '@components/billing/BillingPage.jsx';
+import BillingPlansPage from '@components/billing/BillingPlansPage.jsx';
 import NotFoundPage from '@components/NotFoundPage.jsx';
 import { AdminDashboard } from '@/components/admin/index.js';
 import StorageManagement from '@/components/admin/StorageManagement.jsx';
@@ -53,6 +54,7 @@ export default function AppRoutes() {
           <Route path='/admin/orgs' component={OrgList} />
           <Route path='/admin/orgs/:orgId' component={OrgDetail} />
           <Route path='/settings/billing' component={BillingPage} />
+          <Route path='/settings/billing/plans' component={BillingPlansPage} />
 
           {/* Organization creation */}
           <Route path='/orgs/new' component={CreateOrgPage} />
