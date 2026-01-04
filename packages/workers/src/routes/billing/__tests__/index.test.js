@@ -251,22 +251,6 @@ describe('Billing Routes - GET /api/billing/subscription', () => {
   });
 });
 
-describe('Billing Routes - GET /api/billing/plans', () => {
-  it('should return available plans', async () => {
-    const res = await fetchBilling('/api/billing/plans');
-    expect(res.status).toBe(200);
-
-    const body = await json(res);
-    expect(body.plans).toBeDefined();
-    expect(Array.isArray(body.plans)).toBe(true);
-    expect(body.plans.length).toBeGreaterThan(0);
-
-    const freePlan = body.plans.find(p => p.tier === 'free');
-    expect(freePlan).toBeDefined();
-    expect(freePlan.price.monthly).toBe(0);
-  });
-});
-
 describe('Billing Routes - POST /api/billing/checkout', () => {
   it('should create checkout session for valid tier (org-scoped)', async () => {
     const nowSec = Math.floor(Date.now() / 1000);

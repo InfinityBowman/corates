@@ -105,6 +105,8 @@ async function main() {
       'account',
       'session',
       'user',
+      // Observability tables
+      'stripe_event_ledger',
     ];
 
     for (const table of tables) {
@@ -117,28 +119,6 @@ async function main() {
     console.log('  Dropping migration tracking tables...');
     runWranglerD1Execute(`DROP TABLE IF EXISTS __drizzle_migrations;`, { allowFailure: true });
     runWranglerD1Execute(`DROP TABLE IF EXISTS _cf_KV;`, { allowFailure: true });
-
-    // Step 2: Delete and recreate R2 bucket
-    // console.log('');
-    // console.log('Step 2: Clearing R2 bucket...');
-    // console.log(`  Deleting bucket: ${BUCKET_NAME}`);
-    // const deleteResult = deleteR2Bucket();
-    // if (deleteResult.status !== 0) {
-    //   console.log(`    Note: ${deleteResult.stderr || 'Bucket may not exist or already deleted'}`);
-    // } else {
-    //   console.log('    Bucket deleted');
-    // }
-
-    // console.log(`  Creating bucket: ${BUCKET_NAME}`);
-    // const createResult = createR2Bucket();
-    // if (createResult.status !== 0) {
-    //   console.log(
-    //     `    Warning: Failed to create bucket: ${createResult.stderr || createResult.stdout}`,
-    //   );
-    //   throw new Error('Failed to recreate R2 bucket');
-    // } else {
-    //   console.log('    Bucket created');
-    // }
 
     // Step 3: Run migrations
     console.log('');

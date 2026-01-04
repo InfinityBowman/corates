@@ -142,6 +142,7 @@ export async function resetTestDatabase() {
   const tablesToDrop = [
     'project_invitations',
     'org_access_grants',
+    'stripe_event_ledger',
     'subscription',
     'twoFactor',
     'verification',
