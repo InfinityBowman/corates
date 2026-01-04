@@ -42,7 +42,7 @@ export const CHECKLIST_METADATA = {
     shortName: 'ROBINS-I',
     description: 'Risk of bias in non-randomized studies of interventions',
     version: 'V2',
-    url: 'https://www.riskofbias.info/welcome/home/current-version-of-robins-i',
+    url: `${LANDING_URL}/resources`,
     scoreLevels: ['Low', 'Moderate', 'Serious', 'Critical', 'Incomplete'],
     scoreColors: {
       Low: { bg: 'bg-green-100', text: 'text-green-800' },
