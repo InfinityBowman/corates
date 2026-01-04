@@ -107,7 +107,7 @@ export default function OrgDetail() {
       data.cancelAtPeriodEnd = subCancelAtPeriodEnd();
 
       await createOrgSubscription(orgId(), data);
-      showToast({ title: 'Success', description: 'Subscription created successfully' });
+      showToast.success('Success', 'Subscription created successfully');
       setSubscriptionDialogOpen(false);
       resetSubscriptionForm();
       billingQuery.refetch();
@@ -164,7 +164,7 @@ export default function OrgDetail() {
       }
 
       await updateOrgSubscription(orgId(), subscription.id, data);
-      showToast({ title: 'Success', description: 'Subscription updated successfully' });
+      showToast.success('Success', 'Subscription updated successfully');
       setSubscriptionDialogOpen(false);
       setEditingSubscription(null);
       resetSubscriptionForm();
@@ -192,10 +192,7 @@ export default function OrgDetail() {
     setLoading(true);
     try {
       await cancelOrgSubscription(orgId(), subscriptionId);
-      showToast({
-        title: 'Success',
-        description: 'Subscription canceled (status=canceled, endedAt=now)',
-      });
+      showToast.success('Success', 'Subscription canceled (status=canceled, endedAt=now)');
       setConfirmDialog(null);
       billingQuery.refetch();
     } catch (error) {
@@ -229,7 +226,7 @@ export default function OrgDetail() {
       };
 
       await createOrgGrant(orgId(), data);
-      showToast({ title: 'Success', description: 'Grant created successfully' });
+      showToast.success('Success', 'Grant created successfully');
       setGrantDialogOpen(false);
       billingQuery.refetch();
     } catch (error) {
@@ -243,7 +240,7 @@ export default function OrgDetail() {
     setLoading(true);
     try {
       await revokeOrgGrant(orgId(), grantId);
-      showToast({ title: 'Success', description: 'Grant revoked' });
+      showToast.success('Success', 'Grant revoked');
       setConfirmDialog(null);
       billingQuery.refetch();
     } catch (error) {
@@ -257,7 +254,7 @@ export default function OrgDetail() {
     setLoading(true);
     try {
       await grantOrgTrial(orgId());
-      showToast({ title: 'Success', description: 'Trial granted (14 days)' });
+      showToast.success('Success', 'Trial granted (14 days)');
       billingQuery.refetch();
     } catch (error) {
       await handleError(error, { toastTitle: 'Error granting trial' });
@@ -270,10 +267,7 @@ export default function OrgDetail() {
     setLoading(true);
     try {
       await grantOrgSingleProject(orgId());
-      showToast({
-        title: 'Success',
-        description: 'Single project grant created/extended (6 months)',
-      });
+      showToast.success('Success', 'Single project grant created/extended (6 months)');
       billingQuery.refetch();
     } catch (error) {
       await handleError(error, { toastTitle: 'Error granting single project access' });

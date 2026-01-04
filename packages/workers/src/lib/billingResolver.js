@@ -20,10 +20,11 @@ export function isSubscriptionActive(subscription, now) {
 
   const nowTimestamp = now instanceof Date ? Math.floor(now.getTime() / 1000) : now;
   const status = subscription.status;
-  const periodEnd = subscription.periodEnd ?
-    (subscription.periodEnd instanceof Date ?
-      Math.floor(subscription.periodEnd.getTime() / 1000)
-    : subscription.periodEnd)
+  const periodEnd =
+    subscription.periodEnd ?
+      subscription.periodEnd instanceof Date ?
+        Math.floor(subscription.periodEnd.getTime() / 1000)
+      : subscription.periodEnd
     : null;
 
   // trialing: Always active (subscription takes precedence over grants)
@@ -76,12 +77,8 @@ async function getActiveSubscription(db, orgId, now) {
   const activeSubscriptions = subscriptions.filter(sub => isSubscriptionActive(sub, now));
 
   if (activeSubscriptions.length === 0) {
-    // No active subscriptions - if multiple exist, log warning and return latest periodEnd
-    if (subscriptions.length > 1) {
-      console.warn(
-        `[BillingResolver] Multiple subscriptions found for org ${orgId}, none active. Using latest periodEnd.`,
-      );
-    }
+    // No active subscriptions - return latest periodEnd (may be null if no subscriptions exist)
+    // Multiple ended subscriptions is normal and expected
     return subscriptions[0] || null;
   }
 
@@ -146,10 +143,12 @@ export async function resolveOrgAccess(db, orgId, now = new Date()) {
           selectedType = 'trial';
         } else {
           // Both are trial, pick latest expiresAt
-          const currentExpires = selectedGrant.expiresAt instanceof Date ?
+          const currentExpires =
+            selectedGrant.expiresAt instanceof Date ?
               Math.floor(selectedGrant.expiresAt.getTime() / 1000)
             : selectedGrant.expiresAt;
-          const grantExpires = grant.expiresAt instanceof Date ?
+          const grantExpires =
+            grant.expiresAt instanceof Date ?
               Math.floor(grant.expiresAt.getTime() / 1000)
             : grant.expiresAt;
           if (grantExpires > currentExpires) {
@@ -165,10 +164,12 @@ export async function resolveOrgAccess(db, orgId, now = new Date()) {
               selectedType = 'single_project';
             } else {
               // Both are single_project, pick latest expiresAt
-              const currentExpires = selectedGrant.expiresAt instanceof Date ?
+              const currentExpires =
+                selectedGrant.expiresAt instanceof Date ?
                   Math.floor(selectedGrant.expiresAt.getTime() / 1000)
                 : selectedGrant.expiresAt;
-              const grantExpires = grant.expiresAt instanceof Date ?
+              const grantExpires =
+                grant.expiresAt instanceof Date ?
                   Math.floor(grant.expiresAt.getTime() / 1000)
                 : grant.expiresAt;
               if (grantExpires > currentExpires) {
@@ -207,7 +208,8 @@ export async function resolveOrgAccess(db, orgId, now = new Date()) {
     .all();
 
   const expiredGrants = allGrants.filter(grant => {
-    const expiresAt = grant.expiresAt instanceof Date ?
+    const expiresAt =
+      grant.expiresAt instanceof Date ?
         Math.floor(grant.expiresAt.getTime() / 1000)
       : grant.expiresAt;
     return expiresAt <= nowTimestamp;
