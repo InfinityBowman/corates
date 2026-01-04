@@ -32,7 +32,7 @@ export default function OverviewTab() {
   const [tablesExpanded, setTablesExpanded] = createSignal(false);
 
   const { user } = useBetterAuth();
-  const { projectId, orgId, isOwner } = useProjectContext();
+  const { projectId, isOwner } = useProjectContext();
   const confirmDialog = useConfirmDialog();
   const navigate = useNavigate();
 
@@ -219,7 +219,7 @@ export default function OverviewTab() {
 
         {/* Inter-rater Reliability Section */}
         <Show when={interRaterMetrics().studyCount > 0}>
-          <div class='mt-6 rounded-lg border border-blue-200 bg-blue-50 p-5'>
+          <div class='mt-6 rounded-lg border border-purple-200 bg-purple-50 p-5'>
             <h3 class='mb-4 text-base font-semibold text-gray-900'>Inter-rater Reliability</h3>
             <div class='grid grid-cols-1 gap-4 md:grid-cols-3'>
               <div class='text-center'>
@@ -403,7 +403,6 @@ export default function OverviewTab() {
         isOpen={showAddMemberModal()}
         onClose={() => setShowAddMemberModal(false)}
         projectId={projectId}
-        orgId={orgId()}
       />
       <confirmDialog.ConfirmDialogComponent />
     </>

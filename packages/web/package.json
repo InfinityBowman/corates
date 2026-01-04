@@ -19,6 +19,7 @@
   "dependencies": {
     "@corates/shared": "workspace:*",
     "@corates/ui": "workspace:*",
+    "@embedpdf/snippet": "^2.0.0",
     "@solidjs/router": "^0.15.4",
     "@tanstack/solid-query": "^5.90.18",
     "better-auth": "^1.4.9",

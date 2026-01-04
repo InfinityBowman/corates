@@ -4,7 +4,7 @@
  * Reads all migration SQL files and creates a JS file that exports the combined SQL for test helpers
  */
 
-import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, statSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -12,7 +12,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const MIGRATIONS_DIR = join(__dirname, '..', 'migrations');
-const OUTPUT_FILE = join(__dirname, '..', 'src', '__tests__', 'migration-sql.js');
+const OUTPUT_DIR = join(__dirname, '..', 'src', '__tests__');
+const OUTPUT_FILE = join(OUTPUT_DIR, 'migration-sql.js');
 
 try {
   // Read all .sql files from migrations directory
@@ -36,6 +37,9 @@ try {
 
   // Join all migrations with newlines to preserve structure
   const combinedSql = migrationSqls.join('\n\n');
+
+  // Ensure output directory exists (recursive: true creates parent dirs if needed)
+  mkdirSync(OUTPUT_DIR, { recursive: true });
 
   // Generate the JS file with the SQL as an exported constant
   const jsContent = `/**

@@ -10,7 +10,7 @@ node_modules
 npm-debug.log*
 .wrangler
 .turbo
-/reference
+reference/
 
 # Vite cache
 .vite/
