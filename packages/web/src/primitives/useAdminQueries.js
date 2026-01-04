@@ -119,3 +119,51 @@ export function useStorageStats() {
     refetchOnMount: 'always', // Always refetch on mount, even if data exists
   }));
 }
+
+/**
+ * Hook to fetch orgs with pagination and search
+ * @param {() => {page: number, limit: number, search: string}} getParams - Function returning params
+ */
+export function useAdminOrgs(getParams) {
+  return useQuery(() => {
+    const params = typeof getParams === 'function' ? getParams() : getParams;
+    const page = params?.page ?? 1;
+    const limit = params?.limit ?? 20;
+    const search = params?.search ?? '';
+    return {
+      queryKey: queryKeys.admin.orgs(page, limit, search),
+      queryFn: () => fetchOrgs({ page, limit, search }),
+      staleTime: 0,
+      gcTime: 1000 * 60 * 5,
+      refetchOnMount: 'always',
+    };
+  });
+}
+
+/**
+ * Hook to fetch single org details
+ */
+export function useAdminOrgDetails(orgId) {
+  return useQuery(() => ({
+    queryKey: queryKeys.admin.orgDetails(orgId),
+    queryFn: () => fetchOrgDetails(orgId),
+    enabled: !!orgId,
+    staleTime: 0,
+    gcTime: 1000 * 60 * 5,
+    refetchOnMount: 'always',
+  }));
+}
+
+/**
+ * Hook to fetch org billing details
+ */
+export function useAdminOrgBilling(orgId) {
+  return useQuery(() => ({
+    queryKey: queryKeys.admin.orgBilling(orgId),
+    queryFn: () => fetchOrgBilling(orgId),
+    enabled: !!orgId,
+    staleTime: 0,
+    gcTime: 1000 * 60 * 5,
+    refetchOnMount: 'always',
+  }));
+}

@@ -8,7 +8,7 @@ import { useSearchParams } from '@solidjs/router';
 import { FiCreditCard, FiArrowLeft, FiCheckCircle, FiXCircle } from 'solid-icons/fi';
 import { A } from '@solidjs/router';
 import { useSubscription } from '@/primitives/useSubscription.js';
-import { redirectToPortal } from '@/api/billing.js';
+import { redirectToPortal, redirectToSingleProjectCheckout } from '@/api/billing.js';
 import { SubscriptionCard, PricingTable } from '@/components/billing/index.js';
 
 export default function BillingPage() {
@@ -16,10 +16,12 @@ export default function BillingPage() {
   const { subscription, loading, refetch, tier } = useSubscription();
   const [portalLoading, setPortalLoading] = createSignal(false);
   const [showPricing, setShowPricing] = createSignal(false);
+  const [singleProjectLoading, setSingleProjectLoading] = createSignal(false);
 
   // Check for success/canceled query params from Stripe redirect
   const checkoutSuccess = () => searchParams.success === 'true';
   const checkoutCanceled = () => searchParams.canceled === 'true';
+  const purchaseSuccess = () => searchParams.purchase === 'single_project' && checkoutSuccess();
 
   // Refetch subscription on successful checkout
   if (checkoutSuccess()) {
@@ -41,6 +43,25 @@ export default function BillingPage() {
 
   const handleUpgrade = () => {
     setShowPricing(true);
+  };
+
+  const handlePurchaseSingleProject = async () => {
+    setSingleProjectLoading(true);
+    try {
+      await redirectToSingleProjectCheckout();
+    } catch (error) {
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(error, {
+        toastTitle: 'Checkout Error',
+      });
+      setSingleProjectLoading(false);
+    }
+  };
+
+  // Check if org is in free/readOnly state and should show Single Project purchase
+  const showSingleProjectOption = () => {
+    const sub = subscription();
+    return (tier() === 'free' || sub?.accessMode === 'readOnly') && sub?.source !== 'subscription';
   };
 
   return (
@@ -66,7 +87,11 @@ export default function BillingPage() {
           <FiCheckCircle class='mr-3 h-5 w-5 text-green-500' />
           <div>
             <p class='font-medium text-green-800'>Payment successful!</p>
-            <p class='text-sm text-green-600'>Your subscription has been activated.</p>
+            <p class='text-sm text-green-600'>
+              {purchaseSuccess() ?
+                'Your Single Project access has been activated.'
+              : 'Your subscription has been activated.'}
+            </p>
           </div>
         </div>
       </Show>
@@ -89,6 +114,31 @@ export default function BillingPage() {
           onUpgrade={handleUpgrade}
           loading={portalLoading()}
         />
+      </Show>
+
+      {/* Single Project purchase option for free/readOnly orgs */}
+      <Show when={showSingleProjectOption()}>
+        <div class='mt-6 overflow-hidden rounded-xl border border-blue-200 bg-blue-50 p-6'>
+          <div class='flex items-start justify-between'>
+            <div class='flex-1'>
+              <h3 class='text-lg font-semibold text-gray-900'>Single Project Access</h3>
+              <p class='mt-1 text-sm text-gray-600'>
+                Get 1 project and 3 collaborators for one year. Perfect for trying out CoRATES or
+                completing a single research project.
+              </p>
+            </div>
+            <button
+              type='button'
+              class='ml-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50'
+              onClick={handlePurchaseSingleProject}
+              disabled={singleProjectLoading()}
+            >
+              <Show when={singleProjectLoading()} fallback='Purchase Single Project'>
+                Processing...
+              </Show>
+            </button>
+          </div>
+        </div>
       </Show>
 
       {/* Pricing table */}

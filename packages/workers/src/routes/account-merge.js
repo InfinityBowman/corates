@@ -15,15 +15,7 @@
 
 import { Hono } from 'hono';
 import { createDb } from '../db/client.js';
-import {
-  user,
-  account,
-  projects,
-  projectMembers,
-  subscriptions,
-  mediaFiles,
-  verification,
-} from '../db/schema.js';
+import { user, account, projects, projectMembers, mediaFiles, verification } from '../db/schema.js';
 import { eq, sql, like, and } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rateLimit.js';
@@ -41,9 +33,6 @@ const accountMergeRoutes = new Hono();
 
 // All routes require authentication
 accountMergeRoutes.use('*', requireAuth);
-
-// Tier priority for subscription merging
-const TIER_PRIORITY = { enterprise: 4, team: 3, pro: 2, free: 1 };
 
 // Rate limiter for merge initiate (3 attempts per 15 minutes per user+email)
 const mergeInitiateRateLimiter = rateLimit({
@@ -559,35 +548,19 @@ accountMergeRoutes.post('/complete', async c => {
 
   try {
     // Gather all data needed to build the batch
-    const [
-      primaryAccounts,
-      secondaryAccounts,
-      primaryMemberships,
-      secondaryMemberships,
-      primarySub,
-      secondarySub,
-    ] = await Promise.all([
-      db
-        .select({ providerId: account.providerId })
-        .from(account)
-        .where(eq(account.userId, primaryUserId)),
-      db.select().from(account).where(eq(account.userId, secondaryUserId)),
-      db
-        .select({ projectId: projectMembers.projectId })
-        .from(projectMembers)
-        .where(eq(projectMembers.userId, primaryUserId)),
-      db.select().from(projectMembers).where(eq(projectMembers.userId, secondaryUserId)),
-      db
-        .select()
-        .from(subscriptions)
-        .where(eq(subscriptions.userId, primaryUserId))
-        .then(rows => rows[0]),
-      db
-        .select()
-        .from(subscriptions)
-        .where(eq(subscriptions.userId, secondaryUserId))
-        .then(rows => rows[0]),
-    ]);
+    const [primaryAccounts, secondaryAccounts, primaryMemberships, secondaryMemberships] =
+      await Promise.all([
+        db
+          .select({ providerId: account.providerId })
+          .from(account)
+          .where(eq(account.userId, primaryUserId)),
+        db.select().from(account).where(eq(account.userId, secondaryUserId)),
+        db
+          .select({ projectId: projectMembers.projectId })
+          .from(projectMembers)
+          .where(eq(projectMembers.userId, primaryUserId)),
+        db.select().from(projectMembers).where(eq(projectMembers.userId, secondaryUserId)),
+      ]);
 
     // Prepare account operations
     const primaryProviders = new Set(primaryAccounts.map(a => a.providerId));
@@ -603,23 +576,6 @@ accountMergeRoutes.post('/complete', async c => {
     const membershipsToMove = secondaryMemberships.filter(
       m => !primaryMemberProjects.has(m.projectId),
     );
-
-    // Prepare subscription operations
-    let deleteOldPrimarySub = false;
-    let moveSecondarySub = false;
-    let deleteSecondarySub = false;
-
-    if (secondarySub) {
-      const primaryPriority = TIER_PRIORITY[primarySub?.tier] || 0;
-      const secondaryPriority = TIER_PRIORITY[secondarySub.tier] || 0;
-
-      if (secondaryPriority > primaryPriority) {
-        if (primarySub) deleteOldPrimarySub = true;
-        moveSecondarySub = true;
-      } else {
-        deleteSecondarySub = true;
-      }
-    }
 
     // Build batch of all operations - executed as a transaction (all-or-nothing)
     const batchOps = [];
@@ -661,23 +617,7 @@ accountMergeRoutes.post('/complete', async c => {
       );
     }
 
-    // 5. Handle subscriptions
-    if (deleteOldPrimarySub) {
-      batchOps.push(db.delete(subscriptions).where(eq(subscriptions.id, primarySub.id)));
-    }
-    if (moveSecondarySub) {
-      batchOps.push(
-        db
-          .update(subscriptions)
-          .set({ userId: primaryUserId, updatedAt: now })
-          .where(eq(subscriptions.id, secondarySub.id)),
-      );
-    }
-    if (deleteSecondarySub) {
-      batchOps.push(db.delete(subscriptions).where(eq(subscriptions.userId, secondaryUserId)));
-    }
-
-    // 6. Update media files ownership
+    // 5. Update media files ownership
     batchOps.push(
       db
         .update(mediaFiles)
@@ -685,10 +625,10 @@ accountMergeRoutes.post('/complete', async c => {
         .where(eq(mediaFiles.uploadedBy, secondaryUserId)),
     );
 
-    // 7. Delete secondary user (sessions, etc. will cascade)
+    // 6. Delete secondary user (sessions, etc. will cascade)
     batchOps.push(db.delete(user).where(eq(user.id, secondaryUserId)));
 
-    // 8. Clean up merge request
+    // 7. Clean up merge request
     batchOps.push(db.delete(verification).where(eq(verification.id, mergeRequest.id)));
 
     // Execute all operations as a single atomic batch transaction

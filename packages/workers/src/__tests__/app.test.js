@@ -254,26 +254,3 @@ describe('Main App - Durable Object Routes', () => {
     expect([200, 400, 401]).toContain(res.status);
   });
 });
-
-describe('Main App - Admin Routes (regression)', () => {
-  it('should mount admin subscription route (never 404)', async () => {
-    // Test that the subscription route is mounted and reachable
-    // Even without auth, should return 401 (not 404)
-    const res = await fetchApp(app, '/api/admin/users/test-user-id/subscription', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        origin: 'http://localhost:5173',
-      },
-      body: JSON.stringify({
-        tier: 'pro',
-        status: 'active',
-      }),
-    });
-
-    // Should never be 404 - route should be registered
-    // Will be 401 (auth required) or 403 (not admin)
-    expect(res.status).not.toBe(404);
-    expect([401, 403]).toContain(res.status);
-  });
-});

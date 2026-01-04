@@ -4,7 +4,7 @@
  * Plans are static configuration - not stored in database
  */
 
-import type { Plans, PlanId } from './types.js';
+import type { Plans, PlanId, Plan } from './types.js';
 
 /**
  * Plan configurations for all subscription tiers
@@ -14,42 +14,40 @@ export const PLANS: Plans = {
     name: 'Free',
     entitlements: {
       'project.create': false,
-      'checklist.edit': true,
-      'export.pdf': false,
-      'ai.run': false,
     },
     quotas: {
       'projects.max': 0,
-      'storage.project.maxMB': 10,
-      'ai.tokens.monthly': 0,
+      'collaborators.org.max': 0,
     },
   },
-  pro: {
-    name: 'Pro',
+  starter_team: {
+    name: 'Starter Team',
     entitlements: {
       'project.create': true,
-      'checklist.edit': true,
-      'export.pdf': true,
-      'ai.run': true,
+    },
+    quotas: {
+      'projects.max': 3,
+      'collaborators.org.max': 5,
+    },
+  },
+  team: {
+    name: 'Team',
+    entitlements: {
+      'project.create': true,
     },
     quotas: {
       'projects.max': 10,
-      'storage.project.maxMB': 1000,
-      'ai.tokens.monthly': 100000,
+      'collaborators.org.max': 15,
     },
   },
-  unlimited: {
-    name: 'Unlimited',
+  unlimited_team: {
+    name: 'Unlimited Team',
     entitlements: {
       'project.create': true,
-      'checklist.edit': true,
-      'export.pdf': true,
-      'ai.run': true,
     },
     quotas: {
       'projects.max': -1,
-      'storage.project.maxMB': -1,
-      'ai.tokens.monthly': -1,
+      'collaborators.org.max': -1,
     },
   },
 };
@@ -78,4 +76,42 @@ export function getPlan(planId: PlanId | string): Plans[PlanId] {
  */
 export function isUnlimitedQuota(quota: number): boolean {
   return quota === -1;
+}
+
+/**
+ * Grant types - not plans, but provide access similar to plans
+ */
+export type GrantType = 'trial' | 'single_project';
+
+/**
+ * Get plan-like configuration for a grant type
+ * Grants provide temporary access and map to specific quotas/entitlements
+ */
+export function getGrantPlan(grantType: GrantType): Plan {
+  switch (grantType) {
+    case 'trial':
+      return {
+        name: 'Trial',
+        entitlements: {
+          'project.create': true,
+        },
+        quotas: {
+          'projects.max': 1,
+          'collaborators.org.max': 3,
+        },
+      };
+    case 'single_project':
+      return {
+        name: 'Single Project',
+        entitlements: {
+          'project.create': true,
+        },
+        quotas: {
+          'projects.max': 1,
+          'collaborators.org.max': 3,
+        },
+      };
+    default:
+      return PLANS[DEFAULT_PLAN];
+  }
 }

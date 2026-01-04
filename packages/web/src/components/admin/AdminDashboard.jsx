@@ -16,6 +16,7 @@ import {
   FiAlertCircle,
   FiDatabase,
   FiLoader,
+  FiBuilding2,
 } from 'solid-icons/fi';
 import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.js';
 import { useAdminStats, useAdminUsers } from '@primitives/useAdminQueries.js';
@@ -94,13 +95,22 @@ export default function AdminDashboard() {
                 <p class='text-sm text-gray-500'>Manage users and monitor activity</p>
               </div>
             </div>
-            <A
-              href='/admin/storage'
-              class='flex items-center space-x-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
-            >
-              <FiDatabase class='h-4 w-4' />
-              <span>Storage Management</span>
-            </A>
+            <div class='flex items-center space-x-2'>
+              <A
+                href='/admin/orgs'
+                class='flex items-center space-x-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+              >
+                <FiBuilding2 class='h-4 w-4' />
+                <span>Organizations</span>
+              </A>
+              <A
+                href='/admin/storage'
+                class='flex items-center space-x-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+              >
+                <FiDatabase class='h-4 w-4' />
+                <span>Storage Management</span>
+              </A>
+            </div>
           </div>
 
           {/* Stats Grid */}

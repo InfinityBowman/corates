@@ -326,6 +326,192 @@ async function fetchStorageStats() {
   return response.json();
 }
 
+/**
+ * Fetch orgs with pagination and search
+ */
+async function fetchOrgs({ page = 1, limit = 20, search = '' } = {}) {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+  if (search) params.set('search', search);
+
+  const response = await fetch(`${API_BASE}/api/admin/orgs?${params}`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error('Failed to fetch orgs');
+  return response.json();
+}
+
+/**
+ * Fetch single org details with billing summary
+ */
+async function fetchOrgDetails(orgId) {
+  const response = await fetch(`${API_BASE}/api/admin/orgs/${orgId}`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error('Failed to fetch org details');
+  return response.json();
+}
+
+/**
+ * Fetch org billing details
+ */
+async function fetchOrgBilling(orgId) {
+  const response = await fetch(`${API_BASE}/api/admin/orgs/${orgId}/billing`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error('Failed to fetch org billing');
+  return response.json();
+}
+
+/**
+ * Create subscription for an org
+ */
+async function createOrgSubscription(orgId, subscriptionData) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/subscriptions`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(subscriptionData),
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
+/**
+ * Update subscription for an org
+ */
+async function updateOrgSubscription(orgId, subscriptionId, updateData) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/subscriptions/${subscriptionId}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updateData),
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
+/**
+ * Cancel subscription for an org
+ */
+async function cancelOrgSubscription(orgId, subscriptionId) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/subscriptions/${subscriptionId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
+/**
+ * Create grant for an org
+ */
+async function createOrgGrant(orgId, grantData) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/grants`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(grantData),
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
+/**
+ * Update grant for an org
+ */
+async function updateOrgGrant(orgId, grantId, updateData) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/grants/${grantId}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updateData),
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
+/**
+ * Revoke grant for an org
+ */
+async function revokeOrgGrant(orgId, grantId) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/grants/${grantId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
+/**
+ * Quick action: Grant trial to org
+ */
+async function grantOrgTrial(orgId) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/grant-trial`, {
+      method: 'POST',
+      credentials: 'include',
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
+/**
+ * Quick action: Grant single_project to org
+ */
+async function grantOrgSingleProject(orgId) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/grant-single-project`, {
+      method: 'POST',
+      credentials: 'include',
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
 export {
   isAdmin,
   isAdminChecked,
@@ -347,4 +533,15 @@ export {
   fetchStorageDocuments,
   deleteStorageDocuments,
   fetchStorageStats,
+  fetchOrgs,
+  fetchOrgDetails,
+  fetchOrgBilling,
+  createOrgSubscription,
+  updateOrgSubscription,
+  cancelOrgSubscription,
+  createOrgGrant,
+  updateOrgGrant,
+  revokeOrgGrant,
+  grantOrgTrial,
+  grantOrgSingleProject,
 };

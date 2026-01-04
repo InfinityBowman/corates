@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "a223d94d-98d7-41d4-acff-03be7082de54",
+  "id": "32b88ed2-f072-4067-8d08-3a8a8e009be0",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -107,8 +107,12 @@
           "name": "account_userId_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -186,8 +190,12 @@
           "name": "invitation_inviterId_user_id_fk",
           "tableFrom": "invitation",
           "tableTo": "user",
-          "columnsFrom": ["inviterId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "inviterId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -195,8 +203,12 @@
           "name": "invitation_organizationId_organization_id_fk",
           "tableFrom": "invitation",
           "tableTo": "organization",
-          "columnsFrom": ["organizationId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "organizationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -272,8 +284,12 @@
           "name": "mediaFiles_uploadedBy_user_id_fk",
           "tableFrom": "mediaFiles",
           "tableTo": "user",
-          "columnsFrom": ["uploadedBy"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "uploadedBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -329,8 +345,12 @@
           "name": "member_userId_user_id_fk",
           "tableFrom": "member",
           "tableTo": "user",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -338,8 +358,108 @@
           "name": "member_organizationId_organization_id_fk",
           "tableFrom": "member",
           "tableTo": "organization",
-          "columnsFrom": ["organizationId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "organizationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "org_access_grants": {
+      "name": "org_access_grants",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "orgId": {
+          "name": "orgId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "startsAt": {
+          "name": "startsAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "revokedAt": {
+          "name": "revokedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "stripeCheckoutSessionId": {
+          "name": "stripeCheckoutSessionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "org_access_grants_stripeCheckoutSessionId_unique": {
+          "name": "org_access_grants_stripeCheckoutSessionId_unique",
+          "columns": [
+            "stripeCheckoutSessionId"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "org_access_grants_orgId_organization_id_fk": {
+          "name": "org_access_grants_orgId_organization_id_fk",
+          "tableFrom": "org_access_grants",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "orgId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -398,7 +518,9 @@
       "indexes": {
         "organization_slug_unique": {
           "name": "organization_slug_unique",
-          "columns": ["slug"],
+          "columns": [
+            "slug"
+          ],
           "isUnique": true
         }
       },
@@ -502,7 +624,9 @@
       "indexes": {
         "project_invitations_token_unique": {
           "name": "project_invitations_token_unique",
-          "columns": ["token"],
+          "columns": [
+            "token"
+          ],
           "isUnique": true
         }
       },
@@ -511,8 +635,12 @@
           "name": "project_invitations_orgId_organization_id_fk",
           "tableFrom": "project_invitations",
           "tableTo": "organization",
-          "columnsFrom": ["orgId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "orgId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -520,8 +648,12 @@
           "name": "project_invitations_projectId_projects_id_fk",
           "tableFrom": "project_invitations",
           "tableTo": "projects",
-          "columnsFrom": ["projectId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "projectId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -529,8 +661,12 @@
           "name": "project_invitations_invitedBy_user_id_fk",
           "tableFrom": "project_invitations",
           "tableTo": "user",
-          "columnsFrom": ["invitedBy"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "invitedBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -586,8 +722,12 @@
           "name": "project_members_projectId_projects_id_fk",
           "tableFrom": "project_members",
           "tableTo": "projects",
-          "columnsFrom": ["projectId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "projectId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -595,8 +735,12 @@
           "name": "project_members_userId_user_id_fk",
           "tableFrom": "project_members",
           "tableTo": "user",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -666,8 +810,12 @@
           "name": "projects_orgId_organization_id_fk",
           "tableFrom": "projects",
           "tableTo": "organization",
-          "columnsFrom": ["orgId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "orgId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -675,8 +823,12 @@
           "name": "projects_createdBy_user_id_fk",
           "tableFrom": "projects",
           "tableTo": "user",
-          "columnsFrom": ["createdBy"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "createdBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -764,7 +916,9 @@
       "indexes": {
         "session_token_unique": {
           "name": "session_token_unique",
-          "columns": ["token"],
+          "columns": [
+            "token"
+          ],
           "isUnique": true
         }
       },
@@ -773,8 +927,12 @@
           "name": "session_userId_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -782,8 +940,12 @@
           "name": "session_impersonatedBy_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": ["impersonatedBy"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "impersonatedBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -791,8 +953,12 @@
           "name": "session_activeOrganizationId_organization_id_fk",
           "tableFrom": "session",
           "tableTo": "organization",
-          "columnsFrom": ["activeOrganizationId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "activeOrganizationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -801,8 +967,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "subscriptions": {
-      "name": "subscriptions",
+    "subscription": {
+      "name": "subscription",
       "columns": {
         "id": {
           "name": "id",
@@ -811,8 +977,15 @@
           "notNull": true,
           "autoincrement": false
         },
-        "userId": {
-          "name": "userId",
+        "plan": {
+          "name": "plan",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "referenceId": {
+          "name": "referenceId",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -832,31 +1005,23 @@
           "notNull": false,
           "autoincrement": false
         },
-        "tier": {
-          "name": "tier",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'free'"
-        },
         "status": {
           "name": "status",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'active'"
+          "default": "'incomplete'"
         },
-        "currentPeriodStart": {
-          "name": "currentPeriodStart",
+        "periodStart": {
+          "name": "periodStart",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "currentPeriodEnd": {
-          "name": "currentPeriodEnd",
+        "periodEnd": {
+          "name": "periodEnd",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
@@ -869,6 +1034,48 @@
           "notNull": false,
           "autoincrement": false,
           "default": false
+        },
+        "cancelAt": {
+          "name": "cancelAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "canceledAt": {
+          "name": "canceledAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "endedAt": {
+          "name": "endedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "seats": {
+          "name": "seats",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "trialStart": {
+          "name": "trialStart",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "trialEnd": {
+          "name": "trialEnd",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "createdAt": {
           "name": "createdAt",
@@ -887,34 +1094,8 @@
           "default": "(unixepoch())"
         }
       },
-      "indexes": {
-        "subscriptions_userId_unique": {
-          "name": "subscriptions_userId_unique",
-          "columns": ["userId"],
-          "isUnique": true
-        },
-        "subscriptions_stripeCustomerId_unique": {
-          "name": "subscriptions_stripeCustomerId_unique",
-          "columns": ["stripeCustomerId"],
-          "isUnique": true
-        },
-        "subscriptions_stripeSubscriptionId_unique": {
-          "name": "subscriptions_stripeSubscriptionId_unique",
-          "columns": ["stripeSubscriptionId"],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {
-        "subscriptions_userId_user_id_fk": {
-          "name": "subscriptions_userId_user_id_fk",
-          "tableFrom": "subscriptions",
-          "tableTo": "user",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -973,8 +1154,12 @@
           "name": "twoFactor_userId_user_id_fk",
           "tableFrom": "twoFactor",
           "tableTo": "user",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1109,17 +1294,28 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "stripeCustomerId": {
+          "name": "stripeCustomerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {
         "user_email_unique": {
           "name": "user_email_unique",
-          "columns": ["email"],
+          "columns": [
+            "email"
+          ],
           "isUnique": true
         },
         "user_username_unique": {
           "name": "user_username_unique",
-          "columns": ["username"],
+          "columns": [
+            "username"
+          ],
           "isUnique": true
         }
       },

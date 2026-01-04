@@ -21,6 +21,8 @@ export const user = sqliteTable('user', {
   banned: integer('banned', { mode: 'boolean' }).default(false),
   banReason: text('banReason'),
   banExpires: integer('banExpires', { mode: 'timestamp' }),
+  // Better Auth Stripe plugin field
+  stripeCustomerId: text('stripeCustomerId'),
 });
 
 // Organizations table (Better Auth organization plugin)
@@ -152,22 +154,41 @@ export const mediaFiles = sqliteTable('mediaFiles', {
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 
-// Subscriptions table (Stripe billing)
-export const subscriptions = sqliteTable('subscriptions', {
+// Better Auth Stripe subscription table
+export const subscription = sqliteTable('subscription', {
   id: text('id').primaryKey(),
-  userId: text('userId')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' })
-    .unique(),
-  stripeCustomerId: text('stripeCustomerId').unique(),
-  stripeSubscriptionId: text('stripeSubscriptionId').unique(),
-  tier: text('tier').notNull().default('free'), // 'free', 'basic', 'pro', 'enterprise'
-  status: text('status').notNull().default('active'), // 'active', 'canceled', 'past_due', 'trialing', 'incomplete'
-  currentPeriodStart: integer('currentPeriodStart', { mode: 'timestamp' }),
-  currentPeriodEnd: integer('currentPeriodEnd', { mode: 'timestamp' }),
+  plan: text('plan').notNull(), // Plan name (e.g., 'starter_team', 'team', 'unlimited_team')
+  referenceId: text('referenceId').notNull(), // Org ID (orgId) for org-scoped billing
+  stripeCustomerId: text('stripeCustomerId'),
+  stripeSubscriptionId: text('stripeSubscriptionId'),
+  status: text('status').notNull().default('incomplete'), // active, trialing, past_due, canceled, paused, unpaid, incomplete, incomplete_expired
+  periodStart: integer('periodStart', { mode: 'timestamp' }),
+  periodEnd: integer('periodEnd', { mode: 'timestamp' }),
   cancelAtPeriodEnd: integer('cancelAtPeriodEnd', { mode: 'boolean' }).default(false),
+  cancelAt: integer('cancelAt', { mode: 'timestamp' }),
+  canceledAt: integer('canceledAt', { mode: 'timestamp' }),
+  endedAt: integer('endedAt', { mode: 'timestamp' }),
+  seats: integer('seats'),
+  trialStart: integer('trialStart', { mode: 'timestamp' }),
+  trialEnd: integer('trialEnd', { mode: 'timestamp' }),
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+});
+
+// Org access grants table (for trial and single_project grants)
+export const orgAccessGrants = sqliteTable('org_access_grants', {
+  id: text('id').primaryKey(),
+  orgId: text('orgId')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(), // 'trial' | 'single_project'
+  startsAt: integer('startsAt', { mode: 'timestamp' }).notNull(),
+  expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+  revokedAt: integer('revokedAt', { mode: 'timestamp' }), // null if not revoked
+  // Idempotency field for Stripe checkout sessions (prevents duplicate grants from webhook retries)
+  stripeCheckoutSessionId: text('stripeCheckoutSessionId').unique(),
+  metadata: text('metadata'), // JSON string for additional data
 });
 
 // Two-Factor Authentication table
@@ -220,6 +241,7 @@ export const dbSchema = {
   projects,
   projectMembers,
   mediaFiles,
-  subscriptions,
+  subscription,
+  orgAccessGrants,
   projectInvitations,
 };

@@ -12,6 +12,7 @@ import {
   requireProjectAccess,
   getProjectContext,
 } from '../../middleware/requireOrg.js';
+import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
 import { FILE_SIZE_LIMITS } from '../../config/constants.js';
 import { createDomainError, FILE_ERRORS, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 
@@ -81,7 +82,7 @@ orgPdfRoutes.get('/', requireOrgMembership(), requireProjectAccess(), extractStu
  * POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs
  * Upload a PDF for a study
  */
-orgPdfRoutes.post('/', requireOrgMembership(), requireProjectAccess(), extractStudyId, async c => {
+orgPdfRoutes.post('/', requireOrgMembership(), requireOrgWriteAccess(), requireProjectAccess(), extractStudyId, async c => {
   const { user } = getAuth(c);
   const { projectId } = getProjectContext(c);
   const studyId = c.get('studyId');
@@ -287,6 +288,7 @@ orgPdfRoutes.get(
 orgPdfRoutes.delete(
   '/:fileName',
   requireOrgMembership(),
+  requireOrgWriteAccess(),
   requireProjectAccess(),
   extractStudyId,
   async c => {

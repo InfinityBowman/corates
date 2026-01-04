@@ -14,7 +14,7 @@ import {
   projects,
   projectMembers,
   session,
-  subscriptions,
+  subscription,
   organization,
   member,
   mediaFiles,
@@ -141,7 +141,8 @@ export async function resetTestDatabase() {
   // Wrap each drop in try-catch to handle cases where tables don't exist
   const tablesToDrop = [
     'project_invitations',
-    'subscriptions',
+    'org_access_grants',
+    'subscription',
     'twoFactor',
     'verification',
     'mediaFiles',
@@ -209,6 +210,7 @@ export async function seedUser(params) {
     banned: validated.banned === 1,
     banReason: validated.banReason,
     banExpires: validated.banExpires ? new Date(validated.banExpires * 1000) : null,
+    stripeCustomerId: validated.stripeCustomerId,
     createdAt: new Date(validated.createdAt * 1000),
     updatedAt: new Date(validated.updatedAt * 1000),
   });
@@ -305,18 +307,22 @@ export async function seedSubscription(params) {
   const validated = seedSubscriptionSchema.parse(params);
   const db = createDb(env.DB);
 
-  await db.insert(subscriptions).values({
+  await db.insert(subscription).values({
     id: validated.id,
-    userId: validated.userId,
-    tier: validated.tier,
+    plan: validated.plan,
+    referenceId: validated.referenceId,
     status: validated.status,
     stripeCustomerId: validated.stripeCustomerId,
     stripeSubscriptionId: validated.stripeSubscriptionId,
-    currentPeriodStart:
-      validated.currentPeriodStart ? new Date(validated.currentPeriodStart * 1000) : null,
-    currentPeriodEnd:
-      validated.currentPeriodEnd ? new Date(validated.currentPeriodEnd * 1000) : null,
+    periodStart: validated.periodStart ? new Date(validated.periodStart * 1000) : null,
+    periodEnd: validated.periodEnd ? new Date(validated.periodEnd * 1000) : null,
     cancelAtPeriodEnd: validated.cancelAtPeriodEnd === 1,
+    cancelAt: validated.cancelAt ? new Date(validated.cancelAt * 1000) : null,
+    canceledAt: validated.canceledAt ? new Date(validated.canceledAt * 1000) : null,
+    endedAt: validated.endedAt ? new Date(validated.endedAt * 1000) : null,
+    seats: validated.seats,
+    trialStart: validated.trialStart ? new Date(validated.trialStart * 1000) : null,
+    trialEnd: validated.trialEnd ? new Date(validated.trialEnd * 1000) : null,
     createdAt: new Date(validated.createdAt * 1000),
     updatedAt: new Date(validated.updatedAt * 1000),
   });

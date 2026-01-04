@@ -2,8 +2,10 @@ import { betterAuth } from 'better-auth';
 import { createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { genericOAuth, magicLink, twoFactor, admin, organization } from 'better-auth/plugins';
+import { stripe } from '@better-auth/stripe';
+import Stripe from 'stripe';
 import { drizzle } from 'drizzle-orm/d1';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import * as schema from '../db/schema.js';
 import { createEmailService } from './email.js';
 import { getAllowedOrigins } from '../config/origins.js';
@@ -133,6 +135,68 @@ export function createAuth(env, ctx) {
     }),
   );
 
+  // Stripe plugin for org-scoped subscriptions
+  if (env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET) {
+    const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-11-17.clover',
+    });
+
+    plugins.push(
+      stripe({
+        stripeClient,
+        stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
+        createCustomerOnSignUp: true,
+        subscription: {
+          enabled: true,
+          plans: [
+            {
+              name: 'starter_team',
+              priceId: env.STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY || 'price_starter_team_monthly',
+              annualDiscountPriceId: env.STRIPE_PRICE_ID_STARTER_TEAM_YEARLY || 'price_starter_team_yearly',
+            },
+            {
+              name: 'team',
+              priceId: env.STRIPE_PRICE_ID_TEAM_MONTHLY || 'price_team_monthly',
+              annualDiscountPriceId: env.STRIPE_PRICE_ID_TEAM_YEARLY || 'price_team_yearly',
+            },
+            {
+              name: 'unlimited_team',
+              priceId: env.STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY || 'price_unlimited_team_monthly',
+              annualDiscountPriceId: env.STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY || 'price_unlimited_team_yearly',
+            },
+          ],
+          authorizeReference: async ({ user, session: _session, referenceId, action }) => {
+            // Check if user is org owner for subscription management actions
+            if (
+              action === 'upgrade-subscription' ||
+              action === 'cancel-subscription' ||
+              action === 'restore-subscription' ||
+              action === 'list-subscription'
+            ) {
+              const membership = await db
+                .select({ role: schema.member.role })
+                .from(schema.member)
+                .where(
+                  and(
+                    eq(schema.member.organizationId, referenceId),
+                    eq(schema.member.userId, user.id),
+                  ),
+                )
+                .get();
+
+              return membership?.role === 'owner';
+            }
+            return true;
+          },
+        },
+      }),
+    );
+  } else {
+    console.error(
+      '[Auth] Stripe plugin NOT configured - missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET',
+    );
+  }
+
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: 'sqlite',
@@ -145,6 +209,7 @@ export function createAuth(env, ctx) {
         organization: schema.organization,
         member: schema.member,
         invitation: schema.invitation,
+        subscription: schema.subscription,
       },
     }),
 

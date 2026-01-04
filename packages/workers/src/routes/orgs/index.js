@@ -9,6 +9,7 @@ import { projects } from '../../db/schema.js';
 import { eq, count } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../../middleware/auth.js';
 import { requireOrgMembership, getOrgContext } from '../../middleware/requireOrg.js';
+import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
 import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { createAuth } from '../../auth/config.js';
 import { orgProjectRoutes } from './projects.js';
@@ -133,7 +134,7 @@ orgRoutes.get('/:orgId', requireOrgMembership(), async c => {
  * PUT /api/orgs/:orgId
  * Update organization (requires admin or owner role)
  */
-orgRoutes.put('/:orgId', requireOrgMembership('admin'), async c => {
+orgRoutes.put('/:orgId', requireOrgMembership('admin'), requireOrgWriteAccess(), async c => {
   const orgId = c.req.param('orgId');
 
   try {
@@ -174,7 +175,7 @@ orgRoutes.put('/:orgId', requireOrgMembership('admin'), async c => {
  * DELETE /api/orgs/:orgId
  * Delete organization (requires owner role)
  */
-orgRoutes.delete('/:orgId', requireOrgMembership('owner'), async c => {
+orgRoutes.delete('/:orgId', requireOrgMembership('owner'), requireOrgWriteAccess(), async c => {
   const orgId = c.req.param('orgId');
 
   try {
@@ -228,7 +229,7 @@ orgRoutes.get('/:orgId/members', requireOrgMembership(), async c => {
  * POST /api/orgs/:orgId/members
  * Add member to organization (requires admin or owner role)
  */
-orgRoutes.post('/:orgId/members', requireOrgMembership('admin'), async c => {
+orgRoutes.post('/:orgId/members', requireOrgMembership('admin'), requireOrgWriteAccess(), async c => {
   const orgId = c.req.param('orgId');
 
   try {
@@ -274,7 +275,7 @@ orgRoutes.post('/:orgId/members', requireOrgMembership('admin'), async c => {
  * PUT /api/orgs/:orgId/members/:memberId
  * Update member role (requires admin or owner role)
  */
-orgRoutes.put('/:orgId/members/:memberId', requireOrgMembership('admin'), async c => {
+orgRoutes.put('/:orgId/members/:memberId', requireOrgMembership('admin'), requireOrgWriteAccess(), async c => {
   const orgId = c.req.param('orgId');
   const memberId = c.req.param('memberId');
 
@@ -321,7 +322,7 @@ orgRoutes.put('/:orgId/members/:memberId', requireOrgMembership('admin'), async 
  * DELETE /api/orgs/:orgId/members/:memberId
  * Remove member from organization (requires admin or owner role, or self-removal)
  */
-orgRoutes.delete('/:orgId/members/:memberId', requireOrgMembership(), async c => {
+orgRoutes.delete('/:orgId/members/:memberId', requireOrgMembership(), requireOrgWriteAccess(), async c => {
   const { user: authUser } = getAuth(c);
   const { orgRole } = getOrgContext(c);
   const orgId = c.req.param('orgId');

@@ -26,4 +26,3 @@ Plans are intentionally opinionated and are expected to change as the codebase e
 - [Undo checklist completion](/plans/undo-checklist-completion)
 - [Undo checklist completion feasibility review](/plans/undo-checklist-completion-review)
 - [Application improvement recommendations](/plans/application-improvement-recommendations)
-- [Internal todo](/plans/todo)

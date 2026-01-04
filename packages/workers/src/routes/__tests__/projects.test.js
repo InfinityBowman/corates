@@ -286,8 +286,8 @@ describe('Org-Scoped Project Routes - POST /api/orgs/:orgId/projects', () => {
 
     await seedSubscription({
       id: 'sub-1',
-      userId: 'user-1',
-      tier: 'pro',
+      plan: 'team',
+      referenceId: 'org-1',
       status: 'active',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -355,8 +355,8 @@ describe('Org-Scoped Project Routes - POST /api/orgs/:orgId/projects', () => {
 
     await seedSubscription({
       id: 'sub-1',
-      userId: 'user-1',
-      tier: 'pro',
+      plan: 'team',
+      referenceId: 'org-1',
       status: 'active',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -405,8 +405,8 @@ describe('Org-Scoped Project Routes - POST /api/orgs/:orgId/projects', () => {
 
     await seedSubscription({
       id: 'sub-1',
-      userId: 'user-1',
-      tier: 'pro',
+      plan: 'team',
+      referenceId: 'org-1',
       status: 'active',
       createdAt: nowSec,
       updatedAt: nowSec,
@@ -454,8 +454,8 @@ describe('Org-Scoped Project Routes - POST /api/orgs/:orgId/projects', () => {
 
     await seedSubscription({
       id: 'sub-1',
-      userId: 'user-1',
-      tier: 'pro',
+      plan: 'team',
+      referenceId: 'org-1',
       status: 'active',
       createdAt: nowSec,
       updatedAt: nowSec,

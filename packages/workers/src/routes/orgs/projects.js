@@ -16,6 +16,7 @@ import {
 } from '../../middleware/requireOrg.js';
 import { requireEntitlement } from '../../middleware/requireEntitlement.js';
 import { requireQuota } from '../../middleware/requireQuota.js';
+import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
 import { projectSchemas, validateRequest } from '../../config/validation.js';
 import { createDomainError, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { syncProjectToDO } from '../../lib/project-sync.js';
@@ -68,15 +69,15 @@ orgProjectRoutes.get('/', requireOrgMembership(), async c => {
 });
 
 /**
- * Helper to get current project count for user in this org
+ * Helper to get current project count for org (all projects in org, not per-user)
  */
-async function getProjectCount(c, user) {
+async function getProjectCount(c, _user) {
   const { orgId } = getOrgContext(c);
   const db = createDb(c.env.DB);
   const [result] = await db
     .select({ count: count() })
     .from(projects)
-    .where(and(eq(projects.orgId, orgId), eq(projects.createdBy, user.id)));
+    .where(eq(projects.orgId, orgId));
   return result?.count || 0;
 }
 
@@ -87,6 +88,7 @@ async function getProjectCount(c, user) {
 orgProjectRoutes.post(
   '/',
   requireOrgMembership(),
+  requireOrgWriteAccess(),
   requireEntitlement('project.create'),
   requireQuota('projects.max', getProjectCount, 1),
   validateRequest(projectSchemas.create),
@@ -234,6 +236,7 @@ orgProjectRoutes.get('/:projectId', requireOrgMembership(), requireProjectAccess
 orgProjectRoutes.put(
   '/:projectId',
   requireOrgMembership(),
+  requireOrgWriteAccess(),
   requireProjectAccess('member'),
   validateRequest(projectSchemas.update),
   async c => {
@@ -280,6 +283,7 @@ orgProjectRoutes.put(
 orgProjectRoutes.delete(
   '/:projectId',
   requireOrgMembership(),
+  requireOrgWriteAccess(),
   requireProjectAccess('owner'),
   async c => {
     const { user: authUser } = getAuth(c);

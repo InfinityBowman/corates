@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod/v4';
-import { PROJECT_ROLES, SUBSCRIPTION_TIERS, SUBSCRIPTION_STATUSES } from '../config/constants.js';
+import { PROJECT_ROLES } from '../config/constants.js';
 
 /**
  * Helper to convert Date or number (timestamp) to number (Unix timestamp in seconds)
@@ -46,6 +46,7 @@ export const seedUserSchema = z.object({
     .union([z.boolean(), z.number()])
     .transform(val => (val === true || val === 1 ? 1 : 0))
     .default(0),
+  stripeCustomerId: z.string().nullable().optional().default(null),
 });
 
 /**
@@ -116,20 +117,13 @@ export const seedSessionSchema = z.object({
  */
 export const seedSubscriptionSchema = z.object({
   id: z.string().min(1, 'Subscription ID is required'),
-  userId: z.string().min(1, 'User ID is required'),
-  tier: z
-    .enum(SUBSCRIPTION_TIERS, {
-      error: `Tier must be one of: ${SUBSCRIPTION_TIERS.join(', ')}`,
-    })
-    .default('free'),
-  status: z
-    .enum(SUBSCRIPTION_STATUSES, {
-      error: `Status must be one of: ${SUBSCRIPTION_STATUSES.join(', ')}`,
-    })
-    .default('active'),
+  // Better Auth Stripe table fields (org-scoped via referenceId = orgId)
+  plan: z.string().min(1, 'Plan is required'),
+  referenceId: z.string().min(1, 'Reference ID is required'),
+  status: z.string().optional().default('active'),
   stripeCustomerId: z.string().nullable().optional().default(null),
   stripeSubscriptionId: z.string().nullable().optional().default(null),
-  currentPeriodStart: z
+  periodStart: z
     .union([z.date(), z.number().int(), z.null()])
     .optional()
     .transform(val => {
@@ -138,7 +132,7 @@ export const seedSubscriptionSchema = z.object({
       return Math.floor(val.getTime() / 1000);
     })
     .default(null),
-  currentPeriodEnd: z
+  periodEnd: z
     .union([z.date(), z.number().int(), z.null()])
     .optional()
     .transform(val => {
@@ -151,6 +145,52 @@ export const seedSubscriptionSchema = z.object({
     .union([z.boolean(), z.number()])
     .transform(val => (val === true || val === 1 ? 1 : 0))
     .default(0),
+  cancelAt: z
+    .union([z.date(), z.number().int(), z.null()])
+    .optional()
+    .transform(val => {
+      if (val === null || val === undefined) return null;
+      if (typeof val === 'number') return val;
+      return Math.floor(val.getTime() / 1000);
+    })
+    .default(null),
+  canceledAt: z
+    .union([z.date(), z.number().int(), z.null()])
+    .optional()
+    .transform(val => {
+      if (val === null || val === undefined) return null;
+      if (typeof val === 'number') return val;
+      return Math.floor(val.getTime() / 1000);
+    })
+    .default(null),
+  endedAt: z
+    .union([z.date(), z.number().int(), z.null()])
+    .optional()
+    .transform(val => {
+      if (val === null || val === undefined) return null;
+      if (typeof val === 'number') return val;
+      return Math.floor(val.getTime() / 1000);
+    })
+    .default(null),
+  seats: z.number().int().nullable().optional().default(null),
+  trialStart: z
+    .union([z.date(), z.number().int(), z.null()])
+    .optional()
+    .transform(val => {
+      if (val === null || val === undefined) return null;
+      if (typeof val === 'number') return val;
+      return Math.floor(val.getTime() / 1000);
+    })
+    .default(null),
+  trialEnd: z
+    .union([z.date(), z.number().int(), z.null()])
+    .optional()
+    .transform(val => {
+      if (val === null || val === undefined) return null;
+      if (typeof val === 'number') return val;
+      return Math.floor(val.getTime() / 1000);
+    })
+    .default(null),
   createdAt: dateOrTimestampToNumber,
   updatedAt: dateOrTimestampToNumber,
 });

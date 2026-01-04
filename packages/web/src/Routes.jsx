@@ -16,6 +16,8 @@ import BillingPage from '@components/billing/BillingPage.jsx';
 import NotFoundPage from '@components/NotFoundPage.jsx';
 import { AdminDashboard } from '@/components/admin/index.js';
 import StorageManagement from '@/components/admin/StorageManagement.jsx';
+import OrgList from '@/components/admin/OrgList.jsx';
+import OrgDetail from '@/components/admin/OrgDetail.jsx';
 import { BASEPATH } from '@config/api.js';
 import ProtectedGuard from '@/components/auth/ProtectedGuard.jsx';
 import ProjectView from '@/components/project/ProjectView.jsx';
@@ -48,6 +50,8 @@ export default function AppRoutes() {
           <Route path='/settings' component={SettingsPage} />
           <Route path='/admin' component={AdminDashboard} />
           <Route path='/admin/storage' component={StorageManagement} />
+          <Route path='/admin/orgs' component={OrgList} />
+          <Route path='/admin/orgs/:orgId' component={OrgDetail} />
           <Route path='/settings/billing' component={BillingPage} />
 
           {/* Organization creation */}

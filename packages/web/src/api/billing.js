@@ -109,3 +109,31 @@ export async function redirectToPortal() {
   const { url } = await createPortalSession();
   window.location.href = url;
 }
+
+/**
+ * Create a Stripe Checkout session for one-time Single Project purchase
+ * @returns {Promise<{ url: string, sessionId: string }>}
+ */
+export async function createSingleProjectCheckout() {
+  const response = await fetch(`${API_BASE}/api/billing/single-project/checkout`, {
+    ...fetchOptions,
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ error: 'Failed to create checkout session' }));
+    throw new Error(error.error || 'Failed to create checkout session');
+  }
+
+  return response.json();
+}
+
+/**
+ * Redirect to Stripe Checkout for Single Project purchase
+ */
+export async function redirectToSingleProjectCheckout() {
+  const { url } = await createSingleProjectCheckout();
+  window.location.href = url;
+}

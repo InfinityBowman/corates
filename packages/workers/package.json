@@ -27,6 +27,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@better-auth/stripe": "^1.4.9",
     "@cloudflare/workers-types": "^4.20251229.0",
     "@corates/shared": "workspace:*",
     "better-auth": "^1.4.9",
