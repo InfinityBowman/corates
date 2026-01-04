@@ -17,16 +17,8 @@
     "analyze": "vite build --mode analyze && source-map-explorer dist/assets/index-*.js --no-border-checks"
   },
   "dependencies": {
-    "@corates/embedpdf-solid": "workspace:*",
     "@corates/shared": "workspace:*",
     "@corates/ui": "workspace:*",
-    "@embedpdf/core": "^2.1.1",
-    "@embedpdf/engines": "^2.1.1",
-    "@embedpdf/models": "^2.1.1",
-    "@embedpdf/plugin-document-manager": "^2.1.1",
-    "@embedpdf/plugin-render": "^2.1.1",
-    "@embedpdf/plugin-scroll": "^2.1.1",
-    "@embedpdf/plugin-viewport": "^2.1.1",
     "@embedpdf/snippet": "^2.0.0",
     "@solidjs/router": "^0.15.4",
     "@tanstack/solid-query": "^5.90.18",
