@@ -65,15 +65,15 @@ All errors follow this structure, with distinct types for domain vs transport er
 ```typescript
 // Base error shape
 interface AppError {
-  code: string;           // Machine-readable error code (e.g., "PROJECT_NOT_FOUND")
-  message: string;        // User-facing message (localized, can be overridden)
-  timestamp?: string;     // Error timestamp (for debugging)
+  code: string; // Machine-readable error code (e.g., "PROJECT_NOT_FOUND")
+  message: string; // User-facing message (localized, can be overridden)
+  timestamp?: string; // Error timestamp (for debugging)
 }
 
 // Domain errors - business logic errors from backend API
 interface DomainError extends AppError {
-  code: DomainErrorCode;  // Typed error code
-  statusCode: number;    // HTTP status code (required for domain errors)
+  code: DomainErrorCode; // Typed error code
+  statusCode: number; // HTTP status code (required for domain errors)
   details?: ErrorDetails; // Typed details based on error code
 }
 
@@ -99,18 +99,10 @@ type ErrorDetails =
 // TypeScript provides compile-time hints, but runtime validation ensures correctness
 
 // Union of all domain error codes for type safety
-type DomainErrorCode =
-  | ValidationErrorCode
-  | ProjectErrorCode
-  | FileErrorCode
-  | AuthErrorCode
-  | SystemErrorCode;
+type DomainErrorCode = ValidationErrorCode | ProjectErrorCode | FileErrorCode | AuthErrorCode | SystemErrorCode;
 
 // Transport error codes (frontend only)
-type TransportErrorCode =
-  | 'TRANSPORT_NETWORK_ERROR'
-  | 'TRANSPORT_TIMEOUT'
-  | 'TRANSPORT_CORS_ERROR';
+type TransportErrorCode = 'TRANSPORT_NETWORK_ERROR' | 'TRANSPORT_TIMEOUT' | 'TRANSPORT_CORS_ERROR';
 
 interface ValidationErrorDetails {
   field: string;
@@ -270,7 +262,7 @@ export const PROJECT_ERRORS = {
 } as const;
 
 // Type-safe error code union
-export type ProjectErrorCode = typeof PROJECT_ERRORS[keyof typeof PROJECT_ERRORS]['code'];
+export type ProjectErrorCode = (typeof PROJECT_ERRORS)[keyof typeof PROJECT_ERRORS]['code'];
 
 // Error definition type
 export type ErrorDefinition = {
@@ -308,7 +300,7 @@ export const VALIDATION_ERRORS = {
   // ... etc
 } as const;
 
-export type ValidationErrorCode = typeof VALIDATION_ERRORS[keyof typeof VALIDATION_ERRORS]['code'];
+export type ValidationErrorCode = (typeof VALIDATION_ERRORS)[keyof typeof VALIDATION_ERRORS]['code'];
 ```
 
 ## Backend implementation
@@ -323,7 +315,7 @@ import type { ErrorDefinition, ErrorDetails } from './types.js';
 export function createDomainError(
   errorDef: ErrorDefinition,
   details?: ErrorDetails,
-  messageOverride?: string
+  messageOverride?: string,
 ): DomainError {
   return {
     code: errorDef.code as DomainErrorCode,
@@ -339,7 +331,7 @@ export function createValidationError(
   field: string,
   errorCode: ValidationErrorCode,
   value?: unknown,
-  constraint?: string
+  constraint?: string,
 ): DomainError {
   const errorDef = VALIDATION_ERRORS[errorCode];
   return {
@@ -353,7 +345,7 @@ export function createValidationError(
 
 // Create multi-field validation error
 export function createMultiFieldValidationError(
-  errors: Array<{ field: string; code: ValidationErrorCode; message: string }>
+  errors: Array<{ field: string; code: ValidationErrorCode; message: string }>,
 ): DomainError {
   return {
     code: 'VALIDATION_MULTI_FIELD',
@@ -368,7 +360,7 @@ export function createMultiFieldValidationError(
 export function createTransportError(
   code: TransportErrorCode,
   message: string,
-  details?: TransportError['details']
+  details?: TransportError['details'],
 ): TransportError {
   return {
     code,
@@ -387,21 +379,18 @@ Note: Backend remains in JavaScript but imports from TypeScript-compiled shared 
 // packages/workers/src/routes/projects.js
 import { createDomainError, PROJECT_ERRORS } from '@shared/errors';
 
-projectRoutes.get('/:id', async (c) => {
+projectRoutes.get('/:id', async c => {
   const project = await db.getProject(id);
 
   if (!project) {
-    return c.json(
-      createDomainError(PROJECT_ERRORS.NOT_FOUND),
-      PROJECT_ERRORS.NOT_FOUND.statusCode
-    );
+    return c.json(createDomainError(PROJECT_ERRORS.NOT_FOUND), PROJECT_ERRORS.NOT_FOUND.statusCode);
   }
 
   // ...
 });
 
 // Validation example
-projectRoutes.post('/', validateRequest(projectSchema), async (c) => {
+projectRoutes.post('/', validateRequest(projectSchema), async c => {
   // Validation middleware automatically creates validation errors
   // ...
 });
@@ -460,10 +449,7 @@ export async function parseApiError(response: Response): Promise<DomainError> {
 }
 
 // Handle fetch errors - separates transport from domain
-export async function handleFetchError(
-  fetchPromise: Promise<Response>,
-  options = {}
-): Promise<Response> {
+export async function handleFetchError(fetchPromise: Promise<Response>, options = {}): Promise<Response> {
   try {
     const response = await fetchPromise;
 
@@ -724,14 +710,10 @@ export const UNKNOWN_ERRORS = {
   },
 } as const;
 
-export type UnknownErrorCode = typeof UNKNOWN_ERRORS[keyof typeof UNKNOWN_ERRORS]['code'];
+export type UnknownErrorCode = (typeof UNKNOWN_ERRORS)[keyof typeof UNKNOWN_ERRORS]['code'];
 
 // Helper to create unknown errors
-export function createUnknownError(
-  code: UnknownErrorCode,
-  message: string,
-  details?: SystemErrorDetails
-): DomainError {
+export function createUnknownError(code: UnknownErrorCode, message: string, details?: SystemErrorDetails): DomainError {
   return {
     code,
     message,
@@ -765,9 +747,7 @@ function isAppError(error: unknown): error is AppError {
 export function isDomainError(error: unknown): error is DomainError {
   if (!isAppError(error)) return false;
   return (
-    typeof error.statusCode === 'number' &&
-    !error.code.startsWith('TRANSPORT_') &&
-    !error.code.startsWith('UNKNOWN_')
+    typeof error.statusCode === 'number' && !error.code.startsWith('TRANSPORT_') && !error.code.startsWith('UNKNOWN_')
   );
 }
 
@@ -793,10 +773,12 @@ export function normalizeError(error: unknown): TransportError | DomainError {
     const msg = error.message.toLowerCase();
 
     // Network errors - strict patterns
-    if (msg.includes('failed to fetch') ||
-        msg.includes('networkerror') ||
-        msg.includes('load failed') ||
-        msg.includes('cors')) {
+    if (
+      msg.includes('failed to fetch') ||
+      msg.includes('networkerror') ||
+      msg.includes('load failed') ||
+      msg.includes('cors')
+    ) {
       return createTransportError('TRANSPORT_NETWORK_ERROR', getErrorMessage('TRANSPORT_NETWORK_ERROR'), {
         originalError: error.message,
       });
