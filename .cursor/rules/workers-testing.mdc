@@ -1,0 +1,136 @@
+---
+description: "Workers (Cloudflare) testing patterns: Vitest pool-workers, env bindings, auth mocking, DB reset + seed helpers"
+globs: packages/workers/src/**/*.test.js,packages/workers/src/**/__tests__/**/*.js
+alwaysApply: false
+---
+# Workers Testing Rules
+
+These rules are for writing tests in `packages/workers` (Cloudflare Workers runtime) using Vitest + `@cloudflare/vitest-pool-workers`.
+
+## Test Runtime + Config
+
+- Tests run under `@cloudflare/vitest-pool-workers` (see `packages/workers/vitest.config.js`).
+- Global setup runs before all tests: `packages/workers/src/__tests__/setup.js`.
+  - Postmark and Stripe are mocked globally there.
+  - Only re-mock those modules inside a test file if you need behavior different from the global mock.
+
+## Database: Always Reset from Migrations
+
+**Default pattern:** reset D1 from migration SQL before each test (or each `describe` if safe).
+
+- Use `resetTestDatabase()` from `packages/workers/src/__tests__/helpers.js`.
+- Prefer seeding via the provided `seed*` helpers (they validate inputs with Zod schemas in `seed-schemas.js`).
+
+Example:
+
+```js
+import { beforeEach } from 'vitest';
+import { resetTestDatabase, seedUser, seedOrganization, seedOrgMember } from '../../__tests__/helpers.js';
+
+beforeEach(async () => {
+  await resetTestDatabase();
+});
+
+// Seed helpers accept Date objects or Unix timestamps (seconds).
+const nowSec = Math.floor(Date.now() / 1000);
+await seedUser({ id: 'user-1', name: 'User 1', email: 'user1@example.com', createdAt: nowSec, updatedAt: nowSec });
+await seedOrganization({ id: 'org-1', name: 'Test Org', slug: 'test-org', createdAt: nowSec });
+await seedOrgMember({ id: 'om-1', organizationId: 'org-1', userId: 'user-1', role: 'owner', createdAt: nowSec });
+```
+
+## Durable Objects: Prevent Invalidation Issues
+
+When a test touches ProjectDoc Durable Objects (directly or indirectly), clear DO storage between tests to avoid invalidation/reset edge cases.
+
+- Use `clearProjectDOs([...projectIds])` from `packages/workers/src/__tests__/helpers.js`.
+- This uses `runInDurableObject(...)` with `env.PROJECT_DOC` to delete all keys in `state.storage`.
+
+Example:
+
+```js
+import { beforeEach } from 'vitest';
+import { resetTestDatabase, clearProjectDOs } from '../../__tests__/helpers.js';
+
+beforeEach(async () => {
+  await resetTestDatabase();
+  await clearProjectDOs(['project-1', 'project-2']);
+});
+```
+
+## Fetching: Prefer Real Worker `env` for Integration Tests
+
+Most workers tests should run against a Hono app via `app.fetch(req, env, ctx)` using the real `env` provided by `cloudflare:test`:
+
+```js
+import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
+
+const ctx = createExecutionContext();
+const req = new Request('http://localhost/api/orgs/org-1/projects', { method: 'GET' });
+const res = await app.fetch(req, env, ctx);
+await waitOnExecutionContext(ctx);
+```
+
+**Use the shared helper when appropriate:**
+
+- `fetchApp(app, path, init, envOverrides)` from `packages/workers/src/__tests__/helpers.js` is convenient for many route/app tests.
+- It provides a DB binding and safe mocked bindings for R2/DO/KV (unless overridden).
+- If a test needs real Durable Objects or real Workers bindings beyond D1, use `cloudflare:test` `env` directly.
+
+## Response Parsing
+
+Use the shared `json(res)` helper from `packages/workers/src/__tests__/helpers.js` to parse response bodies safely:
+
+```js
+import { json } from '../../__tests__/helpers.js';
+
+const body = await json(res);
+// If not JSON, body will be { _raw: "..." }
+```
+
+## Auth: Mock `requireAuth` in Route Tests
+
+Most routes rely on Better Auth, which is not desirable to exercise in unit/integration route tests. The common pattern is to **mock `src/middleware/auth.js`** and attach a test user/session.
+
+Pattern:
+
+```js
+import { vi } from 'vitest';
+
+vi.mock('../../middleware/auth.js', () => {
+  return {
+    requireAuth: async (c, next) => {
+      const userId = c.req.raw.headers.get('x-test-user-id') || 'user-1';
+      const email = c.req.raw.headers.get('x-test-user-email') || 'user1@example.com';
+      c.set('user', { id: userId, email, name: 'Test User', displayName: 'Test User', image: null });
+      c.set('session', { id: 'test-session' });
+      await next();
+    },
+    getAuth: c => ({ user: c.get('user'), session: c.get('session') }),
+  };
+});
+```
+
+Then, in fetch helpers for the test file, provide default headers:
+
+```js
+headers: {
+  'x-test-user-id': 'user-1',
+  'x-test-user-email': 'user1@example.com',
+  ...init.headers,
+}
+```
+
+## Preferred Helpers to Reuse (Do Not Re-invent)
+
+From `packages/workers/src/__tests__/helpers.js`:
+
+- `resetTestDatabase()`
+- `clearProjectDOs(projectIds?)`
+- `getProjectDocName(projectId)`
+- `seedUser()`, `seedOrganization()`, `seedOrgMember()`, `seedProject()`, `seedProjectMember()`, `seedSession()`, `seedSubscription()`, `seedMediaFile()`, `seedProjectInvitation()`
+- `createTestEnv(overrides?)`
+- `fetchApp(app, path, init?, envOverrides?)`
+- `json(res)`
+- `createAuthHeaders(userId?, email?)`
+
+Prefer these helpers over ad-hoc SQL, manual schema building, or custom response parsers.

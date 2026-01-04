@@ -18,6 +18,8 @@ import {
   organization,
   member,
   mediaFiles,
+  projectInvitations,
+  stripeEventLedger,
 } from '../db/schema.js';
 import {
   seedUserSchema,
@@ -28,6 +30,8 @@ import {
   seedOrganizationSchema,
   seedOrgMemberSchema,
   seedMediaFileSchema,
+  seedProjectInvitationSchema,
+  seedStripeEventLedgerSchema,
 } from './seed-schemas.js';
 import { MIGRATION_SQL } from './migration-sql.js';
 
@@ -345,6 +349,59 @@ export async function seedMediaFile(params) {
     uploadedBy: validated.uploadedBy,
     bucketKey: validated.bucketKey,
     createdAt: new Date(validated.createdAt * 1000),
+  });
+}
+
+/**
+ * Seed a project invitation into the test database
+ */
+export async function seedProjectInvitation(params) {
+  const validated = seedProjectInvitationSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(projectInvitations).values({
+    id: validated.id,
+    orgId: validated.orgId,
+    projectId: validated.projectId,
+    email: validated.email.toLowerCase(),
+    role: validated.role,
+    orgRole: validated.orgRole,
+    grantOrgMembership: validated.grantOrgMembership === 1,
+    token: validated.token,
+    invitedBy: validated.invitedBy,
+    expiresAt: new Date(validated.expiresAt * 1000),
+    acceptedAt: validated.acceptedAt ? new Date(validated.acceptedAt * 1000) : null,
+    createdAt: new Date(validated.createdAt * 1000),
+  });
+}
+
+/**
+ * Seed a Stripe event ledger entry into the test database
+ */
+export async function seedStripeEventLedger(params) {
+  const validated = seedStripeEventLedgerSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(stripeEventLedger).values({
+    id: validated.id,
+    payloadHash: validated.payloadHash,
+    signaturePresent: validated.signaturePresent === 1,
+    receivedAt: new Date(validated.receivedAt * 1000),
+    route: validated.route,
+    requestId: validated.requestId,
+    status: validated.status,
+    error: validated.error,
+    httpStatus: validated.httpStatus,
+    stripeEventId: validated.stripeEventId,
+    type: validated.type,
+    livemode: validated.livemode === 1 ? true : validated.livemode === 0 ? false : null,
+    apiVersion: validated.apiVersion,
+    created: validated.created ? new Date(validated.created * 1000) : null,
+    processedAt: validated.processedAt ? new Date(validated.processedAt * 1000) : null,
+    orgId: validated.orgId,
+    stripeCustomerId: validated.stripeCustomerId,
+    stripeSubscriptionId: validated.stripeSubscriptionId,
+    stripeCheckoutSessionId: validated.stripeCheckoutSessionId,
   });
 }
 

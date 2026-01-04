@@ -209,3 +209,89 @@ export const seedMediaFileSchema = z.object({
   bucketKey: z.string().min(1, 'Bucket key is required'),
   createdAt: dateOrTimestampToNumber,
 });
+
+/**
+ * Schema for seeding a project invitation
+ */
+export const seedProjectInvitationSchema = z.object({
+  id: z.string().min(1, 'Invitation ID is required'),
+  orgId: z.string().min(1, 'Organization ID is required'),
+  projectId: z.string().min(1, 'Project ID is required'),
+  email: z.string().email('Invalid email address'),
+  role: z
+    .enum(PROJECT_ROLES, {
+      error: `Role must be one of: ${PROJECT_ROLES.join(', ')}`,
+    })
+    .default('member'),
+  orgRole: z.enum(['owner', 'admin', 'member']).default('member'),
+  grantOrgMembership: z
+    .union([z.boolean(), z.number()])
+    .transform(val => (val === true || val === 1 ? 1 : 0))
+    .default(0),
+  token: z.string().min(1, 'Token is required'),
+  invitedBy: z.string().min(1, 'Invited by user ID is required'),
+  expiresAt: dateOrTimestampToNumber,
+  acceptedAt: z
+    .union([z.date(), z.number().int(), z.null()])
+    .optional()
+    .transform(val => {
+      if (val === null || val === undefined) return null;
+      if (typeof val === 'number') return val;
+      return Math.floor(val.getTime() / 1000);
+    })
+    .default(null),
+  createdAt: dateOrTimestampToNumber,
+});
+
+/**
+ * Schema for seeding a Stripe event ledger entry
+ */
+export const seedStripeEventLedgerSchema = z.object({
+  id: z.string().min(1, 'Ledger entry ID is required'),
+  payloadHash: z.string().min(1, 'Payload hash is required'),
+  signaturePresent: z
+    .union([z.boolean(), z.number()])
+    .transform(val => (val === true || val === 1 ? 1 : 0))
+    .default(1),
+  receivedAt: dateOrTimestampToNumber,
+  route: z.string().min(1, 'Route is required'),
+  requestId: z.string().min(1, 'Request ID is required'),
+  status: z
+    .enum(['received', 'processed', 'skipped_duplicate', 'failed', 'ignored_unverified'])
+    .default('received'),
+  error: z.string().nullable().optional().default(null),
+  httpStatus: z.number().int().nullable().optional().default(null),
+  stripeEventId: z.string().nullable().optional().default(null),
+  type: z.string().nullable().optional().default(null),
+  livemode: z
+    .union([z.boolean(), z.number(), z.null()])
+    .optional()
+    .transform(val => {
+      if (val === null || val === undefined) return null;
+      return val === true || val === 1 ? 1 : 0;
+    })
+    .default(null),
+  apiVersion: z.string().nullable().optional().default(null),
+  created: z
+    .union([z.date(), z.number().int(), z.null()])
+    .optional()
+    .transform(val => {
+      if (val === null || val === undefined) return null;
+      if (typeof val === 'number') return val;
+      return Math.floor(val.getTime() / 1000);
+    })
+    .default(null),
+  processedAt: z
+    .union([z.date(), z.number().int(), z.null()])
+    .optional()
+    .transform(val => {
+      if (val === null || val === undefined) return null;
+      if (typeof val === 'number') return val;
+      return Math.floor(val.getTime() / 1000);
+    })
+    .default(null),
+  orgId: z.string().nullable().optional().default(null),
+  stripeCustomerId: z.string().nullable().optional().default(null),
+  stripeSubscriptionId: z.string().nullable().optional().default(null),
+  stripeCheckoutSessionId: z.string().nullable().optional().default(null),
+});
