@@ -6,7 +6,14 @@
 import { useQuery } from '@tanstack/solid-query';
 import { API_BASE } from '@config/api.js';
 import { queryKeys } from '@lib/queryKeys.js';
-import { fetchOrgs, fetchOrgDetails, fetchOrgBilling } from '@/stores/adminStore.js';
+import {
+  fetchOrgs,
+  fetchOrgDetails,
+  fetchOrgBilling,
+  fetchBillingLedger,
+  fetchBillingStuckStates,
+  fetchOrgBillingReconcile,
+} from '@/stores/adminStore.js';
 
 /**
  * Helper for admin fetch calls
@@ -167,4 +174,68 @@ export function useAdminOrgBilling(orgId) {
     gcTime: 1000 * 60 * 5,
     refetchOnMount: 'always',
   }));
+}
+
+/**
+ * Hook to fetch Stripe event ledger entries
+ */
+export function useAdminBillingLedger(getParams) {
+  return useQuery(() => {
+    const params = typeof getParams === 'function' ? getParams() : getParams || {};
+    const queryParams = {
+      limit: params.limit ?? 50,
+      status: params.status ?? undefined,
+      type: params.type ?? undefined,
+    };
+    return {
+      queryKey: queryKeys.admin.billingLedger(queryParams),
+      queryFn: () => fetchBillingLedger(queryParams),
+      staleTime: 0,
+      gcTime: 1000 * 60 * 5,
+      refetchOnMount: 'always',
+    };
+  });
+}
+
+/**
+ * Hook to fetch orgs with stuck billing states
+ */
+export function useAdminBillingStuckStates(getParams) {
+  return useQuery(() => {
+    const params = typeof getParams === 'function' ? getParams() : getParams || {};
+    const queryParams = {
+      incompleteThreshold: params.incompleteThreshold ?? 30,
+      limit: params.limit ?? 50,
+    };
+    return {
+      queryKey: queryKeys.admin.billingStuckStates(queryParams),
+      queryFn: () => fetchBillingStuckStates(queryParams),
+      staleTime: 0,
+      gcTime: 1000 * 60 * 5,
+      refetchOnMount: 'always',
+    };
+  });
+}
+
+/**
+ * Hook to fetch org billing reconciliation results
+ */
+export function useAdminOrgBillingReconcile(orgId, getParams) {
+  return useQuery(() => {
+    const params = typeof getParams === 'function' ? getParams() : getParams || {};
+    const queryParams = {
+      checkStripe: params.checkStripe ?? false,
+      incompleteThreshold: params.incompleteThreshold ?? 30,
+      checkoutNoSubThreshold: params.checkoutNoSubThreshold ?? 15,
+      processingLagThreshold: params.processingLagThreshold ?? 5,
+    };
+    return {
+      queryKey: queryKeys.admin.orgBillingReconcile(orgId, queryParams),
+      queryFn: () => fetchOrgBillingReconcile(orgId, queryParams),
+      enabled: !!orgId,
+      staleTime: 0,
+      gcTime: 1000 * 60 * 5,
+      refetchOnMount: 'always',
+    };
+  });
 }

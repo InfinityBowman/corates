@@ -9,6 +9,7 @@ import { requireTrustedOrigin } from '../../middleware/csrf.js';
 import { userRoutes } from './users.js';
 import { storageRoutes } from './storage.js';
 import { billingRoutes } from './billing.js';
+import { billingObservabilityRoutes } from './billing-observability.js';
 import { orgRoutes } from './orgs.js';
 
 const adminRoutes = new Hono();
@@ -22,6 +23,7 @@ adminRoutes.use('*', requireTrustedOrigin);
 adminRoutes.route('/', userRoutes);
 adminRoutes.route('/', storageRoutes);
 adminRoutes.route('/', billingRoutes);
+adminRoutes.route('/', billingObservabilityRoutes);
 adminRoutes.route('/', orgRoutes);
 
 export { adminRoutes };

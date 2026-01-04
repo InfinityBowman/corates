@@ -44,5 +44,8 @@ export const queryKeys = {
       search,
     ],
     storageStats: ['storageStats'],
+    billingLedger: params => ['adminBillingLedger', params],
+    billingStuckStates: params => ['adminBillingStuckStates', params],
+    orgBillingReconcile: (orgId, params) => ['adminOrgBillingReconcile', orgId, params],
   },
 };

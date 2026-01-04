@@ -475,6 +475,75 @@ async function grantOrgSingleProject(orgId) {
   return result;
 }
 
+/**
+ * Fetch Stripe event ledger entries
+ */
+async function fetchBillingLedger({ limit = 50, status, type } = {}) {
+  const params = new URLSearchParams({ limit: limit.toString() });
+  if (status) params.set('status', status);
+  if (type) params.set('type', type);
+
+  const response = await fetch(`${API_BASE}/api/admin/billing/ledger?${params}`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'Failed to fetch billing ledger');
+  }
+  return response.json();
+}
+
+/**
+ * Fetch orgs with stuck billing states
+ */
+async function fetchBillingStuckStates({ incompleteThreshold = 30, limit = 50 } = {}) {
+  const params = new URLSearchParams({
+    incompleteThreshold: incompleteThreshold.toString(),
+    limit: limit.toString(),
+  });
+
+  const response = await fetch(`${API_BASE}/api/admin/billing/stuck-states?${params}`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'Failed to fetch stuck states');
+  }
+  return response.json();
+}
+
+/**
+ * Fetch org billing reconciliation results
+ */
+async function fetchOrgBillingReconcile(orgId, {
+  checkStripe = false,
+  incompleteThreshold = 30,
+  checkoutNoSubThreshold = 15,
+  processingLagThreshold = 5,
+} = {}) {
+  const params = new URLSearchParams({
+    incompleteThreshold: incompleteThreshold.toString(),
+    checkoutNoSubThreshold: checkoutNoSubThreshold.toString(),
+    processingLagThreshold: processingLagThreshold.toString(),
+  });
+  if (checkStripe) params.set('checkStripe', 'true');
+
+  const response = await fetch(
+    `${API_BASE}/api/admin/orgs/${orgId}/billing/reconcile?${params}`,
+    {
+      credentials: 'include',
+      cache: 'no-store',
+    },
+  );
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'Failed to fetch reconciliation');
+  }
+  return response.json();
+}
+
 export {
   isAdmin,
   isAdminChecked,
@@ -507,4 +576,7 @@ export {
   revokeOrgGrant,
   grantOrgTrial,
   grantOrgSingleProject,
+  fetchBillingLedger,
+  fetchBillingStuckStates,
+  fetchOrgBillingReconcile,
 };

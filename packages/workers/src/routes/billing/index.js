@@ -11,6 +11,14 @@ import { resolveOrgAccess } from '../../lib/billingResolver.js';
 import { getPlan, DEFAULT_PLAN, getGrantPlan } from '@corates/shared/plans';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import Stripe from 'stripe';
+import { createLogger, sha256, truncateError, withTiming } from '../../lib/observability/logger.js';
+import {
+  insertLedgerEntry,
+  updateLedgerWithVerifiedFields,
+  updateLedgerStatus,
+  getLedgerByPayloadHash,
+  LedgerStatus,
+} from '../../db/stripeEventLedger.js';
 
 const billingRoutes = new Hono();
 
@@ -139,6 +147,8 @@ billingRoutes.post('/checkout', requireAuth, async c => {
     return c.json(error, error.statusCode);
   }
 
+  const logger = createLogger({ c, service: 'billing', env: c.env });
+
   try {
     const body = await c.req.json();
     const { tier, interval = 'monthly' } = body;
@@ -151,23 +161,53 @@ billingRoutes.post('/checkout', requireAuth, async c => {
       return c.json(error, error.statusCode);
     }
 
+    // Log checkout initiation
+    logger.stripe('checkout_initiated', {
+      orgId,
+      userId: user.id,
+      plan: tier,
+      interval,
+    });
+
     // Delegate to Better Auth Stripe plugin
     const { createAuth } = await import('../../auth/config.js');
     const auth = createAuth(c.env, c.executionCtx);
-    const result = await auth.api.upgradeSubscription({
-      headers: c.req.raw.headers,
-      body: {
-        plan: tier,
-        annual: interval === 'yearly',
-        referenceId: orgId,
-        successUrl: `${c.env.APP_URL || 'https://corates.org'}/settings/billing?success=true`,
-        cancelUrl: `${c.env.APP_URL || 'https://corates.org'}/settings/billing?canceled=true`,
-      },
+
+    const { result, durationMs } = await withTiming(async () => {
+      return auth.api.upgradeSubscription({
+        headers: c.req.raw.headers,
+        body: {
+          plan: tier,
+          annual: interval === 'yearly',
+          referenceId: orgId,
+          successUrl: `${c.env.APP_URL || 'https://corates.org'}/settings/billing?success=true`,
+          cancelUrl: `${c.env.APP_URL || 'https://corates.org'}/settings/billing?canceled=true`,
+        },
+      });
+    });
+
+    // Log checkout created
+    logger.stripe('checkout_created', {
+      outcome: 'success',
+      orgId,
+      userId: user.id,
+      plan: tier,
+      interval,
+      durationMs,
+      // Extract any identifiers from the result if available
+      stripeCheckoutSessionId: result?.url?.includes('cs_') ? result.url.split('/').pop() : null,
     });
 
     return c.json(result);
   } catch (error) {
-    console.error('Error creating checkout session:', error);
+    logger.stripe('checkout_failed', {
+      outcome: 'failed',
+      orgId,
+      userId: user.id,
+      error: truncateError(error),
+      errorCode: error.code || 'unknown',
+    });
+
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'create_checkout_session',
       originalError: error.message,
@@ -300,6 +340,8 @@ billingRoutes.post('/single-project/checkout', requireAuth, async c => {
     return c.json(error, error.statusCode);
   }
 
+  const logger = createLogger({ c, service: 'billing', env: c.env });
+
   try {
     if (!c.env.STRIPE_SECRET_KEY) {
       const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
@@ -308,17 +350,31 @@ billingRoutes.post('/single-project/checkout', requireAuth, async c => {
       return c.json(error, error.statusCode);
     }
 
+    // Log checkout initiation
+    logger.stripe('single_project_checkout_initiated', {
+      orgId,
+      userId: user.id,
+      plan: 'single_project',
+    });
+
     // Get user's Stripe customer ID (required by Better Auth Stripe plugin)
-    const db = createDb(c.env.DB);
+    const dbForUser = createDb(c.env.DB);
     const { user: userTable } = await import('../../db/schema.js');
     const { eq } = await import('drizzle-orm');
-    const userRecord = await db
+    const userRecord = await dbForUser
       .select({ stripeCustomerId: userTable.stripeCustomerId })
       .from(userTable)
       .where(eq(userTable.id, user.id))
       .get();
 
     if (!userRecord?.stripeCustomerId) {
+      logger.stripe('single_project_checkout_failed', {
+        outcome: 'failed',
+        orgId,
+        userId: user.id,
+        errorCode: 'stripe_customer_not_found',
+      });
+
       const error = createDomainError(
         SYSTEM_ERRORS.INTERNAL_ERROR,
         {
@@ -337,23 +393,36 @@ billingRoutes.post('/single-project/checkout', requireAuth, async c => {
     const priceId = c.env.STRIPE_PRICE_ID_SINGLE_PROJECT || 'price_single_project';
 
     const baseUrl = c.env.APP_URL || 'https://corates.org';
-    const checkoutSession = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      payment_method_types: ['card'],
-      customer: userRecord.stripeCustomerId,
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
+
+    const { result: checkoutSession, durationMs } = await withTiming(async () => {
+      return stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['card'],
+        customer: userRecord.stripeCustomerId,
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        metadata: {
+          orgId,
+          grantType: 'single_project',
+          purchaserUserId: user.id,
         },
-      ],
-      metadata: {
-        orgId,
-        grantType: 'single_project',
-        purchaserUserId: user.id,
-      },
-      success_url: `${baseUrl}/settings/billing?success=true&purchase=single_project`,
-      cancel_url: `${baseUrl}/settings/billing?canceled=true`,
+        success_url: `${baseUrl}/settings/billing?success=true&purchase=single_project`,
+        cancel_url: `${baseUrl}/settings/billing?canceled=true`,
+      });
+    });
+
+    logger.stripe('single_project_checkout_created', {
+      outcome: 'success',
+      orgId,
+      userId: user.id,
+      plan: 'single_project',
+      stripeCheckoutSessionId: checkoutSession.id,
+      stripeCustomerId: userRecord.stripeCustomerId,
+      durationMs,
     });
 
     return c.json({
@@ -361,7 +430,14 @@ billingRoutes.post('/single-project/checkout', requireAuth, async c => {
       sessionId: checkoutSession.id,
     });
   } catch (error) {
-    console.error('Error creating single-project checkout session:', error);
+    logger.stripe('single_project_checkout_failed', {
+      outcome: 'failed',
+      orgId,
+      userId: user.id,
+      error: truncateError(error),
+      errorCode: error.code || 'unknown',
+    });
+
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'create_single_project_checkout',
       originalError: error.message,
@@ -374,8 +450,17 @@ billingRoutes.post('/single-project/checkout', requireAuth, async c => {
  * POST /api/billing/purchases/webhook
  * Handle Stripe webhook events for one-time purchases (checkout.session.completed)
  * Separate from Better Auth Stripe plugin webhook which handles subscriptions
+ * Uses two-phase trust model for ledger: trust-minimal on receipt, verified after signature check
  */
 billingRoutes.post('/purchases/webhook', async c => {
+  const logger = createLogger({ c, service: 'billing-purchases-webhook', env: c.env });
+  const db = createDb(c.env.DB);
+  const route = '/api/billing/purchases/webhook';
+
+  let rawBody;
+  let ledgerId;
+  let payloadHash;
+
   try {
     if (!c.env.STRIPE_SECRET_KEY || !c.env.STRIPE_WEBHOOK_SECRET_PURCHASES) {
       const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
@@ -388,17 +473,102 @@ billingRoutes.post('/purchases/webhook', async c => {
       apiVersion: '2025-11-17.clover',
     });
 
+    // Phase 1: Read request and store trust-minimal fields
     const signature = c.req.header('stripe-signature');
-    if (!signature) {
+    const signaturePresent = !!signature;
+
+    // Read raw body
+    try {
+      rawBody = await c.req.text();
+    } catch (bodyError) {
+      // Body unreadable - insert ledger entry and return 400
+      ledgerId = crypto.randomUUID();
+      await insertLedgerEntry(db, {
+        id: ledgerId,
+        payloadHash: 'unreadable_body',
+        signaturePresent: false,
+        route,
+        requestId: logger.requestId,
+        status: LedgerStatus.IGNORED_UNVERIFIED,
+        error: truncateError(bodyError),
+        httpStatus: 400,
+      });
+
+      logger.stripe('webhook_rejected', {
+        outcome: 'ignored_unverified',
+        errorCode: 'body_unreadable',
+        error: bodyError,
+      });
+
+      const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        operation: 'body_unreadable',
+      });
+      return c.json(error, 400);
+    }
+
+    // If signature header is missing, insert ledger and return 403
+    if (!signaturePresent) {
+      ledgerId = crypto.randomUUID();
+      payloadHash = await sha256(rawBody);
+
+      await insertLedgerEntry(db, {
+        id: ledgerId,
+        payloadHash,
+        signaturePresent: false,
+        route,
+        requestId: logger.requestId,
+        status: LedgerStatus.IGNORED_UNVERIFIED,
+        error: 'missing_signature',
+        httpStatus: 403,
+      });
+
+      logger.stripe('webhook_rejected', {
+        outcome: 'ignored_unverified',
+        errorCode: 'missing_signature',
+        payloadHash,
+        signaturePresent: false,
+      });
+
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'missing_signature',
       });
       return c.json(error, error.statusCode);
     }
 
-    const rawBody = await c.req.text();
+    // Compute payload hash for dedupe
+    payloadHash = await sha256(rawBody);
 
-    // Verify webhook signature
+    // Check for duplicate by payload hash
+    const existingEntry = await getLedgerByPayloadHash(db, payloadHash);
+    if (existingEntry) {
+      logger.stripe('webhook_dedupe', {
+        outcome: 'skipped_duplicate',
+        payloadHash,
+        existingLedgerId: existingEntry.id,
+        existingStatus: existingEntry.status,
+      });
+
+      return c.json({ received: true, skipped: 'duplicate_payload' }, 200);
+    }
+
+    // Insert ledger entry with trust-minimal fields
+    ledgerId = crypto.randomUUID();
+    await insertLedgerEntry(db, {
+      id: ledgerId,
+      payloadHash,
+      signaturePresent: true,
+      route,
+      requestId: logger.requestId,
+      status: LedgerStatus.RECEIVED,
+    });
+
+    logger.stripe('webhook_received', {
+      payloadHash,
+      signaturePresent: true,
+      ledgerId,
+    });
+
+    // Phase 2: Verify signature and process
     let event;
     try {
       event = await stripe.webhooks.constructEventAsync(
@@ -407,19 +577,58 @@ billingRoutes.post('/purchases/webhook', async c => {
         c.env.STRIPE_WEBHOOK_SECRET_PURCHASES,
       );
     } catch (err) {
-      console.error('Webhook signature verification failed:', err);
+      // Signature verification failed
+      await updateLedgerStatus(db, ledgerId, {
+        status: LedgerStatus.IGNORED_UNVERIFIED,
+        error: 'invalid_signature',
+        httpStatus: 403,
+      });
+
+      logger.stripe('webhook_rejected', {
+        outcome: 'ignored_unverified',
+        errorCode: 'invalid_signature',
+        payloadHash,
+        error: truncateError(err),
+      });
+
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'invalid_signature',
       });
       return c.json(error, error.statusCode);
     }
 
+    // Signature verified - now we can trust the parsed event
+    const stripeEventId = event.id;
+    const eventType = event.type;
+    const livemode = event.livemode;
+    const apiVersion = event.api_version;
+    const created = event.created ? new Date(event.created * 1000) : null;
+
     // Handle checkout.session.completed for one-time purchases
-    if (event.type === 'checkout.session.completed') {
+    if (eventType === 'checkout.session.completed') {
       const session = event.data?.object;
 
       // Only process payment mode (one-time purchases), not subscription mode
       if (!session || session.mode !== 'payment') {
+        await updateLedgerWithVerifiedFields(db, ledgerId, {
+          stripeEventId,
+          type: eventType,
+          livemode,
+          apiVersion,
+          created,
+          status: LedgerStatus.PROCESSED,
+          httpStatus: 200,
+          stripeCheckoutSessionId: session?.id,
+        });
+
+        logger.stripe('webhook_skipped', {
+          outcome: 'skipped',
+          stripeEventId,
+          stripeEventType: eventType,
+          reason: 'not_payment_mode',
+          payloadHash,
+        });
+
         return c.json({ received: true, skipped: 'not_payment_mode' });
       }
 
@@ -427,7 +636,20 @@ billingRoutes.post('/purchases/webhook', async c => {
       const orgId = session.metadata?.orgId;
       const grantType = session.metadata?.grantType;
       if (!orgId || grantType !== 'single_project') {
-        console.error('Invalid checkout session metadata:', session.metadata);
+        await updateLedgerStatus(db, ledgerId, {
+          status: LedgerStatus.FAILED,
+          error: 'invalid_metadata',
+          httpStatus: 400,
+        });
+
+        logger.stripe('webhook_failed', {
+          outcome: 'failed',
+          stripeEventId,
+          stripeEventType: eventType,
+          errorCode: 'invalid_metadata',
+          payloadHash,
+        });
+
         const error = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
           field: 'metadata',
           value: session.metadata,
@@ -439,7 +661,20 @@ billingRoutes.post('/purchases/webhook', async c => {
 
       // Verify payment was successful
       if (session.payment_status !== 'paid') {
-        console.error('Checkout session not paid:', session.id, session.payment_status);
+        await updateLedgerStatus(db, ledgerId, {
+          status: LedgerStatus.FAILED,
+          error: `payment_not_paid:${session.payment_status}`,
+          httpStatus: 400,
+        });
+
+        logger.stripe('webhook_failed', {
+          outcome: 'failed',
+          stripeEventId,
+          stripeEventType: eventType,
+          errorCode: 'payment_not_paid',
+          payloadHash,
+        });
+
         const error = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
           field: 'payment_status',
           value: session.payment_status,
@@ -447,7 +682,6 @@ billingRoutes.post('/purchases/webhook', async c => {
         return c.json(error, error.statusCode);
       }
 
-      const db = createDb(c.env.DB);
       const {
         getGrantByStripeCheckoutSessionId,
         getGrantByOrgIdAndType,
@@ -458,7 +692,29 @@ billingRoutes.post('/purchases/webhook', async c => {
       // Check for idempotency - if grant already exists for this checkout session, skip
       const existingGrantBySession = await getGrantByStripeCheckoutSessionId(db, session.id);
       if (existingGrantBySession) {
-        console.log('Grant already exists for checkout session:', session.id);
+        await updateLedgerWithVerifiedFields(db, ledgerId, {
+          stripeEventId,
+          type: eventType,
+          livemode,
+          apiVersion,
+          created,
+          status: LedgerStatus.SKIPPED_DUPLICATE,
+          httpStatus: 200,
+          orgId,
+          stripeCustomerId: session.customer,
+          stripeCheckoutSessionId: session.id,
+        });
+
+        logger.stripe('webhook_skipped', {
+          outcome: 'skipped_duplicate',
+          stripeEventId,
+          stripeEventType: eventType,
+          reason: 'already_processed',
+          orgId,
+          stripeCheckoutSessionId: session.id,
+          payloadHash,
+        });
+
         return c.json({ received: true, skipped: 'already_processed' });
       }
 
@@ -480,6 +736,32 @@ billingRoutes.post('/purchases/webhook', async c => {
         newExpiresAt.setMonth(newExpiresAt.getMonth() + 6);
 
         await updateGrantExpiresAt(db, existingGrant.id, newExpiresAt);
+
+        await updateLedgerWithVerifiedFields(db, ledgerId, {
+          stripeEventId,
+          type: eventType,
+          livemode,
+          apiVersion,
+          created,
+          status: LedgerStatus.PROCESSED,
+          httpStatus: 200,
+          orgId,
+          stripeCustomerId: session.customer,
+          stripeCheckoutSessionId: session.id,
+        });
+
+        logger.stripe('webhook_processed', {
+          outcome: 'processed',
+          action: 'extended',
+          stripeEventId,
+          stripeEventType: eventType,
+          orgId,
+          userId: purchaserUserId,
+          stripeCheckoutSessionId: session.id,
+          grantId: existingGrant.id,
+          payloadHash,
+        });
+
         return c.json({ received: true, action: 'extended', grantId: existingGrant.id });
       }
 
@@ -502,13 +784,74 @@ billingRoutes.post('/purchases/webhook', async c => {
         },
       });
 
+      await updateLedgerWithVerifiedFields(db, ledgerId, {
+        stripeEventId,
+        type: eventType,
+        livemode,
+        apiVersion,
+        created,
+        status: LedgerStatus.PROCESSED,
+        httpStatus: 200,
+        orgId,
+        stripeCustomerId: session.customer,
+        stripeCheckoutSessionId: session.id,
+      });
+
+      logger.stripe('webhook_processed', {
+        outcome: 'processed',
+        action: 'created',
+        stripeEventId,
+        stripeEventType: eventType,
+        orgId,
+        userId: purchaserUserId,
+        stripeCheckoutSessionId: session.id,
+        grantId,
+        payloadHash,
+      });
+
       return c.json({ received: true, action: 'created', grantId });
     }
 
-    // Ignore other event types
+    // Other event types - record but don't process
+    await updateLedgerWithVerifiedFields(db, ledgerId, {
+      stripeEventId,
+      type: eventType,
+      livemode,
+      apiVersion,
+      created,
+      status: LedgerStatus.PROCESSED,
+      httpStatus: 200,
+    });
+
+    logger.stripe('webhook_skipped', {
+      outcome: 'skipped',
+      stripeEventId,
+      stripeEventType: eventType,
+      reason: 'event_type_not_handled',
+      payloadHash,
+    });
+
     return c.json({ received: true, skipped: 'event_type_not_handled' });
   } catch (error) {
-    console.error('Error processing purchase webhook:', error);
+    logger.error('Purchase webhook handler error', {
+      error: truncateError(error),
+      ledgerId,
+      payloadHash,
+    });
+
+    // Update ledger if we have an entry
+    if (ledgerId) {
+      try {
+        await updateLedgerStatus(db, ledgerId, {
+          status: LedgerStatus.FAILED,
+          error: truncateError(error),
+          httpStatus: 500,
+        });
+      } catch {
+        // Ignore ledger update errors in error handler
+      }
+    }
+
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'process_purchase_webhook',
       originalError: error.message,

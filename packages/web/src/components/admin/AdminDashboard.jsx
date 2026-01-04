@@ -3,8 +3,7 @@
  * Displays system statistics, user management, and provides navigation to other admin features
  */
 
-import { createSignal, Show, onMount, onCleanup } from 'solid-js';
-import { useNavigate, A } from '@solidjs/router';
+import { createSignal, Show, onCleanup } from 'solid-js';
 import {
   FiUsers,
   FiFolder,
@@ -15,11 +14,9 @@ import {
   FiChevronRight,
   FiShield,
   FiAlertCircle,
-  FiDatabase,
   FiLoader,
-  FiHome,
 } from 'solid-icons/fi';
-import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.js';
+import { isAdmin, isAdminChecked } from '@/stores/adminStore.js';
 import { useAdminStats, useAdminUsers } from '@primitives/useAdminQueries.js';
 import UserTable from './UserTable.jsx';
 import StatsCard from './StatsCard.jsx';
@@ -30,18 +27,9 @@ import StatsCard from './StatsCard.jsx';
  * @returns {JSX.Element} - The AdminDashboard component
  */
 export default function AdminDashboard() {
-  const navigate = useNavigate();
   const [search, setSearch] = createSignal('');
   const [page, setPage] = createSignal(1);
   const [debouncedSearch, setDebouncedSearch] = createSignal('');
-
-  // Check admin status on mount
-  onMount(async () => {
-    await checkAdminStatus();
-    if (!isAdmin()) {
-      navigate('/dashboard');
-    }
-  });
 
   // Fetch stats using TanStack Query
   const statsQuery = useAdminStats();
@@ -94,133 +82,113 @@ export default function AdminDashboard() {
           </div>
         }
       >
-        <div class='mx-auto max-w-7xl p-6'>
-          {/* Header */}
-          <div class='mb-8 flex items-center justify-between'>
-            <div class='flex items-center space-x-3'>
-              <div class='rounded-lg bg-blue-100 p-2'>
-                <FiShield class='h-6 w-6 text-blue-600' />
+        {/* Header */}
+        <div class='mb-8 flex items-center space-x-3'>
+          <div class='rounded-lg bg-blue-100 p-2'>
+            <FiShield class='h-6 w-6 text-blue-600' />
+          </div>
+          <div>
+            <h1 class='text-2xl font-bold text-gray-900'>Admin Dashboard</h1>
+            <p class='text-sm text-gray-500'>Manage users and monitor activity</p>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div class='mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
+          <StatsCard
+            title='Total Users'
+            value={stats()?.users ?? '-'}
+            icon={FiUsers}
+            color='blue'
+            loading={statsQuery.isLoading}
+          />
+          <StatsCard
+            title='Projects'
+            value={stats()?.projects ?? '-'}
+            icon={FiFolder}
+            color='green'
+            loading={statsQuery.isLoading}
+          />
+          <StatsCard
+            title='Active Sessions'
+            value={stats()?.activeSessions ?? '-'}
+            icon={FiActivity}
+            color='purple'
+            loading={statsQuery.isLoading}
+          />
+          <StatsCard
+            title='New This Week'
+            value={stats()?.recentSignups ?? '-'}
+            icon={FiUserPlus}
+            color='orange'
+            loading={statsQuery.isLoading}
+          />
+        </div>
+
+        {/* Users Section */}
+        <div class='rounded-lg border border-gray-200 bg-white shadow-sm'>
+          <div class='border-b border-gray-200 px-6 py-4'>
+            <div class='flex items-center justify-between'>
+              <h2 class='text-lg font-semibold text-gray-900'>Users</h2>
+              <div class='relative'>
+                <FiSearch class='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400' />
+                <input
+                  type='text'
+                  placeholder='Search by name or email...'
+                  value={search()}
+                  onInput={handleSearchInput}
+                  class='w-64 rounded-lg border border-gray-300 py-2 pr-4 pl-9 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                />
               </div>
-              <div>
-                <h1 class='text-2xl font-bold text-gray-900'>Admin Dashboard</h1>
-                <p class='text-sm text-gray-500'>Manage users and monitor activity</p>
-              </div>
-            </div>
-            <div class='flex items-center space-x-2'>
-              <A
-                href='/admin/orgs'
-                class='flex items-center space-x-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
-              >
-                <FiHome class='h-4 w-4' />
-                <span>Organizations</span>
-              </A>
-              <A
-                href='/admin/storage'
-                class='flex items-center space-x-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
-              >
-                <FiDatabase class='h-4 w-4' />
-                <span>Storage Management</span>
-              </A>
             </div>
           </div>
 
-          {/* Stats Grid */}
-          <div class='mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
-            <StatsCard
-              title='Total Users'
-              value={stats()?.users ?? '-'}
-              icon={FiUsers}
-              color='blue'
-              loading={statsQuery.isLoading}
-            />
-            <StatsCard
-              title='Projects'
-              value={stats()?.projects ?? '-'}
-              icon={FiFolder}
-              color='green'
-              loading={statsQuery.isLoading}
-            />
-            <StatsCard
-              title='Active Sessions'
-              value={stats()?.activeSessions ?? '-'}
-              icon={FiActivity}
-              color='purple'
-              loading={statsQuery.isLoading}
-            />
-            <StatsCard
-              title='New This Week'
-              value={stats()?.recentSignups ?? '-'}
-              icon={FiUserPlus}
-              color='orange'
-              loading={statsQuery.isLoading}
-            />
-          </div>
+          {/* Users Table */}
+          <Show
+            when={!usersDataQuery.isLoading}
+            fallback={
+              <div class='flex items-center justify-center py-12'>
+                <FiLoader class='h-8 w-8 animate-spin text-blue-600' />
+              </div>
+            }
+          >
+            <UserTable users={usersData()?.users || []} onRefresh={handleRefresh} />
+          </Show>
 
-          {/* Users Section */}
-          <div class='rounded-lg border border-gray-200 bg-white shadow-sm'>
-            <div class='border-b border-gray-200 px-6 py-4'>
-              <div class='flex items-center justify-between'>
-                <h2 class='text-lg font-semibold text-gray-900'>Users</h2>
-                <div class='relative'>
-                  <FiSearch class='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400' />
-                  <input
-                    type='text'
-                    placeholder='Search by name or email...'
-                    value={search()}
-                    onInput={handleSearchInput}
-                    class='w-64 rounded-lg border border-gray-300 py-2 pr-4 pl-9 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                  />
-                </div>
+          {/* Pagination */}
+          <Show when={usersData()?.pagination}>
+            <div class='flex items-center justify-between border-t border-gray-200 px-6 py-4'>
+              <p class='text-sm text-gray-500'>
+                Showing {(page() - 1) * (usersData()?.pagination?.limit || 20) + 1} to{' '}
+                {Math.min(
+                  page() * (usersData()?.pagination?.limit || 20),
+                  usersData()?.pagination?.total || 0,
+                )}{' '}
+                of {usersData()?.pagination?.total || 0} users
+              </p>
+              <div class='flex items-center space-x-2'>
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page() === 1}
+                  class='rounded-lg border border-gray-300 p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                >
+                  <FiChevronLeft class='h-4 w-4' />
+                </button>
+                <span class='text-sm text-gray-600'>
+                  Page {page()} of {usersData()?.pagination?.totalPages || 1}
+                </span>
+                <button
+                  onClick={() =>
+                    setPage(p => Math.min(usersData()?.pagination?.totalPages || 1, p + 1))
+                  }
+                  disabled={page() >= (usersData()?.pagination?.totalPages || 1)}
+                  class='rounded-lg border border-gray-300 p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                >
+                  <FiChevronRight class='h-4 w-4' />
+                </button>
               </div>
             </div>
-
-            {/* Users Table */}
-            <Show
-              when={!usersDataQuery.isLoading}
-              fallback={
-                <div class='flex items-center justify-center py-12'>
-                  <FiLoader class='h-8 w-8 animate-spin text-blue-600' />
-                </div>
-              }
-            >
-              <UserTable users={usersData()?.users || []} onRefresh={handleRefresh} />
-            </Show>
-
-            {/* Pagination */}
-            <Show when={usersData()?.pagination}>
-              <div class='flex items-center justify-between border-t border-gray-200 px-6 py-4'>
-                <p class='text-sm text-gray-500'>
-                  Showing {(page() - 1) * (usersData()?.pagination?.limit || 20) + 1} to{' '}
-                  {Math.min(
-                    page() * (usersData()?.pagination?.limit || 20),
-                    usersData()?.pagination?.total || 0,
-                  )}{' '}
-                  of {usersData()?.pagination?.total || 0} users
-                </p>
-                <div class='flex items-center space-x-2'>
-                  <button
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page() === 1}
-                    class='rounded-lg border border-gray-300 p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
-                  >
-                    <FiChevronLeft class='h-4 w-4' />
-                  </button>
-                  <span class='text-sm text-gray-600'>
-                    Page {page()} of {usersData()?.pagination?.totalPages || 1}
-                  </span>
-                  <button
-                    onClick={() =>
-                      setPage(p => Math.min(usersData()?.pagination?.totalPages || 1, p + 1))
-                    }
-                    disabled={page() >= (usersData()?.pagination?.totalPages || 1)}
-                    class='rounded-lg border border-gray-300 p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
-                  >
-                    <FiChevronRight class='h-4 w-4' />
-                  </button>
-                </div>
-              </div>
-            </Show>
-          </div>
+          </Show>
         </div>
       </Show>
     </Show>

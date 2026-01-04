@@ -203,6 +203,35 @@ export const twoFactor = sqliteTable('twoFactor', {
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 
+// Stripe event ledger table (for webhook observability and auditing)
+// Stores all webhook deliveries with two-phase trust model:
+// - Phase 1: Store trust-minimal fields on receipt (before signature verification)
+// - Phase 2: Populate verified fields only after signature verification succeeds
+export const stripeEventLedger = sqliteTable('stripe_event_ledger', {
+  id: text('id').primaryKey(),
+  // Trust-minimal fields (populated on receipt)
+  payloadHash: text('payloadHash').notNull().unique(), // SHA-256 hash for dedupe before verification
+  signaturePresent: integer('signaturePresent', { mode: 'boolean' }).notNull(),
+  receivedAt: integer('receivedAt', { mode: 'timestamp' }).notNull(),
+  route: text('route').notNull(), // e.g., '/api/auth/stripe/webhook' or '/api/billing/purchases/webhook'
+  requestId: text('requestId').notNull(),
+  status: text('status').notNull().default('received'), // received, processed, skipped_duplicate, failed, ignored_unverified
+  error: text('error'), // Truncated error message/JSON
+  httpStatus: integer('httpStatus'), // HTTP response status code
+  // Verified fields (populated only after signature verification succeeds)
+  stripeEventId: text('stripeEventId').unique(), // Nullable, unique when not null
+  type: text('type'), // e.g., 'checkout.session.completed', 'customer.subscription.updated'
+  livemode: integer('livemode', { mode: 'boolean' }),
+  apiVersion: text('apiVersion'),
+  created: integer('created', { mode: 'timestamp' }), // Stripe event created timestamp
+  processedAt: integer('processedAt', { mode: 'timestamp' }),
+  // Optional linking fields (populated if determinable from verified event data)
+  orgId: text('orgId'),
+  stripeCustomerId: text('stripeCustomerId'),
+  stripeSubscriptionId: text('stripeSubscriptionId'),
+  stripeCheckoutSessionId: text('stripeCheckoutSessionId'),
+});
+
 // Project invitations table (for inviting users to projects)
 // Projects are always invite-only: accepting grants project membership only by default.
 // Optional: grantOrgMembership can be set to true by org admins/owners for governance/billing.
@@ -243,5 +272,6 @@ export const dbSchema = {
   mediaFiles,
   subscription,
   orgAccessGrants,
+  stripeEventLedger,
   projectInvitations,
 };

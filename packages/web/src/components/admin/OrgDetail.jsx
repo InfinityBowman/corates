@@ -4,10 +4,9 @@
  * Allows admins to manage subscriptions, create grants, and view organization statistics.
  */
 
-import { createSignal, Show, onMount } from 'solid-js';
-import { useNavigate, useParams, A } from '@solidjs/router';
-import { FiArrowLeft, FiLoader, FiHome, FiUsers, FiFolder, FiShield } from 'solid-icons/fi';
-import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.js';
+import { createSignal, Show } from 'solid-js';
+import { useParams, A } from '@solidjs/router';
+import { FiArrowLeft, FiHome, FiUsers, FiFolder, FiShield, FiLoader } from 'solid-icons/fi';
 import { useAdminOrgDetails, useAdminOrgBilling } from '@primitives/useAdminQueries.js';
 import {
   createOrgSubscription,
@@ -17,6 +16,8 @@ import {
   revokeOrgGrant,
   grantOrgTrial,
   grantOrgSingleProject,
+  isAdminChecked,
+  isAdmin,
 } from '@/stores/adminStore.js';
 import { Dialog, showToast } from '@corates/ui';
 import { handleError } from '@/lib/error-utils.js';
@@ -26,19 +27,11 @@ import SubscriptionList from './SubscriptionList.jsx';
 import GrantList from './GrantList.jsx';
 import SubscriptionDialog from './SubscriptionDialog.jsx';
 import GrantDialog from './GrantDialog.jsx';
+import OrgBillingReconcilePanel from './billing-observability/OrgBillingReconcilePanel.jsx';
 
 export default function OrgDetail() {
-  const navigate = useNavigate();
   const params = useParams();
   const orgId = () => params.orgId;
-
-  // Check admin status on mount
-  onMount(async () => {
-    await checkAdminStatus();
-    if (!isAdmin()) {
-      navigate('/dashboard');
-    }
-  });
 
   // Fetch org details and billing
   const orgDetailsQuery = useAdminOrgDetails(orgId());
@@ -301,195 +294,196 @@ export default function OrgDetail() {
           </div>
         }
       >
-        <div class='mx-auto max-w-7xl p-6'>
-          {/* Header */}
-          <div class='mb-6'>
-            <A
-              href='/admin/orgs'
-              class='mb-4 inline-flex items-center text-sm text-gray-500 hover:text-gray-700'
-            >
-              <FiArrowLeft class='mr-1 h-4 w-4' />
-              Back to Organizations
-            </A>
-            <div class='flex items-center space-x-3'>
-              <div class='flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100'>
-                <FiHome class='h-6 w-6 text-blue-600' />
-              </div>
-              <div>
-                <h1 class='text-2xl font-bold text-gray-900'>
-                  {orgDetails()?.org?.name || 'Organization'}
-                </h1>
-                <p class='text-sm text-gray-500'>
-                  <code>{orgDetails()?.org?.slug || ''}</code>
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <Show when={orgDetails()}>
-            <div class='mb-6 grid grid-cols-1 gap-4 md:grid-cols-3'>
-              <div class='rounded-lg border border-gray-200 bg-white p-4'>
-                <div class='flex items-center space-x-2'>
-                  <FiUsers class='h-5 w-5 text-gray-400' />
-                  <div>
-                    <p class='text-sm text-gray-500'>Members</p>
-                    <p class='text-2xl font-bold text-gray-900'>
-                      {orgDetails()?.stats?.memberCount ?? 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div class='rounded-lg border border-gray-200 bg-white p-4'>
-                <div class='flex items-center space-x-2'>
-                  <FiFolder class='h-5 w-5 text-gray-400' />
-                  <div>
-                    <p class='text-sm text-gray-500'>Projects</p>
-                    <p class='text-2xl font-bold text-gray-900'>
-                      {orgDetails()?.stats?.projectCount ?? 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Show>
-
-          {/* Billing Summary */}
-          <div class='mb-6'>
-            <OrgBillingSummary billing={billingData()} />
-          </div>
-
-          {/* Quick Actions */}
-          <div class='mb-6'>
-            <OrgQuickActions
-              loading={loading()}
-              onGrantTrial={handleQuickTrial}
-              onGrantSingleProject={handleQuickSingleProject}
-              onCreateSubscription={handleOpenSubscriptionDialog}
-              onCreateGrant={handleOpenGrantDialog}
-            />
-          </div>
-
-          {/* Subscriptions */}
-          <div class='mb-6'>
-            <SubscriptionList
-              subscriptions={billing()?.subscriptions}
-              effectiveSubscriptionId={billingData()?.subscription?.id}
-              loading={loading()}
-              isLoading={billingQuery.isLoading}
-              onCancel={subscriptionId =>
-                setConfirmDialog({ type: 'cancel-subscription', subscriptionId })
-              }
-              onEdit={handleEditSubscription}
-            />
-          </div>
-
-          {/* Grants */}
-          <div class='mb-6'>
-            <GrantList
-              grants={billing()?.grants}
-              loading={loading()}
-              isLoading={billingQuery.isLoading}
-              onRevoke={grantId => setConfirmDialog({ type: 'revoke-grant', grantId })}
-            />
-          </div>
-
-          {/* Create/Edit Subscription Dialog */}
-          <SubscriptionDialog
-            open={subscriptionDialogOpen()}
-            onOpenChange={open => {
-              if (!open) {
-                setEditingSubscription(null);
-                resetSubscriptionForm();
-              }
-              setSubscriptionDialogOpen(open);
-            }}
-            loading={loading()}
-            isEdit={!!editingSubscription()}
-            plan={subPlan()}
-            status={subStatus()}
-            periodStart={subPeriodStart()}
-            periodEnd={subPeriodEnd()}
-            cancelAtPeriodEnd={subCancelAtPeriodEnd()}
-            canceledAt={subCanceledAt()}
-            endedAt={subEndedAt()}
-            stripeCustomerId={subStripeCustomerId()}
-            stripeSubscriptionId={subStripeSubscriptionId()}
-            onPlanChange={setSubPlan}
-            onStatusChange={setSubStatus}
-            onPeriodStartChange={setSubPeriodStart}
-            onPeriodEndChange={setSubPeriodEnd}
-            onCancelAtPeriodEndChange={setSubCancelAtPeriodEnd}
-            onCanceledAtChange={setSubCanceledAt}
-            onEndedAtChange={setSubEndedAt}
-            onStripeCustomerIdChange={setSubStripeCustomerId}
-            onStripeSubscriptionIdChange={setSubStripeSubscriptionId}
-            onSubmit={() => {
-              const editing = editingSubscription();
-              if (editing) {
-                handleUpdateSubscription();
-              } else {
-                handleCreateSubscription();
-              }
-            }}
-          />
-
-          {/* Create Grant Dialog */}
-          <GrantDialog
-            open={grantDialogOpen()}
-            onOpenChange={setGrantDialogOpen}
-            loading={loading()}
-            type={grantType()}
-            startsAt={grantStartsAt()}
-            expiresAt={grantExpiresAt()}
-            onTypeChange={setGrantType}
-            onStartsAtChange={setGrantStartsAt}
-            onExpiresAtChange={setGrantExpiresAt}
-            onSubmit={handleCreateGrant}
-          />
-
-          {/* Confirm Dialog */}
-          <Dialog
-            open={!!confirmDialog()}
-            onOpenChange={open => !open && setConfirmDialog(null)}
-            title={
-              confirmDialog()?.type === 'cancel-subscription' ?
-                'Cancel Subscription'
-              : 'Revoke Grant'
-            }
-            role='alertdialog'
+        {/* Header */}
+        <div class='mb-6'>
+          <A
+            href='/admin/orgs'
+            class='mb-4 inline-flex items-center text-sm text-gray-500 hover:text-gray-700'
           >
-            <div class='space-y-4'>
-              <p class='text-sm text-gray-600'>
-                {confirmDialog()?.type === 'cancel-subscription' ?
-                  'Are you sure you want to cancel this subscription?'
-                : 'Are you sure you want to revoke this grant?'}
+            <FiArrowLeft class='mr-1 h-4 w-4' />
+            Back to Organizations
+          </A>
+          <div class='flex items-center space-x-3'>
+            <div class='flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100'>
+              <FiHome class='h-6 w-6 text-blue-600' />
+            </div>
+            <div>
+              <h1 class='text-2xl font-bold text-gray-900'>
+                {orgDetails()?.org?.name || 'Organization'}
+              </h1>
+              <p class='text-sm text-gray-500'>
+                <code>{orgDetails()?.org?.slug || ''}</code>
               </p>
-              <div class='flex justify-end space-x-3'>
-                <button
-                  onClick={() => setConfirmDialog(null)}
-                  class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    const dialog = confirmDialog();
-                    if (dialog?.type === 'cancel-subscription') {
-                      handleCancelSubscription(dialog.subscriptionId);
-                    } else if (dialog?.type === 'revoke-grant') {
-                      handleRevokeGrant(dialog.grantId);
-                    }
-                  }}
-                  disabled={loading()}
-                  class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
-                >
-                  {loading() ? 'Processing...' : 'Confirm'}
-                </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <Show when={orgDetails()}>
+          <div class='mb-6 grid grid-cols-1 gap-4 md:grid-cols-3'>
+            <div class='rounded-lg border border-gray-200 bg-white p-4'>
+              <div class='flex items-center space-x-2'>
+                <FiUsers class='h-5 w-5 text-gray-400' />
+                <div>
+                  <p class='text-sm text-gray-500'>Members</p>
+                  <p class='text-2xl font-bold text-gray-900'>
+                    {orgDetails()?.stats?.memberCount ?? 0}
+                  </p>
+                </div>
               </div>
             </div>
-          </Dialog>
+            <div class='rounded-lg border border-gray-200 bg-white p-4'>
+              <div class='flex items-center space-x-2'>
+                <FiFolder class='h-5 w-5 text-gray-400' />
+                <div>
+                  <p class='text-sm text-gray-500'>Projects</p>
+                  <p class='text-2xl font-bold text-gray-900'>
+                    {orgDetails()?.stats?.projectCount ?? 0}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Show>
+
+        {/* Billing Summary */}
+        <div class='mb-6'>
+          <OrgBillingSummary billing={billingData()} />
         </div>
+
+        {/* Quick Actions */}
+        <div class='mb-6'>
+          <OrgQuickActions
+            loading={loading()}
+            onGrantTrial={handleQuickTrial}
+            onGrantSingleProject={handleQuickSingleProject}
+            onCreateSubscription={handleOpenSubscriptionDialog}
+            onCreateGrant={handleOpenGrantDialog}
+          />
+        </div>
+
+        {/* Subscriptions */}
+        <div class='mb-6'>
+          <SubscriptionList
+            subscriptions={billing()?.subscriptions}
+            effectiveSubscriptionId={billingData()?.subscription?.id}
+            loading={loading()}
+            isLoading={billingQuery.isLoading}
+            onCancel={subscriptionId =>
+              setConfirmDialog({ type: 'cancel-subscription', subscriptionId })
+            }
+            onEdit={handleEditSubscription}
+          />
+        </div>
+
+        {/* Grants */}
+        <div class='mb-6'>
+          <GrantList
+            grants={billing()?.grants}
+            loading={loading()}
+            isLoading={billingQuery.isLoading}
+            onRevoke={grantId => setConfirmDialog({ type: 'revoke-grant', grantId })}
+          />
+        </div>
+
+        {/* Billing Observability / Reconciliation */}
+        <div class='mb-6'>
+          <OrgBillingReconcilePanel orgId={orgId} />
+        </div>
+
+        {/* Create/Edit Subscription Dialog */}
+        <SubscriptionDialog
+          open={subscriptionDialogOpen()}
+          onOpenChange={open => {
+            if (!open) {
+              setEditingSubscription(null);
+              resetSubscriptionForm();
+            }
+            setSubscriptionDialogOpen(open);
+          }}
+          loading={loading()}
+          isEdit={!!editingSubscription()}
+          plan={subPlan()}
+          status={subStatus()}
+          periodStart={subPeriodStart()}
+          periodEnd={subPeriodEnd()}
+          cancelAtPeriodEnd={subCancelAtPeriodEnd()}
+          canceledAt={subCanceledAt()}
+          endedAt={subEndedAt()}
+          stripeCustomerId={subStripeCustomerId()}
+          stripeSubscriptionId={subStripeSubscriptionId()}
+          onPlanChange={setSubPlan}
+          onStatusChange={setSubStatus}
+          onPeriodStartChange={setSubPeriodStart}
+          onPeriodEndChange={setSubPeriodEnd}
+          onCancelAtPeriodEndChange={setSubCancelAtPeriodEnd}
+          onCanceledAtChange={setSubCanceledAt}
+          onEndedAtChange={setSubEndedAt}
+          onStripeCustomerIdChange={setSubStripeCustomerId}
+          onStripeSubscriptionIdChange={setSubStripeSubscriptionId}
+          onSubmit={() => {
+            const editing = editingSubscription();
+            if (editing) {
+              handleUpdateSubscription();
+            } else {
+              handleCreateSubscription();
+            }
+          }}
+        />
+
+        {/* Create Grant Dialog */}
+        <GrantDialog
+          open={grantDialogOpen()}
+          onOpenChange={setGrantDialogOpen}
+          loading={loading()}
+          type={grantType()}
+          startsAt={grantStartsAt()}
+          expiresAt={grantExpiresAt()}
+          onTypeChange={setGrantType}
+          onStartsAtChange={setGrantStartsAt}
+          onExpiresAtChange={setGrantExpiresAt}
+          onSubmit={handleCreateGrant}
+        />
+
+        {/* Confirm Dialog */}
+        <Dialog
+          open={!!confirmDialog()}
+          onOpenChange={open => !open && setConfirmDialog(null)}
+          title={
+            confirmDialog()?.type === 'cancel-subscription' ? 'Cancel Subscription' : 'Revoke Grant'
+          }
+          role='alertdialog'
+        >
+          <div class='space-y-4'>
+            <p class='text-sm text-gray-600'>
+              {confirmDialog()?.type === 'cancel-subscription' ?
+                'Are you sure you want to cancel this subscription?'
+              : 'Are you sure you want to revoke this grant?'}
+            </p>
+            <div class='flex justify-end space-x-3'>
+              <button
+                onClick={() => setConfirmDialog(null)}
+                class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const dialog = confirmDialog();
+                  if (dialog?.type === 'cancel-subscription') {
+                    handleCancelSubscription(dialog.subscriptionId);
+                  } else if (dialog?.type === 'revoke-grant') {
+                    handleRevokeGrant(dialog.grantId);
+                  }
+                }}
+                disabled={loading()}
+                class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
+              >
+                {loading() ? 'Processing...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </Dialog>
       </Show>
     </Show>
   );
