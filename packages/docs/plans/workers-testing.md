@@ -12,7 +12,7 @@ Add tests for: stuck-state detection thresholds, “checkout completed but no su
 Admin billing/storage/orgs routes (src/routes/admin/billing.js, src/routes/admin/storage.js, src/routes/admin/orgs.js)
 Add at least smoke + a couple sharp-edge tests each (pagination, validation, deletes, R2 interactions).
 P2: WebSocket upgrade + DO routing correctness
-ProjectDoc WS routing (src/index.js handleProjectDoc at /api/project-doc/:projectId/*)
+ProjectDoc WS routing (src/index.js handleProjectDoc at /api/project-doc/:projectId/\*)
 Add tests that ensure 101 upgrade responses are passed through unwrapped, and non-WS responses remain normal.
 If you care about authz at the WS boundary, add one test that proves a removed org member cannot keep syncing (this is often a real-world footgun).
 

@@ -215,10 +215,13 @@ describe('/api/admin/stop-impersonation - Error handling', () => {
   });
 
   it('should return Better Auth response when handler succeeds', async () => {
-    const mockResponse = new Response(JSON.stringify({ success: true, message: 'Impersonation stopped' }), {
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-    });
+    const mockResponse = new Response(
+      JSON.stringify({ success: true, message: 'Impersonation stopped' }),
+      {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      },
+    );
     mockHandler.mockResolvedValueOnce(mockResponse);
 
     const res = await fetchApp('/api/admin/stop-impersonation', {
