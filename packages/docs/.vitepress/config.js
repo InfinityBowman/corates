@@ -9,6 +9,7 @@ export default withMermaid({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Architecture', link: '/architecture/' },
+      { text: 'Plans', link: '/plans/' },
       { text: 'Guides', link: '/guides/' },
     ],
 
@@ -64,6 +65,52 @@ export default withMermaid({
               { text: 'Development Workflow', link: '/guides/development-workflow' },
               { text: 'Error Handling', link: '/guides/error-handling' },
               { text: 'Style Guide', link: '/guides/style-guide' },
+            ],
+          },
+        ],
+      },
+      {
+        text: 'Plans',
+        items: [
+          { text: 'Overview', link: '/plans/' },
+          {
+            text: 'Product and Billing',
+            items: [
+              { text: 'Pricing Model (Proposal)', link: '/plans/pricing-model' },
+              {
+                text: 'Ownership and Billing Model',
+                link: '/plans/ownership-billing-multitenancy',
+              },
+              { text: 'Stripe Implementation', link: '/plans/stripe-implementation' },
+              { text: 'Stripe Testing Guide', link: '/plans/stripe-testing-guide' },
+            ],
+          },
+          {
+            text: 'Collaboration and Realtime',
+            items: [
+              { text: 'Presence (Project WebSocket)', link: '/plans/presence' },
+              { text: 'Yjs Awareness', link: '/plans/yjs-awareness' },
+            ],
+          },
+          {
+            text: 'Quality and Architecture',
+            items: [
+              { text: 'Ideal Error Model', link: '/plans/ideal-error-model' },
+              { text: 'Audit Logs', link: '/plans/audit-logs' },
+              {
+                text: 'App Improvement Recommendations',
+                link: '/plans/application-improvement-recommendations',
+              },
+            ],
+          },
+          {
+            text: 'Checklist Workflow',
+            items: [
+              { text: 'Undo Checklist Completion', link: '/plans/undo-checklist-completion' },
+              {
+                text: 'Undo Checklist Completion Review',
+                link: '/plans/undo-checklist-completion-review',
+              },
             ],
           },
         ],

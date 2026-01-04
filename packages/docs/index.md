@@ -31,12 +31,17 @@ Learn about the system architecture, package structure, data models, and how dif
 - API Actions
 - Yjs Sync
 
+### [Plans](/plans/)
+
+Design docs and implementation plans (product, architecture, and major features).
+
 ### [Guides](/guides/)
 
 Practical guides for common development tasks and patterns.
 
 - [Error Handling](/guides/error-handling) - How to handle errors consistently across the application
 - [Style Guide](/guides/style-guide) - UI/UX guidelines and design system
+- [Pricing Model (Proposal)](/plans/pricing-model) - Proposed pricing model and billing scopes
 
 ## Getting Started
 

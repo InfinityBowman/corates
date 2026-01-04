@@ -3,10 +3,9 @@
  * Handles syncing Y.Doc state to the project store
  */
 
-import * as Y from 'yjs';
 import projectStore from '@/stores/projectStore.js';
 import { scoreChecklistOfType } from '@/checklist-registry/index.js';
-import { getAnswers as getAMSTAR2Answers } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
+import { getAnswers as getAMSTAR2Answers } from '@/AMSTAR2/checklist.js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 
 /**
@@ -224,11 +223,9 @@ function extractAnswersFromYMap(answersMap, checklistType) {
         if (answersNestedYMap && typeof answersNestedYMap.entries === 'function') {
           for (const [qKey, questionYMap] of answersNestedYMap.entries()) {
             if (questionYMap && typeof questionYMap.get === 'function') {
-              const commentValue = questionYMap.get('comment');
               sectionData.answers[qKey] = {
                 answer: questionYMap.get('answer') ?? null,
-                comment:
-                  commentValue instanceof Y.Text ? commentValue.toString() : (commentValue ?? ''),
+                comment: questionYMap.get('comment') ?? '',
               };
             } else {
               sectionData.answers[qKey] = questionYMap;
@@ -249,11 +246,9 @@ function extractAnswersFromYMap(answersMap, checklistType) {
         const sectionData = {};
         for (const [subKey, subValue] of sectionYMap.entries()) {
           if (subValue && typeof subValue.get === 'function') {
-            const commentValue = subValue.get('comment');
             sectionData[subKey] = {
               answer: subValue.get('answer') ?? null,
-              comment:
-                commentValue instanceof Y.Text ? commentValue.toString() : (commentValue ?? ''),
+              comment: subValue.get('comment') ?? '',
             };
           } else {
             sectionData[subKey] = subValue;
@@ -261,16 +256,7 @@ function extractAnswersFromYMap(answersMap, checklistType) {
         }
         answers[key] = sectionData;
       } else {
-        // Other sections (planning, sectionA, sectionC, sectionD): convert Y.Text to strings
-        const sectionData = {};
-        for (const [fieldKey, fieldValue] of sectionYMap.entries()) {
-          if (fieldValue instanceof Y.Text) {
-            sectionData[fieldKey] = fieldValue.toString();
-          } else {
-            sectionData[fieldKey] = fieldValue;
-          }
-        }
-        answers[key] = sectionData;
+        answers[key] = sectionYMap.toJSON ? sectionYMap.toJSON() : sectionYMap;
       }
     } else {
       // AMSTAR2 and other types: simple toJSON conversion
