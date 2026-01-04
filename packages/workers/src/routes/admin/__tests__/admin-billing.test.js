@@ -229,11 +229,7 @@ describe('Admin billing routes - DELETE /api/admin/orgs/:orgId/subscriptions/:su
     expect(body.success).toBe(true);
 
     const db = createDb(env.DB);
-    const updated = await db
-      .select()
-      .from(subscription)
-      .where(eq(subscription.id, 'sub-1'))
-      .get();
+    const updated = await db.select().from(subscription).where(eq(subscription.id, 'sub-1')).get();
     expect(updated.status).toBe('canceled');
     expect(updated.endedAt).not.toBeNull();
   });

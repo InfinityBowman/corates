@@ -84,10 +84,7 @@ let mockSyncMemberToDO;
 beforeAll(async () => {
   const { orgInvitationRoutes } = await import('../orgs/invitations.js');
   app = new Hono();
-  app.route(
-    '/api/orgs/:orgId/projects/:projectId/invitations',
-    orgInvitationRoutes,
-  );
+  app.route('/api/orgs/:orgId/projects/:projectId/invitations', orgInvitationRoutes);
 });
 
 beforeEach(async () => {
@@ -115,8 +112,12 @@ beforeEach(async () => {
   });
 
   // Setup default DO mocks
-  mockEmailQueueFetch = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
-  mockUserSessionFetch = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
+  mockEmailQueueFetch = vi.fn(
+    async () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
+  );
+  mockUserSessionFetch = vi.fn(
+    async () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
+  );
 
   mockSyncMemberToDO.mockResolvedValue(undefined);
 });

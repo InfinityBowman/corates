@@ -394,7 +394,10 @@ export async function seedStripeEventLedger(params) {
     httpStatus: validated.httpStatus,
     stripeEventId: validated.stripeEventId,
     type: validated.type,
-    livemode: validated.livemode === 1 ? true : validated.livemode === 0 ? false : null,
+    livemode:
+      validated.livemode === 1 ? true
+      : validated.livemode === 0 ? false
+      : null,
     apiVersion: validated.apiVersion,
     created: validated.created ? new Date(validated.created * 1000) : null,
     processedAt: validated.processedAt ? new Date(validated.processedAt * 1000) : null,

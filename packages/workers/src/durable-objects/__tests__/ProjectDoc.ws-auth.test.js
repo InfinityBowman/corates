@@ -5,7 +5,14 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { env, runInDurableObject } from 'cloudflare:test';
-import { resetTestDatabase, seedUser, seedOrganization, seedProject, seedProjectMember, clearProjectDOs } from '../../__tests__/helpers.js';
+import {
+  resetTestDatabase,
+  seedUser,
+  seedOrganization,
+  seedProject,
+  seedProjectMember,
+  clearProjectDOs,
+} from '../../__tests__/helpers.js';
 
 vi.mock('../../auth/config.js', () => {
   const mockVerifyAuth = vi.fn(async () => ({

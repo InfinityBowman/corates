@@ -855,9 +855,7 @@ describe('Org Management API - PUT /api/orgs/:orgId/members/:memberId', () => {
       createdAt: nowSec,
     });
 
-    mockUpdateMemberRole.mockRejectedValueOnce(
-      new Error('Only owners can change owner role'),
-    );
+    mockUpdateMemberRole.mockRejectedValueOnce(new Error('Only owners can change owner role'));
 
     const res = await fetchOrgs('/api/orgs/org-1/members/member-2', {
       method: 'PUT',

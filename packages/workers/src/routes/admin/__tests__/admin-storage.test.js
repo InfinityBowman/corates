@@ -6,7 +6,13 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import { resetTestDatabase, seedUser, seedOrganization, seedProject, json } from '../../../__tests__/helpers.js';
+import {
+  resetTestDatabase,
+  seedUser,
+  seedOrganization,
+  seedProject,
+  json,
+} from '../../../__tests__/helpers.js';
 
 vi.mock('../../../middleware/requireAdmin.js', () => {
   return {
@@ -59,17 +65,35 @@ beforeEach(async () => {
 describe('Admin storage routes - GET /api/admin/storage/documents', () => {
   it('should return paginated documents with cursor', async () => {
     const mockR2 = {
-      list: vi.fn()
+      list: vi
+        .fn()
         .mockResolvedValueOnce({
           objects: [
-            { key: 'projects/p1/studies/s1/file1.pdf', size: 100, uploaded: new Date(), etag: 'etag1' },
-            { key: 'projects/p1/studies/s1/file2.pdf', size: 200, uploaded: new Date(), etag: 'etag2' },
+            {
+              key: 'projects/p1/studies/s1/file1.pdf',
+              size: 100,
+              uploaded: new Date(),
+              etag: 'etag1',
+            },
+            {
+              key: 'projects/p1/studies/s1/file2.pdf',
+              size: 200,
+              uploaded: new Date(),
+              etag: 'etag2',
+            },
           ],
           truncated: true,
           cursor: 'cursor-page2',
         })
         .mockResolvedValueOnce({
-          objects: [{ key: 'projects/p1/studies/s2/file3.pdf', size: 300, uploaded: new Date(), etag: 'etag3' }],
+          objects: [
+            {
+              key: 'projects/p1/studies/s2/file3.pdf',
+              size: 300,
+              uploaded: new Date(),
+              etag: 'etag3',
+            },
+          ],
           truncated: false,
         }),
       get: async () => null,
@@ -94,7 +118,14 @@ describe('Admin storage routes - GET /api/admin/storage/documents', () => {
   it('should handle composite cursor correctly', async () => {
     const mockR2 = {
       list: vi.fn().mockResolvedValueOnce({
-        objects: [{ key: 'projects/p1/studies/s1/file1.pdf', size: 100, uploaded: new Date(), etag: 'etag1' }],
+        objects: [
+          {
+            key: 'projects/p1/studies/s1/file1.pdf',
+            size: 100,
+            uploaded: new Date(),
+            etag: 'etag1',
+          },
+        ],
         truncated: false,
       }),
       get: async () => null,
@@ -128,7 +159,11 @@ describe('Admin storage routes - GET /api/admin/storage/documents', () => {
     const res1 = await fetchApp('/api/admin/storage/documents?limit=0', {}, { PDF_BUCKET: mockR2 });
     expect(res1.status).toBe(400);
 
-    const res2 = await fetchApp('/api/admin/storage/documents?limit=99999', {}, { PDF_BUCKET: mockR2 });
+    const res2 = await fetchApp(
+      '/api/admin/storage/documents?limit=99999',
+      {},
+      { PDF_BUCKET: mockR2 },
+    );
     expect(res2.status).toBe(400);
   });
 
@@ -136,8 +171,18 @@ describe('Admin storage routes - GET /api/admin/storage/documents', () => {
     const mockR2 = {
       list: vi.fn().mockResolvedValueOnce({
         objects: [
-          { key: 'projects/p1/studies/s1/document.pdf', size: 100, uploaded: new Date(), etag: 'etag1' },
-          { key: 'projects/p1/studies/s1/image.jpg', size: 200, uploaded: new Date(), etag: 'etag2' },
+          {
+            key: 'projects/p1/studies/s1/document.pdf',
+            size: 100,
+            uploaded: new Date(),
+            etag: 'etag1',
+          },
+          {
+            key: 'projects/p1/studies/s1/image.jpg',
+            size: 200,
+            uploaded: new Date(),
+            etag: 'etag2',
+          },
         ],
         truncated: false,
       }),
@@ -146,7 +191,11 @@ describe('Admin storage routes - GET /api/admin/storage/documents', () => {
       delete: async () => {},
     };
 
-    const res = await fetchApp('/api/admin/storage/documents?search=document', {}, { PDF_BUCKET: mockR2 });
+    const res = await fetchApp(
+      '/api/admin/storage/documents?search=document',
+      {},
+      { PDF_BUCKET: mockR2 },
+    );
     expect(res.status).toBe(200);
 
     const body = await json(res);
@@ -158,9 +207,19 @@ describe('Admin storage routes - GET /api/admin/storage/documents', () => {
     const mockR2 = {
       list: vi.fn().mockResolvedValueOnce({
         objects: [
-          { key: 'projects/p1/studies/s1/file.pdf', size: 100, uploaded: new Date(), etag: 'etag1' },
+          {
+            key: 'projects/p1/studies/s1/file.pdf',
+            size: 100,
+            uploaded: new Date(),
+            etag: 'etag1',
+          },
           { key: 'invalid-key', size: 200, uploaded: new Date(), etag: 'etag2' },
-          { key: 'projects/p1/studies/s2/file2.pdf', size: 300, uploaded: new Date(), etag: 'etag3' },
+          {
+            key: 'projects/p1/studies/s2/file2.pdf',
+            size: 300,
+            uploaded: new Date(),
+            etag: 'etag3',
+          },
         ],
         truncated: false,
       }),
@@ -214,8 +273,18 @@ describe('Admin storage routes - GET /api/admin/storage/documents', () => {
     const mockR2 = {
       list: vi.fn().mockResolvedValueOnce({
         objects: [
-          { key: `projects/${projectId1}/studies/s1/file1.pdf`, size: 100, uploaded: new Date(), etag: 'etag1' },
-          { key: `projects/${projectId2}/studies/s1/file2.pdf`, size: 200, uploaded: new Date(), etag: 'etag2' },
+          {
+            key: `projects/${projectId1}/studies/s1/file1.pdf`,
+            size: 100,
+            uploaded: new Date(),
+            etag: 'etag1',
+          },
+          {
+            key: `projects/${projectId2}/studies/s1/file2.pdf`,
+            size: 200,
+            uploaded: new Date(),
+            etag: 'etag2',
+          },
         ],
         truncated: false,
       }),
@@ -264,7 +333,8 @@ describe('Admin storage routes - DELETE /api/admin/storage/documents', () => {
       list: async () => ({ objects: [], truncated: false }),
       get: async () => null,
       put: async () => ({ key: 'test-key' }),
-      delete: vi.fn()
+      delete: vi
+        .fn()
         .mockResolvedValueOnce(undefined)
         .mockRejectedValueOnce(new Error('Delete failed'))
         .mockResolvedValueOnce(undefined),
@@ -320,15 +390,29 @@ describe('Admin storage routes - DELETE /api/admin/storage/documents', () => {
 describe('Admin storage routes - GET /api/admin/storage/stats', () => {
   it('should return storage statistics', async () => {
     const mockR2 = {
-      list: vi.fn()
-        .mockResolvedValueOnce({
-          objects: [
-            { key: 'projects/p1/studies/s1/file1.pdf', size: 100, uploaded: new Date(), etag: 'etag1' },
-            { key: 'projects/p1/studies/s1/file2.pdf', size: 200, uploaded: new Date(), etag: 'etag2' },
-            { key: 'projects/p2/studies/s1/file3.pdf', size: 300, uploaded: new Date(), etag: 'etag3' },
-          ],
-          truncated: false,
-        }),
+      list: vi.fn().mockResolvedValueOnce({
+        objects: [
+          {
+            key: 'projects/p1/studies/s1/file1.pdf',
+            size: 100,
+            uploaded: new Date(),
+            etag: 'etag1',
+          },
+          {
+            key: 'projects/p1/studies/s1/file2.pdf',
+            size: 200,
+            uploaded: new Date(),
+            etag: 'etag2',
+          },
+          {
+            key: 'projects/p2/studies/s1/file3.pdf',
+            size: 300,
+            uploaded: new Date(),
+            etag: 'etag3',
+          },
+        ],
+        truncated: false,
+      }),
       get: async () => null,
       put: async () => ({ key: 'test-key' }),
       delete: async () => {},
