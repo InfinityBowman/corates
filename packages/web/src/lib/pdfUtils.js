@@ -4,17 +4,10 @@
 
 import { initEmbedPdfEngine } from './embedPdfEngine.js';
 
-// PDF.js library reference (loaded dynamically)
-// Note: PDF.js is no longer used for viewing (EmbedPDF is used instead)
-// This may be removed in the future if not needed elsewhere
-let pdfjsLib = null;
-let pdfjsInitPromise = null;
-
 // DOI regex pattern
 const DOI_REGEX = /\b(10\.\d{4,}(?:\.\d+)*\/\S+)\b/gi;
 
 // Timeout constants
-const PDF_INIT_TIMEOUT = 10000; // 10 seconds for PDF.js initialization
 const PDF_EXTRACT_TIMEOUT = 10000; // 10 seconds for title/DOI extraction
 
 /**
@@ -35,32 +28,6 @@ export function withTimeout(promise, ms, operationName = 'Operation') {
   return Promise.race([promise, timeoutPromise]).finally(() => {
     clearTimeout(timeoutId);
   });
-}
-
-/**
- * Initialize PDF.js library lazily
- * This is the shared initialization function used by all PDF-related components
- * @returns {Promise<Object>} - The initialized pdfjs-dist library
- */
-export async function initPdfJs() {
-  if (pdfjsLib) return pdfjsLib;
-
-  if (pdfjsInitPromise) return pdfjsInitPromise;
-
-  pdfjsInitPromise = (async () => {
-    const [pdfjs, workerModule] = await withTimeout(
-      Promise.all([import('pdfjs-dist'), import('pdfjs-dist/build/pdf.worker.min.mjs?url')]),
-      PDF_INIT_TIMEOUT,
-      'PDF.js initialization',
-    );
-
-    pdfjsLib = pdfjs;
-    pdfjsLib.GlobalWorkerOptions.workerSrc = workerModule.default;
-
-    return pdfjsLib;
-  })();
-
-  return pdfjsInitPromise;
 }
 
 /**
