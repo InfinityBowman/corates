@@ -5,7 +5,7 @@
  * - Phase 2: Update with verified fields only after signature verification succeeds
  */
 
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { stripeEventLedger } from './schema.js';
 
 /**
@@ -212,7 +212,7 @@ export async function getLedgerEntriesByOrgId(db, orgId, options = {}) {
     .select()
     .from(stripeEventLedger)
     .where(eq(stripeEventLedger.orgId, orgId))
-    .orderBy(stripeEventLedger.receivedAt)
+    .orderBy(desc(stripeEventLedger.receivedAt))
     .limit(limit)
     .all();
 

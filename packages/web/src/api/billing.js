@@ -4,6 +4,7 @@
  */
 
 import { API_BASE } from '@config/api.js';
+import { handleFetchError } from '@/lib/error-utils.js';
 
 /**
  * Fetch options with credentials
@@ -20,15 +21,12 @@ const fetchOptions = {
  * @returns {Promise<Object>}
  */
 export async function getSubscription() {
-  const response = await fetch(`${API_BASE}/api/billing/subscription`, {
-    ...fetchOptions,
-    method: 'GET',
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch subscription' }));
-    throw new Error(error.error || 'Failed to fetch subscription');
-  }
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/billing/subscription`, {
+      ...fetchOptions,
+      method: 'GET',
+    }),
+  );
 
   return response.json();
 }
@@ -40,18 +38,13 @@ export async function getSubscription() {
  * @returns {Promise<{ url: string, sessionId: string }>}
  */
 export async function createCheckoutSession(tier, interval = 'monthly') {
-  const response = await fetch(`${API_BASE}/api/billing/checkout`, {
-    ...fetchOptions,
-    method: 'POST',
-    body: JSON.stringify({ tier, interval }),
-  });
-
-  if (!response.ok) {
-    const error = await response
-      .json()
-      .catch(() => ({ error: 'Failed to create checkout session' }));
-    throw new Error(error.error || 'Failed to create checkout session');
-  }
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/billing/checkout`, {
+      ...fetchOptions,
+      method: 'POST',
+      body: JSON.stringify({ tier, interval }),
+    }),
+  );
 
   return response.json();
 }
@@ -61,15 +54,12 @@ export async function createCheckoutSession(tier, interval = 'monthly') {
  * @returns {Promise<{ url: string }>}
  */
 export async function createPortalSession() {
-  const response = await fetch(`${API_BASE}/api/billing/portal`, {
-    ...fetchOptions,
-    method: 'POST',
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to create portal session' }));
-    throw new Error(error.error || 'Failed to create portal session');
-  }
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/billing/portal`, {
+      ...fetchOptions,
+      method: 'POST',
+    }),
+  );
 
   return response.json();
 }
@@ -97,17 +87,12 @@ export async function redirectToPortal() {
  * @returns {Promise<{ url: string, sessionId: string }>}
  */
 export async function createSingleProjectCheckout() {
-  const response = await fetch(`${API_BASE}/api/billing/single-project/checkout`, {
-    ...fetchOptions,
-    method: 'POST',
-  });
-
-  if (!response.ok) {
-    const error = await response
-      .json()
-      .catch(() => ({ error: 'Failed to create checkout session' }));
-    throw new Error(error.error || 'Failed to create checkout session');
-  }
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/billing/single-project/checkout`, {
+      ...fetchOptions,
+      method: 'POST',
+    }),
+  );
 
   return response.json();
 }
@@ -125,15 +110,12 @@ export async function redirectToSingleProjectCheckout() {
  * @returns {Promise<{ success: boolean, grantId: string, expiresAt: number }>}
  */
 export async function startTrial() {
-  const response = await fetch(`${API_BASE}/api/billing/trial/start`, {
-    ...fetchOptions,
-    method: 'POST',
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to start trial' }));
-    throw new Error(error.error || error.message || 'Failed to start trial');
-  }
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/billing/trial/start`, {
+      ...fetchOptions,
+      method: 'POST',
+    }),
+  );
 
   return response.json();
 }

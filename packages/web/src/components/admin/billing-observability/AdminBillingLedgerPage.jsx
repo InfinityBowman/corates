@@ -68,8 +68,8 @@ export default function AdminBillingLedgerPage() {
         return `${base}/subscriptions/${id}`;
       case 'event':
         return `${base}/events/${id}`;
-      case 'checkout':
-        return `${base}/payments/${id}`;
+      // Checkout sessions don't have a direct dashboard URL
+      // They can be accessed via payment intent or customer page if needed
       default:
         return null;
     }

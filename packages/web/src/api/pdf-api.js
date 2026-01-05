@@ -5,6 +5,7 @@
  */
 
 import { API_BASE } from '@config/api.js';
+import { handleFetchError } from '@/lib/error-utils.js';
 
 /**
  * Fetch a PDF from an external URL via the backend proxy (avoids CORS issues)
@@ -14,19 +15,16 @@ import { API_BASE } from '@config/api.js';
 export async function fetchPdfViaProxy(url) {
   const proxyUrl = `${API_BASE}/api/pdf-proxy`;
 
-  const response = await fetch(proxyUrl, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ url }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Proxy fetch failed' }));
-    throw new Error(error.error || 'Failed to fetch PDF from external URL');
-  }
+  const response = await handleFetchError(
+    fetch(proxyUrl, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ url }),
+    }),
+  );
 
   return response.arrayBuffer();
 }
@@ -66,16 +64,13 @@ export async function uploadPdf(orgId, projectId, studyId, file, fileName = null
     formData.append('file', fileObj);
   }
 
-  const response = await fetch(url, {
-    method: 'POST',
-    credentials: 'include',
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Upload failed' }));
-    throw new Error(error.error || 'Failed to upload PDF');
-  }
+  const response = await handleFetchError(
+    fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    }),
+  );
 
   return response.json();
 }
@@ -92,15 +87,12 @@ export async function downloadPdf(orgId, projectId, studyId, fileName) {
   const baseUrl = buildPdfBaseUrl(orgId, projectId, studyId);
   const url = `${baseUrl}/${encodeURIComponent(fileName)}`;
 
-  const response = await fetch(url, {
-    method: 'GET',
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Download failed' }));
-    throw new Error(error.error || 'Failed to download PDF');
-  }
+  const response = await handleFetchError(
+    fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+    }),
+  );
 
   return response.arrayBuffer();
 }
@@ -130,15 +122,12 @@ export async function deletePdf(orgId, projectId, studyId, fileName) {
   const baseUrl = buildPdfBaseUrl(orgId, projectId, studyId);
   const url = `${baseUrl}/${encodeURIComponent(fileName)}`;
 
-  const response = await fetch(url, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Delete failed' }));
-    throw new Error(error.error || 'Failed to delete PDF');
-  }
+  const response = await handleFetchError(
+    fetch(url, {
+      method: 'DELETE',
+      credentials: 'include',
+    }),
+  );
 
   return response.json();
 }
@@ -153,15 +142,12 @@ export async function deletePdf(orgId, projectId, studyId, fileName) {
 export async function listPdfs(orgId, projectId, studyId) {
   const url = buildPdfBaseUrl(orgId, projectId, studyId);
 
-  const response = await fetch(url, {
-    method: 'GET',
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'List failed' }));
-    throw new Error(error.error || 'Failed to list PDFs');
-  }
+  const response = await handleFetchError(
+    fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+    }),
+  );
 
   return response.json();
 }

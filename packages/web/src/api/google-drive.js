@@ -5,22 +5,19 @@
  */
 
 import { API_BASE } from '@config/api.js';
-import { parseApiError } from '@/lib/error-utils.js';
+import { handleFetchError } from '@/lib/error-utils.js';
 
 /**
  * Check if the user has connected their Google account
  * @returns {Promise<{connected: boolean, hasRefreshToken: boolean}>}
  */
 export async function getGoogleDriveStatus() {
-  const response = await fetch(`${API_BASE}/api/google-drive/status`, {
-    method: 'GET',
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const parsedError = await parseApiError(response);
-    throw new Error(parsedError.message);
-  }
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/google-drive/status`, {
+      method: 'GET',
+      credentials: 'include',
+    }),
+  );
 
   return response.json();
 }
@@ -30,15 +27,12 @@ export async function getGoogleDriveStatus() {
  * @returns {Promise<{success: boolean}>}
  */
 export async function disconnectGoogleDrive() {
-  const response = await fetch(`${API_BASE}/api/google-drive/disconnect`, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const parsedError = await parseApiError(response);
-    throw new Error(parsedError.message);
-  }
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/google-drive/disconnect`, {
+      method: 'DELETE',
+      credentials: 'include',
+    }),
+  );
 
   return response.json();
 }
@@ -54,19 +48,16 @@ export async function disconnectGoogleDrive() {
 export async function importFromGoogleDrive(fileId, orgId, projectId, studyId) {
   const url = `${API_BASE}/api/orgs/${orgId}/google-drive/import`;
 
-  const response = await fetch(url, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ fileId, projectId, studyId }),
-  });
-
-  if (!response.ok) {
-    const parsedError = await parseApiError(response);
-    throw new Error(parsedError.message);
-  }
+  const response = await handleFetchError(
+    fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ fileId, projectId, studyId }),
+    }),
+  );
 
   return response.json();
 }
@@ -76,15 +67,12 @@ export async function importFromGoogleDrive(fileId, orgId, projectId, studyId) {
  * @returns {Promise<{accessToken: string, expiresAt: string|null}>}
  */
 export async function getGoogleDrivePickerToken() {
-  const response = await fetch(`${API_BASE}/api/google-drive/picker-token`, {
-    method: 'GET',
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const parsedError = await parseApiError(response);
-    throw new Error(parsedError.message);
-  }
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/google-drive/picker-token`, {
+      method: 'GET',
+      credentials: 'include',
+    }),
+  );
 
   return response.json();
 }
@@ -95,22 +83,19 @@ export async function getGoogleDrivePickerToken() {
  * @param {string} [callbackUrl] - Optional callback URL after auth
  */
 export async function connectGoogleAccount(callbackUrl) {
-  const response = await fetch(`${API_BASE}/api/auth/sign-in/social`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      provider: 'google',
-      callbackURL: callbackUrl || window.location.href,
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/auth/sign-in/social`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        provider: 'google',
+        callbackURL: callbackUrl || window.location.href,
+      }),
     }),
-  });
-
-  if (!response.ok) {
-    const parsedError = await parseApiError(response);
-    throw new Error(parsedError.message);
-  }
+  );
 
   const data = await response.json();
 
