@@ -38,7 +38,7 @@
     "postmark": "^4.0.5",
     "stripe": "^20.1.0",
     "y-protocols": "^1.0.7",
-    "yjs": "^13.6.28",
+    "yjs": "^13.6.29",
     "zod": "^4.2.1"
   },
   "devDependencies": {
