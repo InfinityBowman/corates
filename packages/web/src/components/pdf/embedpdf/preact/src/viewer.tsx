@@ -14,7 +14,12 @@ import {
   GlobalPointerProvider,
   PagePointerProvider,
 } from '@embedpdf/plugin-interaction-manager/react';
-import { ZoomMode, ZoomPluginPackage, MarqueeZoom } from '@embedpdf/plugin-zoom/react';
+import {
+  ZoomMode,
+  ZoomPluginPackage,
+  MarqueeZoom,
+  ZoomGestureWrapper,
+} from '@embedpdf/plugin-zoom/react';
 import { PanPluginPackage } from '@embedpdf/plugin-pan/react';
 import { SpreadMode, SpreadPluginPackage } from '@embedpdf/plugin-spread/react';
 import { Rotate, RotatePluginPackage } from '@embedpdf/plugin-rotate/react';
@@ -267,75 +272,77 @@ export function ViewerPage() {
                                     <div className='relative h-full w-full'>
                                       <GlobalPointerProvider documentId={documentId}>
                                         <Viewport className='bg-gray-100' documentId={documentId}>
-                                          <Scroller
-                                            documentId={documentId}
-                                            renderPage={({ pageIndex }) => (
-                                              <Rotate
-                                                documentId={documentId}
-                                                pageIndex={pageIndex}
-                                                style={{ backgroundColor: '#fff' }}
-                                              >
-                                                <PagePointerProvider
+                                          <ZoomGestureWrapper documentId={documentId}>
+                                            <Scroller
+                                              documentId={documentId}
+                                              renderPage={({ pageIndex }) => (
+                                                <Rotate
                                                   documentId={documentId}
                                                   pageIndex={pageIndex}
+                                                  style={{ backgroundColor: '#fff' }}
                                                 >
-                                                  <RenderLayer
+                                                  <PagePointerProvider
                                                     documentId={documentId}
                                                     pageIndex={pageIndex}
-                                                    scale={1}
-                                                    style={{ pointerEvents: 'none' }}
-                                                  />
-                                                  <TilingLayer
-                                                    documentId={documentId}
-                                                    pageIndex={pageIndex}
-                                                    style={{ pointerEvents: 'none' }}
-                                                  />
-                                                  <SearchLayer
-                                                    documentId={documentId}
-                                                    pageIndex={pageIndex}
-                                                  />
-                                                  <MarqueeZoom
-                                                    documentId={documentId}
-                                                    pageIndex={pageIndex}
-                                                  />
-                                                  <MarqueeCapture
-                                                    documentId={documentId}
-                                                    pageIndex={pageIndex}
-                                                  />
-                                                  <SelectionLayer
-                                                    documentId={documentId}
-                                                    pageIndex={pageIndex}
-                                                    selectionMenu={props => (
-                                                      <SelectionSelectionMenu
-                                                        {...props}
-                                                        documentId={documentId}
-                                                      />
-                                                    )}
-                                                  />
-                                                  <RedactionLayer
-                                                    documentId={documentId}
-                                                    pageIndex={pageIndex}
-                                                    selectionMenu={props => (
-                                                      <RedactionSelectionMenu
-                                                        {...props}
-                                                        documentId={documentId}
-                                                      />
-                                                    )}
-                                                  />
-                                                  <AnnotationLayer
-                                                    documentId={documentId}
-                                                    pageIndex={pageIndex}
-                                                    selectionMenu={props => (
-                                                      <AnnotationSelectionMenu
-                                                        {...props}
-                                                        documentId={documentId}
-                                                      />
-                                                    )}
-                                                  />
-                                                </PagePointerProvider>
-                                              </Rotate>
-                                            )}
-                                          />
+                                                  >
+                                                    <RenderLayer
+                                                      documentId={documentId}
+                                                      pageIndex={pageIndex}
+                                                      scale={1}
+                                                      style={{ pointerEvents: 'none' }}
+                                                    />
+                                                    <TilingLayer
+                                                      documentId={documentId}
+                                                      pageIndex={pageIndex}
+                                                      style={{ pointerEvents: 'none' }}
+                                                    />
+                                                    <SearchLayer
+                                                      documentId={documentId}
+                                                      pageIndex={pageIndex}
+                                                    />
+                                                    <MarqueeZoom
+                                                      documentId={documentId}
+                                                      pageIndex={pageIndex}
+                                                    />
+                                                    <MarqueeCapture
+                                                      documentId={documentId}
+                                                      pageIndex={pageIndex}
+                                                    />
+                                                    <SelectionLayer
+                                                      documentId={documentId}
+                                                      pageIndex={pageIndex}
+                                                      selectionMenu={props => (
+                                                        <SelectionSelectionMenu
+                                                          {...props}
+                                                          documentId={documentId}
+                                                        />
+                                                      )}
+                                                    />
+                                                    <RedactionLayer
+                                                      documentId={documentId}
+                                                      pageIndex={pageIndex}
+                                                      selectionMenu={props => (
+                                                        <RedactionSelectionMenu
+                                                          {...props}
+                                                          documentId={documentId}
+                                                        />
+                                                      )}
+                                                    />
+                                                    <AnnotationLayer
+                                                      documentId={documentId}
+                                                      pageIndex={pageIndex}
+                                                      selectionMenu={props => (
+                                                        <AnnotationSelectionMenu
+                                                          {...props}
+                                                          documentId={documentId}
+                                                        />
+                                                      )}
+                                                    />
+                                                  </PagePointerProvider>
+                                                </Rotate>
+                                              )}
+                                            />
+                                          </ZoomGestureWrapper>
                                           {/* Page Controls */}
                                           <PageControls documentId={documentId} />
                                         </Viewport>
