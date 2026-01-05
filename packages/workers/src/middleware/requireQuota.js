@@ -8,8 +8,9 @@ import { createDb } from '../db/client.js';
 import { getAuth } from './auth.js';
 import { getOrgContext } from './requireOrg.js';
 import { resolveOrgAccess } from '../lib/billingResolver.js';
-import { createDomainError, AUTH_ERRORS } from '@corates/shared';
+import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { isUnlimitedQuota } from '@corates/shared/plans';
+import { createLogger } from '../lib/observability/logger.js';
 
 /**
  * Middleware that requires quota availability
@@ -35,8 +36,23 @@ export function requireQuota(quotaKey, getUsage, requested = 1) {
       return c.json(error, error.statusCode);
     }
 
-    const db = createDb(c.env.DB);
-    const orgBilling = await resolveOrgAccess(db, orgId);
+    let db;
+    let orgBilling;
+    try {
+      db = createDb(c.env.DB);
+      orgBilling = await resolveOrgAccess(db, orgId);
+    } catch (error) {
+      const logger = c.logger || createLogger({ c, service: 'quota-middleware', env: c.env });
+      logger.error('Error resolving org access for quota check', {
+        operation: 'resolve_org_access',
+        orgId,
+        originalError: error.message,
+      });
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'resolve_org_access',
+      });
+      return c.json(dbError, dbError.statusCode);
+    }
 
     // Get current usage
     const used = await getUsage(c, user);

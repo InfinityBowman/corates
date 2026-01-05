@@ -189,7 +189,7 @@ export default function UserTable(props) {
               each={users()}
               fallback={
                 <tr>
-                  <td colspan='8' class='px-6 py-12 text-center text-gray-500'>
+                  <td colspan='7' class='px-6 py-12 text-center text-gray-500'>
                     No users found
                   </td>
                 </tr>

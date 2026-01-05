@@ -426,27 +426,62 @@ describe('requireProjectAccess middleware', () => {
       expect(body.details?.reason).toBe('org_context_required');
     });
 
-    it('should return 403 project_id_required when projectId param is missing', async () => {
+    it('should return 403 project_id_required when projectId param is empty', async () => {
+      const nowSec = Math.floor(Date.now() / 1000);
+
+      await seedUser({
+        id: 'user-1',
+        name: 'User 1',
+        email: 'user1@example.com',
+        createdAt: nowSec,
+        updatedAt: nowSec,
+      });
+
+      await seedOrganization({
+        id: 'org-1',
+        name: 'Test Org',
+        slug: 'test-org',
+        createdAt: nowSec,
+      });
+
+      await seedOrgMember({
+        id: 'member-1',
+        userId: 'user-1',
+        organizationId: 'org-1',
+        role: 'member',
+        createdAt: nowSec,
+      });
+
       const app = new Hono();
       app.get(
         '/orgs/:orgId/projects/:projectId/test',
         requireAuth,
         requireOrgMembership(),
+        async (c, next) => {
+          // Manually set projectId param to empty string to test middleware behavior
+          // This simulates what would happen if the router produced an empty projectId
+          const originalParam = c.req.param.bind(c.req);
+          c.req.param = (key) => {
+            if (key === 'projectId') return '';
+            return originalParam(key);
+          };
+          await next();
+        },
         requireProjectAccess(),
         c => c.json({ success: true }),
       );
 
-      const res = await fetchApp(app, '/orgs/org-1/projects//test', {
+      const res = await fetchApp(app, '/orgs/org-1/projects/placeholder/test', {
         headers: {
           'x-test-user-id': 'user-1',
           'x-test-user-email': 'user1@example.com',
         },
       });
 
-      // This will fail at requireOrgMembership first, but if it gets past that,
-      // requireProjectAccess should handle missing projectId
-      // The actual URL parsing may prevent this case, but the middleware should handle it
-      expect([403, 404]).toContain(res.status);
+      expect(res.status).toBe(403);
+      const body = await json(res);
+      expect(body.code).toBe('AUTH_FORBIDDEN');
+      expect(body.details?.reason).toBe('project_id_required');
     });
   });
 

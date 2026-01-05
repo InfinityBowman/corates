@@ -103,7 +103,9 @@ export default function BillingPage() {
               </div>
               <div class='text-right'>
                 <div class='text-sm text-gray-500'>Users</div>
-                <div class='text-2xl font-semibold text-gray-900'>1</div>
+                <div class='text-2xl font-semibold text-gray-900'>
+                  {subscription()?.memberCount ?? 0}
+                </div>
               </div>
             </div>
             <Show when={subscription()?.currentPeriodEnd}>

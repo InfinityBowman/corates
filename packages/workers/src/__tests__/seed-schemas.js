@@ -3,7 +3,7 @@
  * Ensures type safety and validation for test data seeding
  */
 
-import { z } from 'zod/v4';
+import { z } from 'zod';
 import { PROJECT_ROLES } from '../config/constants.js';
 
 /**

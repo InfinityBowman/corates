@@ -7,6 +7,8 @@
 import { Hono } from 'hono';
 import { requireAuth, getAuth } from '../../middleware/auth.js';
 import { createDb } from '../../db/client.js';
+import { member } from '../../db/schema.js';
+import { eq, count } from 'drizzle-orm';
 import { resolveOrgAccess } from '../../lib/billingResolver.js';
 import { getPlan, DEFAULT_PLAN, getGrantPlan } from '@corates/shared/plans';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
@@ -58,6 +60,14 @@ billingRoutes.get('/subscription', requireAuth, async c => {
 
     const orgBilling = await resolveOrgAccess(db, orgId);
 
+    // Get member count for the organization
+    const memberCountResult = await db
+      .select({ count: count() })
+      .from(member)
+      .where(eq(member.organizationId, orgId))
+      .get();
+    const memberCount = memberCountResult?.count || 0;
+
     // Convert to frontend-compatible format
     // Use getGrantPlan for grants, getPlan for subscriptions/free
     const effectivePlan =
@@ -84,6 +94,7 @@ billingRoutes.get('/subscription', requireAuth, async c => {
       cancelAtPeriodEnd: orgBilling.subscription?.cancelAtPeriodEnd || false,
       accessMode: orgBilling.accessMode,
       source: orgBilling.source,
+      memberCount,
     });
   } catch (error) {
     console.error('Error fetching org billing:', error);
