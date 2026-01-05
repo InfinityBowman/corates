@@ -52,7 +52,35 @@ function runWranglerD1Execute(command, options = {}) {
     command,
   ];
 
+  if (options.json) {
+    args.push('--json');
+  }
+
   return runCommand('pnpm', args, options);
+}
+
+function extractTableNamesFromWranglerJson(stdout) {
+  let parsed;
+  try {
+    parsed = JSON.parse(stdout);
+  } catch {
+    return [];
+  }
+
+  const statements = Array.isArray(parsed) ? parsed : [parsed];
+  const tableNames = [];
+
+  for (const stmt of statements) {
+    if (Array.isArray(stmt?.results)) {
+      for (const row of stmt.results) {
+        if (row.name) {
+          tableNames.push(row.name);
+        }
+      }
+    }
+  }
+
+  return tableNames;
 }
 
 function runWranglerD1MigrationsApply() {
@@ -82,40 +110,29 @@ async function main() {
   console.log('');
 
   try {
-    // Step 1: Drop existing tables (in reverse dependency order to respect foreign keys)
+    // Step 1: Drop all existing tables
     console.log('');
-    console.log('Step 1: Dropping existing tables...');
+    console.log('Step 1: Dropping all existing tables...');
 
-    // Drop tables in reverse dependency order (children before parents)
-    // This ensures foreign key constraints don't prevent dropping
-    const tables = [
-      // App-specific tables (children first)
-      'project_invitations',
-      'project_members',
-      'mediaFiles',
-      'projects',
-      'subscriptions',
-      // Better Auth organization plugin tables
-      'invitation',
-      'member',
-      'organization',
-      // Better Auth core tables
-      'twoFactor',
-      'verification',
-      'account',
-      'session',
-      'user',
-      // Observability tables
-      'stripe_event_ledger',
-    ];
+    // Query all user tables from sqlite_master (exclude system tables and migration tracking)
+    const listTablesResult = runWranglerD1Execute(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT IN ('_cf_KV', '__drizzle_migrations');",
+      { json: true, allowFailure: true },
+    );
 
-    for (const table of tables) {
-      console.log(`  Dropping table: ${table}`);
-      runWranglerD1Execute(`DROP TABLE IF EXISTS ${table};`);
+    const tableNames = extractTableNamesFromWranglerJson(listTablesResult.stdout || '[]');
+
+    if (tableNames.length === 0) {
+      console.log('  No tables found to drop');
+    } else {
+      console.log(`  Found ${tableNames.length} tables to drop`);
+      for (const tableName of tableNames) {
+        console.log(`  Dropping table: ${tableName}`);
+        runWranglerD1Execute(`DROP TABLE IF EXISTS ${tableName};`);
+      }
     }
 
     // Also drop migration tracking tables if they exist
-    // Wrangler D1 stores migration history in system tables
     console.log('  Dropping migration tracking tables...');
     runWranglerD1Execute(`DROP TABLE IF EXISTS __drizzle_migrations;`, { allowFailure: true });
     runWranglerD1Execute(`DROP TABLE IF EXISTS _cf_KV;`, { allowFailure: true });
