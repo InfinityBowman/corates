@@ -28,6 +28,12 @@ export const queryKeys = {
     current: ['subscription'],
   },
 
+  // Members queries
+  members: {
+    /** Current org's members */
+    current: ['members'],
+  },
+
   // Admin queries
   admin: {
     stats: ['adminStats'],

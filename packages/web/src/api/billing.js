@@ -106,6 +106,22 @@ export async function redirectToSingleProjectCheckout() {
 }
 
 /**
+ * Get the current org's members
+ * @returns {Promise<{ members: Array, count: number }>}
+ */
+export async function getMembers() {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/billing/members`, {
+      ...fetchOptions,
+      method: 'GET',
+    }),
+    { showToast: false },
+  );
+
+  return response.json();
+}
+
+/**
  * Start a 14-day trial grant for the current org (owner-only)
  * @returns {Promise<{ success: boolean, grantId: string, expiresAt: number }>}
  */

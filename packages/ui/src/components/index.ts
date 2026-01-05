@@ -30,3 +30,12 @@ export { Toaster, toaster, showToast, type ToastPromiseOptions } from './Toast';
 export { ToggleGroup } from './ToggleGroup';
 export { Tooltip } from './Tooltip';
 export { Tour, TourProvider, useTour } from './Tour';
+export {
+  Spinner,
+  PageLoader,
+  LoadingPlaceholder,
+  ButtonSpinner,
+  type SpinnerProps,
+  type SpinnerSize,
+  type SpinnerVariant,
+} from './Spinner';
