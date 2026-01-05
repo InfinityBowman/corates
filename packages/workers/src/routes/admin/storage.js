@@ -5,8 +5,7 @@
 
 import { Hono } from 'hono';
 import { createDb } from '../../db/client.js';
-import { projects } from '../../db/schema.js';
-import { inArray } from 'drizzle-orm';
+import { mediaFiles } from '../../db/schema.js';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { storageSchemas, validateQueryParams, validateRequest } from '../../config/validation.js';
 
@@ -138,26 +137,19 @@ storageRoutes.get(
       // Slice with offset to get the correct page
       const paginatedObjects = matchingObjects.slice(skipCount, skipCount + limit);
 
-      // Check which projects exist in the database to identify orphaned PDFs
-      const uniqueProjectIds = [...new Set(paginatedObjects.map(doc => doc.projectId))];
-      let existingProjectIds = new Set();
+      // Check which PDFs are tracked in mediaFiles table to identify orphaned PDFs
+      // Orphans are R2 objects whose keys are NOT in mediaFiles.bucketKey
+      const db = createDb(c.env.DB);
+      const trackedKeys = await db
+        .select({ bucketKey: mediaFiles.bucketKey })
+        .from(mediaFiles);
 
-      // Only query database if there are project IDs to check
-      // inArray with empty array generates invalid SQL (WHERE id IN ())
-      if (uniqueProjectIds.length > 0) {
-        const db = createDb(c.env.DB);
-        const existingProjects = await db
-          .select({ id: projects.id })
-          .from(projects)
-          .where(inArray(projects.id, uniqueProjectIds));
+      const trackedKeysSet = new Set(trackedKeys.map(row => row.bucketKey));
 
-        existingProjectIds = new Set(existingProjects.map(p => p.id));
-      }
-
-      // Mark documents as orphaned if their project doesn't exist
+      // Mark documents as orphaned if their key is not in mediaFiles table
       const documentsWithOrphanStatus = paginatedObjects.map(doc => ({
         ...doc,
-        orphaned: !existingProjectIds.has(doc.projectId),
+        orphaned: !trackedKeysSet.has(doc.key),
       }));
 
       const response = {

@@ -267,7 +267,7 @@ async function generate() {
     // Legacy routes (deprecated, kept for backward compatibility detection)
     { file: 'src/routes/projects.js', basePath: '/api/projects' },
     { file: 'src/routes/members.js', basePath: '/api/projects/{projectId}/members' },
-    { file: 'src/routes/pdfs.js', basePath: '/api/projects/{projectId}/studies/{studyId}/pdfs' },
+    // Note: src/routes/pdfs.js removed - replaced by org-scoped routes in src/routes/orgs/pdfs.js
     { file: 'src/routes/invitations.js', basePath: '/api/invitations' },
     // Other routes
     { file: 'src/routes/users.js', basePath: '/api/users' },
