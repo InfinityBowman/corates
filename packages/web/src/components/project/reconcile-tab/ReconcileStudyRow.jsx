@@ -11,7 +11,7 @@ import { BsFileDiff } from 'solid-icons/bs';
 import { Collapsible } from '@corates/ui';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 import { isReconciledChecklist } from '@/lib/checklist-domain.js';
-import PdfListItem from '@/components/checklist/pdf/PdfListItem.jsx';
+import PdfListItem from '@pdf/pdfjs/PdfListItem.jsx';
 import ReconcileStatusTag from './ReconcileStatusTag.jsx';
 
 /**

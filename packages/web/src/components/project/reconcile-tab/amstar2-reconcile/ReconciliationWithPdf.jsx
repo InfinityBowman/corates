@@ -6,7 +6,7 @@
 import { Show, createMemo } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { AiOutlineArrowLeft } from 'solid-icons/ai';
-import PdfViewer from '@/components/checklist/pdf/PdfViewer.jsx';
+import PdfViewer from '@pdf/pdfjs/PdfViewer.jsx';
 import ChecklistReconciliation from './ChecklistReconciliation.jsx';
 import Navbar from './Navbar.jsx';
 import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx';

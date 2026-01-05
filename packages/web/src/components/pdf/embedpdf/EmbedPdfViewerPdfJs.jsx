@@ -1,9 +1,9 @@
 /**
  * EmbedPdfViewerPdfJs - Wrapper for PDF.js viewer
- * Uses the existing PdfViewer component from the pdf directory
+ * Uses the existing PdfViewer component from the pdfjs directory
  */
 
-import PdfViewer from '../pdf/PdfViewer';
+import PdfViewer from '../pdfjs/PdfViewer';
 
 export default function EmbedPdfViewerPdfJs(props) {
   // props.pdfData - ArrayBuffer of PDF data (required)

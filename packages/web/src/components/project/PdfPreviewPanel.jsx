@@ -7,7 +7,7 @@
 
 import { Switch, Match, createMemo } from 'solid-js';
 import SlidingPanel from './SlidingPanel.jsx';
-import PdfViewer from '@/components/checklist/pdf/PdfViewer.jsx';
+import PdfViewer from '@pdf/pdfjs/PdfViewer.jsx';
 import pdfPreviewStore from '@/stores/pdfPreviewStore.js';
 
 export default function PdfPreviewPanel() {

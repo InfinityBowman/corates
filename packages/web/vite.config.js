@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => ({
       '@primitives': path.resolve(__dirname, 'src/primitives'),
       '@auth': path.resolve(__dirname, 'src/components/auth'),
       '@checklist': path.resolve(__dirname, 'src/components/checklist'),
+      '@pdf': path.resolve(__dirname, 'src/components/pdf'),
       '@project': path.resolve(__dirname, 'src/components/project'),
       '@offline': path.resolve(__dirname, 'src/offline'),
       '@api': path.resolve(__dirname, 'src/api'),

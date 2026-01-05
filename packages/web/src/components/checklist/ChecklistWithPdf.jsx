@@ -6,8 +6,8 @@
  */
 
 import GenericChecklist from '@/components/checklist/GenericChecklist.jsx';
-import PdfViewer from '@/components/checklist/pdf/PdfViewer.jsx';
-import EmbedPdfViewer from '@/components/checklist/embedpdf/EmbedPdfViewer.jsx';
+import PdfViewer from '@pdf/pdfjs/PdfViewer.jsx';
+import EmbedPdfViewer from '@pdf/embedpdf/EmbedPdfViewer.jsx';
 import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx';
 import { PDF_VIEWER_MODE } from '@config/pdfViewer.js';
 import { createMemo, Show } from 'solid-js';

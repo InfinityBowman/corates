@@ -165,6 +165,18 @@ export default [
     },
   },
   {
+    // Preact components - disable SolidJS rules
+    files: ['**/preact/**/*.{js,jsx,ts,tsx}'],
+    rules: {
+      'solid/reactivity': 'off',
+      'solid/no-destructure': 'off',
+      'solid/prefer-for': 'off',
+      'solid/components-return-once': 'off',
+      'solid/no-react-specific-props': 'off',
+      'solid/style-prop': 'off',
+    },
+  },
+  {
     ignores: [
       '**/node_modules/**',
       '**/dist/**',
