@@ -16,6 +16,9 @@ import EmbedPdfViewerPdfJs from './EmbedPdfViewerPdfJs';
  * @param {ArrayBuffer} props.pdfData - ArrayBuffer of PDF data (required)
  * @param {string} props.pdfFileName - Name of the PDF file (optional, for display)
  * @param {boolean} props.readOnly - If true, view only mode
+ * @param {Array} props.pdfs - Array of PDFs for multi-PDF selection
+ * @param {string} props.selectedPdfId - Currently selected PDF ID
+ * @param {Function} props.onPdfSelect - Handler for PDF selection change
  *
  * @returns
  */
@@ -27,6 +30,9 @@ export default function EmbedPdfViewer(props) {
           pdfData={props.pdfData}
           pdfFileName={props.pdfFileName}
           readOnly={props.readOnly}
+          pdfs={props.pdfs}
+          selectedPdfId={props.selectedPdfId}
+          onPdfSelect={props.onPdfSelect}
         />
       </Match>
 

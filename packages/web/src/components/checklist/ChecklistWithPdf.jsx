@@ -76,6 +76,9 @@ export default function ChecklistWithPdf(props) {
             pdfData={props.pdfData}
             pdfFileName={props.pdfFileName}
             readOnly={props.readOnly}
+            pdfs={props.pdfs}
+            selectedPdfId={props.selectedPdfId}
+            onPdfSelect={props.onPdfSelect}
           />
         </Show>
       </SplitScreenLayout>
