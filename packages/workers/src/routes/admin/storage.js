@@ -140,9 +140,7 @@ storageRoutes.get(
       // Check which PDFs are tracked in mediaFiles table to identify orphaned PDFs
       // Orphans are R2 objects whose keys are NOT in mediaFiles.bucketKey
       const db = createDb(c.env.DB);
-      const trackedKeys = await db
-        .select({ bucketKey: mediaFiles.bucketKey })
-        .from(mediaFiles);
+      const trackedKeys = await db.select({ bucketKey: mediaFiles.bucketKey }).from(mediaFiles);
 
       const trackedKeysSet = new Set(trackedKeys.map(row => row.bucketKey));
 

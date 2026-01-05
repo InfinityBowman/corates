@@ -61,8 +61,14 @@ const databaseSchemas = {
       .default('')
       .transform(val => val.trim()),
     order: z.enum(['asc', 'desc']).optional().default('desc'),
-    filterBy: z.string().optional().transform(val => val?.trim()),
-    filterValue: z.string().optional().transform(val => val?.trim()),
+    filterBy: z
+      .string()
+      .optional()
+      .transform(val => val?.trim()),
+    filterValue: z
+      .string()
+      .optional()
+      .transform(val => val?.trim()),
   }),
 };
 
@@ -160,7 +166,14 @@ databaseRoutes.get(
   validateQueryParams(databaseSchemas.tableRows),
   async c => {
     const { tableName } = c.req.param();
-    const { page, limit, orderBy: orderByParam, order, filterBy, filterValue } = c.get('validatedQuery');
+    const {
+      page,
+      limit,
+      orderBy: orderByParam,
+      order,
+      filterBy,
+      filterValue,
+    } = c.get('validatedQuery');
 
     if (!ALLOWED_TABLES.includes(tableName)) {
       const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
@@ -183,7 +196,14 @@ databaseRoutes.get(
 
     // Special handling for mediaFiles with joins
     if (tableName === 'mediaFiles') {
-      return handleMediaFilesQuery(c, { page, limit, orderBy: orderByParam, order, filterBy, filterValue });
+      return handleMediaFilesQuery(c, {
+        page,
+        limit,
+        orderBy: orderByParam,
+        order,
+        filterBy,
+        filterValue,
+      });
     }
 
     try {
@@ -252,7 +272,10 @@ databaseRoutes.get(
 /**
  * Handle mediaFiles query with joins for better readability
  */
-async function handleMediaFilesQuery(c, { page, limit, orderBy: orderByParam, order, filterBy, filterValue }) {
+async function handleMediaFilesQuery(
+  c,
+  { page, limit, orderBy: orderByParam, order, filterBy, filterValue },
+) {
   try {
     const db = createDb(c.env.DB);
     const offset = (page - 1) * limit;
@@ -300,9 +323,7 @@ async function handleMediaFilesQuery(c, { page, limit, orderBy: orderByParam, or
     }
 
     // Get total count with filtering
-    let countQuery = db
-      .select({ count: count() })
-      .from(mediaFiles);
+    let countQuery = db.select({ count: count() }).from(mediaFiles);
     if (whereConditions.length > 0) {
       countQuery = countQuery.where(and(...whereConditions));
     }
@@ -580,8 +601,9 @@ databaseRoutes.get(
           id: row.projectId,
           name: row.projectName,
         },
-        uploadedBy: row.uploadedBy
-          ? {
+        uploadedBy:
+          row.uploadedBy ?
+            {
               id: row.uploadedBy,
               name: row.uploadedByName,
               email: row.uploadedByEmail,
