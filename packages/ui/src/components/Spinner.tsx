@@ -36,6 +36,17 @@ const variantClasses = {
   white: 'border-white',
 } as const;
 
+// Track color mappings (lighter colors for the animated spinner track)
+const trackColorClasses = {
+  default: 'border-t-blue-200',
+  primary: 'border-t-blue-200',
+  secondary: 'border-t-gray-200',
+  success: 'border-t-green-200',
+  warning: 'border-t-yellow-200',
+  error: 'border-t-red-200',
+  white: 'border-t-gray-200',
+} as const;
+
 export type SpinnerSize = keyof typeof sizeClasses;
 export type SpinnerVariant = keyof typeof variantClasses;
 
@@ -71,7 +82,7 @@ export const Spinner: Component<SpinnerProps> = props => {
         sizeClasses[size()],
         borderWidthClasses[size()],
         variantClasses[variant()],
-        'border-t-blue-200',
+        trackColorClasses[variant()],
         local.class,
       )}
     >

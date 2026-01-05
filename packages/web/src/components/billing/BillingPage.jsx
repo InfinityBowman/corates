@@ -215,7 +215,12 @@ export default function BillingPage() {
             <div class='rounded-lg border border-gray-200 bg-white p-4'>
               <p class='text-sm text-gray-600'>
                 Need help with billing?{' '}
-                <a href='#' class='font-medium text-blue-600 hover:text-blue-700'>
+                <a
+                  href={`${LANDING_URL}/contact`}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  class='font-medium text-blue-600 hover:text-blue-700'
+                >
                   Contact support
                 </a>{' '}
                 and we'll get back to you within 24 hours.
