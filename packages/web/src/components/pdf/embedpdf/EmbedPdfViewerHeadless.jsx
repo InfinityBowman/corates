@@ -5,7 +5,7 @@
 
 import { createEffect, onCleanup } from 'solid-js';
 import { render, h } from 'preact';
-import EmbedPdfViewerPreact from './preact/EmbedPdfViewerPreact.jsx';
+import EmbedPdfViewerPreact2 from './preact/src/main.js';
 
 /**
  * EmbedPdfViewerHeadless - SolidJS wrapper that manages Preact island
@@ -32,7 +32,7 @@ export default function EmbedPdfViewerHeadless(props) {
 
     // Render Preact component into the container
     render(
-      h(EmbedPdfViewerPreact, {
+      h(EmbedPdfViewerPreact2, {
         pdfData,
         pdfFileName,
         readOnly,

@@ -20,6 +20,11 @@ export default defineConfig(({ mode }) => ({
       '@api': path.resolve(__dirname, 'src/api'),
       '@config': path.resolve(__dirname, 'src/config'),
       '@lib': path.resolve(__dirname, 'src/lib'),
+      // Preact/compat aliases for React-style imports in Preact components
+      react: 'preact/compat',
+      'react-dom': 'preact/compat',
+      'react-dom/test-utils': 'preact/test-utils',
+      'react/jsx-runtime': 'preact/jsx-runtime',
     },
   },
   server: {
@@ -29,11 +34,11 @@ export default defineConfig(({ mode }) => ({
     // SolidJS plugin - exclude Preact files
     solidPlugin({
       include: ['**/*.{js,jsx,ts,tsx}'],
-      exclude: ['**/preact/**'],
+      exclude: ['**/preact/**', '**/preact-2/**'],
     }),
     // Preact plugin - only process Preact files
     preact({
-      include: ['**/preact/**/*.{js,jsx,ts,tsx}'],
+      include: ['**/preact/**/*.{js,jsx,ts,tsx}', '**/preact-2/**/*.{js,jsx,ts,tsx}'],
     }),
     tailwindcss(),
   ],

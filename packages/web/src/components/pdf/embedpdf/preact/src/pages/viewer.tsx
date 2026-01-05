@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'preact/hooks';
 import { EmbedPDF } from '@embedpdf/core/react';
 import { usePdfiumEngine } from '@embedpdf/engines/react';
 import { createPluginRegistration } from '@embedpdf/core';
@@ -42,7 +42,6 @@ import { ConsoleLogger } from '@embedpdf/models';
 import { SplitViewLayout } from '../components/split-view-layout';
 import { AnnotationSelectionMenu } from '../components/annotation-selection-menu';
 import { SelectionSelectionMenu } from '../components/selection-selection-menu';
-import { NavigationBar } from '../components/navigation-bar';
 import { EmptyState } from '../components/empty-state';
 import { I18nPluginPackage } from '@embedpdf/plugin-i18n/react';
 import { RedactionSelectionMenu } from '../components/redaction-selection-menu';
@@ -153,8 +152,6 @@ export function ViewerPage() {
 
   return (
     <div className='flex h-screen flex-1 flex-col overflow-hidden' ref={containerRef}>
-      <NavigationBar />
-
       <div className='flex flex-1 flex-col overflow-hidden select-none'>
         <EmbedPDF
           engine={engine}

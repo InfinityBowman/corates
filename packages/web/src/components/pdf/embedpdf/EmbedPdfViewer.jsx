@@ -25,6 +25,7 @@ import EmbedPdfViewerHeadless from './EmbedPdfViewerHeadless';
  * @returns
  */
 export default function EmbedPdfViewer(props) {
+  console.log('EmbedPdfViewer', PDF_VIEWER_MODE);
   return (
     <Switch>
       <Match when={PDF_VIEWER_MODE === 'snippet'}>

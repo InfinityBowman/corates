@@ -1,28 +1,28 @@
-import { Command } from '@embedpdf/plugin-commands/react';
-import { CapturePlugin } from '@embedpdf/plugin-capture/react';
-import { ZoomMode, ZoomPlugin } from '@embedpdf/plugin-zoom/react';
-import { PanPlugin } from '@embedpdf/plugin-pan/react';
-import { SpreadMode, SpreadPlugin } from '@embedpdf/plugin-spread/react';
-import { RotatePlugin } from '@embedpdf/plugin-rotate/react';
+import { Command } from '@embedpdf/plugin-commands/preact';
+import { CapturePlugin } from '@embedpdf/plugin-capture/preact';
+import { ZoomMode, ZoomPlugin } from '@embedpdf/plugin-zoom/preact';
+import { PanPlugin } from '@embedpdf/plugin-pan/preact';
+import { SpreadMode, SpreadPlugin } from '@embedpdf/plugin-spread/preact';
+import { RotatePlugin } from '@embedpdf/plugin-rotate/preact';
 import {
   ANNOTATION_PLUGIN_ID,
   AnnotationPlugin,
   getToolDefaultsById,
-} from '@embedpdf/plugin-annotation/react';
-import {
-  REDACTION_PLUGIN_ID,
-  RedactionMode,
-  RedactionPlugin,
-} from '@embedpdf/plugin-redaction/react';
-import { PrintPlugin } from '@embedpdf/plugin-print/react';
-import { ExportPlugin } from '@embedpdf/plugin-export/react';
-import { DocumentManagerPlugin } from '@embedpdf/plugin-document-manager/react';
-import { HISTORY_PLUGIN_ID, HistoryPlugin } from '@embedpdf/plugin-history/react';
+} from '@embedpdf/plugin-annotation/preact';
+// import {
+//   REDACTION_PLUGIN_ID,
+//   RedactionMode,
+//   RedactionPlugin,
+// } from '@embedpdf/plugin-redaction/react';
+import { PrintPlugin } from '@embedpdf/plugin-print/preact';
+import { ExportPlugin } from '@embedpdf/plugin-export/preact';
+import { DocumentManagerPlugin } from '@embedpdf/plugin-document-manager/preact';
+import { HISTORY_PLUGIN_ID, HistoryPlugin } from '@embedpdf/plugin-history/preact';
 import { State } from './types';
 import { isSidebarOpen, isToolbarOpen, UI_PLUGIN_ID, UIPlugin } from '@embedpdf/plugin-ui';
-import { ScrollPlugin, ScrollStrategy } from '@embedpdf/plugin-scroll/react';
+import { ScrollPlugin, ScrollStrategy } from '@embedpdf/plugin-scroll/preact';
 import { InteractionManagerPlugin } from '@embedpdf/plugin-interaction-manager';
-import { SelectionPlugin } from '@embedpdf/plugin-selection/react';
+import { SelectionPlugin } from '@embedpdf/plugin-selection/preact';
 
 export const commands: Record<string, Command<State>> = {
   // ─────────────────────────────────────────────────────────
@@ -1018,87 +1018,87 @@ export const commands: Record<string, Command<State>> = {
   // ─────────────────────────────────────────────────────────
   // Redaction Commands
   // ─────────────────────────────────────────────────────────
-  'redaction:redact-area': {
-    id: 'redaction:redact-area',
-    labelKey: 'redaction.area',
-    icon: 'RedactArea',
-    categories: ['redaction'],
-    action: ({ registry, documentId }) => {
-      const redaction = registry.getPlugin<RedactionPlugin>('redaction')?.provides();
-      redaction?.forDocument(documentId).toggleMarqueeRedact();
-    },
-    active: ({ state, documentId }) => {
-      const redaction = state.plugins[REDACTION_PLUGIN_ID]?.documents[documentId];
-      return redaction?.activeType === RedactionMode.MarqueeRedact;
-    },
-  },
+  // 'redaction:redact-area': {
+  //   id: 'redaction:redact-area',
+  //   labelKey: 'redaction.area',
+  //   icon: 'RedactArea',
+  //   categories: ['redaction'],
+  //   action: ({ registry, documentId }) => {
+  //     const redaction = registry.getPlugin<RedactionPlugin>('redaction')?.provides();
+  //     redaction?.forDocument(documentId).toggleMarqueeRedact();
+  //   },
+  //   active: ({ state, documentId }) => {
+  //     const redaction = state.plugins[REDACTION_PLUGIN_ID]?.documents[documentId];
+  //     return redaction?.activeType === RedactionMode.MarqueeRedact;
+  //   },
+  // },
 
-  'redaction:redact-text': {
-    id: 'redaction:redact-text',
-    labelKey: 'redaction.text',
-    icon: 'RedactText',
-    categories: ['redaction'],
-    action: ({ registry, documentId }) => {
-      const redaction = registry.getPlugin<RedactionPlugin>('redaction')?.provides();
-      redaction?.forDocument(documentId).toggleRedactSelection();
-    },
-    active: ({ state, documentId }) => {
-      const redaction = state.plugins[REDACTION_PLUGIN_ID]?.documents[documentId];
-      return redaction?.activeType === RedactionMode.RedactSelection;
-    },
-  },
+  // 'redaction:redact-text': {
+  //   id: 'redaction:redact-text',
+  //   labelKey: 'redaction.text',
+  //   icon: 'RedactText',
+  //   categories: ['redaction'],
+  //   action: ({ registry, documentId }) => {
+  //     const redaction = registry.getPlugin<RedactionPlugin>('redaction')?.provides();
+  //     redaction?.forDocument(documentId).toggleRedactSelection();
+  //   },
+  //   active: ({ state, documentId }) => {
+  //     const redaction = state.plugins[REDACTION_PLUGIN_ID]?.documents[documentId];
+  //     return redaction?.activeType === RedactionMode.RedactSelection;
+  //   },
+  // },
 
-  'redaction:apply-all': {
-    id: 'redaction:apply-all',
-    labelKey: 'redaction.applyAll',
-    icon: 'Check',
-    categories: ['redaction'],
-    action: ({ registry, documentId }) => {
-      const redaction = registry.getPlugin<RedactionPlugin>('redaction')?.provides();
-      redaction?.forDocument(documentId).commitAllPending();
-    },
-  },
+  // 'redaction:apply-all': {
+  //   id: 'redaction:apply-all',
+  //   labelKey: 'redaction.applyAll',
+  //   icon: 'Check',
+  //   categories: ['redaction'],
+  //   action: ({ registry, documentId }) => {
+  //     const redaction = registry.getPlugin<RedactionPlugin>('redaction')?.provides();
+  //     redaction?.forDocument(documentId).commitAllPending();
+  //   },
+  // },
 
-  'redaction:clear-all': {
-    id: 'redaction:clear-all',
-    labelKey: 'redaction.clearAll',
-    icon: 'Close',
-    categories: ['redaction'],
-    action: ({ registry, documentId }) => {
-      const redaction = registry.getPlugin<RedactionPlugin>('redaction')?.provides();
-      redaction?.forDocument(documentId).clearPending();
-    },
-  },
+  // 'redaction:clear-all': {
+  //   id: 'redaction:clear-all',
+  //   labelKey: 'redaction.clearAll',
+  //   icon: 'Close',
+  //   categories: ['redaction'],
+  //   action: ({ registry, documentId }) => {
+  //     const redaction = registry.getPlugin<RedactionPlugin>('redaction')?.provides();
+  //     redaction?.forDocument(documentId).clearPending();
+  //   },
+  // },
 
-  'redaction:delete-selected': {
-    id: 'redaction:delete-selected',
-    labelKey: 'redaction.deleteSelected',
-    icon: 'Trash',
-    categories: ['redaction'],
-    action: ({ registry, documentId }) => {
-      const redaction = registry.getPlugin<RedactionPlugin>('redaction')?.provides();
-      const selectedRedaction = redaction?.forDocument(documentId).getSelectedPending();
-      if (!selectedRedaction) return;
-      redaction
-        ?.forDocument(documentId)
-        .removePending(selectedRedaction.page, selectedRedaction.id);
-    },
-  },
+  // 'redaction:delete-selected': {
+  //   id: 'redaction:delete-selected',
+  //   labelKey: 'redaction.deleteSelected',
+  //   icon: 'Trash',
+  //   categories: ['redaction'],
+  //   action: ({ registry, documentId }) => {
+  //     const redaction = registry.getPlugin<RedactionPlugin>('redaction')?.provides();
+  //     const selectedRedaction = redaction?.forDocument(documentId).getSelectedPending();
+  //     if (!selectedRedaction) return;
+  //     redaction
+  //       ?.forDocument(documentId)
+  //       .removePending(selectedRedaction.page, selectedRedaction.id);
+  //   },
+  // },
 
-  'redaction:commit-selected': {
-    id: 'redaction:commit-selected',
-    labelKey: 'redaction.commitSelected',
-    icon: 'Check',
-    categories: ['redaction'],
-    action: ({ registry, documentId }) => {
-      const redaction = registry.getPlugin<RedactionPlugin>('redaction')?.provides();
-      const selectedRedaction = redaction?.forDocument(documentId).getSelectedPending();
-      if (!selectedRedaction) return;
-      redaction
-        ?.forDocument(documentId)
-        .commitPending(selectedRedaction.page, selectedRedaction.id);
-    },
-  },
+  // 'redaction:commit-selected': {
+  //   id: 'redaction:commit-selected',
+  //   labelKey: 'redaction.commitSelected',
+  //   icon: 'Check',
+  //   categories: ['redaction'],
+  //   action: ({ registry, documentId }) => {
+  //     const redaction = registry.getPlugin<RedactionPlugin>('redaction')?.provides();
+  //     const selectedRedaction = redaction?.forDocument(documentId).getSelectedPending();
+  //     if (!selectedRedaction) return;
+  //     redaction
+  //       ?.forDocument(documentId)
+  //       .commitPending(selectedRedaction.page, selectedRedaction.id);
+  //   },
+  // },
 
   'selection:copy': {
     id: 'selection:copy',

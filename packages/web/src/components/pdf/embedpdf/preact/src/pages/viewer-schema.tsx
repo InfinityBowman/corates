@@ -1,41 +1,41 @@
 import { useMemo, useRef } from 'preact/hooks';
-import { EmbedPDF } from '@embedpdf/core/preact';
-import { usePdfiumEngine } from '@embedpdf/engines/preact';
+import { EmbedPDF } from '@embedpdf/core/react';
+import { usePdfiumEngine } from '@embedpdf/engines/react';
 import { createPluginRegistration } from '@embedpdf/core';
-import { ViewportPluginPackage, Viewport } from '@embedpdf/plugin-viewport/preact';
-import { ScrollPluginPackage, ScrollStrategy, Scroller } from '@embedpdf/plugin-scroll/preact';
+import { ViewportPluginPackage, Viewport } from '@embedpdf/plugin-viewport/react';
+import { ScrollPluginPackage, ScrollStrategy, Scroller } from '@embedpdf/plugin-scroll/react';
 import {
   DocumentManagerPluginPackage,
   DocumentContent,
-} from '@embedpdf/plugin-document-manager/preact';
+} from '@embedpdf/plugin-document-manager/react';
 import {
   InteractionManagerPluginPackage,
   GlobalPointerProvider,
   PagePointerProvider,
-} from '@embedpdf/plugin-interaction-manager/preact';
+} from '@embedpdf/plugin-interaction-manager/react';
 import {
   ZoomMode,
   ZoomPluginPackage,
   MarqueeZoom,
   ZoomGestureWrapper,
-} from '@embedpdf/plugin-zoom/preact';
-import { PanPluginPackage } from '@embedpdf/plugin-pan/preact';
-import { SpreadMode, SpreadPluginPackage } from '@embedpdf/plugin-spread/preact';
-import { Rotate, RotatePluginPackage } from '@embedpdf/plugin-rotate/preact';
-import { RenderLayer, RenderPluginPackage } from '@embedpdf/plugin-render/preact';
-import { TilingLayer, TilingPluginPackage } from '@embedpdf/plugin-tiling/preact';
+} from '@embedpdf/plugin-zoom/react';
+import { PanPluginPackage } from '@embedpdf/plugin-pan/react';
+import { SpreadMode, SpreadPluginPackage } from '@embedpdf/plugin-spread/react';
+import { Rotate, RotatePluginPackage } from '@embedpdf/plugin-rotate/react';
+import { RenderLayer, RenderPluginPackage } from '@embedpdf/plugin-render/react';
+import { TilingLayer, TilingPluginPackage } from '@embedpdf/plugin-tiling/react';
 // import { RedactionLayer, RedactionPluginPackage } from '@embedpdf/plugin-redaction/react';
-import { ExportPluginPackage } from '@embedpdf/plugin-export/preact';
-import { PrintPluginPackage } from '@embedpdf/plugin-print/preact';
-import { SelectionLayer, SelectionPluginPackage } from '@embedpdf/plugin-selection/preact';
-import { SearchLayer, SearchPluginPackage } from '@embedpdf/plugin-search/preact';
-import { ThumbnailPluginPackage } from '@embedpdf/plugin-thumbnail/preact';
-import { MarqueeCapture, CapturePluginPackage } from '@embedpdf/plugin-capture/preact';
-import { FullscreenPluginPackage } from '@embedpdf/plugin-fullscreen/preact';
-import { HistoryPluginPackage } from '@embedpdf/plugin-history/preact';
-import { AnnotationPluginPackage, AnnotationLayer } from '@embedpdf/plugin-annotation/preact';
-import { CommandsPluginPackage } from '@embedpdf/plugin-commands/preact';
-import { I18nPluginPackage } from '@embedpdf/plugin-i18n/preact';
+import { ExportPluginPackage } from '@embedpdf/plugin-export/react';
+import { PrintPluginPackage } from '@embedpdf/plugin-print/react';
+import { SelectionLayer, SelectionPluginPackage } from '@embedpdf/plugin-selection/react';
+import { SearchLayer, SearchPluginPackage } from '@embedpdf/plugin-search/react';
+import { ThumbnailPluginPackage } from '@embedpdf/plugin-thumbnail/react';
+import { MarqueeCapture, CapturePluginPackage } from '@embedpdf/plugin-capture/react';
+import { FullscreenPluginPackage } from '@embedpdf/plugin-fullscreen/react';
+import { HistoryPluginPackage } from '@embedpdf/plugin-history/react';
+import { AnnotationPluginPackage, AnnotationLayer } from '@embedpdf/plugin-annotation/react';
+import { CommandsPluginPackage } from '@embedpdf/plugin-commands/react';
+import { I18nPluginPackage } from '@embedpdf/plugin-i18n/react';
 import {
   UIPluginPackage,
   UIProvider,
@@ -141,7 +141,7 @@ export function ViewerSchemaPage() {
       }),
       createPluginRegistration(SelectionPluginPackage),
       createPluginRegistration(SearchPluginPackage),
-      createPluginRegistration(RedactionPluginPackage),
+      // createPluginRegistration(RedactionPluginPackage),
       createPluginRegistration(CapturePluginPackage),
       createPluginRegistration(HistoryPluginPackage),
       createPluginRegistration(AnnotationPluginPackage),
