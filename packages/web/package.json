@@ -19,6 +19,9 @@
   "dependencies": {
     "@corates/shared": "workspace:*",
     "@corates/ui": "workspace:*",
+    "@embedpdf/engines": "^2.1.1",
+    "@embedpdf/models": "^2.1.1",
+    "@embedpdf/pdfium": "^2.1.1",
     "@embedpdf/snippet": "^2.0.0",
     "@solidjs/router": "^0.15.4",
     "@tanstack/solid-query": "^5.90.18",

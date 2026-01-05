@@ -32,6 +32,25 @@ export default defineConfig(({ mode }) => ({
         comments: false,
       },
     },
+    rollupOptions: {
+      output: {
+        manualChunks: id => {
+          // Separate EmbedPDF modules into their own chunks for code-splitting
+          if (id.includes('@embedpdf/')) {
+            // Group all font packages together (they're small and related)
+            if (id.includes('@embedpdf/fonts-')) {
+              return 'embedpdf-fonts';
+            }
+            // Extract package name from path for other packages
+            const match = id.match(/@embedpdf\/([^/]+)/);
+            if (match) {
+              return `embedpdf-${match[1]}`;
+            }
+            return 'embedpdf';
+          }
+        },
+      },
+    },
   },
   test: {
     environment: 'jsdom',

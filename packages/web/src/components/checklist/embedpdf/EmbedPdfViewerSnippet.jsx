@@ -25,7 +25,6 @@ export default function EmbedPdfViewerSnippet(props) {
   let currentReadOnly = null;
   let currentCategories = null;
   let popoverElement = null;
-  let popoverButtonElement = null;
   let clickOutsideHandler = null;
   let escapeKeyHandler = null;
 
@@ -135,7 +134,6 @@ export default function EmbedPdfViewerSnippet(props) {
   // Helper function to open the PDF switcher popover
   function openPdfSwitcherPopover(buttonElement) {
     if (!popoverElement || !containerRef) return;
-    popoverButtonElement = buttonElement;
 
     const containerRect = containerRef.getBoundingClientRect();
 
@@ -199,7 +197,9 @@ export default function EmbedPdfViewerSnippet(props) {
     sortedPdfs.forEach(pdf => {
       const isSelected = pdf.id === props.selectedPdfId;
       const tagLabel =
-        pdf.tag === 'primary' ? 'Primary' : pdf.tag === 'protocol' ? 'Protocol' : null;
+        pdf.tag === 'primary' ? 'Primary'
+        : pdf.tag === 'protocol' ? 'Protocol'
+        : null;
       const displayName = tagLabel ? `${pdf.fileName} (${tagLabel})` : pdf.fileName;
 
       const button = document.createElement('button');
@@ -350,6 +350,7 @@ export default function EmbedPdfViewerSnippet(props) {
 
         // Customize responsive breakpoints and setup PDF switcher after initialization
         // Adjust mobile view threshold (default is 640px for sm breakpoint)
+        // eslint-disable-next-line
         viewerInstance.registry.then(registry => {
           try {
             const commands = registry.getPlugin('commands')?.provides();
@@ -436,7 +437,9 @@ export default function EmbedPdfViewerSnippet(props) {
                   if (!popoverElement || !container) return;
 
                   // Find the button element - try multiple selectors as EmbedPDF may use different attributes
-                  let buttonElement = container.querySelector(`[data-command-id="custom.pdf-switcher"]`);
+                  let buttonElement = container.querySelector(
+                    `[data-command-id="custom.pdf-switcher"]`,
+                  );
                   if (!buttonElement) {
                     buttonElement = container.querySelector('#pdf-switcher-button');
                   }
@@ -519,9 +522,6 @@ export default function EmbedPdfViewerSnippet(props) {
 
   // Update popover content when PDFs or selectedPdfId changes
   createEffect(() => {
-    const pdfs = props.pdfs;
-    const selectedPdfId = props.selectedPdfId;
-
     // Update popover content if it exists
     if (popoverElement && popoverElement.parentNode) {
       updatePdfSwitcherPopoverContent();
