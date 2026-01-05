@@ -23,6 +23,7 @@ packages/landing/app.config.timestamp_*.js
 
 # testing
 /coverage
+/packages/workers/src/lib/dev-seed/pdfs/
 
 # production
 /build
