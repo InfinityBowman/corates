@@ -16,7 +16,7 @@ type ViewerToolbarProps = {
   isSearchOpen: boolean;
   isThumbnailsOpen: boolean;
   mode: ViewMode;
-  onModeChange: (mode: ViewMode) => void;
+  onModeChange: (_mode: ViewMode) => void;
 };
 
 export function ViewerToolbar({

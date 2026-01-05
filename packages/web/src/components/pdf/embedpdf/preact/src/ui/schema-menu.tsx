@@ -243,7 +243,7 @@ interface MenuItemRendererProps {
   documentId: string;
   onClose: () => void;
   isMobile: boolean;
-  onNavigateToSubmenu?: (submenuId: string, title: string) => void;
+  onNavigateToSubmenu?: (_submenuId: string, _title: string) => void;
 }
 
 function MenuItemRenderer({
@@ -375,7 +375,7 @@ function SubmenuItem({
   item: Extract<MenuItem, { type: 'submenu' }>;
   documentId: string;
   isMobile: boolean;
-  onNavigateToSubmenu?: (submenuId: string, title: string) => void;
+  onNavigateToSubmenu?: (_submenuId: string, _title: string) => void;
 }) {
   const { translate } = useTranslations(documentId);
   const iconName = item.icon ? `${item.icon}Icon` : null;
@@ -426,7 +426,7 @@ function MenuSection({
   documentId: string;
   onClose: () => void;
   isMobile: boolean;
-  onNavigateToSubmenu?: (submenuId: string, title: string) => void;
+  onNavigateToSubmenu?: (_submenuId: string, _title: string) => void;
 }) {
   const { translate } = useTranslations(documentId);
 

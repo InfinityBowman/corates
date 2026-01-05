@@ -1,7 +1,7 @@
 import { useDocumentManagerCapability } from '@embedpdf/plugin-document-manager/react';
 
 interface EmptyStateProps {
-  onDocumentOpened?: (documentId: string) => void;
+  onDocumentOpened?: (_documentId: string) => void;
 }
 
 export function EmptyState({ onDocumentOpened }: EmptyStateProps) {

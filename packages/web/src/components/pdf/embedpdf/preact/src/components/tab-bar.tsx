@@ -7,8 +7,8 @@ import { CloseIcon, DocumentIcon, PlusIcon } from './icons';
 
 interface TabBarProps {
   currentView: View | undefined;
-  onSelect: (documentId: string) => void;
-  onClose: (documentId: string) => void;
+  onSelect: (_documentId: string) => void;
+  onClose: (_documentId: string) => void;
   onOpenFile: () => void;
 }
 

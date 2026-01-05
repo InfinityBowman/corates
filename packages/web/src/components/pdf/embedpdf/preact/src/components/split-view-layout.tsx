@@ -7,7 +7,7 @@ import { ViewContext } from '@embedpdf/plugin-view-manager/react';
 import { ReactNode, useEffect } from 'react';
 
 interface SplitViewLayoutProps {
-  renderView: (context: ViewContextRenderProps) => ReactNode;
+  renderView: (_context: ViewContextRenderProps) => ReactNode;
 }
 
 export function SplitViewLayout({ renderView }: SplitViewLayoutProps) {

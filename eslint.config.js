@@ -167,6 +167,15 @@ export default [
   {
     // Preact components - disable SolidJS rules
     files: ['**/preact/**/*.{js,jsx,ts,tsx}'],
+    languageOptions: {
+      globals: {
+        React: 'readonly',
+        HTMLAnchorElement: 'readonly',
+        HTMLFormElement: 'readonly',
+        Node: 'readonly',
+        NodeJS: 'readonly',
+      },
+    },
     rules: {
       'solid/reactivity': 'off',
       'solid/no-destructure': 'off',

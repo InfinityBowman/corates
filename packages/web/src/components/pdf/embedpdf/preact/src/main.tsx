@@ -1,4 +1,4 @@
 import './index.css';
-import App from './application';
+import { ViewerPage } from './viewer';
 
-export default App;
+export default ViewerPage;

@@ -31,20 +31,20 @@ import { CapturePluginPackage, MarqueeCapture } from '@embedpdf/plugin-capture/r
 import { FullscreenPluginPackage } from '@embedpdf/plugin-fullscreen/react';
 import { HistoryPluginPackage } from '@embedpdf/plugin-history/react';
 import { AnnotationPluginPackage, AnnotationLayer } from '@embedpdf/plugin-annotation/react';
-import { TabBar } from '../components/tab-bar';
-import { ViewerToolbar, ViewMode } from '../components/viewer-toolbar';
-import { LoadingSpinner } from '../components/loading-spinner';
-import { DocumentPasswordPrompt } from '../components/document-password-prompt';
-import { SearchSidebar } from '../components/search-sidebar';
-import { ThumbnailsSidebar } from '../components/thumbnails-sidebar';
-import { PageControls } from '../components/page-controls';
+import { TabBar } from './components/tab-bar';
+import { ViewerToolbar, ViewMode } from './components/viewer-toolbar';
+import { LoadingSpinner } from './components/loading-spinner';
+import { DocumentPasswordPrompt } from './components/document-password-prompt';
+import { SearchSidebar } from './components/search-sidebar';
+import { ThumbnailsSidebar } from './components/thumbnails-sidebar';
+import { PageControls } from './components/page-controls';
 import { ConsoleLogger } from '@embedpdf/models';
-import { SplitViewLayout } from '../components/split-view-layout';
-import { AnnotationSelectionMenu } from '../components/annotation-selection-menu';
-import { SelectionSelectionMenu } from '../components/selection-selection-menu';
-import { EmptyState } from '../components/empty-state';
+import { SplitViewLayout } from './components/split-view-layout';
+import { AnnotationSelectionMenu } from './components/annotation-selection-menu';
+import { SelectionSelectionMenu } from './components/selection-selection-menu';
+import { EmptyState } from './components/empty-state';
 import { I18nPluginPackage } from '@embedpdf/plugin-i18n/react';
-import { RedactionSelectionMenu } from '../components/redaction-selection-menu';
+import { RedactionSelectionMenu } from './components/redaction-selection-menu';
 
 const logger = new ConsoleLogger();
 

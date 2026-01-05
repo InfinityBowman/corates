@@ -1,6 +1,6 @@
 import { useSearch } from '@embedpdf/plugin-search/react';
 import { useScrollCapability } from '@embedpdf/plugin-scroll/react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'preact/hooks';
 import { MatchFlag } from '@embedpdf/models';
 import { SearchResult } from '@embedpdf/models';
 import { SearchIcon, CloseIcon, ChevronRightIcon, ChevronLeftIcon } from './icons';

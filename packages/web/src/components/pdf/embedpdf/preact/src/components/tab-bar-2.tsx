@@ -1,7 +1,7 @@
 import { DocumentState } from '@embedpdf/core';
 import { CloseIcon, DocumentIcon, PlusIcon } from './icons';
 import { useDocumentManagerCapability } from '@embedpdf/plugin-document-manager/react';
-import { useCallback } from 'react';
+import { useCallback } from 'preact/hooks';
 
 type TabBarProps = {
   documentStates: DocumentState[];
@@ -53,7 +53,7 @@ export function TabBar({ documentStates, activeDocumentId }: TabBarProps) {
             } `}
           >
             {/* Document Icon */}
-            <DocumentIcon className='h-4 w-4 flex-shrink-0' title='Document' />
+            <DocumentIcon className='h-4 w-4 shrink-0' title='Document' />
 
             {/* Document Name */}
             <span className='min-w-0 flex-1 truncate'>
@@ -67,7 +67,7 @@ export function TabBar({ documentStates, activeDocumentId }: TabBarProps) {
                 onClose(document.id);
               }}
               aria-label={`Close ${document.name ?? 'document'}`}
-              className={`flex-shrink-0 cursor-pointer rounded-full p-1 transition-all hover:bg-gray-300/50 ${
+              className={`shrink-0 cursor-pointer rounded-full p-1 transition-all hover:bg-gray-300/50 ${
                 // Show close always unless the tab is compact and not active
                 activeDocumentId === document.id ?
                   'opacity-100'
@@ -82,7 +82,7 @@ export function TabBar({ documentStates, activeDocumentId }: TabBarProps) {
         {/* Add Tab (Open File) - placed directly after tabs like Chrome */}
         <button
           onClick={onOpenFile}
-          className='mb-2 ml-1 flex-shrink-0 cursor-pointer rounded p-1.5 text-gray-600 transition-colors hover:bg-gray-200/80 hover:text-gray-800'
+          className='mb-2 ml-1 shrink-0 cursor-pointer rounded p-1.5 text-gray-600 transition-colors hover:bg-gray-200/80 hover:text-gray-800'
           aria-label='Open File'
           title='Open File'
         >
