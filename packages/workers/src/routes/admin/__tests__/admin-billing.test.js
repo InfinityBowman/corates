@@ -13,9 +13,8 @@ import {
   json,
 } from '../../../__tests__/helpers.js';
 import { createDb } from '../../../db/client.js';
-import { subscription, orgAccessGrants } from '../../../db/schema.js';
+import { subscription } from '../../../db/schema.js';
 import { eq } from 'drizzle-orm';
-import { getGrantByOrgIdAndType } from '../../../db/orgAccessGrants.js';
 
 vi.mock('../../../middleware/requireAdmin.js', () => {
   return {

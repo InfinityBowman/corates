@@ -49,17 +49,6 @@ describe('ProjectDoc WebSocket Authorization Boundary', () => {
     });
   }
 
-  function createInternalSyncMemberRequest(projectId, action, member) {
-    return new Request(`https://internal/api/project-doc/${projectId}/sync-member`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Internal-Request': 'true',
-      },
-      body: JSON.stringify({ action, member }),
-    });
-  }
-
   // NOTE: We do not test WebSocket disconnection when a member is removed via sync-member
   // because the test environment's runInDurableObject utility does not reliably observe
   // in-memory state changes (this.sessions Map) after WebSocket close operations.
@@ -113,7 +102,7 @@ describe('ProjectDoc WebSocket Authorization Boundary', () => {
 
     expect(wsResponse.status).toBe(101);
 
-    await runInDurableObject(stub, async (instance, state) => {
+    await runInDurableObject(stub, async (instance, _state) => {
       expect(instance.sessions.size).toBe(1);
     });
   });
