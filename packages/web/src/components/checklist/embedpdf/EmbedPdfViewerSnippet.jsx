@@ -199,7 +199,9 @@ export default function EmbedPdfViewerSnippet(props) {
     sortedPdfs.forEach(pdf => {
       const isSelected = pdf.id === props.selectedPdfId;
       const tagLabel =
-        pdf.tag === 'primary' ? 'Primary' : pdf.tag === 'protocol' ? 'Protocol' : null;
+        pdf.tag === 'primary' ? 'Primary'
+        : pdf.tag === 'protocol' ? 'Protocol'
+        : null;
       const displayName = tagLabel ? `${pdf.fileName} (${tagLabel})` : pdf.fileName;
 
       const button = document.createElement('button');
@@ -436,7 +438,9 @@ export default function EmbedPdfViewerSnippet(props) {
                   if (!popoverElement || !container) return;
 
                   // Find the button element - try multiple selectors as EmbedPDF may use different attributes
-                  let buttonElement = container.querySelector(`[data-command-id="custom.pdf-switcher"]`);
+                  let buttonElement = container.querySelector(
+                    `[data-command-id="custom.pdf-switcher"]`,
+                  );
                   if (!buttonElement) {
                     buttonElement = container.querySelector('#pdf-switcher-button');
                   }
