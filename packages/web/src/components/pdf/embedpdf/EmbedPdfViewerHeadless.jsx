@@ -5,7 +5,7 @@
 
 import { createEffect, onCleanup } from 'solid-js';
 import { render, h } from 'preact';
-import EmbedPdfViewerPreact2 from './preact/src/main.js';
+import EmbedPdfViewerPreact from './preact/src/main.js';
 
 /**
  * EmbedPdfViewerHeadless - SolidJS wrapper that manages Preact island
@@ -24,21 +24,17 @@ export default function EmbedPdfViewerHeadless(props) {
     if (!containerRef) return;
 
     // Convert SolidJS signals to plain values for Preact
+    // For now, use pdfs[0] as requested - will add picker later
+    const firstPdf = props.pdfs?.[0];
     const pdfData = props.pdfData;
-    const pdfFileName = props.pdfFileName;
-    const readOnly = props.readOnly;
-    const pdfs = props.pdfs;
-    const selectedPdfId = props.selectedPdfId;
+    const pdfFileName = props.pdfFileName || firstPdf?.fileName;
 
     // Render Preact component into the container
     render(
-      h(EmbedPdfViewerPreact2, {
+      h(EmbedPdfViewerPreact, {
         pdfData,
         pdfFileName,
-        readOnly,
-        pdfs,
-        selectedPdfId,
-        onPdfSelect: props.onPdfSelect,
+        pdfs: props.pdfs,
       }),
       containerRef,
     );

@@ -36,7 +36,7 @@ import { CapturePluginPackage, MarqueeCapture } from '@embedpdf/plugin-capture/r
 import { FullscreenPluginPackage } from '@embedpdf/plugin-fullscreen/react';
 import { HistoryPluginPackage } from '@embedpdf/plugin-history/react';
 import { AnnotationPluginPackage, AnnotationLayer } from '@embedpdf/plugin-annotation/react';
-import { TabBar } from './components/tab-bar';
+// import { TabBar } from './components/tab-bar';
 import { ViewerToolbar, ViewMode } from './components/viewer-toolbar';
 import { LoadingSpinner } from './components/loading-spinner';
 import { DocumentPasswordPrompt } from './components/document-password-prompt';
@@ -59,7 +59,13 @@ type SidebarState = {
   thumbnails: boolean;
 };
 
-export function ViewerPage() {
+type ViewerPageProps = {
+  pdfData?: ArrayBuffer;
+  pdfFileName?: string;
+  pdfs?: Array<{ id: string; fileName: string; tag?: string }>;
+};
+
+export function ViewerPage({ pdfData, pdfFileName, pdfs }: ViewerPageProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { engine, isLoading, error } = usePdfiumEngine({
     logger,
@@ -163,12 +169,29 @@ export function ViewerPage() {
           logger={logger}
           plugins={plugins}
           onInitialized={async registry => {
-            // Load default PDF URL on initialization
-            const document = await registry
+            const docManager = registry
               ?.getPlugin<DocumentManagerPlugin>(DocumentManagerPlugin.id)
-              ?.provides()
-              ?.openDocumentUrl({ url: 'https://snippet.embedpdf.com/ebook.pdf' })
-              .toPromise();
+              ?.provides();
+
+            if (!docManager) return;
+
+            // Load PDF from ArrayBuffer if provided, otherwise use default URL
+            let document;
+            if (pdfData) {
+              const pdfName = pdfFileName || pdfs?.[0]?.fileName || 'document.pdf';
+              document = await docManager
+                .openDocumentBuffer({
+                  buffer: pdfData,
+                  name: pdfName,
+                  autoActivate: true,
+                })
+                .toPromise();
+            } else {
+              // Fallback to default PDF URL
+              document = await docManager
+                .openDocumentUrl({ url: 'https://snippet.embedpdf.com/ebook.pdf' })
+                .toPromise();
+            }
 
             if (!document) return;
 
@@ -185,18 +208,18 @@ export function ViewerPage() {
             }
           }}
         >
-          {({ pluginsReady, registry }) => (
+          {({ pluginsReady, _registry }: { pluginsReady: boolean; _registry: any }) => (
             <>
               {pluginsReady ?
                 <SplitViewLayout
                   renderView={({
-                    view,
+                    // view,
                     activeDocumentId: documentId,
                     addDocument,
                     setActiveDocument,
                   }) => (
                     <div className='flex h-full flex-col'>
-                      <TabBar
+                      {/* <TabBar
                         currentView={view}
                         onSelect={documentId => setActiveDocument(documentId)}
                         onClose={docId =>
@@ -220,7 +243,7 @@ export function ViewerPage() {
                             },
                           );
                         }}
-                      />
+                      /> */}
 
                       {documentId && (
                         <ViewerToolbar
@@ -275,7 +298,11 @@ export function ViewerPage() {
                                           <ZoomGestureWrapper documentId={documentId}>
                                             <Scroller
                                               documentId={documentId}
-                                              renderPage={({ pageIndex }) => (
+                                              renderPage={({
+                                                pageIndex,
+                                              }: {
+                                                pageIndex: number;
+                                              }) => (
                                                 <Rotate
                                                   documentId={documentId}
                                                   pageIndex={pageIndex}
