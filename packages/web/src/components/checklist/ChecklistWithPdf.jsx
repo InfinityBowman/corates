@@ -6,11 +6,9 @@
  */
 
 import GenericChecklist from '@/components/checklist/GenericChecklist.jsx';
-import PdfViewer from '@/components/checklist/pdf/PdfViewer.jsx';
-import EmbedPdfViewer from '@/components/checklist/embedpdf/EmbedPdfViewer.jsx';
+import EmbedPdfViewer from '@pdf/embedpdf/EmbedPdfViewer.jsx';
 import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx';
-import { PDF_VIEWER_MODE } from '@config/pdfViewer.js';
-import { createMemo, Show } from 'solid-js';
+import { Show } from 'solid-js';
 
 export default function ChecklistWithPdf(props) {
   // props.checklistType - the type of checklist ('AMSTAR2', 'ROBINS_I', etc.)
@@ -19,20 +17,13 @@ export default function ChecklistWithPdf(props) {
   // props.headerContent - optional content to show in the header bar (left side)
   // props.pdfData - saved PDF ArrayBuffer (optional)
   // props.pdfFileName - saved PDF file name (optional)
-  // props.onPdfChange - callback when PDF changes: (data, fileName) => void
-  // props.onPdfClear - callback when PDF is cleared
   // props.readOnly - if true, disables checklist updates and PDF uploads
-  // props.allowDelete - if true, shows PDF delete button (only applies when !readOnly)
   // props.pdfs - array of PDFs for multi-PDF selection
   // props.selectedPdfId - currently selected PDF ID
   // props.onPdfSelect - handler for PDF selection change
   // props.getQuestionNote - function to get Y.Text for a question note
   // props.getRobinsText - function to get Y.Text for a ROBINS-I free-text field
   // props.pdfUrl - optional PDF URL (for server-hosted PDFs)
-
-  // Use EmbedPDF viewer when mode is 'snippet' and we have pdfData
-  // Note: EmbedPDF viewer only works with pdfData (blob URLs), not direct pdfUrl
-  const useEmbedPdf = createMemo(() => PDF_VIEWER_MODE === 'snippet' && !!props.pdfData);
 
   return (
     <div class='flex h-full flex-col bg-blue-50'>
@@ -56,22 +47,7 @@ export default function ChecklistWithPdf(props) {
         />
 
         {/* Second panel: PDF Viewer */}
-        <Show
-          when={useEmbedPdf()}
-          fallback={
-            <PdfViewer
-              pdfData={props.pdfData}
-              pdfFileName={props.pdfFileName}
-              onPdfChange={props.onPdfChange}
-              onPdfClear={props.onPdfClear}
-              readOnly={props.readOnly}
-              allowDelete={props.allowDelete}
-              pdfs={props.pdfs}
-              selectedPdfId={props.selectedPdfId}
-              onPdfSelect={props.onPdfSelect}
-            />
-          }
-        >
+        <Show when={props.pdfData}>
           <EmbedPdfViewer
             pdfData={props.pdfData}
             pdfFileName={props.pdfFileName}
