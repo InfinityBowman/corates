@@ -15,6 +15,9 @@ import {
 import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
 import { FILE_SIZE_LIMITS } from '../../config/constants.js';
 import { createDomainError, FILE_ERRORS, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import { createDb } from '../../db/client.js';
+import { mediaFiles, user } from '../../db/schema.js';
+import { eq, and } from 'drizzle-orm';
 
 const orgPdfRoutes = new Hono();
 
@@ -48,6 +51,72 @@ function isValidFileName(fileName) {
 }
 
 /**
+ * Generate a unique filename by auto-renaming if duplicate exists
+ * @param {string} fileName - Original filename
+ * @param {string} projectId - Project ID
+ * @param {string} studyId - Study ID
+ * @param {DrizzleD1Database} db - Database connection
+ * @returns {Promise<string>} Unique filename
+ */
+export async function generateUniqueFileName(fileName, projectId, studyId, db) {
+  // Check if original filename is available
+  const existing = await db
+    .select({ id: mediaFiles.id })
+    .from(mediaFiles)
+    .where(
+      and(
+        eq(mediaFiles.projectId, projectId),
+        eq(mediaFiles.studyId, studyId),
+        eq(mediaFiles.filename, fileName),
+      ),
+    )
+    .get();
+
+  if (!existing) {
+    return fileName;
+  }
+
+  // Extract name and extension
+  const lastDot = fileName.lastIndexOf('.');
+  const nameWithoutExt = lastDot > 0 ? fileName.slice(0, lastDot) : fileName;
+  const ext = lastDot > 0 ? fileName.slice(lastDot) : '';
+
+  // Try numbered versions: "file (1).pdf", "file (2).pdf", etc.
+  let counter = 1;
+  let uniqueFileName;
+  let found = true;
+
+  while (found && counter < 1000) {
+    uniqueFileName = `${nameWithoutExt} (${counter})${ext}`;
+    const duplicate = await db
+      .select({ id: mediaFiles.id })
+      .from(mediaFiles)
+      .where(
+        and(
+          eq(mediaFiles.projectId, projectId),
+          eq(mediaFiles.studyId, studyId),
+          eq(mediaFiles.filename, uniqueFileName),
+        ),
+      )
+      .get();
+
+    if (!duplicate) {
+      found = false;
+    } else {
+      counter++;
+    }
+  }
+
+  if (found) {
+    // Fallback: use timestamp if we hit the limit
+    const timestamp = Date.now();
+    uniqueFileName = `${nameWithoutExt}_${timestamp}${ext}`;
+  }
+
+  return uniqueFileName;
+}
+
+/**
  * GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs
  * List PDFs for a study
  */
@@ -55,26 +124,55 @@ orgPdfRoutes.get('/', requireOrgMembership(), requireProjectAccess(), extractStu
   const { projectId } = getProjectContext(c);
   const studyId = c.get('studyId');
 
-  const prefix = `projects/${projectId}/studies/${studyId}/`;
-
   try {
-    const listed = await c.env.PDF_BUCKET.list({ prefix });
+    const db = createDb(c.env.DB);
 
-    const pdfs = listed.objects.map(obj => ({
-      key: obj.key,
-      fileName: obj.key.replace(prefix, ''),
-      size: obj.size,
-      uploaded: obj.uploaded,
+    const results = await db
+      .select({
+        id: mediaFiles.id,
+        filename: mediaFiles.filename,
+        originalName: mediaFiles.originalName,
+        fileType: mediaFiles.fileType,
+        fileSize: mediaFiles.fileSize,
+        bucketKey: mediaFiles.bucketKey,
+        createdAt: mediaFiles.createdAt,
+        uploadedBy: mediaFiles.uploadedBy,
+        uploadedByName: user.name,
+        uploadedByEmail: user.email,
+        uploadedByDisplayName: user.displayName,
+      })
+      .from(mediaFiles)
+      .leftJoin(user, eq(mediaFiles.uploadedBy, user.id))
+      .where(and(eq(mediaFiles.projectId, projectId), eq(mediaFiles.studyId, studyId)))
+      .orderBy(mediaFiles.createdAt);
+
+    const pdfs = results.map(row => ({
+      id: row.id,
+      key: row.bucketKey,
+      fileName: row.filename,
+      originalName: row.originalName,
+      size: row.fileSize,
+      fileType: row.fileType,
+      createdAt: row.createdAt,
+      uploadedBy:
+        row.uploadedBy ?
+          {
+            id: row.uploadedBy,
+            name: row.uploadedByName,
+            email: row.uploadedByEmail,
+            displayName: row.uploadedByDisplayName,
+          }
+        : null,
     }));
 
     return c.json({ pdfs });
   } catch (error) {
     console.error('PDF list error:', error);
-    const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'list_pdfs',
       originalError: error.message,
     });
-    return c.json(systemError, systemError.statusCode);
+    return c.json(dbError, dbError.statusCode);
   }
 });
 
@@ -182,16 +280,13 @@ orgPdfRoutes.post(
         return c.json(error, error.statusCode);
       }
 
-      // Check for duplicate file name
-      const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
-      const existingFile = await c.env.PDF_BUCKET.head(key);
-      if (existingFile) {
-        const error = createDomainError(FILE_ERRORS.ALREADY_EXISTS, {
-          fileName,
-          key,
-        });
-        return c.json(error, error.statusCode);
-      }
+      const orgId = c.get('orgId');
+      const originalFileName = fileName;
+      const db = createDb(c.env.DB);
+
+      // Generate unique filename (auto-rename if duplicate exists)
+      const uniqueFileName = await generateUniqueFileName(fileName, projectId, studyId, db);
+      const key = `projects/${projectId}/studies/${studyId}/${uniqueFileName}`;
 
       // Store in R2
       await c.env.PDF_BUCKET.put(key, pdfData, {
@@ -201,16 +296,40 @@ orgPdfRoutes.post(
         customMetadata: {
           projectId,
           studyId,
-          fileName,
+          fileName: uniqueFileName,
+          originalFileName: originalFileName !== uniqueFileName ? originalFileName : undefined,
           uploadedBy: user.id,
           uploadedAt: new Date().toISOString(),
         },
       });
 
+      // Insert into mediaFiles table
+      const mediaFileId = crypto.randomUUID();
+      try {
+        await db.insert(mediaFiles).values({
+          id: mediaFileId,
+          filename: uniqueFileName,
+          originalName: originalFileName,
+          fileType: 'application/pdf',
+          fileSize: pdfData.byteLength,
+          uploadedBy: user.id,
+          bucketKey: key,
+          orgId,
+          projectId,
+          studyId,
+          createdAt: new Date(),
+        });
+      } catch (dbError) {
+        // Log error but don't fail the request (R2 object exists, can be cleaned up later)
+        console.error('Failed to insert mediaFiles record after R2 upload:', dbError);
+      }
+
       return c.json({
         success: true,
+        id: mediaFileId,
         key,
-        fileName,
+        fileName: uniqueFileName,
+        originalFileName: originalFileName !== uniqueFileName ? originalFileName : undefined,
         size: pdfData.byteLength,
       });
     } catch (error) {
@@ -324,16 +443,59 @@ orgPdfRoutes.delete(
     const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
 
     try {
-      await c.env.PDF_BUCKET.delete(key);
+      const db = createDb(c.env.DB);
+
+      // Check if record exists in database first
+      const existingRecord = await db
+        .select({ id: mediaFiles.id })
+        .from(mediaFiles)
+        .where(
+          and(
+            eq(mediaFiles.projectId, projectId),
+            eq(mediaFiles.studyId, studyId),
+            eq(mediaFiles.filename, fileName),
+          ),
+        )
+        .get();
+
+      if (!existingRecord) {
+        // Record doesn't exist in database, but try to delete from R2 anyway
+        try {
+          await c.env.PDF_BUCKET.delete(key);
+        } catch (r2Error) {
+          // R2 delete failed, but that's okay - return success since DB record doesn't exist
+          console.warn('PDF not found in database, R2 delete also failed:', r2Error);
+        }
+        return c.json({ success: true });
+      }
+
+      // Delete from mediaFiles table (database is source of truth)
+      await db
+        .delete(mediaFiles)
+        .where(
+          and(
+            eq(mediaFiles.projectId, projectId),
+            eq(mediaFiles.studyId, studyId),
+            eq(mediaFiles.filename, fileName),
+          ),
+        );
+
+      // Delete from R2 (if this fails, log but don't fail - database is source of truth)
+      try {
+        await c.env.PDF_BUCKET.delete(key);
+      } catch (r2Error) {
+        console.error('Failed to delete PDF from R2 after database delete:', r2Error);
+        // Continue - database is source of truth
+      }
+
       return c.json({ success: true });
     } catch (error) {
       console.error('PDF delete error:', error);
-      const internalError = createDomainError(
-        SYSTEM_ERRORS.INTERNAL_ERROR,
-        { operation: 'delete_pdf', originalError: error.message },
-        error.message,
-      );
-      return c.json(internalError, internalError.statusCode);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'delete_pdf',
+        originalError: error.message,
+      });
+      return c.json(dbError, dbError.statusCode);
     }
   },
 );

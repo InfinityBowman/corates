@@ -151,6 +151,13 @@ export const mediaFiles = sqliteTable('mediaFiles', {
   fileSize: integer('fileSize'),
   uploadedBy: text('uploadedBy').references(() => user.id, { onDelete: 'set null' }),
   bucketKey: text('bucketKey').notNull(),
+  orgId: text('orgId')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  projectId: text('projectId')
+    .notNull()
+    .references(() => projects.id, { onDelete: 'cascade' }),
+  studyId: text('studyId'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 

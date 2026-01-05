@@ -207,6 +207,9 @@ export const seedMediaFileSchema = z.object({
   fileSize: z.number().int().nullable().optional().default(null),
   uploadedBy: z.string().nullable().optional().default(null),
   bucketKey: z.string().min(1, 'Bucket key is required'),
+  orgId: z.string().min(1, 'Organization ID is required'),
+  projectId: z.string().min(1, 'Project ID is required'),
+  studyId: z.string().nullable().optional().default(null),
   createdAt: dateOrTimestampToNumber,
 });
 

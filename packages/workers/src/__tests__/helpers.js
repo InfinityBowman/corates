@@ -348,6 +348,9 @@ export async function seedMediaFile(params) {
     fileSize: validated.fileSize,
     uploadedBy: validated.uploadedBy,
     bucketKey: validated.bucketKey,
+    orgId: validated.orgId,
+    projectId: validated.projectId,
+    studyId: validated.studyId,
     createdAt: new Date(validated.createdAt * 1000),
   });
 }

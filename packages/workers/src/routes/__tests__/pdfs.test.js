@@ -13,8 +13,12 @@ import {
   seedProjectMember,
   seedOrganization,
   seedOrgMember,
+  seedMediaFile,
   json,
 } from '../../__tests__/helpers.js';
+import { createDb } from '../../db/client.js';
+import { mediaFiles } from '../../db/schema.js';
+import { eq, and } from 'drizzle-orm';
 import { FILE_SIZE_LIMITS } from '../../config/constants.js';
 
 // Mock postmark
@@ -197,7 +201,22 @@ describe('Org-Scoped PDF Routes - GET /api/orgs/:orgId/projects/:projectId/studi
       joinedAt: nowSec,
     });
 
-    // Upload a PDF
+    // Seed a PDF in mediaFiles table
+    await seedMediaFile({
+      id: 'media-1',
+      filename: 'document.pdf',
+      originalName: 'document.pdf',
+      fileType: 'application/pdf',
+      fileSize: 1024,
+      uploadedBy: 'user-1',
+      bucketKey: 'projects/project-1/studies/study-1/document.pdf',
+      orgId: 'org-1',
+      projectId: 'project-1',
+      studyId: 'study-1',
+      createdAt: nowSec,
+    });
+
+    // Also add to R2 mock for download compatibility
     const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]); // %PDF-
     await mockR2Bucket.put('projects/project-1/studies/study-1/document.pdf', pdfData, {
       httpMetadata: { contentType: 'application/pdf' },
@@ -210,6 +229,9 @@ describe('Org-Scoped PDF Routes - GET /api/orgs/:orgId/projects/:projectId/studi
     expect(body.pdfs).toBeDefined();
     expect(body.pdfs.length).toBe(1);
     expect(body.pdfs[0].fileName).toBe('document.pdf');
+    expect(body.pdfs[0].id).toBe('media-1');
+    expect(body.pdfs[0].uploadedBy).toBeDefined();
+    expect(body.pdfs[0].uploadedBy.id).toBe('user-1');
   });
 
   it('should require project membership', async () => {
@@ -339,6 +361,27 @@ describe('Org-Scoped PDF Routes - POST /api/orgs/:orgId/projects/:projectId/stud
     expect(body.success).toBe(true);
     expect(body.fileName).toBe('document.pdf');
     expect(body.key).toBe('projects/project-1/studies/study-1/document.pdf');
+    expect(body.id).toBeDefined();
+
+    // Verify mediaFiles record was created
+    const db = createDb(env.DB);
+    const mediaFile = await db
+      .select()
+      .from(mediaFiles)
+      .where(
+        and(
+          eq(mediaFiles.projectId, 'project-1'),
+          eq(mediaFiles.studyId, 'study-1'),
+          eq(mediaFiles.filename, 'document.pdf'),
+        ),
+      )
+      .get();
+    expect(mediaFile).toBeDefined();
+    expect(mediaFile.id).toBe(body.id);
+    expect(mediaFile.orgId).toBe('org-1');
+    expect(mediaFile.projectId).toBe('project-1');
+    expect(mediaFile.studyId).toBe('study-1');
+    expect(mediaFile.uploadedBy).toBe('user-1');
   });
 
   it('should reject files that are too large', async () => {
@@ -458,7 +501,7 @@ describe('Org-Scoped PDF Routes - POST /api/orgs/:orgId/projects/:projectId/stud
     expect(body.code).toBe('FILE_INVALID_TYPE');
   });
 
-  it('should reject duplicate file names', async () => {
+  it('should auto-rename duplicate file names', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
     await seedUser({
       id: 'user-1',
@@ -500,13 +543,28 @@ describe('Org-Scoped PDF Routes - POST /api/orgs/:orgId/projects/:projectId/stud
       joinedAt: nowSec,
     });
 
-    // Upload first PDF
+    // Seed first PDF in database
+    await seedMediaFile({
+      id: 'media-1',
+      filename: 'document.pdf',
+      originalName: 'document.pdf',
+      fileType: 'application/pdf',
+      fileSize: 1024,
+      uploadedBy: 'user-1',
+      bucketKey: 'projects/project-1/studies/study-1/document.pdf',
+      orgId: 'org-1',
+      projectId: 'project-1',
+      studyId: 'study-1',
+      createdAt: nowSec,
+    });
+
+    // Also add to R2 mock
     const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]);
     await mockR2Bucket.put('projects/project-1/studies/study-1/document.pdf', pdfData, {
       httpMetadata: { contentType: 'application/pdf' },
     });
 
-    // Try to upload duplicate
+    // Try to upload duplicate - should auto-rename
     const file = new File([pdfData], 'document.pdf', { type: 'application/pdf' });
     const formData = new FormData();
     formData.append('file', file);
@@ -516,9 +574,12 @@ describe('Org-Scoped PDF Routes - POST /api/orgs/:orgId/projects/:projectId/stud
       body: formData,
     });
 
-    expect(res.status).toBe(409);
+    expect(res.status).toBe(200);
     const body = await json(res);
-    expect(body.code).toBe('FILE_ALREADY_EXISTS');
+    expect(body.success).toBe(true);
+    expect(body.fileName).toBe('document (1).pdf');
+    expect(body.originalFileName).toBe('document.pdf');
+    expect(body.key).toBe('projects/project-1/studies/study-1/document (1).pdf');
   });
 
   it('should accept raw PDF upload with X-File-Name header', async () => {
@@ -731,6 +792,21 @@ describe('Org-Scoped PDF Routes - DELETE /api/orgs/:orgId/projects/:projectId/st
       joinedAt: nowSec,
     });
 
+    // Seed a PDF in mediaFiles table
+    await seedMediaFile({
+      id: 'media-1',
+      filename: 'document.pdf',
+      originalName: 'document.pdf',
+      fileType: 'application/pdf',
+      fileSize: 1024,
+      uploadedBy: 'user-1',
+      bucketKey: 'projects/project-1/studies/study-1/document.pdf',
+      orgId: 'org-1',
+      projectId: 'project-1',
+      studyId: 'study-1',
+      createdAt: nowSec,
+    });
+
     const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]);
     await mockR2Bucket.put('projects/project-1/studies/study-1/document.pdf', pdfData, {
       httpMetadata: { contentType: 'application/pdf' },
@@ -743,6 +819,21 @@ describe('Org-Scoped PDF Routes - DELETE /api/orgs/:orgId/projects/:projectId/st
     expect(res.status).toBe(200);
     const body = await json(res);
     expect(body.success).toBe(true);
+
+    // Verify mediaFiles record was deleted
+    const db = createDb(env.DB);
+    const mediaFile = await db
+      .select()
+      .from(mediaFiles)
+      .where(
+        and(
+          eq(mediaFiles.projectId, 'project-1'),
+          eq(mediaFiles.studyId, 'study-1'),
+          eq(mediaFiles.filename, 'document.pdf'),
+        ),
+      )
+      .get();
+    expect(mediaFile).toBeUndefined();
 
     // Verify PDF is deleted
     const pdf = await mockR2Bucket.get('projects/project-1/studies/study-1/document.pdf');
