@@ -2,55 +2,33 @@
  * Tests for PDF Utility Functions
  *
  * INTENDED BEHAVIOR:
- * - groupTextIntoLines: Groups PDF text items by y-position into logical lines
  * - cleanTitle: Removes excessive whitespace and common article prefixes
  * - readFileAsArrayBuffer: Converts File to ArrayBuffer
  * - extractPdfTitle: Extracts title from metadata or first page text
+ * - extractPdfDoi: Extracts DOI from metadata or first page text
  *
  * NOTES:
- * - extractPdfTitle requires PDF.js and is tested separately with mocks
- * - groupTextIntoLines and cleanTitle are internal but tested for correctness
+ * - extractPdfTitle and extractPdfDoi require EmbedPDF engine and are tested with mocks
+ * - cleanTitle is internal but tested for correctness
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { readFileAsArrayBuffer } from '../pdfUtils';
 
-// Recreate internal functions for testing since they're not exported
-function groupTextIntoLines(textItems) {
-  const lines = [];
-  let currentLine = [];
-  let lastY = null;
-  const yThreshold = 5; // pixels
+// Mock EmbedPDF engine before importing pdfUtils
+const mockEngine = {
+  openDocumentBuffer: vi.fn(),
+  getMetadata: vi.fn(),
+  extractText: vi.fn(),
+  closeDocument: vi.fn(),
+};
 
-  // Sort by y position (descending, since PDF coords start from bottom)
-  const sorted = [...textItems].sort((a, b) => b.transform[5] - a.transform[5]);
+vi.mock('../embedPdfEngine.js', () => ({
+  initEmbedPdfEngine: vi.fn(() => Promise.resolve(mockEngine)),
+}));
 
-  for (const item of sorted) {
-    if (!item.str.trim()) continue;
+import { readFileAsArrayBuffer, extractPdfTitle, extractPdfDoi } from '../pdfUtils';
 
-    const y = item.transform[5];
-
-    if (lastY === null || Math.abs(y - lastY) < yThreshold) {
-      currentLine.push(item);
-    } else {
-      if (currentLine.length > 0) {
-        // Sort line items by x position
-        currentLine.sort((a, b) => a.transform[4] - b.transform[4]);
-        lines.push(currentLine);
-      }
-      currentLine = [item];
-    }
-    lastY = y;
-  }
-
-  if (currentLine.length > 0) {
-    currentLine.sort((a, b) => a.transform[4] - b.transform[4]);
-    lines.push(currentLine);
-  }
-
-  return lines;
-}
-
+// Recreate internal function for testing since it's not exported
 function cleanTitle(title) {
   return (
     title
@@ -61,113 +39,6 @@ function cleanTitle(title) {
       .trim()
   );
 }
-
-describe('groupTextIntoLines', () => {
-  describe('basic line grouping', () => {
-    it('should group items on the same y-position into one line', () => {
-      const items = [
-        { str: 'Hello', transform: [1, 0, 0, 1, 10, 100] },
-        { str: 'World', transform: [1, 0, 0, 1, 60, 100] },
-      ];
-
-      const lines = groupTextIntoLines(items);
-
-      expect(lines).toHaveLength(1);
-      expect(lines[0].map(i => i.str).join(' ')).toBe('Hello World');
-    });
-
-    it('should group items within y-threshold into one line', () => {
-      const items = [
-        { str: 'Hello', transform: [1, 0, 0, 1, 10, 100] },
-        { str: 'World', transform: [1, 0, 0, 1, 60, 103] }, // Within 5px threshold
-      ];
-
-      const lines = groupTextIntoLines(items);
-
-      expect(lines).toHaveLength(1);
-    });
-
-    it('should separate items beyond y-threshold into different lines', () => {
-      const items = [
-        { str: 'Line 1', transform: [1, 0, 0, 1, 10, 200] },
-        { str: 'Line 2', transform: [1, 0, 0, 1, 10, 100] }, // 100px difference
-      ];
-
-      const lines = groupTextIntoLines(items);
-
-      expect(lines).toHaveLength(2);
-    });
-  });
-
-  describe('sorting behavior', () => {
-    it('should sort lines by y-position descending (top to bottom in PDF coords)', () => {
-      const items = [
-        { str: 'Bottom', transform: [1, 0, 0, 1, 10, 50] },
-        { str: 'Top', transform: [1, 0, 0, 1, 10, 200] },
-        { str: 'Middle', transform: [1, 0, 0, 1, 10, 125] },
-      ];
-
-      const lines = groupTextIntoLines(items);
-
-      expect(lines).toHaveLength(3);
-      expect(lines[0][0].str).toBe('Top');
-      expect(lines[1][0].str).toBe('Middle');
-      expect(lines[2][0].str).toBe('Bottom');
-    });
-
-    it('should sort items within a line by x-position', () => {
-      const items = [
-        { str: 'Third', transform: [1, 0, 0, 1, 150, 100] },
-        { str: 'First', transform: [1, 0, 0, 1, 10, 100] },
-        { str: 'Second', transform: [1, 0, 0, 1, 80, 100] },
-      ];
-
-      const lines = groupTextIntoLines(items);
-
-      expect(lines).toHaveLength(1);
-      expect(lines[0].map(i => i.str)).toEqual(['First', 'Second', 'Third']);
-    });
-  });
-
-  describe('edge cases', () => {
-    it('should skip empty string items', () => {
-      const items = [
-        { str: 'Hello', transform: [1, 0, 0, 1, 10, 100] },
-        { str: '', transform: [1, 0, 0, 1, 40, 100] },
-        { str: '   ', transform: [1, 0, 0, 1, 50, 100] },
-        { str: 'World', transform: [1, 0, 0, 1, 60, 100] },
-      ];
-
-      const lines = groupTextIntoLines(items);
-
-      expect(lines).toHaveLength(1);
-      expect(lines[0]).toHaveLength(2);
-      expect(lines[0].map(i => i.str)).toEqual(['Hello', 'World']);
-    });
-
-    it('should return empty array for empty input', () => {
-      expect(groupTextIntoLines([])).toEqual([]);
-    });
-
-    it('should return empty array when all items are whitespace', () => {
-      const items = [
-        { str: '', transform: [1, 0, 0, 1, 10, 100] },
-        { str: '   ', transform: [1, 0, 0, 1, 40, 100] },
-      ];
-
-      expect(groupTextIntoLines(items)).toEqual([]);
-    });
-
-    it('should handle single item', () => {
-      const items = [{ str: 'Single', transform: [1, 0, 0, 1, 10, 100] }];
-
-      const lines = groupTextIntoLines(items);
-
-      expect(lines).toHaveLength(1);
-      expect(lines[0][0].str).toBe('Single');
-    });
-  });
-});
 
 describe('cleanTitle', () => {
   describe('whitespace normalization', () => {
@@ -299,15 +170,256 @@ describe('readFileAsArrayBuffer', () => {
 });
 
 describe('extractPdfTitle', () => {
-  // These tests would require mocking pdfjs-dist
-  // For now, we document the intended behavior
+  const mockDoc = { id: 'test-doc' };
 
-  it.todo('should return title from PDF metadata when available');
-  it.todo('should fall back to first page text when metadata has no title');
-  it.todo('should find largest font text as likely title');
-  it.todo('should return null when no text can be extracted');
-  it.todo('should return null on PDF parsing error');
-  it.todo('should clean extracted title of prefixes');
-  it.todo('should reject titles that are too short (< 5 chars)');
-  it.todo('should reject titles that are too long (> 300 chars)');
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should return title from PDF metadata when available', async () => {
+    const pdfData = new ArrayBuffer(100);
+
+    mockEngine.openDocumentBuffer.mockReturnValue({
+      toPromise: () => Promise.resolve(mockDoc),
+    });
+    mockEngine.getMetadata.mockReturnValue({
+      toPromise: () => Promise.resolve({ title: 'Test PDF Title' }),
+    });
+    mockEngine.closeDocument.mockReturnValue({
+      toPromise: () => Promise.resolve(),
+    });
+
+    const title = await extractPdfTitle(pdfData);
+
+    expect(title).toBe('Test PDF Title');
+    expect(mockEngine.openDocumentBuffer).toHaveBeenCalled();
+    expect(mockEngine.getMetadata).toHaveBeenCalledWith(mockDoc);
+    expect(mockEngine.closeDocument).toHaveBeenCalledWith(mockDoc);
+  });
+
+  it('should fall back to first page text when metadata has no title', async () => {
+    const pdfData = new ArrayBuffer(100);
+
+    mockEngine.openDocumentBuffer.mockReturnValue({
+      toPromise: () => Promise.resolve(mockDoc),
+    });
+    mockEngine.getMetadata.mockReturnValue({
+      toPromise: () => Promise.resolve({ title: null }),
+    });
+    mockEngine.extractText.mockReturnValue({
+      toPromise: () => Promise.resolve('Important Study About Cats\nAbstract text here...'),
+    });
+    mockEngine.closeDocument.mockReturnValue({
+      toPromise: () => Promise.resolve(),
+    });
+
+    const title = await extractPdfTitle(pdfData);
+
+    expect(title).toBe('Important Study About Cats');
+    expect(mockEngine.extractText).toHaveBeenCalledWith(mockDoc, [0]);
+  });
+
+  it('should clean extracted title of prefixes', async () => {
+    const pdfData = new ArrayBuffer(100);
+
+    mockEngine.openDocumentBuffer.mockReturnValue({
+      toPromise: () => Promise.resolve(mockDoc),
+    });
+    mockEngine.getMetadata.mockReturnValue({
+      toPromise: () => Promise.resolve({ title: null }),
+    });
+    mockEngine.extractText.mockReturnValue({
+      toPromise: () => Promise.resolve('Original Article: Machine Learning Study'),
+    });
+    mockEngine.closeDocument.mockReturnValue({
+      toPromise: () => Promise.resolve(),
+    });
+
+    const title = await extractPdfTitle(pdfData);
+
+    expect(title).toBe('Machine Learning Study');
+  });
+
+  it('should return null when no text can be extracted', async () => {
+    const pdfData = new ArrayBuffer(100);
+
+    mockEngine.openDocumentBuffer.mockReturnValue({
+      toPromise: () => Promise.resolve(mockDoc),
+    });
+    mockEngine.getMetadata.mockReturnValue({
+      toPromise: () => Promise.resolve({ title: null }),
+    });
+    mockEngine.extractText.mockReturnValue({
+      toPromise: () => Promise.resolve(''),
+    });
+    mockEngine.closeDocument.mockReturnValue({
+      toPromise: () => Promise.resolve(),
+    });
+
+    const title = await extractPdfTitle(pdfData);
+
+    expect(title).toBeNull();
+  });
+
+  it('should reject titles that are too short', async () => {
+    const pdfData = new ArrayBuffer(100);
+
+    mockEngine.openDocumentBuffer.mockReturnValue({
+      toPromise: () => Promise.resolve(mockDoc),
+    });
+    mockEngine.getMetadata.mockReturnValue({
+      toPromise: () => Promise.resolve({ title: null }),
+    });
+    mockEngine.extractText.mockReturnValue({
+      toPromise: () => Promise.resolve('Hi\nThis is a longer line'),
+    });
+    mockEngine.closeDocument.mockReturnValue({
+      toPromise: () => Promise.resolve(),
+    });
+
+    const title = await extractPdfTitle(pdfData);
+
+    // Should skip "Hi" (too short) and return the next substantial line
+    expect(title).toBe('This is a longer line');
+  });
+
+  it('should handle PDF parsing errors gracefully', async () => {
+    const pdfData = new ArrayBuffer(100);
+
+    mockEngine.openDocumentBuffer.mockReturnValue({
+      toPromise: () => Promise.reject(new Error('Invalid PDF')),
+    });
+
+    await expect(extractPdfTitle(pdfData)).rejects.toThrow();
+  });
+});
+
+describe('extractPdfDoi', () => {
+  const mockDoc = { id: 'test-doc' };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should extract DOI from metadata subject field', async () => {
+    const pdfData = new ArrayBuffer(100);
+
+    mockEngine.openDocumentBuffer.mockReturnValue({
+      toPromise: () => Promise.resolve(mockDoc),
+    });
+    mockEngine.getMetadata.mockReturnValue({
+      toPromise: () => Promise.resolve({ subject: 'DOI: 10.1234/test.doi' }),
+    });
+    mockEngine.closeDocument.mockReturnValue({
+      toPromise: () => Promise.resolve(),
+    });
+
+    const doi = await extractPdfDoi(pdfData);
+
+    expect(doi).toBe('10.1234/test.doi');
+  });
+
+  it('should extract DOI from metadata keywords field', async () => {
+    const pdfData = new ArrayBuffer(100);
+
+    mockEngine.openDocumentBuffer.mockReturnValue({
+      toPromise: () => Promise.resolve(mockDoc),
+    });
+    mockEngine.getMetadata.mockReturnValue({
+      toPromise: () => Promise.resolve({ keywords: '10.5678/example.doi' }),
+    });
+    mockEngine.closeDocument.mockReturnValue({
+      toPromise: () => Promise.resolve(),
+    });
+
+    const doi = await extractPdfDoi(pdfData);
+
+    expect(doi).toBe('10.5678/example.doi');
+  });
+
+  it('should extract DOI from custom metadata fields', async () => {
+    const pdfData = new ArrayBuffer(100);
+
+    mockEngine.openDocumentBuffer.mockReturnValue({
+      toPromise: () => Promise.resolve(mockDoc),
+    });
+    mockEngine.getMetadata.mockReturnValue({
+      toPromise: () =>
+        Promise.resolve({
+          custom: {
+            doi: '10.9999/custom.doi',
+          },
+        }),
+    });
+    mockEngine.closeDocument.mockReturnValue({
+      toPromise: () => Promise.resolve(),
+    });
+
+    const doi = await extractPdfDoi(pdfData);
+
+    expect(doi).toBe('10.9999/custom.doi');
+  });
+
+  it('should fall back to extracting DOI from first page text', async () => {
+    const pdfData = new ArrayBuffer(100);
+
+    mockEngine.openDocumentBuffer.mockReturnValue({
+      toPromise: () => Promise.resolve(mockDoc),
+    });
+    mockEngine.getMetadata.mockReturnValue({
+      toPromise: () => Promise.resolve({}),
+    });
+    mockEngine.extractText.mockReturnValue({
+      toPromise: () => Promise.resolve('This is a study. DOI: 10.1234/page.doi'),
+    });
+    mockEngine.closeDocument.mockReturnValue({
+      toPromise: () => Promise.resolve(),
+    });
+
+    const doi = await extractPdfDoi(pdfData);
+
+    expect(doi).toBe('10.1234/page.doi');
+  });
+
+  it('should return null when no DOI is found', async () => {
+    const pdfData = new ArrayBuffer(100);
+
+    mockEngine.openDocumentBuffer.mockReturnValue({
+      toPromise: () => Promise.resolve(mockDoc),
+    });
+    mockEngine.getMetadata.mockReturnValue({
+      toPromise: () => Promise.resolve({}),
+    });
+    mockEngine.extractText.mockReturnValue({
+      toPromise: () => Promise.resolve('No DOI in this text'),
+    });
+    mockEngine.closeDocument.mockReturnValue({
+      toPromise: () => Promise.resolve(),
+    });
+
+    const doi = await extractPdfDoi(pdfData);
+
+    expect(doi).toBeNull();
+  });
+
+  it('should clean DOI by removing URL prefixes and normalizing', async () => {
+    const pdfData = new ArrayBuffer(100);
+
+    mockEngine.openDocumentBuffer.mockReturnValue({
+      toPromise: () => Promise.resolve(mockDoc),
+    });
+    mockEngine.getMetadata.mockReturnValue({
+      toPromise: () => Promise.resolve({}),
+    });
+    mockEngine.extractText.mockReturnValue({
+      toPromise: () => Promise.resolve('https://doi.org/10.1234/test.doi'),
+    });
+    mockEngine.closeDocument.mockReturnValue({
+      toPromise: () => Promise.resolve(),
+    });
+
+    const doi = await extractPdfDoi(pdfData);
+
+    expect(doi).toBe('10.1234/test.doi');
+  });
 });

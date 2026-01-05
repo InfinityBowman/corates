@@ -6,7 +6,7 @@
 import { Show, createMemo } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { AiOutlineArrowLeft } from 'solid-icons/ai';
-import PdfViewer from '@/components/checklist/pdf/PdfViewer.jsx';
+import EmbedPdfViewer from '@pdf/embedpdf/EmbedPdfViewer.jsx';
 import ChecklistReconciliation from './ChecklistReconciliation.jsx';
 import Navbar from './Navbar.jsx';
 import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx';
@@ -124,7 +124,7 @@ export default function ReconciliationWithPdf(props) {
               </div>
             }
           >
-            <PdfViewer
+            <EmbedPdfViewer
               pdfData={props.pdfData}
               pdfFileName={props.pdfFileName}
               readOnly={true}

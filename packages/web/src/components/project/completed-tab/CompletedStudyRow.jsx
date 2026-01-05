@@ -9,7 +9,7 @@ import { For, Show, createMemo, createSignal } from 'solid-js';
 import { BiRegularChevronRight } from 'solid-icons/bi';
 import { Collapsible } from '@corates/ui';
 import { getChecklistMetadata } from '@/checklist-registry';
-import PdfListItem from '@/components/checklist/pdf/PdfListItem.jsx';
+import { PdfListItem } from '@pdf';
 import { getCompletedChecklists } from '@/lib/checklist-domain.js';
 import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status.js';
 import PreviousReviewersView from './PreviousReviewersView.jsx';
