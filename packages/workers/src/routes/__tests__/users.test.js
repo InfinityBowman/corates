@@ -534,11 +534,36 @@ describe('User Routes - DELETE /api/users/me', () => {
       updatedAt: nowSec,
     });
 
-    // Create a media file owned by the user
+    await seedUser({
+      id: 'user-2',
+      name: 'User 2',
+      email: 'user2@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    // Create project with a different user as creator so it doesn't get deleted
+    await seedProject({
+      id: 'project-1',
+      name: 'Project 1',
+      orgId: 'org-1',
+      createdBy: 'user-2',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    // Create a media file owned by the user being deleted
     await env.DB.prepare(
-      'INSERT INTO mediaFiles (id, filename, bucketKey, uploadedBy, createdAt) VALUES (?1, ?2, ?3, ?4, ?5)',
+      'INSERT INTO mediaFiles (id, filename, bucketKey, uploadedBy, orgId, projectId, createdAt) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)',
     )
-      .bind('media-1', 'test.pdf', 'bucket-key-1', 'user-1', nowSec)
+      .bind('media-1', 'test.pdf', 'bucket-key-1', 'user-1', 'org-1', 'project-1', nowSec)
       .run();
 
     const res = await fetchUsers('/api/users/me', {

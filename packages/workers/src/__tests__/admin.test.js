@@ -468,12 +468,36 @@ describe('Admin API routes', () => {
       createdAt: nowSec,
       updatedAt: nowSec,
     });
+    await seedUser({
+      id: 'u2',
+      name: 'Owner',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    // Create project with a different user as creator so it doesn't get deleted
+    await seedProject({
+      id: 'p1',
+      name: 'Project 1',
+      orgId: 'org-1',
+      createdBy: 'u2',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
 
     // Create a media file owned by the user to be deleted
     await env.DB.prepare(
-      'INSERT INTO mediaFiles (id, filename, bucketKey, uploadedBy, createdAt) VALUES (?1, ?2, ?3, ?4, ?5)',
+      'INSERT INTO mediaFiles (id, filename, bucketKey, uploadedBy, orgId, projectId, createdAt) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)',
     )
-      .bind('media-1', 'test.pdf', 'bucket-key-1', 'u1', nowSec)
+      .bind('media-1', 'test.pdf', 'bucket-key-1', 'u1', 'org-1', 'p1', nowSec)
       .run();
 
     const del = await fetchApp('/api/admin/users/u1', {

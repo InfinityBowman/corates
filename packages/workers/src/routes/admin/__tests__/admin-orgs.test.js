@@ -265,8 +265,8 @@ describe('Admin org routes - GET /api/admin/orgs/:orgId', () => {
     expect(body.billing.plan).toBeDefined();
   });
 
-  it('should return 400 for invalid orgId', async () => {
-    const res = await fetchApp('/api/admin/orgs/invalid-org-id');
-    expect(res.status).toBe(400);
+  it('should return 403 for non-existent orgId', async () => {
+    const res = await fetchApp('/api/admin/orgs/non-existent-org-id');
+    expect(res.status).toBe(403);
   });
 });

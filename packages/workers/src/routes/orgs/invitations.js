@@ -15,7 +15,7 @@ import {
   member,
   organization,
 } from '../../db/schema.js';
-import { eq, and, desc, isNull, count, ne } from 'drizzle-orm';
+import { eq, and, desc, isNull } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../../middleware/auth.js';
 import {
   requireOrgMembership,
@@ -32,9 +32,8 @@ import {
   VALIDATION_ERRORS,
 } from '@corates/shared';
 import { syncMemberToDO } from '../../lib/project-sync.js';
-import { resolveOrgAccess } from '../../lib/billingResolver.js';
-import { isUnlimitedQuota } from '@corates/shared/plans';
 import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
+import { checkCollaboratorQuota } from '../../lib/quotaTransaction.js';
 
 const orgInvitationRoutes = new Hono();
 
@@ -478,6 +477,7 @@ orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), a
     }
 
     // Enforce collaborator quota before acceptance
+    // Use transactional check to prevent race conditions
     if (invitation.orgId) {
       // Check if user is already an org member
       const existingOrgMembership = await db
@@ -488,33 +488,9 @@ orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), a
 
       // Only enforce quota if user is not already an org member
       if (!existingOrgMembership) {
-        // Resolve org billing to get quota
-        const orgBilling = await resolveOrgAccess(db, invitation.orgId);
-        const collaboratorLimit = orgBilling.quotas['collaborators.org.max'];
-
-        // Count current accepted collaborators (excluding org owner)
-        const [collaboratorCountResult] = await db
-          .select({ count: count() })
-          .from(member)
-          .where(and(eq(member.organizationId, invitation.orgId), ne(member.role, 'owner')))
-          .all();
-
-        const currentCollaboratorCount = collaboratorCountResult?.count || 0;
-
-        // Check if adding this user would exceed quota
-        if (!isUnlimitedQuota(collaboratorLimit) && currentCollaboratorCount >= collaboratorLimit) {
-          const error = createDomainError(
-            AUTH_ERRORS.FORBIDDEN,
-            {
-              reason: 'quota_exceeded',
-              quotaKey: 'collaborators.org.max',
-              used: currentCollaboratorCount,
-              limit: collaboratorLimit,
-              requested: 1,
-            },
-            `Collaborator quota exceeded. Current usage: ${currentCollaboratorCount}, Limit: ${collaboratorLimit}`,
-          );
-          return c.json(error, error.statusCode);
+        const quotaResult = await checkCollaboratorQuota(db, invitation.orgId);
+        if (!quotaResult.allowed) {
+          return c.json(quotaResult.error, quotaResult.error.statusCode);
         }
       }
     }
@@ -565,6 +541,24 @@ orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), a
 
     // Execute atomically
     await db.batch(batchOps);
+
+    // Post-insert verification for collaborator quota race conditions
+    // Re-check count after insert to detect races (D1 doesn't support true rollback)
+    if (invitation.orgId) {
+      const postInsertQuotaResult = await checkCollaboratorQuota(db, invitation.orgId);
+      if (
+        !postInsertQuotaResult.allowed &&
+        postInsertQuotaResult.used > postInsertQuotaResult.limit
+      ) {
+        // Race condition detected - log for admin review
+        // The membership was already created, so we log but don't fail
+        console.warn(
+          `[Invitation] Race condition detected: collaborator quota exceeded for org ${invitation.orgId}. ` +
+            `Count: ${postInsertQuotaResult.used}, Limit: ${postInsertQuotaResult.limit}. ` +
+            `User ${authUser.id} was still added. Consider manual intervention.`,
+        );
+      }
+    }
 
     // Get project name and org slug for response
     const project = await db

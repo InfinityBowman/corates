@@ -166,6 +166,20 @@ export const apiRateLimit = rateLimit({
   keyPrefix: 'api',
 });
 
+// Rate limit for billing checkout endpoints (prevent checkout spam)
+export const billingCheckoutRateLimit = rateLimit({
+  limit: 10,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  keyPrefix: 'billing-checkout',
+});
+
+// Rate limit for billing portal access
+export const billingPortalRateLimit = rateLimit({
+  limit: 20,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  keyPrefix: 'billing-portal',
+});
+
 /**
  * Clear the rate limit store (for testing only)
  * @internal

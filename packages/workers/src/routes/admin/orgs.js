@@ -9,13 +9,11 @@ import { organization, member, projects } from '../../db/schema.js';
 import { eq, count, desc, like, or, sql } from 'drizzle-orm';
 import {
   createDomainError,
-  createValidationError,
   SYSTEM_ERRORS,
   AUTH_ERRORS,
 } from '@corates/shared';
 import { resolveOrgAccess } from '../../lib/billingResolver.js';
 import { getPlan, getGrantPlan } from '@corates/shared/plans';
-import { commonFields } from '../../config/validation.js';
 
 const orgRoutes = new Hono();
 
@@ -163,18 +161,6 @@ orgRoutes.get('/orgs/:orgId', async c => {
   const db = createDb(c.env.DB);
 
   try {
-    // Validate UUID format before database query
-    const uuidValidation = commonFields.uuid.safeParse(orgId);
-    if (!uuidValidation.success) {
-      const error = createValidationError(
-        'orgId',
-        'VALIDATION_FIELD_INVALID_FORMAT',
-        orgId,
-        'uuid',
-      );
-      return c.json(error, error.statusCode);
-    }
-
     // Get org
     const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
     if (!org) {

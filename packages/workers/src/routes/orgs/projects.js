@@ -19,6 +19,7 @@ import { requireQuota } from '../../middleware/requireQuota.js';
 import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
 import { projectSchemas, validateRequest } from '../../config/validation.js';
 import { createDomainError, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import { insertWithQuotaCheck } from '../../lib/quotaTransaction.js';
 import { syncProjectToDO } from '../../lib/project-sync.js';
 import { getProjectDocStub } from '../../lib/project-doc-id.js';
 import { orgProjectMemberRoutes } from './members.js';
@@ -103,8 +104,9 @@ orgProjectRoutes.post(
     const now = new Date();
 
     try {
-      // Create project with orgId and add creator as owner
-      await db.batch([
+      // Use transactional quota check to prevent race conditions
+      // The middleware provides fast-path rejection, but this ensures atomicity
+      const insertStatements = [
         db.insert(projects).values({
           id: projectId,
           name: name.trim(),
@@ -121,7 +123,19 @@ orgProjectRoutes.post(
           role: 'owner',
           joinedAt: now,
         }),
-      ]);
+      ];
+
+      const quotaResult = await insertWithQuotaCheck(db, {
+        orgId,
+        quotaKey: 'projects.max',
+        countTable: projects,
+        countColumn: projects.orgId,
+        insertStatements,
+      });
+
+      if (!quotaResult.success) {
+        return c.json(quotaResult.error, quotaResult.error.statusCode);
+      }
 
       // Get creator's user info for DO sync
       const creator = await db

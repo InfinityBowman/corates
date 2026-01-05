@@ -11,6 +11,7 @@ import {
   seedUser,
   seedOrganization,
   seedProject,
+  seedMediaFile,
   json,
 } from '../../../__tests__/helpers.js';
 
@@ -268,6 +269,18 @@ describe('Admin storage routes - GET /api/admin/storage/documents', () => {
       createdBy: userId,
       createdAt: nowSec,
       updatedAt: nowSec,
+    });
+
+    // Create a mediaFiles entry for the first file (so it's not orphaned)
+    await seedMediaFile({
+      id: 'media-1',
+      filename: 'file1.pdf',
+      bucketKey: `projects/${projectId1}/studies/s1/file1.pdf`,
+      orgId,
+      projectId: projectId1,
+      studyId: 's1',
+      uploadedBy: userId,
+      createdAt: nowSec,
     });
 
     const mockR2 = {

@@ -19,6 +19,7 @@ import {
   getLedgerByPayloadHash,
   LedgerStatus,
 } from '../../db/stripeEventLedger.js';
+import { billingCheckoutRateLimit, billingPortalRateLimit } from '../../middleware/rateLimit.js';
 
 const billingRoutes = new Hono();
 
@@ -157,7 +158,7 @@ billingRoutes.get('/members', requireAuth, async c => {
  * Create a Stripe Checkout session (delegates to Better Auth Stripe plugin)
  * This endpoint is deprecated - use Better Auth Stripe client plugin directly
  */
-billingRoutes.post('/checkout', requireAuth, async c => {
+billingRoutes.post('/checkout', billingCheckoutRateLimit, requireAuth, async c => {
   const { user, session } = getAuth(c);
   const db = createDb(c.env.DB);
 
@@ -277,7 +278,7 @@ billingRoutes.post('/checkout', requireAuth, async c => {
  * POST /api/billing/portal
  * Create a Stripe Customer Portal session (delegates to Better Auth Stripe plugin)
  */
-billingRoutes.post('/portal', requireAuth, async c => {
+billingRoutes.post('/portal', billingPortalRateLimit, requireAuth, async c => {
   const { user, session } = getAuth(c);
   const db = createDb(c.env.DB);
 
@@ -352,7 +353,7 @@ billingRoutes.post('/portal', requireAuth, async c => {
  * Create a Stripe Checkout session for one-time Single Project purchase
  * Owner-gated: only org owners can purchase
  */
-billingRoutes.post('/single-project/checkout', requireAuth, async c => {
+billingRoutes.post('/single-project/checkout', billingCheckoutRateLimit, requireAuth, async c => {
   const { user, session } = getAuth(c);
   const db = createDb(c.env.DB);
 
@@ -451,25 +452,34 @@ billingRoutes.post('/single-project/checkout', requireAuth, async c => {
 
     const baseUrl = c.env.APP_URL || 'https://corates.org';
 
+    // Generate idempotency key to prevent duplicate checkout sessions from rapid clicks
+    // Uses 1-minute time window granularity
+    const idempotencyKey = `sp_checkout_${orgId}_${user.id}_${Math.floor(Date.now() / 60000)}`;
+
     const { result: checkoutSession, durationMs } = await withTiming(async () => {
-      return stripe.checkout.sessions.create({
-        mode: 'payment',
-        payment_method_types: ['card'],
-        customer: userRecord.stripeCustomerId,
-        line_items: [
-          {
-            price: priceId,
-            quantity: 1,
+      return stripe.checkout.sessions.create(
+        {
+          mode: 'payment',
+          payment_method_types: ['card'],
+          customer: userRecord.stripeCustomerId,
+          line_items: [
+            {
+              price: priceId,
+              quantity: 1,
+            },
+          ],
+          metadata: {
+            orgId,
+            grantType: 'single_project',
+            purchaserUserId: user.id,
           },
-        ],
-        metadata: {
-          orgId,
-          grantType: 'single_project',
-          purchaserUserId: user.id,
+          success_url: `${baseUrl}/settings/billing?success=true&purchase=single_project`,
+          cancel_url: `${baseUrl}/settings/billing?canceled=true`,
         },
-        success_url: `${baseUrl}/settings/billing?success=true&purchase=single_project`,
-        cancel_url: `${baseUrl}/settings/billing?canceled=true`,
-      });
+        {
+          idempotencyKey,
+        },
+      );
     });
 
     logger.stripe('single_project_checkout_created', {
