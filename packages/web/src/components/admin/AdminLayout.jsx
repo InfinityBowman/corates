@@ -13,6 +13,7 @@ import {
   FiAlertTriangle,
   FiLoader,
   FiAlertCircle,
+  FiServer,
 } from 'solid-icons/fi';
 import { A } from '@solidjs/router';
 import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.js';
@@ -21,6 +22,7 @@ const navItems = [
   { path: '/admin', label: 'Dashboard', icon: FiShield },
   { path: '/admin/orgs', label: 'Organizations', icon: FiHome },
   { path: '/admin/storage', label: 'Storage', icon: FiDatabase },
+  { path: '/admin/database', label: 'Database', icon: FiServer },
   { path: '/admin/billing/ledger', label: 'Event Ledger', icon: FiFilter },
   { path: '/admin/billing/stuck-states', label: 'Stuck States', icon: FiAlertTriangle },
 ];

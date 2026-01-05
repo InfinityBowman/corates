@@ -239,3 +239,60 @@ export function useAdminOrgBillingReconcile(orgId, getParams) {
     };
   });
 }
+
+/**
+ * Hook to fetch D1 database tables with row counts
+ */
+export function useAdminDatabaseTables() {
+  return useQuery(() => ({
+    queryKey: queryKeys.admin.databaseTables,
+    queryFn: () => adminFetch('database/tables'),
+    staleTime: 0,
+    gcTime: 1000 * 60 * 5,
+    refetchOnMount: 'always',
+  }));
+}
+
+/**
+ * Hook to fetch table schema
+ */
+export function useAdminTableSchema(tableName) {
+  return useQuery(() => ({
+    queryKey: queryKeys.admin.tableSchema(tableName()),
+    queryFn: () => adminFetch(`database/tables/${tableName()}/schema`),
+    enabled: !!tableName(),
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
+  }));
+}
+
+/**
+ * Hook to fetch table rows with pagination
+ */
+export function useAdminTableRows(getParams) {
+  return useQuery(() => {
+    const params = typeof getParams === 'function' ? getParams() : getParams;
+    const tableName = params?.tableName;
+    const page = params?.page ?? 1;
+    const limit = params?.limit ?? 50;
+    const orderBy = params?.orderBy ?? 'id';
+    const order = params?.order ?? 'desc';
+
+    return {
+      queryKey: queryKeys.admin.tableRows(tableName, page, limit, orderBy, order),
+      queryFn: () => {
+        const searchParams = new URLSearchParams({
+          page: page.toString(),
+          limit: limit.toString(),
+          orderBy,
+          order,
+        });
+        return adminFetch(`database/tables/${tableName}/rows?${searchParams}`);
+      },
+      enabled: !!tableName,
+      staleTime: 0,
+      gcTime: 1000 * 60 * 5,
+      refetchOnMount: 'always',
+    };
+  });
+}
