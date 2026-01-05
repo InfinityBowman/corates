@@ -60,14 +60,6 @@ billingRoutes.get('/subscription', requireAuth, async c => {
 
     const orgBilling = await resolveOrgAccess(db, orgId);
 
-    // Get member count for the organization
-    const memberCountResult = await db
-      .select({ count: count() })
-      .from(member)
-      .where(eq(member.organizationId, orgId))
-      .get();
-    const memberCount = memberCountResult?.count || 0;
-
     // Convert to frontend-compatible format
     // Use getGrantPlan for grants, getPlan for subscriptions/free
     const effectivePlan =
@@ -94,12 +86,76 @@ billingRoutes.get('/subscription', requireAuth, async c => {
       cancelAtPeriodEnd: orgBilling.subscription?.cancelAtPeriodEnd || false,
       accessMode: orgBilling.accessMode,
       source: orgBilling.source,
-      memberCount,
     });
   } catch (error) {
     console.error('Error fetching org billing:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_org_billing',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
+  }
+});
+
+/**
+ * GET /api/billing/members
+ * Get the current org's members (uses session's activeOrganizationId)
+ * Returns list of members with count
+ */
+billingRoutes.get('/members', requireAuth, async c => {
+  const { user, session } = getAuth(c);
+  const db = createDb(c.env.DB);
+
+  try {
+    // Get orgId from session's activeOrganizationId
+    let orgId = session?.activeOrganizationId;
+
+    // If no active org in session, get user's first org
+    if (!orgId) {
+      const { member } = await import('../../db/schema.js');
+      const { eq } = await import('drizzle-orm');
+      const firstMembership = await db
+        .select({ organizationId: member.organizationId })
+        .from(member)
+        .where(eq(member.userId, user.id))
+        .limit(1)
+        .get();
+      orgId = firstMembership?.organizationId;
+    }
+
+    if (!orgId) {
+      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+        reason: 'no_org_found',
+      });
+      return c.json(error, error.statusCode);
+    }
+
+    // Use Better Auth API to list members (consistent with orgs endpoint)
+    const { createAuth } = await import('../../auth/config.js');
+    const auth = createAuth(c.env, c.executionCtx);
+    const result = await auth.api.listMembers({
+      headers: c.req.raw.headers,
+      query: {
+        organizationId: orgId,
+      },
+    });
+
+    // Get member count for convenience
+    const memberCountResult = await db
+      .select({ count: count() })
+      .from(member)
+      .where(eq(member.organizationId, orgId))
+      .get();
+    const memberCount = memberCountResult?.count || 0;
+
+    return c.json({
+      members: result.members || [],
+      count: memberCount,
+    });
+  } catch (error) {
+    console.error('Error fetching org members:', error);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'fetch_org_members',
       originalError: error.message,
     });
     return c.json(dbError, dbError.statusCode);

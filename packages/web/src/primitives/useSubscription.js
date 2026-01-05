@@ -67,6 +67,7 @@ export function useSubscription() {
   // Return default subscription when not logged in or when query fails
   // This prevents breaking the UI while still exposing the error for components that care
   const subscription = () => query.data || DEFAULT_SUBSCRIPTION;
+  console.log(subscription());
 
   /**
    * Whether subscription fetch failed (only meaningful when logged in)
