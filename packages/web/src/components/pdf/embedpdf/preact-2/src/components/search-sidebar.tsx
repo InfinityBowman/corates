@@ -28,15 +28,15 @@ const HitLine = ({
       ref={ref}
       onClick={onClick}
       className={`w-full rounded border p-2 text-left text-sm transition-colors ${
-        active
-          ? 'border-blue-500 bg-blue-50 text-blue-900'
-          : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+        active ?
+          'border-blue-500 bg-blue-50 text-blue-900'
+        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
       }`}
     >
       <span>
         {hit.context.truncatedLeft && '… '}
         {hit.context.before}
-        <span className="font-bold text-blue-600">{hit.context.match}</span>
+        <span className='font-bold text-blue-600'>{hit.context.match}</span>
         {hit.context.after}
         {hit.context.truncatedRight && ' …'}
       </span>
@@ -89,7 +89,7 @@ export function SearchSidebar({ documentId, onClose }: SearchSidebarProps) {
     if (checked) {
       provides?.setFlags([...state.flags, flag]);
     } else {
-      provides?.setFlags(state.flags.filter((f) => f !== flag));
+      provides?.setFlags(state.flags.filter(f => f !== flag));
     }
   };
 
@@ -135,60 +135,60 @@ export function SearchSidebar({ documentId, onClose }: SearchSidebarProps) {
   const grouped = groupByPage(state.results);
 
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className='flex h-full flex-col bg-white'>
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-300 px-4 py-3">
-        <h2 className="text-lg font-semibold text-gray-800">{translate('search.title')}</h2>
+      <div className='flex items-center justify-between border-b border-gray-300 px-4 py-3'>
+        <h2 className='text-lg font-semibold text-gray-800'>{translate('search.title')}</h2>
         <button
           onClick={onClose}
-          className="rounded p-1 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+          className='rounded p-1 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700'
           aria-label={translate('search.close')}
         >
-          <CloseIcon className="h-5 w-5" />
+          <CloseIcon className='h-5 w-5' />
         </button>
       </div>
 
       {/* Search Input */}
-      <div className="border-b border-gray-200 p-4">
-        <div className="relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <SearchIcon className="h-5 w-5 text-gray-400" />
+      <div className='border-b border-gray-200 p-4'>
+        <div className='relative'>
+          <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'>
+            <SearchIcon className='h-5 w-5 text-gray-400' />
           </div>
           <input
             ref={inputRef}
-            type="text"
+            type='text'
             placeholder={translate('search.placeholder')}
             value={inputValue}
             onChange={handleInputChange}
-            className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-10 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className='w-full rounded-lg border border-gray-300 py-2 pr-10 pl-10 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
           />
           {inputValue && (
             <button
               onClick={clearInput}
-              className="absolute inset-y-0 right-0 flex items-center pr-3"
+              className='absolute inset-y-0 right-0 flex items-center pr-3'
             >
-              <CloseIcon className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+              <CloseIcon className='h-4 w-4 text-gray-400 hover:text-gray-600' />
             </button>
           )}
         </div>
 
         {/* Options */}
-        <div className="mt-3 space-y-2">
-          <label className="flex items-center text-sm text-gray-700">
+        <div className='mt-3 space-y-2'>
+          <label className='flex items-center text-sm text-gray-700'>
             <input
-              type="checkbox"
+              type='checkbox'
               checked={state.flags.includes(MatchFlag.MatchCase)}
-              onChange={(e) => handleFlagChange(MatchFlag.MatchCase, e.target.checked)}
-              className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              onChange={e => handleFlagChange(MatchFlag.MatchCase, e.target.checked)}
+              className='mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
             />
             {translate('search.caseSensitive')}
           </label>
-          <label className="flex items-center text-sm text-gray-700">
+          <label className='flex items-center text-sm text-gray-700'>
             <input
-              type="checkbox"
+              type='checkbox'
               checked={state.flags.includes(MatchFlag.MatchWholeWord)}
-              onChange={(e) => handleFlagChange(MatchFlag.MatchWholeWord, e.target.checked)}
-              className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              onChange={e => handleFlagChange(MatchFlag.MatchWholeWord, e.target.checked)}
+              className='mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
             />
             {translate('search.wholeWord')}
           </label>
@@ -196,25 +196,25 @@ export function SearchSidebar({ documentId, onClose }: SearchSidebarProps) {
 
         {/* Results count and navigation */}
         {state.active && !state.loading && state.total > 0 && (
-          <div className="mt-3 flex items-center justify-between">
-            <span className="text-sm text-gray-600">
+          <div className='mt-3 flex items-center justify-between'>
+            <span className='text-sm text-gray-600'>
               {translate('search.resultsFound', { params: { count: state.total } })}
             </span>
             {state.total > 1 && (
-              <div className="flex gap-1">
+              <div className='flex gap-1'>
                 <button
                   onClick={() => provides.previousResult()}
-                  className="rounded p-1 text-gray-600 hover:bg-gray-100"
+                  className='rounded p-1 text-gray-600 hover:bg-gray-100'
                   aria-label={translate('search.previousResult')}
                 >
-                  <ChevronLeftIcon className="h-4 w-4" />
+                  <ChevronLeftIcon className='h-4 w-4' />
                 </button>
                 <button
                   onClick={() => provides.nextResult()}
-                  className="rounded p-1 text-gray-600 hover:bg-gray-100"
+                  className='rounded p-1 text-gray-600 hover:bg-gray-100'
                   aria-label={translate('search.nextResult')}
                 >
-                  <ChevronRightIcon className="h-4 w-4" />
+                  <ChevronRightIcon className='h-4 w-4' />
                 </button>
               </div>
             )}
@@ -223,19 +223,18 @@ export function SearchSidebar({ documentId, onClose }: SearchSidebarProps) {
       </div>
 
       {/* Results */}
-      <div className="flex-1 overflow-auto p-4">
-        {state.loading ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+      <div className='flex-1 overflow-auto p-4'>
+        {state.loading ?
+          <div className='flex h-full items-center justify-center'>
+            <div className='h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600' />
           </div>
-        ) : (
-          <div className="space-y-4">
+        : <div className='space-y-4'>
             {Object.entries(grouped).map(([page, hits]) => (
               <div key={page}>
-                <div className="mb-2 text-xs font-semibold text-gray-500">
+                <div className='mb-2 text-xs font-semibold text-gray-500'>
                   {translate('search.page', { params: { number: Number(page) + 1 } })}
                 </div>
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   {hits.map(({ hit, index }) => (
                     <HitLine
                       key={index}
@@ -248,7 +247,7 @@ export function SearchSidebar({ documentId, onClose }: SearchSidebarProps) {
               </div>
             ))}
           </div>
-        )}
+        }
       </div>
     </div>
   );

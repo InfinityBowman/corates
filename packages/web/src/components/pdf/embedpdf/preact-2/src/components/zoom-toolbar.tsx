@@ -68,21 +68,21 @@ export function ZoomToolbar({ documentId }: ZoomToolbarProps) {
   };
 
   return (
-    <div className="relative">
-      <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-1">
+    <div className='relative'>
+      <div className='flex items-center gap-1 rounded bg-gray-100 px-2 py-1'>
         {/* Zoom Out Button */}
         <button
           onClick={handleZoomOut}
-          className="rounded p-1 text-gray-600 transition-colors hover:bg-gray-200 hover:text-gray-900"
-          aria-label="Zoom out"
+          className='rounded p-1 text-gray-600 transition-colors hover:bg-gray-200 hover:text-gray-900'
+          aria-label='Zoom out'
         >
-          <SearchMinusIcon className="h-4 w-4" title="Zoom Out" />
+          <SearchMinusIcon className='h-4 w-4' title='Zoom Out' />
         </button>
 
         {/* Zoom Percentage Display */}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="flex items-center gap-1 rounded px-2 py-0.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
+          className='flex items-center gap-1 rounded px-2 py-0.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
         >
           <span>{zoomPercentage}%</span>
           <ChevronDownIcon
@@ -93,23 +93,23 @@ export function ZoomToolbar({ documentId }: ZoomToolbarProps) {
         {/* Zoom In Button */}
         <button
           onClick={handleZoomIn}
-          className="rounded p-1 text-gray-600 transition-colors hover:bg-gray-200 hover:text-gray-900"
-          aria-label="Zoom in"
+          className='rounded p-1 text-gray-600 transition-colors hover:bg-gray-200 hover:text-gray-900'
+          aria-label='Zoom in'
         >
-          <SearchPlusIcon className="h-4 w-4" title="Zoom In" />
+          <SearchPlusIcon className='h-4 w-4' title='Zoom In' />
         </button>
       </div>
 
-      <DropdownMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} className="w-48">
+      <DropdownMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} className='w-48'>
         <DropdownItem
           onClick={handleZoomIn}
-          icon={<SearchPlusIcon className="h-4 w-4" title="Zoom In" />}
+          icon={<SearchPlusIcon className='h-4 w-4' title='Zoom In' />}
         >
           Zoom In
         </DropdownItem>
         <DropdownItem
           onClick={handleZoomOut}
-          icon={<SearchMinusIcon className="h-4 w-4" title="Zoom Out" />}
+          icon={<SearchMinusIcon className='h-4 w-4' title='Zoom Out' />}
         >
           Zoom Out
         </DropdownItem>
@@ -135,11 +135,9 @@ export function ZoomToolbar({ documentId }: ZoomToolbarProps) {
             key={value}
             onClick={() => handleSelectZoom(value)}
             icon={
-              value === ZoomMode.FitPage ? (
-                <FitPageIcon className="h-4 w-4" title="Fit to Page" />
-              ) : (
-                <FitWidthIcon className="h-4 w-4" title="Fit to Width" />
-              )
+              value === ZoomMode.FitPage ?
+                <FitPageIcon className='h-4 w-4' title='Fit to Page' />
+              : <FitWidthIcon className='h-4 w-4' title='Fit to Width' />
             }
             isActive={state.zoomLevel === value}
           >
@@ -151,7 +149,7 @@ export function ZoomToolbar({ documentId }: ZoomToolbarProps) {
 
         <DropdownItem
           onClick={handleToggleMarquee}
-          icon={<MarqueeIcon className="h-4 w-4" title="Marquee Zoom" />}
+          icon={<MarqueeIcon className='h-4 w-4' title='Marquee Zoom' />}
           isActive={state.isMarqueeZoomActive}
         >
           Marquee Zoom

@@ -52,9 +52,9 @@ export function CommandButton({
       title={command.label}
       className={className}
     >
-      {variant === 'text' ? (
-        <span className="text-sm">{command.label}</span>
-      ) : variant === 'icon-text' ? (
+      {variant === 'text' ?
+        <span className='text-sm'>{command.label}</span>
+      : variant === 'icon-text' ?
         <>
           {IconComponent && (
             <IconComponent
@@ -65,10 +65,10 @@ export function CommandButton({
           )}
           <span>{command.label}</span>
         </>
-      ) : variant === 'tab' ? (
-        <span className="px-3 py-1">{command.label}</span>
-      ) : // Default: icon only
-      IconComponent ? (
+      : variant === 'tab' ?
+        <span className='px-3 py-1'>{command.label}</span>
+        // Default: icon only
+      : IconComponent ?
         <IconComponent
           className={twMerge('h-5 w-5', iconProps.className)}
           title={command.label}
@@ -77,9 +77,7 @@ export function CommandButton({
             fill: iconProps.secondaryColor,
           }}
         />
-      ) : (
-        <span>{command.label}</span>
-      )}
+      : <span>{command.label}</span>}
     </ToolbarButton>
   );
 }

@@ -24,12 +24,14 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
     },
     ref,
   ) => {
-    const baseClasses = isActive
-      ? 'border-none bg-blue-50 text-blue-500 shadow ring ring-blue-500'
+    const baseClasses =
+      isActive ?
+        'border-none bg-blue-50 text-blue-500 shadow ring ring-blue-500'
       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 hover:ring hover:ring-[#1a466b]';
 
-    const disabledClasses = disabled
-      ? 'cursor-not-allowed opacity-50 hover:bg-transparent hover:text-gray-600 hover:ring-0'
+    const disabledClasses =
+      disabled ?
+        'cursor-not-allowed opacity-50 hover:bg-transparent hover:text-gray-600 hover:ring-0'
       : '';
 
     const mergedClasses = twMerge(

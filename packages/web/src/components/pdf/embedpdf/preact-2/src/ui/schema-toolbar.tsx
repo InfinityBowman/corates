@@ -34,7 +34,7 @@ export function SchemaToolbar({
       className={twMerge('flex items-center gap-2', placementClasses, slotClasses, className)}
       {...getUIItemProps(schema)}
     >
-      {schema.items.map((item) => (
+      {schema.items.map(item => (
         <ToolbarItemRenderer key={item.id} item={item} documentId={documentId} />
       ))}
     </div>
@@ -110,10 +110,10 @@ function TabGroupRenderer({
     <div
       className={twMerge('flex items-center', alignmentClass)}
       {...getUIItemProps(item)}
-      role="tablist"
+      role='tablist'
     >
-      <div className="flex rounded-lg bg-gray-100 p-1">
-        {item.tabs.map((tab) => {
+      <div className='flex rounded-lg bg-gray-100 p-1'>
+        {item.tabs.map(tab => {
           if (!tab.commandId) {
             return null;
           }
@@ -150,7 +150,7 @@ function DividerRenderer({ item }: { item: Extract<ToolbarItem, { type: 'divider
  */
 function SpacerRenderer({ item }: { item: Extract<ToolbarItem, { type: 'spacer' }> }) {
   return (
-    <div className={item.flex ? 'flex-1' : 'w-4'} {...getUIItemProps(item)} aria-hidden="true" />
+    <div className={item.flex ? 'flex-1' : 'w-4'} {...getUIItemProps(item)} aria-hidden='true' />
   );
 }
 
@@ -172,7 +172,7 @@ function GroupRenderer({
       className={twMerge('flex items-center', gapClass, alignmentClass)}
       {...getUIItemProps(item)}
     >
-      {item.items.map((childItem) => (
+      {item.items.map(childItem => (
         <ToolbarItemRenderer key={childItem.id} item={childItem} documentId={documentId} />
       ))}
     </div>

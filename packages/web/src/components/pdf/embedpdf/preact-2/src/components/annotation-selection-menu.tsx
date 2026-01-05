@@ -38,15 +38,15 @@ export function AnnotationSelectionMenu({
 
   return (
     <div {...menuWrapperProps}>
-      <div style={menuStyle} className="rounded-lg border border-gray-200 bg-white shadow-lg">
-        <div className="flex items-center gap-1 px-2 py-1">
+      <div style={menuStyle} className='rounded-lg border border-gray-200 bg-white shadow-lg'>
+        <div className='flex items-center gap-1 px-2 py-1'>
           <button
             onClick={handleDelete}
-            className="flex items-center justify-center rounded p-1.5 text-gray-600 transition-colors hover:bg-gray-100 hover:text-red-600"
-            aria-label="Delete annotation"
-            title="Delete annotation"
+            className='flex items-center justify-center rounded p-1.5 text-gray-600 transition-colors hover:bg-gray-100 hover:text-red-600'
+            aria-label='Delete annotation'
+            title='Delete annotation'
           >
-            <TrashIcon className="h-4 w-4" />
+            <TrashIcon className='h-4 w-4' />
           </button>
         </div>
       </div>

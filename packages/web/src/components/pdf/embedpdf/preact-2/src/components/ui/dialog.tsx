@@ -68,32 +68,32 @@ export function Dialog({
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 bg-black/50 md:flex md:items-center md:justify-center"
+      className='fixed inset-0 z-50 bg-black/50 md:flex md:items-center md:justify-center'
       onClick={handleBackdropClick}
     >
       <div
         className={`relative flex h-full w-full flex-col bg-white md:h-auto md:w-[28rem] md:max-w-[90vw] md:rounded-lg md:border md:border-gray-200 md:shadow-lg ${className || ''}`}
         style={{ maxWidth }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-6 py-4">
-            {title && <h2 className="text-lg font-semibold text-gray-900">{title}</h2>}
+          <div className='flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-6 py-4'>
+            {title && <h2 className='text-lg font-semibold text-gray-900'>{title}</h2>}
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="rounded p-1 hover:bg-gray-100"
-                aria-label="Close dialog"
+                className='rounded p-1 hover:bg-gray-100'
+                aria-label='Close dialog'
               >
-                <CloseIcon className="h-5 w-5" />
+                <CloseIcon className='h-5 w-5' />
               </button>
             )}
           </div>
         )}
 
         {/* Content */}
-        <div className="flex-1 space-y-6 overflow-y-auto px-6 py-4 md:max-h-[80vh] md:flex-none">
+        <div className='flex-1 space-y-6 overflow-y-auto px-6 py-4 md:max-h-[80vh] md:flex-none'>
           {children}
         </div>
       </div>

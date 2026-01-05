@@ -37,23 +37,23 @@ export default function ZoomToolbar({ documentId }) {
   }, [provides]);
 
   const handlePresetSelect = useCallback(
-    (value) => {
+    value => {
       provides.requestZoom(value);
       setIsDropdownOpen(false);
     },
-    [provides]
+    [provides],
   );
 
   const handleModeSelect = useCallback(
-    (newMode) => {
+    newMode => {
       provides.requestZoom(newMode);
       setIsDropdownOpen(false);
     },
-    [provides]
+    [provides],
   );
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handleClickOutside = e => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setIsDropdownOpen(false);
       }
@@ -65,7 +65,7 @@ export default function ZoomToolbar({ documentId }) {
   }, [isDropdownOpen]);
 
   const zoomPercentage = Math.round((state.currentZoomLevel || 1) * 100);
-  const currentModeLabel = ZOOM_MODES.find((m) => m.value === state.zoomLevel)?.label;
+  const currentModeLabel = ZOOM_MODES.find(m => m.value === state.zoomLevel)?.label;
 
   return (
     <div class='flex items-center gap-1'>
@@ -87,8 +87,8 @@ export default function ZoomToolbar({ documentId }) {
         </button>
 
         {isDropdownOpen && (
-          <div class='absolute left-0 top-full z-50 mt-1 w-36 rounded-md border border-gray-200 bg-white py-1 shadow-lg'>
-            {ZOOM_MODES.map((zoomMode) => (
+          <div class='absolute top-full left-0 z-50 mt-1 w-36 rounded-md border border-gray-200 bg-white py-1 shadow-lg'>
+            {ZOOM_MODES.map(zoomMode => (
               <button
                 key={zoomMode.value}
                 onClick={() => handleModeSelect(zoomMode.value)}
@@ -100,14 +100,14 @@ export default function ZoomToolbar({ documentId }) {
               </button>
             ))}
             <ToolbarDivider orientation='horizontal' />
-            {ZOOM_PRESETS.map((preset) => (
+            {ZOOM_PRESETS.map(preset => (
               <button
                 key={preset.value}
                 onClick={() => handlePresetSelect(preset.value)}
                 class={`w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 ${
-                  Math.abs(state.currentZoomLevel - preset.value) < 0.01
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-700'
+                  Math.abs(state.currentZoomLevel - preset.value) < 0.01 ?
+                    'bg-blue-50 text-blue-600'
+                  : 'text-gray-700'
                 }`}
               >
                 {preset.label}

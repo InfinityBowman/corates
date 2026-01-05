@@ -36,9 +36,8 @@ export function CommandTabButton({
   const iconProps = command.iconProps || {};
 
   const baseClasses = `rounded transition-colors disabled:cursor-not-allowed disabled:opacity-50`;
-  const activeClasses = command.active
-    ? 'bg-white text-gray-900 shadow-sm'
-    : 'text-gray-600 hover:text-gray-900';
+  const activeClasses =
+    command.active ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900';
 
   const sizeClasses = variant === 'icon' ? 'p-1.5' : 'px-4 py-1';
 
@@ -50,21 +49,19 @@ export function CommandTabButton({
       className={twMerge(baseClasses, activeClasses, sizeClasses)}
       aria-label={command.label}
       title={command.label}
-      role="tab"
+      role='tab'
       aria-selected={command.active}
     >
-      {variant === 'icon' && IconComponent ? (
+      {variant === 'icon' && IconComponent ?
         <IconComponent
-          className="h-5 w-5"
+          className='h-5 w-5'
           title={command.label}
           style={{
             color: iconProps.primaryColor,
             fill: iconProps.secondaryColor,
           }}
         />
-      ) : (
-        <span className="text-sm font-medium">{command.label}</span>
-      )}
+      : <span className='text-sm font-medium'>{command.label}</span>}
     </button>
   );
 }

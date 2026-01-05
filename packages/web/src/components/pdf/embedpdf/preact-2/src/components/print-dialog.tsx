@@ -61,7 +61,7 @@ export function PrintDialog({ documentId, isOpen, onClose }: PrintDialogProps) {
           () => {
             onClose();
           },
-          (error) => {
+          error => {
             console.error('Print failed:', error);
             setIsLoading(false);
           },
@@ -74,63 +74,63 @@ export function PrintDialog({ documentId, isOpen, onClose }: PrintDialogProps) {
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} title="Print Settings" maxWidth="28rem">
+    <Dialog open={isOpen} onClose={onClose} title='Print Settings' maxWidth='28rem'>
       <DialogContent>
         {/* Pages to print */}
         <div>
-          <label className="mb-3 block text-sm font-medium text-gray-700">Pages to print</label>
-          <div className="space-y-2">
-            <label className="flex items-center">
+          <label className='mb-3 block text-sm font-medium text-gray-700'>Pages to print</label>
+          <div className='space-y-2'>
+            <label className='flex items-center'>
               <input
-                type="radio"
-                name="selection"
-                value="all"
+                type='radio'
+                name='selection'
+                value='all'
                 checked={selection === 'all'}
-                onChange={(e) => setSelection(e.target.value as PageSelection)}
-                className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                onChange={e => setSelection(e.target.value as PageSelection)}
+                className='h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500'
               />
-              <span className="ml-2 text-sm text-gray-700">All pages</span>
+              <span className='ml-2 text-sm text-gray-700'>All pages</span>
             </label>
 
-            <label className="flex items-center">
+            <label className='flex items-center'>
               <input
-                type="radio"
-                name="selection"
-                value="current"
+                type='radio'
+                name='selection'
+                value='current'
                 checked={selection === 'current'}
-                onChange={(e) => setSelection(e.target.value as PageSelection)}
-                className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                onChange={e => setSelection(e.target.value as PageSelection)}
+                className='h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500'
               />
-              <span className="ml-2 text-sm text-gray-700">
+              <span className='ml-2 text-sm text-gray-700'>
                 Current page ({scrollState.currentPage})
               </span>
             </label>
 
-            <label className="flex items-center">
+            <label className='flex items-center'>
               <input
-                type="radio"
-                name="selection"
-                value="custom"
+                type='radio'
+                name='selection'
+                value='custom'
                 checked={selection === 'custom'}
-                onChange={(e) => setSelection(e.target.value as PageSelection)}
-                className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                onChange={e => setSelection(e.target.value as PageSelection)}
+                className='h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500'
               />
-              <span className="ml-2 text-sm text-gray-700">Specify pages</span>
+              <span className='ml-2 text-sm text-gray-700'>Specify pages</span>
             </label>
           </div>
 
           {/* Custom page range input */}
-          <div className="mt-3">
+          <div className='mt-3'>
             <input
-              type="text"
+              type='text'
               value={customPages}
-              onChange={(e) => setCustomPages(e.target.value)}
-              placeholder="e.g., 1-3, 5, 8-10"
+              onChange={e => setCustomPages(e.target.value)}
+              placeholder='e.g., 1-3, 5, 8-10'
               disabled={selection !== 'custom'}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+              className='w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500'
             />
             {customPages.trim() && scrollState.totalPages > 0 && (
-              <p className="mt-1 text-xs text-gray-500">
+              <p className='mt-1 text-xs text-gray-500'>
                 Total pages in document: {scrollState.totalPages}
               </p>
             )}
@@ -139,22 +139,22 @@ export function PrintDialog({ documentId, isOpen, onClose }: PrintDialogProps) {
 
         {/* Include annotations */}
         <div>
-          <label className="flex items-center">
+          <label className='flex items-center'>
             <input
-              type="checkbox"
+              type='checkbox'
               checked={includeAnnotations}
-              onChange={(e) => setIncludeAnnotations(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+              onChange={e => setIncludeAnnotations(e.target.checked)}
+              className='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500'
             />
-            <span className="ml-2 text-sm text-gray-700">Include annotations</span>
+            <span className='ml-2 text-sm text-gray-700'>Include annotations</span>
           </label>
         </div>
       </DialogContent>
       <DialogFooter>
-        <Button variant="secondary" onClick={onClose} disabled={isLoading}>
+        <Button variant='secondary' onClick={onClose} disabled={isLoading}>
           Cancel
         </Button>
-        <Button variant="primary" onClick={handlePrint} disabled={!canSubmit}>
+        <Button variant='primary' onClick={handlePrint} disabled={!canSubmit}>
           {isLoading ? 'Printing...' : 'Print'}
         </Button>
       </DialogFooter>

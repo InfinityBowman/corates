@@ -34,9 +34,9 @@ export function Button({
         onClick={onClick}
         disabled={disabled}
         className={`flex h-[32px] w-auto min-w-[32px] items-center justify-center rounded-md p-[5px] transition-colors ${
-          active
-            ? 'border-none bg-blue-50 text-blue-500 shadow ring ring-blue-500'
-            : variantStyles.default
+          active ?
+            'border-none bg-blue-50 text-blue-500 shadow ring ring-blue-500'
+          : variantStyles.default
         } ${disabled ? 'cursor-not-allowed opacity-50 hover:bg-transparent hover:ring-0' : 'cursor-pointer'} ${className}`}
         title={tooltip}
         {...props}

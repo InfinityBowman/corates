@@ -412,8 +412,9 @@ export const dutchTranslations: Locale = {
 
 export const paramResolvers: ParamResolvers<State> = {
   'zoom.level': ({ state, documentId }) => {
-    const zoomLevel = documentId
-      ? (state.plugins[ZOOM_PLUGIN_ID]?.documents[documentId]?.currentZoomLevel ?? 1)
+    const zoomLevel =
+      documentId ?
+        (state.plugins[ZOOM_PLUGIN_ID]?.documents[documentId]?.currentZoomLevel ?? 1)
       : 1;
     return {
       level: Math.round(zoomLevel * 100),

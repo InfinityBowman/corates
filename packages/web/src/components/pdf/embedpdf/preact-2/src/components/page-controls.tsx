@@ -36,7 +36,7 @@ export function PageControls({ documentId }: PageControlsProps) {
   useEffect(() => {
     if (!viewport) return;
 
-    return viewport.onScrollActivity((activity) => {
+    return viewport.onScrollActivity(activity => {
       if (activity.documentId === documentId) {
         setIsVisible(true);
         startHideTimer();
@@ -99,40 +99,40 @@ export function PageControls({ documentId }: PageControlsProps) {
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >
-      <div className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-1 shadow-lg">
+      <div className='flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-1 shadow-lg'>
         {/* Previous Button */}
         <button
           onClick={handlePreviousPage}
           disabled={currentPage === 1}
-          className="rounded p-1 text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400 disabled:hover:bg-transparent"
-          aria-label="Previous page"
+          className='rounded p-1 text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400 disabled:hover:bg-transparent'
+          aria-label='Previous page'
         >
-          <ChevronLeftIcon className="h-5 w-5" />
+          <ChevronLeftIcon className='h-5 w-5' />
         </button>
 
         {/* Page Input */}
-        <form onSubmit={handlePageChange} className="flex items-center gap-2">
+        <form onSubmit={handlePageChange} className='flex items-center gap-2'>
           <input
-            type="text"
-            name="page"
+            type='text'
+            name='page'
             value={inputValue}
-            onChange={(e) => {
+            onChange={e => {
               const value = e.target.value.replace(/[^0-9]/g, '');
               setInputValue(value);
             }}
-            className="h-7 w-10 rounded border border-gray-300 bg-white px-1 text-center text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className='h-7 w-10 rounded border border-gray-300 bg-white px-1 text-center text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
           />
-          <span className="text-sm text-gray-600">{totalPages}</span>
+          <span className='text-sm text-gray-600'>{totalPages}</span>
         </form>
 
         {/* Next Button */}
         <button
           onClick={handleNextPage}
           disabled={currentPage === totalPages}
-          className="rounded p-1 text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400 disabled:hover:bg-transparent"
-          aria-label="Next page"
+          className='rounded p-1 text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400 disabled:hover:bg-transparent'
+          aria-label='Next page'
         >
-          <ChevronRightIcon className="h-5 w-5" />
+          <ChevronRightIcon className='h-5 w-5' />
         </button>
       </div>
     </div>

@@ -179,8 +179,8 @@ export function SchemaPanel({ schema, documentId, isOpen, onClose }: SidebarRend
       };
 
       const activeTab =
-        availableTabs.find((tab) => tab.id === activeTabId) ??
-        availableTabs.find((tab) => tab.id === resolvedActiveTabId) ??
+        availableTabs.find(tab => tab.id === activeTabId) ??
+        availableTabs.find(tab => tab.id === resolvedActiveTabId) ??
         availableTabs[0];
 
       if (!activeTab) {
@@ -192,14 +192,14 @@ export function SchemaPanel({ schema, documentId, isOpen, onClose }: SidebarRend
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity"
+            className='fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity'
             onClick={onClose}
           />
 
           {/* Bottom Sheet */}
           <div
             ref={panelRef}
-            className={`fixed bottom-0 left-0 right-0 z-50 ${heightClass} flex flex-col rounded-t-2xl bg-white shadow-2xl transition-all duration-300`}
+            className={`fixed right-0 bottom-0 left-0 z-50 ${heightClass} flex flex-col rounded-t-2xl bg-white shadow-2xl transition-all duration-300`}
             style={{
               transform: `translateY(${dragOffset}px)`,
             }}
@@ -207,39 +207,39 @@ export function SchemaPanel({ schema, documentId, isOpen, onClose }: SidebarRend
           >
             {/* Drag Handle & Header */}
             <div
-              className="flex cursor-grab items-center justify-between border-b border-gray-200 px-4 py-3 active:cursor-grabbing"
+              className='flex cursor-grab items-center justify-between border-b border-gray-200 px-4 py-3 active:cursor-grabbing'
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
               onMouseDown={handleMouseDown}
             >
-              <div className="flex flex-1 justify-center">
-                <div className="h-1.5 w-12 rounded-full bg-gray-300" />
+              <div className='flex flex-1 justify-center'>
+                <div className='h-1.5 w-12 rounded-full bg-gray-300' />
               </div>
               <button
                 onClick={onClose}
-                className="ml-2 rounded-full p-1 transition-colors hover:bg-gray-100"
-                aria-label="Close panel"
+                className='ml-2 rounded-full p-1 transition-colors hover:bg-gray-100'
+                aria-label='Close panel'
               >
-                <Icons.CloseIcon className="h-5 w-5 text-gray-600" />
+                <Icons.CloseIcon className='h-5 w-5 text-gray-600' />
               </button>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 border-b border-gray-200 bg-gray-50 p-2">
-              {availableTabs.map((tab) => {
+            <div className='flex gap-2 border-b border-gray-200 bg-gray-50 p-2'>
+              {availableTabs.map(tab => {
                 const isActive = tab.id === (activeTab?.id ?? activeTabId);
                 return (
                   <button
                     key={tab.id}
-                    type="button"
+                    type='button'
                     className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
+                      isActive ?
+                        'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
                     }`}
                     onClick={() => handleTabSelect(tab.id)}
-                    role="tab"
+                    role='tab'
                     aria-selected={isActive}
                   >
                     {translate(tab.labelKey || tab.id, { fallback: tab.label || tab.id })}
@@ -249,7 +249,7 @@ export function SchemaPanel({ schema, documentId, isOpen, onClose }: SidebarRend
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-auto">
+            <div className='flex-1 overflow-auto'>
               {renderCustomComponent(activeTab.componentId, documentId, {
                 tabId: activeTab.id,
                 onClose,
@@ -266,14 +266,14 @@ export function SchemaPanel({ schema, documentId, isOpen, onClose }: SidebarRend
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity"
+            className='fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity'
             onClick={onClose}
           />
 
           {/* Bottom Sheet */}
           <div
             ref={panelRef}
-            className={`fixed bottom-0 left-0 right-0 z-50 ${heightClass} flex flex-col rounded-t-2xl bg-white shadow-2xl transition-all duration-300`}
+            className={`fixed right-0 bottom-0 left-0 z-50 ${heightClass} flex flex-col rounded-t-2xl bg-white shadow-2xl transition-all duration-300`}
             style={{
               transform: `translateY(${dragOffset}px)`,
             }}
@@ -281,26 +281,26 @@ export function SchemaPanel({ schema, documentId, isOpen, onClose }: SidebarRend
           >
             {/* Drag Handle & Header */}
             <div
-              className="flex cursor-grab items-center justify-between border-b border-gray-200 px-4 py-3 active:cursor-grabbing"
+              className='flex cursor-grab items-center justify-between border-b border-gray-200 px-4 py-3 active:cursor-grabbing'
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
               onMouseDown={handleMouseDown}
             >
-              <div className="flex flex-1 justify-center">
-                <div className="h-1.5 w-12 rounded-full bg-gray-300" />
+              <div className='flex flex-1 justify-center'>
+                <div className='h-1.5 w-12 rounded-full bg-gray-300' />
               </div>
               <button
                 onClick={onClose}
-                className="ml-2 rounded-full p-1 transition-colors hover:bg-gray-100"
-                aria-label="Close panel"
+                className='ml-2 rounded-full p-1 transition-colors hover:bg-gray-100'
+                aria-label='Close panel'
               >
-                <Icons.CloseIcon className="h-5 w-5 text-gray-600" />
+                <Icons.CloseIcon className='h-5 w-5 text-gray-600' />
               </button>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-auto">
+            <div className='flex-1 overflow-auto'>
               {renderCustomComponent(content.componentId, documentId, {
                 onClose,
               })}
@@ -343,8 +343,8 @@ export function SchemaPanel({ schema, documentId, isOpen, onClose }: SidebarRend
     };
 
     const activeTab =
-      availableTabs.find((tab) => tab.id === activeTabId) ??
-      availableTabs.find((tab) => tab.id === resolvedActiveTabId) ??
+      availableTabs.find(tab => tab.id === activeTabId) ??
+      availableTabs.find(tab => tab.id === resolvedActiveTabId) ??
       availableTabs[0];
 
     if (!activeTab) {
@@ -358,20 +358,20 @@ export function SchemaPanel({ schema, documentId, isOpen, onClose }: SidebarRend
         style={widthStyle}
         data-panel-id={schema.id}
       >
-        <div className="flex gap-2 border-b border-gray-200 bg-gray-50 p-2">
-          {availableTabs.map((tab) => {
+        <div className='flex gap-2 border-b border-gray-200 bg-gray-50 p-2'>
+          {availableTabs.map(tab => {
             const isActive = tab.id === (activeTab?.id ?? activeTabId);
             return (
               <button
                 key={tab.id}
-                type="button"
+                type='button'
                 className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                  isActive ?
+                    'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
                 }`}
                 onClick={() => handleTabSelect(tab.id)}
-                role="tab"
+                role='tab'
                 aria-selected={isActive}
               >
                 {translate(tab.labelKey || tab.id, { fallback: tab.label || tab.id })}
@@ -380,7 +380,7 @@ export function SchemaPanel({ schema, documentId, isOpen, onClose }: SidebarRend
           })}
         </div>
 
-        <div className="flex-1 overflow-auto">
+        <div className='flex-1 overflow-auto'>
           {renderCustomComponent(activeTab.componentId, documentId, {
             tabId: activeTab.id,
             onClose,

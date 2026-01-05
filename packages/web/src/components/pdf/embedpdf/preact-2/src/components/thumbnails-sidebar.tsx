@@ -10,11 +10,11 @@ export function ThumbnailsSidebar({ documentId, onClose }: ThumbnailsSidebarProp
   const { state, provides } = useScroll(documentId);
 
   return (
-    <div className="flex h-full flex-col bg-gray-50">
+    <div className='flex h-full flex-col bg-gray-50'>
       {/* Thumbnails */}
-      <div className="flex-1 overflow-hidden">
+      <div className='flex-1 overflow-hidden'>
         <ThumbnailsPane documentId={documentId} style={{ width: '100%', height: '100%' }}>
-          {(m) => (
+          {m => (
             <div
               key={m.pageIndex}
               style={{
@@ -42,9 +42,9 @@ export function ThumbnailsSidebar({ documentId, onClose }: ThumbnailsSidebarProp
                   borderRadius: '4px',
                   overflow: 'hidden',
                   boxShadow:
-                    state.currentPage === m.pageIndex + 1
-                      ? '0 0 0 2px rgba(59, 130, 246, 0.2)'
-                      : 'none',
+                    state.currentPage === m.pageIndex + 1 ?
+                      '0 0 0 2px rgba(59, 130, 246, 0.2)'
+                    : 'none',
                 }}
               >
                 <ThumbImg
@@ -66,7 +66,7 @@ export function ThumbnailsSidebar({ documentId, onClose }: ThumbnailsSidebarProp
                   marginTop: '4px',
                 }}
               >
-                <span className="text-xs text-gray-600">{m.pageIndex + 1}</span>
+                <span className='text-xs text-gray-600'>{m.pageIndex + 1}</span>
               </div>
             </div>
           )}

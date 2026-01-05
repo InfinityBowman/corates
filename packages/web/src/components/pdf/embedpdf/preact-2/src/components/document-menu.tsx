@@ -51,44 +51,42 @@ export function DocumentMenu({ documentId }: DocumentMenuProps) {
 
   return (
     <>
-      <div className="relative">
+      <div className='relative'>
         <ToolbarButton
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           isActive={isMenuOpen}
-          aria-label="Document Menu"
-          title="Document Menu"
+          aria-label='Document Menu'
+          title='Document Menu'
         >
-          <MenuIcon className="h-4 w-4" />
+          <MenuIcon className='h-4 w-4' />
         </ToolbarButton>
 
-        <DropdownMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} className="w-48">
+        <DropdownMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} className='w-48'>
           <DropdownItem
             isActive={captureState.isMarqueeCaptureActive}
             onClick={handleScreenshot}
-            icon={<ScreenshotIcon className="h-4 w-4" title="Capture Area" />}
+            icon={<ScreenshotIcon className='h-4 w-4' title='Capture Area' />}
           >
             Capture Area
           </DropdownItem>
           <DropdownItem
             onClick={handlePrint}
-            icon={<PrintIcon className="h-4 w-4" title="Print" />}
+            icon={<PrintIcon className='h-4 w-4' title='Print' />}
           >
             Print
           </DropdownItem>
           <DropdownItem
             onClick={handleDownload}
-            icon={<DownloadIcon className="h-4 w-4" title="Download" />}
+            icon={<DownloadIcon className='h-4 w-4' title='Download' />}
           >
             Download
           </DropdownItem>
           <DropdownItem
             onClick={handleFullscreen}
             icon={
-              fullscreenState.isFullscreen ? (
-                <FullscreenExitIcon className="h-4 w-4" title="Exit Fullscreen" />
-              ) : (
-                <FullscreenIcon className="h-4 w-4" title="Fullscreen" />
-              )
+              fullscreenState.isFullscreen ?
+                <FullscreenExitIcon className='h-4 w-4' title='Exit Fullscreen' />
+              : <FullscreenIcon className='h-4 w-4' title='Fullscreen' />
             }
           >
             {fullscreenState.isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}

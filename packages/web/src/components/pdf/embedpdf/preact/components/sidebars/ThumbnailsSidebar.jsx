@@ -18,7 +18,12 @@ export default function ThumbnailsSidebar({ documentId, onClose }) {
           aria-label='Close thumbnails'
         >
           <svg class='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M6 18L18 6M6 6l12 12'
+            />
           </svg>
         </button>
       </div>
@@ -26,7 +31,7 @@ export default function ThumbnailsSidebar({ documentId, onClose }) {
       {/* Thumbnail list */}
       <div class='flex-1 overflow-hidden'>
         <ThumbnailsPane documentId={documentId} style={{ width: '100%', height: '100%' }}>
-          {(m) => (
+          {m => (
             <div
               key={m.pageIndex}
               style={{
@@ -54,9 +59,9 @@ export default function ThumbnailsSidebar({ documentId, onClose }) {
                   borderRadius: '4px',
                   overflow: 'hidden',
                   boxShadow:
-                    state.currentPage === m.pageIndex + 1
-                      ? '0 0 0 2px rgba(59, 130, 246, 0.2)'
-                      : 'none',
+                    state.currentPage === m.pageIndex + 1 ?
+                      '0 0 0 2px rgba(59, 130, 246, 0.2)'
+                    : 'none',
                 }}
               >
                 <ThumbImg

@@ -115,7 +115,7 @@ export function ViewerPage() {
   );
 
   const toggleSidebar = (documentId: string, sidebar: keyof SidebarState) => {
-    setSidebarStates((prev) => ({
+    setSidebarStates(prev => ({
       ...prev,
       [documentId]: {
         ...(prev[documentId] || { search: false, thumbnails: false }),
@@ -133,7 +133,7 @@ export function ViewerPage() {
   };
 
   const setToolbarMode = (documentId: string, mode: ViewMode) => {
-    setToolbarModes((prev) => ({
+    setToolbarModes(prev => ({
       ...prev,
       [documentId]: mode,
     }));
@@ -145,22 +145,22 @@ export function ViewerPage() {
 
   if (isLoading || !engine) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <LoadingSpinner message="Loading PDF engine..." />
+      <div className='flex h-screen items-center justify-center'>
+        <LoadingSpinner message='Loading PDF engine...' />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen flex-1 flex-col overflow-hidden" ref={containerRef}>
+    <div className='flex h-screen flex-1 flex-col overflow-hidden' ref={containerRef}>
       <NavigationBar />
 
-      <div className="flex flex-1 select-none flex-col overflow-hidden">
+      <div className='flex flex-1 flex-col overflow-hidden select-none'>
         <EmbedPDF
           engine={engine}
           logger={logger}
           plugins={plugins}
-          onInitialized={async (registry) => {
+          onInitialized={async registry => {
             // Load default PDF URL on initialization
             const document = await registry
               ?.getPlugin<DocumentManagerPlugin>(DocumentManagerPlugin.id)
@@ -185,7 +185,7 @@ export function ViewerPage() {
         >
           {({ pluginsReady, registry }) => (
             <>
-              {pluginsReady ? (
+              {pluginsReady ?
                 <SplitViewLayout
                   renderView={({
                     view,
@@ -193,11 +193,11 @@ export function ViewerPage() {
                     addDocument,
                     setActiveDocument,
                   }) => (
-                    <div className="flex h-full flex-col">
+                    <div className='flex h-full flex-col'>
                       <TabBar
                         currentView={view}
-                        onSelect={(documentId) => setActiveDocument(documentId)}
-                        onClose={(docId) =>
+                        onSelect={documentId => setActiveDocument(documentId)}
+                        onClose={docId =>
                           registry
                             ?.getPlugin<DocumentManagerPlugin>(DocumentManagerPlugin.id)
                             ?.provides()
@@ -209,11 +209,11 @@ export function ViewerPage() {
                             ?.provides()
                             ?.openFileDialog();
                           openTask?.wait(
-                            (result) => {
+                            result => {
                               addDocument(result.documentId);
                               setActiveDocument(result.documentId);
                             },
-                            (error) => {
+                            error => {
                               console.error('Open file failed:', error);
                             },
                           );
@@ -228,14 +228,14 @@ export function ViewerPage() {
                           isSearchOpen={getSidebarState(documentId).search}
                           isThumbnailsOpen={getSidebarState(documentId).thumbnails}
                           mode={getToolbarMode(documentId)}
-                          onModeChange={(mode) => setToolbarMode(documentId, mode)}
+                          onModeChange={mode => setToolbarMode(documentId, mode)}
                         />
                       )}
 
                       {/* Empty State - No Documents */}
                       {!documentId && (
                         <EmptyState
-                          onDocumentOpened={(documentId) => {
+                          onDocumentOpened={documentId => {
                             addDocument(documentId);
                             setActiveDocument(documentId);
                           }}
@@ -244,7 +244,7 @@ export function ViewerPage() {
 
                       {/* Document Content Area */}
                       {documentId && (
-                        <div id={documentId} className="flex flex-1 overflow-hidden bg-white">
+                        <div id={documentId} className='flex flex-1 overflow-hidden bg-white'>
                           {/* Thumbnails Sidebar - Left */}
                           {getSidebarState(documentId).thumbnails && (
                             <ThumbnailsSidebar
@@ -254,22 +254,22 @@ export function ViewerPage() {
                           )}
 
                           {/* Main Viewer */}
-                          <div className="flex-1 overflow-hidden">
+                          <div className='flex-1 overflow-hidden'>
                             <DocumentContent documentId={documentId}>
                               {({ documentState, isLoading, isError, isLoaded }) => (
                                 <>
                                   {isLoading && (
-                                    <div className="flex h-full items-center justify-center">
-                                      <LoadingSpinner message="Loading document..." />
+                                    <div className='flex h-full items-center justify-center'>
+                                      <LoadingSpinner message='Loading document...' />
                                     </div>
                                   )}
                                   {isError && (
                                     <DocumentPasswordPrompt documentState={documentState} />
                                   )}
                                   {isLoaded && (
-                                    <div className="relative h-full w-full">
+                                    <div className='relative h-full w-full'>
                                       <GlobalPointerProvider documentId={documentId}>
-                                        <Viewport className="bg-gray-100" documentId={documentId}>
+                                        <Viewport className='bg-gray-100' documentId={documentId}>
                                           <Scroller
                                             documentId={documentId}
                                             renderPage={({ pageIndex }) => (
@@ -308,7 +308,7 @@ export function ViewerPage() {
                                                   <SelectionLayer
                                                     documentId={documentId}
                                                     pageIndex={pageIndex}
-                                                    selectionMenu={(props) => (
+                                                    selectionMenu={props => (
                                                       <SelectionSelectionMenu
                                                         {...props}
                                                         documentId={documentId}
@@ -318,7 +318,7 @@ export function ViewerPage() {
                                                   <RedactionLayer
                                                     documentId={documentId}
                                                     pageIndex={pageIndex}
-                                                    selectionMenu={(props) => (
+                                                    selectionMenu={props => (
                                                       <RedactionSelectionMenu
                                                         {...props}
                                                         documentId={documentId}
@@ -328,7 +328,7 @@ export function ViewerPage() {
                                                   <AnnotationLayer
                                                     documentId={documentId}
                                                     pageIndex={pageIndex}
-                                                    selectionMenu={(props) => (
+                                                    selectionMenu={props => (
                                                       <AnnotationSelectionMenu
                                                         {...props}
                                                         documentId={documentId}
@@ -362,11 +362,10 @@ export function ViewerPage() {
                     </div>
                   )}
                 />
-              ) : (
-                <div className="flex h-full items-center justify-center">
-                  <LoadingSpinner message="Initializing plugins..." />
+              : <div className='flex h-full items-center justify-center'>
+                  <LoadingSpinner message='Initializing plugins...' />
                 </div>
-              )}
+              }
             </>
           )}
         </EmbedPDF>

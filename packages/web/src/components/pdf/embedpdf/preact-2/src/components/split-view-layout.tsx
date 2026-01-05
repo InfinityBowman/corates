@@ -18,10 +18,10 @@ export function SplitViewLayout({ renderView }: SplitViewLayoutProps) {
   useEffect(() => {
     if (!viewManager) return;
 
-    const emptyViews = allViews.filter((v) => v.documentIds.length === 0);
+    const emptyViews = allViews.filter(v => v.documentIds.length === 0);
 
     if (emptyViews.length > 0 && allViews.length > 1) {
-      emptyViews.forEach((emptyView) => {
+      emptyViews.forEach(emptyView => {
         if (allViews.length > 1) {
           viewManager.removeView(emptyView.id);
         }
@@ -45,9 +45,9 @@ export function SplitViewLayout({ renderView }: SplitViewLayoutProps) {
 
   return (
     <div className={`grid h-full gap-1 ${getLayoutClass()} p-1`}>
-      {allViews.map((view) => (
+      {allViews.map(view => (
         <ViewContext key={view.id} viewId={view.id}>
-          {(context) => (
+          {context => (
             <div
               onClick={context.focus}
               className={`relative overflow-hidden border ${

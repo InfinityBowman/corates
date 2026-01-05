@@ -20,9 +20,9 @@ const HitLine = ({ hit, onClick, active }) => {
       ref={ref}
       onClick={onClick}
       class={`w-full rounded border p-2 text-left text-sm transition-colors ${
-        active
-          ? 'border-blue-500 bg-blue-50 text-blue-900'
-          : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+        active ?
+          'border-blue-500 bg-blue-50 text-blue-900'
+        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
       }`}
     >
       <span>
@@ -60,7 +60,7 @@ export default function SearchSidebar({ documentId, onClose }) {
   }, [state.activeResultIndex, state.loading, state.query, state.flags]);
 
   const handleInputChange = useCallback(
-    (e) => {
+    e => {
       const value = e.target.value;
       setInputValue(value);
 
@@ -70,7 +70,7 @@ export default function SearchSidebar({ documentId, onClose }) {
         provides?.searchAllPages(value);
       }
     },
-    [provides]
+    [provides],
   );
 
   const handleFlagChange = useCallback(
@@ -78,10 +78,10 @@ export default function SearchSidebar({ documentId, onClose }) {
       if (checked) {
         provides?.setFlags([...state.flags, flag]);
       } else {
-        provides?.setFlags(state.flags.filter((f) => f !== flag));
+        provides?.setFlags(state.flags.filter(f => f !== flag));
       }
     },
-    [provides, state.flags]
+    [provides, state.flags],
   );
 
   const clearInput = useCallback(() => {
@@ -93,7 +93,7 @@ export default function SearchSidebar({ documentId, onClose }) {
   }, [provides]);
 
   const scrollToItem = useCallback(
-    (index) => {
+    index => {
       const item = state.results[index];
       if (!item) return;
 
@@ -102,7 +102,7 @@ export default function SearchSidebar({ documentId, onClose }) {
           x: Math.min(min.x, rect.origin.x),
           y: Math.min(min.y, rect.origin.y),
         }),
-        { x: Infinity, y: Infinity }
+        { x: Infinity, y: Infinity },
       );
 
       scrollProvides?.forDocument(documentId).scrollToPage({
@@ -111,10 +111,10 @@ export default function SearchSidebar({ documentId, onClose }) {
         center: true,
       });
     },
-    [state.results, scrollProvides, documentId]
+    [state.results, scrollProvides, documentId],
   );
 
-  const groupByPage = useCallback((results) => {
+  const groupByPage = useCallback(results => {
     return results.reduce((map, r, i) => {
       (map[r.pageIndex] ??= []).push({ hit: r, index: i });
       return map;
@@ -136,7 +136,12 @@ export default function SearchSidebar({ documentId, onClose }) {
           aria-label='Close search'
         >
           <svg class='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M6 18L18 6M6 6l12 12'
+            />
           </svg>
         </button>
       </div>
@@ -145,7 +150,12 @@ export default function SearchSidebar({ documentId, onClose }) {
       <div class='border-b border-gray-200 p-3'>
         <div class='relative'>
           <div class='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'>
-            <svg class='h-4 w-4 text-gray-400' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+            <svg
+              class='h-4 w-4 text-gray-400'
+              fill='none'
+              viewBox='0 0 24 24'
+              stroke='currentColor'
+            >
               <path
                 strokeLinecap='round'
                 strokeLinejoin='round'
@@ -160,7 +170,7 @@ export default function SearchSidebar({ documentId, onClose }) {
             value={inputValue}
             onInput={handleInputChange}
             placeholder='Search in document...'
-            class='w-full rounded border border-gray-300 py-1.5 pl-9 pr-8 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+            class='w-full rounded border border-gray-300 py-1.5 pr-8 pl-9 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
           />
           {inputValue && (
             <button
@@ -168,8 +178,18 @@ export default function SearchSidebar({ documentId, onClose }) {
               onClick={clearInput}
               class='absolute inset-y-0 right-0 flex items-center pr-2'
             >
-              <svg class='h-4 w-4 text-gray-400 hover:text-gray-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+              <svg
+                class='h-4 w-4 text-gray-400 hover:text-gray-600'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M6 18L18 6M6 6l12 12'
+                />
               </svg>
             </button>
           )}
@@ -181,7 +201,7 @@ export default function SearchSidebar({ documentId, onClose }) {
             <input
               type='checkbox'
               checked={state.flags?.includes(MatchFlag.MatchCase)}
-              onChange={(e) => handleFlagChange(MatchFlag.MatchCase, e.target.checked)}
+              onChange={e => handleFlagChange(MatchFlag.MatchCase, e.target.checked)}
               class='h-3 w-3 rounded border-gray-300'
             />
             Match case
@@ -190,7 +210,7 @@ export default function SearchSidebar({ documentId, onClose }) {
             <input
               type='checkbox'
               checked={state.flags?.includes(MatchFlag.MatchWholeWord)}
-              onChange={(e) => handleFlagChange(MatchFlag.MatchWholeWord, e.target.checked)}
+              onChange={e => handleFlagChange(MatchFlag.MatchWholeWord, e.target.checked)}
               class='h-3 w-3 rounded border-gray-300'
             />
             Whole word
@@ -210,7 +230,12 @@ export default function SearchSidebar({ documentId, onClose }) {
                   aria-label='Previous result'
                 >
                   <svg class='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 15l7-7 7 7' />
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M5 15l7-7 7 7'
+                    />
                   </svg>
                 </button>
                 <button
@@ -220,7 +245,12 @@ export default function SearchSidebar({ documentId, onClose }) {
                   aria-label='Next result'
                 >
                   <svg class='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M19 9l-7 7-7-7'
+                    />
                   </svg>
                 </button>
               </div>
@@ -231,13 +261,12 @@ export default function SearchSidebar({ documentId, onClose }) {
 
       {/* Results */}
       <div class='flex-1 overflow-y-auto p-3'>
-        {state.loading ? (
+        {state.loading ?
           <div class='flex items-center justify-center py-4'>
             <div class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600' />
             <span class='ml-2 text-sm text-gray-500'>Searching...</span>
           </div>
-        ) : (
-          <div class='space-y-3'>
+        : <div class='space-y-3'>
             {Object.entries(grouped).map(([page, hits]) => (
               <div key={page}>
                 <div class='mb-1 text-xs font-semibold text-gray-500'>Page {Number(page) + 1}</div>
@@ -254,7 +283,7 @@ export default function SearchSidebar({ documentId, onClose }) {
               </div>
             ))}
           </div>
-        )}
+        }
       </div>
     </div>
   );

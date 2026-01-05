@@ -141,41 +141,40 @@ export function SchemaMenu({ schema, documentId, anchorEl, onClose }: MenuRender
       <>
         {/* Backdrop */}
         <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity"
+          className='fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity'
           onClick={onClose}
         />
 
         {/* Bottom Sheet */}
         <div
           ref={menuRef}
-          className="animate-slide-up fixed bottom-0 left-0 right-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-2xl bg-white shadow-2xl"
+          className='animate-slide-up fixed right-0 bottom-0 left-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-2xl bg-white shadow-2xl'
           {...getUIItemProps(currentMenu.schema)}
-          role="menu"
+          role='menu'
         >
           {/* Header */}
-          {menuStack.length > 1 ? (
-            <div className="flex items-center border-b border-gray-200 px-4 py-3">
+          {menuStack.length > 1 ?
+            <div className='flex items-center border-b border-gray-200 px-4 py-3'>
               <button
                 onClick={navigateBack}
-                className="flex items-center gap-2 font-medium text-blue-600"
-                aria-label="Go back"
+                className='flex items-center gap-2 font-medium text-blue-600'
+                aria-label='Go back'
               >
-                <Icons.ChevronLeftIcon className="h-5 w-5" />
+                <Icons.ChevronLeftIcon className='h-5 w-5' />
                 <span>Back</span>
               </button>
               {currentMenu.title && (
-                <span className="ml-auto text-sm font-semibold text-gray-700">
+                <span className='ml-auto text-sm font-semibold text-gray-700'>
                   {currentMenu.title}
                 </span>
               )}
             </div>
-          ) : (
-            <div className="flex justify-center py-3">
-              <div className="h-1.5 w-12 rounded-full bg-gray-300" />
+          : <div className='flex justify-center py-3'>
+              <div className='h-1.5 w-12 rounded-full bg-gray-300' />
             </div>
-          )}
+          }
 
-          <div className="pb-safe px-2">
+          <div className='pb-safe px-2'>
             {currentMenu.schema.items.map((item, index) => (
               <MenuItemRenderer
                 key={`${item.type}-${index}`}
@@ -196,30 +195,30 @@ export function SchemaMenu({ schema, documentId, anchorEl, onClose }: MenuRender
   return (
     <div
       ref={menuRef}
-      className="animate-fade-in fixed z-50 min-w-[200px] rounded-lg border border-gray-200 bg-white shadow-lg"
+      className='animate-fade-in fixed z-50 min-w-[200px] rounded-lg border border-gray-200 bg-white shadow-lg'
       style={position ? { top: position.top, left: position.left } : undefined}
       {...getUIItemProps(currentMenu.schema)}
-      role="menu"
+      role='menu'
     >
       {/* Header for submenus */}
       {menuStack.length > 1 && (
-        <div className="flex items-center rounded-t-lg border-b border-gray-200 bg-gray-50 px-2 py-2">
+        <div className='flex items-center rounded-t-lg border-b border-gray-200 bg-gray-50 px-2 py-2'>
           <button
             onClick={navigateBack}
-            className="flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
-            aria-label="Go back"
+            className='flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700'
+            aria-label='Go back'
           >
-            <Icons.ChevronLeftIcon className="h-4 w-4" />
+            <Icons.ChevronLeftIcon className='h-4 w-4' />
             <span>Back</span>
           </button>
           {currentMenu.title && (
-            <span className="ml-auto text-xs font-semibold text-gray-600">{currentMenu.title}</span>
+            <span className='ml-auto text-xs font-semibold text-gray-600'>{currentMenu.title}</span>
           )}
         </div>
       )}
 
       {/* Menu items */}
-      <div className="py-1">
+      <div className='py-1'>
         {currentMenu.schema.items.map((item, index) => (
           <MenuItemRenderer
             key={`${item.type}-${index}`}
@@ -322,8 +321,9 @@ function CommandMenuItem({
   const iconName = command.icon ? `${command.icon}Icon` : null;
   const IconComponent = iconName ? Icons[iconName as keyof typeof Icons] : null;
 
-  const baseClasses = isMobile
-    ? 'flex items-center gap-3 px-4 py-3 text-base transition-colors active:bg-gray-100'
+  const baseClasses =
+    isMobile ?
+      'flex items-center gap-3 px-4 py-3 text-base transition-colors active:bg-gray-100'
     : 'flex items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-gray-100';
 
   const disabledClasses = command.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';
@@ -344,7 +344,7 @@ function CommandMenuItem({
       onClick={handleClick}
       disabled={command.disabled}
       className={twMerge(baseClasses, disabledClasses, activeClasses, 'w-full text-left')}
-      role="menuitem"
+      role='menuitem'
     >
       {IconComponent && (
         <IconComponent
@@ -353,10 +353,10 @@ function CommandMenuItem({
           style={{ color: iconProps.primaryColor, fill: iconProps.secondaryColor }}
         />
       )}
-      <span className="flex-1">{command.label}</span>
-      {command.active && <Icons.CheckIcon className="h-4 w-4" />}
+      <span className='flex-1'>{command.label}</span>
+      {command.active && <Icons.CheckIcon className='h-4 w-4' />}
       {command.shortcuts && command.shortcuts.length > 0 && !isMobile && (
-        <span className="text-xs text-gray-400">{command.shortcuts[0]}</span>
+        <span className='text-xs text-gray-400'>{command.shortcuts[0]}</span>
       )}
     </button>
   );
@@ -381,8 +381,9 @@ function SubmenuItem({
   const iconName = item.icon ? `${item.icon}Icon` : null;
   const IconComponent = iconName ? Icons[iconName as keyof typeof Icons] : null;
 
-  const baseClasses = isMobile
-    ? 'flex items-center gap-3 px-4 py-3 text-base transition-colors active:bg-gray-100'
+  const baseClasses =
+    isMobile ?
+      'flex items-center gap-3 px-4 py-3 text-base transition-colors active:bg-gray-100'
     : 'flex items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-gray-100';
 
   const handleClick = () => {
@@ -399,10 +400,10 @@ function SubmenuItem({
       {...getUIItemProps(item)}
       onClick={handleClick}
       className={twMerge(baseClasses, 'w-full cursor-pointer text-left text-gray-700')}
-      role="menuitem"
+      role='menuitem'
     >
       {IconComponent && <IconComponent className={isMobile ? 'h-5 w-5' : 'h-4 w-4'} />}
-      <span className="flex-1">
+      <span className='flex-1'>
         {translate(item.labelKey || item.id, { fallback: item.label || item.id })}
       </span>
       <Icons.ChevronRightIcon className={isMobile ? 'h-5 w-5' : 'h-4 w-4'} />
@@ -434,9 +435,9 @@ function MenuSection({
       {(item.labelKey || item.label) && (
         <div
           className={
-            isMobile
-              ? 'px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500'
-              : 'px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500'
+            isMobile ?
+              'px-4 py-2 text-xs font-semibold tracking-wider text-gray-500 uppercase'
+            : 'px-3 py-1.5 text-xs font-semibold tracking-wider text-gray-500 uppercase'
           }
         >
           {translate(item.labelKey || item.id, { fallback: item.label || item.id })}

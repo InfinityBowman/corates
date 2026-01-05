@@ -15,10 +15,10 @@ export function PanToggleButton({ documentId }: PanToggleButtonProps) {
     <ToolbarButton
       onClick={pan.togglePan}
       isActive={isPanning}
-      aria-label="Toggle Pan"
-      title="Pan (hand)"
+      aria-label='Toggle Pan'
+      title='Pan (hand)'
     >
-      <HandIcon className="h-4 w-4" title="Pan" />
+      <HandIcon className='h-4 w-4' title='Pan' />
     </ToolbarButton>
   );
 }

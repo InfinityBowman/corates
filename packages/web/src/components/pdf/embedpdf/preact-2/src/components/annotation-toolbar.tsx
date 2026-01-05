@@ -29,7 +29,7 @@ type ToolColors = Record<string, { primaryColor?: string; secondaryColor?: strin
 // Helper function to extract tool colors
 function extractToolColors(tools: AnnotationTool[]): ToolColors {
   const colors: ToolColors = {};
-  tools.forEach((tool) => {
+  tools.forEach(tool => {
     const defaults = tool.defaults as any;
     colors[tool.id] = {
       primaryColor: defaults.strokeColor || defaults.color || defaults.fontColor,
@@ -70,7 +70,7 @@ export function AnnotationToolbar({ documentId }: AnnotationToolbarProps) {
     setActiveTool(annotationProvides.getActiveTool());
 
     // Subscribe to changes
-    return annotationProvides.onActiveToolChange((tool) => {
+    return annotationProvides.onActiveToolChange(tool => {
       setActiveTool(tool);
     });
   }, [annotationProvides]);
@@ -80,7 +80,7 @@ export function AnnotationToolbar({ documentId }: AnnotationToolbarProps) {
     if (!annotationCapability) return;
 
     // Subscribe to tool changes (only when tool defaults are updated)
-    return annotationCapability.onToolsChange((event) => {
+    return annotationCapability.onToolsChange(event => {
       setToolColors(extractToolColors(event.tools));
     });
   }, [annotationCapability]);
@@ -122,33 +122,33 @@ export function AnnotationToolbar({ documentId }: AnnotationToolbarProps) {
   };
 
   return (
-    <div className="flex items-center gap-2 border-b border-gray-300 bg-white px-3 py-2">
+    <div className='flex items-center gap-2 border-b border-gray-300 bg-white px-3 py-2'>
       <ToolbarButton
         onClick={() => toggleTool('highlight')}
         isActive={activeTool?.id === 'highlight'}
-        aria-label="Highlight text"
-        title="Highlight Text"
+        aria-label='Highlight text'
+        title='Highlight Text'
       >
-        <HighlightIcon className="h-4 w-4" style={{ color: toolColors.highlight?.primaryColor }} />
+        <HighlightIcon className='h-4 w-4' style={{ color: toolColors.highlight?.primaryColor }} />
       </ToolbarButton>
 
       <ToolbarButton
         onClick={() => toggleTool('underline')}
         isActive={activeTool?.id === 'underline'}
-        aria-label="Underline text"
-        title="Underline"
+        aria-label='Underline text'
+        title='Underline'
       >
-        <UnderlineIcon className="h-4 w-4" style={{ color: toolColors.underline?.primaryColor }} />
+        <UnderlineIcon className='h-4 w-4' style={{ color: toolColors.underline?.primaryColor }} />
       </ToolbarButton>
 
       <ToolbarButton
         onClick={() => toggleTool('strikeout')}
         isActive={activeTool?.id === 'strikeout'}
-        aria-label="Strikethrough text"
-        title="Strikethrough"
+        aria-label='Strikethrough text'
+        title='Strikethrough'
       >
         <StrikethroughIcon
-          className="h-4 w-4"
+          className='h-4 w-4'
           style={{ color: toolColors.strikeout?.primaryColor }}
         />
       </ToolbarButton>
@@ -156,94 +156,94 @@ export function AnnotationToolbar({ documentId }: AnnotationToolbarProps) {
       <ToolbarButton
         onClick={() => toggleTool('squiggly')}
         isActive={activeTool?.id === 'squiggly'}
-        aria-label="Squiggly underline"
-        title="Squiggly Underline"
+        aria-label='Squiggly underline'
+        title='Squiggly Underline'
       >
-        <SquigglyIcon className="h-4 w-4" style={{ color: toolColors.squiggly?.primaryColor }} />
+        <SquigglyIcon className='h-4 w-4' style={{ color: toolColors.squiggly?.primaryColor }} />
       </ToolbarButton>
 
       <ToolbarButton
         onClick={() => toggleTool('ink')}
         isActive={activeTool?.id === 'ink'}
-        aria-label="Freehand annotation"
-        title="Draw Freehand"
+        aria-label='Freehand annotation'
+        title='Draw Freehand'
       >
-        <PenIcon className="h-4 w-4" style={{ color: toolColors.ink?.primaryColor }} />
+        <PenIcon className='h-4 w-4' style={{ color: toolColors.ink?.primaryColor }} />
       </ToolbarButton>
 
       <ToolbarButton
         onClick={() => toggleTool('freeText')}
         isActive={activeTool?.id === 'freeText'}
-        aria-label="Text annotation"
-        title="Add Text Annotation"
+        aria-label='Text annotation'
+        title='Add Text Annotation'
       >
-        <TextIcon className="h-4 w-4" style={{ color: toolColors.freeText?.primaryColor }} />
+        <TextIcon className='h-4 w-4' style={{ color: toolColors.freeText?.primaryColor }} />
       </ToolbarButton>
 
       <ToolbarButton
         onClick={() => toggleTool('circle')}
         isActive={activeTool?.id === 'circle'}
-        aria-label="Circle annotation"
-        title="Draw Circle"
+        aria-label='Circle annotation'
+        title='Draw Circle'
       >
-        <CircleIcon className="h-4 w-4" style={{ color: toolColors.circle?.primaryColor }} />
+        <CircleIcon className='h-4 w-4' style={{ color: toolColors.circle?.primaryColor }} />
       </ToolbarButton>
 
       <ToolbarButton
         onClick={() => toggleTool('square')}
         isActive={activeTool?.id === 'square'}
-        aria-label="Square annotation"
-        title="Draw Rectangle"
+        aria-label='Square annotation'
+        title='Draw Rectangle'
       >
-        <SquareIcon className="h-4 w-4" style={{ color: toolColors.square?.primaryColor }} />
+        <SquareIcon className='h-4 w-4' style={{ color: toolColors.square?.primaryColor }} />
       </ToolbarButton>
 
       <ToolbarButton
         onClick={() => toggleTool('polygon')}
         isActive={activeTool?.id === 'polygon'}
-        aria-label="Polygon annotation"
-        title="Draw Polygon"
+        aria-label='Polygon annotation'
+        title='Draw Polygon'
       >
-        <PolygonIcon className="h-4 w-4" style={{ color: toolColors.polygon?.primaryColor }} />
+        <PolygonIcon className='h-4 w-4' style={{ color: toolColors.polygon?.primaryColor }} />
       </ToolbarButton>
 
       <ToolbarButton
         onClick={() => toggleTool('polyline')}
         isActive={activeTool?.id === 'polyline'}
-        aria-label="Polyline annotation"
-        title="Draw Polyline"
+        aria-label='Polyline annotation'
+        title='Draw Polyline'
       >
-        <PolylineIcon className="h-4 w-4" style={{ color: toolColors.polyline?.primaryColor }} />
+        <PolylineIcon className='h-4 w-4' style={{ color: toolColors.polyline?.primaryColor }} />
       </ToolbarButton>
 
       <ToolbarButton
         onClick={() => toggleTool('line')}
         isActive={activeTool?.id === 'line'}
-        aria-label="Line annotation"
-        title="Draw Line"
+        aria-label='Line annotation'
+        title='Draw Line'
       >
-        <LineIcon className="h-4 w-4" style={{ color: toolColors.line?.primaryColor }} />
+        <LineIcon className='h-4 w-4' style={{ color: toolColors.line?.primaryColor }} />
       </ToolbarButton>
 
       <ToolbarButton
         onClick={() => toggleTool('lineArrow')}
         isActive={activeTool?.id === 'lineArrow'}
-        aria-label="Arrow annotation"
-        title="Draw Arrow"
+        aria-label='Arrow annotation'
+        title='Draw Arrow'
       >
-        <ArrowIcon className="h-4 w-4" style={{ color: toolColors.lineArrow?.primaryColor }} />
+        <ArrowIcon className='h-4 w-4' style={{ color: toolColors.lineArrow?.primaryColor }} />
       </ToolbarButton>
 
       {/* Divider */}
-      <div className="mx-1 h-6 w-px bg-gray-300" />
+      <div className='mx-1 h-6 w-px bg-gray-300' />
 
       {/* Undo/Redo buttons */}
-      <ToolbarButton onClick={handleUndo} disabled={!canUndo} aria-label="Undo" title="Undo">
-        <UndoIcon className="h-4 w-4" />
+      <ToolbarButton onClick={handleUndo} disabled={!canUndo} aria-label='Undo' title='Undo'>
+        <UndoIcon className='h-4 w-4' />
       </ToolbarButton>
 
-      <ToolbarButton onClick={handleRedo} disabled={!canRedo} aria-label="Redo" title="Redo">
-        <RedoIcon className="h-4 w-4" />
+      <ToolbarButton onClick={handleRedo} disabled={!canRedo} aria-label='Redo' title='Redo'>
+        <RedoIcon className='h-4 w-4' />
       </ToolbarButton>
     </div>
   );

@@ -75,31 +75,31 @@ export function CaptureDialog({ documentId }: CaptureDialogProps) {
 
   return (
     <>
-      <Dialog open={open} onClose={handleClose} title="Capture PDF Area">
+      <Dialog open={open} onClose={handleClose} title='Capture PDF Area'>
         <DialogContent>
-          <div className="flex justify-center">
+          <div className='flex justify-center'>
             {previewUrl && (
               <img
                 src={previewUrl}
                 onLoad={handleImageLoad}
-                alt="Captured PDF area"
-                className="block max-h-[400px] max-w-full rounded border border-gray-200"
+                alt='Captured PDF area'
+                className='block max-h-[400px] max-w-full rounded border border-gray-200'
               />
             )}
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button variant="secondary" onClick={handleClose}>
+          <Button variant='secondary' onClick={handleClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleDownload} disabled={!captureData}>
+          <Button variant='primary' onClick={handleDownload} disabled={!captureData}>
             Download
           </Button>
         </DialogFooter>
       </Dialog>
 
       {/* Hidden download link */}
-      <a ref={downloadLinkRef} style={{ display: 'none' }} href="" download="" />
+      <a ref={downloadLinkRef} style={{ display: 'none' }} href='' download='' />
     </>
   );
 }

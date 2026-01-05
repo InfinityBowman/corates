@@ -11,13 +11,13 @@ export default function ToolbarButton({
   title,
   class: className = '',
 }) {
-  const baseClasses = isActive
-    ? 'bg-blue-50 text-blue-600 ring-1 ring-blue-500'
+  const baseClasses =
+    isActive ?
+      'bg-blue-50 text-blue-600 ring-1 ring-blue-500'
     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900';
 
-  const disabledClasses = disabled
-    ? 'cursor-not-allowed opacity-50 hover:bg-transparent hover:text-gray-600'
-    : '';
+  const disabledClasses =
+    disabled ? 'cursor-not-allowed opacity-50 hover:bg-transparent hover:text-gray-600' : '';
 
   return (
     <button

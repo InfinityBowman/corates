@@ -52,25 +52,24 @@ export function SelectionSelectionMenu({ rect, menuWrapperProps, placement, docu
 
   return (
     <div {...menuWrapperProps}>
-      <div style={menuStyle} className="rounded-lg border border-gray-200 bg-white shadow-lg">
-        <div className="flex items-center gap-1 px-2 py-1">
+      <div style={menuStyle} className='rounded-lg border border-gray-200 bg-white shadow-lg'>
+        <div className='flex items-center gap-1 px-2 py-1'>
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 rounded px-2 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-100"
-            aria-label="Copy selected text"
-            title="Copy"
+            className='flex items-center gap-1.5 rounded px-2 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-100'
+            aria-label='Copy selected text'
+            title='Copy'
           >
-            {copied ? (
+            {copied ?
               <>
-                <CheckIcon className="h-4 w-4 text-green-600" />
-                <span className="text-green-600">Copied!</span>
+                <CheckIcon className='h-4 w-4 text-green-600' />
+                <span className='text-green-600'>Copied!</span>
               </>
-            ) : (
-              <>
-                <SquaresIcon className="h-4 w-4" />
+            : <>
+                <SquaresIcon className='h-4 w-4' />
                 <span>Copy</span>
               </>
-            )}
+            }
           </button>
         </div>
       </div>

@@ -35,7 +35,7 @@ export default function PageControls({ documentId }) {
   useEffect(() => {
     if (!viewport) return;
 
-    return viewport.onScrollActivity((activity) => {
+    return viewport.onScrollActivity(activity => {
       if (activity.documentId === documentId) {
         setIsVisible(true);
         startHideTimer();
@@ -61,7 +61,7 @@ export default function PageControls({ documentId }) {
     startHideTimer();
   };
 
-  const handlePageChange = (e) => {
+  const handlePageChange = e => {
     e.preventDefault();
     const page = parseInt(inputValue, 10);
 
@@ -72,7 +72,7 @@ export default function PageControls({ documentId }) {
     }
   };
 
-  const handlePreviousPage = (e) => {
+  const handlePreviousPage = e => {
     e.preventDefault();
     e.currentTarget.blur();
     if (currentPage > 1) {
@@ -80,7 +80,7 @@ export default function PageControls({ documentId }) {
     }
   };
 
-  const handleNextPage = (e) => {
+  const handleNextPage = e => {
     e.preventDefault();
     e.currentTarget.blur();
     if (currentPage < totalPages) {
@@ -107,7 +107,12 @@ export default function PageControls({ documentId }) {
           aria-label='Previous page'
         >
           <svg class='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' />
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M15 19l-7-7 7-7'
+            />
           </svg>
         </button>
 
@@ -116,7 +121,7 @@ export default function PageControls({ documentId }) {
           <input
             type='text'
             value={inputValue}
-            onInput={(e) => {
+            onInput={e => {
               const value = e.target.value.replace(/[^0-9]/g, '');
               setInputValue(value);
             }}

@@ -59,33 +59,33 @@ export function CustomZoomToolbar({ documentId }: CustomZoomToolbarProps) {
   };
 
   return (
-    <div className="relative">
-      <div className="flex items-center rounded bg-gray-100">
+    <div className='relative'>
+      <div className='flex items-center rounded bg-gray-100'>
         {/* Editable Zoom Percentage Input */}
-        <form onSubmit={handleZoomChange} className="block">
+        <form onSubmit={handleZoomChange} className='block'>
           <input
-            name="zoom"
-            type="text"
-            inputMode="numeric"
-            pattern="\d*"
-            className="h-6 w-8 border-0 bg-transparent p-0 text-right text-sm outline-none focus:outline-none"
-            aria-label="Set zoom"
+            name='zoom'
+            type='text'
+            inputMode='numeric'
+            pattern='\d*'
+            className='h-6 w-8 border-0 bg-transparent p-0 text-right text-sm outline-none focus:outline-none'
+            aria-label='Set zoom'
             autoFocus={false}
             value={inputValue}
             onChange={handleInputChange}
             onBlur={handleBlur}
           />
-          <span className="text-sm">%</span>
+          <span className='text-sm'>%</span>
         </form>
         <CommandButton
-          commandId="zoom:toggle-menu"
+          commandId='zoom:toggle-menu'
           documentId={documentId}
-          itemId="zoom-menu-button"
+          itemId='zoom-menu-button'
         />
         {/* Zoom Out Button */}
-        <CommandButton commandId="zoom:out" documentId={documentId} />
+        <CommandButton commandId='zoom:out' documentId={documentId} />
         {/* Zoom In Button */}
-        <CommandButton commandId="zoom:in" documentId={documentId} />
+        <CommandButton commandId='zoom:in' documentId={documentId} />
       </div>
     </div>
   );

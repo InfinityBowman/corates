@@ -31,17 +31,17 @@ export function ViewerToolbar({
   return (
     <>
       {/* Main Toolbar */}
-      <div className="flex items-center gap-2 border-b border-gray-300 bg-white px-3 py-2">
+      <div className='flex items-center gap-2 border-b border-gray-300 bg-white px-3 py-2'>
         {/* Left side - Document menu and Thumbnails toggle */}
         <DocumentMenu documentId={documentId} />
         <ToolbarDivider />
         <ToolbarButton
           onClick={onToggleThumbnails}
           isActive={isThumbnailsOpen}
-          aria-label="Toggle thumbnails"
-          title="Toggle Thumbnails"
+          aria-label='Toggle thumbnails'
+          title='Toggle Thumbnails'
         >
-          <ThumbnailsIcon className="h-4 w-4" />
+          <ThumbnailsIcon className='h-4 w-4' />
         </ToolbarButton>
         <PageSettingsMenu documentId={documentId} />
 
@@ -53,14 +53,14 @@ export function ViewerToolbar({
         <PanToggleButton documentId={documentId} />
 
         {/* Mode Tabs */}
-        <div className="mx-4 flex flex-1 items-center justify-center">
-          <div className="flex rounded-lg bg-gray-100 p-1">
+        <div className='mx-4 flex flex-1 items-center justify-center'>
+          <div className='flex rounded-lg bg-gray-100 p-1'>
             <button
               onClick={() => onModeChange('view')}
               className={`rounded px-4 py-1 text-sm font-medium transition-colors ${
-                mode === 'view'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                mode === 'view' ?
+                  'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               View
@@ -68,9 +68,9 @@ export function ViewerToolbar({
             <button
               onClick={() => onModeChange('annotate')}
               className={`rounded px-4 py-1 text-sm font-medium transition-colors ${
-                mode === 'annotate'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                mode === 'annotate' ?
+                  'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               Annotate
@@ -78,9 +78,9 @@ export function ViewerToolbar({
             <button
               onClick={() => onModeChange('redact')}
               className={`rounded px-4 py-1 text-sm font-medium transition-colors ${
-                mode === 'redact'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                mode === 'redact' ?
+                  'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               Redact
@@ -92,10 +92,10 @@ export function ViewerToolbar({
         <ToolbarButton
           onClick={onToggleSearch}
           isActive={isSearchOpen}
-          aria-label="Toggle search"
-          title="Toggle Search"
+          aria-label='Toggle search'
+          title='Toggle Search'
         >
-          <SearchIcon className="h-4 w-4" />
+          <SearchIcon className='h-4 w-4' />
         </ToolbarButton>
       </div>
 
