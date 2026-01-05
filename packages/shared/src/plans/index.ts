@@ -13,6 +13,24 @@ export type {
   Plan,
   Plans,
 } from './types.js';
+export type { GrantType } from './plans.js';
+export type {
+  BillingCatalogTier,
+  BillingCatalogCTA,
+  BillingCatalogPlan,
+  BillingCatalogResponse,
+} from './catalog.js';
 
 // Plan configuration
-export { PLANS, DEFAULT_PLAN, getPlan, isUnlimitedQuota } from './plans.js';
+export { PLANS, DEFAULT_PLAN, getPlan, isUnlimitedQuota, getGrantPlan } from './plans.js';
+
+// Pricing
+export { PLAN_PRICING, getPlanPricing, getMonthlyEquivalent } from './pricing.js';
+export type { PlanPricing } from './pricing.js';
+
+// Billing catalog (pricing page / billing UI)
+export { getBillingPlanCatalog } from './catalog.js';
+
+// Stripe setup
+export { getStripeProductConfig, getAllStripeProductConfigs } from './stripe.js';
+export type { StripeProductConfig } from './stripe.js';

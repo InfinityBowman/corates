@@ -50,6 +50,20 @@ CREATE TABLE `member` (
 	FOREIGN KEY (`organizationId`) REFERENCES `organization`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
+CREATE TABLE `org_access_grants` (
+	`id` text PRIMARY KEY NOT NULL,
+	`orgId` text NOT NULL,
+	`type` text NOT NULL,
+	`startsAt` integer NOT NULL,
+	`expiresAt` integer NOT NULL,
+	`createdAt` integer DEFAULT (unixepoch()),
+	`revokedAt` integer,
+	`stripeCheckoutSessionId` text,
+	`metadata` text,
+	FOREIGN KEY (`orgId`) REFERENCES `organization`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `org_access_grants_stripeCheckoutSessionId_unique` ON `org_access_grants` (`stripeCheckoutSessionId`);--> statement-breakpoint
 CREATE TABLE `organization` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
@@ -118,24 +132,50 @@ CREATE TABLE `session` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `session_token_unique` ON `session` (`token`);--> statement-breakpoint
-CREATE TABLE `subscriptions` (
+CREATE TABLE `stripe_event_ledger` (
 	`id` text PRIMARY KEY NOT NULL,
-	`userId` text NOT NULL,
+	`payloadHash` text NOT NULL,
+	`signaturePresent` integer NOT NULL,
+	`receivedAt` integer NOT NULL,
+	`route` text NOT NULL,
+	`requestId` text NOT NULL,
+	`status` text DEFAULT 'received' NOT NULL,
+	`error` text,
+	`httpStatus` integer,
+	`stripeEventId` text,
+	`type` text,
+	`livemode` integer,
+	`apiVersion` text,
+	`created` integer,
+	`processedAt` integer,
+	`orgId` text,
 	`stripeCustomerId` text,
 	`stripeSubscriptionId` text,
-	`tier` text DEFAULT 'free' NOT NULL,
-	`status` text DEFAULT 'active' NOT NULL,
-	`currentPeriodStart` integer,
-	`currentPeriodEnd` integer,
-	`cancelAtPeriodEnd` integer DEFAULT false,
-	`createdAt` integer DEFAULT (unixepoch()),
-	`updatedAt` integer DEFAULT (unixepoch()),
-	FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
+	`stripeCheckoutSessionId` text
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `subscriptions_userId_unique` ON `subscriptions` (`userId`);--> statement-breakpoint
-CREATE UNIQUE INDEX `subscriptions_stripeCustomerId_unique` ON `subscriptions` (`stripeCustomerId`);--> statement-breakpoint
-CREATE UNIQUE INDEX `subscriptions_stripeSubscriptionId_unique` ON `subscriptions` (`stripeSubscriptionId`);--> statement-breakpoint
+CREATE UNIQUE INDEX `stripe_event_ledger_payloadHash_unique` ON `stripe_event_ledger` (`payloadHash`);--> statement-breakpoint
+CREATE UNIQUE INDEX `stripe_event_ledger_stripeEventId_unique` ON `stripe_event_ledger` (`stripeEventId`);--> statement-breakpoint
+CREATE TABLE `subscription` (
+	`id` text PRIMARY KEY NOT NULL,
+	`plan` text NOT NULL,
+	`referenceId` text NOT NULL,
+	`stripeCustomerId` text,
+	`stripeSubscriptionId` text,
+	`status` text DEFAULT 'incomplete' NOT NULL,
+	`periodStart` integer,
+	`periodEnd` integer,
+	`cancelAtPeriodEnd` integer DEFAULT false,
+	`cancelAt` integer,
+	`canceledAt` integer,
+	`endedAt` integer,
+	`seats` integer,
+	`trialStart` integer,
+	`trialEnd` integer,
+	`createdAt` integer DEFAULT (unixepoch()),
+	`updatedAt` integer DEFAULT (unixepoch())
+);
+--> statement-breakpoint
 CREATE TABLE `twoFactor` (
 	`id` text PRIMARY KEY NOT NULL,
 	`userId` text NOT NULL,
@@ -163,7 +203,8 @@ CREATE TABLE `user` (
 	`twoFactorEnabled` integer DEFAULT false,
 	`banned` integer DEFAULT false,
 	`banReason` text,
-	`banExpires` integer
+	`banExpires` integer,
+	`stripeCustomerId` text
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `user_email_unique` ON `user` (`email`);--> statement-breakpoint

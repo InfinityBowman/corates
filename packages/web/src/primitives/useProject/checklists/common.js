@@ -2,8 +2,6 @@
  * Common checklist operations shared across all checklist types
  */
 
-import * as Y from 'yjs';
-
 /**
  * Create shared checklist operations that work with any checklist type
  * @param {Function} getYDoc - Function that returns the Y.Doc

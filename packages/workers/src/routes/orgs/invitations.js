@@ -15,7 +15,7 @@ import {
   member,
   organization,
 } from '../../db/schema.js';
-import { eq, and, desc, isNull } from 'drizzle-orm';
+import { eq, and, desc, isNull, count, ne } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../../middleware/auth.js';
 import {
   requireOrgMembership,
@@ -32,6 +32,9 @@ import {
   VALIDATION_ERRORS,
 } from '@corates/shared';
 import { syncMemberToDO } from '../../lib/project-sync.js';
+import { resolveOrgAccess } from '../../lib/billingResolver.js';
+import { isUnlimitedQuota } from '@corates/shared/plans';
+import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
 
 const orgInvitationRoutes = new Hono();
 
@@ -83,6 +86,7 @@ orgInvitationRoutes.get('/', requireOrgMembership(), requireProjectAccess(), asy
 orgInvitationRoutes.post(
   '/',
   requireOrgMembership(),
+  requireOrgWriteAccess(),
   requireProjectAccess('owner'),
   validateRequest(invitationSchemas.create),
   async c => {
@@ -113,13 +117,9 @@ orgInvitationRoutes.post(
       let token;
       let invitationId;
 
-      // Check if user is org admin/owner to allow grantOrgMembership
-      const { orgRole } = getOrgContext(c);
-      const canGrantOrgMembership = orgRole === 'admin' || orgRole === 'owner';
-      const { grantOrgMembership = false } = c.get('validatedBody');
-
-      // Only org admins/owners can set grantOrgMembership to true
-      const finalGrantOrgMembership = canGrantOrgMembership ? grantOrgMembership : false;
+      // Always grant org membership when accepting project invitation
+      // grantOrgMembership is now always true (no longer optional)
+      const finalGrantOrgMembership = true;
 
       if (existingInvitation && !existingInvitation.acceptedAt) {
         // Resend existing invitation - update role and extend expiration
@@ -306,6 +306,7 @@ orgInvitationRoutes.post(
 orgInvitationRoutes.delete(
   '/:invitationId',
   requireOrgMembership(),
+  requireOrgWriteAccess(),
   requireProjectAccess('owner'),
   async c => {
     const { projectId } = getProjectContext(c);
@@ -353,7 +354,8 @@ orgInvitationRoutes.delete(
 /**
  * POST /api/orgs/:orgId/projects/:projectId/invitations/accept
  * Accept a project invitation by token
- * Hybrid flow: always adds project membership (invite-only), optionally adds org membership if grantOrgMembership is true
+ * Always grants org membership (role: member), then adds project membership
+ * Enforces collaborator quota before acceptance
  * Uses db.batch() for atomicity
  */
 orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), async c => {
@@ -362,7 +364,7 @@ orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), a
   const { token } = c.get('validatedBody');
 
   try {
-    // Find invitation by token (includes org fields for hybrid flow)
+    // Find invitation by token (includes org fields)
     const invitation = await db
       .select({
         id: projectInvitations.id,
@@ -475,9 +477,72 @@ orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), a
       });
     }
 
-    // Hybrid flow: always add project membership, optionally add org membership
+    // Enforce collaborator quota before acceptance
+    if (invitation.orgId) {
+      // Check if user is already an org member
+      const existingOrgMembership = await db
+        .select({ id: member.id, role: member.role })
+        .from(member)
+        .where(and(eq(member.organizationId, invitation.orgId), eq(member.userId, authUser.id)))
+        .get();
+
+      // Only enforce quota if user is not already an org member
+      if (!existingOrgMembership) {
+        // Resolve org billing to get quota
+        const orgBilling = await resolveOrgAccess(db, invitation.orgId);
+        const collaboratorLimit = orgBilling.quotas['collaborators.org.max'];
+
+        // Count current accepted collaborators (excluding org owner)
+        const [collaboratorCountResult] = await db
+          .select({ count: count() })
+          .from(member)
+          .where(and(eq(member.organizationId, invitation.orgId), ne(member.role, 'owner')))
+          .all();
+
+        const currentCollaboratorCount = collaboratorCountResult?.count || 0;
+
+        // Check if adding this user would exceed quota
+        if (!isUnlimitedQuota(collaboratorLimit) && currentCollaboratorCount >= collaboratorLimit) {
+          const error = createDomainError(
+            AUTH_ERRORS.FORBIDDEN,
+            {
+              reason: 'quota_exceeded',
+              quotaKey: 'collaborators.org.max',
+              used: currentCollaboratorCount,
+              limit: collaboratorLimit,
+              requested: 1,
+            },
+            `Collaborator quota exceeded. Current usage: ${currentCollaboratorCount}, Limit: ${collaboratorLimit}`,
+          );
+          return c.json(error, error.statusCode);
+        }
+      }
+    }
+
+    // Always grant org membership and add project membership
     const nowDate = new Date();
     const batchOps = [];
+
+    // Always add user to org with role 'member' (if not already a member)
+    if (invitation.orgId) {
+      const existingOrgMembership = await db
+        .select({ id: member.id })
+        .from(member)
+        .where(and(eq(member.organizationId, invitation.orgId), eq(member.userId, authUser.id)))
+        .get();
+
+      if (!existingOrgMembership) {
+        batchOps.push(
+          db.insert(member).values({
+            id: crypto.randomUUID(),
+            userId: authUser.id,
+            organizationId: invitation.orgId,
+            role: 'member', // Always 'member' role for project invite acceptance
+            createdAt: nowDate,
+          }),
+        );
+      }
+    }
 
     // Always add user to project (projects are invite-only)
     batchOps.push(
@@ -489,28 +554,6 @@ orgInvitationRoutes.post('/accept', validateRequest(invitationSchemas.accept), a
         joinedAt: nowDate,
       }),
     );
-
-    // Optionally add user to org if grantOrgMembership is true
-    if (invitation.grantOrgMembership && invitation.orgId) {
-      const existingOrgMembership = await db
-        .select({ id: member.id })
-        .from(member)
-        .where(and(eq(member.organizationId, invitation.orgId), eq(member.userId, authUser.id)))
-        .get();
-
-      if (!existingOrgMembership) {
-        // Add user to org with orgRole from invitation
-        batchOps.push(
-          db.insert(member).values({
-            id: crypto.randomUUID(),
-            userId: authUser.id,
-            organizationId: invitation.orgId,
-            role: invitation.orgRole || 'member',
-            createdAt: nowDate,
-          }),
-        );
-      }
-    }
 
     // Mark invitation as accepted
     batchOps.push(

@@ -11,6 +11,15 @@ import {
   getEmailVerificationErrorPage,
 } from './templates.js';
 import { authRateLimit, sessionRateLimit } from '../middleware/rateLimit.js';
+import { createLogger, sha256, truncateError } from '../lib/observability/logger.js';
+import { createDb } from '../db/client.js';
+import {
+  insertLedgerEntry,
+  updateLedgerWithVerifiedFields,
+  updateLedgerStatus,
+  getLedgerByPayloadHash,
+  LedgerStatus,
+} from '../db/stripeEventLedger.js';
 
 const auth = new Hono();
 
@@ -100,6 +109,258 @@ auth.get('/verify-email', async c => {
       status: 500,
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
     });
+  }
+});
+
+/**
+ * Stripe webhook wrapper - records webhook receipt/outcome in ledger
+ * Uses two-phase trust model:
+ * - Phase 1: Store trust-minimal fields on receipt (before verification)
+ * - Phase 2: Populate verified fields only after Better Auth verification succeeds
+ */
+auth.post('/stripe/webhook', async c => {
+  const logger = createLogger({ c, service: 'stripe-webhook', env: c.env });
+  const db = createDb(c.env.DB);
+  const route = '/api/auth/stripe/webhook';
+
+  let rawBody;
+  let ledgerId;
+
+  try {
+    // Phase 1: Read request and store trust-minimal fields
+
+    // Check signature header presence (do not verify here)
+    const signatureHeader = c.req.header('stripe-signature');
+    const signaturePresent = !!signatureHeader;
+
+    // Read raw body
+    try {
+      rawBody = await c.req.text();
+    } catch (bodyError) {
+      // Body unreadable - insert ledger entry and return 400
+      ledgerId = crypto.randomUUID();
+      await insertLedgerEntry(db, {
+        id: ledgerId,
+        payloadHash: 'unreadable_body',
+        signaturePresent: false,
+        route,
+        requestId: logger.requestId,
+        status: LedgerStatus.IGNORED_UNVERIFIED,
+        error: truncateError(bodyError),
+        httpStatus: 400,
+      });
+
+      logger.stripe('webhook_rejected', {
+        outcome: 'ignored_unverified',
+        errorCode: 'body_unreadable',
+        error: bodyError,
+        signaturePresent: false,
+      });
+
+      return c.json({ error: 'Body unreadable' }, 400);
+    }
+
+    // If signature header is missing, insert ledger and return 403
+    if (!signaturePresent) {
+      ledgerId = crypto.randomUUID();
+      const payloadHash = await sha256(rawBody);
+
+      await insertLedgerEntry(db, {
+        id: ledgerId,
+        payloadHash,
+        signaturePresent: false,
+        route,
+        requestId: logger.requestId,
+        status: LedgerStatus.IGNORED_UNVERIFIED,
+        error: 'missing_signature',
+        httpStatus: 403,
+      });
+
+      logger.stripe('webhook_rejected', {
+        outcome: 'ignored_unverified',
+        errorCode: 'missing_signature',
+        payloadHash,
+        signaturePresent: false,
+      });
+
+      return c.json({ error: 'Missing Stripe signature' }, 403);
+    }
+
+    // Compute payload hash for dedupe
+    const payloadHash = await sha256(rawBody);
+
+    // Check for duplicate by payload hash
+    const existingEntry = await getLedgerByPayloadHash(db, payloadHash);
+    if (existingEntry) {
+      logger.stripe('webhook_dedupe', {
+        outcome: 'skipped_duplicate',
+        payloadHash,
+        existingLedgerId: existingEntry.id,
+        existingStatus: existingEntry.status,
+      });
+
+      return c.json({ received: true, skipped: 'duplicate_payload' }, 200);
+    }
+
+    // Insert ledger entry with trust-minimal fields
+    ledgerId = crypto.randomUUID();
+    await insertLedgerEntry(db, {
+      id: ledgerId,
+      payloadHash,
+      signaturePresent: true,
+      route,
+      requestId: logger.requestId,
+      status: LedgerStatus.RECEIVED,
+    });
+
+    logger.stripe('webhook_received', {
+      payloadHash,
+      signaturePresent: true,
+      ledgerId,
+    });
+
+    // Phase 2: Forward to Better Auth and update ledger based on response
+
+    const betterAuth = createAuth(c.env, c.executionCtx);
+    const url = new URL(c.req.url);
+
+    // Reconstruct request with same headers and raw body
+    const authUrl = new URL('/api/auth/stripe/webhook', url.origin);
+    const authRequest = new Request(authUrl.toString(), {
+      method: 'POST',
+      headers: c.req.raw.headers,
+      body: rawBody,
+    });
+
+    // Forward to Better Auth handler
+    const response = await betterAuth.handler(authRequest);
+    const httpStatus = response.status;
+
+    // Handle response based on status
+    if (httpStatus >= 200 && httpStatus < 300) {
+      // Signature verified and processed - parse verified fields from raw body
+      let stripeEventId = null;
+      let eventType = null;
+      let livemode = null;
+      let apiVersion = null;
+      let created = null;
+      let orgId = null;
+      let stripeCustomerId = null;
+      let stripeSubscriptionId = null;
+      let stripeCheckoutSessionId = null;
+
+      try {
+        const event = JSON.parse(rawBody);
+        stripeEventId = event.id || null;
+        eventType = event.type || null;
+        livemode = event.livemode ?? null;
+        apiVersion = event.api_version || null;
+        created = event.created ? new Date(event.created * 1000) : null;
+
+        // Extract linking fields from event data if available
+        const eventData = event.data?.object;
+        if (eventData) {
+          // Try to extract orgId from metadata (referenceId)
+          orgId = eventData.metadata?.referenceId || eventData.metadata?.orgId || null;
+          stripeCustomerId = eventData.customer || null;
+          stripeSubscriptionId = eventData.subscription || eventData.id || null;
+          if (eventType === 'checkout.session.completed') {
+            stripeCheckoutSessionId = eventData.id || null;
+            // For subscriptions, the subscription ID is in the subscription field
+            if (eventData.mode === 'subscription') {
+              stripeSubscriptionId = eventData.subscription || null;
+            }
+          }
+        }
+      } catch {
+        // Parse failed after verification - unusual but log it
+        logger.warn('Failed to parse verified webhook body', { ledgerId });
+      }
+
+      await updateLedgerWithVerifiedFields(db, ledgerId, {
+        stripeEventId,
+        type: eventType,
+        livemode,
+        apiVersion,
+        created,
+        status: LedgerStatus.PROCESSED,
+        httpStatus,
+        orgId,
+        stripeCustomerId,
+        stripeSubscriptionId,
+        stripeCheckoutSessionId,
+      });
+
+      logger.stripe('webhook_processed', {
+        outcome: 'processed',
+        stripeEventId,
+        stripeEventType: eventType,
+        stripeMode: livemode ? 'live' : 'test',
+        orgId,
+        stripeCustomerId,
+        stripeSubscriptionId,
+        status: httpStatus,
+      });
+    } else if (httpStatus === 401 || httpStatus === 403) {
+      // Signature verification failed
+      await updateLedgerStatus(db, ledgerId, {
+        status: LedgerStatus.IGNORED_UNVERIFIED,
+        error: 'invalid_signature',
+        httpStatus,
+      });
+
+      logger.stripe('webhook_rejected', {
+        outcome: 'ignored_unverified',
+        errorCode: 'invalid_signature',
+        payloadHash,
+        status: httpStatus,
+      });
+    } else {
+      // Other error (4xx/5xx) - processing failed after verification
+      let errorMessage = `HTTP ${httpStatus}`;
+      try {
+        const responseBody = await response.clone().text();
+        errorMessage = truncateError(responseBody);
+      } catch {
+        // Ignore response read errors
+      }
+
+      await updateLedgerStatus(db, ledgerId, {
+        status: LedgerStatus.FAILED,
+        error: errorMessage,
+        httpStatus,
+      });
+
+      logger.stripe('webhook_failed', {
+        outcome: 'failed',
+        error: errorMessage,
+        payloadHash,
+        status: httpStatus,
+      });
+    }
+
+    return response;
+  } catch (error) {
+    // Unexpected error
+    logger.error('Stripe webhook handler error', {
+      error: truncateError(error),
+      ledgerId,
+    });
+
+    // Update ledger if we have an entry
+    if (ledgerId) {
+      try {
+        await updateLedgerStatus(db, ledgerId, {
+          status: LedgerStatus.FAILED,
+          error: truncateError(error),
+          httpStatus: 500,
+        });
+      } catch {
+        // Ignore ledger update errors in error handler
+      }
+    }
+
+    return c.json({ error: 'Webhook processing error' }, 500);
   }
 });
 

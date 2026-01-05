@@ -33,6 +33,9 @@ export const queryKeys = {
     stats: ['adminStats'],
     users: (page, limit, search) => ['adminUsers', page, limit, search],
     userDetails: userId => ['adminUserDetails', userId],
+    orgs: (page, limit, search) => ['adminOrgs', page, limit, search],
+    orgDetails: orgId => ['adminOrgDetails', orgId],
+    orgBilling: orgId => ['adminOrgBilling', orgId],
     storageDocuments: (cursor, limit, prefix, search) => [
       'storageDocuments',
       cursor,
@@ -41,5 +44,8 @@ export const queryKeys = {
       search,
     ],
     storageStats: ['storageStats'],
+    billingLedger: params => ['adminBillingLedger', params],
+    billingStuckStates: params => ['adminBillingStuckStates', params],
+    orgBillingReconcile: (orgId, params) => ['adminOrgBillingReconcile', orgId, params],
   },
 };

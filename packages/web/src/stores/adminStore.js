@@ -210,62 +210,25 @@ async function deleteUser(userId) {
 }
 
 /**
- * Grant subscription to a user
- * @param {string} userId - User ID
- * @param {Object} options - Subscription options
- * @param {string} options.tier - Plan tier ('free', 'pro', 'unlimited')
- * @param {number} [options.currentPeriodEnd] - Expiration timestamp in seconds (optional, null = no expiration)
+ * @deprecated Billing is now org-scoped, not user-scoped.
+ * Use org-level subscription management via /admin/orgs/:orgId instead.
+ * These functions are kept for backwards compatibility but should not be used.
  */
-async function grantAccess(userId, options = {}) {
-  const { tier, currentPeriodEnd } = options;
-  if (!tier) {
-    throw new Error('Tier is required');
-  }
-  const body = {
-    tier,
-    status: 'active',
-    currentPeriodStart: Math.floor(Date.now() / 1000),
-  };
-  if (currentPeriodEnd) {
-    body.currentPeriodEnd = currentPeriodEnd;
-  }
-
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/admin/users/${userId}/subscription`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    }),
-    { showToast: false },
+async function grantAccess(_userId, _options = {}) {
+  throw new Error(
+    'User-level subscription management is deprecated. Billing is now org-scoped. Use /admin/orgs/:orgId to manage subscriptions.',
   );
-  const result = await response.json();
-
-  // Invalidate user-specific caches so frontend immediately reflects the change
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.userDetails(userId) });
-  queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
-
-  return result;
 }
 
 /**
- * Revoke subscription from a user
+ * @deprecated Billing is now org-scoped, not user-scoped.
+ * Use org-level subscription management via /admin/orgs/:orgId instead.
+ * These functions are kept for backwards compatibility but should not be used.
  */
-async function revokeAccess(userId) {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/admin/users/${userId}/subscription`, {
-      method: 'DELETE',
-      credentials: 'include',
-    }),
-    { showToast: false },
+async function revokeAccess(_userId) {
+  throw new Error(
+    'User-level subscription management is deprecated. Billing is now org-scoped. Use /admin/orgs/:orgId to manage subscriptions.',
   );
-  const result = await response.json();
-
-  // Invalidate user-specific caches so frontend immediately reflects the change
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.userDetails(userId) });
-  queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
-
-  return result;
 }
 
 /**
@@ -326,6 +289,261 @@ async function fetchStorageStats() {
   return response.json();
 }
 
+/**
+ * Fetch orgs with pagination and search
+ */
+async function fetchOrgs({ page = 1, limit = 20, search = '' } = {}) {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+  if (search) params.set('search', search);
+
+  const response = await fetch(`${API_BASE}/api/admin/orgs?${params}`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error('Failed to fetch orgs');
+  return response.json();
+}
+
+/**
+ * Fetch single org details with billing summary
+ */
+async function fetchOrgDetails(orgId) {
+  const response = await fetch(`${API_BASE}/api/admin/orgs/${orgId}`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error('Failed to fetch org details');
+  return response.json();
+}
+
+/**
+ * Fetch org billing details
+ */
+async function fetchOrgBilling(orgId) {
+  const response = await fetch(`${API_BASE}/api/admin/orgs/${orgId}/billing`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error('Failed to fetch org billing');
+  return response.json();
+}
+
+/**
+ * Create subscription for an org
+ */
+async function createOrgSubscription(orgId, subscriptionData) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/subscriptions`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(subscriptionData),
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
+/**
+ * Update subscription for an org
+ */
+async function updateOrgSubscription(orgId, subscriptionId, updateData) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/subscriptions/${subscriptionId}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updateData),
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
+/**
+ * Cancel subscription for an org
+ */
+async function cancelOrgSubscription(orgId, subscriptionId) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/subscriptions/${subscriptionId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
+/**
+ * Create grant for an org
+ */
+async function createOrgGrant(orgId, grantData) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/grants`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(grantData),
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
+/**
+ * Update grant for an org
+ */
+async function updateOrgGrant(orgId, grantId, updateData) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/grants/${grantId}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updateData),
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
+/**
+ * Revoke grant for an org
+ */
+async function revokeOrgGrant(orgId, grantId) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/grants/${grantId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
+/**
+ * Quick action: Grant trial to org
+ */
+async function grantOrgTrial(orgId) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/grant-trial`, {
+      method: 'POST',
+      credentials: 'include',
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
+/**
+ * Quick action: Grant single_project to org
+ */
+async function grantOrgSingleProject(orgId) {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/admin/orgs/${orgId}/grant-single-project`, {
+      method: 'POST',
+      credentials: 'include',
+    }),
+    { showToast: false },
+  );
+  const result = await response.json();
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
+}
+
+/**
+ * Fetch Stripe event ledger entries
+ */
+async function fetchBillingLedger({ limit = 50, status, type } = {}) {
+  const params = new URLSearchParams({ limit: limit.toString() });
+  if (status) params.set('status', status);
+  if (type) params.set('type', type);
+
+  const response = await fetch(`${API_BASE}/api/admin/billing/ledger?${params}`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'Failed to fetch billing ledger');
+  }
+  return response.json();
+}
+
+/**
+ * Fetch orgs with stuck billing states
+ */
+async function fetchBillingStuckStates({ incompleteThreshold = 30, limit = 50 } = {}) {
+  const params = new URLSearchParams({
+    incompleteThreshold: incompleteThreshold.toString(),
+    limit: limit.toString(),
+  });
+
+  const response = await fetch(`${API_BASE}/api/admin/billing/stuck-states?${params}`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'Failed to fetch stuck states');
+  }
+  return response.json();
+}
+
+/**
+ * Fetch org billing reconciliation results
+ */
+async function fetchOrgBillingReconcile(
+  orgId,
+  {
+    checkStripe = false,
+    incompleteThreshold = 30,
+    checkoutNoSubThreshold = 15,
+    processingLagThreshold = 5,
+  } = {},
+) {
+  const params = new URLSearchParams({
+    incompleteThreshold: incompleteThreshold.toString(),
+    checkoutNoSubThreshold: checkoutNoSubThreshold.toString(),
+    processingLagThreshold: processingLagThreshold.toString(),
+  });
+  if (checkStripe) params.set('checkStripe', 'true');
+
+  const response = await fetch(`${API_BASE}/api/admin/orgs/${orgId}/billing/reconcile?${params}`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'Failed to fetch reconciliation');
+  }
+  return response.json();
+}
+
 export {
   isAdmin,
   isAdminChecked,
@@ -347,4 +565,18 @@ export {
   fetchStorageDocuments,
   deleteStorageDocuments,
   fetchStorageStats,
+  fetchOrgs,
+  fetchOrgDetails,
+  fetchOrgBilling,
+  createOrgSubscription,
+  updateOrgSubscription,
+  cancelOrgSubscription,
+  createOrgGrant,
+  updateOrgGrant,
+  revokeOrgGrant,
+  grantOrgTrial,
+  grantOrgSingleProject,
+  fetchBillingLedger,
+  fetchBillingStuckStates,
+  fetchOrgBillingReconcile,
 };

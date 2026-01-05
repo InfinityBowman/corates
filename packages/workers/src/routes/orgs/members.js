@@ -14,6 +14,7 @@ import {
   getOrgContext,
   getProjectContext,
 } from '../../middleware/requireOrg.js';
+import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
 import { memberSchemas, validateRequest } from '../../config/validation.js';
 import {
   createDomainError,
@@ -73,6 +74,7 @@ orgProjectMemberRoutes.get('/', requireOrgMembership(), requireProjectAccess(), 
 orgProjectMemberRoutes.post(
   '/',
   requireOrgMembership(),
+  requireOrgWriteAccess(),
   requireProjectAccess('owner'),
   validateRequest(memberSchemas.add),
   async c => {
@@ -227,6 +229,7 @@ orgProjectMemberRoutes.post(
 orgProjectMemberRoutes.put(
   '/:userId',
   requireOrgMembership(),
+  requireOrgWriteAccess(),
   requireProjectAccess('owner'),
   validateRequest(memberSchemas.updateRole),
   async c => {
@@ -316,6 +319,7 @@ orgProjectMemberRoutes.put(
 orgProjectMemberRoutes.delete(
   '/:userId',
   requireOrgMembership(),
+  requireOrgWriteAccess(),
   requireProjectAccess(),
   async c => {
     const { user: authUser } = getAuth(c);

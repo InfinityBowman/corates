@@ -9,6 +9,7 @@ import { projects } from '../../db/schema.js';
 import { eq, count } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../../middleware/auth.js';
 import { requireOrgMembership, getOrgContext } from '../../middleware/requireOrg.js';
+import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
 import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { createAuth } from '../../auth/config.js';
 import { orgProjectRoutes } from './projects.js';
@@ -133,7 +134,7 @@ orgRoutes.get('/:orgId', requireOrgMembership(), async c => {
  * PUT /api/orgs/:orgId
  * Update organization (requires admin or owner role)
  */
-orgRoutes.put('/:orgId', requireOrgMembership('admin'), async c => {
+orgRoutes.put('/:orgId', requireOrgMembership('admin'), requireOrgWriteAccess(), async c => {
   const orgId = c.req.param('orgId');
 
   try {
@@ -174,7 +175,7 @@ orgRoutes.put('/:orgId', requireOrgMembership('admin'), async c => {
  * DELETE /api/orgs/:orgId
  * Delete organization (requires owner role)
  */
-orgRoutes.delete('/:orgId', requireOrgMembership('owner'), async c => {
+orgRoutes.delete('/:orgId', requireOrgMembership('owner'), requireOrgWriteAccess(), async c => {
   const orgId = c.req.param('orgId');
 
   try {
@@ -228,156 +229,171 @@ orgRoutes.get('/:orgId/members', requireOrgMembership(), async c => {
  * POST /api/orgs/:orgId/members
  * Add member to organization (requires admin or owner role)
  */
-orgRoutes.post('/:orgId/members', requireOrgMembership('admin'), async c => {
-  const orgId = c.req.param('orgId');
+orgRoutes.post(
+  '/:orgId/members',
+  requireOrgMembership('admin'),
+  requireOrgWriteAccess(),
+  async c => {
+    const orgId = c.req.param('orgId');
 
-  try {
-    const body = await c.req.json();
-    const { userId, role = 'member' } = body;
+    try {
+      const body = await c.req.json();
+      const { userId, role = 'member' } = body;
 
-    if (!userId) {
-      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'user_id_required',
+      if (!userId) {
+        const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'user_id_required',
+        });
+        return c.json(error, error.statusCode);
+      }
+
+      const auth = createAuth(c.env, c.executionCtx);
+      const result = await auth.api.addMember({
+        body: {
+          organizationId: orgId,
+          userId,
+          role,
+        },
+        headers: c.req.raw.headers,
       });
-      return c.json(error, error.statusCode);
-    }
 
-    const auth = createAuth(c.env, c.executionCtx);
-    const result = await auth.api.addMember({
-      body: {
-        organizationId: orgId,
-        userId,
-        role,
-      },
-      headers: c.req.raw.headers,
-    });
-
-    return c.json({ success: true, ...result }, 201);
-  } catch (error) {
-    console.error('Error adding org member:', error);
-    // Check for already member error
-    if (error.message?.includes('already') || error.message?.includes('member')) {
-      const memberError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'already_member',
+      return c.json({ success: true, ...result }, 201);
+    } catch (error) {
+      console.error('Error adding org member:', error);
+      // Check for already member error
+      if (error.message?.includes('already') || error.message?.includes('member')) {
+        const memberError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'already_member',
+        });
+        return c.json(memberError, memberError.statusCode);
+      }
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'add_org_member',
+        originalError: error.message,
       });
-      return c.json(memberError, memberError.statusCode);
+      return c.json(dbError, dbError.statusCode);
     }
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'add_org_member',
-      originalError: error.message,
-    });
-    return c.json(dbError, dbError.statusCode);
-  }
-});
+  },
+);
 
 /**
  * PUT /api/orgs/:orgId/members/:memberId
  * Update member role (requires admin or owner role)
  */
-orgRoutes.put('/:orgId/members/:memberId', requireOrgMembership('admin'), async c => {
-  const orgId = c.req.param('orgId');
-  const memberId = c.req.param('memberId');
+orgRoutes.put(
+  '/:orgId/members/:memberId',
+  requireOrgMembership('admin'),
+  requireOrgWriteAccess(),
+  async c => {
+    const orgId = c.req.param('orgId');
+    const memberId = c.req.param('memberId');
 
-  try {
-    const body = await c.req.json();
-    const { role } = body;
+    try {
+      const body = await c.req.json();
+      const { role } = body;
 
-    if (!role) {
-      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'role_required',
+      if (!role) {
+        const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'role_required',
+        });
+        return c.json(error, error.statusCode);
+      }
+
+      const auth = createAuth(c.env, c.executionCtx);
+      await auth.api.updateMemberRole({
+        headers: c.req.raw.headers,
+        body: {
+          organizationId: orgId,
+          memberId,
+          role,
+        },
       });
-      return c.json(error, error.statusCode);
-    }
 
-    const auth = createAuth(c.env, c.executionCtx);
-    await auth.api.updateMemberRole({
-      headers: c.req.raw.headers,
-      body: {
-        organizationId: orgId,
-        memberId,
-        role,
-      },
-    });
-
-    return c.json({ success: true, memberId, role });
-  } catch (error) {
-    console.error('Error updating org member:', error);
-    // Check for permission errors
-    if (error.message?.includes('owner') || error.message?.includes('permission')) {
-      const permError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'owner_role_change_requires_owner',
+      return c.json({ success: true, memberId, role });
+    } catch (error) {
+      console.error('Error updating org member:', error);
+      // Check for permission errors
+      if (error.message?.includes('owner') || error.message?.includes('permission')) {
+        const permError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'owner_role_change_requires_owner',
+        });
+        return c.json(permError, permError.statusCode);
+      }
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'update_org_member',
+        originalError: error.message,
       });
-      return c.json(permError, permError.statusCode);
+      return c.json(dbError, dbError.statusCode);
     }
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'update_org_member',
-      originalError: error.message,
-    });
-    return c.json(dbError, dbError.statusCode);
-  }
-});
+  },
+);
 
 /**
  * DELETE /api/orgs/:orgId/members/:memberId
  * Remove member from organization (requires admin or owner role, or self-removal)
  */
-orgRoutes.delete('/:orgId/members/:memberId', requireOrgMembership(), async c => {
-  const { user: authUser } = getAuth(c);
-  const { orgRole } = getOrgContext(c);
-  const orgId = c.req.param('orgId');
-  const memberId = c.req.param('memberId');
+orgRoutes.delete(
+  '/:orgId/members/:memberId',
+  requireOrgMembership(),
+  requireOrgWriteAccess(),
+  async c => {
+    const { user: authUser } = getAuth(c);
+    const { orgRole } = getOrgContext(c);
+    const orgId = c.req.param('orgId');
+    const memberId = c.req.param('memberId');
 
-  // Allow self-removal (leave org) or admin/owner removal
-  // Better Auth's removeMember requires admin/owner, but leaveOrganization allows self-removal
-  const isSelf = memberId === authUser.id;
-  const isAdminOrOwner = orgRole === 'admin' || orgRole === 'owner';
+    // Allow self-removal (leave org) or admin/owner removal
+    // Better Auth's removeMember requires admin/owner, but leaveOrganization allows self-removal
+    const isSelf = memberId === authUser.id;
+    const isAdminOrOwner = orgRole === 'admin' || orgRole === 'owner';
 
-  if (!isSelf && !isAdminOrOwner) {
-    const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-      reason: 'cannot_remove_member',
-    });
-    return c.json(error, error.statusCode);
-  }
-
-  try {
-    const auth = createAuth(c.env, c.executionCtx);
-
-    if (isSelf) {
-      // Use leaveOrganization for self-removal
-      await auth.api.leaveOrganization({
-        headers: c.req.raw.headers,
-        body: {
-          organizationId: orgId,
-        },
+    if (!isSelf && !isAdminOrOwner) {
+      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+        reason: 'cannot_remove_member',
       });
-    } else {
-      // Use removeMember for admin/owner removal
-      await auth.api.removeMember({
-        headers: c.req.raw.headers,
-        body: {
-          organizationId: orgId,
-          memberIdOrEmail: memberId,
-        },
-      });
+      return c.json(error, error.statusCode);
     }
 
-    return c.json({ success: true, removed: memberId, isSelf });
-  } catch (error) {
-    console.error('Error removing org member:', error);
-    // Check for last owner error
-    if (error.message?.includes('owner') || error.message?.includes('last')) {
-      const ownerError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'cannot_remove_last_owner',
+    try {
+      const auth = createAuth(c.env, c.executionCtx);
+
+      if (isSelf) {
+        // Use leaveOrganization for self-removal
+        await auth.api.leaveOrganization({
+          headers: c.req.raw.headers,
+          body: {
+            organizationId: orgId,
+          },
+        });
+      } else {
+        // Use removeMember for admin/owner removal
+        await auth.api.removeMember({
+          headers: c.req.raw.headers,
+          body: {
+            organizationId: orgId,
+            memberIdOrEmail: memberId,
+          },
+        });
+      }
+
+      return c.json({ success: true, removed: memberId, isSelf });
+    } catch (error) {
+      console.error('Error removing org member:', error);
+      // Check for last owner error
+      if (error.message?.includes('owner') || error.message?.includes('last')) {
+        const ownerError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'cannot_remove_last_owner',
+        });
+        return c.json(ownerError, ownerError.statusCode);
+      }
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'remove_org_member',
+        originalError: error.message,
       });
-      return c.json(ownerError, ownerError.statusCode);
+      return c.json(dbError, dbError.statusCode);
     }
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'remove_org_member',
-      originalError: error.message,
-    });
-    return c.json(dbError, dbError.statusCode);
-  }
-});
+  },
+);
 
 /**
  * POST /api/orgs/:orgId/set-active

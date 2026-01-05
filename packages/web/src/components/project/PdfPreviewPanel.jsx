@@ -5,7 +5,7 @@
  * Used across project views to preview PDFs without leaving context.
  */
 
-import { Show, Switch, Match, createMemo } from 'solid-js';
+import { Switch, Match, createMemo } from 'solid-js';
 import SlidingPanel from './SlidingPanel.jsx';
 import PdfViewer from '@/components/checklist/pdf/PdfViewer.jsx';
 import pdfPreviewStore from '@/stores/pdfPreviewStore.js';

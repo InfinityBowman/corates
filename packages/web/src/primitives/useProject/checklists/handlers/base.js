@@ -12,47 +12,47 @@ import * as Y from 'yjs';
 export class ChecklistHandler {
   /**
    * Extract answer structure from checklist template
-   * @param {Object} template - The checklist template from createChecklistOfType
+   * @param {Object} _template - The checklist template from createChecklistOfType
    * @returns {Object} Extracted answers data structure
    */
-  extractAnswersFromTemplate(template) {
+  extractAnswersFromTemplate(_template) {
     throw new Error('extractAnswersFromTemplate must be implemented by subclass');
   }
 
   /**
    * Create Y.Map structure for answers from extracted data
-   * @param {Object} answersData - The extracted answers data
+   * @param {Object} _answersData - The extracted answers data
    * @returns {Y.Map} The answers Y.Map
    */
-  createAnswersYMap(answersData) {
+  createAnswersYMap(_answersData) {
     throw new Error('createAnswersYMap must be implemented by subclass');
   }
 
   /**
    * Serialize answers Y.Map to plain object
-   * @param {Y.Map} answersMap - The answers Y.Map
+   * @param {Y.Map} _answersMap - The answers Y.Map
    * @returns {Object} Plain object with answers
    */
-  serializeAnswers(answersMap) {
+  serializeAnswers(_answersMap) {
     throw new Error('serializeAnswers must be implemented by subclass');
   }
 
   /**
    * Update a single answer/section in the answers Y.Map
-   * @param {Y.Map} answersMap - The answers Y.Map
-   * @param {string} key - The answer key (e.g., 'q1' for AMSTAR2, 'domain1a' for ROBINS-I)
-   * @param {Object} data - The answer data
+   * @param {Y.Map} _answersMap - The answers Y.Map
+   * @param {string} _key - The answer key (e.g., 'q1' for AMSTAR2, 'domain1a' for ROBINS-I)
+   * @param {Object} _data - The answer data
    */
-  updateAnswer(answersMap, key, data) {
+  updateAnswer(_answersMap, _key, _data) {
     throw new Error('updateAnswer must be implemented by subclass');
   }
 
   /**
    * Get type-specific text getter function
-   * @param {Function} getYDoc - Function that returns the Y.Doc
+   * @param {Function} _getYDoc - Function that returns the Y.Doc
    * @returns {Function|null} Text getter function or null if not applicable
    */
-  getTextGetter(getYDoc) {
+  getTextGetter(_getYDoc) {
     return null; // Optional - defaults to null
   }
 }

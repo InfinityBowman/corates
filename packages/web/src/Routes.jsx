@@ -13,9 +13,15 @@ import ReconciliationWrapper from '@/components/project/reconcile-tab/amstar2-re
 import ProfilePage from '@/components/profile/ProfilePage.jsx';
 import SettingsPage from '@/components/profile/SettingsPage.jsx';
 import BillingPage from '@components/billing/BillingPage.jsx';
+import BillingPlansPage from '@components/billing/BillingPlansPage.jsx';
 import NotFoundPage from '@components/NotFoundPage.jsx';
+import AdminLayout from '@/components/admin/AdminLayout.jsx';
 import { AdminDashboard } from '@/components/admin/index.js';
 import StorageManagement from '@/components/admin/StorageManagement.jsx';
+import OrgList from '@/components/admin/OrgList.jsx';
+import OrgDetail from '@/components/admin/OrgDetail.jsx';
+import AdminBillingLedgerPage from '@/components/admin/billing-observability/AdminBillingLedgerPage.jsx';
+import AdminBillingStuckStatesPage from '@/components/admin/billing-observability/AdminBillingStuckStatesPage.jsx';
 import { BASEPATH } from '@config/api.js';
 import ProtectedGuard from '@/components/auth/ProtectedGuard.jsx';
 import ProjectView from '@/components/project/ProjectView.jsx';
@@ -35,7 +41,7 @@ export default function AppRoutes() {
         <Route path='/reset-password' component={ResetPassword} />
       </Route>
 
-      {/* Main app routes */}
+      {/* Main app routes - Layout handles sidebar visibility based on route */}
       <Route path='/' component={Layout}>
         {/* Dashboard - public home for all users */}
         <Route path='/' component={Dashboard} />
@@ -43,12 +49,19 @@ export default function AppRoutes() {
 
         {/* Protected routes - requires login */}
         <Route path='/' component={ProtectedGuard}>
-          {/* Global user routes */}
+          {/* Global user routes (no sidebar) */}
           <Route path='/profile' component={ProfilePage} />
           <Route path='/settings' component={SettingsPage} />
-          <Route path='/admin' component={AdminDashboard} />
-          <Route path='/admin/storage' component={StorageManagement} />
           <Route path='/settings/billing' component={BillingPage} />
+          <Route path='/settings/billing/plans' component={BillingPlansPage} />
+          <Route path='/admin' component={AdminLayout}>
+            <Route path='/' component={AdminDashboard} />
+            <Route path='/orgs' component={OrgList} />
+            <Route path='/orgs/:orgId' component={OrgDetail} />
+            <Route path='/storage' component={StorageManagement} />
+            <Route path='/billing/ledger' component={AdminBillingLedgerPage} />
+            <Route path='/billing/stuck-states' component={AdminBillingStuckStatesPage} />
+          </Route>
 
           {/* Organization creation */}
           <Route path='/orgs/new' component={CreateOrgPage} />

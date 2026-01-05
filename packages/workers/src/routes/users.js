@@ -13,7 +13,6 @@ import {
   account,
   verification,
   twoFactor,
-  subscriptions,
   mediaFiles,
 } from '../db/schema.js';
 import { eq, desc, or, like, sql } from 'drizzle-orm';
@@ -244,7 +243,6 @@ userRoutes.delete('/me', async c => {
       db.update(mediaFiles).set({ uploadedBy: null }).where(eq(mediaFiles.uploadedBy, userId)),
       db.delete(projectMembers).where(eq(projectMembers.userId, userId)),
       db.delete(projects).where(eq(projects.createdBy, userId)),
-      db.delete(subscriptions).where(eq(subscriptions.userId, userId)),
       db.delete(twoFactor).where(eq(twoFactor.userId, userId)),
       db.delete(session).where(eq(session.userId, userId)),
       db.delete(account).where(eq(account.userId, userId)),

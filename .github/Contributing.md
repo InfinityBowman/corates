@@ -64,6 +64,53 @@ This is a pnpm monorepo with the following packages:
    - API: http://localhost:8787
    - Docs: http://localhost:8787/docs [API Docs](#api-documentation)
 
+### Stripe Local Development
+
+For local Stripe webhook testing, the project includes a `@corates/stripe-dev` package that runs two Stripe CLI listeners automatically when you run `turbo dev`:
+
+- **Subscription webhooks** (Better Auth): `http://localhost:8787/api/auth/stripe/webhook`
+- **Purchase webhooks** (one-time): `http://localhost:8787/api/billing/purchases/webhook`
+
+**Quick Setup (Automated):**
+
+1. Get your Stripe test secret key from https://dashboard.stripe.com/test/apikeys
+2. Run the automated setup script:
+   ```sh
+   cd packages/workers
+   STRIPE_SECRET_KEY=sk_test_... pnpm stripe:setup
+   ```
+   This automatically creates all required products and prices, and writes them to `.env`
+3. Install Stripe CLI: https://stripe.com/docs/stripe-cli
+4. Authenticate: `stripe login`
+5. Run `turbo dev` - the Stripe listeners will start automatically
+6. Copy the two `whsec_...` signing secrets printed by each listener
+7. Add them to `packages/workers/.env`:
+   - `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...` (from the auth listener)
+   - `STRIPE_WEBHOOK_SECRET_PURCHASES=whsec_...` (from the purchases listener)
+
+**Manual Setup (Alternative):**
+
+If you prefer to set up manually:
+
+1. Install Stripe CLI: https://stripe.com/docs/stripe-cli
+2. Authenticate: `stripe login`
+3. Run `turbo dev` - the Stripe listeners will start automatically
+4. Copy the two `whsec_...` signing secrets printed by each listener
+5. Create products and prices in Stripe Dashboard (Test mode)
+6. Add all configuration to `packages/workers/.env`:
+   - `STRIPE_SECRET_KEY=sk_test_...`
+   - `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...` (from the auth listener)
+   - `STRIPE_WEBHOOK_SECRET_PURCHASES=whsec_...` (from the purchases listener)
+   - `STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY=price_...`
+   - `STRIPE_PRICE_ID_STARTER_TEAM_YEARLY=price_...`
+   - `STRIPE_PRICE_ID_TEAM_MONTHLY=price_...`
+   - `STRIPE_PRICE_ID_TEAM_YEARLY=price_...`
+   - `STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY=price_...`
+   - `STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY=price_...`
+   - `STRIPE_PRICE_ID_SINGLE_PROJECT=price_...`
+
+**Note:** The webhook signing secrets are printed when the listeners start. You only need to copy them once into `.env` - they remain valid for that Stripe CLI session.
+
 ## Development Workflow
 
 ### Code Quality
@@ -129,19 +176,20 @@ pnpm run initialize-mcp
 
 ## Useful Commands
 
-| Command                                           | Description                     |
-| ------------------------------------------------- | ------------------------------- |
-| `pnpm dev:front`                                  | Start frontend (landing + web)  |
-| `pnpm dev:workers`                                | Start backend workers           |
-| `pnpm build`                                      | Build all packages              |
-| `pnpm test`                                       | Run all tests                   |
-| `pnpm lint`                                       | Run ESLint                      |
-| `pnpm format`                                     | Run Prettier                    |
-| `pnpm clear-workers`                              | Clear local worker storage      |
-| `pnpm logs`                                       | View worker logs                |
-| `pnpm docs`                                       | View architecture documentation |
-| `pnpm loc`                                        | Lines of code report            |
-| `pnpm user:make-admin:local -- email@example.com` | Make a user admin (local)       |
+| Command                                           | Description                       |
+| ------------------------------------------------- | --------------------------------- |
+| `pnpm dev:front`                                  | Start frontend (landing + web)    |
+| `pnpm dev:workers`                                | Start backend workers             |
+| `pnpm build`                                      | Build all packages                |
+| `pnpm test`                                       | Run all tests                     |
+| `pnpm lint`                                       | Run ESLint                        |
+| `pnpm format`                                     | Run Prettier                      |
+| `pnpm clear-workers`                              | Clear local worker storage        |
+| `pnpm logs`                                       | View worker logs                  |
+| `pnpm docs`                                       | View architecture documentation   |
+| `pnpm loc`                                        | Lines of code report              |
+| `pnpm user:make-admin:local -- email@example.com` | Make a user admin (local)         |
+| `pnpm stripe:setup`                               | Setup Stripe test products/prices |
 
 ## Code Style
 

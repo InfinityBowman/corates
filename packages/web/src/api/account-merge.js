@@ -5,7 +5,7 @@
  * multiple accounts and wants to combine them.
  */
 
-import { parseApiError } from '@/lib/error-utils.js';
+import { handleFetchError } from '@/lib/error-utils.js';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8787';
 
@@ -25,20 +25,16 @@ export async function initiateMerge(targetEmail, targetOrcidId) {
     throw new Error('Either targetEmail or targetOrcidId must be provided');
   }
 
-  const response = await fetch(`${API_BASE}/api/accounts/merge/initiate`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/accounts/merge/initiate`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
+  );
 
-  if (!response.ok) {
-    const error = await parseApiError(response);
-    throw error;
-  }
-
-  const data = await response.json();
-  return data;
+  return response.json();
 }
 
 /**
@@ -48,20 +44,16 @@ export async function initiateMerge(targetEmail, targetOrcidId) {
  * @returns {Promise<{ success: boolean, message: string, preview: { currentProviders: string[], targetProviders: string[] } }>}
  */
 export async function verifyMergeCode(mergeToken, code) {
-  const response = await fetch(`${API_BASE}/api/accounts/merge/verify`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mergeToken, code }),
-  });
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/accounts/merge/verify`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mergeToken, code }),
+    }),
+  );
 
-  if (!response.ok) {
-    const error = await parseApiError(response);
-    throw error;
-  }
-
-  const data = await response.json();
-  return data;
+  return response.json();
 }
 
 /**
@@ -70,20 +62,16 @@ export async function verifyMergeCode(mergeToken, code) {
  * @returns {Promise<{ success: boolean, message: string, mergedProviders: string[] }>}
  */
 export async function completeMerge(mergeToken) {
-  const response = await fetch(`${API_BASE}/api/accounts/merge/complete`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mergeToken }),
-  });
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/accounts/merge/complete`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mergeToken }),
+    }),
+  );
 
-  if (!response.ok) {
-    const error = await parseApiError(response);
-    throw error;
-  }
-
-  const data = await response.json();
-  return data;
+  return response.json();
 }
 
 /**
@@ -92,21 +80,14 @@ export async function completeMerge(mergeToken) {
  * @returns {Promise<{ status: string, initiatorEmail: string, targetEmail: string, isInitiator: boolean, verified: boolean }>}
  */
 export async function getMergeStatus(mergeToken) {
-  const response = await fetch(
-    `${API_BASE}/api/accounts/merge/status?token=${encodeURIComponent(mergeToken)}`,
-    {
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/accounts/merge/status?token=${encodeURIComponent(mergeToken)}`, {
       method: 'GET',
       credentials: 'include',
-    },
+    }),
   );
 
-  if (!response.ok) {
-    const error = await parseApiError(response);
-    throw error;
-  }
-
-  const data = await response.json();
-  return data;
+  return response.json();
 }
 
 /**
@@ -115,18 +96,14 @@ export async function getMergeStatus(mergeToken) {
  * @returns {Promise<{ success: boolean }>}
  */
 export async function cancelMerge(mergeToken) {
-  const response = await fetch(`${API_BASE}/api/accounts/merge/cancel`, {
-    method: 'DELETE',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mergeToken }),
-  });
+  const response = await handleFetchError(
+    fetch(`${API_BASE}/api/accounts/merge/cancel`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mergeToken }),
+    }),
+  );
 
-  if (!response.ok) {
-    const error = await parseApiError(response);
-    throw error;
-  }
-
-  const data = await response.json();
-  return data;
+  return response.json();
 }

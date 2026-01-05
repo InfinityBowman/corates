@@ -89,7 +89,13 @@ Environment variables are defined in `wrangler.jsonc` or `.dev.vars`:
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` - Google OAuth
 - `ORCID_CLIENT_ID` / `ORCID_CLIENT_SECRET` - ORCID OAuth
 - `POSTMARK_API_KEY` - Email service
-- `STRIPE_SECRET_KEY` - Stripe billing
+- `STRIPE_SECRET_KEY` - Stripe API secret key (shared for all Stripe operations)
+- `STRIPE_WEBHOOK_SECRET_AUTH` - Stripe webhook signing secret for Better Auth subscription webhooks (`/api/auth/stripe/webhook`)
+- `STRIPE_WEBHOOK_SECRET_PURCHASES` - Stripe webhook signing secret for one-time purchase webhooks (`/api/billing/purchases/webhook`)
+- `STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY` / `STRIPE_PRICE_ID_STARTER_TEAM_YEARLY` - Subscription plan price IDs
+- `STRIPE_PRICE_ID_TEAM_MONTHLY` / `STRIPE_PRICE_ID_TEAM_YEARLY` - Subscription plan price IDs
+- `STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY` / `STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY` - Subscription plan price IDs
+- `STRIPE_PRICE_ID_SINGLE_PROJECT` - One-time purchase price ID
 - `R2_BUCKET` - R2 storage binding for PDFs
 
 ### Frontend (Web)
@@ -147,6 +153,53 @@ pnpm test
 # Run linting
 pnpm lint
 ```
+
+### Stripe Local Development
+
+For local Stripe webhook testing, the project includes a `@corates/stripe-dev` package that runs two Stripe CLI listeners automatically when you run `turbo dev`:
+
+- **Subscription webhooks** (Better Auth): `http://localhost:8787/api/auth/stripe/webhook`
+- **Purchase webhooks** (one-time): `http://localhost:8787/api/billing/purchases/webhook`
+
+**Quick Setup (Automated):**
+
+1. Get your Stripe test secret key from https://dashboard.stripe.com/test/apikeys
+2. Run the setup script:
+   ```bash
+   cd packages/workers
+   STRIPE_SECRET_KEY=sk_test_... pnpm stripe:setup
+   ```
+   This automatically creates all required products and prices, and writes them to `.env`
+3. Install Stripe CLI: https://stripe.com/docs/stripe-cli
+4. Authenticate: `stripe login`
+5. Run `turbo dev` - the Stripe listeners will start automatically
+6. Copy the two `whsec_...` signing secrets printed by each listener
+7. Add them to `packages/workers/.env`:
+   - `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...` (from the auth listener)
+   - `STRIPE_WEBHOOK_SECRET_PURCHASES=whsec_...` (from the purchases listener)
+
+**Manual Setup (Alternative):**
+
+If you prefer to set up manually:
+
+1. Install Stripe CLI: https://stripe.com/docs/stripe-cli
+2. Authenticate: `stripe login`
+3. Run `turbo dev` - the Stripe listeners will start automatically
+4. Copy the two `whsec_...` signing secrets printed by each listener
+5. Create products and prices in Stripe Dashboard (Test mode)
+6. Add all configuration to `packages/workers/.env`:
+   - `STRIPE_SECRET_KEY=sk_test_...`
+   - `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...` (from the auth listener)
+   - `STRIPE_WEBHOOK_SECRET_PURCHASES=whsec_...` (from the purchases listener)
+   - `STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY=price_...`
+   - `STRIPE_PRICE_ID_STARTER_TEAM_YEARLY=price_...`
+   - `STRIPE_PRICE_ID_TEAM_MONTHLY=price_...`
+   - `STRIPE_PRICE_ID_TEAM_YEARLY=price_...`
+   - `STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY=price_...`
+   - `STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY=price_...`
+   - `STRIPE_PRICE_ID_SINGLE_PROJECT=price_...`
+
+**Note:** The webhook signing secrets are printed when the listeners start. You only need to copy them once into `.env` - they remain valid for that Stripe CLI session.
 
 ## Package-Specific Configuration
 

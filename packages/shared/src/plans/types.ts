@@ -6,26 +6,23 @@
 /**
  * Plan ID - identifies a subscription tier
  */
-export type PlanId = 'free' | 'pro' | 'unlimited';
+export type PlanId = 'free' | 'starter_team' | 'team' | 'unlimited_team';
 
 /**
  * Entitlement keys - boolean capabilities that can be enabled/disabled per plan
  */
-export type EntitlementKey = 'project.create' | 'checklist.edit' | 'export.pdf' | 'ai.run';
+export type EntitlementKey = 'project.create';
 
 /**
  * Quota keys - numeric limits that can be set per plan
  */
-export type QuotaKey = 'projects.max' | 'storage.project.maxMB' | 'ai.tokens.monthly';
+export type QuotaKey = 'projects.max' | 'collaborators.org.max';
 
 /**
  * Entitlements - mapping of entitlement keys to boolean values
  */
 export interface Entitlements {
   'project.create': boolean;
-  'checklist.edit': boolean;
-  'export.pdf': boolean;
-  'ai.run': boolean;
 }
 
 /**
@@ -34,8 +31,7 @@ export interface Entitlements {
  */
 export interface Quotas {
   'projects.max': number;
-  'storage.project.maxMB': number;
-  'ai.tokens.monthly': number;
+  'collaborators.org.max': number;
 }
 
 /**

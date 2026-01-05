@@ -11,7 +11,6 @@ import {
   seedUser,
   seedProject,
   seedProjectMember,
-  seedSubscription,
   seedOrganization,
   seedOrgMember,
   json,
@@ -592,83 +591,6 @@ describe('Account Merge Routes - POST /api/accounts/merge/complete', () => {
     expect(res.status).toBe(400);
     const body = await json(res);
     expect(body.code).toBe('VALIDATION_INVALID_INPUT');
-  });
-
-  it('should merge subscriptions with tier priority', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedSubscription({
-      id: 'sub-1',
-      userId: 'user-1',
-      tier: 'pro',
-      status: 'active',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedSubscription({
-      id: 'sub-2',
-      userId: 'user-2',
-      tier: 'team',
-      status: 'active',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    const mergeToken = 'test-token-123';
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-    const mergeData = {
-      token: mergeToken,
-      code: '123456',
-      initiatorId: 'user-1',
-      targetId: 'user-2',
-      verified: true,
-      verifiedAt: Date.now(),
-    };
-
-    await env.DB.prepare(
-      `INSERT INTO verification (id, identifier, value, expiresAt, createdAt, updatedAt)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
-    )
-      .bind(
-        'verify-1',
-        'merge:user-1:user-2',
-        JSON.stringify(mergeData),
-        Math.floor(expiresAt.getTime() / 1000),
-        nowSec,
-        nowSec,
-      )
-      .run();
-
-    const res = await fetchAccountMerge('/api/accounts/merge/complete', {
-      method: 'POST',
-      body: JSON.stringify({
-        mergeToken,
-      }),
-    });
-
-    expect(res.status).toBe(200);
-
-    // Verify team subscription (higher tier) is kept
-    const subscription = await env.DB.prepare('SELECT * FROM subscriptions WHERE userId = ?1')
-      .bind('user-1')
-      .first();
-    expect(subscription.tier).toBe('team');
   });
 });
 

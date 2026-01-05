@@ -589,11 +589,28 @@ export class ProjectDoc {
    */
   disconnectUser(userId, reason = 'membership-revoked') {
     const closeCode = 1008; // Policy Violation
+    const sessionsToClose = [];
     this.sessions.forEach((sessionData, ws) => {
       if (sessionData.user?.id === userId && ws.readyState === 1) {
-        ws.close(closeCode, reason);
+        sessionsToClose.push({ ws, sessionData });
       }
     });
+    // Close websockets and remove sessions immediately
+    // (don't wait for close event handler, which may not fire synchronously in tests)
+    for (const { ws, sessionData } of sessionsToClose) {
+      // Remove awareness state if present and awareness is initialized
+      if (this.awareness && sessionData.awarenessClientId != null) {
+        awarenessProtocol.removeAwarenessStates(
+          this.awareness,
+          [sessionData.awarenessClientId],
+          ws,
+        );
+      }
+      // Remove session immediately
+      this.sessions.delete(ws);
+      // Close the websocket
+      ws.close(closeCode, reason);
+    }
   }
 
   /**

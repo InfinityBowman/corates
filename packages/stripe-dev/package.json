@@ -1,0 +1,14 @@
+{
+  "name": "@corates/stripe-dev",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Stripe CLI listeners for local development",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n auth,purchases -c yellow,blue \"stripe listen --forward-to http://localhost:8787/api/auth/stripe/webhook\" \"stripe listen --forward-to http://localhost:8787/api/billing/purchases/webhook\""
+  },
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

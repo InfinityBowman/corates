@@ -27,19 +27,33 @@ const colorMap = {
   },
 };
 
+/**
+ * Stats Card component for admin dashboard
+ * Displays a single statistic with icon and optional loading state
+ * @param {object} props - Component props
+ * @param {string} props.title - The title of the stat
+ * @param {number|string} props.value - The value of the stat
+ * @param {'blue'|'green'|'purple'|'orange'} props.color - The color theme of the stat
+ * @param {Component} props.icon - The icon component to display
+ * @param {boolean} [props.loading] - Whether the stat is loading
+ * @returns {JSX.Element} - The StatsCard component
+ */
 export default function StatsCard(props) {
+  const title = () => props.title;
+  const value = () => props.value;
+  const loading = () => props.loading;
   const colors = () => colorMap[props.color] || colorMap.blue;
 
   return (
     <div class={`rounded-lg border border-gray-200 p-5 ${colors().bg}`}>
       <div class='flex items-center justify-between'>
         <div>
-          <p class='text-sm font-medium text-gray-600'>{props.title}</p>
+          <p class='text-sm font-medium text-gray-600'>{title()}</p>
           <Show
-            when={!props.loading}
+            when={!loading()}
             fallback={<div class='mt-1 h-8 w-16 animate-pulse rounded bg-gray-200' />}
           >
-            <p class={`mt-1 text-2xl font-bold ${colors().text}`}>{props.value}</p>
+            <p class={`mt-1 text-2xl font-bold ${colors().text}`}>{value()}</p>
           </Show>
         </div>
         <div class={`rounded-lg p-3 ${colors().icon}`}>

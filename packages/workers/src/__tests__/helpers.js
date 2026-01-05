@@ -14,10 +14,12 @@ import {
   projects,
   projectMembers,
   session,
-  subscriptions,
+  subscription,
   organization,
   member,
   mediaFiles,
+  projectInvitations,
+  stripeEventLedger,
 } from '../db/schema.js';
 import {
   seedUserSchema,
@@ -28,6 +30,8 @@ import {
   seedOrganizationSchema,
   seedOrgMemberSchema,
   seedMediaFileSchema,
+  seedProjectInvitationSchema,
+  seedStripeEventLedgerSchema,
 } from './seed-schemas.js';
 import { MIGRATION_SQL } from './migration-sql.js';
 
@@ -141,7 +145,9 @@ export async function resetTestDatabase() {
   // Wrap each drop in try-catch to handle cases where tables don't exist
   const tablesToDrop = [
     'project_invitations',
-    'subscriptions',
+    'org_access_grants',
+    'stripe_event_ledger',
+    'subscription',
     'twoFactor',
     'verification',
     'mediaFiles',
@@ -209,6 +215,7 @@ export async function seedUser(params) {
     banned: validated.banned === 1,
     banReason: validated.banReason,
     banExpires: validated.banExpires ? new Date(validated.banExpires * 1000) : null,
+    stripeCustomerId: validated.stripeCustomerId,
     createdAt: new Date(validated.createdAt * 1000),
     updatedAt: new Date(validated.updatedAt * 1000),
   });
@@ -305,18 +312,22 @@ export async function seedSubscription(params) {
   const validated = seedSubscriptionSchema.parse(params);
   const db = createDb(env.DB);
 
-  await db.insert(subscriptions).values({
+  await db.insert(subscription).values({
     id: validated.id,
-    userId: validated.userId,
-    tier: validated.tier,
+    plan: validated.plan,
+    referenceId: validated.referenceId,
     status: validated.status,
     stripeCustomerId: validated.stripeCustomerId,
     stripeSubscriptionId: validated.stripeSubscriptionId,
-    currentPeriodStart:
-      validated.currentPeriodStart ? new Date(validated.currentPeriodStart * 1000) : null,
-    currentPeriodEnd:
-      validated.currentPeriodEnd ? new Date(validated.currentPeriodEnd * 1000) : null,
+    periodStart: validated.periodStart ? new Date(validated.periodStart * 1000) : null,
+    periodEnd: validated.periodEnd ? new Date(validated.periodEnd * 1000) : null,
     cancelAtPeriodEnd: validated.cancelAtPeriodEnd === 1,
+    cancelAt: validated.cancelAt ? new Date(validated.cancelAt * 1000) : null,
+    canceledAt: validated.canceledAt ? new Date(validated.canceledAt * 1000) : null,
+    endedAt: validated.endedAt ? new Date(validated.endedAt * 1000) : null,
+    seats: validated.seats,
+    trialStart: validated.trialStart ? new Date(validated.trialStart * 1000) : null,
+    trialEnd: validated.trialEnd ? new Date(validated.trialEnd * 1000) : null,
     createdAt: new Date(validated.createdAt * 1000),
     updatedAt: new Date(validated.updatedAt * 1000),
   });
@@ -338,6 +349,62 @@ export async function seedMediaFile(params) {
     uploadedBy: validated.uploadedBy,
     bucketKey: validated.bucketKey,
     createdAt: new Date(validated.createdAt * 1000),
+  });
+}
+
+/**
+ * Seed a project invitation into the test database
+ */
+export async function seedProjectInvitation(params) {
+  const validated = seedProjectInvitationSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(projectInvitations).values({
+    id: validated.id,
+    orgId: validated.orgId,
+    projectId: validated.projectId,
+    email: validated.email.toLowerCase(),
+    role: validated.role,
+    orgRole: validated.orgRole,
+    grantOrgMembership: validated.grantOrgMembership === 1,
+    token: validated.token,
+    invitedBy: validated.invitedBy,
+    expiresAt: new Date(validated.expiresAt * 1000),
+    acceptedAt: validated.acceptedAt ? new Date(validated.acceptedAt * 1000) : null,
+    createdAt: new Date(validated.createdAt * 1000),
+  });
+}
+
+/**
+ * Seed a Stripe event ledger entry into the test database
+ */
+export async function seedStripeEventLedger(params) {
+  const validated = seedStripeEventLedgerSchema.parse(params);
+  const db = createDb(env.DB);
+
+  await db.insert(stripeEventLedger).values({
+    id: validated.id,
+    payloadHash: validated.payloadHash,
+    signaturePresent: validated.signaturePresent === 1,
+    receivedAt: new Date(validated.receivedAt * 1000),
+    route: validated.route,
+    requestId: validated.requestId,
+    status: validated.status,
+    error: validated.error,
+    httpStatus: validated.httpStatus,
+    stripeEventId: validated.stripeEventId,
+    type: validated.type,
+    livemode:
+      validated.livemode === 1 ? true
+      : validated.livemode === 0 ? false
+      : null,
+    apiVersion: validated.apiVersion,
+    created: validated.created ? new Date(validated.created * 1000) : null,
+    processedAt: validated.processedAt ? new Date(validated.processedAt * 1000) : null,
+    orgId: validated.orgId,
+    stripeCustomerId: validated.stripeCustomerId,
+    stripeSubscriptionId: validated.stripeSubscriptionId,
+    stripeCheckoutSessionId: validated.stripeCheckoutSessionId,
   });
 }
 

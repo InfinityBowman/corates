@@ -5,11 +5,13 @@ import { FiMenu, FiWifiOff, FiChevronDown, FiX } from 'solid-icons/fi';
 import { LANDING_URL } from '@config/api.js';
 import useOnlineStatus from '@primitives/useOnlineStatus.js';
 import { Avatar } from '@corates/ui';
+import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.js';
 
 export default function Navbar(props) {
   const { user, signout, authLoading } = useBetterAuth();
   const navigate = useNavigate();
   const isOnline = useOnlineStatus();
+  const showAdminMenu = () => isAdmin() && isAdminChecked();
 
   const [showUserMenu, setShowUserMenu] = createSignal(false);
   let userMenuRef;
@@ -28,7 +30,7 @@ export default function Navbar(props) {
   });
 
   // Close menus when clicking outside
-  onMount(() => {
+  onMount(async () => {
     const handleClickOutside = event => {
       if (userMenuRef && !userMenuRef.contains(event.target)) {
         setShowUserMenu(false);
@@ -39,6 +41,7 @@ export default function Navbar(props) {
     onCleanup(() => {
       document.removeEventListener('mousedown', handleClickOutside);
     });
+    await checkAdminStatus();
   });
 
   const handleSignOut = async () => {
@@ -54,16 +57,18 @@ export default function Navbar(props) {
   return (
     <nav class='sticky top-0 z-50 flex items-center justify-between bg-linear-to-r from-blue-700 to-blue-500 px-4 py-2 text-white shadow-lg'>
       <div class='flex items-center space-x-3'>
-        {/* Mobile sidebar toggle button (hidden on desktop where sidebar has its own toggle) */}
-        <button
-          class='-ml-1.5 rounded-full border border-blue-200 bg-white/80 p-1.5 text-blue-700 shadow transition-all duration-200 hover:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none md:hidden'
-          onClick={() => props.toggleMobileSidebar?.()}
-          aria-label={props.mobileSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
-        >
-          <Show when={props.mobileSidebarOpen} fallback={<FiMenu class='h-4 w-4' />}>
-            <FiX class='h-4 w-4' />
-          </Show>
-        </button>
+        {/* Mobile sidebar toggle button (only shown when sidebar is present) */}
+        <Show when={props.toggleMobileSidebar}>
+          <button
+            class='-ml-1.5 rounded-full border border-blue-200 bg-white/80 p-1.5 text-blue-700 shadow transition-all duration-200 hover:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none md:hidden'
+            onClick={() => props.toggleMobileSidebar?.()}
+            aria-label={props.mobileSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+          >
+            <Show when={props.mobileSidebarOpen} fallback={<FiMenu class='h-4 w-4' />}>
+              <FiX class='h-4 w-4' />
+            </Show>
+          </button>
+        </Show>
         <a
           href={LANDING_URL}
           rel='external'
@@ -97,6 +102,14 @@ export default function Navbar(props) {
         >
           Dashboard
         </A>
+        <Show when={showAdminMenu()}>
+          <A
+            href='/admin'
+            class='flex h-9 items-center rounded px-2 font-medium transition hover:bg-blue-600'
+          >
+            Admin
+          </A>
+        </Show>
         <Show
           when={user() || (authLoading() && isLikelyLoggedIn)}
           fallback={

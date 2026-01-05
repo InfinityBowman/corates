@@ -11,6 +11,11 @@ import {
 } from '@/stores/adminStore.js';
 import { Z_INDEX } from '@corates/ui';
 
+/**
+ * Impersonation Banner component
+ * Shows when admin is impersonating a user
+ * @returns {JSX.Element} - The ImpersonationBanner component
+ */
 export default function ImpersonationBanner() {
   // Check impersonation status on mount
   onMount(async () => {

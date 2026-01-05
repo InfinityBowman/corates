@@ -17,13 +17,3 @@ Plans are intentionally opinionated and are expected to change as the codebase e
 ## Quality and architecture
 
 - [Ideal error model architecture](/plans/ideal-error-model)
-
-## Other plans
-
-- [Audit logs](/plans/audit-logs)
-- [Stripe payment implementation](/plans/stripe-implementation)
-- [Stripe checkout testing guide](/plans/stripe-testing-guide)
-- [Undo checklist completion](/plans/undo-checklist-completion)
-- [Undo checklist completion feasibility review](/plans/undo-checklist-completion-review)
-- [Application improvement recommendations](/plans/application-improvement-recommendations)
-- [Internal todo](/plans/todo)

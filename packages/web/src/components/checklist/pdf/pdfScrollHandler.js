@@ -28,7 +28,7 @@ export function createPdfScrollHandler(document) {
   let zoomOriginPoint = null; // { x, y } in container coordinates
   let zoomOriginScale = null; // Scale before zoom
   let lastMousePosition = null; // { x, y } for button-triggered zoom
-  let isWheelZooming = false; // Track if we're in an active wheel zoom gesture
+  let _isWheelZooming = false; // Track if we're in an active wheel zoom gesture
   let scrollAdjustRafId = null; // RAF ID for scroll adjustment to prevent multiple queued adjustments
   let zoomAdjustToken = 0; // Token to coalesce rapid zoom adjustments (latest wins)
 
@@ -110,7 +110,7 @@ export function createPdfScrollHandler(document) {
     };
 
     // Mark that we're in a wheel zoom gesture
-    isWheelZooming = true;
+    _isWheelZooming = true;
 
     // Use deltaY directly for smooth, proportional zooming
     // Smaller divisor = more sensitive, larger = less sensitive
@@ -131,7 +131,7 @@ export function createPdfScrollHandler(document) {
     // Clear wheel zoom flag after a short delay (when gesture ends)
     clearTimeout(handleWheel.zoomEndTimeout);
     handleWheel.zoomEndTimeout = setTimeout(() => {
-      isWheelZooming = false;
+      _isWheelZooming = false;
     }, 150);
   }
 

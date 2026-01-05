@@ -176,6 +176,7 @@ export default [
       'packages/learn/.astro/**',
       '**/.vitepress/cache/**',
       '**/.vitepress/dist/**',
+      'reference/**',
     ],
   },
 ];

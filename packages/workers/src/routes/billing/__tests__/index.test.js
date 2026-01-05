@@ -5,7 +5,37 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import { resetTestDatabase, seedUser, seedSubscription, json } from '../../../__tests__/helpers.js';
+import {
+  resetTestDatabase,
+  seedUser,
+  seedOrganization,
+  seedOrgMember,
+  json,
+} from '../../../__tests__/helpers.js';
+import { createDb } from '../../../db/client.js';
+import { subscription } from '../../../db/schema.js';
+
+const mockAuthUpgradeSubscription = vi.fn(async () => ({
+  url: 'https://checkout.stripe.com/test',
+}));
+const mockAuthCreateBillingPortal = vi.fn(async () => ({
+  url: 'https://billing.stripe.com/test',
+}));
+
+// Mock Better Auth config used by billing routes for subscription management.
+// This keeps tests focused on our route contract (not Better Auth Stripe plugin internals).
+vi.mock('../../../auth/config.js', () => {
+  return {
+    createAuth: () => {
+      return {
+        api: {
+          upgradeSubscription: mockAuthUpgradeSubscription,
+          createBillingPortal: mockAuthCreateBillingPortal,
+        },
+      };
+    },
+  };
+});
 
 // Mock postmark to avoid loading runtime code
 vi.mock('postmark', () => {
@@ -104,13 +134,43 @@ async function fetchBilling(path, init = {}) {
 describe('Billing Routes - GET /api/billing/subscription', () => {
   it('should return free tier when no subscription exists', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
+    const orgId = 'org-1';
+    const userId = 'user-1';
 
     await seedUser({
-      id: 'user-1',
+      id: userId,
       name: 'User 1',
       email: 'user1@example.com',
       createdAt: nowSec,
       updatedAt: nowSec,
+    });
+
+    await seedOrganization({
+      id: orgId,
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'member-1',
+      userId,
+      organizationId: orgId,
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
+    // Set activeOrganizationId in session
+    const db = createDb(env.DB);
+    const { session: sessionTable } = await import('../../../db/schema.js');
+    await db.insert(sessionTable).values({
+      id: 'test-session',
+      userId,
+      token: 'test-token',
+      expiresAt: new Date(Date.now() + 86400 * 1000),
+      activeOrganizationId: orgId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     const res = await fetchBilling('/api/billing/subscription');
@@ -118,78 +178,126 @@ describe('Billing Routes - GET /api/billing/subscription', () => {
 
     const body = await json(res);
     expect(body.tier).toBe('free');
-    expect(body.status).toBe('active');
+    expect(body.status).toBe('inactive');
     expect(body.stripeSubscriptionId).toBeNull();
+    expect(body.source).toBe('free');
+    expect(body.accessMode).toBe('free');
   });
 
-  it('should return subscription when exists', async () => {
+  it('should return org subscription when exists', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
+    const orgId = 'org-1';
+    const userId = 'user-1';
 
     await seedUser({
-      id: 'user-1',
+      id: userId,
       name: 'User 1',
       email: 'user1@example.com',
       createdAt: nowSec,
       updatedAt: nowSec,
     });
 
-    await seedSubscription({
+    await seedOrganization({
+      id: orgId,
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'member-1',
+      userId,
+      organizationId: orgId,
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
+    // Create org-scoped subscription
+    const db = createDb(env.DB);
+    const { session: sessionTable } = await import('../../../db/schema.js');
+    await db.insert(sessionTable).values({
+      id: 'test-session',
+      userId,
+      token: 'test-token',
+      expiresAt: new Date(Date.now() + 86400 * 1000),
+      activeOrganizationId: orgId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await db.insert(subscription).values({
       id: 'sub-1',
-      userId: 'user-1',
-      tier: 'pro',
+      plan: 'team',
+      referenceId: orgId,
       status: 'active',
       stripeCustomerId: 'cus_test',
       stripeSubscriptionId: 'sub_test',
-      currentPeriodStart: nowSec,
-      currentPeriodEnd: nowSec + 86400 * 30,
-      cancelAtPeriodEnd: 0,
-      createdAt: nowSec,
-      updatedAt: nowSec,
+      periodStart: new Date(nowSec * 1000),
+      periodEnd: new Date((nowSec + 86400 * 30) * 1000),
+      cancelAtPeriodEnd: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     const res = await fetchBilling('/api/billing/subscription');
     expect(res.status).toBe(200);
 
     const body = await json(res);
-    expect(body.tier).toBe('pro');
+    expect(body.tier).toBe('team');
     expect(body.status).toBe('active');
-    expect(body.stripeSubscriptionId).toBe('sub_test');
-  });
-});
-
-describe('Billing Routes - GET /api/billing/plans', () => {
-  it('should return available plans', async () => {
-    const res = await fetchBilling('/api/billing/plans');
-    expect(res.status).toBe(200);
-
-    const body = await json(res);
-    expect(body.plans).toBeDefined();
-    expect(Array.isArray(body.plans)).toBe(true);
-    expect(body.plans.length).toBeGreaterThan(0);
-
-    const freePlan = body.plans.find(p => p.tier === 'free');
-    expect(freePlan).toBeDefined();
-    expect(freePlan.price.monthly).toBe(0);
+    expect(body.stripeSubscriptionId).toBe('sub-1');
+    expect(body.source).toBe('subscription');
+    expect(body.accessMode).toBe('full');
   });
 });
 
 describe('Billing Routes - POST /api/billing/checkout', () => {
-  it('should create checkout session for valid tier', async () => {
+  it('should create checkout session for valid tier (org-scoped)', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
+    const orgId = 'org-1';
+    const userId = 'user-1';
 
     await seedUser({
-      id: 'user-1',
+      id: userId,
       name: 'User 1',
       email: 'user1@example.com',
       createdAt: nowSec,
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: orgId,
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'member-1',
+      userId,
+      organizationId: orgId,
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
+    // Set activeOrganizationId in session
+    const db = createDb(env.DB);
+    const { session: sessionTable } = await import('../../../db/schema.js');
+    await db.insert(sessionTable).values({
+      id: 'test-session',
+      userId,
+      token: 'test-token',
+      expiresAt: new Date(Date.now() + 86400 * 1000),
+      activeOrganizationId: orgId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
     const res = await fetchBilling('/api/billing/checkout', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        tier: 'pro',
+        tier: 'team',
         interval: 'monthly',
       }),
     });
@@ -197,11 +305,36 @@ describe('Billing Routes - POST /api/billing/checkout', () => {
     expect(res.status).toBe(200);
     const body = await json(res);
     expect(body.url).toBeDefined();
-    expect(body.sessionId).toBeDefined();
-    expect(mockStripeCheckoutSessionsCreate).toHaveBeenCalled();
   });
 
   it('should reject free tier', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const orgId = 'org-1';
+    const userId = 'user-1';
+
+    await seedUser({
+      id: userId,
+      name: 'User 1',
+      email: 'user1@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedOrganization({
+      id: orgId,
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'member-1',
+      userId,
+      organizationId: orgId,
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     const res = await fetchBilling('/api/billing/checkout', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -219,6 +352,33 @@ describe('Billing Routes - POST /api/billing/checkout', () => {
   });
 
   it('should reject missing tier', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const orgId = 'org-1';
+    const userId = 'user-1';
+
+    await seedUser({
+      id: userId,
+      name: 'User 1',
+      email: 'user1@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedOrganization({
+      id: orgId,
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'member-1',
+      userId,
+      organizationId: orgId,
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
     const res = await fetchBilling('/api/billing/checkout', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -231,23 +391,40 @@ describe('Billing Routes - POST /api/billing/checkout', () => {
   });
 
   it('should handle Stripe errors', async () => {
-    mockStripeCheckoutSessionsCreate.mockRejectedValueOnce(new Error('Stripe API error'));
-
     const nowSec = Math.floor(Date.now() / 1000);
+    const orgId = 'org-1';
+    const userId = 'user-1';
 
     await seedUser({
-      id: 'user-1',
+      id: userId,
       name: 'User 1',
       email: 'user1@example.com',
       createdAt: nowSec,
       updatedAt: nowSec,
     });
 
+    await seedOrganization({
+      id: orgId,
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'member-1',
+      userId,
+      organizationId: orgId,
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
+    mockAuthUpgradeSubscription.mockRejectedValueOnce(new Error('Stripe API error'));
+
     const res = await fetchBilling('/api/billing/checkout', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        tier: 'pro',
+        tier: 'team',
         interval: 'monthly',
       }),
     });
@@ -260,30 +437,200 @@ describe('Billing Routes - POST /api/billing/checkout', () => {
   });
 });
 
-describe('Billing Routes - POST /api/billing/portal', () => {
-  it('should create portal session when subscription exists', async () => {
+describe('Billing Routes - POST /api/billing/single-project/checkout', () => {
+  it('should create checkout session for single project purchase', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
+    const orgId = 'org-1';
+    const userId = 'user-1';
 
     await seedUser({
-      id: 'user-1',
+      id: userId,
       name: 'User 1',
       email: 'user1@example.com',
       createdAt: nowSec,
       updatedAt: nowSec,
     });
 
-    await seedSubscription({
+    await seedOrganization({
+      id: orgId,
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'member-1',
+      userId,
+      organizationId: orgId,
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
+    // Set activeOrganizationId in session
+    const db = createDb(env.DB);
+    const { session: sessionTable } = await import('../../../db/schema.js');
+    await db.insert(sessionTable).values({
+      id: 'test-session',
+      userId,
+      token: 'test-token',
+      expiresAt: new Date(Date.now() + 86400 * 1000),
+      activeOrganizationId: orgId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const testEnv = {
+      ...env,
+      STRIPE_SECRET_KEY: 'sk_test_123',
+      STRIPE_PRICE_ID_SINGLE_PROJECT: 'price_single_project_test',
+      APP_URL: 'http://localhost:5173',
+    };
+
+    const ctx = createExecutionContext();
+    const req = new Request('http://localhost/api/billing/single-project/checkout', {
+      method: 'POST',
+      headers: {
+        'x-test-user-id': userId,
+        'x-test-user-email': 'user1@example.com',
+        'content-type': 'application/json',
+      },
+    });
+    const res = await app.fetch(req, testEnv, ctx);
+    await waitOnExecutionContext(ctx);
+
+    expect(res.status).toBe(200);
+    const body = await json(res);
+    expect(body.url).toBeDefined();
+    expect(body.sessionId).toBeDefined();
+    expect(mockStripeCheckoutSessionsCreate).toHaveBeenCalled();
+    const callArgs = mockStripeCheckoutSessionsCreate.mock.calls[0][0];
+    expect(callArgs.mode).toBe('payment');
+    expect(callArgs.metadata.orgId).toBe(orgId);
+    expect(callArgs.metadata.grantType).toBe('single_project');
+  });
+
+  it('should reject non-owner users', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const orgId = 'org-1';
+    const userId = 'user-1';
+
+    await seedUser({
+      id: userId,
+      name: 'User 1',
+      email: 'user1@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedOrganization({
+      id: orgId,
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'member-1',
+      userId,
+      organizationId: orgId,
+      role: 'member', // Not owner
+      createdAt: nowSec,
+    });
+
+    // Set activeOrganizationId in session
+    const db = createDb(env.DB);
+    const { session: sessionTable } = await import('../../../db/schema.js');
+    await db.insert(sessionTable).values({
+      id: 'test-session',
+      userId,
+      token: 'test-token',
+      expiresAt: new Date(Date.now() + 86400 * 1000),
+      activeOrganizationId: orgId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const testEnv = {
+      ...env,
+      STRIPE_SECRET_KEY: 'sk_test_123',
+      STRIPE_PRICE_ID_SINGLE_PROJECT: 'price_single_project_test',
+      APP_URL: 'http://localhost:5173',
+    };
+
+    const ctx = createExecutionContext();
+    const req = new Request('http://localhost/api/billing/single-project/checkout', {
+      method: 'POST',
+      headers: {
+        'x-test-user-id': userId,
+        'x-test-user-email': 'user1@example.com',
+        'content-type': 'application/json',
+      },
+    });
+    const res = await app.fetch(req, testEnv, ctx);
+    await waitOnExecutionContext(ctx);
+
+    expect(res.status).toBe(403);
+    const body = await json(res);
+    expect(body.code).toBeDefined();
+    expect(body.code).toMatch(/AUTH_FORBIDDEN/);
+  });
+});
+
+describe('Billing Routes - POST /api/billing/portal', () => {
+  it('should create portal session when org subscription exists', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const orgId = 'org-1';
+    const userId = 'user-1';
+
+    await seedUser({
+      id: userId,
+      name: 'User 1',
+      email: 'user1@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedOrganization({
+      id: orgId,
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'member-1',
+      userId,
+      organizationId: orgId,
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
+    // Set activeOrganizationId in session
+    const db = createDb(env.DB);
+    const { session: sessionTable } = await import('../../../db/schema.js');
+    await db.insert(sessionTable).values({
+      id: 'test-session',
+      userId,
+      token: 'test-token',
+      expiresAt: new Date(Date.now() + 86400 * 1000),
+      activeOrganizationId: orgId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // Create org-scoped subscription
+    await db.insert(subscription).values({
       id: 'sub-1',
-      userId: 'user-1',
-      tier: 'pro',
+      plan: 'team',
+      referenceId: orgId,
       status: 'active',
       stripeCustomerId: 'cus_test',
       stripeSubscriptionId: 'sub_test',
-      currentPeriodStart: nowSec,
-      currentPeriodEnd: nowSec + 86400 * 30,
-      cancelAtPeriodEnd: 0,
-      createdAt: nowSec,
-      updatedAt: nowSec,
+      periodStart: new Date(nowSec * 1000),
+      periodEnd: new Date((nowSec + 86400 * 30) * 1000),
+      cancelAtPeriodEnd: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     const res = await fetchBilling('/api/billing/portal', {
@@ -294,29 +641,5 @@ describe('Billing Routes - POST /api/billing/portal', () => {
     expect(res.status).toBe(200);
     const body = await json(res);
     expect(body.url).toBeDefined();
-    expect(mockStripeBillingPortalSessionsCreate).toHaveBeenCalled();
-  });
-
-  it('should reject when no subscription exists', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    const res = await fetchBilling('/api/billing/portal', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-    });
-
-    expect(res.status).toBe(404);
-    const body = await json(res);
-    expect(body.code).toBeDefined();
-    expect(body.code).toMatch(/USER_NOT_FOUND/);
-    expect(body.message || body.error).toBeDefined();
   });
 });
