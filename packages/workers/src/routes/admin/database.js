@@ -54,7 +54,7 @@ databaseRoutes.get('/database/tables', async c => {
           error: 'Failed to count rows',
         };
       }
-    })
+    }),
   );
 
   return c.json({
@@ -131,7 +131,12 @@ databaseRoutes.get('/database/tables/:tableName/rows', async c => {
   const orderFn = order === 'asc' ? asc : desc;
 
   // Get rows with ordering
-  const rows = await db.select().from(table).orderBy(orderFn(orderColumn)).limit(limit).offset(offset);
+  const rows = await db
+    .select()
+    .from(table)
+    .orderBy(orderFn(orderColumn))
+    .limit(limit)
+    .offset(offset);
 
   return c.json({
     tableName,
