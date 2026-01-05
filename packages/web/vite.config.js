@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import solidPlugin from 'vite-plugin-solid';
+import preact from '@preact/preset-vite';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 
@@ -23,7 +24,18 @@ export default defineConfig(({ mode }) => ({
   server: {
     allowedHosts: ['corates.org', 'www.corates.org', 'localhost'],
   },
-  plugins: [solidPlugin(), tailwindcss()],
+  plugins: [
+    // SolidJS plugin - exclude Preact files
+    solidPlugin({
+      include: ['**/*.{js,jsx,ts,tsx}'],
+      exclude: ['**/preact/**'],
+    }),
+    // Preact plugin - only process Preact files
+    preact({
+      include: ['**/preact/**/*.{js,jsx,ts,tsx}'],
+    }),
+    tailwindcss(),
+  ],
   build: {
     minify: mode === 'analyze' ? 'terser' : 'esbuild',
     sourcemap: mode === 'analyze',

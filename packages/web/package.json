@@ -19,9 +19,14 @@
   "dependencies": {
     "@corates/shared": "workspace:*",
     "@corates/ui": "workspace:*",
+    "@embedpdf/core": "^2.1.1",
     "@embedpdf/engines": "^2.1.1",
     "@embedpdf/models": "^2.1.1",
     "@embedpdf/pdfium": "^2.1.1",
+    "@embedpdf/plugin-document-manager": "^2.1.1",
+    "@embedpdf/plugin-render": "^2.1.1",
+    "@embedpdf/plugin-scroll": "^2.1.1",
+    "@embedpdf/plugin-viewport": "^2.1.1",
     "@embedpdf/snippet": "^2.0.0",
     "@solidjs/router": "^0.15.4",
     "@tanstack/solid-query": "^5.90.18",
@@ -29,6 +34,7 @@
     "d3": "^7.9.0",
     "idb": "^8.0.3",
     "pdfjs-dist": "^5.4.530",
+    "preact": "^10.28.1",
     "solid-icons": "^1.1.0",
     "solid-js": "^1.9.10",
     "y-indexeddb": "^9.0.12",
@@ -36,6 +42,7 @@
     "yjs": "^13.6.28"
   },
   "devDependencies": {
+    "@preact/preset-vite": "^2.10.0",
     "@solidjs/testing-library": "^0.8.10",
     "@tailwindcss/vite": "^4.1.18",
     "@testing-library/jest-dom": "^6.9.1",
