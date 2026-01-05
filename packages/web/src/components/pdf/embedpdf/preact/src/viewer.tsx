@@ -25,7 +25,6 @@ import { SpreadMode, SpreadPluginPackage } from '@embedpdf/plugin-spread/react';
 import { Rotate, RotatePluginPackage } from '@embedpdf/plugin-rotate/react';
 import { RenderLayer, RenderPluginPackage } from '@embedpdf/plugin-render/react';
 import { TilingLayer, TilingPluginPackage } from '@embedpdf/plugin-tiling/react';
-import { ViewManagerPlugin, ViewManagerPluginPackage } from '@embedpdf/plugin-view-manager/react';
 import { RedactionLayer, RedactionPluginPackage } from '@embedpdf/plugin-redaction/react';
 import { ExportPluginPackage } from '@embedpdf/plugin-export/react';
 import { PrintPluginPackage } from '@embedpdf/plugin-print/react';
@@ -44,7 +43,6 @@ import { SearchSidebar } from './components/search-sidebar';
 import { ThumbnailsSidebar } from './components/thumbnails-sidebar';
 import { PageControls } from './components/page-controls';
 import { ConsoleLogger } from '@embedpdf/models';
-import { SplitViewLayout } from './components/split-view-layout';
 import { AnnotationSelectionMenu } from './components/annotation-selection-menu';
 import { SelectionSelectionMenu } from './components/selection-selection-menu';
 import { EmptyState } from './components/empty-state';
@@ -116,9 +114,6 @@ export function ViewerPage({ pdfData, pdfFileName, pdfs }: ViewerPageProps = {})
         width: 120,
         paddingY: 10,
       }),
-      createPluginRegistration(ViewManagerPluginPackage, {
-        defaultViewCount: 1,
-      }),
       createPluginRegistration(I18nPluginPackage),
     ],
     [], // Empty dependency array since these never change
@@ -176,10 +171,10 @@ export function ViewerPage({ pdfData, pdfFileName, pdfs }: ViewerPageProps = {})
             if (!docManager) return;
 
             // Load PDF from ArrayBuffer if provided, otherwise use default URL
-            let document;
+            // Document is automatically activated via autoActivate: true
             if (pdfData) {
               const pdfName = pdfFileName || pdfs?.[0]?.fileName || 'document.pdf';
-              document = await docManager
+              await docManager
                 .openDocumentBuffer({
                   buffer: pdfData,
                   name: pdfName,
@@ -188,211 +183,161 @@ export function ViewerPage({ pdfData, pdfFileName, pdfs }: ViewerPageProps = {})
                 .toPromise();
             } else {
               // Fallback to default PDF URL
-              document = await docManager
+              await docManager
                 .openDocumentUrl({ url: 'https://snippet.embedpdf.com/ebook.pdf' })
                 .toPromise();
             }
-
-            if (!document) return;
-
-            const viewManager = registry
-              ?.getPlugin<ViewManagerPlugin>(ViewManagerPlugin.id)
-              ?.provides();
-            if (!viewManager) return;
-
-            const views = viewManager.getAllViews();
-            if (views.length > 0 && views[0]) {
-              const firstViewId = views[0].id;
-              viewManager.addDocumentToView(firstViewId, document.documentId);
-              viewManager.setViewActiveDocument(firstViewId, document.documentId);
-            }
           }}
         >
-          {({ pluginsReady, _registry }: { pluginsReady: boolean; _registry: any }) => (
+          {({
+            pluginsReady,
+            activeDocumentId,
+          }: {
+            pluginsReady: boolean;
+            activeDocumentId: string | null;
+          }) => (
             <>
               {pluginsReady ?
-                <SplitViewLayout
-                  renderView={({
-                    // view,
-                    activeDocumentId: documentId,
-                    addDocument,
-                    setActiveDocument,
-                  }) => (
-                    <div className='flex h-full flex-col'>
-                      {/* <TabBar
-                        currentView={view}
-                        onSelect={documentId => setActiveDocument(documentId)}
-                        onClose={docId =>
-                          registry
-                            ?.getPlugin<DocumentManagerPlugin>(DocumentManagerPlugin.id)
-                            ?.provides()
-                            ?.closeDocument(docId)
-                        }
-                        onOpenFile={() => {
-                          const openTask = registry
-                            ?.getPlugin<DocumentManagerPlugin>(DocumentManagerPlugin.id)
-                            ?.provides()
-                            ?.openFileDialog();
-                          openTask?.wait(
-                            result => {
-                              addDocument(result.documentId);
-                              setActiveDocument(result.documentId);
-                            },
-                            error => {
-                              console.error('Open file failed:', error);
-                            },
-                          );
-                        }}
-                      /> */}
+                <div className='flex h-full flex-col'>
+                  {activeDocumentId && (
+                    <ViewerToolbar
+                      documentId={activeDocumentId}
+                      onToggleSearch={() => toggleSidebar(activeDocumentId, 'search')}
+                      onToggleThumbnails={() => toggleSidebar(activeDocumentId, 'thumbnails')}
+                      isSearchOpen={getSidebarState(activeDocumentId).search}
+                      isThumbnailsOpen={getSidebarState(activeDocumentId).thumbnails}
+                      mode={getToolbarMode(activeDocumentId)}
+                      onModeChange={mode => setToolbarMode(activeDocumentId, mode)}
+                    />
+                  )}
 
-                      {documentId && (
-                        <ViewerToolbar
-                          documentId={documentId}
-                          onToggleSearch={() => toggleSidebar(documentId, 'search')}
-                          onToggleThumbnails={() => toggleSidebar(documentId, 'thumbnails')}
-                          isSearchOpen={getSidebarState(documentId).search}
-                          isThumbnailsOpen={getSidebarState(documentId).thumbnails}
-                          mode={getToolbarMode(documentId)}
-                          onModeChange={mode => setToolbarMode(documentId, mode)}
+                  {/* Empty State - No Documents */}
+                  {!activeDocumentId && (
+                    <EmptyState
+                      onDocumentOpened={() => {
+                        // Document will be activated automatically via autoActivate: true
+                      }}
+                    />
+                  )}
+
+                  {/* Document Content Area */}
+                  {activeDocumentId && (
+                    <div id={activeDocumentId} className='flex flex-1 overflow-hidden bg-white'>
+                      {/* Thumbnails Sidebar - Left */}
+                      {getSidebarState(activeDocumentId).thumbnails && (
+                        <ThumbnailsSidebar
+                          documentId={activeDocumentId}
+                          onClose={() => toggleSidebar(activeDocumentId, 'thumbnails')}
                         />
                       )}
 
-                      {/* Empty State - No Documents */}
-                      {!documentId && (
-                        <EmptyState
-                          onDocumentOpened={documentId => {
-                            addDocument(documentId);
-                            setActiveDocument(documentId);
-                          }}
-                        />
-                      )}
-
-                      {/* Document Content Area */}
-                      {documentId && (
-                        <div id={documentId} className='flex flex-1 overflow-hidden bg-white'>
-                          {/* Thumbnails Sidebar - Left */}
-                          {getSidebarState(documentId).thumbnails && (
-                            <ThumbnailsSidebar
-                              documentId={documentId}
-                              onClose={() => toggleSidebar(documentId, 'thumbnails')}
-                            />
-                          )}
-
-                          {/* Main Viewer */}
-                          <div className='flex-1 overflow-hidden'>
-                            <DocumentContent documentId={documentId}>
-                              {({ documentState, isLoading, isError, isLoaded }) => (
-                                <>
-                                  {isLoading && (
-                                    <div className='flex h-full items-center justify-center'>
-                                      <LoadingSpinner message='Loading document...' />
-                                    </div>
-                                  )}
-                                  {isError && (
-                                    <DocumentPasswordPrompt documentState={documentState} />
-                                  )}
-                                  {isLoaded && (
-                                    <div className='relative h-full w-full'>
-                                      <GlobalPointerProvider documentId={documentId}>
-                                        <Viewport className='bg-gray-100' documentId={documentId}>
-                                          <ZoomGestureWrapper documentId={documentId}>
-                                            <Scroller
-                                              documentId={documentId}
-                                              renderPage={({
-                                                pageIndex,
-                                              }: {
-                                                pageIndex: number;
-                                              }) => (
-                                                <Rotate
-                                                  documentId={documentId}
-                                                  pageIndex={pageIndex}
-                                                  style={{ backgroundColor: '#fff' }}
-                                                >
-                                                  <PagePointerProvider
-                                                    documentId={documentId}
-                                                    pageIndex={pageIndex}
-                                                  >
-                                                    <RenderLayer
-                                                      documentId={documentId}
-                                                      pageIndex={pageIndex}
-                                                      scale={1}
-                                                      style={{ pointerEvents: 'none' }}
-                                                    />
-                                                    <TilingLayer
-                                                      documentId={documentId}
-                                                      pageIndex={pageIndex}
-                                                      style={{ pointerEvents: 'none' }}
-                                                    />
-                                                    <SearchLayer
-                                                      documentId={documentId}
-                                                      pageIndex={pageIndex}
-                                                    />
-                                                    <MarqueeZoom
-                                                      documentId={documentId}
-                                                      pageIndex={pageIndex}
-                                                    />
-                                                    <MarqueeCapture
-                                                      documentId={documentId}
-                                                      pageIndex={pageIndex}
-                                                    />
-                                                    <SelectionLayer
-                                                      documentId={documentId}
-                                                      pageIndex={pageIndex}
-                                                      selectionMenu={props => (
-                                                        <SelectionSelectionMenu
-                                                          {...props}
-                                                          documentId={documentId}
-                                                        />
-                                                      )}
-                                                    />
-                                                    <RedactionLayer
-                                                      documentId={documentId}
-                                                      pageIndex={pageIndex}
-                                                      selectionMenu={props => (
-                                                        <RedactionSelectionMenu
-                                                          {...props}
-                                                          documentId={documentId}
-                                                        />
-                                                      )}
-                                                    />
-                                                    <AnnotationLayer
-                                                      documentId={documentId}
-                                                      pageIndex={pageIndex}
-                                                      selectionMenu={props => (
-                                                        <AnnotationSelectionMenu
-                                                          {...props}
-                                                          documentId={documentId}
-                                                        />
-                                                      )}
-                                                    />
-                                                  </PagePointerProvider>
-                                                </Rotate>
-                                              )}
-                                            />
-                                          </ZoomGestureWrapper>
-                                          {/* Page Controls */}
-                                          <PageControls documentId={documentId} />
-                                        </Viewport>
-                                      </GlobalPointerProvider>
-                                    </div>
-                                  )}
-                                </>
+                      {/* Main Viewer */}
+                      <div className='flex-1 overflow-hidden'>
+                        <DocumentContent documentId={activeDocumentId}>
+                          {({ documentState, isLoading, isError, isLoaded }) => (
+                            <>
+                              {isLoading && (
+                                <div className='flex h-full items-center justify-center'>
+                                  <LoadingSpinner message='Loading document...' />
+                                </div>
                               )}
-                            </DocumentContent>
-                          </div>
-
-                          {/* Search Sidebar - Right */}
-                          {getSidebarState(documentId).search && (
-                            <SearchSidebar
-                              documentId={documentId}
-                              onClose={() => toggleSidebar(documentId, 'search')}
-                            />
+                              {isError && <DocumentPasswordPrompt documentState={documentState} />}
+                              {isLoaded && (
+                                <div className='relative h-full w-full'>
+                                  <GlobalPointerProvider documentId={activeDocumentId}>
+                                    <Viewport className='bg-gray-100' documentId={activeDocumentId}>
+                                      <ZoomGestureWrapper documentId={activeDocumentId}>
+                                        <Scroller
+                                          documentId={activeDocumentId}
+                                          renderPage={({ pageIndex }: { pageIndex: number }) => (
+                                            <Rotate
+                                              documentId={activeDocumentId}
+                                              pageIndex={pageIndex}
+                                              style={{ backgroundColor: '#fff' }}
+                                            >
+                                              <PagePointerProvider
+                                                documentId={activeDocumentId}
+                                                pageIndex={pageIndex}
+                                              >
+                                                <RenderLayer
+                                                  documentId={activeDocumentId}
+                                                  pageIndex={pageIndex}
+                                                  scale={1}
+                                                  style={{ pointerEvents: 'none' }}
+                                                />
+                                                <TilingLayer
+                                                  documentId={activeDocumentId}
+                                                  pageIndex={pageIndex}
+                                                  style={{ pointerEvents: 'none' }}
+                                                />
+                                                <SearchLayer
+                                                  documentId={activeDocumentId}
+                                                  pageIndex={pageIndex}
+                                                />
+                                                <MarqueeZoom
+                                                  documentId={activeDocumentId}
+                                                  pageIndex={pageIndex}
+                                                />
+                                                <MarqueeCapture
+                                                  documentId={activeDocumentId}
+                                                  pageIndex={pageIndex}
+                                                />
+                                                <SelectionLayer
+                                                  documentId={activeDocumentId}
+                                                  pageIndex={pageIndex}
+                                                  selectionMenu={props => (
+                                                    <SelectionSelectionMenu
+                                                      {...props}
+                                                      documentId={activeDocumentId}
+                                                    />
+                                                  )}
+                                                />
+                                                <RedactionLayer
+                                                  documentId={activeDocumentId}
+                                                  pageIndex={pageIndex}
+                                                  selectionMenu={props => (
+                                                    <RedactionSelectionMenu
+                                                      {...props}
+                                                      documentId={activeDocumentId}
+                                                    />
+                                                  )}
+                                                />
+                                                <AnnotationLayer
+                                                  documentId={activeDocumentId}
+                                                  pageIndex={pageIndex}
+                                                  selectionMenu={props => (
+                                                    <AnnotationSelectionMenu
+                                                      {...props}
+                                                      documentId={activeDocumentId}
+                                                    />
+                                                  )}
+                                                />
+                                              </PagePointerProvider>
+                                            </Rotate>
+                                          )}
+                                        />
+                                      </ZoomGestureWrapper>
+                                      {/* Page Controls */}
+                                      <PageControls documentId={activeDocumentId} />
+                                    </Viewport>
+                                  </GlobalPointerProvider>
+                                </div>
+                              )}
+                            </>
                           )}
-                        </div>
+                        </DocumentContent>
+                      </div>
+
+                      {/* Search Sidebar - Right */}
+                      {getSidebarState(activeDocumentId).search && (
+                        <SearchSidebar
+                          documentId={activeDocumentId}
+                          onClose={() => toggleSidebar(activeDocumentId, 'search')}
+                        />
                       )}
                     </div>
                   )}
-                />
+                </div>
               : <div className='flex h-full items-center justify-center'>
                   <LoadingSpinner message='Initializing plugins...' />
                 </div>
