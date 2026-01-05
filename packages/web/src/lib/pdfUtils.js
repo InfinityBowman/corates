@@ -5,7 +5,8 @@
 import { initEmbedPdfEngine } from './embedPdfEngine.js';
 
 // PDF.js library reference (loaded dynamically)
-// Kept for pdfDocument.js compatibility (viewing still uses PDF.js)
+// Note: PDF.js is no longer used for viewing (EmbedPDF is used instead)
+// This may be removed in the future if not needed elsewhere
 let pdfjsLib = null;
 let pdfjsInitPromise = null;
 

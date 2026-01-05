@@ -7,7 +7,7 @@
 
 import { Switch, Match, createMemo } from 'solid-js';
 import SlidingPanel from './SlidingPanel.jsx';
-import PdfViewer from '@pdf/pdfjs/PdfViewer.jsx';
+import EmbedPdfViewer from '@pdf/embedpdf/EmbedPdfViewer.jsx';
 import pdfPreviewStore from '@/stores/pdfPreviewStore.js';
 
 export default function PdfPreviewPanel() {
@@ -63,7 +63,7 @@ export default function PdfPreviewPanel() {
           </Match>
 
           <Match when={viewState() === 'ready'}>
-            <PdfViewer
+            <EmbedPdfViewer
               pdfData={pdfPreviewStore.pdfData()}
               pdfFileName={pdfPreviewStore.pdf()?.fileName}
               readOnly={true}

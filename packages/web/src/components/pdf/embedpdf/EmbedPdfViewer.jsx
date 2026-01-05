@@ -1,58 +1,64 @@
 /**
- * EmbedPdfViewer - Component for viewing PDF files
- * Supports three modes via VITE_PDF_VIEWER_MODE:
- * - 'pdfjs': PDF.js with custom UI (default)
- * - 'snippet': EmbedPDF snippet viewer with full UI (toolbar, sidebar, etc.)
- * - 'headless': EmbedPDF headless mode with Preact islands (custom UI)
+ * EmbedPdfViewer - Preact island wrapper for EmbedPDF viewer
+ * Manages Preact component lifecycle and converts SolidJS props to plain values
  */
 
-import { Switch, Match } from 'solid-js';
-import { PDF_VIEWER_MODE } from '@config/pdfViewer';
-import EmbedPdfViewerSnippet from './EmbedPdfViewerSnippet';
-import EmbedPdfViewerPdfJs from './EmbedPdfViewerPdfJs';
-import EmbedPdfViewerHeadless from './EmbedPdfViewerHeadless';
+import { createEffect, onCleanup } from 'solid-js';
+import { render, h } from 'preact';
+import EmbedPdfViewerPreact from './preact/src/main';
 
 /**
- * EmbedPdfViewer - Component for viewing PDF files using EmbedPDF
+ * EmbedPdfViewer - SolidJS wrapper that manages Preact island
  * @param {Object} props - Component props
  * @param {ArrayBuffer} props.pdfData - ArrayBuffer of PDF data (required)
- * @param {string} props.pdfFileName - Name of the PDF file (optional, for display)
+ * @param {string} props.pdfFileName - Name of the PDF file (optional)
  * @param {boolean} props.readOnly - If true, view only mode
  * @param {Array} props.pdfs - Array of PDFs for multi-PDF selection
  * @param {string} props.selectedPdfId - Currently selected PDF ID
  * @param {Function} props.onPdfSelect - Handler for PDF selection change
- *
- * @returns
  */
 export default function EmbedPdfViewer(props) {
-  console.log('EmbedPdfViewer', PDF_VIEWER_MODE);
-  return (
-    <Switch>
-      <Match when={PDF_VIEWER_MODE === 'snippet'}>
-        <EmbedPdfViewerSnippet
-          pdfData={props.pdfData}
-          pdfFileName={props.pdfFileName}
-          readOnly={props.readOnly}
-          pdfs={props.pdfs}
-          selectedPdfId={props.selectedPdfId}
-          onPdfSelect={props.onPdfSelect}
-        />
-      </Match>
+  let containerRef;
 
-      <Match when={PDF_VIEWER_MODE === 'headless'}>
-        <EmbedPdfViewerHeadless
-          pdfData={props.pdfData}
-          pdfFileName={props.pdfFileName}
-          readOnly={props.readOnly}
-          pdfs={props.pdfs}
-          selectedPdfId={props.selectedPdfId}
-          onPdfSelect={props.onPdfSelect}
-        />
-      </Match>
+  createEffect(() => {
+    const container = containerRef;
+    if (!container) return;
 
-      <Match when={PDF_VIEWER_MODE === 'pdfjs'}>
-        <EmbedPdfViewerPdfJs pdfData={props.pdfData} pdfFileName={props.pdfFileName} />
-      </Match>
-    </Switch>
-  );
+    // Access props directly in effect to track reactivity
+    const pdfData = props.pdfData;
+    const pdfFileName = props.pdfFileName;
+    const pdfs = props.pdfs;
+    const selectedPdfId = props.selectedPdfId;
+    const onPdfSelect = props.onPdfSelect;
+    const readOnly = props.readOnly;
+
+    // Render Preact component into the container
+    render(
+      h(EmbedPdfViewerPreact, {
+        pdfData,
+        pdfFileName,
+        pdfs,
+        selectedPdfId,
+        onPdfSelect,
+        readOnly,
+      }),
+      container,
+    );
+
+    // Cleanup function
+    return () => {
+      if (container) {
+        render(null, container);
+      }
+    };
+  });
+
+  // Cleanup on unmount
+  onCleanup(() => {
+    if (containerRef) {
+      render(null, containerRef);
+    }
+  });
+
+  return <div ref={containerRef} class='flex h-full w-full flex-col' />;
 }

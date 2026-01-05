@@ -21,6 +21,7 @@ type ViewerToolbarProps = {
   pdfs?: Array<{ id: string; fileName: string; tag?: string }>;
   selectedPdfId?: string | null;
   onPdfSelect?: (_pdfId: string) => void;
+  readOnly?: boolean;
 };
 
 export function ViewerToolbar({
@@ -34,6 +35,7 @@ export function ViewerToolbar({
   pdfs,
   selectedPdfId,
   onPdfSelect,
+  readOnly = false,
 }: ViewerToolbarProps) {
   return (
     <>
@@ -60,41 +62,43 @@ export function ViewerToolbar({
 
         <PanToggleButton documentId={documentId} />
 
-        {/* Mode Tabs */}
-        <div className='mx-4 flex flex-1 items-center justify-center'>
-          <div className='flex rounded-lg bg-gray-100 p-1'>
-            <button
-              onClick={() => onModeChange('view')}
-              className={`rounded px-4 py-1 text-sm font-medium transition-colors ${
-                mode === 'view' ?
-                  'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              View
-            </button>
-            <button
-              onClick={() => onModeChange('annotate')}
-              className={`rounded px-4 py-1 text-sm font-medium transition-colors ${
-                mode === 'annotate' ?
-                  'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Annotate
-            </button>
-            {/* <button
-              onClick={() => onModeChange('redact')}
-              className={`rounded px-4 py-1 text-sm font-medium transition-colors ${
-                mode === 'redact' ?
-                  'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Redact
-            </button> */}
+        {/* Mode Tabs - Hidden in read-only mode */}
+        {!readOnly && (
+          <div className='mx-4 flex flex-1 items-center justify-center'>
+            <div className='flex rounded-lg bg-gray-100 p-1'>
+              <button
+                onClick={() => onModeChange('view')}
+                className={`rounded px-4 py-1 text-sm font-medium transition-colors ${
+                  mode === 'view' ?
+                    'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                View
+              </button>
+              <button
+                onClick={() => onModeChange('annotate')}
+                className={`rounded px-4 py-1 text-sm font-medium transition-colors ${
+                  mode === 'annotate' ?
+                    'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Annotate
+              </button>
+              {/* <button
+                onClick={() => onModeChange('redact')}
+                className={`rounded px-4 py-1 text-sm font-medium transition-colors ${
+                  mode === 'redact' ?
+                    'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Redact
+              </button> */}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Right side - Search toggle */}
         <ToolbarButton

@@ -57,6 +57,7 @@
     "preact": "^10.28.1",
     "solid-icons": "^1.1.0",
     "solid-js": "^1.9.10",
+    "tailwind-merge": "^3.4.0",
     "y-indexeddb": "^9.0.12",
     "y-websocket": "^3.0.0",
     "yjs": "^13.6.28"

@@ -35,7 +35,6 @@ import { CapturePluginPackage, MarqueeCapture } from '@embedpdf/plugin-capture/r
 import { FullscreenPluginPackage } from '@embedpdf/plugin-fullscreen/react';
 import { HistoryPluginPackage } from '@embedpdf/plugin-history/react';
 import { AnnotationPluginPackage, AnnotationLayer } from '@embedpdf/plugin-annotation/react';
-// import { TabBar } from './components/tab-bar';
 import { ViewerToolbar, ViewMode } from './components/viewer-toolbar';
 import { LoadingSpinner } from './components/loading-spinner';
 import { DocumentPasswordPrompt } from './components/document-password-prompt';
@@ -70,6 +69,7 @@ type ViewerPageProps = {
   pdfs?: Array<{ id: string; fileName: string; tag?: string }>;
   selectedPdfId?: string | null;
   onPdfSelect?: (_pdfId: string) => void;
+  readOnly?: boolean;
 };
 
 export function ViewerPage({
@@ -78,6 +78,7 @@ export function ViewerPage({
   pdfs,
   selectedPdfId,
   onPdfSelect,
+  readOnly = false,
 }: ViewerPageProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { engine, isLoading, error } = usePdfiumEngine({
@@ -163,10 +164,14 @@ export function ViewerPage({
   };
 
   const getToolbarMode = (documentId: string): ViewMode => {
+    // Force 'view' mode when readOnly is true
+    if (readOnly) return 'view';
     return toolbarModes[documentId] || 'view';
   };
 
   const setToolbarMode = (documentId: string, mode: ViewMode) => {
+    // Prevent mode changes when readOnly is true
+    if (readOnly) return;
     setToolbarModes(prev => ({
       ...prev,
       [documentId]: mode,
@@ -305,6 +310,7 @@ export function ViewerPage({
                         pdfs={pdfs}
                         selectedPdfId={selectedPdfId}
                         onPdfSelect={onPdfSelect}
+                        readOnly={readOnly}
                       />
                     )}
 
