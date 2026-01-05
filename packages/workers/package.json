@@ -29,17 +29,17 @@
   },
   "dependencies": {
     "@better-auth/stripe": "^1.4.9",
-    "@cloudflare/workers-types": "^4.20251229.0",
+    "@cloudflare/workers-types": "^4.20260103.0",
     "@corates/shared": "workspace:*",
-    "better-auth": "^1.4.9",
+    "better-auth": "^1.4.10",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.11.3",
-    "lib0": "^0.2.116",
+    "lib0": "^0.2.117",
     "postmark": "^4.0.5",
     "stripe": "^20.1.0",
     "y-protocols": "^1.0.7",
-    "yjs": "^13.6.28",
-    "zod": "^4.2.1"
+    "yjs": "^13.6.29",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.11.1",
