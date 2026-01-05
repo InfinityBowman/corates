@@ -50,9 +50,7 @@ export default function EmbedPdfViewerPreact(props) {
   const loadDocument = (registry, pdfData, pdfFileName, documentId) => {
     if (!registry || !pdfData || loadingRef.current) return;
 
-    const documentManager = registry
-      ?.getPlugin(DocumentManagerPlugin.id)
-      ?.provides();
+    const documentManager = registry?.getPlugin(DocumentManagerPlugin.id)?.provides();
 
     if (!documentManager) return;
 
@@ -76,11 +74,11 @@ export default function EmbedPdfViewerPreact(props) {
         autoActivate: true,
       })
       .wait(
-        (result) => {
+        result => {
           loadedDocumentIdRef.current = result.documentId;
           loadingRef.current = false;
         },
-        (error) => {
+        error => {
           console.error('Failed to load document:', error);
           loadingRef.current = false;
         },
@@ -90,12 +88,7 @@ export default function EmbedPdfViewerPreact(props) {
   // Load document when props change
   useEffect(() => {
     if (registryRef.current && props.pdfData) {
-      loadDocument(
-        registryRef.current,
-        props.pdfData,
-        props.pdfFileName,
-        props.selectedPdfId,
-      );
+      loadDocument(registryRef.current, props.pdfData, props.pdfFileName, props.selectedPdfId);
     }
   }, [props.pdfData, props.pdfFileName, props.selectedPdfId]);
 
@@ -140,7 +133,7 @@ export default function EmbedPdfViewerPreact(props) {
       <EmbedPDF
         engine={pdfEngine.engine}
         plugins={plugins}
-        onInitialized={(registry) => {
+        onInitialized={registry => {
           registryRef.current = registry;
           // Load document if pdfData is already available
           if (props.pdfData) {
