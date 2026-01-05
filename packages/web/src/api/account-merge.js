@@ -81,13 +81,10 @@ export async function completeMerge(mergeToken) {
  */
 export async function getMergeStatus(mergeToken) {
   const response = await handleFetchError(
-    fetch(
-      `${API_BASE}/api/accounts/merge/status?token=${encodeURIComponent(mergeToken)}`,
-      {
-        method: 'GET',
-        credentials: 'include',
-      },
-    ),
+    fetch(`${API_BASE}/api/accounts/merge/status?token=${encodeURIComponent(mergeToken)}`, {
+      method: 'GET',
+      credentials: 'include',
+    }),
   );
 
   return response.json();
