@@ -16,16 +16,12 @@ export const STATIC_ORIGINS = [
   'https://api.corates.org',
 ];
 
-/**
- * Patterns for dynamically allowed origins (e.g., preview deploys)
- * These are regex patterns that will be tested against the origin
- */
-export const ORIGIN_PATTERNS = [
-  // Cloudflare Workers preview deploys: *-corates.jacobamaynard.workers.dev
-  /^https:\/\/[a-z0-9-]+-corates\.jacobamaynard\.workers\.dev$/,
-  // Main workers.dev subdomain
-  /^https:\/\/corates\.jacobamaynard\.workers\.dev$/,
-];
+// Patterns for dynamically allowed origins (e.g., preview deploys)
+// These are regex patterns that will be tested against the origin.
+// Accept any workers.dev preview domain (may contain multiple dot-separated labels
+// before the workers.dev zone), e.g. `abc-branch-username.workers.dev` or
+// `preview-123.workers.dev`.
+export const ORIGIN_PATTERNS = [/^https:\/\/[a-z0-9-]+(?:\.[a-z0-9-]+)*\.workers\.dev$/];
 
 /**
  * Check if an origin matches any of the dynamic patterns
