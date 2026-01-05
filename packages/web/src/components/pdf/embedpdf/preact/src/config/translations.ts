@@ -1,6 +1,7 @@
 import { ParamResolvers, Locale } from '@embedpdf/plugin-i18n';
 import { State } from './types';
 import { ZOOM_PLUGIN_ID } from '@embedpdf/plugin-zoom';
+import { SEARCH_PLUGIN_ID } from '@embedpdf/plugin-search/react';
 
 export const englishTranslations: Locale = {
   code: 'en',
@@ -421,7 +422,7 @@ export const paramResolvers: ParamResolvers<State> = {
     };
   },
   'search.resultsFound': ({ state, documentId }) => {
-    const searchState = documentId ? state.plugins['search']?.documents[documentId] : null;
+    const searchState = documentId ? state.plugins[SEARCH_PLUGIN_ID]?.documents[documentId] : null;
     return {
       count: searchState?.total ?? 0,
     };

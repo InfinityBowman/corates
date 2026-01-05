@@ -1,7 +1,9 @@
+import { CSSProperties } from 'preact';
+
 type IconProps = {
   className?: string;
   title?: string;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
 };
 
 export function DocumentIcon({ className, title }: IconProps) {

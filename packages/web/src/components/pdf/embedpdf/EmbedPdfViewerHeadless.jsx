@@ -24,17 +24,20 @@ export default function EmbedPdfViewerHeadless(props) {
     if (!containerRef) return;
 
     // Convert SolidJS signals to plain values for Preact
-    // For now, use pdfs[0] as requested - will add picker later
-    const firstPdf = props.pdfs?.[0];
     const pdfData = props.pdfData;
-    const pdfFileName = props.pdfFileName || firstPdf?.fileName;
+    const pdfFileName = props.pdfFileName;
+    const pdfs = props.pdfs;
+    const selectedPdfId = props.selectedPdfId;
+    const onPdfSelect = props.onPdfSelect;
 
     // Render Preact component into the container
     render(
       h(EmbedPdfViewerPreact, {
         pdfData,
         pdfFileName,
-        pdfs: props.pdfs,
+        pdfs,
+        selectedPdfId,
+        onPdfSelect,
       }),
       containerRef,
     );

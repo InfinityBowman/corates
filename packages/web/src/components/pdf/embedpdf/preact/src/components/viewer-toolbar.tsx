@@ -6,6 +6,7 @@ import { SearchIcon, ThumbnailsIcon } from './icons';
 import { ToolbarButton, ToolbarDivider } from './ui';
 import { RedactionToolbar } from './redaction-toolbar';
 import { AnnotationToolbar } from './annotation-toolbar';
+import { PdfPicker } from './pdf-picker';
 
 export type ViewMode = 'view' | 'annotate' | 'redact';
 
@@ -17,6 +18,9 @@ type ViewerToolbarProps = {
   isThumbnailsOpen: boolean;
   mode: ViewMode;
   onModeChange: (_mode: ViewMode) => void;
+  pdfs?: Array<{ id: string; fileName: string; tag?: string }>;
+  selectedPdfId?: string | null;
+  onPdfSelect?: (_pdfId: string) => void;
 };
 
 export function ViewerToolbar({
@@ -27,6 +31,9 @@ export function ViewerToolbar({
   isThumbnailsOpen,
   mode,
   onModeChange,
+  pdfs,
+  selectedPdfId,
+  onPdfSelect,
 }: ViewerToolbarProps) {
   return (
     <>
@@ -35,6 +42,7 @@ export function ViewerToolbar({
         {/* Left side - Document menu and Thumbnails toggle */}
         <DocumentMenu documentId={documentId} />
         <ToolbarDivider />
+        <PdfPicker pdfs={pdfs} selectedPdfId={selectedPdfId} onPdfSelect={onPdfSelect} />
         <ToolbarButton
           onClick={onToggleThumbnails}
           isActive={isThumbnailsOpen}
@@ -75,7 +83,7 @@ export function ViewerToolbar({
             >
               Annotate
             </button>
-            <button
+            {/* <button
               onClick={() => onModeChange('redact')}
               className={`rounded px-4 py-1 text-sm font-medium transition-colors ${
                 mode === 'redact' ?
@@ -84,7 +92,7 @@ export function ViewerToolbar({
               }`}
             >
               Redact
-            </button>
+            </button> */}
           </div>
         </div>
 

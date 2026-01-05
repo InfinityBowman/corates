@@ -5,6 +5,7 @@ import { MatchFlag } from '@embedpdf/models';
 import { SearchResult } from '@embedpdf/models';
 import { SearchIcon, CloseIcon, ChevronRightIcon, ChevronLeftIcon } from './icons';
 import { useTranslations } from '@embedpdf/plugin-i18n/react';
+import { TargetedEvent } from 'preact';
 
 const HitLine = ({
   hit,
@@ -73,8 +74,8 @@ export function SearchSidebar({ documentId, onClose }: SearchSidebarProps) {
     }
   }, [state.activeResultIndex, state.loading, state.query, state.flags]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+  const handleInputChange = (e: TargetedEvent<HTMLInputElement>) => {
+    const value = (e.target as HTMLInputElement).value;
     setInputValue(value);
 
     // Trigger search immediately on user input
@@ -116,11 +117,11 @@ export function SearchSidebar({ documentId, onClose }: SearchSidebarProps) {
     scroll?.forDocument(documentId).scrollToPage({
       pageNumber: item.pageIndex + 1,
       pageCoordinates: minCoordinates,
-      center: true,
+      // center: true,
     });
   };
 
-  const groupByPage = (results: typeof state.results) => {
+  const groupByPage = (results: SearchResult[]) => {
     return results.reduce<Record<number, { hit: (typeof results)[0]; index: number }[]>>(
       (map, r, i) => {
         (map[r.pageIndex] ??= []).push({ hit: r, index: i });
@@ -178,7 +179,9 @@ export function SearchSidebar({ documentId, onClose }: SearchSidebarProps) {
             <input
               type='checkbox'
               checked={state.flags.includes(MatchFlag.MatchCase)}
-              onChange={e => handleFlagChange(MatchFlag.MatchCase, e.target.checked)}
+              onChange={e =>
+                handleFlagChange(MatchFlag.MatchCase, (e.target as HTMLInputElement).checked)
+              }
               className='mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
             />
             {translate('search.caseSensitive')}
@@ -187,7 +190,9 @@ export function SearchSidebar({ documentId, onClose }: SearchSidebarProps) {
             <input
               type='checkbox'
               checked={state.flags.includes(MatchFlag.MatchWholeWord)}
-              onChange={e => handleFlagChange(MatchFlag.MatchWholeWord, e.target.checked)}
+              onChange={e =>
+                handleFlagChange(MatchFlag.MatchWholeWord, (e.target as HTMLInputElement).checked)
+              }
               className='mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
             />
             {translate('search.wholeWord')}
