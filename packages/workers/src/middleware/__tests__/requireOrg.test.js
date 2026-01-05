@@ -461,7 +461,7 @@ describe('requireProjectAccess middleware', () => {
           // Manually set projectId param to empty string to test middleware behavior
           // This simulates what would happen if the router produced an empty projectId
           const originalParam = c.req.param.bind(c.req);
-          c.req.param = (key) => {
+          c.req.param = key => {
             if (key === 'projectId') return '';
             return originalParam(key);
           };
