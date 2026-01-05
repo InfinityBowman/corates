@@ -53,5 +53,17 @@ export const queryKeys = {
     billingLedger: params => ['adminBillingLedger', params],
     billingStuckStates: params => ['adminBillingStuckStates', params],
     orgBillingReconcile: (orgId, params) => ['adminOrgBillingReconcile', orgId, params],
+    databaseTables: ['admin', 'database', 'tables'],
+    tableSchema: tableName => ['admin', 'database', 'schema', tableName],
+    tableRows: (tableName, page, limit, orderBy, order) => [
+      'admin',
+      'database',
+      'rows',
+      tableName,
+      page,
+      limit,
+      orderBy,
+      order,
+    ],
   },
 };

@@ -11,6 +11,7 @@ import { storageRoutes } from './storage.js';
 import { billingRoutes } from './billing.js';
 import { billingObservabilityRoutes } from './billing-observability.js';
 import { orgRoutes } from './orgs.js';
+import { databaseRoutes } from './database.js';
 
 const adminRoutes = new Hono();
 
@@ -25,5 +26,6 @@ adminRoutes.route('/', storageRoutes);
 adminRoutes.route('/', billingRoutes);
 adminRoutes.route('/', billingObservabilityRoutes);
 adminRoutes.route('/', orgRoutes);
+adminRoutes.route('/', databaseRoutes);
 
 export { adminRoutes };

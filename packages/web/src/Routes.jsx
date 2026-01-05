@@ -22,6 +22,7 @@ import OrgList from '@/components/admin/OrgList.jsx';
 import OrgDetail from '@/components/admin/OrgDetail.jsx';
 import AdminBillingLedgerPage from '@/components/admin/billing-observability/AdminBillingLedgerPage.jsx';
 import AdminBillingStuckStatesPage from '@/components/admin/billing-observability/AdminBillingStuckStatesPage.jsx';
+import DatabaseViewer from '@/components/admin/DatabaseViewer.jsx';
 import { BASEPATH } from '@config/api.js';
 import ProtectedGuard from '@/components/auth/ProtectedGuard.jsx';
 import ProjectView from '@/components/project/ProjectView.jsx';
@@ -61,6 +62,7 @@ export default function AppRoutes() {
             <Route path='/storage' component={StorageManagement} />
             <Route path='/billing/ledger' component={AdminBillingLedgerPage} />
             <Route path='/billing/stuck-states' component={AdminBillingStuckStatesPage} />
+            <Route path='/database' component={DatabaseViewer} />
           </Route>
 
           {/* Organization creation */}
