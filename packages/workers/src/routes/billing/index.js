@@ -7,8 +7,6 @@
 import { Hono } from 'hono';
 import { requireAuth, getAuth } from '../../middleware/auth.js';
 import { createDb } from '../../db/client.js';
-import { member } from '../../db/schema.js';
-import { eq, count } from 'drizzle-orm';
 import { resolveOrgAccess } from '../../lib/billingResolver.js';
 import { getPlan, DEFAULT_PLAN, getGrantPlan } from '@corates/shared/plans';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
@@ -140,17 +138,9 @@ billingRoutes.get('/members', requireAuth, async c => {
       },
     });
 
-    // Get member count for convenience
-    const memberCountResult = await db
-      .select({ count: count() })
-      .from(member)
-      .where(eq(member.organizationId, orgId))
-      .get();
-    const memberCount = memberCountResult?.count || 0;
-
     return c.json({
       members: result.members || [],
-      count: memberCount,
+      count: result.members?.length || 0,
     });
   } catch (error) {
     console.error('Error fetching org members:', error);
