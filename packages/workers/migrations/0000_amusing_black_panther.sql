@@ -36,8 +36,13 @@ CREATE TABLE `mediaFiles` (
 	`fileSize` integer,
 	`uploadedBy` text,
 	`bucketKey` text NOT NULL,
+	`orgId` text NOT NULL,
+	`projectId` text NOT NULL,
+	`studyId` text,
 	`createdAt` integer DEFAULT (unixepoch()),
-	FOREIGN KEY (`uploadedBy`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE set null
+	FOREIGN KEY (`uploadedBy`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE set null,
+	FOREIGN KEY (`orgId`) REFERENCES `organization`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`projectId`) REFERENCES `projects`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE TABLE `member` (

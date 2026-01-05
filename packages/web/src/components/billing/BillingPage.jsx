@@ -161,9 +161,7 @@ export default function BillingPage() {
             </div>
             <div>
               <p class='font-semibold text-green-800'>Payment successful!</p>
-              <p class='text-sm text-green-600'>
-                Your subscription has been activated. Welcome aboard!
-              </p>
+              <p class='text-sm text-green-600'>Your subscription has been activated!</p>
             </div>
           </div>
         </Show>

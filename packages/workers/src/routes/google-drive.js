@@ -6,8 +6,9 @@
 import { Hono } from 'hono';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { createDb } from '../db/client.js';
-import { account } from '../db/schema.js';
+import { account, projects, mediaFiles } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
+import { generateUniqueFileName } from './orgs/pdfs.js';
 import {
   createDomainError,
   createValidationError,
@@ -337,15 +338,36 @@ googleDriveRoutes.post('/import', async c => {
     // This is necessary because R2 requires a stream with a known length
     const fileContent = await downloadResponse.arrayBuffer();
 
+    // Get project to retrieve orgId
+    const project = await db
+      .select({ orgId: projects.orgId })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .get();
+
+    if (!project) {
+      const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'fetch_project_for_import',
+        projectId,
+        message: 'Project not found',
+      });
+      return c.json(error, error.statusCode);
+    }
+
+    // Generate unique filename (auto-rename if duplicate exists)
+    const originalFileName = fileMeta.name;
+    const uniqueFileName = await generateUniqueFileName(fileMeta.name, projectId, studyId, db);
+    const r2Key = `projects/${projectId}/studies/${studyId}/${uniqueFileName}`;
+
     // Upload to R2 bucket
-    const r2Key = `projects/${projectId}/studies/${studyId}/${fileMeta.name}`;
+    const fileSize = fileContent.byteLength;
 
     await c.env.PDF_BUCKET.put(r2Key, fileContent, {
       httpMetadata: {
         contentType: 'application/pdf',
       },
       customMetadata: {
-        originalName: fileMeta.name,
+        originalName: originalFileName,
         importedFrom: 'google-drive',
         googleDriveFileId: fileId,
         uploadedBy: user.id,
@@ -353,12 +375,35 @@ googleDriveRoutes.post('/import', async c => {
       },
     });
 
+    // Insert into mediaFiles table
+    const mediaFileId = crypto.randomUUID();
+    try {
+      await db.insert(mediaFiles).values({
+        id: mediaFileId,
+        filename: uniqueFileName,
+        originalName: originalFileName,
+        fileType: 'application/pdf',
+        fileSize: fileSize,
+        uploadedBy: user.id,
+        bucketKey: r2Key,
+        orgId: project.orgId,
+        projectId,
+        studyId,
+        createdAt: new Date(),
+      });
+    } catch (dbError) {
+      // Log error but don't fail the request (R2 object exists, can be cleaned up later)
+      console.error('Failed to insert mediaFiles record after Google Drive import:', dbError);
+    }
+
     return c.json({
       success: true,
+      id: mediaFileId,
       file: {
         key: r2Key,
-        fileName: fileMeta.name,
-        size: fileMeta.size,
+        fileName: uniqueFileName,
+        originalFileName: originalFileName !== uniqueFileName ? originalFileName : undefined,
+        size: fileSize,
         source: 'google-drive',
       },
     });

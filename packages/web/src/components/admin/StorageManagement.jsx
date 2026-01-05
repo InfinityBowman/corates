@@ -205,9 +205,8 @@ export default function StorageManagement() {
       <div class='mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4'>
         <p class='text-sm text-blue-800'>
           <strong>Note:</strong> This dashboard shows all PDFs in R2 storage. PDFs marked as
-          "Orphaned" have a project ID that no longer exists in the database (e.g., from failed
-          cleanup when projects were deleted). You can safely delete orphaned PDFs to free up
-          storage space.
+          "Orphaned" are files in R2 that are not tracked in the mediaFiles database table (e.g.,
+          from failed cleanup). You can safely delete orphaned PDFs to free up storage space.
         </p>
       </div>
 
@@ -351,7 +350,7 @@ export default function StorageManagement() {
                           <Show when={doc.orphaned}>
                             <span
                               class='inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800'
-                              title='Orphaned: Project no longer exists in database'
+                              title='Orphaned: File exists in R2 but is not tracked in mediaFiles database table'
                             >
                               Orphaned
                             </span>

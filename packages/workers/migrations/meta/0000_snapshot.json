@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "4d58f8a3-08c6-4560-880b-a1eb4bfde9f5",
+  "id": "3a9d2b37-4834-467a-ac0f-ec8ae72a22ce",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -257,6 +257,27 @@
           "notNull": true,
           "autoincrement": false
         },
+        "orgId": {
+          "name": "orgId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "projectId": {
+          "name": "projectId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "studyId": {
+          "name": "studyId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "createdAt": {
           "name": "createdAt",
           "type": "integer",
@@ -275,6 +296,24 @@
           "columnsFrom": ["uploadedBy"],
           "columnsTo": ["id"],
           "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "mediaFiles_orgId_organization_id_fk": {
+          "name": "mediaFiles_orgId_organization_id_fk",
+          "tableFrom": "mediaFiles",
+          "tableTo": "organization",
+          "columnsFrom": ["orgId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "mediaFiles_projectId_projects_id_fk": {
+          "name": "mediaFiles_projectId_projects_id_fk",
+          "tableFrom": "mediaFiles",
+          "tableTo": "projects",
+          "columnsFrom": ["projectId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
