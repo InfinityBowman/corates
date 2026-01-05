@@ -1,4 +1,5 @@
-import { createSignal, onMount } from 'solid-js';
+import { createSignal, onMount, createMemo, Show } from 'solid-js';
+import { useLocation } from '@solidjs/router';
 import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/sidebar/Sidebar.jsx';
 import { Toaster } from '@corates/ui';
@@ -13,9 +14,21 @@ const DEFAULT_SIDEBAR_WIDTH = 256;
 const MIN_SIDEBAR_WIDTH = 200;
 const MAX_SIDEBAR_WIDTH = 480;
 
-export default function MainLayout(props) {
+/**
+ * Layout - Single layout that handles both sidebar and no-sidebar routes
+ * Keeps Navbar mounted across route changes to prevent flashing
+ */
+export default function Layout(props) {
   // Set up real-time membership sync
   useMembershipSync();
+
+  const location = useLocation();
+
+  // Routes that should NOT show the sidebar
+  const shouldHideSidebar = createMemo(() => {
+    const path = location.pathname;
+    return path.startsWith('/admin') || path.startsWith('/settings') || path === '/profile';
+  });
 
   // Desktop sidebar mode: 'expanded' or 'collapsed' (rail)
   const [desktopSidebarMode, setDesktopSidebarMode] = createSignal('collapsed');
@@ -61,16 +74,21 @@ export default function MainLayout(props) {
       class={`flex h-screen flex-col overflow-hidden bg-blue-50 ${isImpersonating() ? 'pt-10' : ''}`}
     >
       <ImpersonationBanner />
-      <Navbar mobileSidebarOpen={mobileSidebarOpen()} toggleMobileSidebar={toggleMobileSidebar} />
+      <Navbar
+        mobileSidebarOpen={shouldHideSidebar() ? undefined : mobileSidebarOpen()}
+        toggleMobileSidebar={shouldHideSidebar() ? undefined : toggleMobileSidebar}
+      />
       <div class='flex flex-1 overflow-hidden'>
-        <Sidebar
-          desktopMode={desktopSidebarMode()}
-          mobileOpen={mobileSidebarOpen()}
-          onToggleDesktop={toggleDesktopSidebar}
-          onCloseMobile={closeMobileSidebar}
-          width={sidebarWidth()}
-          onWidthChange={handleWidthChange}
-        />
+        <Show when={!shouldHideSidebar()}>
+          <Sidebar
+            desktopMode={desktopSidebarMode()}
+            mobileOpen={mobileSidebarOpen()}
+            onToggleDesktop={toggleDesktopSidebar}
+            onCloseMobile={closeMobileSidebar}
+            width={sidebarWidth()}
+            onWidthChange={handleWidthChange}
+          />
+        </Show>
         <main class='flex-1 overflow-auto text-gray-900'>{props.children}</main>
       </div>
       <Toaster />

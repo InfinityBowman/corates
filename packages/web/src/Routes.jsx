@@ -41,7 +41,7 @@ export default function AppRoutes() {
         <Route path='/reset-password' component={ResetPassword} />
       </Route>
 
-      {/* Main app routes */}
+      {/* Main app routes - Layout handles sidebar visibility based on route */}
       <Route path='/' component={Layout}>
         {/* Dashboard - public home for all users */}
         <Route path='/' component={Dashboard} />
@@ -49,9 +49,11 @@ export default function AppRoutes() {
 
         {/* Protected routes - requires login */}
         <Route path='/' component={ProtectedGuard}>
-          {/* Global user routes */}
+          {/* Global user routes (no sidebar) */}
           <Route path='/profile' component={ProfilePage} />
           <Route path='/settings' component={SettingsPage} />
+          <Route path='/settings/billing' component={BillingPage} />
+          <Route path='/settings/billing/plans' component={BillingPlansPage} />
           <Route path='/admin' component={AdminLayout}>
             <Route path='/' component={AdminDashboard} />
             <Route path='/orgs' component={OrgList} />
@@ -60,8 +62,6 @@ export default function AppRoutes() {
             <Route path='/billing/ledger' component={AdminBillingLedgerPage} />
             <Route path='/billing/stuck-states' component={AdminBillingStuckStatesPage} />
           </Route>
-          <Route path='/settings/billing' component={BillingPage} />
-          <Route path='/settings/billing/plans' component={BillingPlansPage} />
 
           {/* Organization creation */}
           <Route path='/orgs/new' component={CreateOrgPage} />
