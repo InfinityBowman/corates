@@ -8,7 +8,7 @@
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 
-// Load environment variables from .env (or .dev.vars if renamed)
+// Load environment variables from .env
 import dotenv from 'dotenv';
 dotenv.config();
 

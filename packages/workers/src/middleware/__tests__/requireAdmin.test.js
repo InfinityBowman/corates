@@ -69,7 +69,7 @@ describe('requireAdmin middleware', () => {
 
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toBe('Admin access required');
+    expect(body.code).toBe('AUTH_FORBIDDEN');
   });
 
   it('should block unauthenticated requests with 401', async () => {
@@ -81,7 +81,7 @@ describe('requireAdmin middleware', () => {
 
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Authentication required');
+    expect(body.code).toBe('AUTH_REQUIRED');
   });
 
   it('should set user, session, and isAdmin in context', async () => {
@@ -131,7 +131,7 @@ describe('requireAdmin middleware', () => {
 
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Authentication required');
+    expect(body.code).toBe('AUTH_REQUIRED');
   });
 });
 

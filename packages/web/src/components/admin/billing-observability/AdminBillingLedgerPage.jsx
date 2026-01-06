@@ -3,7 +3,8 @@
  * Displays Stripe event ledger entries with filtering and search
  */
 
-import { createSignal, Show, For, onCleanup } from 'solid-js';
+import { createSignal, Show, For } from 'solid-js';
+import { useDebouncedSignal } from '@/primitives/useDebouncedSignal.js';
 import { A } from '@solidjs/router';
 import { FiLoader, FiAlertCircle, FiCopy, FiCheck, FiExternalLink, FiFilter } from 'solid-icons/fi';
 import { isAdmin, isAdminChecked } from '@/stores/adminStore.js';
@@ -23,9 +24,8 @@ const LIMIT_OPTIONS = [25, 50, 100, 200];
 
 export default function AdminBillingLedgerPage() {
   const [statusFilter, setStatusFilter] = createSignal('');
-  const [typeFilter, setTypeFilter] = createSignal('');
+  const [typeFilter, setTypeFilter, debouncedTypeFilter] = useDebouncedSignal('', 300);
   const [limit, setLimit] = createSignal(50);
-  const [debouncedTypeFilter, setDebouncedTypeFilter] = createSignal('');
   const [copiedId, setCopiedId] = createSignal(null);
 
   const ledgerQuery = useAdminBillingLedger(() => ({
@@ -34,18 +34,9 @@ export default function AdminBillingLedgerPage() {
     type: debouncedTypeFilter() || undefined,
   }));
 
-  let typeTimeout;
   const handleTypeInput = e => {
     setTypeFilter(e.target.value);
-    clearTimeout(typeTimeout);
-    typeTimeout = setTimeout(() => {
-      setDebouncedTypeFilter(e.target.value);
-    }, 300);
   };
-
-  onCleanup(() => {
-    clearTimeout(typeTimeout);
-  });
 
   const handleCopy = async (text, label) => {
     try {

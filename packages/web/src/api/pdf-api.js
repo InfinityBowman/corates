@@ -5,7 +5,7 @@
  */
 
 import { API_BASE } from '@config/api.js';
-import { handleFetchError } from '@/lib/error-utils.js';
+import { apiFetch } from '@/lib/apiFetch.js';
 
 /**
  * Fetch a PDF from an external URL via the backend proxy (avoids CORS issues)
@@ -13,31 +13,24 @@ import { handleFetchError } from '@/lib/error-utils.js';
  * @returns {Promise<ArrayBuffer>} - The PDF data as ArrayBuffer
  */
 export async function fetchPdfViaProxy(url) {
-  const proxyUrl = `${API_BASE}/api/pdf-proxy`;
-
-  const response = await handleFetchError(
-    fetch(proxyUrl, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ url }),
-    }),
-  );
+  const response = await apiFetch('/api/pdf-proxy', {
+    method: 'POST',
+    body: { url },
+    raw: true,
+  });
 
   return response.arrayBuffer();
 }
 
 /**
- * Build the org-scoped PDF base URL
+ * Build the org-scoped PDF base path
  * @param {string} orgId - The organization ID
  * @param {string} projectId - The project ID
  * @param {string} studyId - The study ID
- * @returns {string} The base URL for PDF operations
+ * @returns {string} The base path for PDF operations (without API_BASE)
  */
-function buildPdfBaseUrl(orgId, projectId, studyId) {
-  return `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/studies/${studyId}/pdfs`;
+function buildPdfBasePath(orgId, projectId, studyId) {
+  return `/api/orgs/${orgId}/projects/${projectId}/studies/${studyId}/pdfs`;
 }
 
 /**
@@ -50,7 +43,7 @@ function buildPdfBaseUrl(orgId, projectId, studyId) {
  * @returns {Promise<{success: boolean, key: string, fileName: string, size: number}>}
  */
 export async function uploadPdf(orgId, projectId, studyId, file, fileName = null) {
-  const url = buildPdfBaseUrl(orgId, projectId, studyId);
+  const path = buildPdfBasePath(orgId, projectId, studyId);
 
   // Always use FormData for consistency and better browser streaming support
   const formData = new FormData();
@@ -64,15 +57,10 @@ export async function uploadPdf(orgId, projectId, studyId, file, fileName = null
     formData.append('file', fileObj);
   }
 
-  const response = await handleFetchError(
-    fetch(url, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-    }),
-  );
-
-  return response.json();
+  return apiFetch(path, {
+    method: 'POST',
+    body: formData,
+  });
 }
 
 /**
@@ -84,15 +72,13 @@ export async function uploadPdf(orgId, projectId, studyId, file, fileName = null
  * @returns {Promise<ArrayBuffer>}
  */
 export async function downloadPdf(orgId, projectId, studyId, fileName) {
-  const baseUrl = buildPdfBaseUrl(orgId, projectId, studyId);
-  const url = `${baseUrl}/${encodeURIComponent(fileName)}`;
+  const basePath = buildPdfBasePath(orgId, projectId, studyId);
+  const path = `${basePath}/${encodeURIComponent(fileName)}`;
 
-  const response = await handleFetchError(
-    fetch(url, {
-      method: 'GET',
-      credentials: 'include',
-    }),
-  );
+  const response = await apiFetch(path, {
+    method: 'GET',
+    raw: true,
+  });
 
   return response.arrayBuffer();
 }
@@ -106,8 +92,9 @@ export async function downloadPdf(orgId, projectId, studyId, fileName) {
  * @returns {string}
  */
 export function getPdfUrl(orgId, projectId, studyId, fileName) {
-  const baseUrl = buildPdfBaseUrl(orgId, projectId, studyId);
-  return `${baseUrl}/${encodeURIComponent(fileName)}`;
+  const basePath = buildPdfBasePath(orgId, projectId, studyId);
+  // Need full URL for embedding in iframes/viewers
+  return `${API_BASE}${basePath}/${encodeURIComponent(fileName)}`;
 }
 
 /**
@@ -119,17 +106,10 @@ export function getPdfUrl(orgId, projectId, studyId, fileName) {
  * @returns {Promise<{success: boolean}>}
  */
 export async function deletePdf(orgId, projectId, studyId, fileName) {
-  const baseUrl = buildPdfBaseUrl(orgId, projectId, studyId);
-  const url = `${baseUrl}/${encodeURIComponent(fileName)}`;
+  const basePath = buildPdfBasePath(orgId, projectId, studyId);
+  const path = `${basePath}/${encodeURIComponent(fileName)}`;
 
-  const response = await handleFetchError(
-    fetch(url, {
-      method: 'DELETE',
-      credentials: 'include',
-    }),
-  );
-
-  return response.json();
+  return apiFetch.delete(path);
 }
 
 /**
@@ -140,14 +120,7 @@ export async function deletePdf(orgId, projectId, studyId, fileName) {
  * @returns {Promise<{pdfs: Array<{key: string, fileName: string, size: number, uploaded: string}>}>}
  */
 export async function listPdfs(orgId, projectId, studyId) {
-  const url = buildPdfBaseUrl(orgId, projectId, studyId);
+  const path = buildPdfBasePath(orgId, projectId, studyId);
 
-  const response = await handleFetchError(
-    fetch(url, {
-      method: 'GET',
-      credentials: 'include',
-    }),
-  );
-
-  return response.json();
+  return apiFetch.get(path);
 }

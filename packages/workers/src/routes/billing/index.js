@@ -106,6 +106,93 @@ billingRoutes.get('/subscription', requireAuth, async c => {
 });
 
 /**
+ * GET /api/billing/invoices
+ * Get the current org's invoice history from Stripe
+ * Returns list of invoices for the org's subscription
+ */
+billingRoutes.get('/invoices', requireAuth, async c => {
+  const { user, session } = getAuth(c);
+  const db = createDb(c.env.DB);
+
+  try {
+    // Get orgId from session's activeOrganizationId
+    let orgId = session?.activeOrganizationId;
+
+    // If no active org in session, get user's first org
+    if (!orgId) {
+      const { member } = await import('../../db/schema.js');
+      const { eq } = await import('drizzle-orm');
+      const firstMembership = await db
+        .select({ organizationId: member.organizationId })
+        .from(member)
+        .where(eq(member.userId, user.id))
+        .limit(1)
+        .get();
+      orgId = firstMembership?.organizationId;
+    }
+
+    if (!orgId) {
+      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+        reason: 'no_org_found',
+      });
+      return c.json(error, error.statusCode);
+    }
+
+    // Get org's subscription to find the Stripe customer ID
+    const { subscription } = await import('../../db/schema.js');
+    const { eq } = await import('drizzle-orm');
+    const orgSubscription = await db
+      .select()
+      .from(subscription)
+      .where(eq(subscription.referenceId, orgId))
+      .get();
+
+    if (!orgSubscription?.stripeCustomerId) {
+      // No subscription or customer - return empty invoices
+      return c.json({ invoices: [] });
+    }
+
+    // Fetch invoices from Stripe
+    if (!c.env.STRIPE_SECRET_KEY) {
+      const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        operation: 'stripe_not_configured',
+      });
+      return c.json(error, error.statusCode);
+    }
+
+    const stripeClient = new Stripe(c.env.STRIPE_SECRET_KEY);
+    const invoices = await stripeClient.invoices.list({
+      customer: orgSubscription.stripeCustomerId,
+      limit: 24,
+    });
+
+    // Map to simplified format for frontend
+    const simplifiedInvoices = invoices.data.map(invoice => ({
+      id: invoice.id,
+      number: invoice.number,
+      status: invoice.status,
+      amountCents: invoice.amount_due,
+      amount: invoice.amount_due / 100,
+      currency: invoice.currency,
+      created: invoice.created,
+      periodStart: invoice.period_start,
+      periodEnd: invoice.period_end,
+      pdfUrl: invoice.invoice_pdf,
+      hostedUrl: invoice.hosted_invoice_url,
+    }));
+
+    return c.json({ invoices: simplifiedInvoices });
+  } catch (error) {
+    console.error('Error fetching invoices:', error);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'fetch_invoices',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
+  }
+});
+
+/**
  * GET /api/billing/members
  * Get the current org's members (uses session's activeOrganizationId)
  * Returns list of members with count
@@ -320,6 +407,7 @@ billingRoutes.post('/checkout', billingCheckoutRateLimit, requireAuth, async c =
           referenceId: orgId,
           successUrl: `${c.env.APP_URL || 'https://corates.org'}/settings/billing?success=true`,
           cancelUrl: `${c.env.APP_URL || 'https://corates.org'}/settings/billing?canceled=true`,
+          returnUrl: `${c.env.APP_URL || 'https://corates.org'}/settings/billing`,
         },
       });
     });

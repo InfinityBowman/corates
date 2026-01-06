@@ -196,6 +196,11 @@ export const SYSTEM_ERRORS = {
     defaultMessage: 'Service temporarily unavailable',
     statusCode: 503,
   },
+  ROUTE_NOT_FOUND: {
+    code: 'SYSTEM_ROUTE_NOT_FOUND',
+    defaultMessage: 'Route not found',
+    statusCode: 404,
+  },
 } as const;
 
 export type SystemErrorCode = (typeof SYSTEM_ERRORS)[keyof typeof SYSTEM_ERRORS]['code'];

@@ -234,37 +234,6 @@ async function revokeAccess(_userId) {
 
 ---
 
-### D3: Deprecated Google Drive Function ⚠️ **DEPRECATED CORRECTLY**
-
-**Location:** [web/src/api/google-drive.js:111-114](packages/web/src/api/google-drive.js:111)
-
-```javascript
-/**
- * @deprecated Use connectGoogleAccount() instead
- */
-export function getGoogleConnectUrl() {
-  console.warn('getGoogleConnectUrl is deprecated, use connectGoogleAccount() instead');
-  // ... implementation still works
-}
-```
-
-**Status:** ✅ **Acceptable**
-
-- Properly marked with `@deprecated`
-- Console warning alerts developers
-- Alternative function documented
-
-**Recommendation:**
-
-- Search codebase for usage
-- If unused, schedule for removal in next major version
-- If used, create deprecation timeline
-
-**Priority:** Low
-**Effort:** 1 hour (search usage + plan removal)
-
----
-
 ## Duplicated Patterns
 
 ### Pattern 1: Database Connection Boilerplate 🔴 **HIGH DUPLICATION**

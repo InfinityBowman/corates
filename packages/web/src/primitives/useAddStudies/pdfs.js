@@ -11,6 +11,7 @@ import {
 } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import { cloneArrayBuffer } from './serialization.js';
+import { validatePdfFile } from '@/lib/pdfValidation.js';
 
 const DOI_FETCH_TIMEOUT = 10000;
 
@@ -24,8 +25,18 @@ export function createPdfOperations() {
   const pdfCount = () => uploadedPdfs.filter(p => p.title?.trim() && !p.extracting).length;
 
   const handlePdfSelect = async files => {
-    const pdfFiles = files.filter(f => f.type === 'application/pdf');
-    if (pdfFiles.length === 0) return;
+    // Validate each file before processing
+    const validFiles = [];
+    for (const file of files) {
+      const validation = await validatePdfFile(file);
+      if (validation.valid) {
+        validFiles.push(file);
+      } else {
+        console.warn('Invalid PDF file:', file.name, validation.details.message);
+      }
+    }
+
+    if (validFiles.length === 0) return;
 
     // Filter out duplicates by name and size (handle null file objects from restored state)
     const existingFiles = new Set(
@@ -33,7 +44,9 @@ export function createPdfOperations() {
         .filter(pdf => pdf.file?.name)
         .map(pdf => `${pdf.file.name}:${pdf.file.size || 0}`),
     );
-    const newFiles = pdfFiles.filter(file => !existingFiles.has(`${file.name}:${file.size || 0}`));
+    const newFiles = validFiles.filter(
+      file => !existingFiles.has(`${file.name}:${file.size || 0}`),
+    );
 
     if (newFiles.length === 0) return;
 

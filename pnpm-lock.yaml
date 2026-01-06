@@ -259,6 +259,9 @@ importers:
       '@embedpdf/plugin-zoom':
         specifier: ^2.1.1
         version: 2.1.1(b1c8daec8b8248609960e85499d9d470)
+      '@solid-primitives/scheduled':
+        specifier: ^1.5.2
+        version: 1.5.2(solid-js@1.9.10)
       '@solidjs/router':
         specifier: ^0.15.4
         version: 0.15.4(solid-js@1.9.10)
@@ -3829,6 +3832,14 @@ packages:
     resolution:
       {
         integrity: sha512-BgoEdqPw48URnI+L5sZIHdF4ua4Las1eWEBBPaoSFs42kkhnHue+rwCBPL2Z9ebOyQ75sUhUfOETdJfmv0D6Kg==,
+      }
+    peerDependencies:
+      solid-js: ^1.6.12
+
+  '@solid-primitives/scheduled@1.5.2':
+    resolution:
+      {
+        integrity: sha512-/j2igE0xyNaHhj6kMfcUQn5rAVSTLbAX+CDEBm25hSNBmNiHLu2lM7Usj2kJJ5j36D67bE8wR1hBNA8hjtvsQA==,
       }
     peerDependencies:
       solid-js: ^1.6.12
@@ -13876,6 +13887,10 @@ snapshots:
   '@sindresorhus/merge-streams@4.0.0': {}
 
   '@solid-primitives/keyed@1.5.2(solid-js@1.9.10)':
+    dependencies:
+      solid-js: 1.9.10
+
+  '@solid-primitives/scheduled@1.5.2(solid-js@1.9.10)':
     dependencies:
       solid-js: 1.9.10
 

@@ -5,6 +5,7 @@
 
 import { createAuth } from '../auth/config.js';
 import { isAdminUser } from '../auth/admin.js';
+import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 
 export const isAdmin = isAdminUser;
 
@@ -20,11 +21,13 @@ export async function requireAdmin(c, next) {
     });
 
     if (!session?.user) {
-      return c.json({ error: 'Authentication required' }, 401);
+      const error = createDomainError(AUTH_ERRORS.REQUIRED);
+      return c.json(error, error.statusCode);
     }
 
     if (!isAdminUser(session.user)) {
-      return c.json({ error: 'Admin access required' }, 403);
+      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' });
+      return c.json(error, error.statusCode);
     }
 
     c.set('user', session.user);
@@ -34,6 +37,7 @@ export async function requireAdmin(c, next) {
     await next();
   } catch (error) {
     console.error('Admin auth error:', error);
-    return c.json({ error: 'Authentication required' }, 401);
+    const authError = createDomainError(AUTH_ERRORS.REQUIRED);
+    return c.json(authError, authError.statusCode);
   }
 }

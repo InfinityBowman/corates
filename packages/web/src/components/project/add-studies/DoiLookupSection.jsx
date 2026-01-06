@@ -15,6 +15,7 @@ import {
 import { FiFile, FiFileText, FiAlertCircle, FiCheck, FiDownload } from 'solid-icons/fi';
 import { Checkbox, Tooltip, showToast } from '@corates/ui';
 import { getRefDisplayName } from '@/lib/referenceParser.js';
+import { validatePdfFile } from '@/lib/pdfValidation.js';
 
 export default function DoiLookupSection(props) {
   const studies = () => props.studies;
@@ -125,8 +126,10 @@ export default function DoiLookupSection(props) {
                   const file = e.target.files?.[0];
                   if (!file) return;
 
-                  if (file.type !== 'application/pdf') {
-                    showToast.error('Invalid File', 'Please select a PDF file');
+                  const result = await validatePdfFile(file);
+                  if (!result.valid) {
+                    showToast.error('Invalid PDF', result.error);
+                    if (fileInputRef) fileInputRef.value = '';
                     return;
                   }
 

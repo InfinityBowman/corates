@@ -6,8 +6,8 @@ import { PrimaryButton } from './AuthButtons.jsx';
 import RoleSelector from './RoleSelector.jsx';
 import StepIndicator from './StepIndicator.jsx';
 import { FiChevronLeft } from 'solid-icons/fi';
-import { handleError, handleFetchError } from '@/lib/error-utils.js';
-import { API_BASE } from '@config/api.js';
+import { handleError } from '@/lib/error-utils.js';
+import { apiFetch } from '@lib/apiFetch.js';
 import { showToast } from '@corates/ui';
 
 /**
@@ -141,21 +141,11 @@ export default function CompleteProfile() {
 
       if (invitationToken) {
         try {
-          const response = await handleFetchError(
-            fetch(`${API_BASE}/api/invitations/accept`, {
-              method: 'POST',
-              credentials: 'include',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ token: invitationToken }),
-            }),
-            {
-              showToast: false,
-            },
+          const result = await apiFetch.post(
+            '/api/invitations/accept',
+            { token: invitationToken },
+            { toastMessage: false },
           );
-
-          const result = await response.json();
           localStorage.removeItem('pendingInvitationToken');
 
           // Redirect to the project (use org-scoped path when available)
