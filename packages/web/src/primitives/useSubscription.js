@@ -1,7 +1,7 @@
 /**
  * useSubscription primitive
  * Manages subscription state and provides permission helpers
- * Uses localStorage for local-first persistence during bad connections
+ * Relies on TanStack Query for caching and IndexedDB persistence (via queryClient.js)
  */
 
 import { createMemo, onCleanup } from 'solid-js';
@@ -17,11 +17,6 @@ import {
 } from '@/lib/entitlements.js';
 import { useBetterAuth } from '@/api/better-auth-store.js';
 
-// LocalStorage keys for offline caching
-const SUBSCRIPTION_CACHE_KEY = 'corates-subscription-cache';
-const SUBSCRIPTION_CACHE_TIMESTAMP_KEY = 'corates-subscription-cache-timestamp';
-const SUBSCRIPTION_CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
-
 const DEFAULT_SUBSCRIPTION = {
   tier: 'free',
   status: 'active',
@@ -32,82 +27,10 @@ const DEFAULT_SUBSCRIPTION = {
 };
 
 /**
- * Load cached subscription from localStorage
- * @returns {Object|null} Cached subscription or null
- */
-function loadCachedSubscription() {
-  if (typeof window === 'undefined') return null;
-  try {
-    const cached = localStorage.getItem(SUBSCRIPTION_CACHE_KEY);
-    const timestamp = localStorage.getItem(SUBSCRIPTION_CACHE_TIMESTAMP_KEY);
-    if (!cached || !timestamp) return null;
-
-    const age = Date.now() - parseInt(timestamp, 10);
-    if (age > SUBSCRIPTION_CACHE_MAX_AGE) {
-      localStorage.removeItem(SUBSCRIPTION_CACHE_KEY);
-      localStorage.removeItem(SUBSCRIPTION_CACHE_TIMESTAMP_KEY);
-      return null;
-    }
-
-    return JSON.parse(cached);
-  } catch (err) {
-    console.error('Error loading cached subscription:', err);
-    return null;
-  }
-}
-
-/**
- * Save subscription to localStorage
- * @param {Object|null} subscription - Subscription data to cache
- */
-function saveCachedSubscription(subscription) {
-  if (typeof window === 'undefined') return;
-  try {
-    if (subscription && subscription.tier) {
-      localStorage.setItem(SUBSCRIPTION_CACHE_KEY, JSON.stringify(subscription));
-      localStorage.setItem(SUBSCRIPTION_CACHE_TIMESTAMP_KEY, Date.now().toString());
-    }
-  } catch (err) {
-    console.error('Error saving cached subscription:', err);
-  }
-}
-
-/**
- * Clear cached subscription from localStorage
- */
-function clearCachedSubscription() {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.removeItem(SUBSCRIPTION_CACHE_KEY);
-    localStorage.removeItem(SUBSCRIPTION_CACHE_TIMESTAMP_KEY);
-  } catch (err) {
-    console.error('Error clearing cached subscription:', err);
-  }
-}
-
-/**
- * Get the timestamp of when subscription was last synced
- * @returns {number|null} Timestamp in milliseconds or null
- */
-function getLastSyncedTimestamp() {
-  if (typeof window === 'undefined') return null;
-  try {
-    const timestamp = localStorage.getItem(SUBSCRIPTION_CACHE_TIMESTAMP_KEY);
-    return timestamp ? parseInt(timestamp, 10) : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Fetch subscription from API
- * Throws on error instead of silently returning default
  */
 async function fetchSubscription() {
-  const data = await apiFetch.get('/api/billing/subscription', { toastMessage: false });
-  // Cache successful fetch for local-first persistence
-  saveCachedSubscription(data);
-  return data;
+  return apiFetch.get('/api/billing/subscription', { toastMessage: false });
 }
 
 /**
@@ -116,23 +39,22 @@ async function fetchSubscription() {
  */
 export function useSubscription() {
   const { isLoggedIn } = useBetterAuth();
+  const queryClient = useQueryClient();
 
-  // Load cached subscription for local-first fallback
-  const cachedSubscription = loadCachedSubscription();
-
-  // Use TanStack Query for subscription data with persistence
+  // Use TanStack Query for subscription data
+  // TanStack Query handles caching and IndexedDB persistence automatically
   const query = useQuery(() => ({
     queryKey: queryKeys.subscription.current,
     queryFn: fetchSubscription,
     enabled: isLoggedIn(),
-    staleTime: 1000 * 60 * 2, // 2 minutes (reduced from 5 for fresher data)
-    gcTime: 1000 * 60 * 10, // 10 minutes
-    retry: 1, // Retry once on failure
-    // Use cached subscription as initial data for instant display
-    initialData: cachedSubscription || undefined,
+    staleTime: 1000 * 60 * 2, // 2 minutes - data considered fresh
+    gcTime: 1000 * 60 * 30, // 30 minutes - keep in cache for offline access
+    retry: 1,
+    refetchOnWindowFocus: true, // Refetch when tab becomes active
+    refetchOnReconnect: true, // Refetch when network reconnects
   }));
 
-  // Refetch subscription when tab becomes visible (handles plan changes in another tab)
+  // Also refetch on visibility change (for plan changes in another tab/window)
   if (typeof window !== 'undefined') {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && isLoggedIn()) {
@@ -145,26 +67,21 @@ export function useSubscription() {
     });
   }
 
-  // Local-first: use query data, fall back to cached, then default
-  // This ensures paid users keep their entitlements during bad connections
-  const subscription = () => {
-    if (query.data) return query.data;
-    if (query.isError && cachedSubscription) return cachedSubscription;
-    return DEFAULT_SUBSCRIPTION;
-  };
+  // Use query data or default
+  const subscription = () => query.data ?? DEFAULT_SUBSCRIPTION;
 
-  // Track if we're using cached data (for UI indicators)
+  // Track if we're using stale/cached data
   const isUsingCachedData = createMemo(() => {
-    return isLoggedIn() && query.isError && cachedSubscription !== null;
+    return isLoggedIn() && query.isStale && !query.isFetching;
   });
 
-  // Get formatted last synced time for UI display
+  // Get formatted last synced time from query's dataUpdatedAt
   const lastSynced = createMemo(() => {
-    const timestamp = getLastSyncedTimestamp();
+    const timestamp = query.dataUpdatedAt;
     if (!timestamp) return null;
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
+
+    const now = Date.now();
+    const diffMs = now - timestamp;
     const diffMins = Math.floor(diffMs / (1000 * 60));
 
     if (diffMins < 1) return 'Just now';
@@ -247,24 +164,31 @@ export function useSubscription() {
     });
   });
 
-  const queryClient = useQueryClient();
-
   return {
     // Query state
     subscription,
     loading: () => query.isLoading || query.isFetching,
     error: () => query.error,
-    subscriptionFetchFailed, // True when logged in and fetch failed
-    isUsingCachedData, // True when using localStorage fallback
-    lastSynced, // Formatted string for when data was last synced
-    refetch: () => query.refetch(),
-    mutate: data => {
-      // Optimistic update - set query data via queryClient
-      queryClient.setQueryData(queryKeys.subscription.current, data);
-      // Also update cache for local-first persistence
-      saveCachedSubscription(data);
+    subscriptionFetchFailed,
+    isUsingCachedData,
+    lastSynced,
+
+    // Force fresh data from server (removes cache and refetches)
+    refetch: async () => {
+      // resetQueries removes cached data AND refetches, so UI shows loading state
+      const result = await queryClient.resetQueries({ queryKey: queryKeys.subscription.current });
+      return result;
     },
-    clearCache: clearCachedSubscription, // For logout cleanup
+
+    // Optimistic update
+    mutate: data => {
+      queryClient.setQueryData(queryKeys.subscription.current, data);
+    },
+
+    // Clear subscription cache (for logout)
+    clearCache: () => {
+      queryClient.removeQueries({ queryKey: queryKeys.subscription.current });
+    },
 
     // Tier info
     tier,

@@ -112,8 +112,16 @@ app.get('/health', async c => {
 // Simple liveness probe (for load balancers)
 app.get('/healthz', c => c.text('OK'));
 
-// Root endpoint
-app.get('/', c => c.text('Corates Workers API'));
+// Root endpoint - redirect browsers to frontend, return text for API clients
+app.get('/', c => {
+  const accept = c.req.header('Accept') || '';
+  // If browser request (accepts HTML), redirect to frontend
+  if (accept.includes('text/html')) {
+    const frontendUrl = c.env.APP_URL || 'https://corates.org';
+    return c.redirect(`${frontendUrl}/dashboard`, 302);
+  }
+  return c.text('Corates Workers API');
+});
 
 // API Documentation (development only)
 app.get('/docs', async c => {
