@@ -44,30 +44,20 @@ export default function AddMemberModal(props) {
   const searchUsers = async query => {
     setSearching(true);
     try {
-      const url = new URL(`${API_BASE}/api/users/search`);
-      url.searchParams.set('q', query);
-      url.searchParams.set('projectId', props.projectId);
-
-      const response = await handleFetchError(
-        fetch(url, {
-          credentials: 'include',
-        }),
-        {
-          setError,
-          showToast: false,
-        },
+      const results = await apiFetch.get(
+        `/api/users/search?q=${encodeURIComponent(query)}&projectId=${encodeURIComponent(props.projectId)}`,
+        { toastMessage: false },
       );
-
-      const results = await response.json();
       setSearchResults(results);
-    } catch (_err) {
-      // Error already handled by handleFetchError
+    } catch (err) {
+      setError(err.message || 'Search failed');
     } finally {
       setSearching(false);
     }
   };
 
   // Debounced search function
+  // eslint-disable-next-line solid/reactivity -- searchUsers is used via debounce in event handler
   const debouncedSearchUsers = debounce(searchUsers, 300);
 
   // Cleanup debounced function on unmount

@@ -11,6 +11,7 @@ import { createEmailService } from './email.js';
 import { getAllowedOrigins } from '../config/origins.js';
 import { isAdminUser } from './admin.js';
 import { MAGIC_LINK_EXPIRY_MINUTES } from './emailTemplates.js';
+import { notifyOrgMembers, EventTypes } from '../lib/notify.js';
 
 export function createAuth(env, ctx) {
   // Initialize Drizzle with D1
@@ -171,6 +172,41 @@ export function createAuth(env, ctx) {
                 env.STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY || 'price_unlimited_team_yearly',
             },
           ],
+          // Real-time notifications for subscription changes
+          onSubscriptionComplete: async ({ subscription }) => {
+            // Notify all org members when subscription is created/upgraded
+            await notifyOrgMembers(env, db, subscription.referenceId, {
+              type: EventTypes.SUBSCRIPTION_UPDATED,
+              data: {
+                tier: subscription.plan,
+                status: subscription.status,
+                periodEnd: subscription.periodEnd,
+              },
+            });
+          },
+          onSubscriptionUpdate: async ({ subscription }) => {
+            // Notify all org members when subscription changes
+            await notifyOrgMembers(env, db, subscription.referenceId, {
+              type: EventTypes.SUBSCRIPTION_UPDATED,
+              data: {
+                tier: subscription.plan,
+                status: subscription.status,
+                periodEnd: subscription.periodEnd,
+                cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+              },
+            });
+          },
+          onSubscriptionCancel: async ({ subscription }) => {
+            // Notify all org members when subscription is canceled
+            await notifyOrgMembers(env, db, subscription.referenceId, {
+              type: EventTypes.SUBSCRIPTION_CANCELED,
+              data: {
+                tier: subscription.plan,
+                cancelAt: subscription.cancelAt,
+                canceledAt: subscription.canceledAt,
+              },
+            });
+          },
           authorizeReference: async ({ user, session: _session, referenceId, action }) => {
             // Check if user is org owner for subscription management actions
             if (
