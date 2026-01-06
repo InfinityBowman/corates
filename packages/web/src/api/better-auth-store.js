@@ -1,3 +1,34 @@
+/**
+ * Better Auth Store - Centralized authentication state management
+ *
+ * WARNING: HIGH BLAST RADIUS FILE
+ *
+ * This file manages ALL authentication state for the application.
+ * Changes here impact:
+ * - User login/logout flow
+ * - Session management and caching
+ * - Offline authentication fallback
+ * - Organization context switching
+ * - Avatar caching
+ * - Query cache invalidation on auth changes
+ *
+ * BEFORE MODIFYING:
+ * 1. Read: .cursor/rules/error-handling.mdc
+ * 2. Understand Better Auth session structure
+ * 3. Test login/logout flows in both online and offline modes
+ * 4. Verify LocalStorage fallback works (7-day cache)
+ * 5. Check organization switching doesn't break state
+ * 6. Test bfcache restoration (browser back button)
+ *
+ * CRITICAL PATTERNS:
+ * - Singleton pattern (createRoot prevents disposal)
+ * - Dual caching (Better Auth + LocalStorage for offline)
+ * - Avatar caching in IndexedDB
+ * - Query invalidation on sign out
+ *
+ * See: packages/docs/guides/authentication.md
+ */
+
 import { createSignal, createRoot, createEffect } from 'solid-js';
 import { authClient, useSession } from '@api/auth-client.js';
 import { queryClient, clearPersistedQueryCache } from '@lib/queryClient.js';

@@ -15,6 +15,27 @@ const messageAwareness = 1;
 /**
  * ProjectDoc Durable Object
  *
+ * WARNING: HIGH BLAST RADIUS FILE
+ *
+ * This file affects ALL real-time collaboration features.
+ * Changes here impact:
+ * - Y.js document state and sync protocol
+ * - Project data persistence (all collaborative edits)
+ * - WebSocket connections for all active users
+ * - Member authorization for project access
+ * - Awareness protocol (user presence indicators)
+ *
+ * BEFORE MODIFYING:
+ * 1. Read: .cursor/rules/yjs-sync.mdc and durable-objects.mdc
+ * 2. Run full test suite: cd packages/workers && pnpm test
+ * 3. Test with multiple concurrent browser clients
+ * 4. Verify WebSocket close codes don't break reconnection
+ * 5. Check that member sync updates reflect correctly
+ *
+ * See: packages/docs/guides/yjs-sync.md for architecture details
+ *
+ * ─────────────────────────────────────────────────────────────
+ *
  * Holds the authoritative Y.Doc for a project with hierarchical structure:
  *
  * Project (this DO)
