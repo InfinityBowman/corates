@@ -92,3 +92,6 @@ const RadioGroupComponent: Component<RadioGroupProps> = props => {
 };
 
 export { RadioGroupComponent as RadioGroup };
+
+// Export raw Ark UI primitive for custom layouts
+export { RadioGroup as RadioGroupPrimitive };

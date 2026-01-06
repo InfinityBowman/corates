@@ -4,8 +4,9 @@
  */
 
 import { createSignal, For, Show, onMount } from 'solid-js';
+import { Portal } from 'solid-js/web';
 import { FiCheck, FiStar, FiZap, FiAlertCircle, FiArrowDown } from 'solid-icons/fi';
-import { showToast, Dialog } from '@corates/ui';
+import { showToast, DialogPrimitive as Dialog } from '@corates/ui';
 import {
   redirectToCheckout,
   redirectToSingleProjectCheckout,
@@ -23,13 +24,19 @@ import { getBillingPlanCatalog } from '@corates/shared/plans';
  * @returns {JSX.Element} - The PricingTable component
  */
 export default function PricingTable(props) {
-  const plans = () => getBillingPlanCatalog();
+  const catalog = getBillingPlanCatalog();
+  const plans = catalog.plans;
+
   const [billingInterval, setBillingInterval] = createSignal('monthly');
   const [loadingTier, setLoadingTier] = createSignal(null);
   const [validationError, setValidationError] = createSignal(null);
   const [pendingDowngrade, setPendingDowngrade] = createSignal(null);
 
-  const { refetch: refetchSubscription } = useSubscription();
+  // Don't destructure - access properties directly to preserve reactivity
+  const subscription = useSubscription();
+
+  // Check if user is on trial
+  const isTrialing = () => subscription.status() === 'trialing';
 
   // Tier order for downgrade detection (higher = more features)
   const TIER_ORDER = {
@@ -78,7 +85,7 @@ export default function PricingTable(props) {
       if (plan.cta === 'start_trial') {
         await startTrial();
         showToast.success('Trial started', 'Your 14-day trial is now active.');
-        await refetchSubscription();
+        await subscription.refetch();
         setLoadingTier(null);
         return;
       }
@@ -135,7 +142,11 @@ export default function PricingTable(props) {
     if (plan.tier === currentTier()) return 'Current Plan';
     if (plan.cta === 'start_trial') return 'Start Free Trial';
     if (plan.cta === 'buy_single_project') return 'Buy Now';
-    if (plan.cta === 'subscribe') return 'Get Started';
+    if (plan.cta === 'subscribe') {
+      // Show "Upgrade" for trial users moving to paid plans
+      if (isTrialing()) return 'Upgrade Now';
+      return 'Get Started';
+    }
     return 'Unavailable';
   };
 
@@ -185,8 +196,19 @@ export default function PricingTable(props) {
       </div>
 
       {/* Plans grid */}
+      <Show when={isTrialing()}>
+        <div class='mb-6 flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4'>
+          <FiZap class='h-5 w-5 shrink-0 text-blue-600' />
+          <div>
+            <p class='font-medium text-blue-800'>Enjoying your trial?</p>
+            <p class='text-sm text-blue-600'>
+              Upgrade now to keep your projects and avoid any interruption when your trial ends.
+            </p>
+          </div>
+        </div>
+      </Show>
       <div class='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
-        <For each={plans()?.plans ?? []}>
+        <For each={plans}>
           {plan => {
             const isPopular = () => plan.isPopular;
             const isCurrent = () => plan.tier === currentTier();
@@ -337,113 +359,117 @@ export default function PricingTable(props) {
       {/* Validation Error Dialog */}
       <Dialog.Root
         open={validationError() !== null}
-        onOpenChange={open => {
-          if (!open) setValidationError(null);
+        onOpenChange={details => {
+          if (!details.open) setValidationError(null);
         }}
       >
-        <Dialog.Backdrop class='fixed inset-0 z-40 bg-black/50' />
-        <Dialog.Positioner class='fixed inset-0 z-50 flex items-center justify-center p-4'>
-          <Dialog.Content class='w-full max-w-md rounded-2xl bg-white p-6 shadow-xl'>
-            <div class='mb-4 flex items-start gap-3'>
-              <div class='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100'>
-                <FiAlertCircle class='h-5 w-5 text-red-600' />
-              </div>
-              <div>
-                <Dialog.Title class='text-lg font-semibold text-gray-900'>
-                  Cannot Change Plan
-                </Dialog.Title>
-                <Dialog.Description class='mt-1 text-sm text-gray-500'>
-                  Your current usage exceeds the limits of the selected plan.
-                </Dialog.Description>
-              </div>
-            </div>
-
-            <Show when={validationError()}>
-              <div class='mb-6 space-y-3'>
-                <For each={validationError().violations}>
-                  {violation => (
-                    <div class='rounded-lg border border-red-200 bg-red-50 p-3'>
-                      <p class='text-sm font-medium text-red-800'>{violation.message}</p>
-                      <p class='mt-1 text-xs text-red-600'>
-                        Current: {violation.current} / Limit: {violation.limit}
-                      </p>
-                    </div>
-                  )}
-                </For>
+        <Portal>
+          <Dialog.Backdrop class='fixed inset-0 z-40 bg-black/50' />
+          <Dialog.Positioner class='fixed inset-0 z-50 flex items-center justify-center p-4'>
+            <Dialog.Content class='w-full max-w-md rounded-2xl bg-white p-6 shadow-xl'>
+              <div class='mb-4 flex items-start gap-3'>
+                <div class='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100'>
+                  <FiAlertCircle class='h-5 w-5 text-red-600' />
+                </div>
+                <div>
+                  <Dialog.Title class='text-lg font-semibold text-gray-900'>
+                    Cannot Change Plan
+                  </Dialog.Title>
+                  <Dialog.Description class='mt-1 text-sm text-gray-500'>
+                    Your current usage exceeds the limits of the selected plan.
+                  </Dialog.Description>
+                </div>
               </div>
 
-              <p class='mb-4 text-sm text-gray-600'>
-                To switch to {validationError().targetPlan?.name}, you'll need to reduce your usage
-                first.
-              </p>
-            </Show>
+              <Show when={validationError()}>
+                <div class='mb-6 space-y-3'>
+                  <For each={validationError().violations}>
+                    {violation => (
+                      <div class='rounded-lg border border-red-200 bg-red-50 p-3'>
+                        <p class='text-sm font-medium text-red-800'>{violation.message}</p>
+                        <p class='mt-1 text-xs text-red-600'>
+                          Current: {violation.current} / Limit: {violation.limit}
+                        </p>
+                      </div>
+                    )}
+                  </For>
+                </div>
 
-            <div class='flex justify-end'>
-              <Dialog.CloseTrigger class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'>
-                Got it
-              </Dialog.CloseTrigger>
-            </div>
-          </Dialog.Content>
-        </Dialog.Positioner>
+                <p class='mb-4 text-sm text-gray-600'>
+                  To switch to {validationError().targetPlan?.name}, you'll need to reduce your
+                  usage first.
+                </p>
+              </Show>
+
+              <div class='flex justify-end'>
+                <Dialog.CloseTrigger class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'>
+                  Got it
+                </Dialog.CloseTrigger>
+              </div>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
       </Dialog.Root>
 
       {/* Downgrade Confirmation Dialog */}
       <Dialog.Root
         open={pendingDowngrade() !== null}
-        onOpenChange={open => {
-          if (!open) setPendingDowngrade(null);
+        onOpenChange={details => {
+          if (!details.open) setPendingDowngrade(null);
         }}
       >
-        <Dialog.Backdrop class='fixed inset-0 z-40 bg-black/50' />
-        <Dialog.Positioner class='fixed inset-0 z-50 flex items-center justify-center p-4'>
-          <Dialog.Content class='w-full max-w-md rounded-2xl bg-white p-6 shadow-xl'>
-            <div class='mb-4 flex items-start gap-3'>
-              <div class='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100'>
-                <FiArrowDown class='h-5 w-5 text-amber-600' />
+        <Portal>
+          <Dialog.Backdrop class='fixed inset-0 z-40 bg-black/50' />
+          <Dialog.Positioner class='fixed inset-0 z-50 flex items-center justify-center p-4'>
+            <Dialog.Content class='w-full max-w-md rounded-2xl bg-white p-6 shadow-xl'>
+              <div class='mb-4 flex items-start gap-3'>
+                <div class='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100'>
+                  <FiArrowDown class='h-5 w-5 text-amber-600' />
+                </div>
+                <div>
+                  <Dialog.Title class='text-lg font-semibold text-gray-900'>
+                    Confirm Downgrade
+                  </Dialog.Title>
+                  <Dialog.Description class='mt-1 text-sm text-gray-500'>
+                    Are you sure you want to downgrade your plan?
+                  </Dialog.Description>
+                </div>
               </div>
-              <div>
-                <Dialog.Title class='text-lg font-semibold text-gray-900'>
+
+              <Show when={pendingDowngrade()}>
+                <div class='mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4'>
+                  <p class='text-sm text-amber-800'>
+                    You're switching from <span class='font-semibold'>{currentTier()}</span> to{' '}
+                    <span class='font-semibold'>{pendingDowngrade()?.name}</span>.
+                  </p>
+                  <p class='mt-2 text-sm text-amber-700'>
+                    Your new plan will take effect at the end of your current billing period. You'll
+                    keep access to your current features until then.
+                  </p>
+                </div>
+              </Show>
+
+              <div class='flex justify-end gap-3'>
+                <Dialog.CloseTrigger class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'>
+                  Cancel
+                </Dialog.CloseTrigger>
+                <button
+                  type='button'
+                  class='rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700'
+                  onClick={async () => {
+                    const plan = pendingDowngrade();
+                    setPendingDowngrade(null);
+                    if (plan) {
+                      await proceedWithPlanChange(plan);
+                    }
+                  }}
+                >
                   Confirm Downgrade
-                </Dialog.Title>
-                <Dialog.Description class='mt-1 text-sm text-gray-500'>
-                  Are you sure you want to downgrade your plan?
-                </Dialog.Description>
+                </button>
               </div>
-            </div>
-
-            <Show when={pendingDowngrade()}>
-              <div class='mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4'>
-                <p class='text-sm text-amber-800'>
-                  You're switching from <span class='font-semibold'>{currentTier()}</span> to{' '}
-                  <span class='font-semibold'>{pendingDowngrade().name}</span>.
-                </p>
-                <p class='mt-2 text-sm text-amber-700'>
-                  Your new plan will take effect at the end of your current billing period. You'll
-                  keep access to your current features until then.
-                </p>
-              </div>
-            </Show>
-
-            <div class='flex justify-end gap-3'>
-              <Dialog.CloseTrigger class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'>
-                Cancel
-              </Dialog.CloseTrigger>
-              <button
-                type='button'
-                class='rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700'
-                onClick={async () => {
-                  const plan = pendingDowngrade();
-                  setPendingDowngrade(null);
-                  if (plan) {
-                    await proceedWithPlanChange(plan);
-                  }
-                }}
-              >
-                Confirm Downgrade
-              </button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Positioner>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
       </Dialog.Root>
     </div>
   );

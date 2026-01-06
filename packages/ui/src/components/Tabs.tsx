@@ -109,3 +109,6 @@ const TabsComponent: Component<TabsProps> = props => {
 };
 
 export { TabsComponent as Tabs };
+
+// Export raw Ark UI primitive for custom layouts
+export { Tabs as TabsPrimitive };

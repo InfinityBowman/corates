@@ -215,3 +215,6 @@ const FloatingPanelComponent: Component<FloatingPanelProps> = props => {
 };
 
 export { FloatingPanelComponent as FloatingPanel };
+
+// Export raw Ark UI primitive for custom layouts
+export { FloatingPanel as FloatingPanelPrimitive };

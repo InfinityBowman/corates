@@ -85,3 +85,6 @@ const AccordionComponent: Component<AccordionProps> = props => {
 };
 
 export { AccordionComponent as Accordion };
+
+// Export raw Ark UI primitive for custom layouts
+export { Accordion as AccordionPrimitive };

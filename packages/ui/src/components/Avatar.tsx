@@ -55,3 +55,6 @@ const AvatarComponent: Component<AvatarProps> = props => {
 };
 
 export { AvatarComponent as Avatar };
+
+// Export raw Ark UI primitive for custom layouts
+export { Avatar as AvatarPrimitive };

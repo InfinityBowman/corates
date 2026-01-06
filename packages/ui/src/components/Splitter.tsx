@@ -50,3 +50,6 @@ const SplitterComponent: Component<SplitterProps> = props => {
 };
 
 export { SplitterComponent as Splitter };
+
+// Export raw Ark UI primitive for custom layouts
+export { Splitter as SplitterPrimitive };

@@ -131,3 +131,6 @@ const NumberInputComponent: Component<NumberInputProps> = props => {
 };
 
 export { NumberInputComponent as NumberInput };
+
+// Export raw Ark UI primitive for custom layouts
+export { NumberInput as NumberInputPrimitive };

@@ -231,3 +231,6 @@ export const CopyButton: Component<CopyButtonProps> = props => {
 };
 
 export { ClipboardComponent as Clipboard };
+
+// Export raw Ark UI primitive for custom layouts
+export { Clipboard as ClipboardPrimitive };

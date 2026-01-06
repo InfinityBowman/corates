@@ -59,3 +59,6 @@ const QRCodeComponent: Component<QRCodeProps> = props => {
 
 export { QRCodeComponent as QRCode };
 export default QRCodeComponent;
+
+// Export raw Ark UI primitive for custom layouts
+export { QrCode as QRCodePrimitive };

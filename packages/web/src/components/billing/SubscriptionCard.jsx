@@ -104,10 +104,17 @@ export default function SubscriptionCard(props) {
 
         {/* Trial countdown */}
         <Show when={isTrial() && daysRemaining() !== null}>
-          <div class='mt-4 flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 backdrop-blur-sm'>
-            <FiClock class='h-4 w-4 text-blue-200' />
+          <div
+            class={`mt-4 flex items-center gap-2 rounded-lg px-3 py-2 backdrop-blur-sm ${
+              daysRemaining() <= 3 ? 'bg-amber-500/20' : 'bg-white/10'
+            }`}
+          >
+            <FiClock
+              class={`h-4 w-4 ${daysRemaining() <= 3 ? 'text-amber-200' : 'text-blue-200'}`}
+            />
             <span class='text-sm font-medium text-white'>
               {daysRemaining()} days remaining in trial
+              {daysRemaining() <= 3 && ' - upgrade soon!'}
             </span>
           </div>
         </Show>
@@ -161,6 +168,27 @@ export default function SubscriptionCard(props) {
                 Your subscription will end on {periodEndDate()}. You'll be downgraded to the Free
                 plan.
               </p>
+            </div>
+          </div>
+        </Show>
+
+        {/* Trial expiry warning - show when 3 days or less remaining */}
+        <Show when={isTrial() && daysRemaining() !== null && daysRemaining() <= 3}>
+          <div class='mb-4 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4'>
+            <FiClock class='mt-0.5 h-5 w-5 shrink-0 text-amber-500' />
+            <div>
+              <p class='font-medium text-amber-800'>Trial ending soon</p>
+              <p class='mt-1 text-sm text-amber-600'>
+                Your trial ends in {daysRemaining()} day{daysRemaining() !== 1 ? 's' : ''}. Upgrade
+                now to keep your projects and data.
+              </p>
+              <A
+                href='/settings/billing/plans'
+                class='mt-2 inline-flex items-center gap-1 text-sm font-medium text-amber-700 hover:text-amber-800'
+              >
+                View upgrade options
+                <FiArrowRight class='h-4 w-4' />
+              </A>
             </div>
           </div>
         </Show>

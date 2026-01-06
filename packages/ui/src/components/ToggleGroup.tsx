@@ -95,3 +95,6 @@ const ToggleGroupComponent: Component<ToggleGroupProps> = props => {
 };
 
 export { ToggleGroupComponent as ToggleGroup };
+
+// Export raw Ark UI primitive for custom layouts
+export { ToggleGroup as ToggleGroupPrimitive };

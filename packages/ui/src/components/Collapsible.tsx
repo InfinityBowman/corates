@@ -191,5 +191,8 @@ const CollapsibleComponent: Component<CollapsibleProps> = props => {
 
 export default CollapsibleComponent;
 
+// Export raw Ark UI primitive for custom layouts
+export { ArkCollapsible as CollapsiblePrimitive };
+
 // Export hook for programmatic control
 export { useCollapsible };

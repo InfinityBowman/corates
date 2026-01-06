@@ -171,5 +171,8 @@ const TooltipComponent: Component<TooltipProps> = props => {
 // Export high-level component
 export { TooltipComponent as Tooltip };
 
+// Export raw Ark UI primitive for custom layouts
+export { ArkTooltip as TooltipPrimitive };
+
 // Export hook for programmatic control
 export { useTooltip };

@@ -77,5 +77,9 @@ const SwitchComponent: Component<SwitchProps> = props => {
 
 export { SwitchComponent as Switch };
 export default SwitchComponent;
+
+// Export raw Ark UI primitive for custom layouts
+export { ArkSwitch as SwitchPrimitive };
+
 // Export hook for programmatic control
 export { useSwitch };

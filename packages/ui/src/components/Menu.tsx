@@ -163,3 +163,6 @@ const MenuComponent: Component<MenuProps> = props => {
 };
 
 export { MenuComponent as Menu };
+
+// Export raw Ark UI primitive for custom layouts
+export { Menu as MenuPrimitive };
