@@ -21,16 +21,16 @@ export const PLAN_PRICING: Record<PlanId, PlanPricing> = {
     yearly: 0,
   },
   starter_team: {
-    monthly: 9.99,
-    yearly: 100, // 9.99 * 10 months (2 months free, rounded)
+    monthly: 9,
+    yearly: 90, // 9 * 10 months (2 months free)
   },
   team: {
     monthly: 29,
     yearly: 290, // 29 * 10 months (2 months free)
   },
   unlimited_team: {
-    monthly: 49,
-    yearly: 490, // 49 * 10 months (2 months free)
+    monthly: 59,
+    yearly: 590, // 59 * 10 months (2 months free)
   },
 };
 
