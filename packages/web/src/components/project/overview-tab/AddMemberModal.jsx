@@ -204,7 +204,7 @@ export default function AddMemberModal(props) {
             {/* Quota Warning Banner */}
             <Show when={isAtQuotaLimit()}>
               <div class='flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
-                <FiAlertTriangle class='mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600' />
+                <FiAlertTriangle class='mt-0.5 h-5 w-5 shrink-0 text-amber-600' />
                 <div class='text-sm'>
                   <p class='font-medium text-amber-800'>Collaborator limit reached</p>
                   <p class='mt-1 text-amber-700'>
