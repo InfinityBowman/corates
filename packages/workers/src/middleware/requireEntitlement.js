@@ -21,7 +21,8 @@ export function requireEntitlement(entitlement) {
     const { user } = getAuth(c);
 
     if (!user) {
-      return c.json({ error: 'Authentication required' }, 401);
+      const error = createDomainError(AUTH_ERRORS.REQUIRED);
+      return c.json(error, error.statusCode);
     }
 
     const { orgId } = getOrgContext(c);

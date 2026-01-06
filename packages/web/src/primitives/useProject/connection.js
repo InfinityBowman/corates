@@ -4,6 +4,7 @@
  */
 
 import { WebsocketProvider } from 'y-websocket';
+import { throttle } from '@solid-primitives/scheduled';
 import { getWsBaseUrl } from '@config/api.js';
 import projectStore from '@/stores/projectStore.js';
 
@@ -31,10 +32,13 @@ export function createConnectionManager(projectId, ydoc, options) {
   const { onSync, isLocalProject, onAccessDenied } = options;
 
   let provider = null;
-  let lastErrorLog = 0;
   let consecutiveErrors = 0;
-  const ERROR_LOG_THROTTLE = 5000; // Only log errors every 5 seconds
   const MAX_CONSECUTIVE_ERRORS = 5; // Stop reconnecting after this many failures
+
+  // Throttled error logging to prevent console spam
+  const throttledErrorLog = throttle(() => {
+    console.error('WebSocket connection error');
+  }, 5000);
 
   // Track if we intend to be connected (for online/offline handling)
   let shouldBeConnected = false;
@@ -175,11 +179,7 @@ export function createConnectionManager(projectId, ydoc, options) {
       consecutiveErrors++;
 
       // Throttle error logs to prevent console spam
-      const now = Date.now();
-      if (now - lastErrorLog > ERROR_LOG_THROTTLE) {
-        console.error('WebSocket connection error');
-        lastErrorLog = now;
-      }
+      throttledErrorLog();
 
       // After too many consecutive errors, stop trying to reconnect
       // This handles cases where project was deleted or user doesn't have access

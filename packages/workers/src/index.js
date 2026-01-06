@@ -12,6 +12,7 @@ import { createCorsMiddleware } from './middleware/cors.js';
 import { securityHeaders } from './middleware/securityHeaders.js';
 import { requireAuth } from './middleware/auth.js';
 import { requireTrustedOrigin } from './middleware/csrf.js';
+import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 
 // Route imports
 import { auth } from './auth/routes.js';
@@ -388,12 +389,26 @@ app.all('/api/sessions/:sessionId', handleUserSession);
 app.all('/api/sessions/:sessionId/*', handleUserSession);
 
 // 404 handler
-app.notFound(c => c.json({ error: 'Not Found' }, 404));
+app.notFound(c => {
+  return c.json(
+    {
+      code: 'NOT_FOUND',
+      message: 'Route not found',
+      statusCode: 404,
+      details: { path: c.req.path },
+      timestamp: new Date().toISOString(),
+    },
+    404,
+  );
+});
 
 // Error handler
 app.onError((err, c) => {
   console.error('Worker error:', err);
-  return c.json({ error: 'Internal Server Error' }, 500);
+  const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+    originalError: err.message,
+  });
+  return c.json(error, error.statusCode);
 });
 
 export default app;

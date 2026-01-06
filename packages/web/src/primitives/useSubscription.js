@@ -6,9 +6,8 @@
 
 import { createMemo, onCleanup } from 'solid-js';
 import { useQuery, useQueryClient } from '@tanstack/solid-query';
-import { API_BASE } from '@config/api.js';
 import { queryKeys } from '@lib/queryKeys.js';
-import { handleFetchError } from '@/lib/error-utils.js';
+import { apiFetch } from '@/lib/apiFetch.js';
 import { hasActiveAccess as checkActiveAccess } from '@/lib/access.js';
 import {
   hasEntitlement as checkEntitlement,
@@ -105,17 +104,7 @@ function getLastSyncedTimestamp() {
  * Throws on error instead of silently returning default
  */
 async function fetchSubscription() {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/billing/subscription`, {
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'GET',
-    }),
-    { showToast: false },
-  );
-  const data = await response.json();
+  const data = await apiFetch.get('/api/billing/subscription', { toastMessage: false });
   // Cache successful fetch for local-first persistence
   saveCachedSubscription(data);
   return data;

@@ -3,7 +3,8 @@
  * Displays system statistics, user management, and provides navigation to other admin features
  */
 
-import { createSignal, Show, onCleanup } from 'solid-js';
+import { createSignal, Show } from 'solid-js';
+import { useDebouncedSignal } from '@/primitives/useDebouncedSignal.js';
 import {
   FiUsers,
   FiFolder,
@@ -27,9 +28,8 @@ import StatsCard from './StatsCard.jsx';
  * @returns {JSX.Element} - The AdminDashboard component
  */
 export default function AdminDashboard() {
-  const [search, setSearch] = createSignal('');
+  const [search, setSearch, debouncedSearch] = useDebouncedSignal('', 300);
   const [page, setPage] = createSignal(1);
-  const [debouncedSearch, setDebouncedSearch] = createSignal('');
 
   // Fetch stats using TanStack Query
   const statsQuery = useAdminStats();
@@ -43,21 +43,11 @@ export default function AdminDashboard() {
   }));
   const usersData = () => usersDataQuery.data;
 
-  // Debounce search
-  let searchTimeout;
+  // Handle search input - reset page when search changes
   const handleSearchInput = e => {
     setSearch(e.target.value);
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-      setDebouncedSearch(e.target.value);
-      setPage(1);
-    }, 300);
+    setPage(1);
   };
-
-  // Cleanup timeout on unmount
-  onCleanup(() => {
-    clearTimeout(searchTimeout);
-  });
 
   const handleRefresh = () => {
     usersDataQuery.refetch();

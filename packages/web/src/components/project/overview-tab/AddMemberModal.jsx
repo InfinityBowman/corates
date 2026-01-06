@@ -1,9 +1,9 @@
 import { createSignal, For, Show, createEffect, onCleanup } from 'solid-js';
+import { debounce } from '@solid-primitives/scheduled';
 import { A } from '@solidjs/router';
-import { API_BASE } from '@config/api.js';
 import { FiX, FiAlertTriangle } from 'solid-icons/fi';
 import { Select, Avatar, showToast } from '@corates/ui';
-import { handleFetchError } from '@/lib/error-utils.js';
+import { apiFetch } from '@lib/apiFetch.js';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 
 /**
@@ -32,7 +32,6 @@ export default function AddMemberModal(props) {
     return props.quotaInfo.used >= props.quotaInfo.max;
   };
 
-  let searchTimeout = null;
   let inputRef;
 
   // Focus input when modal opens
@@ -41,28 +40,6 @@ export default function AddMemberModal(props) {
       inputRef.focus();
     }
   });
-
-  // Cleanup timeout on unmount
-  onCleanup(() => {
-    if (searchTimeout) clearTimeout(searchTimeout);
-  });
-
-  // Debounced search
-  const handleSearchInput = value => {
-    setSearchQuery(value);
-    setError(null);
-
-    if (searchTimeout) clearTimeout(searchTimeout);
-
-    if (value.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-
-    searchTimeout = setTimeout(() => {
-      searchUsers(value);
-    }, 300);
-  };
 
   const searchUsers = async query => {
     setSearching(true);
@@ -90,6 +67,28 @@ export default function AddMemberModal(props) {
     }
   };
 
+  // Debounced search function
+  const debouncedSearchUsers = debounce(searchUsers, 300);
+
+  // Cleanup debounced function on unmount
+  onCleanup(() => {
+    debouncedSearchUsers.clear();
+  });
+
+  // Handle search input
+  const handleSearchInput = value => {
+    setSearchQuery(value);
+    setError(null);
+
+    if (value.length < 2) {
+      setSearchResults([]);
+      debouncedSearchUsers.clear();
+      return;
+    }
+
+    debouncedSearchUsers(value);
+  };
+
   const handleSelectUser = user => {
     setSelectedUser(user);
     setSearchQuery(user.displayName || user.name || user.email);
@@ -108,32 +107,19 @@ export default function AddMemberModal(props) {
     setError(null);
 
     try {
-      const response = await handleFetchError(
-        fetch(`${API_BASE}/api/orgs/${props.orgId}/projects/${props.projectId}/members`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
+      const result = await apiFetch.post(
+        `/api/orgs/${props.orgId}/projects/${props.projectId}/members`,
+        user ?
+          {
+            userId: user.id,
+            role: selectedRole(),
+          }
+        : {
+            email: searchQuery().trim(),
+            role: selectedRole(),
           },
-          body: JSON.stringify(
-            user ?
-              {
-                userId: user.id,
-                role: selectedRole(),
-              }
-            : {
-                email: searchQuery().trim(),
-                role: selectedRole(),
-              },
-          ),
-        }),
-        {
-          setError,
-          showToast: false,
-        },
+        { toastMessage: false },
       );
-
-      const result = await response.json();
 
       // Check if invitation was sent
       if (result.invitation) {

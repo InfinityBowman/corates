@@ -5,8 +5,7 @@
 
 import { For, Show, createResource } from 'solid-js';
 import { FiDownload, FiFileText, FiExternalLink } from 'solid-icons/fi';
-import { API_BASE } from '@config/api.js';
-import { handleFetchError } from '@/lib/error-utils.js';
+import { apiFetch } from '@lib/apiFetch.js';
 
 /**
  * Fetch invoices from API
@@ -14,17 +13,7 @@ import { handleFetchError } from '@/lib/error-utils.js';
  */
 async function fetchInvoices() {
   try {
-    const response = await handleFetchError(
-      fetch(`${API_BASE}/api/billing/invoices`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'GET',
-      }),
-      { showToast: false },
-    );
-    return response.json();
+    return await apiFetch.get('/api/billing/invoices', { toastMessage: false });
   } catch {
     // API endpoint doesn't exist yet, return empty array
     return { invoices: [] };

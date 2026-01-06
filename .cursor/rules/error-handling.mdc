@@ -1,6 +1,6 @@
 ---
 alwaysApply: false
-description: "Error handling patterns for both frontend and backend using createDomainError and handleFetchError"
+description: 'Error handling patterns for both frontend and backend using createDomainError and handleFetchError'
 globs: packages/web/**, packages/workers/**
 ---
 
@@ -33,6 +33,7 @@ if (!project) {
 ### Error Constants
 
 Use predefined error constants from `@corates/shared`:
+
 - `PROJECT_ERRORS.*` - Project-related errors
 - `AUTH_ERRORS.*` - Authentication/authorization errors
 - `VALIDATION_ERRORS.*` - Validation errors
@@ -77,33 +78,49 @@ routes.post('/', async c => {
 
 ## Frontend (Web) Error Handling
 
-### API Calls
+### API Calls (Preferred: apiFetch)
 
-**ALWAYS use `handleFetchError` for fetch calls:**
+**Use `apiFetch` for all API calls** - handles JSON parsing, errors, and toast notifications automatically:
+
+```js
+import { apiFetch } from '@lib/apiFetch.js';
+
+// GET request - returns parsed JSON directly
+const projects = await apiFetch.get('/api/projects');
+
+// POST request with body
+const newProject = await apiFetch.post('/api/projects', { name: 'My Project' });
+
+// With options
+const data = await apiFetch.get('/api/projects', {
+  toastMessage: false, // Disable error toast
+  retries: 2, // Retry on failure
+});
+
+// For raw Response (e.g., ArrayBuffer):
+const response = await apiFetch.get('/api/pdf', { raw: true });
+const buffer = await response.arrayBuffer();
+```
+
+Available methods: `.get()`, `.post()`, `.put()`, `.patch()`, `.delete()`
+
+### Legacy: handleFetchError
+
+For existing code not yet migrated, `handleFetchError` wraps raw fetch calls:
 
 ```js
 import { handleFetchError } from '@/lib/error-utils.js';
 
-// CORRECT
+// LEGACY - prefer apiFetch instead
 try {
   const response = await handleFetchError(
     fetch('/api/projects', { method: 'POST', body: JSON.stringify(data) }),
-    { showToast: true }
+    { showToast: true },
   );
   const result = await response.json();
 } catch (error) {
   // Error already handled (toast shown if showToast: true)
   // error is a DomainError or TransportError
-}
-
-// WRONG
-try {
-  const response = await fetch('/api/projects');
-  if (!response.ok) {
-    // Don't manually handle errors
-  }
-} catch (error) {
-  // Don't manually show toasts
 }
 ```
 

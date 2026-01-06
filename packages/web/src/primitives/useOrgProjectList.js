@@ -5,9 +5,8 @@
  */
 
 import { useQuery } from '@tanstack/solid-query';
-import { API_BASE } from '@config/api.js';
 import { queryKeys } from '@lib/queryKeys.js';
-import { handleFetchError } from '@/lib/error-utils.js';
+import { apiFetch } from '@/lib/apiFetch.js';
 
 /**
  * Fetch projects for an organization
@@ -19,15 +18,7 @@ async function fetchOrgProjects(orgId) {
     return [];
   }
 
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/orgs/${orgId}/projects`, {
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-    }),
-    { showToast: false },
-  );
-
-  return response.json();
+  return apiFetch.get(`/api/orgs/${orgId}/projects`, { toastMessage: false });
 }
 
 /**

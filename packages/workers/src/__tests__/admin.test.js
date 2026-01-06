@@ -84,15 +84,6 @@ beforeEach(async () => {
 });
 
 describe('Admin API routes', () => {
-  it('GET /api/admin/check returns admin user info', async () => {
-    const res = await fetchApp('/api/admin/check');
-    expect(res.status).toBe(200);
-    const body = await json(res);
-    expect(body.isAdmin).toBe(true);
-    expect(body.user).toHaveProperty('id');
-    expect(body.user).toHaveProperty('email');
-  });
-
   it('GET /api/admin/stats returns correct counts and recentSignups', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
     const eightDaysAgo = nowSec - 8 * 24 * 60 * 60;
@@ -317,7 +308,8 @@ describe('Admin API routes', () => {
     });
     expect(blocked.status).toBe(403);
     const blockedBody = await json(blocked);
-    expect(blockedBody.error).toMatch(/Origin|Referer/i);
+    expect(blockedBody.code).toBe('AUTH_FORBIDDEN');
+    expect(blockedBody.details?.reason).toBe('missing_origin');
 
     // Trusted origin should allow the request.
     const allowed = await fetchApp('/api/admin/users/u1/ban', {

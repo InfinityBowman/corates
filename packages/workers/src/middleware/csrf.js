@@ -6,6 +6,7 @@
  */
 
 import { isOriginAllowed } from '../config/origins.js';
+import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 
 /**
  * Middleware that blocks state-changing requests unless Origin/Referer is trusted.
@@ -36,7 +37,8 @@ export function requireTrustedOrigin(c, next) {
         path: new URL(c.req.url).pathname,
       });
     }
-    return c.json({ error: 'Missing Origin/Referer' }, 403);
+    const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'missing_origin' });
+    return c.json(error, error.statusCode);
   }
 
   if (!isOriginAllowed(requestOrigin, c.env)) {
@@ -47,7 +49,11 @@ export function requireTrustedOrigin(c, next) {
         origin: requestOrigin,
       });
     }
-    return c.json({ error: 'Untrusted Origin' }, 403);
+    const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+      reason: 'untrusted_origin',
+      origin: requestOrigin,
+    });
+    return c.json(error, error.statusCode);
   }
 
   return next();

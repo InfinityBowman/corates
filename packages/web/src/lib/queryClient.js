@@ -4,6 +4,7 @@
  */
 
 import { QueryClient } from '@tanstack/solid-query';
+import { debounce } from '@solid-primitives/scheduled';
 import { createIDBPersister } from './queryPersister.js';
 
 let queryClientInstance = null;
@@ -68,49 +69,43 @@ async function setupPersistence(queryClient) {
   }
 
   // Set up periodic persistence (debounced)
-  let persistTimeout = null;
-  const persistCache = async () => {
-    if (persistTimeout) {
-      clearTimeout(persistTimeout);
+  const persistCache = debounce(async () => {
+    try {
+      const queryCache = queryClient.getQueryCache();
+      const mutationCache = queryClient.getMutationCache();
+
+      // Build persisted client state
+      const persistedClient = {
+        clientState: {
+          queries: Array.from(queryCache.getAll()).map(query => ({
+            queryKey: query.queryKey,
+            queryHash: query.queryHash,
+            state: {
+              data: query.state.data,
+              dataUpdatedAt: query.state.dataUpdatedAt,
+              error: query.state.error,
+              errorUpdatedAt: query.state.errorUpdatedAt,
+              status: query.state.status,
+              fetchStatus: query.state.fetchStatus,
+            },
+          })),
+          mutations: Array.from(mutationCache.getAll()).map(mutation => ({
+            mutationKey: mutation.options.mutationKey,
+            state: {
+              status: mutation.state.status,
+              data: mutation.state.data,
+              error: mutation.state.error,
+            },
+          })),
+        },
+        timestamp: Date.now(),
+      };
+
+      await persister.persistClient(persistedClient);
+    } catch (error) {
+      console.error('Failed to persist query cache:', error);
     }
-    persistTimeout = setTimeout(async () => {
-      try {
-        const queryCache = queryClient.getQueryCache();
-        const mutationCache = queryClient.getMutationCache();
-
-        // Build persisted client state
-        const persistedClient = {
-          clientState: {
-            queries: Array.from(queryCache.getAll()).map(query => ({
-              queryKey: query.queryKey,
-              queryHash: query.queryHash,
-              state: {
-                data: query.state.data,
-                dataUpdatedAt: query.state.dataUpdatedAt,
-                error: query.state.error,
-                errorUpdatedAt: query.state.errorUpdatedAt,
-                status: query.state.status,
-                fetchStatus: query.state.fetchStatus,
-              },
-            })),
-            mutations: Array.from(mutationCache.getAll()).map(mutation => ({
-              mutationKey: mutation.options.mutationKey,
-              state: {
-                status: mutation.state.status,
-                data: mutation.state.data,
-                error: mutation.state.error,
-              },
-            })),
-          },
-          timestamp: Date.now(),
-        };
-
-        await persister.persistClient(persistedClient);
-      } catch (error) {
-        console.error('Failed to persist query cache:', error);
-      }
-    }, 1000); // Debounce by 1 second
-  };
+  }, 1000); // Debounce by 1 second
 
   // Persist on cache updates
   const unsubscribeQueries = queryClient.getQueryCache().subscribe(() => {
@@ -124,7 +119,7 @@ async function setupPersistence(queryClient) {
   // Persist on window unload
   // Use synchronous localStorage as fallback since async IndexedDB may not complete
   const handleBeforeUnload = () => {
-    persistTimeout && clearTimeout(persistTimeout);
+    persistCache.clear();
 
     // Synchronous localStorage write as fallback for critical data
     // IndexedDB async write may not complete before page unload
@@ -186,9 +181,7 @@ async function setupPersistence(queryClient) {
   return () => {
     unsubscribeQueries();
     unsubscribeMutations();
-    if (persistTimeout) {
-      clearTimeout(persistTimeout);
-    }
+    persistCache.clear();
     if (typeof window !== 'undefined') {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     }

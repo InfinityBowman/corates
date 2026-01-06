@@ -56,7 +56,8 @@ describe('requireTrustedOrigin middleware', () => {
 
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toMatch(/Origin|Referer/i);
+    expect(body.code).toBe('AUTH_FORBIDDEN');
+    expect(body.details?.reason).toBe('missing_origin');
   });
 
   it('should allow POST requests with trusted Origin', async () => {
@@ -106,7 +107,8 @@ describe('requireTrustedOrigin middleware', () => {
 
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toBe('Untrusted Origin');
+    expect(body.code).toBe('AUTH_FORBIDDEN');
+    expect(body.details?.reason).toBe('untrusted_origin');
   });
 
   it('should block POST requests with untrusted Referer', async () => {

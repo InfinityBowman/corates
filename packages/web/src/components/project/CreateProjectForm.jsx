@@ -10,7 +10,8 @@ import {
   getRestoreParamsFromUrl,
   clearRestoreParamsFromUrl,
 } from '@lib/formStatePersistence.js';
-import { isErrorCode, handleFetchError, handleError } from '@/lib/error-utils.js';
+import { isErrorCode, handleError } from '@/lib/error-utils.js';
+import { apiFetch } from '@lib/apiFetch.js';
 import { useOrgs } from '@primitives/useOrgs.js';
 
 /**
@@ -124,25 +125,14 @@ export default function CreateProjectForm(props) {
 
     setIsCreating(true);
     try {
-      const response = await handleFetchError(
-        fetch(`${props.apiBase}/api/orgs/${orgId}/projects`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name: projectName().trim(),
-            description: projectDescription().trim(),
-          }),
-        }),
+      const newProject = await apiFetch.post(
+        `/api/orgs/${orgId}/projects`,
         {
-          toastTitle: 'Creation Failed',
-          showToast: false,
+          name: projectName().trim(),
+          description: projectDescription().trim(),
         },
+        { toastMessage: false },
       );
-
-      const newProject = await response.json();
       const studies = collectedStudies();
 
       // Pass PDFs with their binary data

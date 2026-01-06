@@ -4,22 +4,14 @@
  * Import endpoint uses org-scoped route: /api/orgs/:orgId/google-drive/import
  */
 
-import { API_BASE } from '@config/api.js';
-import { handleFetchError } from '@/lib/error-utils.js';
+import { apiFetch } from '@/lib/apiFetch.js';
 
 /**
  * Check if the user has connected their Google account
  * @returns {Promise<{connected: boolean, hasRefreshToken: boolean}>}
  */
 export async function getGoogleDriveStatus() {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/google-drive/status`, {
-      method: 'GET',
-      credentials: 'include',
-    }),
-  );
-
-  return response.json();
+  return apiFetch.get('/api/google-drive/status');
 }
 
 /**
@@ -27,14 +19,7 @@ export async function getGoogleDriveStatus() {
  * @returns {Promise<{success: boolean}>}
  */
 export async function disconnectGoogleDrive() {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/google-drive/disconnect`, {
-      method: 'DELETE',
-      credentials: 'include',
-    }),
-  );
-
-  return response.json();
+  return apiFetch.delete('/api/google-drive/disconnect');
 }
 
 /**
@@ -46,20 +31,9 @@ export async function disconnectGoogleDrive() {
  * @returns {Promise<{success: boolean, file: Object}>}
  */
 export async function importFromGoogleDrive(fileId, orgId, projectId, studyId) {
-  const url = `${API_BASE}/api/orgs/${orgId}/google-drive/import`;
+  const url = `/api/orgs/${orgId}/google-drive/import`;
 
-  const response = await handleFetchError(
-    fetch(url, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ fileId, projectId, studyId }),
-    }),
-  );
-
-  return response.json();
+  return apiFetch.post(url, { fileId, projectId, studyId });
 }
 
 /**
@@ -67,14 +41,7 @@ export async function importFromGoogleDrive(fileId, orgId, projectId, studyId) {
  * @returns {Promise<{accessToken: string, expiresAt: string|null}>}
  */
 export async function getGoogleDrivePickerToken() {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/google-drive/picker-token`, {
-      method: 'GET',
-      credentials: 'include',
-    }),
-  );
-
-  return response.json();
+  return apiFetch.get('/api/google-drive/picker-token');
 }
 
 /**
@@ -83,21 +50,10 @@ export async function getGoogleDrivePickerToken() {
  * @param {string} [callbackUrl] - Optional callback URL after auth
  */
 export async function connectGoogleAccount(callbackUrl) {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/auth/sign-in/social`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        provider: 'google',
-        callbackURL: callbackUrl || window.location.href,
-      }),
-    }),
-  );
-
-  const data = await response.json();
+  const data = await apiFetch.post('/api/auth/sign-in/social', {
+    provider: 'google',
+    callbackURL: callbackUrl || window.location.href,
+  });
 
   // BetterAuth returns { url, redirect: true } - we need to redirect to the URL
   if (data.url) {
@@ -105,22 +61,6 @@ export async function connectGoogleAccount(callbackUrl) {
   } else {
     throw new Error('No redirect URL received from auth server');
   }
-}
-
-/**
- * @deprecated Use connectGoogleAccount() instead
- */
-export function getGoogleConnectUrl(callbackUrl) {
-  console.warn('getGoogleConnectUrl is deprecated, use connectGoogleAccount() instead');
-  const params = new URLSearchParams({
-    provider: 'google',
-  });
-
-  if (callbackUrl) {
-    params.set('callbackURL', callbackUrl);
-  }
-
-  return `${API_BASE}/api/auth/sign-in/social?${params}`;
 }
 
 /**

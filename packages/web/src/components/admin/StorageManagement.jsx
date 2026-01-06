@@ -3,6 +3,7 @@
  */
 
 import { createSignal, Show, For } from 'solid-js';
+import { useDebouncedSignal } from '@/primitives/useDebouncedSignal.js';
 import {
   FiTrash2,
   FiSearch,
@@ -43,11 +44,10 @@ function formatDate(timestamp) {
  * @returns {JSX.Element} - The StorageManagement component
  */
 export default function StorageManagement() {
-  const [search, setSearch] = createSignal('');
+  const [search, setSearch, debouncedSearch] = useDebouncedSignal('', 300);
   const [prefix, setPrefix] = createSignal('');
   const [cursor, setCursor] = createSignal(null);
   const [cursorHistory, setCursorHistory] = createSignal([]);
-  const [debouncedSearch, setDebouncedSearch] = createSignal('');
   const [selectedKeys, setSelectedKeys] = createSignal(new Set());
   const [deleteDialog, setDeleteDialog] = createSignal(null);
   const [loading, setLoading] = createSignal(false);
@@ -63,17 +63,12 @@ export default function StorageManagement() {
   }));
   const documentsData = () => documentsDataQuery.data;
 
-  // Debounce search
-  let searchTimeout;
+  // Handle search input - reset pagination when search changes
   const handleSearchInput = e => {
     setSearch(e.target.value);
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-      setDebouncedSearch(e.target.value);
-      setCursor(null);
-      setCursorHistory([]);
-      setSelectedKeys(new Set());
-    }, 300);
+    setCursor(null);
+    setCursorHistory([]);
+    setSelectedKeys(new Set());
   };
 
   const handlePrefixChange = e => {

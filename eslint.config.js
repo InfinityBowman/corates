@@ -28,6 +28,7 @@ export default [
 
       globals: {
         // Browser globals
+        DOMException: 'readonly',
         requestIdleCallback: 'readonly',
         cancelIdleCallback: 'readonly',
         performance: 'readonly',

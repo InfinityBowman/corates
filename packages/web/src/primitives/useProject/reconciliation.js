@@ -1,7 +1,7 @@
 /**
  * Reconciliation progress operations for useProject
  *
- * Note: finalAnswers are now stored in a third checklist (reconciled checklist)
+ * Note: finalAnswers are stored in a third checklist (reconciled checklist)
  * that both reviewers can edit. This leverages existing checklist infrastructure
  * for automatic Yjs sync. Reconciliation progress only stores metadata references.
  */
