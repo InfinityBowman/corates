@@ -28,6 +28,12 @@ export const queryKeys = {
     current: ['subscription'],
   },
 
+  // Billing queries
+  billing: {
+    /** Current org/user invoices */
+    invoices: ['billing', 'invoices'],
+  },
+
   // Members queries
   members: {
     /** Current org's members */

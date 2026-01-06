@@ -40,7 +40,19 @@ export function useNotifications(userId, options = {}) {
     const wsHost = API_BASE.replace(/^https?:\/\//, '');
     const wsUrl = `${wsProtocol}://${wsHost}/api/sessions/${userId()}`;
 
-    ws = new WebSocket(wsUrl);
+    try {
+      ws = new WebSocket(wsUrl);
+    } catch (err) {
+      console.error('[useNotifications] WebSocket construction failed', err);
+      // Schedule a reconnect attempt using existing backoff logic
+      ws = null;
+      if (shouldConnect && navigator.onLine) {
+        const delay = Math.min(5000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+        reconnectAttempts++;
+        reconnectTimeout = setTimeout(() => connect(), delay);
+      }
+      return;
+    }
 
     ws.onopen = () => {
       setConnected(true);
@@ -89,12 +101,17 @@ export function useNotifications(userId, options = {}) {
       }
     };
 
-    ws.onerror = () => {
-      // Suppress error logging when offline to prevent console spam
+    ws.onerror = event => {
+      // Log error details to help debugging handshake/SSL issues
       if (navigator.onLine) {
-        console.error('Notification WebSocket error');
+        console.error('[useNotifications] Notification WebSocket error', event);
       }
-      // Don't set connected false here - onclose will fire next and handle cleanup
+      // Force close the socket so onclose runs and reconnection/backoff is applied
+      try {
+        if (ws && ws.readyState !== WebSocket.CLOSED) ws.close();
+      } catch (_e) {
+        // ignore
+      }
     };
   }
 

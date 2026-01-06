@@ -53,6 +53,8 @@ export function useMembershipSync() {
       console.log('[useMembershipSync] Subscription event received, invalidating cache');
       // Invalidate subscription query to fetch fresh data
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current });
+      // Also invalidate invoices so billing UI refreshes after webhook-initiated changes
+      queryClient.invalidateQueries({ queryKey: queryKeys.billing.invoices });
     }
 
     // Handle org membership events

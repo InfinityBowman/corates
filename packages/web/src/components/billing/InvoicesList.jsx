@@ -3,9 +3,11 @@
  * Premium invoices list with status badges and empty state
  */
 
-import { For, Show, createResource } from 'solid-js';
+import { For, Show } from 'solid-js';
 import { FiDownload, FiFileText, FiExternalLink } from 'solid-icons/fi';
 import { apiFetch } from '@lib/apiFetch.js';
+import { useQuery } from '@tanstack/solid-query';
+import { queryKeys } from '@lib/queryKeys.js';
 
 /**
  * Fetch invoices from API
@@ -111,7 +113,15 @@ function EmptyState() {
 }
 
 export default function InvoicesList() {
-  const [invoices] = createResource(fetchInvoices);
+  const query = useQuery(() => ({
+    queryKey: queryKeys.billing.invoices,
+    queryFn: fetchInvoices,
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 30,
+    retry: 1,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  }));
 
   const handleDownload = async (invoiceId, pdfUrl) => {
     if (pdfUrl) {
@@ -130,7 +140,7 @@ export default function InvoicesList() {
             <FiFileText class='h-5 w-5 text-gray-400' />
             <h2 class='text-base font-semibold text-gray-900'>Invoices</h2>
           </div>
-          <Show when={invoices()?.invoices?.length > 0}>
+          <Show when={query.data?.invoices?.length > 0}>
             <button
               type='button'
               class='text-sm font-medium text-blue-600 transition-colors hover:text-blue-700'
@@ -142,10 +152,10 @@ export default function InvoicesList() {
       </div>
 
       {/* Content */}
-      <Show when={!invoices.loading} fallback={<InvoicesSkeleton />}>
-        <Show when={invoices()?.invoices?.length > 0} fallback={<EmptyState />}>
+      <Show when={!query.isFetching} fallback={<InvoicesSkeleton />}>
+        <Show when={query.data?.invoices?.length > 0} fallback={<EmptyState />}>
           <div class='divide-y divide-gray-100'>
-            <For each={invoices()?.invoices ?? []}>
+            <For each={query.data?.invoices ?? []}>
               {invoice => (
                 <div class='flex items-center justify-between px-6 py-4 transition-colors hover:bg-gray-50'>
                   <div class='flex items-center gap-4'>
