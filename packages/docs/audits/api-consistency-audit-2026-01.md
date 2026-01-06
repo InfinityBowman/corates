@@ -54,31 +54,6 @@ POST /api/billing/trial/actions/start
 POST /api/invitations/:invId/actions/resend
 ```
 
-#### Issue 1.2: PDF Route Nesting Inconsistency
-
-**Severity**: Low
-**Location**: `packages/workers/src/routes/orgs/projects.js:406`
-
-**Problem**: PDF routes are nested under a non-existent `studies` resource:
-
-```javascript
-// Current:
-orgProjectRoutes.route('/:projectId/studies/:studyId/pdfs', orgPdfRoutes);
-
-// Actual usage:
-GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs
-```
-
-The `studies` resource doesn't have its own CRUD operations but is required in the path. This suggests either:
-
-1. Studies should be a first-class resource with CRUD endpoints
-2. PDFs should be directly under projects
-
-**Recommendation**:
-
-- If studies are a concept in the domain model, add study CRUD endpoints
-- Otherwise, simplify to `/api/orgs/:orgId/projects/:projectId/pdfs` and store studyId as metadata
-
 #### Issue 1.3: Inconsistent ID Parameter Naming
 
 **Severity**: Very Low
