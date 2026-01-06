@@ -1,6 +1,7 @@
 /**
  * useSubscription primitive
  * Manages subscription state and provides permission helpers
+ * Uses localStorage for local-first persistence during bad connections
  */
 
 import { createMemo } from 'solid-js';
@@ -17,6 +18,11 @@ import {
 } from '@/lib/entitlements.js';
 import { useBetterAuth } from '@/api/better-auth-store.js';
 
+// LocalStorage keys for offline caching
+const SUBSCRIPTION_CACHE_KEY = 'corates-subscription-cache';
+const SUBSCRIPTION_CACHE_TIMESTAMP_KEY = 'corates-subscription-cache-timestamp';
+const SUBSCRIPTION_CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 const DEFAULT_SUBSCRIPTION = {
   tier: 'free',
   status: 'active',
@@ -25,6 +31,74 @@ const DEFAULT_SUBSCRIPTION = {
   currentPeriodEnd: null,
   cancelAtPeriodEnd: false,
 };
+
+/**
+ * Load cached subscription from localStorage
+ * @returns {Object|null} Cached subscription or null
+ */
+function loadCachedSubscription() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const cached = localStorage.getItem(SUBSCRIPTION_CACHE_KEY);
+    const timestamp = localStorage.getItem(SUBSCRIPTION_CACHE_TIMESTAMP_KEY);
+    if (!cached || !timestamp) return null;
+
+    const age = Date.now() - parseInt(timestamp, 10);
+    if (age > SUBSCRIPTION_CACHE_MAX_AGE) {
+      localStorage.removeItem(SUBSCRIPTION_CACHE_KEY);
+      localStorage.removeItem(SUBSCRIPTION_CACHE_TIMESTAMP_KEY);
+      return null;
+    }
+
+    return JSON.parse(cached);
+  } catch (err) {
+    console.error('Error loading cached subscription:', err);
+    return null;
+  }
+}
+
+/**
+ * Save subscription to localStorage
+ * @param {Object|null} subscription - Subscription data to cache
+ */
+function saveCachedSubscription(subscription) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (subscription && subscription.tier) {
+      localStorage.setItem(SUBSCRIPTION_CACHE_KEY, JSON.stringify(subscription));
+      localStorage.setItem(SUBSCRIPTION_CACHE_TIMESTAMP_KEY, Date.now().toString());
+    }
+  } catch (err) {
+    console.error('Error saving cached subscription:', err);
+  }
+}
+
+/**
+ * Clear cached subscription from localStorage
+ */
+function clearCachedSubscription() {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(SUBSCRIPTION_CACHE_KEY);
+    localStorage.removeItem(SUBSCRIPTION_CACHE_TIMESTAMP_KEY);
+  } catch (err) {
+    console.error('Error clearing cached subscription:', err);
+  }
+}
+
+/**
+ * Get the timestamp of when subscription was last synced
+ * @returns {number|null} Timestamp in milliseconds or null
+ */
+function getLastSyncedTimestamp() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const timestamp = localStorage.getItem(SUBSCRIPTION_CACHE_TIMESTAMP_KEY);
+    return timestamp ? parseInt(timestamp, 10) : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Fetch subscription from API
@@ -41,7 +115,10 @@ async function fetchSubscription() {
     }),
     { showToast: false },
   );
-  return response.json();
+  const data = await response.json();
+  // Cache successful fetch for local-first persistence
+  saveCachedSubscription(data);
+  return data;
 }
 
 /**
@@ -51,22 +128,50 @@ async function fetchSubscription() {
 export function useSubscription() {
   const { isLoggedIn } = useBetterAuth();
 
+  // Load cached subscription for local-first fallback
+  const cachedSubscription = loadCachedSubscription();
+
   // Use TanStack Query for subscription data with persistence
   const query = useQuery(() => ({
     queryKey: queryKeys.subscription.current,
     queryFn: fetchSubscription,
     enabled: isLoggedIn(),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 2, // 2 minutes (reduced from 5 for fresher data)
     gcTime: 1000 * 60 * 10, // 10 minutes
     retry: 1, // Retry once on failure
-    // Use placeholderData so components can check loading state
-    // placeholderData is only used while loading, not as initial data
-    placeholderData: undefined,
+    // Use cached subscription as initial data for instant display
+    initialData: cachedSubscription || undefined,
   }));
 
-  // Return default subscription when not logged in or when query fails
-  // This prevents breaking the UI while still exposing the error for components that care
-  const subscription = () => query.data || DEFAULT_SUBSCRIPTION;
+  // Local-first: use query data, fall back to cached, then default
+  // This ensures paid users keep their entitlements during bad connections
+  const subscription = () => {
+    if (query.data) return query.data;
+    if (query.isError && cachedSubscription) return cachedSubscription;
+    return DEFAULT_SUBSCRIPTION;
+  };
+
+  // Track if we're using cached data (for UI indicators)
+  const isUsingCachedData = createMemo(() => {
+    return isLoggedIn() && query.isError && cachedSubscription !== null;
+  });
+
+  // Get formatted last synced time for UI display
+  const lastSynced = createMemo(() => {
+    const timestamp = getLastSyncedTimestamp();
+    if (!timestamp) return null;
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  });
 
   /**
    * Whether subscription fetch failed (only meaningful when logged in)
@@ -148,11 +253,16 @@ export function useSubscription() {
     loading: () => query.isLoading || query.isFetching,
     error: () => query.error,
     subscriptionFetchFailed, // True when logged in and fetch failed
+    isUsingCachedData, // True when using localStorage fallback
+    lastSynced, // Formatted string for when data was last synced
     refetch: () => query.refetch(),
     mutate: data => {
       // Optimistic update - set query data via queryClient
       queryClient.setQueryData(queryKeys.subscription.current, data);
+      // Also update cache for local-first persistence
+      saveCachedSubscription(data);
     },
+    clearCache: clearCachedSubscription, // For logout cleanup
 
     // Tier info
     tier,
