@@ -25,15 +25,15 @@ This package implements the entire backend infrastructure for CoRATES, including
 
 ## Key Entry Points
 
-| File | Purpose |
-|------|---------|
-| `src/index.js` | Main Hono app with route mounting |
-| `src/routes/` | API route handlers (REST endpoints) |
-| `src/durable-objects/ProjectDoc.js` | ⚠️ Yjs document sync (HIGH BLAST RADIUS) |
-| `src/durable-objects/UserSession.js` | User presence tracking |
-| `src/auth/config.js` | Better Auth configuration |
-| `src/middleware/` | Auth, CORS, CSRF, rate limiting, etc. |
-| `src/db/schema.js` | Database schema (Drizzle) |
+| File                                 | Purpose                                  |
+| ------------------------------------ | ---------------------------------------- |
+| `src/index.js`                       | Main Hono app with route mounting        |
+| `src/routes/`                        | API route handlers (REST endpoints)      |
+| `src/durable-objects/ProjectDoc.js`  | ⚠️ Yjs document sync (HIGH BLAST RADIUS) |
+| `src/durable-objects/UserSession.js` | User presence tracking                   |
+| `src/auth/config.js`                 | Better Auth configuration                |
+| `src/middleware/`                    | Auth, CORS, CSRF, rate limiting, etc.    |
+| `src/db/schema.js`                   | Database schema (Drizzle)                |
 
 ## Key Exports
 
@@ -115,13 +115,16 @@ Organization
 Routes compose middleware for authorization and validation:
 
 ```javascript
-projectRoutes.post('/',
-  requireAuth,                          // Must be logged in
-  requireOrgMembership(),               // Must be org member
+projectRoutes.post(
+  '/',
+  requireAuth, // Must be logged in
+  requireOrgMembership(), // Must be org member
   requireEntitlement('project.create'), // Plan allows feature
-  requireQuota('projects.max', fn, 1),  // Under quota
-  validateRequest(schema),              // Valid input
-  async (c) => { /* handler */ }
+  requireQuota('projects.max', fn, 1), // Under quota
+  validateRequest(schema), // Valid input
+  async c => {
+    /* handler */
+  },
 );
 ```
 
@@ -186,7 +189,7 @@ import { validateRequest } from '../middleware/validateRequest.js';
 import { projectSchemas } from '../config/validation.js';
 
 projectRoutes.post('/', validateRequest(projectSchemas.create), async c => {
-  const body = c.req.valid('json');  // Pre-validated
+  const body = c.req.valid('json'); // Pre-validated
 });
 ```
 

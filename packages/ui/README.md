@@ -35,14 +35,7 @@ pnpm add @corates/ui --workspace
 ### Importing Components
 
 ```jsx
-import {
-  Dialog,
-  Select,
-  Tabs,
-  Toast,
-  toaster,
-  Tooltip,
-} from '@corates/ui';
+import { Dialog, Select, Tabs, Toast, toaster, Tooltip } from '@corates/ui';
 
 // Import primitives for custom components
 import { DialogPrimitive } from '@corates/ui';
@@ -66,13 +59,15 @@ function MyComponent() {
       <Dialog
         open={open()}
         onOpenChange={({ open }) => setOpen(open)}
-        title="Confirm Action"
-        description="Are you sure you want to proceed?"
+        title='Confirm Action'
+        description='Are you sure you want to proceed?'
       >
-        <button onClick={() => {
-          toaster.success('Action confirmed!');
-          setOpen(false);
-        }}>
+        <button
+          onClick={() => {
+            toaster.success('Action confirmed!');
+            setOpen(false);
+          }}
+        >
           Confirm
         </button>
       </Dialog>
@@ -85,58 +80,58 @@ function MyComponent() {
 
 ### Layout & Structure
 
-| Component | Description |
-|-----------|-------------|
-| **Accordion** | Expandable/collapsible content sections with keyboard navigation |
-| **Collapsible** | Single collapsible content section |
-| **Splitter** | Resizable split panels for layouts |
-| **Tabs** | Tabbed content panels with routed or local state |
+| Component       | Description                                                      |
+| --------------- | ---------------------------------------------------------------- |
+| **Accordion**   | Expandable/collapsible content sections with keyboard navigation |
+| **Collapsible** | Single collapsible content section                               |
+| **Splitter**    | Resizable split panels for layouts                               |
+| **Tabs**        | Tabbed content panels with routed or local state                 |
 
 ### Forms & Input
 
-| Component | Description |
-|-----------|-------------|
-| **Checkbox** | Checkbox input with indeterminate state support |
-| **Combobox** | Searchable select with autocomplete and filtering |
-| **Editable** | Inline editable text with submit/cancel |
-| **FileUpload** | File upload with drag-and-drop and previews |
-| **NumberInput** | Numeric input with increment/decrement buttons |
-| **PasswordInput** | Password input with visibility toggle |
-| **PinInput** | OTP/PIN code input with auto-focus |
-| **RadioGroup** | Radio button group with keyboard navigation |
-| **Select** | Dropdown select with search and multi-select |
-| **Switch** | Toggle switch (on/off) |
-| **TagsInput** | Tag/chip input with add/remove |
+| Component         | Description                                       |
+| ----------------- | ------------------------------------------------- |
+| **Checkbox**      | Checkbox input with indeterminate state support   |
+| **Combobox**      | Searchable select with autocomplete and filtering |
+| **Editable**      | Inline editable text with submit/cancel           |
+| **FileUpload**    | File upload with drag-and-drop and previews       |
+| **NumberInput**   | Numeric input with increment/decrement buttons    |
+| **PasswordInput** | Password input with visibility toggle             |
+| **PinInput**      | OTP/PIN code input with auto-focus                |
+| **RadioGroup**    | Radio button group with keyboard navigation       |
+| **Select**        | Dropdown select with search and multi-select      |
+| **Switch**        | Toggle switch (on/off)                            |
+| **TagsInput**     | Tag/chip input with add/remove                    |
 
 ### Overlays & Dialogs
 
-| Component | Description |
-|-----------|-------------|
-| **Dialog** | Modal dialog with backdrop and focus trap |
-| **ConfirmDialog** | Pre-built confirmation dialog with promise API |
-| **Drawer** | Slide-in panel from any edge |
-| **FloatingPanel** | Draggable/resizable floating panel |
-| **Menu** | Dropdown menu with submenus and keyboard navigation |
-| **Popover** | Floating content panel with positioning |
-| **Tooltip** | Hover tooltips with delay and positioning |
+| Component         | Description                                         |
+| ----------------- | --------------------------------------------------- |
+| **Dialog**        | Modal dialog with backdrop and focus trap           |
+| **ConfirmDialog** | Pre-built confirmation dialog with promise API      |
+| **Drawer**        | Slide-in panel from any edge                        |
+| **FloatingPanel** | Draggable/resizable floating panel                  |
+| **Menu**          | Dropdown menu with submenus and keyboard navigation |
+| **Popover**       | Floating content panel with positioning             |
+| **Tooltip**       | Hover tooltips with delay and positioning           |
 
 ### Feedback & Status
 
-| Component | Description |
-|-----------|-------------|
-| **Avatar** | User avatar with fallback initials |
-| **Progress** | Progress bar with percentage display |
-| **Spinner** | Loading spinner with variants (button, page, inline) |
-| **Toast/Toaster** | Toast notifications (success, error, info, loading) |
+| Component         | Description                                          |
+| ----------------- | ---------------------------------------------------- |
+| **Avatar**        | User avatar with fallback initials                   |
+| **Progress**      | Progress bar with percentage display                 |
+| **Spinner**       | Loading spinner with variants (button, page, inline) |
+| **Toast/Toaster** | Toast notifications (success, error, info, loading)  |
 
 ### Utilities
 
-| Component | Description |
-|-----------|-------------|
-| **Clipboard** | Copy to clipboard button with feedback |
-| **QRCode** | QR code generator |
+| Component       | Description                                      |
+| --------------- | ------------------------------------------------ |
+| **Clipboard**   | Copy to clipboard button with feedback           |
+| **QRCode**      | QR code generator                                |
 | **ToggleGroup** | Group of toggle buttons (single or multi-select) |
-| **Tour** | Guided tour/onboarding with steps |
+| **Tour**        | Guided tour/onboarding with steps                |
 
 ## Key Exports
 
@@ -176,8 +171,8 @@ import {
 ### Utilities
 
 ```jsx
-import { cn } from '@corates/ui';  // Class name utility (clsx + tailwind-merge)
-import { Z_INDEX } from '@corates/ui';  // z-index constants for layering
+import { cn } from '@corates/ui'; // Class name utility (clsx + tailwind-merge)
+import { Z_INDEX } from '@corates/ui'; // z-index constants for layering
 ```
 
 ### Toast API
@@ -186,14 +181,11 @@ import { Z_INDEX } from '@corates/ui';  // z-index constants for layering
 import { toaster, showToast } from '@corates/ui';
 
 // Promise-based API
-toaster.promise(
-  fetchData(),
-  {
-    loading: 'Loading...',
-    success: 'Data loaded!',
-    error: 'Failed to load data',
-  }
-);
+toaster.promise(fetchData(), {
+  loading: 'Loading...',
+  success: 'Data loaded!',
+  error: 'Failed to load data',
+});
 
 // Direct API
 toaster.success('Success message');
@@ -228,11 +220,13 @@ Use the `cn()` utility to merge Tailwind classes with proper precedence:
 ```jsx
 import { cn } from '@corates/ui';
 
-<div className={cn(
-  'bg-blue-500 text-white',  // Base classes
-  isActive && 'bg-green-500', // Conditional override
-  className                   // User-provided override
-)} />
+<div
+  className={cn(
+    'bg-blue-500 text-white', // Base classes
+    isActive && 'bg-green-500', // Conditional override
+    className, // User-provided override
+  )}
+/>;
 ```
 
 ### Z-Index System
@@ -243,7 +237,7 @@ Use centralized z-index constants for consistent layering:
 import { Z_INDEX } from '@corates/ui';
 
 // Z_INDEX.MODAL, Z_INDEX.TOOLTIP, Z_INDEX.POPOVER, etc.
-<div style={{ zIndex: Z_INDEX.MODAL }} />
+<div style={{ zIndex: Z_INDEX.MODAL }} />;
 ```
 
 ## Development
@@ -289,13 +283,7 @@ import { render, screen } from '@solidjs/testing-library';
 import { Dialog } from './Dialog';
 
 test('Dialog renders with title and description', () => {
-  render(() => (
-    <Dialog
-      open={true}
-      title="Test Title"
-      description="Test Description"
-    />
-  ));
+  render(() => <Dialog open={true} title='Test Title' description='Test Description' />);
 
   expect(screen.getByText('Test Title')).toBeInTheDocument();
   expect(screen.getByText('Test Description')).toBeInTheDocument();
@@ -311,11 +299,7 @@ Each component follows this pattern:
 ```tsx
 // High-level styled component
 export function Dialog(props) {
-  return (
-    <DialogPrimitive.Root {...props}>
-      {/* Pre-styled implementation */}
-    </DialogPrimitive.Root>
-  );
+  return <DialogPrimitive.Root {...props}>{/* Pre-styled implementation */}</DialogPrimitive.Root>;
 }
 
 // Re-export primitive for custom use
@@ -325,6 +309,7 @@ export { Dialog as DialogPrimitive } from '@ark-ui/solid';
 ### Headless Primitives
 
 Most components are built on [Ark UI](https://ark-ui.com/) primitives:
+
 - **Accessibility**: ARIA attributes, keyboard navigation, focus management
 - **State management**: Handle open/close, selection, focus, etc.
 - **No styling**: Bring your own styles with Tailwind
@@ -367,8 +352,8 @@ import { Select } from '@corates/ui';
   ]}
   value={selectedValue()}
   onValueChange={({ value }) => setSelectedValue(value)}
-  placeholder="Select an option"
-/>
+  placeholder='Select an option'
+/>;
 ```
 
 ### Tooltip
@@ -376,9 +361,9 @@ import { Select } from '@corates/ui';
 ```jsx
 import { Tooltip } from '@corates/ui';
 
-<Tooltip content="This is a helpful tooltip">
+<Tooltip content='This is a helpful tooltip'>
   <button>Hover me</button>
-</Tooltip>
+</Tooltip>;
 ```
 
 ### File Upload
@@ -387,17 +372,18 @@ import { Tooltip } from '@corates/ui';
 import { FileUpload } from '@corates/ui';
 
 <FileUpload
-  accept="application/pdf"
+  accept='application/pdf'
   maxFiles={5}
-  onFilesChange={(files) => {
+  onFilesChange={files => {
     console.log('Uploaded files:', files);
   }}
-/>
+/>;
 ```
 
 ## Peer Dependencies
 
 This package requires:
+
 - **solid-js** ^1.9.0 - SolidJS framework
 - **solid-icons** ^1.1.0 - Icon library
 
@@ -417,12 +403,14 @@ These are marked as peer dependencies to avoid version conflicts.
 Most components have been migrated from Zag.js to Ark UI. The API is similar but with improvements:
 
 **Old (Zag.js):**
+
 ```jsx
 const [state, send] = createMachine(dialog.machine({ id: '1' }));
 const api = dialog.connect(state, send);
 ```
 
 **New (Ark UI):**
+
 ```jsx
 <Dialog.Root open={open()} onOpenChange={setOpen}>
   <Dialog.Trigger />
@@ -440,9 +428,7 @@ If you need custom behavior, use primitives directly:
 ```jsx
 import { SelectPrimitive } from '@corates/ui';
 
-<SelectPrimitive.Root {...props}>
-  {/* Your custom implementation */}
-</SelectPrimitive.Root>
+<SelectPrimitive.Root {...props}>{/* Your custom implementation */}</SelectPrimitive.Root>;
 ```
 
 ## TypeScript

@@ -58,14 +58,7 @@ import {
 ### Plans-Only Export (`@corates/shared/plans`)
 
 ```typescript
-import {
-  PLANS,
-  getPlan,
-  PLAN_PRICING,
-  getBillingPlanCatalog,
-  type Plan,
-  type PlanId,
-} from '@corates/shared/plans';
+import { PLANS, getPlan, PLAN_PRICING, getBillingPlanCatalog, type Plan, type PlanId } from '@corates/shared/plans';
 ```
 
 ## File Structure
@@ -127,7 +120,7 @@ import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 // In API route handler
 if (!project) {
   const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, {
-    projectId
+    projectId,
   });
   return c.json(error, error.statusCode); // 404
 }
@@ -189,16 +182,16 @@ catalog.forEach(plan => {
 
 The error system organizes errors by domain:
 
-| Domain | Examples | Status Codes |
-|--------|----------|--------------|
-| **AUTH** | AUTH_REQUIRED, AUTH_FORBIDDEN | 401, 403 |
-| **VALIDATION** | FIELD_REQUIRED, FIELD_INVALID_FORMAT | 400 |
-| **PROJECT** | PROJECT_NOT_FOUND, PROJECT_QUOTA_EXCEEDED | 404, 403 |
-| **FILE** | FILE_NOT_FOUND, FILE_TOO_LARGE | 404, 413 |
-| **USER** | USER_NOT_FOUND, EMAIL_ALREADY_EXISTS | 404, 409 |
-| **SYSTEM** | INTERNAL_ERROR, RATE_LIMIT_EXCEEDED | 500, 429 |
-| **TRANSPORT** | NETWORK_ERROR, TIMEOUT | - |
-| **UNKNOWN** | UNKNOWN_ERROR | 500 |
+| Domain         | Examples                                  | Status Codes |
+| -------------- | ----------------------------------------- | ------------ |
+| **AUTH**       | AUTH_REQUIRED, AUTH_FORBIDDEN             | 401, 403     |
+| **VALIDATION** | FIELD_REQUIRED, FIELD_INVALID_FORMAT      | 400          |
+| **PROJECT**    | PROJECT_NOT_FOUND, PROJECT_QUOTA_EXCEEDED | 404, 403     |
+| **FILE**       | FILE_NOT_FOUND, FILE_TOO_LARGE            | 404, 413     |
+| **USER**       | USER_NOT_FOUND, EMAIL_ALREADY_EXISTS      | 404, 409     |
+| **SYSTEM**     | INTERNAL_ERROR, RATE_LIMIT_EXCEEDED       | 500, 429     |
+| **TRANSPORT**  | NETWORK_ERROR, TIMEOUT                    | -            |
+| **UNKNOWN**    | UNKNOWN_ERROR                             | 500          |
 
 ### Error Structure
 
@@ -206,10 +199,11 @@ All errors follow this structure:
 
 ```typescript
 interface DomainError {
-  code: string;           // e.g., 'PROJECT_NOT_FOUND'
-  message: string;        // Human-readable message
-  statusCode: number;     // HTTP status code (404, 400, 500, etc.)
-  details?: {             // Optional domain-specific details
+  code: string; // e.g., 'PROJECT_NOT_FOUND'
+  message: string; // Human-readable message
+  statusCode: number; // HTTP status code (404, 400, 500, etc.)
+  details?: {
+    // Optional domain-specific details
     projectId?: string;
     field?: string;
     // ...
@@ -221,23 +215,23 @@ interface DomainError {
 
 ```typescript
 // Create domain error
-createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId: '123' })
+createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId: '123' });
 
 // Create validation error (single field)
-createValidationError('email', 'Invalid email format')
+createValidationError('email', 'Invalid email format');
 
 // Create multi-field validation error
 createMultiFieldValidationError([
   { field: 'email', message: 'Required' },
   { field: 'password', message: 'Too short' },
-])
+]);
 
 // Normalize any error to standard format
-normalizeError(error) // Returns DomainError | TransportError
+normalizeError(error); // Returns DomainError | TransportError
 
 // Type guards
-isDomainError(error)    // true if DomainError
-isTransportError(error) // true if TransportError
+isDomainError(error); // true if DomainError
+isTransportError(error); // true if TransportError
 ```
 
 ## Plan System
@@ -258,12 +252,16 @@ export const PLANS = {
       'collaborators.org.max': 0,
     },
   },
-  starter_team: { /* ... */ },
-  team: { /* ... */ },
+  starter_team: {
+    /* ... */
+  },
+  team: {
+    /* ... */
+  },
   unlimited_team: {
     name: 'Unlimited Team',
     quotas: {
-      'projects.max': -1,        // -1 = unlimited
+      'projects.max': -1, // -1 = unlimited
       'collaborators.org.max': -1,
     },
   },
@@ -277,8 +275,8 @@ Pricing is defined separately in [src/plans/pricing.ts](src/plans/pricing.ts):
 ```typescript
 export const PLAN_PRICING = {
   starter_team: {
-    monthly: { amount: 4900, currency: 'usd' },  // $49/month
-    yearly: { amount: 49900, currency: 'usd' },  // $499/year
+    monthly: { amount: 4900, currency: 'usd' }, // $49/month
+    yearly: { amount: 49900, currency: 'usd' }, // $499/year
   },
   // ...
 };
@@ -312,7 +310,8 @@ pnpm test:watch
 ```
 
 Test coverage includes:
-- Error creation and normalization ([errors/__tests__/](src/errors/__tests__/))
+
+- Error creation and normalization ([errors/**tests**/](src/errors/__tests__/))
 - Plan resolution and quota checks
 - Type validation
 
@@ -321,11 +320,13 @@ Test coverage includes:
 ### Always Use Centralized Error Definitions
 
 ❌ **Bad - Magic strings:**
+
 ```typescript
 return c.json({ error: 'Project not found' }, 404);
 ```
 
 ✅ **Good - Type-safe domain errors:**
+
 ```typescript
 const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
 return c.json(error, error.statusCode);
@@ -334,6 +335,7 @@ return c.json(error, error.statusCode);
 ### Normalize Errors at Transport Boundaries
 
 ❌ **Bad - Passing raw errors:**
+
 ```typescript
 catch (err) {
   toast.error(err.message); // err might be anything
@@ -341,6 +343,7 @@ catch (err) {
 ```
 
 ✅ **Good - Normalize first:**
+
 ```typescript
 catch (err) {
   const error = normalizeError(err);
@@ -351,6 +354,7 @@ catch (err) {
 ### Check Quotas with isUnlimitedQuota
 
 ❌ **Bad - Direct comparison:**
+
 ```typescript
 if (currentCount >= plan.quotas['projects.max']) {
   // Fails for unlimited (-1) quota
@@ -358,6 +362,7 @@ if (currentCount >= plan.quotas['projects.max']) {
 ```
 
 ✅ **Good - Handle unlimited:**
+
 ```typescript
 import { isUnlimitedQuota } from '@corates/shared/plans';
 

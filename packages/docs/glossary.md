@@ -16,7 +16,9 @@ A comprehensive guide to domain terminology, technical concepts, and acronyms us
 ## Domain Terminology
 
 ### Organization (Org)
+
 A top-level tenant entity representing a research group, institution, or team. Organizations:
+
 - Own projects and subscriptions
 - Have members with role-based access
 - Are billed as a unit (org-scoped billing)
@@ -25,7 +27,9 @@ A top-level tenant entity representing a research group, institution, or team. O
 **Related:** [src/db/schema.js:orgs](../workers/src/db/schema.js), Billing Model
 
 ### Project
+
 A systematic review project containing studies, checklists, and PDFs. Projects:
+
 - Belong to a single organization
 - Have their own member list (project-level access)
 - Use Yjs CRDT for real-time collaboration
@@ -35,7 +39,9 @@ A systematic review project containing studies, checklists, and PDFs. Projects:
 **Related:** [ProjectDoc.js](../workers/src/durable-objects/ProjectDoc.js), Yjs Sync
 
 ### Study
+
 A publication or research study being evaluated in a systematic review. Studies:
+
 - Belong to a project
 - Can have multiple checklists (AMSTAR2, ROBINS-I, etc.)
 - Can have associated PDF files stored in R2
@@ -44,7 +50,9 @@ A publication or research study being evaluated in a systematic review. Studies:
 **Related:** Studies are stored in the Yjs document as an array
 
 ### Checklist
+
 A structured assessment tool (AMSTAR2, ROBINS-I, etc.) used to evaluate a study. Checklists:
+
 - Follow a specific schema (questions, domains, scoring)
 - Support collaborative completion with Yjs
 - Can be reconciled between multiple reviewers
@@ -53,7 +61,9 @@ A structured assessment tool (AMSTAR2, ROBINS-I, etc.) used to evaluate a study.
 **Related:** Local checklists (offline) vs. project checklists (synced)
 
 ### Reconciliation
+
 The process of resolving disagreements between multiple reviewers' checklist assessments. Reconciliation:
+
 - Compares two completed checklists item-by-item
 - Shows agreements, disagreements, and missing responses
 - Calculates inter-rater reliability (Cohen's kappa, percent agreement)
@@ -66,7 +76,9 @@ The process of resolving disagreements between multiple reviewers' checklist ass
 ## Technical Concepts
 
 ### Yjs (Y.js)
+
 A CRDT (Conflict-free Replicated Data Type) library for real-time collaborative editing. In CoRATES:
+
 - **ydoc** - The Yjs document containing shared state
 - **Y.Array** - Shared array (e.g., `studies`, `checklists`)
 - **Y.Map** - Shared key-value map (e.g., `metadata`)
@@ -76,7 +88,9 @@ A CRDT (Conflict-free Replicated Data Type) library for real-time collaborative 
 **Related:** [Yjs Sync Guide](guides/yjs-sync.md), [ProjectDoc.js](../workers/src/durable-objects/ProjectDoc.js)
 
 ### Durable Objects (DO)
+
 Cloudflare's distributed computing primitive providing:
+
 - Single-threaded, stateful compute (like an actor)
 - In-memory state with optional persistent storage
 - WebSocket support for real-time connections
@@ -85,7 +99,9 @@ Cloudflare's distributed computing primitive providing:
 **Related:** [durable-objects.mdc](../../.cursor/rules/durable-objects.mdc)
 
 ### IndexedDB
+
 Browser-based persistent storage used for offline-first capabilities:
+
 - **corates-query-cache** - TanStack Query cache (projects, orgs, subscriptions)
 - **corates-auth-cache** - Better Auth session and avatar cache
 - **corates-pdf-cache** - PDF file cache
@@ -95,7 +111,9 @@ Browser-based persistent storage used for offline-first capabilities:
 **Related:** [Offline/Local-First Audit](audits/offline-local-first-audit-2026-01.md)
 
 ### TanStack Query (React Query)
+
 Data fetching and caching library used in CoRATES for:
+
 - Server state management (projects, orgs, subscriptions)
 - Optimistic updates
 - Cache invalidation via query keys
@@ -104,7 +122,9 @@ Data fetching and caching library used in CoRATES for:
 **Related:** [queryClient.js](../web/src/lib/queryClient.js), [queryKeys.js](../web/src/lib/queryKeys.js)
 
 ### Better Auth
+
 Authentication library (v1.4.10) providing:
+
 - Email/password authentication
 - Social OAuth (Google)
 - Magic link email authentication
@@ -114,7 +134,9 @@ Authentication library (v1.4.10) providing:
 **Related:** [better-auth-store.js](../web/src/api/better-auth-store.js), [auth/config.js](../workers/src/auth/config.js)
 
 ### Service Worker
+
 Browser background script for offline capabilities (currently disabled):
+
 - Caches static assets
 - Intercepts network requests
 - Enables offline UI access
@@ -123,7 +145,9 @@ Browser background script for offline capabilities (currently disabled):
 **Related:** Currently commented out in landing package
 
 ### Drizzle ORM
+
 TypeScript ORM used for database access:
+
 - Type-safe queries
 - Schema definition in TypeScript
 - Migrations support
@@ -132,7 +156,9 @@ TypeScript ORM used for database access:
 **Related:** [db/schema.js](../workers/src/db/schema.js)
 
 ### Hono.js
+
 Lightweight web framework for Cloudflare Workers:
+
 - Express-like API
 - Middleware support
 - Type-safe routing with context
@@ -145,20 +171,25 @@ Lightweight web framework for Cloudflare Workers:
 ## Systematic Review Terminology
 
 ### AMSTAR2
+
 "A MeaSurement Tool to Assess systematic Reviews 2" - A 16-item critical appraisal tool for systematic reviews of healthcare interventions.
 
 ### ROBINS-I
+
 "Risk Of Bias In Non-randomized Studies - of Interventions" - A tool to assess risk of bias in non-randomized studies. Has 7 domains with signaling questions.
 
 ### Cohen's Kappa
+
 Inter-rater reliability statistic measuring agreement between two reviewers beyond chance. Range: -1 to 1 (>0.8 = excellent agreement).
 
 **Related:** [inter-rater-reliability.js](../web/src/lib/inter-rater-reliability.js)
 
 ### Systematic Review
+
 A research methodology that comprehensively identifies, appraises, and synthesizes all relevant studies on a specific research question.
 
 ### Meta-Analysis
+
 Statistical technique combining results from multiple studies to produce a single estimate of effect.
 
 ---
@@ -166,7 +197,9 @@ Statistical technique combining results from multiple studies to produce a singl
 ## Architecture & Patterns
 
 ### Domain Errors
+
 Centralized error system from `@corates/shared`:
+
 - Type-safe error codes (AUTH_ERRORS, PROJECT_ERRORS, etc.)
 - Consistent error structure with `code`, `message`, `statusCode`, `details`
 - Normalization for transport errors vs. business logic errors
@@ -174,22 +207,27 @@ Centralized error system from `@corates/shared`:
 **Related:** [@corates/shared/errors](../shared/src/errors/), [error-handling.mdc](../../.cursor/rules/error-handling.mdc)
 
 ### Middleware Stack
+
 Composable request processing pipeline:
+
 ```javascript
-route.post('/',
-  requireAuth,                      // Authentication
-  requireOrgMembership(),           // Organization access
+route.post(
+  '/',
+  requireAuth, // Authentication
+  requireOrgMembership(), // Organization access
   requireEntitlement('project.create'), // Feature flag
-  requireQuota('projects.max', fn, 1),  // Quota check
-  validateRequest(schema),          // Input validation
-  handler                           // Business logic
+  requireQuota('projects.max', fn, 1), // Quota check
+  validateRequest(schema), // Input validation
+  handler, // Business logic
 );
 ```
 
 **Related:** [middleware/](../workers/src/middleware/)
 
 ### Query Key Factory
+
 Centralized function for generating TanStack Query cache keys:
+
 - Prevents cache invalidation bugs from inconsistent keys
 - Type-safe with TypeScript
 - Namespaced by domain (projects, orgs, admin, etc.)
@@ -197,7 +235,9 @@ Centralized function for generating TanStack Query cache keys:
 **Related:** [queryKeys.js](../web/src/lib/queryKeys.js)
 
 ### Optimistic Updates
+
 UI pattern where changes appear immediately before server confirmation:
+
 - Update local cache optimistically
 - Roll back on server error
 - Prevents UI lag on slow networks
@@ -205,7 +245,9 @@ UI pattern where changes appear immediately before server confirmation:
 **Related:** TanStack Query mutations with `onMutate`, `onError`, `onSettled`
 
 ### Local-First Architecture
+
 Design pattern prioritizing local data and offline functionality:
+
 - IndexedDB as primary data store
 - Sync to server when online
 - Conflict resolution with CRDTs (Yjs)
@@ -214,7 +256,9 @@ Design pattern prioritizing local data and offline functionality:
 **Related:** [Offline/Local-First Audit](audits/offline-local-first-audit-2026-01.md)
 
 ### Headless Components
+
 UI components that provide behavior/state without styling:
+
 - Ark UI primitives provide accessibility and state
 - Tailwind CSS for styling
 - Full customization control
@@ -226,7 +270,9 @@ UI components that provide behavior/state without styling:
 ## Billing & Access Control
 
 ### Plan
+
 A subscription tier (free, starter_team, team, unlimited_team) defining:
+
 - **Entitlements** - Boolean feature flags (e.g., `project.create`)
 - **Quotas** - Numeric limits (e.g., `projects.max: 10`)
 - **Pricing** - Monthly/yearly cost in cents
@@ -234,7 +280,9 @@ A subscription tier (free, starter_team, team, unlimited_team) defining:
 **Related:** [@corates/shared/plans](../shared/src/plans/), [PLANS configuration](../shared/src/plans/plans.ts)
 
 ### Access Grant
+
 Time-limited access upgrade (trial, single_project) that:
+
 - Temporarily overrides the base plan
 - Has an expiration date
 - Is org-scoped (one per organization)
@@ -243,7 +291,9 @@ Time-limited access upgrade (trial, single_project) that:
 **Related:** [billing.md](guides/billing.md), Billing resolver logic
 
 ### Subscription
+
 Stripe subscription providing ongoing access:
+
 - Org-scoped (one per organization)
 - Has a `planId` (starter_team, team, unlimited_team)
 - Synced via Stripe webhooks
@@ -252,7 +302,9 @@ Stripe subscription providing ongoing access:
 **Related:** [routes/billing/](../workers/src/routes/billing/)
 
 ### Entitlement
+
 Boolean capability check (e.g., "can create projects"):
+
 ```javascript
 if (!plan.entitlements['project.create']) {
   return forbidden('Plan does not allow project creation');
@@ -262,7 +314,9 @@ if (!plan.entitlements['project.create']) {
 **Related:** requireEntitlement middleware
 
 ### Quota
+
 Numeric limit check (e.g., "max 10 projects"):
+
 ```javascript
 const maxProjects = plan.quotas['projects.max'];
 if (!isUnlimitedQuota(maxProjects) && currentCount >= maxProjects) {
@@ -273,7 +327,9 @@ if (!isUnlimitedQuota(maxProjects) && currentCount >= maxProjects) {
 **Related:** requireQuota middleware, isUnlimitedQuota helper
 
 ### Webhook Ledger
+
 Idempotency tracking for Stripe webhooks:
+
 - Stores `payloadHash` and `stripeEventId`
 - Prevents duplicate processing
 - Two-phase verification pattern (verify signature, then check ledger)
@@ -281,7 +337,9 @@ Idempotency tracking for Stripe webhooks:
 **Related:** [routes/billing/index.js](../workers/src/routes/billing/index.js)
 
 ### Billing Resolver
+
 Logic that determines effective plan from multiple sources:
+
 ```
 1. Active subscription (highest priority)
 2. Active access grant (fallback)
@@ -295,6 +353,7 @@ Logic that determines effective plan from multiple sources:
 ## Acronyms
 
 ### Technical
+
 - **API** - Application Programming Interface
 - **CRDT** - Conflict-free Replicated Data Type
 - **CSRF** - Cross-Site Request Forgery
@@ -313,6 +372,7 @@ Logic that determines effective plan from multiple sources:
 - **WebSocket** - Full-duplex communication protocol
 
 ### Systematic Review
+
 - **AMSTAR2** - A MeaSurement Tool to Assess systematic Reviews 2
 - **PICO** - Population, Intervention, Comparison, Outcome
 - **PRISMA** - Preferred Reporting Items for Systematic Reviews and Meta-Analyses
@@ -320,6 +380,7 @@ Logic that determines effective plan from multiple sources:
 - **ROBINS-I** - Risk Of Bias In Non-randomized Studies - of Interventions
 
 ### Business/Domain
+
 - **Org** - Organization (tenant entity)
 - **CoRATES** - Collaborative Risk Assessment Tool for Evidence Synthesis
 
@@ -342,6 +403,7 @@ For more details on any concept, see:
 ## Contributing to This Glossary
 
 When adding new domain concepts or technical terms:
+
 1. Add entry to appropriate section
 2. Include brief definition (1-2 sentences)
 3. Add "Related:" links to relevant code/docs

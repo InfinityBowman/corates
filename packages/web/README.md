@@ -28,16 +28,16 @@ This package implements the entire frontend user interface for CoRATES, includin
 
 ## Key Entry Points
 
-| File | Purpose |
-|------|---------|
-| [src/main.jsx](src/main.jsx) | App initialization, QueryClient setup, bfcache handler |
-| [src/Routes.jsx](src/Routes.jsx) | All route definitions (auth, protected, admin) |
-| [src/Layout.jsx](src/Layout.jsx) | Main layout with sidebar and navbar |
-| [src/api/better-auth-store.js](src/api/better-auth-store.js) | ⚠️ Auth state management (HIGH BLAST RADIUS) |
-| [src/lib/queryClient.js](src/lib/queryClient.js) | TanStack Query configuration with offline support |
-| [src/lib/queryKeys.js](src/lib/queryKeys.js) | Centralized query key factory |
-| [src/primitives/useProject.js](src/primitives/useProject.js) | Project Yjs document sync hook |
-| [src/components/project/ProjectView.jsx](src/components/project/ProjectView.jsx) | Main project view with tabs |
+| File                                                                             | Purpose                                                |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| [src/main.jsx](src/main.jsx)                                                     | App initialization, QueryClient setup, bfcache handler |
+| [src/Routes.jsx](src/Routes.jsx)                                                 | All route definitions (auth, protected, admin)         |
+| [src/Layout.jsx](src/Layout.jsx)                                                 | Main layout with sidebar and navbar                    |
+| [src/api/better-auth-store.js](src/api/better-auth-store.js)                     | ⚠️ Auth state management (HIGH BLAST RADIUS)           |
+| [src/lib/queryClient.js](src/lib/queryClient.js)                                 | TanStack Query configuration with offline support      |
+| [src/lib/queryKeys.js](src/lib/queryKeys.js)                                     | Centralized query key factory                          |
+| [src/primitives/useProject.js](src/primitives/useProject.js)                     | Project Yjs document sync hook                         |
+| [src/components/project/ProjectView.jsx](src/components/project/ProjectView.jsx) | Main project view with tabs                            |
 
 ## Key Exports
 

@@ -123,130 +123,135 @@ billingCheckoutRoutes.post('/checkout', billingCheckoutRateLimit, requireAuth, a
  * Create a Stripe Checkout session for one-time Single Project purchase
  * Owner-gated: only org owners can purchase
  */
-billingCheckoutRoutes.post('/single-project/checkout', billingCheckoutRateLimit, requireAuth, async c => {
-  const { user, session } = getAuth(c);
-  const db = createDb(c.env.DB);
-  const logger = createLogger({ c, service: 'billing', env: c.env });
+billingCheckoutRoutes.post(
+  '/single-project/checkout',
+  billingCheckoutRateLimit,
+  requireAuth,
+  async c => {
+    const { user, session } = getAuth(c);
+    const db = createDb(c.env.DB);
+    const logger = createLogger({ c, service: 'billing', env: c.env });
 
-  try {
-    const { orgId, role } = await resolveOrgIdWithRole({ db, session, userId: user.id });
+    try {
+      const { orgId, role } = await resolveOrgIdWithRole({ db, session, userId: user.id });
 
-    // Verify user is org owner
-    requireOrgOwner({ orgId, role });
+      // Verify user is org owner
+      requireOrgOwner({ orgId, role });
 
-    if (!c.env.STRIPE_SECRET_KEY) {
-      const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-        operation: 'stripe_not_configured',
-      });
-      return c.json(error, error.statusCode);
-    }
+      if (!c.env.STRIPE_SECRET_KEY) {
+        const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+          operation: 'stripe_not_configured',
+        });
+        return c.json(error, error.statusCode);
+      }
 
-    // Log checkout initiation
-    logger.stripe('single_project_checkout_initiated', {
-      orgId,
-      userId: user.id,
-      plan: 'single_project',
-    });
-
-    // Get user's Stripe customer ID (required by Better Auth Stripe plugin)
-    const { user: userTable } = await import('../../db/schema.js');
-    const { eq } = await import('drizzle-orm');
-    const userRecord = await db
-      .select({ stripeCustomerId: userTable.stripeCustomerId })
-      .from(userTable)
-      .where(eq(userTable.id, user.id))
-      .get();
-
-    if (!userRecord?.stripeCustomerId) {
-      logger.stripe('single_project_checkout_failed', {
-        outcome: 'failed',
+      // Log checkout initiation
+      logger.stripe('single_project_checkout_initiated', {
         orgId,
         userId: user.id,
-        errorCode: 'stripe_customer_not_found',
+        plan: 'single_project',
       });
 
-      const error = createDomainError(
-        SYSTEM_ERRORS.INTERNAL_ERROR,
-        {
-          operation: 'stripe_customer_not_found',
-        },
-        'Stripe customer ID not found. Please sign out and sign in again, or contact support.',
-      );
-      return c.json(error, error.statusCode);
-    }
+      // Get user's Stripe customer ID (required by Better Auth Stripe plugin)
+      const { user: userTable } = await import('../../db/schema.js');
+      const { eq } = await import('drizzle-orm');
+      const userRecord = await db
+        .select({ stripeCustomerId: userTable.stripeCustomerId })
+        .from(userTable)
+        .where(eq(userTable.id, user.id))
+        .get();
 
-    const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-11-17.clover',
-    });
+      if (!userRecord?.stripeCustomerId) {
+        logger.stripe('single_project_checkout_failed', {
+          outcome: 'failed',
+          orgId,
+          userId: user.id,
+          errorCode: 'stripe_customer_not_found',
+        });
 
-    // Get single project price ID from env (or use a default)
-    const priceId = c.env.STRIPE_PRICE_ID_SINGLE_PROJECT || 'price_single_project';
-
-    const baseUrl = c.env.APP_URL || 'https://corates.org';
-
-    // Generate idempotency key to prevent duplicate checkout sessions from rapid clicks
-    // Uses 1-minute time window granularity
-    const idempotencyKey = `sp_checkout_${orgId}_${user.id}_${Math.floor(Date.now() / 60000)}`;
-
-    const { result: checkoutSession, durationMs } = await withTiming(async () => {
-      return stripe.checkout.sessions.create(
-        {
-          mode: 'payment',
-          payment_method_types: ['card'],
-          customer: userRecord.stripeCustomerId,
-          line_items: [
-            {
-              price: priceId,
-              quantity: 1,
-            },
-          ],
-          metadata: {
-            orgId,
-            grantType: 'single_project',
-            purchaserUserId: user.id,
+        const error = createDomainError(
+          SYSTEM_ERRORS.INTERNAL_ERROR,
+          {
+            operation: 'stripe_customer_not_found',
           },
-          success_url: `${baseUrl}/settings/billing?success=true&purchase=single_project`,
-          cancel_url: `${baseUrl}/settings/billing?canceled=true`,
-        },
-        {
-          idempotencyKey,
-        },
-      );
-    });
+          'Stripe customer ID not found. Please sign out and sign in again, or contact support.',
+        );
+        return c.json(error, error.statusCode);
+      }
 
-    logger.stripe('single_project_checkout_created', {
-      outcome: 'success',
-      orgId,
-      userId: user.id,
-      plan: 'single_project',
-      stripeCheckoutSessionId: checkoutSession.id,
-      stripeCustomerId: userRecord.stripeCustomerId,
-      durationMs,
-    });
+      const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2025-11-17.clover',
+      });
 
-    return c.json({
-      url: checkoutSession.url,
-      sessionId: checkoutSession.id,
-    });
-  } catch (error) {
-    logger.stripe('single_project_checkout_failed', {
-      outcome: 'failed',
-      userId: user.id,
-      error: truncateError(error),
-      errorCode: error.code || 'unknown',
-    });
+      // Get single project price ID from env (or use a default)
+      const priceId = c.env.STRIPE_PRICE_ID_SINGLE_PROJECT || 'price_single_project';
 
-    // If error is already a domain error, return it as-is
-    if (error.code && error.statusCode) {
-      return c.json(error, error.statusCode);
+      const baseUrl = c.env.APP_URL || 'https://corates.org';
+
+      // Generate idempotency key to prevent duplicate checkout sessions from rapid clicks
+      // Uses 1-minute time window granularity
+      const idempotencyKey = `sp_checkout_${orgId}_${user.id}_${Math.floor(Date.now() / 60000)}`;
+
+      const { result: checkoutSession, durationMs } = await withTiming(async () => {
+        return stripe.checkout.sessions.create(
+          {
+            mode: 'payment',
+            payment_method_types: ['card'],
+            customer: userRecord.stripeCustomerId,
+            line_items: [
+              {
+                price: priceId,
+                quantity: 1,
+              },
+            ],
+            metadata: {
+              orgId,
+              grantType: 'single_project',
+              purchaserUserId: user.id,
+            },
+            success_url: `${baseUrl}/settings/billing?success=true&purchase=single_project`,
+            cancel_url: `${baseUrl}/settings/billing?canceled=true`,
+          },
+          {
+            idempotencyKey,
+          },
+        );
+      });
+
+      logger.stripe('single_project_checkout_created', {
+        outcome: 'success',
+        orgId,
+        userId: user.id,
+        plan: 'single_project',
+        stripeCheckoutSessionId: checkoutSession.id,
+        stripeCustomerId: userRecord.stripeCustomerId,
+        durationMs,
+      });
+
+      return c.json({
+        url: checkoutSession.url,
+        sessionId: checkoutSession.id,
+      });
+    } catch (error) {
+      logger.stripe('single_project_checkout_failed', {
+        outcome: 'failed',
+        userId: user.id,
+        error: truncateError(error),
+        errorCode: error.code || 'unknown',
+      });
+
+      // If error is already a domain error, return it as-is
+      if (error.code && error.statusCode) {
+        return c.json(error, error.statusCode);
+      }
+
+      const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        operation: 'create_single_project_checkout',
+        originalError: error.message,
+      });
+      return c.json(systemError, systemError.statusCode);
     }
-
-    const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-      operation: 'create_single_project_checkout',
-      originalError: error.message,
-    });
-    return c.json(systemError, systemError.statusCode);
-  }
-});
+  },
+);
 
 export { billingCheckoutRoutes };
