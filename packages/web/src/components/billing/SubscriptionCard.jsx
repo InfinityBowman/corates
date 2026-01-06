@@ -25,6 +25,7 @@ function StatusBadge(props) {
     past_due: 'bg-red-50 text-red-700 border-red-200',
     canceled: 'bg-gray-50 text-gray-700 border-gray-200',
     incomplete: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+    unpaid: 'bg-red-50 text-red-700 border-red-200',
   };
 
   const statusLabels = {
@@ -33,6 +34,7 @@ function StatusBadge(props) {
     past_due: 'Past Due',
     canceled: 'Canceled',
     incomplete: 'Incomplete',
+    unpaid: 'Unpaid',
   };
 
   return (
@@ -121,6 +123,30 @@ export default function SubscriptionCard(props) {
               <p class='font-medium text-red-800'>Payment failed</p>
               <p class='mt-1 text-sm text-red-600'>
                 Please update your payment method to continue using premium features.
+              </p>
+            </div>
+          </div>
+        </Show>
+
+        <Show when={status() === 'incomplete'}>
+          <div class='mb-4 flex items-start gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-4'>
+            <FiAlertCircle class='mt-0.5 h-5 w-5 shrink-0 text-yellow-500' />
+            <div>
+              <p class='font-medium text-yellow-800'>Payment required</p>
+              <p class='mt-1 text-sm text-yellow-600'>
+                Complete your payment to activate your subscription.
+              </p>
+            </div>
+          </div>
+        </Show>
+
+        <Show when={status() === 'unpaid'}>
+          <div class='mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4'>
+            <FiAlertCircle class='mt-0.5 h-5 w-5 shrink-0 text-red-500' />
+            <div>
+              <p class='font-medium text-red-800'>Subscription unpaid</p>
+              <p class='mt-1 text-sm text-red-600'>
+                Your subscription is unpaid. Please update your payment method.
               </p>
             </div>
           </div>

@@ -12,6 +12,7 @@ import { redirectToPortal } from '@/api/billing.js';
 import SubscriptionCard from './SubscriptionCard.jsx';
 import UsageCard from './UsageCard.jsx';
 import InvoicesList from './InvoicesList.jsx';
+import PaymentIssueBanner from './PaymentIssueBanner.jsx';
 import { LANDING_URL } from '@/config/api.js';
 
 /**
@@ -132,6 +133,9 @@ export default function BillingPage() {
     collaborators: memberCount(),
   });
 
+  // Subscription status for payment issue detection
+  const subscriptionStatus = () => subscription()?.status || 'active';
+
   return (
     <div class='min-h-full bg-blue-50 py-6'>
       <div class='mx-auto max-w-6xl px-4 sm:px-6 lg:px-8'>
@@ -160,6 +164,13 @@ export default function BillingPage() {
             </A>
           </div>
         </div>
+
+        {/* Payment issue banner - prominent display for past_due, incomplete, unpaid */}
+        <PaymentIssueBanner
+          status={subscriptionStatus()}
+          onUpdatePayment={handleManageSubscription}
+          loading={portalLoading()}
+        />
 
         {/* Success alert */}
         <Show when={checkoutOutcome() === 'success'}>
