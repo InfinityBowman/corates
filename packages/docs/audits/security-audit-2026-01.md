@@ -14,6 +14,7 @@ This comprehensive security audit of the CoRATES collaborative research platform
 ### Overall Security Rating: **STRONG** ✅
 
 **Key Strengths:**
+
 - Multi-layered authentication with 2FA support
 - Robust authorization with role-based access control
 - Two-phase webhook verification for payment security
@@ -23,6 +24,7 @@ This comprehensive security audit of the CoRATES collaborative research platform
 - Security headers properly configured
 
 **Areas for Improvement:**
+
 - Rate limiting is per-worker instance (not distributed)
 - No session revocation mechanism
 - 2FA is optional (not enforced for admin users)
@@ -55,16 +57,16 @@ This comprehensive security audit of the CoRATES collaborative research platform
 
 ### Security-Critical Components
 
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| Authentication Config | `packages/workers/src/auth/config.js` | BetterAuth setup, plugins, session management |
-| Auth Middleware | `packages/workers/src/middleware/auth.js` | Session verification |
-| CSRF Protection | `packages/workers/src/middleware/csrf.js` | Origin/Referer validation |
-| Admin Guard | `packages/workers/src/middleware/requireAdmin.js` | Admin privilege enforcement |
-| Org/Project Access | `packages/workers/src/middleware/requireOrg.js` | Multi-tenant authorization |
-| Payment Webhooks | `packages/workers/src/routes/billing/index.js` | Stripe webhook processing |
-| Security Headers | `packages/workers/src/middleware/securityHeaders.js` | HTTP security headers |
-| Rate Limiting | `packages/workers/src/middleware/rateLimit.js` | Request throttling |
+| Component             | Location                                             | Purpose                                       |
+| --------------------- | ---------------------------------------------------- | --------------------------------------------- |
+| Authentication Config | `packages/workers/src/auth/config.js`                | BetterAuth setup, plugins, session management |
+| Auth Middleware       | `packages/workers/src/middleware/auth.js`            | Session verification                          |
+| CSRF Protection       | `packages/workers/src/middleware/csrf.js`            | Origin/Referer validation                     |
+| Admin Guard           | `packages/workers/src/middleware/requireAdmin.js`    | Admin privilege enforcement                   |
+| Org/Project Access    | `packages/workers/src/middleware/requireOrg.js`      | Multi-tenant authorization                    |
+| Payment Webhooks      | `packages/workers/src/routes/billing/index.js`       | Stripe webhook processing                     |
+| Security Headers      | `packages/workers/src/middleware/securityHeaders.js` | HTTP security headers                         |
+| Rate Limiting         | `packages/workers/src/middleware/rateLimit.js`       | Request throttling                            |
 
 ---
 
@@ -75,6 +77,7 @@ This comprehensive security audit of the CoRATES collaborative research platform
 **Framework:** BetterAuth v1.4.10 with Drizzle adapter
 
 **Supported Methods:**
+
 1. **Email/Password** - Requires email verification, minimum 8 characters
 2. **Magic Links** - Passwordless authentication, 15-minute expiry
 3. **Google OAuth** - With Drive read-only scope for PDF import
@@ -82,6 +85,7 @@ This comprehensive security audit of the CoRATES collaborative research platform
 5. **Two-Factor Authentication (TOTP)** - Optional, 10 backup codes
 
 **Session Management:**
+
 - **Expiry:** 7 days
 - **Refresh:** 1 day
 - **Storage:** HTTP-only cookies
@@ -92,6 +96,7 @@ This comprehensive security audit of the CoRATES collaborative research platform
 ### Security Strengths ✅
 
 1. **Account Linking with Trust Model**
+
    ```javascript
    accountLinking: {
      enabled: true,
@@ -100,6 +105,7 @@ This comprehensive security audit of the CoRATES collaborative research platform
      allowUnlinkingAll: true        // Magic link fallback available
    }
    ```
+
    - Prevents duplicate accounts for same user
    - Trusts Google's email verification
    - Allows safe account merging
@@ -139,16 +145,20 @@ This comprehensive security audit of the CoRATES collaborative research platform
    - Verifies project belongs to org, then checks user membership
 
 **Authorization Chain Example:**
+
 ```javascript
 // Middleware stack for project creation
-orgProjectRoutes.post('/',
-  requireAuth,                           // ✅ Must be authenticated
-  requireOrgMembership(),               // ✅ Must be org member
-  requireOrgWriteAccess(),              // ✅ Not in readonly mode
+orgProjectRoutes.post(
+  '/',
+  requireAuth, // ✅ Must be authenticated
+  requireOrgMembership(), // ✅ Must be org member
+  requireOrgWriteAccess(), // ✅ Not in readonly mode
   requireEntitlement('project.create'), // ✅ Feature enabled for plan
   requireQuota('projects.max', getProjectCount, 1), // ✅ Under quota
   validateRequest(projectSchemas.create), // ✅ Valid input
-  async (c) => { /* create project */ }
+  async c => {
+    /* create project */
+  },
 );
 ```
 
@@ -184,17 +194,20 @@ orgProjectRoutes.post('/',
 ### Integration: Stripe with Two-Phase Webhook Verification
 
 **Subscription Plans (Org-scoped):**
+
 - `starter_team`: $9.99/mo, $100/yr
 - `team`: $29/mo, $290/yr
 - `unlimited_team`: $49/mo, $490/yr
 
 **One-time Purchases:**
+
 - `single_project`: 6-month grant (extensible)
 - `trial`: 14-day grant (one per org)
 
 ### Security Architecture: Two-Phase Trust Model
 
 **Phase 1: Trust-Minimal Receipt** ([billing/index.js:602-716](packages/workers/src/routes/billing/index.js:602))
+
 ```javascript
 // BEFORE signature verification - store only trust-minimal fields
 ledgerId = crypto.randomUUID();
@@ -202,28 +215,25 @@ payloadHash = sha256(rawBody);
 
 await insertLedgerEntry(db, {
   id: ledgerId,
-  payloadHash,                // SHA-256 for deduplication
+  payloadHash, // SHA-256 for deduplication
   signaturePresent: !!signature,
   status: 'received',
-  requestId: logger.requestId
+  requestId: logger.requestId,
 });
 ```
 
 **Phase 2: Verified Processing** ([billing/index.js:718-950](packages/workers/src/routes/billing/index.js:718))
+
 ```javascript
 // AFTER signature verification - populate verified fields
-event = await stripe.webhooks.constructEventAsync(
-  rawBody,
-  signature,
-  STRIPE_WEBHOOK_SECRET_PURCHASES
-);
+event = await stripe.webhooks.constructEventAsync(rawBody, signature, STRIPE_WEBHOOK_SECRET_PURCHASES);
 
 await updateLedgerWithVerifiedFields(db, ledgerId, {
-  stripeEventId: event.id,    // Unique constraint after verification
+  stripeEventId: event.id, // Unique constraint after verification
   type: event.type,
   livemode: event.livemode,
   orgId,
-  stripeCheckoutSessionId: session.id
+  stripeCheckoutSessionId: session.id,
 });
 ```
 
@@ -235,14 +245,14 @@ await updateLedgerWithVerifiedFields(db, ledgerId, {
    - **Idempotency:** Checkout session ID prevents duplicate grant creation
 
 2. **Owner-Only Billing Operations**
+
    ```javascript
    authorizeReference: async ({ user, referenceId, action }) => {
      if (action === 'upgrade-subscription' || action === 'cancel-subscription') {
-       const membership = await db.select()
-         .where(eq(member.organizationId, referenceId), eq(member.userId, user.id));
-       return membership?.role === 'owner';  // ✅ Only org owners
+       const membership = await db.select().where(eq(member.organizationId, referenceId), eq(member.userId, user.id));
+       return membership?.role === 'owner'; // ✅ Only org owners
      }
-   }
+   };
    ```
 
 3. **Audit Trail via Stripe Event Ledger**
@@ -256,6 +266,7 @@ await updateLedgerWithVerifiedFields(db, ledgerId, {
    - Reduces blast radius of secret compromise
 
 5. **Payment Status Verification**
+
    ```javascript
    if (session.payment_status !== 'paid') {
      await updateLedgerStatus(db, ledgerId, { status: 'failed' });
@@ -271,9 +282,11 @@ await updateLedgerWithVerifiedFields(db, ledgerId, {
 
 1. **Price ID Validation**
    - **Issue:** Price IDs from env vars have fallback defaults
+
    ```javascript
-   priceId: env.STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY || 'price_starter_team_monthly'
+   priceId: env.STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY || 'price_starter_team_monthly';
    ```
+
    - **Impact:** Misconfiguration could allow wrong pricing
    - **Recommendation:** Fail on missing price IDs in production
    - **Priority:** High
@@ -297,16 +310,19 @@ await updateLedgerWithVerifiedFields(db, ledgerId, {
 **Framework:** Zod v4.3.5 for type-safe runtime validation
 
 **Example: Project Creation Schema** ([validation.js:24-35](packages/workers/src/config/validation.js:24))
+
 ```javascript
 projectSchemas.create = z.object({
-  name: z.string()
+  name: z
+    .string()
     .min(1, 'Project name is required')
     .max(255, 'Project name must be 255 characters or less')
-    .transform(val => val.trim()),  // ✅ Automatic trimming
-  description: z.string()
+    .transform(val => val.trim()), // ✅ Automatic trimming
+  description: z
+    .string()
     .max(2000, 'Description must be 2000 characters or less')
     .optional()
-    .transform(val => val?.trim() || null)
+    .transform(val => val?.trim() || null),
 });
 ```
 
@@ -326,15 +342,20 @@ projectSchemas.create = z.object({
    - Rejects malformed addresses
 
 4. **HTML Escaping for Email Templates** ([escapeHtml.js](packages/workers/src/lib/escapeHtml.js))
+
    ```javascript
    export function escapeHtml(text) {
      const map = {
-       '&': '&amp;', '<': '&lt;', '>': '&gt;',
-       '"': '&quot;', "'": '&#039;'
+       '&': '&amp;',
+       '<': '&lt;',
+       '>': '&gt;',
+       '"': '&quot;',
+       "'": '&#039;',
      };
      return String(text).replace(/[&<>"']/g, m => map[m]);
    }
    ```
+
    - Used in contact form emails
    - Prevents XSS in email HTML
 
@@ -345,20 +366,25 @@ projectSchemas.create = z.object({
 ### Drizzle ORM Protection Against SQL Injection
 
 **No Raw SQL Found:**
+
 ```bash
 $ grep -r "\.raw\(|\.execute\(" packages/workers/src
 # Only found in migration files and test helpers
 ```
 
 **Parameterized Queries:**
+
 ```javascript
 // ✅ Safe: Drizzle uses parameterized queries
-await db.select()
+await db
+  .select()
   .from(projects)
-  .where(and(
-    eq(projects.orgId, orgId),      // Parameters bound safely
-    eq(projectMembers.userId, userId)
-  ));
+  .where(
+    and(
+      eq(projects.orgId, orgId), // Parameters bound safely
+      eq(projectMembers.userId, userId),
+    ),
+  );
 ```
 
 ### Weaknesses & Recommendations ⚠️
@@ -409,12 +435,14 @@ await db.select()
 **Status:** ✅ **PROPERLY PROTECTED**
 
 **Data Protection Measures:**
+
 - HTTPS enforced via `Strict-Transport-Security` header
 - Secrets stored in environment variables (never in code)
 - HTTP-only cookies prevent JavaScript access to session tokens
 - PII filtered in structured logs
 
 **Stripe Integration:**
+
 - No credit card data stored (Stripe handles)
 - Webhook secrets kept in environment
 
@@ -434,6 +462,7 @@ await db.select()
 **Status:** ✅ **COMPREHENSIVE CONTROLS**
 
 **Authorization Enforcement:**
+
 - Middleware-based access control on all protected routes
 - Role hierarchy enforced: owner > admin > member
 - Project access requires both org membership AND project membership
@@ -441,12 +470,16 @@ await db.select()
 - Quota enforcement before resource creation
 
 **Example: Delete Project** ([org projects.js](packages/workers/src/routes/orgs/projects.js))
+
 ```javascript
-orgProjectRoutes.delete('/:projectId',
+orgProjectRoutes.delete(
+  '/:projectId',
   requireAuth,
   requireOrgMembership(),
-  requireProjectAccess('owner'),  // ✅ Only project owners
-  async (c) => { /* delete */ }
+  requireProjectAccess('owner'), // ✅ Only project owners
+  async c => {
+    /* delete */
+  },
 );
 ```
 
@@ -459,17 +492,20 @@ orgProjectRoutes.delete('/:projectId',
 **Status:** ✅ **WELL CONFIGURED**
 
 **Positive Observations:**
+
 - Environment-specific configurations (dev, production)
 - Security headers properly configured
 - Default deny for unknown origins
 - Secrets validation on startup (`getAuthSecret()` throws if missing)
 
 **Configuration Files:**
+
 - `.env.example` provided with templates (no actual secrets)
 - `wrangler.jsonc` excludes secrets (uses Wrangler CLI)
 - `.gitignore` properly configured for secrets
 
 **Minor Issue:**
+
 - Rate limiting disabled in development mode (acceptable for dev)
 
 ---
@@ -479,14 +515,17 @@ orgProjectRoutes.delete('/:projectId',
 **Status:** ✅ **PROPERLY MITIGATED**
 
 **Frontend (SolidJS):**
+
 - Framework provides automatic escaping
 - No `dangerouslySetInnerHTML` found in codebase
 
 **Backend (Email Templates):**
+
 - HTML escaping via `escapeHtml()` function
 - Used in contact form and email templates
 
 **Content Security Policy:**
+
 ```javascript
 // Production HTML responses
 "default-src 'self'",
@@ -508,13 +547,14 @@ orgProjectRoutes.delete('/:projectId',
 - Validation after deserialization via Zod
 
 **Example:**
+
 ```javascript
 try {
   body = await c.req.json();
 } catch {
   return c.json({ error: 'invalid_json' }, 400);
 }
-const result = contactSchema.safeParse(body);  // ✅ Validate
+const result = contactSchema.safeParse(body); // ✅ Validate
 ```
 
 ---
@@ -524,6 +564,7 @@ const result = contactSchema.safeParse(body);  // ✅ Validate
 **Status:** ⚠️ **NEEDS MONITORING**
 
 **Dependencies:**
+
 - BetterAuth: v1.4.10 (latest)
 - Stripe: v20.1.0 (latest)
 - Hono: v4.11.3 (latest)
@@ -531,6 +572,7 @@ const result = contactSchema.safeParse(body);  // ✅ Validate
 - SolidJS: v1.9.10 (latest)
 
 **Recommendation:**
+
 - Run `npm audit` regularly
 - Enable Dependabot alerts
 - Monitor security advisories for:
@@ -547,23 +589,26 @@ const result = contactSchema.safeParse(body);  // ✅ Validate
 **Status:** ✅ **COMPREHENSIVE LOGGING**
 
 **Structured Logging:**
+
 - Request IDs for correlation
 - PII filtering in logs
 - Stripe event ledger for audit trail
 - Log levels: `info`, `error`, `stripe`, `auth`
 
 **Example:**
+
 ```javascript
 logger.stripe('webhook_processed', {
   outcome: 'processed',
   stripeEventId,
   orgId,
   grantId,
-  payloadHash
+  payloadHash,
 });
 ```
 
 **Enhancement Opportunity:**
+
 - Add alerting on suspicious patterns (e.g., repeated signature failures)
 - **Priority:** Low
 
@@ -576,15 +621,15 @@ logger.stripe('webhook_processed', {
 **Status:** ✅ **PROTECTED**
 
 **CSRF Protection:** [`csrf.js`](packages/workers/src/middleware/csrf.js:14)
+
 ```javascript
 export function requireTrustedOrigin(c, next) {
   const method = c.req.method.toUpperCase();
   if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
-    return next();  // Safe methods
+    return next(); // Safe methods
   }
 
-  const origin = c.req.raw.headers.get('origin') ||
-                 new URL(c.req.raw.headers.get('referer')).origin;
+  const origin = c.req.raw.headers.get('origin') || new URL(c.req.raw.headers.get('referer')).origin;
 
   if (!isOriginAllowed(origin, c.env)) {
     return c.json({ error: 'Untrusted Origin' }, 403);
@@ -593,6 +638,7 @@ export function requireTrustedOrigin(c, next) {
 ```
 
 **Applied to:**
+
 - Admin stop-impersonation endpoint
 - All state-changing cookie-authenticated routes
 
@@ -604,7 +650,7 @@ export function requireTrustedOrigin(c, next) {
 
 ```javascript
 c.header('X-Frame-Options', 'DENY');
-c.header('Content-Security-Policy', '... frame-ancestors \'none\' ...');
+c.header('Content-Security-Policy', "... frame-ancestors 'none' ...");
 ```
 
 ---
@@ -614,6 +660,7 @@ c.header('Content-Security-Policy', '... frame-ancestors \'none\' ...');
 **Status:** ℹ️ **LOW RISK**
 
 **PDF Proxy Endpoint:**
+
 - Proxies external PDFs for CORS
 - **Recommendation:** Validate URL schemes (http/https only), block internal IPs
 - **Priority:** Medium
@@ -625,6 +672,7 @@ c.header('Content-Security-Policy', '... frame-ancestors \'none\' ...');
 ### Environment Variables
 
 **Workers Backend:** ([.env.example](packages/workers/.env.example))
+
 ```bash
 # Critical Secrets (MUST be set via Wrangler CLI in production)
 AUTH_SECRET=                          # ✅ Required, throws if missing
@@ -638,6 +686,7 @@ ADMIN_EMAIL=                          # Admin whitelist
 ```
 
 **Frontend:** ([web/.env.example](packages/web/.env.example))
+
 ```bash
 VITE_API_URL=http://localhost:8787   # ✅ Public (non-sensitive)
 VITE_PUBLIC_APP_URL=
@@ -647,20 +696,23 @@ VITE_GOOGLE_PICKER_API_KEY=          # ⚠️ Public (client-side)
 ### Security Strengths ✅
 
 1. **Secrets Validation on Startup**
+
    ```javascript
    function getAuthSecret(env) {
      if (env.AUTH_SECRET) return env.AUTH_SECRET;
-     throw new Error('AUTH_SECRET must be configured');  // ✅ Fail fast
+     throw new Error('AUTH_SECRET must be configured'); // ✅ Fail fast
    }
    ```
 
 2. **Production Secrets via Wrangler CLI**
+
    ```bash
    wrangler secret put AUTH_SECRET --env production
    # NOT stored in wrangler.jsonc
    ```
 
 3. **`.gitignore` Properly Configured**
+
    ```
    .env*
    *.vars
@@ -693,24 +745,24 @@ VITE_GOOGLE_PICKER_API_KEY=          # ⚠️ Public (client-side)
 
 ### Backend Dependencies ([workers/package.json](packages/workers/package.json))
 
-| Package | Version | Purpose | Security Notes |
-|---------|---------|---------|----------------|
-| `better-auth` | 1.4.10 | Authentication | ⚠️ Monitor for CVEs (auth-critical) |
-| `stripe` | 20.1.0 | Payment processing | ⚠️ Monitor for CVEs (payment-critical) |
-| `hono` | 4.11.3 | Web framework | ✅ Lightweight, minimal attack surface |
-| `drizzle-orm` | 0.45.1 | Database ORM | ✅ Type-safe, prevents SQL injection |
-| `yjs` | 13.6.29 | CRDT (real-time) | ⚠️ Monitor (collaboration-critical) |
-| `zod` | 4.3.5 | Validation | ✅ Type-safe validation |
-| `postmark` | 4.0.5 | Email | ✅ Trusted email service |
+| Package       | Version | Purpose            | Security Notes                         |
+| ------------- | ------- | ------------------ | -------------------------------------- |
+| `better-auth` | 1.4.10  | Authentication     | ⚠️ Monitor for CVEs (auth-critical)    |
+| `stripe`      | 20.1.0  | Payment processing | ⚠️ Monitor for CVEs (payment-critical) |
+| `hono`        | 4.11.3  | Web framework      | ✅ Lightweight, minimal attack surface |
+| `drizzle-orm` | 0.45.1  | Database ORM       | ✅ Type-safe, prevents SQL injection   |
+| `yjs`         | 13.6.29 | CRDT (real-time)   | ⚠️ Monitor (collaboration-critical)    |
+| `zod`         | 4.3.5   | Validation         | ✅ Type-safe validation                |
+| `postmark`    | 4.0.5   | Email              | ✅ Trusted email service               |
 
 ### Frontend Dependencies ([web/package.json](packages/web/package.json))
 
-| Package | Version | Purpose | Security Notes |
-|---------|---------|---------|----------------|
-| `solid-js` | 1.9.10 | UI framework | ✅ Automatic XSS escaping |
-| `@embedpdf/*` | 2.1.1 | PDF rendering | ⚠️ WebAssembly (PDFium engine) - monitor |
-| `@tanstack/solid-query` | 5.90.19 | State management | ✅ Well-maintained |
-| `d3` | 7.9.0 | Visualization | ⚠️ Large library, audit for XSS if using user data |
+| Package                 | Version | Purpose          | Security Notes                                     |
+| ----------------------- | ------- | ---------------- | -------------------------------------------------- |
+| `solid-js`              | 1.9.10  | UI framework     | ✅ Automatic XSS escaping                          |
+| `@embedpdf/*`           | 2.1.1   | PDF rendering    | ⚠️ WebAssembly (PDFium engine) - monitor           |
+| `@tanstack/solid-query` | 5.90.19 | State management | ✅ Well-maintained                                 |
+| `d3`                    | 7.9.0   | Visualization    | ⚠️ Large library, audit for XSS if using user data |
 
 ### Recommendations
 
@@ -762,6 +814,7 @@ Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
 ### Content Security Policy
 
 **Production HTML:**
+
 ```
 default-src 'self';
 script-src 'self';                    // ✅ No inline scripts
@@ -775,29 +828,33 @@ form-action 'self';
 ```
 
 **Dev Docs (Non-production Only):**
+
 ```
 script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net
 ```
+
 ⚠️ **Note:** Permissive CSP for API docs, only enabled in development
 
 ### CORS Configuration ([cors.js](packages/workers/src/middleware/cors.js), [origins.js](packages/workers/src/config/origins.js))
 
 **Allowed Origins:**
+
 ```javascript
 STATIC_ORIGINS = [
-  'http://localhost:5173',  // Vite dev
-  'http://localhost:8787',  // Worker dev
+  'http://localhost:5173', // Vite dev
+  'http://localhost:8787', // Worker dev
   'https://corates.org',
   'https://app.corates.org',
-  'https://api.corates.org'
-]
+  'https://api.corates.org',
+];
 
 ORIGIN_PATTERNS = [
-  /^https:\/\/[a-z0-9-]+-corates\.jacobamaynard\.workers\.dev$/  // Preview deploys
-]
+  /^https:\/\/[a-z0-9-]+-corates\.jacobamaynard\.workers\.dev$/, // Preview deploys
+];
 ```
 
 **CORS Headers:**
+
 ```
 Access-Control-Allow-Origin: <matched origin>  // ✅ Not wildcard
 Access-Control-Allow-Credentials: true
@@ -839,11 +896,13 @@ Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
 **Issue:** Admin users (`user.role === 'admin'`) can perform privileged operations (impersonation, billing observability) without 2FA.
 
 **Impact:**
+
 - Admin account compromise via phishing
 - Unauthorized impersonation of users
 - Billing data access
 
 **Recommendation:**
+
 ```javascript
 // In requireAdmin middleware
 export async function requireAdmin(c, next) {
@@ -855,10 +914,13 @@ export async function requireAdmin(c, next) {
 
   // NEW: Require 2FA for admin actions
   if (!session.user.twoFactorEnabled) {
-    return c.json({
-      error: 'Two-factor authentication required for admin access',
-      code: '2FA_REQUIRED'
-    }, 403);
+    return c.json(
+      {
+        error: 'Two-factor authentication required for admin access',
+        code: '2FA_REQUIRED',
+      },
+      403,
+    );
   }
 
   await next();
@@ -877,15 +939,18 @@ export async function requireAdmin(c, next) {
 **Issue:** Missing Stripe price IDs fall back to hardcoded defaults that may not exist.
 
 **Impact:**
+
 - Subscriptions created with wrong pricing
 - Revenue loss or customer confusion
 
 **Current Code:**
+
 ```javascript
-priceId: env.STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY || 'price_starter_team_monthly'
+priceId: env.STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY || 'price_starter_team_monthly';
 ```
 
 **Recommendation:**
+
 ```javascript
 // Fail fast in production if price IDs are missing
 if (env.ENVIRONMENT === 'production') {
@@ -895,7 +960,7 @@ if (env.ENVIRONMENT === 'production') {
     'STRIPE_PRICE_ID_TEAM_MONTHLY',
     'STRIPE_PRICE_ID_TEAM_YEARLY',
     'STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY',
-    'STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY'
+    'STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY',
   ];
 
   const missing = requiredPriceIds.filter(id => !env[id]);
@@ -917,11 +982,13 @@ if (env.ENVIRONMENT === 'production') {
 **Issue:** No evidence of file type, size, or content validation for uploaded PDFs.
 
 **Impact:**
+
 - Malicious file uploads (XSS via SVG, XXE, malware)
 - Storage exhaustion
 - MIME confusion attacks
 
 **Recommendation:**
+
 1. Validate file extension and MIME type
 2. Enforce file size limits (e.g., 50MB)
 3. Scan file headers (magic bytes) to verify PDF format
@@ -929,10 +996,12 @@ if (env.ENVIRONMENT === 'production') {
 5. Store files with random names (no user-controlled filenames)
 
 **Example:**
+
 ```javascript
 async function validatePdfUpload(file) {
   // Size check
-  if (file.size > 50 * 1024 * 1024) {  // 50MB
+  if (file.size > 50 * 1024 * 1024) {
+    // 50MB
     throw new Error('File too large');
   }
 
@@ -963,12 +1032,14 @@ async function validatePdfUpload(file) {
 **Issue:** No endpoint to invalidate sessions before expiry.
 
 **Impact:**
+
 - Compromised sessions remain valid for 7 days
 - No logout from all devices
 - Delayed response to account compromise
 
 **Recommendation:**
 Implement session revocation:
+
 1. Add `revokedAt` timestamp to `session` table
 2. Create `/api/auth/revoke-session` endpoint
 3. Create `/api/auth/revoke-all-sessions` endpoint
@@ -986,16 +1057,19 @@ Implement session revocation:
 **Issue:** Rate limit store is in-memory (per-worker instance).
 
 **Impact:**
+
 - Attackers can bypass limits by hitting different worker instances
 - Multiple deployments reset limits
 
 **Current:**
+
 ```javascript
-const rateLimitStore = new Map();  // ⚠️ Per-instance
+const rateLimitStore = new Map(); // ⚠️ Per-instance
 ```
 
 **Recommendation:**
 Use Durable Objects for global rate limiting:
+
 ```javascript
 // Create RateLimitDO for distributed state
 export class RateLimitDO {
@@ -1022,11 +1096,13 @@ export class RateLimitDO {
 **Issue:** Unclear if magic link tokens are single-use or can be replayed.
 
 **Impact:**
+
 - Token reuse after initial authentication
 - Extended attack window if token leaked
 
 **Recommendation:**
 Verify BetterAuth's magic link implementation:
+
 1. Tokens are deleted after use
 2. Add explicit check in codebase if not built-in
 
@@ -1042,22 +1118,25 @@ Verify BetterAuth's magic link implementation:
 **Issue:** Proxying external URLs without validation.
 
 **Impact:**
+
 - SSRF to internal services (metadata endpoints, databases)
 - Port scanning via proxy
 - SSRF to localhost (127.0.0.1, ::1)
 
 **Recommendation:**
+
 ```javascript
 const BLOCKED_IPS = [
-  '127.0.0.1', '::1',           // Localhost
-  '169.254.169.254',            // AWS metadata
-  '::ffff:169.254.169.254'      // IPv6-mapped AWS metadata
+  '127.0.0.1',
+  '::1', // Localhost
+  '169.254.169.254', // AWS metadata
+  '::ffff:169.254.169.254', // IPv6-mapped AWS metadata
 ];
 
 const BLOCKED_RANGES = [
-  '10.0.0.0/8',                 // Private
-  '172.16.0.0/12',              // Private
-  '192.168.0.0/16'              // Private
+  '10.0.0.0/8', // Private
+  '172.16.0.0/12', // Private
+  '192.168.0.0/16', // Private
 ];
 
 async function validateProxyUrl(urlString) {
@@ -1090,22 +1169,24 @@ async function validateProxyUrl(urlString) {
 **Issue:** No check for `event.livemode` in production.
 
 **Impact:**
+
 - Test events processed in production
 - Confusion in billing/grants
 - Potential for test-mode data pollution
 
 **Recommendation:**
+
 ```javascript
 // After signature verification
 if (env.ENVIRONMENT === 'production' && !event.livemode) {
   await updateLedgerStatus(db, ledgerId, {
     status: LedgerStatus.IGNORED_TEST_MODE,
-    httpStatus: 400
+    httpStatus: 400,
   });
 
   logger.stripe('webhook_rejected', {
     reason: 'test_event_in_production',
-    stripeEventId
+    stripeEventId,
   });
 
   return c.json({ received: true, skipped: 'test_event' }, 200);
@@ -1124,9 +1205,11 @@ if (env.ENVIRONMENT === 'production' && !event.livemode) {
 **Issue:** Repeated webhook signature failures not alerted.
 
 **Impact:**
+
 - Delayed detection of attacks or misconfigurations
 
 **Recommendation:**
+
 - Alert on >10 signature failures in 1 hour
 - Implement via Durable Objects alarm or external monitoring
 
@@ -1140,6 +1223,7 @@ if (env.ENVIRONMENT === 'production' && !event.livemode) {
 **Issue:** Actions performed during impersonation not logged separately.
 
 **Impact:**
+
 - Reduced audit trail granularity
 
 **Recommendation:**
@@ -1155,10 +1239,12 @@ Add `impersonatedBy` to all log entries during impersonation session.
 **Issue:** Client-side API key may not have sufficient restrictions.
 
 **Impact:**
+
 - API key abuse if restrictions not set
 
 **Recommendation:**
 Verify in Google Cloud Console:
+
 - HTTP referrer restrictions: `https://corates.org/*`, `https://app.corates.org/*`
 - API restrictions: Only Google Picker API enabled
 
@@ -1173,19 +1259,19 @@ Verify in Google Cloud Console:
 
 **Level 2 Compliance:** ✅ **Substantially Compliant**
 
-| Category | Status | Notes |
-|----------|--------|-------|
-| V2: Authentication | ✅ | MFA available, session security strong |
-| V3: Session Management | ⚠️ | Missing revocation (M1) |
-| V4: Access Control | ✅ | Role-based, hierarchical, well-enforced |
-| V5: Validation | ✅ | Zod schemas, XSS protection |
-| V7: Cryptography | ✅ | HTTPS enforced, secure cookies |
-| V8: Data Protection | ✅ | Secrets managed properly |
-| V9: Communications | ✅ | HSTS, secure origins |
-| V10: Malicious Code | ✅ | No dangerous functions, CSP enforced |
-| V12: Files | ⚠️ | PDF upload validation unclear (H3) |
-| V13: API Security | ✅ | CORS, CSRF, rate limiting |
-| V14: Configuration | ✅ | Environment separation, secrets validation |
+| Category               | Status | Notes                                      |
+| ---------------------- | ------ | ------------------------------------------ |
+| V2: Authentication     | ✅     | MFA available, session security strong     |
+| V3: Session Management | ⚠️     | Missing revocation (M1)                    |
+| V4: Access Control     | ✅     | Role-based, hierarchical, well-enforced    |
+| V5: Validation         | ✅     | Zod schemas, XSS protection                |
+| V7: Cryptography       | ✅     | HTTPS enforced, secure cookies             |
+| V8: Data Protection    | ✅     | Secrets managed properly                   |
+| V9: Communications     | ✅     | HSTS, secure origins                       |
+| V10: Malicious Code    | ✅     | No dangerous functions, CSP enforced       |
+| V12: Files             | ⚠️     | PDF upload validation unclear (H3)         |
+| V13: API Security      | ✅     | CORS, CSRF, rate limiting                  |
+| V14: Configuration     | ✅     | Environment separation, secrets validation |
 
 ---
 
@@ -1203,6 +1289,7 @@ Verify in Google Cloud Console:
 ### GDPR Considerations
 
 **Data Protection Measures:**
+
 - ✅ PII filtered in logs
 - ✅ Email verification required (lawful basis)
 - ✅ User can delete account (right to erasure)
@@ -1210,6 +1297,7 @@ Verify in Google Cloud Console:
 - ⚠️ Data processing agreement with Stripe/Postmark not verified
 
 **Recommendation:**
+
 - Document data retention periods
 - Ensure DPAs in place with third-party processors
 

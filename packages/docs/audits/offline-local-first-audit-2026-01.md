@@ -13,6 +13,7 @@ This audit examines CoRATES's local-first architecture, focusing on offline capa
 ### Overall Rating: **GOOD** ✅ (with notable gaps)
 
 **Key Strengths:**
+
 - ✅ Automatic conflict resolution via Yjs CRDT (operation-based)
 - ✅ Multiple layers of IndexedDB persistence (Yjs, TanStack Query, auth, PDFs, forms)
 - ✅ Smart online status detection with verification
@@ -21,6 +22,7 @@ This audit examines CoRATES's local-first architecture, focusing on offline capa
 - ✅ bfcache (back-forward cache) detection and refresh
 
 **Critical Gaps:**
+
 - ❌ **Service worker DISABLED** - No offline app shell or asset caching
 - ❌ **Potential excessive WebSocket connections** - May connect to all projects instead of only active one
 - ⚠️ Stale data risk: 24-hour IndexedDB cache without server invalidation
@@ -58,13 +60,14 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     const registrations = await navigator.serviceWorker.getRegistrations();
     for (const registration of registrations) {
-      await registration.unregister();  // ❌ Actively removing SWs
+      await registration.unregister(); // ❌ Actively removing SWs
     }
   });
 }
 ```
 
 **Service Worker Implementation:** [packages/landing/public/sw.js](packages/landing/public/sw.js)
+
 - ✅ **Well-designed** network-first strategy
 - ✅ Cache version busting via `__BUILD_TIME__`
 - ✅ SPA shell fallback for offline navigation
@@ -73,51 +76,56 @@ if ('serviceWorker' in navigator) {
 
 ### Impact Analysis
 
-| Scenario | With SW Enabled | Current (SW Disabled) |
-|----------|----------------|----------------------|
-| **First load offline** | ✅ Shows cached app shell | ❌ No app at all |
-| **Navigation offline** | ✅ SPA routes work | ❌ Breaks on refresh |
-| **Assets offline** | ✅ Cached JS/CSS loads | ❌ Fetch fails, white screen |
-| **Offline message** | ✅ Graceful "Offline" page | ❌ Browser error page |
+| Scenario               | With SW Enabled            | Current (SW Disabled)        |
+| ---------------------- | -------------------------- | ---------------------------- |
+| **First load offline** | ✅ Shows cached app shell  | ❌ No app at all             |
+| **Navigation offline** | ✅ SPA routes work         | ❌ Breaks on refresh         |
+| **Assets offline**     | ✅ Cached JS/CSS loads     | ❌ Fetch fails, white screen |
+| **Offline message**    | ✅ Graceful "Offline" page | ❌ Browser error page        |
 
 ### Service Worker Decision Matrix
 
 #### Option 1: Enable for Web Package Only ✅ **RECOMMENDED**
 
 **Reasoning:**
+
 - Web package (`/app.html`) is the authenticated SPA where offline capability matters
 - Landing package is marketing content that doesn't need offline support
 - Simpler to maintain one service worker scope
 
 **Implementation:**
+
 ```javascript
 // In packages/web/src/main.jsx (add after line 30)
 if ('serviceWorker' in navigator && !import.meta.env.DEV) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', {
-      scope: '/',
-      updateViaCache: 'none'
-    }).then(reg => {
-      // Auto-update on new version
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // Notify user of update available
-            console.info('[SW] New version available');
-          }
+    navigator.serviceWorker
+      .register('/sw.js', {
+        scope: '/',
+        updateViaCache: 'none',
+      })
+      .then(reg => {
+        // Auto-update on new version
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // Notify user of update available
+              console.info('[SW] New version available');
+            }
+          });
         });
       });
-    });
   });
 }
 ```
 
 **Service Worker Scope:**
+
 ```javascript
 // sw.js modifications needed
 const CACHE_NAME = 'corates-web-v1';
-const APP_SHELL_URL = '/app.html';  // Already correct
+const APP_SHELL_URL = '/app.html'; // Already correct
 
 // Skip caching landing routes (/, /about, /pricing)
 // Only cache /app.html and its assets
@@ -126,6 +134,7 @@ const APP_SHELL_URL = '/app.html';  // Already correct
 #### Option 2: Enable for Both (Landing + Web)
 
 **Reasoning:**
+
 - User mentioned "technically I only need web" suggesting this is less preferred
 - More complex: needs to handle both landing (public) and app (auth) routes
 - Landing gets bundled with web, so SW would cover both anyway
@@ -151,6 +160,7 @@ const APP_SHELL_URL = '/app.html';  // Already correct
 ### How It Works
 
 1. **Dual Sync Strategy:**
+
    ```javascript
    // IndexedDB for offline persistence
    indexeddbProvider = new IndexeddbPersistence(`corates-project-${projectId}`, ydoc);
@@ -160,10 +170,11 @@ const APP_SHELL_URL = '/app.html';  // Already correct
    ```
 
 2. **Sync Order:** ([useProject/index.js:240-258](packages/web/src/primitives/useProject/index.js:240))
+
    ```javascript
    // 1. IndexedDB syncs first (local data restored immediately)
    indexeddbProvider.whenSynced.then(() => {
-     syncManager.syncFromYDoc();  // UI updated from local data
+     syncManager.syncFromYDoc(); // UI updated from local data
 
      // 2. For online projects, mark "synced" only after WebSocket syncs
      if (!isLocalProject()) {
@@ -180,22 +191,23 @@ const APP_SHELL_URL = '/app.html';  // Already correct
 
 ### Conflict Scenarios Tested
 
-| Scenario | Yjs Behavior | User Experience |
-|----------|--------------|-----------------|
-| **Two users edit same field simultaneously** | LWW based on Lamport timestamp | Later edit wins, no conflict UI |
-| **User A adds item, User B deletes parent** | Tombstones preserved | Item remains if added after delete |
-| **Offline edits sync when online** | Operations replayed in causal order | Seamless merge |
-| **Network partition (split-brain)** | Operations buffered, merged on reconnect | All edits preserved |
+| Scenario                                     | Yjs Behavior                             | User Experience                    |
+| -------------------------------------------- | ---------------------------------------- | ---------------------------------- |
+| **Two users edit same field simultaneously** | LWW based on Lamport timestamp           | Later edit wins, no conflict UI    |
+| **User A adds item, User B deletes parent**  | Tombstones preserved                     | Item remains if added after delete |
+| **Offline edits sync when online**           | Operations replayed in causal order      | Seamless merge                     |
+| **Network partition (split-brain)**          | Operations buffered, merged on reconnect | All edits preserved                |
 
 ### Strengths ✅
 
 1. **Connection Registry Prevents Duplicate Connections** ([useProject/index.js:26-91](packages/web/src/primitives/useProject/index.js:26))
+
    ```javascript
-   const connectionRegistry = new Map();  // Global singleton
+   const connectionRegistry = new Map(); // Global singleton
 
    function getOrCreateConnection(projectId) {
      if (connectionRegistry.has(projectId)) {
-       entry.refCount++;  // ✅ Share connection across components
+       entry.refCount++; // ✅ Share connection across components
        return entry;
      }
      // Create new Y.Doc only once per project
@@ -245,11 +257,13 @@ CoRATES uses **5 separate IndexedDB databases** for different purposes:
 **Purpose:** Store CRDT update history for offline editing
 
 **Key Points:**
+
 - ✅ Automatic sync: Yjs writes every change to IndexedDB
 - ✅ Cleanup: Database deleted when project access revoked ([useProject/index.js:99-141](packages/web/src/primitives/useProject/index.js:99))
 - ✅ Per-project isolation: Prevents data leakage
 
 **Edge Case Handled:**
+
 ```javascript
 // When user removed from project while offline
 await cleanupProjectLocalData(projectId);
@@ -266,11 +280,13 @@ await cleanupProjectLocalData(projectId);
 **Purpose:** Cache API responses (project list, org data, etc.)
 
 **Cache Invalidation Strategy:**
+
 - ✅ **24-hour expiry** on cached queries ([queryClient.js:12](packages/web/src/lib/queryClient.js:12))
 - ✅ **Validates age** on restoration ([queryClient.js:34-46](packages/web/src/lib/queryClient.js:34))
 - ✅ **Preserves original timestamps** to prevent false freshness ([queryClient.js:52-56](packages/web/src/lib/queryClient.js:52))
 
 **Issue Found:** ⚠️ **Stale Data Risk**
+
 ```javascript
 // Production settings (queryClient.js:217)
 staleTime: 1000 * 60 * 5,  // 5 minutes (data considered fresh)
@@ -281,6 +297,7 @@ gcTime: 1000 * 60 * 10,    // 10 minutes (unused data kept in memory)
 ```
 
 **Scenario:**
+
 1. User fetches project list at 9:00 AM (cached to IndexedDB)
 2. User closes tab
 3. Another user removes them from a project at 10:00 AM
@@ -289,11 +306,13 @@ gcTime: 1000 * 60 * 10,    // 10 minutes (unused data kept in memory)
 6. ❌ **BAD:** If offline, shows stale project list from IndexedDB
 
 **Mitigation Currently in Place:**
+
 - ✅ `refetchOnReconnect: true` - Refetches when coming online
 - ✅ `refetchOnMount: true` - Refetches if stale
 - ✅ Stale project cleanup on successful project list fetch ([useProjectList.js:61-83](packages/web/src/primitives/useProjectList.js:61))
 
 **Remaining Gap:**
+
 - ⚠️ User sees stale UI until refetch completes
 - ⚠️ No loading indicator during background refetch
 - **Recommendation:** Show "Syncing..." badge on project cards during refetch
@@ -306,6 +325,7 @@ gcTime: 1000 * 60 * 10,    // 10 minutes (unused data kept in memory)
 **Purpose:** 7-day offline auth fallback ([better-auth-store.js:14-17](packages/web/src/api/better-auth-store.js:14))
 
 **How It Works:**
+
 ```javascript
 // On auth success, save to localStorage
 function saveCachedAuth(userData) {
@@ -315,17 +335,20 @@ function saveCachedAuth(userData) {
 
 // On app load, check if cache is valid
 const age = Date.now() - cachedTimestamp;
-if (age > AUTH_CACHE_MAX_AGE) {  // 7 days
+if (age > AUTH_CACHE_MAX_AGE) {
+  // 7 days
   // Clear expired cache
 }
 ```
 
 **Issue:** ⚠️ **LocalStorage Size Limits**
+
 - LocalStorage limited to ~5-10MB per origin
 - User object includes profile data, avatar URL, etc.
 - If user has large avatar or metadata, could fail silently
 
 **Better Approach:**
+
 ```javascript
 // Move to IndexedDB (larger quota, async)
 const AUTH_DB = 'corates-auth';
@@ -342,6 +365,7 @@ const AUTH_DB = 'corates-auth';
 **Purpose:** Cache PDFs for offline viewing
 
 **Key Design:**
+
 ```javascript
 // Composite key: projectId:studyId:fileName
 function getCacheKey(projectId, studyId, fileName) {
@@ -349,16 +373,18 @@ function getCacheKey(projectId, studyId, fileName) {
 }
 
 // Indexes for cleanup
-store.createIndex('projectId', 'projectId');  // Delete all for project
-store.createIndex('cachedAt', 'cachedAt');     // Age-based eviction
+store.createIndex('projectId', 'projectId'); // Delete all for project
+store.createIndex('cachedAt', 'cachedAt'); // Age-based eviction
 ```
 
 **Strengths:** ✅
+
 - Source of truth is R2 (cloud storage)
 - Cache is just a performance optimization
 - Indexed for fast project-scoped deletion
 
 **Missing:** ⚠️ **No automatic eviction policy**
+
 - PDFs can accumulate indefinitely
 - No quota management (could fill disk)
 - **Recommendation:** Add LRU eviction when quota exceeded
@@ -371,12 +397,14 @@ store.createIndex('cachedAt', 'cachedAt');     // Age-based eviction
 **Purpose:** Preserve form data across OAuth redirects
 
 **Use Cases:**
+
 - User starts creating project → OAuth redirect → form restored
 - User adds studies with PDFs → OAuth redirect → files preserved
 
 **Expiry:** 24 hours ([formStatePersistence.js:10](packages/web/src/lib/formStatePersistence.js:10))
 
 **Cleanup:** ✅ Automatic on app load ([main.jsx:11-13](packages/web/src/main.jsx:11))
+
 ```javascript
 cleanupExpiredStates().catch(() => {
   // Silent fail - cleanup is best-effort
@@ -390,11 +418,13 @@ cleanupExpiredStates().catch(() => {
 ### TanStack Query Configuration
 
 **Network Mode:** `offlineFirst` ([queryClient.js:214](packages/web/src/lib/queryClient.js:214))
+
 - Queries try cache first, then network
 - If offline, returns cached data immediately
 - Refetches when online
 
 **Development vs Production:**
+
 ```javascript
 const isDevelopment = import.meta.env.DEV;
 
@@ -405,6 +435,7 @@ queries: {
 ```
 
 **Reasoning:** ✅ **GOOD**
+
 - Development: Always fetch fresh data (no caching confusion)
 - Production: Balance freshness vs performance
 
@@ -416,6 +447,7 @@ retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000)
 ```
 
 **Backoff Schedule:**
+
 - Attempt 1: 0ms (immediate)
 - Attempt 2: 2s
 - Attempt 3: 4s
@@ -423,15 +455,18 @@ retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000)
 - Max: 30s
 
 **Issue:** ⚠️ **No offline detection in retry logic**
+
 - Retries even when `navigator.onLine === false`
 - Wastes 3 attempts before giving up
 - **Recommendation:** Skip retries when offline
+
 ```javascript
 retry: (failureCount, error) => {
-  if (!navigator.onLine) return false;  // Don't retry when offline
+  if (!navigator.onLine) return false; // Don't retry when offline
   return failureCount < 3;
-}
+};
 ```
+
 **Priority:** Low (only adds ~14s delay, not critical)
 
 ### Dual Persistence Strategy
@@ -442,11 +477,13 @@ retry: (failureCount, error) => {
 2. **Fallback: LocalStorage** (synchronous on beforeunload)
 
 **Reasoning:** ✅ **EXCELLENT**
+
 - IndexedDB writes are async and may not complete before page unload
 - LocalStorage is synchronous, guarantees write on tab close
 - Limits LocalStorage to 10 critical queries to avoid quota issues
 
 **Restoration Priority:**
+
 ```javascript
 // 1. Try IndexedDB first
 const persistedClient = await persister.restoreClient();
@@ -464,6 +501,7 @@ const snapshot = localStorage.getItem(CACHE_SNAPSHOT_KEY);
 ### Scenario 1: User Removed from Project While Offline ✅ **HANDLED**
 
 **Flow:**
+
 1. User opens project → Yjs syncs to IndexedDB
 2. Goes offline
 3. Admin removes user from project (server-side)
@@ -471,8 +509,9 @@ const snapshot = localStorage.getItem(CACHE_SNAPSHOT_KEY);
 5. User goes online → WebSocket connection rejected
 
 **Handling:** ([useProject/connection.js:128-141](packages/web/src/primitives/useProject/connection.js:128))
+
 ```javascript
-provider.on('connection-close', (event) => {
+provider.on('connection-close', event => {
   if (reason === CLOSE_REASONS.MEMBERSHIP_REVOKED) {
     // ✅ Stop reconnection
     provider.shouldConnect = false;
@@ -487,6 +526,7 @@ provider.on('connection-close', (event) => {
 ```
 
 **Result:** ✅ **EXCELLENT**
+
 - User sees error message
 - Local data deleted (no stale drafts)
 - Project list refetched and updated
@@ -498,6 +538,7 @@ provider.on('connection-close', (event) => {
 **Similar to Scenario 1**, handled via `CLOSE_REASONS.PROJECT_DELETED`
 
 **Cleanup includes:**
+
 1. ✅ Destroy Yjs connection
 2. ✅ Delete `corates-project-{projectId}` IndexedDB
 3. ✅ Clear in-memory projectStore
@@ -508,18 +549,21 @@ provider.on('connection-close', (event) => {
 ### Scenario 3: Cached Project List Shows Deleted Project ⚠️ **PARTIAL**
 
 **Flow:**
+
 1. User fetches project list at 9:00 AM → cached to IndexedDB
 2. User closes browser
 3. Project deleted at 9:30 AM
 4. User reopens browser at 9:31 AM **while offline**
 
 **Current Behavior:**
+
 - Project appears in list (from IndexedDB cache)
 - User clicks project
 - WebSocket connection fails immediately
 - Error shown after ~5 connection attempts
 
 **Better UX:**
+
 - Show project list with "Last synced: 31 minutes ago" timestamp
 - Show "Offline" badge on project cards
 - When user clicks, show "Unable to connect (offline)" immediately
@@ -532,11 +576,13 @@ provider.on('connection-close', (event) => {
 ### Scenario 4: Yjs Sync After Long Offline Period ✅ **HANDLED**
 
 **Flow:**
+
 1. User edits project offline for 2 days
 2. Another user makes 50 edits during that time
 3. Original user goes online
 
 **Yjs Behavior:**
+
 - Yjs stores update history in IndexedDB
 - On reconnect, sends all offline updates to server
 - Server sends all server updates to client
@@ -554,9 +600,10 @@ provider.on('connection-close', (event) => {
 **Issue:** When user navigates back, they see old cached state without refetch.
 
 **Solution:** [lib/bfcache-handler.js](packages/web/src/lib/bfcache-handler.js)
+
 ```javascript
-window.addEventListener('pageshow', async (event) => {
-  if (!event.persisted) return;  // Not from bfcache
+window.addEventListener('pageshow', async event => {
+  if (!event.persisted) return; // Not from bfcache
 
   // ✅ Force refresh auth session
   await auth.forceRefreshSession();
@@ -567,6 +614,7 @@ window.addEventListener('pageshow', async (event) => {
 ```
 
 **Result:** ✅ **EXCELLENT**
+
 - Detects bfcache restoration
 - Refreshes critical data (auth, projects)
 - Prevents stale UI after browser back button
@@ -576,6 +624,7 @@ window.addEventListener('pageshow', async (event) => {
 ### Scenario 6: TanStack Query Cache Served While Refetch Pending ⚠️ **UX GAP**
 
 **Flow:**
+
 1. User loads app → project list cached
 2. User closes app
 3. 10 minutes later, user reopens app
@@ -586,15 +635,16 @@ window.addEventListener('pageshow', async (event) => {
 **Issue:** User doesn't know if they're seeing stale data during those 2 seconds.
 
 **Recommendation:**
+
 ```jsx
 // Add to project list UI
 const { data, isRefetching, dataUpdatedAt } = useProjectList();
 
-{isRefetching && (
-  <div class="text-sm text-gray-500">
-    Syncing... (last updated {formatDistanceToNow(dataUpdatedAt)})
-  </div>
-)}
+{
+  isRefetching && (
+    <div class='text-sm text-gray-500'>Syncing... (last updated {formatDistanceToNow(dataUpdatedAt)})</div>
+  );
+}
 ```
 
 **Priority:** Medium
@@ -607,42 +657,45 @@ const { data, isRefetching, dataUpdatedAt } = useProjectList();
 
 **Library:** `y-websocket` (WebsocketProvider)
 **Built-in Features:**
+
 - Automatic reconnection with exponential backoff
 - Max delay capped at library defaults
 
 **Custom Enhancements:** ([useProject/connection.js](packages/web/src/primitives/useProject/connection.js))
 
 1. **Online/Offline Detection** ([connection.js:42-61](packages/web/src/primitives/useProject/connection.js:42))
+
    ```javascript
    window.addEventListener('online', handleOnline);
    window.addEventListener('offline', handleOffline);
 
    function handleOffline() {
-     provider.shouldConnect = false;  // ✅ Stop reconnection attempts
+     provider.shouldConnect = false; // ✅ Stop reconnection attempts
    }
 
    function handleOnline() {
      if (shouldBeConnected && !provider.wsconnected) {
-       provider.connect();  // ✅ Resume connection
+       provider.connect(); // ✅ Resume connection
      }
    }
    ```
 
 2. **Error Throttling** ([connection.js:34-37](packages/web/src/primitives/useProject/connection.js:34))
+
    ```javascript
-   const ERROR_LOG_THROTTLE = 5000;  // ✅ Prevent console spam
-   const MAX_CONSECUTIVE_ERRORS = 5;  // ✅ Stop after persistent failures
+   const ERROR_LOG_THROTTLE = 5000; // ✅ Prevent console spam
+   const MAX_CONSECUTIVE_ERRORS = 5; // ✅ Stop after persistent failures
    ```
 
 3. **Access Denial Detection** ([connection.js:107-167](packages/web/src/primitives/useProject/connection.js:107))
+
    ```javascript
-   provider.on('connection-close', (event) => {
+   provider.on('connection-close', event => {
      const reason = event.reason;
 
      // ✅ Permanent failures: Stop reconnecting
-     if (reason === 'project-deleted' ||
-         reason === 'membership-revoked' ||
-         event.code === 1008) {  // Policy Violation
+     if (reason === 'project-deleted' || reason === 'membership-revoked' || event.code === 1008) {
+       // Policy Violation
        provider.shouldConnect = false;
        onAccessDenied({ reason });
      }
@@ -653,13 +706,14 @@ const { data, isRefetching, dataUpdatedAt } = useProjectList();
 
 **States:** `connecting` → `connected` → `synced`
 
-| State | Meaning | UI Indication |
-|-------|---------|---------------|
-| `connecting: true` | WebSocket handshake in progress | "Connecting..." |
-| `connected: true` | WebSocket open | "Connected" |
-| `synced: true` | Yjs sync protocol completed | "Synced" (hide indicator) |
+| State              | Meaning                         | UI Indication             |
+| ------------------ | ------------------------------- | ------------------------- |
+| `connecting: true` | WebSocket handshake in progress | "Connecting..."           |
+| `connected: true`  | WebSocket open                  | "Connected"               |
+| `synced: true`     | Yjs sync protocol completed     | "Synced" (hide indicator) |
 
 **State Transitions:**
+
 ```javascript
 // Initial connection
 setConnectionState({ connecting: true });
@@ -672,7 +726,7 @@ provider.on('status', ({ status }) => {
 });
 
 // Yjs sync completes
-provider.on('sync', (isSynced) => {
+provider.on('sync', isSynced => {
   if (isSynced) {
     setConnectionState({ synced: true });
   }
@@ -682,11 +736,12 @@ provider.on('sync', (isSynced) => {
 ### Edge Cases Handled ✅
 
 1. **Offline During Initial Connection**
+
    ```javascript
    function connect() {
      if (!navigator.onLine) {
-       shouldBeConnected = true;  // ✅ Remember intent
-       return;  // ✅ Don't attempt connection
+       shouldBeConnected = true; // ✅ Remember intent
+       return; // ✅ Don't attempt connection
      }
    }
    ```
@@ -710,6 +765,7 @@ provider.on('sync', (isSynced) => {
 **Implementation:** [primitives/useOnlineStatus.js](packages/web/src/primitives/useOnlineStatus.js)
 
 **Features:**
+
 - ✅ Debouncing (1s) to prevent flapping
 - ✅ **Network verification** - doesn't trust `navigator.onLine` alone
 - ✅ HEAD request to `/api/health` to confirm connectivity
@@ -717,23 +773,26 @@ provider.on('sync', (isSynced) => {
 ```javascript
 async function verifyConnectivity() {
   const controller = new AbortController();
-  setTimeout(() => controller.abort(), 3000);  // 3s timeout
+  setTimeout(() => controller.abort(), 3000); // 3s timeout
 
   await fetch('/api/health', {
     method: 'HEAD',
     signal: controller.signal,
-    cache: 'no-store'
+    cache: 'no-store',
   });
-  return true;  // Only returns true if fetch succeeds
+  return true; // Only returns true if fetch succeeds
 }
 ```
 
 **Usage in UI:**
+
 ```jsx
 const isOnline = useOnlineStatus();
 
 // Somewhere in UI (example - not currently implemented)
-{!isOnline() && <OfflineBanner />}
+{
+  !isOnline() && <OfflineBanner />;
+}
 ```
 
 #### 2. Connection State Per Project ✅
@@ -741,17 +800,23 @@ const isOnline = useOnlineStatus();
 **Stored in:** `projectStore.getConnectionState(projectId)`
 
 **Includes:**
+
 - `connected: boolean` - WebSocket open
 - `connecting: boolean` - Connection in progress
 - `synced: boolean` - Yjs sync complete
 - `error: string | null` - Connection error message
 
 **Example Usage:**
+
 ```jsx
 const { connected, synced, error } = useProject(projectId);
 
-{!connected() && <Badge>Offline</Badge>}
-{error() && <Alert>{error()}</Alert>}
+{
+  !connected() && <Badge>Offline</Badge>;
+}
+{
+  error() && <Alert>{error()}</Alert>;
+}
 ```
 
 ### Missing UX Indicators ⚠️
@@ -759,16 +824,18 @@ const { connected, synced, error } = useProject(projectId);
 1. **No Global Offline Banner**
    - Users don't know if they're offline
    - **Recommendation:** Add persistent offline indicator
+
    ```jsx
    // In Navbar.jsx or App root
-   {!isOnline() && (
-     <div class="bg-yellow-50 border-b border-yellow-200 px-4 py-2">
-       <p class="text-sm text-yellow-800">
-         You're offline. Changes will sync when connection is restored.
-       </p>
-     </div>
-   )}
+   {
+     !isOnline() && (
+       <div class='border-b border-yellow-200 bg-yellow-50 px-4 py-2'>
+         <p class='text-sm text-yellow-800'>You're offline. Changes will sync when connection is restored.</p>
+       </div>
+     );
+   }
    ```
+
    **Priority:** High
 
 2. **No "Syncing..." Indicator for Background Refetch**
@@ -780,13 +847,13 @@ const { connected, synced, error } = useProject(projectId);
 3. **No "Last Synced" Timestamp**
    - User doesn't know how old cached data is
    - **Recommendation:** Show `dataUpdatedAt` from query state
+
    ```jsx
-   {dataUpdatedAt && (
-     <span class="text-xs text-gray-500">
-       Last synced {formatDistanceToNow(dataUpdatedAt)}
-     </span>
-   )}
+   {
+     dataUpdatedAt && <span class='text-xs text-gray-500'>Last synced {formatDistanceToNow(dataUpdatedAt)}</span>;
+   }
    ```
+
    **Priority:** Medium
 
 4. **No Awareness Indicators (Who's Editing)**
@@ -802,16 +869,19 @@ const { connected, synced, error } = useProject(projectId);
 ### Edge Case 1: IndexedDB Quota Exceeded ❌ **NOT HANDLED**
 
 **Scenario:**
+
 - User has 100 projects, each with 1000 studies
 - Each Yjs document stores full update history
 - IndexedDB quota exceeded (browser typically 50MB-1GB)
 
 **Current Behavior:**
+
 - IndexedDB write fails silently
 - Yjs continues in-memory
 - On page reload, offline changes lost
 
 **Recommendation:** Add quota management
+
 ```javascript
 // In IndexeddbPersistence initialization
 try {
@@ -832,19 +902,22 @@ try {
 ### Edge Case 2: Yjs Update History Grows Unbounded ⚠️ **POTENTIAL ISSUE**
 
 **Scenario:**
+
 - Long-lived project with thousands of edits
 - Yjs stores every single update in IndexedDB
 - Database size grows indefinitely
 
 **Yjs Behavior:**
+
 - No automatic compaction
 - Update history needed for offline conflict resolution
 - Can be manually compacted via `Y.encodeStateAsUpdate()`
 
 **Recommendation:** Periodic compaction
+
 ```javascript
 // After successful sync, compact old updates
-provider.on('sync', async (isSynced) => {
+provider.on('sync', async isSynced => {
   if (isSynced) {
     // Compact updates older than 30 days
     const stateVector = Y.encodeStateVector(ydoc);
@@ -861,6 +934,7 @@ provider.on('sync', async (isSynced) => {
 ### Edge Case 3: LocalStorage Auth Cache Falls Back to Stale Data ⚠️
 
 **Scenario:**
+
 1. User authenticates at 9:00 AM (cached to LocalStorage)
 2. Admin revokes user's access at 10:00 AM
 3. User's auth session expires at 10:05 AM
@@ -869,18 +943,21 @@ provider.on('sync', async (isSynced) => {
 6. User sees app as if still authenticated
 
 **Current Mitigation:**
+
 - ✅ API requests will fail (403 Forbidden)
 - ✅ Query errors will show in UI
 
 **Gap:**
+
 - User sees authenticated UI until first API call fails
 - Confusing UX
 
 **Recommendation:** Add server-validated "auth check" on app load
+
 ```javascript
 // On app load (when online)
 if (navigator.onLine) {
-  await auth.forceRefreshSession();  // Already exists
+  await auth.forceRefreshSession(); // Already exists
   // If fails, clear cached auth
 }
 ```
@@ -894,28 +971,32 @@ if (navigator.onLine) {
 ### Edge Case 4: User Edits Project While Connection Flapping ⚠️
 
 **Scenario:**
+
 - User on unreliable network
 - Connection drops and reconnects every 10 seconds
 - User continues editing during disconnections
 
 **Yjs Behavior:**
+
 - ✅ All edits buffered in IndexedDB
 - ✅ Sent to server on reconnection
 - ✅ No data loss
 
 **UX Issue:**
+
 - User doesn't know if edits are saved to server
 - **Recommendation:** Show "Synced" checkmark after successful sync
+
 ```jsx
-{synced() ? (
-  <div class="flex items-center gap-1 text-green-600">
-    <CheckIcon /> Synced
-  </div>
-) : (
-  <div class="flex items-center gap-1 text-yellow-600">
-    <SyncIcon class="animate-spin" /> Syncing...
-  </div>
-)}
+{
+  synced() ?
+    <div class='flex items-center gap-1 text-green-600'>
+      <CheckIcon /> Synced
+    </div>
+  : <div class='flex items-center gap-1 text-yellow-600'>
+      <SyncIcon class='animate-spin' /> Syncing...
+    </div>;
+}
 ```
 
 **Priority:** Medium
@@ -925,10 +1006,12 @@ if (navigator.onLine) {
 ### Edge Case 5: Multiple Tabs Editing Same Project ✅ **HANDLED**
 
 **Scenario:**
+
 - User opens project in 2 browser tabs
 - Edits in both tabs simultaneously
 
 **Yjs Behavior:**
+
 - ✅ BroadcastChannel syncs Y.Docs across tabs
 - ✅ Both tabs share same IndexedDB
 - ✅ Edits merged correctly
@@ -940,24 +1023,28 @@ if (navigator.onLine) {
 ### Edge Case 6: Unnecessary WebSocket Connections for All Projects ❌ **CRITICAL ISSUE**
 
 **Current Behavior:**
+
 - `useProject()` hook called in `ProjectView.jsx` (line 47)
 - Creates WebSocket connection immediately when component mounts
 - Connection registry prevents duplicate connections per project
 - **BUT:** If user has project list visible (e.g., Dashboard), all projects are rendered in the list
 
 **Problem Scenario:**
+
 1. User has 50 projects
 2. User views Dashboard page
 3. Each project card potentially mounts and calls `useProject()`
 4. **Result:** 50+ WebSocket connections to server simultaneously
 
 **Investigation Needed:**
+
 ```bash
 # Check where useProject is called
 grep -r "useProject(" packages/web/src/components/
 ```
 
 **Current Findings:**
+
 - [ProjectView.jsx:47](packages/web/src/components/project/ProjectView.jsx:47) - Main project view (✅ **CORRECT**)
 - [ChecklistYjsWrapper.jsx](packages/web/src/components/checklist/ChecklistYjsWrapper.jsx) - Checklist editing (✅ **CORRECT**)
 - [ReconciliationWrapper.jsx](packages/web/src/components/project/reconcile-tab/amstar2-reconcile/ReconciliationWrapper.jsx) - Reconciliation (✅ **CORRECT**)
@@ -994,6 +1081,7 @@ Only maintain **2 WebSocket connections** maximum:
 **If Issue Confirmed:**
 
 **Solution 1: Lazy Connection (Recommended)**
+
 ```javascript
 // In useProject/index.js
 export function useProject(projectId, options = {}) {
@@ -1010,7 +1098,7 @@ export function useProject(projectId, options = {}) {
 
   return {
     ...projectConnection,
-    connect,  // Expose for manual connection
+    connect, // Expose for manual connection
   };
 }
 
@@ -1022,6 +1110,7 @@ const projectConnection = useProject(project.id, { autoConnect: false });
 ```
 
 **Solution 2: Route-Based Connection**
+
 ```javascript
 // Only allow useProject() on project detail routes
 // Dashboard/list should use TanStack Query for metadata only
@@ -1038,11 +1127,13 @@ const projectConnection = useProject(project.id, { autoConnect: false });
 **Currently:** Service worker disabled, so no update issues.
 
 **When SW enabled:**
+
 - New version detected while user editing
 - Old SW serves old assets
 - New code expects new data format
 
 **Recommendation (when SW enabled):**
+
 ```javascript
 // Notify user of update, allow them to choose when to reload
 registration.addEventListener('updatefound', () => {
@@ -1069,6 +1160,7 @@ registration.addEventListener('updatefound', () => {
 **Issue:** No offline app shell means app completely broken when offline.
 
 **Solution:**
+
 1. Uncomment service worker registration in `packages/web/src/main.jsx`
 2. Scope service worker to `/app.html` and assets
 3. Test offline loading, navigation, and cache busting
@@ -1083,11 +1175,13 @@ registration.addEventListener('updatefound', () => {
 **Issue:** Potentially connecting to multiple project WebSockets simultaneously instead of only active project + notifications.
 
 **Required Architecture:**
+
 - **1 Notifications WebSocket** - User-scoped for membership changes (✅ already correct)
 - **1 Project WebSocket** - Only for actively viewed/edited project
 - **0 WebSockets** - For project list/dashboard (use TanStack Query only)
 
 **Verification Steps:**
+
 1. Open browser DevTools → Network → WS filter
 2. Navigate to Dashboard with 10+ projects
 3. Count active WebSocket connections
@@ -1095,10 +1189,11 @@ registration.addEventListener('updatefound', () => {
 5. **If More:** Projects list is mounting `useProject()` - needs fix
 
 **Solution (if issue confirmed):**
+
 ```javascript
 // Option 1: Add autoConnect flag to useProject
 export function useProject(projectId, options = {}) {
-  const { autoConnect = false } = options;  // Default to false
+  const { autoConnect = false } = options; // Default to false
 
   if (autoConnect) {
     createEffect(() => {
@@ -1106,7 +1201,7 @@ export function useProject(projectId, options = {}) {
     });
   }
 
-  return { ...projectConnection, connect };  // Allow manual connect
+  return { ...projectConnection, connect }; // Allow manual connect
 }
 
 // In ProjectView.jsx (active project detail)
@@ -1127,6 +1222,7 @@ const project = useProject(projectId, { autoConnect: false });
 **Issue:** Users don't know when they're offline.
 
 **Solution:**
+
 ```jsx
 // In App.jsx or Navbar.jsx
 import useOnlineStatus from '@/primitives/useOnlineStatus';
@@ -1136,11 +1232,9 @@ function OfflineBanner() {
 
   return (
     <Show when={!isOnline()}>
-      <div class="bg-yellow-50 border-b px-4 py-2 flex items-center gap-2">
-        <AlertCircle class="h-4 w-4 text-yellow-600" />
-        <p class="text-sm text-yellow-800">
-          You're offline. Changes will sync when connection is restored.
-        </p>
+      <div class='flex items-center gap-2 border-b bg-yellow-50 px-4 py-2'>
+        <AlertCircle class='h-4 w-4 text-yellow-600' />
+        <p class='text-sm text-yellow-800'>You're offline. Changes will sync when connection is restored.</p>
       </div>
     </Show>
   );
@@ -1159,15 +1253,18 @@ function OfflineBanner() {
 **Issue:** Users don't know if cached data is being refreshed.
 
 **Solution:**
+
 ```jsx
 const { data, isRefetching, dataUpdatedAt } = useProjectList();
 
-{isRefetching() && (
-  <div class="flex items-center gap-2 text-sm text-gray-600">
-    <Spinner class="h-4 w-4 animate-spin" />
-    Syncing project list...
-  </div>
-)}
+{
+  isRefetching() && (
+    <div class='flex items-center gap-2 text-sm text-gray-600'>
+      <Spinner class='h-4 w-4 animate-spin' />
+      Syncing project list...
+    </div>
+  );
+}
 ```
 
 **Effort:** 2-3 hours (across multiple components)
@@ -1180,14 +1277,15 @@ const { data, isRefetching, dataUpdatedAt } = useProjectList();
 **Issue:** Users can't tell if data is fresh or stale.
 
 **Solution:**
+
 ```jsx
 import { formatDistanceToNow } from 'date-fns';
 
-{dataUpdatedAt && (
-  <span class="text-xs text-gray-500">
-    Last synced {formatDistanceToNow(dataUpdatedAt, { addSuffix: true })}
-  </span>
-)}
+{
+  dataUpdatedAt && (
+    <span class='text-xs text-gray-500'>Last synced {formatDistanceToNow(dataUpdatedAt, { addSuffix: true })}</span>
+  );
+}
 ```
 
 **Effort:** 2-3 hours
@@ -1200,6 +1298,7 @@ import { formatDistanceToNow } from 'date-fns';
 **Issue:** No handling when storage quota exceeded.
 
 **Solution:**
+
 ```javascript
 // Add to useProject/index.js
 async function handleQuotaError(projectId) {
@@ -1236,13 +1335,25 @@ try {
 **Issue:** No visual indication of sync status per project.
 
 **Solution:**
+
 ```jsx
 // In ProjectCard.jsx
 const { connected, synced } = useProject(project.id);
 
-<Badge variant={synced() ? 'success' : connected() ? 'warning' : 'error'}>
-  {synced() ? 'Synced' : connected() ? 'Syncing...' : 'Offline'}
-</Badge>
+<Badge
+  variant={
+    synced() ? 'success'
+    : connected() ?
+      'warning'
+    : 'error'
+  }
+>
+  {synced() ?
+    'Synced'
+  : connected() ?
+    'Syncing...'
+  : 'Offline'}
+</Badge>;
 ```
 
 **Effort:** 3-4 hours
@@ -1255,6 +1366,7 @@ const { connected, synced } = useProject(project.id);
 **Issue:** LocalStorage has small quota, synchronous blocking.
 
 **Solution:**
+
 ```javascript
 // Create new auth-cache.js using idb library
 import { openDB } from 'idb';
@@ -1265,7 +1377,7 @@ export async function saveAuthCache(userData) {
   const db = await openDB(AUTH_DB, 1, {
     upgrade(db) {
       db.createObjectStore('auth');
-    }
+    },
   });
   await db.put('auth', userData, 'current-user');
 }
@@ -1286,6 +1398,7 @@ export async function loadAuthCache() {
 **Issue:** PDFs accumulate indefinitely.
 
 **Solution:**
+
 ```javascript
 // In pdfCache.js
 const MAX_PDF_CACHE_SIZE_MB = 100;
@@ -1323,6 +1436,7 @@ async function evictLeastRecentlyUsed() {
 **Issue:** No visibility into other users' presence.
 
 **Solution:**
+
 ```jsx
 // In ChecklistView.jsx
 const awareness = connectionManager.getAwareness();
@@ -1333,11 +1447,9 @@ createEffect(() => {
   });
 });
 
-<div class="flex items-center gap-1">
-  <For each={activeUsers()}>
-    {user => <Avatar src={user.image} title={user.name} />}
-  </For>
-</div>
+<div class='flex items-center gap-1'>
+  <For each={activeUsers()}>{user => <Avatar src={user.image} title={user.name} />}</For>
+</div>;
 ```
 
 **Effort:** 6-8 hours
@@ -1350,6 +1462,7 @@ createEffect(() => {
 **Issue:** Small lag between user action and Yjs update.
 
 **Solution:**
+
 ```jsx
 // In study creation
 function createStudy(data) {
@@ -1379,6 +1492,7 @@ function createStudy(data) {
 **Issue:** Update history grows unbounded for long-lived projects.
 
 **Solution:**
+
 ```javascript
 // Compact every 7 days or 10k updates
 let updateCount = 0;
@@ -1475,20 +1589,24 @@ CoRATES has **strong local-first foundations** with Yjs CRDT providing automatic
 ### Recommended Implementation Order:
 
 **Week 1 (Critical):**
+
 1. **Verify WebSocket connection count** - Check if multiple projects connect simultaneously
 2. **Fix connection strategy** (if needed) - Only active project + notifications
 3. Enable service worker for web package
 4. Add global offline banner
 
 **Week 2 (High Priority):**
+
 - Add background refetch indicators
 - Add "last synced" timestamps
 
 **Week 3 (High Priority):**
+
 - Implement quota management
 - Add connection status badges
 
 **Month 2 (Medium Priority):**
+
 - Migrate auth cache to IndexedDB
 - Add LRU PDF eviction
 - Add awareness indicators (optional)

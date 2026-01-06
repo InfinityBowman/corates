@@ -14,6 +14,7 @@ This technical debt audit examined 397 source files across the CoRATES codebase,
 ### Overall Rating: **GOOD** ✅ (with areas for improvement)
 
 **Codebase Statistics:**
+
 - **Total Source Files:** 397 (JS/JSX/TS/TSX)
 - **Test Files:** 72 (18% test coverage by file count)
 - **TODO/FIXME Comments:** 3 actionable items
@@ -21,6 +22,7 @@ This technical debt audit examined 397 source files across the CoRATES codebase,
 - **Console Statements:** 20+ files (many intentional logging)
 
 **Key Strengths:**
+
 - ✅ Well-organized monorepo structure
 - ✅ Consistent use of barrel exports (`index.js`)
 - ✅ Centralized validation with Zod schemas
@@ -28,6 +30,7 @@ This technical debt audit examined 397 source files across the CoRATES codebase,
 - ✅ Deprecated code properly marked with alternatives
 
 **Critical Issues:**
+
 - ⚠️ **Magic numbers scattered throughout** - Need constants file
 - ⚠️ **Duplicated error handling patterns** - Missing abstraction
 - ⚠️ **Inconsistent import paths** - Mix of relative (`../../../`) and aliases (`@/`)
@@ -65,11 +68,13 @@ This technical debt audit examined 397 source files across the CoRATES codebase,
 **Issue:** Errors caught by ErrorBoundary are not sent to monitoring service.
 
 **Impact:**
+
 - Production errors invisible to team
 - No proactive error detection
 - User issues go unreported
 
 **Recommendation:**
+
 ```javascript
 import * as Sentry from '@sentry/solidjs';
 
@@ -96,10 +101,12 @@ resetError={() => {
 **Issue:** Password change form exists but doesn't call API.
 
 **Impact:**
+
 - Users cannot change passwords
 - Potential security issue if users want to rotate credentials
 
 **Recommendation:**
+
 ```javascript
 async function handlePasswordChange(e) {
   e.preventDefault();
@@ -125,7 +132,9 @@ async function handlePasswordChange(e) {
 **Location:** [landing/src/routes/contact.jsx:111](packages/landing/src/routes/contact.jsx:111)
 
 ```jsx
-{/* TODO FAQ */}
+{
+  /* TODO FAQ */
+}
 ```
 
 **Issue:** Placeholder for FAQ section on contact page.
@@ -140,11 +149,13 @@ async function handlePasswordChange(e) {
 ### Non-Actionable TODOs (False Positives)
 
 **"todo" tab/folder references:** 30+ occurrences
+
 - These are legitimate feature names, not TODO comments
 - Examples: `TodoTab.jsx`, `todo-tab/`, `getTodoChecklists()`
 - ✅ **No action needed**
 
 **Spanish translation "todo":** 2 occurrences in PDF viewer
+
 - `applyAll: 'Aplicar todo'` - Spanish for "Apply all"
 - ✅ **No action needed**
 
@@ -167,11 +178,13 @@ billingRoutes.post('/checkout', billingCheckoutRateLimit, requireAuth, async c =
 ```
 
 **Issue:**
+
 - Endpoint marked deprecated but fully functional
 - Increases maintenance burden
 - Confuses developers about which API to use
 
 **Usage Check:**
+
 ```bash
 # Search for calls to /api/billing/checkout
 grep -r "'/api/billing/checkout'" packages/web/src
@@ -196,7 +209,7 @@ grep -r "'/api/billing/checkout'" packages/web/src
 async function grantAccess(_userId, _options = {}) {
   throw new Error(
     'User-level subscription management is deprecated. ' +
-    'Billing is now org-scoped. Use /admin/orgs/:orgId to manage subscriptions.'
+      'Billing is now org-scoped. Use /admin/orgs/:orgId to manage subscriptions.',
   );
 }
 
@@ -209,6 +222,7 @@ async function revokeAccess(_userId) {
 ```
 
 **Issue:**
+
 - Functions throw errors immediately (completely non-functional)
 - Not exported from module
 - Never called (would crash if called)
@@ -235,11 +249,13 @@ export function getGoogleConnectUrl() {
 ```
 
 **Status:** ✅ **Acceptable**
+
 - Properly marked with `@deprecated`
 - Console warning alerts developers
 - Alternative function documented
 
 **Recommendation:**
+
 - Search codebase for usage
 - If unused, schedule for removal in next major version
 - If used, create deprecation timeline
@@ -256,22 +272,26 @@ export function getGoogleConnectUrl() {
 **Occurrences:** 50+ files
 
 **Pattern:**
+
 ```javascript
 // Repeated in every route file
 const db = createDb(c.env.DB);
 ```
 
 **Examples:**
+
 - [workers/src/routes/projects.js](packages/workers/src/routes/projects.js)
 - [workers/src/routes/members.js](packages/workers/src/routes/members.js)
 - [workers/src/routes/orgs/projects.js](packages/workers/src/routes/orgs/projects.js)
 - ... 47+ more
 
 **Issue:**
+
 - Same boilerplate in every route handler
 - If `createDb` signature changes, must update everywhere
 
 **Recommendation:** Create middleware or context helper
+
 ```javascript
 // New middleware: packages/workers/src/middleware/db.js
 export function withDb(c, next) {
@@ -283,9 +303,9 @@ export function withDb(c, next) {
 app.use('*', withDb);
 
 // In route handlers
-async (c) => {
-  const db = c.db;  // ✅ No boilerplate
-}
+async c => {
+  const db = c.db; // ✅ No boilerplate
+};
 ```
 
 **Priority:** Medium
@@ -299,6 +319,7 @@ async (c) => {
 **Occurrences:** 10+ files
 
 **Pattern:**
+
 ```javascript
 await syncMemberToDO(c.env, projectId, 'add', {
   userId: member.userId,
@@ -309,6 +330,7 @@ await syncMemberToDO(c.env, projectId, 'add', {
 ```
 
 **Examples:**
+
 - [workers/src/routes/invitations.js:244](packages/workers/src/routes/invitations.js:244)
 - [workers/src/routes/members.js:416](packages/workers/src/routes/members.js:416)
 - [workers/src/routes/orgs/members.js:204](packages/workers/src/routes/orgs/members.js:204)
@@ -316,10 +338,12 @@ await syncMemberToDO(c.env, projectId, 'add', {
 - ... 6+ more
 
 **Issue:**
+
 - Same function called with same data structure in many places
 - Action strings (`'add'`, `'remove'`, `'update'`) are magic strings
 
 **Recommendation:**
+
 ```javascript
 // Create enum for actions
 export const SyncAction = {
@@ -348,6 +372,7 @@ export async function syncProjectMember(env, projectId, action, memberData) {
 **Occurrences:** 30+ files
 
 **Pattern:**
+
 ```javascript
 try {
   // ... operation
@@ -358,17 +383,20 @@ try {
 ```
 
 **Examples:**
+
 - [workers/src/routes/projects.js](packages/workers/src/routes/projects.js)
 - [workers/src/routes/members.js](packages/workers/src/routes/members.js)
 - [workers/src/routes/billing/index.js](packages/workers/src/routes/billing/index.js)
 - ... 27+ more
 
 **Issue:**
+
 - Mix of `console.error` and structured logging
 - Inconsistent error messages (some generic, some detailed)
 - No correlation IDs
 
 **Recommendation:** Use domain error abstraction (already exists!)
+
 ```javascript
 // Already have createDomainError in errors module
 import { createDomainError } from '@corates/shared/errors';
@@ -397,6 +425,7 @@ try {
 **Occurrences:** 15+ files in `packages/web/src/api/`
 
 **Pattern:**
+
 ```javascript
 const response = await fetch(`${API_BASE}/api/...`, {
   method: 'POST',
@@ -414,6 +443,7 @@ return response.json();
 ```
 
 **Examples:**
+
 - [web/src/api/pdf-api.js](packages/web/src/api/pdf-api.js)
 - [web/src/api/google-drive.js](packages/web/src/api/google-drive.js)
 - [web/src/api/billing.js](packages/web/src/api/billing.js)
@@ -421,6 +451,7 @@ return response.json();
 - ... 11+ more
 
 **Recommendation:** Create API client wrapper
+
 ```javascript
 // packages/web/src/lib/apiClient.js
 export async function apiCall(endpoint, options = {}) {
@@ -448,7 +479,7 @@ import { apiCall } from '@lib/apiClient';
 export async function uploadPdf(orgId, projectId, studyId, file) {
   return apiCall(`/api/orgs/${orgId}/projects/${projectId}/studies/${studyId}/pdfs`, {
     method: 'POST',
-    body: formData,  // Handle FormData vs JSON
+    body: formData, // Handle FormData vs JSON
   });
 }
 ```
@@ -464,6 +495,7 @@ export async function uploadPdf(orgId, projectId, studyId, file) {
 **Occurrences:** 8+ files
 
 **Pattern:**
+
 ```javascript
 const params = new URLSearchParams();
 if (search) params.set('search', search);
@@ -473,6 +505,7 @@ const queryString = params.toString() ? `?${params.toString()}` : '';
 ```
 
 **Recommendation:** Create utility
+
 ```javascript
 // packages/web/src/lib/urlUtils.js
 export function buildQueryString(params) {
@@ -504,15 +537,16 @@ const url = `/api/storage${buildQueryString({ search, cursor, limit })}`;
 
 **Pattern:** Time values scattered across files without constants
 
-| Value | Location | Purpose | Should Be Constant |
-|-------|----------|---------|-------------------|
-| `60000` | [middleware/rateLimit.js:13](packages/workers/src/middleware/rateLimit.js:13) | Cleanup interval (1 min) | ✅ `CLEANUP_INTERVAL_MS` |
-| `5000` | [docs.js:104](packages/workers/src/docs.js:104) | Auth check interval | ✅ `AUTH_CHECK_INTERVAL_MS` |
-| `60 * 1000` | [routes/google-drive.js:85](packages/workers/src/routes/google-drive.js:85) | Buffer time | ✅ `TOKEN_BUFFER_MS` |
-| `10 * 60 * 1000` | [auth/emailTemplates.js:100](packages/workers/src/auth/emailTemplates.js:100) | Magic link expiry | ✅ Already constant! |
-| `30000` | [useOnlineStatus.js:5](packages/web/src/primitives/useOnlineStatus.js) | Ping interval | ✅ `KEEPALIVE_INTERVAL_MS` |
+| Value            | Location                                                                      | Purpose                  | Should Be Constant          |
+| ---------------- | ----------------------------------------------------------------------------- | ------------------------ | --------------------------- |
+| `60000`          | [middleware/rateLimit.js:13](packages/workers/src/middleware/rateLimit.js:13) | Cleanup interval (1 min) | ✅ `CLEANUP_INTERVAL_MS`    |
+| `5000`           | [docs.js:104](packages/workers/src/docs.js:104)                               | Auth check interval      | ✅ `AUTH_CHECK_INTERVAL_MS` |
+| `60 * 1000`      | [routes/google-drive.js:85](packages/workers/src/routes/google-drive.js:85)   | Buffer time              | ✅ `TOKEN_BUFFER_MS`        |
+| `10 * 60 * 1000` | [auth/emailTemplates.js:100](packages/workers/src/auth/emailTemplates.js:100) | Magic link expiry        | ✅ Already constant!        |
+| `30000`          | [useOnlineStatus.js:5](packages/web/src/primitives/useOnlineStatus.js)        | Ping interval            | ✅ `KEEPALIVE_INTERVAL_MS`  |
 
 **Recommendation:** Create constants file
+
 ```javascript
 // packages/workers/src/config/constants.js
 export const TIME_CONSTANTS = {
@@ -536,18 +570,19 @@ export const RATE_LIMIT = {
 
 ### Category 2: Size Limits ⚠️ **INCONSISTENT**
 
-| Value | Location | Purpose | Issue |
-|-------|----------|---------|-------|
-| `50 * 1024 * 1024` | [google-drive.js:310](packages/workers/src/routes/google-drive.js:310) | 50MB max file size | ✅ Has comment |
-| `10000` | [admin/storage.js:69](packages/workers/src/routes/admin/storage.js:69) | Processing cap | ⚠️ No comment |
-| `50` | [adminStore.js:237](packages/web/src/stores/adminStore.js:237) | Pagination limit | ⚠️ Magic number |
+| Value              | Location                                                               | Purpose            | Issue           |
+| ------------------ | ---------------------------------------------------------------------- | ------------------ | --------------- |
+| `50 * 1024 * 1024` | [google-drive.js:310](packages/workers/src/routes/google-drive.js:310) | 50MB max file size | ✅ Has comment  |
+| `10000`            | [admin/storage.js:69](packages/workers/src/routes/admin/storage.js:69) | Processing cap     | ⚠️ No comment   |
+| `50`               | [adminStore.js:237](packages/web/src/stores/adminStore.js:237)         | Pagination limit   | ⚠️ Magic number |
 
 **Recommendation:**
+
 ```javascript
 // packages/shared/src/limits.js
 export const FILE_LIMITS = {
-  MAX_PDF_SIZE_BYTES: 50 * 1024 * 1024,  // 50MB
-  MAX_UPLOAD_SIZE_BYTES: 100 * 1024 * 1024,  // 100MB
+  MAX_PDF_SIZE_BYTES: 50 * 1024 * 1024, // 50MB
+  MAX_UPLOAD_SIZE_BYTES: 100 * 1024 * 1024, // 100MB
 };
 
 export const PAGINATION = {
@@ -576,6 +611,7 @@ const closeCode = 1000; // Normal closure
 ```
 
 **Status:** ✅ **Acceptable**
+
 - WebSocket close codes are standard
 - Comments explain meaning
 - Could be extracted to enum but low priority
@@ -587,11 +623,13 @@ const closeCode = 1000; // Normal closure
 **Pattern:** `XXXX-XXXX-XXXX` placeholders for codes
 
 **Occurrences:**
+
 - [account-merge.js:83](packages/workers/src/routes/account-merge.js:83) - Account merge code format
 - [TwoFactorVerify.jsx:91](packages/web/src/components/auth/TwoFactorVerify.jsx:91) - Backup code placeholder
 - [AccountProviderCard.jsx:21](packages/web/src/components/profile/AccountProviderCard.jsx:21) - Account ID masking
 
 **Status:** ✅ **Acceptable**
+
 - These are display formats, not business logic
 - Consistent pattern across codebase
 
@@ -606,25 +644,29 @@ const closeCode = 1000; // Normal closure
 **Examples:**
 
 **Workers (Relative Paths):**
+
 ```javascript
 import { syncMemberToDO } from '../lib/project-sync.js';
 import { syncMemberToDO } from '../../lib/project-sync.js';
-import { syncMemberToDO } from '../../../lib/project-sync.js';  // ⚠️ Deep nesting
+import { syncMemberToDO } from '../../../lib/project-sync.js'; // ⚠️ Deep nesting
 ```
 
 **Web (Mixed):**
+
 ```javascript
-import useProject from '@/primitives/useProject/index.js';  // ✅ Alias
-import { useBetterAuth } from '@api/better-auth-store.js';  // ✅ Alias
-import '../../../styles/something.css';  // ⚠️ Relative
+import useProject from '@/primitives/useProject/index.js'; // ✅ Alias
+import { useBetterAuth } from '@api/better-auth-store.js'; // ✅ Alias
+import '../../../styles/something.css'; // ⚠️ Relative
 ```
 
 **Issue:**
+
 - Hard to refactor file structure
 - Difficult to find import sources
 - Inconsistent team conventions
 
 **Recommendation:** Standardize on aliases
+
 ```javascript
 // tsconfig.json / jsconfig.json (already configured for web)
 {
@@ -662,6 +704,7 @@ import '../../../styles/something.css';  // ⚠️ Relative
 **Pattern:** Many `index.js` files that only re-export
 
 **Examples:**
+
 ```javascript
 // packages/web/src/components/project/todo-tab/index.js
 export { default as TodoStudyRow } from './TodoStudyRow.jsx';
@@ -674,23 +717,28 @@ export { InvoicesList } from './InvoicesList.jsx';
 ```
 
 **Issue:**
+
 - Adds indirection without clear benefit
 - Most files only have 1-2 exports
 - Increases bundle size slightly (re-exports entire modules)
 
 **When Barrels Are Good:**
+
 - Public API of a package (library exports)
 - Many small utilities in one folder
 - Intentional abstraction boundary
 
 **When to Avoid:**
+
 - Single component folders
 - Components only used internally
 
 **Recommendation:**
+
 - Keep barrel exports for major boundaries (e.g., `components/billing/index.js`)
 - Remove for single-component folders (e.g., `todo-tab/index.js`)
 - Direct imports are clearer:
+
   ```javascript
   // Instead of
   import { ToDoTab } from './todo-tab';
@@ -708,6 +756,7 @@ export { InvoicesList } from './InvoicesList.jsx';
 ### Issue 3: Test File Placement Inconsistency 🟡 **MINOR ISSUE**
 
 **Current Structure:**
+
 ```
 packages/workers/src/
   routes/
@@ -724,6 +773,7 @@ packages/workers/src/
 ```
 
 **Status:** ✅ **Actually Good**
+
 - Tests colocated with source
 - Easy to find tests for a file
 - Follows modern best practices
@@ -739,6 +789,7 @@ packages/workers/src/
 **Current State:** Every route has custom error handling
 
 **Pattern Repeated 50+ Times:**
+
 ```javascript
 try {
   // ... operation
@@ -749,6 +800,7 @@ try {
 ```
 
 **Recommendation:** Centralized error handling middleware
+
 ```javascript
 // packages/workers/src/middleware/errorHandler.js
 export async function errorHandler(c, next) {
@@ -776,7 +828,7 @@ export async function errorHandler(c, next) {
 
 // Apply globally
 app.use('*', errorHandler);
-app.use('*', withDb);  // DB middleware can now throw, will be caught
+app.use('*', withDb); // DB middleware can now throw, will be caught
 ```
 
 **Priority:** High
@@ -790,6 +842,7 @@ app.use('*', withDb);  // DB middleware can now throw, will be caught
 **Current State:** Permission checks scattered in middleware and routes
 
 **Pattern:**
+
 ```javascript
 // In various files
 if (membership.role !== 'owner') {
@@ -802,6 +855,7 @@ if (!['owner', 'admin'].includes(membership.role)) {
 ```
 
 **Recommendation:** Permission utility
+
 ```javascript
 // packages/workers/src/lib/permissions.js
 export const OrgRole = {
@@ -839,13 +893,10 @@ if (!hasOrgPermission(membership.role, OrgRole.ADMIN)) {
 **Current State:** Common query patterns repeated
 
 **Pattern:**
+
 ```javascript
 // Repeated pattern: "get first row or return error"
-const [project] = await db
-  .select()
-  .from(projects)
-  .where(eq(projects.id, projectId))
-  .limit(1);
+const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
 
 if (!project) {
   const error = createDomainError('PROJECT_NOT_FOUND', { projectId });
@@ -854,6 +905,7 @@ if (!project) {
 ```
 
 **Recommendation:** Query helpers
+
 ```javascript
 // packages/workers/src/lib/queryHelpers.js
 export async function findOneOrThrow(query, errorCode, context) {
@@ -872,7 +924,7 @@ export async function findMany(query, { offset = 0, limit = 50 } = {}) {
 const project = await findOneOrThrow(
   db.select().from(projects).where(eq(projects.id, projectId)),
   'PROJECT_NOT_FOUND',
-  { projectId }
+  { projectId },
 );
 ```
 
@@ -887,12 +939,13 @@ const project = await findOneOrThrow(
 **Current State:** Form validation logic duplicated across components
 
 **Pattern:**
+
 ```javascript
 // In CreateProjectForm.jsx, CreateOrgPage.jsx, etc.
 const [errors, setErrors] = createSignal({});
 const [isSubmitting, setIsSubmitting] = createSignal(false);
 
-const handleSubmit = async (e) => {
+const handleSubmit = async e => {
   e.preventDefault();
   setIsSubmitting(true);
 
@@ -918,6 +971,7 @@ const handleSubmit = async (e) => {
 ```
 
 **Recommendation:** Create form hook
+
 ```javascript
 // packages/web/src/primitives/useForm.js
 export function useForm(schema, onSubmit) {
@@ -925,7 +979,7 @@ export function useForm(schema, onSubmit) {
   const [errors, setErrors] = createSignal({});
   const [isSubmitting, setIsSubmitting] = createSignal(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrors({});
@@ -934,7 +988,7 @@ export function useForm(schema, onSubmit) {
     const result = schema.safeParse(values());
     if (!result.success) {
       const fieldErrors = {};
-      result.error.issues.forEach((issue) => {
+      result.error.issues.forEach(issue => {
         fieldErrors[issue.path[0]] = issue.message;
       });
       setErrors(fieldErrors);
@@ -955,7 +1009,7 @@ export function useForm(schema, onSubmit) {
 }
 
 // Usage
-const form = useForm(createOrgSchema, async (data) => {
+const form = useForm(createOrgSchema, async data => {
   await createOrg(data);
   navigate('/orgs');
 });
@@ -972,6 +1026,7 @@ const form = useForm(createOrgSchema, async (data) => {
 ### Unused Exports Analysis
 
 **Methodology:**
+
 1. Search for all `export` statements
 2. Grep for imports of each export
 3. Identify exports with 0 imports
@@ -983,6 +1038,7 @@ const form = useForm(createOrgSchema, async (data) => {
 **Location:** [web/src/stores/adminStore.js:217-232](packages/web/src/stores/adminStore.js:217)
 
 **Status:**
+
 - Not exported from module
 - Functions throw errors
 - **Confirmed safe to delete**
@@ -997,6 +1053,7 @@ const form = useForm(createOrgSchema, async (data) => {
 **Pattern:** Some route files have both old and new endpoints
 
 **Example:**
+
 ```javascript
 // Old endpoint (may be unused)
 app.get('/api/projects', ...)
@@ -1006,6 +1063,7 @@ app.get('/api/orgs/:orgId/projects', ...)
 ```
 
 **Recommendation:** Audit API usage
+
 1. Check frontend for old endpoint calls
 2. Check documentation for deprecated routes
 3. Add deprecation headers to old routes
@@ -1023,6 +1081,7 @@ app.get('/api/orgs/:orgId/projects', ...)
 **Pattern:** Inconsistent file naming conventions
 
 **Component Files:**
+
 ```
 ✅ PascalCase: ProjectView.jsx, OverviewTab.jsx (React/Solid convention)
 ✅ PascalCase: CreateOrgPage.jsx, BillingPage.jsx
@@ -1030,6 +1089,7 @@ app.get('/api/orgs/:orgId/projects', ...)
 ```
 
 **Utility Files:**
+
 ```
 ✅ camelCase: formStatePersistence.js, queryClient.js
 ✅ kebab-case: better-auth-store.js, checklist-domain.js
@@ -1037,11 +1097,13 @@ app.get('/api/orgs/:orgId/projects', ...)
 ```
 
 **Status:** ✅ **Mostly Consistent**
+
 - Components: PascalCase ✅
 - Hooks: camelCase starting with `use` ✅
 - Utilities: Mostly camelCase, some kebab-case
 
 **Recommendation:** Document conventions in `CONTRIBUTING.md`
+
 ```markdown
 ## File Naming Conventions
 
@@ -1062,34 +1124,38 @@ app.get('/api/orgs/:orgId/projects', ...)
 **Pattern:** Mix of verb styles
 
 **Examples:**
+
 ```javascript
 // Verb-first (imperative)
-createProject()
-deleteStudy()
-updateMember()
+createProject();
+deleteStudy();
+updateMember();
 
 // Noun-first
-projectCreate()  // ⚠️ Rare, but exists in some files
+projectCreate(); // ⚠️ Rare, but exists in some files
 
 // Getter-style
-getProjects()
-getTodoChecklists()
+getProjects();
+getTodoChecklists();
 
 // Boolean queries
-hasPermission()
-isOwner()
+hasPermission();
+isOwner();
 ```
 
 **Status:** ✅ **Mostly Consistent**
+
 - Verb-first dominates (good!)
 - Boolean functions use `is`/`has` prefix
 - Getters use `get` prefix
 
 **Minor Issues:**
+
 - A few `fetch*` vs `get*` inconsistencies
 - Some `handle*` vs `on*` for event handlers
 
 **Recommendation:** Codify in style guide
+
 ```markdown
 ## Function Naming
 
@@ -1249,6 +1315,7 @@ isOwner()
 ### Technical Debt Score: **6.5/10** (Lower is better)
 
 **Calculation:**
+
 - **Code Duplication:** 3/4 (High duplication in API calls, error handling)
 - **Dead Code:** 2/4 (Some deprecated functions, mostly cleaned up)
 - **Magic Numbers:** 3/4 (Many scattered constants)
@@ -1261,25 +1328,16 @@ isOwner()
 ### Prioritized Action Plan
 
 **Week 1 (Critical):**
+
 1. Implement error monitoring (Sentry)
 2. Implement password change
 3. Create API client abstraction
 
-**Week 2-3 (High):**
-4. Standardize import paths
-5. Create error handler middleware
-6. Extract constants file
+**Week 2-3 (High):** 4. Standardize import paths 5. Create error handler middleware 6. Extract constants file
 
-**Month 2 (Medium):**
-7. Remove deprecated code
-8. Create database middleware
-9. Standardize error patterns
-10. Create permission utility
+**Month 2 (Medium):** 7. Remove deprecated code 8. Create database middleware 9. Standardize error patterns 10. Create permission utility
 
-**Backlog (Low):**
-11. Remove unnecessary barrel exports
-12. Document naming conventions
-13. Create form validation hook
+**Backlog (Low):** 11. Remove unnecessary barrel exports 12. Document naming conventions 13. Create form validation hook
 
 ---
 
@@ -1292,6 +1350,7 @@ The CoRATES codebase demonstrates **good engineering practices** with intentiona
 3. **Minor inconsistencies** in import paths and naming
 
 **Key Strengths to Maintain:**
+
 - ✅ Well-organized monorepo structure
 - ✅ Colocated tests
 - ✅ Consistent use of Zod for validation
@@ -1299,6 +1358,7 @@ The CoRATES codebase demonstrates **good engineering practices** with intentiona
 - ✅ Deprecated code properly marked
 
 **Most Impactful Improvements:**
+
 1. API client abstraction (reduces 15+ files of duplication)
 2. Error handler middleware (cleans up 50+ route files)
 3. Constants file (makes limits configurable)

@@ -15,12 +15,14 @@ This audit reviews API consistency across 100+ endpoints in the CoRATES Hono bac
 ### Strengths
 
 **Consistent RESTful patterns:**
+
 - Resource-based naming: `/api/orgs`, `/api/users`, `/api/projects`
 - Standard HTTP verbs aligned with CRUD operations
 - Hierarchical nesting for related resources: `/api/orgs/:orgId/projects/:projectId/members`
 - Plural nouns for collections: `/orgs`, `/projects`, `/members`
 
 **Clear org-scoped architecture:**
+
 - All project-related operations properly scoped under org: `/api/orgs/:orgId/projects/...`
 - Consistent parameter naming: `:orgId`, `:projectId`, `:userId`, `:memberId`
 
@@ -68,10 +70,12 @@ GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs
 ```
 
 The `studies` resource doesn't have its own CRUD operations but is required in the path. This suggests either:
+
 1. Studies should be a first-class resource with CRUD endpoints
 2. PDFs should be directly under projects
 
 **Recommendation**:
+
 - If studies are a concept in the domain model, add study CRUD endpoints
 - Otherwise, simplify to `/api/orgs/:orgId/projects/:projectId/pdfs` and store studyId as metadata
 
@@ -92,6 +96,7 @@ DELETE /api/orgs/:orgId/projects/:projectId/members/:userId  // Uses :userId her
 ```
 
 **Recommendation**: Standardize to use the actual resource type. For org/project members, consider:
+
 - `:memberId` for membership records
 - `:userId` when directly referencing users
 
@@ -100,11 +105,13 @@ DELETE /api/orgs/:orgId/projects/:projectId/members/:userId  // Uses :userId her
 ### Strengths
 
 **Consistent success patterns:**
+
 - Creation operations return `201` status with created resource
 - Most operations return full resource objects
 - Success flags used consistently: `{ success: true, ... }`
 
 **Well-structured data:**
+
 - Timestamp consistency (mostly using Date objects, some using Unix timestamps)
 - Nested data follows logical hierarchies
 
@@ -118,20 +125,25 @@ DELETE /api/orgs/:orgId/projects/:projectId/members/:userId  // Uses :userId her
 **Problem**: Different patterns for successful operations:
 
 **Pattern A: Full resource return**
+
 ```javascript
 // orgs/projects.js:181-192
-return c.json({
-  id: projectId,
-  name: name.trim(),
-  description: description?.trim() || null,
-  orgId,
-  role: 'owner',
-  createdAt: now,
-  updatedAt: now,
-}, 201);
+return c.json(
+  {
+    id: projectId,
+    name: name.trim(),
+    description: description?.trim() || null,
+    orgId,
+    role: 'owner',
+    createdAt: now,
+    updatedAt: now,
+  },
+  201,
+);
 ```
 
 **Pattern B: Success flag with partial data**
+
 ```javascript
 // orgs/index.js:157
 return c.json({ success: true, orgId, ...result });
@@ -144,9 +156,10 @@ return c.json({ success: true, projectId });
 ```
 
 **Pattern C: Delegated response (no wrapping)**
+
 ```javascript
 // orgs/index.js:33
-return c.json(result);  // Raw Better Auth response
+return c.json(result); // Raw Better Auth response
 ```
 
 **Impact**: Frontend code must handle different response shapes for similar operations
@@ -154,23 +167,27 @@ return c.json(result);  // Raw Better Auth response
 **Recommendation**: Standardize on one pattern:
 
 **For GET operations** (queries): Return resource or array directly
+
 ```javascript
 return c.json(resource);
 return c.json(resources);
 ```
 
 **For POST/PUT operations** (mutations): Return full resource
+
 ```javascript
 return c.json(createdResource, 201);
 return c.json(updatedResource);
 ```
 
 **For DELETE operations**: Return confirmation with resource ID
+
 ```javascript
 return c.json({ success: true, deleted: resourceId });
 ```
 
 **For custom actions**: Return action-specific result
+
 ```javascript
 return c.json({ success: true, actionResult: ... });
 ```
@@ -197,6 +214,7 @@ updatedAt: now.getTime(),  // Unix timestamp (milliseconds)
 ```
 
 **Impact**:
+
 - Frontend must handle multiple date formats
 - Potential confusion between seconds and milliseconds
 - JSON serialization of Date objects varies by client
@@ -213,6 +231,7 @@ updatedAt: now.getTime(),  // Unix timestamp (milliseconds)
 ```
 
 Benefits:
+
 - Universally parseable
 - Timezone-aware
 - Human-readable
@@ -250,8 +269,8 @@ return c.json({
   meta: {
     projectCount: count,
     userRole: role,
-    computedAt: new Date().toISOString()
-  }
+    computedAt: new Date().toISOString(),
+  },
 });
 ```
 
@@ -263,6 +282,7 @@ return c.json({
 **Problem**: List endpoints inconsistently wrap data:
 
 **Pattern A: Wrapped with pagination**
+
 ```javascript
 // admin/users.js:175-183
 return c.json({
@@ -277,12 +297,14 @@ return c.json({
 ```
 
 **Pattern B: Direct array return**
+
 ```javascript
 // orgs/projects.js:61
-return c.json(results);  // Array of projects
+return c.json(results); // Array of projects
 ```
 
 **Pattern C: Wrapped without pagination**
+
 ```javascript
 // billing/index.js:151-154
 return c.json({
@@ -315,22 +337,25 @@ return c.json({
 ### Strengths
 
 **Excellent error consistency:**
+
 - Centralized error creation via `createDomainError()` from `@corates/shared`
 - Consistent error structure with domain-specific error codes
 - Proper HTTP status codes
 - Rich error context with field/operation details
 
 **Standardized error domains:**
+
 ```javascript
-AUTH_ERRORS
-USER_ERRORS
-PROJECT_ERRORS
-FILE_ERRORS
-VALIDATION_ERRORS
-SYSTEM_ERRORS
+AUTH_ERRORS;
+USER_ERRORS;
+PROJECT_ERRORS;
+FILE_ERRORS;
+VALIDATION_ERRORS;
+SYSTEM_ERRORS;
 ```
 
 **Consistent error handling pattern:**
+
 ```javascript
 try {
   // operation
@@ -356,7 +381,7 @@ try {
 ```javascript
 // Pattern A: Structured error with reason
 createDomainError(AUTH_ERRORS.FORBIDDEN, {
-  reason: 'org_not_found',  // Snake_case string
+  reason: 'org_not_found', // Snake_case string
   orgId,
 });
 
@@ -367,15 +392,20 @@ createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
 });
 
 // Pattern C: String message override
-createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-  operation: 'create_checkout_session',
-  originalError: error.message,
-}, 'Custom message string');  // Third parameter
+createDomainError(
+  SYSTEM_ERRORS.INTERNAL_ERROR,
+  {
+    operation: 'create_checkout_session',
+    originalError: error.message,
+  },
+  'Custom message string',
+); // Third parameter
 ```
 
 **Observation**: This is actually quite good - different error types use appropriate patterns. However, documentation would help clarify when to use each pattern.
 
 **Recommendation**: Document error patterns in API guide:
+
 - Auth/permission errors: Use `reason` field with snake_case identifier
 - Validation errors: Use `field` and `value` fields
 - System errors: Use `operation` and `originalError` fields
@@ -409,6 +439,7 @@ if (error.message?.includes('already') || error.message?.includes('member')) {
 **Impact**: Brittle error handling that depends on error message text
 
 **Recommendation**:
+
 1. Prefer error codes/types over string matching
 2. If using Better Auth, check their error structure for typed errors
 3. Consider wrapping Better Auth calls with typed error translation:
@@ -435,6 +466,7 @@ try {
 ### Positive Observations
 
 **Excellent practices:**
+
 - All errors return JSON (no plain text error responses)
 - Errors include operation context
 - Console logging for debugging while returning user-friendly errors
@@ -446,6 +478,7 @@ try {
 ### Current State
 
 **Only one paginated endpoint found:**
+
 ```javascript
 // admin/users.js:84-92
 GET /api/admin/users
@@ -469,6 +502,7 @@ Response:
 ```
 
 **Non-paginated list endpoints:**
+
 - `GET /api/orgs` - Returns all user's orgs (typically small)
 - `GET /api/orgs/:orgId/projects` - Returns all user's projects in org
 - `GET /api/orgs/:orgId/members` - Returns all org members
@@ -489,6 +523,7 @@ Response:
 - **Project members**: Could grow to dozens/hundreds
 
 **Impact**:
+
 - Performance degradation with large datasets
 - High memory usage in browser
 - Slow initial page loads
@@ -511,6 +546,7 @@ Response:
 ```
 
 **Priority targets:**
+
 1. `GET /api/orgs/:orgId/projects/:projectId/pdfs` (HIGH - can grow very large)
 2. `GET /api/orgs/:orgId/members` (MEDIUM - orgs can be large)
 3. `GET /api/orgs/:orgId/projects` (LOW - users typically have <20 projects)
@@ -582,25 +618,30 @@ return c.json(createPaginationResponse(users, total, pagination));
 ### Positive Patterns
 
 **Rate Limiting:**
+
 - Properly implemented on sensitive endpoints
 - Descriptive rate limit identifiers: `searchRateLimit`, `billingCheckoutRateLimit`
 - Applied at route level for clarity
 
 **Middleware Organization:**
+
 - Clear separation of concerns: auth, CSRF, quota, entitlement
 - Composable middleware chains
 - Context helpers: `getAuth(c)`, `getOrgContext(c)`, `getProjectContext(c)`
 
 **Validation:**
+
 - Zod schemas for request validation
 - `validateRequest()` middleware for consistent validation
 - Proper error responses for validation failures
 
 **Legacy Migration:**
+
 - Deprecated routes return 410 Gone with helpful migration messages
 - Webhook redirect endpoint provides clear guidance
 
 **Observability:**
+
 - Structured logging via `createLogger()`
 - Stripe webhook ledger for audit trail
 - Request ID tracking
@@ -613,12 +654,14 @@ return c.json(createPaginationResponse(users, total, pagination));
 **Recommendation**: Generate OpenAPI 3.0 spec from routes
 
 Benefits:
+
 - Auto-generated client SDKs
 - Interactive API documentation
 - Contract testing
 - Type safety for frontend
 
 Tools:
+
 - `@hono/zod-openapi` - Generate OpenAPI from Zod schemas
 - Swagger UI integration
 
@@ -635,8 +678,8 @@ export interface ProjectResponse {
   description: string | null;
   orgId: string;
   role: 'owner' | 'admin' | 'member';
-  createdAt: string;  // ISO 8601
-  updatedAt: string;  // ISO 8601
+  createdAt: string; // ISO 8601
+  updatedAt: string; // ISO 8601
 }
 
 export interface PaginatedResponse<T> {
@@ -658,6 +701,7 @@ export interface PaginatedResponse<T> {
 **Recommendation**: Plan for future versioning
 
 Options:
+
 1. URL versioning: `/api/v1/orgs`, `/api/v2/orgs`
 2. Header versioning: `Accept: application/vnd.corates.v1+json`
 3. Query param: `/api/orgs?v=1`
@@ -670,6 +714,7 @@ Recommendation: Start with URL versioning when breaking changes are needed
 **Observation**: Generally good - JavaScript/JSON uses camelCase consistently
 
 Minor inconsistencies:
+
 - Error `reason` fields use snake_case (acceptable)
 - Database fields follow DB conventions
 - API responses use camelCase
@@ -679,14 +724,17 @@ Minor inconsistencies:
 ## Summary of Issues by Severity
 
 ### High Severity
+
 None identified. The API is well-structured.
 
 ### Medium Severity
+
 1. **Issue 2.1**: Inconsistent success response shapes
 2. **Issue 2.2**: Inconsistent timestamp formats
 3. **Issue 4.1**: No pagination for potentially large lists
 
 ### Low Severity
+
 1. **Issue 1.1**: Inconsistent action endpoint naming
 2. **Issue 1.2**: PDF route nesting inconsistency
 3. **Issue 1.3**: Inconsistent ID parameter naming
@@ -697,20 +745,24 @@ None identified. The API is well-structured.
 8. **Issue 4.3**: No standard pagination helper
 
 ### Very Low Severity
+
 None that weren't already categorized.
 
 ## Recommendations Priority
 
 ### P0 (Critical - Do Soon)
+
 1. **Standardize timestamp formats** to ISO 8601 strings across all endpoints
 2. **Add pagination** to PDF list endpoint (highest risk of large datasets)
 
 ### P1 (Important - Plan For)
+
 1. **Standardize success response shapes** across all mutation endpoints
 2. **Create pagination helpers** for reusable pagination logic
 3. **Document error patterns** in API development guide
 
 ### P2 (Nice to Have - Future)
+
 1. **Standardize action endpoint naming** convention
 2. **Review PDF/study nesting** and align with domain model
 3. **Add OpenAPI documentation** generation
@@ -720,12 +772,14 @@ None that weren't already categorized.
 ## Conclusion
 
 The CoRATES API demonstrates **strong overall consistency**, particularly in:
+
 - Error handling and domain modeling
 - RESTful resource naming
 - Middleware architecture
 - Security patterns (auth, CSRF, rate limiting)
 
 The main areas for improvement are:
+
 - Response shape standardization
 - Timestamp format consistency
 - Pagination for scalability
@@ -733,6 +787,7 @@ The main areas for improvement are:
 These are relatively minor issues that can be addressed incrementally without breaking existing clients. The API is production-ready and well-architected, with clear patterns that developers can follow.
 
 **Action Items:**
+
 1. Create API development guide documenting current patterns
 2. Implement P0 recommendations in next sprint
 3. Plan P1 recommendations for Q1 2026
@@ -741,6 +796,7 @@ These are relatively minor issues that can be addressed incrementally without br
 ## Appendix: Route Inventory
 
 ### Public Routes (No Auth)
+
 - `POST /api/contact` - Contact form submission
 - `POST /api/email/send` - Email sending (rate limited)
 - `POST /api/billing/webhook` - Stripe webhook (deprecated)
@@ -749,7 +805,9 @@ These are relatively minor issues that can be addressed incrementally without br
 - `GET /healthz` - Liveness probe
 
 ### Authenticated Routes
+
 **Organizations:**
+
 - `GET /api/orgs` - List user's orgs
 - `POST /api/orgs` - Create org
 - `GET /api/orgs/:orgId` - Get org details
@@ -762,6 +820,7 @@ These are relatively minor issues that can be addressed incrementally without br
 - `POST /api/orgs/:orgId/set-active` - Set active org
 
 **Projects (Org-scoped):**
+
 - `GET /api/orgs/:orgId/projects` - List projects
 - `POST /api/orgs/:orgId/projects` - Create project
 - `GET /api/orgs/:orgId/projects/:projectId` - Get project
@@ -770,12 +829,14 @@ These are relatively minor issues that can be addressed incrementally without br
 - `POST /api/orgs/:orgId/projects/:projectId/leave` - Leave project
 
 **Project Members:**
+
 - `GET /api/orgs/:orgId/projects/:projectId/members` - List members
 - `POST /api/orgs/:orgId/projects/:projectId/members` - Add member (owner)
 - `PUT /api/orgs/:orgId/projects/:projectId/members/:userId` - Update role (owner)
 - `DELETE /api/orgs/:orgId/projects/:projectId/members/:userId` - Remove (owner or self)
 
 **Project Invitations:**
+
 - `GET /api/orgs/:orgId/projects/:projectId/invitations` - List invitations
 - `POST /api/orgs/:orgId/projects/:projectId/invitations` - Send invitation (owner)
 - `DELETE /api/orgs/:orgId/projects/:projectId/invitations/:invId` - Cancel (owner)
@@ -783,6 +844,7 @@ These are relatively minor issues that can be addressed incrementally without br
 - `POST /api/orgs/:orgId/projects/:projectId/invitations/accept/:token` - Accept
 
 **PDFs:**
+
 - `GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs` - List PDFs
 - `POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs` - Upload PDF
 - `GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:pdfId` - Get PDF
@@ -791,6 +853,7 @@ These are relatively minor issues that can be addressed incrementally without br
 - `POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:pdfId/duplicates` - Find duplicates
 
 **Users:**
+
 - `GET /api/users/search` - Search users (rate limited)
 - `GET /api/users/:userId` - Get user profile
 - `PUT /api/users/:userId` - Update user
@@ -799,6 +862,7 @@ These are relatively minor issues that can be addressed incrementally without br
 - `DELETE /api/users/avatar` - Delete avatar
 
 **Billing (Org-scoped):**
+
 - `GET /api/billing/subscription` - Get subscription status
 - `GET /api/billing/members` - Get org members count
 - `GET /api/billing/validate-plan-change` - Validate plan change
@@ -808,17 +872,21 @@ These are relatively minor issues that can be addressed incrementally without br
 - `POST /api/billing/trial/start` - Start trial (owner)
 
 **Google Drive:**
+
 - `GET /api/google-drive/status` - Connection status
 - `GET /api/google-drive/picker-token` - Get picker token
 - `POST /api/google-drive/import` - Import files
 
 **Account Management:**
+
 - `POST /api/accounts/merge/initiate` - Start merge
 - `POST /api/accounts/merge/verify` - Verify merge
 - `POST /api/accounts/merge/complete` - Complete merge
 
 ### Admin Routes (Admin Role Required)
+
 **User Management:**
+
 - `GET /api/admin/stats` - Dashboard stats
 - `GET /api/admin/users` - List all users (paginated)
 - `GET /api/admin/users/:userId` - Get user details
@@ -829,22 +897,26 @@ These are relatively minor issues that can be addressed incrementally without br
 - `DELETE /api/admin/users/:userId/sessions` - Revoke sessions
 
 **Storage Management:**
+
 - `GET /api/admin/storage/usage` - R2 usage stats
 - `GET /api/admin/storage/files` - List R2 files
 - `DELETE /api/admin/storage/files/:fileKey` - Delete R2 file
 - `POST /api/admin/storage/cleanup` - Cleanup orphans
 
 **Billing Management:**
+
 - `GET /api/admin/billing/subscriptions` - List subscriptions
 - `GET /api/admin/billing/orgs/:orgId/subscription` - Get org subscription
 - `POST /api/admin/billing/orgs/:orgId/subscription/cancel` - Cancel subscription
 - `POST /api/admin/billing/grants` - Create grant
 
 **Billing Observability:**
+
 - `GET /api/admin/billing/observability/ledger` - Webhook ledger
 - `GET /api/admin/billing/observability/grants` - List grants
 
 **Database Management:**
+
 - `GET /api/admin/database/tables` - List tables
 - `GET /api/admin/database/tables/:tableName/schema` - Table schema
 - `GET /api/admin/database/tables/:tableName/data` - Table data
@@ -854,14 +926,17 @@ These are relatively minor issues that can be addressed incrementally without br
 - `GET /api/admin/database/analytics/users-by-org` - User analytics
 
 **Organization Management:**
+
 - `GET /api/admin/orgs` - List all orgs
 - `GET /api/admin/orgs/:orgId` - Get org details
 
 ### WebSocket Routes
+
 - `GET /api/project-doc/:projectId` - ProjectDoc Durable Object
 - `GET /api/sessions/:sessionId` - UserSession Durable Object
 
 ### Development Only
+
 - `GET /api/db/users` - List users (dev)
 - `POST /api/db/users` - Create test user (dev)
 - `POST /api/db/migrate` - Run migrations (dev)
