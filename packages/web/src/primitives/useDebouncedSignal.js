@@ -26,7 +26,7 @@ export function useDebouncedSignal(initialValue = '', delay = 300) {
   const [debouncedValue, setDebouncedValue] = createSignal(initialValue);
 
   // Create debounced setter for the debounced value
-  const updateDebouncedValue = debounce((newValue) => {
+  const updateDebouncedValue = debounce(newValue => {
     setDebouncedValue(newValue);
   }, delay);
 

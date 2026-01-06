@@ -7,11 +7,13 @@ Migrate from custom billing API routes to Better Auth Stripe client plugin for s
 ## Current State
 
 ### Backend
+
 - ✅ Better Auth Stripe plugin configured in `packages/workers/src/auth/config.js`
 - ✅ Webhook handling at `/api/auth/stripe/webhook`
 - ✅ Custom routes at `/api/billing/*` that wrap Better Auth plugin methods
 
 ### Frontend
+
 - ❌ Not using Better Auth Stripe client plugin
 - ✅ Custom API functions in `packages/web/src/api/billing.js`
 - ✅ Components use `redirectToCheckout()` and `redirectToPortal()`
@@ -65,6 +67,7 @@ These provide custom business logic beyond standard subscriptions:
 ### Phase 1: Setup (No Breaking Changes)
 
 1. **Install client plugin package**
+
    ```bash
    cd packages/web
    pnpm add @better-auth/stripe
@@ -185,6 +188,7 @@ await authClient.subscription.upgrade({...});
 ## Testing Checklist
 
 ### Subscription Operations
+
 - [ ] Create new subscription (free → paid)
 - [ ] Upgrade subscription (starter → team)
 - [ ] Downgrade subscription (team → starter) - with validation
@@ -194,18 +198,21 @@ await authClient.subscription.upgrade({...});
 - [ ] Restore canceled subscription (if needed)
 
 ### Org Scoping
+
 - [ ] Subscription created for correct org
 - [ ] Org owner can manage subscription
 - [ ] Non-owner cannot manage subscription
 - [ ] Switching orgs shows correct subscription
 
 ### Error Cases
+
 - [ ] Network errors during checkout
 - [ ] Invalid plan name
 - [ ] Validation failures (quota exceeded)
 - [ ] Stripe API errors
 
 ### Edge Cases
+
 - [ ] User with no active org
 - [ ] User with multiple orgs
 - [ ] Browser back button from Stripe
