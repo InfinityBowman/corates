@@ -135,3 +135,29 @@ export async function startTrial() {
 
   return response.json();
 }
+
+/**
+ * Validate if a plan change is allowed
+ * Checks if current usage would exceed the target plan's quotas
+ * @param {string} targetPlan - The target plan ID to validate
+ * @returns {Promise<{
+ *   valid: boolean,
+ *   violations: Array<{ quotaKey: string, current: number, limit: number, message: string }>,
+ *   targetPlan: { id: string, name: string, quotas: object },
+ *   currentUsage: { projects: number, collaborators: number }
+ * }>}
+ */
+export async function validatePlanChange(targetPlan) {
+  const response = await handleFetchError(
+    fetch(
+      `${API_BASE}/api/billing/validate-plan-change?targetPlan=${encodeURIComponent(targetPlan)}`,
+      {
+        ...fetchOptions,
+        method: 'GET',
+      },
+    ),
+    { showToast: false },
+  );
+
+  return response.json();
+}

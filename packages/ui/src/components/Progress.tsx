@@ -99,3 +99,6 @@ const ProgressComponent: Component<ProgressProps> = props => {
 };
 
 export { ProgressComponent as Progress };
+
+// Export raw Ark UI primitive for custom layouts
+export { Progress as ProgressPrimitive };

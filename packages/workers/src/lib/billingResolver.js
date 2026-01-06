@@ -3,10 +3,10 @@
  * Centralizes subscription status evaluation and grant precedence logic
  */
 
-import { eq, and, desc, isNull } from 'drizzle-orm';
-import { subscription, orgAccessGrants } from '../db/schema.js';
+import { eq, and, desc, isNull, ne, count } from 'drizzle-orm';
+import { subscription, orgAccessGrants, projects, member } from '../db/schema.js';
 import { getActiveGrantsByOrgId } from '../db/orgAccessGrants.js';
-import { getPlan, DEFAULT_PLAN, getGrantPlan } from '@corates/shared/plans';
+import { getPlan, DEFAULT_PLAN, getGrantPlan, isUnlimitedQuota } from '@corates/shared/plans';
 
 /**
  * Check if a subscription is active based on status and period end
@@ -244,5 +244,81 @@ export async function resolveOrgAccess(db, orgId, now = new Date()) {
     quotas: freePlan.quotas,
     subscription: null,
     grant: null,
+  };
+}
+
+/**
+ * Get current resource usage for an organization
+ * Used for downgrade validation
+ *
+ * @param {DrizzleD1Database} db - Drizzle database instance
+ * @param {string} orgId - Organization ID
+ * @returns {Promise<{projects: number, collaborators: number}>}
+ */
+export async function getOrgResourceUsage(db, orgId) {
+  // Count projects in org
+  const [projectResult] = await db
+    .select({ count: count() })
+    .from(projects)
+    .where(eq(projects.orgId, orgId));
+
+  // Count non-owner members (owner doesn't count toward collaborator limit)
+  const [memberResult] = await db
+    .select({ count: count() })
+    .from(member)
+    .where(and(eq(member.organizationId, orgId), ne(member.role, 'owner')));
+
+  return {
+    projects: projectResult?.count || 0,
+    collaborators: memberResult?.count || 0,
+  };
+}
+
+/**
+ * Validate if an organization can downgrade/change to a target plan
+ * Checks if current usage would exceed the target plan's quotas
+ *
+ * @param {DrizzleD1Database} db - Drizzle database instance
+ * @param {string} orgId - Organization ID
+ * @param {string} targetPlanId - Target plan ID to validate against
+ * @returns {Promise<{valid: boolean, violations: Array<{quotaKey: string, used: number, limit: number, message: string}>}>}
+ */
+export async function validatePlanChange(db, orgId, targetPlanId) {
+  const targetPlan = getPlan(targetPlanId);
+  const usage = await getOrgResourceUsage(db, orgId);
+
+  const violations = [];
+
+  // Check projects quota
+  const projectsLimit = targetPlan.quotas['projects.max'];
+  if (!isUnlimitedQuota(projectsLimit) && usage.projects > projectsLimit) {
+    violations.push({
+      quotaKey: 'projects.max',
+      used: usage.projects,
+      limit: projectsLimit,
+      message: `You have ${usage.projects} projects, but the ${targetPlan.name} plan only allows ${projectsLimit}. Please archive or delete ${usage.projects - projectsLimit} project(s) before downgrading.`,
+    });
+  }
+
+  // Check collaborators quota
+  const collaboratorsLimit = targetPlan.quotas['collaborators.org.max'];
+  if (!isUnlimitedQuota(collaboratorsLimit) && usage.collaborators > collaboratorsLimit) {
+    violations.push({
+      quotaKey: 'collaborators.org.max',
+      used: usage.collaborators,
+      limit: collaboratorsLimit,
+      message: `You have ${usage.collaborators} team members, but the ${targetPlan.name} plan only allows ${collaboratorsLimit}. Please remove ${usage.collaborators - collaboratorsLimit} team member(s) before downgrading.`,
+    });
+  }
+
+  return {
+    valid: violations.length === 0,
+    violations,
+    usage,
+    targetPlan: {
+      id: targetPlanId,
+      name: targetPlan.name,
+      quotas: targetPlan.quotas,
+    },
   };
 }

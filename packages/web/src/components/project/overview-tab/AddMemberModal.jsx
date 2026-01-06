@@ -1,8 +1,10 @@
 import { createSignal, For, Show, createEffect, onCleanup } from 'solid-js';
+import { A } from '@solidjs/router';
 import { API_BASE } from '@config/api.js';
-import { FiX } from 'solid-icons/fi';
+import { FiX, FiAlertTriangle } from 'solid-icons/fi';
 import { Select, Avatar, showToast } from '@corates/ui';
 import { handleFetchError } from '@/lib/error-utils.js';
+import { isUnlimitedQuota } from '@corates/shared/plans';
 
 /**
  * Modal for searching and adding members to a project
@@ -11,6 +13,7 @@ import { handleFetchError } from '@/lib/error-utils.js';
  * @param {Function} props.onClose
  * @param {string} props.projectId
  * @param {string} props.orgId
+ * @param {Object} [props.quotaInfo] - Collaborator quota info { used: number, max: number }
  * @returns {JSX.Element}
  */
 export default function AddMemberModal(props) {
@@ -21,6 +24,13 @@ export default function AddMemberModal(props) {
   const [selectedRole, setSelectedRole] = createSignal('member');
   const [adding, setAdding] = createSignal(false);
   const [error, setError] = createSignal(null);
+
+  // Check if at collaborator quota limit
+  const isAtQuotaLimit = () => {
+    if (!props.quotaInfo) return false;
+    if (isUnlimitedQuota(props.quotaInfo.max)) return false;
+    return props.quotaInfo.used >= props.quotaInfo.max;
+  };
 
   let searchTimeout = null;
   let inputRef;
@@ -191,6 +201,23 @@ export default function AddMemberModal(props) {
 
           {/* Content */}
           <div class='space-y-4 p-4'>
+            {/* Quota Warning Banner */}
+            <Show when={isAtQuotaLimit()}>
+              <div class='flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
+                <FiAlertTriangle class='mt-0.5 h-5 w-5 shrink-0 text-amber-600' />
+                <div class='text-sm'>
+                  <p class='font-medium text-amber-800'>Collaborator limit reached</p>
+                  <p class='mt-1 text-amber-700'>
+                    Your team has {props.quotaInfo?.used} of {props.quotaInfo?.max} collaborators.{' '}
+                    <A href='/settings/billing/plans' class='font-medium underline'>
+                      Upgrade your plan
+                    </A>{' '}
+                    to add more team members.
+                  </p>
+                </div>
+              </div>
+            </Show>
+
             {/* Search Input */}
             <div class='relative'>
               <label class='mb-1 block text-sm font-medium text-gray-700'>
@@ -204,6 +231,7 @@ export default function AddMemberModal(props) {
                 onInput={e => handleSearchInput(e.target.value)}
                 placeholder='Type at least 2 characters...'
                 class='w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                disabled={isAtQuotaLimit()}
               />
 
               {/* Search Results Dropdown */}
@@ -327,7 +355,7 @@ export default function AddMemberModal(props) {
             </button>
             <button
               onClick={handleAddMember}
-              disabled={(!selectedUser() && !canAddByEmail()) || adding()}
+              disabled={(!selectedUser() && !canAddByEmail()) || adding() || isAtQuotaLimit()}
               class='rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
             >
               {adding() ?

@@ -34,7 +34,7 @@ Do not worry about migrations (client side or backend) unless specifically instr
 - Prefer modern ES6+ syntax and features
 - Use import aliases from jsconfig.json (see ui-components.mdc)
 - Prefer config files over hardcoding values
-- Place plans in `docs/plans/` directory
+- Place plans/audits in `packages/docs/audits/` directory
 - Ensure browser compatibility (Safari is usually problematic)
 
 ### File Organization

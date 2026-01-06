@@ -233,3 +233,6 @@ const EditableComponent: Component<EditableProps> = props => {
 
 export { EditableComponent as Editable };
 export default EditableComponent;
+
+// Export raw Ark UI primitive for custom layouts
+export { Editable as EditablePrimitive };

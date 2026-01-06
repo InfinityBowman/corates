@@ -92,3 +92,6 @@ const PinInputComponent: Component<PinInputProps> = props => {
 
 export { PinInputComponent as PinInput };
 export default PinInputComponent;
+
+// Export raw Ark UI primitive for custom layouts
+export { PinInput as PinInputPrimitive };

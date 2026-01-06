@@ -324,5 +324,8 @@ export function useConfirmDialog() {
 
 export { DialogComponent as Dialog, ConfirmDialogComponent as ConfirmDialog };
 
+// Export raw Ark UI Dialog primitives for custom dialog layouts
+export { ArkDialog as DialogPrimitive };
+
 // Export hook for programmatic control
 export { useDialog };

@@ -116,7 +116,7 @@ const NumberInputComponent: Component<NumberInputProps> = props => {
         </Show>
         <NumberInput.Input
           placeholder={local.placeholder}
-          class={`${sizes().input} flex-1 border border-gray-300 text-center ${showControls() ? '' : 'rounded-lg'} read-only:bg-gray-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 data-[invalid]:border-red-500 data-[invalid]:ring-red-500 ${local.inputClass || ''}`}
+          class={`${sizes().input} flex-1 border border-gray-300 text-center ${showControls() ? '' : 'rounded-lg'} read-only:bg-gray-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 data-invalid:border-red-500 data-invalid:ring-red-500 ${local.inputClass || ''}`}
         />
         <Show when={showControls()}>
           <NumberInput.IncrementTrigger
@@ -131,3 +131,6 @@ const NumberInputComponent: Component<NumberInputProps> = props => {
 };
 
 export { NumberInputComponent as NumberInput };
+
+// Export raw Ark UI primitive for custom layouts
+export { NumberInput as NumberInputPrimitive };

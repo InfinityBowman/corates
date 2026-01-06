@@ -121,3 +121,6 @@ const TagsInputComponent: Component<TagsInputProps> = props => {
 };
 
 export { TagsInputComponent as TagsInput };
+
+// Export raw Ark UI primitive for custom layouts
+export { TagsInput as TagsInputPrimitive };

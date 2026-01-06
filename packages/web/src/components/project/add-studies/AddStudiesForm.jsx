@@ -1,9 +1,3 @@
-/**
- * AddStudiesForm - Unified component for adding studies to a project
- * Supports four methods: PDF uploads, reference file imports, DOI/PMID lookups, and Google Drive
- * Can be used both during project creation and when adding studies to existing projects
- */
-
 import { createSignal, createEffect, Show, onMount, onCleanup } from 'solid-js';
 import { BiRegularPlus } from 'solid-icons/bi';
 import { AiOutlineCloudUpload } from 'solid-icons/ai';
@@ -18,6 +12,10 @@ import DoiLookupSection from './DoiLookupSection.jsx';
 import GoogleDriveSection from './GoogleDriveSection.jsx';
 
 /**
+ * AddStudiesForm - Unified component for adding studies to a project
+ * Supports four methods: PDF uploads, reference file imports, DOI/PMID lookups, and Google Drive
+ * Can be used both during project creation and when adding studies to existing projects
+ *
  * @param {Object} props
  * @param {string} [props.projectId] - Project ID to read existing studies from store (not used in collectMode)
  * @param {Function} [props.onAddStudies] - Called with studies to add: async (studies: Array) => void (not used in collectMode)

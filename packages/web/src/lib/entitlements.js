@@ -3,7 +3,24 @@
  * Computes effective entitlements and quotas from subscription at request time
  */
 
-import { getPlan, DEFAULT_PLAN, isUnlimitedQuota } from '@corates/shared/plans';
+import { getPlan, DEFAULT_PLAN, isUnlimitedQuota, getGrantPlan } from '@corates/shared/plans';
+
+/**
+ * Grant types that should use getGrantPlan instead of getPlan
+ */
+const GRANT_TYPES = ['trial', 'single_project'];
+
+/**
+ * Resolve the plan configuration for a given tier/grant type
+ * @param {string} planId - Plan ID or grant type
+ * @returns {Object} Plan configuration with entitlements and quotas
+ */
+function resolvePlan(planId) {
+  if (GRANT_TYPES.includes(planId)) {
+    return getGrantPlan(planId);
+  }
+  return getPlan(planId);
+}
 
 /**
  * Check if subscription is active
@@ -30,7 +47,7 @@ export function isSubscriptionActive(subscription) {
  */
 export function getEffectiveEntitlements(subscription) {
   const planId = subscription?.tier || DEFAULT_PLAN;
-  const plan = getPlan(planId);
+  const plan = resolvePlan(planId);
   if (!isSubscriptionActive(subscription)) {
     return getPlan(DEFAULT_PLAN).entitlements;
   }
@@ -44,7 +61,7 @@ export function getEffectiveEntitlements(subscription) {
  */
 export function getEffectiveQuotas(subscription) {
   const planId = subscription?.tier || DEFAULT_PLAN;
-  const plan = getPlan(planId);
+  const plan = resolvePlan(planId);
   if (!isSubscriptionActive(subscription)) {
     return getPlan(DEFAULT_PLAN).quotas;
   }

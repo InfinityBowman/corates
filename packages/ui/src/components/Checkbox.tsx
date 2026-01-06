@@ -110,5 +110,8 @@ const CheckboxComponent: Component<CheckboxProps> = props => {
 
 export { CheckboxComponent as Checkbox };
 
+// Export raw Ark UI primitive for custom layouts
+export { ArkCheckbox as CheckboxPrimitive };
+
 // Export hook for programmatic control
 export { useCheckbox };

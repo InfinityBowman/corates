@@ -643,3 +643,280 @@ describe('Billing Routes - POST /api/billing/portal', () => {
     expect(body.url).toBeDefined();
   });
 });
+
+describe('Billing Routes - GET /api/billing/validate-plan-change', () => {
+  it('should validate plan change and return valid when within limits', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const orgId = 'org-1';
+    const userId = 'user-1';
+
+    await seedUser({
+      id: userId,
+      name: 'User 1',
+      email: 'user1@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedOrganization({
+      id: orgId,
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'member-1',
+      userId,
+      organizationId: orgId,
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
+    // Set activeOrganizationId in session
+    const db = createDb(env.DB);
+    const { session: sessionTable } = await import('../../../db/schema.js');
+    await db.insert(sessionTable).values({
+      id: 'test-session',
+      userId,
+      token: 'test-token',
+      expiresAt: new Date(Date.now() + 86400 * 1000),
+      activeOrganizationId: orgId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const res = await fetchBilling('/api/billing/validate-plan-change?targetPlan=starter_team');
+    expect(res.status).toBe(200);
+
+    const body = await json(res);
+    expect(body.valid).toBe(true);
+    expect(body.violations).toHaveLength(0);
+    expect(body.targetPlan.id).toBe('starter_team');
+  });
+
+  it('should return violations when usage exceeds target plan limits', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const orgId = 'org-1';
+    const userId = 'user-1';
+
+    await seedUser({
+      id: userId,
+      name: 'User 1',
+      email: 'user1@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedOrganization({
+      id: orgId,
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'member-1',
+      userId,
+      organizationId: orgId,
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
+    // Create 5 projects (exceeds starter_team limit of 3)
+    const db = createDb(env.DB);
+    const { projects } = await import('../../../db/schema.js');
+    for (let i = 1; i <= 5; i++) {
+      await db.insert(projects).values({
+        id: `project-${i}`,
+        name: `Project ${i}`,
+        orgId,
+        createdBy: userId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+
+    // Set activeOrganizationId in session
+    const { session: sessionTable } = await import('../../../db/schema.js');
+    await db.insert(sessionTable).values({
+      id: 'test-session',
+      userId,
+      token: 'test-token',
+      expiresAt: new Date(Date.now() + 86400 * 1000),
+      activeOrganizationId: orgId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const res = await fetchBilling('/api/billing/validate-plan-change?targetPlan=starter_team');
+    expect(res.status).toBe(200);
+
+    const body = await json(res);
+    expect(body.valid).toBe(false);
+    expect(body.violations.length).toBeGreaterThan(0);
+    expect(body.violations[0].quotaKey).toBe('projects.max');
+    expect(body.violations[0].used).toBe(5);
+    expect(body.violations[0].limit).toBe(3);
+  });
+
+  it('should return 400 when targetPlan is missing', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const userId = 'user-1';
+
+    await seedUser({
+      id: userId,
+      name: 'User 1',
+      email: 'user1@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    const res = await fetchBilling('/api/billing/validate-plan-change');
+    expect(res.status).toBe(400);
+
+    const body = await json(res);
+    expect(body.code).toMatch(/VALIDATION_INVALID_INPUT/);
+  });
+});
+
+describe('Billing Routes - POST /api/billing/checkout (downgrade validation)', () => {
+  it('should reject checkout when downgrade exceeds quotas', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const orgId = 'org-1';
+    const userId = 'user-1';
+
+    await seedUser({
+      id: userId,
+      name: 'User 1',
+      email: 'user1@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedOrganization({
+      id: orgId,
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'member-1',
+      userId,
+      organizationId: orgId,
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
+    // Create 5 projects (exceeds starter_team limit of 3)
+    const db = createDb(env.DB);
+    const { projects } = await import('../../../db/schema.js');
+    for (let i = 1; i <= 5; i++) {
+      await db.insert(projects).values({
+        id: `project-${i}`,
+        name: `Project ${i}`,
+        orgId,
+        createdBy: userId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+
+    // Set activeOrganizationId in session
+    const { session: sessionTable } = await import('../../../db/schema.js');
+    await db.insert(sessionTable).values({
+      id: 'test-session',
+      userId,
+      token: 'test-token',
+      expiresAt: new Date(Date.now() + 86400 * 1000),
+      activeOrganizationId: orgId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const res = await fetchBilling('/api/billing/checkout', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        tier: 'starter_team',
+        interval: 'monthly',
+      }),
+    });
+
+    expect(res.status).toBe(400);
+    const body = await json(res);
+    expect(body.code).toMatch(/VALIDATION_INVALID_INPUT/);
+    expect(body.details.reason).toBe('downgrade_exceeds_quotas');
+    expect(body.details.violations).toBeDefined();
+    expect(body.details.violations.length).toBeGreaterThan(0);
+  });
+
+  it('should allow checkout when upgrading to unlimited plan', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const orgId = 'org-1';
+    const userId = 'user-1';
+
+    await seedUser({
+      id: userId,
+      name: 'User 1',
+      email: 'user1@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedOrganization({
+      id: orgId,
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'member-1',
+      userId,
+      organizationId: orgId,
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
+    // Create many projects
+    const db = createDb(env.DB);
+    const { projects } = await import('../../../db/schema.js');
+    for (let i = 1; i <= 10; i++) {
+      await db.insert(projects).values({
+        id: `project-${i}`,
+        name: `Project ${i}`,
+        orgId,
+        createdBy: userId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+
+    // Set activeOrganizationId in session
+    const { session: sessionTable } = await import('../../../db/schema.js');
+    await db.insert(sessionTable).values({
+      id: 'test-session',
+      userId,
+      token: 'test-token',
+      expiresAt: new Date(Date.now() + 86400 * 1000),
+      activeOrganizationId: orgId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const res = await fetchBilling('/api/billing/checkout', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        tier: 'unlimited_team',
+        interval: 'monthly',
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await json(res);
+    expect(body.url).toBeDefined();
+  });
+});

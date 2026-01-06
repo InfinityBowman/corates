@@ -58,4 +58,4 @@ openapi.json
 packages/workers/src/__tests__/migration-sql.js
 
 # Temp files
-/docs/plans*
+/docs/audits*

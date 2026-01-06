@@ -173,5 +173,8 @@ const ComboboxComponent: Component<ComboboxProps> = props => {
 
 export { ComboboxComponent as Combobox };
 
+// Export raw Ark UI primitive for custom layouts
+export { ArkCombobox as ComboboxPrimitive };
+
 // Export hook for programmatic control
 export { useCombobox };

@@ -279,5 +279,8 @@ export default SelectComponent;
 // Export hook for programmatic control
 export { useSelect };
 
+// Export raw Ark UI primitive for custom layouts
+export { ArkSelect as SelectPrimitive };
+
 // Export component
 export { SelectComponent as Select };

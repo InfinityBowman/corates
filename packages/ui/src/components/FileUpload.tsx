@@ -165,3 +165,6 @@ const FileUploadComponent: Component<FileUploadProps> = props => {
 };
 
 export { FileUploadComponent as FileUpload };
+
+// Export raw Ark UI primitive for custom layouts
+export { FileUpload as FileUploadPrimitive };

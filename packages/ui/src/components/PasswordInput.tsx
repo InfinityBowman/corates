@@ -77,3 +77,6 @@ const PasswordInputComponent: Component<PasswordInputProps> = props => {
 
 export { PasswordInputComponent as PasswordInput };
 export default PasswordInputComponent;
+
+// Export raw Ark UI primitive for custom layouts
+export { PasswordInput as PasswordInputPrimitive };

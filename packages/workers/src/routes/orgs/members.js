@@ -24,6 +24,7 @@ import {
   USER_ERRORS,
 } from '@corates/shared';
 import { syncMemberToDO } from '../../lib/project-sync.js';
+import { checkCollaboratorQuota } from '../../lib/quotaTransaction.js';
 
 const orgProjectMemberRoutes = new Hono();
 
@@ -139,6 +140,21 @@ orgProjectMemberRoutes.post(
           userId: userToAdd.id,
         });
         return c.json(error, error.statusCode);
+      }
+
+      // Check if user is already an org member (for quota purposes)
+      const existingOrgMembership = await db
+        .select({ id: member.id })
+        .from(member)
+        .where(and(eq(member.organizationId, orgId), eq(member.userId, userToAdd.id)))
+        .get();
+
+      // Enforce collaborator quota if adding a new org member
+      if (!existingOrgMembership) {
+        const quotaResult = await checkCollaboratorQuota(db, orgId);
+        if (!quotaResult.allowed) {
+          return c.json(quotaResult.error, quotaResult.error.statusCode);
+        }
       }
 
       // Ensure org membership first (combined flow)

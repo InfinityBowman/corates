@@ -113,8 +113,8 @@ const MenuComponent: Component<MenuProps> = props => {
                 closeOnSelect={machineProps.closeOnSelect ?? true}
                 class={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors ${
                   item.destructive ?
-                    'text-red-600 hover:bg-red-50 data-[highlighted]:bg-red-50'
-                  : 'text-gray-700 hover:bg-gray-50 data-[highlighted]:bg-gray-50'
+                    'text-red-600 hover:bg-red-50 data-highlighted:bg-red-50'
+                  : 'text-gray-700 hover:bg-gray-50 data-highlighted:bg-gray-50'
                 } ${item.disabled ? 'cursor-not-allowed opacity-50' : ''} focus:outline-none`}
               >
                 <Show when={item.icon}>
@@ -163,3 +163,6 @@ const MenuComponent: Component<MenuProps> = props => {
 };
 
 export { MenuComponent as Menu };
+
+// Export raw Ark UI primitive for custom layouts
+export { Menu as MenuPrimitive };

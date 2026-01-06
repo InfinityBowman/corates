@@ -151,5 +151,8 @@ const PopoverComponent: Component<PopoverProps> = props => {
 
 export { PopoverComponent as Popover };
 
+// Export raw Ark UI primitive for custom layouts
+export { ArkPopover as PopoverPrimitive };
+
 // Export hook for programmatic control
 export { usePopover };

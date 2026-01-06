@@ -126,3 +126,6 @@ const DrawerComponent: Component<DrawerProps> = props => {
 };
 
 export { DrawerComponent as Drawer };
+
+// Export raw Ark UI Dialog primitive for custom drawer layouts
+export { ArkDialog as DrawerPrimitive };

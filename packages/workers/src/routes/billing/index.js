@@ -7,7 +7,7 @@
 import { Hono } from 'hono';
 import { requireAuth, getAuth } from '../../middleware/auth.js';
 import { createDb } from '../../db/client.js';
-import { resolveOrgAccess } from '../../lib/billingResolver.js';
+import { resolveOrgAccess, validatePlanChange } from '../../lib/billingResolver.js';
 import { getPlan, DEFAULT_PLAN, getGrantPlan } from '@corates/shared/plans';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import Stripe from 'stripe';
@@ -59,6 +59,14 @@ billingRoutes.get('/subscription', requireAuth, async c => {
 
     const orgBilling = await resolveOrgAccess(db, orgId);
 
+    // Get project count for usage display
+    const { projects } = await import('../../db/schema.js');
+    const { eq, count } = await import('drizzle-orm');
+    const [projectCountResult] = await db
+      .select({ count: count() })
+      .from(projects)
+      .where(eq(projects.orgId, orgId));
+
     // Convert to frontend-compatible format
     // Use getGrantPlan for grants, getPlan for subscriptions/free
     const effectivePlan =
@@ -85,6 +93,7 @@ billingRoutes.get('/subscription', requireAuth, async c => {
       cancelAtPeriodEnd: orgBilling.subscription?.cancelAtPeriodEnd || false,
       accessMode: orgBilling.accessMode,
       source: orgBilling.source,
+      projectCount: projectCountResult?.count || 0,
     });
   } catch (error) {
     console.error('Error fetching org billing:', error);
@@ -154,6 +163,61 @@ billingRoutes.get('/members', requireAuth, async c => {
 });
 
 /**
+ * GET /api/billing/validate-plan-change
+ * Validate if the org can change to a target plan
+ * Checks if current usage would exceed the target plan's quotas
+ * Used before allowing plan downgrades
+ */
+billingRoutes.get('/validate-plan-change', requireAuth, async c => {
+  const { user, session } = getAuth(c);
+  const db = createDb(c.env.DB);
+
+  try {
+    const targetPlan = c.req.query('targetPlan');
+
+    if (!targetPlan) {
+      const error = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
+        field: 'targetPlan',
+        value: targetPlan,
+      });
+      return c.json(error, error.statusCode);
+    }
+
+    // Get orgId from session's activeOrganizationId or first org
+    let orgId = session?.activeOrganizationId;
+    if (!orgId) {
+      const { member } = await import('../../db/schema.js');
+      const { eq } = await import('drizzle-orm');
+      const firstMembership = await db
+        .select({ organizationId: member.organizationId })
+        .from(member)
+        .where(eq(member.userId, user.id))
+        .limit(1)
+        .get();
+      orgId = firstMembership?.organizationId;
+    }
+
+    if (!orgId) {
+      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+        reason: 'no_org_found',
+      });
+      return c.json(error, error.statusCode);
+    }
+
+    const validationResult = await validatePlanChange(db, orgId, targetPlan);
+
+    return c.json(validationResult);
+  } catch (error) {
+    console.error('Error validating plan change:', error);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'validate_plan_change',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
+  }
+});
+
+/**
  * POST /api/billing/checkout
  * Create a Stripe Checkout session (delegates to Better Auth Stripe plugin)
  * This endpoint is deprecated - use Better Auth Stripe client plugin directly
@@ -216,6 +280,22 @@ billingRoutes.post('/checkout', billingCheckoutRateLimit, requireAuth, async c =
         field: 'tier',
         value: tier,
       });
+      return c.json(error, error.statusCode);
+    }
+
+    // Validate plan change to prevent downgrades that exceed quotas
+    const validationResult = await validatePlanChange(db, orgId, tier);
+    if (!validationResult.valid) {
+      const error = createDomainError(
+        VALIDATION_ERRORS.INVALID_INPUT,
+        {
+          reason: 'downgrade_exceeds_quotas',
+          violations: validationResult.violations,
+          usage: validationResult.usage,
+          targetPlan: validationResult.targetPlan,
+        },
+        validationResult.violations.map(v => v.message).join(' '),
+      );
       return c.json(error, error.statusCode);
     }
 

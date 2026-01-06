@@ -122,3 +122,6 @@ export const showToast = {
 
 export { ToasterComponent as Toaster };
 export type { ToastPromiseOptions };
+
+// Export raw Ark UI primitives for custom layouts
+export { Toast as ToastPrimitive, Toaster as ToasterPrimitive };
