@@ -4,7 +4,7 @@
  */
 
 import { createSignal, For, Show, onMount } from 'solid-js';
-import { FiCheck, FiStar, FiZap, FiAlertCircle } from 'solid-icons/fi';
+import { FiCheck, FiStar, FiZap, FiAlertCircle, FiArrowDown } from 'solid-icons/fi';
 import { showToast, Dialog } from '@corates/ui';
 import {
   redirectToCheckout,
@@ -27,8 +27,25 @@ export default function PricingTable(props) {
   const [billingInterval, setBillingInterval] = createSignal('monthly');
   const [loadingTier, setLoadingTier] = createSignal(null);
   const [validationError, setValidationError] = createSignal(null);
+  const [pendingDowngrade, setPendingDowngrade] = createSignal(null);
 
   const { refetch: refetchSubscription } = useSubscription();
+
+  // Tier order for downgrade detection (higher = more features)
+  const TIER_ORDER = {
+    free: 0,
+    trial: 1,
+    single_project: 2,
+    starter_team: 3,
+    team: 4,
+    unlimited_team: 5,
+  };
+
+  const isDowngrade = (fromTier, toTier) => {
+    const fromOrder = TIER_ORDER[fromTier] ?? 0;
+    const toOrder = TIER_ORDER[toTier] ?? 0;
+    return toOrder < fromOrder;
+  };
 
   // Clear loading state on mount (handles browser back from Stripe)
   onMount(() => {
@@ -72,18 +89,39 @@ export default function PricingTable(props) {
       }
 
       if (plan.cta === 'subscribe') {
-        // Validate plan change before redirecting to checkout
-        const validation = await validatePlanChange(plan.tier);
-
-        if (!validation.valid) {
-          setValidationError(validation);
+        // Show confirmation for downgrades
+        if (isDowngrade(currentTier(), plan.tier)) {
+          setPendingDowngrade(plan);
           setLoadingTier(null);
           return;
         }
 
-        await redirectToCheckout(plan.tier, billingInterval());
+        await proceedWithPlanChange(plan);
         return;
       }
+    } catch (error) {
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(error, {
+        toastTitle: 'Checkout Error',
+      });
+      setLoadingTier(null);
+    }
+  };
+
+  // Extracted plan change logic for reuse after confirmation
+  const proceedWithPlanChange = async plan => {
+    setLoadingTier(plan.tier);
+    try {
+      // Validate plan change before redirecting to checkout
+      const validation = await validatePlanChange(plan.tier);
+
+      if (!validation.valid) {
+        setValidationError(validation);
+        setLoadingTier(null);
+        return;
+      }
+
+      await redirectToCheckout(plan.tier, billingInterval());
     } catch (error) {
       const { handleError } = await import('@/lib/error-utils.js');
       await handleError(error, {
@@ -344,6 +382,65 @@ export default function PricingTable(props) {
               <Dialog.CloseTrigger class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'>
                 Got it
               </Dialog.CloseTrigger>
+            </div>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
+
+      {/* Downgrade Confirmation Dialog */}
+      <Dialog.Root
+        open={pendingDowngrade() !== null}
+        onOpenChange={open => {
+          if (!open) setPendingDowngrade(null);
+        }}
+      >
+        <Dialog.Backdrop class='fixed inset-0 z-40 bg-black/50' />
+        <Dialog.Positioner class='fixed inset-0 z-50 flex items-center justify-center p-4'>
+          <Dialog.Content class='w-full max-w-md rounded-2xl bg-white p-6 shadow-xl'>
+            <div class='mb-4 flex items-start gap-3'>
+              <div class='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100'>
+                <FiArrowDown class='h-5 w-5 text-amber-600' />
+              </div>
+              <div>
+                <Dialog.Title class='text-lg font-semibold text-gray-900'>
+                  Confirm Downgrade
+                </Dialog.Title>
+                <Dialog.Description class='mt-1 text-sm text-gray-500'>
+                  Are you sure you want to downgrade your plan?
+                </Dialog.Description>
+              </div>
+            </div>
+
+            <Show when={pendingDowngrade()}>
+              <div class='mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4'>
+                <p class='text-sm text-amber-800'>
+                  You're switching from <span class='font-semibold'>{currentTier()}</span> to{' '}
+                  <span class='font-semibold'>{pendingDowngrade().name}</span>.
+                </p>
+                <p class='mt-2 text-sm text-amber-700'>
+                  Your new plan will take effect at the end of your current billing period. You'll
+                  keep access to your current features until then.
+                </p>
+              </div>
+            </Show>
+
+            <div class='flex justify-end gap-3'>
+              <Dialog.CloseTrigger class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'>
+                Cancel
+              </Dialog.CloseTrigger>
+              <button
+                type='button'
+                class='rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700'
+                onClick={async () => {
+                  const plan = pendingDowngrade();
+                  setPendingDowngrade(null);
+                  if (plan) {
+                    await proceedWithPlanChange(plan);
+                  }
+                }}
+              >
+                Confirm Downgrade
+              </button>
             </div>
           </Dialog.Content>
         </Dialog.Positioner>

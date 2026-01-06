@@ -3,9 +3,9 @@
  * Dashboard-style billing settings page with subscription, usage, and invoices
  */
 
-import { Show, createSignal } from 'solid-js';
+import { Show, createSignal, onMount } from 'solid-js';
 import { useSearchParams, A } from '@solidjs/router';
-import { FiArrowLeft, FiCheckCircle, FiArrowRight, FiHelpCircle } from 'solid-icons/fi';
+import { FiArrowLeft, FiCheckCircle, FiArrowRight, FiHelpCircle, FiXCircle } from 'solid-icons/fi';
 import { useSubscription } from '@/primitives/useSubscription.js';
 import { useMembers } from '@/primitives/useMembers.js';
 import { redirectToPortal } from '@/api/billing.js';
@@ -92,18 +92,26 @@ function UsageSkeleton() {
  * @returns {JSX.Element} - The BillingPage component
  */
 export default function BillingPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { subscription, loading, refetch, quotas } = useSubscription();
   const { memberCount } = useMembers();
   const [portalLoading, setPortalLoading] = createSignal(false);
 
-  // Check for success/canceled query params from Stripe redirect
-  const checkoutSuccess = () => searchParams.success === 'true';
+  // Track checkout outcome to display after clearing URL params
+  const [checkoutOutcome, setCheckoutOutcome] = createSignal(null);
 
-  // Refetch subscription on successful checkout
-  if (checkoutSuccess()) {
-    refetch();
-  }
+  // Handle checkout redirect params on mount
+  onMount(() => {
+    if (searchParams.success === 'true') {
+      setCheckoutOutcome('success');
+      refetch();
+      // Clear params from URL without triggering navigation
+      setSearchParams({ success: undefined }, { replace: true });
+    } else if (searchParams.canceled === 'true') {
+      setCheckoutOutcome('canceled');
+      setSearchParams({ canceled: undefined }, { replace: true });
+    }
+  });
 
   const handleManageSubscription = async () => {
     setPortalLoading(true);
@@ -154,15 +162,44 @@ export default function BillingPage() {
         </div>
 
         {/* Success alert */}
-        <Show when={checkoutSuccess()}>
+        <Show when={checkoutOutcome() === 'success'}>
           <div class='mb-6 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4'>
             <div class='flex h-10 w-10 items-center justify-center rounded-full bg-green-100'>
               <FiCheckCircle class='h-5 w-5 text-green-600' />
             </div>
             <div>
               <p class='font-semibold text-green-800'>Payment successful!</p>
-              <p class='text-sm text-green-600'>Your subscription has been activated!</p>
+              <p class='text-sm text-green-600'>Your subscription has been activated.</p>
             </div>
+            <button
+              type='button'
+              onClick={() => setCheckoutOutcome(null)}
+              class='ml-auto text-green-600 hover:text-green-800'
+              aria-label='Dismiss'
+            >
+              <FiXCircle class='h-5 w-5' />
+            </button>
+          </div>
+        </Show>
+
+        {/* Canceled alert */}
+        <Show when={checkoutOutcome() === 'canceled'}>
+          <div class='mb-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4'>
+            <div class='flex h-10 w-10 items-center justify-center rounded-full bg-amber-100'>
+              <FiXCircle class='h-5 w-5 text-amber-600' />
+            </div>
+            <div>
+              <p class='font-semibold text-amber-800'>Checkout canceled</p>
+              <p class='text-sm text-amber-600'>No changes were made to your subscription.</p>
+            </div>
+            <button
+              type='button'
+              onClick={() => setCheckoutOutcome(null)}
+              class='ml-auto text-amber-600 hover:text-amber-800'
+              aria-label='Dismiss'
+            >
+              <FiXCircle class='h-5 w-5' />
+            </button>
           </div>
         </Show>
 

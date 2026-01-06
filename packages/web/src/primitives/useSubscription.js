@@ -4,7 +4,7 @@
  * Uses localStorage for local-first persistence during bad connections
  */
 
-import { createMemo } from 'solid-js';
+import { createMemo, onCleanup } from 'solid-js';
 import { useQuery, useQueryClient } from '@tanstack/solid-query';
 import { API_BASE } from '@config/api.js';
 import { queryKeys } from '@lib/queryKeys.js';
@@ -142,6 +142,19 @@ export function useSubscription() {
     // Use cached subscription as initial data for instant display
     initialData: cachedSubscription || undefined,
   }));
+
+  // Refetch subscription when tab becomes visible (handles plan changes in another tab)
+  if (typeof window !== 'undefined') {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isLoggedIn()) {
+        query.refetch();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    onCleanup(() => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    });
+  }
 
   // Local-first: use query data, fall back to cached, then default
   // This ensures paid users keep their entitlements during bad connections
