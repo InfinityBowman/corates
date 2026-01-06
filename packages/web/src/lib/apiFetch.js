@@ -55,12 +55,21 @@ function calculateBackoff(attempt, baseDelayMs, maxDelayMs) {
  */
 function sleep(ms, signal) {
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(resolve, ms);
+    const timeout = setTimeout(() => {
+      if (signal) {
+        signal.removeEventListener('abort', abortHandler);
+      }
+      resolve();
+    }, ms);
+
+    let abortHandler;
     if (signal) {
-      signal.addEventListener('abort', () => {
+      abortHandler = () => {
         clearTimeout(timeout);
+        signal.removeEventListener('abort', abortHandler);
         reject(new DOMException('Aborted', 'AbortError'));
-      });
+      };
+      signal.addEventListener('abort', abortHandler);
     }
   });
 }

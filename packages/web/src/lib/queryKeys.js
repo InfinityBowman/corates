@@ -10,6 +10,8 @@ export const queryKeys = {
   orgs: {
     /** All orgs for current user */
     list: ['orgs'],
+    /** Details for a specific organization */
+    detail: orgId => ['org', orgId],
   },
 
   // Project queries

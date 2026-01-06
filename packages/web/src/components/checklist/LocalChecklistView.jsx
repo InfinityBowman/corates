@@ -75,9 +75,8 @@ export default function LocalChecklistView() {
   });
 
   // Debounced save function
-  const debouncedSave = debounce(async updates => {
+  const debouncedSave = debounce(async (checklistId, updates) => {
     try {
-      const checklistId = params.checklistId;
       await updateChecklist(checklistId, updates);
     } catch (err) {
       console.error('Error saving checklist:', err);
@@ -98,7 +97,7 @@ export default function LocalChecklistView() {
     });
 
     // Debounce the save to IndexedDB
-    debouncedSave(updates);
+    debouncedSave(params.checklistId, updates);
   };
 
   // Handle PDF change

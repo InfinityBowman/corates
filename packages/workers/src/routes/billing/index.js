@@ -154,8 +154,8 @@ billingRoutes.get('/invoices', requireAuth, async c => {
 
     // Fetch invoices from Stripe
     if (!c.env.STRIPE_SECRET_KEY) {
-      const error = createDomainError(SYSTEM_ERRORS.CONFIG_ERROR, {
-        reason: 'stripe_not_configured',
+      const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        operation: 'stripe_not_configured',
       });
       return c.json(error, error.statusCode);
     }

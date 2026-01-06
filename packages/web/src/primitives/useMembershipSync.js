@@ -64,13 +64,13 @@ export function useMembershipSync() {
       notificationType === 'org:role-changed'
     ) {
       // Invalidate org-related queries
-      if (notification.data?.orgId) {
+      if (notification.orgId) {
         queryClient.invalidateQueries({
-          queryKey: ['org', notification.data.orgId],
+          queryKey: queryKeys.orgs.detail(notification.orgId),
         });
       }
       // Also invalidate the user's org list
-      queryClient.invalidateQueries({ queryKey: ['organizations'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.orgs.list });
     }
   };
 

@@ -175,37 +175,103 @@ export function createAuth(env, ctx) {
           // Real-time notifications for subscription changes
           onSubscriptionComplete: async ({ subscription }) => {
             // Notify all org members when subscription is created/upgraded
-            await notifyOrgMembers(env, db, subscription.referenceId, {
-              type: EventTypes.SUBSCRIPTION_UPDATED,
-              data: {
-                tier: subscription.plan,
-                status: subscription.status,
-                periodEnd: subscription.periodEnd,
-              },
-            });
+            console.log(
+              '[Auth] Queuing subscription complete notification for org:',
+              subscription.referenceId,
+            );
+            if (ctx && ctx.waitUntil) {
+              ctx.waitUntil(
+                (async () => {
+                  try {
+                    const result = await notifyOrgMembers(env, db, subscription.referenceId, {
+                      type: EventTypes.SUBSCRIPTION_UPDATED,
+                      data: {
+                        tier: subscription.plan,
+                        status: subscription.status,
+                        periodEnd: subscription.periodEnd,
+                      },
+                    });
+                    console.log('[Auth:waitUntil] Subscription complete notification sent:', {
+                      orgId: subscription.referenceId,
+                      notified: result.notified,
+                      failed: result.failed,
+                    });
+                  } catch (err) {
+                    console.error('[Auth:waitUntil] Subscription complete notification error:', {
+                      orgId: subscription.referenceId,
+                      error: err.message,
+                    });
+                  }
+                })(),
+              );
+            }
           },
           onSubscriptionUpdate: async ({ subscription }) => {
             // Notify all org members when subscription changes
-            await notifyOrgMembers(env, db, subscription.referenceId, {
-              type: EventTypes.SUBSCRIPTION_UPDATED,
-              data: {
-                tier: subscription.plan,
-                status: subscription.status,
-                periodEnd: subscription.periodEnd,
-                cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-              },
-            });
+            console.log(
+              '[Auth] Queuing subscription update notification for org:',
+              subscription.referenceId,
+            );
+            if (ctx && ctx.waitUntil) {
+              ctx.waitUntil(
+                (async () => {
+                  try {
+                    const result = await notifyOrgMembers(env, db, subscription.referenceId, {
+                      type: EventTypes.SUBSCRIPTION_UPDATED,
+                      data: {
+                        tier: subscription.plan,
+                        status: subscription.status,
+                        periodEnd: subscription.periodEnd,
+                        cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+                      },
+                    });
+                    console.log('[Auth:waitUntil] Subscription update notification sent:', {
+                      orgId: subscription.referenceId,
+                      notified: result.notified,
+                      failed: result.failed,
+                    });
+                  } catch (err) {
+                    console.error('[Auth:waitUntil] Subscription update notification error:', {
+                      orgId: subscription.referenceId,
+                      error: err.message,
+                    });
+                  }
+                })(),
+              );
+            }
           },
           onSubscriptionCancel: async ({ subscription }) => {
             // Notify all org members when subscription is canceled
-            await notifyOrgMembers(env, db, subscription.referenceId, {
-              type: EventTypes.SUBSCRIPTION_CANCELED,
-              data: {
-                tier: subscription.plan,
-                cancelAt: subscription.cancelAt,
-                canceledAt: subscription.canceledAt,
-              },
-            });
+            console.log(
+              '[Auth] Queuing subscription cancel notification for org:',
+              subscription.referenceId,
+            );
+            if (ctx && ctx.waitUntil) {
+              ctx.waitUntil(
+                (async () => {
+                  try {
+                    const result = await notifyOrgMembers(env, db, subscription.referenceId, {
+                      type: EventTypes.SUBSCRIPTION_CANCELED,
+                      data: {
+                        tier: subscription.plan,
+                        cancelAt: subscription.cancelAt,
+                        canceledAt: subscription.canceledAt,
+                      },
+                    });
+                    console.log('[Auth:waitUntil] Subscription cancel notification sent:', {
+                      orgId: subscription.referenceId,
+                      notified: result.notified,
+                      failed: result.failed,
+                    });
+                  } catch (err) {
+                    console.error('[Auth:waitUntil] Subscription cancel notification error:', {
+                      orgId: subscription.referenceId,
+                      error: err.message,
+                    });
+                  }
+                })(),
+              );
+            }
           },
           authorizeReference: async ({ user, session: _session, referenceId, action }) => {
             // Check if user is org owner for subscription management actions

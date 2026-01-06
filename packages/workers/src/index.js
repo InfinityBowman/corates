@@ -398,16 +398,8 @@ app.all('/api/sessions/:sessionId/*', handleUserSession);
 
 // 404 handler
 app.notFound(c => {
-  return c.json(
-    {
-      code: 'NOT_FOUND',
-      message: 'Route not found',
-      statusCode: 404,
-      details: { path: c.req.path },
-      timestamp: new Date().toISOString(),
-    },
-    404,
-  );
+  const error = createDomainError(SYSTEM_ERRORS.ROUTE_NOT_FOUND, { path: c.req.path });
+  return c.json(error, error.statusCode);
 });
 
 // Error handler

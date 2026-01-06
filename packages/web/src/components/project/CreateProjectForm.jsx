@@ -131,7 +131,7 @@ export default function CreateProjectForm(props) {
           name: projectName().trim(),
           description: projectDescription().trim(),
         },
-        { toastMessage: false },
+        { showToast: false },
       );
       const studies = collectedStudies();
 
