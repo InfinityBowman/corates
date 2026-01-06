@@ -227,15 +227,18 @@ export async function handleTransportError(error, options = {}) {
     onError(error);
   }
 
+  // Get user-friendly message
+  const friendlyMessage = getUserFriendlyMessage(error);
+
   // Update error state if setter provided
   if (setError) {
-    setError(error.message);
+    setError(friendlyMessage);
   }
 
   // Show toast for transport errors
   if (showToastOption) {
     const title = toastTitle || 'Connection Error';
-    showToast.error(title, error.message);
+    showToast.error(title, friendlyMessage);
   }
 }
 
