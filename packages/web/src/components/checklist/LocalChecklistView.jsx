@@ -7,6 +7,7 @@
  */
 
 import { createSignal, createEffect, Show, onCleanup, createMemo } from 'solid-js';
+import { debounce } from '@solid-primitives/scheduled';
 import { useParams, useNavigate } from '@solidjs/router';
 import ChecklistWithPdf from '@/components/checklist/ChecklistWithPdf.jsx';
 import CreateLocalChecklist from '@/components/checklist/CreateLocalChecklist.jsx';
@@ -25,9 +26,6 @@ export default function LocalChecklistView() {
   const [pdfFileName, setPdfFileName] = createSignal(null);
   const [loading, setLoading] = createSignal(true);
   const [error, setError] = createSignal(null);
-
-  // Debounce timer for auto-save
-  let saveTimeout = null;
 
   // Load the checklist and PDF on mount
   createEffect(() => {
@@ -76,11 +74,18 @@ export default function LocalChecklistView() {
     })();
   });
 
+  // Debounced save function
+  const debouncedSave = debounce(async (checklistId, updates) => {
+    try {
+      await updateChecklist(checklistId, updates);
+    } catch (err) {
+      console.error('Error saving checklist:', err);
+    }
+  }, 500);
+
   // Cleanup on unmount
   onCleanup(() => {
-    if (saveTimeout) {
-      clearTimeout(saveTimeout);
-    }
+    debouncedSave.clear();
   });
 
   // Handle updates from the AMSTAR2Checklist component
@@ -92,18 +97,7 @@ export default function LocalChecklistView() {
     });
 
     // Debounce the save to IndexedDB
-    if (saveTimeout) {
-      clearTimeout(saveTimeout);
-    }
-
-    saveTimeout = setTimeout(async () => {
-      try {
-        const checklistId = params.checklistId;
-        await updateChecklist(checklistId, updates);
-      } catch (err) {
-        console.error('Error saving checklist:', err);
-      }
-    }, 500);
+    debouncedSave(params.checklistId, updates);
   };
 
   // Handle PDF change

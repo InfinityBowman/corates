@@ -536,20 +536,4 @@ userRoutes.delete('/users/:userId', async c => {
   }
 });
 
-/**
- * GET /api/admin/check
- * Check if current user is admin
- */
-userRoutes.get('/check', async c => {
-  const adminUser = c.get('user');
-  return c.json({
-    isAdmin: true,
-    user: {
-      id: adminUser.id,
-      email: adminUser.email,
-      name: adminUser.name,
-    },
-  });
-});
-
 export { userRoutes };

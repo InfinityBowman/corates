@@ -172,7 +172,8 @@ describe('Main App - Error Handling', () => {
     expect(res.status).toBe(404);
 
     const body = await json(res);
-    expect(body.error).toBe('Not Found');
+    expect(body.code).toBe('SYSTEM_ROUTE_NOT_FOUND');
+    expect(body.message).toBe('Route not found');
   });
 
   it('should handle errors gracefully', async () => {

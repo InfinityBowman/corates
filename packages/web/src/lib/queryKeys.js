@@ -10,6 +10,8 @@ export const queryKeys = {
   orgs: {
     /** All orgs for current user */
     list: ['orgs'],
+    /** Details for a specific organization */
+    detail: orgId => ['org', orgId],
   },
 
   // Project queries
@@ -26,6 +28,12 @@ export const queryKeys = {
   subscription: {
     /** Current user's subscription */
     current: ['subscription'],
+  },
+
+  // Billing queries
+  billing: {
+    /** Current org/user invoices */
+    invoices: ['billing', 'invoices'],
   },
 
   // Members queries

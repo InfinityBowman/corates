@@ -3,32 +3,14 @@
  * Handles all billing-related API calls
  */
 
-import { API_BASE } from '@config/api.js';
-import { handleFetchError } from '@/lib/error-utils.js';
-
-/**
- * Fetch options with credentials
- */
-const fetchOptions = {
-  credentials: 'include',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-};
+import { apiFetch } from '@/lib/apiFetch.js';
 
 /**
  * Get the current user's subscription
  * @returns {Promise<Object>}
  */
 export async function getSubscription() {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/billing/subscription`, {
-      ...fetchOptions,
-      method: 'GET',
-    }),
-  );
-
-  return response.json();
+  return apiFetch.get('/api/billing/subscription');
 }
 
 /**
@@ -38,15 +20,7 @@ export async function getSubscription() {
  * @returns {Promise<{ url: string, sessionId: string }>}
  */
 export async function createCheckoutSession(tier, interval = 'monthly') {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/billing/checkout`, {
-      ...fetchOptions,
-      method: 'POST',
-      body: JSON.stringify({ tier, interval }),
-    }),
-  );
-
-  return response.json();
+  return apiFetch.post('/api/billing/checkout', { tier, interval });
 }
 
 /**
@@ -54,14 +28,7 @@ export async function createCheckoutSession(tier, interval = 'monthly') {
  * @returns {Promise<{ url: string }>}
  */
 export async function createPortalSession() {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/billing/portal`, {
-      ...fetchOptions,
-      method: 'POST',
-    }),
-  );
-
-  return response.json();
+  return apiFetch.post('/api/billing/portal');
 }
 
 /**
@@ -87,14 +54,7 @@ export async function redirectToPortal() {
  * @returns {Promise<{ url: string, sessionId: string }>}
  */
 export async function createSingleProjectCheckout() {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/billing/single-project/checkout`, {
-      ...fetchOptions,
-      method: 'POST',
-    }),
-  );
-
-  return response.json();
+  return apiFetch.post('/api/billing/single-project/checkout');
 }
 
 /**
@@ -110,15 +70,7 @@ export async function redirectToSingleProjectCheckout() {
  * @returns {Promise<{ members: Array, count: number }>}
  */
 export async function getMembers() {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/billing/members`, {
-      ...fetchOptions,
-      method: 'GET',
-    }),
-    { showToast: false },
-  );
-
-  return response.json();
+  return apiFetch.get('/api/billing/members', { toastMessage: false });
 }
 
 /**
@@ -126,14 +78,7 @@ export async function getMembers() {
  * @returns {Promise<{ success: boolean, grantId: string, expiresAt: number }>}
  */
 export async function startTrial() {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/billing/trial/start`, {
-      ...fetchOptions,
-      method: 'POST',
-    }),
-  );
-
-  return response.json();
+  return apiFetch.post('/api/billing/trial/start');
 }
 
 /**
@@ -148,16 +93,8 @@ export async function startTrial() {
  * }>}
  */
 export async function validatePlanChange(targetPlan) {
-  const response = await handleFetchError(
-    fetch(
-      `${API_BASE}/api/billing/validate-plan-change?targetPlan=${encodeURIComponent(targetPlan)}`,
-      {
-        ...fetchOptions,
-        method: 'GET',
-      },
-    ),
-    { showToast: false },
+  return apiFetch.get(
+    `/api/billing/validate-plan-change?targetPlan=${encodeURIComponent(targetPlan)}`,
+    { toastMessage: false },
   );
-
-  return response.json();
 }

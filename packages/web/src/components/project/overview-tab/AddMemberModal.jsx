@@ -1,9 +1,9 @@
 import { createSignal, For, Show, createEffect, onCleanup } from 'solid-js';
+import { debounce } from '@solid-primitives/scheduled';
 import { A } from '@solidjs/router';
-import { API_BASE } from '@config/api.js';
 import { FiX, FiAlertTriangle } from 'solid-icons/fi';
 import { Select, Avatar, showToast } from '@corates/ui';
-import { handleFetchError } from '@/lib/error-utils.js';
+import { apiFetch } from '@lib/apiFetch.js';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 
 /**
@@ -32,7 +32,6 @@ export default function AddMemberModal(props) {
     return props.quotaInfo.used >= props.quotaInfo.max;
   };
 
-  let searchTimeout = null;
   let inputRef;
 
   // Focus input when modal opens
@@ -42,52 +41,42 @@ export default function AddMemberModal(props) {
     }
   });
 
-  // Cleanup timeout on unmount
+  const searchUsers = async query => {
+    setSearching(true);
+    try {
+      const results = await apiFetch.get(
+        `/api/users/search?q=${encodeURIComponent(query)}&projectId=${encodeURIComponent(props.projectId)}`,
+        { toastMessage: false },
+      );
+      setSearchResults(results);
+    } catch (err) {
+      setError(err.message || 'Search failed');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  // Debounced search function
+  // eslint-disable-next-line solid/reactivity -- searchUsers is used via debounce in event handler
+  const debouncedSearchUsers = debounce(searchUsers, 300);
+
+  // Cleanup debounced function on unmount
   onCleanup(() => {
-    if (searchTimeout) clearTimeout(searchTimeout);
+    debouncedSearchUsers.clear();
   });
 
-  // Debounced search
+  // Handle search input
   const handleSearchInput = value => {
     setSearchQuery(value);
     setError(null);
 
-    if (searchTimeout) clearTimeout(searchTimeout);
-
     if (value.length < 2) {
       setSearchResults([]);
+      debouncedSearchUsers.clear();
       return;
     }
 
-    searchTimeout = setTimeout(() => {
-      searchUsers(value);
-    }, 300);
-  };
-
-  const searchUsers = async query => {
-    setSearching(true);
-    try {
-      const url = new URL(`${API_BASE}/api/users/search`);
-      url.searchParams.set('q', query);
-      url.searchParams.set('projectId', props.projectId);
-
-      const response = await handleFetchError(
-        fetch(url, {
-          credentials: 'include',
-        }),
-        {
-          setError,
-          showToast: false,
-        },
-      );
-
-      const results = await response.json();
-      setSearchResults(results);
-    } catch (_err) {
-      // Error already handled by handleFetchError
-    } finally {
-      setSearching(false);
-    }
+    debouncedSearchUsers(value);
   };
 
   const handleSelectUser = user => {
@@ -108,32 +97,19 @@ export default function AddMemberModal(props) {
     setError(null);
 
     try {
-      const response = await handleFetchError(
-        fetch(`${API_BASE}/api/orgs/${props.orgId}/projects/${props.projectId}/members`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
+      const result = await apiFetch.post(
+        `/api/orgs/${props.orgId}/projects/${props.projectId}/members`,
+        user ?
+          {
+            userId: user.id,
+            role: selectedRole(),
+          }
+        : {
+            email: searchQuery().trim(),
+            role: selectedRole(),
           },
-          body: JSON.stringify(
-            user ?
-              {
-                userId: user.id,
-                role: selectedRole(),
-              }
-            : {
-                email: searchQuery().trim(),
-                role: selectedRole(),
-              },
-          ),
-        }),
-        {
-          setError,
-          showToast: false,
-        },
+        { toastMessage: false },
       );
-
-      const result = await response.json();
 
       // Check if invitation was sent
       if (result.invitation) {

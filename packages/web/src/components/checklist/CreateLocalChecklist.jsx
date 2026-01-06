@@ -10,6 +10,7 @@ import useLocalChecklists from '@primitives/useLocalChecklists.js';
 import { FileUpload } from '@corates/ui';
 import { LANDING_URL } from '@config/api.js';
 import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
+import { validatePdfFile } from '@/lib/pdfValidation.js';
 
 export default function CreateLocalChecklist() {
   const navigate = useNavigate();
@@ -24,9 +25,14 @@ export default function CreateLocalChecklist() {
 
   const typeOptions = getChecklistTypeOptions();
 
-  const handleFilesChange = files => {
+  const handleFilesChange = async files => {
     const file = files[0];
     if (file) {
+      const result = await validatePdfFile(file);
+      if (!result.valid) {
+        setError(result.error);
+        return;
+      }
       setPdfFile(file);
       // Auto-fill name from PDF filename if name is empty
       if (!name()) {

@@ -721,7 +721,7 @@ VITE_GOOGLE_PICKER_API_KEY=          # ⚠️ Public (client-side)
    ```
 
 4. **Separate Secrets for Different Environments**
-   - Development: `.dev.vars` (local)
+   - Development: `.env` (local)
    - Production: Wrangler secrets (remote)
 
 ### Weaknesses & Recommendations ⚠️

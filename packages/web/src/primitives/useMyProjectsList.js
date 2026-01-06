@@ -5,9 +5,8 @@
  */
 
 import { useQuery } from '@tanstack/solid-query';
-import { API_BASE } from '@config/api.js';
 import { queryKeys } from '@lib/queryKeys.js';
-import { handleFetchError } from '@/lib/error-utils.js';
+import { apiFetch } from '@/lib/apiFetch.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 
 /**
@@ -15,15 +14,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
  * @returns {Promise<Array>} Array of projects with orgId
  */
 async function fetchMyProjects() {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/users/me/projects`, {
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-    }),
-    { showToast: false },
-  );
-
-  return response.json();
+  return apiFetch.get('/api/users/me/projects', { toastMessage: false });
 }
 
 /**

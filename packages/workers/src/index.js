@@ -12,6 +12,7 @@ import { createCorsMiddleware } from './middleware/cors.js';
 import { securityHeaders } from './middleware/securityHeaders.js';
 import { requireAuth } from './middleware/auth.js';
 import { requireTrustedOrigin } from './middleware/csrf.js';
+import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 
 // Route imports
 import { auth } from './auth/routes.js';
@@ -111,8 +112,16 @@ app.get('/health', async c => {
 // Simple liveness probe (for load balancers)
 app.get('/healthz', c => c.text('OK'));
 
-// Root endpoint
-app.get('/', c => c.text('Corates Workers API'));
+// Root endpoint - redirect browsers to frontend, return text for API clients
+app.get('/', c => {
+  const accept = c.req.header('Accept') || '';
+  // If browser request (accepts HTML), redirect to frontend
+  if (accept.includes('text/html')) {
+    const frontendUrl = c.env.APP_URL || 'https://corates.org';
+    return c.redirect(`${frontendUrl}/dashboard`, 302);
+  }
+  return c.text('Corates Workers API');
+});
 
 // API Documentation (development only)
 app.get('/docs', async c => {
@@ -388,12 +397,18 @@ app.all('/api/sessions/:sessionId', handleUserSession);
 app.all('/api/sessions/:sessionId/*', handleUserSession);
 
 // 404 handler
-app.notFound(c => c.json({ error: 'Not Found' }, 404));
+app.notFound(c => {
+  const error = createDomainError(SYSTEM_ERRORS.ROUTE_NOT_FOUND, { path: c.req.path });
+  return c.json(error, error.statusCode);
+});
 
 // Error handler
 app.onError((err, c) => {
   console.error('Worker error:', err);
-  return c.json({ error: 'Internal Server Error' }, 500);
+  const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+    originalError: err.message,
+  });
+  return c.json(error, error.statusCode);
 });
 
 export default app;

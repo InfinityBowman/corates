@@ -13,8 +13,17 @@ import {
   getProjectContext,
 } from '../../middleware/requireOrg.js';
 import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
-import { FILE_SIZE_LIMITS } from '../../config/constants.js';
-import { createDomainError, FILE_ERRORS, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  FILE_ERRORS,
+  VALIDATION_ERRORS,
+  SYSTEM_ERRORS,
+  PDF_LIMITS,
+  PDF_MAGIC_BYTES,
+  isValidPdfFilename,
+  isPdfSignature,
+  formatFileSize,
+} from '@corates/shared';
 import { createDb } from '../../db/client.js';
 import { mediaFiles, user } from '../../db/schema.js';
 import { eq, and } from 'drizzle-orm';
@@ -42,12 +51,7 @@ async function extractStudyId(c, next) {
 }
 
 function isValidFileName(fileName) {
-  if (!fileName) return false;
-  if (fileName.length > 200) return false;
-  if (/[\\/]/.test(fileName)) return false;
-  if (/\p{C}/u.test(fileName)) return false;
-  if (fileName.includes('"')) return false;
-  return true;
+  return isValidPdfFilename(fileName);
 }
 
 /**
@@ -193,11 +197,11 @@ orgPdfRoutes.post(
 
     // Check Content-Length header first for early rejection
     const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
-    if (contentLength > FILE_SIZE_LIMITS.PDF) {
+    if (contentLength > PDF_LIMITS.MAX_SIZE) {
       const error = createDomainError(
         FILE_ERRORS.TOO_LARGE,
-        { fileSize: contentLength, maxSize: FILE_SIZE_LIMITS.PDF },
-        `File size exceeds limit of ${FILE_SIZE_LIMITS.PDF / (1024 * 1024)}MB`,
+        { fileSize: contentLength, maxSize: PDF_LIMITS.MAX_SIZE },
+        `File size exceeds limit of ${formatFileSize(PDF_LIMITS.MAX_SIZE)}`,
       );
       return c.json(error, error.statusCode);
     }
@@ -223,11 +227,11 @@ orgPdfRoutes.post(
         }
 
         // Check file size
-        if (file.size > FILE_SIZE_LIMITS.PDF) {
+        if (file.size > PDF_LIMITS.MAX_SIZE) {
           const error = createDomainError(
             FILE_ERRORS.TOO_LARGE,
-            { fileSize: file.size, maxSize: FILE_SIZE_LIMITS.PDF },
-            `File size (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds limit of ${FILE_SIZE_LIMITS.PDF / (1024 * 1024)}MB`,
+            { fileSize: file.size, maxSize: PDF_LIMITS.MAX_SIZE },
+            `File size (${formatFileSize(file.size)}) exceeds limit of ${formatFileSize(PDF_LIMITS.MAX_SIZE)}`,
           );
           return c.json(error, error.statusCode);
         }
@@ -240,11 +244,11 @@ orgPdfRoutes.post(
         pdfData = await c.req.arrayBuffer();
 
         // Check size after reading for raw uploads
-        if (pdfData.byteLength > FILE_SIZE_LIMITS.PDF) {
+        if (pdfData.byteLength > PDF_LIMITS.MAX_SIZE) {
           const error = createDomainError(
             FILE_ERRORS.TOO_LARGE,
-            { fileSize: pdfData.byteLength, maxSize: FILE_SIZE_LIMITS.PDF },
-            `File size (${(pdfData.byteLength / (1024 * 1024)).toFixed(2)}MB) exceeds limit of ${FILE_SIZE_LIMITS.PDF / (1024 * 1024)}MB`,
+            { fileSize: pdfData.byteLength, maxSize: PDF_LIMITS.MAX_SIZE },
+            `File size (${formatFileSize(pdfData.byteLength)}) exceeds limit of ${formatFileSize(PDF_LIMITS.MAX_SIZE)}`,
           );
           return c.json(error, error.statusCode);
         }
@@ -267,11 +271,8 @@ orgPdfRoutes.post(
       }
 
       // Validate it's a PDF (check magic bytes)
-      const header = new Uint8Array(pdfData.slice(0, 5));
-      const pdfMagic = [0x25, 0x50, 0x44, 0x46, 0x2d]; // %PDF-
-      const isPdf = pdfMagic.every((byte, i) => header[i] === byte);
-
-      if (!isPdf) {
+      const header = new Uint8Array(pdfData.slice(0, PDF_MAGIC_BYTES.length));
+      if (!isPdfSignature(header)) {
         const error = createDomainError(
           FILE_ERRORS.INVALID_TYPE,
           { fileType: 'unknown', expectedType: 'application/pdf' },

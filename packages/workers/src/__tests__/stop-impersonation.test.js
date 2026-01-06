@@ -71,7 +71,8 @@ describe('/api/admin/stop-impersonation - CSRF enforcement', () => {
 
     expect(res.status).toBe(403);
     const body = await json(res);
-    expect(body.error).toMatch(/Origin|Referer/i);
+    expect(body.code).toBe('AUTH_FORBIDDEN');
+    expect(body.details?.reason).toBe('missing_origin');
 
     // Handler should not be called when CSRF check fails
     expect(mockHandler).not.toHaveBeenCalled();

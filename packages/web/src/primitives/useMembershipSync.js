@@ -1,6 +1,6 @@
 /**
- * useMembershipSync primitive - Handles real-time project membership updates via WebSocket
- * Invalidates TanStack Query cache when membership changes occur
+ * useMembershipSync primitive - Handles real-time updates via WebSocket
+ * Invalidates TanStack Query cache when membership or subscription changes occur
  */
 
 import { createEffect, onCleanup } from 'solid-js';
@@ -10,8 +10,8 @@ import { queryClient } from '@lib/queryClient.js';
 import { queryKeys } from '@lib/queryKeys.js';
 
 /**
- * Sets up real-time membership sync for the current user
- * Invalidates project queries when membership changes occur
+ * Sets up real-time sync for the current user
+ * Invalidates relevant queries when changes occur via WebSocket notifications
  */
 export function useMembershipSync() {
   const { user, isLoggedIn } = useBetterAuth();
@@ -44,6 +44,34 @@ export function useMembershipSync() {
         });
       }
     }
+
+    // Handle subscription change events (from Stripe webhooks)
+    if (
+      notificationType === 'subscription:updated' ||
+      notificationType === 'subscription:canceled'
+    ) {
+      console.log('[useMembershipSync] Subscription event received, invalidating cache');
+      // Invalidate subscription query to fetch fresh data
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current });
+      // Also invalidate invoices so billing UI refreshes after webhook-initiated changes
+      queryClient.invalidateQueries({ queryKey: queryKeys.billing.invoices });
+    }
+
+    // Handle org membership events
+    if (
+      notificationType === 'org:member-added' ||
+      notificationType === 'org:member-removed' ||
+      notificationType === 'org:role-changed'
+    ) {
+      // Invalidate org-related queries
+      if (notification.orgId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.orgs.detail(notification.orgId),
+        });
+      }
+      // Also invalidate the user's org list
+      queryClient.invalidateQueries({ queryKey: queryKeys.orgs.list });
+    }
   };
 
   const notifications = useNotifications(() => user()?.id, {
@@ -64,4 +92,9 @@ export function useMembershipSync() {
   onCleanup(() => {
     notifications.disconnect();
   });
+
+  // Return connection status for UI indicators
+  return {
+    connected: notifications.connected,
+  };
 }

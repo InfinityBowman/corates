@@ -1,4 +1,4 @@
-import { createSignal, Show, For, onCleanup } from 'solid-js';
+import { createSignal, Show, For } from 'solid-js';
 import { A } from '@solidjs/router';
 import {
   FiSearch,
@@ -12,6 +12,7 @@ import {
 } from 'solid-icons/fi';
 import { useAdminOrgs } from '@primitives/useAdminQueries.js';
 import { isAdminChecked, isAdmin } from '@/stores/adminStore.js';
+import { useDebouncedSignal } from '@/primitives/useDebouncedSignal.js';
 
 /**
  * Org List component for admin dashboard
@@ -20,9 +21,8 @@ import { isAdminChecked, isAdmin } from '@/stores/adminStore.js';
  * @returns {JSX.Element} - The OrgList component
  */
 export default function OrgList() {
-  const [search, setSearch] = createSignal('');
+  const [search, setSearch, debouncedSearch] = useDebouncedSignal('', 300);
   const [page, setPage] = createSignal(1);
-  const [debouncedSearch, setDebouncedSearch] = createSignal('');
 
   // Fetch orgs with pagination and search
   const orgsDataQuery = useAdminOrgs(() => ({
@@ -32,21 +32,11 @@ export default function OrgList() {
   }));
   const orgsData = () => orgsDataQuery.data;
 
-  // Debounce search
-  let searchTimeout;
+  // Handle search input - reset page when search changes
   const handleSearchInput = e => {
     setSearch(e.target.value);
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-      setDebouncedSearch(e.target.value);
-      setPage(1);
-    }, 300);
+    setPage(1);
   };
-
-  // Cleanup timeout on unmount
-  onCleanup(() => {
-    clearTimeout(searchTimeout);
-  });
 
   const formatDate = timestamp => {
     if (!timestamp) return '-';

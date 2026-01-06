@@ -408,7 +408,7 @@ describe('requireEntitlement middleware', () => {
       expect(body.details?.entitlement).toBe('project.create');
     });
 
-    it('should return non-domain error format when auth user is missing (current behavior)', async () => {
+    it('should return domain error format when auth user is missing', async () => {
       const app = new Hono();
       // Skip requireOrgMembership to test requireEntitlement's auth check
       app.get('/test', requireEntitlement('project.create'), c => c.json({ success: true }));
@@ -417,9 +417,7 @@ describe('requireEntitlement middleware', () => {
 
       expect(res.status).toBe(401);
       const body = await json(res);
-      // Current implementation returns plain error object (not domain error)
-      // Test pins this behavior - may be refactored to domain error later
-      expect(body.error).toBe('Authentication required');
+      expect(body.code).toBe('AUTH_REQUIRED');
     });
   });
 

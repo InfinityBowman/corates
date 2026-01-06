@@ -76,7 +76,7 @@ import { useProject } from '@primitives/useProject/index.js';
 
 ### Backend (Workers)
 
-Environment variables are defined in `wrangler.jsonc` or `.dev.vars`:
+Environment variables are defined in `.env` NOT `.dev.vars`
 
 **Required:**
 

@@ -11,6 +11,7 @@ import { showToast } from '@corates/ui';
 import { PdfListItem } from '@pdf';
 import EditPdfMetadataModal from '@/components/project/all-studies-tab/EditPdfMetadataModal.jsx';
 import projectActionsStore from '@/stores/projectActionsStore';
+import { validatePdfFile } from '@/lib/pdfValidation.js';
 
 export default function StudyPdfSection(props) {
   // props.study: Study object with pdfs array
@@ -41,8 +42,13 @@ export default function StudyPdfSection(props) {
 
   const handleFileSelect = async e => {
     const file = e.target.files?.[0];
-    if (!file || file.type !== 'application/pdf') {
-      showToast.error('Invalid File', 'Please select a PDF file');
+    if (!file) return;
+
+    // Validate file before upload
+    const validation = await validatePdfFile(file);
+    if (!validation.valid) {
+      showToast.error('Invalid File', validation.details.message);
+      if (fileInputRef) fileInputRef.value = '';
       return;
     }
 

@@ -3,8 +3,7 @@
  */
 
 import { createSignal } from 'solid-js';
-import { API_BASE } from '@config/api.js';
-import { handleFetchError } from '@/lib/error-utils.js';
+import { apiFetch } from '@/lib/apiFetch.js';
 import { queryClient } from '@lib/queryClient.js';
 import { queryKeys } from '@lib/queryKeys.js';
 
@@ -15,20 +14,14 @@ const [isImpersonating, setIsImpersonating] = createSignal(false);
 const [impersonatedBy, setImpersonatedBy] = createSignal(null);
 
 /**
- * Check if current user is admin and if currently impersonating
+ * Check if current user is admin based on session data.
+ * Uses the existing session endpoint to avoid unnecessary admin-protected calls.
  */
 async function checkAdminStatus() {
   try {
-    const response = await fetch(`${API_BASE}/api/admin/check`, {
-      credentials: 'include',
-      cache: 'no-store',
-    });
-    if (response.ok) {
-      const data = await response.json();
-      setIsAdmin(data.isAdmin);
-    } else {
-      setIsAdmin(false);
-    }
+    const data = await apiFetch.get('/api/auth/get-session', { toastMessage: false });
+    // Check if user has admin role
+    setIsAdmin(data?.user?.role === 'admin');
   } catch {
     setIsAdmin(false);
   } finally {
@@ -42,16 +35,7 @@ async function checkAdminStatus() {
  */
 async function checkImpersonationStatus() {
   try {
-    const response = await fetch(`${API_BASE}/api/auth/get-session`, {
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      setIsImpersonating(false);
-      setImpersonatedBy(null);
-      return;
-    }
-
-    const data = await response.json().catch(() => null);
+    const data = await apiFetch.get('/api/auth/get-session', { toastMessage: false });
     if (data?.session?.impersonatedBy) {
       setIsImpersonating(true);
       setImpersonatedBy(data.session.impersonatedBy);
@@ -71,12 +55,7 @@ async function checkImpersonationStatus() {
  * Fetch admin dashboard stats
  */
 async function fetchStats() {
-  const response = await fetch(`${API_BASE}/api/admin/stats`, {
-    credentials: 'include',
-    cache: 'no-store',
-  });
-  if (!response.ok) throw new Error('Failed to fetch stats');
-  return response.json();
+  return apiFetch.get('/api/admin/stats', { toastMessage: false });
 }
 
 /**
@@ -89,56 +68,32 @@ async function fetchUsers({ page = 1, limit = 20, search = '' } = {}) {
   });
   if (search) params.set('search', search);
 
-  const response = await fetch(`${API_BASE}/api/admin/users?${params}`, {
-    credentials: 'include',
-    cache: 'no-store',
-  });
-  if (!response.ok) throw new Error('Failed to fetch users');
-  return response.json();
+  return apiFetch.get(`/api/admin/users?${params}`, { toastMessage: false });
 }
 
 /**
  * Fetch single user details
  */
 async function fetchUserDetails(userId) {
-  const response = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
-    credentials: 'include',
-    cache: 'no-store',
-  });
-  if (!response.ok) throw new Error('Failed to fetch user details');
-  return response.json();
+  return apiFetch.get(`/api/admin/users/${userId}`, { toastMessage: false });
 }
 
 /**
  * Ban a user
  */
 async function banUser(userId, reason, expiresAt = null) {
-  const response = await fetch(`${API_BASE}/api/admin/users/${userId}/ban`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ reason, expiresAt }),
-  });
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to ban user');
-  }
-  return response.json();
+  return apiFetch.post(
+    `/api/admin/users/${userId}/ban`,
+    { reason, expiresAt },
+    { toastMessage: false },
+  );
 }
 
 /**
  * Unban a user
  */
 async function unbanUser(userId) {
-  const response = await fetch(`${API_BASE}/api/admin/users/${userId}/unban`, {
-    method: 'POST',
-    credentials: 'include',
-  });
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to unban user');
-  }
-  return response.json();
+  return apiFetch.post(`/api/admin/users/${userId}/unban`, null, { toastMessage: false });
 }
 
 /**
@@ -146,15 +101,7 @@ async function unbanUser(userId) {
  * Uses Better Auth's admin client for proper cookie handling
  */
 async function impersonateUser(userId) {
-  const response = await fetch(`${API_BASE}/api/admin/users/${userId}/impersonate`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to impersonate user');
-  }
+  await apiFetch.post(`/api/admin/users/${userId}/impersonate`, null, { toastMessage: false });
   setIsImpersonating(true);
   // Refresh the page to load as the impersonated user
   window.location.href = '/';
@@ -165,15 +112,7 @@ async function impersonateUser(userId) {
  * Uses Better Auth's admin client for proper cookie handling
  */
 async function stopImpersonation() {
-  const response = await fetch(`${API_BASE}/api/admin/stop-impersonation`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to stop impersonation');
-  }
+  await apiFetch.post('/api/admin/stop-impersonation', null, { toastMessage: false });
   setIsImpersonating(false);
   // Refresh the page to return to admin
   window.location.href = '/admin';
@@ -183,52 +122,14 @@ async function stopImpersonation() {
  * Revoke all sessions for a user
  */
 async function revokeUserSessions(userId) {
-  const response = await fetch(`${API_BASE}/api/admin/users/${userId}/sessions`, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to revoke sessions');
-  }
-  return response.json();
+  return apiFetch.delete(`/api/admin/users/${userId}/sessions`, { toastMessage: false });
 }
 
 /**
  * Delete a user
  */
 async function deleteUser(userId) {
-  const response = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to delete user');
-  }
-  return response.json();
-}
-
-/**
- * @deprecated Billing is now org-scoped, not user-scoped.
- * Use org-level subscription management via /admin/orgs/:orgId instead.
- * These functions are kept for backwards compatibility but should not be used.
- */
-async function grantAccess(_userId, _options = {}) {
-  throw new Error(
-    'User-level subscription management is deprecated. Billing is now org-scoped. Use /admin/orgs/:orgId to manage subscriptions.',
-  );
-}
-
-/**
- * @deprecated Billing is now org-scoped, not user-scoped.
- * Use org-level subscription management via /admin/orgs/:orgId instead.
- * These functions are kept for backwards compatibility but should not be used.
- */
-async function revokeAccess(_userId) {
-  throw new Error(
-    'User-level subscription management is deprecated. Billing is now org-scoped. Use /admin/orgs/:orgId to manage subscriptions.',
-  );
+  return apiFetch.delete(`/api/admin/users/${userId}`, { toastMessage: false });
 }
 
 /**
@@ -242,15 +143,7 @@ async function fetchStorageDocuments({ cursor, limit = 50, prefix = '', search =
   if (prefix) params.set('prefix', prefix);
   if (search) params.set('search', search);
 
-  const response = await fetch(`${API_BASE}/api/admin/storage/documents?${params}`, {
-    credentials: 'include',
-    cache: 'no-store',
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to fetch storage documents');
-  }
-  return response.json();
+  return apiFetch.get(`/api/admin/storage/documents?${params}`, { toastMessage: false });
 }
 
 /**
@@ -261,32 +154,14 @@ async function deleteStorageDocuments(keys) {
     throw new Error('Keys array is required');
   }
 
-  const response = await fetch(`${API_BASE}/api/admin/storage/documents`, {
-    method: 'DELETE',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ keys }),
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to delete storage documents');
-  }
-  return response.json();
+  return apiFetch.delete('/api/admin/storage/documents', { keys }, { toastMessage: false });
 }
 
 /**
  * Fetch storage statistics
  */
 async function fetchStorageStats() {
-  const response = await fetch(`${API_BASE}/api/admin/storage/stats`, {
-    credentials: 'include',
-    cache: 'no-store',
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to fetch storage stats');
-  }
-  return response.json();
+  return apiFetch.get('/api/admin/storage/stats', { toastMessage: false });
 }
 
 /**
@@ -299,52 +174,30 @@ async function fetchOrgs({ page = 1, limit = 20, search = '' } = {}) {
   });
   if (search) params.set('search', search);
 
-  const response = await fetch(`${API_BASE}/api/admin/orgs?${params}`, {
-    credentials: 'include',
-    cache: 'no-store',
-  });
-  if (!response.ok) throw new Error('Failed to fetch orgs');
-  return response.json();
+  return apiFetch.get(`/api/admin/orgs?${params}`, { toastMessage: false });
 }
 
 /**
  * Fetch single org details with billing summary
  */
 async function fetchOrgDetails(orgId) {
-  const response = await fetch(`${API_BASE}/api/admin/orgs/${orgId}`, {
-    credentials: 'include',
-    cache: 'no-store',
-  });
-  if (!response.ok) throw new Error('Failed to fetch org details');
-  return response.json();
+  return apiFetch.get(`/api/admin/orgs/${orgId}`, { toastMessage: false });
 }
 
 /**
  * Fetch org billing details
  */
 async function fetchOrgBilling(orgId) {
-  const response = await fetch(`${API_BASE}/api/admin/orgs/${orgId}/billing`, {
-    credentials: 'include',
-    cache: 'no-store',
-  });
-  if (!response.ok) throw new Error('Failed to fetch org billing');
-  return response.json();
+  return apiFetch.get(`/api/admin/orgs/${orgId}/billing`, { toastMessage: false });
 }
 
 /**
  * Create subscription for an org
  */
 async function createOrgSubscription(orgId, subscriptionData) {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/admin/orgs/${orgId}/subscriptions`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(subscriptionData),
-    }),
-    { showToast: false },
-  );
-  const result = await response.json();
+  const result = await apiFetch.post(`/api/admin/orgs/${orgId}/subscriptions`, subscriptionData, {
+    toastMessage: false,
+  });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
@@ -354,16 +207,11 @@ async function createOrgSubscription(orgId, subscriptionData) {
  * Update subscription for an org
  */
 async function updateOrgSubscription(orgId, subscriptionId, updateData) {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/admin/orgs/${orgId}/subscriptions/${subscriptionId}`, {
-      method: 'PUT',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updateData),
-    }),
-    { showToast: false },
+  const result = await apiFetch.put(
+    `/api/admin/orgs/${orgId}/subscriptions/${subscriptionId}`,
+    updateData,
+    { toastMessage: false },
   );
-  const result = await response.json();
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
@@ -373,14 +221,11 @@ async function updateOrgSubscription(orgId, subscriptionId, updateData) {
  * Cancel subscription for an org
  */
 async function cancelOrgSubscription(orgId, subscriptionId) {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/admin/orgs/${orgId}/subscriptions/${subscriptionId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    }),
-    { showToast: false },
+  const result = await apiFetch.delete(
+    `/api/admin/orgs/${orgId}/subscriptions/${subscriptionId}`,
+    null,
+    { toastMessage: false },
   );
-  const result = await response.json();
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
@@ -390,16 +235,9 @@ async function cancelOrgSubscription(orgId, subscriptionId) {
  * Create grant for an org
  */
 async function createOrgGrant(orgId, grantData) {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/admin/orgs/${orgId}/grants`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(grantData),
-    }),
-    { showToast: false },
-  );
-  const result = await response.json();
+  const result = await apiFetch.post(`/api/admin/orgs/${orgId}/grants`, grantData, {
+    toastMessage: false,
+  });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
@@ -409,16 +247,9 @@ async function createOrgGrant(orgId, grantData) {
  * Update grant for an org
  */
 async function updateOrgGrant(orgId, grantId, updateData) {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/admin/orgs/${orgId}/grants/${grantId}`, {
-      method: 'PUT',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updateData),
-    }),
-    { showToast: false },
-  );
-  const result = await response.json();
+  const result = await apiFetch.put(`/api/admin/orgs/${orgId}/grants/${grantId}`, updateData, {
+    toastMessage: false,
+  });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
@@ -428,14 +259,9 @@ async function updateOrgGrant(orgId, grantId, updateData) {
  * Revoke grant for an org
  */
 async function revokeOrgGrant(orgId, grantId) {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/admin/orgs/${orgId}/grants/${grantId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    }),
-    { showToast: false },
-  );
-  const result = await response.json();
+  const result = await apiFetch.delete(`/api/admin/orgs/${orgId}/grants/${grantId}`, null, {
+    toastMessage: false,
+  });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
@@ -445,14 +271,9 @@ async function revokeOrgGrant(orgId, grantId) {
  * Quick action: Grant trial to org
  */
 async function grantOrgTrial(orgId) {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/admin/orgs/${orgId}/grant-trial`, {
-      method: 'POST',
-      credentials: 'include',
-    }),
-    { showToast: false },
-  );
-  const result = await response.json();
+  const result = await apiFetch.post(`/api/admin/orgs/${orgId}/grant-trial`, null, {
+    toastMessage: false,
+  });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
@@ -462,14 +283,9 @@ async function grantOrgTrial(orgId) {
  * Quick action: Grant single_project to org
  */
 async function grantOrgSingleProject(orgId) {
-  const response = await handleFetchError(
-    fetch(`${API_BASE}/api/admin/orgs/${orgId}/grant-single-project`, {
-      method: 'POST',
-      credentials: 'include',
-    }),
-    { showToast: false },
-  );
-  const result = await response.json();
+  const result = await apiFetch.post(`/api/admin/orgs/${orgId}/grant-single-project`, null, {
+    toastMessage: false,
+  });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
@@ -483,15 +299,7 @@ async function fetchBillingLedger({ limit = 50, status, type } = {}) {
   if (status) params.set('status', status);
   if (type) params.set('type', type);
 
-  const response = await fetch(`${API_BASE}/api/admin/billing/ledger?${params}`, {
-    credentials: 'include',
-    cache: 'no-store',
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to fetch billing ledger');
-  }
-  return response.json();
+  return apiFetch.get(`/api/admin/billing/ledger?${params}`, { toastMessage: false });
 }
 
 /**
@@ -503,15 +311,7 @@ async function fetchBillingStuckStates({ incompleteThreshold = 30, limit = 50 } 
     limit: limit.toString(),
   });
 
-  const response = await fetch(`${API_BASE}/api/admin/billing/stuck-states?${params}`, {
-    credentials: 'include',
-    cache: 'no-store',
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to fetch stuck states');
-  }
-  return response.json();
+  return apiFetch.get(`/api/admin/billing/stuck-states?${params}`, { toastMessage: false });
 }
 
 /**
@@ -533,15 +333,9 @@ async function fetchOrgBillingReconcile(
   });
   if (checkStripe) params.set('checkStripe', 'true');
 
-  const response = await fetch(`${API_BASE}/api/admin/orgs/${orgId}/billing/reconcile?${params}`, {
-    credentials: 'include',
-    cache: 'no-store',
+  return apiFetch.get(`/api/admin/orgs/${orgId}/billing/reconcile?${params}`, {
+    toastMessage: false,
   });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to fetch reconciliation');
-  }
-  return response.json();
 }
 
 export {
@@ -560,8 +354,6 @@ export {
   stopImpersonation,
   revokeUserSessions,
   deleteUser,
-  grantAccess,
-  revokeAccess,
   fetchStorageDocuments,
   deleteStorageDocuments,
   fetchStorageStats,

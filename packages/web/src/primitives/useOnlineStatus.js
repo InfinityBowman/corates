@@ -1,4 +1,5 @@
 import { createSignal, createEffect, onCleanup } from 'solid-js';
+import { debounce } from '@solid-primitives/scheduled';
 
 // Debounce delay to prevent thrashing on flaky networks
 const DEBOUNCE_MS = 1000;
@@ -18,9 +19,6 @@ export default function useOnlineStatus() {
   const [isOnline, setIsOnline] = createSignal(navigator.onLine);
 
   createEffect(() => {
-    let onlineDebounceTimer = null;
-    let offlineDebounceTimer = null;
-
     /**
      * Verify connectivity by making a lightweight request.
      * Uses HEAD request to minimize data transfer.
@@ -47,47 +45,35 @@ export default function useOnlineStatus() {
       }
     }
 
+    // Debounced handler for going online
+    const debouncedHandleOnline = debounce(async () => {
+      // Verify we're actually online before updating state
+      const actuallyOnline = await verifyConnectivity();
+      if (actuallyOnline) {
+        setIsOnline(true);
+      }
+    }, ONLINE_CONFIRM_DELAY_MS);
+
+    // Debounced handler for going offline
+    const debouncedHandleOffline = debounce(() => {
+      // Double-check browser still thinks we're offline
+      if (!navigator.onLine) {
+        setIsOnline(false);
+      }
+    }, DEBOUNCE_MS);
+
     async function handleOnline() {
       // Clear any pending offline timer
-      if (offlineDebounceTimer) {
-        clearTimeout(offlineDebounceTimer);
-        offlineDebounceTimer = null;
-      }
-
+      debouncedHandleOffline.clear();
       // Debounce going online to prevent thrashing
-      if (onlineDebounceTimer) {
-        clearTimeout(onlineDebounceTimer);
-      }
-
-      onlineDebounceTimer = setTimeout(async () => {
-        // Verify we're actually online before updating state
-        const actuallyOnline = await verifyConnectivity();
-        if (actuallyOnline) {
-          setIsOnline(true);
-        }
-        onlineDebounceTimer = null;
-      }, ONLINE_CONFIRM_DELAY_MS);
+      debouncedHandleOnline();
     }
 
     function handleOffline() {
       // Clear any pending online timer
-      if (onlineDebounceTimer) {
-        clearTimeout(onlineDebounceTimer);
-        onlineDebounceTimer = null;
-      }
-
+      debouncedHandleOnline.clear();
       // Small debounce for offline too, but shorter since we want to react faster
-      if (offlineDebounceTimer) {
-        clearTimeout(offlineDebounceTimer);
-      }
-
-      offlineDebounceTimer = setTimeout(() => {
-        // Double-check browser still thinks we're offline
-        if (!navigator.onLine) {
-          setIsOnline(false);
-        }
-        offlineDebounceTimer = null;
-      }, DEBOUNCE_MS);
+      debouncedHandleOffline();
     }
 
     window.addEventListener('online', handleOnline);
@@ -96,8 +82,8 @@ export default function useOnlineStatus() {
     onCleanup(() => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      if (onlineDebounceTimer) clearTimeout(onlineDebounceTimer);
-      if (offlineDebounceTimer) clearTimeout(offlineDebounceTimer);
+      debouncedHandleOnline.clear();
+      debouncedHandleOffline.clear();
     });
   });
 

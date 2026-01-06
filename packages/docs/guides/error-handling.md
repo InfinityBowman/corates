@@ -86,11 +86,34 @@ The validation middleware automatically creates validation errors:
 
 ## Frontend Usage
 
-### Handling API Errors
+### Handling API Errors (Preferred: apiFetch)
+
+**Use `apiFetch` for all API calls** - it handles JSON parsing, errors, and toast notifications automatically:
 
 ```javascript
-// packages/web/src/lib/error-utils.js
-import { handleFetchError, handleDomainError } from '@/lib/error-utils.js';
+import { apiFetch } from '@lib/apiFetch.js';
+
+// GET request - returns parsed JSON directly
+const projects = await apiFetch.get('/api/projects');
+
+// POST request with body
+const newProject = await apiFetch.post('/api/projects', { name: 'My Project' });
+
+// With options
+const data = await apiFetch.get('/api/projects', {
+  toastMessage: false, // Disable error toast
+  retries: 2, // Retry on failure (default: 1 for GET, 0 for mutations)
+});
+```
+
+Available methods: `apiFetch.get()`, `apiFetch.post()`, `apiFetch.put()`, `apiFetch.patch()`, `apiFetch.delete()`
+
+### Legacy: handleFetchError
+
+For existing code, `handleFetchError` wraps raw fetch calls:
+
+```javascript
+import { handleFetchError } from '@/lib/error-utils.js';
 
 // Wrap fetch calls
 try {
@@ -201,15 +224,16 @@ function App() {
 
 ### ✅ DO
 
+- **Use `apiFetch` for all API calls** (preferred)
 - Use error helpers from `@corates/shared`
 - Handle domain errors with `handleDomainError()`
 - Handle transport errors with `handleTransportError()`
 - Use form error utilities for validation errors
-- Wrap fetch calls with `handleFetchError()`
 - Use error boundaries for rendering errors
 
 ### ❌ DON'T
 
+- Use raw `fetch()` with manual error handling
 - Throw string literals (use `no-throw-literal` ESLint rule)
 - Create raw `Error()` objects without error codes
 - Use string matching for error codes
