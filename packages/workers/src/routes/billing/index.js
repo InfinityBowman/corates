@@ -59,6 +59,14 @@ billingRoutes.get('/subscription', requireAuth, async c => {
 
     const orgBilling = await resolveOrgAccess(db, orgId);
 
+    // Get project count for usage display
+    const { projects } = await import('../../db/schema.js');
+    const { eq, count } = await import('drizzle-orm');
+    const [projectCountResult] = await db
+      .select({ count: count() })
+      .from(projects)
+      .where(eq(projects.orgId, orgId));
+
     // Convert to frontend-compatible format
     // Use getGrantPlan for grants, getPlan for subscriptions/free
     const effectivePlan =
@@ -85,6 +93,7 @@ billingRoutes.get('/subscription', requireAuth, async c => {
       cancelAtPeriodEnd: orgBilling.subscription?.cancelAtPeriodEnd || false,
       accessMode: orgBilling.accessMode,
       source: orgBilling.source,
+      projectCount: projectCountResult?.count || 0,
     });
   } catch (error) {
     console.error('Error fetching org billing:', error);

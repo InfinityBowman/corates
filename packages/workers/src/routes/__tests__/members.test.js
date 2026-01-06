@@ -52,6 +52,22 @@ vi.mock('../../middleware/auth.js', () => {
   };
 });
 
+// Mock billing resolver to return write access with unlimited quota by default
+let mockResolveOrgAccess;
+vi.mock('../../lib/billingResolver.js', () => {
+  return {
+    resolveOrgAccess: vi.fn(),
+  };
+});
+
+// Mock checkCollaboratorQuota to control quota enforcement in tests
+let mockCheckCollaboratorQuota;
+vi.mock('../../lib/quotaTransaction.js', () => {
+  return {
+    checkCollaboratorQuota: vi.fn(),
+  };
+});
+
 let app;
 
 beforeAll(async () => {
@@ -64,6 +80,33 @@ beforeEach(async () => {
   await resetTestDatabase();
   // Clear ProjectDoc DOs to prevent invalidation errors between tests
   await clearProjectDOs(['project-1']);
+  vi.clearAllMocks();
+
+  // Get the mocked functions
+  const billingResolver = await import('../../lib/billingResolver.js');
+  mockResolveOrgAccess = billingResolver.resolveOrgAccess;
+
+  const quotaTransaction = await import('../../lib/quotaTransaction.js');
+  mockCheckCollaboratorQuota = quotaTransaction.checkCollaboratorQuota;
+
+  // Setup default billing resolver mock (unlimited quota)
+  mockResolveOrgAccess.mockResolvedValue({
+    accessMode: 'full',
+    quotas: {
+      'projects.max': 10,
+      'collaborators.org.max': -1, // -1 means unlimited
+    },
+    entitlements: {
+      'project.create': true,
+    },
+  });
+
+  // Setup default quota mock (quota allowed)
+  mockCheckCollaboratorQuota.mockResolvedValue({
+    allowed: true,
+    used: 0,
+    limit: -1,
+  });
 });
 
 async function fetchMembers(orgId, projectId, path = '', init = {}) {
@@ -1333,5 +1376,166 @@ describe('Org-Scoped Member Routes - DELETE /api/orgs/:orgId/projects/:projectId
     });
 
     expect(res.status).toBe(404);
+  });
+});
+
+describe('Org-Scoped Member Routes - Collaborator Quota Enforcement', () => {
+  it('should reject adding a new org member when at collaborator quota', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner User',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedUser({
+      id: 'user-2',
+      name: 'New Member',
+      email: 'newmember@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      orgId: 'org-1',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
+    // Mock quota exceeded
+    const { createDomainError, AUTH_ERRORS } = await import('@corates/shared');
+    mockCheckCollaboratorQuota.mockResolvedValueOnce({
+      allowed: false,
+      used: 1,
+      limit: 0,
+      error: createDomainError(
+        AUTH_ERRORS.FORBIDDEN,
+        {
+          reason: 'quota_exceeded',
+          quotaKey: 'collaborators.org.max',
+          used: 1,
+          limit: 0,
+          requested: 1,
+        },
+        'Collaborator quota exceeded.',
+      ),
+    });
+
+    const res = await fetchMembers('org-1', 'project-1', '', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'user-2', role: 'member' }),
+    });
+
+    expect(res.status).toBe(403);
+    const body = await json(res);
+    expect(body.code).toBe('AUTH_FORBIDDEN');
+    expect(body.details?.reason).toBe('quota_exceeded');
+    expect(body.details?.quotaKey).toBe('collaborators.org.max');
+  });
+
+  it('should allow adding existing org member without quota check', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    await seedUser({
+      id: 'user-1',
+      name: 'Owner User',
+      email: 'owner@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedUser({
+      id: 'user-2',
+      name: 'Existing Org Member',
+      email: 'existing@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: nowSec,
+    });
+
+    await seedOrgMember({
+      id: 'om-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      role: 'owner',
+      createdAt: nowSec,
+    });
+
+    // user-2 is already an org member
+    await seedOrgMember({
+      id: 'om-2',
+      organizationId: 'org-1',
+      userId: 'user-2',
+      role: 'member',
+      createdAt: nowSec,
+    });
+
+    await seedProject({
+      id: 'project-1',
+      name: 'Test Project',
+      orgId: 'org-1',
+      createdBy: 'user-1',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+
+    await seedProjectMember({
+      id: 'pm-1',
+      projectId: 'project-1',
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: nowSec,
+    });
+
+    // The quota check won't be called because user is already org member
+    // Default mock returns allowed: true, which shouldn't be used anyway
+
+    const res = await fetchMembers('org-1', 'project-1', '', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'user-2', role: 'member' }),
+    });
+
+    // Should succeed because user-2 is already an org member
+    // checkCollaboratorQuota should NOT have been called (existing org member)
+    expect(res.status).toBe(201);
+    const body = await json(res);
+    expect(body.userId).toBe('user-2');
   });
 });

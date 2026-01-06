@@ -21,6 +21,8 @@ import {
   getKappaInterpretation,
 } from '@/lib/inter-rater-reliability.js';
 import CircularProgress from './CircularProgress.jsx';
+import { useSubscription } from '@primitives/useSubscription.js';
+import { useMembers } from '@/primitives/useMembers.js';
 
 /**
  * OverviewTab - Project overview with stats, settings, and members
@@ -36,10 +38,26 @@ export default function OverviewTab() {
   const confirmDialog = useConfirmDialog();
   const navigate = useNavigate();
 
+  // Subscription/quota checks for member addition
+  const { hasQuota, quotas } = useSubscription();
+  const { memberCount: orgMemberCount } = useMembers();
+
   // Read from store directly
   const studies = () => projectStore.getStudies(projectId);
   const members = () => projectStore.getMembers(projectId);
   const currentUserId = () => user()?.id;
+
+  // Check if can add more collaborators (quota check)
+  const collaboratorQuotaInfo = createMemo(() => {
+    const max = quotas()?.['collaborators.org.max'] ?? 0;
+    const used = orgMemberCount();
+    return { used, max };
+  });
+
+  const canAddMember = createMemo(() => {
+    if (!isOwner()) return false;
+    return hasQuota('collaborators.org.max', { used: orgMemberCount(), requested: 1 });
+  });
 
   // Calculate additional stats
 
@@ -258,13 +276,26 @@ export default function OverviewTab() {
           <div class='mb-4 flex items-center justify-between'>
             <h3 class='text-base font-semibold text-gray-900'>Project Members</h3>
             <Show when={isOwner()}>
-              <button
-                onClick={() => setShowAddMemberModal(true)}
-                class='inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              <Show
+                when={canAddMember()}
+                fallback={
+                  <span
+                    class='inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-500'
+                    title='Collaborator limit reached. Upgrade your plan to add more team members.'
+                  >
+                    <FiPlus class='h-4 w-4' />
+                    Add Member
+                  </span>
+                }
               >
-                <FiPlus class='h-4 w-4' />
-                Add Member
-              </button>
+                <button
+                  onClick={() => setShowAddMemberModal(true)}
+                  class='inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                >
+                  <FiPlus class='h-4 w-4' />
+                  Add Member
+                </button>
+              </Show>
             </Show>
           </div>
           <Show when={members().length > 0}>
@@ -404,6 +435,7 @@ export default function OverviewTab() {
         onClose={() => setShowAddMemberModal(false)}
         projectId={projectId}
         orgId={orgId()}
+        quotaInfo={collaboratorQuotaInfo()}
       />
       <confirmDialog.ConfirmDialogComponent />
     </>
