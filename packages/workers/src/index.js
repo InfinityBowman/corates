@@ -199,50 +199,6 @@ app.route('/api/orgs', orgRoutes);
 // Mount Google Drive routes
 app.route('/api/google-drive', googleDriveRoutes);
 
-// SSRF protection for PDF proxy - block internal/private IPs and metadata endpoints
-const BLOCKED_HOSTNAMES = [
-  'localhost',
-  'metadata.google.internal', // GCP metadata
-  'metadata.google', // GCP metadata alternate
-];
-
-const SSRF_BLOCKED_PATTERNS = [
-  /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/, // 127.0.0.0/8 loopback
-  /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/, // 10.0.0.0/8 private
-  /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/, // 172.16.0.0/12 private
-  /^192\.168\.\d{1,3}\.\d{1,3}$/, // 192.168.0.0/16 private
-  /^169\.254\.\d{1,3}\.\d{1,3}$/, // 169.254.0.0/16 link-local / AWS metadata
-  /^0\.0\.0\.0$/, // Unspecified
-  /^::1$/, // IPv6 loopback
-  /^::$/, // IPv6 unspecified
-  /^fc[0-9a-f]{2}:/i, // IPv6 unique local
-  /^fd[0-9a-f]{2}:/i, // IPv6 unique local
-  /^fe80:/i, // IPv6 link-local
-];
-
-function isBlockedHost(hostname) {
-  // Check blocked hostnames
-  const lowerHost = hostname.toLowerCase();
-  if (BLOCKED_HOSTNAMES.includes(lowerHost)) {
-    return true;
-  }
-
-  // Check if hostname is an IP address matching blocked patterns
-  for (const pattern of SSRF_BLOCKED_PATTERNS) {
-    if (pattern.test(hostname)) {
-      return true;
-    }
-  }
-
-  // Block numeric IPs that could resolve to internal addresses
-  // This catches attempts like http://2130706433 (127.0.0.1 as decimal)
-  if (/^\d+$/.test(hostname)) {
-    return true;
-  }
-
-  return false;
-}
-
 // PDF proxy endpoint - fetches external PDFs to avoid CORS issues
 // Only requires authentication, not project membership
 app.post('/api/pdf-proxy', requireAuth, async c => {
@@ -253,8 +209,9 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
       return c.json({ error: 'URL is required' }, 400);
     }
 
-    // SSRF protection - validate URL against allowlist
     const { validatePdfProxyUrl } = await import('./lib/ssrf-protection.js');
+
+    // SSRF protection - validate URL against allowlist
     const validation = validatePdfProxyUrl(url);
     if (!validation.valid) {
       return c.json({ error: validation.error, code: 'SSRF_BLOCKED' }, 400);
@@ -267,15 +224,6 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
     let currentUrl = url;
 
     while (redirectCount < maxRedirects) {
-      // Re-validate each redirect URL for SSRF protection
-      const redirectValidation = validatePdfProxyUrl(currentUrl);
-      if (!redirectValidation.valid) {
-        return c.json(
-          { error: `Redirect blocked: ${redirectValidation.error}`, code: 'SSRF_BLOCKED' },
-          400,
-        );
-      }
-
       response = await fetch(currentUrl, {
         headers: {
           'User-Agent': 'CoRATES/1.0 (Research Tool; mailto:support@corates.app)',
@@ -284,44 +232,46 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
         redirect: 'manual',
       });
 
-      // Check if it's a redirect
-      if ([301, 302, 303, 307, 308].includes(response.status)) {
-        const location = response.headers.get('location');
-        if (!location) {
-          return c.json({ error: 'Redirect without location header' }, 502);
-        }
-
-        // Detect auth/login redirects (common patterns)
-        if (
-          location.includes('/login') ||
-          location.includes('/auth') ||
-          location.includes('/signin') ||
-          location.includes('authorization.oauth2') ||
-          location.includes('idp.') ||
-          location.includes('/sso/')
-        ) {
-          return c.json(
-            {
-              error: 'PDF requires authentication - this article may not be truly open access',
-              code: 'AUTH_REQUIRED',
-            },
-            403,
-          );
-        }
-
-        const redirectUrl = new URL(location, currentUrl);
-
-        // M4: SSRF Protection - validate redirect destinations
-        if (isBlockedHost(redirectUrl.hostname)) {
-          console.warn('PDF proxy SSRF redirect blocked:', { hostname: redirectUrl.hostname });
-          return c.json({ error: 'Redirect to internal resources is not allowed' }, 403);
-        }
-
-        currentUrl = redirectUrl.href;
-        redirectCount++;
-      } else {
+      if (![301, 302, 303, 307, 308].includes(response.status)) {
         break;
       }
+
+      const location = response.headers.get('location');
+      if (!location) {
+        return c.json({ error: 'Redirect without location header' }, 502);
+      }
+
+      // Detect auth/login redirects (common patterns)
+      if (
+        location.includes('/login') ||
+        location.includes('/auth') ||
+        location.includes('/signin') ||
+        location.includes('authorization.oauth2') ||
+        location.includes('idp.') ||
+        location.includes('/sso/')
+      ) {
+        return c.json(
+          {
+            error: 'PDF requires authentication - this article may not be truly open access',
+            code: 'AUTH_REQUIRED',
+          },
+          403,
+        );
+      }
+
+      const redirectUrl = new URL(location, currentUrl);
+
+      // Validate redirect URL for SSRF protection
+      const redirectValidation = validatePdfProxyUrl(redirectUrl.href);
+      if (!redirectValidation.valid) {
+        return c.json(
+          { error: `Redirect blocked: ${redirectValidation.error}`, code: 'SSRF_BLOCKED' },
+          400,
+        );
+      }
+
+      currentUrl = redirectUrl.href;
+      redirectCount++;
     }
 
     if (redirectCount >= maxRedirects) {
@@ -338,7 +288,6 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
     // Check content type
     const contentType = response.headers.get('content-type') || '';
     if (!contentType.includes('pdf') && !contentType.includes('octet-stream')) {
-      // Check if we got an HTML page (login page)
       if (contentType.includes('html')) {
         return c.json(
           {
