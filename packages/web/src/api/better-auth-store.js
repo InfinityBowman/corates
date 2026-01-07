@@ -429,6 +429,35 @@ function createBetterAuthStore() {
     }
   }
 
+  /**
+   * Shared cleanup logic for signout and revokeAllSessions.
+   * Clears all caches, resets state, and notifies other tabs.
+   */
+  async function _performSignoutCleanup() {
+    // Clear cached auth data
+    saveCachedAuth(null);
+    setCachedUser(null);
+    setCachedAvatarUrl(null);
+
+    // Clear cached avatar from IndexedDB
+    clearAvatarCache();
+
+    // Clear all in-memory query cache
+    queryClient.clear();
+
+    // Clear persisted query cache (IndexedDB and localStorage)
+    // This prevents stale data from being restored on next page load
+    await clearPersistedQueryCache();
+
+    // Refetch session to immediately clear it in current tab
+    // This ensures session().data becomes null right away, preventing components
+    // from trying to fetch data with stale user state
+    await session().refetch?.();
+
+    // Notify other tabs of auth change
+    broadcastAuthChange();
+  }
+
   async function signout() {
     try {
       setAuthError(null);
@@ -438,28 +467,7 @@ function createBetterAuthStore() {
         throw new Error(error.message);
       }
 
-      // Clear cached auth data
-      saveCachedAuth(null);
-      setCachedUser(null);
-      setCachedAvatarUrl(null);
-
-      // Clear cached avatar from IndexedDB
-      clearAvatarCache();
-
-      // Clear all in-memory query cache
-      queryClient.clear();
-
-      // Clear persisted query cache (IndexedDB and localStorage)
-      // This prevents stale data from being restored on next page load
-      await clearPersistedQueryCache();
-
-      // Refetch session to immediately clear it in current tab
-      // This ensures session().data becomes null right away, preventing components
-      // from trying to fetch data with stale user state
-      await session().refetch?.();
-
-      // Notify other tabs of auth change
-      broadcastAuthChange();
+      await _performSignoutCleanup();
     } catch (err) {
       setAuthError(err.message);
       throw err;
@@ -676,10 +684,7 @@ function createBetterAuthStore() {
   async function revokeAllSessions() {
     try {
       await _revokeSessions();
-      // Clear local state after revoking all sessions
-      saveCachedAuth(null);
-      setCachedUser(null);
-      setCachedAvatarUrl(null);
+      await _performSignoutCleanup();
     } catch (err) {
       setAuthError(err.message);
       throw err;
@@ -816,19 +821,11 @@ function createBetterAuthStore() {
         throw new Error(data.error || 'Failed to delete account');
       }
 
-      // Clear local data
-      queryClient.clear();
+      // Clear pending email from localStorage (account-specific)
       localStorage.removeItem('pendingEmail');
-      saveCachedAuth(null);
-      setCachedUser(null);
-      setCachedAvatarUrl(null);
-      clearAvatarCache();
 
-      // Clear persisted query cache
-      await clearPersistedQueryCache();
-
-      // Sign out after successful deletion
-      await authClient.signOut();
+      // Use shared cleanup (clears caches, resets state, notifies tabs)
+      await _performSignoutCleanup();
 
       return { success: true };
     } catch (err) {
