@@ -11,6 +11,7 @@ This audit analyzes the CoRATES codebase to identify ESLint rules that would imp
 **Overall Grade**: B (Good foundation with room for improvement)
 
 **Key Statistics**:
+
 - 700+ console statements in production code
 - 1,356 async functions with varying error handling patterns
 - 454 try/catch blocks with inconsistent handling
@@ -22,10 +23,12 @@ This audit analyzes the CoRATES codebase to identify ESLint rules that would imp
 ### Strengths
 
 **Custom Corates rules in place:**
+
 - `corates/corates-error-helpers` - Enforces centralized error handling via `@corates/shared`
 - `corates/corates-ui-imports` - Prevents direct `@ark-ui/solid` imports, requires `@corates/ui`
 
 **Well-configured basics:**
+
 - TypeScript parser with modern ECMAScript support
 - SolidJS-specific rules enabled
 - Underscore-prefixed unused variables allowed
@@ -33,13 +36,13 @@ This audit analyzes the CoRATES codebase to identify ESLint rules that would imp
 
 ### Current Rule Set
 
-| Rule | Level | Purpose |
-|------|-------|---------|
-| `no-unused-vars` | Error | Ignores `_` prefixed variables |
-| `no-throw-literal` | Error | Require Error objects, not literals |
-| `corates/corates-error-helpers` | Warn | Enforce centralized error handling |
-| `corates/corates-ui-imports` | Error | Prevent direct ark-ui imports |
-| `no-restricted-imports` | Error | Block `@ark-ui/*` imports in app code |
+| Rule                            | Level | Purpose                               |
+| ------------------------------- | ----- | ------------------------------------- |
+| `no-unused-vars`                | Error | Ignores `_` prefixed variables        |
+| `no-throw-literal`              | Error | Require Error objects, not literals   |
+| `corates/corates-error-helpers` | Warn  | Enforce centralized error handling    |
+| `corates/corates-ui-imports`    | Error | Prevent direct ark-ui imports         |
+| `no-restricted-imports`         | Error | Block `@ark-ui/*` imports in app code |
 
 ## 2. Recommended Rules - High Priority
 
@@ -49,6 +52,7 @@ This audit analyzes the CoRATES codebase to identify ESLint rules that would imp
 **Issue**: 700+ console statements found across the codebase
 
 **Examples Found**:
+
 - [email.js:52](packages/workers/src/routes/email.js#L52) - `console.error('Email queue handler error:', err)`
 - [better-auth-store.js:85](packages/web/src/api/better-auth-store.js#L85) - `console.error('Error loading cached auth:', err)`
 - [ProjectDoc.js:117](packages/workers/src/durable-objects/ProjectDoc.js#L117) - `console.error('ProjectDoc error:', error)`
@@ -78,6 +82,7 @@ This audit analyzes the CoRATES codebase to identify ESLint rules that would imp
 **Issue**: 1,356 async functions with many unhandled promise chains
 
 **Examples Found**:
+
 - [pdfs.js:82](packages/web/src/stores/projectActionsStore/pdfs.js#L82) - `.catch(console.warn)` (silent error swallowing)
 - [pdfs.js:330](packages/web/src/stores/projectActionsStore/pdfs.js#L330) - `.catch(console.warn)` on critical operations
 - [studies.js:91](packages/web/src/stores/projectActionsStore/studies.js#L91) - `.catch(console.warn)` pattern repeated
@@ -107,6 +112,7 @@ This audit analyzes the CoRATES codebase to identify ESLint rules that would imp
 **Issue**: Many `.catch()` handlers that silently swallow errors
 
 **Examples Found**:
+
 - [pdfs.js:82](packages/web/src/stores/projectActionsStore/pdfs.js#L82) - `.catch(console.warn)` hides failures
 - [main.jsx:11](packages/web/src/main.jsx#L11) - Empty catch block
 - [SplitPanelControls.jsx:54](packages/web/src/components/checklist/SplitPanelControls.jsx#L54) - `catch (_err) { }` pattern
@@ -163,10 +169,12 @@ module.exports = {
 **Issue**: Inconsistent import ordering and styles across files
 
 **Examples Found**:
+
 - [Routes.jsx:1-37](packages/web/src/Routes.jsx#L1-L37) - 37 consecutive imports with mixed ordering
 - [LocalChecklistView.jsx:9-14](packages/web/src/components/checklist/LocalChecklistView.jsx#L9-L14) - No consistent order
 
 **Patterns Observed**:
+
 - Mix of relative (`../`) and alias imports (`@/`, `@api/`, `@config/`)
 - Namespace imports: `import * as Y from 'yjs'`, `import * as d3 from 'd3'`
 - No consistent grouping (external, internal, relative)
@@ -243,6 +251,7 @@ import importPlugin from 'eslint-plugin-import';
 **Issue**: Inconsistent async patterns across the codebase
 
 **Examples Found**:
+
 - Some files use `new Promise((resolve, reject) => { ... })` instead of async/await
 - Async handlers in signals without proper cleanup patterns
 
@@ -346,6 +355,7 @@ import importPlugin from 'eslint-plugin-import';
 **Issue**: Namespace imports (`import * as`) used inconsistently
 
 **Examples Found**:
+
 - `import * as Y from 'yjs'` (11 files)
 - `import * as d3 from 'd3'` (3 files)
 
@@ -485,27 +495,33 @@ export default [
       'consistent-return': 'warn',
 
       // Import Organization
-      'import/order': ['error', {
-        groups: ['builtin', 'external', 'internal', ['parent', 'sibling', 'index'], 'type'],
-        pathGroups: [
-          { pattern: 'solid-js/**', group: 'external', position: 'before' },
-          { pattern: '@solidjs/**', group: 'external', position: 'before' },
-          { pattern: '@corates/**', group: 'internal', position: 'before' },
-          { pattern: '@/**', group: 'internal' },
-        ],
-        'newlines-between': 'always',
-        alphabetize: { order: 'asc', caseInsensitive: true },
-      }],
+      'import/order': [
+        'error',
+        {
+          groups: ['builtin', 'external', 'internal', ['parent', 'sibling', 'index'], 'type'],
+          pathGroups: [
+            { pattern: 'solid-js/**', group: 'external', position: 'before' },
+            { pattern: '@solidjs/**', group: 'external', position: 'before' },
+            { pattern: '@corates/**', group: 'internal', position: 'before' },
+            { pattern: '@/**', group: 'internal' },
+          ],
+          'newlines-between': 'always',
+          alphabetize: { order: 'asc', caseInsensitive: true },
+        },
+      ],
       'import/no-duplicates': 'error',
 
       // TypeScript (requires type-aware linting)
       // '@typescript-eslint/no-floating-promises': 'error',
       // '@typescript-eslint/no-misused-promises': 'error',
       '@typescript-eslint/no-explicit-any': ['warn', { ignoreRestArgs: true }],
-      '@typescript-eslint/consistent-type-imports': ['error', {
-        prefer: 'type-imports',
-        disallowTypeAnnotations: false,
-      }],
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        {
+          prefer: 'type-imports',
+          disallowTypeAnnotations: false,
+        },
+      ],
     },
   },
   // Test file overrides
@@ -522,31 +538,34 @@ export default [
 
 ### By Impact
 
-| Priority | Rule | Impact | Effort |
-|----------|------|--------|--------|
-| High | `no-console` | Catch debug logs | Low |
-| High | `@typescript-eslint/no-floating-promises` | Prevent silent failures | Medium |
-| High | `corates/no-silent-catch` (custom) | Better error handling | Medium |
-| Medium | `import/order` | Code consistency | Low |
-| Medium | `@typescript-eslint/no-explicit-any` | Type safety | Medium |
-| Medium | `no-empty` | Catch empty blocks | Low |
-| Low | `prefer-const` / `no-var` | Modern syntax | Low |
-| Low | Vitest rules | Test quality | Low |
+| Priority | Rule                                      | Impact                  | Effort |
+| -------- | ----------------------------------------- | ----------------------- | ------ |
+| High     | `no-console`                              | Catch debug logs        | Low    |
+| High     | `@typescript-eslint/no-floating-promises` | Prevent silent failures | Medium |
+| High     | `corates/no-silent-catch` (custom)        | Better error handling   | Medium |
+| Medium   | `import/order`                            | Code consistency        | Low    |
+| Medium   | `@typescript-eslint/no-explicit-any`      | Type safety             | Medium |
+| Medium   | `no-empty`                                | Catch empty blocks      | Low    |
+| Low      | `prefer-const` / `no-var`                 | Modern syntax           | Low    |
+| Low      | Vitest rules                              | Test quality            | Low    |
 
 ### By Effort to Implement
 
 **Low Effort (add rule, run autofix):**
+
 - `prefer-const`, `no-var`
 - `no-console`
 - `no-empty`
 - `import/order` (with autofix)
 
 **Medium Effort (requires code changes):**
+
 - `@typescript-eslint/no-floating-promises`
 - `@typescript-eslint/no-explicit-any`
 - `import/order` (manual review)
 
 **High Effort (custom development):**
+
 - `corates/no-silent-catch`
 - `corates/solid-async-cleanup`
 - `corates/consistent-error-context`
@@ -573,13 +592,13 @@ These changes can be implemented incrementally without disrupting development ve
 
 ## Appendix: Files with Most Issues
 
-| File | Console Statements | Empty Catches | Floating Promises |
-|------|-------------------|---------------|-------------------|
-| [better-auth-store.js](packages/web/src/api/better-auth-store.js) | 8 | 2 | 3 |
-| [pdfs.js](packages/web/src/stores/projectActionsStore/pdfs.js) | 12 | 1 | 5 |
-| [studies.js](packages/web/src/stores/projectActionsStore/studies.js) | 6 | 0 | 4 |
-| [ProjectDoc.js](packages/workers/src/durable-objects/ProjectDoc.js) | 15 | 2 | 2 |
-| [Routes.jsx](packages/web/src/Routes.jsx) | 0 | 0 | 0 (import issues) |
+| File                                                                 | Console Statements | Empty Catches | Floating Promises |
+| -------------------------------------------------------------------- | ------------------ | ------------- | ----------------- |
+| [better-auth-store.js](packages/web/src/api/better-auth-store.js)    | 8                  | 2             | 3                 |
+| [pdfs.js](packages/web/src/stores/projectActionsStore/pdfs.js)       | 12                 | 1             | 5                 |
+| [studies.js](packages/web/src/stores/projectActionsStore/studies.js) | 6                  | 0             | 4                 |
+| [ProjectDoc.js](packages/workers/src/durable-objects/ProjectDoc.js)  | 15                 | 2             | 2                 |
+| [Routes.jsx](packages/web/src/Routes.jsx)                            | 0                  | 0             | 0 (import issues) |
 
 ## Appendix: Package Dependencies Required
 
@@ -593,6 +612,7 @@ These changes can be implemented incrementally without disrupting development ve
 ```
 
 For type-aware linting (Phase 3+):
+
 ```javascript
 // eslint.config.js
 {
