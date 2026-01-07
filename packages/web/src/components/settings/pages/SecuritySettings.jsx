@@ -1,13 +1,14 @@
 /**
  * SecuritySettings - Security section extracted from SettingsPage
- * Includes: Add password, change password, linked accounts, 2FA
+ * Includes: Add password, change password, linked accounts, 2FA, session management
  */
 
 import { createSignal, Show } from 'solid-js';
-import { FiShield, FiKey, FiEye, FiEyeOff, FiMail, FiLink } from 'solid-icons/fi';
+import { FiShield, FiKey, FiEye, FiEyeOff, FiMail, FiMonitor } from 'solid-icons/fi';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import TwoFactorSetup from '@/components/settings/pages/TwoFactorSetup.jsx';
 import LinkedAccountsSection from '@/components/settings/pages/LinkedAccountsSection.jsx';
+import SessionManagement from '@/components/settings/pages/SessionManagement.jsx';
 import StrengthIndicator from '@/components/auth/StrengthIndicator.jsx';
 import { handleError } from '@/lib/error-utils.js';
 
@@ -266,6 +267,19 @@ export default function SecuritySettings() {
 
             {/* Two-Factor Authentication */}
             <TwoFactorSetup />
+          </div>
+        </div>
+
+        {/* Active Sessions Section */}
+        <div class='mb-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
+          <div class='border-b border-gray-200 bg-gray-50 px-6 py-4'>
+            <div class='flex items-center space-x-2'>
+              <FiMonitor class='h-5 w-5 text-gray-600' />
+              <h2 class='text-lg font-medium text-gray-900'>Active Sessions</h2>
+            </div>
+          </div>
+          <div class='p-6'>
+            <SessionManagement />
           </div>
         </div>
       </div>

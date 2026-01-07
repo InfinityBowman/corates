@@ -30,7 +30,14 @@
  */
 
 import { createSignal, createRoot, createEffect } from 'solid-js';
-import { authClient, useSession } from '@api/auth-client.js';
+import {
+  authClient,
+  useSession,
+  listSessions as _listSessions,
+  revokeSession as _revokeSession,
+  revokeOtherSessions as _revokeOtherSessions,
+  revokeSessions as _revokeSessions,
+} from '@api/auth-client.js';
 import { queryClient, clearPersistedQueryCache } from '@lib/queryClient.js';
 import { queryKeys } from '@lib/queryKeys.js';
 import { API_BASE, BASEPATH } from '@config/api.js';
@@ -618,6 +625,67 @@ function createBetterAuthStore() {
     return { enabled: currentUser?.twoFactorEnabled ?? false };
   }
 
+  // ==========================================
+  // Session Management (M1: Session Revocation)
+  // ==========================================
+
+  /**
+   * List all active sessions for the current user
+   * Returns session data including device info, IP, and timestamps
+   */
+  async function listActiveSessions() {
+    try {
+      const result = await _listSessions();
+      return result.data || [];
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  /**
+   * Revoke a specific session by its token
+   * @param {string} token - The session token to revoke
+   */
+  async function revokeSessionByToken(token) {
+    try {
+      await _revokeSession({ token });
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  /**
+   * Revoke all sessions except the current one
+   * Useful for "logout from other devices" functionality
+   */
+  async function revokeAllOtherSessions() {
+    try {
+      await _revokeOtherSessions();
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  /**
+   * Revoke all sessions including the current one
+   * Will log out the user from all devices
+   */
+  async function revokeAllSessions() {
+    try {
+      await _revokeSessions();
+      // Clear local state after revoking all sessions
+      saveCachedAuth(null);
+      setCachedUser(null);
+      setCachedAvatarUrl(null);
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
   async function authFetch(url, options = {}) {
     try {
       // Better Auth automatically handles authentication via cookies
@@ -800,6 +868,12 @@ function createBetterAuthStore() {
     disableTwoFactor,
     verifyTwoFactor,
     getTwoFactorStatus,
+
+    // Session Management (M1: Session Revocation)
+    listActiveSessions,
+    revokeSessionByToken,
+    revokeAllOtherSessions,
+    revokeAllSessions,
 
     // Utility/compatibility methods
     getCurrentUser,
