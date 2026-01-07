@@ -514,7 +514,13 @@ export default function ReconciliationWrapper() {
               updateChecklistAnswer(params.studyId, id, questionKey, questionData);
             }}
             getRobinsText={(sectionKey, fieldKey, questionKey) =>
-              getRobinsText(params.studyId, reconciledChecklistId(), sectionKey, fieldKey, questionKey)
+              getRobinsText(
+                params.studyId,
+                reconciledChecklistId(),
+                sectionKey,
+                fieldKey,
+                questionKey,
+              )
             }
           />
         </Show>

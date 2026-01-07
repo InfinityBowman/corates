@@ -394,9 +394,11 @@ export default function RobinsIReconciliation(props) {
                   reviewer1Data={props.checklist1?.sectionB?.[currentNavItem().key]}
                   reviewer2Data={props.checklist2?.sectionB?.[currentNavItem().key]}
                   finalData={finalAnswers().sectionB?.[currentNavItem().key]}
-                  finalCommentYText={
-                    props.getRobinsText?.('sectionB', 'comment', currentNavItem().key)
-                  }
+                  finalCommentYText={props.getRobinsText?.(
+                    'sectionB',
+                    'comment',
+                    currentNavItem().key,
+                  )}
                   reviewer1Name={props.reviewer1Name || 'Reviewer 1'}
                   reviewer2Name={props.reviewer2Name || 'Reviewer 2'}
                   isAgreement={isNavItemAgreement(currentNavItem(), comparison())}
@@ -432,13 +434,11 @@ export default function RobinsIReconciliation(props) {
                   finalData={
                     finalAnswers()[currentNavItem().domainKey]?.answers?.[currentNavItem().key]
                   }
-                  finalCommentYText={
-                    props.getRobinsText?.(
-                      currentNavItem().domainKey,
-                      'comment',
-                      currentNavItem().key,
-                    )
-                  }
+                  finalCommentYText={props.getRobinsText?.(
+                    currentNavItem().domainKey,
+                    'comment',
+                    currentNavItem().key,
+                  )}
                   reviewer1Name={props.reviewer1Name || 'Reviewer 1'}
                   reviewer2Name={props.reviewer2Name || 'Reviewer 2'}
                   isAgreement={isNavItemAgreement(currentNavItem(), comparison())}
