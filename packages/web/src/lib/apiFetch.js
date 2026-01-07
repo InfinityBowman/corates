@@ -222,9 +222,23 @@ export async function apiFetch(path, options = {}) {
     } catch (error) {
       lastError = error;
 
+      // Log error details for debugging
+      console.error('[apiFetch] Request failed:', {
+        url,
+        method,
+        attempt: attempt + 1,
+        error: {
+          message: error.message,
+          code: error.code,
+          statusCode: error.statusCode,
+          stack: error.stack,
+        },
+      });
+
       // Check if we should retry
       if (retryConfig.shouldRetry(error, attempt, retryConfig.maxRetries)) {
         const delay = calculateBackoff(attempt, retryConfig.baseDelayMs, retryConfig.maxDelayMs);
+        console.log(`[apiFetch] Retrying in ${delay}ms (attempt ${attempt + 2})`);
         await sleep(delay, signal);
         continue;
       }

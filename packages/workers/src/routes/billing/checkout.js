@@ -80,6 +80,7 @@ billingCheckoutRoutes.post('/checkout', billingCheckoutRateLimit, requireAuth, a
           referenceId: orgId,
           successUrl: `${c.env.APP_URL || 'https://corates.org'}/settings/billing?success=true`,
           cancelUrl: `${c.env.APP_URL || 'https://corates.org'}/settings/billing?canceled=true`,
+          returnUrl: `${c.env.APP_URL || 'https://corates.org'}/settings/billing`,
         },
       });
     });

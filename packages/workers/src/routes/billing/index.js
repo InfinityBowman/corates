@@ -38,6 +38,7 @@ import { billingPortalRoutes } from './portal.js';
 import { billingGrantRoutes } from './grants.js';
 import { billingCheckoutRoutes } from './checkout.js';
 import { billingWebhookRoutes } from './webhooks.js';
+import { billingInvoicesRoutes } from './invoices.js';
 
 const billingRoutes = new Hono();
 
@@ -49,5 +50,6 @@ billingRoutes.route('/', billingPortalRoutes);
 billingRoutes.route('/', billingCheckoutRoutes);
 billingRoutes.route('/', billingGrantRoutes);
 billingRoutes.route('/', billingWebhookRoutes);
+billingRoutes.route('/', billingInvoicesRoutes);
 
 export { billingRoutes };
