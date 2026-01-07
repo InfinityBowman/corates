@@ -6,7 +6,7 @@
 import { createSignal, Show, For } from 'solid-js';
 import { useNavigate, useSearchParams } from '@solidjs/router';
 import { FiFileText, FiX } from 'solid-icons/fi';
-import useLocalChecklists from '@primitives/useLocalChecklists.js';
+import localChecklistsStore from '@/stores/localChecklistsStore';
 import { FileUpload } from '@corates/ui';
 import { LANDING_URL } from '@config/api.js';
 import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
@@ -15,7 +15,7 @@ import { validatePdfFile } from '@/lib/pdfValidation.js';
 export default function CreateLocalChecklist() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { createChecklist, savePdf } = useLocalChecklists();
+  const { createChecklist, savePdf } = localChecklistsStore;
 
   const [name, setName] = createSignal('');
   const [checklistType, setChecklistType] = createSignal(DEFAULT_CHECKLIST_TYPE);

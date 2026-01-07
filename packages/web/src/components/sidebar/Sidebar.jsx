@@ -2,7 +2,7 @@ import { Show, For, createSignal, createEffect, onCleanup } from 'solid-js';
 import { useNavigate, useLocation } from '@solidjs/router';
 import { Portal } from 'solid-js/web';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { useLocalChecklists } from '@primitives/useLocalChecklists.js';
+import localChecklistsStore from '@/stores/localChecklistsStore';
 import { useMyProjectsList } from '@primitives/useMyProjectsList.js';
 // import useRecentsNav from './useRecentsNav.js';
 import { useConfirmDialog, Tooltip } from '@corates/ui';
@@ -29,7 +29,7 @@ export default function Sidebar(props) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isLoggedIn } = useBetterAuth();
-  const { checklists, deleteChecklist } = useLocalChecklists();
+  const { checklists, deleteChecklist } = localChecklistsStore;
 
   const currentUserId = () => user()?.id;
 
