@@ -41,7 +41,7 @@ import { DocumentPasswordPrompt } from './components/document-password-prompt';
 import { SearchSidebar } from './components/search-sidebar';
 import { ThumbnailsSidebar } from './components/thumbnails-sidebar';
 import { PageControls } from './components/page-controls';
-import { ConsoleLogger } from '@embedpdf/models';
+// import { ConsoleLogger } from '@embedpdf/models';
 import { AnnotationSelectionMenu } from './components/annotation-selection-menu';
 import { SelectionSelectionMenu } from './components/selection-selection-menu';
 import { EmptyState } from './components/empty-state';
@@ -55,7 +55,7 @@ import {
   paramResolvers,
 } from './config';
 
-const logger = new ConsoleLogger();
+// const logger = new ConsoleLogger();
 
 // Type for tracking sidebar state per document
 type SidebarState = {
@@ -82,7 +82,7 @@ export function ViewerPage({
 }: ViewerPageProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { engine, isLoading, error } = usePdfiumEngine({
-    logger,
+    // logger,
   });
 
   // Track sidebar state per document
@@ -271,7 +271,7 @@ export function ViewerPage({
       <div className='flex flex-1 flex-col overflow-hidden select-none'>
         <EmbedPDF
           engine={engine}
-          logger={logger}
+          // logger={logger}
           plugins={plugins}
           onInitialized={async registry => {
             const docManager = registry
