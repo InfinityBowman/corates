@@ -298,9 +298,9 @@ export default function ChecklistYjsWrapper() {
 
     // Show confirmation dialog before marking complete
     const confirmed = await confirmDialog.open({
-      title: 'Mark Checklist as Complete?',
+      title: 'Mark Appraisal as Complete?',
       description:
-        'Once marked complete, this checklist will be locked and cannot be edited. Are you sure you want to proceed?',
+        'Once marked complete, this appraisal will be locked and cannot be edited. Are you sure you want to proceed?',
       confirmText: 'Mark Complete',
       cancelText: 'Cancel',
       variant: 'warning',
@@ -315,8 +315,8 @@ export default function ChecklistYjsWrapper() {
     const statusLabel =
       nextStatus === CHECKLIST_STATUS.FINALIZED ? 'completed' : 'awaiting reconciliation';
     showToast.success(
-      'Checklist Completed',
-      `This checklist has been marked as ${statusLabel} and is now locked.`,
+      'Appraisal Completed',
+      `This appraisal has been marked as ${statusLabel} and is now locked.`,
     );
   }
 
