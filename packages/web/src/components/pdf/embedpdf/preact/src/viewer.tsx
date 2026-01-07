@@ -233,6 +233,27 @@ export function ViewerPage({
     loadDocument();
   }, [pdfData, selectedPdfId, pdfFileName, pdfs]);
 
+  // Cleanup: close the active document and release resources on unmount
+  useEffect(() => {
+    return () => {
+      const closeActiveDocument = async () => {
+        if (docManagerRef.current && activeDocumentIdRef.current) {
+          try {
+            await docManagerRef.current.closeDocument(activeDocumentIdRef.current);
+          } catch (err) {
+            console.warn('Error closing document on unmount:', err);
+          }
+        }
+        // Clear refs to release memory
+        docManagerRef.current = null;
+        activeDocumentIdRef.current = null;
+        previousSelectedPdfIdRef.current = undefined;
+        isLoadingRef.current = false;
+      };
+      closeActiveDocument();
+    };
+  }, []);
+
   if (error) {
     return <div>Error: {error.message}</div>;
   }
