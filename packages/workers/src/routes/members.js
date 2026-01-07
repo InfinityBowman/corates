@@ -250,7 +250,11 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         // Get auth secret from environment (same logic as getAuthSecret)
         const authSecret = c.env.AUTH_SECRET || c.env.SECRET;
         if (!authSecret) {
-          throw new Error('AUTH_SECRET must be configured');
+          throw createDomainError(
+            SYSTEM_ERRORS.CONFIG_MISSING,
+            { key: 'AUTH_SECRET' },
+            'AUTH_SECRET must be configured',
+          );
         }
 
         // Create a temporary auth instance with a custom sendMagicLink that captures the URL
@@ -291,7 +295,11 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         });
 
         if (!capturedMagicLinkUrl) {
-          throw new Error('Failed to generate magic link URL');
+          throw createDomainError(
+            SYSTEM_ERRORS.INTERNAL,
+            { service: 'magic-link' },
+            'Failed to generate magic link URL',
+          );
         }
 
         const magicLinkUrl = capturedMagicLinkUrl;

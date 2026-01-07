@@ -114,10 +114,6 @@ export default [
       ],
       // Prevent throwing literals - must throw Error objects
       'no-throw-literal': 'error',
-      // Prevent creating Error objects without proper error handling
-      // Encourage using error helpers from @corates/shared
-      'no-new-error': 'off', // This doesn't exist, but we document the pattern
-      // 'sonarjs/cognitive-complexity': 'error',
 
       // Ensure correct usage of @corates/ui prestyled vs primitive components
       // Prestyled (Dialog) should not be used with .Root, .Content patterns
@@ -303,6 +299,14 @@ export default [
         registration: 'readonly',
         ServiceWorkerGlobalScope: 'readonly',
       },
+    },
+  },
+  {
+    // Backend workers - enforce structured error handling
+    files: ['packages/workers/src/**/*.{js,ts}'],
+    rules: {
+      // Use createDomainError(), createTransportError(), or createValidationError()
+      'corates/corates-error-helpers': 'warn',
     },
   },
   {

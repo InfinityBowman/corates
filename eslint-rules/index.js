@@ -5,9 +5,11 @@
  */
 
 import coratesUiImports from './corates-ui-imports.js';
+import coratesErrorHelpers from './corates-error-helpers.js';
 
 export default {
   rules: {
     'corates-ui-imports': coratesUiImports,
+    'corates-error-helpers': coratesErrorHelpers,
   },
 };
