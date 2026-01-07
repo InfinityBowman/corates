@@ -28,6 +28,7 @@ import {
   USER_ERRORS,
   SYSTEM_ERRORS,
 } from '@corates/shared';
+import { TIME_DURATIONS } from '../../config/constants.js';
 import { syncMemberToDO } from '../../lib/project-sync.js';
 import { userSchemas, validateRequest } from '../../config/validation.js';
 
@@ -49,7 +50,7 @@ userRoutes.get('/stats', async c => {
     ]);
 
     // Get recent signups (last 7 days)
-    const sevenDaysAgo = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
+    const sevenDaysAgo = Math.floor(Date.now() / 1000) - TIME_DURATIONS.STATS_RECENT_DAYS_SEC;
     const [recentSignups] = await db
       .select({ count: count() })
       .from(user)

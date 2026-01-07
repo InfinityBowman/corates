@@ -16,6 +16,7 @@ import {
 } from '../../middleware/requireOrg.js';
 import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
 import { memberSchemas, validateRequest } from '../../config/validation.js';
+import { TIME_DURATIONS } from '../../config/constants.js';
 import {
   createDomainError,
   PROJECT_ERRORS,
@@ -505,7 +506,7 @@ async function handleInvitation(c, { orgId, projectId, email, role }) {
     // Resend existing invitation
     invitationId = existingInvitation.id;
     token = existingInvitation.token;
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
 
     await db
       .update(projectInvitations)
@@ -520,7 +521,7 @@ async function handleInvitation(c, { orgId, projectId, email, role }) {
     // Create new invitation with orgId
     invitationId = crypto.randomUUID();
     token = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
 
     await db.insert(projectInvitations).values({
       id: invitationId,

@@ -9,6 +9,7 @@ import { projectMembers, user, projects, projectInvitations } from '../db/schema
 import { eq, and, count } from 'drizzle-orm';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { memberSchemas, validateRequest } from '../config/validation.js';
+import { TIME_DURATIONS } from '../config/constants.js';
 import {
   createDomainError,
   PROJECT_ERRORS,
@@ -177,7 +178,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         // Resend existing invitation - update role and extend expiration
         invitationId = existingInvitation.id;
         token = existingInvitation.token;
-        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+        const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
 
         await db
           .update(projectInvitations)
@@ -196,7 +197,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         // Create new invitation
         invitationId = crypto.randomUUID();
         token = crypto.randomUUID();
-        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+        const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
 
         await db.insert(projectInvitations).values({
           id: invitationId,

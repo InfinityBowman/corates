@@ -8,6 +8,7 @@
 import { Hono } from 'hono';
 import { requireAuth, getAuth } from '../middleware/auth.js';
 import { createDomainError, FILE_ERRORS, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import { FILE_SIZE_LIMITS } from '../config/constants.js';
 import { createDb } from '../db/client.js';
 import { projectMembers, projects } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
@@ -17,9 +18,6 @@ const avatarRoutes = new Hono();
 
 // Apply auth middleware to all routes
 avatarRoutes.use('*', requireAuth);
-
-// Maximum avatar file size (2MB - smaller than general IMAGE limit)
-const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
 
 // Allowed image types
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -77,11 +75,11 @@ avatarRoutes.post('/', async c => {
 
   // Check Content-Length header first for early rejection
   const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
-  if (contentLength > MAX_AVATAR_SIZE) {
+  if (contentLength > FILE_SIZE_LIMITS.AVATAR) {
     const error = createDomainError(
       FILE_ERRORS.TOO_LARGE,
-      { fileSize: contentLength, maxSize: MAX_AVATAR_SIZE },
-      `Avatar size exceeds limit of ${MAX_AVATAR_SIZE / (1024 * 1024)}MB`,
+      { fileSize: contentLength, maxSize: FILE_SIZE_LIMITS.AVATAR },
+      `Avatar size exceeds limit of ${FILE_SIZE_LIMITS.AVATAR / (1024 * 1024)}MB`,
     );
     return c.json(error, error.statusCode);
   }
@@ -114,11 +112,11 @@ avatarRoutes.post('/', async c => {
       }
 
       // Validate file size (double-check after parsing)
-      if (file.size > MAX_AVATAR_SIZE) {
+      if (file.size > FILE_SIZE_LIMITS.AVATAR) {
         const error = createDomainError(
           FILE_ERRORS.TOO_LARGE,
-          { fileSize: file.size, maxSize: MAX_AVATAR_SIZE },
-          `Avatar size exceeds limit of ${MAX_AVATAR_SIZE / (1024 * 1024)}MB`,
+          { fileSize: file.size, maxSize: FILE_SIZE_LIMITS.AVATAR },
+          `Avatar size exceeds limit of ${FILE_SIZE_LIMITS.AVATAR / (1024 * 1024)}MB`,
         );
         return c.json(error, error.statusCode);
       }

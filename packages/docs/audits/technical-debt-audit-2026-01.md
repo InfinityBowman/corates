@@ -1154,7 +1154,7 @@ isOwner();
 
 ### High Priority (Next Sprint)
 
-#### H1: Standardize Import Paths 🔴
+#### H1: Standardize Import Paths
 
 **Current:** Mix of `../../../` and `@/` aliases
 **Action:** Configure aliases for workers package, refactor imports
@@ -1164,29 +1164,43 @@ isOwner();
 
 ---
 
-#### H2: Create Error Handler Middleware 🔴
+#### H2: Create Error Handler Middleware - COMPLETED
 
-**Current:** Try-catch in every route handler
-**Action:** Centralized error handling middleware
-**Files:** `middleware/errorHandler.js`, all route files
-**Effort:** 3-4 hours
-**Impact:** Cleaner code, consistent logging
+**Completed:** January 2026
+**Solution:** Created `middleware/errorHandler.js` with centralized error handling
+**Features:**
+
+- Global error handler via `app.onError(errorHandler)`
+- Handles domain errors, Zod validation errors, DB errors automatically
+- Consistent JSON error response format
+- Routes can now throw errors instead of try-catch boilerplate
+
+**Files:** `packages/workers/src/middleware/errorHandler.js`, `packages/workers/src/index.js`
+**Impact:** Cleaner route code, consistent error responses
 
 ---
 
-#### H3: Extract Constants File 🔴
+#### H3: Extract Constants File - COMPLETED
 
-**Current:** Magic numbers scattered everywhere
-**Action:** Create `config/constants.js` with all time/size limits
-**Files:** 20+ files with magic numbers
-**Effort:** 2-3 hours
-**Impact:** Easier to adjust limits, clearer intent
+**Completed:** January 2026
+**Solution:** Extended `config/constants.js` with comprehensive constants
+**Constants Added:**
+
+- `TIME_DURATIONS`: INVITATION_EXPIRY_MS, MERGE_VERIFICATION_EXPIRY_MS, STATS_RECENT_DAYS
+- `GRANT_CONFIG`: DURATION_MONTHS
+- `CACHE_DURATIONS`: CORS_PREFLIGHT_SEC, AVATAR_SEC, PDF_SEC
+- `QUERY_LIMITS`: R2_LIST_BATCH_SIZE, LEDGER_QUERY_LIMIT
+- `ORG_LIMITS`: MEMBERSHIP_LIMIT
+- `FILE_SIZE_LIMITS.AVATAR`: Added to existing limits
+
+**Files Updated:** orgs/invitations.js, orgs/members.js, members.js, avatars.js, admin/users.js
+**Impact:** Centralized configuration, no more magic numbers for durations
 
 ---
 
 ### Medium Priority (Next Month)
 
-#### M1: Remove Deprecated Code ⚠️
+#### M1: Remove Deprecated Code
 
 **Current:** 4 deprecated functions/endpoints still in code
 **Action:** Delete unused code
@@ -1196,7 +1210,7 @@ isOwner();
 
 ---
 
-#### M2: Create Database Middleware 🟡
+#### M2: Create Database Middleware
 
 **Current:** `const db = createDb(c.env.DB)` in every route
 **Action:** Middleware to attach `db` to context
@@ -1265,12 +1279,12 @@ isOwner();
 
 - **Code Duplication:** 2/4 (~~High duplication in API calls, error handling~~ - Resolved with apiFetch)
 - **Dead Code:** 2/4 (Some deprecated functions, mostly cleaned up)
-- **Magic Numbers:** 3/4 (Many scattered constants)
-- **Missing Abstractions:** 1/4 (~~Some patterns could be abstracted~~ - apiFetch and error-utils added)
+- **Magic Numbers:** 2/4 (~~Many scattered constants~~ - Centralized in constants.js)
+- **Missing Abstractions:** 1/4 (~~Some patterns could be abstracted~~ - apiFetch, error-utils, errorHandler added)
 - **Organization:** 1/4 (Well-organized, minor import path issues)
 - **Test Coverage:** 2/4 (18% by file count, likely higher by LOC)
 
-**Average:** (2+2+3+1+1+2) / 6 = **1.83 / 4** - **5.5 / 10**
+**Average:** (2+2+2+1+1+2) / 6 = **1.67 / 4** - **5.0 / 10**
 
 ### Prioritized Action Plan
 
@@ -1279,17 +1293,19 @@ isOwner();
 - ~~Create API client abstraction~~ - apiFetch wrapper implemented
 - ~~Standardize error handling~~ - USER_FRIENDLY_MESSAGES in error-utils.js
 - ~~Pattern 4 fetch duplication~~ - All API files migrated to apiFetch
+- ~~Implement password change~~ - Wired up Better Auth changePassword API
+- ~~Create error handler middleware~~ - Global errorHandler in workers
+- ~~Extract constants file~~ - TIME_DURATIONS, CACHE_DURATIONS, etc.
 
 **Week 1 (Critical):**
 
 1. Implement error monitoring (Sentry)
-2. Implement password change
 
-**Week 2-3 (High):** 3. Standardize import paths 4. Create error handler middleware (backend routes) 5. Extract constants file
+**Week 2-3 (High):** 2. Standardize import paths
 
-**Month 2 (Medium):** 6. Remove deprecated code 7. Create database middleware 8. Standardize error patterns 9. Create permission utility
+**Month 2 (Medium):** 3. Remove deprecated code 4. Create database middleware 5. Standardize error patterns 6. Create permission utility
 
-**Backlog (Low):** 10. Remove unnecessary barrel exports 11. Document naming conventions 12. Create form validation hook
+**Backlog (Low):** 7. Remove unnecessary barrel exports 8. Document naming conventions 9. Create form validation hook
 
 ---
 
@@ -1298,7 +1314,7 @@ isOwner();
 The CoRATES codebase demonstrates **good engineering practices** with intentional structure and organization. The identified technical debt is **moderate and manageable**, primarily consisting of:
 
 1. ~~**Duplicated patterns** that can be abstracted (API calls, error handling)~~ - RESOLVED
-2. **Magic numbers** that should be extracted to constants
+2. ~~**Magic numbers** that should be extracted to constants~~ - RESOLVED
 3. **Minor inconsistencies** in import paths and naming
 
 **Key Strengths to Maintain:**
