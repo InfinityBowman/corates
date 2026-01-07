@@ -19,6 +19,8 @@ import { downloadPdf, getPdfUrl } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
 import { showToast } from '@corates/ui';
 import ReconciliationWithPdf from './ReconciliationWithPdf.jsx';
+import { RobinsIReconciliationWithPdf } from '../robins-i-reconcile/index.js';
+import { CHECKLIST_TYPES } from '@/checklist-registry/types.js';
 
 /**
  * ReconciliationWrapper - Handles loading checklists and managing reconciliation workflow
@@ -44,6 +46,7 @@ export default function ReconciliationWrapper() {
     getChecklistData,
     getReconciliationProgress,
     getQuestionNote,
+    getRobinsText,
     saveReconciliationProgress,
   } = useProject(params.projectId);
 
@@ -369,6 +372,18 @@ export default function ReconciliationWrapper() {
     return result;
   });
 
+  // Detect checklist type for routing to appropriate reconciliation component
+  const checklistType = createMemo(() => {
+    const meta = checklist1Meta();
+    return meta?.type || 'AMSTAR2';
+  });
+
+  // Check if this is a ROBINS-I checklist
+  const isRobinsI = createMemo(() => {
+    const type = checklistType();
+    return type === CHECKLIST_TYPES.ROBINS_I || type === 'ROBINS_I';
+  });
+
   // Get reviewer name from userId
   function getReviewerName(userId) {
     if (!userId) return 'Unassigned';
@@ -447,31 +462,68 @@ export default function ReconciliationWrapper() {
           </div>
         }
       >
-        <ReconciliationWithPdf
-          checklist1={checklist1Data()}
-          checklist2={checklist2Data()}
-          reconciledChecklist={reconciledChecklistData()}
-          reconciledChecklistId={reconciledChecklistId()}
-          reviewer1Name={getReviewerName(checklist1Meta()?.assignedTo)}
-          reviewer2Name={getReviewerName(checklist2Meta()?.assignedTo)}
-          onSaveReconciled={handleSaveReconciled}
-          onCancel={handleCancel}
-          pdfData={pdfData()}
-          pdfFileName={pdfFileName()}
-          pdfUrl={pdfUrl()}
-          pdfLoading={pdfLoading()}
-          pdfs={studyPdfs()}
-          selectedPdfId={selectedPdfId()}
-          onPdfSelect={handlePdfSelect}
-          getQuestionNote={questionKey =>
-            getQuestionNote(params.studyId, reconciledChecklistId(), questionKey)
+        <Show
+          when={isRobinsI()}
+          fallback={
+            <ReconciliationWithPdf
+              checklist1={checklist1Data()}
+              checklist2={checklist2Data()}
+              reconciledChecklist={reconciledChecklistData()}
+              reconciledChecklistId={reconciledChecklistId()}
+              reviewer1Name={getReviewerName(checklist1Meta()?.assignedTo)}
+              reviewer2Name={getReviewerName(checklist2Meta()?.assignedTo)}
+              onSaveReconciled={handleSaveReconciled}
+              onCancel={handleCancel}
+              pdfData={pdfData()}
+              pdfFileName={pdfFileName()}
+              pdfUrl={pdfUrl()}
+              pdfLoading={pdfLoading()}
+              pdfs={studyPdfs()}
+              selectedPdfId={selectedPdfId()}
+              onPdfSelect={handlePdfSelect}
+              getQuestionNote={questionKey =>
+                getQuestionNote(params.studyId, reconciledChecklistId(), questionKey)
+              }
+              updateChecklistAnswer={(questionKey, questionData) => {
+                const id = reconciledChecklistId();
+                if (!id) return;
+                updateChecklistAnswer(params.studyId, id, questionKey, questionData);
+              }}
+            />
           }
-          updateChecklistAnswer={(questionKey, questionData) => {
-            const id = reconciledChecklistId();
-            if (!id) return;
-            updateChecklistAnswer(params.studyId, id, questionKey, questionData);
-          }}
-        />
+        >
+          <RobinsIReconciliationWithPdf
+            checklist1={checklist1Data()}
+            checklist2={checklist2Data()}
+            reconciledChecklist={reconciledChecklistData()}
+            reconciledChecklistId={reconciledChecklistId()}
+            reviewer1Name={getReviewerName(checklist1Meta()?.assignedTo)}
+            reviewer2Name={getReviewerName(checklist2Meta()?.assignedTo)}
+            onSaveReconciled={handleSaveReconciled}
+            onCancel={handleCancel}
+            pdfData={pdfData()}
+            pdfFileName={pdfFileName()}
+            pdfUrl={pdfUrl()}
+            pdfLoading={pdfLoading()}
+            pdfs={studyPdfs()}
+            selectedPdfId={selectedPdfId()}
+            onPdfSelect={handlePdfSelect}
+            updateChecklistAnswer={(questionKey, questionData) => {
+              const id = reconciledChecklistId();
+              if (!id) return;
+              updateChecklistAnswer(params.studyId, id, questionKey, questionData);
+            }}
+            getRobinsText={(sectionKey, fieldKey, questionKey) =>
+              getRobinsText(
+                params.studyId,
+                reconciledChecklistId(),
+                sectionKey,
+                fieldKey,
+                questionKey,
+              )
+            }
+          />
+        </Show>
       </Show>
     </Show>
   );

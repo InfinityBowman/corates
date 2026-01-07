@@ -13,6 +13,10 @@ const DB_NAME = 'corates-pdf-cache';
 const DB_VERSION = 1;
 const PDF_STORE_NAME = 'pdfs';
 
+// LRU cache limits
+const MAX_CACHE_SIZE_BYTES = 200 * 1024 * 1024; // 200 MB total cache limit
+const MAX_SINGLE_FILE_SIZE = 50 * 1024 * 1024; // 50 MB per file (matches PDF_LIMITS.MAX_SIZE)
+
 // Shared database instance and initialization promise
 let dbInstance = null;
 let dbInitPromise = null;
@@ -102,7 +106,78 @@ export async function getCachedPdf(projectId, studyId, fileName) {
 }
 
 /**
- * Save a PDF to the local cache
+ * Get total cache size and list of entries sorted by cachedAt (oldest first)
+ * @returns {Promise<{totalSize: number, entries: Array<{id: string, size: number, cachedAt: number}>}>}
+ */
+async function getCacheStats() {
+  try {
+    const db = await getDb();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(PDF_STORE_NAME, 'readonly');
+      const store = transaction.objectStore(PDF_STORE_NAME);
+      const request = store.openCursor();
+      const entries = [];
+      let totalSize = 0;
+
+      request.onsuccess = event => {
+        const cursor = event.target.result;
+        if (cursor) {
+          const { id, size, cachedAt } = cursor.value;
+          entries.push({ id, size, cachedAt });
+          totalSize += size || 0;
+          cursor.continue();
+        } else {
+          // Sort by cachedAt ascending (oldest first for LRU eviction)
+          entries.sort((a, b) => a.cachedAt - b.cachedAt);
+          resolve({ totalSize, entries });
+        }
+      };
+      request.onerror = () => reject(request.error);
+    });
+  } catch (err) {
+    console.warn('Failed to get cache stats:', err);
+    return { totalSize: 0, entries: [] };
+  }
+}
+
+/**
+ * Evict oldest entries until cache size is under the limit
+ * @param {number} requiredSpace - Additional space needed for new entry
+ */
+async function evictIfNeeded(requiredSpace) {
+  try {
+    const { totalSize, entries } = await getCacheStats();
+    let currentSize = totalSize;
+    const targetSize = MAX_CACHE_SIZE_BYTES - requiredSpace;
+
+    if (currentSize <= targetSize) {
+      return; // No eviction needed
+    }
+
+    const db = await getDb();
+
+    // Evict oldest entries until we're under the limit
+    for (const entry of entries) {
+      if (currentSize <= targetSize) break;
+
+      await new Promise((resolve, reject) => {
+        const transaction = db.transaction(PDF_STORE_NAME, 'readwrite');
+        const store = transaction.objectStore(PDF_STORE_NAME);
+        const request = store.delete(entry.id);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+
+      currentSize -= entry.size;
+    }
+  } catch (err) {
+    console.warn('Failed to evict from PDF cache:', err);
+  }
+}
+
+/**
+ * Save a PDF to the local cache with LRU eviction
  * @param {string} projectId
  * @param {string} studyId
  * @param {string} fileName
@@ -110,6 +185,17 @@ export async function getCachedPdf(projectId, studyId, fileName) {
  */
 export async function cachePdf(projectId, studyId, fileName, data) {
   try {
+    const fileSize = data.byteLength;
+
+    // Skip caching if file exceeds single-file limit
+    if (fileSize > MAX_SINGLE_FILE_SIZE) {
+      console.warn(`PDF too large to cache: ${fileSize} bytes (limit: ${MAX_SINGLE_FILE_SIZE})`);
+      return false;
+    }
+
+    // Evict old entries if needed to make room
+    await evictIfNeeded(fileSize);
+
     const db = await getDb();
     const id = getCacheKey(projectId, studyId, fileName);
 
@@ -119,7 +205,7 @@ export async function cachePdf(projectId, studyId, fileName, data) {
       studyId,
       fileName,
       data,
-      size: data.byteLength,
+      size: fileSize,
       cachedAt: Date.now(),
     };
 
@@ -134,6 +220,7 @@ export async function cachePdf(projectId, studyId, fileName, data) {
   } catch (err) {
     console.warn('Failed to write to PDF cache:', err);
     // Don't throw - caching failure shouldn't break the app
+    return false;
   }
 }
 
@@ -230,10 +317,20 @@ export async function clearProjectCache(projectId) {
   }
 }
 
+/**
+ * Get current cache size in bytes (for monitoring/debugging)
+ * @returns {Promise<number>}
+ */
+export async function getCacheSize() {
+  const { totalSize } = await getCacheStats();
+  return totalSize;
+}
+
 export default {
   getCachedPdf,
   cachePdf,
   removeCachedPdf,
   clearStudyCache,
   clearProjectCache,
+  getCacheSize,
 };

@@ -1,4 +1,4 @@
-import { createSignal, createEffect, createMemo, Show } from 'solid-js';
+import { createSignal, createEffect, createMemo, Show, onCleanup } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import ChecklistWithPdf from '@/components/checklist/ChecklistWithPdf.jsx';
 import useProject from '@/primitives/useProject/index.js';
@@ -31,6 +31,13 @@ export default function ChecklistYjsWrapper() {
   const [pdfFileName, setPdfFileName] = createSignal(null);
   const [pdfLoading, setPdfLoading] = createSignal(false);
   const [selectedPdfId, setSelectedPdfId] = createSignal(null);
+
+  // Cleanup PDF data on unmount to release memory
+  onCleanup(() => {
+    setPdfData(null);
+    setPdfFileName(null);
+    setSelectedPdfId(null);
+  });
 
   // Use full hook for write operations
   const {
@@ -133,6 +140,9 @@ export default function ChecklistYjsWrapper() {
 
     setAttemptedPdfFile(fileName);
     setPdfLoading(true);
+
+    // Clear previous PDF data to release memory before loading new one
+    setPdfData(null);
 
     // Try cache first, then fall back to cloud
     getCachedPdf(params.projectId, params.studyId, fileName)
@@ -298,9 +308,9 @@ export default function ChecklistYjsWrapper() {
 
     // Show confirmation dialog before marking complete
     const confirmed = await confirmDialog.open({
-      title: 'Mark Checklist as Complete?',
+      title: 'Mark Appraisal as Complete?',
       description:
-        'Once marked complete, this checklist will be locked and cannot be edited. Are you sure you want to proceed?',
+        'Once marked complete, this appraisal will be locked and cannot be edited. Are you sure you want to proceed?',
       confirmText: 'Mark Complete',
       cancelText: 'Cancel',
       variant: 'warning',
@@ -315,8 +325,8 @@ export default function ChecklistYjsWrapper() {
     const statusLabel =
       nextStatus === CHECKLIST_STATUS.FINALIZED ? 'completed' : 'awaiting reconciliation';
     showToast.success(
-      'Checklist Completed',
-      `This checklist has been marked as ${statusLabel} and is now locked.`,
+      'Appraisal Completed',
+      `This appraisal has been marked as ${statusLabel} and is now locked.`,
     );
   }
 

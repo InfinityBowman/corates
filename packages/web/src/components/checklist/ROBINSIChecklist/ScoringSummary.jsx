@@ -186,7 +186,7 @@ export function ScoringSummary(props) {
  */
 function ResourcesDialog(props) {
   return (
-    <Dialog open={props.open} onOpenChange={open => !open && props.onClose()}>
+    <Dialog.Root open={props.open} onOpenChange={open => !open && props.onClose()}>
       <Dialog.Backdrop class='fixed inset-0 z-40 bg-black/50' />
       <Dialog.Positioner class='fixed inset-0 z-50 flex items-center justify-center p-4'>
         <Dialog.Content class='max-h-[85vh] w-full max-w-md overflow-auto rounded-lg bg-white shadow-xl'>
@@ -239,7 +239,7 @@ function ResourcesDialog(props) {
           </div>
         </Dialog.Content>
       </Dialog.Positioner>
-    </Dialog>
+    </Dialog.Root>
   );
 }
 

@@ -1,0 +1,135 @@
+import { Show, For } from 'solid-js';
+import { ROB_JUDGEMENTS } from '@/components/checklist/ROBINSIChecklist/checklist-map.js';
+
+/**
+ * Get badge color for risk of bias judgement
+ * @param {string} judgement - The judgement value
+ * @returns {string} Tailwind CSS classes for badge styling
+ */
+function getJudgementBadgeStyle(judgement) {
+  if (!judgement) return 'bg-gray-100 text-gray-600 border-gray-200';
+
+  if (judgement.toLowerCase().includes('low')) {
+    return 'bg-green-100 text-green-800 border-green-200';
+  }
+  if (judgement.toLowerCase().includes('moderate')) {
+    return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+  }
+  if (judgement.toLowerCase().includes('serious')) {
+    return 'bg-orange-100 text-orange-800 border-orange-200';
+  }
+  if (judgement.toLowerCase().includes('critical')) {
+    return 'bg-red-100 text-red-800 border-red-200';
+  }
+  return 'bg-gray-100 text-gray-600 border-gray-200';
+}
+
+/**
+ * Get button style for judgement options
+ * @param {boolean} isSelected - Whether this option is selected
+ * @param {string} panelType - 'reviewer1', 'reviewer2', or 'final'
+ * @returns {string} Tailwind CSS classes
+ */
+function getJudgementButtonStyle(isSelected, panelType) {
+  if (!isSelected) {
+    return 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50';
+  }
+
+  switch (panelType) {
+    case 'reviewer1':
+      return 'border-blue-400 bg-blue-50 text-blue-800';
+    case 'reviewer2':
+      return 'border-purple-400 bg-purple-50 text-purple-800';
+    case 'final':
+      return 'border-green-400 bg-green-50 text-green-800';
+    default:
+      return 'border-gray-400 bg-gray-50 text-gray-800';
+  }
+}
+
+/**
+ * Panel for displaying/selecting risk of bias judgement
+ *
+ * @param {Object} props
+ * @param {string} props.title - Panel title
+ * @param {string} props.panelType - 'reviewer1', 'reviewer2', or 'final'
+ * @param {string} props.judgement - Current judgement value
+ * @param {Array} props.judgementOptions - Available judgement options (defaults to ROB_JUDGEMENTS)
+ * @param {boolean} props.readOnly - If true, inputs are disabled
+ * @param {boolean} props.hideUseThis - Hide the "Use This" button
+ * @param {boolean} props.isSelected - If true, this panel is the selected source
+ * @param {Function} props.onJudgementChange - (judgement) => void
+ * @param {Function} props.onUseThis - Callback when "Use This" is clicked
+ * @returns {JSX.Element}
+ */
+export default function JudgementPanel(props) {
+  const panelType = () => props.panelType || 'reviewer1';
+  const isFinal = () => panelType() === 'final';
+  const options = () => props.judgementOptions || ROB_JUDGEMENTS;
+
+  return (
+    <div class={`p-4 ${isFinal() ? 'bg-green-50/30' : ''}`}>
+      {/* Panel Header */}
+      <div class='mb-4 flex items-center justify-between'>
+        <h3 class='font-semibold text-gray-900'>{props.title}</h3>
+        <Show when={!isFinal() && !props.hideUseThis}>
+          <button
+            onClick={() => props.onUseThis?.()}
+            class={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+              props.isSelected ? 'bg-blue-600 text-white' : (
+                'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+              )
+            }`}
+          >
+            {props.isSelected ? 'Selected' : 'Use This'}
+          </button>
+        </Show>
+      </div>
+
+      {/* Judgement Badge (for reviewer panels) */}
+      <Show when={!isFinal()}>
+        <div class='mb-4 flex flex-wrap items-center gap-2'>
+          <span class='text-xs text-gray-500'>Judgement:</span>
+          <span
+            class={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getJudgementBadgeStyle(props.judgement)}`}
+          >
+            {props.judgement || 'Not set'}
+          </span>
+        </div>
+      </Show>
+
+      {/* Judgement Options */}
+      <div class='space-y-2'>
+        <label class='mb-1 block text-xs font-medium text-gray-700'>Risk of Bias Judgement</label>
+        <For each={options()}>
+          {option => {
+            const isSelected = () => props.judgement === option;
+            const baseClasses =
+              'w-full rounded-lg border-2 px-3 py-2 text-left text-sm font-medium transition-all';
+
+            return (
+              <Show
+                when={!props.readOnly}
+                fallback={
+                  <div
+                    class={`${baseClasses} ${getJudgementButtonStyle(isSelected(), panelType())}`}
+                  >
+                    {option}
+                  </div>
+                }
+              >
+                <button
+                  type='button'
+                  onClick={() => props.onJudgementChange?.(option)}
+                  class={`${baseClasses} cursor-pointer hover:border-green-300 ${getJudgementButtonStyle(isSelected(), panelType())}`}
+                >
+                  {option}
+                </button>
+              </Show>
+            );
+          }}
+        </For>
+      </div>
+    </div>
+  );
+}
