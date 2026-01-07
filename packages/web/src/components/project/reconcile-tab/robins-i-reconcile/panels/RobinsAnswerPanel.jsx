@@ -1,5 +1,6 @@
 import { Show, For } from 'solid-js';
 import { RESPONSE_LABELS } from '@/components/checklist/ROBINSIChecklist/checklist-map.js';
+import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
 
 /**
  * Get badge color for Robins-I answer type
@@ -53,13 +54,13 @@ function getSelectedAnswerStyle(panelType) {
  * @param {string} props.title - Panel title (e.g., "Reviewer 1", "Final Answer")
  * @param {string} props.panelType - 'reviewer1', 'reviewer2', or 'final'
  * @param {string} props.answer - The selected answer code (Y, PY, PN, N, etc.)
- * @param {string} props.comment - The comment text
+ * @param {string} props.comment - The comment text (for reviewer panels, read-only display)
+ * @param {Y.Text} props.commentYText - Y.Text instance for the final panel's comment (collaborative editing)
  * @param {Array} props.responseOptions - Array of response codes ['Y', 'PY', 'PN', 'N']
  * @param {boolean} props.readOnly - If true, inputs are disabled
  * @param {boolean} props.hideUseThis - Hide the "Use This" button
  * @param {boolean} props.isSelected - If true, this panel is the selected source
  * @param {Function} props.onAnswerChange - Callback when answer changes (answer) => void
- * @param {Function} props.onCommentChange - Callback when comment changes (comment) => void
  * @param {Function} props.onUseThis - Callback when "Use This" is clicked
  * @returns {JSX.Element}
  */
@@ -161,12 +162,13 @@ export default function RobinsAnswerPanel(props) {
             </div>
           }
         >
-          <textarea
-            value={props.comment || ''}
-            onInput={e => props.onCommentChange?.(e.target.value)}
+          {/* Final panel uses NoteEditor with Y.Text for collaborative editing */}
+          <NoteEditor
+            yText={props.commentYText}
             placeholder='Add the final reconciled comment...'
-            class='w-full rounded-lg border border-gray-200 bg-white p-3 text-sm focus:border-green-400 focus:ring-2 focus:ring-green-400 focus:ring-offset-1 focus:outline-none'
-            rows={4}
+            readOnly={false}
+            inline={true}
+            focusRingColor='green-400'
           />
         </Show>
       </div>

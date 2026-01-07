@@ -32,6 +32,7 @@ import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx';
  * @param {string} props.selectedPdfId - Currently selected PDF ID
  * @param {Function} props.onPdfSelect - Handler for PDF selection change
  * @param {Function} props.updateChecklistAnswer - Function to update answer
+ * @param {Function} props.getRobinsText - Function to get Y.Text for comments (sectionKey, fieldKey, questionKey) => Y.Text
  * @returns {JSX.Element}
  */
 export default function RobinsIReconciliationWithPdf(props) {
@@ -105,6 +106,7 @@ export default function RobinsIReconciliationWithPdf(props) {
           onCancel={props.onCancel}
           setNavbarStore={setNavbarStore}
           updateChecklistAnswer={props.updateChecklistAnswer}
+          getRobinsText={props.getRobinsText}
         />
 
         {/* Second panel: PDF Viewer (read-only) - only rendered when PDF exists */}

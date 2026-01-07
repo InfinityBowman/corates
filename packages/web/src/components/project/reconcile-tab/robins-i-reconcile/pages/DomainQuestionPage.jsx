@@ -15,12 +15,12 @@ import RobinsAnswerPanel from '../panels/RobinsAnswerPanel.jsx';
  * @param {string} props.questionKey - The question key (d1a_1, d2_1, etc.)
  * @param {Object} props.reviewer1Data - { answer, comment } from reviewer 1
  * @param {Object} props.reviewer2Data - { answer, comment } from reviewer 2
- * @param {Object} props.finalData - { answer, comment } current final selection
+ * @param {Object} props.finalData - { answer } current final selection (comment is in Y.Text)
+ * @param {Y.Text} props.finalCommentYText - Y.Text instance for the final comment
  * @param {string} props.reviewer1Name - Display name for reviewer 1
  * @param {string} props.reviewer2Name - Display name for reviewer 2
  * @param {boolean} props.isAgreement - Whether reviewers agree on this question
  * @param {Function} props.onFinalAnswerChange - (answer) => void
- * @param {Function} props.onFinalCommentChange - (comment) => void
  * @param {Function} props.onUseReviewer1 - Copy reviewer 1's answer to final
  * @param {Function} props.onUseReviewer2 - Copy reviewer 2's answer to final
  * @param {string} props.selectedSource - 'reviewer1', 'reviewer2', or null
@@ -98,12 +98,11 @@ export default function DomainQuestionPage(props) {
           title='Final Answer'
           panelType='final'
           answer={props.finalData?.answer}
-          comment={props.finalData?.comment}
+          commentYText={props.finalCommentYText}
           responseOptions={responseOptions()}
           readOnly={false}
           hideUseThis={true}
           onAnswerChange={props.onFinalAnswerChange}
-          onCommentChange={props.onFinalCommentChange}
         />
       </div>
     </div>

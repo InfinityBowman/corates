@@ -38,6 +38,7 @@ import RobinsISummaryView from './RobinsISummaryView.jsx';
  * @param {string} props.reviewer2Name - Display name for second reviewer
  * @param {Function} props.setNavbarStore - Store setter for navbar state
  * @param {Function} props.updateChecklistAnswer - Function to update answer in reconciled checklist
+ * @param {Function} props.getRobinsText - Function to get Y.Text for comments (sectionKey, fieldKey, questionKey) => Y.Text
  * @returns {JSX.Element}
  */
 export default function RobinsIReconciliation(props) {
@@ -172,12 +173,14 @@ export default function RobinsIReconciliation(props) {
     if (item.type === NAV_ITEM_TYPES.SECTION_B) {
       const answer = props.checklist1?.sectionB?.[item.key];
       if (answer) {
-        updateSectionBAnswer(item.key, answer.answer, answer.comment);
+        updateSectionBAnswer(item.key, answer.answer);
+        copyCommentToYText('sectionB', 'comment', item.key, answer.comment);
       }
     } else if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) {
       const answer = props.checklist1?.[item.domainKey]?.answers?.[item.key];
       if (answer) {
-        updateDomainQuestionAnswer(item.domainKey, item.key, answer.answer, answer.comment);
+        updateDomainQuestionAnswer(item.domainKey, item.key, answer.answer);
+        copyCommentToYText(item.domainKey, 'comment', item.key, answer.comment);
       }
     } else if (item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT) {
       const domain = props.checklist1?.[item.domainKey];
@@ -192,24 +195,36 @@ export default function RobinsIReconciliation(props) {
     }
   }
 
+  // Helper to copy comment text to Y.Text
+  function copyCommentToYText(sectionKey, fieldKey, questionKey, commentText) {
+    if (!props.getRobinsText) return;
+    const yText = props.getRobinsText(sectionKey, fieldKey, questionKey);
+    if (!yText) return;
+    const text = (commentText || '').slice(0, 2000);
+    yText.doc.transact(() => {
+      yText.delete(0, yText.length);
+      yText.insert(0, text);
+    });
+  }
+
   // Update functions for different item types
-  function updateSectionBAnswer(key, answer, comment) {
+  function updateSectionBAnswer(key, answer) {
     if (!props.updateChecklistAnswer) return;
     const currentSectionB = finalAnswers().sectionB || {};
     props.updateChecklistAnswer('sectionB', {
       ...currentSectionB,
-      [key]: { answer, comment: comment || '' },
+      [key]: { answer },
     });
   }
 
-  function updateDomainQuestionAnswer(domainKey, questionKey, answer, comment) {
+  function updateDomainQuestionAnswer(domainKey, questionKey, answer) {
     if (!props.updateChecklistAnswer) return;
     const currentDomain = finalAnswers()[domainKey] || { answers: {} };
     props.updateChecklistAnswer(domainKey, {
       ...currentDomain,
       answers: {
         ...currentDomain.answers,
-        [questionKey]: { answer, comment: comment || '' },
+        [questionKey]: { answer },
       },
     });
   }
@@ -379,30 +394,26 @@ export default function RobinsIReconciliation(props) {
                   reviewer1Data={props.checklist1?.sectionB?.[currentNavItem().key]}
                   reviewer2Data={props.checklist2?.sectionB?.[currentNavItem().key]}
                   finalData={finalAnswers().sectionB?.[currentNavItem().key]}
+                  finalCommentYText={
+                    props.getRobinsText?.('sectionB', 'comment', currentNavItem().key)
+                  }
                   reviewer1Name={props.reviewer1Name || 'Reviewer 1'}
                   reviewer2Name={props.reviewer2Name || 'Reviewer 2'}
                   isAgreement={isNavItemAgreement(currentNavItem(), comparison())}
-                  onFinalAnswerChange={answer =>
-                    updateSectionBAnswer(
-                      currentNavItem().key,
-                      answer,
-                      finalAnswers().sectionB?.[currentNavItem().key]?.comment,
-                    )
-                  }
-                  onFinalCommentChange={comment =>
-                    updateSectionBAnswer(
-                      currentNavItem().key,
-                      finalAnswers().sectionB?.[currentNavItem().key]?.answer,
-                      comment,
-                    )
-                  }
+                  onFinalAnswerChange={answer => updateSectionBAnswer(currentNavItem().key, answer)}
                   onUseReviewer1={() => {
                     const data = props.checklist1?.sectionB?.[currentNavItem().key];
-                    if (data) updateSectionBAnswer(currentNavItem().key, data.answer, data.comment);
+                    if (data) {
+                      updateSectionBAnswer(currentNavItem().key, data.answer);
+                      copyCommentToYText('sectionB', 'comment', currentNavItem().key, data.comment);
+                    }
                   }}
                   onUseReviewer2={() => {
                     const data = props.checklist2?.sectionB?.[currentNavItem().key];
-                    if (data) updateSectionBAnswer(currentNavItem().key, data.answer, data.comment);
+                    if (data) {
+                      updateSectionBAnswer(currentNavItem().key, data.answer);
+                      copyCommentToYText('sectionB', 'comment', currentNavItem().key, data.comment);
+                    }
                   }}
                 />
               </Match>
@@ -421,6 +432,13 @@ export default function RobinsIReconciliation(props) {
                   finalData={
                     finalAnswers()[currentNavItem().domainKey]?.answers?.[currentNavItem().key]
                   }
+                  finalCommentYText={
+                    props.getRobinsText?.(
+                      currentNavItem().domainKey,
+                      'comment',
+                      currentNavItem().key,
+                    )
+                  }
                   reviewer1Name={props.reviewer1Name || 'Reviewer 1'}
                   reviewer2Name={props.reviewer2Name || 'Reviewer 2'}
                   isAgreement={isNavItemAgreement(currentNavItem(), comparison())}
@@ -429,17 +447,6 @@ export default function RobinsIReconciliation(props) {
                       currentNavItem().domainKey,
                       currentNavItem().key,
                       answer,
-                      finalAnswers()[currentNavItem().domainKey]?.answers?.[currentNavItem().key]
-                        ?.comment,
-                    )
-                  }
-                  onFinalCommentChange={comment =>
-                    updateDomainQuestionAnswer(
-                      currentNavItem().domainKey,
-                      currentNavItem().key,
-                      finalAnswers()[currentNavItem().domainKey]?.answers?.[currentNavItem().key]
-                        ?.answer,
-                      comment,
                     )
                   }
                   onUseReviewer1={() => {
@@ -447,26 +454,38 @@ export default function RobinsIReconciliation(props) {
                       props.checklist1?.[currentNavItem().domainKey]?.answers?.[
                         currentNavItem().key
                       ];
-                    if (data)
+                    if (data) {
                       updateDomainQuestionAnswer(
                         currentNavItem().domainKey,
                         currentNavItem().key,
                         data.answer,
+                      );
+                      copyCommentToYText(
+                        currentNavItem().domainKey,
+                        'comment',
+                        currentNavItem().key,
                         data.comment,
                       );
+                    }
                   }}
                   onUseReviewer2={() => {
                     const data =
                       props.checklist2?.[currentNavItem().domainKey]?.answers?.[
                         currentNavItem().key
                       ];
-                    if (data)
+                    if (data) {
                       updateDomainQuestionAnswer(
                         currentNavItem().domainKey,
                         currentNavItem().key,
                         data.answer,
+                      );
+                      copyCommentToYText(
+                        currentNavItem().domainKey,
+                        'comment',
+                        currentNavItem().key,
                         data.comment,
                       );
+                    }
                   }}
                 />
               </Match>

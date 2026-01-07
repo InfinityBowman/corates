@@ -46,6 +46,7 @@ export default function ReconciliationWrapper() {
     getChecklistData,
     getReconciliationProgress,
     getQuestionNote,
+    getRobinsText,
     saveReconciliationProgress,
   } = useProject(params.projectId);
 
@@ -512,6 +513,9 @@ export default function ReconciliationWrapper() {
               if (!id) return;
               updateChecklistAnswer(params.studyId, id, questionKey, questionData);
             }}
+            getRobinsText={(sectionKey, fieldKey, questionKey) =>
+              getRobinsText(params.studyId, reconciledChecklistId(), sectionKey, fieldKey, questionKey)
+            }
           />
         </Show>
       </Show>
