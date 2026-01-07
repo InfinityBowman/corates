@@ -47,7 +47,7 @@ export default function RobinsINavbar(props) {
         {group => (
           <div class='flex items-center gap-1'>
             {/* Section separator label */}
-            <span class='mr-1 text-[10px] font-medium text-gray-400'>
+            <span class='text-2xs mr-1 font-medium text-gray-400'>
               {getSectionLabel(group.section)}
             </span>
             <For each={group.items}>
@@ -156,9 +156,9 @@ function SummaryButton(props) {
   const isActive = () => props.store.viewMode === 'summary';
 
   const buttonStyle = createMemo(() =>
-    isActive()
-      ? 'bg-blue-600 text-white ring-2 ring-blue-300'
-      : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+    isActive() ?
+      'bg-blue-600 text-white ring-2 ring-blue-300'
+    : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
   );
 
   return (

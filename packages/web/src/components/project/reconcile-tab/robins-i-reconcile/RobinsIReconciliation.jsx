@@ -327,13 +327,19 @@ export default function RobinsIReconciliation(props) {
     if (!item || !comp) return null;
 
     if (item.type === NAV_ITEM_TYPES.SECTION_B) {
-      const allItems = [...(comp.sectionB?.agreements || []), ...(comp.sectionB?.disagreements || [])];
+      const allItems = [
+        ...(comp.sectionB?.agreements || []),
+        ...(comp.sectionB?.disagreements || []),
+      ];
       return allItems.find(c => c.key === item.key);
     }
     if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) {
       const domain = comp.domains?.[item.domainKey];
       if (!domain) return null;
-      const allItems = [...(domain.questions?.agreements || []), ...(domain.questions?.disagreements || [])];
+      const allItems = [
+        ...(domain.questions?.agreements || []),
+        ...(domain.questions?.disagreements || []),
+      ];
       return allItems.find(c => c.key === item.key);
     }
     if (item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT) {
@@ -353,7 +359,7 @@ export default function RobinsIReconciliation(props) {
         {/* Critical Risk Warning Banner */}
         <Show when={sectionBCritical()}>
           <div class='mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
-            <AiOutlineWarning class='h-5 w-5 flex-shrink-0' />
+            <AiOutlineWarning class='h-5 w-5 shrink-0' />
             <div>
               <span class='font-medium'>Critical Risk Detected:</span> Section B indicates this
               study may be at critical risk of bias. Consider whether to proceed with full domain
@@ -377,10 +383,18 @@ export default function RobinsIReconciliation(props) {
                   reviewer2Name={props.reviewer2Name || 'Reviewer 2'}
                   isAgreement={isNavItemAgreement(currentNavItem(), comparison())}
                   onFinalAnswerChange={answer =>
-                    updateSectionBAnswer(currentNavItem().key, answer, finalAnswers().sectionB?.[currentNavItem().key]?.comment)
+                    updateSectionBAnswer(
+                      currentNavItem().key,
+                      answer,
+                      finalAnswers().sectionB?.[currentNavItem().key]?.comment,
+                    )
                   }
                   onFinalCommentChange={comment =>
-                    updateSectionBAnswer(currentNavItem().key, finalAnswers().sectionB?.[currentNavItem().key]?.answer, comment)
+                    updateSectionBAnswer(
+                      currentNavItem().key,
+                      finalAnswers().sectionB?.[currentNavItem().key]?.answer,
+                      comment,
+                    )
                   }
                   onUseReviewer1={() => {
                     const data = props.checklist1?.sectionB?.[currentNavItem().key];
@@ -398,9 +412,15 @@ export default function RobinsIReconciliation(props) {
                 <DomainQuestionPage
                   domainKey={currentNavItem().domainKey}
                   questionKey={currentNavItem().key}
-                  reviewer1Data={props.checklist1?.[currentNavItem().domainKey]?.answers?.[currentNavItem().key]}
-                  reviewer2Data={props.checklist2?.[currentNavItem().domainKey]?.answers?.[currentNavItem().key]}
-                  finalData={finalAnswers()[currentNavItem().domainKey]?.answers?.[currentNavItem().key]}
+                  reviewer1Data={
+                    props.checklist1?.[currentNavItem().domainKey]?.answers?.[currentNavItem().key]
+                  }
+                  reviewer2Data={
+                    props.checklist2?.[currentNavItem().domainKey]?.answers?.[currentNavItem().key]
+                  }
+                  finalData={
+                    finalAnswers()[currentNavItem().domainKey]?.answers?.[currentNavItem().key]
+                  }
                   reviewer1Name={props.reviewer1Name || 'Reviewer 1'}
                   reviewer2Name={props.reviewer2Name || 'Reviewer 2'}
                   isAgreement={isNavItemAgreement(currentNavItem(), comparison())}
@@ -409,24 +429,44 @@ export default function RobinsIReconciliation(props) {
                       currentNavItem().domainKey,
                       currentNavItem().key,
                       answer,
-                      finalAnswers()[currentNavItem().domainKey]?.answers?.[currentNavItem().key]?.comment
+                      finalAnswers()[currentNavItem().domainKey]?.answers?.[currentNavItem().key]
+                        ?.comment,
                     )
                   }
                   onFinalCommentChange={comment =>
                     updateDomainQuestionAnswer(
                       currentNavItem().domainKey,
                       currentNavItem().key,
-                      finalAnswers()[currentNavItem().domainKey]?.answers?.[currentNavItem().key]?.answer,
-                      comment
+                      finalAnswers()[currentNavItem().domainKey]?.answers?.[currentNavItem().key]
+                        ?.answer,
+                      comment,
                     )
                   }
                   onUseReviewer1={() => {
-                    const data = props.checklist1?.[currentNavItem().domainKey]?.answers?.[currentNavItem().key];
-                    if (data) updateDomainQuestionAnswer(currentNavItem().domainKey, currentNavItem().key, data.answer, data.comment);
+                    const data =
+                      props.checklist1?.[currentNavItem().domainKey]?.answers?.[
+                        currentNavItem().key
+                      ];
+                    if (data)
+                      updateDomainQuestionAnswer(
+                        currentNavItem().domainKey,
+                        currentNavItem().key,
+                        data.answer,
+                        data.comment,
+                      );
                   }}
                   onUseReviewer2={() => {
-                    const data = props.checklist2?.[currentNavItem().domainKey]?.answers?.[currentNavItem().key];
-                    if (data) updateDomainQuestionAnswer(currentNavItem().domainKey, currentNavItem().key, data.answer, data.comment);
+                    const data =
+                      props.checklist2?.[currentNavItem().domainKey]?.answers?.[
+                        currentNavItem().key
+                      ];
+                    if (data)
+                      updateDomainQuestionAnswer(
+                        currentNavItem().domainKey,
+                        currentNavItem().key,
+                        data.answer,
+                        data.comment,
+                      );
                   }}
                 />
               </Match>
@@ -446,31 +486,51 @@ export default function RobinsIReconciliation(props) {
                     updateDomainJudgement(
                       currentNavItem().domainKey,
                       judgement,
-                      finalAnswers()[currentNavItem().domainKey]?.direction
+                      finalAnswers()[currentNavItem().domainKey]?.direction,
                     )
                   }
                   onFinalDirectionChange={direction =>
                     updateDomainJudgement(
                       currentNavItem().domainKey,
                       finalAnswers()[currentNavItem().domainKey]?.judgement,
-                      direction
+                      direction,
                     )
                   }
                   onUseReviewer1Judgement={() => {
                     const data = props.checklist1?.[currentNavItem().domainKey];
-                    if (data) updateDomainJudgement(currentNavItem().domainKey, data.judgement, finalAnswers()[currentNavItem().domainKey]?.direction);
+                    if (data)
+                      updateDomainJudgement(
+                        currentNavItem().domainKey,
+                        data.judgement,
+                        finalAnswers()[currentNavItem().domainKey]?.direction,
+                      );
                   }}
                   onUseReviewer2Judgement={() => {
                     const data = props.checklist2?.[currentNavItem().domainKey];
-                    if (data) updateDomainJudgement(currentNavItem().domainKey, data.judgement, finalAnswers()[currentNavItem().domainKey]?.direction);
+                    if (data)
+                      updateDomainJudgement(
+                        currentNavItem().domainKey,
+                        data.judgement,
+                        finalAnswers()[currentNavItem().domainKey]?.direction,
+                      );
                   }}
                   onUseReviewer1Direction={() => {
                     const data = props.checklist1?.[currentNavItem().domainKey];
-                    if (data) updateDomainJudgement(currentNavItem().domainKey, finalAnswers()[currentNavItem().domainKey]?.judgement, data.direction);
+                    if (data)
+                      updateDomainJudgement(
+                        currentNavItem().domainKey,
+                        finalAnswers()[currentNavItem().domainKey]?.judgement,
+                        data.direction,
+                      );
                   }}
                   onUseReviewer2Direction={() => {
                     const data = props.checklist2?.[currentNavItem().domainKey];
-                    if (data) updateDomainJudgement(currentNavItem().domainKey, finalAnswers()[currentNavItem().domainKey]?.judgement, data.direction);
+                    if (data)
+                      updateDomainJudgement(
+                        currentNavItem().domainKey,
+                        finalAnswers()[currentNavItem().domainKey]?.judgement,
+                        data.direction,
+                      );
                   }}
                 />
               </Match>
@@ -493,19 +553,23 @@ export default function RobinsIReconciliation(props) {
                   }
                   onUseReviewer1Judgement={() => {
                     const data = props.checklist1?.overall;
-                    if (data) updateOverallJudgement(data.judgement, finalAnswers().overall?.direction);
+                    if (data)
+                      updateOverallJudgement(data.judgement, finalAnswers().overall?.direction);
                   }}
                   onUseReviewer2Judgement={() => {
                     const data = props.checklist2?.overall;
-                    if (data) updateOverallJudgement(data.judgement, finalAnswers().overall?.direction);
+                    if (data)
+                      updateOverallJudgement(data.judgement, finalAnswers().overall?.direction);
                   }}
                   onUseReviewer1Direction={() => {
                     const data = props.checklist1?.overall;
-                    if (data) updateOverallJudgement(finalAnswers().overall?.judgement, data.direction);
+                    if (data)
+                      updateOverallJudgement(finalAnswers().overall?.judgement, data.direction);
                   }}
                   onUseReviewer2Direction={() => {
                     const data = props.checklist2?.overall;
-                    if (data) updateOverallJudgement(finalAnswers().overall?.judgement, data.direction);
+                    if (data)
+                      updateOverallJudgement(finalAnswers().overall?.judgement, data.direction);
                   }}
                 />
               </Match>
@@ -517,9 +581,9 @@ export default function RobinsIReconciliation(props) {
                 onClick={goToPrevious}
                 disabled={currentPage() === 0}
                 class={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
-                  currentPage() === 0
-                    ? 'cursor-not-allowed bg-gray-100 text-gray-400'
-                    : 'bg-white text-gray-700 shadow hover:bg-gray-100'
+                  currentPage() === 0 ?
+                    'cursor-not-allowed bg-gray-100 text-gray-400'
+                  : 'bg-white text-gray-700 shadow hover:bg-gray-100'
                 }`}
               >
                 <AiOutlineArrowLeft class='h-4 w-4' />
