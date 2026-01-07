@@ -18,9 +18,11 @@ import { Switch } from '@corates/ui';
 import GoogleDriveSettings from './GoogleDriveSettings.jsx';
 import TwoFactorSetup from './TwoFactorSetup.jsx';
 import LinkedAccountsSection from './LinkedAccountsSection.jsx';
+import StrengthIndicator from '../auth/StrengthIndicator.jsx';
+import { handleError } from '@/lib/error-utils.js';
 
 export default function SettingsPage() {
-  const { user, resetPassword } = useBetterAuth();
+  const { user, resetPassword, changePassword } = useBetterAuth();
 
   // Notification settings
   const [emailNotifications, setEmailNotifications] = createSignal(false);
@@ -39,6 +41,7 @@ export default function SettingsPage() {
   const [passwordError, setPasswordError] = createSignal('');
   const [passwordSuccess, setPasswordSuccess] = createSignal('');
   const [changingPassword, setChangingPassword] = createSignal(false);
+  const [unmetRequirements, setUnmetRequirements] = createSignal([]);
 
   // Add password (for magic link / OAuth users)
   const [addPasswordLoading, setAddPasswordLoading] = createSignal(false);
@@ -49,28 +52,31 @@ export default function SettingsPage() {
     setPasswordError('');
     setPasswordSuccess('');
 
-    if (newPassword() !== confirmPassword()) {
-      setPasswordError('New passwords do not match.');
+    // Check password strength requirements
+    if (unmetRequirements().length > 0) {
+      setPasswordError(`Password must have ${unmetRequirements().join(', ')}`);
       return;
     }
 
-    if (newPassword().length < 8) {
-      setPasswordError('Password must be at least 8 characters long.');
+    if (newPassword() !== confirmPassword()) {
+      setPasswordError('New passwords do not match.');
       return;
     }
 
     setChangingPassword(true);
 
     try {
-      // TODO: Implement password change API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await changePassword(currentPassword(), newPassword());
       setPasswordSuccess('Password changed successfully!');
       setShowPasswordForm(false);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch {
-      setPasswordError('Failed to change password. Please try again.');
+    } catch (err) {
+      await handleError(err, {
+        setError: setPasswordError,
+        showToast: false,
+      });
     } finally {
       setChangingPassword(false);
     }
@@ -306,6 +312,7 @@ export default function SettingsPage() {
                     </Show>
                   </button>
                 </div>
+                <StrengthIndicator password={newPassword()} onUnmet={setUnmetRequirements} />
               </div>
 
               <div>

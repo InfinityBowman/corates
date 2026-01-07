@@ -1,8 +1,9 @@
 # CoRATES Technical Debt Audit Report
 
-**Date:** January 6, 2026
+**Date:** January 6, 2026 (Updated: January 2026)
 **Auditor:** Claude Sonnet 4.5
 **Codebase Version:** Git commit 99879e30 (branch: 234-payment-edge-cases)
+**Last Updated:** Branch 236-fetch-wrapper-abstraction
 **Scope:** Maintainability, code quality, technical debt
 
 ---
@@ -11,7 +12,13 @@
 
 This technical debt audit examined 397 source files across the CoRATES codebase, identifying patterns of duplication, deprecated code, magic numbers, organizational issues, and missing abstractions. The codebase shows **good overall structure** with intentional organization, but has accumulated **moderate technical debt** that should be addressed to maintain long-term maintainability.
 
-### Overall Rating: **GOOD** ✅ (with areas for improvement)
+### Overall Rating: **GOOD** (with areas for improvement)
+
+**Recent Progress:**
+
+- C3 API Client Abstraction - COMPLETED (apiFetch wrapper)
+- Pattern 4 Fetch Error Handling - RESOLVED
+- User-friendly error messages - IMPLEMENTED
 
 **Codebase Statistics:**
 
@@ -32,7 +39,7 @@ This technical debt audit examined 397 source files across the CoRATES codebase,
 **Critical Issues:**
 
 - ⚠️ **Magic numbers scattered throughout** - Need constants file
-- ⚠️ **Duplicated error handling patterns** - Missing abstraction
+- ✅ **~~Duplicated error handling patterns~~** - Resolved with `apiFetch` wrapper
 - ⚠️ **Inconsistent import paths** - Mix of relative (`../../../`) and aliases (`@/`)
 - ⚠️ **Deprecated functions not removed** - Dead code kept for "compatibility"
 - ⚠️ **Missing utility abstractions** - Repeated patterns for common operations
@@ -90,40 +97,21 @@ resetError={() => {
 
 ---
 
-#### T2: Password Change Not Implemented ⚠️
+#### T2: Password Change Not Implemented - COMPLETED
 
-**Location:** [web/src/components/profile/SettingsPage.jsx:65](packages/web/src/components/profile/SettingsPage.jsx:65)
+**Location:** [web/src/components/profile/SettingsPage.jsx](packages/web/src/components/profile/SettingsPage.jsx)
 
-```javascript
-// TODO: Implement password change API call
-```
+**Status:** Implemented in branch 238-ai-agent-readiness
 
-**Issue:** Password change form exists but doesn't call API.
+**Solution:**
 
-**Impact:**
+- Wired up `changePassword()` from Better Auth store
+- Added `StrengthIndicator` component for real-time password validation
+- Validates password requirements before submission
+- Shows user-friendly error messages via `handleError`
 
-- Users cannot change passwords
-- Potential security issue if users want to rotate credentials
-
-**Recommendation:**
-
-```javascript
-async function handlePasswordChange(e) {
-  e.preventDefault();
-  try {
-    await authClient.changePassword({
-      currentPassword: form.currentPassword,
-      newPassword: form.newPassword,
-    });
-    showToast.success('Password updated successfully');
-  } catch (err) {
-    showToast.error('Failed to update password', err.message);
-  }
-}
-```
-
-**Priority:** High
-**Effort:** 1-2 hours
+**Priority:** ~~High~~ DONE
+**Effort:** ~~1-2 hours~~ Completed
 
 ---
 
@@ -389,37 +377,28 @@ try {
 
 ---
 
-### Pattern 4: Fetch Error Handling in Frontend 🟡 **MEDIUM DUPLICATION**
+### Pattern 4: Fetch Error Handling in Frontend ✅ **COMPLETED**
 
-**Occurrences:** 15+ files in `packages/web/src/api/`
+**Status:** Resolved with `apiFetch` wrapper in `packages/web/src/lib/apiFetch.js`
 
-**Pattern:**
+**Solution Implemented:**
 
-```javascript
-const response = await fetch(`${API_BASE}/api/...`, {
-  method: 'POST',
-  credentials: 'include',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(data),
-});
+- Created centralized `apiFetch` wrapper with standardized error handling
+- All API files now use `apiFetch.get()`, `apiFetch.post()`, etc.
+- User-friendly error messages via `error-utils.js` with `USER_FRIENDLY_MESSAGES` mapping
+- Automatic retry with exponential backoff (opt-in)
+- Consistent toast notifications and error state management
 
-if (!response.ok) {
-  const error = await response.json();
-  throw new Error(error.error || 'Request failed');
-}
+**Files Updated:**
 
-return response.json();
-```
+- `packages/web/src/lib/apiFetch.js` - Main wrapper
+- `packages/web/src/lib/error-utils.js` - User-friendly error messages
+- `packages/web/src/api/billing.js` - Migrated to apiFetch
+- `packages/web/src/api/pdf-api.js` - Migrated to apiFetch
+- `packages/web/src/api/account-merge.js` - Migrated to apiFetch
+- ... all API files migrated
 
-**Examples:**
-
-- [web/src/api/pdf-api.js](packages/web/src/api/pdf-api.js)
-- [web/src/api/google-drive.js](packages/web/src/api/google-drive.js)
-- [web/src/api/billing.js](packages/web/src/api/billing.js)
-- [web/src/api/account-merge.js](packages/web/src/api/account-merge.js)
-- ... 11+ more
-
-**Recommendation:** Create API client wrapper
+**Previous Recommendation:** ~~Create API client wrapper~~
 
 ```javascript
 // packages/web/src/lib/apiClient.js
@@ -1154,23 +1133,22 @@ isOwner();
 
 ---
 
-#### C2: Implement Password Change ⚠️
+#### C2: Implement Password Change - COMPLETED
 
-**Current:** Form exists but no backend call
-**Action:** Wire up BetterAuth password change API
+**Completed:** January 2026
+**Solution:** Wired up Better Auth `changePassword` API in SettingsPage.jsx
+**Features:** Added StrengthIndicator for real-time validation, user-friendly error handling
 **Files:** `SettingsPage.jsx`
-**Effort:** 1-2 hours
-**Impact:** Users can secure accounts
+**Impact:** Users can now change passwords with proper validation
 
 ---
 
-#### C3: Create API Client Abstraction 🔴
+#### C3: Create API Client Abstraction - COMPLETED
 
-**Current:** Duplicated fetch logic in 15+ files
-**Action:** Create `apiClient.js` with standardized error handling
-**Files:** All files in `packages/web/src/api/`
-**Effort:** 3-4 hours
-**Impact:** Reduces duplication, consistent error handling, easier to add auth refresh
+**Completed:** January 2026
+**Solution:** Created `apiFetch` wrapper in `packages/web/src/lib/apiFetch.js`
+**Files Updated:** All files in `packages/web/src/api/` now use `apiFetch`
+**Impact:** Reduced duplication, consistent error handling, user-friendly error messages, retry support
 
 ---
 
@@ -1281,32 +1259,37 @@ isOwner();
 
 ## Summary Metrics
 
-### Technical Debt Score: **6.5/10** (Lower is better)
+### Technical Debt Score: **5.5/10** (Lower is better)
 
 **Calculation:**
 
-- **Code Duplication:** 3/4 (High duplication in API calls, error handling)
+- **Code Duplication:** 2/4 (~~High duplication in API calls, error handling~~ - Resolved with apiFetch)
 - **Dead Code:** 2/4 (Some deprecated functions, mostly cleaned up)
 - **Magic Numbers:** 3/4 (Many scattered constants)
-- **Missing Abstractions:** 2/4 (Some patterns could be abstracted)
+- **Missing Abstractions:** 1/4 (~~Some patterns could be abstracted~~ - apiFetch and error-utils added)
 - **Organization:** 1/4 (Well-organized, minor import path issues)
 - **Test Coverage:** 2/4 (18% by file count, likely higher by LOC)
 
-**Average:** (3+2+3+2+1+2) / 6 = **2.17 / 4** → **6.5 / 10**
+**Average:** (2+2+3+1+1+2) / 6 = **1.83 / 4** - **5.5 / 10**
 
 ### Prioritized Action Plan
+
+**COMPLETED:**
+
+- ~~Create API client abstraction~~ - apiFetch wrapper implemented
+- ~~Standardize error handling~~ - USER_FRIENDLY_MESSAGES in error-utils.js
+- ~~Pattern 4 fetch duplication~~ - All API files migrated to apiFetch
 
 **Week 1 (Critical):**
 
 1. Implement error monitoring (Sentry)
 2. Implement password change
-3. Create API client abstraction
 
-**Week 2-3 (High):** 4. Standardize import paths 5. Create error handler middleware 6. Extract constants file
+**Week 2-3 (High):** 3. Standardize import paths 4. Create error handler middleware (backend routes) 5. Extract constants file
 
-**Month 2 (Medium):** 7. Remove deprecated code 8. Create database middleware 9. Standardize error patterns 10. Create permission utility
+**Month 2 (Medium):** 6. Remove deprecated code 7. Create database middleware 8. Standardize error patterns 9. Create permission utility
 
-**Backlog (Low):** 11. Remove unnecessary barrel exports 12. Document naming conventions 13. Create form validation hook
+**Backlog (Low):** 10. Remove unnecessary barrel exports 11. Document naming conventions 12. Create form validation hook
 
 ---
 
@@ -1314,25 +1297,27 @@ isOwner();
 
 The CoRATES codebase demonstrates **good engineering practices** with intentional structure and organization. The identified technical debt is **moderate and manageable**, primarily consisting of:
 
-1. **Duplicated patterns** that can be abstracted (API calls, error handling)
+1. ~~**Duplicated patterns** that can be abstracted (API calls, error handling)~~ - RESOLVED
 2. **Magic numbers** that should be extracted to constants
 3. **Minor inconsistencies** in import paths and naming
 
 **Key Strengths to Maintain:**
 
-- ✅ Well-organized monorepo structure
-- ✅ Colocated tests
-- ✅ Consistent use of Zod for validation
-- ✅ Intentional middleware composition
-- ✅ Deprecated code properly marked
+- Well-organized monorepo structure
+- Colocated tests
+- Consistent use of Zod for validation
+- Intentional middleware composition
+- Deprecated code properly marked
+- **NEW:** Centralized API client (`apiFetch`) with consistent error handling
 
-**Most Impactful Improvements:**
+**Most Impactful Improvements (Remaining):**
 
-1. API client abstraction (reduces 15+ files of duplication)
+1. ~~API client abstraction (reduces 15+ files of duplication)~~ - DONE
 2. Error handler middleware (cleans up 50+ route files)
 3. Constants file (makes limits configurable)
+4. Error monitoring (Sentry integration)
 
-The technical debt is **not blocking progress** but addressing the high-priority items will significantly improve maintainability and make future features easier to implement.
+The technical debt is **not blocking progress** and has been **actively reduced**. The `apiFetch` wrapper now provides consistent error handling across all API calls, improving both developer experience and user-facing error messages.
 
 ---
 
