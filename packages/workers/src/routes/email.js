@@ -4,7 +4,7 @@
  */
 
 import { Hono } from 'hono';
-import { emailRateLimit } from '../middleware/rateLimit.js';
+import { emailRateLimit } from '@/middleware/rateLimit.js';
 import {
   createDomainError,
   createValidationError,

@@ -126,6 +126,8 @@ export const TIME_DURATIONS = {
  */
 export const GRANT_CONFIG = {
   DURATION_MONTHS: 6,
+  // Default trial length (in days)
+  TRIAL_DAYS: 14,
 };
 
 /**

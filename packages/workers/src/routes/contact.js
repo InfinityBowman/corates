@@ -6,7 +6,7 @@
 import { Hono } from 'hono';
 import { Client as PostmarkClient } from 'postmark';
 import { z } from 'zod';
-import { contactRateLimit } from '../middleware/rateLimit.js';
+import { contactRateLimit } from '@/middleware/rateLimit.js';
 import {
   createDomainError,
   createValidationError,
@@ -178,6 +178,6 @@ contact.post('/', async c => {
   }
 });
 
-import { escapeHtml } from '../lib/escapeHtml.js';
+import { escapeHtml } from '@/lib/escapeHtml.js';
 
 export { contact as contactRoutes };

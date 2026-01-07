@@ -6,13 +6,13 @@
  */
 
 import { Hono } from 'hono';
-import { requireAuth, getAuth } from '../middleware/auth.js';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDomainError, FILE_ERRORS, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import { FILE_SIZE_LIMITS } from '../config/constants.js';
-import { createDb } from '../db/client.js';
-import { projectMembers, projects } from '../db/schema.js';
+import { FILE_SIZE_LIMITS } from '@/config/constants.js';
+import { createDb } from '@/db/client.js';
+import { projectMembers, projects } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
-import { getProjectDocStub } from '../lib/project-doc-id.js';
+import { getProjectDocStub } from '@/lib/project-doc-id.js';
 
 const avatarRoutes = new Hono();
 

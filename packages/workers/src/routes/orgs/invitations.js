@@ -6,7 +6,7 @@
  */
 
 import { Hono } from 'hono';
-import { createDb } from '../../db/client.js';
+import { createDb } from '@/db/client.js';
 import {
   projectInvitations,
   projectMembers,
@@ -14,17 +14,17 @@ import {
   user,
   member,
   organization,
-} from '../../db/schema.js';
+} from '@/db/schema.js';
 import { eq, and, desc, isNull } from 'drizzle-orm';
-import { requireAuth, getAuth } from '../../middleware/auth.js';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
 import {
   requireOrgMembership,
   requireProjectAccess,
   getOrgContext,
   getProjectContext,
-} from '../../middleware/requireOrg.js';
-import { invitationSchemas, validateRequest } from '../../config/validation.js';
-import { TIME_DURATIONS } from '../../config/constants.js';
+} from '@/middleware/requireOrg.js';
+import { invitationSchemas, validateRequest } from '@/config/validation.js';
+import { TIME_DURATIONS } from '@/config/constants.js';
 import {
   createDomainError,
   PROJECT_ERRORS,
@@ -32,9 +32,9 @@ import {
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
-import { syncMemberToDO } from '../../lib/project-sync.js';
-import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
-import { checkCollaboratorQuota } from '../../lib/quotaTransaction.js';
+import { syncMemberToDO } from '@/lib/project-sync.js';
+import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
+import { checkCollaboratorQuota } from '@/lib/quotaTransaction.js';
 
 const orgInvitationRoutes = new Hono();
 
@@ -190,8 +190,8 @@ orgInvitationRoutes.post(
         const { magicLink } = await import('better-auth/plugins');
         const { drizzleAdapter } = await import('better-auth/adapters/drizzle');
         const { drizzle } = await import('drizzle-orm/d1');
-        const schema = await import('../../db/schema.js');
-        const { MAGIC_LINK_EXPIRY_MINUTES } = await import('../../auth/emailTemplates.js');
+        const schema = await import('@/db/schema.js');
+        const { MAGIC_LINK_EXPIRY_MINUTES } = await import('@/auth/emailTemplates.js');
 
         const authSecret = c.env.AUTH_SECRET || c.env.SECRET;
         if (!authSecret) {
@@ -240,8 +240,8 @@ orgInvitationRoutes.post(
         }
 
         const { getProjectInvitationEmailHtml, getProjectInvitationEmailText } =
-          await import('../../auth/emailTemplates.js');
-        const { escapeHtml } = await import('../../lib/escapeHtml.js');
+          await import('@/auth/emailTemplates.js');
+        const { escapeHtml } = await import('@/lib/escapeHtml.js');
 
         const projectName = project?.name || 'Unknown Project';
         const inviterName = inviter?.displayName || inviter?.name || inviter?.email || 'Someone';

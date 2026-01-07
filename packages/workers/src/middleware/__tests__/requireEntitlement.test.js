@@ -11,7 +11,7 @@ import {
   seedUser,
   seedOrganization,
   seedOrgMember,
-} from '../../__tests__/helpers.js';
+} from '@/__tests__/helpers.js';
 import { requireEntitlement } from '../requireEntitlement.js';
 import { requireOrgMembership } from '../requireOrg.js';
 import { requireAuth } from '../auth.js';
@@ -51,7 +51,7 @@ vi.mock('../auth.js', () => {
 });
 
 // Mock billing resolver - use factory function that returns a new mock each time
-vi.mock('../../lib/billingResolver.js', () => {
+vi.mock('@/lib/billingResolver.js', () => {
   return {
     resolveOrgAccess: vi.fn(),
   };
@@ -83,7 +83,7 @@ let mockResolveOrgAccess;
 
 beforeEach(async () => {
   await resetTestDatabase();
-  const billingResolver = await import('../../lib/billingResolver.js');
+  const billingResolver = await import('@/lib/billingResolver.js');
   mockResolveOrgAccess = billingResolver.resolveOrgAccess;
   mockResolveOrgAccess.mockClear();
 });

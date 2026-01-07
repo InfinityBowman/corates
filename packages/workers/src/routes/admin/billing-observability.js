@@ -4,11 +4,11 @@
  */
 
 import { Hono } from 'hono';
-import { createDb } from '../../db/client.js';
-import { subscription, organization, stripeEventLedger } from '../../db/schema.js';
+import { createDb } from '@/db/client.js';
+import { subscription, organization, stripeEventLedger } from '@/db/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
 import { createDomainError, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import { getLedgerEntriesByOrgId, LedgerStatus } from '../../db/stripeEventLedger.js';
+import { getLedgerEntriesByOrgId, LedgerStatus } from '@/db/stripeEventLedger.js';
 import Stripe from 'stripe';
 
 const billingObservabilityRoutes = new Hono();

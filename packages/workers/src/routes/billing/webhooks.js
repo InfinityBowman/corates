@@ -21,17 +21,17 @@
  * - Grant extension rule: expiresAt = max(now, currentExpiresAt) + 6 months
  */
 import { Hono } from 'hono';
-import { createDb } from '../../db/client.js';
+import { createDb } from '@/db/client.js';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import Stripe from 'stripe';
-import { createLogger, sha256, truncateError } from '../../lib/observability/logger.js';
+import { createLogger, sha256, truncateError } from '@/lib/observability/logger.js';
 import {
   insertLedgerEntry,
   updateLedgerWithVerifiedFields,
   updateLedgerStatus,
   getLedgerByPayloadHash,
   LedgerStatus,
-} from '../../db/stripeEventLedger.js';
+} from '@/db/stripeEventLedger.js';
 
 const billingWebhookRoutes = new Hono();
 
@@ -276,7 +276,7 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
         getGrantByOrgIdAndType,
         createGrant,
         updateGrantExpiresAt,
-      } = await import('../../db/orgAccessGrants.js');
+      } = await import('@/db/orgAccessGrants.js');
 
       // Check for idempotency - if grant already exists for this checkout session, skip
       const existingGrantBySession = await getGrantByStripeCheckoutSessionId(db, session.id);

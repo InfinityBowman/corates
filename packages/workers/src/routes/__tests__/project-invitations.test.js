@@ -16,9 +16,9 @@ import {
   seedOrgMember,
   seedProjectInvitation,
   json,
-} from '../../__tests__/helpers.js';
-import { createDb } from '../../db/client.js';
-import { projectInvitations, projectMembers, member } from '../../db/schema.js';
+} from '@/__tests__/helpers.js';
+import { createDb } from '@/db/client.js';
+import { projectInvitations, projectMembers, member } from '@/db/schema.js';
 import { eq, and } from 'drizzle-orm';
 
 // Mock postmark
@@ -34,7 +34,7 @@ vi.mock('postmark', () => {
 });
 
 // Mock auth middleware
-vi.mock('../../middleware/auth.js', () => {
+vi.mock('@/middleware/auth.js', () => {
   return {
     requireAuth: async (c, next) => {
       const userId = c.req.raw.headers.get('x-test-user-id') || 'user-1';
@@ -58,14 +58,14 @@ vi.mock('../../middleware/auth.js', () => {
 
 // Mock billing resolver to return write access with unlimited quota by default
 let mockResolveOrgAccess;
-vi.mock('../../lib/billingResolver.js', () => {
+vi.mock('@/lib/billingResolver.js', () => {
   return {
     resolveOrgAccess: vi.fn(),
   };
 });
 
 // Mock project sync
-vi.mock('../../lib/project-sync.js', () => {
+vi.mock('@/lib/project-sync.js', () => {
   return {
     syncMemberToDO: vi.fn(),
   };
@@ -93,10 +93,10 @@ beforeEach(async () => {
   vi.clearAllMocks();
 
   // Get the mocked functions
-  const billingResolver = await import('../../lib/billingResolver.js');
+  const billingResolver = await import('@/lib/billingResolver.js');
   mockResolveOrgAccess = billingResolver.resolveOrgAccess;
 
-  const projectSync = await import('../../lib/project-sync.js');
+  const projectSync = await import('@/lib/project-sync.js');
   mockSyncMemberToDO = projectSync.syncMemberToDO;
 
   // Setup default billing resolver mock (unlimited quota)

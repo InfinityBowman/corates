@@ -4,10 +4,10 @@
  */
 
 import { Hono } from 'hono';
-import { createDb } from '../../db/client.js';
-import { mediaFiles } from '../../db/schema.js';
+import { createDb } from '@/db/client.js';
+import { mediaFiles } from '@/db/schema.js';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { storageSchemas, validateQueryParams, validateRequest } from '../../config/validation.js';
+import { storageSchemas, validateQueryParams, validateRequest } from '@/config/validation.js';
 
 const storageRoutes = new Hono();
 

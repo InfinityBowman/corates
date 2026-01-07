@@ -5,7 +5,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import { json } from '../../__tests__/helpers.js';
+import { json } from '@/__tests__/helpers.js';
 
 // Mock Postmark
 const mockSendEmail = vi.fn(async () => ({

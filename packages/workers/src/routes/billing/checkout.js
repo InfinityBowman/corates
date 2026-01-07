@@ -3,14 +3,14 @@
  * Handles Stripe Checkout session creation for subscriptions and one-time purchases
  */
 import { Hono } from 'hono';
-import { requireAuth, getAuth } from '../../middleware/auth.js';
-import { createDb } from '../../db/client.js';
-import { validatePlanChange } from '../../lib/billingResolver.js';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { createDb } from '@/db/client.js';
+import { validatePlanChange } from '@/lib/billingResolver.js';
 import { DEFAULT_PLAN } from '@corates/shared/plans';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import Stripe from 'stripe';
-import { createLogger, truncateError, withTiming } from '../../lib/observability/logger.js';
-import { billingCheckoutRateLimit } from '../../middleware/rateLimit.js';
+import { createLogger, truncateError, withTiming } from '@/lib/observability/logger.js';
+import { billingCheckoutRateLimit } from '@/middleware/rateLimit.js';
 import { resolveOrgIdWithRole } from './helpers/orgContext.js';
 import { requireOrgOwner } from './helpers/ownerGate.js';
 
@@ -68,7 +68,7 @@ billingCheckoutRoutes.post('/checkout', billingCheckoutRateLimit, requireAuth, a
     });
 
     // Delegate to Better Auth Stripe plugin
-    const { createAuth } = await import('../../auth/config.js');
+    const { createAuth } = await import('@/auth/config.js');
     const auth = createAuth(c.env, c.executionCtx);
 
     const { result, durationMs } = await withTiming(async () => {
@@ -153,7 +153,7 @@ billingCheckoutRoutes.post(
       });
 
       // Get user's Stripe customer ID (required by Better Auth Stripe plugin)
-      const { user: userTable } = await import('../../db/schema.js');
+      const { user: userTable } = await import('@/db/schema.js');
       const { eq } = await import('drizzle-orm');
       const userRecord = await db
         .select({ stripeCustomerId: userTable.stripeCustomerId })

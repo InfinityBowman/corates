@@ -5,10 +5,10 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { env, runInDurableObject } from 'cloudflare:test';
-import { __mockVerifyAuth as mockVerifyAuth } from '../../auth/config.js';
+import { __mockVerifyAuth as mockVerifyAuth } from '@/auth/config.js';
 
 // Mock auth
-vi.mock('../../auth/config.js', () => {
+vi.mock('@/auth/config.js', () => {
   const mockVerifyAuth = vi.fn(async () => ({
     user: { id: 'test-user-1', email: 'test@example.com' },
   }));

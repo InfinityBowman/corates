@@ -1154,13 +1154,21 @@ isOwner();
 
 ### High Priority (Next Sprint)
 
-#### H1: Standardize Import Paths
+#### H1: Standardize Import Paths - INFRASTRUCTURE COMPLETE
 
-**Current:** Mix of `../../../` and `@/` aliases
-**Action:** Configure aliases for workers package, refactor imports
-**Files:** Most `.js` files in workers
-**Effort:** 4-6 hours
-**Impact:** Easier refactoring, clearer imports
+**Completed:** January 2026
+**Solution:** Configured `@` alias in workers package pointing to `src/`
+**Configuration Files:**
+
+- `packages/workers/jsconfig.json` - IDE support
+- `packages/workers/vitest.config.js` - Test resolution
+
+**Usage:** `import { createDb } from '@/db/client.js'` instead of `../../db/client.js`
+
+**Migration Status:** Infrastructure in place, files can be gradually migrated as they're touched.
+One file (`orgs/invitations.js`) converted as example.
+
+**Impact:** Cleaner imports, easier refactoring, consistent with web package patterns
 
 ---
 

@@ -4,7 +4,7 @@
  */
 
 import { Hono } from 'hono';
-import { createDb } from '../db/client.js';
+import { createDb } from '@/db/client.js';
 import {
   projects,
   projectMembers,
@@ -14,10 +14,10 @@ import {
   verification,
   twoFactor,
   mediaFiles,
-} from '../db/schema.js';
+} from '@/db/schema.js';
 import { eq, desc, or, like, sql } from 'drizzle-orm';
-import { requireAuth, getAuth } from '../middleware/auth.js';
-import { searchRateLimit } from '../middleware/rateLimit.js';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { searchRateLimit } from '@/middleware/rateLimit.js';
 import {
   createDomainError,
   createValidationError,
@@ -26,8 +26,8 @@ import {
   USER_ERRORS,
   SYSTEM_ERRORS,
 } from '@corates/shared';
-import { syncMemberToDO } from '../lib/project-sync.js';
-import { getProjectDocStub } from '../lib/project-doc-id.js';
+import { syncMemberToDO } from '@/lib/project-sync.js';
+import { getProjectDocStub } from '@/lib/project-doc-id.js';
 
 const userRoutes = new Hono();
 

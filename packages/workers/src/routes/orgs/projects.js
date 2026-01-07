@@ -4,24 +4,24 @@
  */
 
 import { Hono } from 'hono';
-import { createDb } from '../../db/client.js';
-import { projects, projectMembers, user } from '../../db/schema.js';
+import { createDb } from '@/db/client.js';
+import { projects, projectMembers, user } from '@/db/schema.js';
 import { eq, and, count, desc } from 'drizzle-orm';
-import { requireAuth, getAuth } from '../../middleware/auth.js';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
 import {
   requireOrgMembership,
   requireProjectAccess,
   getOrgContext,
   getProjectContext,
-} from '../../middleware/requireOrg.js';
-import { requireEntitlement } from '../../middleware/requireEntitlement.js';
-import { requireQuota } from '../../middleware/requireQuota.js';
-import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
-import { projectSchemas, validateRequest } from '../../config/validation.js';
+} from '@/middleware/requireOrg.js';
+import { requireEntitlement } from '@/middleware/requireEntitlement.js';
+import { requireQuota } from '@/middleware/requireQuota.js';
+import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
+import { projectSchemas, validateRequest } from '@/config/validation.js';
 import { createDomainError, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import { insertWithQuotaCheck } from '../../lib/quotaTransaction.js';
-import { syncProjectToDO } from '../../lib/project-sync.js';
-import { getProjectDocStub } from '../../lib/project-doc-id.js';
+import { insertWithQuotaCheck } from '@/lib/quotaTransaction.js';
+import { syncProjectToDO } from '@/lib/project-sync.js';
+import { getProjectDocStub } from '@/lib/project-doc-id.js';
 import { orgProjectMemberRoutes } from './members.js';
 import { orgPdfRoutes } from './pdfs.js';
 import { orgInvitationRoutes } from './invitations.js';

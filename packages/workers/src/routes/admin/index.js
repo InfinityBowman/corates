@@ -4,8 +4,8 @@
  */
 
 import { Hono } from 'hono';
-import { requireAdmin } from '../../middleware/requireAdmin.js';
-import { requireTrustedOrigin } from '../../middleware/csrf.js';
+import { requireAdmin } from '@/middleware/requireAdmin.js';
+import { requireTrustedOrigin } from '@/middleware/csrf.js';
 import { userRoutes } from './users.js';
 import { storageRoutes } from './storage.js';
 import { billingRoutes } from './billing.js';

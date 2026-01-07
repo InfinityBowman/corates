@@ -4,8 +4,8 @@
  */
 
 import { eq, and, desc, isNull, ne, count } from 'drizzle-orm';
-import { subscription, orgAccessGrants, projects, member } from '../db/schema.js';
-import { getActiveGrantsByOrgId } from '../db/orgAccessGrants.js';
+import { subscription, orgAccessGrants, projects, member } from '@/db/schema.js';
+import { getActiveGrantsByOrgId } from '@/db/orgAccessGrants.js';
 import { getPlan, DEFAULT_PLAN, getGrantPlan, isUnlimitedQuota } from '@corates/shared/plans';
 
 /**

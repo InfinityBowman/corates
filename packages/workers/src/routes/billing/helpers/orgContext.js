@@ -16,7 +16,7 @@ export async function resolveOrgId({ db, session, userId }) {
 
   // If no active org in session, get user's first org
   if (!orgId) {
-    const { member } = await import('../../../db/schema.js');
+    const { member } = await import('@/db/schema.js');
     const { eq } = await import('drizzle-orm');
     const firstMembership = await db
       .select({ organizationId: member.organizationId })
@@ -43,7 +43,7 @@ export async function resolveOrgIdWithRole({ db, session, userId }) {
   let role = null;
 
   if (!orgId) {
-    const { member } = await import('../../../db/schema.js');
+    const { member } = await import('@/db/schema.js');
     const { eq } = await import('drizzle-orm');
     const firstMembership = await db
       .select({ organizationId: member.organizationId, role: member.role })
@@ -55,7 +55,7 @@ export async function resolveOrgIdWithRole({ db, session, userId }) {
     role = firstMembership?.role || null;
   } else {
     // Get role for active org
-    const { member } = await import('../../../db/schema.js');
+    const { member } = await import('@/db/schema.js');
     const { eq, and } = await import('drizzle-orm');
     const membership = await db
       .select({ role: member.role })

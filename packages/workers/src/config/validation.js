@@ -3,7 +3,7 @@
  * Centralized validation for all route handlers
  */
 
-import { z } from 'zod/v4';
+import { z } from 'zod';
 import { PROJECT_ROLES } from './constants.js';
 import { createValidationError, createMultiFieldValidationError } from '@corates/shared';
 

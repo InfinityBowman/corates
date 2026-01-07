@@ -3,9 +3,9 @@
  * Handles org-scoped billing status and member info (read-only endpoints)
  */
 import { Hono } from 'hono';
-import { requireAuth, getAuth } from '../../middleware/auth.js';
-import { createDb } from '../../db/client.js';
-import { resolveOrgAccess } from '../../lib/billingResolver.js';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { createDb } from '@/db/client.js';
+import { resolveOrgAccess } from '@/lib/billingResolver.js';
 import { getPlan, getGrantPlan } from '@corates/shared/plans';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { resolveOrgId } from './helpers/orgContext.js';
@@ -35,7 +35,7 @@ billingSubscriptionRoutes.get('/subscription', requireAuth, async c => {
     const orgBilling = await resolveOrgAccess(db, orgId);
 
     // Get project count for usage display
-    const { projects } = await import('../../db/schema.js');
+    const { projects } = await import('@/db/schema.js');
     const { eq, count } = await import('drizzle-orm');
     const [projectCountResult] = await db
       .select({ count: count() })
@@ -100,7 +100,7 @@ billingSubscriptionRoutes.get('/members', requireAuth, async c => {
     }
 
     // Use Better Auth API to list members (consistent with orgs endpoint)
-    const { createAuth } = await import('../../auth/config.js');
+    const { createAuth } = await import('@/auth/config.js');
     const auth = createAuth(c.env, c.executionCtx);
     const result = await auth.api.listMembers({
       headers: c.req.raw.headers,

@@ -5,7 +5,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import { resetTestDatabase, seedUser, json } from '../../__tests__/helpers.js';
+import { resetTestDatabase, seedUser, json } from '@/__tests__/helpers.js';
 
 // Mock postmark to avoid loading runtime code
 vi.mock('postmark', () => {
@@ -20,7 +20,7 @@ vi.mock('postmark', () => {
 });
 
 // Mock auth middleware
-vi.mock('../../middleware/auth.js', () => {
+vi.mock('@/middleware/auth.js', () => {
   return {
     requireAuth: async (c, next) => {
       const userId = c.req.raw.headers.get('x-test-user-id') || 'user-1';

@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod';
-import { PROJECT_ROLES } from '../config/constants.js';
+import { PROJECT_ROLES } from '@/config/constants.js';
 
 /**
  * Helper to convert Date or number (timestamp) to number (Unix timestamp in seconds)

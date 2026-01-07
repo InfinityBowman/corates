@@ -4,9 +4,9 @@
  */
 
 import { Hono } from 'hono';
-import { requireAuth, getAuth } from '../middleware/auth.js';
-import { createDb } from '../db/client.js';
-import { account, projects, mediaFiles } from '../db/schema.js';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { createDb } from '@/db/client.js';
+import { account, projects, mediaFiles } from '@/db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { generateUniqueFileName } from './orgs/pdfs.js';
 import {

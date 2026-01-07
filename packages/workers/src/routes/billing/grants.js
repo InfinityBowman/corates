@@ -3,9 +3,10 @@
  * Handles trial and access grant management
  */
 import { Hono } from 'hono';
-import { requireAuth, getAuth } from '../../middleware/auth.js';
-import { createDb } from '../../db/client.js';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { createDb } from '@/db/client.js';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import { GRANT_CONFIG } from '@/config/constants.js';
 import { resolveOrgIdWithRole } from './helpers/orgContext.js';
 import { requireOrgOwner } from './helpers/ownerGate.js';
 
@@ -26,7 +27,7 @@ billingGrantRoutes.post('/trial/start', requireAuth, async c => {
     // Verify user is org owner
     requireOrgOwner({ orgId, role });
 
-    const { getGrantByOrgIdAndType, createGrant } = await import('../../db/orgAccessGrants.js');
+    const { getGrantByOrgIdAndType, createGrant } = await import('@/db/orgAccessGrants.js');
 
     // Check if trial grant already exists (uniqueness requirement)
     const existingTrial = await getGrantByOrgIdAndType(db, orgId, 'trial');
@@ -42,10 +43,10 @@ billingGrantRoutes.post('/trial/start', requireAuth, async c => {
       return c.json(error, error.statusCode);
     }
 
-    // Create trial grant (14 days from now)
+    // Create trial grant (configured trial days from now)
     const now = new Date();
     const expiresAt = new Date(now);
-    expiresAt.setDate(expiresAt.getDate() + 14);
+    expiresAt.setDate(expiresAt.getDate() + GRANT_CONFIG.TRIAL_DAYS);
 
     const grantId = crypto.randomUUID();
     await createGrant(db, {

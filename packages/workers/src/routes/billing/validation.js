@@ -3,9 +3,9 @@
  * Handles plan change validation logic
  */
 import { Hono } from 'hono';
-import { requireAuth, getAuth } from '../../middleware/auth.js';
-import { createDb } from '../../db/client.js';
-import { validatePlanChange } from '../../lib/billingResolver.js';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { createDb } from '@/db/client.js';
+import { validatePlanChange } from '@/lib/billingResolver.js';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { resolveOrgId } from './helpers/orgContext.js';
 

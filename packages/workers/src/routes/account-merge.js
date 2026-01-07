@@ -14,13 +14,13 @@
  */
 
 import { Hono } from 'hono';
-import { createDb } from '../db/client.js';
-import { user, account, projects, projectMembers, mediaFiles, verification } from '../db/schema.js';
+import { createDb } from '@/db/client.js';
+import { user, account, projects, projectMembers, mediaFiles, verification } from '@/db/schema.js';
 import { eq, sql, like, and } from 'drizzle-orm';
-import { requireAuth, getAuth } from '../middleware/auth.js';
-import { rateLimit } from '../middleware/rateLimit.js';
-import { createEmailService } from '../auth/email.js';
-import { getAccountMergeEmailHtml, getAccountMergeEmailText } from '../auth/emailTemplates.js';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { rateLimit } from '@/middleware/rateLimit.js';
+import { createEmailService } from '@/auth/email.js';
+import { getAccountMergeEmailHtml, getAccountMergeEmailText } from '@/auth/emailTemplates.js';
 import {
   createDomainError,
   createValidationError,

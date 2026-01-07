@@ -24,7 +24,7 @@ const mockSendEmail = vi.fn(async () => ({
   id: 'test-message-id',
 }));
 
-vi.mock('../../auth/email.js', () => {
+vi.mock('@/auth/email.js', () => {
   return {
     createEmailService: _env => ({
       sendEmail: mockSendEmail,

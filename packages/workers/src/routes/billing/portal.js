@@ -3,10 +3,10 @@
  * Handles Stripe Customer Portal session creation (delegates to Better Auth)
  */
 import { Hono } from 'hono';
-import { requireAuth, getAuth } from '../../middleware/auth.js';
-import { createDb } from '../../db/client.js';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { createDb } from '@/db/client.js';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { billingPortalRateLimit } from '../../middleware/rateLimit.js';
+import { billingPortalRateLimit } from '@/middleware/rateLimit.js';
 import { resolveOrgIdWithRole } from './helpers/orgContext.js';
 import { requireOrgOwner } from './helpers/ownerGate.js';
 
@@ -27,7 +27,7 @@ billingPortalRoutes.post('/portal', billingPortalRateLimit, requireAuth, async c
     requireOrgOwner({ orgId, role });
 
     // Delegate to Better Auth Stripe plugin
-    const { createAuth } = await import('../../auth/config.js');
+    const { createAuth } = await import('@/auth/config.js');
     const auth = createAuth(c.env, c.executionCtx);
     const result = await auth.api.createBillingPortal({
       headers: c.req.raw.headers,

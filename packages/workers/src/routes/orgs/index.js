@@ -4,14 +4,14 @@
  */
 
 import { Hono } from 'hono';
-import { createDb } from '../../db/client.js';
-import { projects } from '../../db/schema.js';
+import { createDb } from '@/db/client.js';
+import { projects } from '@/db/schema.js';
 import { eq, count } from 'drizzle-orm';
-import { requireAuth, getAuth } from '../../middleware/auth.js';
-import { requireOrgMembership, getOrgContext } from '../../middleware/requireOrg.js';
-import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { requireOrgMembership, getOrgContext } from '@/middleware/requireOrg.js';
+import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
 import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import { createAuth } from '../../auth/config.js';
+import { createAuth } from '@/auth/config.js';
 import { orgProjectRoutes } from './projects.js';
 
 const orgRoutes = new Hono();
