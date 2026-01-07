@@ -12,7 +12,7 @@ import {
   seedOrganization,
   seedOrgMember,
   json,
-} from '../../__tests__/helpers.js';
+} from '@/__tests__/helpers.js';
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -27,7 +27,7 @@ vi.mock('postmark', () => {
 });
 
 // Mock auth middleware
-vi.mock('../../middleware/auth.js', () => {
+vi.mock('@/middleware/auth.js', () => {
   return {
     requireAuth: async (c, next) => {
       const userId = c.req.raw.headers.get('x-test-user-id') || 'user-1';
@@ -62,7 +62,7 @@ const mockRemoveMember = vi.fn();
 const mockLeaveOrganization = vi.fn();
 const mockSetActiveOrganization = vi.fn();
 
-vi.mock('../../auth/config.js', () => {
+vi.mock('@/auth/config.js', () => {
   return {
     createAuth: () => {
       return {
@@ -85,7 +85,7 @@ vi.mock('../../auth/config.js', () => {
 });
 
 // Mock billing resolver to return write access for all orgs
-vi.mock('../../lib/billingResolver.js', () => {
+vi.mock('@/lib/billingResolver.js', () => {
   return {
     resolveOrgAccess: vi.fn(async () => ({
       accessMode: 'write',

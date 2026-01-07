@@ -16,7 +16,7 @@ import {
   seedOrganization,
   seedOrgMember,
   json,
-} from '../../__tests__/helpers.js';
+} from '@/__tests__/helpers.js';
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -31,7 +31,7 @@ vi.mock('postmark', () => {
 });
 
 // Mock auth middleware
-vi.mock('../../middleware/auth.js', () => {
+vi.mock('@/middleware/auth.js', () => {
   return {
     requireAuth: async (c, next) => {
       const userId = c.req.raw.headers.get('x-test-user-id') || 'user-1';

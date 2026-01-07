@@ -4,11 +4,11 @@
  */
 
 import { Hono } from 'hono';
-import { createDb } from '../../db/client.js';
-import { subscription, orgAccessGrants, organization } from '../../db/schema.js';
+import { createDb } from '@/db/client.js';
+import { subscription, orgAccessGrants, organization } from '@/db/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
 import { createDomainError, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import { resolveOrgAccess } from '../../lib/billingResolver.js';
+import { resolveOrgAccess } from '@/lib/billingResolver.js';
 import {
   createGrant,
   getGrantById,
@@ -16,9 +16,9 @@ import {
   updateGrantExpiresAt,
   revokeGrant,
   getGrantsByOrgId,
-} from '../../db/orgAccessGrants.js';
+} from '@/db/orgAccessGrants.js';
 import { getPlan, getGrantPlan } from '@corates/shared/plans';
-import { validateRequest } from '../../config/validation.js';
+import { validateRequest } from '@/config/validation.js';
 import { z } from 'zod/v4';
 
 const billingRoutes = new Hono();

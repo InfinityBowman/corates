@@ -6,13 +6,13 @@
  */
 
 import { Hono } from 'hono';
-import { requireAuth, getAuth } from '../../middleware/auth.js';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
 import {
   requireOrgMembership,
   requireProjectAccess,
   getProjectContext,
-} from '../../middleware/requireOrg.js';
-import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
+} from '@/middleware/requireOrg.js';
+import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
 import {
   createDomainError,
   FILE_ERRORS,
@@ -24,8 +24,8 @@ import {
   isPdfSignature,
   formatFileSize,
 } from '@corates/shared';
-import { createDb } from '../../db/client.js';
-import { mediaFiles, user } from '../../db/schema.js';
+import { createDb } from '@/db/client.js';
+import { mediaFiles, user } from '@/db/schema.js';
 import { eq, and } from 'drizzle-orm';
 
 const orgPdfRoutes = new Hono();

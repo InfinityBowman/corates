@@ -51,10 +51,10 @@ export default function StrengthIndicator(props) {
               return (
                 <li class='flex items-center gap-2'>
                   <span
-                    class={`ml-1 flex h-3.5 w-3.5 items-center justify-center rounded-full ${
+                    class={`ml-1 flex h-4 w-4 items-center justify-center rounded-full ${
                       met() ?
-                        'border-[1.5px] border-green-500 bg-white text-green-500'
-                      : 'border-[1.5px] border-red-600 text-red-600'
+                        'border border-green-500 bg-white text-green-500'
+                      : 'border border-red-600 text-red-600'
                     }`}
                     aria-hidden='true'
                   >

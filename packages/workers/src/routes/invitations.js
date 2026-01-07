@@ -4,7 +4,7 @@
  */
 
 import { Hono } from 'hono';
-import { createDb } from '../db/client.js';
+import { createDb } from '@/db/client.js';
 import {
   projectInvitations,
   projectMembers,
@@ -12,10 +12,10 @@ import {
   user,
   member,
   organization,
-} from '../db/schema.js';
+} from '@/db/schema.js';
 import { eq, and } from 'drizzle-orm';
-import { requireAuth, getAuth } from '../middleware/auth.js';
-import { invitationSchemas, validateRequest } from '../config/validation.js';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { invitationSchemas, validateRequest } from '@/config/validation.js';
 import {
   createDomainError,
   PROJECT_ERRORS,
@@ -23,7 +23,7 @@ import {
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
-import { syncMemberToDO } from '../lib/project-sync.js';
+import { syncMemberToDO } from '@/lib/project-sync.js';
 
 const invitationRoutes = new Hono();
 

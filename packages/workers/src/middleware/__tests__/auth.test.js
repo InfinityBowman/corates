@@ -6,7 +6,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { Hono } from 'hono';
 import { requireAuth, getAuth } from '../auth.js';
 
-vi.mock('../../auth/config.js', () => {
+vi.mock('@/auth/config.js', () => {
   return {
     createAuth: vi.fn(() => ({
       api: {
@@ -87,7 +87,7 @@ describe('requireAuth middleware', () => {
   });
 
   it('should handle auth errors gracefully', async () => {
-    const { createAuth } = await import('../../auth/config.js');
+    const { createAuth } = await import('@/auth/config.js');
     createAuth.mockImplementationOnce(() => {
       throw new Error('Auth service unavailable');
     });

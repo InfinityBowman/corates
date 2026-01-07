@@ -12,6 +12,7 @@ import { createCorsMiddleware } from './middleware/cors.js';
 import { securityHeaders } from './middleware/securityHeaders.js';
 import { requireAuth } from './middleware/auth.js';
 import { requireTrustedOrigin } from './middleware/csrf.js';
+import { errorHandler } from './middleware/errorHandler.js';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 
 // Route imports
@@ -402,13 +403,7 @@ app.notFound(c => {
   return c.json(error, error.statusCode);
 });
 
-// Error handler
-app.onError((err, c) => {
-  console.error('Worker error:', err);
-  const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-    originalError: err.message,
-  });
-  return c.json(error, error.statusCode);
-});
+// Global error handler - catches all uncaught errors in routes
+app.onError(errorHandler);
 
 export default app;

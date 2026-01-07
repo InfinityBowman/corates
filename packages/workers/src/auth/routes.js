@@ -10,16 +10,16 @@ import {
   getEmailVerificationFailurePage,
   getEmailVerificationErrorPage,
 } from './templates.js';
-import { authRateLimit, sessionRateLimit } from '../middleware/rateLimit.js';
-import { createLogger, sha256, truncateError } from '../lib/observability/logger.js';
-import { createDb } from '../db/client.js';
+import { authRateLimit, sessionRateLimit } from '@/middleware/rateLimit.js';
+import { createLogger, sha256, truncateError } from '@/lib/observability/logger.js';
+import { createDb } from '@/db/client.js';
 import {
   insertLedgerEntry,
   updateLedgerWithVerifiedFields,
   updateLedgerStatus,
   getLedgerByPayloadHash,
   LedgerStatus,
-} from '../db/stripeEventLedger.js';
+} from '@/db/stripeEventLedger.js';
 
 const auth = new Hono();
 

@@ -15,11 +15,11 @@ import {
   seedOrgMember,
   seedMediaFile,
   json,
-} from '../../__tests__/helpers.js';
-import { createDb } from '../../db/client.js';
-import { mediaFiles } from '../../db/schema.js';
+} from '@/__tests__/helpers.js';
+import { createDb } from '@/db/client.js';
+import { mediaFiles } from '@/db/schema.js';
 import { eq, and } from 'drizzle-orm';
-import { FILE_SIZE_LIMITS } from '../../config/constants.js';
+import { FILE_SIZE_LIMITS } from '@/config/constants.js';
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -34,7 +34,7 @@ vi.mock('postmark', () => {
 });
 
 // Mock auth middleware
-vi.mock('../../middleware/auth.js', () => {
+vi.mock('@/middleware/auth.js', () => {
   return {
     requireAuth: async (c, next) => {
       const userId = c.req.raw.headers.get('x-test-user-id') || 'user-1';

@@ -4,11 +4,11 @@
  */
 
 import { Hono } from 'hono';
-import { createDb } from '../../db/client.js';
-import { organization, member, projects } from '../../db/schema.js';
+import { createDb } from '@/db/client.js';
+import { organization, member, projects } from '@/db/schema.js';
 import { eq, count, desc, like, or, sql } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
-import { resolveOrgAccess } from '../../lib/billingResolver.js';
+import { resolveOrgAccess } from '@/lib/billingResolver.js';
 import { getPlan, getGrantPlan } from '@corates/shared/plans';
 
 const orgRoutes = new Hono();

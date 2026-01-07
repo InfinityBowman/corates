@@ -4,7 +4,7 @@
  */
 
 import { Hono } from 'hono';
-import { createDb } from '../../db/client.js';
+import { createDb } from '@/db/client.js';
 import {
   user,
   session,
@@ -16,11 +16,11 @@ import {
   mediaFiles,
   member,
   organization,
-} from '../../db/schema.js';
+} from '@/db/schema.js';
 import { eq, desc, sql, like, or, count } from 'drizzle-orm';
-import { resolveOrgAccess } from '../../lib/billingResolver.js';
+import { resolveOrgAccess } from '@/lib/billingResolver.js';
 import { getPlan, getGrantPlan } from '@corates/shared/plans';
-import { createAuth } from '../../auth/config.js';
+import { createAuth } from '@/auth/config.js';
 import {
   createDomainError,
   createValidationError,
@@ -28,8 +28,9 @@ import {
   USER_ERRORS,
   SYSTEM_ERRORS,
 } from '@corates/shared';
-import { syncMemberToDO } from '../../lib/project-sync.js';
-import { userSchemas, validateRequest } from '../../config/validation.js';
+import { TIME_DURATIONS } from '@/config/constants.js';
+import { syncMemberToDO } from '@/lib/project-sync.js';
+import { userSchemas, validateRequest } from '@/config/validation.js';
 
 const userRoutes = new Hono();
 
@@ -49,7 +50,7 @@ userRoutes.get('/stats', async c => {
     ]);
 
     // Get recent signups (last 7 days)
-    const sevenDaysAgo = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
+    const sevenDaysAgo = Math.floor(Date.now() / 1000) - TIME_DURATIONS.STATS_RECENT_DAYS_SEC;
     const [recentSignups] = await db
       .select({ count: count() })
       .from(user)

@@ -65,6 +65,7 @@ export default withMermaid({
               { text: 'Development Workflow', link: '/guides/development-workflow' },
               { text: 'Error Handling', link: '/guides/error-handling' },
               { text: 'Style Guide', link: '/guides/style-guide' },
+              { text: 'Glossary', link: '/glossary' },
             ],
           },
         ],

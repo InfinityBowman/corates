@@ -11,13 +11,13 @@ import {
   seedOrganization,
   seedOrgMember,
   json,
-} from '../../../__tests__/helpers.js';
-import { createDb } from '../../../db/client.js';
-import { createGrant } from '../../../db/orgAccessGrants.js';
-import { session } from '../../../db/schema.js';
+} from '@/__tests__/helpers.js';
+import { createDb } from '@/db/client.js';
+import { createGrant } from '@/db/orgAccessGrants.js';
+import { session } from '@/db/schema.js';
 
 // Mock auth middleware
-vi.mock('../../../middleware/auth.js', () => {
+vi.mock('@/middleware/auth.js', () => {
   return {
     requireAuth: async (c, next) => {
       const userId = c.req.raw.headers.get('x-test-user-id') || 'user-1';

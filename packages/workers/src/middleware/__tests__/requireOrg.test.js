@@ -13,7 +13,7 @@ import {
   seedOrgMember,
   seedProject,
   seedProjectMember,
-} from '../../__tests__/helpers.js';
+} from '@/__tests__/helpers.js';
 import { requireOrgMembership, requireProjectAccess } from '../requireOrg.js';
 import { requireAuth } from '../auth.js';
 

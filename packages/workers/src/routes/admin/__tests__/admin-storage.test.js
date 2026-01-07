@@ -13,9 +13,9 @@ import {
   seedProject,
   seedMediaFile,
   json,
-} from '../../../__tests__/helpers.js';
+} from '@/__tests__/helpers.js';
 
-vi.mock('../../../middleware/requireAdmin.js', () => {
+vi.mock('@/middleware/requireAdmin.js', () => {
   return {
     isAdmin: () => true,
     requireAdmin: async (c, next) => {

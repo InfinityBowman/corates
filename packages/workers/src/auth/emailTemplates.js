@@ -1,6 +1,6 @@
 // Email HTML and text templates for BetterAuth
 
-import { escapeHtml } from '../lib/escapeHtml.js';
+import { escapeHtml } from '@/lib/escapeHtml.js';
 
 export function getVerificationEmailHtml({ name, subject, verificationUrl }) {
   return `

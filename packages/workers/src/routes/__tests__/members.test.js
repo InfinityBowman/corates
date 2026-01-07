@@ -15,7 +15,7 @@ import {
   seedOrganization,
   seedOrgMember,
   json,
-} from '../../__tests__/helpers.js';
+} from '@/__tests__/helpers.js';
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -30,7 +30,7 @@ vi.mock('postmark', () => {
 });
 
 // Mock auth middleware
-vi.mock('../../middleware/auth.js', () => {
+vi.mock('@/middleware/auth.js', () => {
   return {
     requireAuth: async (c, next) => {
       const userId = c.req.raw.headers.get('x-test-user-id') || 'user-1';
@@ -54,7 +54,7 @@ vi.mock('../../middleware/auth.js', () => {
 
 // Mock billing resolver to return write access with unlimited quota by default
 let mockResolveOrgAccess;
-vi.mock('../../lib/billingResolver.js', () => {
+vi.mock('@/lib/billingResolver.js', () => {
   return {
     resolveOrgAccess: vi.fn(),
   };
@@ -62,7 +62,7 @@ vi.mock('../../lib/billingResolver.js', () => {
 
 // Mock checkCollaboratorQuota to control quota enforcement in tests
 let mockCheckCollaboratorQuota;
-vi.mock('../../lib/quotaTransaction.js', () => {
+vi.mock('@/lib/quotaTransaction.js', () => {
   return {
     checkCollaboratorQuota: vi.fn(),
   };
@@ -83,10 +83,10 @@ beforeEach(async () => {
   vi.clearAllMocks();
 
   // Get the mocked functions
-  const billingResolver = await import('../../lib/billingResolver.js');
+  const billingResolver = await import('@/lib/billingResolver.js');
   mockResolveOrgAccess = billingResolver.resolveOrgAccess;
 
-  const quotaTransaction = await import('../../lib/quotaTransaction.js');
+  const quotaTransaction = await import('@/lib/quotaTransaction.js');
   mockCheckCollaboratorQuota = quotaTransaction.checkCollaboratorQuota;
 
   // Setup default billing resolver mock (unlimited quota)

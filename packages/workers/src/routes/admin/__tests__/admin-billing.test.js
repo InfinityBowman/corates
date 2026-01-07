@@ -11,12 +11,12 @@ import {
   seedOrganization,
   seedSubscription,
   json,
-} from '../../../__tests__/helpers.js';
-import { createDb } from '../../../db/client.js';
-import { subscription } from '../../../db/schema.js';
+} from '@/__tests__/helpers.js';
+import { createDb } from '@/db/client.js';
+import { subscription } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
 
-vi.mock('../../../middleware/requireAdmin.js', () => {
+vi.mock('@/middleware/requireAdmin.js', () => {
   return {
     isAdmin: () => true,
     requireAdmin: async (c, next) => {
@@ -247,7 +247,7 @@ describe('Admin billing routes - POST /api/admin/orgs/:orgId/grant-trial', () =>
     });
 
     const db = createDb(env.DB);
-    const { createGrant } = await import('../../../db/orgAccessGrants.js');
+    const { createGrant } = await import('@/db/orgAccessGrants.js');
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + 14);
@@ -306,7 +306,7 @@ describe('Admin billing routes - POST /api/admin/orgs/:orgId/grant-single-projec
     });
 
     const db = createDb(env.DB);
-    const { createGrant } = await import('../../../db/orgAccessGrants.js');
+    const { createGrant } = await import('@/db/orgAccessGrants.js');
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setMonth(expiresAt.getMonth() + 6);
@@ -366,7 +366,7 @@ describe('Admin billing routes - PUT /api/admin/orgs/:orgId/grants/:grantId', ()
     });
 
     const db = createDb(env.DB);
-    const { createGrant } = await import('../../../db/orgAccessGrants.js');
+    const { createGrant } = await import('@/db/orgAccessGrants.js');
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + 14);
@@ -401,7 +401,7 @@ describe('Admin billing routes - PUT /api/admin/orgs/:orgId/grants/:grantId', ()
     });
 
     const db = createDb(env.DB);
-    const { createGrant } = await import('../../../db/orgAccessGrants.js');
+    const { createGrant } = await import('@/db/orgAccessGrants.js');
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + 14);

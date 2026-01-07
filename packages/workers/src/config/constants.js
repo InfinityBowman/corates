@@ -50,6 +50,7 @@ export const ACTIVE_STATUSES = [SUBSCRIPTION_STATUSES[0], SUBSCRIPTION_STATUSES[
 export const FILE_SIZE_LIMITS = {
   PDF: 50 * 1024 * 1024, // 50 MB
   IMAGE: 10 * 1024 * 1024, // 10 MB
+  AVATAR: 2 * 1024 * 1024, // 2 MB
   DEFAULT: 25 * 1024 * 1024, // 25 MB
 };
 
@@ -97,6 +98,73 @@ export const EMAIL_RETRY_CONFIG = {
  * Note: Error codes have been moved to @corates/shared package
  * Use createDomainError() and error constants from @corates/shared instead
  */
+
+/**
+ * Time duration constants
+ */
+export const TIME_DURATIONS = {
+  // Project Invitation expiry (7 days)
+  INVITATION_EXPIRY_MS: 7 * 24 * 60 * 60 * 1000,
+  INVITATION_EXPIRY_SEC: 7 * 24 * 60 * 60,
+  // Account merge verification (15 minutes)
+  MERGE_VERIFICATION_EXPIRY_MS: 15 * 60 * 1000,
+  // Admin impersonation session (1 hour)
+  IMPERSONATION_SESSION_SEC: 60 * 60,
+  // Stats query recent days
+  STATS_RECENT_DAYS: 7,
+  STATS_RECENT_DAYS_SEC: 7 * 24 * 60 * 60,
+  // One day in various units
+  ONE_DAY_MS: 24 * 60 * 60 * 1000,
+  ONE_DAY_SEC: 24 * 60 * 60,
+  // One hour
+  ONE_HOUR_MS: 60 * 60 * 1000,
+  ONE_HOUR_SEC: 60 * 60,
+};
+
+/**
+ * Grant/billing configuration
+ */
+export const GRANT_CONFIG = {
+  DURATION_MONTHS: 6,
+  // Default trial length (in days)
+  TRIAL_DAYS: 14,
+};
+
+/**
+ * Cache duration constants (in seconds for HTTP headers)
+ */
+export const CACHE_DURATIONS = {
+  CORS_PREFLIGHT_SEC: 24 * 60 * 60, // 24 hours
+  AVATAR_SEC: 365 * 24 * 60 * 60, // 1 year
+  PDF_SEC: 60 * 60, // 1 hour
+  HSTS_SEC: 180 * 24 * 60 * 60, // 180 days
+};
+
+/**
+ * Query and pagination limits
+ */
+export const QUERY_LIMITS = {
+  R2_LIST_BATCH_SIZE: 1000,
+  LEDGER_QUERY_LIMIT: 100,
+  STORAGE_PROCESSING_CAP: 10000,
+  RECENT_FAILURES_DISPLAY: 5,
+  DEFAULT_PAGE_SIZE: 50,
+  MAX_PAGE_SIZE: 100,
+};
+
+/**
+ * Organization limits
+ */
+export const ORG_LIMITS = {
+  MEMBERSHIP_LIMIT: 100,
+};
+
+/**
+ * Webhook configuration
+ */
+export const WEBHOOK_CONFIG = {
+  FAILURE_THRESHOLD: 100,
+};
 
 /**
  * Check if a role is valid

@@ -4,10 +4,10 @@
  */
 
 import { Hono } from 'hono';
-import { createDb } from '../db/client.js';
-import { user } from '../db/schema.js';
+import { createDb } from '@/db/client.js';
+import { user } from '@/db/schema.js';
 import { desc } from 'drizzle-orm';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth } from '@/middleware/auth.js';
 import {
   createDomainError,
   createValidationError,

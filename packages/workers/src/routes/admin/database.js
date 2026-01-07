@@ -5,11 +5,11 @@
 
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { createDb } from '../../db/client.js';
-import { dbSchema, mediaFiles, organization, projects, user } from '../../db/schema.js';
+import { createDb } from '@/db/client.js';
+import { dbSchema, mediaFiles, organization, projects, user } from '@/db/schema.js';
 import { count, desc, asc, eq, and, sum } from 'drizzle-orm';
 import { createDomainError, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import { validateQueryParams } from '../../config/validation.js';
+import { validateQueryParams } from '@/config/validation.js';
 
 const databaseRoutes = new Hono();
 

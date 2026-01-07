@@ -12,12 +12,9 @@ import {
   seedOrganization,
   seedOrgMember,
   json,
-} from '../../../__tests__/helpers.js';
-import { createDb } from '../../../db/client.js';
-import {
-  getGrantByStripeCheckoutSessionId,
-  getGrantByOrgIdAndType,
-} from '../../../db/orgAccessGrants.js';
+} from '@/__tests__/helpers.js';
+import { createDb } from '@/db/client.js';
+import { getGrantByStripeCheckoutSessionId, getGrantByOrgIdAndType } from '@/db/orgAccessGrants.js';
 
 // Use a local hook for the Stripe webhook event construction.
 // Stripe itself is globally mocked in test setup; here we just control the returned event.
@@ -184,7 +181,7 @@ describe('Purchase Webhook Handler', () => {
 
     // Create existing grant (expires in 6 months)
     const db = createDb(env.DB);
-    const { createGrant } = await import('../../../db/orgAccessGrants.js');
+    const { createGrant } = await import('@/db/orgAccessGrants.js');
     const existingGrantId = 'grant-1';
     const existingExpiresAt = new Date();
     existingExpiresAt.setMonth(existingExpiresAt.getMonth() + 6);
@@ -270,7 +267,7 @@ describe('Purchase Webhook Handler', () => {
 
     // Create grant with same checkout session ID
     const db = createDb(env.DB);
-    const { createGrant } = await import('../../../db/orgAccessGrants.js');
+    const { createGrant } = await import('@/db/orgAccessGrants.js');
     await createGrant(db, {
       id: 'grant-1',
       orgId,
