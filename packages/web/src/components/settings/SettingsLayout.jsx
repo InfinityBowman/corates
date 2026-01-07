@@ -79,9 +79,7 @@ export default function SettingsLayout(props) {
         width={sidebarWidth()}
         onWidthChange={handleWidthChange}
       />
-      <main class='flex-1 overflow-auto'>
-        {props.children}
-      </main>
+      <main class='flex-1 overflow-auto'>{props.children}</main>
     </div>
   );
 }
