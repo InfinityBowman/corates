@@ -11,7 +11,7 @@ import { debounce } from '@solid-primitives/scheduled';
 import { useParams, useNavigate } from '@solidjs/router';
 import ChecklistWithPdf from '@/components/checklist/ChecklistWithPdf.jsx';
 import CreateLocalChecklist from '@/components/checklist/CreateLocalChecklist.jsx';
-import useLocalChecklists from '@primitives/useLocalChecklists.js';
+import localChecklistsStore from '@/stores/localChecklistsStore';
 import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry';
 import { IoChevronBack } from 'solid-icons/io';
 import ScoreTag from '@/components/checklist/ScoreTag.jsx';
@@ -19,7 +19,7 @@ import ScoreTag from '@/components/checklist/ScoreTag.jsx';
 export default function LocalChecklistView() {
   const params = useParams();
   const navigate = useNavigate();
-  const { getChecklist, updateChecklist, getPdf, savePdf, deletePdf } = useLocalChecklists();
+  const { getChecklist, updateChecklist, getPdf, savePdf, deletePdf } = localChecklistsStore;
 
   const [checklist, setChecklist] = createSignal(null);
   const [pdfData, setPdfData] = createSignal(null);

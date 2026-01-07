@@ -9,7 +9,7 @@
 
 import { For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import useLocalChecklists from '@primitives/useLocalChecklists.js';
+import localChecklistsStore from '@/stores/localChecklistsStore';
 import { useConfirmDialog } from '@corates/ui';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { FiTrash2 } from 'solid-icons/fi';
@@ -21,7 +21,7 @@ export default function LocalAppraisalsPanel(props) {
   const showSignInPrompt = () => props.showSignInPrompt ?? false;
   const showHeader = () => props.showHeader ?? true;
 
-  const { checklists, loading, deleteChecklist, updateChecklist } = useLocalChecklists();
+  const { checklists, loading, deleteChecklist, updateChecklist } = localChecklistsStore;
 
   // Confirm dialog for delete actions
   const confirmDialog = useConfirmDialog();
