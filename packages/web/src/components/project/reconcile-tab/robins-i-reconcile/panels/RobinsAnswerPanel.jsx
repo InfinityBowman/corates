@@ -76,9 +76,9 @@ export default function RobinsAnswerPanel(props) {
           <button
             onClick={() => props.onUseThis?.()}
             class={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              props.isSelected
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+              props.isSelected ? 'bg-blue-600 text-white' : (
+                'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+              )
             }`}
           >
             {props.isSelected ? 'Selected' : 'Use This'}
@@ -100,9 +100,9 @@ export default function RobinsAnswerPanel(props) {
                 fallback={
                   <div
                     class={`${baseClasses} ${
-                      isSelected()
-                        ? getSelectedAnswerStyle(panelType())
-                        : 'border-gray-200 bg-white text-gray-700'
+                      isSelected() ?
+                        getSelectedAnswerStyle(panelType())
+                      : 'border-gray-200 bg-white text-gray-700'
                     }`}
                   >
                     <span class='mr-1'>{option}</span>
@@ -111,10 +111,10 @@ export default function RobinsAnswerPanel(props) {
                 }
               >
                 <label
-                  class={`${baseClasses} cursor-pointer focus-within:outline-none focus-within:ring-2 focus-within:ring-green-400 focus-within:ring-offset-1 hover:border-green-300 ${
-                    isSelected()
-                      ? getSelectedAnswerStyle(panelType())
-                      : 'border-gray-200 bg-white text-gray-700 hover:bg-green-50'
+                  class={`${baseClasses} cursor-pointer focus-within:ring-2 focus-within:ring-green-400 focus-within:ring-offset-1 focus-within:outline-none hover:border-green-300 ${
+                    isSelected() ?
+                      getSelectedAnswerStyle(panelType())
+                    : 'border-gray-200 bg-white text-gray-700 hover:bg-green-50'
                   }`}
                 >
                   <input
@@ -155,8 +155,8 @@ export default function RobinsAnswerPanel(props) {
           when={!props.readOnly}
           fallback={
             <div class='rounded-lg border border-gray-200 bg-gray-50 p-3'>
-              <p class='whitespace-pre-wrap text-sm text-gray-700'>
-                {props.comment || <span class='italic text-gray-400'>No comment</span>}
+              <p class='text-sm whitespace-pre-wrap text-gray-700'>
+                {props.comment || <span class='text-gray-400 italic'>No comment</span>}
               </p>
             </div>
           }
@@ -165,7 +165,7 @@ export default function RobinsAnswerPanel(props) {
             value={props.comment || ''}
             onInput={e => props.onCommentChange?.(e.target.value)}
             placeholder='Add the final reconciled comment...'
-            class='w-full rounded-lg border border-gray-200 bg-white p-3 text-sm focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-1'
+            class='w-full rounded-lg border border-gray-200 bg-white p-3 text-sm focus:border-green-400 focus:ring-2 focus:ring-green-400 focus:ring-offset-1 focus:outline-none'
             rows={4}
           />
         </Show>

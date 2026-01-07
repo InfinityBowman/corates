@@ -33,9 +33,9 @@ export default function SectionBQuestionPage(props) {
       {/* Question Header */}
       <div
         class={`p-4 ${
-          props.isAgreement
-            ? 'border-b border-green-200 bg-green-50'
-            : 'border-b border-amber-200 bg-amber-50'
+          props.isAgreement ?
+            'border-b border-green-200 bg-green-50'
+          : 'border-b border-amber-200 bg-amber-50'
         }`}
       >
         <h2 class='text-md font-medium text-gray-900'>
@@ -46,9 +46,7 @@ export default function SectionBQuestionPage(props) {
         </Show>
         <div class='mt-2 flex items-center gap-3'>
           <span
-            class={`text-xs font-medium ${
-              props.isAgreement ? 'text-green-700' : 'text-amber-700'
-            }`}
+            class={`text-xs font-medium ${props.isAgreement ? 'text-green-700' : 'text-amber-700'}`}
           >
             {props.isAgreement ? 'Reviewers Agree' : 'Requires Reconciliation'}
           </span>

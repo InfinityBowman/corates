@@ -208,8 +208,8 @@ export function getNavItemPillStyle(isCurrentPage, hasAnswer, isAgreement) {
     return 'bg-blue-600 text-white ring-2 ring-blue-300';
   }
   // Use lighter colors - checkmark icon indicates if answered
-  return isAgreement
-    ? 'bg-green-100 text-green-700 hover:bg-green-200'
+  return isAgreement ?
+      'bg-green-100 text-green-700 hover:bg-green-200'
     : 'bg-amber-100 text-amber-700 hover:bg-amber-200';
 }
 
@@ -259,8 +259,5 @@ export function isSectionBCritical(sectionB) {
  * @returns {string} Display number (1A, 1B, 2, 3, etc.)
  */
 export function getDomainDisplayNumber(domainKey) {
-  return domainKey
-    .replace('domain', '')
-    .replace('a', 'A')
-    .replace('b', 'B');
+  return domainKey.replace('domain', '').replace('a', 'A').replace('b', 'B');
 }
