@@ -52,28 +52,6 @@ describe('Main App - Route Mounting', () => {
     expect(text).toContain('Corates Workers API');
   });
 
-  it('should return 410 Gone for legacy project routes', async () => {
-    const res = await fetchApp(app, '/api/projects/nonexistent', {
-      headers: {
-        'x-test-user-id': 'user-1',
-      },
-    });
-    // Legacy routes now return 410 Gone
-    expect(res.status).toBe(410);
-    const body = await json(res);
-    expect(body.error).toBe('ENDPOINT_MOVED');
-  });
-
-  it('should return 410 Gone for legacy member routes', async () => {
-    const res = await fetchApp(app, '/api/projects/test-project/members', {
-      headers: {
-        'x-test-user-id': 'user-1',
-      },
-    });
-    // Legacy routes now return 410 Gone
-    expect(res.status).toBe(410);
-  });
-
   it('should mount org-scoped project routes', async () => {
     const res = await fetchApp(app, '/api/orgs/test-org/projects/nonexistent', {
       headers: {

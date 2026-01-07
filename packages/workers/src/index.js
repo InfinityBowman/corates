@@ -199,20 +199,49 @@ app.route('/api/orgs', orgRoutes);
 // Mount Google Drive routes
 app.route('/api/google-drive', googleDriveRoutes);
 
-// Legacy project endpoints - return 410 Gone to indicate they've moved to org-scoped routes
-const legacyGoneHandler = c =>
-  c.json(
-    {
-      error: 'ENDPOINT_MOVED',
-      message: 'This endpoint has been moved. Use /api/orgs/:orgId/projects/... instead.',
-      statusCode: 410,
-    },
-    410,
-  );
-app.all('/api/projects', legacyGoneHandler);
-app.all('/api/projects/*', legacyGoneHandler);
-app.all('/api/invitations', legacyGoneHandler);
-app.all('/api/invitations/*', legacyGoneHandler);
+// SSRF protection for PDF proxy - block internal/private IPs and metadata endpoints
+const BLOCKED_HOSTNAMES = [
+  'localhost',
+  'metadata.google.internal', // GCP metadata
+  'metadata.google', // GCP metadata alternate
+];
+
+const SSRF_BLOCKED_PATTERNS = [
+  /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/, // 127.0.0.0/8 loopback
+  /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/, // 10.0.0.0/8 private
+  /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/, // 172.16.0.0/12 private
+  /^192\.168\.\d{1,3}\.\d{1,3}$/, // 192.168.0.0/16 private
+  /^169\.254\.\d{1,3}\.\d{1,3}$/, // 169.254.0.0/16 link-local / AWS metadata
+  /^0\.0\.0\.0$/, // Unspecified
+  /^::1$/, // IPv6 loopback
+  /^::$/, // IPv6 unspecified
+  /^fc[0-9a-f]{2}:/i, // IPv6 unique local
+  /^fd[0-9a-f]{2}:/i, // IPv6 unique local
+  /^fe80:/i, // IPv6 link-local
+];
+
+function isBlockedHost(hostname) {
+  // Check blocked hostnames
+  const lowerHost = hostname.toLowerCase();
+  if (BLOCKED_HOSTNAMES.includes(lowerHost)) {
+    return true;
+  }
+
+  // Check if hostname is an IP address matching blocked patterns
+  for (const pattern of SSRF_BLOCKED_PATTERNS) {
+    if (pattern.test(hostname)) {
+      return true;
+    }
+  }
+
+  // Block numeric IPs that could resolve to internal addresses
+  // This catches attempts like http://2130706433 (127.0.0.1 as decimal)
+  if (/^\d+$/.test(hostname)) {
+    return true;
+  }
+
+  return false;
+}
 
 // PDF proxy endpoint - fetches external PDFs to avoid CORS issues
 // Only requires authentication, not project membership
@@ -228,6 +257,12 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
     const parsedUrl = new URL(url);
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
       return c.json({ error: 'Invalid URL protocol' }, 400);
+    }
+
+    // M4: SSRF Protection - block internal/private IPs and metadata endpoints
+    if (isBlockedHost(parsedUrl.hostname)) {
+      console.warn('PDF proxy SSRF attempt blocked:', { hostname: parsedUrl.hostname });
+      return c.json({ error: 'Access to internal resources is not allowed' }, 403);
     }
 
     // Fetch the PDF with manual redirect handling to detect auth loops
@@ -270,7 +305,15 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
           );
         }
 
-        currentUrl = new URL(location, currentUrl).href;
+        const redirectUrl = new URL(location, currentUrl);
+
+        // M4: SSRF Protection - validate redirect destinations
+        if (isBlockedHost(redirectUrl.hostname)) {
+          console.warn('PDF proxy SSRF redirect blocked:', { hostname: redirectUrl.hostname });
+          return c.json({ error: 'Redirect to internal resources is not allowed' }, 403);
+        }
+
+        currentUrl = redirectUrl.href;
         redirectCount++;
       } else {
         break;
