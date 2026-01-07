@@ -42,6 +42,12 @@ export const queryKeys = {
     current: ['members'],
   },
 
+  // Account queries
+  accounts: {
+    /** Linked accounts for current user */
+    linked: ['accounts', 'linked'],
+  },
+
   // Admin queries
   admin: {
     stats: ['adminStats'],

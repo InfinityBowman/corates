@@ -11,10 +11,16 @@ import LocalChecklistView from '@/components/checklist/LocalChecklistView.jsx';
 import ChecklistYjsWrapper from '@/components/checklist/ChecklistYjsWrapper.jsx';
 import ReconciliationWrapper from '@/components/project/reconcile-tab/amstar2-reconcile/ReconciliationWrapper.jsx';
 import ProfilePage from '@/components/profile/ProfilePage.jsx';
-import SettingsPage from '@/components/profile/SettingsPage.jsx';
-import BillingPage from '@components/billing/BillingPage.jsx';
-import BillingPlansPage from '@components/billing/BillingPlansPage.jsx';
 import NotFoundPage from '@components/NotFoundPage.jsx';
+import {
+  SettingsLayout,
+  SettingsIndex,
+  BillingSettings,
+  PlansSettings,
+  SecuritySettings,
+  NotificationsSettings,
+  GeneralSettings,
+} from '@/components/settings/index.js';
 import AdminLayout from '@/components/admin/AdminLayout.jsx';
 import { AdminDashboard } from '@/components/admin/index.js';
 import StorageManagement from '@/components/admin/StorageManagement.jsx';
@@ -52,9 +58,17 @@ export default function AppRoutes() {
         <Route path='/' component={ProtectedGuard}>
           {/* Global user routes (no sidebar) */}
           <Route path='/profile' component={ProfilePage} />
-          <Route path='/settings' component={SettingsPage} />
-          <Route path='/settings/billing' component={BillingPage} />
-          <Route path='/settings/billing/plans' component={BillingPlansPage} />
+
+          {/* Settings routes with settings sidebar */}
+          <Route path='/settings' component={SettingsLayout}>
+            <Route path='/' component={SettingsIndex} />
+            <Route path='/billing' component={BillingSettings} />
+            <Route path='/plans' component={PlansSettings} />
+            <Route path='/security' component={SecuritySettings} />
+            <Route path='/notifications' component={NotificationsSettings} />
+            <Route path='/general' component={GeneralSettings} />
+          </Route>
+
           <Route path='/admin' component={AdminLayout}>
             <Route path='/' component={AdminDashboard} />
             <Route path='/orgs' component={OrgList} />

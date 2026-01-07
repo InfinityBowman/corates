@@ -1,13 +1,13 @@
 /**
- * BillingPlansPage Component
+ * PlansSettings Component
  * Premium plan comparison page with FAQ and trust signals
+ * Adapted from BillingPlansPage for the settings sidebar layout
  */
 
 import { For, createSignal } from 'solid-js';
-import { FiArrowLeft, FiShield, FiClock, FiHelpCircle, FiChevronDown } from 'solid-icons/fi';
-import { A } from '@solidjs/router';
+import { FiShield, FiClock, FiHelpCircle, FiChevronDown } from 'solid-icons/fi';
 import { useSubscription } from '@/primitives/useSubscription.js';
-import PricingTable from './PricingTable.jsx';
+import PricingTable from '@/components/billing/PricingTable.jsx';
 import { LANDING_URL } from '@/config/api.js';
 
 /**
@@ -88,10 +88,9 @@ const FAQ_ITEMS = [
 ];
 
 /**
- * Billing Plans Page component
- * @returns {JSX.Element} - The BillingPlansPage component
+ * Plans Settings component
  */
-export default function BillingPlansPage() {
+export default function PlansSettings() {
   const { tier } = useSubscription();
 
   return (
@@ -99,13 +98,6 @@ export default function BillingPlansPage() {
       <div class='mx-auto max-w-6xl px-4 sm:px-6 lg:px-8'>
         {/* Header */}
         <div class='mb-8'>
-          <A
-            href='/settings/billing'
-            class='mb-4 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700'
-          >
-            <FiArrowLeft class='mr-1 h-4 w-4' />
-            Back to Billing
-          </A>
           <div class='text-center'>
             <h1 class='text-4xl font-bold text-gray-900'>Choose the right plan for your team</h1>
             <p class='mx-auto mt-4 max-w-2xl text-lg text-gray-500'>

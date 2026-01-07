@@ -10,10 +10,11 @@
  * - Offers account merge when linking conflicts with another user
  */
 
-import { createSignal, createResource, createMemo, For, Show, onMount } from 'solid-js';
+import { createSignal, createMemo, For, Show, onMount } from 'solid-js';
 import { FiLink, FiMail, FiInfo, FiAlertCircle } from 'solid-icons/fi';
 import { authClient } from '@api/auth-client.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
+import { useLinkedAccounts } from '@/primitives/useLinkedAccounts.js';
 import { showToast, Dialog } from '@corates/ui';
 import AccountProviderCard from './AccountProviderCard.jsx';
 import MergeAccountsDialog from './MergeAccountsDialog.jsx';
@@ -41,18 +42,9 @@ const PROVIDERS = {
   },
 };
 
-/**
- * Fetch linked accounts from Better Auth
- */
-async function fetchLinkedAccounts() {
-  const { data, error } = await authClient.listAccounts();
-  if (error) throw error;
-  return data || [];
-}
-
 export default function LinkedAccountsSection() {
-  // Fetch linked accounts
-  const [accounts, { refetch }] = createResource(fetchLinkedAccounts);
+  // Fetch linked accounts with TanStack Query (cached across navigations)
+  const { accounts, isLoading, error, refetch } = useLinkedAccounts();
 
   // UI state
   const [unlinkingId, setUnlinkingId] = createSignal(null);
@@ -237,13 +229,13 @@ export default function LinkedAccountsSection() {
 
       <div class='space-y-4 p-6'>
         {/* Error state */}
-        <Show when={accounts.error}>
+        <Show when={error()}>
           <div class='rounded-lg border border-red-200 bg-red-50 p-4'>
             <div class='flex items-start gap-3'>
               <FiAlertCircle class='mt-0.5 h-5 w-5 text-red-600' />
               <div>
                 <p class='font-medium text-red-800'>Failed to load linked accounts</p>
-                <p class='mt-1 text-sm text-red-600'>{accounts.error.message}</p>
+                <p class='mt-1 text-sm text-red-600'>{error()?.message}</p>
                 <button
                   onClick={() => refetch()}
                   class='mt-2 text-sm font-medium text-red-700 underline hover:text-red-800'
@@ -255,8 +247,27 @@ export default function LinkedAccountsSection() {
           </div>
         </Show>
 
-        {/* Linked accounts list */}
-        <Show when={!accounts.loading && !accounts.error && accounts()?.length > 0}>
+        {/* Linked accounts list - show cached data immediately, or loading skeleton on first load */}
+        <Show
+          when={accounts().length > 0}
+          fallback={
+            <Show when={isLoading()}>
+              {/* Loading skeleton */}
+              <div class='space-y-3'>
+                <div class='flex animate-pulse items-center justify-between rounded-lg border border-gray-200 p-4'>
+                  <div class='flex items-center gap-3'>
+                    <div class='h-10 w-10 rounded-lg bg-gray-200' />
+                    <div class='space-y-2'>
+                      <div class='h-4 w-24 rounded bg-gray-200' />
+                      <div class='h-3 w-32 rounded bg-gray-200' />
+                    </div>
+                  </div>
+                  <div class='h-8 w-16 rounded bg-gray-200' />
+                </div>
+              </div>
+            </Show>
+          }
+        >
           <div class='space-y-3' role='list' aria-label='Linked accounts'>
             <For each={accounts()}>
               {account => (

@@ -1,18 +1,19 @@
 /**
- * BillingPage Component
+ * BillingSettings Component
  * Dashboard-style billing settings page with subscription, usage, and invoices
+ * Adapted from BillingPage for the settings sidebar layout
  */
 
 import { Show, createSignal, onMount } from 'solid-js';
 import { useSearchParams, A } from '@solidjs/router';
-import { FiArrowLeft, FiCheckCircle, FiArrowRight, FiHelpCircle, FiXCircle } from 'solid-icons/fi';
+import { FiCheckCircle, FiArrowRight, FiHelpCircle, FiXCircle } from 'solid-icons/fi';
 import { useSubscription } from '@/primitives/useSubscription.js';
 import { useMembers } from '@/primitives/useMembers.js';
 import { redirectToPortal } from '@/api/billing.js';
-import SubscriptionCard from './SubscriptionCard.jsx';
-import UsageCard from './UsageCard.jsx';
-import InvoicesList from './InvoicesList.jsx';
-import PaymentIssueBanner from './PaymentIssueBanner.jsx';
+import SubscriptionCard from '@/components/billing/SubscriptionCard.jsx';
+import UsageCard from '@/components/billing/UsageCard.jsx';
+import InvoicesList from '@/components/billing/InvoicesList.jsx';
+import PaymentIssueBanner from '@/components/billing/PaymentIssueBanner.jsx';
 import { LANDING_URL } from '@/config/api.js';
 
 /**
@@ -89,10 +90,9 @@ function UsageSkeleton() {
 }
 
 /**
- * Billing Page component - Dashboard layout
- * @returns {JSX.Element} - The BillingPage component
+ * Billing Settings component - Dashboard layout
  */
-export default function BillingPage() {
+export default function BillingSettings() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { subscription, loading, refetch, quotas } = useSubscription();
   const { memberCount } = useMembers();
@@ -141,13 +141,6 @@ export default function BillingPage() {
       <div class='mx-auto max-w-6xl px-4 sm:px-6 lg:px-8'>
         {/* Header */}
         <div class='mb-8'>
-          <A
-            href='/settings'
-            class='mb-4 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700'
-          >
-            <FiArrowLeft class='mr-1 h-4 w-4' />
-            Back to Settings
-          </A>
           <div class='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
             <div>
               <h1 class='text-3xl font-bold text-gray-900'>Billing</h1>
@@ -156,7 +149,7 @@ export default function BillingPage() {
               </p>
             </div>
             <A
-              href='/settings/billing/plans'
+              href='/settings/plans'
               class='inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow'
             >
               View All Plans
@@ -242,7 +235,7 @@ export default function BillingPage() {
             <div class='space-y-3'>
               <h3 class='text-sm font-semibold text-gray-900'>Quick Actions</h3>
               <QuickAction
-                href='/settings/billing/plans'
+                href='/settings/plans'
                 icon={<FiArrowRight class='h-5 w-5' />}
                 title='Compare Plans'
                 description='See all available plans'
