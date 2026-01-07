@@ -85,7 +85,9 @@ export default function RobinsISummaryView(props) {
               <div class='text-xs text-amber-600'>Disagreements</div>
             </div>
             <div class='rounded-lg border border-sky-200 bg-sky-50 p-3 text-center'>
-              <div class='text-2xl font-bold text-sky-700'>{props.summary.agreementPercentage}%</div>
+              <div class='text-2xl font-bold text-sky-700'>
+                {props.summary.agreementPercentage}%
+              </div>
               <div class='text-xs text-sky-600'>Agreement Rate</div>
             </div>
           </div>
@@ -118,9 +120,9 @@ export default function RobinsISummaryView(props) {
                         <div class='flex items-center gap-3'>
                           <span
                             class={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
-                              isAgreement()
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-amber-100 text-amber-700'
+                              isAgreement() ?
+                                'bg-green-100 text-green-700'
+                              : 'bg-amber-100 text-amber-700'
                             }`}
                           >
                             {getItemDisplayNumber(item)}
@@ -161,7 +163,7 @@ export default function RobinsISummaryView(props) {
       <div class='flex items-center justify-between border-t border-gray-200 bg-gray-50 p-6'>
         <button
           onClick={() => props.onBack()}
-          class='flex items-center gap-2 rounded-lg bg-white px-4 py-2 font-medium text-gray-700 shadow transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+          class='flex items-center gap-2 rounded-lg bg-white px-4 py-2 font-medium text-gray-700 shadow transition-colors hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'
         >
           <AiOutlineArrowLeft class='h-4 w-4' />
           Back to Questions
@@ -171,9 +173,9 @@ export default function RobinsISummaryView(props) {
           onClick={() => props.onSave()}
           disabled={!props.allAnswered || props.saving}
           class={`flex items-center gap-2 rounded-lg px-6 py-2 font-medium transition-colors focus:outline-none ${
-            props.allAnswered && !props.saving
-              ? 'bg-blue-600 text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-500'
-              : 'cursor-not-allowed bg-gray-300 text-gray-500'
+            props.allAnswered && !props.saving ?
+              'bg-blue-600 text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-500'
+            : 'cursor-not-allowed bg-gray-300 text-gray-500'
           }`}
         >
           <Show when={!props.saving} fallback='Saving...'>
@@ -266,7 +268,9 @@ function ItemValueBadge(props) {
       {v => (
         <span
           class={`rounded-full px-3 py-1 text-sm font-medium ${
-            v().type === 'judgement' ? getJudgementBadgeStyle(v().value) : getAnswerBadgeStyle(v().value)
+            v().type === 'judgement' ?
+              getJudgementBadgeStyle(v().value)
+            : getAnswerBadgeStyle(v().value)
           }`}
         >
           {v().type === 'answer' ? `${v().value} - ${RESPONSE_LABELS[v().value]}` : v().value}

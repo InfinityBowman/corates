@@ -43,9 +43,9 @@ export default function OverallJudgementPage(props) {
       <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
         <div
           class={`p-3 ${
-            props.judgementMatch
-              ? 'border-b border-green-200 bg-green-50'
-              : 'border-b border-amber-200 bg-amber-50'
+            props.judgementMatch ?
+              'border-b border-green-200 bg-green-50'
+            : 'border-b border-amber-200 bg-amber-50'
           }`}
         >
           <h3 class='font-medium text-gray-900'>Overall Risk of Bias Judgement</h3>
@@ -97,9 +97,9 @@ export default function OverallJudgementPage(props) {
       <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
         <div
           class={`p-3 ${
-            props.directionMatch
-              ? 'border-b border-green-200 bg-green-50'
-              : 'border-b border-amber-200 bg-amber-50'
+            props.directionMatch ?
+              'border-b border-green-200 bg-green-50'
+            : 'border-b border-amber-200 bg-amber-50'
           }`}
         >
           <h3 class='font-medium text-gray-900'>Predicted Direction of Bias (Overall)</h3>

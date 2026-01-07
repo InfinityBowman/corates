@@ -53,9 +53,9 @@ export default function DirectionPanel(props) {
           <button
             onClick={() => props.onUseThis?.()}
             class={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              props.isSelected
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+              props.isSelected ? 'bg-blue-600 text-white' : (
+                'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+              )
             }`}
           >
             {props.isSelected ? 'Selected' : 'Use This'}
