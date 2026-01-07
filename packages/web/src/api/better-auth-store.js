@@ -30,7 +30,14 @@
  */
 
 import { createSignal, createRoot, createEffect } from 'solid-js';
-import { authClient, useSession } from '@api/auth-client.js';
+import {
+  authClient,
+  useSession,
+  listSessions as _listSessions,
+  revokeSession as _revokeSession,
+  revokeOtherSessions as _revokeOtherSessions,
+  revokeSessions as _revokeSessions,
+} from '@api/auth-client.js';
 import { queryClient, clearPersistedQueryCache } from '@lib/queryClient.js';
 import { queryKeys } from '@lib/queryKeys.js';
 import { API_BASE, BASEPATH } from '@config/api.js';
@@ -422,6 +429,35 @@ function createBetterAuthStore() {
     }
   }
 
+  /**
+   * Shared cleanup logic for signout and revokeAllSessions.
+   * Clears all caches, resets state, and notifies other tabs.
+   */
+  async function _performSignoutCleanup() {
+    // Clear cached auth data
+    saveCachedAuth(null);
+    setCachedUser(null);
+    setCachedAvatarUrl(null);
+
+    // Clear cached avatar from IndexedDB
+    clearAvatarCache();
+
+    // Clear all in-memory query cache
+    queryClient.clear();
+
+    // Clear persisted query cache (IndexedDB and localStorage)
+    // This prevents stale data from being restored on next page load
+    await clearPersistedQueryCache();
+
+    // Refetch session to immediately clear it in current tab
+    // This ensures session().data becomes null right away, preventing components
+    // from trying to fetch data with stale user state
+    await session().refetch?.();
+
+    // Notify other tabs of auth change
+    broadcastAuthChange();
+  }
+
   async function signout() {
     try {
       setAuthError(null);
@@ -431,28 +467,7 @@ function createBetterAuthStore() {
         throw new Error(error.message);
       }
 
-      // Clear cached auth data
-      saveCachedAuth(null);
-      setCachedUser(null);
-      setCachedAvatarUrl(null);
-
-      // Clear cached avatar from IndexedDB
-      clearAvatarCache();
-
-      // Clear all in-memory query cache
-      queryClient.clear();
-
-      // Clear persisted query cache (IndexedDB and localStorage)
-      // This prevents stale data from being restored on next page load
-      await clearPersistedQueryCache();
-
-      // Refetch session to immediately clear it in current tab
-      // This ensures session().data becomes null right away, preventing components
-      // from trying to fetch data with stale user state
-      await session().refetch?.();
-
-      // Notify other tabs of auth change
-      broadcastAuthChange();
+      await _performSignoutCleanup();
     } catch (err) {
       setAuthError(err.message);
       throw err;
@@ -618,6 +633,64 @@ function createBetterAuthStore() {
     return { enabled: currentUser?.twoFactorEnabled ?? false };
   }
 
+  // ==========================================
+  // Session Management (M1: Session Revocation)
+  // ==========================================
+
+  /**
+   * List all active sessions for the current user
+   * Returns session data including device info, IP, and timestamps
+   */
+  async function listActiveSessions() {
+    try {
+      const result = await _listSessions();
+      return result.data || [];
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  /**
+   * Revoke a specific session by its token
+   * @param {string} token - The session token to revoke
+   */
+  async function revokeSessionByToken(token) {
+    try {
+      await _revokeSession({ token });
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  /**
+   * Revoke all sessions except the current one
+   * Useful for "logout from other devices" functionality
+   */
+  async function revokeAllOtherSessions() {
+    try {
+      await _revokeOtherSessions();
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
+  /**
+   * Revoke all sessions including the current one
+   * Will log out the user from all devices
+   */
+  async function revokeAllSessions() {
+    try {
+      await _revokeSessions();
+      await _performSignoutCleanup();
+    } catch (err) {
+      setAuthError(err.message);
+      throw err;
+    }
+  }
+
   async function authFetch(url, options = {}) {
     try {
       // Better Auth automatically handles authentication via cookies
@@ -748,19 +821,11 @@ function createBetterAuthStore() {
         throw new Error(data.error || 'Failed to delete account');
       }
 
-      // Clear local data
-      queryClient.clear();
+      // Clear pending email from localStorage (account-specific)
       localStorage.removeItem('pendingEmail');
-      saveCachedAuth(null);
-      setCachedUser(null);
-      setCachedAvatarUrl(null);
-      clearAvatarCache();
 
-      // Clear persisted query cache
-      await clearPersistedQueryCache();
-
-      // Sign out after successful deletion
-      await authClient.signOut();
+      // Use shared cleanup (clears caches, resets state, notifies tabs)
+      await _performSignoutCleanup();
 
       return { success: true };
     } catch (err) {
@@ -800,6 +865,12 @@ function createBetterAuthStore() {
     disableTwoFactor,
     verifyTwoFactor,
     getTwoFactorStatus,
+
+    // Session Management (M1: Session Revocation)
+    listActiveSessions,
+    revokeSessionByToken,
+    revokeAllOtherSessions,
+    revokeAllSessions,
 
     // Utility/compatibility methods
     getCurrentUser,

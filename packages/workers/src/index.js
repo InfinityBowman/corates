@@ -253,10 +253,11 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
       return c.json({ error: 'URL is required' }, 400);
     }
 
-    // Validate URL is https and looks like a PDF source
-    const parsedUrl = new URL(url);
-    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-      return c.json({ error: 'Invalid URL protocol' }, 400);
+    // SSRF protection - validate URL against allowlist
+    const { validatePdfProxyUrl } = await import('./lib/ssrf-protection.js');
+    const validation = validatePdfProxyUrl(url);
+    if (!validation.valid) {
+      return c.json({ error: validation.error, code: 'SSRF_BLOCKED' }, 400);
     }
 
     // M4: SSRF Protection - block internal/private IPs and metadata endpoints
@@ -272,6 +273,15 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
     let currentUrl = url;
 
     while (redirectCount < maxRedirects) {
+      // Re-validate each redirect URL for SSRF protection
+      const redirectValidation = validatePdfProxyUrl(currentUrl);
+      if (!redirectValidation.valid) {
+        return c.json(
+          { error: `Redirect blocked: ${redirectValidation.error}`, code: 'SSRF_BLOCKED' },
+          400,
+        );
+      }
+
       response = await fetch(currentUrl, {
         headers: {
           'User-Agent': 'CoRATES/1.0 (Research Tool; mailto:support@corates.app)',

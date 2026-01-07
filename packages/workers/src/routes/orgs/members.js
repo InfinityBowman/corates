@@ -570,7 +570,11 @@ async function handleInvitation(c, { orgId, projectId, email, role }) {
 
     const authSecret = c.env.AUTH_SECRET || c.env.SECRET;
     if (!authSecret) {
-      throw new Error('AUTH_SECRET must be configured');
+      throw createDomainError(
+        SYSTEM_ERRORS.CONFIG_MISSING,
+        { key: 'AUTH_SECRET' },
+        'AUTH_SECRET must be configured',
+      );
     }
 
     const tempDb = drizzle(c.env.DB, { schema });
@@ -607,7 +611,11 @@ async function handleInvitation(c, { orgId, projectId, email, role }) {
     });
 
     if (!capturedMagicLinkUrl) {
-      throw new Error('Failed to generate magic link URL');
+      throw createDomainError(
+        SYSTEM_ERRORS.INTERNAL,
+        { service: 'magic-link' },
+        'Failed to generate magic link URL',
+      );
     }
 
     if (c.env.ENVIRONMENT !== 'production') {

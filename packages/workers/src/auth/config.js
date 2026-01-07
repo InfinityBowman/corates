@@ -12,6 +12,7 @@ import { getAllowedOrigins } from '../config/origins.js';
 import { isAdminUser } from './admin.js';
 import { MAGIC_LINK_EXPIRY_MINUTES } from './emailTemplates.js';
 import { notifyOrgMembers, EventTypes } from '../lib/notify.js';
+import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 
 export function createAuth(env, ctx) {
   // Initialize Drizzle with D1
@@ -558,7 +559,11 @@ function getAuthSecret(env) {
     return env.AUTH_SECRET;
   }
 
-  throw new Error('AUTH_SECRET must be configured');
+  throw createDomainError(
+    SYSTEM_ERRORS.CONFIG_MISSING,
+    { key: 'AUTH_SECRET' },
+    'AUTH_SECRET must be configured',
+  );
 }
 
 // Auth middleware to verify sessions

@@ -66,7 +66,7 @@ export default function SettingsLayout(props) {
     localStorage.setItem(SIDEBAR_MODE_KEY, newMode);
   };
 
-  const toggleMobileSidebar = () => setMobileSidebarOpen(open => !open);
+  // const toggleMobileSidebar = () => setMobileSidebarOpen(open => !open);
   const closeMobileSidebar = () => setMobileSidebarOpen(false);
 
   return (
@@ -79,9 +79,7 @@ export default function SettingsLayout(props) {
         width={sidebarWidth()}
         onWidthChange={handleWidthChange}
       />
-      <main class='flex-1 overflow-auto'>
-        {props.children}
-      </main>
+      <main class='flex-1 overflow-auto'>{props.children}</main>
     </div>
   );
 }

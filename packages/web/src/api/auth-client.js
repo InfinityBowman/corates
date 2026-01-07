@@ -46,4 +46,9 @@ export const {
   verifyEmail,
   admin,
   organization,
+  // Session management (M1: Session Revocation)
+  listSessions,
+  revokeSession,
+  revokeOtherSessions,
+  revokeSessions,
 } = authClient;
