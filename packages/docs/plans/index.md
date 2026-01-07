@@ -8,12 +8,15 @@ Plans are intentionally opinionated and are expected to change as the codebase e
 
 - [Pricing model (proposal)](/plans/pricing-model)
 - [Ownership, organizations, and billing model](/plans/ownership-billing-multitenancy)
+- [Org Billing](/plans/org-billing-implementation)
 
 ## Collaboration and realtime
 
 - [Presence (project WebSocket)](/plans/presence)
 - [Y.js awareness](/plans/yjs-awareness)
+- [SSE Realtime Sync](/plans/sse-real-time-sync)
 
 ## Quality and architecture
 
 - [Ideal error model architecture](/plans/ideal-error-model)
+- [Frontend Testing](/plans/frontend-testing-plan)

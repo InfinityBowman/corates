@@ -5,6 +5,19 @@ export default withMermaid({
   description: 'Collaborative Research Appraisal Tool for Evidence Synthesis - Documentation',
   base: '/',
 
+  // Ignore dead links in audit files (point-in-time snapshots that may reference moved files)
+  // and glossary links to source code outside the docs folder
+  ignoreDeadLinks: [
+    // Audit files contain links to source code that may have moved
+    /audits\//,
+    // Glossary links to source files outside docs folder
+    /\.\.\//,
+    // Links with line numbers to source files
+    /packages\/(web|workers|shared|ui|landing|mcp)\//,
+    // Cursor rules folder
+    /\.cursor\//,
+  ],
+
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },

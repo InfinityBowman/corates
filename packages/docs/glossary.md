@@ -288,7 +288,7 @@ Time-limited access upgrade (trial, single_project) that:
 - Is org-scoped (one per organization)
 - Stored in `orgAccessGrants` table
 
-**Related:** [billing.md](guides/billing.md), Billing resolver logic
+**Related:** Billing resolver logic in workers package
 
 ### Subscription
 

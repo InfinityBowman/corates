@@ -26,7 +26,7 @@ export default function PrivacyPolicy() {
         <main class='flex-1 py-16'>
           <div class='mx-auto max-w-3xl px-6'>
             <h1 class='mb-2 text-4xl font-bold text-gray-900'>Privacy Policy</h1>
-            <p class='mb-8 text-gray-500'>Effective date: December 5, 2025</p>
+            <p class='mb-8 text-gray-500'>Effective date: January 7, 2026</p>
 
             <div class='space-y-6 leading-relaxed text-gray-700'>
               <p>
@@ -338,11 +338,12 @@ export default function PrivacyPolicy() {
                   <strong>Service Providers.</strong> These parties help us provide the Services or
                   perform business functions on our behalf. They include:
                   <ul class='mt-1 ml-6 list-outside list-disc text-gray-600'>
-                    <li>Hosting, technology and communication providers (Cloudflare)</li>
+                    <li>Hosting, technology and communication providers (Cloudflare, Inc.)</li>
+                    <li>Payment processors (Stripe, Inc.)</li>
+                    <li>Email service providers (Postmark / ActiveCampaign, LLC)</li>
                     <li>Security and fraud prevention consultants</li>
                     <li>Analytics providers</li>
                     <li>Support and customer service vendors</li>
-                    <li>Payment processors</li>
                   </ul>
                 </li>
                 <li>
@@ -428,6 +429,73 @@ export default function PrivacyPolicy() {
                 functionality (such as importing a selected PDF into your project) and do not use
                 Google Drive data for advertising.
               </p>
+
+              <h3 class='pt-4 text-lg font-medium text-gray-900'>Payment Processing (Stripe)</h3>
+
+              <p>
+                We use Stripe, Inc. as our payment processor to handle subscription payments and
+                billing. When you subscribe to a paid plan or update your payment information:
+              </p>
+
+              <ul class='ml-6 list-outside list-disc space-y-2 text-gray-600'>
+                <li>
+                  <strong>Data collected by Stripe.</strong> Stripe collects your payment card
+                  information (card number, expiration date, CVC), billing address, and email
+                  address directly. This payment information is processed and stored by Stripe and
+                  is subject to Stripe's Privacy Policy (https://stripe.com/privacy).
+                </li>
+                <li>
+                  <strong>Data we receive from Stripe.</strong> We receive limited information from
+                  Stripe, including the last four digits of your payment card, card type, billing
+                  address, and subscription status. We do not receive or store your full payment
+                  card number.
+                </li>
+                <li>
+                  <strong>Data we send to Stripe.</strong> We send your email address and account
+                  identifiers to Stripe to associate payments with your account and to enable Stripe
+                  to send payment-related communications (such as receipts and failed payment
+                  notifications).
+                </li>
+                <li>
+                  <strong>International transfers.</strong> Stripe may process your payment data in
+                  the United States or other countries where Stripe operates. Stripe is certified
+                  under the EU-U.S. Data Privacy Framework. For more information, see Stripe's
+                  privacy documentation.
+                </li>
+              </ul>
+
+              <h3 class='pt-4 text-lg font-medium text-gray-900'>
+                Email Communications (Postmark)
+              </h3>
+
+              <p>
+                We use Postmark (operated by ActiveCampaign, LLC) to send transactional emails,
+                including account verification, password resets, project invitations, and other
+                Service-related notifications.
+              </p>
+
+              <ul class='ml-6 list-outside list-disc space-y-2 text-gray-600'>
+                <li>
+                  <strong>Data shared with Postmark.</strong> When we send you an email, we share
+                  your email address and name with Postmark. The email content may include
+                  information relevant to the notification (such as project names or invitation
+                  details).
+                </li>
+                <li>
+                  <strong>Data Postmark collects.</strong> Postmark may collect metadata about email
+                  delivery, such as whether an email was opened or bounced, to help us ensure
+                  reliable email delivery.
+                </li>
+                <li>
+                  <strong>Data retention.</strong> Postmark retains email logs and metadata in
+                  accordance with their data retention policies. For more information, see
+                  Postmark's Privacy Policy (https://postmarkapp.com/privacy-policy).
+                </li>
+                <li>
+                  <strong>International transfers.</strong> Postmark may process email data in the
+                  United States. ActiveCampaign participates in the EU-U.S. Data Privacy Framework.
+                </li>
+              </ul>
 
               {/* Tracking Tools and Opt-Out */}
               <h2 id='tracking-tools' class='pt-6 text-xl font-semibold text-gray-900'>
@@ -642,6 +710,19 @@ export default function PrivacyPolicy() {
                 or obtained from a third party, is being provided to Syntch LLC in the U.S. and will
                 be hosted on U.S. servers, and you authorize Syntch LLC to transfer, store and
                 process your information to and in the U.S., and possibly other countries.
+              </p>
+
+              <p>
+                Our service providers, including Cloudflare, Stripe, and Postmark, may process your
+                data in the United States or other jurisdictions. These providers have committed to
+                appropriate safeguards for international data transfers, including certification
+                under the EU-U.S. Data Privacy Framework or implementation of Standard Contractual
+                Clauses approved by the European Commission. You may contact us at{' '}
+                <a href='mailto:privacy@corates.org' class='text-blue-600 hover:text-blue-700'>
+                  privacy@corates.org
+                </a>{' '}
+                to request more information about the safeguards we have in place for international
+                data transfers.
               </p>
 
               {/* Changes to this Privacy Policy */}

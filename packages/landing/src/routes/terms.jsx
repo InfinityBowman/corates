@@ -26,7 +26,7 @@ export default function TermsOfService() {
         <main class='flex-1 py-16'>
           <div class='mx-auto max-w-3xl px-6'>
             <h1 class='mb-2 text-4xl font-bold text-gray-900'>Terms of Service</h1>
-            <p class='mb-12 text-gray-500'>Effective date: December 5, 2025</p>
+            <p class='mb-12 text-gray-500'>Effective date: January 7, 2026</p>
 
             <div class='space-y-6 leading-relaxed text-gray-700'>
               <p>
@@ -134,9 +134,9 @@ export default function TermsOfService() {
 
               <p>
                 The Service may work together with third party products, services or applications
-                that are not owned or controlled by Syntch LLC (e.g., ORCID, Google Drive)
-                ("Third-Party Applications") and Customer, at its sole option, may choose to use
-                such Third-Party Applications. Syntch LLC does not endorse such Third-Party
+                that are not owned or controlled by Syntch LLC (e.g., ORCID, Google Drive, Stripe,
+                Postmark) ("Third-Party Applications") and Customer, at its sole option, may choose
+                to use such Third-Party Applications. Syntch LLC does not endorse such Third-Party
                 Applications. Customer acknowledges and agrees that this Agreement does not apply to
                 Customer's use of such Third-Party Applications and Customer may be required by the
                 providers of such Third-Party Applications to enter into separate agreements for
@@ -166,12 +166,13 @@ export default function TermsOfService() {
               </p>
 
               <p>
-                <strong>4.2. Payment.</strong> Syntch LLC, either directly or through its
-                third-party payment processor ("Payment Processor") will charge Customer for the
-                Fees via credit card or other payment method, pursuant to the payment information
-                provided by Customer to Syntch LLC. It is Customer's sole responsibility to provide
-                Syntch LLC with current and up to date payment information; failure to provide such
-                information may result in suspension of Customer's access to the Services.
+                <strong>4.2. Payment.</strong> Syntch LLC uses Stripe, Inc. as its third-party
+                payment processor ("Payment Processor") to charge Customer for the Fees via credit
+                card or other payment method, pursuant to the payment information provided by
+                Customer to Stripe. Customer's use of Stripe's services is subject to Stripe's terms
+                of service and privacy policy. It is Customer's sole responsibility to provide
+                current and up to date payment information; failure to provide such information may
+                result in suspension of Customer's access to the Services.
               </p>
 
               <p>
