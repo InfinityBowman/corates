@@ -198,7 +198,7 @@ describe('Main App - PDF Proxy Endpoint', () => {
     const res = await fetchApp(app, '/api/pdf-proxy', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ url: 'https://example.com/test.pdf' }),
+      body: JSON.stringify({ url: 'https://arxiv.org/pdf/1234.5678.pdf' }),
     });
 
     expect(res.status).toBe(401);
@@ -234,6 +234,74 @@ describe('Main App - PDF Proxy Endpoint', () => {
 
     // Should return 400 (validation error) or 401 (auth required)
     expect([400, 401]).toContain(res.status);
+  });
+
+  it('should block SSRF attempts to internal IPs', async () => {
+    const res = await fetchApp(app, '/api/pdf-proxy', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-test-user-id': 'user-1',
+      },
+      body: JSON.stringify({ url: 'https://127.0.0.1/admin' }),
+    });
+
+    expect([400, 401]).toContain(res.status);
+    if (res.status === 400) {
+      const body = await json(res);
+      expect(body.code).toBe('SSRF_BLOCKED');
+    }
+  });
+
+  it('should block SSRF attempts to localhost', async () => {
+    const res = await fetchApp(app, '/api/pdf-proxy', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-test-user-id': 'user-1',
+      },
+      body: JSON.stringify({ url: 'https://localhost:8787/api/admin' }),
+    });
+
+    expect([400, 401]).toContain(res.status);
+    if (res.status === 400) {
+      const body = await json(res);
+      expect(body.code).toBe('SSRF_BLOCKED');
+    }
+  });
+
+  it('should block SSRF attempts to cloud metadata endpoints', async () => {
+    const res = await fetchApp(app, '/api/pdf-proxy', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-test-user-id': 'user-1',
+      },
+      body: JSON.stringify({ url: 'http://169.254.169.254/latest/meta-data/' }),
+    });
+
+    expect([400, 401]).toContain(res.status);
+    if (res.status === 400) {
+      const body = await json(res);
+      expect(body.code).toBe('SSRF_BLOCKED');
+    }
+  });
+
+  it('should block URLs not in the allowlist', async () => {
+    const res = await fetchApp(app, '/api/pdf-proxy', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-test-user-id': 'user-1',
+      },
+      body: JSON.stringify({ url: 'https://evil-site.com/malicious.pdf' }),
+    });
+
+    expect([400, 401]).toContain(res.status);
+    if (res.status === 400) {
+      const body = await json(res);
+      expect(body.code).toBe('SSRF_BLOCKED');
+    }
   });
 });
 

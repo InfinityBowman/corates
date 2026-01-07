@@ -1,4 +1,5 @@
 import { EMAIL_RETRY_CONFIG } from '../config/constants.js';
+import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 
 export class EmailQueue {
   constructor(state, env) {
@@ -82,7 +83,11 @@ export class EmailQueue {
         setTimeout(() => this.cleanupSentEmail(emailRecord.id), 60000);
         return true;
       } else {
-        throw new Error(result.error || 'Unknown email error');
+        throw createDomainError(
+          SYSTEM_ERRORS.INTERNAL,
+          { service: 'email' },
+          result.error || 'Unknown email error',
+        );
       }
     } catch (err) {
       console.error(

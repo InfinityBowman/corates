@@ -6,6 +6,8 @@
  * Tenant safety is enforced via DB validation of project.orgId against URL orgId.
  */
 
+import { createDomainError, VALIDATION_ERRORS } from '@corates/shared';
+
 /**
  * Get the project-scoped name for a ProjectDoc DO instance
  * @param {string} projectId - Project ID
@@ -13,7 +15,11 @@
  */
 export function getProjectDocName(projectId) {
   if (!projectId) {
-    throw new Error('projectId is required for ProjectDoc DO name');
+    throw createDomainError(
+      VALIDATION_ERRORS.FIELD_REQUIRED,
+      { field: 'projectId' },
+      'projectId is required for ProjectDoc DO name',
+    );
   }
   return `project:${projectId}`;
 }

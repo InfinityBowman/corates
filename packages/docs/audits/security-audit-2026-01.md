@@ -1015,26 +1015,39 @@ if (!isValidPdfFilename(fileName)) {
 
 ### Medium Severity
 
-#### M1: Session Revocation Not Implemented
+#### M1: Session Revocation
 
-**Issue:** No endpoint to invalidate sessions before expiry.
+**Status:** RESOLVED
 
-**Impact:**
+**Original Issue:** No endpoint to invalidate sessions before expiry.
 
-- Compromised sessions remain valid for 7 days
-- No logout from all devices
-- Delayed response to account compromise
+**Resolution:** Leveraged Better Auth's built-in session revocation APIs and created a user-facing UI.
 
-**Recommendation:**
-Implement session revocation:
+**Implementation:**
 
-1. Add `revokedAt` timestamp to `session` table
-2. Create `/api/auth/revoke-session` endpoint
-3. Create `/api/auth/revoke-all-sessions` endpoint
-4. Check `revokedAt` in auth middleware
+1. **Backend:** Better Auth provides session management APIs out-of-the-box:
+   - `listSessions()` - List all active sessions with device info
+   - `revokeSession({ token })` - Revoke specific session
+   - `revokeOtherSessions()` - Revoke all except current
+   - `revokeSessions()` - Logout everywhere
 
-**Priority:** Medium
-**Effort:** Medium (4 hours)
+2. **Frontend:**
+   - Added session methods to `auth-client.js` exports
+   - Created wrapper functions in `better-auth-store.js` with error handling
+   - Built `SessionManagement.jsx` component with:
+     - List of active sessions with device/browser detection
+     - Current session indicator
+     - Individual session revocation
+     - "Sign out other sessions" button
+     - "Sign out everywhere" with confirmation dialog
+   - Added to Security Settings page
+
+**Files Changed:**
+
+- `packages/web/src/api/auth-client.js` - Export session methods
+- `packages/web/src/api/better-auth-store.js` - Session management functions
+- `packages/web/src/components/settings/pages/SessionManagement.jsx` - New component
+- `packages/web/src/components/settings/pages/SecuritySettings.jsx` - Added section
 
 ---
 
@@ -1106,52 +1119,40 @@ Better Auth stores magic link tokens in the `verification` table with:
 
 #### M4: SSRF Protection for PDF Proxy
 
-**Location:** PDF proxy endpoint (exact location unclear)
+**Location:** `packages/workers/src/index.js` - `/api/pdf-proxy` endpoint
 
-**Issue:** Proxying external URLs without validation.
+**Status:** RESOLVED
 
-**Impact:**
+**Original Issue:** PDF proxy accepted user-provided URLs without validation, allowing SSRF attacks to internal services.
 
-- SSRF to internal services (metadata endpoints, databases)
-- Port scanning via proxy
-- SSRF to localhost (127.0.0.1, ::1)
+**Implementation:** Added comprehensive SSRF protection with:
 
-**Recommendation:**
+1. **Blocked hostnames:** `localhost`, `metadata.google.internal`, `metadata.google`
+2. **Blocked IP patterns (regex):**
+   - `127.x.x.x` (loopback)
+   - `10.x.x.x` (private Class A)
+   - `172.16-31.x.x` (private Class B)
+   - `192.168.x.x` (private Class C)
+   - `169.254.x.x` (link-local / cloud metadata)
+   - IPv6 loopback, link-local, unique local
+3. **Numeric IP blocking:** Blocks decimal IP representations like `2130706433` (127.0.0.1)
+4. **Redirect validation:** Also validates redirect destinations to prevent SSRF via open redirects
+
+**Code:**
 
 ```javascript
-const BLOCKED_IPS = [
-  '127.0.0.1',
-  '::1', // Localhost
-  '169.254.169.254', // AWS metadata
-  '::ffff:169.254.169.254', // IPv6-mapped AWS metadata
-];
+// Initial URL validation
+if (isBlockedHost(parsedUrl.hostname)) {
+  console.warn('PDF proxy SSRF attempt blocked:', { hostname: parsedUrl.hostname });
+  return c.json({ error: 'Access to internal resources is not allowed' }, 403);
+}
 
-const BLOCKED_RANGES = [
-  '10.0.0.0/8', // Private
-  '172.16.0.0/12', // Private
-  '192.168.0.0/16', // Private
-];
-
-async function validateProxyUrl(urlString) {
-  const url = new URL(urlString);
-
-  // Only allow HTTP(S)
-  if (!['http:', 'https:'].includes(url.protocol)) {
-    throw new Error('Invalid protocol');
-  }
-
-  // Resolve hostname to IP
-  const ip = await dns.resolve(url.hostname);
-
-  // Check against blocked IPs/ranges
-  if (BLOCKED_IPS.includes(ip) || isPrivateIP(ip)) {
-    throw new Error('Access denied');
-  }
+// Redirect validation
+if (isBlockedHost(redirectUrl.hostname)) {
+  console.warn('PDF proxy SSRF redirect blocked:', { hostname: redirectUrl.hostname });
+  return c.json({ error: 'Redirect to internal resources is not allowed' }, 403);
 }
 ```
-
-**Priority:** Medium
-**Effort:** Medium (4-6 hours)
 
 ---
 
@@ -1237,20 +1238,14 @@ Add `impersonatedBy` to all log entries during impersonation session.
 
 #### L3: Google Picker API Key Restrictions
 
-**Issue:** Client-side API key may not have sufficient restrictions.
+**Status:** RESOLVED (manually verified)
 
-**Impact:**
+**Original Issue:** Client-side API key may not have sufficient restrictions.
 
-- API key abuse if restrictions not set
+**Resolution:** Verified in Google Cloud Console that API key has proper restrictions:
 
-**Recommendation:**
-Verify in Google Cloud Console:
-
-- HTTP referrer restrictions: `https://corates.org/*`, `https://app.corates.org/*`
-- API restrictions: Only Google Picker API enabled
-
-**Priority:** Low
-**Effort:** Low (30 minutes)
+- HTTP referrer restrictions configured for production domains
+- API restrictions: Only Google Picker API and Google Drive API enabled
 
 ---
 
@@ -1316,8 +1311,8 @@ The CoRATES application demonstrates **strong security engineering** with compre
 
 ### Short-Term Improvements (30 days)
 
-4. Implement session revocation (M1)
-5. Add SSRF protection to PDF proxy (M4)
+4. ~~Implement session revocation (M1)~~ - RESOLVED: Built UI with Better Auth APIs
+5. ~~Add SSRF protection to PDF proxy (M4)~~ - RESOLVED: Implemented hostname and IP blocking
 6. ~~Verify magic link single-use enforcement (M3)~~ - VERIFIED: Built into Better Auth
 7. ~~Reject test webhook events in production (M5)~~ - RESOLVED: Implemented livemode check
 
@@ -1328,9 +1323,9 @@ The CoRATES application demonstrates **strong security engineering** with compre
 10. Establish secrets rotation policy
 11. Enable automated dependency scanning
 
-### Security Posture Score: **8.7/10**
+### Security Posture Score: **8.8/10**
 
-The application is production-ready with strong foundational security. Addressing the high-priority findings will raise the score to 9.5/10.
+The application is production-ready with strong foundational security. All short-term security items are resolved. Addressing the high-priority H1 finding (2FA for admins) will raise the score to 9.5/10.
 
 ---
 
