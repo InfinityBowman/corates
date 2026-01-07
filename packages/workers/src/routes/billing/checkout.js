@@ -184,8 +184,23 @@ billingCheckoutRoutes.post(
         apiVersion: '2025-11-17.clover',
       });
 
-      // Get single project price ID from env (or use a default)
-      const priceId = c.env.STRIPE_PRICE_ID_SINGLE_PROJECT || 'price_single_project';
+      // Validate single project price ID is configured
+      const priceId = c.env.STRIPE_PRICE_ID_SINGLE_PROJECT;
+      if (!priceId) {
+        logger.stripe('single_project_checkout_failed', {
+          outcome: 'failed',
+          orgId,
+          userId: user.id,
+          errorCode: 'stripe_price_not_configured',
+        });
+
+        const error = createDomainError(
+          SYSTEM_ERRORS.INTERNAL_ERROR,
+          { operation: 'stripe_price_not_configured' },
+          'Single project pricing is not configured. Please contact support.',
+        );
+        return c.json(error, error.statusCode);
+      }
 
       const baseUrl = c.env.APP_URL || 'https://corates.org';
 

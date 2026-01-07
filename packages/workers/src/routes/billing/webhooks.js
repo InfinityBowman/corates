@@ -193,6 +193,29 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
     const apiVersion = event.api_version;
     const created = event.created ? new Date(event.created * 1000) : null;
 
+    // M5: Reject test events in production environment
+    if (c.env.ENVIRONMENT === 'production' && !livemode) {
+      await updateLedgerWithVerifiedFields(db, ledgerId, {
+        stripeEventId,
+        type: eventType,
+        livemode,
+        apiVersion,
+        created,
+        status: LedgerStatus.IGNORED_TEST_MODE,
+        httpStatus: 200,
+      });
+
+      logger.stripe('webhook_rejected', {
+        outcome: 'ignored_test_mode',
+        stripeEventId,
+        stripeEventType: eventType,
+        reason: 'test_event_in_production',
+        payloadHash,
+      });
+
+      return c.json({ received: true, skipped: 'test_event_in_production' }, 200);
+    }
+
     // Handle checkout.session.completed for one-time purchases
     if (eventType === 'checkout.session.completed') {
       const session = event.data?.object;

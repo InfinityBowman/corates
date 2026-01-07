@@ -219,6 +219,37 @@ auth.post('/stripe/webhook', async c => {
       ledgerId,
     });
 
+    // M5: Reject test events in production environment (pre-verification check)
+    // Parse body minimally to check livemode before forwarding to Better Auth
+    if (c.env.ENVIRONMENT === 'production') {
+      try {
+        const preCheckEvent = JSON.parse(rawBody);
+        if (preCheckEvent.livemode === false) {
+          await updateLedgerWithVerifiedFields(db, ledgerId, {
+            stripeEventId: preCheckEvent.id || null,
+            type: preCheckEvent.type || null,
+            livemode: false,
+            apiVersion: preCheckEvent.api_version || null,
+            created: preCheckEvent.created ? new Date(preCheckEvent.created * 1000) : null,
+            status: LedgerStatus.IGNORED_TEST_MODE,
+            httpStatus: 200,
+          });
+
+          logger.stripe('webhook_rejected', {
+            outcome: 'ignored_test_mode',
+            stripeEventId: preCheckEvent.id,
+            stripeEventType: preCheckEvent.type,
+            reason: 'test_event_in_production',
+            payloadHash,
+          });
+
+          return c.json({ received: true, skipped: 'test_event_in_production' }, 200);
+        }
+      } catch {
+        // Parse failed - let Better Auth handle the error
+      }
+    }
+
     // Phase 2: Forward to Better Auth and update ledger based on response
 
     const betterAuth = createAuth(c.env, c.executionCtx);

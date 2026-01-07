@@ -17,6 +17,7 @@ export const LedgerStatus = {
   SKIPPED_DUPLICATE: 'skipped_duplicate',
   FAILED: 'failed',
   IGNORED_UNVERIFIED: 'ignored_unverified',
+  IGNORED_TEST_MODE: 'ignored_test_mode',
 };
 
 /**

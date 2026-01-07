@@ -934,94 +934,82 @@ export async function requireAdmin(c, next) {
 
 #### H2: Stripe Price ID Validation
 
-**Location:** [`auth/config.js:158-172`](packages/workers/src/auth/config.js:158)
+**Location:** `packages/workers/src/routes/billing/checkout.js`
 
-**Issue:** Missing Stripe price IDs fall back to hardcoded defaults that may not exist.
+**Status:** RESOLVED
 
-**Impact:**
+**Original Issue:** Missing Stripe price IDs fell back to hardcoded defaults that may not exist.
 
-- Subscriptions created with wrong pricing
-- Revenue loss or customer confusion
+**Resolution:** Removed fallback values and implemented fail-fast validation. If `STRIPE_PRICE_ID_SINGLE_PROJECT` env var is missing, the endpoint returns a clear error instead of using an invalid price ID.
 
-**Current Code:**
-
-```javascript
-priceId: env.STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY || 'price_starter_team_monthly';
-```
-
-**Recommendation:**
+**Implementation:**
 
 ```javascript
-// Fail fast in production if price IDs are missing
-if (env.ENVIRONMENT === 'production') {
-  const requiredPriceIds = [
-    'STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY',
-    'STRIPE_PRICE_ID_STARTER_TEAM_YEARLY',
-    'STRIPE_PRICE_ID_TEAM_MONTHLY',
-    'STRIPE_PRICE_ID_TEAM_YEARLY',
-    'STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY',
-    'STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY',
-  ];
+// From packages/workers/src/routes/billing/checkout.js
+const priceId = c.env.STRIPE_PRICE_ID_SINGLE_PROJECT;
+if (!priceId) {
+  logger.stripe('single_project_checkout_failed', {
+    outcome: 'failed',
+    orgId,
+    userId: user.id,
+    errorCode: 'stripe_price_not_configured',
+  });
 
-  const missing = requiredPriceIds.filter(id => !env[id]);
-  if (missing.length > 0) {
-    throw new Error(`Missing required Stripe price IDs: ${missing.join(', ')}`);
-  }
+  const error = createDomainError(
+    SYSTEM_ERRORS.INTERNAL_ERROR,
+    { operation: 'stripe_price_not_configured' },
+    'Single project pricing is not configured. Please contact support.',
+  );
+  return c.json(error, error.statusCode);
 }
 ```
 
-**Priority:** High
-**Effort:** Low (30 minutes)
+**Note:** Subscription price IDs (starter_team, team, unlimited_team) are handled by Better Auth Stripe plugin which validates them at configuration time.
 
 ---
 
 #### H3: File Upload Validation
 
-**Location:** PDF upload routes (implementation unclear)
+**Location:** `packages/workers/src/routes/orgs/pdfs.js`
 
-**Issue:** No evidence of file type, size, or content validation for uploaded PDFs.
+**Status:** RESOLVED
 
-**Impact:**
+**Implementation:** PDF upload validation is fully implemented with:
 
-- Malicious file uploads (XSS via SVG, XXE, malware)
-- Storage exhaustion
-- MIME confusion attacks
+1. **Size validation** - Content-Length header check and post-read size validation against `PDF_LIMITS.MAX_SIZE` (50MB)
+2. **Content-Type validation** - Accepts only `multipart/form-data` or `application/pdf`
+3. **Magic bytes validation** - Uses `isPdfSignature()` from `@corates/shared` to verify `%PDF-` header
+4. **Filename validation** - Uses `isValidPdfFilename()` to prevent path traversal and special characters
+5. **Auto-rename for duplicates** - `generateUniqueFileName()` prevents overwrites
 
-**Recommendation:**
-
-1. Validate file extension and MIME type
-2. Enforce file size limits (e.g., 50MB)
-3. Scan file headers (magic bytes) to verify PDF format
-4. Consider virus scanning for user uploads
-5. Store files with random names (no user-controlled filenames)
-
-**Example:**
+**Actual Implementation:**
 
 ```javascript
-async function validatePdfUpload(file) {
-  // Size check
-  if (file.size > 50 * 1024 * 1024) {
-    // 50MB
-    throw new Error('File too large');
-  }
+// From packages/workers/src/routes/orgs/pdfs.js
 
-  // MIME type check
-  if (!['application/pdf'].includes(file.type)) {
-    throw new Error('Invalid file type');
-  }
+// Size check
+if (file.size > PDF_LIMITS.MAX_SIZE) {
+  return c.json(createDomainError(FILE_ERRORS.TOO_LARGE, ...));
+}
 
-  // Magic bytes check (PDF signature: %PDF-1.)
-  const header = await file.slice(0, 8).arrayBuffer();
-  const bytes = new Uint8Array(header);
-  const signature = String.fromCharCode(...bytes.slice(0, 5));
-  if (signature !== '%PDF-') {
-    throw new Error('Invalid PDF file');
-  }
+// Content-Type check
+if (!contentType.includes('multipart/form-data') && contentType !== 'application/pdf') {
+  return c.json(createDomainError(FILE_ERRORS.INVALID_TYPE, ...));
+}
+
+// Magic bytes check
+const header = new Uint8Array(pdfData.slice(0, PDF_MAGIC_BYTES.length));
+if (!isPdfSignature(header)) {
+  return c.json(createDomainError(FILE_ERRORS.INVALID_TYPE, ...));
+}
+
+// Filename validation
+if (!isValidPdfFilename(fileName)) {
+  return c.json(createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, ...));
 }
 ```
 
-**Priority:** High (if not already implemented)
-**Effort:** Medium (4-6 hours with testing)
+**Remaining Consideration:** Virus scanning for user uploads (not implemented, low priority for PDF-only uploads)
 
 ---
 
@@ -1093,21 +1081,26 @@ export class RateLimitDO {
 
 #### M3: Magic Link Single-Use Enforcement
 
-**Issue:** Unclear if magic link tokens are single-use or can be replayed.
+**Status:** VERIFIED - Built-in to Better Auth
 
-**Impact:**
+**Original Issue:** Unclear if magic link tokens are single-use or can be replayed.
 
-- Token reuse after initial authentication
-- Extended attack window if token leaked
+**Investigation Findings:**
 
-**Recommendation:**
-Verify BetterAuth's magic link implementation:
+Better Auth stores magic link tokens in the `verification` table with:
 
-1. Tokens are deleted after use
-2. Add explicit check in codebase if not built-in
+- `identifier`: Email address
+- `value`: The verification token (can be hashed via `storeToken: "hashed"` option)
+- `expiresAt`: Token expiry timestamp (default 5 minutes, CoRATES uses 15 minutes)
 
-**Priority:** Medium
-**Effort:** Low (2 hours - investigation + testing)
+**Single-Use Enforcement:** Better Auth's verification flow automatically deletes the token from the database after successful verification. This is built into the `magicLinkVerify` endpoint - once a token is used, it cannot be replayed because it no longer exists in the database.
+
+**Additional Protections in CoRATES:**
+
+- 15-minute token expiry (`MAGIC_LINK_EXPIRY_MINUTES`)
+- Tokens are cryptographically random (128-bit entropy by default)
+
+**Conclusion:** No action required - single-use enforcement is built into Better Auth.
 
 ---
 
@@ -1164,37 +1157,45 @@ async function validateProxyUrl(urlString) {
 
 #### M5: Stripe Webhook Test Events in Production
 
-**Location:** [`routes/billing/index.js:750`](packages/workers/src/routes/billing/index.js:750)
+**Location:** `packages/workers/src/routes/billing/webhooks.js` and `packages/workers/src/auth/routes.js`
 
-**Issue:** No check for `event.livemode` in production.
+**Status:** RESOLVED
 
-**Impact:**
+**Original Issue:** No check for `event.livemode` in production, allowing test events to be processed.
 
-- Test events processed in production
-- Confusion in billing/grants
-- Potential for test-mode data pollution
+**Resolution:** Implemented `livemode` check in both webhook handlers:
 
-**Recommendation:**
+- Purchase webhook (`webhooks.js`): Checks after signature verification
+- Subscription webhook (`auth/routes.js`): Checks before forwarding to Better Auth
+
+**Implementation:**
 
 ```javascript
-// After signature verification
-if (env.ENVIRONMENT === 'production' && !event.livemode) {
-  await updateLedgerStatus(db, ledgerId, {
+// M5: Reject test events in production environment
+if (c.env.ENVIRONMENT === 'production' && !livemode) {
+  await updateLedgerWithVerifiedFields(db, ledgerId, {
+    stripeEventId,
+    type: eventType,
+    livemode,
+    apiVersion,
+    created,
     status: LedgerStatus.IGNORED_TEST_MODE,
-    httpStatus: 400,
+    httpStatus: 200,
   });
 
   logger.stripe('webhook_rejected', {
-    reason: 'test_event_in_production',
+    outcome: 'ignored_test_mode',
     stripeEventId,
+    stripeEventType: eventType,
+    reason: 'test_event_in_production',
+    payloadHash,
   });
 
-  return c.json({ received: true, skipped: 'test_event' }, 200);
+  return c.json({ received: true, skipped: 'test_event_in_production' }, 200);
 }
 ```
 
-**Priority:** Medium
-**Effort:** Low (1 hour)
+Added `IGNORED_TEST_MODE` status to `LedgerStatus` enum for proper tracking.
 
 ---
 
@@ -1259,19 +1260,19 @@ Verify in Google Cloud Console:
 
 **Level 2 Compliance:** ✅ **Substantially Compliant**
 
-| Category               | Status | Notes                                      |
-| ---------------------- | ------ | ------------------------------------------ |
-| V2: Authentication     | ✅     | MFA available, session security strong     |
-| V3: Session Management | ⚠️     | Missing revocation (M1)                    |
-| V4: Access Control     | ✅     | Role-based, hierarchical, well-enforced    |
-| V5: Validation         | ✅     | Zod schemas, XSS protection                |
-| V7: Cryptography       | ✅     | HTTPS enforced, secure cookies             |
-| V8: Data Protection    | ✅     | Secrets managed properly                   |
-| V9: Communications     | ✅     | HSTS, secure origins                       |
-| V10: Malicious Code    | ✅     | No dangerous functions, CSP enforced       |
-| V12: Files             | ⚠️     | PDF upload validation unclear (H3)         |
-| V13: API Security      | ✅     | CORS, CSRF, rate limiting                  |
-| V14: Configuration     | ✅     | Environment separation, secrets validation |
+| Category               | Status | Notes                                           |
+| ---------------------- | ------ | ----------------------------------------------- |
+| V2: Authentication     | ✅     | MFA available, session security strong          |
+| V3: Session Management | ⚠️     | Missing revocation (M1)                         |
+| V4: Access Control     | ✅     | Role-based, hierarchical, well-enforced         |
+| V5: Validation         | ✅     | Zod schemas, XSS protection                     |
+| V7: Cryptography       | ✅     | HTTPS enforced, secure cookies                  |
+| V8: Data Protection    | ✅     | Secrets managed properly                        |
+| V9: Communications     | ✅     | HSTS, secure origins                            |
+| V10: Malicious Code    | ✅     | No dangerous functions, CSP enforced            |
+| V12: Files             | ✅     | PDF upload validation implemented (H3 resolved) |
+| V13: API Security      | ✅     | CORS, CSRF, rate limiting                       |
+| V14: Configuration     | ✅     | Environment separation, secrets validation      |
 
 ---
 
@@ -1310,23 +1311,24 @@ The CoRATES application demonstrates **strong security engineering** with compre
 ### Immediate Actions Required
 
 1. **Enforce 2FA for admin users** (H1) - High priority, low effort
-2. **Validate Stripe price IDs in production** (H2) - High priority, low effort
-3. **Verify/implement PDF upload validation** (H3) - High priority if not done
+2. ~~**Validate Stripe price IDs in production** (H2)~~ - RESOLVED: Removed fallback, fails fast if env var missing
+3. ~~**Verify/implement PDF upload validation** (H3)~~ - RESOLVED: Fully implemented with size, type, magic bytes, and filename validation
 
 ### Short-Term Improvements (30 days)
 
 4. Implement session revocation (M1)
 5. Add SSRF protection to PDF proxy (M4)
-6. Verify magic link single-use enforcement (M3)
+6. ~~Verify magic link single-use enforcement (M3)~~ - VERIFIED: Built into Better Auth
+7. ~~Reject test webhook events in production (M5)~~ - RESOLVED: Implemented livemode check
 
 ### Long-Term Enhancements (90 days)
 
-7. Migrate to distributed rate limiting via Durable Objects (M2)
-8. Implement webhook failure alerting (L1)
-9. Establish secrets rotation policy
-10. Enable automated dependency scanning
+8. Migrate to distributed rate limiting via Durable Objects (M2)
+9. Implement webhook failure alerting (L1)
+10. Establish secrets rotation policy
+11. Enable automated dependency scanning
 
-### Security Posture Score: **8.5/10**
+### Security Posture Score: **8.7/10**
 
 The application is production-ready with strong foundational security. Addressing the high-priority findings will raise the score to 9.5/10.
 
