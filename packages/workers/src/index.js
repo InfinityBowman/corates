@@ -260,12 +260,6 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
       return c.json({ error: validation.error, code: 'SSRF_BLOCKED' }, 400);
     }
 
-    // M4: SSRF Protection - block internal/private IPs and metadata endpoints
-    if (isBlockedHost(parsedUrl.hostname)) {
-      console.warn('PDF proxy SSRF attempt blocked:', { hostname: parsedUrl.hostname });
-      return c.json({ error: 'Access to internal resources is not allowed' }, 403);
-    }
-
     // Fetch the PDF with manual redirect handling to detect auth loops
     let response;
     let redirectCount = 0;
