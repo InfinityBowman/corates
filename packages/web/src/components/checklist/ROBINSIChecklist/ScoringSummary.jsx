@@ -1,7 +1,7 @@
 import { For, Show, createMemo, createSignal } from 'solid-js';
 import { ROBINS_I_CHECKLIST, getActiveDomainKeys } from './checklist-map.js';
 import { getSmartScoring } from './checklist.js';
-import { Dialog } from '@corates/ui';
+import { DialogPrimitive as Dialog } from '@corates/ui';
 import { FiExternalLink, FiInfo } from 'solid-icons/fi';
 
 /**
