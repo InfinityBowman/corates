@@ -7,6 +7,7 @@ Create a settings page with a sidebar navigation that allows users to toggle bet
 ## Current State
 
 ### Existing Components
+
 - **Sidebar** (`packages/web/src/components/sidebar/Sidebar.jsx`): Main app sidebar with projects, checklists, and navigation
 - **SettingsPage** (`packages/web/src/components/profile/SettingsPage.jsx`): Single-page settings with all sections in one view
 - **BillingPage** (`packages/web/src/components/billing/BillingPage.jsx`): Standalone billing page
@@ -14,11 +15,13 @@ Create a settings page with a sidebar navigation that allows users to toggle bet
 - **Layout** (`packages/web/src/Layout.jsx`): Main layout that conditionally shows/hides sidebar based on route
 
 ### Current Routing
+
 - `/settings` → SettingsPage (all settings in one page)
 - `/settings/billing` → BillingPage
 - `/settings/billing/plans` → BillingPlansPage
 
 ### Current Behavior
+
 - Settings routes hide the main sidebar (via `shouldHideSidebar` in Layout.jsx)
 - Settings pages are standalone with no navigation between sections
 
@@ -169,14 +172,14 @@ components/
 1. **Update `Routes.jsx`**
    - Create a settings route group:
      ```jsx
-     <Route path="/settings" component={SettingsLayout}>
-       <Route path="/" component={SettingsIndex} /> // Redirect or overview
-       <Route path="/billing" component={BillingSettings} />
-       <Route path="/plans" component={PlansSettings} />
-       <Route path="/auth" component={AuthSettings} />
-       <Route path="/notifications" component={NotificationsSettings} />
-       <Route path="/organizations" component={OrgManagementSettings} />
-       <Route path="/general" component={GeneralSettings} />
+     <Route path='/settings' component={SettingsLayout}>
+       <Route path='/' component={SettingsIndex} /> // Redirect or overview
+       <Route path='/billing' component={BillingSettings} />
+       <Route path='/plans' component={PlansSettings} />
+       <Route path='/auth' component={AuthSettings} />
+       <Route path='/notifications' component={NotificationsSettings} />
+       <Route path='/organizations' component={OrgManagementSettings} />
+       <Route path='/general' component={GeneralSettings} />
      </Route>
      ```
 
@@ -332,6 +335,7 @@ packages/web/src/
 ## Implementation Checklist
 
 ### Phase 1: Base Sidebar Component
+
 - [ ] Create `BaseSidebar.jsx` with common sidebar logic
 - [ ] Extract shared UI patterns (header, toggle, mobile overlay)
 - [ ] Test BaseSidebar in isolation
@@ -339,18 +343,21 @@ packages/web/src/
 - [ ] Verify main sidebar still works correctly
 
 ### Phase 2: Settings Sidebar
+
 - [ ] Create `SettingsSidebar.jsx` using BaseSidebar
 - [ ] Define settings navigation items
 - [ ] Add icons for each section
 - [ ] Test sidebar navigation
 
 ### Phase 3: Settings Layout
+
 - [ ] Create `SettingsLayout.jsx`
 - [ ] Implement sidebar state management
 - [ ] Add localStorage persistence
 - [ ] Test responsive behavior
 
 ### Phase 4: Settings Pages
+
 - [ ] Create `AuthSettings.jsx` (extract from SettingsPage)
 - [ ] Create `NotificationsSettings.jsx` (extract from SettingsPage)
 - [ ] Create `GeneralSettings.jsx` (extract from SettingsPage)
@@ -360,18 +367,21 @@ packages/web/src/
 - [ ] Test all pages render correctly
 
 ### Phase 5: Routing
+
 - [ ] Update `Routes.jsx` with nested settings routes
 - [ ] Create `SettingsIndex.jsx` (optional)
 - [ ] Add redirects for old routes
 - [ ] Test all routes work
 
 ### Phase 6: Navigation Updates
+
 - [ ] Update Navbar settings link
 - [ ] Update internal settings links
 - [ ] Test navigation flow
 - [ ] Remove old SettingsPage component (after migration)
 
 ### Testing
+
 - [ ] Test all settings functionality
 - [ ] Test sidebar navigation
 - [ ] Test mobile responsiveness
