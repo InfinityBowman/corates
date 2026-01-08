@@ -30,8 +30,10 @@ import {
   updateLedgerWithVerifiedFields,
   updateLedgerStatus,
   getLedgerByPayloadHash,
+  getLedgerByStripeEventId,
   LedgerStatus,
 } from '@/db/stripeEventLedger.js';
+import { routeStripeEvent, extractLedgerContext } from './webhookRouter.js';
 
 const billingWebhookRoutes = new Hono();
 
@@ -193,6 +195,27 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
     const apiVersion = event.api_version;
     const created = event.created ? new Date(event.created * 1000) : null;
 
+    // Dedupe by Stripe event ID (authoritative - same event can have different payload formatting)
+    const existingByEventId = await getLedgerByStripeEventId(db, stripeEventId);
+    if (existingByEventId) {
+      // Update current ledger entry to mark as duplicate
+      await updateLedgerStatus(db, ledgerId, {
+        status: LedgerStatus.SKIPPED_DUPLICATE,
+        httpStatus: 200,
+      });
+
+      logger.stripe('webhook_dedupe_event_id', {
+        outcome: 'skipped_duplicate',
+        stripeEventId,
+        stripeEventType: eventType,
+        existingLedgerId: existingByEventId.id,
+        existingStatus: existingByEventId.status,
+        payloadHash,
+      });
+
+      return c.json({ received: true, skipped: 'duplicate_event_id' }, 200);
+    }
+
     // M5: Reject test events in production environment
     if (c.env.ENVIRONMENT === 'production' && !livemode) {
       await updateLedgerWithVerifiedFields(db, ledgerId, {
@@ -216,234 +239,86 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
       return c.json({ received: true, skipped: 'test_event_in_production' }, 200);
     }
 
-    // Handle checkout.session.completed for one-time purchases
-    if (eventType === 'checkout.session.completed') {
-      const session = event.data?.object;
+    // Route to appropriate handler
+    const ctx = { db, logger, env: c.env };
+    const handlerResult = await routeStripeEvent(event, ctx);
+    const baseLedgerContext = extractLedgerContext(event);
 
-      // Only process payment mode (one-time purchases), not subscription mode
-      if (!session || session.mode !== 'payment') {
-        await updateLedgerWithVerifiedFields(db, ledgerId, {
-          stripeEventId,
-          type: eventType,
-          livemode,
-          apiVersion,
-          created,
-          status: LedgerStatus.PROCESSED,
-          httpStatus: 200,
-          stripeCheckoutSessionId: session?.id,
-        });
+    // Merge handler-specific context with base context
+    const ledgerContext = {
+      ...baseLedgerContext,
+      ...(handlerResult.ledgerContext || {}),
+    };
 
-        logger.stripe('webhook_skipped', {
-          outcome: 'skipped',
-          stripeEventId,
-          stripeEventType: eventType,
-          reason: 'not_payment_mode',
-          payloadHash,
-        });
+    // Determine ledger status based on handler result
+    let ledgerStatus = LedgerStatus.PROCESSED;
+    let httpStatus = 200;
 
-        return c.json({ received: true, skipped: 'not_payment_mode' });
-      }
-
-      // Verify metadata contains required fields
-      const orgId = session.metadata?.orgId;
-      const grantType = session.metadata?.grantType;
-      if (!orgId || grantType !== 'single_project') {
-        await updateLedgerStatus(db, ledgerId, {
-          status: LedgerStatus.FAILED,
-          error: 'invalid_metadata',
-          httpStatus: 400,
-        });
-
-        logger.stripe('webhook_failed', {
-          outcome: 'failed',
-          stripeEventId,
-          stripeEventType: eventType,
-          errorCode: 'invalid_metadata',
-          payloadHash,
-        });
-
-        const error = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
-          field: 'metadata',
-          value: session.metadata,
-        });
-        return c.json(error, error.statusCode);
-      }
-
-      const purchaserUserId = session.metadata?.purchaserUserId;
-
-      // Verify payment was successful
-      if (session.payment_status !== 'paid') {
-        await updateLedgerStatus(db, ledgerId, {
-          status: LedgerStatus.FAILED,
-          error: `payment_not_paid:${session.payment_status}`,
-          httpStatus: 400,
-        });
-
-        logger.stripe('webhook_failed', {
-          outcome: 'failed',
-          stripeEventId,
-          stripeEventType: eventType,
-          errorCode: 'payment_not_paid',
-          payloadHash,
-        });
-
-        const error = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
-          field: 'payment_status',
-          value: session.payment_status,
-        });
-        return c.json(error, error.statusCode);
-      }
-
-      const {
-        getGrantByStripeCheckoutSessionId,
-        getGrantByOrgIdAndType,
-        createGrant,
-        updateGrantExpiresAt,
-      } = await import('@/db/orgAccessGrants.js');
-
-      // Check for idempotency - if grant already exists for this checkout session, skip
-      const existingGrantBySession = await getGrantByStripeCheckoutSessionId(db, session.id);
-      if (existingGrantBySession) {
-        await updateLedgerWithVerifiedFields(db, ledgerId, {
-          stripeEventId,
-          type: eventType,
-          livemode,
-          apiVersion,
-          created,
-          status: LedgerStatus.SKIPPED_DUPLICATE,
-          httpStatus: 200,
-          orgId,
-          stripeCustomerId: session.customer,
-          stripeCheckoutSessionId: session.id,
-        });
-
-        logger.stripe('webhook_skipped', {
-          outcome: 'skipped_duplicate',
-          stripeEventId,
-          stripeEventType: eventType,
-          reason: 'already_processed',
-          orgId,
-          stripeCheckoutSessionId: session.id,
-          payloadHash,
-        });
-
-        return c.json({ received: true, skipped: 'already_processed' });
-      }
-
-      const now = new Date();
-      const nowTimestamp = Math.floor(now.getTime() / 1000);
-
-      // Check if org already has a single_project grant (active or expired, but not revoked)
-      const existingGrant = await getGrantByOrgIdAndType(db, orgId, 'single_project');
-
-      if (existingGrant && !existingGrant.revokedAt) {
-        // Extension rule: expiresAt = max(now, currentExpiresAt) + 6 months
-        const existingExpiresAtTimestamp =
-          existingGrant.expiresAt instanceof Date ?
-            Math.floor(existingGrant.expiresAt.getTime() / 1000)
-          : existingGrant.expiresAt;
-
-        const baseExpiresAt = Math.max(nowTimestamp, existingExpiresAtTimestamp);
-        const newExpiresAt = new Date(baseExpiresAt * 1000);
-        newExpiresAt.setMonth(newExpiresAt.getMonth() + 6);
-
-        await updateGrantExpiresAt(db, existingGrant.id, newExpiresAt);
-
-        await updateLedgerWithVerifiedFields(db, ledgerId, {
-          stripeEventId,
-          type: eventType,
-          livemode,
-          apiVersion,
-          created,
-          status: LedgerStatus.PROCESSED,
-          httpStatus: 200,
-          orgId,
-          stripeCustomerId: session.customer,
-          stripeCheckoutSessionId: session.id,
-        });
-
-        logger.stripe('webhook_processed', {
-          outcome: 'processed',
-          action: 'extended',
-          stripeEventId,
-          stripeEventType: eventType,
-          orgId,
-          userId: purchaserUserId,
-          stripeCheckoutSessionId: session.id,
-          grantId: existingGrant.id,
-          payloadHash,
-        });
-
-        return c.json({ received: true, action: 'extended', grantId: existingGrant.id });
-      }
-
-      // Create new grant (6 months from now)
-      const expiresAt = new Date(now);
-      expiresAt.setMonth(expiresAt.getMonth() + 6);
-
-      const grantId = crypto.randomUUID();
-      await createGrant(db, {
-        id: grantId,
-        orgId,
-        type: grantType,
-        startsAt: now,
-        expiresAt,
-        stripeCheckoutSessionId: session.id,
-        metadata: {
-          purchaserUserId,
-          stripeCheckoutSessionId: session.id,
-          stripePaymentIntentId: session.payment_intent,
-        },
-      });
-
-      await updateLedgerWithVerifiedFields(db, ledgerId, {
-        stripeEventId,
-        type: eventType,
-        livemode,
-        apiVersion,
-        created,
-        status: LedgerStatus.PROCESSED,
-        httpStatus: 200,
-        orgId,
-        stripeCustomerId: session.customer,
-        stripeCheckoutSessionId: session.id,
-      });
-
-      logger.stripe('webhook_processed', {
-        outcome: 'processed',
-        action: 'created',
-        stripeEventId,
-        stripeEventType: eventType,
-        orgId,
-        userId: purchaserUserId,
-        stripeCheckoutSessionId: session.id,
-        grantId,
-        payloadHash,
-      });
-
-      return c.json({ received: true, action: 'created', grantId });
+    if (!handlerResult.handled) {
+      ledgerStatus = LedgerStatus.PROCESSED;
+    } else if (handlerResult.error) {
+      ledgerStatus = LedgerStatus.FAILED;
+      httpStatus = 400;
+    } else if (handlerResult.result === 'already_processed') {
+      ledgerStatus = LedgerStatus.SKIPPED_DUPLICATE;
     }
 
-    // Other event types - record but don't process
+    // Update ledger with verified fields and result
     await updateLedgerWithVerifiedFields(db, ledgerId, {
       stripeEventId,
       type: eventType,
       livemode,
       apiVersion,
       created,
-      status: LedgerStatus.PROCESSED,
-      httpStatus: 200,
+      status: ledgerStatus,
+      httpStatus,
+      error: handlerResult.error || null,
+      ...ledgerContext,
     });
 
-    logger.stripe('webhook_skipped', {
-      outcome: 'skipped',
+    logger.stripe('webhook_processed', {
+      outcome: handlerResult.handled ? 'processed' : 'unhandled',
       stripeEventId,
       stripeEventType: eventType,
-      reason: 'event_type_not_handled',
+      result: handlerResult.result,
       payloadHash,
+      ...(handlerResult.ledgerContext || {}),
     });
 
-    return c.json({ received: true, skipped: 'event_type_not_handled' });
+    // Return error response if handler indicated failure
+    if (handlerResult.error) {
+      // Map handler errors to domain errors for consistent API responses
+      const errorDetails = {
+        field: handlerResult.result,
+        value: handlerResult.error,
+      };
+      const domainError = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, errorDetails);
+      return c.json(domainError, domainError.statusCode);
+    }
+
+    // Build response with backwards-compatible fields for existing tests
+    const response = {
+      received: true,
+      handled: handlerResult.handled,
+      result: handlerResult.result,
+    };
+
+    // Map result strings to expected action/skipped fields for backwards compatibility
+    if (handlerResult.result === 'grant_created') {
+      response.action = 'created';
+      response.grantId = handlerResult.ledgerContext?.grantId;
+    } else if (handlerResult.result === 'grant_extended') {
+      response.action = 'extended';
+      response.grantId = handlerResult.ledgerContext?.grantId;
+    } else if (handlerResult.result === 'already_processed') {
+      response.skipped = 'already_processed';
+    } else if (handlerResult.result === 'not_payment_mode') {
+      response.skipped = 'not_payment_mode';
+    } else if (!handlerResult.handled) {
+      response.skipped = 'event_type_not_handled';
+    }
+
+    return c.json(response);
   } catch (error) {
     logger.error('Purchase webhook handler error', {
       error: truncateError(error),
