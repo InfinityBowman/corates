@@ -1,0 +1,588 @@
+/**
+ * Project Detail component for admin dashboard
+ * Shows project details, members, files, and invitations
+ */
+
+import { createSignal, Show, For } from 'solid-js';
+import { useParams, A } from '@solidjs/router';
+import {
+  FiArrowLeft,
+  FiFolder,
+  FiUsers,
+  FiFile,
+  FiMail,
+  FiTrash2,
+  FiLoader,
+  FiAlertCircle,
+  FiCheckCircle,
+  FiClock,
+  FiHome,
+  FiCopy,
+  FiHardDrive,
+  FiUserMinus,
+} from 'solid-icons/fi';
+import { useAdminProjectDetails } from '@primitives/useAdminQueries.js';
+import {
+  removeProjectMember,
+  deleteProject,
+  isAdminChecked,
+  isAdmin,
+} from '@/stores/adminStore.js';
+import { Dialog, Avatar, showToast } from '@corates/ui';
+import { handleError } from '@/lib/error-utils.js';
+
+export default function ProjectDetail() {
+  const params = useParams();
+  const projectId = () => params.projectId;
+
+  // Fetch project details
+  const projectQuery = useAdminProjectDetails(projectId());
+  const projectData = () => projectQuery.data;
+
+  // Dialog states
+  const [confirmDialog, setConfirmDialog] = createSignal(null);
+  const [loading, setLoading] = createSignal(false);
+  const [copiedId, setCopiedId] = createSignal(null);
+
+  const formatDate = timestamp => {
+    if (!timestamp) return '-';
+    const date =
+      timestamp instanceof Date ? timestamp
+      : typeof timestamp === 'string' ? new Date(timestamp)
+      : new Date(timestamp * 1000);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  };
+
+  const formatShortDate = timestamp => {
+    if (!timestamp) return '-';
+    const date =
+      timestamp instanceof Date ? timestamp
+      : typeof timestamp === 'string' ? new Date(timestamp)
+      : new Date(timestamp * 1000);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const formatBytes = bytes => {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const handleCopy = async (text, label) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(`${label}-${text}`);
+      showToast.success('Copied', `${label} copied to clipboard`);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      showToast.error('Error', 'Failed to copy to clipboard');
+    }
+  };
+
+  const handleRemoveMember = async memberId => {
+    setLoading(true);
+    try {
+      await removeProjectMember(projectId(), memberId);
+      showToast.success('Success', 'Member removed from project');
+      setConfirmDialog(null);
+      projectQuery.refetch();
+    } catch (error) {
+      await handleError(error, { toastTitle: 'Error removing member' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    setLoading(true);
+    try {
+      await deleteProject(projectId());
+      showToast.success('Success', 'Project deleted');
+      window.location.href = '/admin/projects';
+    } catch (error) {
+      await handleError(error, { toastTitle: 'Error deleting project' });
+      setLoading(false);
+    }
+  };
+
+  const isInvitationPending = invitation => {
+    if (invitation.acceptedAt) return false;
+    const expiresAt = new Date(invitation.expiresAt * 1000);
+    return expiresAt > new Date();
+  };
+
+  const isInvitationExpired = invitation => {
+    if (invitation.acceptedAt) return false;
+    const expiresAt = new Date(invitation.expiresAt * 1000);
+    return expiresAt <= new Date();
+  };
+
+  return (
+    <Show
+      when={isAdminChecked()}
+      fallback={
+        <div class='flex min-h-100 items-center justify-center'>
+          <FiLoader class='h-8 w-8 animate-spin text-blue-600' />
+        </div>
+      }
+    >
+      <Show
+        when={isAdmin()}
+        fallback={
+          <div class='flex min-h-100 flex-col items-center justify-center text-gray-500'>
+            <FiAlertCircle class='mb-4 h-12 w-12' />
+            <p class='text-lg font-medium'>Access Denied</p>
+            <p class='text-sm'>You do not have admin privileges.</p>
+          </div>
+        }
+      >
+        {/* Back link */}
+        <A
+          href='/admin/projects'
+          class='mb-6 inline-flex items-center text-sm text-gray-500 hover:text-gray-700'
+        >
+          <FiArrowLeft class='mr-2 h-4 w-4' />
+          Back to Projects
+        </A>
+
+        {/* Loading state */}
+        <Show when={projectQuery.isLoading}>
+          <div class='flex min-h-64 items-center justify-center'>
+            <FiLoader class='h-8 w-8 animate-spin text-blue-600' />
+          </div>
+        </Show>
+
+        {/* Error state */}
+        <Show when={projectQuery.isError}>
+          <div class='rounded-lg border border-red-200 bg-red-50 p-6 text-center'>
+            <FiAlertCircle class='mx-auto mb-2 h-8 w-8 text-red-500' />
+            <p class='text-red-700'>Failed to load project details</p>
+            <button
+              onClick={() => projectQuery.refetch()}
+              class='mt-2 text-sm text-red-600 hover:text-red-700'
+            >
+              Try again
+            </button>
+          </div>
+        </Show>
+
+        {/* Project details */}
+        <Show when={projectData()?.project}>
+          {/* Header */}
+          <div class='mb-8 flex items-start justify-between'>
+            <div class='flex items-center space-x-4'>
+              <div class='flex h-16 w-16 items-center justify-center rounded-lg bg-blue-100'>
+                <FiFolder class='h-8 w-8 text-blue-600' />
+              </div>
+              <div>
+                <h1 class='text-2xl font-bold text-gray-900'>{projectData().project.name}</h1>
+                <Show when={projectData().project.description}>
+                  <p class='mt-1 text-gray-500'>{projectData().project.description}</p>
+                </Show>
+                <div class='mt-2 flex items-center space-x-4 text-sm text-gray-500'>
+                  <A
+                    href={`/admin/orgs/${projectData().project.orgId}`}
+                    class='flex items-center hover:text-blue-600'
+                  >
+                    <FiHome class='mr-1 h-4 w-4' />
+                    {projectData().project.orgName}
+                  </A>
+                  <span class='flex items-center'>
+                    <FiUsers class='mr-1 h-4 w-4' />
+                    {projectData().stats.memberCount} members
+                  </span>
+                  <span class='flex items-center'>
+                    <FiFile class='mr-1 h-4 w-4' />
+                    {projectData().stats.fileCount} files
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <button
+              onClick={() => setConfirmDialog({ type: 'delete-project' })}
+              disabled={loading()}
+              class='inline-flex items-center rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
+            >
+              <FiTrash2 class='mr-2 h-4 w-4' />
+              Delete Project
+            </button>
+          </div>
+
+          {/* Project Info Section */}
+          <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+            <h2 class='mb-4 text-lg font-semibold text-gray-900'>Project Information</h2>
+            <dl class='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+              <div>
+                <dt class='text-sm font-medium text-gray-500'>Project ID</dt>
+                <dd class='mt-1 flex items-center text-sm text-gray-900'>
+                  <span class='font-mono'>{projectData().project.id}</span>
+                  <button
+                    onClick={() => handleCopy(projectData().project.id, 'Project ID')}
+                    class='ml-2 text-gray-400 hover:text-gray-600'
+                  >
+                    <Show
+                      when={copiedId() === `Project ID-${projectData().project.id}`}
+                      fallback={<FiCopy class='h-4 w-4' />}
+                    >
+                      <FiCheckCircle class='h-4 w-4 text-green-500' />
+                    </Show>
+                  </button>
+                </dd>
+              </div>
+              <div>
+                <dt class='text-sm font-medium text-gray-500'>Organization</dt>
+                <dd class='mt-1 text-sm'>
+                  <A
+                    href={`/admin/orgs/${projectData().project.orgId}`}
+                    class='text-blue-600 hover:text-blue-700'
+                  >
+                    {projectData().project.orgName}
+                  </A>
+                  <span class='ml-1 text-gray-500'>@{projectData().project.orgSlug}</span>
+                </dd>
+              </div>
+              <div>
+                <dt class='text-sm font-medium text-gray-500'>Created By</dt>
+                <dd class='mt-1 text-sm'>
+                  <A
+                    href={`/admin/users/${projectData().project.createdBy}`}
+                    class='text-blue-600 hover:text-blue-700'
+                  >
+                    {projectData().project.creatorDisplayName ||
+                      projectData().project.creatorName ||
+                      projectData().project.creatorEmail}
+                  </A>
+                </dd>
+              </div>
+              <div>
+                <dt class='text-sm font-medium text-gray-500'>Created</dt>
+                <dd class='mt-1 text-sm text-gray-900'>
+                  {formatDate(projectData().project.createdAt)}
+                </dd>
+              </div>
+              <div>
+                <dt class='text-sm font-medium text-gray-500'>Updated</dt>
+                <dd class='mt-1 text-sm text-gray-900'>
+                  {formatDate(projectData().project.updatedAt)}
+                </dd>
+              </div>
+              <div>
+                <dt class='text-sm font-medium text-gray-500'>Storage Used</dt>
+                <dd class='mt-1 flex items-center text-sm text-gray-900'>
+                  <FiHardDrive class='mr-1 h-4 w-4 text-gray-400' />
+                  {formatBytes(projectData().stats.totalStorageBytes)}
+                </dd>
+              </div>
+            </dl>
+          </div>
+
+          {/* Members Section */}
+          <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+            <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
+              <FiUsers class='mr-2 h-5 w-5' />
+              Members ({projectData().members?.length || 0})
+            </h2>
+            <Show
+              when={projectData().members?.length > 0}
+              fallback={<p class='text-sm text-gray-500'>No members</p>}
+            >
+              <div class='overflow-x-auto'>
+                <table class='w-full'>
+                  <thead>
+                    <tr class='border-b border-gray-200 bg-gray-50'>
+                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                        User
+                      </th>
+                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                        Role
+                      </th>
+                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                        Joined
+                      </th>
+                      <th class='px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase'>
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class='divide-y divide-gray-200'>
+                    <For each={projectData().members}>
+                      {member => (
+                        <tr class='hover:bg-gray-50'>
+                          <td class='px-4 py-3'>
+                            <div class='flex items-center space-x-3'>
+                              <Avatar
+                                src={member.userAvatar}
+                                name={member.userDisplayName || member.userName}
+                                class='h-8 w-8'
+                              />
+                              <div>
+                                <A
+                                  href={`/admin/users/${member.userId}`}
+                                  class='font-medium text-blue-600 hover:text-blue-700'
+                                >
+                                  {member.userDisplayName || member.userName}
+                                </A>
+                                <p class='text-xs text-gray-500'>{member.userEmail}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td class='px-4 py-3'>
+                            <span
+                              class={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                                member.role === 'owner' ?
+                                  'bg-purple-100 text-purple-800'
+                                : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {member.role}
+                            </span>
+                          </td>
+                          <td class='px-4 py-3 text-sm text-gray-500'>
+                            {formatShortDate(member.joinedAt)}
+                          </td>
+                          <td class='px-4 py-3 text-right'>
+                            <button
+                              onClick={() => setConfirmDialog({ type: 'remove-member', member })}
+                              disabled={loading()}
+                              class='inline-flex items-center text-sm text-red-600 hover:text-red-700 disabled:opacity-50'
+                              title='Remove member'
+                            >
+                              <FiUserMinus class='h-4 w-4' />
+                            </button>
+                          </td>
+                        </tr>
+                      )}
+                    </For>
+                  </tbody>
+                </table>
+              </div>
+            </Show>
+          </div>
+
+          {/* Files Section */}
+          <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+            <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
+              <FiFile class='mr-2 h-5 w-5' />
+              Files ({projectData().files?.length || 0})
+            </h2>
+            <Show
+              when={projectData().files?.length > 0}
+              fallback={<p class='text-sm text-gray-500'>No files uploaded</p>}
+            >
+              <div class='overflow-x-auto'>
+                <table class='w-full'>
+                  <thead>
+                    <tr class='border-b border-gray-200 bg-gray-50'>
+                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                        File
+                      </th>
+                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                        Type
+                      </th>
+                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                        Size
+                      </th>
+                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                        Uploaded By
+                      </th>
+                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                        Uploaded
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class='divide-y divide-gray-200'>
+                    <For each={projectData().files}>
+                      {file => (
+                        <tr class='hover:bg-gray-50'>
+                          <td class='px-4 py-3'>
+                            <div class='flex items-center space-x-2'>
+                              <FiFile class='h-4 w-4 text-gray-400' />
+                              <span class='text-sm font-medium text-gray-900'>
+                                {file.originalName || file.filename}
+                              </span>
+                            </div>
+                          </td>
+                          <td class='px-4 py-3'>
+                            <span class='text-sm text-gray-500'>{file.fileType || '-'}</span>
+                          </td>
+                          <td class='px-4 py-3'>
+                            <span class='text-sm text-gray-500'>{formatBytes(file.fileSize)}</span>
+                          </td>
+                          <td class='px-4 py-3'>
+                            <Show
+                              when={file.uploadedBy}
+                              fallback={<span class='text-sm text-gray-400'>-</span>}
+                            >
+                              <A
+                                href={`/admin/users/${file.uploadedBy}`}
+                                class='text-sm text-blue-600 hover:text-blue-700'
+                              >
+                                {file.uploaderDisplayName || file.uploaderName}
+                              </A>
+                            </Show>
+                          </td>
+                          <td class='px-4 py-3 text-sm text-gray-500'>
+                            {formatShortDate(file.createdAt)}
+                          </td>
+                        </tr>
+                      )}
+                    </For>
+                  </tbody>
+                </table>
+              </div>
+            </Show>
+          </div>
+
+          {/* Invitations Section */}
+          <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+            <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
+              <FiMail class='mr-2 h-5 w-5' />
+              Invitations ({projectData().invitations?.length || 0})
+            </h2>
+            <Show
+              when={projectData().invitations?.length > 0}
+              fallback={<p class='text-sm text-gray-500'>No invitations</p>}
+            >
+              <div class='overflow-x-auto'>
+                <table class='w-full'>
+                  <thead>
+                    <tr class='border-b border-gray-200 bg-gray-50'>
+                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                        Email
+                      </th>
+                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                        Role
+                      </th>
+                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                        Status
+                      </th>
+                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                        Invited By
+                      </th>
+                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                        Created
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class='divide-y divide-gray-200'>
+                    <For each={projectData().invitations}>
+                      {invitation => (
+                        <tr class='hover:bg-gray-50'>
+                          <td class='px-4 py-3 text-sm text-gray-900'>{invitation.email}</td>
+                          <td class='px-4 py-3'>
+                            <span class='inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800'>
+                              {invitation.role}
+                            </span>
+                            <Show when={invitation.grantOrgMembership}>
+                              <span class='ml-1 text-xs text-gray-500'>+ org</span>
+                            </Show>
+                          </td>
+                          <td class='px-4 py-3'>
+                            <Show when={invitation.acceptedAt}>
+                              <span class='inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800'>
+                                <FiCheckCircle class='mr-1 h-3 w-3' />
+                                Accepted
+                              </span>
+                            </Show>
+                            <Show when={isInvitationPending(invitation)}>
+                              <span class='inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800'>
+                                <FiClock class='mr-1 h-3 w-3' />
+                                Pending
+                              </span>
+                            </Show>
+                            <Show when={isInvitationExpired(invitation)}>
+                              <span class='inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800'>
+                                Expired
+                              </span>
+                            </Show>
+                          </td>
+                          <td class='px-4 py-3'>
+                            <A
+                              href={`/admin/users/${invitation.invitedBy}`}
+                              class='text-sm text-blue-600 hover:text-blue-700'
+                            >
+                              {invitation.inviterDisplayName || invitation.inviterName}
+                            </A>
+                          </td>
+                          <td class='px-4 py-3 text-sm text-gray-500'>
+                            {formatShortDate(invitation.createdAt)}
+                          </td>
+                        </tr>
+                      )}
+                    </For>
+                  </tbody>
+                </table>
+              </div>
+            </Show>
+          </div>
+        </Show>
+
+        {/* Confirm Dialog */}
+        <Dialog
+          open={!!confirmDialog()}
+          onOpenChange={open => !open && setConfirmDialog(null)}
+          title={
+            confirmDialog()?.type === 'delete-project' ? 'Delete Project'
+            : confirmDialog()?.type === 'remove-member' ?
+              'Remove Member'
+            : 'Confirm'
+          }
+          role='alertdialog'
+        >
+          <div class='space-y-4'>
+            <Show when={confirmDialog()?.type === 'delete-project'}>
+              <p class='text-sm text-gray-600'>
+                This will permanently delete the project and all associated data including files,
+                members, and invitations. This action cannot be undone.
+              </p>
+            </Show>
+            <Show when={confirmDialog()?.type === 'remove-member'}>
+              <p class='text-sm text-gray-600'>
+                Are you sure you want to remove{' '}
+                <strong>
+                  {confirmDialog()?.member?.userDisplayName ||
+                    confirmDialog()?.member?.userName ||
+                    confirmDialog()?.member?.userEmail}
+                </strong>{' '}
+                from this project?
+              </p>
+            </Show>
+            <div class='flex justify-end space-x-3'>
+              <button
+                onClick={() => setConfirmDialog(null)}
+                class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (confirmDialog()?.type === 'delete-project') handleDeleteProject();
+                  else if (confirmDialog()?.type === 'remove-member')
+                    handleRemoveMember(confirmDialog().member.id);
+                }}
+                disabled={loading()}
+                class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
+              >
+                {loading() ? 'Processing...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </Dialog>
+      </Show>
+    </Show>
+  );
+}

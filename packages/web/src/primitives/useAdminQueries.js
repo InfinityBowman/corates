@@ -87,6 +87,49 @@ export function useAdminUserDetails(userId) {
 }
 
 /**
+ * Hook to fetch projects with pagination and search
+ * @param {() => {page: number, limit: number, search: string, orgId: string}} getParams - Function returning params
+ */
+export function useAdminProjects(getParams) {
+  return useQuery(() => {
+    const params = typeof getParams === 'function' ? getParams() : getParams;
+    const page = params?.page ?? 1;
+    const limit = params?.limit ?? 20;
+    const search = params?.search ?? '';
+    const orgId = params?.orgId ?? '';
+    return {
+      queryKey: queryKeys.admin.projects(page, limit, search, orgId),
+      queryFn: () => {
+        const searchParams = new URLSearchParams({
+          page: page.toString(),
+          limit: limit.toString(),
+        });
+        if (search) searchParams.set('search', search);
+        if (orgId) searchParams.set('orgId', orgId);
+        return adminFetch(`projects?${searchParams.toString()}`);
+      },
+      staleTime: 0,
+      gcTime: 1000 * 60 * 5,
+      refetchOnMount: 'always',
+    };
+  });
+}
+
+/**
+ * Hook to fetch single project details
+ */
+export function useAdminProjectDetails(projectId) {
+  return useQuery(() => ({
+    queryKey: queryKeys.admin.projectDetails(projectId),
+    queryFn: () => adminFetch(`projects/${projectId}`),
+    enabled: !!projectId,
+    staleTime: 0,
+    gcTime: 1000 * 60 * 5,
+    refetchOnMount: 'always',
+  }));
+}
+
+/**
  * Hook to fetch storage documents with cursor-based pagination
  * @param {() => {cursor: string|null, limit: number, prefix: string, search: string}} getParams - Function returning params
  */

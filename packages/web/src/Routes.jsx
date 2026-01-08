@@ -45,6 +45,8 @@ const AdminBillingStuckStatesPage = lazy(
 );
 const DatabaseViewer = lazy(() => import('@/components/admin/DatabaseViewer.jsx'));
 const UserDetail = lazy(() => import('@/components/admin/UserDetail.jsx'));
+const ProjectList = lazy(() => import('@/components/admin/ProjectList.jsx'));
+const ProjectDetail = lazy(() => import('@/components/admin/ProjectDetail.jsx'));
 
 export default function AppRoutes() {
   return (
@@ -84,6 +86,8 @@ export default function AppRoutes() {
             <Route path='/orgs' component={OrgList} />
             <Route path='/orgs/:orgId' component={OrgDetail} />
             <Route path='/users/:userId' component={UserDetail} />
+            <Route path='/projects/*' component={ProjectList} />
+            <Route path='/projects/:projectId' component={ProjectDetail} />
             <Route path='/storage' component={StorageManagement} />
             <Route path='/billing/ledger' component={AdminBillingLedgerPage} />
             <Route path='/billing/stuck-states' component={AdminBillingStuckStatesPage} />

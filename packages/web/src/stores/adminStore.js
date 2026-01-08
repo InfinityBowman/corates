@@ -347,6 +347,43 @@ async function fetchOrgBillingReconcile(
   });
 }
 
+/**
+ * Fetch projects with pagination and search
+ */
+async function fetchProjects({ page = 1, limit = 20, search = '', orgId = '' } = {}) {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+  if (search) params.set('search', search);
+  if (orgId) params.set('orgId', orgId);
+
+  return apiFetch.get(`/api/admin/projects?${params}`, { toastMessage: false });
+}
+
+/**
+ * Fetch single project details
+ */
+async function fetchProjectDetails(projectId) {
+  return apiFetch.get(`/api/admin/projects/${projectId}`, { toastMessage: false });
+}
+
+/**
+ * Remove a member from a project
+ */
+async function removeProjectMember(projectId, memberId) {
+  return apiFetch.delete(`/api/admin/projects/${projectId}/members/${memberId}`, {
+    toastMessage: false,
+  });
+}
+
+/**
+ * Delete a project
+ */
+async function deleteProject(projectId) {
+  return apiFetch.delete(`/api/admin/projects/${projectId}`, { toastMessage: false });
+}
+
 export {
   isAdmin,
   isAdminChecked,
@@ -381,4 +418,8 @@ export {
   fetchBillingLedger,
   fetchBillingStuckStates,
   fetchOrgBillingReconcile,
+  fetchProjects,
+  fetchProjectDetails,
+  removeProjectMember,
+  deleteProject,
 };

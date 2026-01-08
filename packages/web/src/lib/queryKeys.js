@@ -56,6 +56,8 @@ export const queryKeys = {
     orgs: (page, limit, search) => ['adminOrgs', page, limit, search],
     orgDetails: orgId => ['adminOrgDetails', orgId],
     orgBilling: orgId => ['adminOrgBilling', orgId],
+    projects: (page, limit, search, orgId) => ['adminProjects', page, limit, search, orgId],
+    projectDetails: projectId => ['adminProjectDetails', projectId],
     storageDocuments: (cursor, limit, prefix, search) => [
       'storageDocuments',
       cursor,

@@ -14,6 +14,7 @@ import {
   FiLoader,
   FiAlertCircle,
   FiServer,
+  FiFolder,
 } from 'solid-icons/fi';
 import { A } from '@solidjs/router';
 import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.js';
@@ -21,6 +22,7 @@ import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.j
 const navItems = [
   { path: '/admin', label: 'Dashboard', icon: FiShield },
   { path: '/admin/orgs', label: 'Organizations', icon: FiHome },
+  { path: '/admin/projects', label: 'Projects', icon: FiFolder },
   { path: '/admin/storage', label: 'Storage', icon: FiDatabase },
   { path: '/admin/database', label: 'Database', icon: FiServer },
   { path: '/admin/billing/ledger', label: 'Event Ledger', icon: FiFilter },
