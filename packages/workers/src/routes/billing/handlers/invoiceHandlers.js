@@ -93,7 +93,7 @@ export async function handleInvoicePaymentSucceeded(invoice, ctx) {
  * @param {object} ctx - Context with db, logger, env
  */
 export async function handleInvoicePaymentFailed(invoice, ctx) {
-  const { db, logger, _env } = ctx;
+  const { db, logger, env } = ctx;
 
   // Only process subscription invoices
   if (!invoice.subscription) {
@@ -164,7 +164,7 @@ export async function handleInvoicePaymentFailed(invoice, ctx) {
   const stripeCustomerId =
     typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
 
-  if (stripeCustomerId && ctx.env?.EMAIL_QUEUE) {
+  if (stripeCustomerId && env?.EMAIL_QUEUE) {
     const billingUser = await db
       .select({ id: user.id, email: user.email, name: user.name, displayName: user.displayName })
       .from(user)

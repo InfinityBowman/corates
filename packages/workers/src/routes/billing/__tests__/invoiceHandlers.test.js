@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { env } from 'cloudflare:test';
-import { resetTestDatabase, seedUser } from '@/__tests__/helpers.js';
+import { resetTestDatabase, seedUser, seedSubscription } from '@/__tests__/helpers.js';
 import { createDb } from '@/db/client.js';
 import {
   handleInvoicePaymentSucceeded,
@@ -25,23 +25,6 @@ function createTestContext(db, options = {}) {
     },
     env: options.env || {},
   };
-}
-
-// Helper to seed a subscription
-async function seedSubscription(db, data) {
-  await db.insert(subscription).values({
-    id: data.id,
-    plan: data.plan || 'team',
-    referenceId: data.referenceId || 'org-1',
-    stripeCustomerId: data.stripeCustomerId || 'cus_123',
-    stripeSubscriptionId: data.stripeSubscriptionId,
-    status: data.status || 'active',
-    periodStart: data.periodStart || new Date(),
-    periodEnd: data.periodEnd || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    cancelAtPeriodEnd: data.cancelAtPeriodEnd || false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
 }
 
 describe('Invoice Handlers', () => {
@@ -87,10 +70,16 @@ describe('Invoice Handlers', () => {
     });
 
     it('updates subscription to active on payment success', async () => {
-      await seedSubscription(db, {
+      const nowSec = Math.floor(Date.now() / 1000);
+      await seedSubscription({
         id: 'sub-local-1',
+        plan: 'team',
+        referenceId: 'org-1',
         stripeSubscriptionId: 'sub_123',
+        stripeCustomerId: 'cus_123',
         status: 'past_due',
+        createdAt: nowSec,
+        updatedAt: nowSec,
       });
 
       const invoice = {
@@ -118,10 +107,16 @@ describe('Invoice Handlers', () => {
     });
 
     it('handles subscription object instead of string ID', async () => {
-      await seedSubscription(db, {
+      const nowSec = Math.floor(Date.now() / 1000);
+      await seedSubscription({
         id: 'sub-local-1',
+        plan: 'team',
+        referenceId: 'org-1',
         stripeSubscriptionId: 'sub_123',
+        stripeCustomerId: 'cus_123',
         status: 'past_due',
+        createdAt: nowSec,
+        updatedAt: nowSec,
       });
 
       const invoice = {
@@ -170,10 +165,16 @@ describe('Invoice Handlers', () => {
     });
 
     it('updates subscription to past_due on payment failure', async () => {
-      await seedSubscription(db, {
+      const nowSec = Math.floor(Date.now() / 1000);
+      await seedSubscription({
         id: 'sub-local-1',
+        plan: 'team',
+        referenceId: 'org-1',
         stripeSubscriptionId: 'sub_123',
+        stripeCustomerId: 'cus_123',
         status: 'active',
+        createdAt: nowSec,
+        updatedAt: nowSec,
       });
 
       const invoice = {
@@ -213,12 +214,15 @@ describe('Invoice Handlers', () => {
         updatedAt: nowSec,
       });
 
-      await seedSubscription(db, {
+      await seedSubscription({
         id: 'sub-local-1',
+        plan: 'team',
+        referenceId: 'org-1',
         stripeSubscriptionId: 'sub_123',
         stripeCustomerId: 'cus_123',
-        referenceId: 'org-1',
         status: 'active',
+        createdAt: nowSec,
+        updatedAt: nowSec,
       });
 
       const mockEmailQueue = {
@@ -245,11 +249,16 @@ describe('Invoice Handlers', () => {
     });
 
     it('logs when dunning email skipped due to no user', async () => {
-      await seedSubscription(db, {
+      const nowSec = Math.floor(Date.now() / 1000);
+      await seedSubscription({
         id: 'sub-local-1',
+        plan: 'team',
+        referenceId: 'org-1',
         stripeSubscriptionId: 'sub_123',
         stripeCustomerId: 'cus_orphan',
         status: 'active',
+        createdAt: nowSec,
+        updatedAt: nowSec,
       });
 
       const mockEmailQueue = {
