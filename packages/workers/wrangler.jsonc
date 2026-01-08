@@ -82,7 +82,15 @@
       "preview_urls": false,
       "routes": [
         {
-          "pattern": "api.corates.org/*",
+          "pattern": "corates.org/api/*",
+          "zone_name": "corates.org"
+        },
+        {
+          "pattern": "corates.org/health",
+          "zone_name": "corates.org"
+        },
+        {
+          "pattern": "corates.org/healthz",
           "zone_name": "corates.org"
         }
       ],
@@ -98,9 +106,8 @@
       },
       "vars": {
         "ENVIRONMENT": "production",
-        "AUTH_BASE_URL": "https://api.corates.org",
-        "APP_URL": "https://corates.org",
-        "COOKIE_DOMAIN": ".corates.org"
+        "AUTH_BASE_URL": "https://corates.org",
+        "APP_URL": "https://corates.org"
       },
       // Production secrets are managed via `wrangler secret put` command
       // Run these commands to set production secrets:

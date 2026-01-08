@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   server: {
-    allowedHosts: ['corates.org', 'www.corates.org', 'localhost'],
+    allowedHosts: ['corates.org', 'localhost'],
   },
   plugins: [
     // SolidJS plugin - exclude Preact files

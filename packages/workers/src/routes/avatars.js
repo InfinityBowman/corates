@@ -152,8 +152,6 @@ avatarRoutes.post('/', async c => {
       // Generate the public URL - serve through our API
       // Use a same-origin relative URL so service workers and the browser cache
       // can treat the avatar as a first-class asset for offline usage.
-      // Absolute URLs may point to a different hostname (e.g. api.corates.org) which
-      // some service worker logic deliberately skips, preventing offline caching.
       // Add timestamp query parameter for cache-busting when avatar is updated
       const avatarUrl = `/api/users/avatar/${user.id}?t=${timestamp}`;
 

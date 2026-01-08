@@ -1,7 +1,7 @@
 // Environment configuration for the landing page
 export const config = {
-  appUrl: import.meta.env.VITE_PUBLIC_APP_URL || 'https://corates.org',
-  apiUrl: import.meta.env.VITE_API_URL || 'https://api.corates.org',
+  appUrl: import.meta.env.VITE_PUBLIC_APP_URL || 'http://localhost:3010',
+  apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:8787',
 };
 
 // Helper functions for common URLs
