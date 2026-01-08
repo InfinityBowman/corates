@@ -130,7 +130,7 @@ self.addEventListener('fetch', event => {
   if (!request.url.startsWith('http')) return;
 
   // Skip API requests
-  if (url.hostname === 'api.corates.org') return;
+  if (url.pathname.startsWith('/api/')) return;
 
   const isAsset = url.pathname.match(/\.(js|css|map|woff2?|woff|ttf|png|jpg|jpeg|webp|svg|ico)$/);
 

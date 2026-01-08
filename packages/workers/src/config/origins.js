@@ -11,9 +11,6 @@ export const STATIC_ORIGINS = [
   'http://localhost:8787', // Worker dev server
   'http://localhost:3010', // Landing page dev server
   'https://corates.org',
-  'https://www.corates.org',
-  'https://app.corates.org',
-  'https://api.corates.org',
 ];
 
 /**

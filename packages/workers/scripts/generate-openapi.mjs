@@ -33,7 +33,7 @@ const baseSpec = {
       description: 'Local development',
     },
     {
-      url: 'https://api.corates.org',
+      url: 'https://corates.org',
       description: 'Production',
     },
   ],

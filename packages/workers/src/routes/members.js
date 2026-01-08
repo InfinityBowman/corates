@@ -236,7 +236,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
 
         // Generate magic link using Better Auth's API
         // We'll use Better Auth's signInMagicLink but intercept sendMagicLink to capture the URL
-        const authBaseUrl = c.env.AUTH_BASE_URL || c.env.APP_URL || 'https://api.corates.org';
+        const authBaseUrl = c.env.AUTH_BASE_URL || c.env.APP_URL || 'https://corates.org';
         let capturedMagicLinkUrl = null;
 
         // Import required modules

@@ -33,7 +33,7 @@ describe('API Configuration', () => {
 
     it('should convert https:// to wss://', async () => {
       const { getWsBaseUrl } = await import('@config/api.js');
-      expect(getWsBaseUrl('https://api.corates.org')).toBe('wss://api.corates.org');
+      expect(getWsBaseUrl('https://corates.org')).toBe('wss://corates.org');
     });
 
     it('should preserve the host and port in the URL', async () => {
@@ -43,9 +43,8 @@ describe('API Configuration', () => {
 
     it('should handle URLs with paths correctly', async () => {
       const { getWsBaseUrl } = await import('@config/api.js');
-      // Note: Current implementation strips paths - this is expected behavior
-      // The WebSocket base URL should not include path segments
-      expect(getWsBaseUrl('https://api.corates.org/v1')).toBe('wss://api.corates.org/v1');
+      // Note: Current implementation preserves paths
+      expect(getWsBaseUrl('https://corates.org/v1')).toBe('wss://corates.org/v1');
     });
   });
 });

@@ -558,7 +558,7 @@ async function handleInvitation(c, { orgId, projectId, email, role }) {
     const callbackPath = `${basepathNormalized}/complete-profile?invitation=${token}`;
     const callbackURL = `${appUrl}${callbackPath}`;
 
-    const authBaseUrl = c.env.AUTH_BASE_URL || c.env.APP_URL || 'https://api.corates.org';
+    const authBaseUrl = c.env.AUTH_BASE_URL || c.env.APP_URL || 'https://corates.org';
     let capturedMagicLinkUrl = null;
 
     const { betterAuth } = await import('better-auth');

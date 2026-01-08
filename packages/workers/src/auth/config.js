@@ -439,49 +439,6 @@ export function createAuth(env, ctx) {
     trustedOrigins: getAllowedOrigins(env),
 
     advanced: {
-      crossSubDomainCookies: {
-        enabled: !!env.COOKIE_DOMAIN,
-        domain: env.COOKIE_DOMAIN,
-      },
-      // Don't use useSecureCookies as it adds __Secure- prefix which conflicts with custom cookie names
-      // Instead, we set secure: true in individual cookie attributes
-      useSecureCookies: false,
-      // Override ALL cookie settings to use SameSite=None for cross-subdomain
-      cookies:
-        env.COOKIE_DOMAIN ?
-          {
-            session_token: {
-              name: 'better-auth.session_token',
-              attributes: {
-                sameSite: 'none',
-                secure: true,
-                httpOnly: true,
-                path: '/',
-                domain: env.COOKIE_DOMAIN,
-              },
-            },
-            dont_remember: {
-              name: 'better-auth.dont_remember',
-              attributes: {
-                sameSite: 'none',
-                secure: true,
-                httpOnly: true,
-                path: '/',
-                domain: env.COOKIE_DOMAIN,
-              },
-            },
-            session_data: {
-              name: 'better-auth.session_data',
-              attributes: {
-                sameSite: 'none',
-                secure: true,
-                httpOnly: true,
-                path: '/',
-                domain: env.COOKIE_DOMAIN,
-              },
-            },
-          }
-        : {},
       generateId: () => crypto.randomUUID(),
     },
 

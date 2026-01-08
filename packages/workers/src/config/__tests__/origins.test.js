@@ -107,7 +107,6 @@ describe('isOriginAllowed', () => {
   it('should allow static origins', () => {
     expect(isOriginAllowed('http://localhost:5173')).toBe(true);
     expect(isOriginAllowed('https://corates.org')).toBe(true);
-    expect(isOriginAllowed('https://www.corates.org')).toBe(true);
   });
 
   it('should allow origins from env ALLOWED_ORIGINS', () => {
