@@ -1,5 +1,6 @@
 import { urls } from '~/lib/config';
 import PrefetchLink from '~/components/PrefetchLink';
+import { BiRegularCopyright } from 'solid-icons/bi';
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -114,7 +115,10 @@ export default function Footer() {
         </div>
 
         <div class='flex flex-col items-center justify-between gap-4 border-t border-gray-200 pt-8 sm:flex-row'>
-          <p class='text-sm text-gray-400'>{year} Syntch LLC. All rights reserved.</p>
+          <p class='inline-flex items-center gap-1 text-sm text-gray-400'>
+            <BiRegularCopyright class='h-4 w-4' />
+            {year} Syntch LLC. All rights reserved.
+          </p>
           <div class='flex gap-4'>
             <a
               href={urls.signIn()}
