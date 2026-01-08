@@ -3,7 +3,7 @@
  * Displays Stripe event ledger entries with filtering and search
  */
 
-import { createSignal, Show, For } from 'solid-js';
+import { createSignal, Show, For, Switch, Match } from 'solid-js';
 import { useDebouncedSignal } from '@/primitives/useDebouncedSignal.js';
 import { A } from '@solidjs/router';
 import { FiLoader, FiAlertCircle, FiCopy, FiCheck, FiExternalLink, FiFilter } from 'solid-icons/fi';
@@ -142,7 +142,8 @@ export default function AdminBillingLedgerPage() {
       header: 'Event ID',
       cell: info => {
         const entry = info.row.original;
-        return entry.stripeEventId ?
+        return (
+          <Show when={entry.stripeEventId} fallback={<span class='text-gray-400'>-</span>}>
             <div class='flex items-center space-x-1 whitespace-nowrap'>
               <code class='font-mono text-xs text-gray-800'>
                 {entry.stripeEventId.slice(0, 12)}...
@@ -166,7 +167,8 @@ export default function AdminBillingLedgerPage() {
                 <FiExternalLink class='h-3 w-3' />
               </a>
             </div>
-          : <span class='text-gray-400'>-</span>;
+          </Show>
+        );
       },
     },
     {
@@ -174,7 +176,8 @@ export default function AdminBillingLedgerPage() {
       header: 'Org ID',
       cell: info => {
         const entry = info.row.original;
-        return entry.orgId ?
+        return (
+          <Show when={entry.orgId} fallback={<span class='text-gray-400'>-</span>}>
             <div class='flex items-center space-x-1 whitespace-nowrap'>
               <A href={`/admin/orgs/${entry.orgId}`} class='text-blue-600 hover:text-blue-800'>
                 <code class='font-mono text-xs'>{entry.orgId.slice(0, 8)}...</code>
@@ -189,7 +192,8 @@ export default function AdminBillingLedgerPage() {
                 : <FiCopy class='h-3 w-3' />}
               </button>
             </div>
-          : <span class='text-gray-400'>-</span>;
+          </Show>
+        );
       },
     },
     {
@@ -277,7 +281,8 @@ export default function AdminBillingLedgerPage() {
       header: 'Request ID',
       cell: info => {
         const entry = info.row.original;
-        return entry.requestId ?
+        return (
+          <Show when={entry.requestId} fallback={<span class='text-gray-400'>-</span>}>
             <div class='flex items-center space-x-1 whitespace-nowrap'>
               <code class='font-mono text-xs text-gray-800'>{entry.requestId.slice(0, 8)}...</code>
               <button
@@ -290,7 +295,8 @@ export default function AdminBillingLedgerPage() {
                 : <FiCopy class='h-3 w-3' />}
               </button>
             </div>
-          : <span class='text-gray-400'>-</span>;
+          </Show>
+        );
       },
     },
     {
@@ -299,12 +305,16 @@ export default function AdminBillingLedgerPage() {
       cell: info => {
         const entry = info.row.original;
         return (
-          entry.error ?
-            <span class='text-xs text-red-600' title={entry.error}>
-              {entry.error.length > 50 ? `${entry.error.slice(0, 50)}...` : entry.error}
-            </span>
-          : entry.httpStatus ? <span class='text-xs text-gray-500'>{entry.httpStatus}</span>
-          : <span class='text-gray-400'>-</span>
+          <Switch fallback={<span class='text-gray-400'>-</span>}>
+            <Match when={entry.error}>
+              <span class='text-xs text-red-600' title={entry.error}>
+                {entry.error.length > 50 ? `${entry.error.slice(0, 50)}...` : entry.error}
+              </span>
+            </Match>
+            <Match when={entry.httpStatus}>
+              <span class='text-xs text-gray-500'>{entry.httpStatus}</span>
+            </Match>
+          </Switch>
         );
       },
     },

@@ -21,15 +21,12 @@
 
 /**
  * @param {Object} props
- * @param {boolean} [props.wide=false] - Use full width (no max-width constraint)
  * @param {string} [props.class] - Additional CSS classes
  * @param {JSX.Element} props.children - Page content
  */
 export function DashboardBody(props) {
   return (
-    <div
-      class={`flex h-full w-full flex-col px-4 py-6 md:px-6 lg:px-8 ${props.wide ? '' : 'mx-auto max-w-7xl'} ${props.class || ''}`}
-    >
+    <div class={`flex h-full w-full flex-col px-4 py-6 md:px-6 lg:px-8 ${props.class || ''}`}>
       {props.children}
     </div>
   );

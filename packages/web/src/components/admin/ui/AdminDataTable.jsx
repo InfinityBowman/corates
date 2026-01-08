@@ -74,8 +74,10 @@ export function AdminDataTable(props) {
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
+      // eslint-disable-next-line solid/reactivity
       pagination: { pageSize: props.pageSize || 10 },
     },
+    // eslint-disable-next-line solid/reactivity
     enableSorting: props.enableSorting ?? false,
   });
 
@@ -83,8 +85,8 @@ export function AdminDataTable(props) {
 
   return (
     <div class={`flex flex-col gap-4 ${props.class || ''}`}>
-      <div class='overflow-hidden rounded-xl border border-gray-200'>
-        <table class='w-full'>
+      <div class='overflow-x-auto rounded-xl border border-gray-200'>
+        <table class='w-full min-w-max'>
           <thead class='border-b border-gray-200 bg-gray-50'>
             <For each={table.getHeaderGroups()}>
               {headerGroup => (
@@ -92,7 +94,7 @@ export function AdminDataTable(props) {
                   <For each={headerGroup.headers}>
                     {header => (
                       <th
-                        class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'
+                        class='px-4 py-2 text-left text-xs font-medium tracking-wider whitespace-nowrap text-gray-500 uppercase'
                         classList={{
                           'cursor-pointer select-none hover:bg-gray-100':
                             header.column.getCanSort() && props.enableSorting,
@@ -136,7 +138,7 @@ export function AdminDataTable(props) {
                   <tr>
                     <For each={props.columns}>
                       {() => (
-                        <td class='px-6 py-4'>
+                        <td class='px-4 py-2'>
                           <div class='h-4 w-3/4 animate-pulse rounded bg-gray-200' />
                         </td>
                       )}
@@ -149,7 +151,7 @@ export function AdminDataTable(props) {
             {/* Empty State */}
             <Show when={!props.loading && table.getRowModel().rows.length === 0}>
               <tr>
-                <td colspan={props.columns?.length || 1} class='px-6 py-12 text-center'>
+                <td colspan={props.columns?.length || 1} class='px-4 py-8 text-center'>
                   {props.emptyState || (
                     <div class='flex flex-col items-center gap-2'>
                       <span class='text-gray-400'>{props.emptyMessage || 'No data available'}</span>
@@ -170,7 +172,7 @@ export function AdminDataTable(props) {
                   >
                     <For each={row.getVisibleCells()}>
                       {cell => (
-                        <td class='px-6 py-4 text-sm text-gray-900'>
+                        <td class='px-4 py-2 text-sm whitespace-nowrap text-gray-900'>
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </td>
                       )}
