@@ -2,7 +2,7 @@
  * useNotifications hook - Manages WebSocket connection for real-time user notifications
  */
 
-import { createSignal, onCleanup } from 'solid-js';
+import { createSignal, onCleanup, createEffect } from 'solid-js';
 import { API_BASE } from '@config/api.js';
 
 /**
@@ -19,14 +19,20 @@ export function useNotifications(userId, options = {}) {
   let ws = null;
   let reconnectTimeout = null;
   let pingInterval = null;
+  let pongTimeout = null;
   let reconnectAttempts = 0;
   const MAX_RECONNECT_DELAY = 60000; // 1 minute max
+  const PING_INTERVAL = 30000; // 30 seconds
+  const PONG_TIMEOUT = 10000; // 10 seconds to receive pong
 
   // Track whether we should be connected (user intent)
   let shouldConnect = false;
+  // Track if component is still mounted
+  let isMounted = true;
 
   function connect() {
-    if (ws || !userId()) return;
+    // Guard against connecting when unmounted or already connected
+    if (!isMounted || ws || !userId?.()) return;
 
     // Don't attempt connection when offline
     if (!navigator.onLine) {
@@ -44,33 +50,30 @@ export function useNotifications(userId, options = {}) {
       ws = new WebSocket(wsUrl);
     } catch (err) {
       console.error('[useNotifications] WebSocket construction failed', err);
-      // Schedule a reconnect attempt using existing backoff logic
       ws = null;
-      if (shouldConnect && navigator.onLine) {
-        const delay = Math.min(5000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
-        reconnectAttempts++;
-        reconnectTimeout = setTimeout(() => connect(), delay);
-      }
+      scheduleReconnect();
       return;
     }
 
     ws.onopen = () => {
+      if (!isMounted) {
+        ws?.close();
+        return;
+      }
       setConnected(true);
       reconnectAttempts = 0; // Reset on successful connection
-      // Start keepalive ping
-      pingInterval = setInterval(() => {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'ping' }));
-        }
-      }, 30000);
+      startPingPong();
     };
 
     ws.onmessage = event => {
       try {
         const data = JSON.parse(event.data);
 
-        // Ignore pong responses
-        if (data.type === 'pong') return;
+        // Handle pong responses - connection is healthy
+        if (data.type === 'pong') {
+          clearPongTimeout();
+          return;
+        }
 
         // Add to notifications list
         setNotifications(prev => [data, ...prev]);
@@ -84,29 +87,32 @@ export function useNotifications(userId, options = {}) {
       }
     };
 
-    ws.onclose = () => {
+    ws.onclose = event => {
       setConnected(false);
       cleanup();
-      ws = null; // Clear the reference so connect() can run again
+      ws = null;
 
-      // Only attempt reconnection if we should be connected and are online
-      if (shouldConnect && navigator.onLine) {
-        // Exponential backoff: 5s, 10s, 20s, 40s... up to MAX_RECONNECT_DELAY
-        const delay = Math.min(5000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
-        reconnectAttempts++;
+      // Don't reconnect if we intentionally disconnected or unmounted
+      if (!shouldConnect || !isMounted) return;
 
-        reconnectTimeout = setTimeout(() => {
-          connect();
-        }, delay);
+      // Don't reconnect if offline
+      if (!navigator.onLine) return;
+
+      // Check for specific close codes that shouldn't trigger reconnect
+      // 1000 = normal closure, 1001 = going away (page navigation)
+      if (event.code === 1000 || event.code === 1001) {
+        return;
       }
+
+      scheduleReconnect();
     };
 
     ws.onerror = event => {
-      // Log error details to help debugging handshake/SSL issues
+      // Log error details to help debugging (only when online)
       if (navigator.onLine) {
         console.error('[useNotifications] Notification WebSocket error', event);
       }
-      // Force close the socket so onclose runs and reconnection/backoff is applied
+      // Force close so onclose handler runs and triggers reconnection
       try {
         if (ws && ws.readyState !== WebSocket.CLOSED) ws.close();
       } catch (_e) {
@@ -115,17 +121,66 @@ export function useNotifications(userId, options = {}) {
     };
   }
 
+  function scheduleReconnect() {
+    if (!shouldConnect || !isMounted || !navigator.onLine) return;
+
+    // Clear any existing reconnect timeout
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+    }
+
+    // Exponential backoff: 1s, 2s, 4s, 8s... up to MAX_RECONNECT_DELAY
+    // Start from 1s instead of 5s for faster initial reconnect
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+    reconnectAttempts++;
+
+    reconnectTimeout = setTimeout(() => {
+      if (isMounted && shouldConnect && navigator.onLine) {
+        connect();
+      }
+    }, delay);
+  }
+
+  function startPingPong() {
+    // Clear any existing intervals
+    cleanup();
+
+    // Start keepalive ping
+    pingInterval = setInterval(() => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'ping' }));
+
+        // Set up pong timeout - if we don't get pong, connection is dead
+        pongTimeout = setTimeout(() => {
+          console.warn('[useNotifications] Pong timeout - connection may be dead');
+          // Force reconnect by closing the socket
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.close();
+          }
+        }, PONG_TIMEOUT);
+      }
+    }, PING_INTERVAL);
+  }
+
+  function clearPongTimeout() {
+    if (pongTimeout) {
+      clearTimeout(pongTimeout);
+      pongTimeout = null;
+    }
+  }
+
   function cleanup() {
     if (pingInterval) {
       clearInterval(pingInterval);
       pingInterval = null;
     }
+    clearPongTimeout();
   }
 
   // Handle online/offline events
   function handleOnline() {
     // When we come back online and should be connected, attempt reconnection
-    if (shouldConnect && !ws) {
+    if (shouldConnect && !ws && isMounted) {
       reconnectAttempts = 0; // Reset backoff when coming online
       connect();
     }
@@ -139,10 +194,22 @@ export function useNotifications(userId, options = {}) {
     }
   }
 
-  // Set up online/offline listeners
+  // Handle visibility change - reconnect when tab becomes visible
+  function handleVisibilityChange() {
+    if (document.visibilityState === 'visible' && shouldConnect && isMounted) {
+      // Tab became visible - check if we need to reconnect
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        reconnectAttempts = 0;
+        connect();
+      }
+    }
+  }
+
+  // Set up event listeners
   if (typeof window !== 'undefined') {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
   }
 
   function disconnect() {
@@ -153,7 +220,7 @@ export function useNotifications(userId, options = {}) {
     }
     cleanup();
     if (ws) {
-      ws.close();
+      ws.close(1000, 'disconnect'); // Normal closure
       ws = null;
     }
     setConnected(false);
@@ -167,12 +234,24 @@ export function useNotifications(userId, options = {}) {
     setNotifications(prev => prev.filter(n => n.timestamp !== timestamp));
   }
 
+  // Auto-connect when userId changes (reactive)
+  createEffect(() => {
+    const uid = userId?.();
+    if (uid && !ws && isMounted) {
+      connect();
+    } else if (!uid && ws) {
+      disconnect();
+    }
+  });
+
   // Cleanup on unmount
   onCleanup(() => {
+    isMounted = false;
     disconnect();
     if (typeof window !== 'undefined') {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     }
   });
 
