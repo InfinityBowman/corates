@@ -552,13 +552,13 @@ async function handleInvitation(c, { orgId, projectId, email, role }) {
 
   // Send invitation email
   try {
-    const appUrl = c.env.APP_URL || 'https://corates.org';
+    const appUrl = c.env.APP_URL || 'http://localhost:8787';
     const basepath = c.env.BASEPATH || '';
     const basepathNormalized = basepath ? basepath.replace(/\/$/, '') : '';
     const callbackPath = `${basepathNormalized}/complete-profile?invitation=${token}`;
     const callbackURL = `${appUrl}${callbackPath}`;
 
-    const authBaseUrl = c.env.AUTH_BASE_URL || c.env.APP_URL || 'https://corates.org';
+    const authBaseUrl = c.env.AUTH_BASE_URL || appUrl;
     let capturedMagicLinkUrl = null;
 
     const { betterAuth } = await import('better-auth');
