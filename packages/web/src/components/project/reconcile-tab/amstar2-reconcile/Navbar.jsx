@@ -106,7 +106,7 @@ function SummaryButton(props) {
  */
 function ResetButton(props) {
   return (
-    <Tooltip content='Reset all answers to unresolved' placement='bottom' openDelay={200}>
+    <Tooltip content='Reset final answers to unresolved' placement='bottom' openDelay={200}>
       <button
         onClick={() => props.onClick?.()}
         class='flex h-8 items-center gap-1 rounded-full bg-red-100 px-3 text-xs font-medium text-red-700 transition-all hover:bg-red-200'

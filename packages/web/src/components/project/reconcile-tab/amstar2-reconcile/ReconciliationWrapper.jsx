@@ -236,19 +236,13 @@ export default function ReconciliationWrapper() {
   const [hasCheckedForReconciled, setHasCheckedForReconciled] = createSignal(false);
 
   // Get or create reconciled checklist (with race condition prevention)
+  // Trigger when we have study data loaded (from IndexedDB or server), not just when synced
   createEffect(() => {
-    const state = connectionState();
-    if (!state.synced || reconciledChecklistId() || hasCheckedForReconciled()) return;
+    const study = currentStudy();
+    if (!study || reconciledChecklistId() || hasCheckedForReconciled()) return;
 
     setHasCheckedForReconciled(true);
     setReconciledChecklistLoading(true);
-
-    const study = currentStudy();
-    if (!study) {
-      setReconciledChecklistLoading(false);
-      setHasCheckedForReconciled(false); // Allow retry
-      return;
-    }
 
     // First, check if one already exists in reconciliation progress
     const progress = getReconciliationProgress(params.studyId);
@@ -317,8 +311,7 @@ export default function ReconciliationWrapper() {
   // Watch for race condition: if another client created a reconciled checklist,
   // use the one created first (check happens reactively via store updates)
   createEffect(() => {
-    if (!connectionState().synced || !reconciledChecklistId() || reconciledChecklistLoading())
-      return;
+    if (!reconciledChecklistId() || reconciledChecklistLoading()) return;
 
     const study = currentStudy();
     const currentId = reconciledChecklistId();
@@ -443,7 +436,6 @@ export default function ReconciliationWrapper() {
     >
       <Show
         when={
-          connectionState().synced &&
           checklist1Data() &&
           checklist2Data() &&
           !reconciledChecklistLoading() &&
