@@ -73,7 +73,6 @@ export default function AppRoutes() {
         <Route path='/' component={ProtectedGuard}>
           {/* Global user routes (no sidebar) */}
           <Route path='/profile' component={ProfilePage} />
-          """"
           {/* Settings routes with settings sidebar */}
           <Route path='/settings' component={SettingsLayout}>
             <Route path='/' component={SettingsIndex} />

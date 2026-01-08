@@ -21,7 +21,7 @@ export const PDF_MAGIC_BYTES: readonly number[] = [0x25, 0x50, 0x44, 0x46, 0x2d]
 
 /**
  * Validate filename for PDF uploads
- * Rejects filenames with path separators, control characters, quotes, or excessive length
+ * Security: Prevents path traversal, injection attacks, and malformed filenames
  *
  * @param fileName - Filename to validate
  * @returns True if valid
@@ -29,12 +29,26 @@ export const PDF_MAGIC_BYTES: readonly number[] = [0x25, 0x50, 0x44, 0x46, 0x2d]
 export function isValidPdfFilename(fileName: string | null | undefined): boolean {
   if (!fileName) return false;
   if (fileName.length > PDF_LIMITS.MAX_FILENAME_LENGTH) return false;
-  // Reject path separators
+
+  // Reject path traversal sequences
+  if (fileName.includes('..')) return false;
+
+  // Reject path separators (forward and back slashes)
   if (/[\\/]/.test(fileName)) return false;
-  // Reject control characters (Unicode category C)
+
+  // Reject control characters including null bytes (Unicode category C)
   if (/\p{C}/u.test(fileName)) return false;
+
   // Reject quotes (can cause issues with Content-Disposition header)
   if (fileName.includes('"')) return false;
+
+  // Must end with .pdf extension (case-insensitive)
+  if (!fileName.toLowerCase().endsWith('.pdf')) return false;
+
+  // Reject filenames that are only whitespace before extension
+  const nameWithoutExt = fileName.slice(0, -4);
+  if (!nameWithoutExt.trim()) return false;
+
   return true;
 }
 

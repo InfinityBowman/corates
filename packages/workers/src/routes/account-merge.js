@@ -668,14 +668,35 @@ accountMergeRoutes.delete('/cancel', async c => {
     .from(verification)
     .where(like(verification.identifier, `merge:${currentUser.id}:%`));
 
-  if (mergeRequests.length > 0) {
-    const mergeRequest = mergeRequests[0];
-    const mergeData = JSON.parse(mergeRequest.value);
-
-    if (!mergeToken || mergeData.token === mergeToken) {
-      await db.delete(verification).where(eq(verification.id, mergeRequest.id));
-    }
+  if (mergeRequests.length === 0) {
+    return c.json({ success: true });
   }
+
+  const mergeRequest = mergeRequests[0];
+  const mergeData = JSON.parse(mergeRequest.value);
+
+  // Require valid token to cancel - prevents unauthorized cancellation
+  if (!mergeToken || typeof mergeToken !== 'string') {
+    const error = createValidationError(
+      'mergeToken',
+      VALIDATION_ERRORS.FIELD_REQUIRED.code,
+      null,
+      'required',
+    );
+    return c.json(error, error.statusCode);
+  }
+
+  if (mergeData.token !== mergeToken) {
+    const error = createValidationError(
+      'mergeToken',
+      VALIDATION_ERRORS.INVALID_INPUT.code,
+      mergeToken,
+      'invalid_token',
+    );
+    return c.json(error, error.statusCode);
+  }
+
+  await db.delete(verification).where(eq(verification.id, mergeRequest.id));
 
   return c.json({ success: true });
 });

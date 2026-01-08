@@ -36,7 +36,9 @@ describe('isValidPdfFilename', () => {
     expect(isValidPdfFilename('document.pdf')).toBe(true);
     expect(isValidPdfFilename('My Research Paper (2024).pdf')).toBe(true);
     expect(isValidPdfFilename('file-with-dashes_and_underscores.pdf')).toBe(true);
-    expect(isValidPdfFilename('a')).toBe(true);
+    expect(isValidPdfFilename('a.pdf')).toBe(true);
+    expect(isValidPdfFilename('UPPERCASE.PDF')).toBe(true);
+    expect(isValidPdfFilename('MixedCase.Pdf')).toBe(true);
   });
 
   it('should reject null or undefined', () => {
@@ -46,6 +48,25 @@ describe('isValidPdfFilename', () => {
 
   it('should reject empty string', () => {
     expect(isValidPdfFilename('')).toBe(false);
+  });
+
+  it('should reject filenames without .pdf extension', () => {
+    expect(isValidPdfFilename('document')).toBe(false);
+    expect(isValidPdfFilename('document.txt')).toBe(false);
+    expect(isValidPdfFilename('document.pdf.txt')).toBe(false);
+    expect(isValidPdfFilename('a')).toBe(false);
+  });
+
+  it('should reject filenames that are only whitespace before extension', () => {
+    expect(isValidPdfFilename('.pdf')).toBe(false);
+    expect(isValidPdfFilename('   .pdf')).toBe(false);
+  });
+
+  it('should reject path traversal sequences', () => {
+    expect(isValidPdfFilename('../file.pdf')).toBe(false);
+    expect(isValidPdfFilename('..\\file.pdf')).toBe(false);
+    expect(isValidPdfFilename('foo/../bar.pdf')).toBe(false);
+    expect(isValidPdfFilename('file..pdf')).toBe(false);
   });
 
   it('should reject filenames with forward slashes', () => {

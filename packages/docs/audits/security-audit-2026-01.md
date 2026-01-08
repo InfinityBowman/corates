@@ -15,29 +15,21 @@ This security audit examines the CoRATES codebase for vulnerabilities across aut
 
 ## Critical Severity
 
-### 1. Account Merge Logic - Verification Bypass
+### 1. Account Merge Logic - Verification Bypass [RESOLVED]
 
 **Location:** `packages/workers/src/routes/account-merge.js:675`
 
+**Status:** FIXED on 2026-01-08
+
 **Description:**
-The account merge deletion logic contains a logic error that allows deletion with an incorrect token:
+The account merge deletion logic contained a logic error that allowed deletion without proper token validation.
 
-```javascript
-if (!mergeToken || mergeData.token === mergeToken) {
-  await db.delete(verification).where(eq(verification.id, mergeRequest.id));
-}
-```
-
-This should use `!==` not `===`. Currently allows proceeding even with a wrong token.
-
-Additionally, the merge verification at lines 209-227 relies on email verification codes, but an attacker who knows another user's email can initiate a merge request. While code verification is time-limited, this creates a potential privilege escalation vector.
-
-**Recommended Fix:**
-
-1. Fix the logic error at line 675 to use `!==`
-2. Add rate limiting per target email address
-3. Send notification to target email with option to reject merge
-4. Add a secondary confirmation step after verification succeeds
+**Resolution:**
+The cancel endpoint now properly requires a valid token match. The fix:
+- Requires `mergeToken` to be provided and be a string
+- Returns validation error if token is missing
+- Returns validation error if token doesn't match
+- Only deletes the merge request if token validation passes
 
 ---
 
@@ -78,25 +70,23 @@ if (upgradeHeader !== 'websocket') {
 
 ---
 
-### 3. PDF Download - Potential Path Traversal
+### 3. PDF Download - Potential Path Traversal [RESOLVED]
 
 **Location:** `packages/workers/src/routes/orgs/pdfs.js:352-409`
 
+**Status:** FIXED on 2026-01-08
+
 **Description:**
-The PDF download endpoint accepts a fileName parameter from the URL path which is decoded with `decodeURIComponent()`. While validation functions exist (`isValidPdfFilename()`, `isValidFileName()`), if these have any bypass vulnerabilities, attackers could access files from other studies/projects.
+The PDF download endpoint accepts a fileName parameter that needed stronger validation.
 
-The bucket key is constructed as:
-
-```javascript
-const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
-```
-
-**Recommended Fix:**
-
-1. Verify `isValidPdfFilename()` in `@corates/shared` rejects all special characters
-2. Add explicit pattern validation: `fileName.match(/^[a-zA-Z0-9._() -]+\.pdf$/)`
-3. Use UUID-based naming internally (already partially implemented)
-4. Reject `..`, `/`, `\`, null bytes explicitly
+**Resolution:**
+Enhanced `isValidPdfFilename()` in `@corates/shared/src/pdf/index.ts` with:
+- Explicit rejection of `..` path traversal sequences
+- Rejection of path separators (`/` and `\`)
+- Rejection of control characters including null bytes
+- Required `.pdf` extension (case-insensitive)
+- Rejection of filenames that are only whitespace before extension
+- Comprehensive test coverage added for all attack vectors
 
 ---
 
@@ -148,19 +138,21 @@ If `accessTokenExpiresAt` is invalid/null and no refresh token exists, the code 
 
 ---
 
-### 6. CSRF Protection - Missing SameSite Cookie Verification
+### 6. CSRF Protection - Missing SameSite Cookie Verification [RESOLVED]
 
-**Location:** `packages/workers/src/middleware/csrf.js`
+**Location:** `packages/workers/src/auth/config.js`
+
+**Status:** FIXED on 2026-01-08
 
 **Description:**
-The CSRF middleware relies on Origin/Referer header checking, but there is no explicit SameSite cookie configuration visible in the codebase. Without `SameSite=Strict` or `SameSite=Lax` on session cookies, CSRF attacks are possible even with Origin checks, which can be spoofed in certain browser configurations.
+The CSRF middleware relied on Origin/Referer header checking without explicit SameSite cookie configuration.
 
-**Recommended Fix:**
-
-1. Configure Better-Auth to set `SameSite=Lax` on session cookies
-2. Add explicit cookie security headers in `securityHeaders.js`
-3. Implement double-submit cookie pattern as secondary protection
-4. Add CSP `frame-ancestors` directive
+**Resolution:**
+Added explicit cookie security configuration to Better-Auth in `auth/config.js`:
+- `httpOnly: true` - prevents JavaScript access to session cookies
+- `secure: true` in production - ensures HTTPS-only transmission
+- `sameSite: 'lax'` - prevents CSRF attacks from cross-origin requests
+- `path: '/'` - cookie available site-wide
 
 ---
 
@@ -364,23 +356,23 @@ if (env.ALLOWED_ORIGINS) {
 
 ## Summary Table
 
-| Issue                       | Severity | Location                 | Impact                   |
-| --------------------------- | -------- | ------------------------ | ------------------------ |
-| Account Merge Logic Error   | Critical | account-merge.js:675     | Account takeover         |
-| WebSocket Auth Bypass       | Critical | ProjectDoc.js:62-123     | Data exposure            |
-| PDF Path Traversal          | Critical | pdfs.js:352-409          | Unauthorized file access |
-| Stripe Webhook Race         | High     | webhooks.js:147-189      | Invalid event processing |
-| Google Drive Stale Token    | High     | google-drive.js:81-123   | Failed API operations    |
-| Missing SameSite Cookies    | High     | csrf.js                  | CSRF vulnerability       |
-| Rate Limit Bypass           | High     | rateLimit.js:8-65        | Abuse potential          |
-| Google Drive No Integrity   | High     | google-drive.js:273-376  | Malware upload           |
-| Admin File Deletion Pattern | Medium   | validation.js:205-206    | Unintended deletion      |
-| Error Stack Disclosure      | Medium   | errorHandler.js:104-108  | Code structure exposed   |
-| User Enumeration            | Medium   | account-merge.js:209-215 | Email enumeration        |
-| SQL LIKE Considerations     | Medium   | users.js:73-95           | Future risk              |
-| Content-Disposition         | Low      | pdfs.js:390-398          | Header injection         |
-| Insufficient Audit Logging  | Low      | Various                  | Compliance gaps          |
-| Origin Validation           | Low      | origins.js:42-61         | Invalid origin           |
+| Issue                       | Severity | Location                 | Impact                   | Status   |
+| --------------------------- | -------- | ------------------------ | ------------------------ | -------- |
+| Account Merge Logic Error   | Critical | account-merge.js:675     | Account takeover         | RESOLVED |
+| WebSocket Auth Bypass       | Critical | ProjectDoc.js:62-123     | Data exposure            | Open     |
+| PDF Path Traversal          | Critical | pdfs.js:352-409          | Unauthorized file access | RESOLVED |
+| Stripe Webhook Race         | High     | webhooks.js:147-189      | Invalid event processing | Open     |
+| Google Drive Stale Token    | High     | google-drive.js:81-123   | Failed API operations    | Open     |
+| Missing SameSite Cookies    | High     | auth/config.js           | CSRF vulnerability       | RESOLVED |
+| Rate Limit Bypass           | High     | rateLimit.js:8-65        | Abuse potential          | Open     |
+| Google Drive No Integrity   | High     | google-drive.js:273-376  | Malware upload           | Open     |
+| Admin File Deletion Pattern | Medium   | validation.js:205-206    | Unintended deletion      | Open     |
+| Error Stack Disclosure      | Medium   | errorHandler.js:104-108  | Code structure exposed   | Open     |
+| User Enumeration            | Medium   | account-merge.js:209-215 | Email enumeration        | Open     |
+| SQL LIKE Considerations     | Medium   | users.js:73-95           | Future risk              | Open     |
+| Content-Disposition         | Low      | pdfs.js:390-398          | Header injection         | Open     |
+| Insufficient Audit Logging  | Low      | Various                  | Compliance gaps          | Open     |
+| Origin Validation           | Low      | origins.js:42-61         | Invalid origin           | Open     |
 
 ---
 
@@ -388,10 +380,10 @@ if (env.ALLOWED_ORIGINS) {
 
 ### Immediate (1-2 weeks)
 
-1. Fix account merge logic error at line 675
+1. ~~Fix account merge logic error at line 675~~ DONE
 2. Add per-message WebSocket authentication
-3. Verify PDF path traversal protections
-4. Confirm SameSite cookie configuration in Better-Auth
+3. ~~Verify PDF path traversal protections~~ DONE
+4. ~~Confirm SameSite cookie configuration in Better-Auth~~ DONE
 5. Migrate rate limiting to Durable Objects/KV
 
 ### Short-term (1 month)
@@ -409,6 +401,16 @@ if (env.ALLOWED_ORIGINS) {
 3. Implement security event alerting
 4. Add malware scanning for uploads
 5. Security review of admin endpoints
+
+---
+
+## Remediation Log
+
+| Date       | Issue                     | Action Taken                                           |
+| ---------- | ------------------------- | ------------------------------------------------------ |
+| 2026-01-08 | Account Merge Logic Error | Fixed token validation in cancel endpoint              |
+| 2026-01-08 | PDF Path Traversal        | Enhanced isValidPdfFilename() with comprehensive checks |
+| 2026-01-08 | Missing SameSite Cookies  | Added cookie security config to Better-Auth            |
 
 ---
 
