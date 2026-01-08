@@ -5,6 +5,7 @@
 This security audit examines the CoRATES codebase for vulnerabilities across authentication, authorization, input validation, API security, file handling, payment processing, and real-time collaboration features. The codebase demonstrates strong security practices overall, with proper use of Zod validation, Drizzle ORM, and Better-Auth. However, several findings require attention.
 
 **Total Findings:** 15
+
 - Critical: 3
 - High: 5
 - Medium: 4
@@ -32,6 +33,7 @@ This should use `!==` not `===`. Currently allows proceeding even with a wrong t
 Additionally, the merge verification at lines 209-227 relies on email verification codes, but an attacker who knows another user's email can initiate a merge request. While code verification is time-limited, this creates a potential privilege escalation vector.
 
 **Recommended Fix:**
+
 1. Fix the logic error at line 675 to use `!==`
 2. Add rate limiting per target email address
 3. Send notification to target email with option to reject merge
@@ -47,11 +49,13 @@ Additionally, the merge verification at lines 209-227 relies on email verificati
 WebSocket authentication is performed at connection upgrade time but there is no per-message authentication verification. The initial connection is authenticated at lines 92-100, but once upgraded, the persistent WebSocket has no further auth checks in message handler loops.
 
 This means:
+
 - A compromised session could be exploited for the entire connection duration
 - No token expiry enforcement on active connections
 - Malicious Yjs protocol messages can be sent without re-verification
 
 **Code Example:**
+
 ```javascript
 // Line 92-100: One-time auth check
 if (upgradeHeader !== 'websocket') {
@@ -66,6 +70,7 @@ if (upgradeHeader !== 'websocket') {
 ```
 
 **Recommended Fix:**
+
 1. Implement periodic token refresh or heartbeat authentication
 2. Add session validation in message handling loops
 3. Implement token expiry mechanism and disconnect stale connections
@@ -81,11 +86,13 @@ if (upgradeHeader !== 'websocket') {
 The PDF download endpoint accepts a fileName parameter from the URL path which is decoded with `decodeURIComponent()`. While validation functions exist (`isValidPdfFilename()`, `isValidFileName()`), if these have any bypass vulnerabilities, attackers could access files from other studies/projects.
 
 The bucket key is constructed as:
+
 ```javascript
 const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
 ```
 
 **Recommended Fix:**
+
 1. Verify `isValidPdfFilename()` in `@corates/shared` rejects all special characters
 2. Add explicit pattern validation: `fileName.match(/^[a-zA-Z0-9._() -]+\.pdf$/)`
 3. Use UUID-based naming internally (already partially implemented)
@@ -109,6 +116,7 @@ The two-phase ledger pattern creates a timing vulnerability:
 If a database race occurs between these steps, partially-processed data could be exposed. Events are trusted before signature verification completes.
 
 **Recommended Fix:**
+
 1. Use database transactions - only insert after successful signature verification
 2. Create ledger entry with `PENDING` status, update to `RECEIVED` only after signature check
 3. Add monitoring for ledger entries with mismatched signature status
@@ -125,13 +133,14 @@ The token refresh logic has edge cases where stale tokens are returned:
 ```javascript
 // If no expiry or no refresh token, return stale token
 if (!expiresAt || Number.isNaN(new Date(expiresAt).getTime())) {
-  if (tokens.accessToken) return tokens.accessToken;  // STALE TOKEN
+  if (tokens.accessToken) return tokens.accessToken; // STALE TOKEN
 }
 ```
 
 If `accessTokenExpiresAt` is invalid/null and no refresh token exists, the code returns a stale access token that will fail API calls.
 
 **Recommended Fix:**
+
 1. Always verify token validity with a test request
 2. Remove fallback that returns stale tokens
 3. Require users to reconnect Google account if refresh token missing
@@ -147,6 +156,7 @@ If `accessTokenExpiresAt` is invalid/null and no refresh token exists, the code 
 The CSRF middleware relies on Origin/Referer header checking, but there is no explicit SameSite cookie configuration visible in the codebase. Without `SameSite=Strict` or `SameSite=Lax` on session cookies, CSRF attacks are possible even with Origin checks, which can be spoofed in certain browser configurations.
 
 **Recommended Fix:**
+
 1. Configure Better-Auth to set `SameSite=Lax` on session cookies
 2. Add explicit cookie security headers in `securityHeaders.js`
 3. Implement double-submit cookie pattern as secondary protection
@@ -164,6 +174,7 @@ Rate limiting uses in-memory storage (`const rateLimitStore = new Map()`) that i
 Additionally, rate limiting is disabled in non-production at lines 62-65, which is dangerous if staging/preview deployments are exposed.
 
 **Recommended Fix:**
+
 1. Migrate to Cloudflare Durable Objects or KV for distributed rate limiting
 2. Enable rate limiting in all environments
 3. Implement fingerprinting beyond IP addresses
@@ -186,6 +197,7 @@ The Google Drive import endpoint verifies MIME type but:
 If a user's Google Drive is compromised, arbitrary content could be imported.
 
 **Recommended Fix:**
+
 1. Add PDF magic bytes verification (like in pdfs.js)
 2. Calculate and verify file hash if available from Google
 3. Use numeric comparison for file size validation
@@ -201,13 +213,15 @@ If a user's Google Drive is compromised, arbitrary content could be imported.
 
 **Description:**
 The storage deletion endpoint accepts a `keys` array matching a pattern:
+
 ```javascript
-/^projects\/[^/]+\/studies\/[^/]+\/.+$/
+/^projects\/[^/]+\/studies\/[^/]+\/.+$/;
 ```
 
 This allows ANY characters in the filename portion. While PDF upload validates filenames, files created through other means could be affected.
 
 **Recommended Fix:**
+
 1. Ensure all file operations use strict filename validation
 2. Add secondary authorization - verify file ownership
 3. Implement soft deletes for audit trail
@@ -225,12 +239,13 @@ Stack traces and error messages are included in non-production responses. If env
 const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
   ...(process.env.ENVIRONMENT !== 'production' && {
     originalError: err.message,
-    stack: err.stack,  // Leaks code structure
+    stack: err.stack, // Leaks code structure
   }),
 });
 ```
 
 **Recommended Fix:**
+
 1. Use `c.env.ENVIRONMENT` instead of `process.env.ENVIRONMENT`
 2. Never include stack traces in API responses
 3. Use request IDs for server-side debugging only
@@ -243,6 +258,7 @@ const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
 
 **Description:**
 The error response reveals whether an email exists in the system:
+
 ```javascript
 if (!targetUser) {
   const error = createDomainError(USER_ERRORS.NOT_FOUND, {...});
@@ -253,6 +269,7 @@ if (!targetUser) {
 Attackers can enumerate valid email addresses despite rate limiting.
 
 **Recommended Fix:**
+
 1. Return generic error message for all cases
 2. Add exponential backoff per email address
 3. Implement CAPTCHA after repeated failures
@@ -276,6 +293,7 @@ like(sql`lower(${user.email})`, searchPattern),
 Drizzle parameterizes this correctly, but changes to pattern construction could introduce vulnerabilities.
 
 **Recommended Fix:**
+
 1. Add comments noting Drizzle's parameterization
 2. Consider full-text search for better performance
 3. Implement search result caching
@@ -292,6 +310,7 @@ Drizzle parameterizes this correctly, but changes to pattern construction could 
 The Content-Disposition header encodes the filename but doesn't sanitize for HTTP header safety as a defense-in-depth measure.
 
 **Recommended Fix:**
+
 1. Sanitize filename for Content-Disposition header
 2. Use RFC 5987 format only
 3. Strip special characters from display filename
@@ -304,11 +323,13 @@ The Content-Disposition header encodes the filename but doesn't sanitize for HTT
 
 **Description:**
 Some security-sensitive operations lack comprehensive audit logging:
+
 - Admin tool usage doesn't track who accessed what
 - Account merge operations don't log initiator/target
 - File deletions have no audit trail
 
 **Recommended Fix:**
+
 1. Implement comprehensive audit logging for admin operations
 2. Store audit logs immutably
 3. Set up alerts for suspicious patterns
@@ -327,13 +348,14 @@ if (env.ALLOWED_ORIGINS) {
   const envOrigins = env.ALLOWED_ORIGINS.split(',').map(o => o.trim());
   envOrigins.forEach(origin => {
     if (origin && !origins.includes(origin)) {
-      origins.push(origin);  // No validation
+      origins.push(origin); // No validation
     }
   });
 }
 ```
 
 **Recommended Fix:**
+
 1. Validate each origin with `new URL()` constructor
 2. Reject non-HTTPS origins in production
 3. Log invalid origins as configuration errors
@@ -342,29 +364,30 @@ if (env.ALLOWED_ORIGINS) {
 
 ## Summary Table
 
-| Issue | Severity | Location | Impact |
-|-------|----------|----------|--------|
-| Account Merge Logic Error | Critical | account-merge.js:675 | Account takeover |
-| WebSocket Auth Bypass | Critical | ProjectDoc.js:62-123 | Data exposure |
-| PDF Path Traversal | Critical | pdfs.js:352-409 | Unauthorized file access |
-| Stripe Webhook Race | High | webhooks.js:147-189 | Invalid event processing |
-| Google Drive Stale Token | High | google-drive.js:81-123 | Failed API operations |
-| Missing SameSite Cookies | High | csrf.js | CSRF vulnerability |
-| Rate Limit Bypass | High | rateLimit.js:8-65 | Abuse potential |
-| Google Drive No Integrity | High | google-drive.js:273-376 | Malware upload |
-| Admin File Deletion Pattern | Medium | validation.js:205-206 | Unintended deletion |
-| Error Stack Disclosure | Medium | errorHandler.js:104-108 | Code structure exposed |
-| User Enumeration | Medium | account-merge.js:209-215 | Email enumeration |
-| SQL LIKE Considerations | Medium | users.js:73-95 | Future risk |
-| Content-Disposition | Low | pdfs.js:390-398 | Header injection |
-| Insufficient Audit Logging | Low | Various | Compliance gaps |
-| Origin Validation | Low | origins.js:42-61 | Invalid origin |
+| Issue                       | Severity | Location                 | Impact                   |
+| --------------------------- | -------- | ------------------------ | ------------------------ |
+| Account Merge Logic Error   | Critical | account-merge.js:675     | Account takeover         |
+| WebSocket Auth Bypass       | Critical | ProjectDoc.js:62-123     | Data exposure            |
+| PDF Path Traversal          | Critical | pdfs.js:352-409          | Unauthorized file access |
+| Stripe Webhook Race         | High     | webhooks.js:147-189      | Invalid event processing |
+| Google Drive Stale Token    | High     | google-drive.js:81-123   | Failed API operations    |
+| Missing SameSite Cookies    | High     | csrf.js                  | CSRF vulnerability       |
+| Rate Limit Bypass           | High     | rateLimit.js:8-65        | Abuse potential          |
+| Google Drive No Integrity   | High     | google-drive.js:273-376  | Malware upload           |
+| Admin File Deletion Pattern | Medium   | validation.js:205-206    | Unintended deletion      |
+| Error Stack Disclosure      | Medium   | errorHandler.js:104-108  | Code structure exposed   |
+| User Enumeration            | Medium   | account-merge.js:209-215 | Email enumeration        |
+| SQL LIKE Considerations     | Medium   | users.js:73-95           | Future risk              |
+| Content-Disposition         | Low      | pdfs.js:390-398          | Header injection         |
+| Insufficient Audit Logging  | Low      | Various                  | Compliance gaps          |
+| Origin Validation           | Low      | origins.js:42-61         | Invalid origin           |
 
 ---
 
 ## Recommendations by Priority
 
 ### Immediate (1-2 weeks)
+
 1. Fix account merge logic error at line 675
 2. Add per-message WebSocket authentication
 3. Verify PDF path traversal protections
@@ -372,6 +395,7 @@ if (env.ALLOWED_ORIGINS) {
 5. Migrate rate limiting to Durable Objects/KV
 
 ### Short-term (1 month)
+
 1. Add PDF magic bytes verification for Google Drive imports
 2. Fix stale Google token handling
 3. Add comprehensive audit logging
@@ -379,6 +403,7 @@ if (env.ALLOWED_ORIGINS) {
 5. Add origin validation
 
 ### Medium-term (2-3 months)
+
 1. Implement WebSocket heartbeat authentication
 2. Add user enumeration protection
 3. Implement security event alerting
