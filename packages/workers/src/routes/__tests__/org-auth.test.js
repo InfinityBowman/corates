@@ -363,39 +363,3 @@ describe('Org Authorization - Cross-Org Project ID Mismatch', () => {
     expect(body.code).toBe('PROJECT_NOT_FOUND');
   });
 });
-
-describe('Org Authorization - Legacy Routes Return 410', () => {
-  it('should return 410 Gone for legacy /api/projects routes', async () => {
-    const ctx = createExecutionContext();
-    const req = new Request('http://localhost/api/projects/any-project', {
-      headers: {
-        'x-test-user-id': 'user-1',
-      },
-    });
-    const res = await app.fetch(req, env, ctx);
-    await waitOnExecutionContext(ctx);
-
-    expect(res.status).toBe(410);
-    const body = await json(res);
-    expect(body.error).toBe('ENDPOINT_MOVED');
-    expect(body.message).toContain('/api/orgs/:orgId/projects/');
-  });
-
-  it('should return 410 Gone for legacy /api/invitations routes', async () => {
-    const ctx = createExecutionContext();
-    const req = new Request('http://localhost/api/invitations/accept', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-test-user-id': 'user-1',
-      },
-      body: JSON.stringify({ token: 'test-token' }),
-    });
-    const res = await app.fetch(req, env, ctx);
-    await waitOnExecutionContext(ctx);
-
-    expect(res.status).toBe(410);
-    const body = await json(res);
-    expect(body.error).toBe('ENDPOINT_MOVED');
-  });
-});

@@ -115,7 +115,7 @@ databaseRoutes.get('/database/tables', async c => {
 
 /**
  * GET /api/admin/database/tables/:tableName/schema
- * Get table schema (column names and types)
+ * Get table schema (column names, types, and foreign key references)
  */
 databaseRoutes.get('/database/tables/:tableName/schema', async c => {
   const { tableName } = c.req.param();
@@ -139,13 +139,38 @@ databaseRoutes.get('/database/tables/:tableName/schema', async c => {
     return c.json(error, error.statusCode);
   }
 
-  // Extract column info from Drizzle schema
-  const columns = Object.entries(table).map(([name, column]) => ({
-    name,
-    type: column.dataType || 'unknown',
-    notNull: column.notNull ?? false,
-    primaryKey: column.primary ?? false,
-  }));
+  // Extract column info from Drizzle schema including foreign key references
+  const columns = Object.entries(table).map(([name, column]) => {
+    const columnInfo = {
+      name,
+      type: column.dataType || 'unknown',
+      notNull: column.notNull ?? false,
+      primaryKey: column.primary ?? false,
+      unique: column.isUnique ?? false,
+      hasDefault: column.hasDefault ?? false,
+    };
+
+    // Check for foreign key reference
+    if (column.config?.references) {
+      const refFn = column.config.references;
+      try {
+        const refColumn = refFn();
+        if (refColumn?.table) {
+          const refTableName = Object.entries(dbSchema).find(([, t]) => t === refColumn.table)?.[0];
+          if (refTableName && ALLOWED_TABLES.includes(refTableName)) {
+            columnInfo.foreignKey = {
+              table: refTableName,
+              column: refColumn.name,
+            };
+          }
+        }
+      } catch {
+        // Reference function failed, skip FK info
+      }
+    }
+
+    return columnInfo;
+  });
 
   return c.json({ tableName, columns });
 });

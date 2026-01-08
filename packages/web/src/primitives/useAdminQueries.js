@@ -267,7 +267,7 @@ export function useAdminTableSchema(tableName) {
 }
 
 /**
- * Hook to fetch table rows with pagination
+ * Hook to fetch table rows with pagination and filtering
  */
 export function useAdminTableRows(getParams) {
   return useQuery(() => {
@@ -277,9 +277,19 @@ export function useAdminTableRows(getParams) {
     const limit = params?.limit ?? 50;
     const orderBy = params?.orderBy ?? 'id';
     const order = params?.order ?? 'desc';
+    const filterBy = params?.filterBy ?? null;
+    const filterValue = params?.filterValue ?? null;
 
     return {
-      queryKey: queryKeys.admin.tableRows(tableName, page, limit, orderBy, order),
+      queryKey: queryKeys.admin.tableRows(
+        tableName,
+        page,
+        limit,
+        orderBy,
+        order,
+        filterBy,
+        filterValue,
+      ),
       queryFn: () => {
         const searchParams = new URLSearchParams({
           page: page.toString(),
@@ -287,6 +297,10 @@ export function useAdminTableRows(getParams) {
           orderBy,
           order,
         });
+        if (filterBy && filterValue) {
+          searchParams.set('filterBy', filterBy);
+          searchParams.set('filterValue', filterValue);
+        }
         return adminFetch(`database/tables/${tableName}/rows?${searchParams}`);
       },
       enabled: !!tableName,

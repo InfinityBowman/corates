@@ -65,7 +65,7 @@ export default function AdminLayout(props) {
           </div>
         }
       >
-        <div class='mx-auto max-w-7xl'>
+        <div class='mx-auto'>
           {/* Navbar */}
           <div class='border-b border-gray-200 bg-white'>
             <div class='px-6'>
