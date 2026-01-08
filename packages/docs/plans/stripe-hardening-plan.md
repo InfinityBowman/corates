@@ -16,7 +16,16 @@
 | Phase 3 | Payment Failure Recovery (dunning via EmailQueue DO)        | ✅ Complete                    |
 | Phase 4 | Customer Sync (customer.updated, customer.deleted handlers) | ✅ Complete                    |
 | Phase 5 | Payment Intent Tracking                                     | ✅ Complete (handlers existed) |
-| Phase 6 | Integration & Testing                                       | 🔄 In Progress                 |
+| Phase 6 | Integration & Testing                                       | ✅ Complete                    |
+
+**Test Coverage (63 billing handler tests):**
+
+- subscriptionHandlers.test.js - 12 tests (created, updated, deleted, paused, resumed)
+- invoiceHandlers.test.js - 11 tests (payment succeeded, payment failed, dunning, finalized)
+- paymentIntentHandlers.test.js - 9 tests (processing, succeeded, failed)
+- customerHandlers.test.js - 9 tests (updated, deleted)
+- index.test.js - 14 tests (checkout, portal, billing routes)
+- purchase-webhook.test.js - 8 tests (webhook signature, grants, idempotency)
 
 ---
 
