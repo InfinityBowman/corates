@@ -25,7 +25,8 @@
     "user:create-orcid:local": "node ./scripts/create-test-orcid-user.mjs",
     "stripe:setup": "node ./scripts/setup-stripe-test.mjs",
     "openapi:generate": "node ./scripts/generate-openapi.mjs",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@better-auth/stripe": "^1.4.10",
@@ -43,6 +44,7 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.11.1",
+    "better-sqlite3": "^12.5.0",
     "dotenv": "^16.6.1",
     "drizzle-kit": "^0.31.8",
     "vitest": "3.2.0",

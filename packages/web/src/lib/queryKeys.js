@@ -69,7 +69,7 @@ export const queryKeys = {
     orgBillingReconcile: (orgId, params) => ['adminOrgBillingReconcile', orgId, params],
     databaseTables: ['admin', 'database', 'tables'],
     tableSchema: tableName => ['admin', 'database', 'schema', tableName],
-    tableRows: (tableName, page, limit, orderBy, order) => [
+    tableRows: (tableName, page, limit, orderBy, order, filterBy, filterValue) => [
       'admin',
       'database',
       'rows',
@@ -78,6 +78,8 @@ export const queryKeys = {
       limit,
       orderBy,
       order,
+      filterBy,
+      filterValue,
     ],
   },
 };

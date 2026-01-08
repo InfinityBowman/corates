@@ -12,11 +12,17 @@ import {
   FiArrowDown,
   FiAlertCircle,
   FiRefreshCw,
+  FiKey,
+  FiLink,
 } from 'solid-icons/fi';
 import { BiRegularTable } from 'solid-icons/bi';
 import { isAdmin, isAdminChecked } from '@/stores/adminStore.js';
-import { useAdminDatabaseTables, useAdminTableRows } from '@primitives/useAdminQueries.js';
-import { Spinner } from '@corates/ui';
+import {
+  useAdminDatabaseTables,
+  useAdminTableRows,
+  useAdminTableSchema,
+} from '@primitives/useAdminQueries.js';
+import { Spinner, TooltipPrimitive as Tooltip } from '@corates/ui';
 
 const LIMIT_OPTIONS = [25, 50, 100];
 
@@ -26,9 +32,14 @@ export default function DatabaseViewer() {
   const [limit, setLimit] = createSignal(50);
   const [orderBy, setOrderBy] = createSignal('id');
   const [order, setOrder] = createSignal('desc');
+  const [filterColumn, setFilterColumn] = createSignal(null);
+  const [filterValue, setFilterValue] = createSignal(null);
 
   const tablesQuery = useAdminDatabaseTables();
   const tables = () => tablesQuery.data?.tables || [];
+
+  const schemaQuery = useAdminTableSchema(selectedTable);
+  const schemaColumns = () => schemaQuery.data?.columns || [];
 
   const rowsQuery = useAdminTableRows(() => ({
     tableName: selectedTable(),
@@ -36,6 +47,8 @@ export default function DatabaseViewer() {
     limit: limit(),
     orderBy: orderBy(),
     order: order(),
+    filterBy: filterColumn(),
+    filterValue: filterValue(),
   }));
 
   const rows = () => rowsQuery.data?.rows || [];
@@ -47,11 +60,39 @@ export default function DatabaseViewer() {
     return firstRow ? Object.keys(firstRow) : [];
   });
 
+  // Build a map of column name to schema info for quick lookup
+  const columnSchemaMap = createMemo(() => {
+    const map = {};
+    for (const col of schemaColumns()) {
+      map[col.name] = col;
+    }
+    return map;
+  });
+
   const handleTableSelect = tableName => {
     setSelectedTable(tableName);
     setPage(1);
     setOrderBy('id');
     setOrder('desc');
+    setFilterColumn(null);
+    setFilterValue(null);
+  };
+
+  // Navigate to a foreign key reference
+  const navigateToForeignKey = (targetTable, columnName, value) => {
+    setSelectedTable(targetTable);
+    setPage(1);
+    setOrderBy(columnName);
+    setOrder('desc');
+    setFilterColumn(columnName);
+    setFilterValue(value);
+  };
+
+  // Clear active filter
+  const clearFilter = () => {
+    setFilterColumn(null);
+    setFilterValue(null);
+    setPage(1);
   };
 
   const handleSort = column => {
@@ -162,7 +203,24 @@ export default function DatabaseViewer() {
               <div class='rounded-lg border border-gray-200 bg-white'>
                 {/* Table Header */}
                 <div class='flex items-center justify-between border-b border-gray-200 px-4 py-3'>
-                  <h2 class='font-semibold text-gray-900'>{selectedTable()}</h2>
+                  <div class='flex items-center gap-3'>
+                    <h2 class='font-semibold text-gray-900'>{selectedTable()}</h2>
+                    <Show when={filterColumn()}>
+                      <span class='flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700'>
+                        <FiLink class='h-3 w-3' />
+                        {filterColumn()} = {filterValue()}
+                        <button
+                          onClick={clearFilter}
+                          class='ml-1 rounded-full p-0.5 hover:bg-blue-200'
+                          title='Clear filter'
+                        >
+                          <svg class='h-3 w-3' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                            <path d='M18 6L6 18M6 6l12 12' />
+                          </svg>
+                        </button>
+                      </span>
+                    </Show>
+                  </div>
                   <div class='flex items-center gap-4'>
                     <select
                       value={limit()}
@@ -211,21 +269,53 @@ export default function DatabaseViewer() {
                         <thead class='bg-gray-50'>
                           <tr>
                             <For each={columns()}>
-                              {col => (
-                                <th
-                                  class='cursor-pointer px-4 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase hover:bg-gray-100'
-                                  onClick={() => handleSort(col)}
-                                >
-                                  <span class='flex items-center gap-1'>
-                                    {col}
-                                    <Show when={orderBy() === col}>
-                                      {order() === 'desc' ?
-                                        <FiArrowDown class='h-3 w-3' />
-                                      : <FiArrowUp class='h-3 w-3' />}
-                                    </Show>
-                                  </span>
-                                </th>
-                              )}
+                              {col => {
+                                const schema = () => columnSchemaMap()[col];
+                                return (
+                                  <th
+                                    class='cursor-pointer px-4 py-2 text-left text-xs font-medium tracking-wider text-gray-500 uppercase hover:bg-gray-100'
+                                    onClick={() => handleSort(col)}
+                                  >
+                                    <span class='flex items-center gap-1'>
+                                      <Show when={schema()?.primaryKey}>
+                                        <Tooltip.Root openDelay={100}>
+                                          <Tooltip.Trigger>
+                                            <FiKey class='h-3 w-3 text-amber-500' />
+                                          </Tooltip.Trigger>
+                                          <Tooltip.Positioner>
+                                            <Tooltip.Content class='rounded bg-gray-800 px-2 py-1 text-xs text-white'>
+                                              Primary Key
+                                            </Tooltip.Content>
+                                          </Tooltip.Positioner>
+                                        </Tooltip.Root>
+                                      </Show>
+                                      <Show when={schema()?.foreignKey}>
+                                        <Tooltip.Root openDelay={100}>
+                                          <Tooltip.Trigger>
+                                            <FiLink class='h-3 w-3 text-blue-500' />
+                                          </Tooltip.Trigger>
+                                          <Tooltip.Positioner>
+                                            <Tooltip.Content class='rounded bg-gray-800 px-2 py-1 text-xs text-white'>
+                                              FK: {schema().foreignKey.table}.{schema().foreignKey.column}
+                                            </Tooltip.Content>
+                                          </Tooltip.Positioner>
+                                        </Tooltip.Root>
+                                      </Show>
+                                      {col}
+                                      <Show when={schema()?.type}>
+                                        <span class='ml-1 rounded bg-gray-200 px-1 py-0.5 text-2xs font-normal normal-case text-gray-600'>
+                                          {schema().type}
+                                        </span>
+                                      </Show>
+                                      <Show when={orderBy() === col}>
+                                        {order() === 'desc' ?
+                                          <FiArrowDown class='h-3 w-3' />
+                                        : <FiArrowUp class='h-3 w-3' />}
+                                      </Show>
+                                    </span>
+                                  </th>
+                                );
+                              }}
                             </For>
                           </tr>
                         </thead>
@@ -234,11 +324,34 @@ export default function DatabaseViewer() {
                             {row => (
                               <tr class='hover:bg-gray-50'>
                                 <For each={columns()}>
-                                  {col => (
-                                    <td class='max-w-xs truncate px-4 py-2 text-sm whitespace-nowrap text-gray-700'>
-                                      {formatCellValue(row[col])}
-                                    </td>
-                                  )}
+                                  {col => {
+                                    const schema = () => columnSchemaMap()[col];
+                                    const cellValue = row[col];
+                                    const fk = () => schema()?.foreignKey;
+
+                                    return (
+                                      <td class='max-w-xs truncate px-4 py-2 text-sm whitespace-nowrap text-gray-700'>
+                                        <Show
+                                          when={fk() && cellValue != null}
+                                          fallback={formatCellValue(cellValue)}
+                                        >
+                                          <button
+                                            onClick={() =>
+                                              navigateToForeignKey(
+                                                fk().table,
+                                                fk().column,
+                                                cellValue,
+                                              )
+                                            }
+                                            class='text-blue-600 underline decoration-dotted hover:text-blue-800'
+                                            title={`View in ${fk().table}`}
+                                          >
+                                            {formatCellValue(cellValue)}
+                                          </button>
+                                        </Show>
+                                      </td>
+                                    );
+                                  }}
                                 </For>
                               </tr>
                             )}

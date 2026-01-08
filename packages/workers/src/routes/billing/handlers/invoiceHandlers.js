@@ -4,7 +4,7 @@
  * Critical for payment failure recovery and dunning
  */
 
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { subscription } from '@/db/schema.js';
 
 /**
@@ -92,7 +92,7 @@ export async function handleInvoicePaymentSucceeded(invoice, ctx) {
  * @param {object} ctx - Context with db, logger, env
  */
 export async function handleInvoicePaymentFailed(invoice, ctx) {
-  const { db, logger, env } = ctx;
+  const { db, logger, _env } = ctx;
 
   // Only process subscription invoices
   if (!invoice.subscription) {
