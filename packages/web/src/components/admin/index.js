@@ -1,12 +1,3 @@
+// Only export components that are lazy-loaded in Routes.jsx
+// Other admin components are imported directly where needed to enable code splitting
 export { default as AdminDashboard } from './AdminDashboard.jsx';
-export { default as UserTable } from './UserTable.jsx';
-export { default as StatsCard } from './StatsCard.jsx';
-export { default as ImpersonationBanner } from './ImpersonationBanner.jsx';
-export { default as OrgList } from './OrgList.jsx';
-export { default as OrgDetail } from './OrgDetail.jsx';
-export { default as OrgBillingSummary } from './OrgBillingSummary.jsx';
-export { default as OrgQuickActions } from './OrgQuickActions.jsx';
-export { default as SubscriptionList } from './SubscriptionList.jsx';
-export { default as GrantList } from './GrantList.jsx';
-export { default as SubscriptionDialog } from './SubscriptionDialog.jsx';
-export { default as GrantDialog } from './GrantDialog.jsx';

@@ -1,4 +1,5 @@
 import { Router, Route } from '@solidjs/router';
+import { lazy } from 'solid-js';
 import Dashboard from './components/Dashboard.jsx';
 import SignIn from '@/components/auth/SignIn.jsx';
 import SignUp from '@/components/auth/SignUp.jsx';
@@ -22,19 +23,27 @@ import {
   GeneralSettings,
 } from '@/components/settings/index.js';
 import AdminLayout from '@/components/admin/AdminLayout.jsx';
-import { AdminDashboard } from '@/components/admin/index.js';
-import StorageManagement from '@/components/admin/StorageManagement.jsx';
-import OrgList from '@/components/admin/OrgList.jsx';
-import OrgDetail from '@/components/admin/OrgDetail.jsx';
-import AdminBillingLedgerPage from '@/components/admin/billing-observability/AdminBillingLedgerPage.jsx';
-import AdminBillingStuckStatesPage from '@/components/admin/billing-observability/AdminBillingStuckStatesPage.jsx';
-import DatabaseViewer from '@/components/admin/DatabaseViewer.jsx';
 import { BASEPATH } from '@config/api.js';
 import ProtectedGuard from '@/components/auth/ProtectedGuard.jsx';
 import ProjectView from '@/components/project/ProjectView.jsx';
 import { CreateOrgPage } from '@/components/org/index.js';
 import MockIndex from '@/components/mock/MockIndex.jsx';
 import RobinsReconcileSectionBQuestionMock from '@/components/mock/RobinsReconcileSectionBQuestionMock.jsx';
+
+// Code-split admin routes - loaded only when navigating to /admin/*
+const AdminDashboard = lazy(() =>
+  import('@/components/admin/index.js').then(m => ({ default: m.AdminDashboard })),
+);
+const StorageManagement = lazy(() => import('@/components/admin/StorageManagement.jsx'));
+const OrgList = lazy(() => import('@/components/admin/OrgList.jsx'));
+const OrgDetail = lazy(() => import('@/components/admin/OrgDetail.jsx'));
+const AdminBillingLedgerPage = lazy(
+  () => import('@/components/admin/billing-observability/AdminBillingLedgerPage.jsx'),
+);
+const AdminBillingStuckStatesPage = lazy(
+  () => import('@/components/admin/billing-observability/AdminBillingStuckStatesPage.jsx'),
+);
+const DatabaseViewer = lazy(() => import('@/components/admin/DatabaseViewer.jsx'));
 
 export default function AppRoutes() {
   return (

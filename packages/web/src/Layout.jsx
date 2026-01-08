@@ -1,10 +1,12 @@
-import { createSignal, onMount, createMemo, Show } from 'solid-js';
+import { createSignal, onMount, createMemo, Show, lazy } from 'solid-js';
 import { useLocation } from '@solidjs/router';
 import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/sidebar/Sidebar.jsx';
 import { Toaster } from '@corates/ui';
-import { ImpersonationBanner } from '@/components/admin/index.js';
 import { isImpersonating } from '@/stores/adminStore.js';
+
+// Lazy load admin components to avoid bundling admin code for non-admins
+const ImpersonationBanner = lazy(() => import('@/components/admin/ImpersonationBanner.jsx'));
 import { useMembershipSync } from '@/primitives/useMembershipSync.js';
 
 const SIDEBAR_MODE_KEY = 'corates-sidebar-mode';

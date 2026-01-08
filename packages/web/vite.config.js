@@ -53,18 +53,26 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: id => {
-          // Separate EmbedPDF modules into their own chunks for code-splitting
+          // Group all EmbedPDF plugins into a single chunk
+          if (id.includes('@embedpdf/plugin-')) {
+            return 'embedpdf-plugins';
+          }
+          // Group all other EmbedPDF core packages
           if (id.includes('@embedpdf/')) {
-            // Group all font packages together (they're small and related)
+            // Group all font packages together
             if (id.includes('@embedpdf/fonts-')) {
               return 'embedpdf-fonts';
             }
-            // Extract package name from path for other packages
+            // Extract package name from path for core packages
             const match = id.match(/@embedpdf\/([^/]+)/);
             if (match) {
               return `embedpdf-${match[1]}`;
             }
             return 'embedpdf';
+          }
+          // Group all admin components into a single chunk
+          if (id.includes('/components/admin/')) {
+            return 'admin';
           }
         },
       },
