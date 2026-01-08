@@ -126,6 +126,15 @@ async function revokeUserSessions(userId) {
 }
 
 /**
+ * Revoke a specific session for a user
+ */
+async function revokeUserSession(userId, sessionId) {
+  return apiFetch.delete(`/api/admin/users/${userId}/sessions/${sessionId}`, {
+    toastMessage: false,
+  });
+}
+
+/**
  * Delete a user
  */
 async function deleteUser(userId) {
@@ -353,6 +362,7 @@ export {
   impersonateUser,
   stopImpersonation,
   revokeUserSessions,
+  revokeUserSession,
   deleteUser,
   fetchStorageDocuments,
   deleteStorageDocuments,

@@ -466,6 +466,47 @@ userRoutes.delete('/users/:userId/sessions', async c => {
 });
 
 /**
+ * DELETE /api/admin/users/:userId/sessions/:sessionId
+ * Revoke a specific session for a user
+ */
+userRoutes.delete('/users/:userId/sessions/:sessionId', async c => {
+  const userId = c.req.param('userId');
+  const sessionId = c.req.param('sessionId');
+  const db = createDb(c.env.DB);
+
+  try {
+    // Verify the session belongs to the user
+    const [existingSession] = await db
+      .select({ id: session.id, userId: session.userId })
+      .from(session)
+      .where(eq(session.id, sessionId))
+      .limit(1);
+
+    if (!existingSession) {
+      const error = createDomainError(USER_ERRORS.NOT_FOUND, { sessionId });
+      return c.json(error, error.statusCode);
+    }
+
+    // Verify session belongs to the specified user
+    if (existingSession.userId !== userId) {
+      const error = createDomainError(USER_ERRORS.NOT_FOUND, { sessionId });
+      return c.json(error, error.statusCode);
+    }
+
+    await db.delete(session).where(eq(session.id, sessionId));
+
+    return c.json({ success: true, message: 'Session revoked' });
+  } catch (error) {
+    console.error('Error revoking session:', error);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'revoke_session',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
+  }
+});
+
+/**
  * DELETE /api/admin/users/:userId
  * Delete a user and all their data
  */

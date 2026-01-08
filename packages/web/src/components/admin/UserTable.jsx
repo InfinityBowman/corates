@@ -3,6 +3,7 @@
  */
 
 import { createSignal, Show, For } from 'solid-js';
+import { A } from '@solidjs/router';
 import {
   FiMoreVertical,
   FiUserX,
@@ -205,9 +206,12 @@ export default function UserTable(props) {
                         class='h-8 w-8'
                       />
                       <div>
-                        <p class='font-medium text-gray-900'>
+                        <A
+                          href={`/admin/users/${user.id}`}
+                          class='font-medium text-blue-600 hover:text-blue-700 hover:underline'
+                        >
                           {user.displayName || user.name || 'Unknown'}
-                        </p>
+                        </A>
                         <Show when={user.username}>
                           <p class='text-sm text-gray-500'>@{user.username}</p>
                         </Show>
