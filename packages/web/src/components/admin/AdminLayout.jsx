@@ -15,6 +15,7 @@ import {
   FiAlertCircle,
   FiServer,
   FiFolder,
+  FiCreditCard,
 } from 'solid-icons/fi';
 import { A } from '@solidjs/router';
 import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.js';
@@ -27,6 +28,7 @@ const navItems = [
   { path: '/admin/database', label: 'Database', icon: FiServer },
   { path: '/admin/billing/ledger', label: 'Event Ledger', icon: FiFilter },
   { path: '/admin/billing/stuck-states', label: 'Stuck States', icon: FiAlertTriangle },
+  { path: '/admin/billing/stripe-tools', label: 'Stripe Tools', icon: FiCreditCard },
 ];
 
 export default function AdminLayout(props) {
