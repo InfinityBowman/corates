@@ -23,6 +23,7 @@ import {
   deleteUser,
 } from '@/stores/adminStore.js';
 import { Avatar, Dialog, Tooltip } from '@corates/ui';
+import { table, getStatusBadgeClass } from './styles/admin-tokens.js';
 
 // Provider display info
 const PROVIDER_INFO = {
@@ -159,33 +160,19 @@ export default function UserTable(props) {
       </Show>
 
       <div class='overflow-x-auto'>
-        <table class='w-full'>
+        <table class={table.base}>
           <thead>
-            <tr class='border-b border-gray-200 bg-gray-50'>
-              <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                User
-              </th>
-              <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                Email
-              </th>
-              <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                Providers
-              </th>
-              <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                Status
-              </th>
-              <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                Stripe Customer
-              </th>
-              <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                Joined
-              </th>
-              <th class='px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                Actions
-              </th>
+            <tr class={table.header}>
+              <th class={table.headerCell}>User</th>
+              <th class={table.headerCell}>Email</th>
+              <th class={table.headerCell}>Providers</th>
+              <th class={table.headerCell}>Status</th>
+              <th class={table.headerCell}>Stripe Customer</th>
+              <th class={table.headerCell}>Joined</th>
+              <th class={`${table.headerCell} text-right`}>Actions</th>
             </tr>
           </thead>
-          <tbody class='divide-y divide-gray-200'>
+          <tbody class={table.body}>
             <For
               each={users()}
               fallback={
@@ -197,7 +184,7 @@ export default function UserTable(props) {
               }
             >
               {user => (
-                <tr class='hover:bg-gray-50'>
+                <tr class={table.row}>
                   <td class='px-6 py-4'>
                     <div class='flex items-center space-x-3'>
                       <Avatar
@@ -218,7 +205,7 @@ export default function UserTable(props) {
                       </div>
                     </div>
                   </td>
-                  <td class='px-6 py-4'>
+                  <td class={table.cell}>
                     <div class='flex items-center space-x-2'>
                       <span class='text-sm text-gray-500'>{user.email}</span>
                       <Show when={user.emailVerified}>
@@ -226,7 +213,7 @@ export default function UserTable(props) {
                       </Show>
                     </div>
                   </td>
-                  <td class='px-6 py-4'>
+                  <td class={table.cell}>
                     <div class='flex items-center gap-1.5'>
                       <For each={user.providers || []}>
                         {provider => {
@@ -255,21 +242,15 @@ export default function UserTable(props) {
                       </Show>
                     </div>
                   </td>
-                  <td class='px-6 py-4'>
+                  <td class={table.cell}>
                     <Show
                       when={user.banned}
-                      fallback={
-                        <span class='inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800'>
-                          Active
-                        </span>
-                      }
+                      fallback={<span class={getStatusBadgeClass('success')}>Active</span>}
                     >
-                      <span class='inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800'>
-                        Banned
-                      </span>
+                      <span class={getStatusBadgeClass('error')}>Banned</span>
                     </Show>
                   </td>
-                  <td class='px-6 py-4'>
+                  <td class={table.cell}>
                     <Show
                       when={user.stripeCustomerId}
                       fallback={<span class='text-sm text-gray-400'>-</span>}
@@ -279,8 +260,8 @@ export default function UserTable(props) {
                       </code>
                     </Show>
                   </td>
-                  <td class='px-6 py-4 text-sm text-gray-500'>{formatDate(user.createdAt)}</td>
-                  <td class='px-6 py-4 text-right'>
+                  <td class={`${table.cell} text-gray-500`}>{formatDate(user.createdAt)}</td>
+                  <td class={`${table.cell} text-right`}>
                     <div class='relative'>
                       <button
                         onClick={e => {
