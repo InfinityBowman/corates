@@ -111,7 +111,6 @@ Browser-based persistent storage used for offline-first capabilities:
   - `localChecklists` - Offline practice checklists
   - `localChecklistPdfs` - PDFs for local checklists
   - `ops` - Operation queue for offline mutations (future)
-- **y-indexeddb-{projectId}** - Per-project Yjs document persistence (legacy, kept for y-indexeddb)
 
 **Related:** [Offline/Local-First Audit](audits/offline-local-first-audit-2026-01.md), [db.js](../web/src/primitives/db.js)
 

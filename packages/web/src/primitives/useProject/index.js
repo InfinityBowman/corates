@@ -6,7 +6,7 @@
 
 import { createEffect, onCleanup, createMemo } from 'solid-js';
 import * as Y from 'yjs';
-import { IndexeddbPersistence } from 'y-indexeddb';
+import { DexieYProvider } from 'y-dexie';
 import projectStore from '@/stores/projectStore.js';
 import { queryClient } from '@lib/queryClient.js';
 import { queryKeys } from '@lib/queryKeys.js';
@@ -18,19 +18,13 @@ import { createStudyOperations } from './studies.js';
 import { createChecklistOperations } from './checklists/index.js';
 import { createPdfOperations } from './pdfs.js';
 import { createReconciliationOperations } from './reconciliation.js';
-import { deleteProjectData } from '../db.js';
+import { db, deleteProjectData } from '../db.js';
 
 /**
  * Global connection registry to prevent multiple connections to the same project.
  * Each project ID maps to a connection instance with reference counting.
  */
 const connectionRegistry = new Map();
-
-/**
- * IndexedDB database name prefix for Y.js persistence
- * Must match the pattern used in the IndexeddbPersistence initialization
- */
-const INDEXEDDB_PREFIX = 'corates-project-';
 
 /**
  * Get or create a shared connection for a project
@@ -49,7 +43,7 @@ function getOrCreateConnection(projectId) {
   // Create new connection entry
   const entry = {
     ydoc: new Y.Doc(),
-    indexeddbProvider: null,
+    dexieProvider: null,
     connectionManager: null,
     syncManager: null,
     studyOps: null,
@@ -79,8 +73,8 @@ function releaseConnection(projectId) {
     if (entry.connectionManager) {
       entry.connectionManager.destroy();
     }
-    if (entry.indexeddbProvider) {
-      entry.indexeddbProvider.destroy();
+    if (entry.dexieProvider) {
+      DexieYProvider.release(entry.ydoc);
     }
     if (entry.ydoc) {
       entry.ydoc.destroy();
@@ -107,8 +101,8 @@ export async function cleanupProjectLocalData(projectId) {
     if (entry.connectionManager) {
       entry.connectionManager.destroy();
     }
-    if (entry.indexeddbProvider) {
-      entry.indexeddbProvider.destroy();
+    if (entry.dexieProvider) {
+      DexieYProvider.release(entry.ydoc);
     }
     if (entry.ydoc) {
       entry.ydoc.destroy();
@@ -118,33 +112,17 @@ export async function cleanupProjectLocalData(projectId) {
     projectStore.setConnectionState(projectId, { connected: false, synced: false });
   }
 
-  // 2. Delete IndexedDB storage (y-indexeddb uses this naming pattern)
-  try {
-    const dbName = `${INDEXEDDB_PREFIX}${projectId}`;
-    await new Promise((resolve, reject) => {
-      const request = indexedDB.deleteDatabase(dbName);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-      request.onblocked = () => {
-        console.warn('IndexedDB deletion blocked for project:', projectId);
-        resolve(); // Continue anyway
-      };
-    });
-  } catch (err) {
-    console.error('Failed to delete IndexedDB for project:', projectId, err);
-  }
-
-  // 3. Clear from unified Dexie database (PDF cache, etc.)
+  // 2. Clear from unified Dexie database (project Y.Doc, PDF cache, etc.)
   try {
     await deleteProjectData(projectId);
   } catch (err) {
     console.error('Failed to clear Dexie data for project:', projectId, err);
   }
 
-  // 4. Clear from projectStore (in-memory cache)
+  // 3. Clear from projectStore (in-memory cache)
   projectStore.clearProject(projectId);
 
-  // 5. Invalidate project list query
+  // 4. Invalidate project list query
   queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
 }
 
@@ -244,25 +222,47 @@ export function useProject(projectId) {
       connectionEntry.syncManager?.syncFromYDoc();
     });
 
-    // Set up IndexedDB persistence for offline support
-    connectionEntry.indexeddbProvider = new IndexeddbPersistence(
-      `corates-project-${projectId}`,
-      ydoc,
-    );
-
-    connectionEntry.indexeddbProvider.whenSynced.then(() => {
-      // Sync UI from locally persisted data immediately
-      connectionEntry.syncManager.syncFromYDoc();
-
-      // For local projects, we're "connected" and "synced" once IndexedDB is synced
-      if (isLocalProject()) {
-        projectStore.setConnectionState(projectId, {
-          connecting: false,
-          connected: true,
-          synced: true,
-        });
+    // Set up Dexie persistence for offline support using y-dexie
+    // First ensure the project row exists in Dexie, then load the Y.Doc
+    db.projects.get(projectId).then(async existingProject => {
+      if (!existingProject) {
+        // Create a project row if it doesn't exist
+        await db.projects.put({ id: projectId, updatedAt: Date.now() });
       }
-      // For online projects, synced: true is set when WebSocket syncs (in onSync callback)
+
+      // Get the project row (which includes the ydoc property via y-dexie)
+      const project = await db.projects.get(projectId);
+
+      // Load the Dexie Y.Doc and apply its state to our ydoc
+      connectionEntry.dexieProvider = DexieYProvider.load(project.ydoc);
+
+      connectionEntry.dexieProvider.whenLoaded.then(() => {
+        // Apply persisted state from Dexie Y.Doc to our Y.Doc
+        const persistedState = Y.encodeStateAsUpdate(project.ydoc);
+        Y.applyUpdate(ydoc, persistedState);
+
+        // Subscribe to our ydoc updates to persist them to Dexie
+        const updateHandler = (update, origin) => {
+          // Don't persist updates that came from the Dexie doc itself
+          if (origin !== 'dexie-sync') {
+            Y.applyUpdate(project.ydoc, update, 'dexie-sync');
+          }
+        };
+        ydoc.on('update', updateHandler);
+
+        // Sync UI from locally persisted data immediately
+        connectionEntry.syncManager.syncFromYDoc();
+
+        // For local projects, we're "connected" and "synced" once Dexie is loaded
+        if (isLocalProject()) {
+          projectStore.setConnectionState(projectId, {
+            connecting: false,
+            connected: true,
+            synced: true,
+          });
+        }
+        // For online projects, synced: true is set when WebSocket syncs (in onSync callback)
+      });
     });
 
     // For local projects, don't connect to WebSocket

@@ -293,9 +293,6 @@ importers:
       y-dexie:
         specifier: ^4.2.2
         version: 4.2.2(dexie@4.2.1)(yjs@13.6.29)
-      y-indexeddb:
-        specifier: ^9.0.12
-        version: 9.0.12(yjs@13.6.29)
       y-websocket:
         specifier: ^3.0.0
         version: 3.0.0(yjs@13.6.29)
@@ -7319,12 +7316,6 @@ packages:
     peerDependencies:
       dexie: '>=4.2.0-alpha.1 <5.0.0'
       yjs: ^13.6.27
-
-  y-indexeddb@9.0.12:
-    resolution: {integrity: sha512-9oCFRSPPzBK7/w5vOkJBaVCQZKHXB/v6SIT+WYhnJxlEC61juqG0hBrAf+y3gmSMLFLwICNH9nQ53uscuse6Hg==}
-    engines: {node: '>=16.0.0', npm: '>=8.0.0'}
-    peerDependencies:
-      yjs: ^13.0.0
 
   y-protocols@1.0.7:
     resolution: {integrity: sha512-YSVsLoXxO67J6eE/nV4AtFtT3QEotZf5sK5BHxFBXso7VDUT3Tx07IfA6hsu5Q5OmBdMkQVmFZ9QOA7fikWvnw==}
@@ -14792,11 +14783,6 @@ snapshots:
   y-dexie@4.2.2(dexie@4.2.1)(yjs@13.6.29):
     dependencies:
       dexie: 4.2.1
-      yjs: 13.6.29
-
-  y-indexeddb@9.0.12(yjs@13.6.29):
-    dependencies:
-      lib0: 0.2.117
       yjs: 13.6.29
 
   y-protocols@1.0.7(yjs@13.6.29):

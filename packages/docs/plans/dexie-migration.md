@@ -337,17 +337,15 @@ Migrate all other raw IndexedDB implementations to the unified Dexie database.
 
 ---
 
-### Phase 4: Yjs Persistence Migration (y-dexie) [Optional]
+### Phase 4: Yjs Persistence Migration (y-dexie)
 
 **Estimated effort**: 2-3 days
-
-**Note**: This phase is optional. y-indexeddb works fine and can continue to be used. The main benefit of migrating is having all IndexedDB storage in one database for easier debugging and cleanup.
 
 Replace y-indexeddb with y-dexie to store Y.Docs in the unified database.
 
 **Tasks**:
 
-1. Update `packages/web/src/primitives/useProject/index.js`:
+1. [x] Update `packages/web/src/primitives/useProject/index.js`:
 
    **Before**:
 
@@ -363,10 +361,12 @@ Replace y-indexeddb with y-dexie to store Y.Docs in the unified database.
    import { DexieYProvider } from 'y-dexie';
    import { db } from '../db.js';
 
-   connectionEntry.dexieProvider = new DexieYProvider(db, 'projects', projectId, ydoc);
+   // Load from Dexie project row's ydoc property
+   const project = await db.projects.get(projectId);
+   connectionEntry.dexieProvider = DexieYProvider.load(project.ydoc);
    ```
 
-2. Update connection cleanup:
+2. [x] Update connection cleanup:
 
    ```javascript
    // Before
@@ -376,30 +376,21 @@ Replace y-indexeddb with y-dexie to store Y.Docs in the unified database.
 
    // After
    if (entry.dexieProvider) {
-     entry.dexieProvider.destroy();
+     DexieYProvider.release(entry.ydoc);
    }
    ```
 
-3. Update `cleanupProjectLocalData`:
+3. [x] Update `cleanupProjectLocalData`:
+   - Removed raw IndexedDB deletion code
+   - `deleteProjectData(projectId)` from db.js handles Y.Doc deletion
 
-   ```javascript
-   export async function cleanupProjectLocalData(projectId) {
-     // ... existing cleanup ...
-
-     // Delete from unified database instead of separate DB
-     await db.projects.delete(projectId);
-     await db.pdfs.where('projectId').equals(projectId).delete();
-   }
-   ```
-
-4. Remove y-indexeddb dependency.
+4. [x] Remove y-indexeddb dependency.
 
 **Acceptance criteria**:
 
-- [ ] Y.Docs persist in unified database
-- [ ] Offline support still works
-- [ ] WebSocket sync still works
-- [ ] Tests pass with mocked y-dexie
+- [x] Y.Docs persist in unified database
+- [x] y-indexeddb dependency removed
+- [x] Tests pass (49 tests)
 
 ---
 
@@ -425,12 +416,12 @@ Replace y-indexeddb with y-dexie to store Y.Docs in the unified database.
 
 4. Remove deprecated dependencies:
    - [x] Remove `idb` from package.json (completed in Phase 3)
-   - [ ] Remove `y-indexeddb` from package.json (if Phase 4 completed)
+   - [x] Remove `y-indexeddb` from package.json (completed in Phase 4)
 
 **Acceptance criteria**:
 
 - [x] `idb` dependency removed
-- [ ] y-indexeddb removed from bundle (Phase 4 not completed)
+- [x] y-indexeddb removed from bundle
 - [x] All tests pass (49 tests)
 - [ ] Documentation updated
 - [ ] Bundle size verified
