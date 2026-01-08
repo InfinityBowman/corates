@@ -5,7 +5,8 @@
  */
 
 import { eq } from 'drizzle-orm';
-import { subscription } from '@/db/schema.js';
+import { subscription, user } from '@/db/schema.js';
+import { queueDunningEmail } from './dunning.js';
 
 /**
  * Handle invoice.payment_succeeded
@@ -159,23 +160,46 @@ export async function handleInvoicePaymentFailed(invoice, ctx) {
     hostedInvoiceUrl: invoice.hosted_invoice_url,
   });
 
-  // Log dunning event - in production, integrate with email service
-  // Stripe's Smart Retries will handle payment retries automatically
-  // We just need to keep the user informed
-  logger.stripe('dunning_triggered', {
-    subscriptionId: existing.id,
-    orgId: existing.referenceId,
-    attemptCount: invoice.attempt_count,
-    hostedInvoiceUrl: invoice.hosted_invoice_url,
-  });
+  // Look up the user to send dunning email
+  const stripeCustomerId =
+    typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
+
+  if (stripeCustomerId && ctx.env?.EMAIL_QUEUE) {
+    const billingUser = await db
+      .select({ id: user.id, email: user.email, name: user.name, displayName: user.displayName })
+      .from(user)
+      .where(eq(user.stripeCustomerId, stripeCustomerId))
+      .get();
+
+    if (billingUser?.email) {
+      // Queue dunning email via EmailQueue DO
+      await queueDunningEmail(
+        {
+          subscriptionId: existing.id,
+          orgId: existing.referenceId,
+          userEmail: billingUser.email,
+          userName: billingUser.displayName || billingUser.name,
+          invoiceUrl: invoice.hosted_invoice_url,
+          amountDue: invoice.amount_due,
+          currency: invoice.currency,
+          attemptCount: invoice.attempt_count || 1,
+        },
+        ctx,
+      );
+    } else {
+      logger.stripe('dunning_email_skipped_no_user', {
+        subscriptionId: existing.id,
+        stripeCustomerId,
+      });
+    }
+  }
 
   return {
     handled: true,
     result: 'payment_failed_processed',
     ledgerContext: {
       stripeSubscriptionId,
-      stripeCustomerId:
-        typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id,
+      stripeCustomerId,
       orgId: existing.referenceId,
     },
   };
