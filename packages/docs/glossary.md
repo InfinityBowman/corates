@@ -102,13 +102,17 @@ Cloudflare's distributed computing primitive providing:
 
 Browser-based persistent storage used for offline-first capabilities:
 
-- **corates-query-cache** - TanStack Query cache (projects, orgs, subscriptions)
-- **corates-auth-cache** - Better Auth session and avatar cache
-- **corates-pdf-cache** - PDF file cache
-- **corates-form-state** - Form auto-save state
-- **y-indexeddb-{projectId}** - Per-project Yjs document persistence
+- **corates** - Unified Dexie database containing:
+  - `projects` - Y.Doc persistence (via y-dexie)
+  - `pdfs` - PDF file cache with LRU eviction
+  - `avatars` - User avatar cache
+  - `formStates` - Form auto-save for OAuth redirects
+  - `queryCache` - TanStack Query persistence
+  - `localChecklists` - Offline practice checklists
+  - `localChecklistPdfs` - PDFs for local checklists
+  - `ops` - Operation queue for offline mutations (future)
 
-**Related:** [Offline/Local-First Audit](audits/offline-local-first-audit-2026-01.md)
+**Related:** [Offline/Local-First Audit](audits/offline-local-first-audit-2026-01.md), [db.js](../web/src/primitives/db.js)
 
 ### TanStack Query (React Query)
 

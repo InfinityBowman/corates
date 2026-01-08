@@ -96,13 +96,20 @@ VITE_GOOGLE_CLIENT_ID   # OAuth client ID (public)
 
 ### IndexedDB Databases
 
-The app uses 5 separate IndexedDB databases:
+The app uses a unified Dexie database (`corates`) for all client-side storage:
 
-1. **`corates-query-cache`** - TanStack Query offline cache (projects, orgs, subscriptions)
-2. **`corates-auth-cache`** - Better Auth session and avatar cache
-3. **`corates-pdf-cache`** - PDF file cache for offline access
-4. **`corates-form-state`** - Form state persistence (auto-save)
-5. **`y-indexeddb-${projectId}`** - Per-project Yjs document storage
+| Table                | Purpose                                        |
+| -------------------- | ---------------------------------------------- |
+| `projects`           | Y.Doc persistence via y-dexie                  |
+| `pdfs`               | PDF file cache with LRU eviction (200MB limit) |
+| `avatars`            | User avatar cache with 30-day expiry           |
+| `formStates`         | Form auto-save across OAuth redirects          |
+| `queryCache`         | TanStack Query offline persistence             |
+| `localChecklists`    | Offline practice checklists                    |
+| `localChecklistPdfs` | PDFs associated with local checklists          |
+| `ops`                | Operation queue for offline mutations (future) |
+
+Additionally, `y-indexeddb-${projectId}` databases are used for per-project Yjs document storage.
 
 ## Architecture
 

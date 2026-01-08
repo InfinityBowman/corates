@@ -48,6 +48,7 @@ import {
   clearAvatarCache,
   pruneExpiredAvatars,
 } from '@/primitives/avatarCache.js';
+import { clearAllData } from '@/primitives/db.js';
 
 // LocalStorage keys for offline caching
 const AUTH_CACHE_KEY = 'corates-auth-cache';
@@ -439,8 +440,9 @@ function createBetterAuthStore() {
     setCachedUser(null);
     setCachedAvatarUrl(null);
 
-    // Clear cached avatar from IndexedDB
-    clearAvatarCache();
+    // Clear all local data from unified Dexie database
+    // This includes avatars, PDFs, query cache, form states, and ops queue
+    await clearAllData();
 
     // Clear all in-memory query cache
     queryClient.clear();
@@ -823,6 +825,9 @@ function createBetterAuthStore() {
 
       // Clear pending email from localStorage (account-specific)
       localStorage.removeItem('pendingEmail');
+
+      // Sign out from Better Auth session
+      await authClient.signOut();
 
       // Use shared cleanup (clears caches, resets state, notifies tabs)
       await _performSignoutCleanup();

@@ -1,33 +1,12 @@
 /**
  * Form State Persistence
- * Saves and restores form state across OAuth redirects using IndexedDB.
+ * Saves and restores form state across OAuth redirects using Dexie.
  * Handles File/ArrayBuffer serialization for PDF uploads.
  */
 
-const DB_NAME = 'corates-form-state';
-const DB_VERSION = 1;
-const STORE_NAME = 'pendingForms';
+import { db } from '@primitives/db.js';
+
 const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
-
-/**
- * Open the IndexedDB database
- * @returns {Promise<IDBDatabase>}
- */
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-
-    request.onupgradeneeded = event => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'key' });
-      }
-    };
-  });
-}
 
 /**
  * Generate a storage key based on form type and optional project ID
@@ -40,128 +19,53 @@ function getKey(type, projectId) {
 }
 
 /**
- * Save form state to IndexedDB
+ * Save form state to Dexie
  * @param {'createProject' | 'addStudies'} type - Form type
  * @param {Object} data - Form state data (should already be serializable)
  * @param {string} [projectId] - Project ID for add-studies form
  * @returns {Promise<void>}
  */
 export async function saveFormState(type, data, projectId) {
-  const db = await openDB();
   const key = getKey(type, projectId);
 
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-
-    const record = {
-      key,
-      type,
-      projectId: projectId ?? null,
-      data,
-      timestamp: Date.now(),
-    };
-
-    store.put(record);
-
-    tx.oncomplete = () => {
-      db.close();
-      resolve();
-    };
-
-    tx.onerror = () => {
-      db.close();
-      reject(tx.error);
-    };
-
-    tx.onabort = () => {
-      db.close();
-      reject(tx.error);
-    };
+  await db.formStates.put({
+    key,
+    type,
+    projectId: projectId ?? null,
+    data,
+    timestamp: Date.now(),
   });
 }
 
 /**
- * Get saved form state from IndexedDB
+ * Get saved form state from Dexie
  * @param {'createProject' | 'addStudies'} type - Form type
  * @param {string} [projectId] - Project ID for add-studies form
  * @returns {Promise<Object|null>} - The saved data or null if not found/expired
  */
 export async function getFormState(type, projectId) {
-  const db = await openDB();
   const key = getKey(type, projectId);
+  const record = await db.formStates.get(key);
 
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const store = tx.objectStore(STORE_NAME);
+  if (!record) return null;
 
-    let result = null;
+  if (Date.now() - record.timestamp > MAX_AGE_MS) {
+    clearFormState(type, projectId).catch(() => {});
+    return null;
+  }
 
-    const request = store.get(key);
-    request.onerror = () => {
-      tx.abort();
-    };
-    request.onsuccess = () => {
-      const record = request.result;
-
-      if (!record || Date.now() - record.timestamp > MAX_AGE_MS) {
-        if (record) {
-          clearFormState(type, projectId).catch(() => {});
-        }
-        result = null;
-      } else {
-        result = record.data;
-      }
-    };
-
-    tx.oncomplete = () => {
-      db.close();
-      resolve(result);
-    };
-
-    tx.onerror = () => {
-      db.close();
-      reject(tx.error);
-    };
-
-    tx.onabort = () => {
-      db.close();
-      reject(tx.error);
-    };
-  });
+  return record.data;
 }
 
 /**
- * Clear saved form state from IndexedDB
+ * Clear saved form state from Dexie
  * @param {'createProject' | 'addStudies'} type - Form type
  * @param {string} [projectId] - Project ID for add-studies form
  * @returns {Promise<void>}
  */
 export async function clearFormState(type, projectId) {
-  const db = await openDB();
   const key = getKey(type, projectId);
-
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-
-    store.delete(key);
-
-    tx.oncomplete = () => {
-      db.close();
-      resolve();
-    };
-
-    tx.onerror = () => {
-      db.close();
-      reject(tx.error);
-    };
-
-    tx.onabort = () => {
-      db.close();
-      reject(tx.error);
-    };
-  });
+  await db.formStates.delete(key);
 }
 
 /**
@@ -230,43 +134,6 @@ export function clearRestoreParamsFromUrl() {
  * @returns {Promise<void>}
  */
 export async function cleanupExpiredStates() {
-  const db = await openDB();
-
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-
-    const now = Date.now();
-    const request = store.openCursor();
-
-    request.onerror = () => {
-      tx.abort();
-    };
-
-    request.onsuccess = event => {
-      const cursor = event.target.result;
-      if (cursor) {
-        const record = cursor.value;
-        if (now - record.timestamp > MAX_AGE_MS) {
-          cursor.delete();
-        }
-        cursor.continue();
-      }
-    };
-
-    tx.oncomplete = () => {
-      db.close();
-      resolve();
-    };
-
-    tx.onerror = () => {
-      db.close();
-      reject(tx.error);
-    };
-
-    tx.onabort = () => {
-      db.close();
-      reject(tx.error);
-    };
-  });
+  const expiryThreshold = Date.now() - MAX_AGE_MS;
+  await db.formStates.where('timestamp').below(expiryThreshold).delete();
 }
