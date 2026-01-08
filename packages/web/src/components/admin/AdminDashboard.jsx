@@ -21,6 +21,7 @@ import { isAdmin, isAdminChecked } from '@/stores/adminStore.js';
 import { useAdminStats, useAdminUsers } from '@primitives/useAdminQueries.js';
 import UserTable from './UserTable.jsx';
 import StatsCard from './StatsCard.jsx';
+import AnalyticsSection from './AnalyticsSection.jsx';
 
 /**
  * Admin Dashboard component
@@ -113,6 +114,11 @@ export default function AdminDashboard() {
             color='orange'
             loading={statsQuery.isLoading}
           />
+        </div>
+
+        {/* Analytics Charts Section */}
+        <div class='mb-8'>
+          <AnalyticsSection />
         </div>
 
         {/* Users Section */}

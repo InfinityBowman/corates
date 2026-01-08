@@ -17,9 +17,6 @@ import {
   FiDollarSign,
   FiCopy,
   FiCheckCircle,
-  FiXCircle,
-  FiClock,
-  FiRefreshCw,
 } from 'solid-icons/fi';
 import { isAdminChecked, isAdmin } from '@/stores/adminStore.js';
 import { apiFetch } from '@/lib/apiFetch.js';

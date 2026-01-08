@@ -14,6 +14,7 @@ import { orgRoutes } from './orgs.js';
 import { databaseRoutes } from './database.js';
 import { projectRoutes } from './projects.js';
 import { stripeToolsRoutes } from './stripe-tools.js';
+import { statsRoutes } from './stats.js';
 
 const adminRoutes = new Hono();
 
@@ -31,5 +32,6 @@ adminRoutes.route('/', orgRoutes);
 adminRoutes.route('/', databaseRoutes);
 adminRoutes.route('/', projectRoutes);
 adminRoutes.route('/', stripeToolsRoutes);
+adminRoutes.route('/stats', statsRoutes);
 
 export { adminRoutes };

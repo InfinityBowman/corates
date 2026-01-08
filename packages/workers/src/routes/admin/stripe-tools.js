@@ -6,7 +6,7 @@
 import { Hono } from 'hono';
 import { createDb } from '@/db/client.js';
 import { user, organization, subscription } from '@/db/schema.js';
-import { eq, or, like, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import Stripe from 'stripe';
 
