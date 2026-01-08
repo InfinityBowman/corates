@@ -230,17 +230,6 @@ export async function getAvatarWithCache(userId, imageUrl) {
 }
 
 /**
- * Clear all cached avatars (e.g., on logout)
- */
-export async function clearAvatarCache() {
-  try {
-    await db.avatars.clear();
-  } catch (err) {
-    console.error('Error clearing avatar cache:', err);
-  }
-}
-
-/**
  * Prune expired avatar cache entries (older than 30 days)
  * Should be called periodically (e.g., on app startup)
  */

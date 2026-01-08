@@ -45,7 +45,6 @@ import { saveLastLoginMethod, LOGIN_METHODS } from '@lib/lastLoginMethod.js';
 import {
   fetchAndCacheAvatar,
   getCachedAvatar,
-  clearAvatarCache,
   pruneExpiredAvatars,
 } from '@/primitives/avatarCache.js';
 import { clearAllData } from '@/primitives/db.js';

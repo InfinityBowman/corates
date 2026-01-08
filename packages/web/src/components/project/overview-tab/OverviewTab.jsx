@@ -15,7 +15,7 @@ import { useProjectContext } from '../ProjectContext.jsx';
 import { Avatar, useConfirmDialog, showToast, Progress, Collapsible } from '@corates/ui';
 import { API_BASE } from '@config/api.js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
-import { shouldShowInTab } from '@/lib/checklist-domain.js';
+import { shouldShowInTab, isReconciledChecklist } from '@/lib/checklist-domain.js';
 import {
   calculateInterRaterReliability,
   getKappaInterpretation,
@@ -64,8 +64,11 @@ export default function OverviewTab() {
   const readyToReconcile = () =>
     studies().filter(s => {
       const checklists = s.checklists || [];
-      const completedChecklists = checklists.filter(c => c.status === CHECKLIST_STATUS.FINALIZED);
-      return completedChecklists.length === 2;
+      // Count non-reconciled checklists with REVIEWER_COMPLETED status
+      const awaitingReconcile = checklists.filter(
+        c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
+      );
+      return awaitingReconcile.length === 2;
     }).length;
 
   const completedStudies = () =>
