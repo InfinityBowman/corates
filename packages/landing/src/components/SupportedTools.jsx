@@ -7,7 +7,7 @@ export default function SupportedTools() {
       status: 'available',
       description: 'Systematic reviews of interventions',
     },
-    { name: 'ROBINS-I', status: 'coming', description: 'Non-randomized studies' },
+    { name: 'ROBINS-I V2', status: 'available', description: 'Non-randomized studies' },
     { name: 'Cochrane RoB 2', status: 'coming', description: 'Randomized trials' },
     // { name: 'GRADE', status: 'coming', description: 'Certainty of evidence' },
   ];
@@ -17,7 +17,7 @@ export default function SupportedTools() {
       <div class='mb-10 text-center'>
         <h2 class='mb-4 text-2xl font-bold text-gray-900 md:text-3xl'>Supported Appraisal tools</h2>
         <p class='mx-auto max-w-xl text-gray-600'>
-          Start with AMSTAR-2 today. More tools are on the way!
+          Start with AMSTAR or ROBINS today. More tools are on the way!
         </p>
       </div>
 
@@ -35,13 +35,13 @@ export default function SupportedTools() {
 
             const content = (
               <>
-                <p class={`mb-1 font-semibold ${isAvailable ? 'text-blue-700' : 'text-gray-500'}`}>
+                <p class={`mb-1 font-semibold ${isAvailable ? 'text-blue-600' : 'text-gray-500'}`}>
                   {tool.name}
                 </p>
                 <p class='mb-2 text-xs text-gray-500'>{tool.description}</p>
                 <span
                   class={`inline-block rounded-full px-2 py-0.5 text-xs ${
-                    isAvailable ? 'bg-blue-700 text-white' : 'bg-gray-300 text-gray-600'
+                    isAvailable ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
                   }`}
                 >
                   {isAvailable ? 'Available' : 'Coming Soon'}
