@@ -5,6 +5,9 @@
  * These events ensure local customer data stays in sync with Stripe.
  */
 
+import { eq } from 'drizzle-orm';
+import { user } from '@/db/schema.js';
+
 /**
  * Handle customer.updated events
  *
@@ -64,12 +67,12 @@ export async function handleCustomerUpdated(customer, ctx) {
 
   if (hasChanges) {
     await db
-      .update(db.schema.user)
+      .update(user)
       .set({
         ...updates,
         updatedAt: new Date(),
       })
-      .where(db.eq(db.schema.user.id, existingUser.id));
+      .where(eq(user.id, existingUser.id));
 
     logger.stripe('customer_updated_synced', {
       userId: existingUser.id,
@@ -128,12 +131,12 @@ export async function handleCustomerDeleted(customer, ctx) {
   // Clear the Stripe customer association but keep the user
   // The user can create a new Stripe customer if needed
   await db
-    .update(db.schema.user)
+    .update(user)
     .set({
       stripeCustomerId: null,
       updatedAt: new Date(),
     })
-    .where(db.eq(db.schema.user.id, existingUser.id));
+    .where(eq(user.id, existingUser.id));
 
   logger.stripe('customer_deleted_association_cleared', {
     userId: existingUser.id,
