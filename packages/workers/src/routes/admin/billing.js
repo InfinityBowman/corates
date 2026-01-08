@@ -20,8 +20,43 @@ import {
 import { getPlan, getGrantPlan } from '@corates/shared/plans';
 import { validateRequest } from '@/config/validation.js';
 import { z } from 'zod/v4';
+import { notifyOrgMembers, EventTypes } from '@/lib/notify.js';
 
 const billingRoutes = new Hono();
+
+/**
+ * Helper to send subscription notifications asynchronously
+ * @param {Object} c - Hono context
+ * @param {Object} db - Database instance
+ * @param {string} orgId - Organization ID
+ * @param {Object} subscriptionData - Subscription data to include in notification
+ * @param {string} action - Action description for logging (e.g., 'creation', 'update', 'cancellation')
+ */
+function notifySubscriptionChange(c, db, orgId, subscriptionData, action) {
+  if (!c.executionCtx?.waitUntil) return;
+
+  c.executionCtx.waitUntil(
+    (async () => {
+      try {
+        const result = await notifyOrgMembers(c.env, db, orgId, {
+          type: EventTypes.SUBSCRIPTION_UPDATED,
+          data: subscriptionData,
+        });
+        console.log(`[Admin] Subscription ${action} notification sent:`, {
+          orgId,
+          subscriptionId: subscriptionData.subscriptionId || subscriptionData.tier,
+          notified: result.notified,
+          failed: result.failed,
+        });
+      } catch (err) {
+        console.error(`[Admin] Subscription ${action} notification error:`, {
+          orgId,
+          error: err.message,
+        });
+      }
+    })(),
+  );
+}
 
 // Validation schemas for admin billing endpoints
 const adminBillingSchemas = {
@@ -192,6 +227,20 @@ billingRoutes.post(
         .returning()
         .get();
 
+      // Notify org members about the new subscription (async, don't block response)
+      notifySubscriptionChange(
+        c,
+        db,
+        orgId,
+        {
+          subscriptionId: createdSubscription.id,
+          tier: createdSubscription.plan,
+          status: createdSubscription.status,
+          periodEnd: createdSubscription.periodEnd,
+        },
+        'creation',
+      );
+
       return c.json({ success: true, subscription: createdSubscription }, 201);
     } catch (error) {
       console.error('Error creating subscription:', error);
@@ -253,6 +302,21 @@ billingRoutes.put(
         .returning()
         .get();
 
+      // Notify org members about the subscription update (async, don't block response)
+      notifySubscriptionChange(
+        c,
+        db,
+        orgId,
+        {
+          subscriptionId: updatedSubscription.id,
+          tier: updatedSubscription.plan,
+          status: updatedSubscription.status,
+          periodEnd: updatedSubscription.periodEnd,
+          cancelAtPeriodEnd: updatedSubscription.cancelAtPeriodEnd,
+        },
+        'update',
+      );
+
       return c.json({ success: true, subscription: updatedSubscription });
     } catch (error) {
       console.error('Error updating subscription:', error);
@@ -292,14 +356,31 @@ billingRoutes.delete('/orgs/:orgId/subscriptions/:subscriptionId', async c => {
 
     // Cancel subscription (set status to canceled and endedAt)
     const now = new Date();
-    await db
+    const canceledSubscription = await db
       .update(subscription)
       .set({
         status: 'canceled',
         endedAt: now,
         updatedAt: now,
       })
-      .where(eq(subscription.id, subscriptionId));
+      .where(eq(subscription.id, subscriptionId))
+      .returning()
+      .get();
+
+    // Notify org members about the subscription cancellation (async, don't block response)
+    notifySubscriptionChange(
+      c,
+      db,
+      orgId,
+      {
+        subscriptionId,
+        tier: canceledSubscription.plan,
+        status: 'canceled',
+        periodEnd: canceledSubscription.periodEnd,
+        endedAt: canceledSubscription.endedAt,
+      },
+      'cancellation',
+    );
 
     return c.json({ success: true, message: 'Subscription canceled' });
   } catch (error) {
