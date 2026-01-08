@@ -824,6 +824,9 @@ function createBetterAuthStore() {
       // Clear pending email from localStorage (account-specific)
       localStorage.removeItem('pendingEmail');
 
+      // Sign out from Better Auth session
+      await authClient.signOut();
+
       // Use shared cleanup (clears caches, resets state, notifies tabs)
       await _performSignoutCleanup();
 

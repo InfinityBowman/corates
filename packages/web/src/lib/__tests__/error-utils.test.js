@@ -139,7 +139,7 @@ describe('handleDomainError', () => {
 
     await handleDomainError(error, { setError, showToast: false });
 
-    expect(setError).toHaveBeenCalledWith('Project not found');
+    expect(setError).toHaveBeenCalledWith('This project could not be found');
   });
 
   it('should navigate on auth errors', async () => {
