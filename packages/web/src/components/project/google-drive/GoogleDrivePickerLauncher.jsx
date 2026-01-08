@@ -72,11 +72,22 @@ export default function GoogleDrivePickerLauncher(props) {
 
       await connectGoogleAccount(callbackUrl);
     } catch (err) {
-      const { handleError } = await import('@/lib/error-utils.js');
-      await handleError(err, {
-        setError,
-        showToast: false,
-      });
+      // Provide specific messaging for account linking errors
+      const isAccountConflict =
+        err?.message?.includes('already linked') ||
+        err?.code === 'ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER';
+
+      if (isAccountConflict) {
+        setError(
+          'This Google account is already connected to a different user. Please use a different Google account.',
+        );
+      } else {
+        const { handleError } = await import('@/lib/error-utils.js');
+        await handleError(err, {
+          setError,
+          showToast: false,
+        });
+      }
       throw err;
     }
   };

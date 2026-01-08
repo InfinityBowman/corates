@@ -45,12 +45,13 @@ export async function getGoogleDrivePickerToken() {
 }
 
 /**
- * Initiate Google OAuth flow to connect Google account
- * This calls the BetterAuth social sign-in endpoint and redirects to Google
+ * Initiate Google OAuth flow to link Google account to current user
+ * Uses BetterAuth's link-social endpoint to add Google as a linked provider
+ * without creating a new account if user authenticates with different email
  * @param {string} [callbackUrl] - Optional callback URL after auth
  */
 export async function connectGoogleAccount(callbackUrl) {
-  const data = await apiFetch.post('/api/auth/sign-in/social', {
+  const data = await apiFetch.post('/api/auth/link-social', {
     provider: 'google',
     callbackURL: callbackUrl || window.location.href,
   });

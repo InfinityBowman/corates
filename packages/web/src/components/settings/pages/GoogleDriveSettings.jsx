@@ -33,10 +33,22 @@ export default function GoogleDriveSettings() {
     try {
       await connectGoogleAccount(window.location.href);
     } catch (err) {
-      const { handleError } = await import('@/lib/error-utils.js');
-      await handleError(err, {
-        toastTitle: 'Error',
-      });
+      // Provide specific messaging for account linking errors
+      const isAccountConflict =
+        err?.message?.includes('already linked') ||
+        err?.code === 'ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER';
+
+      if (isAccountConflict) {
+        showToast.error(
+          'Account Conflict',
+          'This Google account is already connected to a different user. Please use a different Google account or contact support.',
+        );
+      } else {
+        const { handleError } = await import('@/lib/error-utils.js');
+        await handleError(err, {
+          toastTitle: 'Connection Failed',
+        });
+      }
       setConnecting(false);
     }
   };
