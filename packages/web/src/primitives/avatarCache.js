@@ -1,17 +1,14 @@
 /**
  * avatarCache - Local caching layer for user avatars
  *
- * This provides offline access to avatar images by storing them in IndexedDB.
+ * This provides offline access to avatar images by storing them in Dexie.
  * When online, avatars are fetched from the API and cached locally.
  * When offline, the cached version is used.
  */
 
 import { API_BASE } from '@config/api.js';
 import { compressImageBlob } from '@lib/imageUtils.js';
-
-const DB_NAME = 'corates-avatar-cache';
-const DB_VERSION = 1;
-const AVATAR_STORE_NAME = 'avatars';
+import { db } from './db.js';
 
 // Cache expiry: 30 days in milliseconds
 const CACHE_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
@@ -24,50 +21,6 @@ const MAX_AVATAR_SIZE = 500 * 1024;
 const externalFetchFailures = new Map(); // url -> { failedAt, retryAfter }
 const EXTERNAL_RETRY_DELAY_MS = 60 * 1000; // Wait 1 minute before retrying failed external fetches
 const MAX_RETRY_DELAY_MS = 5 * 60 * 1000; // Max 5 minutes between retries
-
-// Shared database instance and initialization promise
-let dbInstance = null;
-let dbInitPromise = null;
-
-/**
- * Open the IndexedDB database (singleton pattern)
- */
-function openDatabase() {
-  if (dbInitPromise) return dbInitPromise;
-
-  dbInitPromise = new Promise((resolve, reject) => {
-    if (typeof indexedDB === 'undefined') {
-      reject(new Error('IndexedDB not available'));
-      return;
-    }
-
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => {
-      dbInstance = request.result;
-      resolve(dbInstance);
-    };
-
-    request.onupgradeneeded = event => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains(AVATAR_STORE_NAME)) {
-        const store = db.createObjectStore(AVATAR_STORE_NAME, { keyPath: 'userId' });
-        store.createIndex('cachedAt', 'cachedAt', { unique: false });
-      }
-    };
-  });
-
-  return dbInitPromise;
-}
-
-/**
- * Get database instance
- */
-async function getDb() {
-  if (dbInstance) return dbInstance;
-  return openDatabase();
-}
 
 /**
  * Convert a blob to a base64 data URL
@@ -90,22 +43,8 @@ export async function getCachedAvatar(userId) {
   if (!userId) return null;
 
   try {
-    const db = await getDb();
-    const tx = db.transaction(AVATAR_STORE_NAME, 'readonly');
-    const store = tx.objectStore(AVATAR_STORE_NAME);
-
-    return new Promise((resolve, reject) => {
-      const request = store.get(userId);
-      request.onsuccess = () => {
-        const result = request.result;
-        if (result?.dataUrl) {
-          resolve(result.dataUrl);
-        } else {
-          resolve(null);
-        }
-      };
-      request.onerror = () => reject(request.error);
-    });
+    const record = await db.avatars.get(userId);
+    return record?.dataUrl ?? null;
   } catch (err) {
     console.error('Error getting cached avatar:', err);
     return null;
@@ -121,18 +60,10 @@ export async function cacheAvatar(userId, dataUrl) {
   if (!userId || !dataUrl) return;
 
   try {
-    const db = await getDb();
-    const tx = db.transaction(AVATAR_STORE_NAME, 'readwrite');
-    const store = tx.objectStore(AVATAR_STORE_NAME);
-
-    await new Promise((resolve, reject) => {
-      const request = store.put({
-        userId,
-        dataUrl,
-        cachedAt: Date.now(),
-      });
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+    await db.avatars.put({
+      userId,
+      dataUrl,
+      cachedAt: Date.now(),
     });
   } catch (err) {
     console.error('Error caching avatar:', err);
@@ -147,15 +78,7 @@ export async function removeCachedAvatar(userId) {
   if (!userId) return;
 
   try {
-    const db = await getDb();
-    const tx = db.transaction(AVATAR_STORE_NAME, 'readwrite');
-    const store = tx.objectStore(AVATAR_STORE_NAME);
-
-    await new Promise((resolve, reject) => {
-      const request = store.delete(userId);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
+    await db.avatars.delete(userId);
   } catch (err) {
     console.error('Error removing cached avatar:', err);
   }
@@ -311,15 +234,7 @@ export async function getAvatarWithCache(userId, imageUrl) {
  */
 export async function clearAvatarCache() {
   try {
-    const db = await getDb();
-    const tx = db.transaction(AVATAR_STORE_NAME, 'readwrite');
-    const store = tx.objectStore(AVATAR_STORE_NAME);
-
-    await new Promise((resolve, reject) => {
-      const request = store.clear();
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
+    await db.avatars.clear();
   } catch (err) {
     console.error('Error clearing avatar cache:', err);
   }
@@ -331,30 +246,8 @@ export async function clearAvatarCache() {
  */
 export async function pruneExpiredAvatars() {
   try {
-    const db = await getDb();
-    const tx = db.transaction(AVATAR_STORE_NAME, 'readwrite');
-    const store = tx.objectStore(AVATAR_STORE_NAME);
-    const index = store.index('cachedAt');
-
     const expiryThreshold = Date.now() - CACHE_EXPIRY_MS;
-
-    // Get all entries older than the threshold using the cachedAt index
-    // eslint-disable-next-line no-undef
-    const range = IDBKeyRange.upperBound(expiryThreshold);
-
-    await new Promise((resolve, reject) => {
-      const request = index.openCursor(range);
-      request.onsuccess = event => {
-        const cursor = event.target.result;
-        if (cursor) {
-          cursor.delete();
-          cursor.continue();
-        } else {
-          resolve();
-        }
-      };
-      request.onerror = () => reject(request.error);
-    });
+    await db.avatars.where('cachedAt').below(expiryThreshold).delete();
   } catch (err) {
     console.error('Error pruning expired avatars:', err);
   }
