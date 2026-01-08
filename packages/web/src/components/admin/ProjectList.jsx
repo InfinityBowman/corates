@@ -3,8 +3,8 @@
  * Lists all projects with search, filtering, and pagination
  */
 
-import { createSignal, Show, For } from 'solid-js';
-import { A } from '@solidjs/router';
+import { createSignal, Show } from 'solid-js';
+import { A, useNavigate } from '@solidjs/router';
 import {
   FiSearch,
   FiFolder,
@@ -20,10 +20,24 @@ import {
 import { useAdminProjects, useAdminOrgs } from '@primitives/useAdminQueries.js';
 import { isAdminChecked, isAdmin } from '@/stores/adminStore.js';
 import { Select } from '@corates/ui';
-import { DashboardHeader, AdminSection, AdminBox } from './ui/index.js';
-import { input, table } from './styles/admin-tokens.js';
+import { DashboardHeader, AdminSection, AdminDataTable } from './ui/index.js';
+import { input } from './styles/admin-tokens.js';
+
+const formatDate = timestamp => {
+  if (!timestamp) return '-';
+  const date =
+    timestamp instanceof Date ? timestamp
+    : typeof timestamp === 'string' ? new Date(timestamp)
+    : new Date(timestamp * 1000);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
 
 export default function ProjectList() {
+  const navigate = useNavigate();
   const [page, setPage] = createSignal(1);
   const [search, setSearch] = createSignal('');
   const [searchInput, setSearchInput] = createSignal('');
@@ -62,18 +76,89 @@ export default function ProjectList() {
     setPage(1);
   };
 
-  const formatDate = timestamp => {
-    if (!timestamp) return '-';
-    const date =
-      timestamp instanceof Date ? timestamp
-      : typeof timestamp === 'string' ? new Date(timestamp)
-      : new Date(timestamp * 1000);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
+  const columns = [
+    {
+      accessorKey: 'name',
+      header: 'Project',
+      cell: info => {
+        const project = info.row.original;
+        return (
+          <A href={`/admin/projects/${project.id}`} class='flex items-center space-x-3'>
+            <div class='flex h-10 w-10 items-center justify-center rounded-lg bg-green-100'>
+              <FiFolder class='h-5 w-5 text-green-600' />
+            </div>
+            <div>
+              <p class='font-medium text-blue-600 hover:text-blue-700'>{project.name}</p>
+              <Show when={project.description}>
+                <p class='max-w-xs truncate text-sm text-gray-500'>{project.description}</p>
+              </Show>
+            </div>
+          </A>
+        );
+      },
+    },
+    {
+      accessorKey: 'orgName',
+      header: 'Organization',
+      cell: info => {
+        const project = info.row.original;
+        return (
+          <div>
+            <A
+              href={`/admin/orgs/${project.orgId}`}
+              class='flex items-center space-x-2 text-gray-700 hover:text-blue-600'
+              onClick={e => e.stopPropagation()}
+            >
+              <FiHome class='h-4 w-4' />
+              <span>{project.orgName}</span>
+            </A>
+            <p class='text-xs text-gray-500'>@{project.orgSlug}</p>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'createdBy',
+      header: 'Created By',
+      cell: info => {
+        const project = info.row.original;
+        return (
+          <A
+            href={`/admin/users/${project.createdBy}`}
+            class='text-gray-700 hover:text-blue-600'
+            onClick={e => e.stopPropagation()}
+          >
+            {project.creatorDisplayName || project.creatorName || project.creatorEmail}
+          </A>
+        );
+      },
+    },
+    {
+      accessorKey: 'memberCount',
+      header: 'Members',
+      cell: info => (
+        <span class='inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-700'>
+          <FiUsers class='mr-1 h-3 w-3' />
+          {info.getValue()}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'fileCount',
+      header: 'Files',
+      cell: info => (
+        <span class='inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-700'>
+          <FiFile class='mr-1 h-3 w-3' />
+          {info.getValue()}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Created',
+      cell: info => <span class='text-gray-500'>{formatDate(info.getValue())}</span>,
+    },
+  ];
 
   return (
     <Show
@@ -140,13 +225,6 @@ export default function ProjectList() {
           </div>
         </div>
 
-        {/* Loading State */}
-        <Show when={projectsQuery.isLoading}>
-          <div class='flex min-h-64 items-center justify-center'>
-            <FiLoader class='h-8 w-8 animate-spin text-blue-600' />
-          </div>
-        </Show>
-
         {/* Error State */}
         <Show when={projectsQuery.isError}>
           <div class='rounded-lg border border-red-200 bg-red-50 p-6 text-center'>
@@ -162,138 +240,62 @@ export default function ProjectList() {
         </Show>
 
         {/* Projects Table */}
-        <Show when={!projectsQuery.isLoading && !projectsQuery.isError}>
+        <Show when={!projectsQuery.isError}>
           <AdminSection title='All Projects'>
-            <AdminBox padding='compact' class='overflow-hidden p-0'>
-              <div class='overflow-x-auto'>
-                <table class={table.base}>
-                  <thead class={table.header}>
-                    <tr class='border-b border-gray-200'>
-                      <th class={table.headerCell}>Project</th>
-                      <th class={table.headerCell}>Organization</th>
-                      <th class={table.headerCell}>Created By</th>
-                      <th class={`${table.headerCell} text-center`}>Members</th>
-                      <th class={`${table.headerCell} text-center`}>Files</th>
-                      <th class={table.headerCell}>Created</th>
-                    </tr>
-                  </thead>
-                  <tbody class={table.body}>
-                    <For
-                      each={projects()}
-                      fallback={
-                        <tr>
-                          <td colspan='6' class='px-6 py-12 text-center text-gray-500'>
-                            <FiFolder class='mx-auto mb-2 h-8 w-8 text-gray-300' />
-                            <p>No projects found</p>
-                            <Show when={search() || selectedOrgId()}>
-                              <button
-                                onClick={() => {
-                                  clearSearch();
-                                  setSelectedOrgId('');
-                                }}
-                                class='mt-2 text-sm text-blue-600 hover:text-blue-700'
-                              >
-                                Clear filters
-                              </button>
-                            </Show>
-                          </td>
-                        </tr>
-                      }
-                    >
-                      {project => (
-                        <tr class={table.row}>
-                          <td class={table.cell}>
-                            <A
-                              href={`/admin/projects/${project.id}`}
-                              class='flex items-center space-x-3'
-                            >
-                              <div class='flex h-10 w-10 items-center justify-center rounded-lg bg-green-100'>
-                                <FiFolder class='h-5 w-5 text-green-600' />
-                              </div>
-                              <div>
-                                <p class='font-medium text-blue-600 hover:text-blue-700'>
-                                  {project.name}
-                                </p>
-                                <Show when={project.description}>
-                                  <p class='max-w-xs truncate text-sm text-gray-500'>
-                                    {project.description}
-                                  </p>
-                                </Show>
-                              </div>
-                            </A>
-                          </td>
-                          <td class={table.cell}>
-                            <A
-                              href={`/admin/orgs/${project.orgId}`}
-                              class='flex items-center space-x-2 text-gray-700 hover:text-blue-600'
-                            >
-                              <FiHome class='h-4 w-4' />
-                              <span>{project.orgName}</span>
-                            </A>
-                            <p class='text-xs text-gray-500'>@{project.orgSlug}</p>
-                          </td>
-                          <td class={table.cell}>
-                            <A
-                              href={`/admin/users/${project.createdBy}`}
-                              class='text-gray-700 hover:text-blue-600'
-                            >
-                              {project.creatorDisplayName ||
-                                project.creatorName ||
-                                project.creatorEmail}
-                            </A>
-                          </td>
-                          <td class={`${table.cell} text-center`}>
-                            <span class='inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-700'>
-                              <FiUsers class='mr-1 h-3 w-3' />
-                              {project.memberCount}
-                            </span>
-                          </td>
-                          <td class={`${table.cell} text-center`}>
-                            <span class='inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-700'>
-                              <FiFile class='mr-1 h-3 w-3' />
-                              {project.fileCount}
-                            </span>
-                          </td>
-                          <td class={`${table.cell} text-gray-500`}>
-                            {formatDate(project.createdAt)}
-                          </td>
-                        </tr>
-                      )}
-                    </For>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination */}
-              <Show when={pagination().totalPages > 1}>
-                <div class='flex items-center justify-between border-t border-gray-200 bg-gray-50 px-6 py-3'>
-                  <div class='text-sm text-gray-500'>
-                    Showing {(pagination().page - 1) * limit + 1} to{' '}
-                    {Math.min(pagination().page * limit, pagination().total)} of{' '}
-                    {pagination().total} projects
-                  </div>
-                  <div class='flex items-center space-x-2'>
+            <AdminDataTable
+              columns={columns}
+              data={projects()}
+              loading={projectsQuery.isLoading}
+              emptyState={
+                <div class='flex flex-col items-center gap-2'>
+                  <FiFolder class='h-8 w-8 text-gray-300' />
+                  <span class='text-gray-500'>No projects found</span>
+                  <Show when={search() || selectedOrgId()}>
                     <button
-                      onClick={() => setPage(p => Math.max(1, p - 1))}
-                      disabled={page() === 1}
-                      class='rounded-xl border border-gray-200 bg-white p-2 text-gray-600 shadow-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                      onClick={() => {
+                        clearSearch();
+                        setSelectedOrgId('');
+                      }}
+                      class='text-sm text-blue-600 hover:text-blue-700'
                     >
-                      <FiChevronLeft class='h-4 w-4' />
+                      Clear filters
                     </button>
-                    <span class='text-sm text-gray-500'>
-                      Page {pagination().page} of {pagination().totalPages}
-                    </span>
-                    <button
-                      onClick={() => setPage(p => Math.min(pagination().totalPages, p + 1))}
-                      disabled={page() === pagination().totalPages}
-                      class='rounded-xl border border-gray-200 bg-white p-2 text-gray-600 shadow-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
-                    >
-                      <FiChevronRight class='h-4 w-4' />
-                    </button>
-                  </div>
+                  </Show>
                 </div>
-              </Show>
-            </AdminBox>
+              }
+              enableSorting
+              onRowClick={row => navigate(`/admin/projects/${row.id}`)}
+            />
+
+            {/* Server-side Pagination */}
+            <Show when={pagination().totalPages > 1}>
+              <div class='mt-4 flex items-center justify-between'>
+                <div class='text-sm text-gray-500'>
+                  Showing {(pagination().page - 1) * limit + 1} to{' '}
+                  {Math.min(pagination().page * limit, pagination().total)} of {pagination().total}{' '}
+                  projects
+                </div>
+                <div class='flex items-center space-x-2'>
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page() === 1}
+                    class='rounded-xl border border-gray-200 bg-white p-2 text-gray-600 shadow-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                  >
+                    <FiChevronLeft class='h-4 w-4' />
+                  </button>
+                  <span class='text-sm text-gray-500'>
+                    Page {pagination().page} of {pagination().totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage(p => Math.min(pagination().totalPages, p + 1))}
+                    disabled={page() === pagination().totalPages}
+                    class='rounded-xl border border-gray-200 bg-white p-2 text-gray-600 shadow-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                  >
+                    <FiChevronRight class='h-4 w-4' />
+                  </button>
+                </div>
+              </div>
+            </Show>
           </AdminSection>
         </Show>
       </Show>

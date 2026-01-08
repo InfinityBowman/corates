@@ -39,6 +39,7 @@ import {
 import { Dialog, Avatar, showToast } from '@corates/ui';
 import { handleError } from '@/lib/error-utils.js';
 import { AdminBox } from './ui/index.js';
+import { table } from './styles/admin-tokens.js';
 
 export default function UserDetail() {
   const params = useParams();
@@ -455,31 +456,21 @@ export default function UserDetail() {
               fallback={<p class='text-sm text-gray-500'>Not a member of any organizations</p>}
             >
               <div class='overflow-x-auto'>
-                <table class='w-full'>
+                <table class={table.base}>
                   <thead>
-                    <tr class='border-b border-gray-200 bg-gray-50'>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Organization
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Role
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Plan
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Access
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Joined
-                      </th>
+                    <tr class={table.header}>
+                      <th class={table.headerCell}>Organization</th>
+                      <th class={table.headerCell}>Role</th>
+                      <th class={table.headerCell}>Plan</th>
+                      <th class={table.headerCell}>Access</th>
+                      <th class={table.headerCell}>Joined</th>
                     </tr>
                   </thead>
-                  <tbody class='divide-y divide-gray-200'>
+                  <tbody class={table.body}>
                     <For each={userData().orgs}>
                       {org => (
-                        <tr class='hover:bg-gray-50'>
-                          <td class='px-4 py-3'>
+                        <tr class={table.row}>
+                          <td class={table.cellCompact}>
                             <A
                               href={`/admin/orgs/${org.orgId}`}
                               class='font-medium text-blue-600 hover:text-blue-700'
@@ -488,7 +479,7 @@ export default function UserDetail() {
                             </A>
                             <p class='text-xs text-gray-500'>@{org.orgSlug}</p>
                           </td>
-                          <td class='px-4 py-3'>
+                          <td class={table.cellCompact}>
                             <span
                               class={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                                 org.role === 'owner' ? 'bg-purple-100 text-purple-800'
@@ -499,8 +490,8 @@ export default function UserDetail() {
                               {org.role}
                             </span>
                           </td>
-                          <td class='px-4 py-3 text-sm text-gray-900'>{org.billing.planName}</td>
-                          <td class='px-4 py-3'>
+                          <td class={table.cellCompact}>{org.billing.planName}</td>
+                          <td class={table.cellCompact}>
                             <span
                               class={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                                 org.billing.accessMode === 'full' ? 'bg-green-100 text-green-800'
@@ -512,7 +503,7 @@ export default function UserDetail() {
                               {org.billing.accessMode}
                             </span>
                           </td>
-                          <td class='px-4 py-3 text-sm text-gray-500'>
+                          <td class={`${table.cellCompact} text-gray-500`}>
                             {formatShortDate(org.membershipCreatedAt)}
                           </td>
                         </tr>
@@ -535,26 +526,20 @@ export default function UserDetail() {
               fallback={<p class='text-sm text-gray-500'>Not a member of any projects</p>}
             >
               <div class='overflow-x-auto'>
-                <table class='w-full'>
+                <table class={table.base}>
                   <thead>
-                    <tr class='border-b border-gray-200 bg-gray-50'>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Project
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Role
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Joined
-                      </th>
+                    <tr class={table.header}>
+                      <th class={table.headerCell}>Project</th>
+                      <th class={table.headerCell}>Role</th>
+                      <th class={table.headerCell}>Joined</th>
                     </tr>
                   </thead>
-                  <tbody class='divide-y divide-gray-200'>
+                  <tbody class={table.body}>
                     <For each={userData().projects}>
                       {project => (
-                        <tr class='hover:bg-gray-50'>
-                          <td class='px-4 py-3 font-medium text-gray-900'>{project.name}</td>
-                          <td class='px-4 py-3'>
+                        <tr class={table.row}>
+                          <td class={`${table.cellCompact} font-medium`}>{project.name}</td>
+                          <td class={table.cellCompact}>
                             <span
                               class={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                                 project.role === 'owner' ?
@@ -565,7 +550,7 @@ export default function UserDetail() {
                               {project.role}
                             </span>
                           </td>
-                          <td class='px-4 py-3 text-sm text-gray-500'>
+                          <td class={`${table.cellCompact} text-gray-500`}>
                             {formatShortDate(project.joinedAt)}
                           </td>
                         </tr>

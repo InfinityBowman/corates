@@ -1,5 +1,5 @@
-import { createSignal, Show, For } from 'solid-js';
-import { A } from '@solidjs/router';
+import { createSignal, Show } from 'solid-js';
+import { A, useNavigate } from '@solidjs/router';
 import {
   FiSearch,
   FiChevronLeft,
@@ -13,8 +13,18 @@ import {
 import { useAdminOrgs } from '@primitives/useAdminQueries.js';
 import { isAdminChecked, isAdmin } from '@/stores/adminStore.js';
 import { useDebouncedSignal } from '@/primitives/useDebouncedSignal.js';
-import { DashboardHeader, AdminSection, AdminBox } from './ui/index.js';
-import { input, table } from './styles/admin-tokens.js';
+import { DashboardHeader, AdminSection, AdminDataTable } from './ui/index.js';
+import { input } from './styles/admin-tokens.js';
+
+const formatDate = timestamp => {
+  if (!timestamp) return '-';
+  const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp * 1000);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
 
 /**
  * Org List component for admin dashboard
@@ -23,6 +33,7 @@ import { input, table } from './styles/admin-tokens.js';
  * @returns {JSX.Element} - The OrgList component
  */
 export default function OrgList() {
+  const navigate = useNavigate();
   const [search, setSearch, debouncedSearch] = useDebouncedSignal('', 300);
   const [page, setPage] = createSignal(1);
 
@@ -40,15 +51,79 @@ export default function OrgList() {
     setPage(1);
   };
 
-  const formatDate = timestamp => {
-    if (!timestamp) return '-';
-    const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp * 1000);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
+  const columns = [
+    {
+      accessorKey: 'name',
+      header: 'Organization',
+      cell: info => {
+        const org = info.row.original;
+        return (
+          <div class='flex items-center space-x-3'>
+            <div class='flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100'>
+              <FiHome class='h-5 w-5 text-blue-600' />
+            </div>
+            <div>
+              <p class='font-medium text-gray-900'>{org.name}</p>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'slug',
+      header: 'Slug',
+      cell: info => (
+        <code class='rounded bg-gray-100 px-2 py-1 text-sm text-gray-700'>{info.getValue()}</code>
+      ),
+    },
+    {
+      accessorKey: 'stats.memberCount',
+      header: 'Members',
+      cell: info => {
+        const org = info.row.original;
+        return (
+          <div class='flex items-center space-x-1 text-gray-500'>
+            <FiUsers class='h-4 w-4 text-gray-400' />
+            <span>{org.stats?.memberCount ?? '-'}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'stats.projectCount',
+      header: 'Projects',
+      cell: info => {
+        const org = info.row.original;
+        return (
+          <div class='flex items-center space-x-1 text-gray-500'>
+            <FiFolder class='h-4 w-4 text-gray-400' />
+            <span>{org.stats?.projectCount ?? '-'}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Created',
+      cell: info => <span class='text-gray-500'>{formatDate(info.getValue())}</span>,
+    },
+    {
+      id: 'actions',
+      header: '',
+      cell: info => {
+        const org = info.row.original;
+        return (
+          <A
+            href={`/admin/orgs/${org.id}`}
+            class='inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-[3px] focus:ring-blue-100 focus:outline-none'
+            onClick={e => e.stopPropagation()}
+          >
+            Details
+          </A>
+        );
+      },
+    },
+  ];
 
   return (
     <Show
@@ -91,120 +166,49 @@ export default function OrgList() {
             </div>
           }
         >
-          <AdminBox padding='compact' class='overflow-hidden p-0'>
-            {/* Orgs Table */}
-            <Show
-              when={!orgsDataQuery.isLoading}
-              fallback={
-                <div class='flex items-center justify-center py-12'>
-                  <FiLoader class='h-8 w-8 animate-spin text-blue-600' />
-                </div>
-              }
-            >
-              <div class='overflow-x-auto'>
-                <table class={table.base}>
-                  <thead class={table.header}>
-                    <tr class='border-b border-gray-200'>
-                      <th class={table.headerCell}>Organization</th>
-                      <th class={table.headerCell}>Slug</th>
-                      <th class={table.headerCell}>Members</th>
-                      <th class={table.headerCell}>Projects</th>
-                      <th class={table.headerCell}>Created</th>
-                      <th class={`${table.headerCell} text-right`}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody class={table.body}>
-                    <For
-                      each={orgsData()?.orgs || []}
-                      fallback={
-                        <tr>
-                          <td colspan='6' class='px-6 py-12 text-center text-gray-500'>
-                            No organizations found
-                          </td>
-                        </tr>
-                      }
-                    >
-                      {org => (
-                        <tr class={table.row}>
-                          <td class={table.cell}>
-                            <div class='flex items-center space-x-3'>
-                              <div class='flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100'>
-                                <FiHome class='h-5 w-5 text-blue-600' />
-                              </div>
-                              <div>
-                                <p class='font-medium text-gray-900'>{org.name}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td class={table.cell}>
-                            <code class='rounded bg-gray-100 px-2 py-1 text-sm text-gray-700'>
-                              {org.slug}
-                            </code>
-                          </td>
-                          <td class={`${table.cell} text-gray-500`}>
-                            <div class='flex items-center space-x-1'>
-                              <FiUsers class='h-4 w-4 text-gray-400' />
-                              <span>{org.stats?.memberCount ?? '-'}</span>
-                            </div>
-                          </td>
-                          <td class={`${table.cell} text-gray-500`}>
-                            <div class='flex items-center space-x-1'>
-                              <FiFolder class='h-4 w-4 text-gray-400' />
-                              <span>{org.stats?.projectCount ?? '-'}</span>
-                            </div>
-                          </td>
-                          <td class={`${table.cell} text-gray-500`}>{formatDate(org.createdAt)}</td>
-                          <td class={`${table.cell} text-right`}>
-                            <A
-                              href={`/admin/orgs/${org.id}`}
-                              class='inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-[3px] focus:ring-blue-100 focus:outline-none'
-                            >
-                              Details
-                            </A>
-                          </td>
-                        </tr>
-                      )}
-                    </For>
-                  </tbody>
-                </table>
-              </div>
-            </Show>
+          <AdminDataTable
+            columns={columns}
+            data={orgsData()?.orgs || []}
+            loading={orgsDataQuery.isLoading}
+            emptyMessage='No organizations found'
+            enableSorting
+            onRowClick={row => navigate(`/admin/orgs/${row.id}`)}
+          />
 
-            {/* Pagination */}
-            <Show when={orgsData()?.pagination}>
-              <div class='flex items-center justify-between border-t border-gray-200 px-6 py-4'>
-                <p class='text-sm text-gray-500'>
-                  Showing {(page() - 1) * (orgsData()?.pagination?.limit || 20) + 1} to{' '}
-                  {Math.min(
-                    page() * (orgsData()?.pagination?.limit || 20),
-                    orgsData()?.pagination?.total || 0,
-                  )}{' '}
-                  of {orgsData()?.pagination?.total || 0} organizations
-                </p>
-                <div class='flex items-center space-x-2'>
-                  <button
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page() === 1}
-                    class='rounded-lg border border-gray-300 p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
-                  >
-                    <FiChevronLeft class='h-4 w-4' />
-                  </button>
-                  <span class='text-sm text-gray-500'>
-                    Page {page()} of {orgsData()?.pagination?.totalPages || 1}
-                  </span>
-                  <button
-                    onClick={() =>
-                      setPage(p => Math.min(orgsData()?.pagination?.totalPages || 1, p + 1))
-                    }
-                    disabled={page() >= (orgsData()?.pagination?.totalPages || 1)}
-                    class='rounded-lg border border-gray-300 p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
-                  >
-                    <FiChevronRight class='h-4 w-4' />
-                  </button>
-                </div>
+          {/* Server-side Pagination */}
+          <Show when={orgsData()?.pagination}>
+            <div class='mt-4 flex items-center justify-between'>
+              <p class='text-sm text-gray-500'>
+                Showing {(page() - 1) * (orgsData()?.pagination?.limit || 20) + 1} to{' '}
+                {Math.min(
+                  page() * (orgsData()?.pagination?.limit || 20),
+                  orgsData()?.pagination?.total || 0,
+                )}{' '}
+                of {orgsData()?.pagination?.total || 0} organizations
+              </p>
+              <div class='flex items-center space-x-2'>
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page() === 1}
+                  class='rounded-xl border border-gray-200 bg-white p-2 text-gray-600 shadow-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                >
+                  <FiChevronLeft class='h-4 w-4' />
+                </button>
+                <span class='text-sm text-gray-500'>
+                  Page {page()} of {orgsData()?.pagination?.totalPages || 1}
+                </span>
+                <button
+                  onClick={() =>
+                    setPage(p => Math.min(orgsData()?.pagination?.totalPages || 1, p + 1))
+                  }
+                  disabled={page() >= (orgsData()?.pagination?.totalPages || 1)}
+                  class='rounded-xl border border-gray-200 bg-white p-2 text-gray-600 shadow-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                >
+                  <FiChevronRight class='h-4 w-4' />
+                </button>
               </div>
-            </Show>
-          </AdminBox>
+            </div>
+          </Show>
         </AdminSection>
       </Show>
     </Show>

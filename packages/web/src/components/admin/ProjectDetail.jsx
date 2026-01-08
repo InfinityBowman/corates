@@ -31,6 +31,7 @@ import {
 import { Dialog, Avatar, showToast } from '@corates/ui';
 import { handleError } from '@/lib/error-utils.js';
 import { AdminBox } from './ui/index.js';
+import { table } from './styles/admin-tokens.js';
 
 export default function ProjectDetail() {
   const params = useParams();
@@ -302,28 +303,20 @@ export default function ProjectDetail() {
               fallback={<p class='text-sm text-gray-500'>No members</p>}
             >
               <div class='overflow-x-auto'>
-                <table class='w-full'>
+                <table class={table.base}>
                   <thead>
-                    <tr class='border-b border-gray-200 bg-gray-50'>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        User
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Role
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Joined
-                      </th>
-                      <th class='px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase'>
-                        Actions
-                      </th>
+                    <tr class={table.header}>
+                      <th class={table.headerCell}>User</th>
+                      <th class={table.headerCell}>Role</th>
+                      <th class={table.headerCell}>Joined</th>
+                      <th class={`${table.headerCell} text-right`}>Actions</th>
                     </tr>
                   </thead>
-                  <tbody class='divide-y divide-gray-200'>
+                  <tbody class={table.body}>
                     <For each={projectData().members}>
                       {member => (
-                        <tr class='hover:bg-gray-50'>
-                          <td class='px-4 py-3'>
+                        <tr class={table.row}>
+                          <td class={table.cellCompact}>
                             <div class='flex items-center space-x-3'>
                               <Avatar
                                 src={member.userAvatar}
@@ -341,7 +334,7 @@ export default function ProjectDetail() {
                               </div>
                             </div>
                           </td>
-                          <td class='px-4 py-3'>
+                          <td class={table.cellCompact}>
                             <span
                               class={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                                 member.role === 'owner' ?
@@ -352,10 +345,10 @@ export default function ProjectDetail() {
                               {member.role}
                             </span>
                           </td>
-                          <td class='px-4 py-3 text-sm text-gray-500'>
+                          <td class={`${table.cellCompact} text-gray-500`}>
                             {formatShortDate(member.joinedAt)}
                           </td>
-                          <td class='px-4 py-3 text-right'>
+                          <td class={`${table.cellCompact} text-right`}>
                             <button
                               onClick={() => setConfirmDialog({ type: 'remove-member', member })}
                               disabled={loading()}
@@ -385,58 +378,48 @@ export default function ProjectDetail() {
               fallback={<p class='text-sm text-gray-500'>No files uploaded</p>}
             >
               <div class='overflow-x-auto'>
-                <table class='w-full'>
+                <table class={table.base}>
                   <thead>
-                    <tr class='border-b border-gray-200 bg-gray-50'>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        File
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Type
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Size
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Uploaded By
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Uploaded
-                      </th>
+                    <tr class={table.header}>
+                      <th class={table.headerCell}>File</th>
+                      <th class={table.headerCell}>Type</th>
+                      <th class={table.headerCell}>Size</th>
+                      <th class={table.headerCell}>Uploaded By</th>
+                      <th class={table.headerCell}>Uploaded</th>
                     </tr>
                   </thead>
-                  <tbody class='divide-y divide-gray-200'>
+                  <tbody class={table.body}>
                     <For each={projectData().files}>
                       {file => (
-                        <tr class='hover:bg-gray-50'>
-                          <td class='px-4 py-3'>
+                        <tr class={table.row}>
+                          <td class={table.cellCompact}>
                             <div class='flex items-center space-x-2'>
                               <FiFile class='h-4 w-4 text-gray-400' />
-                              <span class='text-sm font-medium text-gray-900'>
+                              <span class='font-medium text-gray-900'>
                                 {file.originalName || file.filename}
                               </span>
                             </div>
                           </td>
-                          <td class='px-4 py-3'>
-                            <span class='text-sm text-gray-500'>{file.fileType || '-'}</span>
+                          <td class={`${table.cellCompact} text-gray-500`}>
+                            {file.fileType || '-'}
                           </td>
-                          <td class='px-4 py-3'>
-                            <span class='text-sm text-gray-500'>{formatBytes(file.fileSize)}</span>
+                          <td class={`${table.cellCompact} text-gray-500`}>
+                            {formatBytes(file.fileSize)}
                           </td>
-                          <td class='px-4 py-3'>
+                          <td class={table.cellCompact}>
                             <Show
                               when={file.uploadedBy}
-                              fallback={<span class='text-sm text-gray-400'>-</span>}
+                              fallback={<span class='text-gray-400'>-</span>}
                             >
                               <A
                                 href={`/admin/users/${file.uploadedBy}`}
-                                class='text-sm text-blue-600 hover:text-blue-700'
+                                class='text-blue-600 hover:text-blue-700'
                               >
                                 {file.uploaderDisplayName || file.uploaderName}
                               </A>
                             </Show>
                           </td>
-                          <td class='px-4 py-3 text-sm text-gray-500'>
+                          <td class={`${table.cellCompact} text-gray-500`}>
                             {formatShortDate(file.createdAt)}
                           </td>
                         </tr>
@@ -459,32 +442,22 @@ export default function ProjectDetail() {
               fallback={<p class='text-sm text-gray-500'>No invitations</p>}
             >
               <div class='overflow-x-auto'>
-                <table class='w-full'>
+                <table class={table.base}>
                   <thead>
-                    <tr class='border-b border-gray-200 bg-gray-50'>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Email
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Role
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Status
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Invited By
-                      </th>
-                      <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
-                        Created
-                      </th>
+                    <tr class={table.header}>
+                      <th class={table.headerCell}>Email</th>
+                      <th class={table.headerCell}>Role</th>
+                      <th class={table.headerCell}>Status</th>
+                      <th class={table.headerCell}>Invited By</th>
+                      <th class={table.headerCell}>Created</th>
                     </tr>
                   </thead>
-                  <tbody class='divide-y divide-gray-200'>
+                  <tbody class={table.body}>
                     <For each={projectData().invitations}>
                       {invitation => (
-                        <tr class='hover:bg-gray-50'>
-                          <td class='px-4 py-3 text-sm text-gray-900'>{invitation.email}</td>
-                          <td class='px-4 py-3'>
+                        <tr class={table.row}>
+                          <td class={table.cellCompact}>{invitation.email}</td>
+                          <td class={table.cellCompact}>
                             <span class='inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800'>
                               {invitation.role}
                             </span>
@@ -492,7 +465,7 @@ export default function ProjectDetail() {
                               <span class='ml-1 text-xs text-gray-500'>+ org</span>
                             </Show>
                           </td>
-                          <td class='px-4 py-3'>
+                          <td class={table.cellCompact}>
                             <Show when={invitation.acceptedAt}>
                               <span class='inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800'>
                                 <FiCheckCircle class='mr-1 h-3 w-3' />
@@ -511,15 +484,15 @@ export default function ProjectDetail() {
                               </span>
                             </Show>
                           </td>
-                          <td class='px-4 py-3'>
+                          <td class={table.cellCompact}>
                             <A
                               href={`/admin/users/${invitation.invitedBy}`}
-                              class='text-sm text-blue-600 hover:text-blue-700'
+                              class='text-blue-600 hover:text-blue-700'
                             >
                               {invitation.inviterDisplayName || invitation.inviterName}
                             </A>
                           </td>
-                          <td class='px-4 py-3 text-sm text-gray-500'>
+                          <td class={`${table.cellCompact} text-gray-500`}>
                             {formatShortDate(invitation.createdAt)}
                           </td>
                         </tr>
