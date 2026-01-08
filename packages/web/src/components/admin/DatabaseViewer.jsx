@@ -23,6 +23,7 @@ import {
   useAdminTableSchema,
 } from '@primitives/useAdminQueries.js';
 import { Spinner, TooltipPrimitive as Tooltip } from '@corates/ui';
+import { DashboardHeader } from './ui/index.js';
 
 const LIMIT_OPTIONS = [25, 50, 100];
 
@@ -132,16 +133,12 @@ export default function DatabaseViewer() {
           </div>
         }
       >
-        {/* Header */}
-        <div class='mb-6 flex items-center space-x-3'>
-          <div class='flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100'>
-            <FiDatabase class='h-6 w-6 text-purple-600' />
-          </div>
-          <div>
-            <h1 class='text-2xl font-bold text-gray-900'>Database Viewer</h1>
-            <p class='text-sm text-gray-500'>Browse D1 tables and data (read-only)</p>
-          </div>
-        </div>
+        <DashboardHeader
+          icon={FiDatabase}
+          title='Database Viewer'
+          description='Browse D1 tables and data (read-only)'
+          iconColor='purple'
+        />
 
         <div class='flex gap-6'>
           {/* Table List Sidebar */}

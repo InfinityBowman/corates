@@ -15,6 +15,8 @@ import {
 } from 'solid-icons/fi';
 import { apiFetch } from '@/lib/apiFetch.js';
 import { LineChart, BarChart, DoughnutChart } from './charts/index.js';
+import { AdminBox } from './ui/index.js';
+import { input } from './styles/admin-tokens.js';
 
 const PERIOD_OPTIONS = [
   { value: 7, label: '7 days' },
@@ -116,7 +118,7 @@ export default function AnalyticsSection() {
       {/* Section Header */}
       <div class='flex items-center justify-between'>
         <div class='flex items-center space-x-3'>
-          <div class='rounded-lg bg-purple-100 p-2'>
+          <div class='rounded-xl bg-purple-100 p-2'>
             <FiTrendingUp class='h-5 w-5 text-purple-600' />
           </div>
           <h2 class='text-lg font-semibold text-gray-900'>Analytics</h2>
@@ -126,7 +128,7 @@ export default function AnalyticsSection() {
       {/* Growth Charts Row */}
       <div class='grid grid-cols-1 gap-6 lg:grid-cols-2'>
         {/* Signups Chart */}
-        <div class='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+        <AdminBox>
           <div class='mb-4 flex items-center justify-between'>
             <div class='flex items-center space-x-2'>
               <FiUsers class='h-5 w-5 text-blue-500' />
@@ -136,7 +138,7 @@ export default function AnalyticsSection() {
               <select
                 value={signupDays()}
                 onChange={e => setSignupDays(parseInt(e.target.value, 10))}
-                class='rounded border border-gray-300 px-2 py-1 text-sm'
+                class={input.base}
               >
                 <For each={PERIOD_OPTIONS}>
                   {opt => <option value={opt.value}>{opt.label}</option>}
@@ -144,7 +146,7 @@ export default function AnalyticsSection() {
               </select>
               <button
                 onClick={() => refetchSignups()}
-                class='rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                class='rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
               >
                 <FiRefreshCw class='h-4 w-4' />
               </button>
@@ -177,10 +179,10 @@ export default function AnalyticsSection() {
               />
             </Show>
           </Suspense>
-        </div>
+        </AdminBox>
 
         {/* Organizations & Projects Chart */}
-        <div class='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+        <AdminBox>
           <div class='mb-4 flex items-center justify-between'>
             <div class='flex items-center space-x-2'>
               <FiHome class='h-5 w-5 text-green-500' />
@@ -238,13 +240,13 @@ export default function AnalyticsSection() {
               />
             </Show>
           </Suspense>
-        </div>
+        </AdminBox>
       </div>
 
       {/* Billing Row */}
       <div class='grid grid-cols-1 gap-6 lg:grid-cols-3'>
         {/* Subscriptions Breakdown */}
-        <div class='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+        <AdminBox>
           <div class='mb-4 flex items-center justify-between'>
             <h3 class='font-medium text-gray-900'>Subscriptions</h3>
             <button
@@ -294,10 +296,10 @@ export default function AnalyticsSection() {
               />
             </Show>
           </Suspense>
-        </div>
+        </AdminBox>
 
         {/* Revenue Chart */}
-        <div class='rounded-lg border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2'>
+        <AdminBox class='lg:col-span-2'>
           <div class='mb-4 flex items-center justify-between'>
             <div class='flex items-center space-x-2'>
               <FiDollarSign class='h-5 w-5 text-green-500' />
@@ -341,11 +343,11 @@ export default function AnalyticsSection() {
               />
             </Show>
           </Suspense>
-        </div>
+        </AdminBox>
       </div>
 
       {/* Webhook Health Row */}
-      <div class='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+      <AdminBox>
         <div class='mb-4 flex items-center justify-between'>
           <div class='flex items-center space-x-2'>
             <FiAlertTriangle class='h-5 w-5 text-orange-500' />
@@ -355,7 +357,7 @@ export default function AnalyticsSection() {
             <select
               value={webhookDays()}
               onChange={e => setWebhookDays(parseInt(e.target.value, 10))}
-              class='rounded border border-gray-300 px-2 py-1 text-sm'
+              class={input.base}
             >
               <option value={7}>7 days</option>
               <option value={14}>14 days</option>
@@ -437,7 +439,7 @@ export default function AnalyticsSection() {
             />
           </Show>
         </Suspense>
-      </div>
+      </AdminBox>
     </div>
   );
 }

@@ -8,3 +8,5 @@
 export { AdminBox } from './AdminBox.jsx';
 export { AdminSection } from './AdminSection.jsx';
 export { AdminDataTable } from './AdminDataTable.jsx';
+export { DashboardHeader } from './DashboardHeader.jsx';
+export { DashboardBody } from './DashboardBody.jsx';

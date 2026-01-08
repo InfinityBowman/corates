@@ -19,6 +19,7 @@ import {
 } from 'solid-icons/fi';
 import { A } from '@solidjs/router';
 import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.js';
+import { DashboardBody } from './ui/index.js';
 
 const navItems = [
   { path: '/admin', label: 'Dashboard', icon: FiShield },
@@ -69,7 +70,7 @@ export default function AdminLayout(props) {
           </div>
         }
       >
-        <div class='mx-auto'>
+        <div class='mx-auto min-h-full bg-gray-50'>
           {/* Navbar */}
           <div class='border-b border-gray-200 bg-white'>
             <div class='px-6'>
@@ -98,7 +99,7 @@ export default function AdminLayout(props) {
           </div>
 
           {/* Page Content */}
-          <div class='p-6'>{props.children}</div>
+          <DashboardBody>{props.children}</DashboardBody>
         </div>
       </Show>
     </Show>

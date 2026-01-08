@@ -22,6 +22,8 @@ import { isAdminChecked, isAdmin } from '@/stores/adminStore.js';
 import { apiFetch } from '@/lib/apiFetch.js';
 import { showToast } from '@corates/ui';
 import { handleError } from '@/lib/error-utils.js';
+import { DashboardHeader, AdminBox } from '../ui/index.js';
+import { input } from '../styles/admin-tokens.js';
 
 export default function StripeToolsPage() {
   // Search state
@@ -221,22 +223,21 @@ export default function StripeToolsPage() {
           </div>
         }
       >
-        {/* Header */}
-        <div class='mb-6'>
-          <h1 class='text-2xl font-bold text-gray-900'>Stripe Tools</h1>
-          <p class='mt-1 text-sm text-gray-500'>
-            Look up customers, view invoices, and manage billing
-          </p>
-        </div>
+        <DashboardHeader
+          icon={FiCreditCard}
+          title='Stripe Tools'
+          description='Look up customers, view invoices, and manage billing'
+          iconColor='purple'
+        />
 
         {/* Search Section */}
-        <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+        <AdminBox class='mb-6'>
           <h2 class='mb-4 text-lg font-semibold text-gray-900'>Customer Lookup</h2>
           <form onSubmit={handleSearch} class='flex flex-col gap-4 sm:flex-row'>
             <select
               value={searchType()}
               onChange={e => setSearchType(e.target.value)}
-              class='rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              class={input.base}
             >
               <option value='email'>Search by Email</option>
               <option value='customerId'>Search by Customer ID</option>
@@ -250,13 +251,13 @@ export default function StripeToolsPage() {
                 placeholder={
                   searchType() === 'email' ? 'customer@example.com' : 'cus_xxxxxxxxxxxxx'
                 }
-                class='w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                class={`w-full ${input.base} ${input.withIconLeft}`}
               />
             </div>
             <button
               type='submit'
               disabled={searching() || !searchInput().trim()}
-              class='inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50'
+              class='inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-blue-700 focus:ring-[3px] focus:ring-blue-100 focus:outline-none disabled:opacity-50'
             >
               {searching() ?
                 <FiLoader class='mr-2 h-4 w-4 animate-spin' />
@@ -267,16 +268,16 @@ export default function StripeToolsPage() {
 
           {/* Search Error */}
           <Show when={searchError()}>
-            <div class='mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4'>
+            <div class='mt-4 rounded-xl border border-yellow-200 bg-yellow-50 p-4'>
               <p class='text-sm text-yellow-700'>{searchError()}</p>
             </div>
           </Show>
-        </div>
+        </AdminBox>
 
         {/* Customer Results */}
         <Show when={customerData()?.found}>
           {/* Customer Info Card */}
-          <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+          <AdminBox class='mb-6'>
             <div class='mb-4 flex items-start justify-between'>
               <h2 class='text-lg font-semibold text-gray-900'>Customer Details</h2>
               <a
@@ -403,10 +404,10 @@ export default function StripeToolsPage() {
                 </Show>
               </div>
             </div>
-          </div>
+          </AdminBox>
 
           {/* Quick Actions */}
-          <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+          <AdminBox class='mb-6'>
             <h2 class='mb-4 text-lg font-semibold text-gray-900'>Quick Actions</h2>
             <div class='flex flex-wrap gap-3'>
               <button
@@ -480,11 +481,11 @@ export default function StripeToolsPage() {
                 <p class='mt-2 text-xs text-green-600'>Link expires in 5 minutes</p>
               </div>
             </Show>
-          </div>
+          </AdminBox>
 
           {/* Subscriptions Section */}
           <Show when={subscriptions()}>
-            <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+            <AdminBox class='mb-6'>
               <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
                 <FiDollarSign class='mr-2 h-5 w-5' />
                 Subscriptions ({subscriptions().length})
@@ -547,12 +548,12 @@ export default function StripeToolsPage() {
                   </For>
                 </div>
               </Show>
-            </div>
+            </AdminBox>
           </Show>
 
           {/* Invoices Section */}
           <Show when={invoices()}>
-            <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+            <AdminBox class='mb-6'>
               <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
                 <FiFileText class='mr-2 h-5 w-5' />
                 Recent Invoices ({invoices().length})
@@ -635,12 +636,12 @@ export default function StripeToolsPage() {
                   </table>
                 </div>
               </Show>
-            </div>
+            </AdminBox>
           </Show>
 
           {/* Payment Methods Section */}
           <Show when={paymentMethods()}>
-            <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+            <AdminBox class='mb-6'>
               <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
                 <FiCreditCard class='mr-2 h-5 w-5' />
                 Payment Methods ({paymentMethods().length})
@@ -670,7 +671,7 @@ export default function StripeToolsPage() {
                   </For>
                 </div>
               </Show>
-            </div>
+            </AdminBox>
           </Show>
         </Show>
       </Show>

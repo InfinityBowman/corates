@@ -1,9 +1,51 @@
 # Admin Dashboard UI Overhaul Plan
 
 **Date:** January 2026  
-**Status:** Planning  
+**Status:** In Progress (Phase 3)  
 **Priority:** High  
 **Reference:** Polar Dashboard ([reference/polar](../../../reference/polar))
+
+## Progress Tracking
+
+### Phase 1: Foundation Components - COMPLETE
+
+- [x] Created `AdminBox.jsx` - Container component with padding variants
+- [x] Created `AdminSection.jsx` - Section grouping with title/description/CTA
+- [x] Created `AdminDataTable.jsx` - TanStack Table wrapper with sorting/pagination
+- [x] Updated `admin-tokens.js` with CVA buttonVariants, softer focus rings
+- [x] Created `ui/index.js` barrel export
+- [x] Installed `@tanstack/solid-table ^8.21.3`
+
+### Phase 2: Layout Restructure - COMPLETE
+
+- [x] Created `DashboardHeader.jsx` - Consistent page header with icon variants
+- [x] Created `DashboardBody.jsx` - Content wrapper with max-width constraints
+- [x] Updated `AdminLayout.jsx` to use DashboardBody
+- [x] Migrated `AdminDashboard.jsx` to use DashboardHeader and AdminSection
+- [x] Migrated `OrgList.jsx` to use DashboardHeader, AdminSection, AdminBox
+- [x] Migrated `ProjectList.jsx` to use DashboardHeader
+- [x] Migrated `StorageManagement.jsx` to use DashboardHeader
+- [x] Migrated `AdminBillingLedgerPage.jsx` to use DashboardHeader
+- [x] Migrated `AdminBillingStuckStatesPage.jsx` to use DashboardHeader
+- [x] Migrated `StripeToolsPage.jsx` to use DashboardHeader
+
+### Phase 3: Component Migration - IN PROGRESS
+
+- [ ] Migrate `UserTable.jsx` to AdminDataTable (complex - has action menus/dialogs)
+- [x] Migrated `OrgList.jsx` to use AdminSection, AdminBox, table tokens
+- [x] Migrated `ProjectList.jsx` to use AdminSection, AdminBox, table tokens
+- [x] Migrated `StorageManagement.jsx` to use AdminSection, AdminBox, table tokens
+- [x] Migrated `DatabaseViewer.jsx` to use DashboardHeader
+- [ ] Update billing observability tables to use table tokens
+- [ ] Update detail pages (UserDetail, OrgDetail, ProjectDetail)
+
+**Note:** AdminDataTable is designed for client-side pagination. Pages with server-side
+pagination (OrgList, ProjectList, StorageManagement) continue to use manual table
+implementations with consistent table tokens for styling.
+
+### Phase 4: Input & Form Styling - NOT STARTED
+
+### Phase 5: Polish & Refinement - NOT STARTED
 
 ## Executive Summary
 

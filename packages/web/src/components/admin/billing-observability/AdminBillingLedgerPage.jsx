@@ -10,6 +10,8 @@ import { FiLoader, FiAlertCircle, FiCopy, FiCheck, FiExternalLink, FiFilter } fr
 import { isAdmin, isAdminChecked } from '@/stores/adminStore.js';
 import { useAdminBillingLedger } from '@primitives/useAdminQueries.js';
 import { showToast } from '@corates/ui';
+import { DashboardHeader, AdminBox } from '../ui/index.js';
+import { input } from '../styles/admin-tokens.js';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All Statuses' },
@@ -121,38 +123,33 @@ export default function AdminBillingLedgerPage() {
           </div>
         }
       >
-        {/* Header */}
-        <div class='mb-6 flex items-center justify-between'>
-          <div class='flex items-center space-x-3'>
-            <div class='flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100'>
-              <FiFilter class='h-6 w-6 text-blue-600' />
-            </div>
-            <div>
-              <h1 class='text-2xl font-bold text-gray-900'>Stripe Event Ledger</h1>
-              <p class='text-sm text-gray-500'>View and search Stripe webhook events</p>
-            </div>
-          </div>
-          <button
-            onClick={() => ledgerQuery.refetch()}
-            class='rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
-            disabled={ledgerQuery.isFetching}
-          >
-            {ledgerQuery.isFetching ?
-              <FiLoader class='h-4 w-4 animate-spin' />
-            : 'Refresh'}
-          </button>
-        </div>
+        <DashboardHeader
+          icon={FiFilter}
+          title='Billing Ledger'
+          description='Stripe event ledger entries with filtering and search'
+          actions={
+            <button
+              onClick={() => ledgerQuery.refetch()}
+              class='inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs hover:bg-gray-50 focus:ring-[3px] focus:ring-blue-100 focus:outline-none'
+              disabled={ledgerQuery.isFetching}
+            >
+              {ledgerQuery.isFetching ?
+                <FiLoader class='h-4 w-4 animate-spin' />
+              : 'Refresh'}
+            </button>
+          }
+        />
 
         {/* Stats Summary */}
         <Show when={stats()}>
           <div class='mb-6 grid grid-cols-2 gap-4 md:grid-cols-5'>
-            <div class='rounded-lg border border-gray-200 bg-white p-4'>
+            <div class='rounded-xl border border-gray-200 bg-white p-4 shadow-xs'>
               <p class='text-sm text-gray-500'>Total</p>
               <p class='text-2xl font-bold text-gray-900'>{stats().total || 0}</p>
             </div>
             <For each={Object.entries(stats().byStatus || {})}>
               {([status, count]) => (
-                <div class='rounded-lg border border-gray-200 bg-white p-4'>
+                <div class='rounded-xl border border-gray-200 bg-white p-4 shadow-xs'>
                   <p class='text-sm text-gray-500 capitalize'>{status.replace(/_/g, ' ')}</p>
                   <p class='text-2xl font-bold text-gray-900'>{count}</p>
                 </div>
@@ -162,14 +159,14 @@ export default function AdminBillingLedgerPage() {
         </Show>
 
         {/* Filters */}
-        <div class='mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm'>
+        <AdminBox class='mb-6'>
           <div class='grid grid-cols-1 gap-4 md:grid-cols-3'>
             <div>
               <label class='block text-sm font-medium text-gray-700'>Status</label>
               <select
                 value={statusFilter()}
                 onInput={e => setStatusFilter(e.target.value)}
-                class='mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                class={`mt-1 block w-full ${input.base}`}
               >
                 <For each={STATUS_OPTIONS}>
                   {option => <option value={option.value}>{option.label}</option>}
@@ -183,7 +180,7 @@ export default function AdminBillingLedgerPage() {
                 value={typeFilter()}
                 onInput={handleTypeInput}
                 placeholder='e.g., checkout.session.completed'
-                class='mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                class={`mt-1 block w-full ${input.base}`}
               />
             </div>
             <div>
@@ -191,13 +188,13 @@ export default function AdminBillingLedgerPage() {
               <select
                 value={limit()}
                 onInput={e => setLimit(parseInt(e.target.value, 10))}
-                class='mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                class={`mt-1 block w-full ${input.base}`}
               >
                 <For each={LIMIT_OPTIONS}>{opt => <option value={opt}>{opt}</option>}</For>
               </select>
             </div>
           </div>
-        </div>
+        </AdminBox>
 
         {/* Table */}
         <div class='rounded-lg border border-gray-200 bg-white'>

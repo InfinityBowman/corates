@@ -30,6 +30,7 @@ import {
 } from '@/stores/adminStore.js';
 import { Dialog, Avatar, showToast } from '@corates/ui';
 import { handleError } from '@/lib/error-utils.js';
+import { AdminBox } from './ui/index.js';
 
 export default function ProjectDetail() {
   const params = useParams();
@@ -223,7 +224,7 @@ export default function ProjectDetail() {
           </div>
 
           {/* Project Info Section */}
-          <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+          <AdminBox class='mb-6'>
             <h2 class='mb-4 text-lg font-semibold text-gray-900'>Project Information</h2>
             <dl class='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
               <div>
@@ -288,10 +289,10 @@ export default function ProjectDetail() {
                 </dd>
               </div>
             </dl>
-          </div>
+          </AdminBox>
 
           {/* Members Section */}
-          <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+          <AdminBox class='mb-6'>
             <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
               <FiUsers class='mr-2 h-5 w-5' />
               Members ({projectData().members?.length || 0})
@@ -371,10 +372,10 @@ export default function ProjectDetail() {
                 </table>
               </div>
             </Show>
-          </div>
+          </AdminBox>
 
           {/* Files Section */}
-          <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+          <AdminBox class='mb-6'>
             <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
               <FiFile class='mr-2 h-5 w-5' />
               Files ({projectData().files?.length || 0})
@@ -445,10 +446,10 @@ export default function ProjectDetail() {
                 </table>
               </div>
             </Show>
-          </div>
+          </AdminBox>
 
           {/* Invitations Section */}
-          <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+          <AdminBox class='mb-6'>
             <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
               <FiMail class='mr-2 h-5 w-5' />
               Invitations ({projectData().invitations?.length || 0})
@@ -528,7 +529,7 @@ export default function ProjectDetail() {
                 </table>
               </div>
             </Show>
-          </div>
+          </AdminBox>
         </Show>
 
         {/* Confirm Dialog */}

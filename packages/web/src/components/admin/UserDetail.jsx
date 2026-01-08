@@ -38,6 +38,7 @@ import {
 } from '@/stores/adminStore.js';
 import { Dialog, Avatar, showToast } from '@corates/ui';
 import { handleError } from '@/lib/error-utils.js';
+import { AdminBox } from './ui/index.js';
 
 export default function UserDetail() {
   const params = useParams();
@@ -335,7 +336,7 @@ export default function UserDetail() {
           </div>
 
           {/* Profile Info Section */}
-          <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+          <AdminBox class='mb-6'>
             <h2 class='mb-4 text-lg font-semibold text-gray-900'>Profile Information</h2>
             <dl class='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
               <div>
@@ -400,10 +401,10 @@ export default function UserDetail() {
                 </div>
               </Show>
             </dl>
-          </div>
+          </AdminBox>
 
           {/* Linked Accounts */}
-          <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+          <AdminBox class='mb-6'>
             <h2 class='mb-4 text-lg font-semibold text-gray-900'>Linked Accounts</h2>
             <Show
               when={userData().accounts?.length > 0}
@@ -441,10 +442,10 @@ export default function UserDetail() {
                 </For>
               </div>
             </Show>
-          </div>
+          </AdminBox>
 
           {/* Organizations */}
-          <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+          <AdminBox class='mb-6'>
             <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
               <FiHome class='mr-2 h-5 w-5' />
               Organizations ({userData().orgs?.length || 0})
@@ -521,10 +522,10 @@ export default function UserDetail() {
                 </table>
               </div>
             </Show>
-          </div>
+          </AdminBox>
 
           {/* Projects */}
-          <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+          <AdminBox class='mb-6'>
             <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
               <FiFolder class='mr-2 h-5 w-5' />
               Projects ({userData().projects?.length || 0})
@@ -574,10 +575,10 @@ export default function UserDetail() {
                 </table>
               </div>
             </Show>
-          </div>
+          </AdminBox>
 
           {/* Sessions */}
-          <div class='mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+          <AdminBox class='mb-6'>
             <div class='mb-4 flex items-center justify-between'>
               <h2 class='flex items-center text-lg font-semibold text-gray-900'>
                 <FiMonitor class='mr-2 h-5 w-5' />
@@ -640,7 +641,7 @@ export default function UserDetail() {
                 </For>
               </div>
             </Show>
-          </div>
+          </AdminBox>
         </Show>
 
         {/* Ban Dialog */}

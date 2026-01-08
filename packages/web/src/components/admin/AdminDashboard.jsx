@@ -22,7 +22,7 @@ import { useAdminStats, useAdminUsers } from '@primitives/useAdminQueries.js';
 import UserTable from './UserTable.jsx';
 import StatsCard from './StatsCard.jsx';
 import AnalyticsSection from './AnalyticsSection.jsx';
-import { AdminSection, AdminBox } from './ui/index.js';
+import { AdminSection, AdminBox, DashboardHeader } from './ui/index.js';
 import { input } from './styles/admin-tokens.js';
 
 /**
@@ -75,16 +75,11 @@ export default function AdminDashboard() {
           </div>
         }
       >
-        {/* Header */}
-        <div class='mb-8 flex items-center space-x-3'>
-          <div class='rounded-xl bg-blue-100 p-2'>
-            <FiShield class='h-6 w-6 text-blue-600' />
-          </div>
-          <div>
-            <h1 class='text-2xl font-bold text-gray-900'>Admin Dashboard</h1>
-            <p class='text-sm text-gray-500'>Manage users and monitor activity</p>
-          </div>
-        </div>
+        <DashboardHeader
+          icon={FiShield}
+          title='Admin Dashboard'
+          description='Manage users and monitor activity'
+        />
 
         {/* Stats Grid */}
         <AdminSection title='Overview' class='mb-8'>
