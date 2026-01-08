@@ -12,7 +12,8 @@ let db, deleteProjectData, clearAllData;
 
 describe('db.js - Unified Dexie Database', () => {
   beforeEach(async () => {
-    // Reset modules to get fresh database instance
+    // Import db instance and helper functions
+    // Test isolation achieved via afterEach cleanup (deleteProjectData/clearAllData)
     const module = await import('../db.js');
     db = module.db;
     deleteProjectData = module.deleteProjectData;
