@@ -214,7 +214,7 @@ export default function StorageManagement() {
             placeholder='Search by file name...'
             value={search()}
             onInput={handleSearchInput}
-            class='w-full rounded-lg border border-gray-300 py-2 pr-4 pl-9 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+            class='w-full rounded-lg border border-gray-300 py-2 pr-4 pl-9 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
           />
         </div>
         <div class='sm:w-64'>
@@ -223,7 +223,7 @@ export default function StorageManagement() {
             placeholder='Filter by prefix (e.g., projects/{id}/)'
             value={prefix()}
             onInput={handlePrefixChange}
-            class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+            class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
           />
         </div>
       </div>
@@ -352,7 +352,7 @@ export default function StorageManagement() {
                           </Show>
                         </div>
                       </td>
-                      <td class='px-6 py-4 text-sm text-gray-600'>{formatFileSize(doc.size)}</td>
+                      <td class='px-6 py-4 text-sm text-gray-500'>{formatFileSize(doc.size)}</td>
                       <td class='px-6 py-4'>
                         <span class='font-mono text-xs text-gray-600'>{doc.projectId}</span>
                       </td>
@@ -402,7 +402,7 @@ export default function StorageManagement() {
               >
                 <FiChevronLeft class='h-4 w-4' />
               </button>
-              <span class='text-sm text-gray-600'>
+              <span class='text-sm text-gray-500'>
                 {cursorHistory().length + 1}
                 {documentsData()?.nextCursor ? ' →' : ''}
               </span>

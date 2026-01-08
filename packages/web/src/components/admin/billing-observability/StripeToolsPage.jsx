@@ -236,7 +236,7 @@ export default function StripeToolsPage() {
             <select
               value={searchType()}
               onChange={e => setSearchType(e.target.value)}
-              class='rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+              class='rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
             >
               <option value='email'>Search by Email</option>
               <option value='customerId'>Search by Customer ID</option>
@@ -250,13 +250,13 @@ export default function StripeToolsPage() {
                 placeholder={
                   searchType() === 'email' ? 'customer@example.com' : 'cus_xxxxxxxxxxxxx'
                 }
-                class='w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                class='w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
               />
             </div>
             <button
               type='submit'
               disabled={searching() || !searchInput().trim()}
-              class='inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50'
+              class='inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50'
             >
               {searching() ?
                 <FiLoader class='mr-2 h-4 w-4 animate-spin' />

@@ -90,7 +90,7 @@ export default function OrgList() {
                   placeholder='Search by name or slug...'
                   value={search()}
                   onInput={handleSearchInput}
-                  class='w-64 rounded-lg border border-gray-300 py-2 pr-4 pl-9 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class='w-64 rounded-lg border border-gray-300 py-2 pr-4 pl-9 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 />
               </div>
             </div>
@@ -157,13 +157,13 @@ export default function OrgList() {
                             {org.slug}
                           </code>
                         </td>
-                        <td class='px-6 py-4 text-sm text-gray-600'>
+                        <td class='px-6 py-4 text-sm text-gray-500'>
                           <div class='flex items-center space-x-1'>
                             <FiUsers class='h-4 w-4 text-gray-400' />
                             <span>{org.stats?.memberCount ?? '-'}</span>
                           </div>
                         </td>
-                        <td class='px-6 py-4 text-sm text-gray-600'>
+                        <td class='px-6 py-4 text-sm text-gray-500'>
                           <div class='flex items-center space-x-1'>
                             <FiFolder class='h-4 w-4 text-gray-400' />
                             <span>{org.stats?.projectCount ?? '-'}</span>
@@ -173,7 +173,7 @@ export default function OrgList() {
                         <td class='px-6 py-4 text-right'>
                           <A
                             href={`/admin/orgs/${org.id}`}
-                            class='inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700'
+                            class='inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none'
                           >
                             Details
                           </A>
@@ -205,7 +205,7 @@ export default function OrgList() {
                 >
                   <FiChevronLeft class='h-4 w-4' />
                 </button>
-                <span class='text-sm text-gray-600'>
+                <span class='text-sm text-gray-500'>
                   Page {page()} of {orgsData()?.pagination?.totalPages || 1}
                 </span>
                 <button

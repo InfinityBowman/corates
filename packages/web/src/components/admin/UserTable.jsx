@@ -220,7 +220,7 @@ export default function UserTable(props) {
                   </td>
                   <td class='px-6 py-4'>
                     <div class='flex items-center space-x-2'>
-                      <span class='text-sm text-gray-600'>{user.email}</span>
+                      <span class='text-sm text-gray-500'>{user.email}</span>
                       <Show when={user.emailVerified}>
                         <FiCheckCircle class='h-4 w-4 text-green-500' title='Email verified' />
                       </Show>

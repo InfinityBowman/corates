@@ -162,14 +162,14 @@ export default function AdminBillingLedgerPage() {
         </Show>
 
         {/* Filters */}
-        <div class='mb-6 rounded-lg border border-gray-200 bg-white p-4'>
+        <div class='mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm'>
           <div class='grid grid-cols-1 gap-4 md:grid-cols-3'>
             <div>
               <label class='block text-sm font-medium text-gray-700'>Status</label>
               <select
                 value={statusFilter()}
                 onInput={e => setStatusFilter(e.target.value)}
-                class='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+                class='mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
               >
                 <For each={STATUS_OPTIONS}>
                   {option => <option value={option.value}>{option.label}</option>}
@@ -183,7 +183,7 @@ export default function AdminBillingLedgerPage() {
                 value={typeFilter()}
                 onInput={handleTypeInput}
                 placeholder='e.g., checkout.session.completed'
-                class='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+                class='mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
               />
             </div>
             <div>
@@ -191,7 +191,7 @@ export default function AdminBillingLedgerPage() {
               <select
                 value={limit()}
                 onInput={e => setLimit(parseInt(e.target.value, 10))}
-                class='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+                class='mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
               >
                 <For each={LIMIT_OPTIONS}>{opt => <option value={opt}>{opt}</option>}</For>
               </select>

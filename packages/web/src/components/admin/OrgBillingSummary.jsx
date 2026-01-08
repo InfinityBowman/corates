@@ -48,7 +48,7 @@ export default function OrgBillingSummary(props) {
 
   return (
     <Show when={billing()}>
-      <div class='rounded-lg border border-gray-200 bg-white p-6'>
+      <div class='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
         <div class='mb-4 flex items-center justify-between'>
           <h2 class='text-lg font-semibold text-gray-900'>Billing Summary</h2>
         </div>

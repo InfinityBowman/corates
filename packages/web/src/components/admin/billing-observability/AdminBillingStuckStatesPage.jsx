@@ -134,7 +134,7 @@ export default function AdminBillingStuckStatesPage() {
       )}
 
       {/* Summary */}
-      <div class='mb-6 rounded-lg border border-gray-200 bg-white p-4'>
+      <div class='mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm'>
         <div class='flex items-center justify-between'>
           <div>
             <p class='text-lg font-semibold text-gray-900'>

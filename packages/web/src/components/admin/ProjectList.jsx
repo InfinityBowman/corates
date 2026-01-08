@@ -109,7 +109,7 @@ export default function ProjectList() {
                 value={searchInput()}
                 onInput={e => setSearchInput(e.target.value)}
                 placeholder='Search by project name...'
-                class='w-full rounded-lg border border-gray-300 py-2 pr-10 pl-10 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                class='w-full rounded-lg border border-gray-300 py-2 pr-10 pl-10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
               />
               <Show when={searchInput()}>
                 <button
@@ -288,7 +288,7 @@ export default function ProjectList() {
                   >
                     <FiChevronLeft class='h-4 w-4' />
                   </button>
-                  <span class='text-sm text-gray-600'>
+                  <span class='text-sm text-gray-500'>
                     Page {pagination().page} of {pagination().totalPages}
                   </span>
                   <button

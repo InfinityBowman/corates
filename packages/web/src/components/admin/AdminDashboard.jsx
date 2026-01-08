@@ -133,7 +133,7 @@ export default function AdminDashboard() {
                   placeholder='Search by name or email...'
                   value={search()}
                   onInput={handleSearchInput}
-                  class='w-64 rounded-lg border border-gray-300 py-2 pr-4 pl-9 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class='w-64 rounded-lg border border-gray-300 py-2 pr-4 pl-9 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 />
               </div>
             </div>
@@ -170,7 +170,7 @@ export default function AdminDashboard() {
                 >
                   <FiChevronLeft class='h-4 w-4' />
                 </button>
-                <span class='text-sm text-gray-600'>
+                <span class='text-sm text-gray-500'>
                   Page {page()} of {usersData()?.pagination?.totalPages || 1}
                 </span>
                 <button
