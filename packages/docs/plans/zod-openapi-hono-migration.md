@@ -58,12 +58,7 @@ export function createOpenAPIApp() {
         if (issues.length === 1) {
           const issue = issues[0];
           const field = issue.path.join('.') || 'root';
-          const error = createValidationError(
-            field,
-            mapZodErrorToValidationCode(issue),
-            undefined,
-            issue.code
-          );
+          const error = createValidationError(field, mapZodErrorToValidationCode(issue), undefined, issue.code);
           return c.json(error, error.statusCode);
         }
 
@@ -110,25 +105,31 @@ Create `packages/workers/src/config/openapi-schemas.js`:
 import { z } from '@hono/zod-openapi';
 
 // Common error response schema
-export const ErrorResponseSchema = z.object({
-  code: z.string().openapi({ example: 'VALIDATION_FIELD_REQUIRED' }),
-  message: z.string().openapi({ example: 'Field is required' }),
-  statusCode: z.number().openapi({ example: 400 }),
-  field: z.string().optional().openapi({ example: 'name' }),
-  details: z.any().optional(),
-}).openapi('ErrorResponse');
+export const ErrorResponseSchema = z
+  .object({
+    code: z.string().openapi({ example: 'VALIDATION_FIELD_REQUIRED' }),
+    message: z.string().openapi({ example: 'Field is required' }),
+    statusCode: z.number().openapi({ example: 400 }),
+    field: z.string().optional().openapi({ example: 'name' }),
+    details: z.any().optional(),
+  })
+  .openapi('ErrorResponse');
 
 // Success response for mutations
-export const SuccessResponseSchema = z.object({
-  success: z.literal(true),
-}).openapi('SuccessResponse');
+export const SuccessResponseSchema = z
+  .object({
+    success: z.literal(true),
+  })
+  .openapi('SuccessResponse');
 
 // Pagination metadata
-export const PaginationSchema = z.object({
-  cursor: z.string().optional(),
-  hasMore: z.boolean(),
-  total: z.number().optional(),
-}).openapi('Pagination');
+export const PaginationSchema = z
+  .object({
+    cursor: z.string().optional(),
+    hasMore: z.boolean(),
+    total: z.number().optional(),
+  })
+  .openapi('Pagination');
 ```
 
 #### 1.4 Update Documentation Endpoint
@@ -164,6 +165,7 @@ app.doc('/api/openapi.json', {
 **Target file**: `packages/workers/src/routes/contact.js`
 
 **Why this route?**
+
 - Simple, single endpoint (POST /api/contact)
 - No auth middleware dependencies
 - Has existing test coverage
@@ -173,7 +175,7 @@ app.doc('/api/openapi.json', {
 
 ```javascript
 // Current pattern in contact.js
-app.post('/', validateRequest(contactSchema), async (c) => {
+app.post('/', validateRequest(contactSchema), async c => {
   const { email, message } = c.get('validatedBody');
   // ...
 });
@@ -189,25 +191,29 @@ import { ErrorResponseSchema } from '@/config/openapi-schemas.js';
 const contactRoutes = createOpenAPIApp();
 
 // Define schemas with OpenAPI metadata
-const ContactRequestSchema = z.object({
-  email: z.string().email().openapi({
-    example: 'user@example.com',
-    description: 'Contact email address'
-  }),
-  name: z.string().min(1).max(100).openapi({
-    example: 'John Doe',
-    description: 'Contact name'
-  }),
-  message: z.string().min(10).max(5000).openapi({
-    example: 'I have a question about...',
-    description: 'Message content'
-  }),
-}).openapi('ContactRequest');
+const ContactRequestSchema = z
+  .object({
+    email: z.string().email().openapi({
+      example: 'user@example.com',
+      description: 'Contact email address',
+    }),
+    name: z.string().min(1).max(100).openapi({
+      example: 'John Doe',
+      description: 'Contact name',
+    }),
+    message: z.string().min(10).max(5000).openapi({
+      example: 'I have a question about...',
+      description: 'Message content',
+    }),
+  })
+  .openapi('ContactRequest');
 
-const ContactResponseSchema = z.object({
-  success: z.literal(true),
-  messageId: z.string().optional(),
-}).openapi('ContactResponse');
+const ContactResponseSchema = z
+  .object({
+    success: z.literal(true),
+    messageId: z.string().optional(),
+  })
+  .openapi('ContactResponse');
 
 // Define route with full OpenAPI spec
 const submitContactRoute = createRoute({
@@ -255,7 +261,7 @@ const submitContactRoute = createRoute({
 });
 
 // Register route with handler
-contactRoutes.openapi(submitContactRoute, async (c) => {
+contactRoutes.openapi(submitContactRoute, async c => {
   // Body is validated and typed
   const { email, name, message } = c.req.valid('json');
 
@@ -287,6 +293,7 @@ Update `packages/workers/src/routes/__tests__/contact.test.js`:
 **Target file**: `packages/workers/src/routes/users.js`
 
 **Endpoints**:
+
 - `GET /api/users/search` - Search users (query params)
 - `GET /api/users/:id` - Get user by ID (path params)
 
@@ -299,37 +306,53 @@ import { z } from '@hono/zod-openapi';
 
 // Path parameters
 const UserIdParamSchema = z.object({
-  id: z.string().min(1).openapi({
-    param: { name: 'id', in: 'path' },
-    example: 'user_abc123',
-  }),
+  id: z
+    .string()
+    .min(1)
+    .openapi({
+      param: { name: 'id', in: 'path' },
+      example: 'user_abc123',
+    }),
 });
 
 // Query parameters
 const UserSearchQuerySchema = z.object({
-  q: z.string().min(2).openapi({
-    param: { name: 'q', in: 'query' },
-    example: 'john',
-    description: 'Search query (min 2 chars)',
-  }),
-  projectId: z.string().uuid().optional().openapi({
-    param: { name: 'projectId', in: 'query' },
-    description: 'Filter by project membership',
-  }),
-  limit: z.string().optional().transform(v => Math.min(Math.max(1, parseInt(v || '10')), 20)).openapi({
-    param: { name: 'limit', in: 'query' },
-    example: '10',
-  }),
+  q: z
+    .string()
+    .min(2)
+    .openapi({
+      param: { name: 'q', in: 'query' },
+      example: 'john',
+      description: 'Search query (min 2 chars)',
+    }),
+  projectId: z
+    .string()
+    .uuid()
+    .optional()
+    .openapi({
+      param: { name: 'projectId', in: 'query' },
+      description: 'Filter by project membership',
+    }),
+  limit: z
+    .string()
+    .optional()
+    .transform(v => Math.min(Math.max(1, parseInt(v || '10')), 20))
+    .openapi({
+      param: { name: 'limit', in: 'query' },
+      example: '10',
+    }),
 });
 
 // Response schemas
-const UserSchema = z.object({
-  id: z.string(),
-  name: z.string().nullable(),
-  email: z.string().email(),
-  displayName: z.string().nullable(),
-  image: z.string().nullable(),
-}).openapi('User');
+const UserSchema = z
+  .object({
+    id: z.string(),
+    name: z.string().nullable(),
+    email: z.string().email(),
+    displayName: z.string().nullable(),
+    image: z.string().nullable(),
+  })
+  .openapi('User');
 
 const UserSearchResponseSchema = z.array(UserSchema).openapi('UserSearchResponse');
 ```
@@ -359,7 +382,7 @@ const searchUsersRoute = createRoute({
   },
 });
 
-userRoutes.openapi(searchUsersRoute, async (c) => {
+userRoutes.openapi(searchUsersRoute, async c => {
   const { q, projectId, limit } = c.req.valid('query');
   // ...existing implementation
 });
@@ -376,10 +399,12 @@ userRoutes.openapi(searchUsersRoute, async (c) => {
 ### Phase 4: Project Routes Migration (Core CRUD)
 
 **Target files**:
+
 - `packages/workers/src/routes/orgs/projects.js`
 - `packages/workers/src/routes/orgs/index.js`
 
 This is the most complex migration - tests project creation, update, delete with:
+
 - Path parameters (orgId, projectId)
 - Body validation
 - Multiple middleware (auth, org membership, entitlements, quotas)
@@ -390,38 +415,59 @@ This is the most complex migration - tests project creation, update, delete with
 ```javascript
 // Path parameters
 const OrgProjectParamsSchema = z.object({
-  orgId: z.string().uuid().openapi({
-    param: { name: 'orgId', in: 'path' },
-    example: 'org_abc123',
-  }),
-  projectId: z.string().uuid().optional().openapi({
-    param: { name: 'projectId', in: 'path' },
-    example: 'proj_xyz789',
-  }),
+  orgId: z
+    .string()
+    .uuid()
+    .openapi({
+      param: { name: 'orgId', in: 'path' },
+      example: 'org_abc123',
+    }),
+  projectId: z
+    .string()
+    .uuid()
+    .optional()
+    .openapi({
+      param: { name: 'projectId', in: 'path' },
+      example: 'proj_xyz789',
+    }),
 });
 
 // Existing schemas enhanced with OpenAPI metadata
-const CreateProjectSchema = z.object({
-  name: z.string().min(1).max(255).transform(v => v.trim()).openapi({
-    example: 'My Research Project',
-    description: 'Project name (1-255 chars)',
-  }),
-  description: z.string().max(2000).optional().transform(v => v?.trim() || null).openapi({
-    example: 'A systematic review of...',
-    description: 'Optional project description',
-  }),
-}).openapi('CreateProjectRequest');
+const CreateProjectSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1)
+      .max(255)
+      .transform(v => v.trim())
+      .openapi({
+        example: 'My Research Project',
+        description: 'Project name (1-255 chars)',
+      }),
+    description: z
+      .string()
+      .max(2000)
+      .optional()
+      .transform(v => v?.trim() || null)
+      .openapi({
+        example: 'A systematic review of...',
+        description: 'Optional project description',
+      }),
+  })
+  .openapi('CreateProjectRequest');
 
-const ProjectSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-  description: z.string().nullable(),
-  orgId: z.string().uuid(),
-  role: z.enum(['owner', 'member']),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-  createdBy: z.string(),
-}).openapi('Project');
+const ProjectSchema = z
+  .object({
+    id: z.string().uuid(),
+    name: z.string(),
+    description: z.string().nullable(),
+    orgId: z.string().uuid(),
+    role: z.enum(['owner', 'member']),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+    createdBy: z.string(),
+  })
+  .openapi('Project');
 ```
 
 #### 4.2 Middleware Integration
@@ -454,10 +500,18 @@ const createProjectRoute = createRoute({
       content: { 'application/json': { schema: ProjectSchema } },
       description: 'Project created',
     },
-    400: { /* validation error */ },
-    401: { /* unauthorized */ },
-    403: { /* forbidden - not org member or no write access */ },
-    429: { /* quota exceeded */ },
+    400: {
+      /* validation error */
+    },
+    401: {
+      /* unauthorized */
+    },
+    403: {
+      /* forbidden - not org member or no write access */
+    },
+    429: {
+      /* quota exceeded */
+    },
   },
 });
 ```
@@ -476,6 +530,7 @@ const createProjectRoute = createRoute({
 **Target file**: `packages/workers/src/routes/orgs/members.js`
 
 Endpoints:
+
 - `GET /api/orgs/:orgId/projects/:projectId/members` - List members
 - `POST /api/orgs/:orgId/projects/:projectId/members` - Add member
 - `PUT /api/orgs/:orgId/projects/:projectId/members/:userId` - Update role
@@ -488,6 +543,7 @@ Endpoints:
 **Target file**: `packages/workers/src/routes/orgs/invitations.js`
 
 Endpoints:
+
 - `GET /api/orgs/:orgId/projects/:projectId/invitations` - List invitations
 - `POST /api/orgs/:orgId/projects/:projectId/invitations` - Create invitation
 - `DELETE /api/orgs/:orgId/projects/:projectId/invitations/:id` - Revoke invitation
@@ -500,6 +556,7 @@ Endpoints:
 **Target file**: `packages/workers/src/routes/billing/index.js` and sub-routes
 
 Complex routes with Stripe integration:
+
 - Subscription management
 - Checkout sessions
 - Portal sessions
@@ -514,6 +571,7 @@ Complex routes with Stripe integration:
 **Target file**: `packages/workers/src/routes/admin/index.js`
 
 Admin-only routes with strict access control:
+
 - User management
 - Storage management
 - Impersonation
@@ -554,9 +612,7 @@ app.doc('/api/openapi.json', {
     title: 'CoRATES API',
     version: '1.0.0',
   },
-  servers: [
-    { url: 'https://api.corates.org', description: 'Production' },
-  ],
+  servers: [{ url: 'https://api.corates.org', description: 'Production' }],
 });
 
 // Swagger UI (development only)
@@ -616,19 +672,19 @@ Each phase can be rolled back independently:
 
 ## Timeline Estimate
 
-| Phase | Description | Complexity | Files |
-|-------|-------------|------------|-------|
-| 1 | Setup & Infrastructure | Low | 3-4 |
-| 2 | Contact Route (Pilot) | Low | 2 |
-| 3 | User Routes | Medium | 2 |
-| 4 | Project Routes | High | 3 |
-| 5 | Member Routes | Medium | 2 |
-| 6 | Invitation Routes | Medium | 2 |
-| 7 | Billing Routes | High | 6 |
-| 8 | Admin Routes | Medium | 3 |
-| 9 | Remaining Routes | Medium | 6 |
-| 10 | Main App Integration | Medium | 2 |
-| 11 | Cleanup | Low | 4 |
+| Phase | Description            | Complexity | Files |
+| ----- | ---------------------- | ---------- | ----- |
+| 1     | Setup & Infrastructure | Low        | 3-4   |
+| 2     | Contact Route (Pilot)  | Low        | 2     |
+| 3     | User Routes            | Medium     | 2     |
+| 4     | Project Routes         | High       | 3     |
+| 5     | Member Routes          | Medium     | 2     |
+| 6     | Invitation Routes      | Medium     | 2     |
+| 7     | Billing Routes         | High       | 6     |
+| 8     | Admin Routes           | Medium     | 3     |
+| 9     | Remaining Routes       | Medium     | 6     |
+| 10    | Main App Integration   | Medium     | 2     |
+| 11    | Cleanup                | Low        | 4     |
 
 ---
 
