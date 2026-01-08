@@ -18,6 +18,7 @@ import { createStudyOperations } from './studies.js';
 import { createChecklistOperations } from './checklists/index.js';
 import { createPdfOperations } from './pdfs.js';
 import { createReconciliationOperations } from './reconciliation.js';
+import { deleteProjectData } from '../db.js';
 
 /**
  * Global connection registry to prevent multiple connections to the same project.
@@ -133,10 +134,17 @@ export async function cleanupProjectLocalData(projectId) {
     console.error('Failed to delete IndexedDB for project:', projectId, err);
   }
 
-  // 3. Clear from projectStore (in-memory cache)
+  // 3. Clear from unified Dexie database (PDF cache, etc.)
+  try {
+    await deleteProjectData(projectId);
+  } catch (err) {
+    console.error('Failed to clear Dexie data for project:', projectId, err);
+  }
+
+  // 4. Clear from projectStore (in-memory cache)
   projectStore.clearProject(projectId);
 
-  // 4. Invalidate project list query
+  // 5. Invalidate project list query
   queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
 }
 
