@@ -281,7 +281,15 @@ export function useAdminTableRows(getParams) {
     const filterValue = params?.filterValue ?? null;
 
     return {
-      queryKey: queryKeys.admin.tableRows(tableName, page, limit, orderBy, order, filterBy, filterValue),
+      queryKey: queryKeys.admin.tableRows(
+        tableName,
+        page,
+        limit,
+        orderBy,
+        order,
+        filterBy,
+        filterValue,
+      ),
       queryFn: () => {
         const searchParams = new URLSearchParams({
           page: page.toString(),

@@ -15,18 +15,18 @@ Integrate Drizzle Studio-like functionality into your existing admin dashboard. 
 
 ## What You're Missing vs Drizzle Studio
 
-| Feature | Current | Needed |
-|---------|---------|--------|
-| Browse tables | Yes | - |
-| View rows with pagination | Yes | - |
-| Sort columns | Yes | - |
-| Filter rows | Yes | - |
-| **Insert rows** | No | Add |
-| **Update rows** | No | Add |
-| **Delete rows** | No | Add |
-| **Inline editing** | No | Add |
-| View schema/types | Partial | Enhance |
-| Run raw SQL | No | Optional |
+| Feature                   | Current | Needed   |
+| ------------------------- | ------- | -------- |
+| Browse tables             | Yes     | -        |
+| View rows with pagination | Yes     | -        |
+| Sort columns              | Yes     | -        |
+| Filter rows               | Yes     | -        |
+| **Insert rows**           | No      | Add      |
+| **Update rows**           | No      | Add      |
+| **Delete rows**           | No      | Add      |
+| **Inline editing**        | No      | Add      |
+| View schema/types         | Partial | Enhance  |
+| Run raw SQL               | No      | Optional |
 
 ## Implementation Plan
 
@@ -35,23 +35,27 @@ Integrate Drizzle Studio-like functionality into your existing admin dashboard. 
 **File**: `packages/workers/src/routes/admin/database.js`
 
 #### 1.1 Add INSERT endpoint
+
 ```
 POST /api/admin/database/tables/:tableName/rows
 Body: { data: { column1: value1, ... } }
 ```
 
 #### 1.2 Add UPDATE endpoint
+
 ```
 PATCH /api/admin/database/tables/:tableName/rows/:id
 Body: { data: { column1: newValue, ... } }
 ```
 
 #### 1.3 Add DELETE endpoint
+
 ```
 DELETE /api/admin/database/tables/:tableName/rows/:id
 ```
 
 #### 1.4 Security considerations
+
 - All routes already protected by `requireAdmin` middleware
 - Validate column names against schema (prevent SQL injection)
 - Whitelist tables via existing `ALLOWED_TABLES`
@@ -64,23 +68,28 @@ DELETE /api/admin/database/tables/:tableName/rows/:id
 **File**: `packages/web/src/components/admin/DatabaseViewer.jsx`
 
 #### 2.1 Add row editing
+
 - Click-to-edit cells with inline input fields
 - Save/Cancel buttons per row
 - Visual indicator for modified cells
 
 #### 2.2 Add row insertion
+
 - "Add Row" button above table
 - Modal or inline form with fields for each column
 - Auto-generate IDs if using UUIDs
 
 #### 2.3 Add row deletion
+
 - Delete button per row (with confirmation dialog)
 - Bulk delete with checkboxes (optional)
 
 #### 2.4 Add TanStack Query mutations
+
 **File**: `packages/web/src/primitives/useAdminQueries.js`
 
 Add mutations:
+
 - `useAdminInsertRow`
 - `useAdminUpdateRow`
 - `useAdminDeleteRow`
@@ -90,10 +99,12 @@ Add mutations:
 ### Phase 3: Enhanced Schema View (Optional)
 
 #### 3.1 Column type indicators
+
 - Show data types (text, integer, boolean, timestamp)
 - Show constraints (primary key, unique, not null, foreign key)
 
 #### 3.2 Relationship visualization
+
 - Show foreign key references
 - Click to navigate to related records
 
@@ -104,17 +115,20 @@ Add mutations:
 If you want full Drizzle Studio parity:
 
 #### 4.1 Backend
+
 ```
 POST /api/admin/database/query
 Body: { sql: "SELECT * FROM user WHERE ...", params: [] }
 ```
 
 **Security**:
+
 - Read-only mode by default (only SELECT)
 - Optional write mode with extra confirmation
 - Log all queries
 
 #### 4.2 Frontend
+
 - SQL editor with syntax highlighting (use Monaco or CodeMirror)
 - Results table
 - Query history
@@ -154,17 +168,21 @@ Body: { sql: "SELECT * FROM user WHERE ...", params: [] }
 If you prefer the official Drizzle Studio UI:
 
 ### Option A: Proxy to local drizzle-kit studio
+
 - Run `drizzle-kit studio` locally
 - Proxy requests through your admin dashboard
 - **Limitation**: Requires local dev environment, not suitable for production
 
 ### Option B: Use drizzle-studio package (experimental)
+
 - `@drizzle-team/studio` is an internal package
 - Not officially supported for embedding
 - **Not recommended**
 
 ### Recommendation
+
 Building on your existing `DatabaseViewer` is the better approach because:
+
 - Full control over security
 - Consistent with your existing admin UI
 - No external dependencies
@@ -175,12 +193,15 @@ Building on your existing `DatabaseViewer` is the better approach because:
 ## File Checklist
 
 ### Backend changes
+
 - [ ] `packages/workers/src/routes/admin/database.js` - Add POST/PATCH/DELETE routes
 
 ### Frontend changes
+
 - [ ] `packages/web/src/primitives/useAdminQueries.js` - Add mutation hooks
 - [ ] `packages/web/src/components/admin/DatabaseViewer.jsx` - Add CRUD UI
 
 ### Optional
+
 - [ ] Add audit logging for database mutations
 - [ ] Add raw SQL console component

@@ -214,7 +214,13 @@ export default function DatabaseViewer() {
                           class='ml-1 rounded-full p-0.5 hover:bg-blue-200'
                           title='Clear filter'
                         >
-                          <svg class='h-3 w-3' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                          <svg
+                            class='h-3 w-3'
+                            viewBox='0 0 24 24'
+                            fill='none'
+                            stroke='currentColor'
+                            stroke-width='2'
+                          >
                             <path d='M18 6L6 18M6 6l12 12' />
                           </svg>
                         </button>
@@ -296,14 +302,15 @@ export default function DatabaseViewer() {
                                           </Tooltip.Trigger>
                                           <Tooltip.Positioner>
                                             <Tooltip.Content class='rounded bg-gray-800 px-2 py-1 text-xs text-white'>
-                                              FK: {schema().foreignKey.table}.{schema().foreignKey.column}
+                                              FK: {schema().foreignKey.table}.
+                                              {schema().foreignKey.column}
                                             </Tooltip.Content>
                                           </Tooltip.Positioner>
                                         </Tooltip.Root>
                                       </Show>
                                       {col}
                                       <Show when={schema()?.type}>
-                                        <span class='ml-1 rounded bg-gray-200 px-1 py-0.5 text-2xs font-normal normal-case text-gray-600'>
+                                        <span class='text-2xs ml-1 rounded bg-gray-200 px-1 py-0.5 font-normal text-gray-600 normal-case'>
                                           {schema().type}
                                         </span>
                                       </Show>

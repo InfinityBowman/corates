@@ -156,9 +156,7 @@ databaseRoutes.get('/database/tables/:tableName/schema', async c => {
       try {
         const refColumn = refFn();
         if (refColumn?.table) {
-          const refTableName = Object.entries(dbSchema).find(
-            ([, t]) => t === refColumn.table,
-          )?.[0];
+          const refTableName = Object.entries(dbSchema).find(([, t]) => t === refColumn.table)?.[0];
           if (refTableName && ALLOWED_TABLES.includes(refTableName)) {
             columnInfo.foreignKey = {
               table: refTableName,
