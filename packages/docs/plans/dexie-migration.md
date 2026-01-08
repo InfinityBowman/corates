@@ -107,9 +107,9 @@ Create the core Dexie database with schema for all tables.
 
 **Acceptance criteria**:
 
-- [ ] Database opens successfully
-- [ ] Schema version 1 creates all tables
-- [ ] Unit tests for database initialization
+- [x] Database opens successfully
+- [x] Schema version 1 creates all tables
+- [x] Unit tests for database initialization (14 tests)
 
 ---
 
@@ -179,10 +179,10 @@ Migrate `pdfCache.js` from raw IndexedDB to unified Dexie database. This provide
 
 **Acceptance criteria**:
 
-- [ ] PDF caching works with new implementation
-- [ ] LRU eviction still works correctly
-- [ ] ~60% code reduction achieved
-- [ ] Unit tests pass
+- [x] PDF caching works with new implementation
+- [x] LRU eviction still works correctly
+- [x] ~60% code reduction achieved (337 -> 167 lines = 50% reduction)
+- [x] Unit tests pass (11 tests)
 
 ---
 
