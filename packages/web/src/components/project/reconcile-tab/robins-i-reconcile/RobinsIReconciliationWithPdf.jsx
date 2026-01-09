@@ -44,8 +44,10 @@ export default function RobinsIReconciliationWithPdf(props) {
     comparison: null,
     finalAnswers: {},
     sectionBCritical: false,
+    expandedDomain: null,
     setViewMode: null,
     goToPage: null,
+    setExpandedDomain: null,
     onReset: null,
   });
 
@@ -76,7 +78,7 @@ export default function RobinsIReconciliationWithPdf(props) {
 
       {/* Navbar - navigation pills */}
       <Show when={navbarStore.navItems?.length > 0}>
-        <div class='flex flex-1 items-center gap-4 overflow-x-auto'>
+        <div class='flex min-w-0 flex-1 items-center overflow-x-auto'>
           <RobinsINavbar store={navbarStore} />
         </div>
       </Show>

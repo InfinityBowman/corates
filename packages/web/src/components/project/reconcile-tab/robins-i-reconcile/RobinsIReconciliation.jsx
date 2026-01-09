@@ -18,6 +18,7 @@ import {
   isNavItemAgreement,
   getAnsweredCount,
   isSectionBCritical,
+  getSectionKeyForPage,
   NAV_ITEM_TYPES,
 } from './navbar-utils.js';
 import SectionBQuestionPage from './pages/SectionBQuestionPage.jsx';
@@ -64,6 +65,7 @@ export default function RobinsIReconciliation(props) {
 
   const [currentPage, setCurrentPage] = createSignal(0);
   const [viewMode, setViewMode] = createSignal('questions');
+  const [expandedDomain, setExpandedDomain] = createSignal(null);
 
   // Initialize navigation state from localStorage
   createEffect(() => {
@@ -80,6 +82,18 @@ export default function RobinsIReconciliation(props) {
       }
     } catch (e) {
       console.error('Failed to load navigation state:', e);
+    }
+  });
+
+  // Auto-expand domain based on current page
+  createEffect(() => {
+    const items = navItems();
+    const page = currentPage();
+    if (items.length > 0 && expandedDomain() === null) {
+      const sectionKey = getSectionKeyForPage(items, page);
+      if (sectionKey) {
+        setExpandedDomain(sectionKey);
+      }
     }
   });
 
@@ -126,8 +140,10 @@ export default function RobinsIReconciliation(props) {
         comparison: comparison(),
         finalAnswers: finalAnswers(),
         sectionBCritical: sectionBCritical(),
+        expandedDomain: expandedDomain(),
         setViewMode,
         goToPage,
+        setExpandedDomain,
         onReset: handleReset,
       });
     }
@@ -146,7 +162,14 @@ export default function RobinsIReconciliation(props) {
     }
 
     if (currentPage() < totalPages() - 1) {
-      setCurrentPage(p => p + 1);
+      const nextPage = currentPage() + 1;
+      setCurrentPage(nextPage);
+
+      // Auto-expand domain if moving to a new one
+      const sectionKey = getSectionKeyForPage(navItems(), nextPage);
+      if (sectionKey && sectionKey !== expandedDomain()) {
+        setExpandedDomain(sectionKey);
+      }
     } else {
       setViewMode('summary');
     }
@@ -158,13 +181,26 @@ export default function RobinsIReconciliation(props) {
       return;
     }
     if (currentPage() > 0) {
-      setCurrentPage(p => p - 1);
+      const prevPage = currentPage() - 1;
+      setCurrentPage(prevPage);
+
+      // Auto-expand domain if moving to a new one
+      const sectionKey = getSectionKeyForPage(navItems(), prevPage);
+      if (sectionKey && sectionKey !== expandedDomain()) {
+        setExpandedDomain(sectionKey);
+      }
     }
   }
 
   function goToPage(index) {
     setCurrentPage(index);
     setViewMode('questions');
+
+    // Auto-expand the domain containing this page
+    const sectionKey = getSectionKeyForPage(navItems(), index);
+    if (sectionKey) {
+      setExpandedDomain(sectionKey);
+    }
   }
 
   // Auto-fill final answer from reviewer 1

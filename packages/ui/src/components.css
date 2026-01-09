@@ -19,12 +19,45 @@
   }
 }
 
-[data-scope='collapsible'][data-part='content'][data-state='open'] {
-  animation: slideDown 250ms;
+/* Horizontal collapsible animations */
+@keyframes expandWidth {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--width);
+  }
 }
 
-[data-scope='collapsible'][data-part='content'][data-state='closed'] {
-  animation: slideUp 200ms;
+@keyframes collapseWidth {
+  from {
+    width: var(--width);
+  }
+  to {
+    width: 0;
+  }
+}
+
+/* Default vertical animation */
+[data-scope='collapsible'][data-part='content'][data-state='open']:not(.collapsible-horizontal) {
+  animation: slideDown 250ms ease-out;
+}
+
+[data-scope='collapsible'][data-part='content'][data-state='closed']:not(.collapsible-horizontal) {
+  animation: slideUp 200ms ease-out;
+}
+
+/* Horizontal collapsible variant */
+[data-scope='collapsible'][data-part='content'].collapsible-horizontal {
+  overflow: hidden;
+}
+
+[data-scope='collapsible'][data-part='content'].collapsible-horizontal[data-state='open'] {
+  animation: expandWidth 200ms ease-out;
+}
+
+[data-scope='collapsible'][data-part='content'].collapsible-horizontal[data-state='closed'] {
+  animation: collapseWidth 150ms ease-out;
 }
 
 /* Collapsible trigger takes full width */
