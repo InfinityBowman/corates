@@ -9,6 +9,10 @@ import { isImpersonating } from '@/stores/adminStore.js';
 const ImpersonationBanner = lazy(() => import('@/components/admin/ImpersonationBanner.jsx'));
 import { useMembershipSync } from '@/primitives/useMembershipSync.js';
 
+// Dev panel - lazily loaded only in dev mode
+const DevPanel = lazy(() => import('@/components/dev/DevPanel.jsx'));
+const DEV_PANEL_ENABLED = import.meta.env.VITE_DEV_PANEL === 'true';
+
 const SIDEBAR_MODE_KEY = 'corates-sidebar-mode';
 const SIDEBAR_WIDTH_KEY = 'corates-sidebar-width';
 
@@ -94,6 +98,10 @@ export default function Layout(props) {
         <main class='flex-1 overflow-auto text-gray-900'>{props.children}</main>
       </div>
       <Toaster />
+      {/* Dev Panel - global, context-aware */}
+      <Show when={DEV_PANEL_ENABLED}>
+        <DevPanel />
+      </Show>
     </div>
   );
 }

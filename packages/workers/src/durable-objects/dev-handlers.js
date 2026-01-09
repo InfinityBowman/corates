@@ -3,6 +3,7 @@
  * Dynamically imported only when DEV_MODE is enabled to keep production bundle small.
  */
 import * as Y from 'yjs';
+import { getTemplate, getTemplateNames, getTemplateDescriptions } from '../lib/mock-templates.js';
 
 /**
  * Export the full Y.Doc state as JSON
@@ -142,12 +143,14 @@ function importAnswers(answers, checklistType) {
 /**
  * Import Y.Doc state from JSON
  * mode: 'replace' (clear existing state) or 'merge' (deep merge)
+ * targetOrgId: if provided, overrides the orgId in imported data (prevents org mismatch)
+ * importer: current user info - will be added as member if not already in the data
  */
 export async function handleDevImport(ctx, request) {
   const { doc } = ctx;
 
   try {
-    const { data, mode = 'replace' } = await request.json();
+    const { data, mode = 'replace', targetOrgId, importer } = await request.json();
 
     if (!data) {
       return new Response(JSON.stringify({ error: 'Missing data field' }), {
@@ -167,10 +170,18 @@ export async function handleDevImport(ctx, request) {
         reviewsMap.clear();
       }
 
-      // Import meta
+      // Import meta, but override orgId if targetOrgId is provided
       if (data.meta) {
         for (const [key, value] of Object.entries(data.meta)) {
-          metaMap.set(key, value);
+          if (key === 'orgId' && targetOrgId) {
+            metaMap.set('orgId', targetOrgId);
+          } else {
+            metaMap.set(key, value);
+          }
+        }
+        // Ensure orgId is set even if not in imported data
+        if (targetOrgId && !data.meta.orgId) {
+          metaMap.set('orgId', targetOrgId);
         }
       }
 
@@ -186,6 +197,18 @@ export async function handleDevImport(ctx, request) {
           memberYMap.set('image', member.image || null);
           membersMap.set(member.userId, memberYMap);
         }
+      }
+
+      // Add importer as member if not already present
+      if (importer?.userId && !membersMap.has(importer.userId)) {
+        const importerYMap = new Y.Map();
+        importerYMap.set('role', 'owner');
+        importerYMap.set('joinedAt', new Date().toISOString());
+        importerYMap.set('name', importer.name || null);
+        importerYMap.set('email', importer.email || null);
+        importerYMap.set('displayName', importer.name || null);
+        importerYMap.set('image', importer.image || null);
+        membersMap.set(importer.userId, importerYMap);
       }
 
       // Import studies
@@ -426,4 +449,56 @@ export async function handleDevRaw(ctx) {
       headers: { 'Content-Type': 'application/json' },
     });
   }
+}
+
+/**
+ * List available mock templates
+ */
+export async function handleDevTemplates() {
+  return new Response(
+    JSON.stringify({
+      templates: getTemplateNames(),
+      descriptions: getTemplateDescriptions(),
+    }),
+    { headers: { 'Content-Type': 'application/json' } },
+  );
+}
+
+/**
+ * Apply a mock template to the Y.Doc
+ * URL param: ?template=template-name
+ * Query param mode: 'replace' (default) or 'merge'
+ */
+export async function handleDevApplyTemplate(ctx, request) {
+  const url = new URL(request.url);
+  const templateName = url.searchParams.get('template');
+  const mode = url.searchParams.get('mode') || 'replace';
+
+  if (!templateName) {
+    return new Response(
+      JSON.stringify({
+        error: 'Missing template parameter',
+        available: getTemplateNames(),
+      }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
+  const templateData = getTemplate(templateName);
+  if (!templateData) {
+    return new Response(
+      JSON.stringify({
+        error: `Unknown template: ${templateName}`,
+        available: getTemplateNames(),
+      }),
+      { status: 404, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
+  // Re-use the import handler with the template data
+  const fakeRequest = {
+    json: async () => ({ data: templateData, mode }),
+  };
+
+  return handleDevImport(ctx, fakeRequest);
 }

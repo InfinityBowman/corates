@@ -50,6 +50,7 @@ export function createAMSTAR2Checklist({
   const formattedDate = `${d.getFullYear()}-${mm}-${dd}`;
 
   return {
+    type: 'AMSTAR2',
     name: name,
     reviewerName: reviewerName || '',
     createdAt: formattedDate,
