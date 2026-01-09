@@ -954,8 +954,14 @@ describe('scoreAllDomains', () => {
 });
 
 describe('mapOverallJudgementToDisplay', () => {
-  it('maps Low to display string', () => {
+  it('maps Low to confounding display string (ROBINS-I overall cannot be plain Low)', () => {
     expect(mapOverallJudgementToDisplay(JUDGEMENTS.LOW)).toBe(
+      'Low risk of bias except for concerns about uncontrolled confounding',
+    );
+  });
+
+  it('maps Low except confounding to display string', () => {
+    expect(mapOverallJudgementToDisplay(JUDGEMENTS.LOW_EXCEPT_CONFOUNDING)).toBe(
       'Low risk of bias except for concerns about uncontrolled confounding',
     );
   });

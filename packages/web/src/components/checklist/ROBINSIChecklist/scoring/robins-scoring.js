@@ -21,8 +21,8 @@ const isNoPPN = answer => inSet(answer, 'N', 'PN');
 // Helper: check if answer is No, Probably No, or No Information
 const isNoPPNNI = answer => inSet(answer, 'N', 'PN', 'NI');
 
-// Canonical judgement values matching ROB_JUDGEMENTS in checklist-map.js
-const JUDGEMENTS = {
+// Canonical judgement values - single source of truth for all ROBINS-I scoring
+export const JUDGEMENTS = {
   LOW: 'Low',
   LOW_EXCEPT_CONFOUNDING: 'Low (except for concerns about uncontrolled confounding)',
   MODERATE: 'Moderate',
@@ -136,7 +136,7 @@ function scoreDomain1A(answers) {
 
       // Q2b -> if SN/NI -> SER (terminal, no NC needed)
       if (inSet(q2, 'SN', 'NI')) {
-        return { judgement: JUDGEMENTS.SERIOUS, isComplete: true, ruleId: 'D1A.R7' };
+        return { judgement: JUDGEMENTS.SERIOUS, isComplete: true, ruleId: 'D1A.R10' };
       }
 
       // Q2b -> if Y/PY/WN -> NC2
@@ -1092,6 +1092,15 @@ export function scoreAllDomains(checklistState) {
   return { domains, overall, isComplete: effectiveJudgements.length === activeDomainKeys.length };
 }
 
+// Overall risk of bias display strings for UI
+// Note: ROBINS-I overall judgement cannot be plain 'Low' - confounding is always a concern
+export const OVERALL_DISPLAY = {
+  LOW_EXCEPT_CONFOUNDING: 'Low risk of bias except for concerns about uncontrolled confounding',
+  MODERATE: 'Moderate risk',
+  SERIOUS: 'Serious risk',
+  CRITICAL: 'Critical risk',
+};
+
 /**
  * Map internal overall judgement to the OVERALL_ROB_JUDGEMENTS display strings
  */
@@ -1099,16 +1108,15 @@ export function mapOverallJudgementToDisplay(judgement) {
   switch (judgement) {
     case JUDGEMENTS.LOW:
     case JUDGEMENTS.LOW_EXCEPT_CONFOUNDING:
-      return 'Low risk of bias except for concerns about uncontrolled confounding';
+      // ROBINS-I overall can only be 'Low except confounding' - plain Low is not valid
+      return OVERALL_DISPLAY.LOW_EXCEPT_CONFOUNDING;
     case JUDGEMENTS.MODERATE:
-      return 'Moderate risk';
+      return OVERALL_DISPLAY.MODERATE;
     case JUDGEMENTS.SERIOUS:
-      return 'Serious risk';
+      return OVERALL_DISPLAY.SERIOUS;
     case JUDGEMENTS.CRITICAL:
-      return 'Critical risk';
+      return OVERALL_DISPLAY.CRITICAL;
     default:
       return null;
   }
 }
-
-export { JUDGEMENTS };

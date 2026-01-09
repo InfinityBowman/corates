@@ -197,6 +197,9 @@ export function DomainSection(props) {
                           onUpdate={newAnswer => handleQuestionUpdate(qKey, newAnswer)}
                           disabled={props.disabled}
                           showComment={props.showComments}
+                          domainKey={props.domainKey}
+                          questionKey={qKey}
+                          getRobinsText={props.getRobinsText}
                         />
                       )}
                     </For>
