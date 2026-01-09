@@ -183,7 +183,7 @@ export default function SubscriptionCard(props) {
                 now to keep your projects and data.
               </p>
               <A
-                href='/settings/billing/plans'
+                href='/settings/plans'
                 class='mt-2 inline-flex items-center gap-1 text-sm font-medium text-amber-700 hover:text-amber-800'
               >
                 View upgrade options
@@ -225,7 +225,7 @@ export default function SubscriptionCard(props) {
           <Switch>
             <Match when={isFree()}>
               <A
-                href='/settings/billing/plans'
+                href='/settings/plans'
                 class='inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md'
               >
                 <FiZap class='h-4 w-4' />
@@ -267,7 +267,7 @@ export default function SubscriptionCard(props) {
                 </Show>
               </button>
               <A
-                href='/settings/billing/plans'
+                href='/settings/plans'
                 class='inline-flex items-center gap-1 rounded-lg px-4 py-2.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50'
               >
                 Change Plan

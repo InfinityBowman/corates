@@ -13,6 +13,55 @@ import { resolveOrgId } from './helpers/orgContext.js';
 const billingSubscriptionRoutes = new Hono();
 
 /**
+ * GET /usage
+ * Get the current org's resource usage (projects, collaborators)
+ */
+billingSubscriptionRoutes.get('/usage', requireAuth, async c => {
+  const { user, session } = getAuth(c);
+  const db = createDb(c.env.DB);
+
+  try {
+    const orgId = await resolveOrgId({ db, session, userId: user.id });
+
+    if (!orgId) {
+      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+        reason: 'no_org_found',
+      });
+      return c.json(error, error.statusCode);
+    }
+
+    const { projects, projectMembers } = await import('@/db/schema.js');
+    const { eq, count, countDistinct } = await import('drizzle-orm');
+
+    // Count projects for this org
+    const [projectCountResult] = await db
+      .select({ count: count() })
+      .from(projects)
+      .where(eq(projects.orgId, orgId));
+
+    // Count unique collaborators across all org projects
+    // This counts distinct users who are members of any project in this org
+    const [collaboratorCountResult] = await db
+      .select({ count: countDistinct(projectMembers.userId) })
+      .from(projectMembers)
+      .innerJoin(projects, eq(projectMembers.projectId, projects.id))
+      .where(eq(projects.orgId, orgId));
+
+    return c.json({
+      projects: Number(projectCountResult?.count ?? 0),
+      collaborators: Number(collaboratorCountResult?.count ?? 0),
+    });
+  } catch (error) {
+    console.error('Error fetching org usage:', error);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'fetch_org_usage',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
+  }
+});
+
+/**
  * GET /subscription
  * Get the current org's billing status (adapter for frontend compatibility)
  * Returns org-scoped billing resolution

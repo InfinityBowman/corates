@@ -6,10 +6,13 @@
 
 import { Show, createSignal, onMount } from 'solid-js';
 import { useSearchParams, A } from '@solidjs/router';
+import { useQuery } from '@tanstack/solid-query';
 import { FiCheckCircle, FiArrowRight, FiHelpCircle, FiXCircle } from 'solid-icons/fi';
 import { useSubscription } from '@/primitives/useSubscription.js';
 import { useMembers } from '@/primitives/useMembers.js';
 import { redirectToPortal } from '@/api/billing.js';
+import { apiFetch } from '@/lib/apiFetch.js';
+import { queryKeys } from '@/lib/queryKeys.js';
 import SubscriptionCard from '@/components/billing/SubscriptionCard.jsx';
 import UsageCard from '@/components/billing/UsageCard.jsx';
 import InvoicesList from '@/components/billing/InvoicesList.jsx';
@@ -95,8 +98,16 @@ function UsageSkeleton() {
 export default function BillingSettings() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { subscription, loading, refetch, quotas } = useSubscription();
-  const { memberCount } = useMembers();
+  useMembers(); // Initialize members context
   const [portalLoading, setPortalLoading] = createSignal(false);
+
+  // Fetch usage from API
+  const usageQuery = useQuery(() => ({
+    queryKey: queryKeys.billing.usage,
+    queryFn: () => apiFetch.get('/api/billing/usage', { toastMessage: false }),
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    retry: 1,
+  }));
 
   // Track checkout outcome to display after clearing URL params
   const [checkoutOutcome, setCheckoutOutcome] = createSignal(null);
@@ -106,6 +117,7 @@ export default function BillingSettings() {
     if (searchParams.success === 'true') {
       setCheckoutOutcome('success');
       refetch();
+      usageQuery.refetch();
       // Clear params from URL without triggering navigation
       setSearchParams({ success: undefined }, { replace: true });
     } else if (searchParams.canceled === 'true') {
@@ -127,11 +139,8 @@ export default function BillingSettings() {
     }
   };
 
-  // Mock usage data - in production this would come from the subscription or a separate API
-  const usage = () => ({
-    projects: subscription()?.projectCount ?? 0,
-    collaborators: memberCount(),
-  });
+  // Usage data from API (with fallback)
+  const usage = () => usageQuery.data ?? { projects: 0, collaborators: 0 };
 
   // Subscription status for payment issue detection
   const subscriptionStatus = () => subscription()?.status || 'active';

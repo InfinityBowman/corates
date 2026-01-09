@@ -34,6 +34,8 @@ export const queryKeys = {
   billing: {
     /** Current org/user invoices */
     invoices: ['billing', 'invoices'],
+    /** Current org usage (projects, collaborators) */
+    usage: ['billing', 'usage'],
   },
 
   // Members queries

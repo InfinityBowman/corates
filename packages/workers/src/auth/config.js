@@ -297,6 +297,15 @@ export function createAuth(env, ctx) {
             }
             return true;
           },
+          // Enable promo codes and billing address collection
+          getCheckoutSessionParams: async () => {
+            return {
+              params: {
+                allow_promotion_codes: true,
+                billing_address_collection: 'auto',
+              },
+            };
+          },
         },
       }),
     );

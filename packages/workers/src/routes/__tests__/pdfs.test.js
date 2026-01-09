@@ -498,7 +498,7 @@ describe('Org-Scoped PDF Routes - POST /api/orgs/:orgId/projects/:projectId/stud
 
     expect(res.status).toBe(400);
     const body = await json(res);
-    expect(body.code).toBe('FILE_INVALID_TYPE');
+    expect(body.code).toBe('VALIDATION_FIELD_INVALID_FORMAT');
   });
 
   it('should auto-rename duplicate file names', async () => {
