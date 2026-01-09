@@ -236,10 +236,12 @@ export default function ReconciliationWrapper() {
   const [hasCheckedForReconciled, setHasCheckedForReconciled] = createSignal(false);
 
   // Get or create reconciled checklist (with race condition prevention)
-  // Trigger when we have study data loaded (from IndexedDB or server), not just when synced
+  // Must wait for YDoc to be synced before creating checklists
   createEffect(() => {
     const study = currentStudy();
-    if (!study || reconciledChecklistId() || hasCheckedForReconciled()) return;
+    const state = connectionState();
+    // Wait for both study data AND YDoc sync before creating checklist
+    if (!study || !state.synced || reconciledChecklistId() || hasCheckedForReconciled()) return;
 
     setHasCheckedForReconciled(true);
     setReconciledChecklistLoading(true);
