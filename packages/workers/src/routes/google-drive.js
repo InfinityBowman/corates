@@ -17,6 +17,8 @@ import {
   FILE_ERRORS,
   SYSTEM_ERRORS,
   isDomainError,
+  isPdfSignature,
+  PDF_MAGIC_BYTES,
 } from '@corates/shared';
 
 const googleDriveRoutes = new Hono();
@@ -337,6 +339,17 @@ googleDriveRoutes.post('/import', async c => {
     // Read the file content into an ArrayBuffer
     // This is necessary because R2 requires a stream with a known length
     const fileContent = await downloadResponse.arrayBuffer();
+
+    // Verify PDF magic bytes - don't trust MIME type alone
+    const header = new Uint8Array(fileContent.slice(0, PDF_MAGIC_BYTES.length));
+    if (!isPdfSignature(header)) {
+      const error = createDomainError(FILE_ERRORS.INVALID_TYPE, {
+        expectedType: 'application/pdf',
+        receivedType: 'unknown (invalid PDF signature)',
+        source: 'google-drive',
+      });
+      return c.json(error, error.statusCode);
+    }
 
     // Get project to retrieve orgId
     const project = await db
