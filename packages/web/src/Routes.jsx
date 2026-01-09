@@ -27,7 +27,16 @@ import { BASEPATH } from '@config/api.js';
 import ProtectedGuard from '@/components/auth/ProtectedGuard.jsx';
 import ProjectView from '@/components/project/ProjectView.jsx';
 import { CreateOrgPage } from '@/components/org/index.js';
-import MockIndex from '@/components/mock/MockIndex.jsx';
+import MockIndex from '@/components/mocks/MockIndex.jsx';
+
+// Code-split mock routes - loaded only when navigating to /mock/*
+const ProjectViewEditorial = lazy(() => import('@/components/mocks/ProjectViewEditorial.jsx'));
+const ProjectViewDashboard = lazy(() => import('@/components/mocks/ProjectViewDashboard.jsx'));
+const ProjectViewKanban = lazy(() => import('@/components/mocks/ProjectViewKanban.jsx'));
+const ProjectViewComplete = lazy(() => import('@/components/mocks/ProjectViewComplete.jsx'));
+const AddStudiesWizard = lazy(() => import('@/components/mocks/AddStudiesWizard.jsx'));
+const AddStudiesPanel = lazy(() => import('@/components/mocks/AddStudiesPanel.jsx'));
+const AddStudiesInline = lazy(() => import('@/components/mocks/AddStudiesInline.jsx'));
 
 // Code-split admin routes - loaded only when navigating to /admin/*
 const AdminDashboard = lazy(() =>
@@ -116,7 +125,14 @@ export default function AppRoutes() {
         <Route path='/checklist/:checklistId' component={LocalChecklistView} />
 
         {/* Mock routes - public, visual-only wireframes */}
-        <Route path='/mock' component={MockIndex} />
+        <Route path='/mocks' component={MockIndex} />
+        <Route path='/mocks/project-view-editorial' component={ProjectViewEditorial} />
+        <Route path='/mocks/project-view-dashboard' component={ProjectViewDashboard} />
+        <Route path='/mocks/project-view-kanban' component={ProjectViewKanban} />
+        <Route path='/mocks/project-view-complete' component={ProjectViewComplete} />
+        <Route path='/mocks/add-studies-wizard' component={AddStudiesWizard} />
+        <Route path='/mocks/add-studies-panel' component={AddStudiesPanel} />
+        <Route path='/mocks/add-studies-inline' component={AddStudiesInline} />
       </Route>
       <Route path='*' component={NotFoundPage} />
     </Router>

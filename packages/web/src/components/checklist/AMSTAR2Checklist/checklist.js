@@ -1,307 +1,25 @@
+/**
+ * AMSTAR2 Checklist Logic
+ *
+ * This file re-exports checklist logic from @corates/shared while maintaining
+ * backward compatibility with existing imports. UI-specific exports (like CSV)
+ * are kept here since they're only used in the frontend.
+ */
+
+import { amstar2 } from '@corates/shared';
 import { AMSTAR_CHECKLIST } from './checklist-map.js';
 
-/**
- * Creates a new AMSTAR2 checklist object with default empty answers for all questions.
- *
- * @param {Object} options - Checklist properties.
- * @param {string} options.name - The checklist name (required).
- * @param {string} options.id - Unique checklist ID (required).
- * @param {number} [options.createdAt=Date.now()] - Timestamp of checklist creation.
- * @param {string} [options.reviewerName=''] - Name of the reviewer.
- *
- * @returns {Object} A checklist object with all AMSTAR2 questions initialized to default answers.
- *
- * @throws {Error} If `id` or `name` is missing or not a non-empty string.
- *
- * Example:
- *   createChecklist({ name: 'My Checklist', id: 'chk-123', reviewerName: 'Alice' });
- */
-export function createChecklist({
-  name = null,
-  id = null,
-  createdAt = Date.now(),
-  reviewerName = '',
-}) {
-  if (!id || typeof id !== 'string' || !id.trim()) {
-    throw new Error('AMSTAR2Checklist requires a non-empty string id.');
-  }
-  if (!name || typeof name !== 'string' || !name.trim()) {
-    throw new Error('AMSTAR2Checklist requires a non-empty string name.');
-  }
-
-  let d = new Date(createdAt);
-  if (isNaN(d)) d = Date.now();
-  // Pad month and day
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  createdAt = `${d.getFullYear()}-${mm}-${dd}`;
-
-  return {
-    name: name,
-    reviewerName: reviewerName || '',
-    createdAt: createdAt,
-    id: id,
-    q1: { answers: [[false, false, false, false], [false], [false, false]], critical: false },
-    q2: {
-      answers: [
-        [false, false, false, false],
-        [false, false, false],
-        [false, false, false],
-      ],
-      critical: true,
-    },
-    q3: {
-      answers: [
-        [false, false, false],
-        [false, false],
-      ],
-      critical: false,
-    },
-    q4: {
-      answers: [
-        [false, false, false],
-        [false, false, false, false, false],
-        [false, false, false],
-      ],
-      critical: true,
-    },
-    q5: {
-      answers: [
-        [false, false],
-        [false, false],
-      ],
-      critical: false,
-    },
-    q6: {
-      answers: [
-        [false, false],
-        [false, false],
-      ],
-      critical: false,
-    },
-    q7: { answers: [[false], [false], [false, false, false]], critical: true },
-    q8: {
-      answers: [
-        [false, false, false, false, false],
-        [false, false, false, false, false],
-        [false, false, false],
-      ],
-      critical: false,
-    },
-    q9a: {
-      answers: [
-        [false, false],
-        [false, false],
-        [false, false, false, false],
-      ],
-      critical: true,
-    },
-    q9b: {
-      answers: [
-        [false, false],
-        [false, false],
-        [false, false, false, false],
-      ],
-      critical: true,
-    },
-    q10: { answers: [[false], [false, false]], critical: false },
-    q11a: {
-      answers: [
-        [false, false, false],
-        [false, false, false],
-      ],
-      critical: true,
-    },
-    q11b: {
-      answers: [
-        [false, false, false, false],
-        [false, false, false],
-      ],
-      critical: true,
-    },
-    q12: {
-      answers: [
-        [false, false],
-        [false, false, false],
-      ],
-      critical: false,
-    },
-    q13: {
-      answers: [
-        [false, false],
-        [false, false],
-      ],
-      critical: true,
-    },
-    q14: {
-      answers: [
-        [false, false],
-        [false, false],
-      ],
-      critical: false,
-    },
-    q15: { answers: [[false], [false, false, false]], critical: true },
-    q16: {
-      answers: [
-        [false, false],
-        [false, false],
-      ],
-      critical: false,
-    },
-  };
-}
-
-// Score checklist using the last column of each question taking into account critical vs non-critical
-export function scoreChecklist(state) {
-  if (!state || typeof state !== 'object') return 'Error';
-
-  let criticalFlaws = 0;
-  let nonCriticalFlaws = 0;
-
-  // Partial yes is scored same as yes
-  // No MA is not counted as a flaw
-  state = consolidateAnswers(state);
-
-  Object.entries(state).forEach(([question, obj]) => {
-    if (!/^q\d+[a-z]*$/i.test(question)) return;
-    if (!obj || !Array.isArray(obj.answers)) return;
-    const selected = getSelectedAnswer(obj.answers, question);
-    if (!selected || selected === 'No') {
-      if (obj.critical) {
-        criticalFlaws++;
-      } else {
-        nonCriticalFlaws++;
-      }
-    }
-  });
-
-  if (criticalFlaws > 1) return 'Critically Low';
-  if (criticalFlaws === 1) return 'Low';
-  if (nonCriticalFlaws > 1) return 'Moderate';
-  return 'High';
-}
-
-// Helper to get the selected answer from the last column of a question
-function getSelectedAnswer(answers, question) {
-  // Question patterns
-  const customPatternQuestions = ['q11a', 'q11b', 'q12', 'q15'];
-  const customLabels = ['Yes', 'No', 'No MA'];
-  const defaultLabels = ['Yes', 'Partial Yes', 'No', 'No MA'];
-
-  if (!Array.isArray(answers) || answers.length === 0) return null;
-  const lastCol = answers[answers.length - 1];
-  if (!Array.isArray(lastCol)) return null;
-  const idx = lastCol.findIndex(v => v === true);
-  if (idx === -1) return null;
-  if (customPatternQuestions.includes(question)) return customLabels[idx] || null;
-  if (lastCol.length === 2) return idx === 0 ? 'Yes' : 'No';
-  if (lastCol.length >= 3) return defaultLabels[idx] || null;
-  return null;
-}
-
-/**
- * Check if an AMSTAR2 checklist is complete (all questions have final answers).
- * A question has a final answer if the last column has at least one option selected.
- *
- * @param {Object} checklist - The checklist object to validate
- * @returns {boolean} True if all questions have final answers, false otherwise
- */
-export function isAMSTAR2Complete(checklist) {
-  if (!checklist || typeof checklist !== 'object') return false;
-
-  // All required AMSTAR2 questions
-  const requiredQuestions = [
-    'q1',
-    'q2',
-    'q3',
-    'q4',
-    'q5',
-    'q6',
-    'q7',
-    'q8',
-    'q9a',
-    'q9b',
-    'q10',
-    'q11a',
-    'q11b',
-    'q12',
-    'q13',
-    'q14',
-    'q15',
-    'q16',
-  ];
-
-  // Check each required question has a final answer
-  for (const questionKey of requiredQuestions) {
-    const question = checklist[questionKey];
-    if (!question || !Array.isArray(question.answers)) return false;
-
-    // Check if the last column has at least one option selected
-    const lastCol = question.answers[question.answers.length - 1];
-    if (!Array.isArray(lastCol)) return false;
-    const hasAnswer = lastCol.some(v => v === true);
-    if (!hasAnswer) return false;
-  }
-
-  return true;
-}
-
-export function getAnswers(checklist) {
-  if (!checklist || typeof checklist !== 'object') return null;
-  const result = {};
-  checklist = consolidateAnswers(checklist);
-
-  Object.entries(checklist).forEach(([key, value]) => {
-    if (!/^q\d+[a-z]*$/i.test(key)) return;
-    if (!value || !Array.isArray(value.answers)) return;
-
-    const selected = getSelectedAnswer(value.answers, key);
-    result[key] = selected;
-  });
-
-  return result;
-}
-
-function consolidateAnswers(prevChecklist) {
-  const checklist = { ...prevChecklist };
-
-  // Consolidate q9a and q9b into q9 by taking the lower score
-  const q9a = getSelectedAnswer(checklist.q9a.answers, 'q9a');
-  const q9b = getSelectedAnswer(checklist.q9b.answers, 'q9b');
-  if (q9a === null || q9b === null) {
-    checklist.q9 = checklist.q9a;
-  } else if (q9a === 'No' || q9b === 'No') {
-    checklist.q9 = q9a === 'No' ? checklist.q9a : checklist.q9b;
-  } else if (q9a === 'No MA' && q9b === 'No MA') {
-    checklist.q9 = checklist.q9a;
-  } else {
-    // Both are Yes or Partial Yes
-    checklist.q9 = checklist.q9a;
-  }
-  delete checklist.q9a;
-  delete checklist.q9b;
-
-  // Consolidate q11a and q11b into q11 by taking the lower score
-  const q11a = getSelectedAnswer(checklist.q11a.answers, 'q11a');
-  const q11b = getSelectedAnswer(checklist.q11b.answers, 'q11b');
-  if (q11a === null || q11b === null) {
-    checklist.q11 = checklist.q11a;
-  } else if (q11a === 'No' || q11b === 'No') {
-    checklist.q11 = q11a === 'No' ? checklist.q11a : checklist.q11b;
-  } else if (q11a === 'No MA' && q11b === 'No MA') {
-    checklist.q11 = checklist.q11a;
-  } else {
-    // Both are Yes or Partial Yes
-    checklist.q11 = checklist.q11a;
-  }
-  delete checklist.q11a;
-  delete checklist.q11b;
-
-  return checklist;
-}
+// Re-export functions from shared package with original names
+export const createChecklist = amstar2.createAMSTAR2Checklist;
+export const scoreChecklist = amstar2.scoreAMSTAR2Checklist;
+export const isAMSTAR2Complete = amstar2.isAMSTAR2Complete;
+export const getAnswers = amstar2.getAnswers;
+export const consolidateAnswers = amstar2.consolidateAnswers;
+export const getSelectedAnswer = amstar2.getSelectedAnswer;
 
 /**
  * Export a checklist (or array of checklists) to CSV using the checklist map for headers.
+ * Note: This is UI-specific and stays in the web package.
  * @param {Array|Object} checklists - One or more checklist objects.
  * @returns {string} CSV string.
  */
@@ -313,8 +31,6 @@ export function exportChecklistsToCSV(checklists) {
   const headers = [
     'Checklist Name',
     'Reviewer',
-    // 'Created At',
-    // 'Checklist ID',
     'Question',
     'Question Text',
     'Column Label',
@@ -343,8 +59,6 @@ export function exportChecklistsToCSV(checklists) {
           rows.push([
             cl.name || '',
             cl.reviewerName || '',
-            // cl.createdAt ? new Date(cl.createdAt).toISOString() : '',
-            // cl.id || '',
             critical,
             q,
             questionText,
