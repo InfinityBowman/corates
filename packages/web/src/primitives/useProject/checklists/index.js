@@ -48,34 +48,68 @@ export function createChecklistOperations(_projectId, getYDoc, _isSynced) {
    * @returns {string|null} The checklist ID or null if failed
    */
   function createChecklist(studyId, type = 'AMSTAR2', assignedTo = null) {
-    const ydoc = getYDoc();
-    if (!ydoc) return null;
+    try {
+      const ydoc = getYDoc();
+      if (!ydoc) {
+        console.error('[createChecklist] No YDoc available');
+        return null;
+      }
 
-    const studiesMap = ydoc.getMap('reviews');
-    const studyYMap = studiesMap.get(studyId);
+      const studiesMap = ydoc.getMap('reviews');
+      const studyYMap = studiesMap.get(studyId);
 
-    if (!studyYMap) return null;
+      if (!studyYMap) {
+        // Debug: log all study IDs in the YDoc
+        const studyIds = Array.from(studiesMap.keys());
+        console.error('[createChecklist] Study not found:', studyId);
+        console.error('[createChecklist] Available studies in YDoc:', studyIds);
+        console.error('[createChecklist] YDoc clientID:', ydoc.clientID);
+        return null;
+      }
 
-    let checklistsMap = studyYMap.get('checklists');
-    if (!checklistsMap) {
-      checklistsMap = new Y.Map();
-      studyYMap.set('checklists', checklistsMap);
-    }
+      let checklistsMap = studyYMap.get('checklists');
+      if (!checklistsMap) {
+        checklistsMap = new Y.Map();
+        studyYMap.set('checklists', checklistsMap);
+      }
 
-    const checklistId = crypto.randomUUID();
-    const now = Date.now();
+      const checklistId = crypto.randomUUID();
+      const now = Date.now();
 
-    // Get the default answers structure for this checklist type using the registry
-    const checklistTemplate = createChecklistOfType(type, {
-      id: checklistId,
-      name: `${type} Checklist`,
-      createdAt: now,
-    });
+      // Get the default answers structure for this checklist type using the registry
+      const checklistTemplate = createChecklistOfType(type, {
+        id: checklistId,
+        name: `${type} Checklist`,
+        createdAt: now,
+      });
 
-    // Get handler for this type
-    const handler = getHandler(type);
-    if (!handler) {
-      // Fallback for unknown types: store data directly
+      // Get handler for this type
+      const handler = getHandler(type);
+      if (!handler) {
+        console.warn('[createChecklist] No handler for type, using fallback:', type);
+        // Fallback for unknown types: store data directly
+        const checklistYMap = new Y.Map();
+        checklistYMap.set('type', type);
+        checklistYMap.set('title', `${type} Checklist`);
+        checklistYMap.set('assignedTo', assignedTo);
+        checklistYMap.set('status', CHECKLIST_STATUS.PENDING);
+        checklistYMap.set('createdAt', now);
+        checklistYMap.set('updatedAt', now);
+
+        const answersYMap = new Y.Map();
+        Object.entries(checklistTemplate).forEach(([key, value]) => {
+          answersYMap.set(key, value);
+        });
+        checklistYMap.set('answers', answersYMap);
+        checklistsMap.set(checklistId, checklistYMap);
+        studyYMap.set('updatedAt', now);
+        return checklistId;
+      }
+
+      // Extract answers using handler
+      const answersData = handler.extractAnswersFromTemplate(checklistTemplate);
+
+      // Create checklist Y.Map
       const checklistYMap = new Y.Map();
       checklistYMap.set('type', type);
       checklistYMap.set('title', `${type} Checklist`);
@@ -84,38 +118,20 @@ export function createChecklistOperations(_projectId, getYDoc, _isSynced) {
       checklistYMap.set('createdAt', now);
       checklistYMap.set('updatedAt', now);
 
-      const answersYMap = new Y.Map();
-      Object.entries(checklistTemplate).forEach(([key, value]) => {
-        answersYMap.set(key, value);
-      });
+      // Create answers Y.Map using handler
+      const answersYMap = handler.createAnswersYMap(answersData);
       checklistYMap.set('answers', answersYMap);
+
       checklistsMap.set(checklistId, checklistYMap);
+
+      // Update study's updatedAt
       studyYMap.set('updatedAt', now);
+
       return checklistId;
+    } catch (err) {
+      console.error('[createChecklist] Error creating checklist:', err);
+      return null;
     }
-
-    // Extract answers using handler
-    const answersData = handler.extractAnswersFromTemplate(checklistTemplate);
-
-    // Create checklist Y.Map
-    const checklistYMap = new Y.Map();
-    checklistYMap.set('type', type);
-    checklistYMap.set('title', `${type} Checklist`);
-    checklistYMap.set('assignedTo', assignedTo);
-    checklistYMap.set('status', CHECKLIST_STATUS.PENDING);
-    checklistYMap.set('createdAt', now);
-    checklistYMap.set('updatedAt', now);
-
-    // Create answers Y.Map using handler
-    const answersYMap = handler.createAnswersYMap(answersData);
-    checklistYMap.set('answers', answersYMap);
-
-    checklistsMap.set(checklistId, checklistYMap);
-
-    // Update study's updatedAt
-    studyYMap.set('updatedAt', now);
-
-    return checklistId;
   }
 
   /**

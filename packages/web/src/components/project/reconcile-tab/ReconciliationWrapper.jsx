@@ -1,12 +1,11 @@
 /**
  * ReconciliationWrapper - Handles loading checklists and managing reconciliation workflow
- * This component is used both for project-based (Y.js) and local checklists
+ * This component is rendered as a child route of ProjectView and shares its YDoc connection
  */
 
 import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
-import useProject from '@/primitives/useProject/index.js';
-import { useProjectOrgId } from '@primitives/useProjectOrgId.js';
+import { useProjectContext } from '@/components/project/ProjectContext.jsx';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
@@ -19,26 +18,27 @@ import { downloadPdf, getPdfUrl } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
 import { showToast } from '@corates/ui';
 import ReconciliationWithPdf from './ReconciliationWithPdf.jsx';
-import { RobinsIReconciliationWithPdf } from '../robins-i-reconcile/index.js';
+import { RobinsIReconciliationWithPdf } from './robins-i-reconcile/index.js';
 import { CHECKLIST_TYPES } from '@/checklist-registry/types.js';
 
 /**
  * ReconciliationWrapper - Handles loading checklists and managing reconciliation workflow
- * This component is used both for project-based (Y.js) and local checklists
+ * This component is rendered as a child route of ProjectView, using the parent's YDoc connection
+ * via ProjectContext instead of creating its own useProject hook.
  * @returns {JSX.Element}
  */
 export default function ReconciliationWrapper() {
   const params = useParams();
   const navigate = useNavigate();
 
-  // Get orgId from project data (for API calls)
-  const orgId = useProjectOrgId(params.projectId);
+  // Get project context from parent ProjectView
+  const { orgId, projectOps } = useProjectContext();
 
   // params.projectId, params.studyId, params.checklist1Id, params.checklist2Id
 
   const [error, setError] = createSignal(null);
 
-  // Use project hook for Y.js operations
+  // Destructure Y.js operations from parent ProjectView's connection
   const {
     createChecklist: createProjectChecklist,
     updateChecklistAnswer,
@@ -48,7 +48,7 @@ export default function ReconciliationWrapper() {
     getQuestionNote,
     getRobinsText,
     saveReconciliationProgress,
-  } = useProject(params.projectId);
+  } = projectOps || {};
 
   // Set active project for action store
   createEffect(() => {
@@ -236,10 +236,12 @@ export default function ReconciliationWrapper() {
   const [hasCheckedForReconciled, setHasCheckedForReconciled] = createSignal(false);
 
   // Get or create reconciled checklist (with race condition prevention)
-  // Trigger when we have study data loaded (from IndexedDB or server), not just when synced
+  // Must wait for YDoc to be synced before creating checklists
   createEffect(() => {
     const study = currentStudy();
-    if (!study || reconciledChecklistId() || hasCheckedForReconciled()) return;
+    const state = connectionState();
+    // Wait for both study data AND YDoc sync before creating checklist
+    if (!study || !state.synced || reconciledChecklistId() || hasCheckedForReconciled()) return;
 
     setHasCheckedForReconciled(true);
     setReconciledChecklistLoading(true);

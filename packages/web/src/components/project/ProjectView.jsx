@@ -1,11 +1,12 @@
 /**
  * ProjectView - Main view for a single project
  * Displays tabs for overview, all studies, to-do, reconciliation, and completed
+ * Child routes (checklist, reconciliation) are rendered via props.children
  *
  * This component uses org-scoped routes and APIs.
  */
 
-import { createSignal, createEffect, Show, onCleanup, batch } from 'solid-js';
+import { createSignal, createEffect, Show, onCleanup, batch, createMemo } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import useProject from '@/primitives/useProject/index.js';
 import { useProjectOrgId } from '@primitives/useProjectOrgId.js';
@@ -33,7 +34,7 @@ import { ToDoTab } from './todo-tab/index.js';
 import { ReconcileTab } from './reconcile-tab/index.js';
 import { CompletedTab } from './completed-tab/index.js';
 
-export default function ProjectView() {
+export default function ProjectView(props) {
   const params = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -46,6 +47,12 @@ export default function ProjectView() {
   // No longer requires orgId for WebSocket connection (project-scoped)
   const projectConnection = useProject(params.projectId);
   const { connect, disconnect } = projectConnection;
+
+  // Detect if we're on a child route (checklist or reconciliation)
+  const isChildRoute = createMemo(() => {
+    const path = location.pathname;
+    return path.includes('/checklists/') || path.includes('/reconcile/');
+  });
 
   // Read data from store (only what's needed at this level)
   const studies = () => projectStore.getStudies(params.projectId);
@@ -273,44 +280,50 @@ export default function ProjectView() {
   const backPath = () => '/dashboard';
 
   return (
-    <div class='mx-auto max-w-7xl p-6 pt-4'>
-      <ProjectProvider projectId={params.projectId}>
-        <ProjectHeader
-          name={() => meta()?.name}
-          description={() => meta()?.description}
-          onRename={newName => projectActionsStore.project.rename(newName)}
-          onUpdateDescription={desc => projectActionsStore.project.updateDescription(desc)}
-          onBack={() => navigate(backPath())}
-        />
+    <ProjectProvider projectId={params.projectId} projectOps={projectConnection}>
+      {/* Child routes (checklist, reconciliation) render via props.children */}
+      <Show when={isChildRoute()}>{props.children}</Show>
 
-        <Tabs tabs={tabDefinitions} value={tabFromUrl()} onValueChange={handleTabChange}>
-          {tabValue => (
-            <>
-              <Show when={tabValue === 'overview'}>
-                <OverviewTab />
-              </Show>
+      {/* Main project view with tabs */}
+      <Show when={!isChildRoute()}>
+        <div class='mx-auto max-w-7xl p-6 pt-4'>
+          <ProjectHeader
+            name={() => meta()?.name}
+            description={() => meta()?.description}
+            onRename={newName => projectActionsStore.project.rename(newName)}
+            onUpdateDescription={desc => projectActionsStore.project.updateDescription(desc)}
+            onBack={() => navigate(backPath())}
+          />
 
-              <Show when={tabValue === 'all-studies'}>
-                <AllStudiesTab />
-              </Show>
+          <Tabs tabs={tabDefinitions} value={tabFromUrl()} onValueChange={handleTabChange}>
+            {tabValue => (
+              <>
+                <Show when={tabValue === 'overview'}>
+                  <OverviewTab />
+                </Show>
 
-              <Show when={tabValue === 'todo'}>
-                <ToDoTab />
-              </Show>
+                <Show when={tabValue === 'all-studies'}>
+                  <AllStudiesTab />
+                </Show>
 
-              <Show when={tabValue === 'reconcile'}>
-                <ReconcileTab />
-              </Show>
+                <Show when={tabValue === 'todo'}>
+                  <ToDoTab />
+                </Show>
 
-              <Show when={tabValue === 'completed'}>
-                <CompletedTab />
-              </Show>
-            </>
-          )}
-        </Tabs>
-      </ProjectProvider>
+                <Show when={tabValue === 'reconcile'}>
+                  <ReconcileTab />
+                </Show>
 
-      <PdfPreviewPanel />
-    </div>
+                <Show when={tabValue === 'completed'}>
+                  <CompletedTab />
+                </Show>
+              </>
+            )}
+          </Tabs>
+        </div>
+
+        <PdfPreviewPanel />
+      </Show>
+    </ProjectProvider>
   );
 }

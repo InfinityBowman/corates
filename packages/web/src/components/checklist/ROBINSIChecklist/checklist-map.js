@@ -1,17 +1,25 @@
 // ROBINS-I V2 Checklist Map
-// Risk Of Bias In Non-randomized Studies – of Interventions, Version 2
+// Risk Of Bias In Non-randomized Studies - of Interventions, Version 2
+
+import { JUDGEMENTS, OVERALL_DISPLAY } from './scoring/robins-scoring.js';
 
 // Response option types used across different questions
 export const RESPONSE_TYPES = {
   YN: ['Y', 'N'], // Yes, No
   STANDARD: ['Y', 'PY', 'PN', 'N'], // Yes, Probably Yes, Probably No, No
   WITH_NI: ['Y', 'PY', 'PN', 'N', 'NI'], // With No Information
+  WITH_NA: ['NA', 'Y', 'PY', 'PN', 'NI'], // With Not Applicable (no N option)
+  WITH_NA_FULL: ['NA', 'Y', 'PY', 'PN', 'N', 'NI'], // NA + all standard options
+  WITH_NA_NO_NI: ['NA', 'Y', 'PY', 'PN', 'N'], // NA but no NI option
   WEAK_STRONG_NO: ['Y', 'PY', 'WN', 'SN', 'NI'], // With Weak No, Strong No
+  WITH_NA_WEAK_STRONG_NO: ['NA', 'Y', 'PY', 'WN', 'SN', 'NI'], // NA + Weak/Strong No
   WEAK_STRONG_YES: ['SY', 'WY', 'PN', 'N', 'NI'], // Strong Yes, Weak Yes
+  WITH_NA_WEAK_STRONG_YES: ['NA', 'SY', 'WY', 'PN', 'N', 'NI'], // NA + Weak/Strong Yes
 };
 
 // Human-readable labels for response options
 export const RESPONSE_LABELS = {
+  NA: 'Not Applicable',
   Y: 'Yes',
   PY: 'Probably Yes',
   PN: 'Probably No',
@@ -23,21 +31,22 @@ export const RESPONSE_LABELS = {
   WY: 'Yes, but not substantially',
 };
 
-// Risk of bias judgement options
+// Risk of bias judgement options - derived from JUDGEMENTS for consistency
 export const ROB_JUDGEMENTS = [
-  'Low',
-  'Low (except for concerns about uncontrolled confounding)',
-  'Moderate',
-  'Serious',
-  'Critical',
+  JUDGEMENTS.LOW,
+  JUDGEMENTS.LOW_EXCEPT_CONFOUNDING,
+  JUDGEMENTS.MODERATE,
+  JUDGEMENTS.SERIOUS,
+  JUDGEMENTS.CRITICAL,
 ];
 
-// Overall ROB includes special option for confounding
+// Overall ROB display strings - derived from OVERALL_DISPLAY for consistency
+// Note: Plain 'Low' is not a valid overall judgement for ROBINS-I
 export const OVERALL_ROB_JUDGEMENTS = [
-  'Low risk of bias except for concerns about uncontrolled confounding',
-  'Moderate risk',
-  'Serious risk',
-  'Critical risk',
+  OVERALL_DISPLAY.LOW_EXCEPT_CONFOUNDING,
+  OVERALL_DISPLAY.MODERATE,
+  OVERALL_DISPLAY.SERIOUS,
+  OVERALL_DISPLAY.CRITICAL,
 ];
 
 // Bias direction options
@@ -220,19 +229,19 @@ export const DOMAIN_1A = {
       id: 'd1a_2',
       number: '1.2',
       text: 'If Y/PY/WN to 1.1: Were confounding factors that were controlled for (and for which control was necessary) measured validly and reliably by the variables available in this study?',
-      responseType: 'WEAK_STRONG_NO',
+      responseType: 'WITH_NA_WEAK_STRONG_NO',
     },
     d1a_3: {
       id: 'd1a_3',
       number: '1.3',
       text: 'If Y/PY/WN to 1.1: Did the authors control for any post-intervention variables that could have been affected by the intervention?',
-      responseType: 'WITH_NI',
+      responseType: 'WITH_NA_FULL',
     },
     d1a_4: {
       id: 'd1a_4',
       number: '1.4',
       text: 'Did the use of negative controls, quantitative bias analysis, or other considerations, suggest serious uncontrolled confounding?',
-      responseType: 'STANDARD',
+      responseType: 'WITH_NA',
     },
   },
   hasDirection: true,
@@ -256,19 +265,19 @@ export const DOMAIN_1B = {
       id: 'd1b_2',
       number: '1.2',
       text: 'If Y/PY to 1.1: Did the authors control for all the important baseline and time-varying confounding factors for which this was necessary?',
-      responseType: 'WEAK_STRONG_NO',
+      responseType: 'WITH_NA_WEAK_STRONG_NO',
     },
     d1b_3: {
       id: 'd1b_3',
       number: '1.3',
       text: 'If Y/PY/WN to 1.2: Were confounding factors that were controlled for (and for which control was necessary) measured validly and reliably by the variables available in this study?',
-      responseType: 'WEAK_STRONG_NO',
+      responseType: 'WITH_NA_WEAK_STRONG_NO',
     },
     d1b_4: {
       id: 'd1b_4',
       number: '1.4',
       text: 'If N/PN/NI to 1.1: Did the authors control for time-varying factors or other variables measured after the start of intervention?',
-      responseType: 'WITH_NI',
+      responseType: 'WITH_NA_FULL',
     },
     d1b_5: {
       id: 'd1b_5',
@@ -296,13 +305,13 @@ export const DOMAIN_2 = {
       id: 'd2_2',
       number: '2.2',
       text: 'If N/PN/NI to 2.1: Did all or nearly all outcome events occur after the intervention and comparator strategies could be distinguished?',
-      responseType: 'WITH_NI',
+      responseType: 'WITH_NA_FULL',
     },
     d2_3: {
       id: 'd2_3',
       number: '2.3',
       text: 'If N/PN/NI to 2.2: Did the analysis avoid problems arising from intervention strategies that are not distinguishable at the start of follow-up?',
-      responseType: 'WEAK_STRONG_YES',
+      responseType: 'WITH_NA_WEAK_STRONG_YES',
     },
     d2_4: {
       id: 'd2_4',
@@ -356,13 +365,13 @@ export const DOMAIN_3 = {
           id: 'd3_4',
           number: '3.4',
           text: 'If Y/PY to 3.3: Were the post-intervention variables that influenced selection likely to be associated with intervention?',
-          responseType: 'WITH_NI',
+          responseType: 'WITH_NA_FULL',
         },
         d3_5: {
           id: 'd3_5',
           number: '3.5',
           text: 'If Y/PY to 3.4: Were the post-intervention variables that influenced selection likely to be influenced by the outcome or a cause of the outcome?',
-          responseType: 'WITH_NI',
+          responseType: 'WITH_NA_FULL',
         },
       },
     },
@@ -373,19 +382,19 @@ export const DOMAIN_3 = {
           id: 'd3_6',
           number: '3.6',
           text: 'If SN to 3.1 or Y/PY to 3.5: Is it likely that the analysis corrected for all of the potential selection biases identified above?',
-          responseType: 'WITH_NI',
+          responseType: 'WITH_NA_FULL',
         },
         d3_7: {
           id: 'd3_7',
           number: '3.7',
           text: 'If N/PN/NI to 3.6: Did sensitivity analyses demonstrate that the likely impact of the potential selection biases identified above was minimal?',
-          responseType: 'WITH_NI',
+          responseType: 'WITH_NA_FULL',
         },
         d3_8: {
           id: 'd3_8',
           number: '3.8',
           text: 'If N/PN/NI to 3.7: Were potential selection biases identified above sufficiently severe that the result should not be included in a quantitative synthesis?',
-          responseType: 'WITH_NI',
+          responseType: 'WITH_NA_FULL',
         },
       },
     },
@@ -421,51 +430,49 @@ export const DOMAIN_4 = {
       id: 'd4_4',
       number: '4.4',
       text: 'If N/PN/NI to 4.1, 4.2 or 4.3: Is the result based on a complete case analysis?',
-      responseType: 'WITH_NI',
+      responseType: 'WITH_NA_FULL',
     },
     d4_5: {
       id: 'd4_5',
       number: '4.5',
       text: 'If Y/PY/NI to 4.4: Was exclusion from the analysis because of missing data (in intervention, confounders or the outcome) likely to be related to the true value of the outcome?',
-      responseType: 'WITH_NI',
+      responseType: 'WITH_NA_FULL',
     },
     d4_6: {
       id: 'd4_6',
       number: '4.6',
       text: 'If Y/PY/NI to 4.5: Is the relationship between the outcome and missingness likely to be explained by the variables in the analysis model?',
-      responseType: 'WEAK_STRONG_NO',
+      responseType: 'WITH_NA_WEAK_STRONG_NO',
     },
     d4_7: {
       id: 'd4_7',
       number: '4.7',
       text: 'If N/PN to 4.4: Was the analysis based on imputing missing values?',
-      responseType: 'WITH_NI',
-      note: 'Response options: Y / PY / PN / NI',
+      responseType: 'WITH_NA',
     },
     d4_8: {
       id: 'd4_8',
       number: '4.8',
       text: "If Y/PY to 4.7: Is it reasonable to assume that data were 'missing at random' (MAR) or 'missing completely at random' (MCAR)?",
-      responseType: 'WITH_NI',
+      responseType: 'WITH_NA_FULL',
     },
     d4_9: {
       id: 'd4_9',
       number: '4.9',
       text: 'If Y/PY to 4.8: Was imputation performed appropriately?',
-      responseType: 'WEAK_STRONG_NO',
+      responseType: 'WITH_NA_WEAK_STRONG_NO',
     },
     d4_10: {
       id: 'd4_10',
       number: '4.10',
       text: 'If N/PN/NI to 4.7: Was an appropriate alternative method used to correct for bias due to missing data?',
-      responseType: 'WEAK_STRONG_NO',
+      responseType: 'WITH_NA_WEAK_STRONG_NO',
     },
     d4_11: {
       id: 'd4_11',
       number: '4.11',
       text: 'If PN/N/NI to 4.1, 4.2 or 4.3 AND (Y/PY/NI to 4.5 OR WN/SN/NI to 4.9 OR WN/SN/NI to 4.10): Is there evidence that the result was not biased by missing data?',
-      responseType: 'WITH_NI',
-      note: 'Response options: Y / PY / PN / N / NI',
+      responseType: 'WITH_NA_NO_NI',
     },
   },
   hasDirection: true,
@@ -493,7 +500,7 @@ export const DOMAIN_5 = {
       id: 'd5_3',
       number: '5.3',
       text: 'If Y/PY/NI to 5.2: Could assessment of the outcome have been influenced by knowledge of the intervention received?',
-      responseType: 'WEAK_STRONG_YES',
+      responseType: 'WITH_NA_WEAK_STRONG_YES',
     },
   },
   hasDirection: true,

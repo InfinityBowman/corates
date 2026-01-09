@@ -7,8 +7,8 @@ import { Show, createMemo } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { AiOutlineArrowLeft } from 'solid-icons/ai';
 import EmbedPdfViewer from '@pdf/embedpdf/EmbedPdfViewer.jsx';
-import ChecklistReconciliation from './ChecklistReconciliation.jsx';
-import Navbar from './Navbar.jsx';
+import ChecklistReconciliation from './amstar2-reconcile/ChecklistReconciliation.jsx';
+import Navbar from './amstar2-reconcile/Navbar.jsx';
 import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx';
 
 /**

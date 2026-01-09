@@ -1,8 +1,12 @@
+/**
+ * ChecklistYjsWrapper - Project-scoped checklist editing view
+ * This component is rendered as a child route of ProjectView and shares its YDoc connection
+ */
+
 import { createSignal, createEffect, createMemo, Show, onCleanup } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import ChecklistWithPdf from '@/components/checklist/ChecklistWithPdf.jsx';
-import useProject from '@/primitives/useProject/index.js';
-import { useProjectOrgId } from '@primitives/useProjectOrgId.js';
+import { useProjectContext } from '@/components/project/ProjectContext.jsx';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
@@ -24,8 +28,8 @@ export default function ChecklistYjsWrapper() {
   const { user } = useBetterAuth();
   const confirmDialog = useConfirmDialog();
 
-  // Get orgId from project data (for API calls)
-  const orgId = useProjectOrgId(params.projectId);
+  // Get project context from parent ProjectView
+  const { orgId, projectOps } = useProjectContext();
 
   const [pdfData, setPdfData] = createSignal(null);
   const [pdfFileName, setPdfFileName] = createSignal(null);
@@ -39,26 +43,22 @@ export default function ChecklistYjsWrapper() {
     setSelectedPdfId(null);
   });
 
-  // Use full hook for write operations
+  // Destructure Y.js operations from parent ProjectView's connection
   const {
-    connect,
     updateChecklistAnswer,
     updateChecklist,
     getChecklistData,
     addPdfToStudy,
     getQuestionNote,
     getRobinsText,
-  } = useProject(params.projectId);
+  } = projectOps || {};
 
   // Set active project for action store
   createEffect(() => {
     const pid = params.projectId;
     const oid = orgId();
-    if (pid) {
-      if (oid) {
-        projectActionsStore._setActiveProject(pid, oid);
-      }
-      connect();
+    if (pid && oid) {
+      projectActionsStore._setActiveProject(pid, oid);
     }
   });
 
