@@ -74,24 +74,26 @@ export function getStripeErrorMessage(error: {
 
 /**
  * Check if an error is a Stripe card error
+ * Stripe card errors have type === 'card_error'
  */
 export function isStripeCardError(error: unknown): boolean {
   return (
     typeof error === 'object' &&
     error !== null &&
     'type' in error &&
-    (error as { type: string }).type === 'StripeCardError'
+    (error as { type: string }).type === 'card_error'
   );
 }
 
 /**
  * Check if an error is a Stripe rate limit error
+ * Stripe rate limit errors have type === 'rate_limit_error'
  */
 export function isStripeRateLimitError(error: unknown): boolean {
   return (
     typeof error === 'object' &&
     error !== null &&
     'type' in error &&
-    (error as { type: string }).type === 'StripeRateLimitError'
+    (error as { type: string }).type === 'rate_limit_error'
   );
 }
