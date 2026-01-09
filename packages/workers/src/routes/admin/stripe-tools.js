@@ -8,6 +8,7 @@ import { createDb } from '@/db/client.js';
 import { user, organization, subscription } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import { validateRequest, stripeSchemas } from '@/config/validation.js';
 import Stripe from 'stripe';
 
 const stripeToolsRoutes = new Hono();
@@ -175,48 +176,45 @@ stripeToolsRoutes.get('/stripe/customer', async c => {
  * Generate a customer portal link for a Stripe customer
  * Body: { customerId, returnUrl? }
  */
-stripeToolsRoutes.post('/stripe/portal-link', async c => {
-  const body = await c.req.json();
-  const { customerId, returnUrl } = body;
+stripeToolsRoutes.post(
+  '/stripe/portal-link',
+  validateRequest(stripeSchemas.portalLink),
+  async c => {
+    const body = c.get('validatedBody');
+    const { customerId, returnUrl } = body;
 
-  if (!customerId) {
-    const error = createDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, {
-      field: 'customerId',
-    });
-    return c.json(error, error.statusCode);
-  }
+    if (!c.env.STRIPE_SECRET_KEY) {
+      const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
+        message: 'Stripe is not configured',
+      });
+      return c.json(error, error.statusCode);
+    }
 
-  if (!c.env.STRIPE_SECRET_KEY) {
-    const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
-      message: 'Stripe is not configured',
-    });
-    return c.json(error, error.statusCode);
-  }
-
-  const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-11-17.clover',
-  });
-
-  try {
-    const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: returnUrl || c.env.APP_URL || 'https://corates.com',
+    const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-11-17.clover',
     });
 
-    return c.json({
-      success: true,
-      url: session.url,
-      expiresAt: session.created + 300, // Portal links typically expire in 5 minutes
-    });
-  } catch (error) {
-    console.error('Error creating portal link:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.EXTERNAL_SERVICE_ERROR, {
-      service: 'Stripe',
-      message: error.message,
-    });
-    return c.json(dbError, dbError.statusCode);
-  }
-});
+    try {
+      const session = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: returnUrl || c.env.APP_URL || 'https://corates.com',
+      });
+
+      return c.json({
+        success: true,
+        url: session.url,
+        expiresAt: session.created + 300, // Portal links typically expire in 5 minutes
+      });
+    } catch (error) {
+      console.error('Error creating portal link:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.EXTERNAL_SERVICE_ERROR, {
+        service: 'Stripe',
+        message: error.message,
+      });
+      return c.json(dbError, dbError.statusCode);
+    }
+  },
+);
 
 /**
  * GET /api/admin/stripe/customer/:customerId/invoices

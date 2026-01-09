@@ -123,6 +123,10 @@ export const userSchemas = {
       ])
       .optional(),
   }),
+  unban: z.object({}),
+  impersonate: z.object({
+    userId: z.string().min(1, 'userId is required'),
+  }),
 };
 
 /**
@@ -207,6 +211,16 @@ export const storageSchemas = {
           }),
       )
       .min(1, 'At least one key is required'),
+  }),
+};
+
+/**
+ * Stripe tools schemas
+ */
+export const stripeSchemas = {
+  portalLink: z.object({
+    customerId: z.string().min(1, 'customerId is required'),
+    returnUrl: z.string().url('returnUrl must be a valid URL').optional(),
   }),
 };
 

@@ -313,15 +313,11 @@ statsRoutes.get('/revenue', async c => {
     });
   } catch (error) {
     console.error('Error fetching revenue stats:', error);
-    return c.json(
-      {
-        data: [],
-        total: 0,
-        currency: 'usd',
-        error: error.message,
-      },
-      200,
-    );
+    const stripeError = createDomainError(SYSTEM_ERRORS.EXTERNAL_SERVICE_ERROR, {
+      service: 'Stripe',
+      message: error.message,
+    });
+    return c.json(stripeError, stripeError.statusCode);
   }
 });
 

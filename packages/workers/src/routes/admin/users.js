@@ -352,7 +352,7 @@ userRoutes.post('/users/:userId/ban', validateRequest(userSchemas.ban), async c 
  * POST /api/admin/users/:userId/unban
  * Unban a user
  */
-userRoutes.post('/users/:userId/unban', async c => {
+userRoutes.post('/users/:userId/unban', validateRequest(userSchemas.unban), async c => {
   const userId = c.req.param('userId');
   const db = createDb(c.env.DB);
 
@@ -383,9 +383,10 @@ userRoutes.post('/users/:userId/unban', async c => {
  * Start impersonating a user (creates a new session)
  * Requires user to have 'admin' role in database
  */
-userRoutes.post('/users/:userId/impersonate', async c => {
+userRoutes.post('/users/:userId/impersonate', validateRequest(userSchemas.impersonate), async c => {
   const userId = c.req.param('userId');
   const adminUser = c.get('user');
+  const body = c.get('validatedBody');
 
   try {
     // Don't allow impersonating yourself
@@ -417,7 +418,7 @@ userRoutes.post('/users/:userId/impersonate', async c => {
     const authRequest = new Request(authUrl.toString(), {
       method: 'POST',
       headers,
-      body: JSON.stringify({ userId }),
+      body: JSON.stringify({ userId: body.userId }),
     });
 
     // Let Better Auth handle the request (this properly sets cookies)
