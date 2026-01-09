@@ -25,6 +25,7 @@ import { getProjectDocStub } from '@/lib/project-doc-id.js';
 import { orgProjectMemberRoutes } from './members.js';
 import { orgPdfRoutes } from './pdfs.js';
 import { orgInvitationRoutes } from './invitations.js';
+import { devRoutes } from './dev-routes.js';
 
 const orgProjectRoutes = new Hono();
 
@@ -407,5 +408,9 @@ orgProjectRoutes.route('/:projectId/studies/:studyId/pdfs', orgPdfRoutes);
 
 // Mount org-scoped invitation routes
 orgProjectRoutes.route('/:projectId/invitations', orgInvitationRoutes);
+
+// Dev routes - imported from separate module for organization
+// Runtime DEV_MODE check is done inside each route handler
+orgProjectRoutes.route('/:projectId/dev', devRoutes);
 
 export { orgProjectRoutes };

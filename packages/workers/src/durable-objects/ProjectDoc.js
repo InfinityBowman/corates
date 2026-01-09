@@ -112,6 +112,12 @@ export class ProjectDoc {
             if (url.pathname === '/dev/raw') {
               return await devHandlers.handleDevRaw(ctx);
             }
+            if (url.pathname === '/dev/templates') {
+              return await devHandlers.handleDevTemplates();
+            }
+            if (url.pathname === '/dev/apply-template') {
+              return await devHandlers.handleDevApplyTemplate(ctx, request);
+            }
           }
         }
       }

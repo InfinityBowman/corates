@@ -62,6 +62,14 @@ async function setupPersistence(queryClient) {
           '[queryClient] Restored persisted cache from',
           new Date(cacheTimestamp).toISOString(),
         );
+
+        // If online, invalidate restored queries so they refetch fresh data
+        // This gives instant UI from cache while fetching updates in the background
+        if (navigator.onLine && restoredQueryKeys.length > 0) {
+          setTimeout(() => {
+            queryClient.invalidateQueries();
+          }, 100);
+        }
       }
     }
   } catch (error) {

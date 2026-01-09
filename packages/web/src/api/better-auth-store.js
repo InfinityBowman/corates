@@ -140,6 +140,15 @@ function createBetterAuthStore() {
   // Prune expired avatar cache entries on startup
   pruneExpiredAvatars();
 
+  // Force session refresh on page load when online to ensure fresh data
+  // This runs after initial load to avoid blocking and updates stale cached data
+  if (typeof window !== 'undefined' && navigator.onLine) {
+    setTimeout(() => {
+      session().refetch?.();
+      console.info('[auth] Refreshing session on page load');
+    }, 100);
+  }
+
   // Cache user data when session is successfully fetched (only when online)
   // Wrap in createRoot to properly dispose of the effect
   createRoot(() => {
