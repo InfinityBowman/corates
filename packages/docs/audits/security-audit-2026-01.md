@@ -26,6 +26,7 @@ The account merge deletion logic contained a logic error that allowed deletion w
 
 **Resolution:**
 The cancel endpoint now properly requires a valid token match. The fix:
+
 - Requires `mergeToken` to be provided and be a string
 - Returns validation error if token is missing
 - Returns validation error if token doesn't match
@@ -81,6 +82,7 @@ The PDF download endpoint accepts a fileName parameter that needed stronger vali
 
 **Resolution:**
 Enhanced `isValidPdfFilename()` in `@corates/shared/src/pdf/index.ts` with:
+
 - Explicit rejection of `..` path traversal sequences
 - Rejection of path separators (`/` and `\`)
 - Rejection of control characters including null bytes
@@ -149,6 +151,7 @@ The CSRF middleware relied on Origin/Referer header checking without explicit Sa
 
 **Resolution:**
 Added explicit cookie security configuration to Better-Auth in `auth/config.js`:
+
 - `httpOnly: true` - prevents JavaScript access to session cookies
 - `secure: true` in production - ensures HTTPS-only transmission
 - `sameSite: 'lax'` - prevents CSRF attacks from cross-origin requests
@@ -406,11 +409,11 @@ if (env.ALLOWED_ORIGINS) {
 
 ## Remediation Log
 
-| Date       | Issue                     | Action Taken                                           |
-| ---------- | ------------------------- | ------------------------------------------------------ |
-| 2026-01-08 | Account Merge Logic Error | Fixed token validation in cancel endpoint              |
+| Date       | Issue                     | Action Taken                                            |
+| ---------- | ------------------------- | ------------------------------------------------------- |
+| 2026-01-08 | Account Merge Logic Error | Fixed token validation in cancel endpoint               |
 | 2026-01-08 | PDF Path Traversal        | Enhanced isValidPdfFilename() with comprehensive checks |
-| 2026-01-08 | Missing SameSite Cookies  | Added cookie security config to Better-Auth            |
+| 2026-01-08 | Missing SameSite Cookies  | Added cookie security config to Better-Auth             |
 
 ---
 
