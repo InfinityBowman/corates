@@ -117,9 +117,7 @@ export default function LocalAppraisalsPanel(props) {
                     showEditIcon={true}
                     onSubmit={newName => updateChecklist(checklist.id, { name: newName })}
                   />
-                  <p class='text-xs text-gray-500'>
-                    {getChecklistMetadata(checklist.checklistType).name}
-                  </p>
+                  <p class='text-xs text-gray-500'>{getChecklistMetadata(checklist.type).name}</p>
                 </div>
 
                 <div class='mb-4 flex items-center justify-between text-xs text-gray-500'>

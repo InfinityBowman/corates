@@ -85,6 +85,35 @@ export class ProjectDoc {
         if (url.pathname === '/disconnect-all') {
           return await this.handleDisconnectAll(request);
         }
+
+        // Dev-only endpoints for Yjs state inspection (dynamically imported)
+        if (this.env.DEV_MODE) {
+          if (url.pathname.startsWith('/dev/')) {
+            const devHandlers = await import('./dev-handlers.js');
+            await this.initializeDoc();
+            const ctx = {
+              doc: this.doc,
+              stateId: this.state.id.toString(),
+              yMapToPlain: this.yMapToPlain.bind(this),
+            };
+
+            if (url.pathname === '/dev/export') {
+              return await devHandlers.handleDevExport(ctx);
+            }
+            if (url.pathname === '/dev/import') {
+              return await devHandlers.handleDevImport(ctx, request);
+            }
+            if (url.pathname === '/dev/patch') {
+              return await devHandlers.handleDevPatch(ctx, request);
+            }
+            if (url.pathname === '/dev/reset') {
+              return await devHandlers.handleDevReset(ctx);
+            }
+            if (url.pathname === '/dev/raw') {
+              return await devHandlers.handleDevRaw(ctx);
+            }
+          }
+        }
       }
 
       // For HTTP requests verify auth (unless it's an upgrade to websocket)

@@ -14,7 +14,7 @@ export interface ChecklistMetadata {
   createdAt: string;
   assignedTo?: string | null;
   status?: ChecklistStatus;
-  type?: 'AMSTAR2' | 'ROBINS_I';
+  type: 'AMSTAR2' | 'ROBINS_I';
 }
 
 /**
@@ -108,7 +108,6 @@ export interface ROBINSISectionB {
  * ROBINS-I checklist structure
  */
 export interface ROBINSIChecklist extends ChecklistMetadata {
-  checklistType: 'ROBINS_I';
   planning: {
     confoundingFactors: string;
   };

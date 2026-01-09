@@ -18,7 +18,11 @@ export interface AMSTAR2Column {
   options: string[];
 }
 
-export interface AMSTAR2Question {
+/**
+ * Schema for AMSTAR2 questions - defines the question structure for UI rendering
+ * (not the answer data type; see AMSTAR2Question type alias in types.ts for answer data)
+ */
+export interface AMSTAR2QuestionSchema {
   info: string;
   text: string;
   columns: AMSTAR2Column[];
@@ -28,7 +32,7 @@ export interface AMSTAR2Question {
   options?: string[];
 }
 
-export const AMSTAR_CHECKLIST: Record<string, AMSTAR2Question> = {
+export const AMSTAR_CHECKLIST: Record<string, AMSTAR2QuestionSchema> = {
   q1: {
     info: 'To score Yes, appraisers should be confident that the 4 elements of PICO (population, intervention, control group and outcome) are described somewhere in the report.',
     text: '1. Did the research questions and inclusion criteria for the review include the components of PICO?',

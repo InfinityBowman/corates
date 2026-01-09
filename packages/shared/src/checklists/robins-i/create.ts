@@ -64,7 +64,7 @@ export function createROBINSIChecklist({
     reviewerName: reviewerName || '',
     createdAt: formattedDate,
     id: id,
-    checklistType: 'ROBINS_I',
+    type: 'ROBINS_I',
 
     planning: {
       confoundingFactors: '',

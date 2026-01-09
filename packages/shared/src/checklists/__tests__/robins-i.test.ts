@@ -20,7 +20,7 @@ describe('ROBINS-I', () => {
       expect(checklist.name).toBe('Test Checklist');
       expect(checklist.id).toBe('test-123');
       expect(checklist.reviewerName).toBe('Bob');
-      expect(checklist.checklistType).toBe('ROBINS_I');
+      expect(checklist.type).toBe('ROBINS_I');
       expect(checklist.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
       // Check all sections exist

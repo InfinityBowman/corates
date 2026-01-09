@@ -68,8 +68,8 @@ export function getChecklistConfig(type) {
 export function createChecklistOfType(type, options) {
   const config = getChecklistConfig(type);
   const checklist = config.createChecklist(options);
-  // Ensure the type is stored in the checklist
-  return { ...checklist, checklistType: type };
+  // Ensure the type is stored in the checklist (already set by create functions)
+  return { ...checklist, type };
 }
 
 /**
@@ -89,11 +89,7 @@ export function scoreChecklistOfType(type, state) {
  * @returns {string} The checklist type
  */
 export function getChecklistTypeFromState(checklistState) {
-  // Check explicit type field
-  if (checklistState?.checklistType) {
-    return checklistState.checklistType;
-  }
-  // Check for type field (alternative naming)
+  // Check type field (canonical discriminant)
   if (checklistState?.type) {
     return checklistState.type;
   }

@@ -23,7 +23,7 @@ This plan outlines a comprehensive development tool that provides visibility int
 | Phase   | Status      | Description                            |
 | ------- | ----------- | -------------------------------------- |
 | Phase 0 | COMPLETE    | Refactor checklist logic to shared pkg |
-| Phase 1 | Not Started | Backend API endpoints                  |
+| Phase 1 | COMPLETE    | Backend API endpoints                  |
 | Phase 2 | Not Started | CLI tool                               |
 | Phase 3 | Not Started | Mock data templates                    |
 | Phase 4 | Not Started | UI panel                               |
@@ -199,11 +199,22 @@ const score = amstar2.scoreAMSTAR2Checklist(checklist);
 
 ### Phase 1: Backend API Endpoints (Dev-Only)
 
-Dynamically imported based on environment similar to other dev routes.
-Add new internal endpoints to ProjectDoc durable object for state manipulation:
+**Status**: COMPLETE (2026-01-11)
 
-```javascript
-// New endpoints (require X-Internal-Request header + DEV mode)
+**What was implemented**:
+
+1. Added `DEV_MODE` environment variable to `wrangler.jsonc` (true for dev, absent for production)
+2. Added dev endpoint routing in `ProjectDoc.js` fetch() method
+3. Implemented 5 dev handler methods in ProjectDoc Durable Object:
+   - `handleDevExport()` - Export full Y.Doc state as structured JSON
+   - `handleDevImport()` - Import JSON with 'replace' or 'merge' modes
+   - `handleDevPatch()` - Apply surgical updates via path operations
+   - `handleDevReset()` - Clear Y.Doc to empty state
+   - `handleDevRaw()` - Export raw Yjs binary state as base64
+
+**Endpoints** (require `X-Internal-Request` header + `DEV_MODE=true`):
+
+```
 POST /dev/export     - Export full Y.Doc state as JSON
 POST /dev/import     - Import/replace Y.Doc state from JSON
 POST /dev/patch      - Apply partial updates to Y.Doc
@@ -211,28 +222,52 @@ POST /dev/reset      - Reset Y.Doc to empty state
 GET  /dev/raw        - Get raw Yjs binary state (for debugging)
 ```
 
-**Implementation in `ProjectDoc.js`**:
+**Export format**:
 
-```javascript
-// Add to fetch() after existing internal request handling
-if (isInternalRequest && this.env.DEV_MODE) {
-  if (url.pathname === '/dev/export') {
-    return await this.handleDevExport(request);
-  }
-  if (url.pathname === '/dev/import') {
-    return await this.handleDevImport(request);
-  }
-  if (url.pathname === '/dev/patch') {
-    return await this.handleDevPatch(request);
-  }
-  if (url.pathname === '/dev/reset') {
-    return await this.handleDevReset(request);
-  }
-  if (url.pathname === '/dev/raw') {
-    return await this.handleDevRaw(request);
-  }
+```json
+{
+  "version": 1,
+  "exportedAt": "2026-01-11T...",
+  "projectId": "...",
+  "meta": { "name": "...", "description": "..." },
+  "members": [{ "userId": "...", "role": "owner", ... }],
+  "studies": [{
+    "id": "...",
+    "name": "...",
+    "checklists": [{ "id": "...", "type": "AMSTAR2", "answers": {...} }],
+    "pdfs": [...]
+  }]
 }
 ```
+
+**Import body**:
+
+```json
+{
+  "data": {
+    /* export format */
+  },
+  "mode": "replace" // or "merge"
+}
+```
+
+**Patch body**:
+
+```json
+{
+  "operations": [
+    { "path": "studies.study_id.name", "value": "New Name" },
+    { "path": "meta.description", "value": "Updated" }
+  ]
+}
+```
+
+**Files modified**:
+
+- `packages/workers/wrangler.jsonc` - Added `DEV_MODE: true` to vars
+- `packages/workers/src/durable-objects/ProjectDoc.js` - Added dev routing and 5 handler methods
+
+---
 
 ### Phase 2: Worker Routes for Dev Tools
 
