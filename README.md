@@ -12,11 +12,11 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 
 > See the detailed [Contributing Guide](.github/CONTRIBUTING.md) for step-by-step setup instructions.
 
+> See detailed [Documentation](packages/docs/README.md) for more info.
+
 > See the [Code of Conduct](.github/CODE_OF_CONDUCT.md).
 
-> See detailed [Documentation](packages/docs/README.md).
-
-> See the [Security](.github/SECURITY.md).
+> See [Security](.github/SECURITY.md).
 
 ## Tech Stack
 

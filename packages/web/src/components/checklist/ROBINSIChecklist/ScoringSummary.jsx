@@ -205,13 +205,13 @@ function ResourcesDialog(props) {
               <ResourceLink
                 title='ROBINS-I Tool (Official)'
                 description='Risk Of Bias In Non-randomized Studies of Interventions'
-                url='https://www.riskofbias.info/welcome/home/current-version-of-robins-i'
+                url='https://www.riskofbias.info/welcome/robins-i-v2'
               />
 
               <ResourceLink
                 title='Detailed Guidance Document'
                 description='Comprehensive guidance for making judgements'
-                url='https://www.riskofbias.info/welcome/home/current-version-of-robins-i/robins-i-detailed-guidance-2016'
+                url='https://drive.google.com/file/d/1zs85KZKFdwGcYwahvldNY_lARNv7Nqsr/view'
               />
 
               <ResourceLink
