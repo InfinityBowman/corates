@@ -57,3 +57,11 @@ export { normalizeError, isDomainError, isTransportError } from './normalize.js'
 
 // Validation
 export { validateErrorResponse } from './validate.js';
+
+// Stripe errors
+export {
+  STRIPE_ERROR_MESSAGES,
+  getStripeErrorMessage,
+  isStripeCardError,
+  isStripeRateLimitError,
+} from './stripe.js';

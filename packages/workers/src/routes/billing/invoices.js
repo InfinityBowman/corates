@@ -55,7 +55,7 @@ billingInvoicesRoutes.get('/invoices', requireAuth, async c => {
 
     // Initialize Stripe client
     const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2024-06-20',
+      apiVersion: '2025-11-17.clover',
     });
 
     // Fetch invoices from Stripe

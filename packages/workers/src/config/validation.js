@@ -225,6 +225,18 @@ export const stripeSchemas = {
 };
 
 /**
+ * Billing schemas for checkout operations
+ */
+export const billingSchemas = {
+  validateCoupon: z.object({
+    code: z
+      .string()
+      .min(1, 'Please enter a promo code')
+      .transform(val => val.trim().toUpperCase()),
+  }),
+};
+
+/**
  * Map Zod error to validation error code
  * @param {object} issue - Zod issue object from error.issues array
  * @param {string} [issue.kind] - Error kind (Zod v4)

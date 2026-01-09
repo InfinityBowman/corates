@@ -5,7 +5,7 @@
 
 import { Show, createMemo } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { AiOutlineArrowLeft } from 'solid-icons/ai';
+import { FiArrowLeft } from 'solid-icons/fi';
 import EmbedPdfViewer from '@pdf/embedpdf/EmbedPdfViewer.jsx';
 import RobinsIReconciliation from './RobinsIReconciliation.jsx';
 import RobinsINavbar from './RobinsINavbar.jsx';
@@ -44,8 +44,10 @@ export default function RobinsIReconciliationWithPdf(props) {
     comparison: null,
     finalAnswers: {},
     sectionBCritical: false,
+    expandedDomain: null,
     setViewMode: null,
     goToPage: null,
+    setExpandedDomain: null,
     onReset: null,
   });
 
@@ -61,7 +63,7 @@ export default function RobinsIReconciliationWithPdf(props) {
         class='shrink-0 rounded-lg p-2 transition-colors hover:bg-gray-100'
         title='Go back'
       >
-        <AiOutlineArrowLeft class='h-5 w-5 text-gray-600' />
+        <FiArrowLeft class='h-5 w-5 text-gray-600' />
       </button>
 
       {/* Title */}
@@ -76,7 +78,7 @@ export default function RobinsIReconciliationWithPdf(props) {
 
       {/* Navbar - navigation pills */}
       <Show when={navbarStore.navItems?.length > 0}>
-        <div class='flex flex-1 items-center gap-4 overflow-x-auto'>
+        <div class='flex min-w-0 flex-1 items-center overflow-x-auto'>
           <RobinsINavbar store={navbarStore} />
         </div>
       </Show>

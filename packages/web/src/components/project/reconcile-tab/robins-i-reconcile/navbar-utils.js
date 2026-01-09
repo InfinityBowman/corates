@@ -205,7 +205,7 @@ export function isNavItemAgreement(navItem, comparison) {
  */
 export function getNavItemPillStyle(isCurrentPage, hasAnswer, isAgreement) {
   if (isCurrentPage) {
-    return 'bg-blue-600 text-white ring-2 ring-blue-300';
+    return 'bg-blue-600 text-white ring-2 ring-inset ring-blue-300';
   }
   // Use lighter colors - checkmark icon indicates if answered
   return isAgreement ?
@@ -260,4 +260,132 @@ export function isSectionBCritical(sectionB) {
  */
 export function getDomainDisplayNumber(domainKey) {
   return domainKey.replace('domain', '').replace('a', 'A').replace('b', 'B');
+}
+
+/**
+ * Get section key from section name (for grouping)
+ * @param {string} sectionName - The section name from nav item
+ * @returns {string} Section key (sectionB, domain1a, etc.)
+ */
+export function getSectionKey(sectionName) {
+  if (sectionName === 'Section B') return 'sectionB';
+  if (sectionName === 'Overall') return 'overall';
+
+  // Domain names like "Domain 1: Bias due to confounding"
+  // We need to find which domain key this corresponds to
+  const domainMatch = sectionName.match(/Domain (\d+)/);
+  if (domainMatch) {
+    const domainNum = domainMatch[1];
+    // Domain 1 could be 1a or 1b - we'll handle this in getDomainProgress
+    if (domainNum === '1') return 'domain1';
+    return `domain${domainNum}`;
+  }
+
+  return sectionName;
+}
+
+/**
+ * Get abbreviated label for a section/domain pill
+ * @param {string} sectionKey - The section key
+ * @returns {string} Short label (B, D1, D2, etc.)
+ */
+export function getSectionLabel(sectionKey) {
+  if (sectionKey === 'sectionB') return 'B';
+  if (sectionKey === 'overall') return 'OA';
+  if (sectionKey.startsWith('domain')) {
+    const num = sectionKey.replace('domain', '').replace('a', '').replace('b', '');
+    return `D${num}`;
+  }
+  return sectionKey;
+}
+
+/**
+ * Get progress stats for each section/domain
+ * @param {Array} navItems - All navigation items
+ * @param {Object} finalAnswers - Reconciled checklist data
+ * @param {Object} comparison - Comparison results
+ * @returns {Object} Progress by section key
+ */
+export function getDomainProgress(navItems, finalAnswers, comparison) {
+  const progress = {};
+  const groups = getGroupedNavigationItems(navItems);
+
+  groups.forEach(group => {
+    // Get the actual domain key from the first item in the group
+    const firstItem = group.items[0];
+    let sectionKey;
+
+    if (firstItem.type === NAV_ITEM_TYPES.SECTION_B) {
+      sectionKey = 'sectionB';
+    } else if (firstItem.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT) {
+      sectionKey = 'overall';
+    } else if (firstItem.domainKey) {
+      sectionKey = firstItem.domainKey;
+    } else {
+      sectionKey = getSectionKey(group.section);
+    }
+
+    let answered = 0;
+    let hasDisagreements = false;
+
+    group.items.forEach(item => {
+      if (hasNavItemAnswer(item, finalAnswers)) {
+        answered++;
+      }
+      if (!isNavItemAgreement(item, comparison)) {
+        hasDisagreements = true;
+      }
+    });
+
+    progress[sectionKey] = {
+      answered,
+      total: group.items.length,
+      hasDisagreements,
+      isComplete: answered === group.items.length,
+      section: group.section,
+      items: group.items,
+    };
+  });
+
+  return progress;
+}
+
+/**
+ * Get the domain key that contains a specific nav item index
+ * @param {Array} navItems - All navigation items
+ * @param {number} pageIndex - The page index
+ * @returns {string|null} The section key or null
+ */
+export function getSectionKeyForPage(navItems, pageIndex) {
+  const item = navItems[pageIndex];
+  if (!item) return null;
+
+  if (item.type === NAV_ITEM_TYPES.SECTION_B) {
+    return 'sectionB';
+  }
+  if (item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT) {
+    return 'overall';
+  }
+  if (item.domainKey) {
+    return item.domainKey;
+  }
+
+  return null;
+}
+
+/**
+ * Find the first unanswered item index within a section
+ * @param {Object} sectionProgress - Progress object for the section
+ * @param {Array} navItems - All navigation items
+ * @param {Object} finalAnswers - Reconciled checklist data
+ * @returns {number} Global index of first unanswered item, or first item if all answered
+ */
+export function getFirstUnansweredInSection(sectionProgress, navItems, finalAnswers) {
+  for (const item of sectionProgress.items) {
+    if (!hasNavItemAnswer(item, finalAnswers)) {
+      return navItems.indexOf(item);
+    }
+  }
+  // All answered - return first item in section
+  return navItems.indexOf(sectionProgress.items[0]);
 }

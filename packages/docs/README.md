@@ -2,6 +2,8 @@
 
 This package contains the VitePress documentation site for CoRATES.
 
+Note the `audits/` and `plans/` are for AI generated plans and audits of the codebase and features.
+
 ## Development
 
 ```bash

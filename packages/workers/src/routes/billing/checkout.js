@@ -11,10 +11,83 @@ import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/sh
 import Stripe from 'stripe';
 import { createLogger, truncateError, withTiming } from '@/lib/observability/logger.js';
 import { billingCheckoutRateLimit } from '@/middleware/rateLimit.js';
+import { billingSchemas, validateRequest } from '@/config/validation.js';
 import { resolveOrgIdWithRole } from './helpers/orgContext.js';
 import { requireOrgOwner } from './helpers/ownerGate.js';
 
 const billingCheckoutRoutes = new Hono();
+
+/**
+ * POST /validate-coupon
+ * Validate a promotion code and return discount details
+ */
+billingCheckoutRoutes.post(
+  '/validate-coupon',
+  requireAuth,
+  validateRequest(billingSchemas.validateCoupon),
+  async c => {
+    const logger = createLogger({ c, service: 'billing', env: c.env });
+
+    try {
+      const { code } = c.get('validatedBody');
+
+      if (!c.env.STRIPE_SECRET_KEY) {
+        logger.error('validate_coupon_failed', { error: 'Stripe not configured' });
+        return c.json({ valid: false, error: 'Payment system not available' });
+      }
+
+      const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2025-11-17.clover',
+      });
+
+      // Look up promotion code (user-facing codes)
+      const promoCodes = await stripe.promotionCodes.list({
+        code: code,
+        active: true,
+        limit: 1,
+      });
+
+      if (promoCodes.data.length === 0) {
+        logger.info('validate_coupon_invalid', { code: code.trim() });
+        return c.json({ valid: false, error: 'Invalid or expired promo code' });
+      }
+
+      const promo = promoCodes.data[0];
+      const coupon = promo.coupon;
+
+      // Check if expired
+      if (promo.expires_at && promo.expires_at < Math.floor(Date.now() / 1000)) {
+        return c.json({ valid: false, error: 'This promo code has expired' });
+      }
+
+      // Check if max redemptions reached
+      if (promo.max_redemptions && promo.times_redeemed >= promo.max_redemptions) {
+        return c.json({ valid: false, error: 'This promo code is no longer available' });
+      }
+
+      logger.info('validate_coupon_success', {
+        code: promo.code,
+        percentOff: coupon.percent_off,
+        amountOff: coupon.amount_off,
+      });
+
+      return c.json({
+        valid: true,
+        promoCodeId: promo.id,
+        code: promo.code,
+        percentOff: coupon.percent_off,
+        amountOff: coupon.amount_off,
+        currency: coupon.currency,
+        duration: coupon.duration,
+        durationMonths: coupon.duration_in_months,
+        name: coupon.name,
+      });
+    } catch (error) {
+      logger.error('validate_coupon_error', { error: truncateError(error) });
+      return c.json({ valid: false, error: 'Failed to validate promo code' });
+    }
+  },
+);
 
 /**
  * POST /checkout
