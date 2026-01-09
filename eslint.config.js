@@ -342,6 +342,7 @@ export default [
       '**/.vinxi/**',
       '**/.output/**',
       '**/coverage/**',
+      '**/mocks/**',
       'packages/learn/.astro/**',
       '**/.vitepress/cache/**',
       '**/.vitepress/dist/**',
