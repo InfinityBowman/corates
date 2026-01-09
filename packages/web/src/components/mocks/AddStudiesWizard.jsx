@@ -106,28 +106,38 @@ const mockImportedStudies = [
 
 function StepIndicator(props) {
   return (
-    <div class="flex items-center gap-2">
+    <div class='flex items-center gap-2'>
       <For each={props.steps}>
         {(step, index) => (
           <>
-            <div class={`flex items-center gap-2 ${index() < props.currentStep ? 'text-emerald-600' : index() === props.currentStep ? 'text-violet-600' : 'text-slate-400'}`}>
-              <div class={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
-                index() < props.currentStep
-                  ? 'bg-emerald-100 text-emerald-600'
-                  : index() === props.currentStep
-                  ? 'bg-violet-100 text-violet-600'
+            <div
+              class={`flex items-center gap-2 ${
+                index() < props.currentStep ? 'text-emerald-600'
+                : index() === props.currentStep ? 'text-violet-600'
+                : 'text-slate-400'
+              }`}
+            >
+              <div
+                class={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
+                  index() < props.currentStep ? 'bg-emerald-100 text-emerald-600'
+                  : index() === props.currentStep ? 'bg-violet-100 text-violet-600'
                   : 'bg-slate-100 text-slate-400'
-              }`}>
+                }`}
+              >
                 <Show when={index() < props.currentStep} fallback={index() + 1}>
-                  <FiCheck class="h-4 w-4" />
+                  <FiCheck class='h-4 w-4' />
                 </Show>
               </div>
-              <span class={`text-sm font-medium ${index() <= props.currentStep ? 'text-slate-900' : 'text-slate-400'}`}>
+              <span
+                class={`text-sm font-medium ${index() <= props.currentStep ? 'text-slate-900' : 'text-slate-400'}`}
+              >
                 {step}
               </span>
             </div>
             <Show when={index() < props.steps.length - 1}>
-              <div class={`h-px w-8 ${index() < props.currentStep ? 'bg-emerald-300' : 'bg-slate-200'}`} />
+              <div
+                class={`h-px w-8 ${index() < props.currentStep ? 'bg-emerald-300' : 'bg-slate-200'}`}
+              />
             </Show>
           </>
         )}
@@ -140,24 +150,28 @@ function SourceCard(props) {
   return (
     <button
       class={`flex flex-col items-center gap-3 rounded-xl border-2 p-6 transition-all ${
-        props.selected
-          ? 'border-violet-500 bg-violet-50 text-violet-700'
-          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+        props.selected ?
+          'border-violet-500 bg-violet-50 text-violet-700'
+        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
       }`}
       onClick={props.onToggle}
     >
-      <div class={`flex h-12 w-12 items-center justify-center rounded-xl ${
-        props.selected ? 'bg-violet-100' : 'bg-slate-100'
-      }`}>
+      <div
+        class={`flex h-12 w-12 items-center justify-center rounded-xl ${
+          props.selected ? 'bg-violet-100' : 'bg-slate-100'
+        }`}
+      >
         {props.icon}
       </div>
-      <div class="text-center">
-        <p class="font-medium">{props.title}</p>
-        <p class={`text-xs ${props.selected ? 'text-violet-500' : 'text-slate-400'}`}>{props.description}</p>
+      <div class='text-center'>
+        <p class='font-medium'>{props.title}</p>
+        <p class={`text-xs ${props.selected ? 'text-violet-500' : 'text-slate-400'}`}>
+          {props.description}
+        </p>
       </div>
       <Show when={props.selected}>
-        <div class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-violet-600 text-white">
-          <FiCheck class="h-3 w-3" />
+        <div class='absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-violet-600 text-white'>
+          <FiCheck class='h-3 w-3' />
         </div>
       </Show>
     </button>
@@ -174,7 +188,9 @@ function SourceBadge(props) {
   const c = config[props.source] || { label: props.source, color: 'bg-slate-100 text-slate-600' };
 
   return (
-    <span class={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${c.color}`}>
+    <span
+      class={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${c.color}`}
+    >
       {c.label}
     </span>
   );
@@ -182,11 +198,27 @@ function SourceBadge(props) {
 
 function MetadataStatus(props) {
   const config = {
-    enriched: { icon: <FiCheckCircle class="h-3.5 w-3.5" />, label: 'Enriched', color: 'text-emerald-600' },
-    complete: { icon: <FiCheck class="h-3.5 w-3.5" />, label: 'Complete', color: 'text-emerald-600' },
-    partial: { icon: <FiAlertCircle class="h-3.5 w-3.5" />, label: 'Partial', color: 'text-amber-600' },
-    failed: { icon: <FiX class="h-3.5 w-3.5" />, label: 'Failed', color: 'text-rose-600' },
-    loading: { icon: <FiLoader class="h-3.5 w-3.5 animate-spin" />, label: 'Scanning...', color: 'text-slate-500' },
+    enriched: {
+      icon: <FiCheckCircle class='h-3.5 w-3.5' />,
+      label: 'Enriched',
+      color: 'text-emerald-600',
+    },
+    complete: {
+      icon: <FiCheck class='h-3.5 w-3.5' />,
+      label: 'Complete',
+      color: 'text-emerald-600',
+    },
+    partial: {
+      icon: <FiAlertCircle class='h-3.5 w-3.5' />,
+      label: 'Partial',
+      color: 'text-amber-600',
+    },
+    failed: { icon: <FiX class='h-3.5 w-3.5' />, label: 'Failed', color: 'text-rose-600' },
+    loading: {
+      icon: <FiLoader class='h-3.5 w-3.5 animate-spin' />,
+      label: 'Scanning...',
+      color: 'text-slate-500',
+    },
   };
   const c = config[props.status] || config.partial;
 
@@ -204,61 +236,67 @@ function MetadataStatus(props) {
 
 function Step1SelectSources(props) {
   return (
-    <div class="space-y-6">
-      <div class="text-center">
-        <h2 class="text-xl font-semibold text-slate-900">Choose Import Sources</h2>
-        <p class="mt-1 text-sm text-slate-500">
+    <div class='space-y-6'>
+      <div class='text-center'>
+        <h2 class='text-xl font-semibold text-slate-900'>Choose Import Sources</h2>
+        <p class='mt-1 text-sm text-slate-500'>
           Select one or more ways to add studies. We'll deduplicate automatically.
         </p>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div class="relative">
+      <div class='grid grid-cols-2 gap-4'>
+        <div class='relative'>
           <SourceCard
-            icon={<FiUpload class="h-6 w-6" />}
-            title="Upload PDFs"
-            description="Drag & drop or browse"
+            icon={<FiUpload class='h-6 w-6' />}
+            title='Upload PDFs'
+            description='Drag & drop or browse'
             selected={props.sources.pdf}
             onToggle={() => props.toggleSource('pdf')}
           />
         </div>
-        <div class="relative">
+        <div class='relative'>
           <SourceCard
-            icon={<FiFolder class="h-6 w-6" />}
-            title="Reference Manager"
-            description="RIS, BibTeX, EndNote"
+            icon={<FiFolder class='h-6 w-6' />}
+            title='Reference Manager'
+            description='RIS, BibTeX, EndNote'
             selected={props.sources.reference}
             onToggle={() => props.toggleSource('reference')}
           />
         </div>
-        <div class="relative">
+        <div class='relative'>
           <SourceCard
-            icon={<FiLink class="h-6 w-6" />}
-            title="DOI / PMID"
-            description="Lookup by identifier"
+            icon={<FiLink class='h-6 w-6' />}
+            title='DOI / PMID'
+            description='Lookup by identifier'
             selected={props.sources.doi}
             onToggle={() => props.toggleSource('doi')}
           />
         </div>
-        <div class="relative">
+        <div class='relative'>
           <SourceCard
             icon={
-              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none" />
+              <svg class='h-6 w-6' viewBox='0 0 24 24' fill='currentColor'>
+                <path
+                  d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'
+                  stroke='currentColor'
+                  stroke-width='2'
+                  fill='none'
+                />
               </svg>
             }
-            title="Google Drive"
-            description="Import from Drive"
+            title='Google Drive'
+            description='Import from Drive'
             selected={props.sources.googleDrive}
             onToggle={() => props.toggleSource('googleDrive')}
           />
         </div>
       </div>
 
-      <div class="rounded-lg bg-slate-50 p-4">
-        <p class="text-xs text-slate-500">
-          <strong class="text-slate-700">Smart deduplication:</strong> If you import the same study from multiple sources
-          (e.g., a PDF and a DOI lookup), we'll detect it and merge the metadata automatically.
+      <div class='rounded-lg bg-slate-50 p-4'>
+        <p class='text-xs text-slate-500'>
+          <strong class='text-slate-700'>Smart deduplication:</strong> If you import the same study
+          from multiple sources (e.g., a PDF and a DOI lookup), we'll detect it and merge the
+          metadata automatically.
         </p>
       </div>
     </div>
@@ -272,38 +310,38 @@ function Step2ImportContent(props) {
   const [driveConnected, setDriveConnected] = createSignal(false);
 
   return (
-    <div class="space-y-6">
-      <div class="text-center">
-        <h2 class="text-xl font-semibold text-slate-900">Import Your Studies</h2>
-        <p class="mt-1 text-sm text-slate-500">
-          Add content from your selected sources
-        </p>
+    <div class='space-y-6'>
+      <div class='text-center'>
+        <h2 class='text-xl font-semibold text-slate-900'>Import Your Studies</h2>
+        <p class='mt-1 text-sm text-slate-500'>Add content from your selected sources</p>
       </div>
 
-      <div class="space-y-4">
+      <div class='space-y-4'>
         {/* PDF Upload */}
         <Show when={props.sources.pdf}>
-          <div class="rounded-xl border border-slate-200 bg-white p-4">
-            <h3 class="mb-3 flex items-center gap-2 font-medium text-slate-900">
-              <FiUpload class="h-4 w-4 text-blue-500" />
+          <div class='rounded-xl border border-slate-200 bg-white p-4'>
+            <h3 class='mb-3 flex items-center gap-2 font-medium text-slate-900'>
+              <FiUpload class='h-4 w-4 text-blue-500' />
               PDF Upload
             </h3>
-            <div class="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-8 text-center hover:border-violet-300 hover:bg-violet-50/30 transition-all cursor-pointer">
-              <FiUpload class="mx-auto h-8 w-8 text-slate-400 mb-2" />
-              <p class="text-sm font-medium text-slate-700">Drop PDF files here or click to browse</p>
-              <p class="text-xs text-slate-400 mt-1">Supports multiple files</p>
+            <div class='cursor-pointer rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-8 text-center transition-all hover:border-violet-300 hover:bg-violet-50/30'>
+              <FiUpload class='mx-auto mb-2 h-8 w-8 text-slate-400' />
+              <p class='text-sm font-medium text-slate-700'>
+                Drop PDF files here or click to browse
+              </p>
+              <p class='mt-1 text-xs text-slate-400'>Supports multiple files</p>
             </div>
             <Show when={pdfFiles().length > 0}>
-              <div class="mt-3 space-y-2">
+              <div class='mt-3 space-y-2'>
                 <For each={pdfFiles()}>
                   {file => (
-                    <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
-                      <div class="flex items-center gap-2">
-                        <FiFile class="h-4 w-4 text-slate-400" />
-                        <span class="text-sm text-slate-700">{file.name}</span>
+                    <div class='flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2'>
+                      <div class='flex items-center gap-2'>
+                        <FiFile class='h-4 w-4 text-slate-400' />
+                        <span class='text-sm text-slate-700'>{file.name}</span>
                       </div>
-                      <button class="text-slate-400 hover:text-rose-500">
-                        <FiX class="h-4 w-4" />
+                      <button class='text-slate-400 hover:text-rose-500'>
+                        <FiX class='h-4 w-4' />
                       </button>
                     </div>
                   )}
@@ -315,39 +353,39 @@ function Step2ImportContent(props) {
 
         {/* Reference Manager */}
         <Show when={props.sources.reference}>
-          <div class="rounded-xl border border-slate-200 bg-white p-4">
-            <h3 class="mb-3 flex items-center gap-2 font-medium text-slate-900">
-              <FiFolder class="h-4 w-4 text-purple-500" />
+          <div class='rounded-xl border border-slate-200 bg-white p-4'>
+            <h3 class='mb-3 flex items-center gap-2 font-medium text-slate-900'>
+              <FiFolder class='h-4 w-4 text-purple-500' />
               Reference Manager Files
             </h3>
-            <div class="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-8 text-center hover:border-violet-300 hover:bg-violet-50/30 transition-all cursor-pointer">
-              <FiFolder class="mx-auto h-8 w-8 text-slate-400 mb-2" />
-              <p class="text-sm font-medium text-slate-700">Drop reference files or folders</p>
-              <p class="text-xs text-slate-400 mt-1">RIS, BibTeX (.bib), EndNote XML</p>
+            <div class='cursor-pointer rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-8 text-center transition-all hover:border-violet-300 hover:bg-violet-50/30'>
+              <FiFolder class='mx-auto mb-2 h-8 w-8 text-slate-400' />
+              <p class='text-sm font-medium text-slate-700'>Drop reference files or folders</p>
+              <p class='mt-1 text-xs text-slate-400'>RIS, BibTeX (.bib), EndNote XML</p>
             </div>
           </div>
         </Show>
 
         {/* DOI/PMID */}
         <Show when={props.sources.doi}>
-          <div class="rounded-xl border border-slate-200 bg-white p-4">
-            <h3 class="mb-3 flex items-center gap-2 font-medium text-slate-900">
-              <FiLink class="h-4 w-4 text-emerald-500" />
+          <div class='rounded-xl border border-slate-200 bg-white p-4'>
+            <h3 class='mb-3 flex items-center gap-2 font-medium text-slate-900'>
+              <FiLink class='h-4 w-4 text-emerald-500' />
               DOI / PMID Lookup
             </h3>
-            <div class="flex gap-2">
+            <div class='flex gap-2'>
               <input
-                type="text"
-                placeholder="Enter DOI or PMID (one per line)"
+                type='text'
+                placeholder='Enter DOI or PMID (one per line)'
                 value={doiInput()}
                 onInput={e => setDoiInput(e.target.value)}
-                class="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm placeholder-slate-400 focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-100"
+                class='flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm placeholder-slate-400 focus:border-violet-300 focus:ring-2 focus:ring-violet-100 focus:outline-none'
               />
-              <button class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors">
-                <FiSearch class="h-4 w-4" />
+              <button class='rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700'>
+                <FiSearch class='h-4 w-4' />
               </button>
             </div>
-            <p class="mt-2 text-xs text-slate-400">
+            <p class='mt-2 text-xs text-slate-400'>
               Examples: 10.1001/jama.2016.0086 or PMID: 26903338
             </p>
           </div>
@@ -355,10 +393,15 @@ function Step2ImportContent(props) {
 
         {/* Google Drive */}
         <Show when={props.sources.googleDrive}>
-          <div class="rounded-xl border border-slate-200 bg-white p-4">
-            <h3 class="mb-3 flex items-center gap-2 font-medium text-slate-900">
-              <svg class="h-4 w-4 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none" />
+          <div class='rounded-xl border border-slate-200 bg-white p-4'>
+            <h3 class='mb-3 flex items-center gap-2 font-medium text-slate-900'>
+              <svg class='h-4 w-4 text-amber-500' viewBox='0 0 24 24' fill='currentColor'>
+                <path
+                  d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'
+                  stroke='currentColor'
+                  stroke-width='2'
+                  fill='none'
+                />
               </svg>
               Google Drive
             </h3>
@@ -366,20 +409,22 @@ function Step2ImportContent(props) {
               when={driveConnected()}
               fallback={
                 <button
-                  class="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                  class='w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100'
                   onClick={() => setDriveConnected(true)}
                 >
                   Connect Google Drive
                 </button>
               }
             >
-              <div class="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2 text-sm text-emerald-700">
-                    <FiCheckCircle class="h-4 w-4" />
+              <div class='rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3'>
+                <div class='flex items-center justify-between'>
+                  <div class='flex items-center gap-2 text-sm text-emerald-700'>
+                    <FiCheckCircle class='h-4 w-4' />
                     Connected to Google Drive
                   </div>
-                  <button class="text-sm text-emerald-600 hover:text-emerald-700">Browse Files</button>
+                  <button class='text-sm text-emerald-600 hover:text-emerald-700'>
+                    Browse Files
+                  </button>
                 </div>
               </div>
             </Show>
@@ -395,61 +440,64 @@ function Step3ReviewDedupe(props) {
 
   const duplicates = createMemo(() => studies().filter(s => s.duplicate));
   const unique = createMemo(() => studies().filter(s => !s.duplicate));
-  const needsAttention = createMemo(() => studies().filter(s => s.metadataStatus === 'failed' || s.metadataStatus === 'partial'));
+  const needsAttention = createMemo(() =>
+    studies().filter(s => s.metadataStatus === 'failed' || s.metadataStatus === 'partial'),
+  );
 
-  const removeStudy = (id) => {
+  const removeStudy = id => {
     setStudies(prev => prev.filter(s => s.id !== id));
   };
 
   return (
-    <div class="space-y-6">
-      <div class="text-center">
-        <h2 class="text-xl font-semibold text-slate-900">Review & Confirm</h2>
-        <p class="mt-1 text-sm text-slate-500">
+    <div class='space-y-6'>
+      <div class='text-center'>
+        <h2 class='text-xl font-semibold text-slate-900'>Review & Confirm</h2>
+        <p class='mt-1 text-sm text-slate-500'>
           We found {unique().length} unique studies. Review and edit before adding.
         </p>
       </div>
 
       {/* Summary Stats */}
-      <div class="grid grid-cols-4 gap-3">
-        <div class="rounded-lg bg-slate-50 p-3 text-center">
-          <p class="text-2xl font-bold text-slate-900">{studies().length}</p>
-          <p class="text-xs text-slate-500">Total imported</p>
+      <div class='grid grid-cols-4 gap-3'>
+        <div class='rounded-lg bg-slate-50 p-3 text-center'>
+          <p class='text-2xl font-bold text-slate-900'>{studies().length}</p>
+          <p class='text-xs text-slate-500'>Total imported</p>
         </div>
-        <div class="rounded-lg bg-emerald-50 p-3 text-center">
-          <p class="text-2xl font-bold text-emerald-700">{unique().length}</p>
-          <p class="text-xs text-emerald-600">Unique studies</p>
+        <div class='rounded-lg bg-emerald-50 p-3 text-center'>
+          <p class='text-2xl font-bold text-emerald-700'>{unique().length}</p>
+          <p class='text-xs text-emerald-600'>Unique studies</p>
         </div>
-        <div class="rounded-lg bg-amber-50 p-3 text-center">
-          <p class="text-2xl font-bold text-amber-700">{duplicates().length}</p>
-          <p class="text-xs text-amber-600">Duplicates found</p>
+        <div class='rounded-lg bg-amber-50 p-3 text-center'>
+          <p class='text-2xl font-bold text-amber-700'>{duplicates().length}</p>
+          <p class='text-xs text-amber-600'>Duplicates found</p>
         </div>
-        <div class="rounded-lg bg-rose-50 p-3 text-center">
-          <p class="text-2xl font-bold text-rose-700">{needsAttention().length}</p>
-          <p class="text-xs text-rose-600">Needs attention</p>
+        <div class='rounded-lg bg-rose-50 p-3 text-center'>
+          <p class='text-2xl font-bold text-rose-700'>{needsAttention().length}</p>
+          <p class='text-xs text-rose-600'>Needs attention</p>
         </div>
       </div>
 
       {/* Duplicates Warning */}
       <Show when={duplicates().length > 0}>
-        <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <div class="flex items-start gap-3">
-            <FiAlertCircle class="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-            <div class="flex-1">
-              <p class="font-medium text-amber-800">Duplicates Detected</p>
-              <p class="text-sm text-amber-700 mt-1">
-                {duplicates().length} duplicate{duplicates().length > 1 ? 's' : ''} found across your import sources.
-                These will be automatically merged - we'll keep the best metadata and any attached PDFs.
+        <div class='rounded-lg border border-amber-200 bg-amber-50 p-4'>
+          <div class='flex items-start gap-3'>
+            <FiAlertCircle class='mt-0.5 h-5 w-5 shrink-0 text-amber-600' />
+            <div class='flex-1'>
+              <p class='font-medium text-amber-800'>Duplicates Detected</p>
+              <p class='mt-1 text-sm text-amber-700'>
+                {duplicates().length} duplicate{duplicates().length > 1 ? 's' : ''} found across
+                your import sources. These will be automatically merged - we'll keep the best
+                metadata and any attached PDFs.
               </p>
-              <div class="mt-3 space-y-2">
+              <div class='mt-3 space-y-2'>
                 <For each={duplicates()}>
                   {study => (
-                    <div class="flex items-center justify-between rounded bg-white/60 px-3 py-2 text-sm">
-                      <div class="flex items-center gap-2">
+                    <div class='flex items-center justify-between rounded bg-white/60 px-3 py-2 text-sm'>
+                      <div class='flex items-center gap-2'>
                         <SourceBadge source={study.source} />
-                        <span class="text-amber-900 truncate max-w-md">{study.title}</span>
+                        <span class='max-w-md truncate text-amber-900'>{study.title}</span>
                       </div>
-                      <span class="text-xs text-amber-600">Duplicate of #{study.duplicateOf}</span>
+                      <span class='text-xs text-amber-600'>Duplicate of #{study.duplicateOf}</span>
                     </div>
                   )}
                 </For>
@@ -460,30 +508,32 @@ function Step3ReviewDedupe(props) {
       </Show>
 
       {/* Studies List */}
-      <div class="rounded-xl border border-slate-200 bg-white">
-        <div class="border-b border-slate-100 px-4 py-3">
-          <h3 class="font-medium text-slate-900">Studies to Add ({unique().length})</h3>
+      <div class='rounded-xl border border-slate-200 bg-white'>
+        <div class='border-b border-slate-100 px-4 py-3'>
+          <h3 class='font-medium text-slate-900'>Studies to Add ({unique().length})</h3>
         </div>
-        <div class="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+        <div class='max-h-80 divide-y divide-slate-100 overflow-y-auto'>
           <For each={unique()}>
             {study => (
-              <div class={`p-4 hover:bg-slate-50 transition-colors ${study.metadataStatus === 'failed' ? 'bg-rose-50/50' : ''}`}>
-                <div class="flex items-start gap-3">
-                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
-                    <Show when={study.hasPdf} fallback={<FiFile class="h-5 w-5" />}>
-                      <FiFile class="h-5 w-5 text-violet-500" />
+              <div
+                class={`p-4 transition-colors hover:bg-slate-50 ${study.metadataStatus === 'failed' ? 'bg-rose-50/50' : ''}`}
+              >
+                <div class='flex items-start gap-3'>
+                  <div class='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400'>
+                    <Show when={study.hasPdf} fallback={<FiFile class='h-5 w-5' />}>
+                      <FiFile class='h-5 w-5 text-violet-500' />
                     </Show>
                   </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-1">
+                  <div class='min-w-0 flex-1'>
+                    <div class='mb-1 flex items-center gap-2'>
                       <SourceBadge source={study.source} />
                       <MetadataStatus status={study.metadataStatus} />
                     </div>
-                    <p class="font-medium text-slate-900 truncate">{study.title}</p>
+                    <p class='truncate font-medium text-slate-900'>{study.title}</p>
                     <Show when={study.authors}>
-                      <p class="text-sm text-slate-500 truncate">{study.authors}</p>
+                      <p class='truncate text-sm text-slate-500'>{study.authors}</p>
                     </Show>
-                    <div class="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                    <div class='mt-1 flex items-center gap-3 text-xs text-slate-400'>
                       <Show when={study.journal}>
                         <span>{study.journal}</span>
                       </Show>
@@ -491,28 +541,36 @@ function Step3ReviewDedupe(props) {
                         <span>{study.year}</span>
                       </Show>
                       <Show when={study.doi}>
-                        <span class="flex items-center gap-1">
-                          <FiExternalLink class="h-3 w-3" />
+                        <span class='flex items-center gap-1'>
+                          <FiExternalLink class='h-3 w-3' />
                           {study.doi}
                         </span>
                       </Show>
                     </div>
                   </div>
-                  <div class="flex items-center gap-1 shrink-0">
-                    <Show when={study.metadataStatus === 'partial' || study.metadataStatus === 'failed'}>
-                      <button class="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-violet-600 transition-colors" title="Edit metadata">
-                        <FiEdit2 class="h-4 w-4" />
+                  <div class='flex shrink-0 items-center gap-1'>
+                    <Show
+                      when={study.metadataStatus === 'partial' || study.metadataStatus === 'failed'}
+                    >
+                      <button
+                        class='rounded p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-violet-600'
+                        title='Edit metadata'
+                      >
+                        <FiEdit2 class='h-4 w-4' />
                       </button>
-                      <button class="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-amber-600 transition-colors" title="Retry metadata extraction">
-                        <FiRefreshCw class="h-4 w-4" />
+                      <button
+                        class='rounded p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-amber-600'
+                        title='Retry metadata extraction'
+                      >
+                        <FiRefreshCw class='h-4 w-4' />
                       </button>
                     </Show>
                     <button
-                      class="rounded p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                      class='rounded p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600'
                       onClick={() => removeStudy(study.id)}
-                      title="Remove"
+                      title='Remove'
                     >
-                      <FiTrash2 class="h-4 w-4" />
+                      <FiTrash2 class='h-4 w-4' />
                     </button>
                   </div>
                 </div>
@@ -541,7 +599,7 @@ export default function AddStudiesWizard() {
 
   const steps = ['Select Sources', 'Import', 'Review'];
 
-  const toggleSource = (source) => {
+  const toggleSource = source => {
     setSelectedSources(prev => ({ ...prev, [source]: !prev[source] }));
   };
 
@@ -551,40 +609,37 @@ export default function AddStudiesWizard() {
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 0));
 
   return (
-    <div class="min-h-screen bg-slate-100 p-8">
+    <div class='min-h-screen bg-slate-100 p-8'>
       {/* Demo Controls */}
-      <div class="mx-auto max-w-2xl mb-6">
-        <div class="rounded-lg bg-amber-50 border border-amber-200 p-4">
-          <p class="text-sm text-amber-800">
-            <strong>Mock Preview:</strong> Add Studies Wizard Flow.
-            Click through the steps to see the full workflow.
+      <div class='mx-auto mb-6 max-w-2xl'>
+        <div class='rounded-lg border border-amber-200 bg-amber-50 p-4'>
+          <p class='text-sm text-amber-800'>
+            <strong>Mock Preview:</strong> Add Studies Wizard Flow. Click through the steps to see
+            the full workflow.
           </p>
         </div>
       </div>
 
       {/* Modal Backdrop */}
       <Show when={isOpen()}>
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm'>
           {/* Modal */}
-          <div class="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+          <div class='relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl'>
             {/* Header */}
-            <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+            <div class='flex items-center justify-between border-b border-slate-100 px-6 py-4'>
               <StepIndicator steps={steps} currentStep={currentStep()} />
               <button
-                class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                class='rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600'
                 onClick={() => setIsOpen(false)}
               >
-                <FiX class="h-5 w-5" />
+                <FiX class='h-5 w-5' />
               </button>
             </div>
 
             {/* Content */}
-            <div class="px-6 py-6">
+            <div class='px-6 py-6'>
               <Show when={currentStep() === 0}>
-                <Step1SelectSources
-                  sources={selectedSources()}
-                  toggleSource={toggleSource}
-                />
+                <Step1SelectSources sources={selectedSources()} toggleSource={toggleSource} />
               </Show>
               <Show when={currentStep() === 1}>
                 <Step2ImportContent sources={selectedSources()} />
@@ -595,20 +650,20 @@ export default function AddStudiesWizard() {
             </div>
 
             {/* Footer */}
-            <div class="flex items-center justify-between border-t border-slate-100 px-6 py-4">
+            <div class='flex items-center justify-between border-t border-slate-100 px-6 py-4'>
               <Show when={currentStep() > 0} fallback={<div />}>
                 <button
-                  class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
+                  class='flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100'
                   onClick={prevStep}
                 >
-                  <FiChevronLeft class="h-4 w-4" />
+                  <FiChevronLeft class='h-4 w-4' />
                   Back
                 </button>
               </Show>
 
-              <div class="flex items-center gap-3">
+              <div class='flex items-center gap-3'>
                 <button
-                  class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
+                  class='rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100'
                   onClick={() => setIsOpen(false)}
                 >
                   Cancel
@@ -616,19 +671,19 @@ export default function AddStudiesWizard() {
                 <Show
                   when={currentStep() < steps.length - 1}
                   fallback={
-                    <button class="flex items-center gap-2 rounded-lg bg-violet-600 px-6 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors">
-                      <FiCheck class="h-4 w-4" />
+                    <button class='flex items-center gap-2 rounded-lg bg-violet-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-700'>
+                      <FiCheck class='h-4 w-4' />
                       Add 4 Studies
                     </button>
                   }
                 >
                   <button
-                    class="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    class='flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50'
                     onClick={nextStep}
                     disabled={currentStep() === 0 && !hasSelectedSource()}
                   >
                     Continue
-                    <FiChevronRight class="h-4 w-4" />
+                    <FiChevronRight class='h-4 w-4' />
                   </button>
                 </Show>
               </div>
@@ -639,9 +694,9 @@ export default function AddStudiesWizard() {
 
       {/* Reopen Button */}
       <Show when={!isOpen()}>
-        <div class="mx-auto max-w-2xl">
+        <div class='mx-auto max-w-2xl'>
           <button
-            class="w-full rounded-lg bg-violet-600 px-4 py-3 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
+            class='w-full rounded-lg bg-violet-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-violet-700'
             onClick={() => {
               setIsOpen(true);
               setCurrentStep(0);

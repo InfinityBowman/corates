@@ -345,7 +345,8 @@ export default function ProjectViewKanban() {
           <div class='mx-auto max-w-[1600px] px-6 py-4'>
             <div class='flex items-center justify-between'>
               {/* Left: Back + Project Info */}
-              <div class='flex items-center gap-4'>""
+              <div class='flex items-center gap-4'>
+                ""
                 <button class='flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900'>
                   <FiArrowLeft class='h-4 w-4' />
                 </button>

@@ -23,16 +23,16 @@ export default function MockIndex() {
           <h2 class='mb-3 text-lg font-semibold text-gray-700'>Featured</h2>
           <A
             href='/mocks/project-view-complete'
-            class='block rounded-lg border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-white p-6 shadow-sm transition-all hover:shadow-md hover:border-violet-300'
+            class='block rounded-lg border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-white p-6 shadow-sm transition-all hover:border-violet-300 hover:shadow-md'
           >
             <div class='flex items-start justify-between'>
               <div>
                 <h3 class='mb-2 text-lg font-semibold text-gray-900'>
                   ProjectView - Complete Workflow
                 </h3>
-                <p class='text-sm text-gray-600 mb-3'>
-                  Full workflow with tabs for Team, Studies, To Do, Reconcile, Completed, and Charts.
-                  Light-mode dashboard style with progress indicators and clear navigation.
+                <p class='mb-3 text-sm text-gray-600'>
+                  Full workflow with tabs for Team, Studies, To Do, Reconcile, Completed, and
+                  Charts. Light-mode dashboard style with progress indicators and clear navigation.
                 </p>
                 <div class='flex flex-wrap gap-2'>
                   <span class='inline-block rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700'>
@@ -65,9 +65,7 @@ export default function MockIndex() {
               href='/mocks/add-studies-wizard'
               class='block rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md'
             >
-              <h3 class='mb-2 text-lg font-semibold text-gray-900'>
-                Add Studies - Wizard Modal
-              </h3>
+              <h3 class='mb-2 text-lg font-semibold text-gray-900'>Add Studies - Wizard Modal</h3>
               <p class='text-sm text-gray-600'>
                 Step-by-step wizard flow: Select sources, import content, review and dedupe,
                 confirm. Best for guided onboarding and complex imports.
@@ -90,8 +88,8 @@ export default function MockIndex() {
                 Add Studies - Slide-over Panel
               </h3>
               <p class='text-sm text-gray-600'>
-                Tabbed slide-over panel with all import sources available at once. Real-time
-                staging area shows studies as they're added with live dedup feedback.
+                Tabbed slide-over panel with all import sources available at once. Real-time staging
+                area shows studies as they're added with live dedup feedback.
               </p>
               <div class='mt-3 flex gap-2'>
                 <span class='inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700'>
@@ -111,8 +109,8 @@ export default function MockIndex() {
                 Add Studies - Inline Progressive
               </h3>
               <p class='text-sm text-gray-600'>
-                Lives directly on the page. Drop zone first with progressive disclosure for
-                other import options. Good for quick additions without losing context.
+                Lives directly on the page. Drop zone first with progressive disclosure for other
+                import options. Good for quick additions without losing context.
               </p>
               <div class='mt-3 flex gap-2'>
                 <span class='inline-block rounded-full bg-rose-100 px-3 py-1 text-xs font-medium text-rose-700'>
