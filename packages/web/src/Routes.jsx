@@ -37,7 +37,10 @@ const ProjectViewComplete = lazy(() => import('@/components/mocks/ProjectViewCom
 const AddStudiesWizard = lazy(() => import('@/components/mocks/AddStudiesWizard.jsx'));
 const AddStudiesPanel = lazy(() => import('@/components/mocks/AddStudiesPanel.jsx'));
 const AddStudiesInline = lazy(() => import('@/components/mocks/AddStudiesInline.jsx'));
-
+const SettingsMockBento = lazy(() => import('@/components/mocks/SettingsMockBento.jsx'));
+const SettingsMockMinimal = lazy(() => import('@/components/mocks/SettingsMockMinimal.jsx'));
+const DashboardMock = lazy(() => import('@/components/mocks/DashboardMock.jsx'));
+('');
 // Code-split admin routes - loaded only when navigating to /admin/*
 const AdminDashboard = lazy(() =>
   import('@/components/admin/index.js').then(m => ({ default: m.AdminDashboard })),
@@ -76,7 +79,6 @@ export default function AppRoutes() {
         {/* Dashboard - public home for all users */}
         <Route path='/' component={Dashboard} />
         <Route path='/dashboard' component={Dashboard} />
-
         {/* Protected routes - requires login */}
         <Route path='/' component={ProtectedGuard}>
           {/* Global user routes (no sidebar) */}
@@ -119,11 +121,9 @@ export default function AppRoutes() {
             />
           </Route>
         </Route>
-
         {/* Local checklists (not org-scoped, work offline) */}
         <Route path='/checklist/*' component={LocalChecklistView} />
         <Route path='/checklist/:checklistId' component={LocalChecklistView} />
-
         {/* Mock routes - public, visual-only wireframes */}
         <Route path='/mocks' component={MockIndex} />
         <Route path='/mocks/project-view-editorial' component={ProjectViewEditorial} />
@@ -133,6 +133,9 @@ export default function AppRoutes() {
         <Route path='/mocks/add-studies-wizard' component={AddStudiesWizard} />
         <Route path='/mocks/add-studies-panel' component={AddStudiesPanel} />
         <Route path='/mocks/add-studies-inline' component={AddStudiesInline} />
+        <Route path='/mocks/settings-bento' component={SettingsMockBento} />
+        <Route path='/mocks/settings-minimal' component={SettingsMockMinimal} />
+        <Route path='/mocks/dashboard' component={DashboardMock} />
       </Route>
       <Route path='*' component={NotFoundPage} />
     </Router>
