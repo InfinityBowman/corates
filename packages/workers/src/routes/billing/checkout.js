@@ -11,6 +11,7 @@ import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/sh
 import Stripe from 'stripe';
 import { createLogger, truncateError, withTiming } from '@/lib/observability/logger.js';
 import { billingCheckoutRateLimit } from '@/middleware/rateLimit.js';
+import { billingSchemas, validateRequest } from '@/config/validation.js';
 import { resolveOrgIdWithRole } from './helpers/orgContext.js';
 import { requireOrgOwner } from './helpers/ownerGate.js';
 
@@ -20,16 +21,11 @@ const billingCheckoutRoutes = new Hono();
  * POST /validate-coupon
  * Validate a promotion code and return discount details
  */
-billingCheckoutRoutes.post('/validate-coupon', requireAuth, async c => {
+billingCheckoutRoutes.post('/validate-coupon', requireAuth, validateRequest(billingSchemas.validateCoupon), async c => {
   const logger = createLogger({ c, service: 'billing', env: c.env });
 
   try {
-    const body = await c.req.json();
-    const { code } = body;
-
-    if (!code || typeof code !== 'string' || code.trim().length === 0) {
-      return c.json({ valid: false, error: 'Please enter a promo code' });
-    }
+    const { code } = c.get('validatedBody');
 
     if (!c.env.STRIPE_SECRET_KEY) {
       logger.error('validate_coupon_failed', { error: 'Stripe not configured' });
@@ -42,7 +38,7 @@ billingCheckoutRoutes.post('/validate-coupon', requireAuth, async c => {
 
     // Look up promotion code (user-facing codes)
     const promoCodes = await stripe.promotionCodes.list({
-      code: code.trim().toUpperCase(),
+      code: code,
       active: true,
       limit: 1,
     });
