@@ -20,13 +20,13 @@ export default function OrgQuickActions(props) {
   const loading = () => props.loading;
 
   return (
-    <div class='rounded-lg border border-gray-200 bg-white p-6'>
+    <div class='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
       <h2 class='mb-4 text-lg font-semibold text-gray-900'>Quick Actions</h2>
       <div class='flex flex-wrap gap-3'>
         <button
           onClick={() => props.onGrantTrial?.()}
           disabled={loading()}
-          class='inline-flex items-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50'
+          class='inline-flex items-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50'
         >
           <FiPlus class='h-4 w-4' />
           <span>Grant Trial (14 days)</span>
@@ -34,7 +34,7 @@ export default function OrgQuickActions(props) {
         <button
           onClick={() => props.onGrantSingleProject?.()}
           disabled={loading()}
-          class='inline-flex items-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50'
+          class='inline-flex items-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50'
         >
           <FiPlus class='h-4 w-4' />
           <span>Grant Single Project (6 months)</span>

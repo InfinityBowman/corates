@@ -75,15 +75,64 @@ export function useAdminUsers(getParams) {
 /**
  * Hook to fetch single user details
  */
-export function useAdminUserDetails(userId) {
-  return useQuery(() => ({
-    queryKey: queryKeys.admin.userDetails(userId),
-    queryFn: () => adminFetch(`users/${userId}`),
-    enabled: !!userId,
-    staleTime: 0, // Always consider data stale to force refetch
-    gcTime: 1000 * 60 * 5, // 5 minutes
-    refetchOnMount: 'always', // Always refetch on mount, even if data exists
-  }));
+export function useAdminUserDetails(getUserId) {
+  return useQuery(() => {
+    const userId = typeof getUserId === 'function' ? getUserId() : getUserId;
+    return {
+      queryKey: queryKeys.admin.userDetails(userId),
+      queryFn: () => adminFetch(`users/${userId}`),
+      enabled: !!userId,
+      staleTime: 0, // Always consider data stale to force refetch
+      gcTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnMount: 'always', // Always refetch on mount, even if data exists
+    };
+  });
+}
+
+/**
+ * Hook to fetch projects with pagination and search
+ * @param {() => {page: number, limit: number, search: string, orgId: string}} getParams - Function returning params
+ */
+export function useAdminProjects(getParams) {
+  return useQuery(() => {
+    const params = typeof getParams === 'function' ? getParams() : getParams;
+    const page = params?.page ?? 1;
+    const limit = params?.limit ?? 20;
+    const search = params?.search ?? '';
+    const orgId = params?.orgId ?? '';
+    return {
+      queryKey: queryKeys.admin.projects(page, limit, search, orgId),
+      queryFn: () => {
+        const searchParams = new URLSearchParams({
+          page: page.toString(),
+          limit: limit.toString(),
+        });
+        if (search) searchParams.set('search', search);
+        if (orgId) searchParams.set('orgId', orgId);
+        return adminFetch(`projects?${searchParams.toString()}`);
+      },
+      staleTime: 0,
+      gcTime: 1000 * 60 * 5,
+      refetchOnMount: 'always',
+    };
+  });
+}
+
+/**
+ * Hook to fetch single project details
+ */
+export function useAdminProjectDetails(getProjectId) {
+  return useQuery(() => {
+    const projectId = typeof getProjectId === 'function' ? getProjectId() : getProjectId;
+    return {
+      queryKey: queryKeys.admin.projectDetails(projectId),
+      queryFn: () => adminFetch(`projects/${projectId}`),
+      enabled: !!projectId,
+      staleTime: 0,
+      gcTime: 1000 * 60 * 5,
+      refetchOnMount: 'always',
+    };
+  });
 }
 
 /**
@@ -151,29 +200,35 @@ export function useAdminOrgs(getParams) {
 /**
  * Hook to fetch single org details
  */
-export function useAdminOrgDetails(orgId) {
-  return useQuery(() => ({
-    queryKey: queryKeys.admin.orgDetails(orgId),
-    queryFn: () => fetchOrgDetails(orgId),
-    enabled: !!orgId,
-    staleTime: 0,
-    gcTime: 1000 * 60 * 5,
-    refetchOnMount: 'always',
-  }));
+export function useAdminOrgDetails(getOrgId) {
+  return useQuery(() => {
+    const orgId = typeof getOrgId === 'function' ? getOrgId() : getOrgId;
+    return {
+      queryKey: queryKeys.admin.orgDetails(orgId),
+      queryFn: () => fetchOrgDetails(orgId),
+      enabled: !!orgId,
+      staleTime: 0,
+      gcTime: 1000 * 60 * 5,
+      refetchOnMount: 'always',
+    };
+  });
 }
 
 /**
  * Hook to fetch org billing details
  */
-export function useAdminOrgBilling(orgId) {
-  return useQuery(() => ({
-    queryKey: queryKeys.admin.orgBilling(orgId),
-    queryFn: () => fetchOrgBilling(orgId),
-    enabled: !!orgId,
-    staleTime: 0,
-    gcTime: 1000 * 60 * 5,
-    refetchOnMount: 'always',
-  }));
+export function useAdminOrgBilling(getOrgId) {
+  return useQuery(() => {
+    const orgId = typeof getOrgId === 'function' ? getOrgId() : getOrgId;
+    return {
+      queryKey: queryKeys.admin.orgBilling(orgId),
+      queryFn: () => fetchOrgBilling(orgId),
+      enabled: !!orgId,
+      staleTime: 0,
+      gcTime: 1000 * 60 * 5,
+      refetchOnMount: 'always',
+    };
+  });
 }
 
 /**

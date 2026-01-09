@@ -352,7 +352,7 @@ userRoutes.post('/users/:userId/ban', validateRequest(userSchemas.ban), async c 
  * POST /api/admin/users/:userId/unban
  * Unban a user
  */
-userRoutes.post('/users/:userId/unban', async c => {
+userRoutes.post('/users/:userId/unban', validateRequest(userSchemas.unban), async c => {
   const userId = c.req.param('userId');
   const db = createDb(c.env.DB);
 
@@ -383,9 +383,10 @@ userRoutes.post('/users/:userId/unban', async c => {
  * Start impersonating a user (creates a new session)
  * Requires user to have 'admin' role in database
  */
-userRoutes.post('/users/:userId/impersonate', async c => {
+userRoutes.post('/users/:userId/impersonate', validateRequest(userSchemas.impersonate), async c => {
   const userId = c.req.param('userId');
   const adminUser = c.get('user');
+  const body = c.get('validatedBody');
 
   try {
     // Don't allow impersonating yourself
@@ -417,7 +418,7 @@ userRoutes.post('/users/:userId/impersonate', async c => {
     const authRequest = new Request(authUrl.toString(), {
       method: 'POST',
       headers,
-      body: JSON.stringify({ userId }),
+      body: JSON.stringify({ userId: body.userId }),
     });
 
     // Let Better Auth handle the request (this properly sets cookies)
@@ -459,6 +460,47 @@ userRoutes.delete('/users/:userId/sessions', async c => {
     console.error('Error revoking sessions:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'revoke_sessions',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
+  }
+});
+
+/**
+ * DELETE /api/admin/users/:userId/sessions/:sessionId
+ * Revoke a specific session for a user
+ */
+userRoutes.delete('/users/:userId/sessions/:sessionId', async c => {
+  const userId = c.req.param('userId');
+  const sessionId = c.req.param('sessionId');
+  const db = createDb(c.env.DB);
+
+  try {
+    // Verify the session belongs to the user
+    const [existingSession] = await db
+      .select({ id: session.id, userId: session.userId })
+      .from(session)
+      .where(eq(session.id, sessionId))
+      .limit(1);
+
+    if (!existingSession) {
+      const error = createDomainError(USER_ERRORS.NOT_FOUND, { sessionId });
+      return c.json(error, error.statusCode);
+    }
+
+    // Verify session belongs to the specified user
+    if (existingSession.userId !== userId) {
+      const error = createDomainError(USER_ERRORS.NOT_FOUND, { sessionId });
+      return c.json(error, error.statusCode);
+    }
+
+    await db.delete(session).where(eq(session.id, sessionId));
+
+    return c.json({ success: true, message: 'Session revoked' });
+  } catch (error) {
+    console.error('Error revoking session:', error);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'revoke_session',
       originalError: error.message,
     });
     return c.json(dbError, dbError.statusCode);

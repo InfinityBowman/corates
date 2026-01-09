@@ -12,6 +12,9 @@ import { billingRoutes } from './billing.js';
 import { billingObservabilityRoutes } from './billing-observability.js';
 import { orgRoutes } from './orgs.js';
 import { databaseRoutes } from './database.js';
+import { projectRoutes } from './projects.js';
+import { stripeToolsRoutes } from './stripe-tools.js';
+import { statsRoutes } from './stats.js';
 
 const adminRoutes = new Hono();
 
@@ -27,5 +30,8 @@ adminRoutes.route('/', billingRoutes);
 adminRoutes.route('/', billingObservabilityRoutes);
 adminRoutes.route('/', orgRoutes);
 adminRoutes.route('/', databaseRoutes);
+adminRoutes.route('/', projectRoutes);
+adminRoutes.route('/', stripeToolsRoutes);
+adminRoutes.route('/stats', statsRoutes);
 
 export { adminRoutes };

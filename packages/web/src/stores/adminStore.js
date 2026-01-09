@@ -126,6 +126,15 @@ async function revokeUserSessions(userId) {
 }
 
 /**
+ * Revoke a specific session for a user
+ */
+async function revokeUserSession(userId, sessionId) {
+  return apiFetch.delete(`/api/admin/users/${userId}/sessions/${sessionId}`, {
+    toastMessage: false,
+  });
+}
+
+/**
  * Delete a user
  */
 async function deleteUser(userId) {
@@ -338,6 +347,51 @@ async function fetchOrgBillingReconcile(
   });
 }
 
+/**
+ * Fetch projects with pagination and search
+ */
+async function fetchProjects({ page = 1, limit = 20, search = '', orgId = '' } = {}) {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+  if (search) params.set('search', search);
+  if (orgId) params.set('orgId', orgId);
+
+  return apiFetch.get(`/api/admin/projects?${params}`, { toastMessage: false });
+}
+
+/**
+ * Fetch single project details
+ */
+async function fetchProjectDetails(projectId) {
+  return apiFetch.get(`/api/admin/projects/${projectId}`, { toastMessage: false });
+}
+
+/**
+ * Remove a member from a project
+ */
+async function removeProjectMember(projectId, memberId) {
+  await apiFetch.delete(`/api/admin/projects/${projectId}/members/${memberId}`, {
+    toastMessage: false,
+  });
+  // Invalidate project detail query
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.projectDetails(projectId) });
+  // Invalidate all projects list queries with partial matching
+  queryClient.invalidateQueries({ queryKey: ['adminProjects'], exact: false });
+}
+
+/**
+ * Delete a project
+ */
+async function deleteProject(projectId) {
+  await apiFetch.delete(`/api/admin/projects/${projectId}`, { toastMessage: false });
+  // Invalidate project detail query
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.projectDetails(projectId) });
+  // Invalidate all projects list queries with partial matching
+  queryClient.invalidateQueries({ queryKey: ['adminProjects'], exact: false });
+}
+
 export {
   isAdmin,
   isAdminChecked,
@@ -353,6 +407,7 @@ export {
   impersonateUser,
   stopImpersonation,
   revokeUserSessions,
+  revokeUserSession,
   deleteUser,
   fetchStorageDocuments,
   deleteStorageDocuments,
@@ -371,4 +426,8 @@ export {
   fetchBillingLedger,
   fetchBillingStuckStates,
   fetchOrgBillingReconcile,
+  fetchProjects,
+  fetchProjectDetails,
+  removeProjectMember,
+  deleteProject,
 };

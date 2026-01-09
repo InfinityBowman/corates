@@ -14,17 +14,22 @@ import {
   FiLoader,
   FiAlertCircle,
   FiServer,
+  FiFolder,
+  FiCreditCard,
 } from 'solid-icons/fi';
 import { A } from '@solidjs/router';
 import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.js';
+import { DashboardBody } from './ui/index.js';
 
 const navItems = [
   { path: '/admin', label: 'Dashboard', icon: FiShield },
   { path: '/admin/orgs', label: 'Organizations', icon: FiHome },
+  { path: '/admin/projects', label: 'Projects', icon: FiFolder },
   { path: '/admin/storage', label: 'Storage', icon: FiDatabase },
   { path: '/admin/database', label: 'Database', icon: FiServer },
   { path: '/admin/billing/ledger', label: 'Event Ledger', icon: FiFilter },
   { path: '/admin/billing/stuck-states', label: 'Stuck States', icon: FiAlertTriangle },
+  { path: '/admin/billing/stripe-tools', label: 'Stripe Tools', icon: FiCreditCard },
 ];
 
 export default function AdminLayout(props) {
@@ -65,7 +70,7 @@ export default function AdminLayout(props) {
           </div>
         }
       >
-        <div class='mx-auto'>
+        <div class='mx-auto min-h-full bg-gray-50'>
           {/* Navbar */}
           <div class='border-b border-gray-200 bg-white'>
             <div class='px-6'>
@@ -94,7 +99,7 @@ export default function AdminLayout(props) {
           </div>
 
           {/* Page Content */}
-          <div class='p-6'>{props.children}</div>
+          <DashboardBody>{props.children}</DashboardBody>
         </div>
       </Show>
     </Show>

@@ -21,6 +21,7 @@ import {
 } from '@/stores/adminStore.js';
 import { Dialog, showToast } from '@corates/ui';
 import { handleError } from '@/lib/error-utils.js';
+import { AdminBox } from './ui/index.js';
 import OrgBillingSummary from './OrgBillingSummary.jsx';
 import OrgQuickActions from './OrgQuickActions.jsx';
 import SubscriptionList from './SubscriptionList.jsx';
@@ -33,9 +34,9 @@ export default function OrgDetail() {
   const params = useParams();
   const orgId = () => params.orgId;
 
-  // Fetch org details and billing
-  const orgDetailsQuery = useAdminOrgDetails(orgId());
-  const billingQuery = useAdminOrgBilling(orgId());
+  // Fetch org details and billing - pass accessors so hooks can track changes
+  const orgDetailsQuery = useAdminOrgDetails(orgId);
+  const billingQuery = useAdminOrgBilling(orgId);
   const orgDetails = () => orgDetailsQuery.data;
   const billing = () => billingQuery.data;
 
@@ -321,7 +322,7 @@ export default function OrgDetail() {
         {/* Stats */}
         <Show when={orgDetails()}>
           <div class='mb-6 grid grid-cols-1 gap-4 md:grid-cols-3'>
-            <div class='rounded-lg border border-gray-200 bg-white p-4'>
+            <AdminBox padding='sm'>
               <div class='flex items-center space-x-2'>
                 <FiUsers class='h-5 w-5 text-gray-400' />
                 <div>
@@ -331,8 +332,8 @@ export default function OrgDetail() {
                   </p>
                 </div>
               </div>
-            </div>
-            <div class='rounded-lg border border-gray-200 bg-white p-4'>
+            </AdminBox>
+            <AdminBox padding='sm'>
               <div class='flex items-center space-x-2'>
                 <FiFolder class='h-5 w-5 text-gray-400' />
                 <div>
@@ -342,7 +343,7 @@ export default function OrgDetail() {
                   </p>
                 </div>
               </div>
-            </div>
+            </AdminBox>
           </div>
         </Show>
 

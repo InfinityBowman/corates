@@ -5,8 +5,16 @@
 
 import { createSignal, Show, For } from 'solid-js';
 import { A } from '@solidjs/router';
-import { FiLoader, FiAlertCircle, FiAlertTriangle, FiCheckCircle } from 'solid-icons/fi';
+import {
+  FiLoader,
+  FiAlertCircle,
+  FiAlertTriangle,
+  FiCheckCircle,
+  FiRefreshCw,
+} from 'solid-icons/fi';
 import { useAdminBillingStuckStates } from '@primitives/useAdminQueries.js';
+import { DashboardHeader, AdminBox } from '../ui/index.js';
+import { input } from '../styles/admin-tokens.js';
 
 export default function AdminBillingStuckStatesPage() {
   const [incompleteThreshold, setIncompleteThreshold] = createSignal(30);
@@ -94,47 +102,45 @@ export default function AdminBillingStuckStatesPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div class='mb-6 flex items-center justify-between'>
-        <div class='flex items-center space-x-3'>
-          <div class='flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100'>
-            <FiAlertTriangle class='h-6 w-6 text-orange-600' />
+      <DashboardHeader
+        icon={FiAlertTriangle}
+        title='Stuck Billing States'
+        description='Organizations with billing issues requiring attention'
+        iconColor='orange'
+        actions={
+          <div class='flex items-center gap-2'>
+            <div class='flex items-center space-x-2'>
+              <label class='text-sm text-gray-600'>Threshold (min):</label>
+              <input
+                type='number'
+                value={incompleteThreshold()}
+                onInput={e => setIncompleteThreshold(parseInt(e.target.value, 10))}
+                min='1'
+                class={`w-20 ${input.base}`}
+              />
+            </div>
+            <button
+              onClick={() => stuckStatesQuery.refetch()}
+              class='inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs hover:bg-gray-50 focus:ring-[3px] focus:ring-blue-100 focus:outline-none'
+              disabled={stuckStatesQuery.isFetching}
+            >
+              {stuckStatesQuery.isFetching ?
+                <FiLoader class='h-4 w-4 animate-spin' />
+              : <>
+                  <FiRefreshCw class='h-4 w-4' /> Refresh
+                </>
+              }
+            </button>
           </div>
-          <div>
-            <h1 class='text-2xl font-bold text-gray-900'>Stuck Billing States</h1>
-            <p class='text-sm text-gray-500'>
-              Organizations with billing issues requiring attention
-            </p>
-          </div>
-        </div>
-        <div class='flex items-center gap-2'>
-          <div class='flex items-center space-x-2'>
-            <label class='text-sm text-gray-600'>Threshold (min):</label>
-            <input
-              type='number'
-              value={incompleteThreshold()}
-              onInput={e => setIncompleteThreshold(parseInt(e.target.value, 10))}
-              min='1'
-              class='w-20 rounded-md border-gray-300 text-sm'
-            />
-          </div>
-          <button
-            onClick={() => stuckStatesQuery.refetch()}
-            class='rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
-            disabled={stuckStatesQuery.isFetching}
-          >
-            {stuckStatesQuery.isFetching ?
-              <FiLoader class='h-4 w-4 animate-spin' />
-            : 'Refresh'}
-          </button>
-        </div>
-      </div>
+        }
+      />
+
       {checkedAt() && (
         <p class='mb-6 text-sm text-gray-500'>Last checked: {formatDate(checkedAt())}</p>
       )}
 
       {/* Summary */}
-      <div class='mb-6 rounded-lg border border-gray-200 bg-white p-4'>
+      <AdminBox class='mb-6'>
         <div class='flex items-center justify-between'>
           <div>
             <p class='text-lg font-semibold text-gray-900'>
@@ -146,7 +152,7 @@ export default function AdminBillingStuckStatesPage() {
             </p>
           </div>
         </div>
-      </div>
+      </AdminBox>
 
       {/* Stuck Orgs by Type */}
       <Show
@@ -160,11 +166,11 @@ export default function AdminBillingStuckStatesPage() {
         <Show
           when={stuckOrgs().length > 0}
           fallback={
-            <div class='rounded-lg border border-gray-200 bg-white p-12 text-center'>
+            <AdminBox class='p-12 text-center'>
               <FiCheckCircle class='mx-auto mb-4 h-12 w-12 text-green-500' />
               <p class='text-lg font-medium text-gray-900'>No stuck states found</p>
               <p class='text-sm text-gray-500'>All organizations have healthy billing states</p>
-            </div>
+            </AdminBox>
           }
         >
           <div class='space-y-6'>
@@ -173,7 +179,7 @@ export default function AdminBillingStuckStatesPage() {
                 const Icon = getStuckStateSeverityIcon(type);
                 const steps = getInvestigationSteps(type);
                 return (
-                  <div class='rounded-lg border border-gray-200 bg-white'>
+                  <AdminBox padding='compact' class='overflow-hidden p-0'>
                     <div class='border-b border-gray-200 px-6 py-4'>
                       <div class='flex items-center space-x-3'>
                         <Icon class='h-5 w-5 text-orange-600' />
@@ -249,7 +255,7 @@ export default function AdminBillingStuckStatesPage() {
                         </For>
                       </div>
                     </div>
-                  </div>
+                  </AdminBox>
                 );
               }}
             </For>

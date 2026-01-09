@@ -44,6 +44,12 @@ const AdminBillingStuckStatesPage = lazy(
   () => import('@/components/admin/billing-observability/AdminBillingStuckStatesPage.jsx'),
 );
 const DatabaseViewer = lazy(() => import('@/components/admin/DatabaseViewer.jsx'));
+const UserDetail = lazy(() => import('@/components/admin/UserDetail.jsx'));
+const ProjectList = lazy(() => import('@/components/admin/ProjectList.jsx'));
+const ProjectDetail = lazy(() => import('@/components/admin/ProjectDetail.jsx'));
+const StripeToolsPage = lazy(
+  () => import('@/components/admin/billing-observability/StripeToolsPage.jsx'),
+);
 
 export default function AppRoutes() {
   return (
@@ -67,7 +73,6 @@ export default function AppRoutes() {
         <Route path='/' component={ProtectedGuard}>
           {/* Global user routes (no sidebar) */}
           <Route path='/profile' component={ProfilePage} />
-
           {/* Settings routes with settings sidebar */}
           <Route path='/settings' component={SettingsLayout}>
             <Route path='/' component={SettingsIndex} />
@@ -77,23 +82,23 @@ export default function AppRoutes() {
             <Route path='/notifications' component={NotificationsSettings} />
             <Route path='/general' component={GeneralSettings} />
           </Route>
-
           <Route path='/admin' component={AdminLayout}>
             <Route path='/' component={AdminDashboard} />
             <Route path='/orgs' component={OrgList} />
             <Route path='/orgs/:orgId' component={OrgDetail} />
+            <Route path='/users/:userId' component={UserDetail} />
+            <Route path='/projects/*' component={ProjectList} />
+            <Route path='/projects/:projectId' component={ProjectDetail} />
             <Route path='/storage' component={StorageManagement} />
             <Route path='/billing/ledger' component={AdminBillingLedgerPage} />
             <Route path='/billing/stuck-states' component={AdminBillingStuckStatesPage} />
+            <Route path='/billing/stripe-tools' component={StripeToolsPage} />
             <Route path='/database' component={DatabaseViewer} />
           </Route>
-
           {/* Organization creation */}
           <Route path='/orgs/new' component={CreateOrgPage} />
-
           {/* Project-scoped routes */}
           <Route path='/projects/:projectId' component={ProjectView} />
-
           {/* Project-scoped checklist routes */}
           <Route
             path='/projects/:projectId/studies/:studyId/checklists/:checklistId'

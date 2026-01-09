@@ -17,6 +17,8 @@ import {
 import { deleteStorageDocuments } from '@/stores/adminStore.js';
 import { useStorageDocuments } from '@primitives/useAdminQueries.js';
 import { Dialog, showToast } from '@corates/ui';
+import { DashboardHeader, AdminSection, AdminBox } from './ui/index.js';
+import { input, table } from './styles/admin-tokens.js';
 
 function formatFileSize(bytes) {
   if (!bytes) return '0 B';
@@ -185,16 +187,11 @@ export default function StorageManagement() {
 
   return (
     <>
-      {/* Header */}
-      <div class='mb-8 flex items-center space-x-3'>
-        <div class='rounded-lg bg-blue-100 p-2'>
-          <FiDatabase class='h-6 w-6 text-blue-600' />
-        </div>
-        <div>
-          <h1 class='text-2xl font-bold text-gray-900'>Storage Management</h1>
-          <p class='text-sm text-gray-500'>Manage documents in R2 storage</p>
-        </div>
-      </div>
+      <DashboardHeader
+        icon={FiDatabase}
+        title='Storage Management'
+        description='Manage documents in R2 storage'
+      />
 
       {/* Info Banner */}
       <div class='mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4'>
@@ -214,7 +211,7 @@ export default function StorageManagement() {
             placeholder='Search by file name...'
             value={search()}
             onInput={handleSearchInput}
-            class='w-full rounded-lg border border-gray-300 py-2 pr-4 pl-9 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+            class={`w-full ${input.base} ${input.withIconLeft}`}
           />
         </div>
         <div class='sm:w-64'>
@@ -223,7 +220,7 @@ export default function StorageManagement() {
             placeholder='Filter by prefix (e.g., projects/{id}/)'
             value={prefix()}
             onInput={handlePrefixChange}
-            class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+            class={`w-full ${input.base}`}
           />
         </div>
       </div>
@@ -252,172 +249,161 @@ export default function StorageManagement() {
       </Show>
 
       {/* Documents Table */}
-      <div class='rounded-lg border border-gray-200 bg-white shadow-sm'>
-        <div class='overflow-x-auto'>
-          <table class='w-full'>
-            <thead>
-              <tr class='border-b border-gray-200 bg-gray-50'>
-                <th class='px-6 py-3 text-left'>
-                  <button
-                    onClick={toggleSelectAll}
-                    class='flex items-center text-gray-400 hover:text-gray-600'
-                    title='Select all'
-                  >
-                    <Show
-                      when={(() => {
-                        const docs = documentsData()?.documents || [];
-                        const selected = selectedKeys();
-                        return docs.length > 0 && docs.every(doc => selected.has(doc.key));
-                      })()}
-                      fallback={<FiSquare class='h-4 w-4' />}
+      <AdminSection title='Documents'>
+        <AdminBox padding='compact' class='overflow-hidden p-0'>
+          <div class='overflow-x-auto'>
+            <table class={table.base}>
+              <thead class={table.header}>
+                <tr class='border-b border-gray-200'>
+                  <th class='px-6 py-3 text-left'>
+                    <button
+                      onClick={toggleSelectAll}
+                      class='flex items-center text-gray-400 hover:text-gray-600'
+                      title='Select all'
                     >
-                      <FiCheckSquare class='h-4 w-4 text-blue-600' />
-                    </Show>
-                  </button>
-                </th>
-                <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                  File Name
-                </th>
-                <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                  Size
-                </th>
-                <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                  Project ID
-                </th>
-                <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                  Study ID
-                </th>
-                <th class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                  Uploaded
-                </th>
-                <th class='px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody class='divide-y divide-gray-200'>
-              <Show
-                when={!documentsDataQuery.isLoading}
-                fallback={
-                  <tr>
-                    <td colspan='7' class='px-6 py-12 text-center'>
-                      <div class='flex items-center justify-center'>
-                        <FiLoader class='h-8 w-8 animate-spin text-blue-600' />
-                      </div>
-                    </td>
-                  </tr>
-                }
-              >
-                <For
-                  each={documentsData()?.documents || []}
+                      <Show
+                        when={(() => {
+                          const docs = documentsData()?.documents || [];
+                          const selected = selectedKeys();
+                          return docs.length > 0 && docs.every(doc => selected.has(doc.key));
+                        })()}
+                        fallback={<FiSquare class='h-4 w-4' />}
+                      >
+                        <FiCheckSquare class='h-4 w-4 text-blue-600' />
+                      </Show>
+                    </button>
+                  </th>
+                  <th class={table.headerCell}>File Name</th>
+                  <th class={table.headerCell}>Size</th>
+                  <th class={table.headerCell}>Project ID</th>
+                  <th class={table.headerCell}>Study ID</th>
+                  <th class={table.headerCell}>Uploaded</th>
+                  <th class={`${table.headerCell} text-right`}>Actions</th>
+                </tr>
+              </thead>
+              <tbody class={table.body}>
+                <Show
+                  when={!documentsDataQuery.isLoading}
                   fallback={
                     <tr>
-                      <td colspan='7' class='px-6 py-12 text-center text-gray-500'>
-                        No documents found
+                      <td colspan='7' class='px-6 py-12 text-center'>
+                        <div class='flex items-center justify-center'>
+                          <FiLoader class='h-8 w-8 animate-spin text-blue-600' />
+                        </div>
                       </td>
                     </tr>
                   }
                 >
-                  {doc => (
-                    <tr
-                      class={`hover:bg-gray-50 ${doc.orphaned ? 'bg-orange-50' : ''}`}
-                      onClick={e => handleRowClick(e, doc.key)}
-                    >
-                      <td class='px-6 py-4'>
-                        <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            toggleSelect(doc.key);
-                          }}
-                          class='text-gray-400 hover:text-gray-600'
-                        >
-                          <Show
-                            when={selectedKeys().has(doc.key)}
-                            fallback={<FiSquare class='h-4 w-4' />}
+                  <For
+                    each={documentsData()?.documents || []}
+                    fallback={
+                      <tr>
+                        <td colspan='7' class='px-6 py-12 text-center text-gray-500'>
+                          No documents found
+                        </td>
+                      </tr>
+                    }
+                  >
+                    {doc => (
+                      <tr
+                        class={`${table.row} ${doc.orphaned ? 'bg-orange-50' : ''}`}
+                        onClick={e => handleRowClick(e, doc.key)}
+                      >
+                        <td class={table.cell}>
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              toggleSelect(doc.key);
+                            }}
+                            class='text-gray-400 hover:text-gray-600'
                           >
-                            <FiCheckSquare class='h-4 w-4 text-blue-600' />
-                          </Show>
-                        </button>
-                      </td>
-                      <td class='px-6 py-4'>
-                        <div class='flex items-center gap-2'>
-                          <span class='font-mono text-sm text-gray-900'>{doc.fileName}</span>
-                          <Show when={doc.orphaned}>
-                            <span
-                              class='inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800'
-                              title='Orphaned: File exists in R2 but is not tracked in mediaFiles database table'
+                            <Show
+                              when={selectedKeys().has(doc.key)}
+                              fallback={<FiSquare class='h-4 w-4' />}
                             >
-                              Orphaned
-                            </span>
-                          </Show>
-                        </div>
-                      </td>
-                      <td class='px-6 py-4 text-sm text-gray-600'>{formatFileSize(doc.size)}</td>
-                      <td class='px-6 py-4'>
-                        <span class='font-mono text-xs text-gray-600'>{doc.projectId}</span>
-                      </td>
-                      <td class='px-6 py-4'>
-                        <span class='font-mono text-xs text-gray-600'>{doc.studyId}</span>
-                      </td>
-                      <td class='px-6 py-4 text-sm text-gray-500'>{formatDate(doc.uploaded)}</td>
-                      <td class='px-6 py-4 text-right'>
-                        <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleSingleDelete(doc.key);
-                          }}
-                          class='rounded-lg p-2 text-red-600 hover:bg-red-50'
-                          title='Delete'
-                        >
-                          <FiTrash2 class='h-4 w-4' />
-                        </button>
-                      </td>
-                    </tr>
-                  )}
-                </For>
-              </Show>
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <Show when={documentsData()}>
-          <div class='flex items-center justify-between border-t border-gray-200 px-6 py-4'>
-            <div class='flex flex-col gap-1'>
-              <p class='text-sm text-gray-500'>
-                Showing {documentsData()?.documents?.length || 0} document
-                {documentsData()?.documents?.length === 1 ? '' : 's'}
-              </p>
-              <Show when={documentsData()?.truncated}>
-                <p class='text-xs text-orange-600'>
-                  Results truncated after processing 10,000 objects. Use pagination to continue.
-                </p>
-              </Show>
-            </div>
-            <div class='flex items-center space-x-2'>
-              <button
-                onClick={handlePrevPage}
-                disabled={cursorHistory().length === 0}
-                class='rounded-lg border border-gray-300 p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
-              >
-                <FiChevronLeft class='h-4 w-4' />
-              </button>
-              <span class='text-sm text-gray-600'>
-                {cursorHistory().length + 1}
-                {documentsData()?.nextCursor ? ' →' : ''}
-              </span>
-              <button
-                onClick={handleNextPage}
-                disabled={!documentsData()?.nextCursor}
-                class='rounded-lg border border-gray-300 p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
-              >
-                <FiChevronRight class='h-4 w-4' />
-              </button>
-            </div>
+                              <FiCheckSquare class='h-4 w-4 text-blue-600' />
+                            </Show>
+                          </button>
+                        </td>
+                        <td class={table.cell}>
+                          <div class='flex items-center gap-2'>
+                            <span class='font-mono text-sm text-gray-900'>{doc.fileName}</span>
+                            <Show when={doc.orphaned}>
+                              <span
+                                class='inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800'
+                                title='Orphaned: File exists in R2 but is not tracked in mediaFiles database table'
+                              >
+                                Orphaned
+                              </span>
+                            </Show>
+                          </div>
+                        </td>
+                        <td class={`${table.cell} text-gray-500`}>{formatFileSize(doc.size)}</td>
+                        <td class={table.cell}>
+                          <span class='font-mono text-xs text-gray-600'>{doc.projectId}</span>
+                        </td>
+                        <td class={table.cell}>
+                          <span class='font-mono text-xs text-gray-600'>{doc.studyId}</span>
+                        </td>
+                        <td class={`${table.cell} text-gray-500`}>{formatDate(doc.uploaded)}</td>
+                        <td class={`${table.cell} text-right`}>
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleSingleDelete(doc.key);
+                            }}
+                            class='rounded-lg p-2 text-red-600 hover:bg-red-50'
+                            title='Delete'
+                          >
+                            <FiTrash2 class='h-4 w-4' />
+                          </button>
+                        </td>
+                      </tr>
+                    )}
+                  </For>
+                </Show>
+              </tbody>
+            </table>
           </div>
-        </Show>
-      </div>
 
+          {/* Pagination */}
+          <Show when={documentsData()}>
+            <div class='flex items-center justify-between border-t border-gray-200 px-6 py-4'>
+              <div class='flex flex-col gap-1'>
+                <p class='text-sm text-gray-500'>
+                  Showing {documentsData()?.documents?.length || 0} document
+                  {documentsData()?.documents?.length === 1 ? '' : 's'}
+                </p>
+                <Show when={documentsData()?.truncated}>
+                  <p class='text-xs text-orange-600'>
+                    Results truncated after processing 10,000 objects. Use pagination to continue.
+                  </p>
+                </Show>
+              </div>
+              <div class='flex items-center space-x-2'>
+                <button
+                  onClick={handlePrevPage}
+                  disabled={cursorHistory().length === 0}
+                  class='rounded-xl border border-gray-200 bg-white p-2 shadow-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                >
+                  <FiChevronLeft class='h-4 w-4' />
+                </button>
+                <span class='text-sm text-gray-500'>
+                  {cursorHistory().length + 1}
+                  {documentsData()?.nextCursor ? ' ->' : ''}
+                </span>
+                <button
+                  onClick={handleNextPage}
+                  disabled={!documentsData()?.nextCursor}
+                  class='rounded-xl border border-gray-200 bg-white p-2 shadow-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                >
+                  <FiChevronRight class='h-4 w-4' />
+                </button>
+              </div>
+            </div>
+          </Show>
+        </AdminBox>
+      </AdminSection>
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={!!deleteDialog()}
