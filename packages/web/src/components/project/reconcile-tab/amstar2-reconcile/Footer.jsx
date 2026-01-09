@@ -1,4 +1,5 @@
-import { AiOutlineCheck, AiOutlineArrowLeft } from 'solid-icons/ai';
+import { AiOutlineCheck } from 'solid-icons/ai';
+import { FiArrowLeft } from 'solid-icons/fi';
 import { Show } from 'solid-js';
 
 /**
@@ -17,7 +18,7 @@ export default function Footer(props) {
         onClick={() => props.onBack()}
         class='flex items-center gap-2 rounded-lg bg-white px-4 py-2 font-medium text-gray-700 shadow transition-colors hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'
       >
-        <AiOutlineArrowLeft class='h-4 w-4' />
+        <FiArrowLeft class='h-4 w-4' />
         Back to Questions
       </button>
 

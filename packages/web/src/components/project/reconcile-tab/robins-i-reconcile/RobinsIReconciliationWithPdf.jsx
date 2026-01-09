@@ -5,7 +5,7 @@
 
 import { Show, createMemo } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { AiOutlineArrowLeft } from 'solid-icons/ai';
+import { FiArrowLeft } from 'solid-icons/fi';
 import EmbedPdfViewer from '@pdf/embedpdf/EmbedPdfViewer.jsx';
 import RobinsIReconciliation from './RobinsIReconciliation.jsx';
 import RobinsINavbar from './RobinsINavbar.jsx';
@@ -61,7 +61,7 @@ export default function RobinsIReconciliationWithPdf(props) {
         class='shrink-0 rounded-lg p-2 transition-colors hover:bg-gray-100'
         title='Go back'
       >
-        <AiOutlineArrowLeft class='h-5 w-5 text-gray-600' />
+        <FiArrowLeft class='h-5 w-5 text-gray-600' />
       </button>
 
       {/* Title */}

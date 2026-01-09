@@ -1,5 +1,6 @@
 import { For, Show, createMemo } from 'solid-js';
-import { AiOutlineArrowRight, AiOutlineCheck, AiOutlineArrowLeft } from 'solid-icons/ai';
+import { AiOutlineCheck } from 'solid-icons/ai';
+import { FiArrowLeft, FiArrowRight } from 'solid-icons/fi';
 import { RESPONSE_LABELS } from '@/components/checklist/ROBINSIChecklist/checklist-map.js';
 import {
   hasNavItemAnswer,
@@ -147,7 +148,7 @@ export default function RobinsISummaryView(props) {
                               <AiOutlineCheck class='h-3 w-3 text-green-600' />
                             </span>
                           </Show>
-                          <AiOutlineArrowRight class='h-4 w-4 text-gray-400' />
+                          <FiArrowRight class='h-4 w-4 text-gray-400' />
                         </div>
                       </div>
                     );
@@ -165,7 +166,7 @@ export default function RobinsISummaryView(props) {
           onClick={() => props.onBack()}
           class='flex items-center gap-2 rounded-lg bg-white px-4 py-2 font-medium text-gray-700 shadow transition-colors hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'
         >
-          <AiOutlineArrowLeft class='h-4 w-4' />
+          <FiArrowLeft class='h-4 w-4' />
           Back to Questions
         </button>
 

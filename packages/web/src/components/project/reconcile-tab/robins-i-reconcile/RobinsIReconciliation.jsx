@@ -4,7 +4,8 @@
  */
 
 import { createSignal, createMemo, createEffect, Show, Switch, Match } from 'solid-js';
-import { AiOutlineArrowLeft, AiOutlineArrowRight, AiOutlineWarning } from 'solid-icons/ai';
+import { AiOutlineWarning } from 'solid-icons/ai';
+import { FiArrowLeft, FiArrowRight } from 'solid-icons/fi';
 import { showToast, useConfirmDialog } from '@corates/ui';
 import {
   compareChecklists,
@@ -605,7 +606,7 @@ export default function RobinsIReconciliation(props) {
                   : 'bg-white text-gray-700 shadow hover:bg-gray-100'
                 }`}
               >
-                <AiOutlineArrowLeft class='h-4 w-4' />
+                <FiArrowLeft class='h-4 w-4' />
                 Previous
               </button>
 
@@ -618,7 +619,7 @@ export default function RobinsIReconciliation(props) {
                 class='flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow transition-colors hover:bg-blue-700'
               >
                 {currentPage() === totalPages() - 1 ? 'Review Summary' : 'Next'}
-                <AiOutlineArrowRight class='h-4 w-4' />
+                <FiArrowRight class='h-4 w-4' />
               </button>
             </div>
           </Show>
