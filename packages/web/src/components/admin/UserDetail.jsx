@@ -45,8 +45,8 @@ export default function UserDetail() {
   const params = useParams();
   const userId = () => params.userId;
 
-  // Fetch user details
-  const userDetailsQuery = useAdminUserDetails(userId());
+  // Fetch user details - pass accessor so hook can track changes
+  const userDetailsQuery = useAdminUserDetails(userId);
   const userData = () => userDetailsQuery.data;
 
   // Dialog states

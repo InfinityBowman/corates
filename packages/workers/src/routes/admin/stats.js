@@ -245,16 +245,11 @@ statsRoutes.get('/subscriptions', async c => {
     });
   } catch (error) {
     console.error('Error fetching subscription stats:', error);
-    return c.json(
-      {
-        active: 0,
-        trialing: 0,
-        pastDue: 0,
-        canceled: 0,
-        error: error.message,
-      },
-      200,
-    );
+    const stripeError = createDomainError(SYSTEM_ERRORS.EXTERNAL_SERVICE_ERROR, {
+      service: 'Stripe',
+      message: error.message,
+    });
+    return c.json(stripeError, stripeError.statusCode);
   }
 });
 

@@ -34,9 +34,9 @@ export default function OrgDetail() {
   const params = useParams();
   const orgId = () => params.orgId;
 
-  // Fetch org details and billing
-  const orgDetailsQuery = useAdminOrgDetails(orgId());
-  const billingQuery = useAdminOrgBilling(orgId());
+  // Fetch org details and billing - pass accessors so hooks can track changes
+  const orgDetailsQuery = useAdminOrgDetails(orgId);
+  const billingQuery = useAdminOrgBilling(orgId);
   const orgDetails = () => orgDetailsQuery.data;
   const billing = () => billingQuery.data;
 

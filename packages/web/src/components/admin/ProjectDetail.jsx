@@ -37,8 +37,8 @@ export default function ProjectDetail() {
   const params = useParams();
   const projectId = () => params.projectId;
 
-  // Fetch project details
-  const projectQuery = useAdminProjectDetails(projectId());
+  // Fetch project details - pass accessor so hook can track changes
+  const projectQuery = useAdminProjectDetails(projectId);
   const projectData = () => projectQuery.data;
 
   // Dialog states

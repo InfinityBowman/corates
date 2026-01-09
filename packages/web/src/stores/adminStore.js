@@ -372,16 +372,24 @@ async function fetchProjectDetails(projectId) {
  * Remove a member from a project
  */
 async function removeProjectMember(projectId, memberId) {
-  return apiFetch.delete(`/api/admin/projects/${projectId}/members/${memberId}`, {
+  await apiFetch.delete(`/api/admin/projects/${projectId}/members/${memberId}`, {
     toastMessage: false,
   });
+  // Invalidate project detail query
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.projectDetails(projectId) });
+  // Invalidate all projects list queries with partial matching
+  queryClient.invalidateQueries({ queryKey: ['adminProjects'], exact: false });
 }
 
 /**
  * Delete a project
  */
 async function deleteProject(projectId) {
-  return apiFetch.delete(`/api/admin/projects/${projectId}`, { toastMessage: false });
+  await apiFetch.delete(`/api/admin/projects/${projectId}`, { toastMessage: false });
+  // Invalidate project detail query
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.projectDetails(projectId) });
+  // Invalidate all projects list queries with partial matching
+  queryClient.invalidateQueries({ queryKey: ['adminProjects'], exact: false });
 }
 
 export {
