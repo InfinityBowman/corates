@@ -13,7 +13,6 @@ import { useParams, useNavigate } from '@solidjs/router';
 import { FiX, FiChevronDown, FiChevronUp, FiLayout } from 'solid-icons/fi';
 import { VsJson, VsDebug } from 'solid-icons/vs';
 import projectStore from '@/stores/projectStore.js';
-import { useProjectOrgId } from '@primitives/useProjectOrgId.js';
 import DevStateTree from './DevStateTree.jsx';
 import DevTemplateSelector from './DevTemplateSelector.jsx';
 import DevQuickActions from './DevQuickActions.jsx';
@@ -24,10 +23,22 @@ export default function DevPanel() {
   const params = useParams();
   const navigate = useNavigate();
 
-  // Detect if we're in a project context
+  // Detect if we're in a project context - use createMemo for derived state
   const projectId = createMemo(() => params.projectId);
-  const orgId = useProjectOrgId(projectId());
   const isProjectContext = createMemo(() => !!projectId());
+
+  // Get orgId reactively - createMemo ensures this updates when projectId changes
+  const orgId = createMemo(() => {
+    const pid = projectId();
+    if (!pid) return null;
+
+    // Try to get from project meta (Y.js synced data)
+    const project = projectStore.getProject(pid);
+    if (project?.meta?.orgId) {
+      return project.meta.orgId;
+    }
+    return null;
+  });
 
   const [isOpen, setIsOpen] = createSignal(false);
   const [activeTab, setActiveTab] = createSignal(null);
