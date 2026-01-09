@@ -120,6 +120,9 @@ export default [
       // Use DialogPrimitive for primitive patterns
       'corates/corates-ui-imports': 'error',
 
+      // Prevent Outlet usage - use props.children for nested routes
+      'corates/no-outlet': 'error',
+
       // Restrict direct imports from @ark-ui/solid - use @corates/ui instead
       // This ensures consistent styling and prevents confusion between
       // prestyled components (Dialog) and primitives (DialogPrimitive)

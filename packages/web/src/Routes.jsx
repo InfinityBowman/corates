@@ -10,7 +10,7 @@ import AuthLayout from '@/components/auth/AuthLayout.jsx';
 import Layout from '@/Layout.jsx';
 import LocalChecklistView from '@/components/checklist/LocalChecklistView.jsx';
 import ChecklistYjsWrapper from '@/components/checklist/ChecklistYjsWrapper.jsx';
-import ReconciliationWrapper from '@/components/project/reconcile-tab/amstar2-reconcile/ReconciliationWrapper.jsx';
+import ReconciliationWrapper from '@/components/project/reconcile-tab/ReconciliationWrapper.jsx';
 import ProfilePage from '@/components/profile/ProfilePage.jsx';
 import NotFoundPage from '@components/NotFoundPage.jsx';
 import {
@@ -28,7 +28,6 @@ import ProtectedGuard from '@/components/auth/ProtectedGuard.jsx';
 import ProjectView from '@/components/project/ProjectView.jsx';
 import { CreateOrgPage } from '@/components/org/index.js';
 import MockIndex from '@/components/mock/MockIndex.jsx';
-import RobinsReconcileSectionBQuestionMock from '@/components/mock/RobinsReconcileSectionBQuestionMock.jsx';
 
 // Code-split admin routes - loaded only when navigating to /admin/*
 const AdminDashboard = lazy(() =>
@@ -97,17 +96,19 @@ export default function AppRoutes() {
           </Route>
           {/* Organization creation */}
           <Route path='/orgs/new' component={CreateOrgPage} />
-          {/* Project-scoped routes */}
-          <Route path='/projects/:projectId' component={ProjectView} />
-          {/* Project-scoped checklist routes */}
-          <Route
-            path='/projects/:projectId/studies/:studyId/checklists/:checklistId'
-            component={ChecklistYjsWrapper}
-          />
-          <Route
-            path='/projects/:projectId/studies/:studyId/reconcile/:checklist1Id/:checklist2Id'
-            component={ReconciliationWrapper}
-          />
+          {/* Project-scoped routes - checklist and reconcile are children sharing YDoc connection */}
+          <Route path='/projects/:projectId' component={ProjectView}>
+            {/* Empty path for ProjectView to render at /projects/:projectId */}
+            <Route path='/' />
+            <Route
+              path='/studies/:studyId/checklists/:checklistId'
+              component={ChecklistYjsWrapper}
+            />
+            <Route
+              path='/studies/:studyId/reconcile/:checklist1Id/:checklist2Id'
+              component={ReconciliationWrapper}
+            />
+          </Route>
         </Route>
 
         {/* Local checklists (not org-scoped, work offline) */}
@@ -116,10 +117,6 @@ export default function AppRoutes() {
 
         {/* Mock routes - public, visual-only wireframes */}
         <Route path='/mock' component={MockIndex} />
-        <Route
-          path='/mock/robins-reconcile-section-b-question'
-          component={RobinsReconcileSectionBQuestionMock}
-        />
       </Route>
       <Route path='*' component={NotFoundPage} />
     </Router>

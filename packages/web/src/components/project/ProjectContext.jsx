@@ -1,5 +1,5 @@
 /**
- * ProjectContext - Provides project identity and user role to child components
+ * ProjectContext - Provides project identity, user role, and Y.js operations to child components
  *
  * This context provides:
  * - projectId: The current project ID
@@ -9,6 +9,7 @@
  * - getAssigneeName: Helper to get a member's display name
  * - getChecklistPath: Helper to build project-scoped checklist path
  * - getReconcilePath: Helper to build project-scoped reconciliation path
+ * - projectOps: Y.js operations for child routes (checklist, reconciliation)
  *
  * For actions (mutations), import projectActionsStore directly:
  *   import projectActionsStore from '@/stores/projectActionsStore.js';
@@ -63,6 +64,10 @@ export function ProjectProvider(props) {
     getAssigneeName,
     getChecklistPath,
     getReconcilePath,
+    // Y.js operations passed from ProjectView for child routes
+    get projectOps() {
+      return props.projectOps || null;
+    },
   };
 
   return <ProjectContext.Provider value={value}>{props.children}</ProjectContext.Provider>;

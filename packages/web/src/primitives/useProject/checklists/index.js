@@ -59,7 +59,11 @@ export function createChecklistOperations(_projectId, getYDoc, _isSynced) {
       const studyYMap = studiesMap.get(studyId);
 
       if (!studyYMap) {
+        // Debug: log all study IDs in the YDoc
+        const studyIds = Array.from(studiesMap.keys());
         console.error('[createChecklist] Study not found:', studyId);
+        console.error('[createChecklist] Available studies in YDoc:', studyIds);
+        console.error('[createChecklist] YDoc clientID:', ydoc.clientID);
         return null;
       }
 
