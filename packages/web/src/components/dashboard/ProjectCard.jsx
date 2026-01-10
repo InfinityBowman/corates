@@ -97,7 +97,7 @@ function formatRelativeTime(date) {
  * @param {Object} props.project - Project data
  * @param {() => void} props.onOpen - Called when project is opened
  * @param {() => void} [props.onDelete] - Called when delete is requested
- * @param {number} [props.delay] - Animation delay in ms
+ * @param {Object} [props.style] - Animation style object
  */
 export function ProjectCard(props) {
   const colors = createMemo(() => {
@@ -129,7 +129,7 @@ export function ProjectCard(props) {
   return (
     <div
       class='group relative overflow-hidden rounded-2xl border border-stone-200/60 bg-white p-6 shadow-sm transition-all duration-300 hover:border-stone-300 hover:shadow-lg hover:shadow-stone-200/50'
-      style={{ animation: `stat-rise 0.4s ease-out ${props.delay || 0}ms backwards` }}
+      style={props.style}
     >
       {/* Decorative corner accent */}
       <div

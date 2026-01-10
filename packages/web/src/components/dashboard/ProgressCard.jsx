@@ -2,7 +2,9 @@
  * ProgressCard - Shows overall progress with an SVG arc visualization
  */
 
-import { createMemo, Show } from 'solid-js';
+import { createMemo, Show, useContext } from 'solid-js';
+
+import { AnimationContext } from './Dashboard.jsx';
 
 /**
  * SVG arc progress indicator
@@ -13,6 +15,8 @@ import { createMemo, Show } from 'solid-js';
  * @param {string} [props.subtitle] - Subtitle text
  */
 export function ProgressCard(props) {
+  const animation = useContext(AnimationContext);
+
   const percentage = createMemo(() => {
     if (!props.total || props.total === 0) return 0;
     return Math.round((props.completed / props.total) * 100);
@@ -28,7 +32,7 @@ export function ProgressCard(props) {
   return (
     <div
       class='flex flex-col items-center rounded-xl border border-stone-200/60 bg-white p-6 text-center'
-      style={{ animation: 'fade-up 0.6s ease-out 200ms backwards' }}
+      style={animation.fadeUp(150)}
     >
       <h3 class='mb-4 text-sm font-medium text-stone-700'>{props.title || 'Overall Progress'}</h3>
 

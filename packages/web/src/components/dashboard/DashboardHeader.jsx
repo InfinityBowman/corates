@@ -2,9 +2,10 @@
  * DashboardHeader - Welcome section with user info and actions
  */
 
-import { Show } from 'solid-js';
+import { Show, useContext } from 'solid-js';
 import { FiPlus, FiSearch } from 'solid-icons/fi';
 import { getRoleLabel } from '@/components/auth/RoleSelector.jsx';
+import { AnimationContext } from './Dashboard.jsx';
 
 /**
  * @param {Object} props
@@ -15,13 +16,14 @@ import { getRoleLabel } from '@/components/auth/RoleSelector.jsx';
  * @param {Function} props.onSearch - Called when search button clicked (optional)
  */
 export function DashboardHeader(props) {
+  const animation = useContext(AnimationContext);
   const firstName = () => {
     const name = props.user?.name || '';
     return name.split(' ')[0] || '';
   };
 
   return (
-    <header class='mb-10' style={{ animation: 'fade-up 0.6s ease-out backwards' }}>
+    <header class='mb-10' style={animation.fadeUp(0)}>
       <div class='flex items-start justify-between'>
         <div>
           <Show

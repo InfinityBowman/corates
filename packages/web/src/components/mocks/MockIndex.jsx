@@ -221,6 +221,38 @@ export default function MockIndex() {
           </p>
           <div class='grid gap-4'>
             <A
+              href='/mocks/settings-combined'
+              class='block rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-6 shadow-sm transition-all hover:border-blue-300 hover:shadow-md'
+            >
+              <div class='flex items-start justify-between'>
+                <div>
+                  <h3 class='mb-2 text-lg font-semibold text-gray-900'>
+                    Settings - Combined Profile & Settings
+                  </h3>
+                  <p class='mb-3 text-sm text-gray-600'>
+                    Unified profile and settings in one place. Minimal Swiss style with app's blue
+                    color scheme. Includes profile editing, linked accounts, billing, security, 2FA,
+                    sessions, notifications, and integrations.
+                  </p>
+                  <div class='flex flex-wrap gap-2'>
+                    <span class='inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700'>
+                      App Colors
+                    </span>
+                    <span class='inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700'>
+                      Sidebar Nav
+                    </span>
+                    <span class='inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700'>
+                      Profile + Settings
+                    </span>
+                  </div>
+                </div>
+                <span class='rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white'>
+                  Recommended
+                </span>
+              </div>
+            </A>
+
+            <A
               href='/mocks/settings-bento'
               class='block rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md'
             >

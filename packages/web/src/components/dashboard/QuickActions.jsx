@@ -2,8 +2,10 @@
  * QuickActions - Quick start cards for creating new appraisals
  */
 
-import { For } from 'solid-js';
+import { For, useContext } from 'solid-js';
 import { FiPlayCircle, FiBook } from 'solid-icons/fi';
+
+import { AnimationContext } from './Dashboard.jsx';
 
 /**
  * Quick action button component
@@ -24,7 +26,6 @@ function QuickActionCard(props) {
       onClick={() => props.onClick?.()}
       disabled={props.disabled}
       class={`group flex items-center gap-4 rounded-xl border bg-white p-4 text-left transition-all duration-200 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 ${props.border}`}
-      style={{ animation: `stat-rise 0.4s ease-out ${props.delay || 0}ms backwards` }}
     >
       <div
         class={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${props.iconBg} transition-transform duration-200 group-hover:scale-105`}
@@ -48,6 +49,8 @@ function QuickActionCard(props) {
  * @param {boolean} [props.canCreate] - Whether user can create new appraisals
  */
 export function QuickActions(props) {
+  const animation = useContext(AnimationContext);
+
   const actions = () => [
     {
       id: 'robins-i',
@@ -57,7 +60,6 @@ export function QuickActions(props) {
       iconBg: 'bg-blue-50',
       border: 'border-blue-100 hover:border-blue-200',
       onClick: () => props.onStartROBINSI?.(),
-      delay: 0,
       requiresCreate: true,
     },
     {
@@ -68,7 +70,6 @@ export function QuickActions(props) {
       iconBg: 'bg-emerald-50',
       border: 'border-emerald-100 hover:border-emerald-200',
       onClick: () => props.onStartAMSTAR2?.(),
-      delay: 50,
       requiresCreate: true,
     },
     {
@@ -79,13 +80,12 @@ export function QuickActions(props) {
       iconBg: 'bg-violet-50',
       border: 'border-violet-100 hover:border-violet-200',
       onClick: () => props.onLearnMore?.(),
-      delay: 100,
       requiresCreate: false,
     },
   ];
 
   return (
-    <section class='mb-6' style={{ animation: 'fade-up 0.6s ease-out 300ms backwards' }}>
+    <section class='mb-6' style={animation.fadeUp(400)}>
       <h3 class='mb-4 text-sm font-semibold tracking-wide text-stone-500 uppercase'>Quick Start</h3>
       <div class='grid gap-3'>
         <For each={actions()}>
@@ -98,7 +98,6 @@ export function QuickActions(props) {
               border={action.border}
               onClick={action.onClick}
               disabled={action.requiresCreate && !props.canCreate}
-              delay={action.delay}
             />
           )}
         </For>

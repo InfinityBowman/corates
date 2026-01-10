@@ -2,8 +2,10 @@
  * ActivityFeed - Shows recent activity across projects
  */
 
-import { Show, For, createMemo } from 'solid-js';
+import { Show, For, createMemo, useContext } from 'solid-js';
 import { FiClock, FiFileText, FiFolder, FiCheck, FiUser } from 'solid-icons/fi';
+
+import { AnimationContext } from './Dashboard.jsx';
 
 /**
  * Format a relative time string
@@ -97,6 +99,8 @@ function EmptyActivity() {
  * @param {() => void} [props.onViewAll] - Handler for view all link
  */
 export function ActivityFeed(props) {
+  const animation = useContext(AnimationContext);
+
   const displayActivities = createMemo(() => {
     const activities = props.activities || [];
     const limit = props.limit || 5;
@@ -104,10 +108,7 @@ export function ActivityFeed(props) {
   });
 
   return (
-    <div
-      class='rounded-xl border border-stone-200/60 bg-white p-5'
-      style={{ animation: 'fade-up 0.6s ease-out 400ms backwards' }}
-    >
+    <div class='rounded-xl border border-stone-200/60 bg-white p-5' style={animation.fadeUp(500)}>
       <div class='mb-2 flex items-center justify-between'>
         <h3 class='text-sm font-semibold tracking-wide text-stone-500 uppercase'>
           Recent Activity

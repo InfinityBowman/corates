@@ -2,8 +2,9 @@
  * StatsRow - Row of stat cards showing key metrics
  */
 
-import { Show, For } from 'solid-js';
+import { Show, For, useContext } from 'solid-js';
 import { FiFolder, FiCheck, FiFileText, FiUsers } from 'solid-icons/fi';
+import { AnimationContext } from './Dashboard.jsx';
 
 /**
  * Individual stat card
@@ -14,12 +15,13 @@ import { FiFolder, FiCheck, FiFileText, FiUsers } from 'solid-icons/fi';
  * @param {JSX.Element} props.icon - Icon element
  * @param {string} [props.iconBg] - Background class for icon container
  * @param {number} [props.delay] - Animation delay in ms
+ * @param {Object} [props.style] - Additional style object
  */
 export function StatCard(props) {
   return (
     <div
       class='relative overflow-hidden rounded-xl border border-stone-200/60 bg-white p-5 transition-all duration-200 hover:shadow-md'
-      style={{ animation: `stat-rise 0.4s ease-out ${props.delay || 0}ms backwards` }}
+      style={props.style}
     >
       <div class='flex items-start justify-between'>
         <div>
@@ -48,6 +50,7 @@ export function StatCard(props) {
  * @param {number} props.localAppraisalCount - Number of local appraisals
  */
 export function StatsRow(props) {
+  const animation = useContext(AnimationContext);
   const stats = () => [
     {
       label: 'Active Projects',
@@ -82,10 +85,7 @@ export function StatsRow(props) {
   ];
 
   return (
-    <section
-      class='mb-10 grid grid-cols-2 gap-4 lg:grid-cols-4'
-      style={{ animation: 'fade-up 0.6s ease-out 100ms backwards' }}
-    >
+    <section class='mb-10 grid grid-cols-2 gap-4 lg:grid-cols-4' style={animation.fadeUp(100)}>
       <For each={stats()}>
         {stat => (
           <StatCard
@@ -94,7 +94,7 @@ export function StatsRow(props) {
             subtext={stat.subtext}
             icon={stat.icon}
             iconBg={stat.iconBg}
-            delay={stat.delay}
+            style={animation.statRise(stat.delay)}
           />
         )}
       </For>

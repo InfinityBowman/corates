@@ -167,7 +167,9 @@ export function useSubscription() {
   return {
     // Query state
     subscription,
-    loading: () => query.isLoading || query.isFetching,
+    // Only show loading when no cached data exists (local-first principle)
+    loading: () => query.isPending && !query.data,
+    isFetching: () => query.isFetching,
     error: () => query.error,
     subscriptionFetchFailed,
     isUsingCachedData,

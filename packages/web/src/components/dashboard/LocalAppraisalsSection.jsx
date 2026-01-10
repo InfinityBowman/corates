@@ -9,10 +9,12 @@
  * - Sign-in prompt for logged-out users
  */
 
-import { Show, For } from 'solid-js';
+import { Show, For, useContext } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useConfirmDialog } from '@corates/ui';
 import { FiPlus, FiFileText, FiLogIn } from 'solid-icons/fi';
+
+import { AnimationContext } from './Dashboard.jsx';
 
 import localChecklistsStore from '@/stores/localChecklistsStore';
 import { LocalAppraisalCard } from './LocalAppraisalCard.jsx';
@@ -22,10 +24,7 @@ import { LocalAppraisalCard } from './LocalAppraisalCard.jsx';
  */
 function EmptyLocalState(props) {
   return (
-    <div
-      class='flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-stone-200 bg-stone-50/50 px-6 py-10'
-      style={{ animation: 'fade-up 0.6s ease-out backwards' }}
-    >
+    <div class='flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-stone-200 bg-stone-50/50 px-6 py-10'>
       <div class='mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-stone-100'>
         <FiFileText class='h-6 w-6 text-stone-400' />
       </div>
@@ -50,10 +49,7 @@ function EmptyLocalState(props) {
  */
 function SignInPrompt(props) {
   return (
-    <div
-      class='flex items-center justify-between rounded-xl border border-blue-100 bg-white/50 p-4'
-      style={{ animation: 'fade-up 0.6s ease-out 100ms backwards' }}
-    >
+    <div class='flex items-center justify-between rounded-xl border border-blue-100 bg-white/50 p-4'>
       <div class='flex items-center gap-3'>
         <div class='flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100'>
           <FiLogIn class='h-5 w-5 text-blue-600' />
@@ -75,28 +71,6 @@ function SignInPrompt(props) {
 }
 
 /**
- * Loading skeleton for local appraisals
- */
-function LocalAppraisalSkeleton(props) {
-  return (
-    <div
-      class='flex items-center gap-4 rounded-xl border border-stone-200/60 bg-white p-4'
-      style={{ animation: `stat-rise 0.4s ease-out ${props.delay || 0}ms backwards` }}
-    >
-      <div class='h-10 w-10 shrink-0 animate-pulse rounded-lg bg-stone-200' />
-      <div class='min-w-0 flex-1'>
-        <div class='mb-1 h-4 w-32 animate-pulse rounded bg-stone-200' />
-        <div class='flex items-center gap-2'>
-          <div class='h-4 w-16 animate-pulse rounded bg-stone-100' />
-          <div class='h-3 w-12 animate-pulse rounded bg-stone-100' />
-        </div>
-      </div>
-      <div class='h-8 w-8 animate-pulse rounded-lg bg-stone-100' />
-    </div>
-  );
-}
-
-/**
  * Local appraisals section component
  * @param {Object} props
  * @param {boolean} [props.showHeader] - Whether to show section header
@@ -106,7 +80,7 @@ export function LocalAppraisalsSection(props) {
   const navigate = useNavigate();
   const confirmDialog = useConfirmDialog();
 
-  const { checklists, loading, deleteChecklist, updateChecklist } = localChecklistsStore;
+  const { checklists, deleteChecklist, updateChecklist } = localChecklistsStore;
 
   const handleOpen = checklistId => {
     navigate(`/checklist/${checklistId}`);
@@ -138,8 +112,10 @@ export function LocalAppraisalsSection(props) {
 
   const hasChecklists = () => checklists()?.length > 0;
 
+  const animation = useContext(AnimationContext);
+
   return (
-    <section style={{ animation: 'fade-up 0.6s ease-out 300ms backwards' }}>
+    <section style={animation.fadeUp(300)}>
       {/* Header */}
       <Show when={props.showHeader !== false}>
         <div class='mb-4 flex items-center justify-between'>
@@ -168,14 +144,8 @@ export function LocalAppraisalsSection(props) {
 
       {/* Appraisals list */}
       <div class='space-y-3'>
-        {/* Loading skeletons */}
-        <Show when={loading() && !hasChecklists()}>
-          <LocalAppraisalSkeleton delay={0} />
-          <LocalAppraisalSkeleton delay={50} />
-        </Show>
-
         {/* Empty state */}
-        <Show when={!loading() && !hasChecklists()}>
+        <Show when={!hasChecklists()}>
           <EmptyLocalState onCreateClick={handleCreate} />
         </Show>
 
@@ -187,7 +157,7 @@ export function LocalAppraisalsSection(props) {
               onOpen={handleOpen}
               onDelete={handleDelete}
               onRename={newName => handleRename(checklist.id, newName)}
-              delay={index() * 50}
+              style={animation.statRise(index() * 50)}
             />
           )}
         </For>

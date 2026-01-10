@@ -1,10 +1,12 @@
 /**
- * Dashboard - Main dashboard container with state machine
+ * Dashboard - Main dashboard container
  *
- * Handles multiple user states: logged-out, loading, no-plan, active, etc.
+ * Local-first approach: Always render content immediately, progressively
+ * enhance based on auth/subscription state. Never show loading states
+ * if we have any data to display.
  */
 
-import { createMemo, Show, Switch, Match, createSignal } from 'solid-js';
+import { createMemo, Show, createSignal, createContext } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useSubscription } from '@primitives/useSubscription.js';
@@ -16,33 +18,26 @@ import { StatsRow } from './StatsRow.jsx';
 import ProgressCard from './ProgressCard.jsx';
 import QuickActions from './QuickActions.jsx';
 import ActivityFeed from './ActivityFeed.jsx';
-import DashboardSkeleton from './DashboardSkeleton.jsx';
 import { ProjectsSection } from './ProjectsSection.jsx';
 import { LocalAppraisalsSection } from './LocalAppraisalsSection.jsx';
-import { LANDING_URL } from '@/config/api.js';
+import { useInitialAnimation } from './useInitialAnimation.js';
+
+// Animation context - allows child components to access animation state
+export const AnimationContext = createContext({
+  shouldAnimate: () => false,
+  fadeUp: () => ({}),
+  statRise: () => ({}),
+});
 
 /**
- * Dashboard state machine
- * Determines which UI state to show based on auth/subscription status
+ * Dashboard data hook - computes derived state from auth/subscription/projects
+ * All signals are fine-grained and won't cause full re-renders
  */
-function useDashboardState() {
-  const { isLoggedIn, authLoading, user, isOnline } = useBetterAuth();
-  const {
-    loading: subscriptionLoading,
-    subscriptionFetchFailed,
-    hasEntitlement,
-    hasQuota,
-  } = useSubscription();
-  const { projects, isInitialLoading: projectsLoading } = useMyProjectsList();
+function useDashboardData() {
+  const { isLoggedIn, user, isOnline } = useBetterAuth();
+  const { subscriptionFetchFailed, hasEntitlement, hasQuota } = useSubscription();
+  const { projects } = useMyProjectsList();
   const { checklists } = localChecklistsStore;
-
-  const state = createMemo(() => {
-    if (authLoading()) return 'loading';
-    if (!isLoggedIn()) return 'logged-out';
-    if (subscriptionLoading() && !projects().length) return 'loading-subscription';
-    if (subscriptionFetchFailed()) return 'subscription-error';
-    return 'active';
-  });
 
   const canCreateProject = createMemo(() => {
     if (!isOnline()) return false;
@@ -57,17 +52,13 @@ function useDashboardState() {
     const projectList = projects() || [];
     const localList = checklists() || [];
 
-    // Calculate completed studies across all projects
     let totalStudies = 0;
     let completedStudies = 0;
     projectList.forEach(project => {
-      const studies = project.studyCount || 0;
-      const completed = project.completedCount || 0;
-      totalStudies += studies;
-      completedStudies += completed;
+      totalStudies += project.studyCount || 0;
+      completedStudies += project.completedCount || 0;
     });
 
-    // Count unique team members across projects
     const memberIds = new Set();
     projectList.forEach(project => {
       if (project.members) {
@@ -87,42 +78,44 @@ function useDashboardState() {
   // Generate recent activity from projects
   const activities = createMemo(() => {
     const projectList = projects() || [];
-    const activities = [];
-
-    projectList.slice(0, 5).forEach(project => {
-      activities.push({
+    return projectList
+      .slice(0, 5)
+      .map(project => ({
         type: 'project',
         title: project.name,
         subtitle: 'was updated',
         timestamp: project.updatedAt || project.createdAt,
-      });
-    });
-
-    return activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5);
+      }))
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, 5);
   });
 
   return {
-    state,
     user,
     isOnline,
     isLoggedIn,
     canCreateProject,
     stats,
     activities,
-    projectsLoading,
     subscriptionFetchFailed,
   };
 }
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { state, user, isOnline, canCreateProject, stats, activities, subscriptionFetchFailed } =
-    useDashboardState();
+  const animation = useInitialAnimation();
+  const {
+    user,
+    isOnline,
+    isLoggedIn,
+    canCreateProject,
+    stats,
+    activities,
+    subscriptionFetchFailed,
+  } = useDashboardData();
   const [showCreateForm, setShowCreateForm] = createSignal(false);
 
   const handleCreateProject = () => {
-    // Trigger the project creation modal through the ProjectsPanel
-    // For now, just scroll to projects section
     document.getElementById('projects-section')?.scrollIntoView({ behavior: 'smooth' });
     setShowCreateForm(true);
   };
@@ -136,61 +129,31 @@ export function Dashboard() {
   };
 
   const handleLearnMore = () => {
-    window.location.href = `${LANDING_URL}/resources`;
+    navigate('/resources');
   };
 
   return (
-    <Switch>
-      {/* Loading state */}
-      <Match when={state() === 'loading'}>
-        <DashboardSkeleton />
-      </Match>
-
-      {/* Logged out state */}
-      <Match when={state() === 'logged-out'}>
-        <div class='mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8'>
-          <DashboardHeader isOnline={isOnline()} onCreateProject={handleCreateProject} />
-
-          {/* Main content grid */}
-          <div class='grid gap-6 lg:grid-cols-3'>
-            {/* Left column - Local appraisals */}
-            <div class='lg:col-span-2'>
-              <LocalAppraisalsSection showHeader={true} showSignInPrompt={true} />
-            </div>
-
-            {/* Right sidebar */}
-            <div class='space-y-6'>
-              <QuickActions
-                onStartROBINSI={handleStartROBINSI}
-                onStartAMSTAR2={handleStartAMSTAR2}
-                onLearnMore={handleLearnMore}
-                canCreate={true}
-              />
-            </div>
+    <AnimationContext.Provider value={animation}>
+      <div class='mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8'>
+        {/* Subscription error banner - only for logged in users */}
+        <Show when={isLoggedIn() && subscriptionFetchFailed()}>
+          <div
+            class='mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800'
+            role='alert'
+          >
+            Could not load subscription details. Some features may be limited.
           </div>
-        </div>
-      </Match>
+        </Show>
 
-      {/* Active state (logged in) */}
-      <Match when={state() === 'active' || state() === 'loading-subscription'}>
-        <div class='mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8'>
-          {/* Subscription error banner */}
-          <Show when={subscriptionFetchFailed()}>
-            <div
-              class='mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800'
-              role='alert'
-            >
-              Could not load subscription details. Some features may be limited.
-            </div>
-          </Show>
+        <DashboardHeader
+          user={user()}
+          canCreateProject={canCreateProject()}
+          isOnline={isOnline()}
+          onCreateProject={handleCreateProject}
+        />
 
-          <DashboardHeader
-            user={user()}
-            canCreateProject={canCreateProject()}
-            isOnline={isOnline()}
-            onCreateProject={handleCreateProject}
-          />
-
+        {/* Stats row - only for logged in users */}
+        <Show when={isLoggedIn()}>
           <StatsRow
             projectCount={stats().projectCount}
             completedStudies={stats().completedStudies}
@@ -198,75 +161,50 @@ export function Dashboard() {
             localAppraisalCount={stats().localAppraisalCount}
             teamMemberCount={stats().teamMemberCount}
           />
+        </Show>
 
-          {/* Main content grid */}
-          <div class='grid gap-6 lg:grid-cols-3'>
-            {/* Left column - Projects and Local appraisals */}
-            <div id='projects-section' class='space-y-6 lg:col-span-2'>
+        {/* Main content grid */}
+        <div class='grid gap-6 lg:grid-cols-3'>
+          {/* Left column */}
+          <div id='projects-section' class='space-y-6 lg:col-span-2'>
+            {/* Projects - only for logged in users */}
+            <Show when={isLoggedIn()}>
               <ProjectsSection
                 showCreateForm={showCreateForm}
                 setShowCreateForm={setShowCreateForm}
               />
-              <LocalAppraisalsSection showHeader={true} />
-            </div>
+            </Show>
 
-            {/* Right sidebar */}
-            <div class='space-y-6'>
+            {/* Local appraisals - always shown */}
+            <LocalAppraisalsSection showHeader={true} showSignInPrompt={!isLoggedIn()} />
+          </div>
+
+          {/* Right sidebar */}
+          <div class='space-y-6'>
+            {/* Progress card - only for logged in users */}
+            <Show when={isLoggedIn()}>
               <ProgressCard
                 completed={stats().completedStudies}
                 total={stats().totalStudies}
                 subtitle='Studies across all projects'
               />
+            </Show>
 
-              <QuickActions
-                onStartROBINSI={handleStartROBINSI}
-                onStartAMSTAR2={handleStartAMSTAR2}
-                onLearnMore={handleLearnMore}
-                canCreate={canCreateProject()}
-              />
+            <QuickActions
+              onStartROBINSI={handleStartROBINSI}
+              onStartAMSTAR2={handleStartAMSTAR2}
+              onLearnMore={handleLearnMore}
+              canCreate={isLoggedIn() ? canCreateProject() : true}
+            />
 
+            {/* Activity feed - only for logged in users */}
+            <Show when={isLoggedIn()}>
               <ActivityFeed activities={activities()} limit={5} />
-            </div>
+            </Show>
           </div>
         </div>
-      </Match>
-
-      {/* Subscription error fallback */}
-      <Match when={state() === 'subscription-error'}>
-        <div class='mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8'>
-          <DashboardHeader
-            user={user()}
-            isOnline={isOnline()}
-            onCreateProject={handleCreateProject}
-          />
-
-          <div class='mb-6 rounded-lg border border-red-200 bg-red-50 p-4'>
-            <p class='text-sm text-red-800'>
-              Unable to load your subscription. Please try refreshing the page.
-            </p>
-          </div>
-
-          {/* Still show content */}
-          <div class='grid gap-6 lg:grid-cols-3'>
-            <div class='space-y-6 lg:col-span-2'>
-              <ProjectsSection
-                showCreateForm={showCreateForm}
-                setShowCreateForm={setShowCreateForm}
-              />
-              <LocalAppraisalsSection showHeader={true} />
-            </div>
-            <div class='space-y-6'>
-              <QuickActions
-                onStartROBINSI={handleStartROBINSI}
-                onStartAMSTAR2={handleStartAMSTAR2}
-                onLearnMore={handleLearnMore}
-                canCreate={false}
-              />
-            </div>
-          </div>
-        </div>
-      </Match>
-    </Switch>
+      </div>
+    </AnimationContext.Provider>
   );
 }
 

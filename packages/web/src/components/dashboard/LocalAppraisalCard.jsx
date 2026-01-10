@@ -43,7 +43,7 @@ function formatRelativeTime(date) {
  * @param {() => void} props.onOpen - Called when card is opened
  * @param {() => void} [props.onDelete] - Called when delete is requested
  * @param {(name: string) => void} [props.onRename] - Called when renamed
- * @param {number} [props.delay] - Animation delay in ms
+ * @param {Object} [props.style] - Animation style object
  */
 export function LocalAppraisalCard(props) {
   const typeLabel = createMemo(() => {
@@ -58,7 +58,7 @@ export function LocalAppraisalCard(props) {
   return (
     <div
       class='group flex items-center gap-4 rounded-xl border border-stone-200/60 bg-white p-4 transition-all duration-200 hover:border-stone-300 hover:shadow-md'
-      style={{ animation: `stat-rise 0.4s ease-out ${props.delay || 0}ms backwards` }}
+      style={props.style}
     >
       {/* Icon */}
       <div class='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-stone-100 text-stone-500 transition-colors group-hover:bg-blue-50 group-hover:text-blue-600'>

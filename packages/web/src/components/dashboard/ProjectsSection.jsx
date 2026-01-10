@@ -5,11 +5,13 @@
  * handles create form, empty states, and loading states.
  */
 
-import { Show, For } from 'solid-js';
+import { Show, For, useContext } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useQueryClient } from '@tanstack/solid-query';
 import { useConfirmDialog, showToast } from '@corates/ui';
 import { FiPlus, FiFolder } from 'solid-icons/fi';
+
+import { AnimationContext } from './Dashboard.jsx';
 
 import { useMyProjectsList } from '@primitives/useMyProjectsList.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
@@ -23,51 +25,11 @@ import CreateProjectForm from '@/components/project/CreateProjectForm.jsx';
 import ContactPrompt from '@/components/project/ContactPrompt.jsx';
 
 /**
- * Skeleton card for loading state
- */
-function ProjectCardSkeleton(props) {
-  return (
-    <div
-      class='rounded-2xl border border-stone-200/60 bg-white p-6'
-      style={{ animation: `stat-rise 0.4s ease-out ${props.delay || 0}ms backwards` }}
-    >
-      <div class='mb-4 flex items-start justify-between'>
-        <div>
-          <div class='mb-2 flex items-center gap-2'>
-            <div class='h-4 w-16 animate-pulse rounded-full bg-stone-200' />
-            <div class='h-3 w-12 animate-pulse rounded bg-stone-100' />
-          </div>
-          <div class='h-6 w-48 animate-pulse rounded bg-stone-200' />
-        </div>
-      </div>
-      <div class='mb-5 space-y-2'>
-        <div class='h-4 w-full animate-pulse rounded bg-stone-100' />
-        <div class='h-4 w-3/4 animate-pulse rounded bg-stone-100' />
-      </div>
-      <div class='mb-4'>
-        <div class='mb-1.5 flex items-center justify-between'>
-          <div class='h-3 w-16 animate-pulse rounded bg-stone-100' />
-          <div class='h-3 w-20 animate-pulse rounded bg-stone-100' />
-        </div>
-        <div class='h-1.5 w-full animate-pulse rounded-full bg-stone-100' />
-      </div>
-      <div class='flex items-center justify-between'>
-        <div class='h-4 w-20 animate-pulse rounded bg-stone-100' />
-        <div class='h-8 w-16 animate-pulse rounded-lg bg-stone-100' />
-      </div>
-    </div>
-  );
-}
-
-/**
  * Empty state when no projects exist
  */
 function EmptyProjectsState(props) {
   return (
-    <div
-      class='col-span-full flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-stone-200 bg-stone-50/50 px-6 py-16'
-      style={{ animation: 'fade-up 0.6s ease-out backwards' }}
-    >
+    <div class='col-span-full flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-stone-200 bg-stone-50/50 px-6 py-16'>
       <div class='mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-stone-100'>
         <FiFolder class='h-8 w-8 text-stone-400' />
       </div>
@@ -113,8 +75,11 @@ export function ProjectsSection(props) {
   const showCreateForm = () => props.showCreateForm();
   const setShowCreateForm = val => props.setShowCreateForm(val);
 
+  // Local-first: assume user can create unless we definitively know they can't
+  // Don't block UI on subscription loading - optimistically allow action
   const canCreateProject = () => {
-    if (subscriptionLoading()) return null;
+    // If still loading subscription data, assume they can create
+    if (subscriptionLoading()) return true;
     return (
       hasEntitlement('project.create') &&
       hasQuota('projects.max', { used: projectCount(), requested: 1 })
@@ -122,6 +87,7 @@ export function ProjectsSection(props) {
   };
 
   const restrictionType = () => {
+    // Don't show restriction prompts while loading
     if (subscriptionLoading()) return null;
     return !hasEntitlement('project.create') ? 'entitlement' : 'quota';
   };
@@ -181,7 +147,6 @@ export function ProjectsSection(props) {
     }
   };
 
-  const isLoading = () => projectListQuery.isInitialLoading();
   const hasProjects = () => projects()?.length > 0;
 
   const handleCreateClick = () => {
@@ -192,8 +157,10 @@ export function ProjectsSection(props) {
     }
   };
 
+  const animation = useContext(AnimationContext);
+
   return (
-    <section style={{ animation: 'fade-up 0.6s ease-out 200ms backwards' }}>
+    <section style={animation.fadeUp(200)}>
       {/* Header */}
       <Show when={props.showHeader !== false}>
         <div class='mb-4 flex items-center justify-between'>
@@ -234,15 +201,8 @@ export function ProjectsSection(props) {
 
       {/* Projects grid */}
       <div class='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
-        {/* Loading skeletons */}
-        <Show when={isLoading() && !hasProjects()}>
-          <ProjectCardSkeleton delay={0} />
-          <ProjectCardSkeleton delay={50} />
-          <ProjectCardSkeleton delay={100} />
-        </Show>
-
         {/* Empty state */}
-        <Show when={!isLoading() && !hasProjects()}>
+        <Show when={!hasProjects()}>
           <EmptyProjectsState
             canCreate={canCreateProject()}
             isOnline={isOnline()}
@@ -257,7 +217,7 @@ export function ProjectsSection(props) {
               project={project}
               onOpen={openProject}
               onDelete={handleDeleteProject}
-              delay={index() * 50}
+              style={animation.statRise(index() * 50)}
             />
           )}
         </For>

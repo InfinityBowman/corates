@@ -39,6 +39,7 @@ const AddStudiesPanel = lazy(() => import('@/components/mocks/AddStudiesPanel.js
 const AddStudiesInline = lazy(() => import('@/components/mocks/AddStudiesInline.jsx'));
 const SettingsMockBento = lazy(() => import('@/components/mocks/SettingsMockBento.jsx'));
 const SettingsMockMinimal = lazy(() => import('@/components/mocks/SettingsMockMinimal.jsx'));
+const SettingsMockCombined = lazy(() => import('@/components/mocks/SettingsMockCombined.jsx'));
 const DashboardMock = lazy(() => import('@/components/mocks/DashboardMock.jsx'));
 ('');
 // Code-split admin routes - loaded only when navigating to /admin/*
@@ -135,6 +136,7 @@ export default function AppRoutes() {
         <Route path='/mocks/add-studies-inline' component={AddStudiesInline} />
         <Route path='/mocks/settings-bento' component={SettingsMockBento} />
         <Route path='/mocks/settings-minimal' component={SettingsMockMinimal} />
+        <Route path='/mocks/settings-combined' component={SettingsMockCombined} />
         <Route path='/mocks/dashboard' component={DashboardMock} />
       </Route>
       <Route path='*' component={NotFoundPage} />
