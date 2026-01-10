@@ -1,6 +1,6 @@
 import { Router, Route } from '@solidjs/router';
 import { lazy } from 'solid-js';
-import Dashboard from './components/Dashboard.jsx';
+import Dashboard from './components/dashboard/index.js';
 import SignIn from '@/components/auth/SignIn.jsx';
 import SignUp from '@/components/auth/SignUp.jsx';
 import CheckEmail from '@/components/auth/CheckEmail.jsx';
