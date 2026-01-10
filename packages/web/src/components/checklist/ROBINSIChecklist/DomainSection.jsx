@@ -1,5 +1,4 @@
 import { For, Show, createMemo } from 'solid-js';
-import { IoCheckmarkCircle } from 'solid-icons/io';
 import { ROBINS_I_CHECKLIST, getDomainQuestions } from './checklist-map.js';
 import { SignallingQuestion } from './SignallingQuestion.jsx';
 import { DomainJudgement, JudgementBadge } from './DomainJudgement.jsx';
@@ -170,15 +169,6 @@ export function DomainSection(props) {
       {/* Domain content */}
       <Show when={!props.collapsed}>
         <div class='px-6 py-4'>
-          {/* Early completion banner */}
-          <Show when={isEarlyComplete()}>
-            <div class='mb-4 flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800'>
-              <IoCheckmarkCircle class='size-5 shrink-0 text-green-600' />
-              <span>
-                Scoring determined - remaining questions are optional but can still be answered
-              </span>
-            </div>
-          </Show>
 
           {/* Questions - with or without subsections */}
           <Show
