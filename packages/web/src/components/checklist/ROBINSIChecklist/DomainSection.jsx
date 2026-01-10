@@ -1,4 +1,5 @@
 import { For, Show, createMemo } from 'solid-js';
+import { IoCheckmarkCircle } from 'solid-icons/io';
 import { ROBINS_I_CHECKLIST, getDomainQuestions } from './checklist-map.js';
 import { SignallingQuestion } from './SignallingQuestion.jsx';
 import { DomainJudgement, JudgementBadge } from './DomainJudgement.jsx';
@@ -27,6 +28,16 @@ export function DomainSection(props) {
   const autoScore = createMemo(() => {
     return scoreRobinsDomain(props.domainKey, props.domainState?.answers);
   });
+
+  // Early completion: scoring determined before all questions answered
+  const isEarlyComplete = createMemo(() => {
+    return autoScore().isComplete && autoScore().judgement !== null;
+  });
+
+  // Check if a specific question can be skipped (scoring done, question unanswered)
+  const isQuestionSkippable = qKey => {
+    return isEarlyComplete() && !props.domainState?.answers?.[qKey]?.answer;
+  };
 
   // Effective judgement: auto unless manually overridden
   const effectiveJudgement = createMemo(() => {
@@ -159,6 +170,16 @@ export function DomainSection(props) {
       {/* Domain content */}
       <Show when={!props.collapsed}>
         <div class='px-6 py-4'>
+          {/* Early completion banner */}
+          <Show when={isEarlyComplete()}>
+            <div class='mb-4 flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800'>
+              <IoCheckmarkCircle class='size-5 shrink-0 text-green-600' />
+              <span>
+                Scoring determined - remaining questions are optional but can still be answered
+              </span>
+            </div>
+          </Show>
+
           {/* Questions - with or without subsections */}
           <Show
             when={hasSubsections()}
@@ -175,6 +196,7 @@ export function DomainSection(props) {
                       domainKey={props.domainKey}
                       questionKey={qKey}
                       getRobinsText={props.getRobinsText}
+                      isSkippable={isQuestionSkippable(qKey)}
                     />
                   )}
                 </For>
@@ -200,6 +222,7 @@ export function DomainSection(props) {
                           domainKey={props.domainKey}
                           questionKey={qKey}
                           getRobinsText={props.getRobinsText}
+                          isSkippable={isQuestionSkippable(qKey)}
                         />
                       )}
                     </For>

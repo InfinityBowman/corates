@@ -1,4 +1,4 @@
-import { For, createEffect, createUniqueId } from 'solid-js';
+import { For, Show, createEffect, createUniqueId } from 'solid-js';
 import { RESPONSE_LABELS, getResponseOptions } from './checklist-map.js';
 import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
 
@@ -13,6 +13,7 @@ import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
  * @param {string} [props.domainKey] - Domain key (e.g., 'domain1a') for comment Y.Text lookup
  * @param {string} [props.questionKey] - Question key for comment Y.Text lookup
  * @param {Function} [props.getRobinsText] - Function to get Y.Text for a ROBINS-I free-text field
+ * @param {boolean} [props.isSkippable] - Whether this question can be skipped (scoring already determined)
  */
 export function SignallingQuestion(props) {
   const uniqueId = createUniqueId();
@@ -44,7 +45,9 @@ export function SignallingQuestion(props) {
   };
 
   return (
-    <div class='border-b border-gray-100 py-3 last:border-b-0'>
+    <div
+      class={`border-b border-gray-100 py-3 last:border-b-0 ${props.isSkippable ? 'opacity-50' : ''}`}
+    >
       <div class='flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4'>
         {/* Question number and text */}
         <div class='min-w-0 flex-1'>
@@ -53,6 +56,9 @@ export function SignallingQuestion(props) {
           {props.question.note && (
             <span class='ml-2 text-xs text-gray-400'>({props.question.note})</span>
           )}
+          <Show when={props.isSkippable}>
+            <span class='ml-2 text-xs text-green-600'>(Optional)</span>
+          </Show>
         </div>
 
         {/* Response options */}
