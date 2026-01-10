@@ -28,6 +28,16 @@ export function DomainSection(props) {
     return scoreRobinsDomain(props.domainKey, props.domainState?.answers);
   });
 
+  // Early completion: scoring determined before all questions answered
+  const isEarlyComplete = createMemo(() => {
+    return autoScore().isComplete && autoScore().judgement !== null;
+  });
+
+  // Check if a specific question can be skipped (scoring done, question unanswered)
+  const isQuestionSkippable = qKey => {
+    return isEarlyComplete() && !props.domainState?.answers?.[qKey]?.answer;
+  };
+
   // Effective judgement: auto unless manually overridden
   const effectiveJudgement = createMemo(() => {
     return getEffectiveDomainJudgement(props.domainState, autoScore());
@@ -175,6 +185,7 @@ export function DomainSection(props) {
                       domainKey={props.domainKey}
                       questionKey={qKey}
                       getRobinsText={props.getRobinsText}
+                      isSkippable={isQuestionSkippable(qKey)}
                     />
                   )}
                 </For>
@@ -200,6 +211,7 @@ export function DomainSection(props) {
                           domainKey={props.domainKey}
                           questionKey={qKey}
                           getRobinsText={props.getRobinsText}
+                          isSkippable={isQuestionSkippable(qKey)}
                         />
                       )}
                     </For>

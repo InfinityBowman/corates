@@ -89,6 +89,16 @@ export const INFORMATION_SOURCES = [
   'Personal communication with sponsor',
 ] as const;
 
+// Section D: What sources of information were used to support the judgements?
+export const SECTION_D = {
+  title: 'Section D: Information used to support judgements',
+  description: 'What sources of information were used to support the judgements above?',
+  otherField: {
+    label: 'Other sources (please specify)',
+    placeholder: 'Describe any other sources of information used...',
+  },
+} as const;
+
 // Checklist type definition
 export const CHECKLIST_TYPES = {
   ROBINS_I: {
