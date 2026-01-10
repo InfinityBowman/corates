@@ -16,7 +16,7 @@ import projectStore from '@/stores/projectStore.js';
 import { LANDING_URL } from '@/config/api.js';
 
 import DashboardHeader from './DashboardHeader.jsx';
-import { StatsRow } from './StatsRow.jsx';
+// import { StatsRow } from './StatsRow.jsx';
 import ProgressCard from './ProgressCard.jsx';
 import QuickActions from './QuickActions.jsx';
 import ActivityFeed from './ActivityFeed.jsx';
@@ -139,7 +139,7 @@ export function Dashboard() {
 
   return (
     <AnimationContext.Provider value={animation}>
-      <div class='mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8'>
+      <div class='mx-auto px-4 py-8 sm:px-6 lg:px-8'>
         {/* Subscription error banner - only for logged in users */}
         <Show when={isLoggedIn() && subscriptionFetchFailed()}>
           <div
@@ -158,7 +158,7 @@ export function Dashboard() {
         />
 
         {/* Stats row - only for logged in users */}
-        <Show when={isLoggedIn()}>
+        {/* <Show when={isLoggedIn()}>
           <StatsRow
             projectCount={stats().projectCount}
             completedStudies={stats().completedStudies}
@@ -166,7 +166,7 @@ export function Dashboard() {
             localAppraisalCount={stats().localAppraisalCount}
             teamMemberCount={stats().teamMemberCount}
           />
-        </Show>
+        </Show> */}
 
         {/* Main content grid */}
         <div class='grid gap-6 lg:grid-cols-3'>
