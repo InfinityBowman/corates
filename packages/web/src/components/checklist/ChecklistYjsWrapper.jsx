@@ -20,6 +20,7 @@ import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-reg
 import { IoChevronBack } from 'solid-icons/io';
 import ScoreTag from '@/components/checklist/ScoreTag.jsx';
 import { isAMSTAR2Complete } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
+import { isROBINSIComplete } from '@/components/checklist/ROBINSIChecklist/checklist.js';
 
 export default function ChecklistYjsWrapper() {
   const params = useParams();
@@ -299,10 +300,12 @@ export default function ChecklistYjsWrapper() {
 
     // Safety check: validate checklist before allowing completion
     if (!isChecklistValid()) {
-      showToast.error(
-        'Incomplete Checklist',
-        'All questions must have a final answer before marking the checklist as complete.',
-      );
+      const type = checklistType();
+      const message =
+        type === 'ROBINS_I' ?
+          'An overall risk of bias judgement must be set before marking the checklist as complete.'
+        : 'All questions must have a final answer before marking the checklist as complete.';
+      showToast.error('Incomplete Checklist', message);
       return;
     }
 
@@ -347,17 +350,22 @@ export default function ChecklistYjsWrapper() {
     return scoreChecklistOfType(type, checklist);
   });
 
-  // Validate checklist completion - only for AMSTAR2 checklists
+  // Validate checklist completion based on checklist type
   const isChecklistValid = createMemo(() => {
     const type = checklistType();
     const checklist = checklistForUI();
-
-    // For non-AMSTAR2 checklists, allow completion (no validation)
-    if (type !== 'AMSTAR2') return true;
-
-    // For AMSTAR2, check if all questions have final answers
     if (!checklist) return false;
-    return isAMSTAR2Complete(checklist);
+
+    if (type === 'AMSTAR2') {
+      return isAMSTAR2Complete(checklist);
+    }
+
+    if (type === 'ROBINS_I') {
+      return isROBINSIComplete(checklist);
+    }
+
+    // For other checklist types, allow completion
+    return true;
   });
 
   // Generate PDF URL for opening in new tab
@@ -418,7 +426,9 @@ export default function ChecklistYjsWrapper() {
             disabled={!isChecklistValid()}
             title={
               !isChecklistValid() ?
-                'All questions must have a final answer before marking complete'
+                checklistType() === 'ROBINS_I' ?
+                  'Overall risk of bias must be set before marking complete'
+                : 'All questions must have a final answer before marking complete'
               : undefined
             }
             class={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${

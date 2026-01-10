@@ -249,6 +249,47 @@ describe('ROBINS-I', () => {
 
       expect(isROBINSIComplete(checklist)).toBe(true);
     });
+
+    it('should return false when domains have judgements but overall is not set', () => {
+      const checklist = createROBINSIChecklist({
+        name: 'Test',
+        id: 'test-123',
+      });
+
+      // Set all domain judgements (ITT analysis - domain1a active)
+      checklist.domain1a = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
+      checklist.domain2 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
+      checklist.domain3 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
+      checklist.domain4 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
+      checklist.domain5 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
+      checklist.domain6 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
+
+      expect(isROBINSIComplete(checklist)).toBe(false);
+    });
+
+    it('should return true when all domains and overall have judgements', () => {
+      const checklist = createROBINSIChecklist({
+        name: 'Test',
+        id: 'test-123',
+      });
+
+      // Set all domain judgements (ITT analysis - domain1a active)
+      checklist.domain1a = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
+      checklist.domain2 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
+      checklist.domain3 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
+      checklist.domain4 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
+      checklist.domain5 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
+      checklist.domain6 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
+
+      // Set overall judgement
+      checklist.overall = {
+        judgement: 'Low risk of bias',
+        judgementSource: 'auto',
+        direction: null,
+      };
+
+      expect(isROBINSIComplete(checklist)).toBe(true);
+    });
   });
 
   describe('getAnswers', () => {

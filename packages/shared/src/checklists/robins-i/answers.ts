@@ -183,7 +183,7 @@ function isQuestionnaireComplete(
 }
 
 /**
- * Check if a ROBINS-I checklist is complete (all active domains have judgements)
+ * Check if a ROBINS-I checklist is complete (all active domains have judgements and overall is set)
  */
 export function isROBINSIComplete(checklist: ROBINSIChecklist): boolean {
   if (!checklist || typeof checklist !== 'object') return false;
@@ -196,8 +196,15 @@ export function isROBINSIComplete(checklist: ROBINSIChecklist): boolean {
   const isPerProtocol = checklist.sectionC?.isPerProtocol || false;
   const activeDomains = getActiveDomainKeys(isPerProtocol);
 
-  return activeDomains.every(domainKey => {
+  // All active domains must have judgements
+  const domainsComplete = activeDomains.every(domainKey => {
     const domain = checklist[domainKey];
     return domain?.judgement !== null && domain?.judgement !== undefined;
   });
+
+  // Overall judgement must be set (either auto-calculated or manually selected)
+  const overallComplete =
+    checklist.overall?.judgement !== null && checklist.overall?.judgement !== undefined;
+
+  return domainsComplete && overallComplete;
 }
