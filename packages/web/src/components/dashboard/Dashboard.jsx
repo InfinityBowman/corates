@@ -13,6 +13,7 @@ import { useSubscription } from '@primitives/useSubscription.js';
 import { useMyProjectsList } from '@primitives/useMyProjectsList.js';
 import localChecklistsStore from '@/stores/localChecklistsStore';
 import projectStore from '@/stores/projectStore.js';
+import { LANDING_URL } from '@/config/api.js';
 
 import DashboardHeader from './DashboardHeader.jsx';
 import { StatsRow } from './StatsRow.jsx';
@@ -132,7 +133,8 @@ export function Dashboard() {
   };
 
   const handleLearnMore = () => {
-    navigate('/resources');
+    // Redirect to landing page resources section
+    window.location.href = `${LANDING_URL}/resources`;
   };
 
   return (
