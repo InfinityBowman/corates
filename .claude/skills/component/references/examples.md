@@ -56,52 +56,52 @@ export function ProjectCard(props) {
 
   return (
     <div
-      class="group relative cursor-pointer rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:shadow-md"
+      class='group relative cursor-pointer rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:shadow-md'
       onClick={() => props.onSelect?.(props.project)}
     >
       {/* Color accent bar */}
-      <div class={`absolute left-0 top-0 h-1 w-full rounded-t-xl ${colors().bg}`} />
+      <div class={`absolute top-0 left-0 h-1 w-full rounded-t-xl ${colors().bg}`} />
 
       {/* Header with title and delete button */}
-      <div class="mb-3 flex items-start justify-between">
-        <h3 class="font-semibold text-gray-900 line-clamp-2">
-          {props.project?.title || 'Untitled Project'}
-        </h3>
+      <div class='mb-3 flex items-start justify-between'>
+        <h3 class='line-clamp-2 font-semibold text-gray-900'>{props.project?.title || 'Untitled Project'}</h3>
 
         <Show when={isOwner() && props.onDelete}>
-          <Tooltip content="Delete project">
+          <Tooltip content='Delete project'>
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 props.onDelete?.(props.project?.id);
               }}
-              class="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-opacity"
+              class='p-1 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500'
             >
-              <FiTrash2 class="h-4 w-4" />
+              <FiTrash2 class='h-4 w-4' />
             </button>
           </Tooltip>
         </Show>
       </div>
 
       {/* Progress section */}
-      <div class="space-y-2">
-        <div class="flex items-center justify-between text-sm">
-          <span class="text-gray-500">Progress</span>
+      <div class='space-y-2'>
+        <div class='flex items-center justify-between text-sm'>
+          <span class='text-gray-500'>Progress</span>
           <span class={colors().text}>{progress().percentage}%</span>
         </div>
 
-        <div class="h-2 w-full rounded-full bg-gray-100">
+        <div class='h-2 w-full rounded-full bg-gray-100'>
           <div
             class={`h-full rounded-full ${colors().bg} transition-all`}
             style={{ width: `${progress().percentage}%` }}
           />
         </div>
 
-        <div class="flex items-center justify-between text-xs text-gray-500">
-          <span>{progress().completed} / {progress().total} studies</span>
+        <div class='flex items-center justify-between text-xs text-gray-500'>
+          <span>
+            {progress().completed} / {progress().total} studies
+          </span>
           <Show when={props.project?.memberCount > 1}>
-            <span class="flex items-center gap-1">
-              <FiUsers class="h-3 w-3" />
+            <span class='flex items-center gap-1'>
+              <FiUsers class='h-3 w-3' />
               {props.project.memberCount}
             </span>
           </Show>
@@ -113,6 +113,7 @@ export function ProjectCard(props) {
 ```
 
 Key patterns:
+
 - Props accessed directly via `props.project`, `props.onDelete`, etc.
 - `createMemo` for computed values that derive from props
 - Arrow functions for simple boolean checks: `isOwner()`
@@ -142,39 +143,32 @@ export function StatsRow(props) {
     {
       label: 'Active Projects',
       value: props.projectCount ?? 0,
-      icon: <FiFolder class="h-5 w-5 text-blue-600" />,
+      icon: <FiFolder class='h-5 w-5 text-blue-600' />,
       iconBg: 'bg-blue-50',
     },
     {
       label: 'Studies Reviewed',
       value: `${props.completedStudies ?? 0}/${props.totalStudies ?? 0}`,
-      icon: <FiCheck class="h-5 w-5 text-emerald-600" />,
+      icon: <FiCheck class='h-5 w-5 text-emerald-600' />,
       iconBg: 'bg-emerald-50',
     },
     {
       label: 'Local Appraisals',
       value: props.localAppraisalCount ?? 0,
-      icon: <FiFileText class="h-5 w-5 text-purple-600" />,
+      icon: <FiFileText class='h-5 w-5 text-purple-600' />,
       iconBg: 'bg-purple-50',
     },
     {
       label: 'Team Members',
       value: props.teamMemberCount ?? '-',
-      icon: <FiUsers class="h-5 w-5 text-amber-600" />,
+      icon: <FiUsers class='h-5 w-5 text-amber-600' />,
       iconBg: 'bg-amber-50',
     },
   ];
 
   return (
-    <section
-      class="grid grid-cols-2 gap-4 lg:grid-cols-4"
-      style={animation.fadeUp(100)}
-    >
-      <For each={stats()}>
-        {(stat, index) => (
-          <StatCard stat={stat} index={index()} animation={animation} />
-        )}
-      </For>
+    <section class='grid grid-cols-2 gap-4 lg:grid-cols-4' style={animation.fadeUp(100)}>
+      <For each={stats()}>{(stat, index) => <StatCard stat={stat} index={index()} animation={animation} />}</For>
     </section>
   );
 }
@@ -182,16 +176,14 @@ export function StatsRow(props) {
 export function StatCard(props) {
   return (
     <div
-      class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+      class='rounded-xl border border-gray-100 bg-white p-4 shadow-sm'
       style={props.animation?.statRise(props.index)}
     >
-      <div class="flex items-center gap-3">
-        <div class={`rounded-lg p-2 ${props.stat.iconBg}`}>
-          {props.stat.icon}
-        </div>
+      <div class='flex items-center gap-3'>
+        <div class={`rounded-lg p-2 ${props.stat.iconBg}`}>{props.stat.icon}</div>
         <div>
-          <p class="text-2xl font-bold text-gray-900">{props.stat.value}</p>
-          <p class="text-sm text-gray-500">{props.stat.label}</p>
+          <p class='text-2xl font-bold text-gray-900'>{props.stat.value}</p>
+          <p class='text-sm text-gray-500'>{props.stat.label}</p>
         </div>
       </div>
     </div>
@@ -200,6 +192,7 @@ export function StatCard(props) {
 ```
 
 Key patterns:
+
 - Context used for animation values (not prop drilling)
 - Stats computed as array with JSX icons
 - Props accessed directly: `props.projectCount`, `props.stat.label`
@@ -237,8 +230,8 @@ export default function Sidebar(props) {
   const localChecklists = () => localChecklistsStore.checklists();
 
   // Toggle expand state
-  const toggleProject = (projectId) => {
-    setExpandedProjects((prev) => ({
+  const toggleProject = projectId => {
+    setExpandedProjects(prev => ({
       ...prev,
       [projectId]: !prev[projectId],
     }));
@@ -246,7 +239,7 @@ export default function Sidebar(props) {
 
   // Handle resize with cleanup
   onMount(() => {
-    const handleMouseMove = (e) => {
+    const handleMouseMove = e => {
       if (!isResizing()) return;
       const newWidth = Math.max(200, Math.min(400, e.clientX));
       setWidth(newWidth);
@@ -266,7 +259,7 @@ export default function Sidebar(props) {
   });
 
   // Delete with confirmation
-  const handleDeleteChecklist = async (checklistId) => {
+  const handleDeleteChecklist = async checklistId => {
     const confirmed = await confirmDialog.confirm({
       title: 'Delete Checklist?',
       message: 'This action cannot be undone.',
@@ -278,27 +271,21 @@ export default function Sidebar(props) {
   };
 
   return (
-    <aside
-      class="flex h-full flex-col border-r border-gray-200 bg-white"
-      style={{ width: `${width()}px` }}
-    >
+    <aside class='flex h-full flex-col border-r border-gray-200 bg-white' style={{ width: `${width()}px` }}>
       {/* Header */}
-      <div class="flex items-center justify-between border-b border-gray-100 p-4">
-        <h2 class="font-semibold text-gray-900">Projects</h2>
-        <Tooltip content="New project">
-          <button
-            onClick={() => navigate('/projects/new')}
-            class="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100"
-          >
-            <FiPlus class="h-4 w-4" />
+      <div class='flex items-center justify-between border-b border-gray-100 p-4'>
+        <h2 class='font-semibold text-gray-900'>Projects</h2>
+        <Tooltip content='New project'>
+          <button onClick={() => navigate('/projects/new')} class='rounded-lg p-1.5 text-gray-500 hover:bg-gray-100'>
+            <FiPlus class='h-4 w-4' />
           </button>
         </Tooltip>
       </div>
 
       {/* Project list */}
-      <div class="flex-1 overflow-y-auto p-2">
+      <div class='flex-1 overflow-y-auto p-2'>
         <For each={projects()}>
-          {(project) => (
+          {project => (
             <ProjectTreeItem
               project={project}
               isExpanded={expandedProjects()[project.id]}
@@ -311,7 +298,7 @@ export default function Sidebar(props) {
 
       {/* Resize handle */}
       <div
-        class="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-blue-500"
+        class='absolute top-0 right-0 h-full w-1 cursor-col-resize hover:bg-blue-500'
         onMouseDown={() => setIsResizing(true)}
       />
     </aside>
@@ -320,6 +307,7 @@ export default function Sidebar(props) {
 ```
 
 Key patterns:
+
 - Multiple local signals for UI state
 - Store imports for data (no prop drilling)
 - onMount + onCleanup for event listeners
@@ -362,7 +350,7 @@ export default function Navbar(props) {
 
   // Click outside to close menu
   onMount(async () => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = event => {
       if (userMenuRef && !userMenuRef.contains(event.target)) {
         setShowUserMenu(false);
       }
@@ -384,57 +372,49 @@ export default function Navbar(props) {
   const showAdminMenu = () => isAdmin() && isAdminChecked();
 
   return (
-    <nav class="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4">
+    <nav class='flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4'>
       {/* Mobile menu toggle - only shown if prop provided */}
       <Show when={props.toggleMobileSidebar}>
         <button
           onClick={() => props.toggleMobileSidebar?.()}
-          class="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 lg:hidden"
+          class='rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 lg:hidden'
           aria-label={props.mobileSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
         >
-          <FiMenu class="h-5 w-5" />
+          <FiMenu class='h-5 w-5' />
         </button>
       </Show>
 
       {/* User menu */}
-      <div class="relative ml-auto" ref={userMenuRef}>
+      <div class='relative ml-auto' ref={userMenuRef}>
         <button
           onClick={() => setShowUserMenu(!showUserMenu())}
-          class="flex items-center gap-2 rounded-lg p-1.5 hover:bg-gray-100"
+          class='flex items-center gap-2 rounded-lg p-1.5 hover:bg-gray-100'
         >
-          <Avatar
-            src={user()?.image}
-            name={user()?.name || storedName}
-            class="h-7 w-7 rounded-full"
-          />
-          <span class="hidden text-sm font-medium text-gray-700 sm:block">
-            {user()?.name || storedName}
-          </span>
-          <FiChevronDown
-            class={`h-4 w-4 text-gray-500 transition-transform ${showUserMenu() ? 'rotate-180' : ''}`}
-          />
+          <Avatar src={user()?.image} name={user()?.name || storedName} class='h-7 w-7 rounded-full' />
+          <span class='hidden text-sm font-medium text-gray-700 sm:block'>{user()?.name || storedName}</span>
+          <FiChevronDown class={`h-4 w-4 text-gray-500 transition-transform ${showUserMenu() ? 'rotate-180' : ''}`} />
         </button>
 
         {/* Dropdown menu */}
         <Show when={showUserMenu()}>
-          <div class="absolute right-0 top-full mt-1 w-48 rounded-lg border border-gray-100 bg-white py-1 shadow-lg">
+          <div class='absolute top-full right-0 mt-1 w-48 rounded-lg border border-gray-100 bg-white py-1 shadow-lg'>
             <Show when={showAdminMenu()}>
               <button
                 onClick={() => {
                   navigate('/admin');
                   setShowUserMenu(false);
                 }}
-                class="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                class='flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50'
               >
-                <FiSettings class="h-4 w-4" />
+                <FiSettings class='h-4 w-4' />
                 Admin Panel
               </button>
             </Show>
             <button
               onClick={handleSignOut}
-              class="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+              class='flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50'
             >
-              <FiLogOut class="h-4 w-4" />
+              <FiLogOut class='h-4 w-4' />
               Sign Out
             </button>
           </div>
@@ -446,6 +426,7 @@ export default function Navbar(props) {
 ```
 
 Key patterns:
+
 - Auth store imported directly (not prop drilled)
 - Ref for click-outside detection
 - Effect for localStorage sync

@@ -49,7 +49,7 @@ export function ComponentName(props) {
   };
 
   return (
-    <div class="...">
+    <div class='...'>
       <Show when={props.showHeader}>
         <h2>{props.title}</h2>
       </Show>
@@ -191,9 +191,11 @@ const [form, setForm] = createStore({
 });
 
 // Update nested
-setForm(produce(f => {
-  f.settings.notify = false;
-}));
+setForm(
+  produce(f => {
+    f.settings.notify = false;
+  }),
+);
 ```
 
 ## Component Patterns
@@ -277,10 +279,12 @@ When creating a component:
 ### Reference Files
 
 For detailed patterns and examples:
+
 - **`references/patterns.md`** - Comprehensive state patterns, effects, and cleanup
 - **`references/examples.md`** - Real component examples from the codebase
 
 ### Example Files
 
 Working templates in `examples/`:
+
 - **`ExampleComponent.jsx`** - Complete component template with all patterns
