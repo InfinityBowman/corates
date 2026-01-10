@@ -11,6 +11,32 @@ import { createStore, produce } from 'solid-js/store';
 // This avoids passing non-serializable data through router state
 const pendingProjectData = new Map();
 
+// localStorage key for persisted project stats
+const PROJECT_STATS_KEY = 'corates:projectStats';
+
+/**
+ * Load project stats from localStorage
+ */
+function loadPersistedStats() {
+  try {
+    const stored = localStorage.getItem(PROJECT_STATS_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Save project stats to localStorage
+ */
+function persistStats(stats) {
+  try {
+    localStorage.setItem(PROJECT_STATS_KEY, JSON.stringify(stats));
+  } catch {
+    // Ignore storage errors (quota exceeded, etc.)
+  }
+}
+
 function createProjectStore() {
   const [store, setStore] = createStore({
     // Cached project data by projectId (Y.js data: studies, members, meta)
@@ -21,7 +47,8 @@ function createProjectStore() {
     connections: {},
     // Cached project stats by projectId (computed from Yjs data)
     // { [projectId]: { studyCount, completedCount, lastUpdated } }
-    projectStats: {},
+    // Initialized from localStorage for persistence across refreshes
+    projectStats: loadPersistedStats(),
   });
 
   /**
@@ -69,6 +96,8 @@ function createProjectStore() {
             ...stats,
             lastUpdated: Date.now(),
           };
+          // Persist stats to localStorage for cross-refresh access
+          persistStats(s.projectStats);
         }
       }),
     );

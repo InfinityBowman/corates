@@ -46,7 +46,6 @@ function QuickActionCard(props) {
  * @param {() => void} props.onStartROBINSI - Handler for starting ROBINS-I
  * @param {() => void} props.onStartAMSTAR2 - Handler for starting AMSTAR 2
  * @param {() => void} props.onLearnMore - Handler for learn more action
- * @param {boolean} [props.canCreate] - Whether user can create new appraisals
  */
 export function QuickActions(props) {
   const animation = useContext(AnimationContext);
@@ -60,7 +59,6 @@ export function QuickActions(props) {
       iconBg: 'bg-blue-50',
       border: 'border-blue-100 hover:border-blue-200',
       onClick: () => props.onStartROBINSI?.(),
-      requiresCreate: true,
     },
     {
       id: 'amstar-2',
@@ -70,7 +68,6 @@ export function QuickActions(props) {
       iconBg: 'bg-emerald-50',
       border: 'border-emerald-100 hover:border-emerald-200',
       onClick: () => props.onStartAMSTAR2?.(),
-      requiresCreate: true,
     },
     {
       id: 'learn-more',
@@ -80,7 +77,6 @@ export function QuickActions(props) {
       iconBg: 'bg-violet-50',
       border: 'border-violet-100 hover:border-violet-200',
       onClick: () => props.onLearnMore?.(),
-      requiresCreate: false,
     },
   ];
 
@@ -97,7 +93,6 @@ export function QuickActions(props) {
               iconBg={action.iconBg}
               border={action.border}
               onClick={action.onClick}
-              disabled={action.requiresCreate && !props.canCreate}
             />
           )}
         </For>

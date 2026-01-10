@@ -197,7 +197,6 @@ export function Dashboard() {
               onStartROBINSI={handleStartROBINSI}
               onStartAMSTAR2={handleStartAMSTAR2}
               onLearnMore={handleLearnMore}
-              canCreate={isLoggedIn() ? canCreateProject() : true}
             />
 
             {/* Activity feed - only for logged in users */}
