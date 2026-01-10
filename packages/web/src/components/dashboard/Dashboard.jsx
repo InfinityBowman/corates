@@ -12,6 +12,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import { useSubscription } from '@primitives/useSubscription.js';
 import { useMyProjectsList } from '@primitives/useMyProjectsList.js';
 import localChecklistsStore from '@/stores/localChecklistsStore';
+import projectStore from '@/stores/projectStore.js';
 
 import DashboardHeader from './DashboardHeader.jsx';
 import { StatsRow } from './StatsRow.jsx';
@@ -47,7 +48,7 @@ function useDashboardData() {
     return hasQuota('projects.max', { used: projectCount, requested: 1 });
   });
 
-  // Compute stats from real data
+  // Compute stats from real data, merging cached Yjs stats
   const stats = createMemo(() => {
     const projectList = projects() || [];
     const localList = checklists() || [];
@@ -55,8 +56,10 @@ function useDashboardData() {
     let totalStudies = 0;
     let completedStudies = 0;
     projectList.forEach(project => {
-      totalStudies += project.studyCount || 0;
-      completedStudies += project.completedCount || 0;
+      // Priority: cached stats from projectStore (Yjs data) > API props > 0
+      const cachedStats = projectStore.getProjectStats(project.id);
+      totalStudies += cachedStats?.studyCount ?? project.studyCount ?? 0;
+      completedStudies += cachedStats?.completedCount ?? project.completedCount ?? 0;
     });
 
     const memberIds = new Set();

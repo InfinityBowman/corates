@@ -70,7 +70,7 @@ export function ProjectsSection(props) {
   const projectCount = () => projects()?.length || 0;
 
   // Subscription checks
-  const { hasEntitlement, hasQuota, loading: subscriptionLoading } = useSubscription();
+  const { hasEntitlement, hasQuota, quotas, loading: subscriptionLoading } = useSubscription();
 
   const showCreateForm = () => props.showCreateForm();
   const setShowCreateForm = val => props.setShowCreateForm(val);
@@ -171,7 +171,12 @@ export function ProjectsSection(props) {
             when={canCreateProject() && hasProjects()}
             fallback={
               <Show when={!canCreateProject() && canCreateProject() !== null}>
-                <ContactPrompt restrictionType={restrictionType()} compact />
+                <ContactPrompt
+                  restrictionType={restrictionType()}
+                  projectCount={projectCount()}
+                  quotaLimit={quotas()?.['projects.max']}
+                  compact
+                />
               </Show>
             }
           >

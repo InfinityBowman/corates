@@ -19,6 +19,9 @@ function createProjectStore() {
     activeProjectId: null,
     // Connection states by projectId
     connections: {},
+    // Cached project stats by projectId (computed from Yjs data)
+    // { [projectId]: { studyCount, completedCount, lastUpdated } }
+    projectStats: {},
   });
 
   /**
@@ -58,9 +61,48 @@ function createProjectStore() {
         }
         if (data.meta !== undefined) s.projects[projectId].meta = data.meta;
         if (data.members !== undefined) s.projects[projectId].members = data.members;
-        if (data.studies !== undefined) s.projects[projectId].studies = data.studies;
+        if (data.studies !== undefined) {
+          s.projects[projectId].studies = data.studies;
+          // Auto-compute and cache stats when studies change
+          const stats = computeProjectStats(data.studies);
+          s.projectStats[projectId] = {
+            ...stats,
+            lastUpdated: Date.now(),
+          };
+        }
       }),
     );
+  }
+
+  /**
+   * Compute project stats from studies array
+   * @param {Array} studies - Array of study objects
+   * @returns {{ studyCount: number, completedCount: number }}
+   */
+  function computeProjectStats(studies) {
+    const studyCount = studies?.length || 0;
+    let completedCount = 0;
+
+    if (studies) {
+      for (const study of studies) {
+        // A study is "completed" if it has at least one checklist with status 'completed'
+        const hasCompletedChecklist = study.checklists?.some(c => c.status === 'completed');
+        if (hasCompletedChecklist) {
+          completedCount++;
+        }
+      }
+    }
+
+    return { studyCount, completedCount };
+  }
+
+  /**
+   * Get cached stats for a project
+   * @param {string} projectId
+   * @returns {{ studyCount: number, completedCount: number, lastUpdated: number } | null}
+   */
+  function getProjectStats(projectId) {
+    return store.projectStats[projectId] || null;
   }
 
   /**
@@ -250,6 +292,7 @@ function createProjectStore() {
     getChecklist,
     getChecklistScore,
     getChecklistAnswers,
+    getProjectStats,
 
     // Getters - PDF Data
     getStudyPdfs,

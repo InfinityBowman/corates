@@ -13,6 +13,8 @@
 import { Show, createMemo } from 'solid-js';
 import { FiUsers, FiChevronRight, FiTrash2 } from 'solid-icons/fi';
 
+import projectStore from '@/stores/projectStore.js';
+
 /**
  * Accent color configurations
  */
@@ -106,8 +108,10 @@ export function ProjectCard(props) {
   });
 
   const progress = createMemo(() => {
-    const completed = props.project?.completedCount || 0;
-    const total = props.project?.studyCount || 0;
+    // Priority: cached stats from projectStore > props from API > 0
+    const cachedStats = projectStore.getProjectStats(props.project?.id);
+    const completed = cachedStats?.completedCount ?? props.project?.completedCount ?? 0;
+    const total = cachedStats?.studyCount ?? props.project?.studyCount ?? 0;
     if (total === 0) return { completed: 0, total: 0, percentage: 0 };
     return {
       completed,

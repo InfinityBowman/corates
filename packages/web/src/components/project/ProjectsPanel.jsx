@@ -34,6 +34,7 @@ export default function ProjectsPanel() {
   const {
     hasEntitlement,
     hasQuota,
+    quotas,
     loading: subscriptionLoading,
     subscriptionFetchFailed,
     refetch: refetchSubscription,
@@ -134,7 +135,13 @@ export default function ProjectsPanel() {
         {/* Create button or quota prompt */}
         <Show
           when={canCreateProject()}
-          fallback={<ContactPrompt restrictionType={restrictionType()} />}
+          fallback={
+            <ContactPrompt
+              restrictionType={restrictionType()}
+              projectCount={projectCount()}
+              quotaLimit={quotas()?.['projects.max']}
+            />
+          }
         >
           <button
             class='inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
