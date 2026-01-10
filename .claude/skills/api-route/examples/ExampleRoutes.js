@@ -93,10 +93,7 @@ itemRoutes.use('*', requireAuth);
 async function getItemCount(c, user) {
   const { orgId } = getOrgContext(c);
   const db = createDb(c.env.DB);
-  const [result] = await db
-    .select({ count: count() })
-    .from(items)
-    .where(eq(items.orgId, orgId));
+  const [result] = await db.select({ count: count() }).from(items).where(eq(items.orgId, orgId));
   return result?.count || 0;
 }
 
@@ -308,10 +305,7 @@ itemRoutes.patch(
       if (updates.type !== undefined) updateData.type = updates.type;
       if (updates.active !== undefined) updateData.active = updates.active;
 
-      await db
-        .update(items)
-        .set(updateData)
-        .where(eq(items.id, itemId));
+      await db.update(items).set(updateData).where(eq(items.id, itemId));
 
       return c.json({ success: true, itemId });
     } catch (error) {

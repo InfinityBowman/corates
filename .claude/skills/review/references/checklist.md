@@ -143,12 +143,12 @@ Comprehensive checklist organized by file type.
 
 ## File Size Guidelines
 
-| File Type | Target | Max | Action if exceeded |
-|-----------|--------|-----|-------------------|
-| Component | <150 lines | 200 | Extract sub-components |
-| Route file | <200 lines | 300 | Split into sub-routes |
-| Store | <150 lines | 200 | Split by domain |
-| Utility | <100 lines | 150 | Split by function |
+| File Type  | Target     | Max | Action if exceeded     |
+| ---------- | ---------- | --- | ---------------------- |
+| Component  | <150 lines | 200 | Extract sub-components |
+| Route file | <200 lines | 300 | Split into sub-routes  |
+| Store      | <150 lines | 200 | Split by domain        |
+| Utility    | <100 lines | 150 | Split by function      |
 
 ---
 

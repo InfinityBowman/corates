@@ -129,7 +129,7 @@ Request bodies must be validated with Zod via `validateRequest` middleware.
 ```javascript
 // BAD
 routes.post('/', async c => {
-  const body = await c.req.json();  // Unvalidated!
+  const body = await c.req.json(); // Unvalidated!
 });
 
 // GOOD
@@ -332,5 +332,6 @@ grep -rn "from '\.\./\.\./\.\." packages/web/src/components/
 ### Reference Files
 
 For detailed patterns and edge cases:
+
 - **`references/checklist.md`** - Complete review checklist by file type
 - **`references/fixes.md`** - Common fixes with before/after examples

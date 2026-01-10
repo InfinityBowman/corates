@@ -9,6 +9,7 @@ Before and after examples for common anti-patterns.
 ### Fix: Prop Destructuring
 
 **Before (broken reactivity):**
+
 ```jsx
 function UserCard({ user, onSelect, showAvatar }) {
   return (
@@ -21,6 +22,7 @@ function UserCard({ user, onSelect, showAvatar }) {
 ```
 
 **After:**
+
 ```jsx
 function UserCard(props) {
   return (
@@ -39,6 +41,7 @@ function UserCard(props) {
 ### Fix: Prop Drilling
 
 **Before (drilling shared state):**
+
 ```jsx
 // Parent.jsx
 function Parent() {
@@ -65,6 +68,7 @@ function Sidebar({ projects, user }) {
 ```
 
 **After:**
+
 ```jsx
 // Parent.jsx
 function Parent() {
@@ -97,6 +101,7 @@ function Sidebar() {
 ### Fix: Wrong Ark UI Import
 
 **Before:**
+
 ```jsx
 import { Dialog } from '@/components/ark/Dialog.jsx';
 import { Select } from '~/components/Select';
@@ -104,6 +109,7 @@ import { Tooltip } from '../../../components/Tooltip';
 ```
 
 **After:**
+
 ```jsx
 import { Dialog, Select, Tooltip } from '@corates/ui';
 ```
@@ -113,6 +119,7 @@ import { Dialog, Select, Tooltip } from '@corates/ui';
 ### Fix: Missing Effect Cleanup
 
 **Before:**
+
 ```jsx
 function Component() {
   const [width, setWidth] = createSignal(window.innerWidth);
@@ -131,6 +138,7 @@ function Component() {
 ```
 
 **After:**
+
 ```jsx
 function Component() {
   const [width, setWidth] = createSignal(window.innerWidth);
@@ -158,10 +166,11 @@ function Component() {
 ### Fix: Derived Value Without Memo
 
 **Before:**
+
 ```jsx
 function Stats(props) {
   // Recomputes on every render
-  const percentage = props.completed / props.total * 100;
+  const percentage = (props.completed / props.total) * 100;
   const isComplete = percentage === 100;
 
   return <span>{percentage}%</span>;
@@ -169,6 +178,7 @@ function Stats(props) {
 ```
 
 **After:**
+
 ```jsx
 function Stats(props) {
   const stats = createMemo(() => {
@@ -189,10 +199,11 @@ function Stats(props) {
 ### Fix: Missing Validation
 
 **Before:**
+
 ```javascript
 routes.post('/', requireAuth, async c => {
   const body = await c.req.json();
-  const { name, email } = body;  // Unvalidated!
+  const { name, email } = body; // Unvalidated!
 
   await db.insert(users).values({ name, email });
   return c.json({ success: true });
@@ -200,11 +211,16 @@ routes.post('/', requireAuth, async c => {
 ```
 
 **After:**
+
 ```javascript
 // In config/validation.js
 export const userSchemas = {
   create: z.object({
-    name: z.string().min(1).max(255).transform(val => val.trim()),
+    name: z
+      .string()
+      .min(1)
+      .max(255)
+      .transform(val => val.trim()),
     email: z.string().email(),
   }),
 };
@@ -223,6 +239,7 @@ routes.post('/', requireAuth, validateRequest(userSchemas.create), async c => {
 ### Fix: Raw Error Objects
 
 **Before:**
+
 ```javascript
 routes.get('/:id', async c => {
   const id = c.req.param('id');
@@ -237,6 +254,7 @@ routes.get('/:id', async c => {
 ```
 
 **After:**
+
 ```javascript
 import { createDomainError, ITEM_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 
@@ -267,6 +285,7 @@ routes.get('/:id', async c => {
 ### Fix: Direct Context Access
 
 **Before:**
+
 ```javascript
 routes.get('/me', async c => {
   const user = c.get('user');
@@ -278,6 +297,7 @@ routes.get('/me', async c => {
 ```
 
 **After:**
+
 ```javascript
 import { getAuth } from '@/middleware/auth.js';
 import { getOrgContext } from '@/middleware/requireOrg.js';
@@ -295,16 +315,18 @@ routes.get('/me', async c => {
 ### Fix: Missing Auth Middleware
 
 **Before:**
+
 ```javascript
 const userRoutes = new Hono();
 
 userRoutes.get('/profile', async c => {
-  const user = c.get('user');  // Could be null!
+  const user = c.get('user'); // Could be null!
   return c.json(user);
 });
 ```
 
 **After:**
+
 ```javascript
 const userRoutes = new Hono();
 
@@ -312,7 +334,7 @@ const userRoutes = new Hono();
 userRoutes.use('*', requireAuth);
 
 userRoutes.get('/profile', async c => {
-  const { user } = getAuth(c);  // Guaranteed to exist
+  const { user } = getAuth(c); // Guaranteed to exist
   return c.json(user);
 });
 ```
@@ -324,6 +346,7 @@ userRoutes.get('/profile', async c => {
 ### Fix: Emojis in Code
 
 **Before:**
+
 ```javascript
 // ✅ User authentication complete
 const STATUS_COMPLETE = '✓';
@@ -333,6 +356,7 @@ console.log('🚀 Server starting...');
 ```
 
 **After:**
+
 ```javascript
 // User authentication complete
 import { FiCheck, FiX } from 'solid-icons/fi';
@@ -349,6 +373,7 @@ console.log('Server starting...');
 ### Fix: Deep Relative Imports
 
 **Before:**
+
 ```javascript
 import { helper } from '../../../lib/utils.js';
 import Component from '../../components/shared/Component.jsx';
@@ -356,6 +381,7 @@ import store from '../../../stores/projectStore.js';
 ```
 
 **After:**
+
 ```javascript
 import { helper } from '@lib/utils.js';
 import Component from '@components/shared/Component.jsx';
@@ -367,6 +393,7 @@ import store from '@/stores/projectStore.js';
 ### Fix: Narrating Comments
 
 **Before:**
+
 ```javascript
 // Get the user from the database
 const user = await db.select().from(users).where(eq(users.id, id)).get();
@@ -382,6 +409,7 @@ user.loginCount += 1;
 ```
 
 **After:**
+
 ```javascript
 const user = await db.select().from(users).where(eq(users.id, id)).get();
 
@@ -399,6 +427,7 @@ user.loginCount += 1;
 ### Fix: Over-Engineering
 
 **Before:**
+
 ```javascript
 // Unused feature flag
 const ENABLE_NEW_AUTH = process.env.ENABLE_NEW_AUTH ?? false;
@@ -416,6 +445,7 @@ export { oldFunction as newFunction };
 ```
 
 **After:**
+
 ```javascript
 // Just use the value directly
 const userName = user.name.trim();
@@ -427,14 +457,14 @@ const userName = user.name.trim();
 
 ## Quick Reference Table
 
-| Anti-Pattern | Detection | Fix |
-|--------------|-----------|-----|
-| Prop destructuring | `function Comp({ x })` | `function Comp(props)` |
-| Prop drilling | 5+ props, passing stores | Import stores directly |
-| Wrong Ark import | `from '@/components/ark'` | `from '@corates/ui'` |
-| Missing cleanup | addEventListener without onCleanup | Add onCleanup |
-| Missing validation | `c.req.json()` in handler | Use `validateRequest()` |
-| Raw error | `{ error: 'msg' }` | `createDomainError()` |
-| Direct context | `c.get('user')` | `getAuth(c)` |
-| Emoji | Any emoji character | Remove or use solid-icons |
-| Deep relative | `../../../` | `@/` or `@components/` |
+| Anti-Pattern       | Detection                          | Fix                       |
+| ------------------ | ---------------------------------- | ------------------------- |
+| Prop destructuring | `function Comp({ x })`             | `function Comp(props)`    |
+| Prop drilling      | 5+ props, passing stores           | Import stores directly    |
+| Wrong Ark import   | `from '@/components/ark'`          | `from '@corates/ui'`      |
+| Missing cleanup    | addEventListener without onCleanup | Add onCleanup             |
+| Missing validation | `c.req.json()` in handler          | Use `validateRequest()`   |
+| Raw error          | `{ error: 'msg' }`                 | `createDomainError()`     |
+| Direct context     | `c.get('user')`                    | `getAuth(c)`              |
+| Emoji              | Any emoji character                | Remove or use solid-icons |
+| Deep relative      | `../../../`                        | `@/` or `@components/`    |

@@ -56,10 +56,7 @@ itemRoutes.get('/', async c => {
   const db = createDb(c.env.DB);
 
   try {
-    const results = await db
-      .select()
-      .from(items)
-      .where(eq(items.userId, user.id));
+    const results = await db.select().from(items).where(eq(items.userId, user.id));
 
     return c.json(results);
   } catch (error) {
@@ -117,11 +114,11 @@ import { validateRequest } from '@/config/validation.js';
 // Full middleware chain for protected route
 routes.post(
   '/',
-  requireOrgMembership(),           // Check org membership
-  requireOrgWriteAccess(),          // Check write permission
-  requireEntitlement('feature.x'),  // Check feature access
-  requireQuota('items.max', getItemCount, 1),  // Check quota
-  validateRequest(schema),          // Validate body
+  requireOrgMembership(), // Check org membership
+  requireOrgWriteAccess(), // Check write permission
+  requireEntitlement('feature.x'), // Check feature access
+  requireQuota('items.max', getItemCount, 1), // Check quota
+  validateRequest(schema), // Validate body
   async c => {
     const { user } = getAuth(c);
     const { orgId } = getOrgContext(c);
@@ -360,10 +357,12 @@ When creating an API route:
 ### Reference Files
 
 For detailed patterns:
+
 - **`references/patterns.md`** - Middleware details, complex queries, nested routes
 - **`references/examples.md`** - Real route examples from the codebase
 
 ### Example Files
 
 Working templates in `examples/`:
+
 - **`ExampleRoutes.js`** - Complete CRUD route template

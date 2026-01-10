@@ -209,10 +209,7 @@ export function requireQuota(quotaKey, getUsage, requested = 1) {
 async function getProjectCount(c, user) {
   const { orgId } = getOrgContext(c);
   const db = createDb(c.env.DB);
-  const [result] = await db
-    .select({ count: count() })
-    .from(projects)
-    .where(eq(projects.orgId, orgId));
+  const [result] = await db.select({ count: count() }).from(projects).where(eq(projects.orgId, orgId));
   return result?.count || 0;
 }
 ```
@@ -235,12 +232,7 @@ export function validateRequest(schema) {
       c.set('validatedBody', result.data);
       await next();
     } catch (error) {
-      const invalidJsonError = createValidationError(
-        'body',
-        'VALIDATION_INVALID_INPUT',
-        null,
-        'invalid_json',
-      );
+      const invalidJsonError = createValidationError('body', 'VALIDATION_INVALID_INPUT', null, 'invalid_json');
       return c.json(invalidJsonError, invalidJsonError.statusCode);
     }
   };
@@ -326,10 +318,7 @@ results = results.filter(u => !existingUserIds.has(u.id));
 ### Count Queries
 
 ```javascript
-const [result] = await db
-  .select({ count: count() })
-  .from(projects)
-  .where(eq(projects.orgId, orgId));
+const [result] = await db.select({ count: count() }).from(projects).where(eq(projects.orgId, orgId));
 
 const projectCount = result?.count || 0;
 ```
@@ -365,19 +354,14 @@ await db.batch([
 ```javascript
 await db.batch([
   // Set nullable foreign keys to null
-  db.update(mediaFiles)
-    .set({ uploadedBy: null })
-    .where(eq(mediaFiles.uploadedBy, userId)),
+  db.update(mediaFiles).set({ uploadedBy: null }).where(eq(mediaFiles.uploadedBy, userId)),
 
   // Delete dependent records
-  db.delete(projectMembers)
-    .where(eq(projectMembers.userId, userId)),
-  db.delete(invitations)
-    .where(eq(invitations.invitedUserId, userId)),
+  db.delete(projectMembers).where(eq(projectMembers.userId, userId)),
+  db.delete(invitations).where(eq(invitations.invitedUserId, userId)),
 
   // Delete main record
-  db.delete(user)
-    .where(eq(user.id, userId)),
+  db.delete(user).where(eq(user.id, userId)),
 ]);
 ```
 

@@ -31,10 +31,7 @@ orgProjectRoutes.use('*', requireAuth);
 async function getProjectCount(c, user) {
   const { orgId } = getOrgContext(c);
   const db = createDb(c.env.DB);
-  const [result] = await db
-    .select({ count: count() })
-    .from(projects)
-    .where(eq(projects.orgId, orgId));
+  const [result] = await db.select({ count: count() }).from(projects).where(eq(projects.orgId, orgId));
   return result?.count || 0;
 }
 
@@ -56,12 +53,7 @@ orgProjectRoutes.get('/', requireOrgMembership(), async c => {
       })
       .from(projects)
       .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
-      .where(
-        and(
-          eq(projects.orgId, orgId),
-          eq(projectMembers.userId, authUser.id),
-        ),
-      )
+      .where(and(eq(projects.orgId, orgId), eq(projectMembers.userId, authUser.id)))
       .orderBy(desc(projects.updatedAt));
 
     return c.json(results);
@@ -131,15 +123,22 @@ orgProjectRoutes.post(
 
       // Sync to Durable Object (best-effort)
       try {
-        await syncProjectToDO(c.env, projectId, {
-          meta: { title: name.trim(), description: description?.trim() || '' },
-        }, [{
-          odId: authUser.id,
-          name: creator?.name || '',
-          email: creator?.email || '',
-          image: creator?.image || '',
-          role: 'owner',
-        }]);
+        await syncProjectToDO(
+          c.env,
+          projectId,
+          {
+            meta: { title: name.trim(), description: description?.trim() || '' },
+          },
+          [
+            {
+              odId: authUser.id,
+              name: creator?.name || '',
+              email: creator?.email || '',
+              image: creator?.image || '',
+              role: 'owner',
+            },
+          ],
+        );
       } catch (err) {
         console.error('Failed to sync project to DO:', err);
       }
@@ -173,12 +172,7 @@ orgProjectRoutes.get('/:projectId', requireOrgMembership(), async c => {
       })
       .from(projects)
       .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
-      .where(
-        and(
-          eq(projects.id, projectId),
-          eq(projectMembers.userId, authUser.id),
-        ),
-      )
+      .where(and(eq(projects.id, projectId), eq(projectMembers.userId, authUser.id)))
       .get();
 
     if (!result) {
@@ -213,12 +207,7 @@ orgProjectRoutes.patch(
       const membership = await db
         .select({ role: projectMembers.role })
         .from(projectMembers)
-        .where(
-          and(
-            eq(projectMembers.projectId, projectId),
-            eq(projectMembers.userId, authUser.id),
-          ),
-        )
+        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, authUser.id)))
         .get();
 
       if (!membership) {
@@ -233,9 +222,7 @@ orgProjectRoutes.patch(
         updateData.description = updates.description?.trim() || null;
       }
 
-      await db.update(projects)
-        .set(updateData)
-        .where(eq(projects.id, projectId));
+      await db.update(projects).set(updateData).where(eq(projects.id, projectId));
 
       return c.json({ success: true, projectId });
     } catch (error) {
@@ -259,12 +246,7 @@ orgProjectRoutes.delete('/:projectId', requireOrgMembership('owner'), async c =>
     const membership = await db
       .select({ role: projectMembers.role })
       .from(projectMembers)
-      .where(
-        and(
-          eq(projectMembers.projectId, projectId),
-          eq(projectMembers.userId, authUser.id),
-        ),
-      )
+      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, authUser.id)))
       .get();
 
     if (!membership || membership.role !== 'owner') {
@@ -550,9 +532,7 @@ avatarRoutes.post('/', async c => {
 
     // Update user record
     const db = createDb(c.env.DB);
-    await db.update(user)
-      .set({ image: avatarUrl, updatedAt: new Date() })
-      .where(eq(user.id, authUser.id));
+    await db.update(user).set({ image: avatarUrl, updatedAt: new Date() }).where(eq(user.id, authUser.id));
 
     return c.json({ success: true, url: avatarUrl });
   } catch (error) {
@@ -576,9 +556,7 @@ avatarRoutes.delete('/', async c => {
     await c.env.BUCKET.delete(key);
 
     // Clear image in database
-    await db.update(user)
-      .set({ image: null, updatedAt: new Date() })
-      .where(eq(user.id, authUser.id));
+    await db.update(user).set({ image: null, updatedAt: new Date() }).where(eq(user.id, authUser.id));
 
     return c.json({ success: true });
   } catch (error) {

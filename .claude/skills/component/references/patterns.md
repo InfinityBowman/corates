@@ -20,7 +20,7 @@ createEffect(() => {
 
 // Effect with cleanup
 createEffect(() => {
-  const handler = (e) => {
+  const handler = e => {
     if (!ref.contains(e.target)) {
       setOpen(false);
     }
@@ -77,9 +77,7 @@ function ProjectView(props) {
   return (
     <Show when={connected()}>
       <h1>{project()?.meta?.title}</h1>
-      <For each={studies()}>
-        {study => <StudyItem study={study} />}
-      </For>
+      <For each={studies()}>{study => <StudyItem study={study} />}</For>
     </Show>
   );
 }
@@ -96,9 +94,7 @@ function ProjectView(props) {
 
   return (
     <Show when={projectData.connected()}>
-      <For each={projectData.studies()}>
-        {study => <StudyItem study={study} />}
-      </For>
+      <For each={projectData.studies()}>{study => <StudyItem study={study} />}</For>
     </Show>
   );
 }
@@ -138,24 +134,23 @@ function FormComponent(props) {
   });
 
   // Update top-level field
-  const updateName = (value) => setForm('name', value);
+  const updateName = value => setForm('name', value);
 
   // Update nested field
   const toggleNotifications = () => {
-    setForm(produce(f => {
-      f.preferences.notifications = !f.preferences.notifications;
-    }));
+    setForm(
+      produce(f => {
+        f.preferences.notifications = !f.preferences.notifications;
+      }),
+    );
   };
 
   // Or with path syntax
-  const setTheme = (theme) => setForm('preferences', 'theme', theme);
+  const setTheme = theme => setForm('preferences', 'theme', theme);
 
   return (
     <form>
-      <input
-        value={form.name}
-        onInput={(e) => updateName(e.target.value)}
-      />
+      <input value={form.name} onInput={e => updateName(e.target.value)} />
     </form>
   );
 }
@@ -170,33 +165,33 @@ function ListComponent() {
   const [items, setItems] = createStore([]);
 
   // Add item
-  const addItem = (item) => {
-    setItems(produce(arr => {
-      arr.push({ id: crypto.randomUUID(), ...item });
-    }));
+  const addItem = item => {
+    setItems(
+      produce(arr => {
+        arr.push({ id: crypto.randomUUID(), ...item });
+      }),
+    );
   };
 
   // Update item
   const updateItem = (id, updates) => {
-    setItems(produce(arr => {
-      const item = arr.find(i => i.id === id);
-      if (item) Object.assign(item, updates);
-    }));
+    setItems(
+      produce(arr => {
+        const item = arr.find(i => i.id === id);
+        if (item) Object.assign(item, updates);
+      }),
+    );
   };
 
   // Remove item
-  const removeItem = (id) => {
+  const removeItem = id => {
     setItems(items => items.filter(i => i.id !== id));
   };
 
   return (
     <For each={items}>
       {item => (
-        <ItemRow
-          item={item}
-          onUpdate={(updates) => updateItem(item.id, updates)}
-          onRemove={() => removeItem(item.id)}
-        />
+        <ItemRow item={item} onUpdate={updates => updateItem(item.id, updates)} onRemove={() => removeItem(item.id)} />
       )}
     </For>
   );
@@ -220,22 +215,14 @@ export const ThemeContext = createContext({
 function ThemeProvider(props) {
   const [theme, setTheme] = createSignal('light');
 
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      {props.children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ theme, setTheme }}>{props.children}</ThemeContext.Provider>;
 }
 
 // Consumer component
 function ThemedButton(props) {
   const { theme } = useContext(ThemeContext);
 
-  return (
-    <button class={theme() === 'dark' ? 'bg-gray-800' : 'bg-white'}>
-      {props.children}
-    </button>
-  );
+  return <button class={theme() === 'dark' ? 'bg-gray-800' : 'bg-white'}>{props.children}</button>;
 }
 ```
 
@@ -283,7 +270,7 @@ function AnimatedShow(props) {
 function Dropdown(props) {
   return (
     <div
-      class="transition-all duration-200 ease-out"
+      class='transition-all duration-200 ease-out'
       classList={{
         'opacity-0 scale-95 pointer-events-none': !props.open,
         'opacity-100 scale-100': props.open,
@@ -304,7 +291,7 @@ function App() {
   return (
     <ErrorBoundary
       fallback={(err, reset) => (
-        <div class="error-container">
+        <div class='error-container'>
           <h2>Something went wrong</h2>
           <p>{err.message}</p>
           <button onClick={reset}>Try Again</button>
@@ -341,7 +328,7 @@ function ResizablePanel() {
 
   return (
     <div ref={containerRef}>
-      <div ref={handleRef} class="resize-handle" />
+      <div ref={handleRef} class='resize-handle' />
     </div>
   );
 }
@@ -354,7 +341,7 @@ function ResizablePanel() {
 ```jsx
 import { createResource, Suspense } from 'solid-js';
 
-const fetchUser = async (id) => {
+const fetchUser = async id => {
   const res = await fetch(`/api/users/${id}`);
   return res.json();
 };
@@ -406,9 +393,15 @@ function DataComponent(props) {
 
   return (
     <Switch>
-      <Match when={loading()}><Loading /></Match>
-      <Match when={error()}><Error message={error()} /></Match>
-      <Match when={data()}><Content data={data()} /></Match>
+      <Match when={loading()}>
+        <Loading />
+      </Match>
+      <Match when={error()}>
+        <Error message={error()} />
+      </Match>
+      <Match when={data()}>
+        <Content data={data()} />
+      </Match>
     </Switch>
   );
 }
@@ -426,30 +419,17 @@ function ContactForm() {
     message: '',
   });
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     await submitForm(form);
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <input
-        value={form.name}
-        onInput={(e) => setForm('name', e.target.value)}
-        placeholder="Name"
-      />
-      <input
-        value={form.email}
-        onInput={(e) => setForm('email', e.target.value)}
-        placeholder="Email"
-        type="email"
-      />
-      <textarea
-        value={form.message}
-        onInput={(e) => setForm('message', e.target.value)}
-        placeholder="Message"
-      />
-      <button type="submit">Send</button>
+      <input value={form.name} onInput={e => setForm('name', e.target.value)} placeholder='Name' />
+      <input value={form.email} onInput={e => setForm('email', e.target.value)} placeholder='Email' type='email' />
+      <textarea value={form.message} onInput={e => setForm('message', e.target.value)} placeholder='Message' />
+      <button type='submit'>Send</button>
     </form>
   );
 }
@@ -482,7 +462,7 @@ function ValidatedForm() {
     return valid;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
     if (validate()) {
       // Submit form
@@ -492,12 +472,9 @@ function ValidatedForm() {
   return (
     <form onSubmit={handleSubmit}>
       <div>
-        <input
-          value={form.email}
-          onInput={(e) => setForm('email', e.target.value)}
-        />
+        <input value={form.email} onInput={e => setForm('email', e.target.value)} />
         <Show when={errors.email}>
-          <span class="text-red-500">{errors.email}</span>
+          <span class='text-red-500'>{errors.email}</span>
         </Show>
       </div>
       {/* ... */}
@@ -561,14 +538,7 @@ function StatusSelect(props) {
     { value: 'completed', label: 'Completed' },
   ];
 
-  return (
-    <Select
-      value={props.value}
-      onChange={props.onChange}
-      options={options}
-      placeholder="Select status"
-    />
-  );
+  return <Select value={props.value} onChange={props.onChange} options={options} placeholder='Select status' />;
 }
 ```
 
@@ -580,9 +550,7 @@ import { Tooltip } from '@corates/ui';
 function IconButton(props) {
   return (
     <Tooltip content={props.tooltip}>
-      <button onClick={props.onClick}>
-        {props.icon}
-      </button>
+      <button onClick={props.onClick}>{props.icon}</button>
     </Tooltip>
   );
 }
@@ -598,8 +566,8 @@ function UserAvatar(props) {
     <Avatar
       src={props.user?.image}
       name={props.user?.name}
-      class="h-8 w-8 rounded-full"
-      fallbackClass="flex items-center justify-center bg-gray-200 text-gray-600 text-sm font-medium"
+      class='h-8 w-8 rounded-full'
+      fallbackClass='flex items-center justify-center bg-gray-200 text-gray-600 text-sm font-medium'
     />
   );
 }
