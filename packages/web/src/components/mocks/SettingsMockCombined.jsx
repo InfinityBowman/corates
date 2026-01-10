@@ -128,7 +128,7 @@ function Section(props) {
   return (
     <section class='border-t border-gray-100 py-8 first:border-t-0 first:pt-0'>
       <Show when={props.title}>
-        <h2 class='mb-1 text-xs font-medium uppercase tracking-widest text-gray-400'>
+        <h2 class='mb-1 text-xs font-medium tracking-widest text-gray-400 uppercase'>
           {props.title}
         </h2>
       </Show>
@@ -246,9 +246,9 @@ export default function SettingsMockCombined() {
                     <button
                       onClick={() => setActiveNav(item.id)}
                       class={`flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
-                        activeNav() === item.id
-                          ? 'bg-blue-600 text-white'
-                          : 'text-gray-600 hover:bg-gray-100'
+                        activeNav() === item.id ?
+                          'bg-blue-600 text-white'
+                        : 'text-gray-600 hover:bg-gray-100'
                       }`}
                     >
                       <Icon class='h-4 w-4' />
@@ -296,7 +296,7 @@ export default function SettingsMockCombined() {
                     fallback={
                       <div class='grid grid-cols-2 gap-6'>
                         <div>
-                          <label class='mb-2 block text-xs font-medium uppercase tracking-wide text-gray-400'>
+                          <label class='mb-2 block text-xs font-medium tracking-wide text-gray-400 uppercase'>
                             First Name
                           </label>
                           <input
@@ -306,7 +306,7 @@ export default function SettingsMockCombined() {
                           />
                         </div>
                         <div>
-                          <label class='mb-2 block text-xs font-medium uppercase tracking-wide text-gray-400'>
+                          <label class='mb-2 block text-xs font-medium tracking-wide text-gray-400 uppercase'>
                             Last Name
                           </label>
                           <input
@@ -336,13 +336,13 @@ export default function SettingsMockCombined() {
                       <div class='flex items-start justify-between'>
                         <div class='grid grid-cols-2 gap-6'>
                           <div>
-                            <label class='mb-1 block text-xs font-medium uppercase tracking-wide text-gray-400'>
+                            <label class='mb-1 block text-xs font-medium tracking-wide text-gray-400 uppercase'>
                               First Name
                             </label>
                             <p class='text-gray-900'>{mockUser.firstName}</p>
                           </div>
                           <div>
-                            <label class='mb-1 block text-xs font-medium uppercase tracking-wide text-gray-400'>
+                            <label class='mb-1 block text-xs font-medium tracking-wide text-gray-400 uppercase'>
                               Last Name
                             </label>
                             <p class='text-gray-900'>{mockUser.lastName}</p>
@@ -359,7 +359,7 @@ export default function SettingsMockCombined() {
                       <div class='border-t border-gray-100 pt-4'>
                         <div class='flex items-start justify-between'>
                           <div>
-                            <label class='mb-1 block text-xs font-medium uppercase tracking-wide text-gray-400'>
+                            <label class='mb-1 block text-xs font-medium tracking-wide text-gray-400 uppercase'>
                               Persona
                             </label>
                             <Show
@@ -392,7 +392,8 @@ export default function SettingsMockCombined() {
                             >
                               <div class='flex items-center gap-2'>
                                 <p class='text-gray-900'>
-                                  {PERSONAS.find(p => p.id === mockUser.persona)?.label || 'Not set'}
+                                  {PERSONAS.find(p => p.id === mockUser.persona)?.label ||
+                                    'Not set'}
                                 </p>
                                 <span class='rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700'>
                                   {PERSONAS.find(p => p.id === mockUser.persona)?.label}
@@ -412,7 +413,7 @@ export default function SettingsMockCombined() {
                       </div>
 
                       <div class='border-t border-gray-100 pt-4'>
-                        <label class='mb-1 block text-xs font-medium uppercase tracking-wide text-gray-400'>
+                        <label class='mb-1 block text-xs font-medium tracking-wide text-gray-400 uppercase'>
                           Email
                         </label>
                         <div class='flex items-center gap-2'>
@@ -427,7 +428,7 @@ export default function SettingsMockCombined() {
                       </div>
 
                       <div class='border-t border-gray-100 pt-4'>
-                        <label class='mb-1 block text-xs font-medium uppercase tracking-wide text-gray-400'>
+                        <label class='mb-1 block text-xs font-medium tracking-wide text-gray-400 uppercase'>
                           Member Since
                         </label>
                         <p class='text-gray-900'>{formatDate(mockUser.createdAt)}</p>
@@ -468,7 +469,7 @@ export default function SettingsMockCombined() {
                 <div class='flex-1 rounded-2xl border border-gray-200 p-6'>
                   <div class='mb-4 flex items-start justify-between'>
                     <div>
-                      <p class='text-xs font-medium uppercase tracking-widest text-gray-400'>
+                      <p class='text-xs font-medium tracking-widest text-gray-400 uppercase'>
                         Current Plan
                       </p>
                       <h2 class='mt-1 text-2xl font-semibold text-gray-900'>{mockPlan.name}</h2>
@@ -518,7 +519,9 @@ export default function SettingsMockCombined() {
             <Section title='Usage This Period'>
               <div class='grid grid-cols-3 gap-4'>
                 <div class='rounded-xl border border-gray-100 bg-gray-50/50 p-5'>
-                  <p class='text-xs font-medium uppercase tracking-widest text-gray-400'>Projects</p>
+                  <p class='text-xs font-medium tracking-widest text-gray-400 uppercase'>
+                    Projects
+                  </p>
                   <p class='mt-2 text-3xl font-bold text-gray-900'>
                     {mockUsage.projects.used}
                     <span class='text-lg font-normal text-gray-400'>
@@ -535,7 +538,7 @@ export default function SettingsMockCombined() {
                   </div>
                 </div>
                 <div class='rounded-xl border border-gray-100 bg-gray-50/50 p-5'>
-                  <p class='text-xs font-medium uppercase tracking-widest text-gray-400'>
+                  <p class='text-xs font-medium tracking-widest text-gray-400 uppercase'>
                     Collaborators
                   </p>
                   <p class='mt-2 text-3xl font-bold text-gray-900'>
@@ -554,7 +557,7 @@ export default function SettingsMockCombined() {
                   </div>
                 </div>
                 <div class='rounded-xl border border-gray-100 bg-gray-50/50 p-5'>
-                  <p class='text-xs font-medium uppercase tracking-widest text-gray-400'>Storage</p>
+                  <p class='text-xs font-medium tracking-widest text-gray-400 uppercase'>Storage</p>
                   <p class='mt-2 text-3xl font-bold text-gray-900'>
                     {mockUsage.storage.used}
                     <span class='text-lg font-normal text-gray-400'>
@@ -583,9 +586,7 @@ export default function SettingsMockCombined() {
 
             <Section title='Linked Accounts' subtitle='Manage how you sign in to CoRATES'>
               <div class='space-y-3'>
-                <For each={mockLinkedAccounts}>
-                  {account => <ProviderCard account={account} />}
-                </For>
+                <For each={mockLinkedAccounts}>{account => <ProviderCard account={account} />}</For>
               </div>
 
               <div class='mt-4 flex flex-wrap gap-2'>
@@ -606,7 +607,10 @@ export default function SettingsMockCombined() {
             </Section>
 
             <Section title='Authentication'>
-              <SettingRow title='Password' description='Set a password to sign in without email links'>
+              <SettingRow
+                title='Password'
+                description='Set a password to sign in without email links'
+              >
                 <button class='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700'>
                   Add Password
                 </button>
@@ -704,7 +708,9 @@ export default function SettingsMockCombined() {
           <Show when={activeNav() === 'integrations'}>
             <div class='mb-6'>
               <h1 class='text-2xl font-semibold text-gray-900'>Integrations</h1>
-              <p class='mt-1 text-gray-500'>Connect third-party services to enhance your workflow</p>
+              <p class='mt-1 text-gray-500'>
+                Connect third-party services to enhance your workflow
+              </p>
             </div>
 
             <Section>
@@ -717,9 +723,9 @@ export default function SettingsMockCombined() {
                   <div>
                     <h3 class='font-medium text-gray-900'>Google Drive</h3>
                     <p class='text-sm text-gray-500'>
-                      {googleDriveConnected()
-                        ? 'Connected - You can import PDFs from your Drive'
-                        : 'Connect to import PDFs from Google Drive'}
+                      {googleDriveConnected() ?
+                        'Connected - You can import PDFs from your Drive'
+                      : 'Connect to import PDFs from Google Drive'}
                     </p>
                   </div>
                 </div>
