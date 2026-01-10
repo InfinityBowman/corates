@@ -175,6 +175,22 @@ function createBetterAuthStore() {
     });
   });
 
+  // Enhanced authLoading that accounts for cached data
+  // If we have cached user data, we're not "loading" from UI perspective
+  const isAuthLoading = () => {
+    // If offline, we're not loading - we use cached data
+    if (!isOnline()) {
+      return false;
+    }
+    // If session is pending but we have cached data, don't show loading state
+    // This prevents UI flash when we have data to show
+    if (authLoading() && cachedUser()) {
+      return false;
+    }
+    // Otherwise return the actual session pending state
+    return authLoading();
+  };
+
   // Combined signals that use cached data when offline
   const isLoggedIn = () => {
     if (isOnline()) {
@@ -852,7 +868,7 @@ function createBetterAuthStore() {
     isLoggedIn,
     isAuthenticated,
     user,
-    authLoading,
+    authLoading: isAuthLoading,
     authError,
     isOnline,
 
