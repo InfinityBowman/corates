@@ -5,10 +5,11 @@
  * Used across project views to preview PDFs without leaving context.
  */
 
-import { Switch, Match, createMemo } from 'solid-js';
+import { Switch, Match, createMemo, lazy, Suspense } from 'solid-js';
 import SlidingPanel from './SlidingPanel.jsx';
-import EmbedPdfViewer from '@pdf/embedpdf/EmbedPdfViewer.jsx';
 import pdfPreviewStore from '@/stores/pdfPreviewStore.js';
+
+const EmbedPdfViewer = lazy(() => import('@pdf/embedpdf/EmbedPdfViewer.jsx'));
 
 export default function PdfPreviewPanel() {
   const handleClose = () => {
@@ -63,11 +64,19 @@ export default function PdfPreviewPanel() {
           </Match>
 
           <Match when={viewState() === 'ready'}>
-            <EmbedPdfViewer
-              pdfData={pdfPreviewStore.pdfData()}
-              pdfFileName={pdfPreviewStore.pdf()?.fileName}
-              readOnly={true}
-            />
+            <Suspense
+              fallback={
+                <div class='flex h-full flex-1 items-center justify-center'>
+                  <div class='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
+                </div>
+              }
+            >
+              <EmbedPdfViewer
+                pdfData={pdfPreviewStore.pdfData()}
+                pdfFileName={pdfPreviewStore.pdf()?.fileName}
+                readOnly={true}
+              />
+            </Suspense>
           </Match>
 
           <Match when={viewState() === 'empty'}>

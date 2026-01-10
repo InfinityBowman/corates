@@ -24,6 +24,38 @@ The web package is copied into the landing package during build and deployed as 
 
 Do not worry about migrations (client side or backend) unless specifically instructed. This project is not in production and has no users.
 
+## Build Commands
+
+```bash
+# Development
+pnpm dev:front              # Frontend web app (port 5173 and port 3010)
+pnpm dev:workers      # Backend workers (port 8787)
+pnpm --filter web build        # Main web SPA frontend
+pnpm --filter landing build     # Landing site only
+
+# Testing
+pnpm test             # Run all tests
+pnpm --filter web test          # Frontend tests only
+pnpm --filter workers test              # Backend tests only
+pnpm --filter web vitest run path/file  # Single test file
+
+# Code Quality
+pnpm lint             # ESLint check
+pnpm lint:fix         # Auto-fix lint issues
+pnpm format           # Prettier format
+pnpm typecheck        # TypeScript check
+
+# Database (workers package)
+pnpm --filter workers db:generate    # Generate Drizzle migrations
+pnpm --filter workers db:migrate     # Apply migrations locally
+
+# Other
+pnpm build            # Build all packages
+pnpm docs             # View docs site (port 8080)
+pnpm openapi          # Generate OpenAPI schema
+pnpm logs             # View production worker logs
+```
+
 ## Critical Rules
 
 ### Coding Standards

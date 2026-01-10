@@ -1,4 +1,4 @@
-import { createSignal, onMount, createMemo, Show, lazy } from 'solid-js';
+import { createSignal, onMount, createMemo, Show, lazy, Suspense } from 'solid-js';
 import { useLocation } from '@solidjs/router';
 import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/sidebar/Sidebar.jsx';
@@ -79,7 +79,11 @@ export default function Layout(props) {
     <div
       class={`flex h-screen flex-col overflow-hidden bg-blue-50 ${isImpersonating() ? 'pt-10' : ''}`}
     >
-      <ImpersonationBanner />
+      <Show when={isImpersonating()}>
+        <Suspense>
+          <ImpersonationBanner />
+        </Suspense>
+      </Show>
       <Navbar
         mobileSidebarOpen={shouldHideSidebar() ? undefined : mobileSidebarOpen()}
         toggleMobileSidebar={shouldHideSidebar() ? undefined : toggleMobileSidebar}

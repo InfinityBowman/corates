@@ -3,13 +3,15 @@
  * in a split-screen layout. The PDF is read-only during reconciliation.
  */
 
-import { Show, createMemo } from 'solid-js';
+import { Show, createMemo, lazy, Suspense } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { FiArrowLeft } from 'solid-icons/fi';
-import EmbedPdfViewer from '@pdf/embedpdf/EmbedPdfViewer.jsx';
 import ChecklistReconciliation from './amstar2-reconcile/ChecklistReconciliation.jsx';
+
 import Navbar from './amstar2-reconcile/Navbar.jsx';
 import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx';
+
+const EmbedPdfViewer = lazy(() => import('@pdf/embedpdf/EmbedPdfViewer.jsx'));
 
 /**
  * ReconciliationWithPdf - Wrapper that combines ChecklistReconciliation with a PDF viewer
@@ -124,14 +126,22 @@ export default function ReconciliationWithPdf(props) {
               </div>
             }
           >
-            <EmbedPdfViewer
-              pdfData={props.pdfData}
-              pdfFileName={props.pdfFileName}
-              readOnly={true}
-              pdfs={props.pdfs}
-              selectedPdfId={props.selectedPdfId}
-              onPdfSelect={props.onPdfSelect}
-            />
+            <Suspense
+              fallback={
+                <div class='flex h-full items-center justify-center bg-gray-100'>
+                  <div class='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
+                </div>
+              }
+            >
+              <EmbedPdfViewer
+                pdfData={props.pdfData}
+                pdfFileName={props.pdfFileName}
+                readOnly={true}
+                pdfs={props.pdfs}
+                selectedPdfId={props.selectedPdfId}
+                onPdfSelect={props.onPdfSelect}
+              />
+            </Suspense>
           </Show>
         </Show>
       </SplitScreenLayout>

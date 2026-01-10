@@ -6,9 +6,10 @@
  */
 
 import GenericChecklist from '@/components/checklist/GenericChecklist.jsx';
-import EmbedPdfViewer from '@pdf/embedpdf/EmbedPdfViewer.jsx';
 import SplitScreenLayout from '@/components/checklist/SplitScreenLayout.jsx';
-import { Show } from 'solid-js';
+import { Show, lazy, Suspense } from 'solid-js';
+
+const EmbedPdfViewer = lazy(() => import('@pdf/embedpdf/EmbedPdfViewer.jsx'));
 
 export default function ChecklistWithPdf(props) {
   // props.checklistType - the type of checklist ('AMSTAR2', 'ROBINS_I', etc.)
@@ -48,14 +49,22 @@ export default function ChecklistWithPdf(props) {
 
         {/* Second panel: PDF Viewer */}
         <Show when={props.pdfData}>
-          <EmbedPdfViewer
-            pdfData={props.pdfData}
-            pdfFileName={props.pdfFileName}
-            readOnly={props.readOnly}
-            pdfs={props.pdfs}
-            selectedPdfId={props.selectedPdfId}
-            onPdfSelect={props.onPdfSelect}
-          />
+          <Suspense
+            fallback={
+              <div class='flex h-full items-center justify-center'>
+                <div class='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
+              </div>
+            }
+          >
+            <EmbedPdfViewer
+              pdfData={props.pdfData}
+              pdfFileName={props.pdfFileName}
+              readOnly={props.readOnly}
+              pdfs={props.pdfs}
+              selectedPdfId={props.selectedPdfId}
+              onPdfSelect={props.onPdfSelect}
+            />
+          </Suspense>
         </Show>
       </SplitScreenLayout>
     </div>

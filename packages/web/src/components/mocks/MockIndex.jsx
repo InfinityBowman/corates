@@ -18,39 +18,73 @@ export default function MockIndex() {
       <div class='space-y-6'>
         <h1 class='text-2xl font-bold text-gray-900'>Available Mocks</h1>
 
-        {/* Featured: Complete Workflow Mock */}
+        {/* Featured Mocks */}
         <div>
           <h2 class='mb-3 text-lg font-semibold text-gray-700'>Featured</h2>
-          <A
-            href='/mocks/project-view-complete'
-            class='block rounded-lg border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-white p-6 shadow-sm transition-all hover:border-violet-300 hover:shadow-md'
-          >
-            <div class='flex items-start justify-between'>
-              <div>
-                <h3 class='mb-2 text-lg font-semibold text-gray-900'>
-                  ProjectView - Complete Workflow
-                </h3>
-                <p class='mb-3 text-sm text-gray-600'>
-                  Full workflow with tabs for Team, Studies, To Do, Reconcile, Completed, and
-                  Charts. Light-mode dashboard style with progress indicators and clear navigation.
-                </p>
-                <div class='flex flex-wrap gap-2'>
-                  <span class='inline-block rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700'>
-                    Light Theme
-                  </span>
-                  <span class='inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700'>
-                    Full Workflow
-                  </span>
-                  <span class='inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700'>
-                    6 Tabs
-                  </span>
+          <div class='grid gap-4'>
+            <A
+              href='/mocks/dashboard'
+              class='block rounded-lg border-2 border-teal-200 bg-gradient-to-br from-teal-50 to-white p-6 shadow-sm transition-all hover:border-teal-300 hover:shadow-md'
+            >
+              <div class='flex items-start justify-between'>
+                <div>
+                  <h3 class='mb-2 text-lg font-semibold text-gray-900'>
+                    Main Dashboard - Academic Observatory
+                  </h3>
+                  <p class='mb-3 text-sm text-gray-600'>
+                    Scientific manuscript meets modern data dashboard. Warm scholarly aesthetic with
+                    Fraunces + Instrument Sans typography, paper-like textures, and teal/cyan
+                    accents. Shows projects, local appraisals, progress, and activity.
+                  </p>
+                  <div class='flex flex-wrap gap-2'>
+                    <span class='inline-block rounded-full bg-teal-100 px-3 py-1 text-xs font-medium text-teal-700'>
+                      Warm Light
+                    </span>
+                    <span class='inline-block rounded-full bg-stone-100 px-3 py-1 text-xs font-medium text-stone-700'>
+                      Academic
+                    </span>
+                    <span class='inline-block rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-700'>
+                      Dashboard
+                    </span>
+                  </div>
                 </div>
+                <span class='rounded-full bg-teal-600 px-3 py-1 text-xs font-medium text-white'>
+                  New
+                </span>
               </div>
-              <span class='rounded-full bg-violet-600 px-3 py-1 text-xs font-medium text-white'>
-                Recommended
-              </span>
-            </div>
-          </A>
+            </A>
+            <A
+              href='/mocks/project-view-complete'
+              class='block rounded-lg border-2 border-violet-200 bg-linear-to-br from-violet-50 to-white p-6 shadow-sm transition-all hover:border-violet-300 hover:shadow-md'
+            >
+              <div class='flex items-start justify-between'>
+                <div>
+                  <h3 class='mb-2 text-lg font-semibold text-gray-900'>
+                    ProjectView - Complete Workflow
+                  </h3>
+                  <p class='mb-3 text-sm text-gray-600'>
+                    Full workflow with tabs for Team, Studies, To Do, Reconcile, Completed, and
+                    Charts. Light-mode dashboard style with progress indicators and clear
+                    navigation.
+                  </p>
+                  <div class='flex flex-wrap gap-2'>
+                    <span class='inline-block rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700'>
+                      Light Theme
+                    </span>
+                    <span class='inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700'>
+                      Full Workflow
+                    </span>
+                    <span class='inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700'>
+                      6 Tabs
+                    </span>
+                  </div>
+                </div>
+                <span class='rounded-full bg-violet-600 px-3 py-1 text-xs font-medium text-white'>
+                  Recommended
+                </span>
+              </div>
+            </A>
+          </div>
         </div>
 
         {/* Add Studies Flow Mocks */}
@@ -174,6 +208,88 @@ export default function MockIndex() {
               <span class='mt-3 inline-block rounded-full bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-700'>
                 Warm Light Theme
               </span>
+            </A>
+          </div>
+        </div>
+
+        {/* Settings Page Mocks */}
+        <div>
+          <h2 class='mb-3 text-lg font-semibold text-gray-700'>Settings Page Mocks</h2>
+          <p class='mb-4 text-sm text-gray-500'>
+            Different approaches for the settings/preferences page layout with various visual styles
+            and information architecture.
+          </p>
+          <div class='grid gap-4'>
+            <A
+              href='/mocks/settings-combined'
+              class='block rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-6 shadow-sm transition-all hover:border-blue-300 hover:shadow-md'
+            >
+              <div class='flex items-start justify-between'>
+                <div>
+                  <h3 class='mb-2 text-lg font-semibold text-gray-900'>
+                    Settings - Combined Profile & Settings
+                  </h3>
+                  <p class='mb-3 text-sm text-gray-600'>
+                    Unified profile and settings in one place. Minimal Swiss style with app's blue
+                    color scheme. Includes profile editing, linked accounts, billing, security, 2FA,
+                    sessions, notifications, and integrations.
+                  </p>
+                  <div class='flex flex-wrap gap-2'>
+                    <span class='inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700'>
+                      App Colors
+                    </span>
+                    <span class='inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700'>
+                      Sidebar Nav
+                    </span>
+                    <span class='inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700'>
+                      Profile + Settings
+                    </span>
+                  </div>
+                </div>
+                <span class='rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white'>
+                  Recommended
+                </span>
+              </div>
+            </A>
+
+            <A
+              href='/mocks/settings-bento'
+              class='block rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md'
+            >
+              <h3 class='mb-2 text-lg font-semibold text-gray-900'>Settings - Bento Box Style</h3>
+              <p class='text-sm text-gray-600'>
+                Modern dashboard-inspired bento grid layout with varied card sizes, progress rings,
+                and gradient accents. Apple-inspired aesthetics.
+              </p>
+              <div class='mt-3 flex gap-2'>
+                <span class='inline-block rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700'>
+                  Grid Layout
+                </span>
+                <span class='inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700'>
+                  Modern
+                </span>
+              </div>
+            </A>
+
+            <A
+              href='/mocks/settings-minimal'
+              class='block rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md'
+            >
+              <h3 class='mb-2 text-lg font-semibold text-gray-900'>
+                Settings - Minimal Swiss Style
+              </h3>
+              <p class='text-sm text-gray-600'>
+                Clean, typographic, understated elegance with strong hierarchy, generous whitespace,
+                and sidebar navigation. Dieter Rams-inspired.
+              </p>
+              <div class='mt-3 flex gap-2'>
+                <span class='inline-block rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700'>
+                  Sidebar Nav
+                </span>
+                <span class='inline-block rounded-full bg-stone-100 px-3 py-1 text-xs font-medium text-stone-700'>
+                  Minimal
+                </span>
+              </div>
             </A>
           </div>
         </div>

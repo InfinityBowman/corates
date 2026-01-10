@@ -1,6 +1,6 @@
 import { Router, Route } from '@solidjs/router';
 import { lazy } from 'solid-js';
-import Dashboard from './components/Dashboard.jsx';
+import Dashboard from './components/dashboard/index.js';
 import SignIn from '@/components/auth/SignIn.jsx';
 import SignUp from '@/components/auth/SignUp.jsx';
 import CheckEmail from '@/components/auth/CheckEmail.jsx';
@@ -22,42 +22,14 @@ import {
   NotificationsSettings,
   GeneralSettings,
 } from '@/components/settings/index.js';
-import AdminLayout from '@/components/admin/AdminLayout.jsx';
 import { BASEPATH } from '@config/api.js';
 import ProtectedGuard from '@/components/auth/ProtectedGuard.jsx';
 import ProjectView from '@/components/project/ProjectView.jsx';
 import { CreateOrgPage } from '@/components/org/index.js';
-import MockIndex from '@/components/mocks/MockIndex.jsx';
 
-// Code-split mock routes - loaded only when navigating to /mock/*
-const ProjectViewEditorial = lazy(() => import('@/components/mocks/ProjectViewEditorial.jsx'));
-const ProjectViewDashboard = lazy(() => import('@/components/mocks/ProjectViewDashboard.jsx'));
-const ProjectViewKanban = lazy(() => import('@/components/mocks/ProjectViewKanban.jsx'));
-const ProjectViewComplete = lazy(() => import('@/components/mocks/ProjectViewComplete.jsx'));
-const AddStudiesWizard = lazy(() => import('@/components/mocks/AddStudiesWizard.jsx'));
-const AddStudiesPanel = lazy(() => import('@/components/mocks/AddStudiesPanel.jsx'));
-const AddStudiesInline = lazy(() => import('@/components/mocks/AddStudiesInline.jsx'));
-
-// Code-split admin routes - loaded only when navigating to /admin/*
-const AdminDashboard = lazy(() =>
-  import('@/components/admin/index.js').then(m => ({ default: m.AdminDashboard })),
-);
-const StorageManagement = lazy(() => import('@/components/admin/StorageManagement.jsx'));
-const OrgList = lazy(() => import('@/components/admin/OrgList.jsx'));
-const OrgDetail = lazy(() => import('@/components/admin/OrgDetail.jsx'));
-const AdminBillingLedgerPage = lazy(
-  () => import('@/components/admin/billing-observability/AdminBillingLedgerPage.jsx'),
-);
-const AdminBillingStuckStatesPage = lazy(
-  () => import('@/components/admin/billing-observability/AdminBillingStuckStatesPage.jsx'),
-);
-const DatabaseViewer = lazy(() => import('@/components/admin/DatabaseViewer.jsx'));
-const UserDetail = lazy(() => import('@/components/admin/UserDetail.jsx'));
-const ProjectList = lazy(() => import('@/components/admin/ProjectList.jsx'));
-const ProjectDetail = lazy(() => import('@/components/admin/ProjectDetail.jsx'));
-const StripeToolsPage = lazy(
-  () => import('@/components/admin/billing-observability/StripeToolsPage.jsx'),
-);
+// Lazy-loaded route modules (only load when path matches)
+const AdminRoutes = lazy(() => import('@/components/admin/AdminRoutes.jsx'));
+const MockRoutes = lazy(() => import('@/components/mocks/MockRoutes.jsx'));
 
 export default function AppRoutes() {
   return (
@@ -76,7 +48,6 @@ export default function AppRoutes() {
         {/* Dashboard - public home for all users */}
         <Route path='/' component={Dashboard} />
         <Route path='/dashboard' component={Dashboard} />
-
         {/* Protected routes - requires login */}
         <Route path='/' component={ProtectedGuard}>
           {/* Global user routes (no sidebar) */}
@@ -90,19 +61,8 @@ export default function AppRoutes() {
             <Route path='/notifications' component={NotificationsSettings} />
             <Route path='/general' component={GeneralSettings} />
           </Route>
-          <Route path='/admin' component={AdminLayout}>
-            <Route path='/' component={AdminDashboard} />
-            <Route path='/orgs' component={OrgList} />
-            <Route path='/orgs/:orgId' component={OrgDetail} />
-            <Route path='/users/:userId' component={UserDetail} />
-            <Route path='/projects/*' component={ProjectList} />
-            <Route path='/projects/:projectId' component={ProjectDetail} />
-            <Route path='/storage' component={StorageManagement} />
-            <Route path='/billing/ledger' component={AdminBillingLedgerPage} />
-            <Route path='/billing/stuck-states' component={AdminBillingStuckStatesPage} />
-            <Route path='/billing/stripe-tools' component={StripeToolsPage} />
-            <Route path='/database' component={DatabaseViewer} />
-          </Route>
+          {/* Admin routes - fully code-split, only loads on /admin/* */}
+          <Route path='/admin/*' component={AdminRoutes} />
           {/* Organization creation */}
           <Route path='/orgs/new' component={CreateOrgPage} />
           {/* Project-scoped routes - checklist and reconcile are children sharing YDoc connection */}
@@ -119,20 +79,11 @@ export default function AppRoutes() {
             />
           </Route>
         </Route>
-
         {/* Local checklists (not org-scoped, work offline) */}
-        <Route path='/checklist/*' component={LocalChecklistView} />
+        <Route path='/checklist' component={LocalChecklistView} />
         <Route path='/checklist/:checklistId' component={LocalChecklistView} />
-
-        {/* Mock routes - public, visual-only wireframes */}
-        <Route path='/mocks' component={MockIndex} />
-        <Route path='/mocks/project-view-editorial' component={ProjectViewEditorial} />
-        <Route path='/mocks/project-view-dashboard' component={ProjectViewDashboard} />
-        <Route path='/mocks/project-view-kanban' component={ProjectViewKanban} />
-        <Route path='/mocks/project-view-complete' component={ProjectViewComplete} />
-        <Route path='/mocks/add-studies-wizard' component={AddStudiesWizard} />
-        <Route path='/mocks/add-studies-panel' component={AddStudiesPanel} />
-        <Route path='/mocks/add-studies-inline' component={AddStudiesInline} />
+        {/* Mock routes - fully code-split, only loads on /mocks/* */}
+        <Route path='/mocks/*' component={MockRoutes} />
       </Route>
       <Route path='*' component={NotFoundPage} />
     </Router>
