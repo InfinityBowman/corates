@@ -8,7 +8,7 @@
 
 import { createSignal, createEffect, Show, onCleanup, createMemo } from 'solid-js';
 import { debounce } from '@solid-primitives/scheduled';
-import { useParams, useNavigate } from '@solidjs/router';
+import { useParams, useNavigate, useSearchParams } from '@solidjs/router';
 import ChecklistWithPdf from '@/components/checklist/ChecklistWithPdf.jsx';
 import CreateLocalChecklist from '@/components/checklist/CreateLocalChecklist.jsx';
 import localChecklistsStore from '@/stores/localChecklistsStore';
@@ -19,6 +19,7 @@ import ScoreTag from '@/components/checklist/ScoreTag.jsx';
 export default function LocalChecklistView() {
   const params = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { getChecklist, updateChecklist, getPdf, savePdf, deletePdf } = localChecklistsStore;
 
   const [checklist, setChecklist] = createSignal(null);
@@ -174,7 +175,7 @@ export default function LocalChecklistView() {
   );
 
   return (
-    <Show when={params.checklistId} fallback={<CreateLocalChecklist />}>
+    <Show when={params.checklistId} fallback={<CreateLocalChecklist type={searchParams.type} />}>
       <Show
         when={!loading()}
         fallback={

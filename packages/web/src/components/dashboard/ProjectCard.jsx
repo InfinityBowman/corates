@@ -160,7 +160,7 @@ export function ProjectCard(props) {
               e.stopPropagation();
               props.onDelete?.(props.project?.id);
             }}
-            class='shrink-0 rounded-lg p-2 text-stone-300 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500'
+            class='z-10 shrink-0 rounded-lg p-2 text-stone-300 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500'
             title='Delete Project'
           >
             <FiTrash2 class='h-4 w-4' />

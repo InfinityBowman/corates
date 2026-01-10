@@ -155,7 +155,7 @@ export default function DevImportProject() {
       <div class='flex-1'>
         <label class='mb-1 block text-xs text-gray-500'>Or paste JSON</label>
         <textarea
-          class='h-full min-h-[150px] w-full resize-none rounded border border-gray-300 bg-gray-50 p-2 font-mono text-xs focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none'
+          class='h-full min-h-37.5 w-full resize-none rounded border border-gray-300 bg-gray-50 p-2 font-mono text-xs focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none'
           placeholder='Paste exported project JSON here...'
           value={jsonText()}
           onInput={e => setJsonText(e.target.value)}

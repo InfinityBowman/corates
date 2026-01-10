@@ -5,7 +5,7 @@
  * handles create form, empty states, and loading states.
  */
 
-import { createSignal, Show, For } from 'solid-js';
+import { Show, For } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useQueryClient } from '@tanstack/solid-query';
 import { useConfirmDialog, showToast } from '@corates/ui';
@@ -110,7 +110,8 @@ export function ProjectsSection(props) {
   // Subscription checks
   const { hasEntitlement, hasQuota, loading: subscriptionLoading } = useSubscription();
 
-  const [showCreateForm, setShowCreateForm] = createSignal(false);
+  const showCreateForm = () => props.showCreateForm();
+  const setShowCreateForm = val => props.setShowCreateForm(val);
 
   const canCreateProject = () => {
     if (subscriptionLoading()) return null;
@@ -211,7 +212,7 @@ export function ProjectsSection(props) {
               type='button'
               onClick={handleCreateClick}
               disabled={!isOnline()}
-              class='flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50'
+              class='flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-blue-600 transition-all hover:scale-105 hover:bg-blue-50 hover:shadow-sm active:scale-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
             >
               <FiPlus class='h-4 w-4' />
               New Project

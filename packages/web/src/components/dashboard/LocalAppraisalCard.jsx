@@ -10,7 +10,7 @@
  */
 
 import { Show, createMemo } from 'solid-js';
-import { FiFileText, FiArrowRight, FiTrash2 } from 'solid-icons/fi';
+import { FiFileText, FiChevronRight, FiTrash2 } from 'solid-icons/fi';
 import { Editable } from '@corates/ui';
 import { getChecklistMetadata } from '@/checklist-registry';
 
@@ -108,10 +108,11 @@ export function LocalAppraisalCard(props) {
         <button
           type='button'
           onClick={() => props.onOpen?.(props.checklist?.id)}
-          class='rounded-lg p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600'
+          class='flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-blue-600 transition-all hover:bg-blue-50 hover:text-blue-700'
           title='Open appraisal'
         >
-          <FiArrowRight class='h-4 w-4' />
+          Open
+          <FiChevronRight class='h-4 w-4 transition-transform group-hover:translate-x-0.5' />
         </button>
       </div>
     </div>

@@ -4,6 +4,7 @@
 
 import { Show } from 'solid-js';
 import { FiPlus, FiSearch } from 'solid-icons/fi';
+import { getRoleLabel } from '@/components/auth/RoleSelector.jsx';
 
 /**
  * @param {Object} props
@@ -16,19 +17,26 @@ import { FiPlus, FiSearch } from 'solid-icons/fi';
 export function DashboardHeader(props) {
   const firstName = () => {
     const name = props.user?.name || '';
-    return name.split(' ')[0] || 'there';
+    return name.split(' ')[0] || '';
   };
 
   return (
     <header class='mb-10' style={{ animation: 'fade-up 0.6s ease-out backwards' }}>
       <div class='flex items-start justify-between'>
         <div>
-          <p class='mb-1 text-sm font-medium text-blue-600'>Welcome back,</p>
-          <h1 class='text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl'>
-            {firstName()}
-          </h1>
-          <Show when={props.user?.email}>
-            <p class='mt-2 text-stone-500'>{props.user.email}</p>
+          <Show
+            when={firstName()}
+            fallback={<p class='mb-1 text-sm font-medium text-blue-600'>Welcome to CoRATES!</p>}
+          >
+            <p class='mb-1 text-sm font-medium text-blue-600'>Welcome back,</p>
+            <h1 class='text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl'>
+              {firstName()}
+            </h1>
+          </Show>
+          <Show when={props.user?.persona || props.user?.email}>
+            <p class='mt-2 text-stone-500'>
+              {props.user?.persona ? getRoleLabel(props.user.persona) : props.user.email}
+            </p>
           </Show>
         </div>
         <div class='flex items-center gap-3'>

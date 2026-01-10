@@ -51,7 +51,7 @@ function EmptyLocalState(props) {
 function SignInPrompt(props) {
   return (
     <div
-      class='flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50/50 p-4'
+      class='flex items-center justify-between rounded-xl border border-blue-100 bg-white/50 p-4'
       style={{ animation: 'fade-up 0.6s ease-out 100ms backwards' }}
     >
       <div class='flex items-center gap-3'>
@@ -150,7 +150,7 @@ export function LocalAppraisalsSection(props) {
             <button
               type='button'
               onClick={handleCreate}
-              class='flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50'
+              class='flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-blue-600 transition-all hover:scale-105 hover:bg-blue-50 hover:shadow-sm active:scale-100'
             >
               <FiPlus class='h-4 w-4' />
               New

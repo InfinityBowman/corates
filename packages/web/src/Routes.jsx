@@ -122,7 +122,7 @@ export default function AppRoutes() {
           </Route>
         </Route>
         {/* Local checklists (not org-scoped, work offline) */}
-        <Route path='/checklist/*' component={LocalChecklistView} />
+        <Route path='/checklist' component={LocalChecklistView} />
         <Route path='/checklist/:checklistId' component={LocalChecklistView} />
         {/* Mock routes - public, visual-only wireframes */}
         <Route path='/mocks' component={MockIndex} />

@@ -4,7 +4,7 @@
  * Handles multiple user states: logged-out, loading, no-plan, active, etc.
  */
 
-import { createMemo, Show, Switch, Match } from 'solid-js';
+import { createMemo, Show, Switch, Match, createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useSubscription } from '@primitives/useSubscription.js';
@@ -19,6 +19,7 @@ import ActivityFeed from './ActivityFeed.jsx';
 import DashboardSkeleton from './DashboardSkeleton.jsx';
 import { ProjectsSection } from './ProjectsSection.jsx';
 import { LocalAppraisalsSection } from './LocalAppraisalsSection.jsx';
+import { LANDING_URL } from '@/config/api.js';
 
 /**
  * Dashboard state machine
@@ -117,23 +118,25 @@ export function Dashboard() {
   const navigate = useNavigate();
   const { state, user, isOnline, canCreateProject, stats, activities, subscriptionFetchFailed } =
     useDashboardState();
+  const [showCreateForm, setShowCreateForm] = createSignal(false);
 
   const handleCreateProject = () => {
     // Trigger the project creation modal through the ProjectsPanel
     // For now, just scroll to projects section
     document.getElementById('projects-section')?.scrollIntoView({ behavior: 'smooth' });
+    setShowCreateForm(true);
   };
 
   const handleStartROBINSI = () => {
-    navigate('/checklist/new?type=robins-i');
+    navigate('/checklist?type=ROBINS_I');
   };
 
   const handleStartAMSTAR2 = () => {
-    navigate('/checklist/new?type=amstar-2');
+    navigate('/checklist?type=AMSTAR2');
   };
 
   const handleLearnMore = () => {
-    window.open('https://docs.corates.app', '_blank');
+    window.location.href = `${LANDING_URL}/resources`;
   };
 
   return (
@@ -200,7 +203,10 @@ export function Dashboard() {
           <div class='grid gap-6 lg:grid-cols-3'>
             {/* Left column - Projects and Local appraisals */}
             <div id='projects-section' class='space-y-6 lg:col-span-2'>
-              <ProjectsSection />
+              <ProjectsSection
+                showCreateForm={showCreateForm}
+                setShowCreateForm={setShowCreateForm}
+              />
               <LocalAppraisalsSection showHeader={true} />
             </div>
 
@@ -243,7 +249,10 @@ export function Dashboard() {
           {/* Still show content */}
           <div class='grid gap-6 lg:grid-cols-3'>
             <div class='space-y-6 lg:col-span-2'>
-              <ProjectsSection />
+              <ProjectsSection
+                showCreateForm={showCreateForm}
+                setShowCreateForm={setShowCreateForm}
+              />
               <LocalAppraisalsSection showHeader={true} />
             </div>
             <div class='space-y-6'>

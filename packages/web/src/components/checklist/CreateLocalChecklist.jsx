@@ -18,12 +18,15 @@ export default function CreateLocalChecklist() {
   const { createChecklist, savePdf } = localChecklistsStore;
 
   const [name, setName] = createSignal('');
-  const [checklistType, setChecklistType] = createSignal(DEFAULT_CHECKLIST_TYPE);
+  const [checklistType, setChecklistType] = createSignal(
+    searchParams.type || DEFAULT_CHECKLIST_TYPE,
+  );
   const [pdfFile, setPdfFile] = createSignal(null);
   const [creating, setCreating] = createSignal(false);
   const [error, setError] = createSignal(null);
 
   const typeOptions = getChecklistTypeOptions();
+  console.log('typeOptions', typeOptions);
 
   const handleFilesChange = async files => {
     const file = files[0];
