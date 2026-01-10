@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createUniqueId } from 'solid-js';
+import { For, Show, createEffect } from 'solid-js';
 import { RESPONSE_LABELS, getResponseOptions } from './checklist-map.js';
 import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
 
@@ -16,13 +16,11 @@ import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
  * @param {boolean} [props.isSkippable] - Whether this question can be skipped (scoring already determined)
  */
 export function SignallingQuestion(props) {
-  const uniqueId = createUniqueId();
   const options = () => getResponseOptions(props.question.responseType);
 
   createEffect(() => {
-    if (props.answer?.answer === 'NA') {
-      // Legacy answer value; NA is not a valid option for ROBINS-I in CoRATES.
-      // We coerce it to NI so the UI remains consistent and scoring doesn't get stuck.
+    // Only coerce NA to NI if NA is not a valid option for this question's response type
+    if (props.answer?.answer === 'NA' && !options().includes('NA')) {
       props.onUpdate({
         ...props.answer,
         answer: 'NI',
@@ -31,9 +29,11 @@ export function SignallingQuestion(props) {
   });
 
   function handleAnswerChange(value) {
+    // Toggle off if clicking the already-selected option
+    const newValue = props.answer?.answer === value ? null : value;
     props.onUpdate({
       ...props.answer,
-      answer: value,
+      answer: newValue,
     });
   }
 
@@ -65,24 +65,19 @@ export function SignallingQuestion(props) {
         <div class='flex shrink-0 flex-wrap gap-1 sm:gap-2'>
           <For each={options()}>
             {option => (
-              <label
+              <button
+                type='button'
+                onClick={() => !props.disabled && handleAnswerChange(option)}
+                disabled={props.disabled}
                 class={`relative inline-flex cursor-pointer items-center justify-center rounded border px-2 py-1 text-xs font-medium transition-colors ${props.disabled ? 'cursor-not-allowed opacity-50' : ''} ${
                   props.answer?.answer === option ?
                     'border-blue-400 bg-blue-100 text-blue-800'
                   : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'
                 } `}
+                title={RESPONSE_LABELS[option]}
               >
-                <input
-                  type='radio'
-                  name={`q-${uniqueId}-${props.question.id}`}
-                  value={option}
-                  checked={props.answer?.answer === option}
-                  onChange={() => handleAnswerChange(option)}
-                  disabled={props.disabled}
-                  class='sr-only'
-                />
-                <span title={RESPONSE_LABELS[option]}>{option}</span>
-              </label>
+                {option}
+              </button>
             )}
           </For>
         </div>
