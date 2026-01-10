@@ -26,7 +26,6 @@ export default function CreateLocalChecklist() {
   const [error, setError] = createSignal(null);
 
   const typeOptions = getChecklistTypeOptions();
-  console.log('typeOptions', typeOptions);
 
   const handleFilesChange = async files => {
     const file = files[0];

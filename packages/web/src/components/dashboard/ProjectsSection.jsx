@@ -130,20 +130,17 @@ export function ProjectsSection(props) {
     }
 
     try {
-      const response = await fetch(
-        `${API_BASE}/api/orgs/${project.orgId}/projects/${targetProjectId}`,
-        { method: 'DELETE', credentials: 'include' },
-      );
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || 'Failed to delete project');
-      }
+      const { apiFetch } = await import('@/lib/apiFetch.js');
+      await apiFetch(`/api/orgs/${project.orgId}/projects/${targetProjectId}`, {
+        method: 'DELETE',
+        toastMessage: 'Delete Failed',
+      });
 
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
       showToast.success('Project Deleted', 'The project has been deleted successfully');
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils.js');
-      await handleError(err, { toastTitle: 'Delete Failed' });
+      await handleError(err, { toastTitle: 'Delete Failed', showToast: false });
     }
   };
 
