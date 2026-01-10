@@ -32,14 +32,7 @@ export const SECTION_A = robinsI.SECTION_A;
 export const SECTION_B = robinsI.SECTION_B;
 export const SECTION_C = robinsI.SECTION_C;
 
-// Confounding factors
-export const PREDEFINED_CONFOUNDERS = robinsI.PREDEFINED_CONFOUNDERS;
-export const CONFOUNDING_FIELDS = robinsI.CONFOUNDING_FIELDS;
-
 // Helper functions
 export const getActiveDomainKeys = robinsI.getActiveDomainKeys;
 export const getDomainQuestions = robinsI.getDomainQuestions;
-export const getDomainTitle = robinsI.getDomainTitle;
-export const getDomainDescription = robinsI.getDomainDescription;
 export const getResponseOptions = robinsI.getResponseOptions;
-export const getQuestionOptions = robinsI.getQuestionOptions;

@@ -43,6 +43,8 @@ export default defineConfig(({ mode }) => ({
     tailwindcss(),
   ],
   build: {
+    // Disable modulepreload for lazy-loaded chunks - we want true on-demand loading
+    modulePreload: false,
     minify: mode === 'analyze' ? 'terser' : 'esbuild',
     sourcemap: mode === 'analyze',
     terserOptions: {
@@ -53,6 +55,10 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: id => {
+          // Chart.js - large library, keep separate for lazy loading
+          if (id.includes('chart.js') || id.includes('solid-chartjs')) {
+            return 'chartjs';
+          }
           // Group all EmbedPDF plugins into a single chunk
           if (id.includes('@embedpdf/plugin-')) {
             return 'embedpdf-plugins';
@@ -69,10 +75,6 @@ export default defineConfig(({ mode }) => ({
               return `embedpdf-${match[1]}`;
             }
             return 'embedpdf';
-          }
-          // Group all admin components into a single chunk
-          if (id.includes('/components/admin/')) {
-            return 'admin';
           }
         },
       },

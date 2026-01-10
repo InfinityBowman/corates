@@ -55,7 +55,7 @@ export default function MockIndex() {
             </A>
             <A
               href='/mocks/project-view-complete'
-              class='block rounded-lg border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-white p-6 shadow-sm transition-all hover:border-violet-300 hover:shadow-md'
+              class='block rounded-lg border-2 border-violet-200 bg-linear-to-br from-violet-50 to-white p-6 shadow-sm transition-all hover:border-violet-300 hover:shadow-md'
             >
               <div class='flex items-start justify-between'>
                 <div>
