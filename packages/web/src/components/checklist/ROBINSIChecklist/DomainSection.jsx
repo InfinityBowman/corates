@@ -169,7 +169,6 @@ export function DomainSection(props) {
       {/* Domain content */}
       <Show when={!props.collapsed}>
         <div class='px-6 py-4'>
-
           {/* Questions - with or without subsections */}
           <Show
             when={hasSubsections()}
