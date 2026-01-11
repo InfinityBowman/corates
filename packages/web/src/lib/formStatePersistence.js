@@ -5,6 +5,7 @@
  */
 
 import { db } from '@primitives/db.js';
+import { bestEffort } from '@lib/errorLogger.js';
 
 const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -50,7 +51,11 @@ export async function getFormState(type, projectId) {
   if (!record) return null;
 
   if (Date.now() - record.timestamp > MAX_AGE_MS) {
-    clearFormState(type, projectId).catch(() => {});
+    bestEffort(clearFormState(type, projectId), {
+      operation: 'clearExpiredFormState',
+      type,
+      projectId,
+    });
     return null;
   }
 

@@ -7,6 +7,7 @@
 import { ErrorBoundary as SolidErrorBoundary } from 'solid-js';
 import { normalizeError } from '@corates/shared';
 import { FiAlertTriangle, FiRefreshCw, FiHome } from 'solid-icons/fi';
+import { logError } from '@lib/errorLogger.js';
 
 /**
  * Safe navigation button that works both inside and outside Route context
@@ -109,12 +110,11 @@ export default function AppErrorBoundary(props) {
     // Normalize the error using our error system
     const normalizedError = normalizeError(error);
 
-    // Log unknown/programmer errors for monitoring
-    if (normalizedError.code?.startsWith('UNKNOWN_')) {
-      console.error('Error Boundary caught unknown error:', normalizedError);
-      // TODO: Send to error monitoring service (e.g., Sentry, LogRocket)
-      // logErrorToService(normalizedError);
-    }
+    // Log errors through centralized error logger (Sentry-ready)
+    logError(normalizedError, {
+      component: props.name || 'AppErrorBoundary',
+      action: 'render',
+    });
 
     // Call custom error handler if provided
     if (props.onError) {
@@ -133,25 +133,44 @@ export default function AppErrorBoundary(props) {
 }
 
 /**
- * Simple error boundary wrapper for specific sections
- * Use this for smaller scoped error boundaries
+ * Section error boundary for specific page sections
+ * Use this for component-level error isolation
+ *
+ * @param {Object} props - Component props
+ * @param {JSX.Element} props.children - Child components to wrap
+ * @param {string} [props.name] - Section name for logging context
+ * @param {Function} [props.onError] - Callback when error is caught
+ * @param {Function} [props.onRetry] - Custom retry handler (e.g., query refetch)
+ * @param {string} [props.retryLabel] - Custom label for retry button
  */
 export function SectionErrorBoundary(props) {
+  const handleRetry = reset => {
+    // Call custom retry handler if provided (e.g., invalidate queries)
+    if (props.onRetry) {
+      props.onRetry();
+    }
+    // Always call reset to clear error boundary state
+    reset();
+  };
+
   return (
     <AppErrorBoundary
+      name={props.name || 'SectionErrorBoundary'}
       fallback={(error, reset) => (
         <div class='rounded-lg border border-red-200 bg-red-50 p-4'>
           <div class='mb-2 flex items-center gap-2'>
             <FiAlertTriangle class='h-5 w-5 text-red-600' />
-            <h3 class='font-semibold text-red-900'>Error</h3>
+            <h3 class='font-semibold text-red-900'>
+              {props.name ? `Error in ${props.name}` : 'Error'}
+            </h3>
           </div>
           <p class='mb-3 text-sm text-red-700'>{error.message || 'Something went wrong'}</p>
           {reset && (
             <button
-              onClick={reset}
+              onClick={() => handleRetry(reset)}
               class='rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
             >
-              Try Again
+              {props.retryLabel || 'Try Again'}
             </button>
           )}
         </div>

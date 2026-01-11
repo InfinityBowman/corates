@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js';
 import SettingsSidebar from './SettingsSidebar.jsx';
+import { SectionErrorBoundary } from '@components/ErrorBoundary.jsx';
 
 // Share the same localStorage keys as main sidebar so state is unified
 const SIDEBAR_MODE_KEY = 'corates-sidebar-mode';
@@ -79,7 +80,11 @@ export default function SettingsLayout(props) {
         width={sidebarWidth()}
         onWidthChange={handleWidthChange}
       />
-      <main class='flex-1 overflow-auto'>{props.children}</main>
+      <main class='flex-1 overflow-auto'>
+        <SectionErrorBoundary name='Settings'>
+          {props.children}
+        </SectionErrorBoundary>
+      </main>
     </div>
   );
 }
