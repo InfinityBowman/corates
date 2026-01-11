@@ -101,9 +101,7 @@ export default function AdminLayout(props) {
 
           {/* Page Content */}
           <DashboardBody>
-            <SectionErrorBoundary name='Admin'>
-              {props.children}
-            </SectionErrorBoundary>
+            <SectionErrorBoundary name='Admin'>{props.children}</SectionErrorBoundary>
           </DashboardBody>
         </div>
       </Show>

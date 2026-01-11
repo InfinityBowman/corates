@@ -81,9 +81,7 @@ export default function SettingsLayout(props) {
         onWidthChange={handleWidthChange}
       />
       <main class='flex-1 overflow-auto'>
-        <SectionErrorBoundary name='Settings'>
-          {props.children}
-        </SectionErrorBoundary>
+        <SectionErrorBoundary name='Settings'>{props.children}</SectionErrorBoundary>
       </main>
     </div>
   );

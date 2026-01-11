@@ -106,9 +106,7 @@ function log(level, message, context = {}) {
  */
 export function logError(error, context = {}) {
   const errorData = formatErrorData(error);
-  const message = context.action
-    ? `${context.action}: ${errorData.message}`
-    : errorData.message;
+  const message = context.action ? `${context.action}: ${errorData.message}` : errorData.message;
 
   log(LogLevel.ERROR, message, {
     ...context,

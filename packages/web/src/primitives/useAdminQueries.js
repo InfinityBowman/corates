@@ -66,7 +66,7 @@ export function useAdminUsers(getParams) {
         if (search) searchParams.set('search', search);
         return adminFetch(`users?${searchParams.toString()}`);
       },
-      ...ADMIN_QUERY_CONFIG
+      ...ADMIN_QUERY_CONFIG,
     };
   });
 }
@@ -81,7 +81,7 @@ export function useAdminUserDetails(getUserId) {
       queryKey: queryKeys.admin.userDetails(userId),
       queryFn: () => adminFetch(`users/${userId}`),
       enabled: !!userId,
-      ...ADMIN_QUERY_CONFIG
+      ...ADMIN_QUERY_CONFIG,
     };
   });
 }
@@ -150,7 +150,7 @@ export function useStorageDocuments(getParams) {
         if (search) searchParams.set('search', search);
         return adminFetch(`storage/documents?${searchParams.toString()}`);
       },
-      ...ADMIN_QUERY_CONFIG
+      ...ADMIN_QUERY_CONFIG,
     };
   });
 }
@@ -162,7 +162,7 @@ export function useStorageStats() {
   return useQuery(() => ({
     queryKey: queryKeys.admin.storageStats,
     queryFn: () => adminFetch('storage/stats'),
-    ...ADMIN_QUERY_CONFIG
+    ...ADMIN_QUERY_CONFIG,
   }));
 }
 
