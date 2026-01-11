@@ -108,7 +108,8 @@ export default function CheckEmail() {
       await resendVerificationEmail(email());
       setResent(true);
       setTimeout(() => setResent(false), RESENT_TIMEOUT_MS);
-    } catch {
+    } catch (err) {
+      console.warn('Failed to resend verification email:', err.message);
       setDisplayError('Failed to resend email. Please try again.');
     } finally {
       setResending(false);

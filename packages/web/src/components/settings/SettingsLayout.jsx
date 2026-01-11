@@ -20,8 +20,8 @@ function getInitialSidebarMode() {
     if (stored === 'expanded' || stored === 'collapsed') {
       return stored;
     }
-  } catch {
-    // localStorage not available (SSR or private browsing)
+  } catch (err) {
+    console.warn('Failed to read sidebar mode from localStorage:', err.message);
   }
   return 'collapsed';
 }
@@ -38,8 +38,8 @@ function getInitialSidebarWidth() {
         return parsed;
       }
     }
-  } catch {
-    // localStorage not available
+  } catch (err) {
+    console.warn('Failed to read sidebar width from localStorage:', err.message);
   }
   return DEFAULT_SIDEBAR_WIDTH;
 }

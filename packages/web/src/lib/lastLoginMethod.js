@@ -45,7 +45,8 @@ export function saveLastLoginMethod(method) {
 export function getLastLoginMethod() {
   try {
     return localStorage.getItem(STORAGE_KEY);
-  } catch {
+  } catch (err) {
+    console.warn('Failed to get last login method from localStorage:', err.message);
     return null;
   }
 }
@@ -65,7 +66,7 @@ export function getLastLoginMethodLabel() {
 export function clearLastLoginMethod() {
   try {
     localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // ignore
+  } catch (err) {
+    console.warn('Failed to clear last login method from localStorage:', err.message);
   }
 }

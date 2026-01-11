@@ -115,8 +115,8 @@ export function useNotifications(userId, options = {}) {
       // Force close so onclose handler runs and triggers reconnection
       try {
         if (ws && ws.readyState !== WebSocket.CLOSED) ws.close();
-      } catch (_e) {
-        // ignore
+      } catch (closeErr) {
+        console.warn('Failed to close WebSocket after error:', closeErr.message);
       }
     };
   }

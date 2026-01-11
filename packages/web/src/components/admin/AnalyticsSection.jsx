@@ -34,7 +34,8 @@ export default function AnalyticsSection() {
     async days => {
       try {
         return await apiFetch.get(`/api/admin/stats/signups?days=${days}`, { toastMessage: false });
-      } catch {
+      } catch (err) {
+        console.warn('Failed to fetch signup stats:', err.message);
         return null;
       }
     },
@@ -48,7 +49,8 @@ export default function AnalyticsSection() {
         return await apiFetch.get(`/api/admin/stats/organizations?days=${days}`, {
           toastMessage: false,
         });
-      } catch {
+      } catch (err) {
+        console.warn('Failed to fetch organization stats:', err.message);
         return null;
       }
     },
@@ -62,7 +64,8 @@ export default function AnalyticsSection() {
         return await apiFetch.get(`/api/admin/stats/projects?days=${days}`, {
           toastMessage: false,
         });
-      } catch {
+      } catch (err) {
+        console.warn('Failed to fetch project stats:', err.message);
         return null;
       }
     },
@@ -76,7 +79,8 @@ export default function AnalyticsSection() {
         return await apiFetch.get(`/api/admin/stats/webhooks?days=${days}`, {
           toastMessage: false,
         });
-      } catch {
+      } catch (err) {
+        console.warn('Failed to fetch webhook stats:', err.message);
         return null;
       }
     },
@@ -86,7 +90,8 @@ export default function AnalyticsSection() {
   const [subscriptionData, { refetch: refetchSubs }] = createResource(async () => {
     try {
       return await apiFetch.get('/api/admin/stats/subscriptions', { toastMessage: false });
-    } catch {
+    } catch (err) {
+      console.warn('Failed to fetch subscription stats:', err.message);
       return null;
     }
   });
@@ -95,7 +100,8 @@ export default function AnalyticsSection() {
   const [revenueData, { refetch: refetchRevenue }] = createResource(async () => {
     try {
       return await apiFetch.get('/api/admin/stats/revenue?months=6', { toastMessage: false });
-    } catch {
+    } catch (err) {
+      console.warn('Failed to fetch revenue stats:', err.message);
       return null;
     }
   });

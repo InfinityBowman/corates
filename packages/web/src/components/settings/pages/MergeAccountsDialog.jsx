@@ -180,8 +180,8 @@ export default function MergeAccountsDialog(props) {
     if (mergeToken()) {
       try {
         await cancelMerge(mergeToken());
-      } catch {
-        // Ignore cancel errors
+      } catch (err) {
+        console.warn('Failed to cancel merge:', err.message);
       }
     }
     props.onOpenChange?.(false);

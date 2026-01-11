@@ -22,7 +22,8 @@ async function checkAdminStatus() {
     const data = await apiFetch.get('/api/auth/get-session', { toastMessage: false });
     // Check if user has admin role
     setIsAdmin(data?.user?.role === 'admin');
-  } catch {
+  } catch (err) {
+    console.warn('Failed to check admin status:', err.message);
     setIsAdmin(false);
   } finally {
     setIsAdminChecked(true);

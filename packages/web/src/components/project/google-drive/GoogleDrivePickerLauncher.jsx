@@ -133,8 +133,8 @@ export default function GoogleDrivePickerLauncher(props) {
   const handleConnectGoogle = async () => {
     try {
       await connect();
-    } catch {
-      // primitive sets error
+    } catch (err) {
+      console.warn('Google Drive connect failed:', err.message);
     }
   };
 
@@ -149,8 +149,8 @@ export default function GoogleDrivePickerLauncher(props) {
       const picked = await openPicker({ multiselect: !!props.multiselect });
       if (!picked || picked.length === 0) return;
       await props.onPick?.(picked, studyId);
-    } catch {
-      // primitive sets error
+    } catch (err) {
+      console.warn('Google Drive picker failed:', err.message);
     }
   };
 

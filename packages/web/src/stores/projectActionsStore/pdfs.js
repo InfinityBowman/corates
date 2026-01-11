@@ -35,8 +35,14 @@ export function createPdfActions(
 
     try {
       const [extractedTitle, extractedDoi] = await Promise.all([
-        extractPdfTitle(arrayBuffer.slice(0)).catch(() => null),
-        extractPdfDoi(arrayBuffer.slice(0)).catch(() => null),
+        extractPdfTitle(arrayBuffer.slice(0)).catch(err => {
+          console.warn('PDF title extraction failed:', err.message);
+          return null;
+        }),
+        extractPdfDoi(arrayBuffer.slice(0)).catch(err => {
+          console.warn('PDF DOI extraction failed:', err.message);
+          return null;
+        }),
       ]);
 
       if (extractedTitle) metadata.title = extractedTitle;
@@ -155,8 +161,8 @@ export function createPdfActions(
       let arrayBuffer = null;
       try {
         arrayBuffer = await file.arrayBuffer();
-      } catch {
-        // Ignore cache if arrayBuffer conversion fails
+      } catch (err) {
+        console.warn('Failed to convert file to ArrayBuffer:', err.message);
       }
       cachePdf(projectId, studyId, uploadResult.fileName, arrayBuffer).catch(err =>
         console.warn('Failed to cache PDF:', err),
