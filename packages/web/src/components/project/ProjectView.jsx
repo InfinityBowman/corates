@@ -33,6 +33,7 @@ import { AllStudiesTab } from './all-studies-tab/index.js';
 import { ToDoTab } from './todo-tab/index.js';
 import { ReconcileTab } from './reconcile-tab/index.js';
 import { CompletedTab } from './completed-tab/index.js';
+import { SectionErrorBoundary } from '@components/ErrorBoundary.jsx';
 
 export default function ProjectView(props) {
   const params = useParams();
@@ -299,23 +300,33 @@ export default function ProjectView(props) {
             {tabValue => (
               <>
                 <Show when={tabValue === 'overview'}>
-                  <OverviewTab />
+                  <SectionErrorBoundary name='Overview'>
+                    <OverviewTab />
+                  </SectionErrorBoundary>
                 </Show>
 
                 <Show when={tabValue === 'all-studies'}>
-                  <AllStudiesTab />
+                  <SectionErrorBoundary name='All Studies'>
+                    <AllStudiesTab />
+                  </SectionErrorBoundary>
                 </Show>
 
                 <Show when={tabValue === 'todo'}>
-                  <ToDoTab />
+                  <SectionErrorBoundary name='To-Do'>
+                    <ToDoTab />
+                  </SectionErrorBoundary>
                 </Show>
 
                 <Show when={tabValue === 'reconcile'}>
-                  <ReconcileTab />
+                  <SectionErrorBoundary name='Reconcile'>
+                    <ReconcileTab />
+                  </SectionErrorBoundary>
                 </Show>
 
                 <Show when={tabValue === 'completed'}>
-                  <CompletedTab />
+                  <SectionErrorBoundary name='Completed'>
+                    <CompletedTab />
+                  </SectionErrorBoundary>
                 </Show>
               </>
             )}

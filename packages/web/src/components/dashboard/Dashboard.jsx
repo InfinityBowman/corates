@@ -23,6 +23,7 @@ import ActivityFeed from './ActivityFeed.jsx';
 import { ProjectsSection } from './ProjectsSection.jsx';
 import { LocalAppraisalsSection } from './LocalAppraisalsSection.jsx';
 import { useInitialAnimation } from './useInitialAnimation.js';
+import { SectionErrorBoundary } from '@components/ErrorBoundary.jsx';
 
 // Animation context - allows child components to access animation state
 export const AnimationContext = createContext({
@@ -174,14 +175,18 @@ export function Dashboard() {
           <div id='projects-section' class='space-y-6 lg:col-span-2'>
             {/* Projects - only for logged in users */}
             <Show when={isLoggedIn()}>
-              <ProjectsSection
-                showCreateForm={showCreateForm}
-                setShowCreateForm={setShowCreateForm}
-              />
+              <SectionErrorBoundary name='Projects'>
+                <ProjectsSection
+                  showCreateForm={showCreateForm}
+                  setShowCreateForm={setShowCreateForm}
+                />
+              </SectionErrorBoundary>
             </Show>
 
             {/* Local appraisals - always shown */}
-            <LocalAppraisalsSection showHeader={true} showSignInPrompt={!isLoggedIn()} />
+            <SectionErrorBoundary name='Local Appraisals'>
+              <LocalAppraisalsSection showHeader={true} showSignInPrompt={!isLoggedIn()} />
+            </SectionErrorBoundary>
           </div>
 
           {/* Right sidebar */}

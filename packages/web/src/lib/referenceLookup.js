@@ -394,7 +394,8 @@ export async function fetchReferenceByIdentifier(identifier) {
     try {
       ref = await fetchFromDOI(trimmed);
       ref.importSource = 'doi';
-    } catch {
+    } catch (err) {
+      console.warn('Reference lookup failed:', err.message);
       throw new Error(
         'Could not identify reference. Please enter a valid DOI (e.g., 10.1234/example) or PubMed ID (e.g., 12345678).',
       );

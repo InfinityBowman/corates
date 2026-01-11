@@ -6,11 +6,10 @@ import { initBfcacheHandler } from '@lib/bfcache-handler.js';
 import AppErrorBoundary from './components/ErrorBoundary.jsx';
 import { QueryClientProvider } from '@tanstack/solid-query';
 import { queryClient } from '@lib/queryClient.js';
+import { bestEffort } from '@lib/errorLogger.js';
 
 // Clean up any expired form state entries from IndexedDB on app load
-cleanupExpiredStates().catch(() => {
-  // Silent fail - cleanup is best-effort
-});
+bestEffort(cleanupExpiredStates(), { operation: 'cleanupExpiredStates' });
 
 // Initialize bfcache restoration handler
 // This detects when Safari (and other browsers) restore pages from bfcache

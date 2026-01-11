@@ -199,6 +199,7 @@ export function useProject(projectId) {
       updateChecklistAnswer: connectionEntry.checklistOps.updateChecklistAnswer,
       getQuestionNote: connectionEntry.checklistOps.getQuestionNote,
       getRobinsText: connectionEntry.checklistOps.getRobinsText,
+      getRob2Text: connectionEntry.checklistOps.getRob2Text,
       // PDF operations
       addPdfToStudy: connectionEntry.pdfOps.addPdfToStudy,
       removePdfFromStudy: connectionEntry.pdfOps.removePdfFromStudy,
@@ -345,6 +346,7 @@ export function useProject(projectId) {
       connectionEntry?.checklistOps?.updateChecklistAnswer(...args),
     getQuestionNote: (...args) => connectionEntry?.checklistOps?.getQuestionNote(...args),
     getRobinsText: (...args) => connectionEntry?.checklistOps?.getRobinsText(...args),
+    getRob2Text: (...args) => connectionEntry?.checklistOps?.getRob2Text(...args),
 
     // PDF operations
     addPdfToStudy: (...args) => connectionEntry?.pdfOps?.addPdfToStudy(...args),

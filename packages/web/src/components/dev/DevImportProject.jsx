@@ -45,7 +45,8 @@ export default function DevImportProject() {
     let parsed;
     try {
       parsed = JSON.parse(jsonText());
-    } catch {
+    } catch (err) {
+      console.warn('JSON parse error:', err.message);
       setResult({ success: false, message: 'Invalid JSON' });
       return;
     }
@@ -118,7 +119,8 @@ export default function DevImportProject() {
       const text = await file.text();
       setJsonText(text);
       setResult(null);
-    } catch {
+    } catch (err) {
+      console.warn('Failed to read file:', err.message);
       setResult({ success: false, message: 'Failed to read file' });
     }
   };

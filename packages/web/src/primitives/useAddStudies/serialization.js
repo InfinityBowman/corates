@@ -18,8 +18,8 @@ export function cloneArrayBuffer(buffer) {
     const copy = new ArrayBuffer(buffer.byteLength);
     new Uint8Array(copy).set(new Uint8Array(buffer));
     return copy;
-  } catch {
-    // Buffer is likely detached
+  } catch (err) {
+    console.warn('Failed to copy ArrayBuffer (likely detached):', err.message);
     return null;
   }
 }

@@ -88,7 +88,8 @@ export default function ProjectDetail() {
       setCopiedId(`${label}-${text}`);
       showToast.success('Copied', `${label} copied to clipboard`);
       setTimeout(() => setCopiedId(null), 2000);
-    } catch {
+    } catch (err) {
+      console.warn('Clipboard copy failed:', err.message);
       showToast.error('Error', 'Failed to copy to clipboard');
     }
   };

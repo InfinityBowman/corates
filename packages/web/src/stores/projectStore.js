@@ -21,7 +21,8 @@ function loadPersistedStats() {
   try {
     const stored = localStorage.getItem(PROJECT_STATS_KEY);
     return stored ? JSON.parse(stored) : {};
-  } catch {
+  } catch (err) {
+    console.warn('Failed to load project stats from localStorage:', err.message);
     return {};
   }
 }
@@ -32,8 +33,8 @@ function loadPersistedStats() {
 function persistStats(stats) {
   try {
     localStorage.setItem(PROJECT_STATS_KEY, JSON.stringify(stats));
-  } catch {
-    // Ignore storage errors (quota exceeded, etc.)
+  } catch (err) {
+    console.warn('Failed to persist project stats to localStorage:', err.message);
   }
 }
 

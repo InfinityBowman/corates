@@ -109,7 +109,8 @@ export default function ProfilePage() {
       syncProfileToProjects();
       showToast.success('Profile Updated', 'Your name has been updated successfully.');
       setIsEditingName(false);
-    } catch {
+    } catch (err) {
+      console.warn('Failed to update profile name:', err.message);
       showToast.error('Update Failed', 'Failed to update name. Please try again.');
     } finally {
       setSaving(false);
@@ -125,7 +126,8 @@ export default function ProfilePage() {
       });
       showToast.success('Profile Updated', 'Your persona has been updated successfully.');
       setIsEditingRole(false);
-    } catch {
+    } catch (err) {
+      console.warn('Failed to update profile persona:', err.message);
       showToast.error('Update Failed', 'Failed to update persona. Please try again.');
     } finally {
       setSaving(false);

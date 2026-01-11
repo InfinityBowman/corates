@@ -22,6 +22,11 @@ import {
   scoreChecklist as scoreROBINSI,
   getAnswers as getROBINSIAnswers,
 } from '@/components/checklist/ROBINSIChecklist/checklist.js';
+import {
+  createChecklist as createROB2,
+  scoreChecklist as scoreROB2,
+  getAnswers as getROB2Answers,
+} from '@/components/checklist/ROB2Checklist/checklist.js';
 
 /**
  * Registry mapping checklist types to their implementations
@@ -42,6 +47,12 @@ export const CHECKLIST_REGISTRY = {
     createChecklist: createROBINSI,
     scoreChecklist: scoreROBINSI,
     getAnswers: getROBINSIAnswers,
+  },
+
+  [CHECKLIST_TYPES.ROB2]: {
+    createChecklist: createROB2,
+    scoreChecklist: scoreROB2,
+    getAnswers: getROB2Answers,
   },
 };
 
@@ -92,6 +103,10 @@ export function getChecklistTypeFromState(checklistState) {
   // Check type field (canonical discriminant)
   if (checklistState?.type) {
     return checklistState.type;
+  }
+  // Detect ROB-2 by structure (has domain2a or domain2b)
+  if (checklistState?.domain2a || checklistState?.domain2b) {
+    return CHECKLIST_TYPES.ROB2;
   }
   // Detect ROBINS-I by structure
   if (checklistState?.sectionB || checklistState?.domain1a || checklistState?.domain1b) {

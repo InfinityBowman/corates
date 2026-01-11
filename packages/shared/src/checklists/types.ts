@@ -14,7 +14,7 @@ export interface ChecklistMetadata {
   createdAt: string;
   assignedTo?: string | null;
   status?: ChecklistStatus;
-  type: 'AMSTAR2' | 'ROBINS_I';
+  type: 'AMSTAR2' | 'ROBINS_I' | 'ROB2';
 }
 
 /**
@@ -170,3 +170,61 @@ export interface ROBINSIDomainScore {
   isComplete: boolean;
   ruleId: string | null;
 }
+
+/**
+ * ROB-2 response types
+ */
+export type ROB2Response = 'Y' | 'PY' | 'PN' | 'N' | 'NI' | 'NA' | null;
+
+/**
+ * ROB-2 question answer structure
+ */
+export interface ROB2QuestionAnswer {
+  answer: ROB2Response;
+  comment: string;
+}
+
+/**
+ * ROB-2 domain state
+ */
+export interface ROB2DomainState {
+  answers: Record<string, ROB2QuestionAnswer>;
+  judgement: string | null;
+  direction: string | null;
+}
+
+/**
+ * ROB-2 preliminary section state
+ */
+export interface ROB2PreliminaryState {
+  studyDesign: string | null;
+  experimental: string;
+  comparator: string;
+  numericalResult: string;
+  aim: 'ASSIGNMENT' | 'ADHERING' | null;
+  deviationsToAddress: string[];
+  sources: Record<string, boolean>;
+}
+
+/**
+ * ROB-2 checklist structure
+ */
+export interface ROB2Checklist extends Omit<ChecklistMetadata, 'type'> {
+  type: 'ROB2';
+  preliminary: ROB2PreliminaryState;
+  domain1: ROB2DomainState;
+  domain2a: ROB2DomainState;
+  domain2b: ROB2DomainState;
+  domain3: ROB2DomainState;
+  domain4: ROB2DomainState;
+  domain5: ROB2DomainState;
+  overall: {
+    judgement: string | null;
+    direction: string | null;
+  };
+}
+
+/**
+ * ROB-2 scoring result
+ */
+export type ROB2Score = 'Low' | 'Some concerns' | 'High' | 'Incomplete' | 'Error';

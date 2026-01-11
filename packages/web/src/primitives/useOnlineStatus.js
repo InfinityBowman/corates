@@ -40,7 +40,8 @@ export default function useOnlineStatus() {
         } finally {
           clearTimeout(timeoutId);
         }
-      } catch {
+      } catch (err) {
+        console.warn('Connectivity check failed:', err.message);
         return false;
       }
     }

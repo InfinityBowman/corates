@@ -146,8 +146,8 @@ async function setupPersistence(queryClient) {
         CACHE_SNAPSHOT_KEY,
         JSON.stringify({ queries: criticalQueries, timestamp: Date.now() }),
       );
-    } catch {
-      // Silently fail - localStorage may be full or unavailable
+    } catch (err) {
+      console.warn('Failed to save query cache snapshot to localStorage:', err.message);
     }
 
     // Still try async persist (may complete if unload is slow)
@@ -177,8 +177,8 @@ async function setupPersistence(queryClient) {
         // Clear snapshot after restoration
         localStorage.removeItem(CACHE_SNAPSHOT_KEY);
       }
-    } catch {
-      // Silently fail
+    } catch (err) {
+      console.warn('Failed to restore query cache from localStorage:', err.message);
     }
   }
 

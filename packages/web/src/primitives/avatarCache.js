@@ -223,8 +223,8 @@ export async function getAvatarWithCache(userId, imageUrl) {
   try {
     const dataUrl = await fetchAndCacheAvatar(userId, imageUrl);
     return dataUrl;
-  } catch {
-    // If fetch fails, try to return cached version
+  } catch (err) {
+    console.warn('Failed to fetch avatar, using cache:', err.message);
     return getCachedAvatar(userId);
   }
 }

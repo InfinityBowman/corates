@@ -16,8 +16,8 @@ import { queryKeys } from '@lib/queryKeys.js';
 async function fetchInvoices() {
   try {
     return await apiFetch.get('/api/billing/invoices', { toastMessage: false });
-  } catch {
-    // API endpoint doesn't exist yet, return empty array
+  } catch (err) {
+    console.warn('Failed to fetch invoices:', err.message);
     return { invoices: [] };
   }
 }

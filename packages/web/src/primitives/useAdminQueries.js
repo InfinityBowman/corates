@@ -4,8 +4,8 @@
  */
 
 import { useQuery } from '@tanstack/solid-query';
-import { API_BASE } from '@config/api.js';
 import { queryKeys } from '@lib/queryKeys.js';
+import { apiFetch } from '@lib/apiFetch.js';
 import {
   fetchOrgs,
   fetchOrgDetails,
@@ -17,20 +17,23 @@ import {
 
 /**
  * Helper for admin fetch calls
- * Uses cache: 'no-store' to prevent browser HTTP caching from serving stale data
+ * Uses apiFetch for proper error handling and normalization
  */
-async function adminFetch(path, options = {}) {
-  const response = await fetch(`${API_BASE}/api/admin/${path}`, {
-    credentials: 'include',
-    cache: 'no-store',
-    ...options,
+async function adminFetch(path) {
+  return apiFetch(`/api/admin/${path}`, {
+    showToast: false, // Admin panel handles its own error display via TanStack Query
   });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || `Failed to fetch ${path}`);
-  }
-  return response.json();
 }
+
+/**
+ * Default cache config for admin queries
+ * Admin data should always be fresh - no stale data shown
+ */
+const ADMIN_QUERY_CONFIG = {
+  staleTime: 0,
+  gcTime: 1000 * 60 * 5,
+  refetchOnMount: 'always',
+};
 
 /**
  * Hook to fetch admin dashboard stats
@@ -39,9 +42,7 @@ export function useAdminStats() {
   return useQuery(() => ({
     queryKey: queryKeys.admin.stats,
     queryFn: () => adminFetch('stats'),
-    staleTime: 0, // Always consider data stale to force refetch
-    gcTime: 1000 * 60 * 5, // 5 minutes
-    refetchOnMount: 'always', // Always refetch on mount, even if data exists
+    ...ADMIN_QUERY_CONFIG,
   }));
 }
 
@@ -65,9 +66,7 @@ export function useAdminUsers(getParams) {
         if (search) searchParams.set('search', search);
         return adminFetch(`users?${searchParams.toString()}`);
       },
-      staleTime: 0, // Always consider data stale to force refetch
-      gcTime: 1000 * 60 * 5, // 5 minutes
-      refetchOnMount: 'always', // Always refetch on mount, even if data exists
+      ...ADMIN_QUERY_CONFIG,
     };
   });
 }
@@ -82,9 +81,7 @@ export function useAdminUserDetails(getUserId) {
       queryKey: queryKeys.admin.userDetails(userId),
       queryFn: () => adminFetch(`users/${userId}`),
       enabled: !!userId,
-      staleTime: 0, // Always consider data stale to force refetch
-      gcTime: 1000 * 60 * 5, // 5 minutes
-      refetchOnMount: 'always', // Always refetch on mount, even if data exists
+      ...ADMIN_QUERY_CONFIG,
     };
   });
 }
@@ -111,9 +108,7 @@ export function useAdminProjects(getParams) {
         if (orgId) searchParams.set('orgId', orgId);
         return adminFetch(`projects?${searchParams.toString()}`);
       },
-      staleTime: 0,
-      gcTime: 1000 * 60 * 5,
-      refetchOnMount: 'always',
+      ...ADMIN_QUERY_CONFIG,
     };
   });
 }
@@ -128,9 +123,7 @@ export function useAdminProjectDetails(getProjectId) {
       queryKey: queryKeys.admin.projectDetails(projectId),
       queryFn: () => adminFetch(`projects/${projectId}`),
       enabled: !!projectId,
-      staleTime: 0,
-      gcTime: 1000 * 60 * 5,
-      refetchOnMount: 'always',
+      ...ADMIN_QUERY_CONFIG,
     };
   });
 }
@@ -157,9 +150,7 @@ export function useStorageDocuments(getParams) {
         if (search) searchParams.set('search', search);
         return adminFetch(`storage/documents?${searchParams.toString()}`);
       },
-      staleTime: 0, // Always consider data stale to force refetch
-      gcTime: 1000 * 60 * 5, // 5 minutes
-      refetchOnMount: 'always', // Always refetch on mount, even if data exists
+      ...ADMIN_QUERY_CONFIG,
     };
   });
 }
@@ -171,9 +162,7 @@ export function useStorageStats() {
   return useQuery(() => ({
     queryKey: queryKeys.admin.storageStats,
     queryFn: () => adminFetch('storage/stats'),
-    staleTime: 0, // Always consider data stale to force refetch
-    gcTime: 1000 * 60 * 5, // 5 minutes
-    refetchOnMount: 'always', // Always refetch on mount, even if data exists
+    ...ADMIN_QUERY_CONFIG,
   }));
 }
 
@@ -190,9 +179,7 @@ export function useAdminOrgs(getParams) {
     return {
       queryKey: queryKeys.admin.orgs(page, limit, search),
       queryFn: () => fetchOrgs({ page, limit, search }),
-      staleTime: 0,
-      gcTime: 1000 * 60 * 5,
-      refetchOnMount: 'always',
+      ...ADMIN_QUERY_CONFIG,
     };
   });
 }
@@ -207,9 +194,7 @@ export function useAdminOrgDetails(getOrgId) {
       queryKey: queryKeys.admin.orgDetails(orgId),
       queryFn: () => fetchOrgDetails(orgId),
       enabled: !!orgId,
-      staleTime: 0,
-      gcTime: 1000 * 60 * 5,
-      refetchOnMount: 'always',
+      ...ADMIN_QUERY_CONFIG,
     };
   });
 }
@@ -224,9 +209,7 @@ export function useAdminOrgBilling(getOrgId) {
       queryKey: queryKeys.admin.orgBilling(orgId),
       queryFn: () => fetchOrgBilling(orgId),
       enabled: !!orgId,
-      staleTime: 0,
-      gcTime: 1000 * 60 * 5,
-      refetchOnMount: 'always',
+      ...ADMIN_QUERY_CONFIG,
     };
   });
 }
@@ -245,9 +228,7 @@ export function useAdminBillingLedger(getParams) {
     return {
       queryKey: queryKeys.admin.billingLedger(queryParams),
       queryFn: () => fetchBillingLedger(queryParams),
-      staleTime: 0,
-      gcTime: 1000 * 60 * 5,
-      refetchOnMount: 'always',
+      ...ADMIN_QUERY_CONFIG,
     };
   });
 }
@@ -265,9 +246,7 @@ export function useAdminBillingStuckStates(getParams) {
     return {
       queryKey: queryKeys.admin.billingStuckStates(queryParams),
       queryFn: () => fetchBillingStuckStates(queryParams),
-      staleTime: 0,
-      gcTime: 1000 * 60 * 5,
-      refetchOnMount: 'always',
+      ...ADMIN_QUERY_CONFIG,
     };
   });
 }
@@ -288,9 +267,7 @@ export function useAdminOrgBillingReconcile(orgId, getParams) {
       queryKey: queryKeys.admin.orgBillingReconcile(orgId, queryParams),
       queryFn: () => fetchOrgBillingReconcile(orgId, queryParams),
       enabled: !!orgId,
-      staleTime: 0,
-      gcTime: 1000 * 60 * 5,
-      refetchOnMount: 'always',
+      ...ADMIN_QUERY_CONFIG,
     };
   });
 }
@@ -302,9 +279,7 @@ export function useAdminDatabaseTables() {
   return useQuery(() => ({
     queryKey: queryKeys.admin.databaseTables,
     queryFn: () => adminFetch('database/tables'),
-    staleTime: 0,
-    gcTime: 1000 * 60 * 5,
-    refetchOnMount: 'always',
+    ...ADMIN_QUERY_CONFIG,
   }));
 }
 
@@ -359,9 +334,7 @@ export function useAdminTableRows(getParams) {
         return adminFetch(`database/tables/${tableName}/rows?${searchParams}`);
       },
       enabled: !!tableName,
-      staleTime: 0,
-      gcTime: 1000 * 60 * 5,
-      refetchOnMount: 'always',
+      ...ADMIN_QUERY_CONFIG,
     };
   });
 }

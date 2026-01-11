@@ -22,8 +22,8 @@ export default function useRecentsNav() {
           setRecents(parsed.slice(0, MAX_RECENTS));
         }
       }
-    } catch {
-      // Ignore parse errors
+    } catch (err) {
+      console.warn('Failed to parse recents from localStorage:', err.message);
     }
   });
 
@@ -41,8 +41,8 @@ export default function useRecentsNav() {
       // Persist to localStorage
       try {
         localStorage.setItem(RECENTS_STORAGE_KEY, JSON.stringify(updated));
-      } catch {
-        // Ignore storage errors
+      } catch (err) {
+        console.warn('Failed to persist recents to localStorage:', err.message);
       }
       return updated;
     });

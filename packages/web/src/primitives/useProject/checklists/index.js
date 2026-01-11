@@ -9,6 +9,7 @@ import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 import { createCommonOperations } from './common.js';
 import { AMSTAR2Handler } from './handlers/amstar2.js';
 import { ROBINSIHandler } from './handlers/robins-i.js';
+import { ROB2Handler } from './handlers/rob2.js';
 
 /**
  * Creates checklist operations
@@ -24,11 +25,13 @@ export function createChecklistOperations(_projectId, getYDoc, _isSynced) {
   // Initialize type-specific handlers
   const amstar2Handler = new AMSTAR2Handler();
   const robinsIHandler = new ROBINSIHandler();
+  const rob2Handler = new ROB2Handler();
 
   // Handler registry
   const handlers = {
     [CHECKLIST_TYPES.AMSTAR2]: amstar2Handler,
     [CHECKLIST_TYPES.ROBINS_I]: robinsIHandler,
+    [CHECKLIST_TYPES.ROB2]: rob2Handler,
   };
 
   /**
@@ -237,6 +240,21 @@ export function createChecklistOperations(_projectId, getYDoc, _isSynced) {
     return textGetter(studyId, checklistId, sectionKey, fieldKey, questionKey);
   }
 
+  /**
+   * Get a Y.Text reference for a ROB-2 free-text field
+   * @param {string} studyId - The study ID
+   * @param {string} checklistId - The checklist ID
+   * @param {string} sectionKey - The section key
+   * @param {string} fieldKey - The field key
+   * @param {string} [questionKey] - Optional question key
+   * @returns {Y.Text|null} The Y.Text reference or null
+   */
+  function getRob2Text(studyId, checklistId, sectionKey, fieldKey, questionKey = null) {
+    const textGetter = rob2Handler.getTextGetter(getYDoc);
+    if (!textGetter) return null;
+    return textGetter(studyId, checklistId, sectionKey, fieldKey, questionKey);
+  }
+
   return {
     createChecklist,
     updateChecklist: commonOps.updateChecklist,
@@ -246,5 +264,6 @@ export function createChecklistOperations(_projectId, getYDoc, _isSynced) {
     updateChecklistAnswer,
     getQuestionNote,
     getRobinsText,
+    getRob2Text,
   };
 }

@@ -20,6 +20,7 @@ import {
 import { A } from '@solidjs/router';
 import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.js';
 import { DashboardBody } from './ui/index.js';
+import { SectionErrorBoundary } from '@components/ErrorBoundary.jsx';
 
 const navItems = [
   { path: '/admin', label: 'Dashboard', icon: FiShield },
@@ -99,7 +100,9 @@ export default function AdminLayout(props) {
           </div>
 
           {/* Page Content */}
-          <DashboardBody>{props.children}</DashboardBody>
+          <DashboardBody>
+            <SectionErrorBoundary name='Admin'>{props.children}</SectionErrorBoundary>
+          </DashboardBody>
         </div>
       </Show>
     </Show>

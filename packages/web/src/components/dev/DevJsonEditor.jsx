@@ -55,7 +55,8 @@ export default function DevJsonEditor(props) {
     let parsed;
     try {
       parsed = JSON.parse(jsonText());
-    } catch {
+    } catch (err) {
+      console.warn('JSON parse error:', err.message);
       setResult({ success: false, message: 'Invalid JSON' });
       return;
     }
