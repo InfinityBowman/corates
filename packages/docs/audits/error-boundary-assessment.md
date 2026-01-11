@@ -18,10 +18,12 @@ All functions normalize errors through `@corates/shared` and include structured 
 ### 2. Enhanced Error Boundaries
 
 **AppErrorBoundary** (main component):
+
 - Now uses `logError` instead of raw `console.error`
 - Passes component name context for better debugging
 
 **SectionErrorBoundary** (new capabilities):
+
 - Added `name` prop for identifying which section failed
 - Added `onRetry` callback for custom retry logic (e.g., query invalidation)
 - Added `retryLabel` prop for custom button text
@@ -31,12 +33,12 @@ All functions normalize errors through `@corates/shared` and include structured 
 
 Wrapped major UI sections with `SectionErrorBoundary`:
 
-| Location | Sections Wrapped |
-|----------|------------------|
-| `Dashboard.jsx` | Projects, Local Appraisals |
-| `ProjectView.jsx` | Overview, All Studies, To-Do, Reconcile, Completed (each tab) |
-| `AdminLayout.jsx` | Admin content area |
-| `SettingsLayout.jsx` | Settings content area |
+| Location             | Sections Wrapped                                              |
+| -------------------- | ------------------------------------------------------------- |
+| `Dashboard.jsx`      | Projects, Local Appraisals                                    |
+| `ProjectView.jsx`    | Overview, All Studies, To-Do, Reconcile, Completed (each tab) |
+| `AdminLayout.jsx`    | Admin content area                                            |
+| `SettingsLayout.jsx` | Settings content area                                         |
 
 ### 4. Best-Effort Operation Cleanup
 
@@ -63,18 +65,23 @@ This ensures failures are logged as warnings rather than completely swallowed.
 ## Why It Was Done
 
 ### Problem 1: Silent Failures
+
 Best-effort operations were using `.catch(() => {})` which completely swallowed errors. If cleanup routines started failing (e.g., IndexedDB quota exceeded), there was no visibility into the issue.
 
 ### Problem 2: No Error Context
+
 When `AppErrorBoundary` caught errors, it logged them with minimal context. Debugging required correlating timestamps with user actions manually.
 
 ### Problem 3: Catastrophic Failures
+
 A single component error (e.g., bad data in one project card) would crash the entire dashboard. Users lost access to all functionality instead of just the affected section.
 
 ### Problem 4: No Monitoring Integration Point
+
 Error logging was scattered across the codebase. Integrating Sentry or similar would require finding and modifying dozens of locations.
 
 ### Problem 5: Inconsistent Error Handling in Admin
+
 Admin queries used raw `fetch` while the rest of the app used `apiFetch`, leading to inconsistent error normalization and handling.
 
 ---

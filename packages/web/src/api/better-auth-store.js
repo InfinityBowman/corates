@@ -784,7 +784,10 @@ function createBetterAuthStore() {
         throw new Error(error.message);
       }
     } catch (authClientErr) {
-      console.warn('Better Auth sendVerificationEmail failed, trying backend:', authClientErr.message);
+      console.warn(
+        'Better Auth sendVerificationEmail failed, trying backend:',
+        authClientErr.message,
+      );
       try {
         const response = await fetch('/api/auth/send-verification-email', {
           method: 'POST',
