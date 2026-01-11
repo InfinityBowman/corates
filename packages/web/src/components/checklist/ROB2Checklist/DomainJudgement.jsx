@@ -19,7 +19,9 @@ export function JudgementBadge(props) {
   };
 
   return (
-    <span class={`inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium ${getColor()}`}>
+    <span
+      class={`inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium ${getColor()}`}
+    >
       {props.judgement}
     </span>
   );
@@ -43,7 +45,7 @@ export function DomainJudgement(props) {
   const getJudgementColor = (judgement, isSelected) => {
     if (!isSelected) {
       return props.isAutoMode ?
-        'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+          'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
         : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 cursor-pointer';
     }
 

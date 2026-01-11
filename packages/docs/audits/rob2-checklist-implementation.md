@@ -16,15 +16,16 @@ ROB-2 is the Cochrane Collaboration's tool for assessing risk of bias in randomi
 
 Created the core ROB-2 logic in `packages/shared/src/checklists/rob2/`:
 
-| File | Purpose |
-|------|---------|
-| `schema.ts` | Question definitions, domain structures, response types, constants |
-| `scoring.ts` | Decision algorithms for each domain (from official ROB-2 decision diagrams) |
-| `create.ts` | Factory function `createROB2Checklist()` |
+| File         | Purpose                                                                             |
+| ------------ | ----------------------------------------------------------------------------------- |
+| `schema.ts`  | Question definitions, domain structures, response types, constants                  |
+| `scoring.ts` | Decision algorithms for each domain (from official ROB-2 decision diagrams)         |
+| `create.ts`  | Factory function `createROB2Checklist()`                                            |
 | `answers.ts` | Utilities: `scoreROB2Checklist`, `isROB2Complete`, `getAnswers`, `getDomainSummary` |
-| `index.ts` | Module exports |
+| `index.ts`   | Module exports                                                                      |
 
 **Key schema elements:**
+
 - 5 domains with signalling questions
 - Domain 2 has two variants: 2a (effect of assignment/ITT) and 2b (effect of adhering/per-protocol)
 - Response types: Y (Yes), PY (Probably Yes), PN (Probably No), N (No), NI (No Information), NA (Not Applicable)
@@ -35,28 +36,30 @@ Created the core ROB-2 logic in `packages/shared/src/checklists/rob2/`:
 
 Created components in `packages/web/src/components/checklist/ROB2Checklist/`:
 
-| Component | Purpose |
-|-----------|---------|
-| `ROB2Checklist.jsx` | Main orchestrating component |
-| `PreliminarySection.jsx` | Study design, aims, interventions, sources |
-| `DomainSection.jsx` | Individual domain with questions and auto-scoring |
-| `SignallingQuestion.jsx` | Response buttons for each question |
-| `DomainJudgement.jsx` | Judgement display badges |
-| `ScoringSummary.jsx` | Compact summary strip with domain chips |
-| `OverallSection.jsx` | Final overall risk of bias section |
-| `checklist.js` | Helper functions and re-exports |
-| `checklist-map.js` | Schema re-exports from shared package |
-| `index.js` | Module entry point |
+| Component                | Purpose                                           |
+| ------------------------ | ------------------------------------------------- |
+| `ROB2Checklist.jsx`      | Main orchestrating component                      |
+| `PreliminarySection.jsx` | Study design, aims, interventions, sources        |
+| `DomainSection.jsx`      | Individual domain with questions and auto-scoring |
+| `SignallingQuestion.jsx` | Response buttons for each question                |
+| `DomainJudgement.jsx`    | Judgement display badges                          |
+| `ScoringSummary.jsx`     | Compact summary strip with domain chips           |
+| `OverallSection.jsx`     | Final overall risk of bias section                |
+| `checklist.js`           | Helper functions and re-exports                   |
+| `checklist-map.js`       | Schema re-exports from shared package             |
+| `index.js`               | Module entry point                                |
 
 ### Yjs Integration
 
 Created `packages/web/src/primitives/useProject/checklists/handlers/rob2.js`:
+
 - `ROB2Handler` class for real-time collaborative editing
 - Methods: `extractAnswersFromTemplate`, `createAnswersYMap`, `serializeAnswers`, `updateAnswer`, `getTextGetter`
 
 ### Registry Integration
 
 Modified files to register ROB-2:
+
 - `packages/web/src/checklist-registry/types.js` - Added ROB2 type constant and metadata
 - `packages/web/src/checklist-registry/index.js` - Registered scoring and creation functions
 - `packages/web/src/primitives/useProject/checklists/index.js` - Added handler and `getRob2Text()`
@@ -66,18 +69,24 @@ Modified files to register ROB-2:
 ## Key Features
 
 ### Auto-Scoring
+
 Domain judgements are automatically calculated from signalling question responses using the official ROB-2 decision algorithms. The overall risk of bias is then derived from all domain judgements:
+
 - If any domain is "High" -> Overall is "High"
 - If any domain is "Some concerns" (and none High) -> Overall is "Some concerns"
 - If all domains are "Low" -> Overall is "Low"
 
 ### Domain 2 Variants
+
 The preliminary section includes an "aim" selection that determines which Domain 2 variant to show:
+
 - **Assignment (ITT)**: Shows Domain 2a - Effect of assignment to intervention
 - **Adhering (per-protocol)**: Shows Domain 2b - Effect of adhering to intervention
 
 ### Collaborative Editing
+
 Full Yjs integration enables real-time collaboration:
+
 - All text fields (experimental intervention, comparator, numerical result) are Y.Text
 - Signalling question responses sync across users
 - Domain judgements update automatically as questions are answered
@@ -161,6 +170,7 @@ Run tests with: `pnpm --filter @corates/shared test`
 ## Decision Diagram Sources
 
 The scoring algorithms were implemented from the decision diagrams in:
+
 - `packages/web/src/components/checklist/ROB2Checklist/scoring/decision-diagrams/`
 
 These files contain the official ROB-2 decision algorithms that determine domain judgements based on signalling question responses.

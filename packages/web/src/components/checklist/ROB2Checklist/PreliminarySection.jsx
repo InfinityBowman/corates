@@ -34,9 +34,8 @@ export function PreliminarySection(props) {
 
   function handleDeviationToggle(deviation) {
     const current = props.preliminaryState?.deviationsToAddress || [];
-    const updated = current.includes(deviation)
-      ? current.filter(d => d !== deviation)
-      : [...current, deviation];
+    const updated =
+      current.includes(deviation) ? current.filter(d => d !== deviation) : [...current, deviation];
     props.onUpdate({
       ...props.preliminaryState,
       deviationsToAddress: updated,
@@ -83,9 +82,9 @@ export function PreliminarySection(props) {
                   class={`rounded-lg border-2 px-3 py-2 text-sm transition-colors ${
                     props.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                   } ${
-                    props.preliminaryState?.studyDesign === design
-                      ? 'border-blue-400 bg-blue-50 text-blue-800'
-                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                    props.preliminaryState?.studyDesign === design ?
+                      'border-blue-400 bg-blue-50 text-blue-800'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                   }`}
                 >
                   {design}
@@ -147,17 +146,17 @@ export function PreliminarySection(props) {
               class={`flex w-full items-start rounded-lg border-2 p-3 text-left text-sm transition-colors ${
                 props.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
               } ${
-                props.preliminaryState?.aim === 'ASSIGNMENT'
-                  ? 'border-blue-400 bg-blue-50'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
+                props.preliminaryState?.aim === 'ASSIGNMENT' ?
+                  'border-blue-400 bg-blue-50'
+                : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
-              <div class='mr-3 mt-0.5'>
+              <div class='mt-0.5 mr-3'>
                 <div
                   class={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
-                    props.preliminaryState?.aim === 'ASSIGNMENT'
-                      ? 'border-blue-500 bg-blue-500'
-                      : 'border-gray-300'
+                    props.preliminaryState?.aim === 'ASSIGNMENT' ?
+                      'border-blue-500 bg-blue-500'
+                    : 'border-gray-300'
                   }`}
                 >
                   <Show when={props.preliminaryState?.aim === 'ASSIGNMENT'}>
@@ -175,17 +174,17 @@ export function PreliminarySection(props) {
               class={`flex w-full items-start rounded-lg border-2 p-3 text-left text-sm transition-colors ${
                 props.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
               } ${
-                props.preliminaryState?.aim === 'ADHERING'
-                  ? 'border-blue-400 bg-blue-50'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
+                props.preliminaryState?.aim === 'ADHERING' ?
+                  'border-blue-400 bg-blue-50'
+                : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
-              <div class='mr-3 mt-0.5'>
+              <div class='mt-0.5 mr-3'>
                 <div
                   class={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
-                    props.preliminaryState?.aim === 'ADHERING'
-                      ? 'border-blue-500 bg-blue-500'
-                      : 'border-gray-300'
+                    props.preliminaryState?.aim === 'ADHERING' ?
+                      'border-blue-500 bg-blue-500'
+                    : 'border-gray-300'
                   }`}
                 >
                   <Show when={props.preliminaryState?.aim === 'ADHERING'}>
@@ -218,9 +217,9 @@ export function PreliminarySection(props) {
                       class={`flex w-full items-center rounded-lg border p-3 text-left text-sm transition-colors ${
                         props.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                       } ${
-                        isChecked()
-                          ? 'border-blue-300 bg-blue-50'
-                          : 'border-gray-200 bg-white hover:border-gray-300'
+                        isChecked() ?
+                          'border-blue-300 bg-blue-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
                       }`}
                     >
                       <div
@@ -264,9 +263,9 @@ export function PreliminarySection(props) {
                     class={`flex items-center rounded border p-2 text-left text-xs transition-colors ${
                       props.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                     } ${
-                      isChecked()
-                        ? 'border-blue-300 bg-blue-50'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
+                      isChecked() ?
+                        'border-blue-300 bg-blue-50'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
                     }`}
                   >
                     <div

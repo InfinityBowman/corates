@@ -69,11 +69,7 @@ export function OverallSection(props) {
     }
   };
 
-  const judgementOptions = [
-    'Low risk of bias',
-    'Some concerns',
-    'High risk of bias',
-  ];
+  const judgementOptions = ['Low risk of bias', 'Some concerns', 'High risk of bias'];
 
   return (
     <div class='overflow-hidden rounded-lg bg-white shadow-md'>

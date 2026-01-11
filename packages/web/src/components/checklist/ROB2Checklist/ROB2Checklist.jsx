@@ -101,8 +101,8 @@ export function ROB2Checklist(props) {
           <div class='rounded-lg border-2 border-blue-200 bg-blue-50 p-6 text-center'>
             <div class='mb-2 text-lg font-semibold text-blue-800'>Select Assessment Aim</div>
             <p class='text-sm text-blue-600'>
-              Please select the review team's aim in the Preliminary Considerations section above
-              to proceed with the domain assessment.
+              Please select the review team's aim in the Preliminary Considerations section above to
+              proceed with the domain assessment.
             </p>
           </div>
         </Show>

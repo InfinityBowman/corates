@@ -180,7 +180,7 @@ export const DOMAIN_2A: ROB2Domain = {
     d2a_2: {
       id: 'd2a_2',
       number: '2.2',
-      text: 'Were carers and people delivering the interventions aware of participants\' assigned intervention during the trial?',
+      text: "Were carers and people delivering the interventions aware of participants' assigned intervention during the trial?",
       responseType: 'STANDARD',
     },
     d2a_3: {
@@ -234,7 +234,7 @@ export const DOMAIN_2B: ROB2Domain = {
     d2b_2: {
       id: 'd2b_2',
       number: '2.2',
-      text: 'Were carers and people delivering the interventions aware of participants\' assigned intervention during the trial?',
+      text: "Were carers and people delivering the interventions aware of participants' assigned intervention during the trial?",
       responseType: 'STANDARD',
     },
     d2b_3: {
@@ -252,7 +252,7 @@ export const DOMAIN_2B: ROB2Domain = {
     d2b_5: {
       id: 'd2b_5',
       number: '2.5',
-      text: '[If applicable:] Was there non-adherence to the assigned intervention regimen that could have affected participants\' outcomes?',
+      text: "[If applicable:] Was there non-adherence to the assigned intervention regimen that could have affected participants' outcomes?",
       responseType: 'WITH_NA',
     },
     d2b_6: {
@@ -385,8 +385,8 @@ export function getDomainKeys(): DomainKey[] {
 
 // Get active domain keys based on aim selection
 export function getActiveDomainKeys(isAdhering: boolean): DomainKey[] {
-  return isAdhering
-    ? ['domain1', 'domain2b', 'domain3', 'domain4', 'domain5']
+  return isAdhering ?
+      ['domain1', 'domain2b', 'domain3', 'domain4', 'domain5']
     : ['domain1', 'domain2a', 'domain3', 'domain4', 'domain5'];
 }
 
