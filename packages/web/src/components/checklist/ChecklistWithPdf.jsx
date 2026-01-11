@@ -24,6 +24,7 @@ export default function ChecklistWithPdf(props) {
   // props.onPdfSelect - handler for PDF selection change
   // props.getQuestionNote - function to get Y.Text for a question note
   // props.getRobinsText - function to get Y.Text for a ROBINS-I free-text field
+  // props.getRob2Text - function to get Y.Text for a ROB-2 free-text field
   // props.pdfUrl - optional PDF URL (for server-hosted PDFs)
 
   return (

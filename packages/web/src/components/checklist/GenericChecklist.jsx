@@ -27,6 +27,7 @@ import { ROB2Checklist } from '@/components/checklist/ROB2Checklist/ROB2Checklis
  * @param {boolean} [props.readOnly] - Whether the checklist is read-only
  * @param {Function} [props.getQuestionNote] - Function to get Y.Text for a question note
  * @param {Function} [props.getRobinsText] - Function to get Y.Text for a ROBINS-I free-text field
+ * @param {Function} [props.getRob2Text] - Function to get Y.Text for a ROB-2 free-text field
  */
 export default function GenericChecklist(props) {
   // Determine the checklist type from props or state

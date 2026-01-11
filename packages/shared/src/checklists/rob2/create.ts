@@ -4,12 +4,7 @@
  * Creates new ROB-2 checklist objects with proper structure and defaults.
  */
 
-import {
-  INFORMATION_SOURCES,
-  getDomainQuestions,
-  ROB2_CHECKLIST,
-  type DomainKey,
-} from './schema.js';
+import { INFORMATION_SOURCES, getDomainQuestions, type DomainKey } from './schema.js';
 
 export interface ROB2Checklist {
   id: string;
@@ -137,11 +132,9 @@ function createDomainState(domainKey: DomainKey): DomainState {
     answers[qKey] = { answer: null, comment: '' };
   });
 
-  const domain = ROB2_CHECKLIST[domainKey];
-
   return {
     answers,
     judgement: null,
-    direction: domain?.hasDirection ? null : null,
+    direction: null,
   };
 }

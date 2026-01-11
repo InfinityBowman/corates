@@ -1,4 +1,4 @@
-import { createSignal, For, Show, createMemo } from 'solid-js';
+import { createSignal, For, Show, createMemo, onCleanup } from 'solid-js';
 import { getActiveDomainKeys } from './checklist-map.js';
 import { PreliminarySection } from './PreliminarySection.jsx';
 import { DomainSection } from './DomainSection.jsx';
@@ -22,6 +22,15 @@ export function ROB2Checklist(props) {
 
   // Track collapsed state for each domain
   const [collapsedDomains, setCollapsedDomains] = createSignal({});
+
+  // Ref for domain scroll timeout cleanup
+  let domainScrollTimeoutId = null;
+
+  onCleanup(() => {
+    if (domainScrollTimeoutId !== null) {
+      clearTimeout(domainScrollTimeoutId);
+    }
+  });
 
   // Get active domains based on aim selection (assignment vs. adhering)
   const isAdhering = createMemo(() => props.checklistState?.preliminary?.aim === 'ADHERING');
@@ -59,10 +68,16 @@ export function ROB2Checklist(props) {
       [domainKey]: false,
     }));
 
+    // Clear any existing timeout before setting a new one
+    if (domainScrollTimeoutId !== null) {
+      clearTimeout(domainScrollTimeoutId);
+    }
+
     // Scroll to domain section after a short delay for DOM update
-    setTimeout(() => {
+    domainScrollTimeoutId = setTimeout(() => {
       const element = document.getElementById(`domain-section-${domainKey}`);
       element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      domainScrollTimeoutId = null;
     }, 100);
   }
 
