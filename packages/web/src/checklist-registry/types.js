@@ -13,9 +13,9 @@ import { LANDING_URL } from '@/config/api.js';
 export const CHECKLIST_TYPES = {
   AMSTAR2: 'AMSTAR2',
   ROBINS_I: 'ROBINS_I',
+  ROB2: 'ROB2',
   // Future types:
   // ROBINS_E: 'ROBINS_E',
-  // ROB2: 'ROB2',
   // GRADE: 'GRADE',
 };
 
@@ -49,6 +49,20 @@ export const CHECKLIST_METADATA = {
       Moderate: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
       Serious: { bg: 'bg-orange-100', text: 'text-orange-800' },
       Critical: { bg: 'bg-red-100', text: 'text-red-800' },
+      Incomplete: { bg: 'bg-gray-100', text: 'text-gray-600' },
+    },
+  },
+  [CHECKLIST_TYPES.ROB2]: {
+    name: 'RoB 2',
+    shortName: 'RoB 2',
+    description: 'Risk of bias in randomized trials',
+    version: '2.0',
+    url: 'https://www.riskofbias.info/welcome/rob-2-0-tool',
+    scoreLevels: ['Low', 'Some concerns', 'High', 'Incomplete'],
+    scoreColors: {
+      Low: { bg: 'bg-green-100', text: 'text-green-800' },
+      'Some concerns': { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+      High: { bg: 'bg-red-100', text: 'text-red-800' },
       Incomplete: { bg: 'bg-gray-100', text: 'text-gray-600' },
     },
   },

@@ -13,6 +13,7 @@ import {
 } from '@/checklist-registry';
 import AMSTAR2Checklist from '@/components/checklist/AMSTAR2Checklist/AMSTAR2Checklist.jsx';
 import { ROBINSIChecklist } from '@/components/checklist/ROBINSIChecklist/index.js';
+import { ROB2Checklist } from '@/components/checklist/ROB2Checklist/ROB2Checklist.jsx';
 
 /**
  * GenericChecklist Component
@@ -57,6 +58,16 @@ export default function GenericChecklist(props) {
           showLegend={true}
           readOnly={props.readOnly}
           getRobinsText={props.getRobinsText}
+        />
+      </Show>
+      <Show when={checklistType() === CHECKLIST_TYPES.ROB2}>
+        <ROB2Checklist
+          checklistState={props.checklist}
+          onUpdate={props.onUpdate}
+          showComments={true}
+          showLegend={true}
+          readOnly={props.readOnly}
+          getRob2Text={props.getRob2Text}
         />
       </Show>
     </div>

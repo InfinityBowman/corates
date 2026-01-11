@@ -21,6 +21,7 @@ import { IoChevronBack } from 'solid-icons/io';
 import ScoreTag from '@/components/checklist/ScoreTag.jsx';
 import { isAMSTAR2Complete } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
 import { isROBINSIComplete } from '@/components/checklist/ROBINSIChecklist/checklist.js';
+import { isROB2Complete } from '@/components/checklist/ROB2Checklist/checklist.js';
 
 export default function ChecklistYjsWrapper() {
   const params = useParams();
@@ -52,6 +53,7 @@ export default function ChecklistYjsWrapper() {
     addPdfToStudy,
     getQuestionNote,
     getRobinsText,
+    getRob2Text,
   } = projectOps || {};
 
   // Set active project for action store
@@ -267,18 +269,29 @@ export default function ChecklistYjsWrapper() {
     'domain6',
     'overall',
   ]);
+  const ROB2_KEYS = new Set([
+    'preliminary',
+    'domain1',
+    'domain2a',
+    'domain2b',
+    'domain3',
+    'domain4',
+    'domain5',
+    'overall',
+  ]);
 
-  // Handle partial updates from checklist components (AMSTAR2 or ROBINS-I)
-  // Both use object-style API: onUpdate({ key: value })
+  // Handle partial updates from checklist components (AMSTAR2, ROBINS-I, or ROB2)
+  // All use object-style API: onUpdate({ key: value })
   function handlePartialUpdate(patch) {
     if (isReadOnly()) return;
     const type = checklistType();
 
     Object.entries(patch).forEach(([key, value]) => {
-      // AMSTAR2: keys like q1, q2a, etc. | ROBINS-I: section and domain keys
+      // Validate key based on checklist type
       const isValidKey =
         (type === 'AMSTAR2' && AMSTAR2_KEY_PATTERN.test(key)) ||
-        (type === 'ROBINS_I' && ROBINS_I_KEYS.has(key));
+        (type === 'ROBINS_I' && ROBINS_I_KEYS.has(key)) ||
+        (type === 'ROB2' && ROB2_KEYS.has(key));
       if (isValidKey) {
         updateChecklistAnswer(params.studyId, params.checklistId, key, value);
       }
@@ -302,8 +315,8 @@ export default function ChecklistYjsWrapper() {
     if (!isChecklistValid()) {
       const type = checklistType();
       const message =
-        type === 'ROBINS_I' ?
-          'An overall risk of bias judgement must be set before marking the checklist as complete.'
+        type === 'ROBINS_I' || type === 'ROB2' ?
+          'All domains must be scored before marking the checklist as complete.'
         : 'All questions must have a final answer before marking the checklist as complete.';
       showToast.error('Incomplete Checklist', message);
       return;
@@ -362,6 +375,10 @@ export default function ChecklistYjsWrapper() {
 
     if (type === 'ROBINS_I') {
       return isROBINSIComplete(checklist);
+    }
+
+    if (type === 'ROB2') {
+      return isROB2Complete(checklist);
     }
 
     // For other checklist types, allow completion
@@ -483,6 +500,9 @@ export default function ChecklistYjsWrapper() {
           }
           getRobinsText={(sectionKey, fieldKey, questionKey) =>
             getRobinsText(params.studyId, params.checklistId, sectionKey, fieldKey, questionKey)
+          }
+          getRob2Text={(sectionKey, fieldKey, questionKey) =>
+            getRob2Text(params.studyId, params.checklistId, sectionKey, fieldKey, questionKey)
           }
         />
       </Show>

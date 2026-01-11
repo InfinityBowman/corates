@@ -45,6 +45,7 @@ export default function ChecklistWithPdf(props) {
           readOnly={props.readOnly}
           getQuestionNote={props.getQuestionNote}
           getRobinsText={props.getRobinsText}
+          getRob2Text={props.getRob2Text}
         />
 
         {/* Second panel: PDF Viewer */}

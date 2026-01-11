@@ -18,6 +18,14 @@
     "./plans": {
       "types": "./dist/plans/index.d.ts",
       "import": "./dist/plans/index.js"
+    },
+    "./checklists": {
+      "types": "./dist/checklists/index.d.ts",
+      "import": "./dist/checklists/index.js"
+    },
+    "./checklists/rob2": {
+      "types": "./dist/checklists/rob2/index.d.ts",
+      "import": "./dist/checklists/rob2/index.js"
     }
   },
   "scripts": {

@@ -25,6 +25,9 @@ export * as amstar2 from './amstar2/index.js';
 // ROBINS-I
 export * as robinsI from './robins-i/index.js';
 
+// ROB-2
+export * as rob2 from './rob2/index.js';
+
 // Re-export key functions at top level for convenience
 export {
   createAMSTAR2Checklist,
@@ -43,3 +46,12 @@ export {
   scoreRobinsDomain,
   scoreAllDomains,
 } from './robins-i/index.js';
+
+export {
+  createROB2Checklist,
+  scoreROB2Checklist,
+  isROB2Complete,
+  getAnswers as getROB2Answers,
+  scoreRob2Domain,
+  scoreAllDomains as scoreAllROB2Domains,
+} from './rob2/index.js';
