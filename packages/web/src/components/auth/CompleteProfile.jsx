@@ -206,7 +206,7 @@ export default function CompleteProfile() {
       >
         <div class='relative w-full max-w-md rounded-xl border border-gray-100 bg-white p-5 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-10'>
           {/* Logo */}
-          <a href='/' class='absolute left-4 top-4 sm:left-5 sm:top-5'>
+          <a href='/' class='absolute top-4 left-4 sm:top-5 sm:left-5'>
             <img src='/logo.svg' alt='CoRATES' class='h-6 w-auto sm:h-7' />
           </a>
 
