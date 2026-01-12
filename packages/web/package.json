@@ -31,7 +31,7 @@
     "@embedpdf/plugin-fullscreen": "^2.1.1",
     "@embedpdf/plugin-history": "^2.1.1",
     "@embedpdf/plugin-i18n": "^2.1.1",
-    "@embedpdf/plugin-interaction-manager": "^2.1.1",
+    "@embedpdf/plugin-interaction-manager": "^2.1.2",
     "@embedpdf/plugin-pan": "^2.1.1",
     "@embedpdf/plugin-print": "^2.1.1",
     "@embedpdf/plugin-redaction": "^2.1.1",
