@@ -32,7 +32,7 @@
     "@better-auth/stripe": "^1.4.10",
     "@cloudflare/workers-types": "^4.20260103.0",
     "@corates/shared": "workspace:*",
-    "better-auth": "^1.4.10",
+    "better-auth": "^1.4.11",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.11.3",
     "lib0": "^0.2.117",
