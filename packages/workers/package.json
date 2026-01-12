@@ -29,15 +29,15 @@
     "studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@better-auth/stripe": "^1.4.10",
-    "@cloudflare/workers-types": "^4.20260103.0",
+    "@better-auth/stripe": "^1.4.11",
+    "@cloudflare/workers-types": "^4.20260111.0",
     "@corates/shared": "workspace:*",
-    "better-auth": "^1.4.10",
+    "better-auth": "^1.4.11",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.11.3",
     "lib0": "^0.2.117",
     "postmark": "^4.0.5",
-    "stripe": "^20.1.0",
+    "stripe": "^20.1.2",
     "y-protocols": "^1.0.7",
     "yjs": "^13.6.29",
     "zod": "^4.3.5"
