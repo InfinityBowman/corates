@@ -6,7 +6,12 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { Client as PostmarkClient } from 'postmark';
 import { contactRateLimit } from '@/middleware/rateLimit.js';
-import { createDomainError, createValidationError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  createValidationError,
+  SYSTEM_ERRORS,
+  VALIDATION_ERRORS,
+} from '@corates/shared';
 import { escapeHtml } from '@/lib/escapeHtml.js';
 
 const contact = new OpenAPIHono({
