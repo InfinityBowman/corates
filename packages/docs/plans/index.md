@@ -14,7 +14,6 @@ Plans are intentionally opinionated and are expected to change as the codebase e
 
 - [Presence (project WebSocket)](/plans/presence)
 - [Y.js awareness](/plans/yjs-awareness)
-- [SSE Realtime Sync](/plans/sse-real-time-sync)
 
 ## Quality and architecture
 
