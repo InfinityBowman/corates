@@ -27,7 +27,7 @@ const StripeToolsPage = lazy(
  */
 export default function AdminRoutes() {
   return (
-    <Route path='/' component={AdminLayout}>
+    <Route path='/admin' component={AdminLayout}>
       <Route path='/' component={AdminDashboard} />
       <Route path='/orgs' component={OrgList} />
       <Route path='/orgs/:orgId' component={OrgDetail} />
