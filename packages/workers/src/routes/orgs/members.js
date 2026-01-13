@@ -3,7 +3,7 @@
  * Routes: /api/orgs/:orgId/projects/:projectId/members
  */
 
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import { projectMembers, user, projects, projectInvitations, member } from '@/db/schema.js';
 import { eq, and, count } from 'drizzle-orm';
@@ -15,28 +15,412 @@ import {
   getProjectContext,
 } from '@/middleware/requireOrg.js';
 import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
-import { memberSchemas, validateRequest } from '@/config/validation.js';
 import { TIME_DURATIONS } from '@/config/constants.js';
 import {
   createDomainError,
+  createValidationError,
   PROJECT_ERRORS,
   AUTH_ERRORS,
   SYSTEM_ERRORS,
   USER_ERRORS,
+  VALIDATION_ERRORS,
 } from '@corates/shared';
 import { syncMemberToDO } from '@/lib/project-sync.js';
 import { checkCollaboratorQuota } from '@/lib/quotaTransaction.js';
 
-const orgProjectMemberRoutes = new Hono();
+const orgProjectMemberRoutes = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
 
-// Apply auth and org/project membership middleware to all routes
+      let message = firstIssue?.message || 'Validation failed';
+      const isMissing =
+        firstIssue?.received === 'undefined' ||
+        message.includes('received undefined') ||
+        message.includes('Required');
+
+      if (isMissing) {
+        message = `${fieldName} is required`;
+      }
+
+      const error = createValidationError(
+        String(field),
+        VALIDATION_ERRORS.FIELD_REQUIRED.code,
+        null,
+      );
+      error.message = message;
+      return c.json(error, 400);
+    }
+  },
+});
+
+// Apply auth middleware to all routes
 orgProjectMemberRoutes.use('*', requireAuth);
+
+// Request/Response schemas
+const ProjectMemberSchema = z
+  .object({
+    userId: z.string(),
+    role: z.string(),
+    joinedAt: z.union([z.string(), z.date(), z.number()]),
+    name: z.string(),
+    email: z.string(),
+    username: z.string().nullable(),
+    displayName: z.string().nullable(),
+    image: z.string().nullable(),
+  })
+  .openapi('ProjectMember');
+
+const ProjectMemberListSchema = z.array(ProjectMemberSchema).openapi('ProjectMemberList');
+
+const AddMemberRequestSchema = z
+  .object({
+    userId: z.string().min(1, 'Invalid user ID').optional().openapi({ example: 'user-123' }),
+    email: z.string().email('Invalid email address').optional().openapi({ example: 'user@example.com' }),
+    role: z
+      .enum(['owner', 'member'], { message: 'Role must be one of: owner, member' })
+      .default('member')
+      .openapi({ example: 'member' }),
+  })
+  .refine(data => data.userId || data.email, {
+    message: 'Either userId or email is required',
+  })
+  .openapi('AddMemberRequest');
+
+const UpdateMemberRoleRequestSchema = z
+  .object({
+    role: z
+      .enum(['owner', 'member'], { message: 'Role must be one of: owner, member' })
+      .openapi({ example: 'owner' }),
+  })
+  .openapi('UpdateMemberRoleRequest');
+
+const MemberErrorSchema = z
+  .object({
+    code: z.string(),
+    message: z.string(),
+    statusCode: z.number(),
+    details: z.record(z.unknown()).optional(),
+  })
+  .openapi('MemberError');
+
+const MemberAddedSchema = z
+  .object({
+    userId: z.string(),
+    name: z.string(),
+    email: z.string(),
+    username: z.string().nullable(),
+    displayName: z.string().nullable(),
+    image: z.string().nullable(),
+    role: z.string(),
+    joinedAt: z.union([z.string(), z.date()]),
+  })
+  .openapi('MemberAdded');
+
+const InvitationSentSchema = z
+  .object({
+    success: z.boolean(),
+    invitation: z.boolean(),
+    message: z.string(),
+    email: z.string(),
+  })
+  .openapi('InvitationSent');
+
+const MemberUpdatedSchema = z
+  .object({
+    success: z.boolean(),
+    userId: z.string(),
+    role: z.string(),
+  })
+  .openapi('MemberUpdated');
+
+const MemberRemovedSchema = z
+  .object({
+    success: z.boolean(),
+    removed: z.string(),
+  })
+  .openapi('MemberRemoved');
+
+// Route definitions
+const listMembersRoute = createRoute({
+  method: 'get',
+  path: '/',
+  tags: ['Project Members'],
+  summary: 'List project members',
+  description: 'List all members of a project',
+  responses: {
+    200: {
+      description: 'List of project members',
+      content: {
+        'application/json': {
+          schema: ProjectMemberListSchema,
+        },
+      },
+    },
+    401: {
+      description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+    403: {
+      description: 'Forbidden - not a project member',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const addMemberRoute = createRoute({
+  method: 'post',
+  path: '/',
+  tags: ['Project Members'],
+  summary: 'Add a project member',
+  description:
+    'Add a member to the project (project owner only). If user does not exist and email is provided, sends an invitation.',
+  request: {
+    body: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: AddMemberRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: 'Member added or invitation sent',
+      content: {
+        'application/json': {
+          schema: z.union([MemberAddedSchema, InvitationSentSchema]),
+        },
+      },
+    },
+    400: {
+      description: 'Validation error',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+    401: {
+      description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+    403: {
+      description: 'Forbidden - not a project owner',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+    404: {
+      description: 'User not found',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+    409: {
+      description: 'Member already exists',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const updateMemberRoleRoute = createRoute({
+  method: 'put',
+  path: '/{userId}',
+  tags: ['Project Members'],
+  summary: 'Update member role',
+  description: "Update a member's role in the project (project owner only)",
+  request: {
+    params: z.object({
+      userId: z.string().openapi({ description: 'User ID to update', example: 'user-123' }),
+    }),
+    body: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: UpdateMemberRoleRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Role updated successfully',
+      content: {
+        'application/json': {
+          schema: MemberUpdatedSchema,
+        },
+      },
+    },
+    400: {
+      description: 'Validation error or last owner',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+    401: {
+      description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+    403: {
+      description: 'Forbidden - not a project owner',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const removeMemberRoute = createRoute({
+  method: 'delete',
+  path: '/{userId}',
+  tags: ['Project Members'],
+  summary: 'Remove project member',
+  description: 'Remove a member from the project (project owner only, or self-removal)',
+  request: {
+    params: z.object({
+      userId: z.string().openapi({ description: 'User ID to remove', example: 'user-123' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Member removed successfully',
+      content: {
+        'application/json': {
+          schema: MemberRemovedSchema,
+        },
+      },
+    },
+    400: {
+      description: 'Cannot remove last owner',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+    401: {
+      description: 'Unauthorized',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+    403: {
+      description: 'Forbidden - not a project owner and not self',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+    404: {
+      description: 'Member not found',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: MemberErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+/**
+ * Helper to run middleware manually and check for early response
+ */
+async function runMiddleware(middleware, c) {
+  let nextCalled = false;
+
+  const result = await middleware(c, async () => {
+    nextCalled = true;
+  });
+
+  if (result instanceof Response) {
+    return result;
+  }
+
+  if (!nextCalled && c.res) {
+    return c.res;
+  }
+
+  return null;
+}
 
 /**
  * GET /api/orgs/:orgId/projects/:projectId/members
  * List all members of a project
  */
-orgProjectMemberRoutes.get('/', requireOrgMembership(), requireProjectAccess(), async c => {
+orgProjectMemberRoutes.openapi(listMembersRoute, async c => {
+  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+  if (membershipResponse) return membershipResponse;
+
+  const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
+  if (projectAccessResponse) return projectAccessResponse;
+
   const { projectId } = getProjectContext(c);
   const db = createDb(c.env.DB);
 
@@ -71,233 +455,357 @@ orgProjectMemberRoutes.get('/', requireOrgMembership(), requireProjectAccess(), 
 /**
  * POST /api/orgs/:orgId/projects/:projectId/members
  * Add a member to the project (project owner only)
- * Combined invite flow: ensures org membership first, then adds project membership
  */
-orgProjectMemberRoutes.post(
-  '/',
-  requireOrgMembership(),
-  requireOrgWriteAccess(),
-  requireProjectAccess('owner'),
-  validateRequest(memberSchemas.add),
-  async c => {
-    const { orgId } = getOrgContext(c);
-    const { projectId } = getProjectContext(c);
-    const db = createDb(c.env.DB);
-    const { userId, email, role } = c.get('validatedBody');
+orgProjectMemberRoutes.openapi(addMemberRoute, async c => {
+  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+  if (membershipResponse) return membershipResponse;
 
-    try {
-      // Find user by userId or email
-      let userToAdd;
-      if (userId) {
-        userToAdd = await db
-          .select({
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            username: user.username,
-            displayName: user.displayName,
-            image: user.image,
-          })
-          .from(user)
-          .where(eq(user.id, userId))
-          .get();
-      } else {
-        userToAdd = await db
-          .select({
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            username: user.username,
-            displayName: user.displayName,
-            image: user.image,
-          })
-          .from(user)
-          .where(eq(user.email, email.toLowerCase()))
-          .get();
-      }
+  const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
+  if (writeAccessResponse) return writeAccessResponse;
 
-      // If user doesn't exist and email was provided, create an invitation
-      if (!userToAdd && email) {
-        return await handleInvitation(c, { orgId, projectId, email, role });
-      }
+  const projectAccessResponse = await runMiddleware(requireProjectAccess('owner'), c);
+  if (projectAccessResponse) return projectAccessResponse;
 
-      if (!userToAdd) {
-        const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId, email });
-        return c.json(error, error.statusCode);
-      }
+  const { orgId } = getOrgContext(c);
+  const { projectId } = getProjectContext(c);
+  const db = createDb(c.env.DB);
+  const body = c.req.valid('json');
+  const { userId, email, role } = body;
 
-      // Check if already a project member
-      const existingMember = await db
-        .select({ id: projectMembers.id })
-        .from(projectMembers)
-        .where(
-          and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userToAdd.id)),
-        )
+  try {
+    // Find user by userId or email
+    let userToAdd;
+    if (userId) {
+      userToAdd = await db
+        .select({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          username: user.username,
+          displayName: user.displayName,
+          image: user.image,
+        })
+        .from(user)
+        .where(eq(user.id, userId))
         .get();
-
-      if (existingMember) {
-        const error = createDomainError(PROJECT_ERRORS.MEMBER_ALREADY_EXISTS, {
-          projectId,
-          userId: userToAdd.id,
-        });
-        return c.json(error, error.statusCode);
-      }
-
-      // Check if user is already an org member (for quota purposes)
-      const existingOrgMembership = await db
-        .select({ id: member.id })
-        .from(member)
-        .where(and(eq(member.organizationId, orgId), eq(member.userId, userToAdd.id)))
+    } else {
+      userToAdd = await db
+        .select({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          username: user.username,
+          displayName: user.displayName,
+          image: user.image,
+        })
+        .from(user)
+        .where(eq(user.email, email.toLowerCase()))
         .get();
+    }
 
-      // Enforce collaborator quota if adding a new org member
-      if (!existingOrgMembership) {
-        const quotaResult = await checkCollaboratorQuota(db, orgId);
-        if (!quotaResult.allowed) {
-          return c.json(quotaResult.error, quotaResult.error.statusCode);
-        }
-      }
+    // If user doesn't exist and email was provided, create an invitation
+    if (!userToAdd && email) {
+      return await handleInvitation(c, { orgId, projectId, email, role });
+    }
 
-      // Ensure org membership first (combined flow)
-      await ensureOrgMembership(db, orgId, userToAdd.id);
+    if (!userToAdd) {
+      const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId, email });
+      return c.json(error, error.statusCode);
+    }
 
-      // Add project membership
-      const now = new Date();
-      await db.insert(projectMembers).values({
-        id: crypto.randomUUID(),
+    // Check if already a project member
+    const existingMember = await db
+      .select({ id: projectMembers.id })
+      .from(projectMembers)
+      .where(
+        and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userToAdd.id)),
+      )
+      .get();
+
+    if (existingMember) {
+      const error = createDomainError(PROJECT_ERRORS.MEMBER_ALREADY_EXISTS, {
         projectId,
         userId: userToAdd.id,
+      });
+      return c.json(error, error.statusCode);
+    }
+
+    // Check if user is already an org member (for quota purposes)
+    const existingOrgMembership = await db
+      .select({ id: member.id })
+      .from(member)
+      .where(and(eq(member.organizationId, orgId), eq(member.userId, userToAdd.id)))
+      .get();
+
+    // Enforce collaborator quota if adding a new org member
+    if (!existingOrgMembership) {
+      const quotaResult = await checkCollaboratorQuota(db, orgId);
+      if (!quotaResult.allowed) {
+        return c.json(quotaResult.error, quotaResult.error.statusCode);
+      }
+    }
+
+    // Ensure org membership first (combined flow)
+    await ensureOrgMembership(db, orgId, userToAdd.id);
+
+    // Add project membership
+    const now = new Date();
+    await db.insert(projectMembers).values({
+      id: crypto.randomUUID(),
+      projectId,
+      userId: userToAdd.id,
+      role,
+      joinedAt: now,
+    });
+
+    // Get project name for notification
+    const project = await db
+      .select({ name: projects.name })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .get();
+
+    // Send notification to the added user
+    try {
+      const userSessionId = c.env.USER_SESSION.idFromName(userToAdd.id);
+      const userSession = c.env.USER_SESSION.get(userSessionId);
+      await userSession.fetch(
+        new Request('https://internal/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'project-membership-added',
+            orgId,
+            projectId,
+            projectName: project?.name || 'Unknown Project',
+            role,
+            timestamp: Date.now(),
+          }),
+        }),
+      );
+    } catch (err) {
+      console.error('Failed to send project membership notification:', err);
+    }
+
+    // Sync member to DO
+    try {
+      await syncMemberToDO(c.env, projectId, 'add', {
+        userId: userToAdd.id,
+        role,
+        joinedAt: now.getTime(),
+        name: userToAdd.name,
+        email: userToAdd.email,
+        displayName: userToAdd.displayName,
+        image: userToAdd.image,
+      });
+    } catch (err) {
+      console.error('Failed to sync member to DO:', err);
+    }
+
+    return c.json(
+      {
+        userId: userToAdd.id,
+        name: userToAdd.name,
+        email: userToAdd.email,
+        username: userToAdd.username,
+        displayName: userToAdd.displayName,
+        image: userToAdd.image,
         role,
         joinedAt: now,
-      });
-
-      // Get project name for notification
-      const project = await db
-        .select({ name: projects.name })
-        .from(projects)
-        .where(eq(projects.id, projectId))
-        .get();
-
-      // Send notification to the added user
-      try {
-        const userSessionId = c.env.USER_SESSION.idFromName(userToAdd.id);
-        const userSession = c.env.USER_SESSION.get(userSessionId);
-        await userSession.fetch(
-          new Request('https://internal/notify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'project-membership-added',
-              orgId,
-              projectId,
-              projectName: project?.name || 'Unknown Project',
-              role,
-              timestamp: Date.now(),
-            }),
-          }),
-        );
-      } catch (err) {
-        console.error('Failed to send project membership notification:', err);
-      }
-
-      // Sync member to DO
-      try {
-        await syncMemberToDO(c.env, projectId, 'add', {
-          userId: userToAdd.id,
-          role,
-          joinedAt: now.getTime(),
-          name: userToAdd.name,
-          email: userToAdd.email,
-          displayName: userToAdd.displayName,
-          image: userToAdd.image,
-        });
-      } catch (err) {
-        console.error('Failed to sync member to DO:', err);
-      }
-
-      return c.json(
-        {
-          userId: userToAdd.id,
-          name: userToAdd.name,
-          email: userToAdd.email,
-          username: userToAdd.username,
-          displayName: userToAdd.displayName,
-          image: userToAdd.image,
-          role,
-          joinedAt: now,
-        },
-        201,
-      );
-    } catch (error) {
-      console.error('Error adding project member:', error);
-      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'add_project_member',
-        originalError: error.message,
-      });
-      return c.json(dbError, dbError.statusCode);
-    }
-  },
-);
+      },
+      201,
+    );
+  } catch (error) {
+    console.error('Error adding project member:', error);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'add_project_member',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
+  }
+});
 
 /**
  * PUT /api/orgs/:orgId/projects/:projectId/members/:userId
  * Update a member's role (project owner only)
  */
-orgProjectMemberRoutes.put(
-  '/:userId',
-  requireOrgMembership(),
-  requireOrgWriteAccess(),
-  requireProjectAccess('owner'),
-  validateRequest(memberSchemas.updateRole),
-  async c => {
-    const { orgId } = getOrgContext(c);
-    const { projectId } = getProjectContext(c);
-    const memberId = c.req.param('userId');
-    const db = createDb(c.env.DB);
-    const { role } = c.get('validatedBody');
+orgProjectMemberRoutes.openapi(updateMemberRoleRoute, async c => {
+  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+  if (membershipResponse) return membershipResponse;
 
+  const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
+  if (writeAccessResponse) return writeAccessResponse;
+
+  const projectAccessResponse = await runMiddleware(requireProjectAccess('owner'), c);
+  if (projectAccessResponse) return projectAccessResponse;
+
+  const { orgId } = getOrgContext(c);
+  const { projectId } = getProjectContext(c);
+  const { userId: memberId } = c.req.valid('param');
+  const db = createDb(c.env.DB);
+  const { role } = c.req.valid('json');
+
+  try {
+    // Prevent removing the last owner
+    if (role !== 'owner') {
+      const ownerCountResult = await db
+        .select({ count: count() })
+        .from(projectMembers)
+        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.role, 'owner')))
+        .get();
+
+      const targetMember = await db
+        .select({ role: projectMembers.role })
+        .from(projectMembers)
+        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)))
+        .get();
+
+      if (targetMember?.role === 'owner' && ownerCountResult?.count <= 1) {
+        const error = createDomainError(
+          PROJECT_ERRORS.LAST_OWNER,
+          { projectId },
+          'Assign another owner first',
+        );
+        return c.json(error, error.statusCode);
+      }
+    }
+
+    await db
+      .update(projectMembers)
+      .set({ role })
+      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
+
+    // Sync role update to DO
     try {
-      // Prevent removing the last owner
-      if (role !== 'owner') {
-        const ownerCountResult = await db
-          .select({ count: count() })
-          .from(projectMembers)
-          .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.role, 'owner')))
+      await syncMemberToDO(c.env, projectId, 'update', {
+        userId: memberId,
+        role,
+      });
+    } catch (err) {
+      console.error('Failed to sync member update to DO:', err);
+    }
+
+    // Send notification to the user whose role was updated
+    try {
+      const userSessionId = c.env.USER_SESSION.idFromName(memberId);
+      const userSession = c.env.USER_SESSION.get(userSessionId);
+      await userSession.fetch(
+        new Request('https://internal/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'project-membership-updated',
+            orgId,
+            projectId,
+            role,
+            timestamp: Date.now(),
+          }),
+        }),
+      );
+    } catch (err) {
+      console.error('Failed to send role update notification:', err);
+    }
+
+    return c.json({ success: true, userId: memberId, role });
+  } catch (error) {
+    console.error('Error updating project member role:', error);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'update_project_member_role',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
+  }
+});
+
+/**
+ * DELETE /api/orgs/:orgId/projects/:projectId/members/:userId
+ * Remove a member from the project (project owner only, or self-removal)
+ */
+orgProjectMemberRoutes.openapi(removeMemberRoute, async c => {
+  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+  if (membershipResponse) return membershipResponse;
+
+  const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
+  if (writeAccessResponse) return writeAccessResponse;
+
+  const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
+  if (projectAccessResponse) return projectAccessResponse;
+
+  const { user: authUser } = getAuth(c);
+  const { orgId } = getOrgContext(c);
+  const { projectId, projectRole } = getProjectContext(c);
+  const { userId: memberId } = c.req.valid('param');
+  const db = createDb(c.env.DB);
+
+  const isSelf = memberId === authUser.id;
+  const isOwner = projectRole === 'owner';
+
+  if (!isOwner && !isSelf) {
+    const error = createDomainError(
+      AUTH_ERRORS.FORBIDDEN,
+      { reason: 'remove_member' },
+      'Only project owners can remove members',
+    );
+    return c.json(error, error.statusCode);
+  }
+
+  try {
+    // Check target member exists
+    const targetMember = await db
+      .select({ role: projectMembers.role })
+      .from(projectMembers)
+      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)))
+      .get();
+
+    if (!targetMember) {
+      const error = createDomainError(
+        PROJECT_ERRORS.NOT_FOUND,
+        { projectId, userId: memberId },
+        'Member not found',
+      );
+      return c.json(error, error.statusCode);
+    }
+
+    // Prevent removing the last owner
+    if (targetMember.role === 'owner') {
+      const ownerCountResult = await db
+        .select({ count: count() })
+        .from(projectMembers)
+        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.role, 'owner')))
+        .get();
+
+      if (ownerCountResult?.count <= 1) {
+        const error = createDomainError(
+          PROJECT_ERRORS.LAST_OWNER,
+          { projectId },
+          'Assign another owner first or delete the project',
+        );
+        return c.json(error, error.statusCode);
+      }
+    }
+
+    await db
+      .delete(projectMembers)
+      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
+
+    // Sync member removal to DO
+    try {
+      await syncMemberToDO(c.env, projectId, 'remove', {
+        userId: memberId,
+      });
+    } catch (err) {
+      console.error('Failed to sync member removal to DO:', err);
+    }
+
+    // Send notification to removed user (if not self-removal)
+    if (!isSelf) {
+      try {
+        const project = await db
+          .select({ name: projects.name })
+          .from(projects)
+          .where(eq(projects.id, projectId))
           .get();
 
-        const targetMember = await db
-          .select({ role: projectMembers.role })
-          .from(projectMembers)
-          .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)))
-          .get();
-
-        if (targetMember?.role === 'owner' && ownerCountResult?.count <= 1) {
-          const error = createDomainError(
-            PROJECT_ERRORS.LAST_OWNER,
-            { projectId },
-            'Assign another owner first',
-          );
-          return c.json(error, error.statusCode);
-        }
-      }
-
-      await db
-        .update(projectMembers)
-        .set({ role })
-        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
-
-      // Sync role update to DO
-      try {
-        await syncMemberToDO(c.env, projectId, 'update', {
-          userId: memberId,
-          role,
-        });
-      } catch (err) {
-        console.error('Failed to sync member update to DO:', err);
-      }
-
-      // Send notification to the user whose role was updated
-      try {
         const userSessionId = c.env.USER_SESSION.idFromName(memberId);
         const userSession = c.env.USER_SESSION.get(userSessionId);
         await userSession.fetch(
@@ -305,147 +813,30 @@ orgProjectMemberRoutes.put(
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              type: 'project-membership-updated',
+              type: 'project-membership-removed',
               orgId,
               projectId,
-              role,
+              projectName: project?.name || 'Unknown Project',
+              removedBy: authUser.name || authUser.email,
               timestamp: Date.now(),
             }),
           }),
         );
       } catch (err) {
-        console.error('Failed to send role update notification:', err);
+        console.error('Failed to send removal notification:', err);
       }
-
-      return c.json({ success: true, userId: memberId, role });
-    } catch (error) {
-      console.error('Error updating project member role:', error);
-      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'update_project_member_role',
-        originalError: error.message,
-      });
-      return c.json(dbError, dbError.statusCode);
-    }
-  },
-);
-
-/**
- * DELETE /api/orgs/:orgId/projects/:projectId/members/:userId
- * Remove a member from the project (project owner only, or self-removal)
- */
-orgProjectMemberRoutes.delete(
-  '/:userId',
-  requireOrgMembership(),
-  requireOrgWriteAccess(),
-  requireProjectAccess(),
-  async c => {
-    const { user: authUser } = getAuth(c);
-    const { orgId } = getOrgContext(c);
-    const { projectId, projectRole } = getProjectContext(c);
-    const memberId = c.req.param('userId');
-    const db = createDb(c.env.DB);
-
-    const isSelf = memberId === authUser.id;
-    const isOwner = projectRole === 'owner';
-
-    if (!isOwner && !isSelf) {
-      const error = createDomainError(
-        AUTH_ERRORS.FORBIDDEN,
-        { reason: 'remove_member' },
-        'Only project owners can remove members',
-      );
-      return c.json(error, error.statusCode);
     }
 
-    try {
-      // Check target member exists
-      const targetMember = await db
-        .select({ role: projectMembers.role })
-        .from(projectMembers)
-        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)))
-        .get();
-
-      if (!targetMember) {
-        const error = createDomainError(
-          PROJECT_ERRORS.NOT_FOUND,
-          { projectId, userId: memberId },
-          'Member not found',
-        );
-        return c.json(error, error.statusCode);
-      }
-
-      // Prevent removing the last owner
-      if (targetMember.role === 'owner') {
-        const ownerCountResult = await db
-          .select({ count: count() })
-          .from(projectMembers)
-          .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.role, 'owner')))
-          .get();
-
-        if (ownerCountResult?.count <= 1) {
-          const error = createDomainError(
-            PROJECT_ERRORS.LAST_OWNER,
-            { projectId },
-            'Assign another owner first or delete the project',
-          );
-          return c.json(error, error.statusCode);
-        }
-      }
-
-      await db
-        .delete(projectMembers)
-        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
-
-      // Sync member removal to DO
-      try {
-        await syncMemberToDO(c.env, projectId, 'remove', {
-          userId: memberId,
-        });
-      } catch (err) {
-        console.error('Failed to sync member removal to DO:', err);
-      }
-
-      // Send notification to removed user (if not self-removal)
-      if (!isSelf) {
-        try {
-          const project = await db
-            .select({ name: projects.name })
-            .from(projects)
-            .where(eq(projects.id, projectId))
-            .get();
-
-          const userSessionId = c.env.USER_SESSION.idFromName(memberId);
-          const userSession = c.env.USER_SESSION.get(userSessionId);
-          await userSession.fetch(
-            new Request('https://internal/notify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                type: 'project-membership-removed',
-                orgId,
-                projectId,
-                projectName: project?.name || 'Unknown Project',
-                removedBy: authUser.name || authUser.email,
-                timestamp: Date.now(),
-              }),
-            }),
-          );
-        } catch (err) {
-          console.error('Failed to send removal notification:', err);
-        }
-      }
-
-      return c.json({ success: true, removed: memberId });
-    } catch (error) {
-      console.error('Error removing project member:', error);
-      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'remove_project_member',
-        originalError: error.message,
-      });
-      return c.json(dbError, dbError.statusCode);
-    }
-  },
-);
+    return c.json({ success: true, removed: memberId });
+  } catch (error) {
+    console.error('Error removing project member:', error);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'remove_project_member',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
+  }
+});
 
 /**
  * Ensure user is a member of the organization, adding them if not
