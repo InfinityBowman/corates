@@ -3,7 +3,7 @@
  * Handles user operations including search and profile management
  */
 
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import {
   projects,
@@ -29,10 +29,72 @@ import {
 import { syncMemberToDO } from '@/lib/project-sync.js';
 import { getProjectDocStub } from '@/lib/project-doc-id.js';
 
-const userRoutes = new Hono();
+const userRoutes = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const message = firstIssue?.message || 'Validation failed';
+      const error = createValidationError(String(field), VALIDATION_ERRORS.INVALID_INPUT.code, null);
+      error.message = message;
+      return c.json(error, 400);
+    }
+  },
+});
 
 // Apply auth middleware to all routes
 userRoutes.use('*', requireAuth);
+
+// Apply rate limiting to search endpoint
+userRoutes.use('/search', searchRateLimit);
+
+// Response schemas
+const UserSearchResultSchema = z
+  .object({
+    id: z.string(),
+    name: z.string().nullable(),
+    displayName: z.string().nullable(),
+    username: z.string().nullable(),
+    image: z.string().nullable(),
+    email: z.string().nullable(),
+  })
+  .openapi('UserSearchResult');
+
+const UserProjectSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string().nullable(),
+    orgId: z.string(),
+    role: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  })
+  .openapi('UserProject');
+
+const ErrorSchema = z
+  .object({
+    code: z.string(),
+    message: z.string(),
+    statusCode: z.number(),
+    details: z.record(z.unknown()).optional(),
+  })
+  .openapi('UserError');
+
+const SuccessSchema = z
+  .object({
+    success: z.literal(true),
+    message: z.string().optional(),
+  })
+  .openapi('UserSuccess');
+
+const SyncResultSchema = z
+  .object({
+    success: z.literal(true),
+    synced: z.number(),
+    total: z.number(),
+  })
+  .openapi('SyncResult');
 
 /**
  * Mask email for privacy (show first 2 chars and domain)
@@ -45,35 +107,49 @@ function maskEmail(email) {
   return `${masked}@${domain}`;
 }
 
-/**
- * GET /api/users/search
- * Search users by name or email
- * Query params:
- *   - q: search query (required, min 2 chars)
- *   - projectId: optional - exclude users already in this project
- *   - limit: max results (default 10, max 20)
- */
-userRoutes.get('/search', searchRateLimit, async c => {
-  const { user: currentUser } = getAuth(c);
-  const query = c.req.query('q')?.trim();
-  const projectId = c.req.query('projectId');
-  const limit = Math.min(parseInt(c.req.query('limit') || '10', 10), 20);
+// Search users route
+const searchUsersRoute = createRoute({
+  method: 'get',
+  path: '/search',
+  tags: ['Users'],
+  summary: 'Search users',
+  description: 'Search users by name or email. Requires minimum 2 character query.',
+  security: [{ cookieAuth: [] }],
+  request: {
+    query: z.object({
+      q: z.string().min(2).openapi({ example: 'john' }),
+      projectId: z.string().optional().openapi({ example: 'proj-123' }),
+      limit: z.coerce
+        .number()
+        .default(10)
+        .transform(n => Math.min(n, 20))
+        .openapi({ example: 10 }),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.array(UserSearchResultSchema),
+        },
+      },
+      description: 'Search results',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Validation error',
+    },
+  },
+});
 
-  if (!query || query.length < 2) {
-    const error = createValidationError(
-      'query',
-      VALIDATION_ERRORS.FIELD_TOO_SHORT.code,
-      query,
-      'min_length',
-    );
-    return c.json(error, error.statusCode);
-  }
+userRoutes.openapi(searchUsersRoute, async c => {
+  const { user: currentUser } = getAuth(c);
+  const { q: query, projectId, limit } = c.req.valid('query');
 
   const db = createDb(c.env.DB);
   const searchPattern = `%${query.toLowerCase()}%`;
 
   try {
-    // Build the query - use lower() for case-insensitive search
     let results = await db
       .select({
         id: user.id,
@@ -94,7 +170,6 @@ userRoutes.get('/search', searchRateLimit, async c => {
       )
       .limit(limit);
 
-    // If projectId provided, filter out users already in the project
     if (projectId) {
       const existingMembers = await db
         .select({ userId: projectMembers.userId })
@@ -105,17 +180,14 @@ userRoutes.get('/search', searchRateLimit, async c => {
       results = results.filter(u => !existingUserIds.has(u.id));
     }
 
-    // Don't include the current user in search results
     results = results.filter(u => u.id !== currentUser.id);
 
-    // Sanitize results - don't expose full email to non-matching queries
     const sanitizedResults = results.map(u => ({
       id: u.id,
       name: u.name,
       displayName: u.displayName,
       username: u.username,
       image: u.image,
-      // Only show email if query matches email pattern
       email: query.includes('@') ? u.email : maskEmail(u.email),
     }));
 
@@ -130,11 +202,27 @@ userRoutes.get('/search', searchRateLimit, async c => {
   }
 });
 
-/**
- * GET /api/users/me/projects
- * Get all projects for the current authenticated user (convenience endpoint)
- */
-userRoutes.get('/me/projects', async c => {
+// Get my projects route
+const getMyProjectsRoute = createRoute({
+  method: 'get',
+  path: '/me/projects',
+  tags: ['Users'],
+  summary: 'Get my projects',
+  description: 'Get all projects for the current authenticated user',
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.array(UserProjectSchema),
+        },
+      },
+      description: 'User projects',
+    },
+  },
+});
+
+userRoutes.openapi(getMyProjectsRoute, async c => {
   const { user: authUser } = getAuth(c);
   const db = createDb(c.env.DB);
 
@@ -165,15 +253,39 @@ userRoutes.get('/me/projects', async c => {
   }
 });
 
-/**
- * GET /api/users/:userId/projects
- * Get all projects for a user
- */
-userRoutes.get('/:userId/projects', async c => {
-  const { user: authUser } = getAuth(c);
-  const userId = c.req.param('userId');
+// Get user projects by ID route
+const getUserProjectsRoute = createRoute({
+  method: 'get',
+  path: '/{userId}/projects',
+  tags: ['Users'],
+  summary: 'Get user projects',
+  description: 'Get all projects for a user (only accessible by the user themselves)',
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: z.object({
+      userId: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.array(UserProjectSchema),
+        },
+      },
+      description: 'User projects',
+    },
+    403: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Forbidden',
+    },
+  },
+});
 
-  // Only allow users to access their own projects
+userRoutes.openapi(getUserProjectsRoute, async c => {
+  const { user: authUser } = getAuth(c);
+  const { userId } = c.req.valid('param');
+
   if (authUser.id !== userId) {
     const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
       reason: 'view_other_user_projects',
@@ -210,17 +322,32 @@ userRoutes.get('/:userId/projects', async c => {
   }
 });
 
-/**
- * DELETE /api/users/me
- * Delete current user's account and all associated data
- */
-userRoutes.delete('/me', async c => {
+// Delete my account route
+const deleteMyAccountRoute = createRoute({
+  method: 'delete',
+  path: '/me',
+  tags: ['Users'],
+  summary: 'Delete my account',
+  description: "Delete current user's account and all associated data",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: SuccessSchema,
+        },
+      },
+      description: 'Account deleted successfully',
+    },
+  },
+});
+
+userRoutes.openapi(deleteMyAccountRoute, async c => {
   const { user: currentUser } = getAuth(c);
   const db = createDb(c.env.DB);
   const userId = currentUser.id;
 
   try {
-    // Fetch all projects the user is a member of before any deletions (with orgId)
     const userProjects = await db
       .select({
         projectId: projectMembers.projectId,
@@ -230,15 +357,10 @@ userRoutes.delete('/me', async c => {
       .innerJoin(projects, eq(projectMembers.projectId, projects.id))
       .where(eq(projectMembers.userId, userId));
 
-    // Sync all member removals to DOs atomically (fail fast if any fails)
     await Promise.all(
       userProjects.map(({ projectId }) => syncMemberToDO(c.env, projectId, 'remove', { userId })),
     );
 
-    // Only proceed with database deletions if all DO syncs succeeded
-    // Delete all user data atomically using batch transaction
-    // Order matters for foreign key constraints
-    // Update mediaFiles.uploadedBy to null before deleting user (following account-merge pattern)
     await db.batch([
       db.update(mediaFiles).set({ uploadedBy: null }).where(eq(mediaFiles.uploadedBy, userId)),
       db.delete(projectMembers).where(eq(projectMembers.userId, userId)),
@@ -263,17 +385,35 @@ userRoutes.delete('/me', async c => {
   }
 });
 
-/**
- * POST /api/users/sync-profile
- * Sync the current user's profile changes to all their project memberships
- * This ensures name/displayName/image updates propagate to Y.js docs
- */
-userRoutes.post('/sync-profile', async c => {
+// Sync profile route
+const syncProfileRoute = createRoute({
+  method: 'post',
+  path: '/sync-profile',
+  tags: ['Users'],
+  summary: 'Sync profile to projects',
+  description: "Sync the current user's profile changes to all their project memberships",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: SyncResultSchema,
+        },
+      },
+      description: 'Profile synced successfully',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'User not found',
+    },
+  },
+});
+
+userRoutes.openapi(syncProfileRoute, async c => {
   const { user: currentUser } = getAuth(c);
   const db = createDb(c.env.DB);
 
   try {
-    // Get fresh user data from DB
     const [userData] = await db
       .select({
         name: user.name,
@@ -289,7 +429,6 @@ userRoutes.post('/sync-profile', async c => {
       return c.json(error, error.statusCode);
     }
 
-    // Get all projects this user is a member of (with orgId for DO addressing)
     const userProjects = await db
       .select({
         projectId: projectMembers.projectId,
@@ -299,7 +438,6 @@ userRoutes.post('/sync-profile', async c => {
       .innerJoin(projects, eq(projectMembers.projectId, projects.id))
       .where(eq(projectMembers.userId, currentUser.id));
 
-    // Sync to each project's Durable Object
     const syncPromises = userProjects.map(async ({ projectId }) => {
       try {
         const projectDoc = getProjectDocStub(c.env, projectId);
