@@ -23,6 +23,13 @@ vi.mock('y-indexeddb', () => ({
   }),
 }));
 
+vi.mock('y-dexie', () => ({
+  default: () => {}, // Dexie addon (no-op in tests)
+  DexieYProvider: {
+    release: vi.fn(),
+  },
+}));
+
 vi.mock('@/stores/projectStore.js', () => ({
   default: {
     getConnectionState: vi.fn(() => ({
@@ -765,7 +772,7 @@ describe('useProject - Connection Reference Counting', () => {
 
       // Mock cleanup methods
       entry.connectionManager = { destroy: vi.fn() };
-      entry.indexeddbProvider = { destroy: vi.fn() };
+      entry.dexieProvider = true; // Signal that dexieProvider exists
       const ydocDestroySpy = vi.spyOn(entry.ydoc, 'destroy');
 
       // First release - should NOT cleanup
@@ -773,14 +780,12 @@ describe('useProject - Connection Reference Counting', () => {
       expect(entry.refCount).toBe(1);
       expect(_connectionRegistry.has(projectId)).toBe(true);
       expect(entry.connectionManager.destroy).not.toHaveBeenCalled();
-      expect(entry.indexeddbProvider.destroy).not.toHaveBeenCalled();
       expect(ydocDestroySpy).not.toHaveBeenCalled();
 
       // Second release - should cleanup
       _releaseConnection(projectId);
       expect(_connectionRegistry.has(projectId)).toBe(false);
       expect(entry.connectionManager.destroy).toHaveBeenCalledTimes(1);
-      expect(entry.indexeddbProvider.destroy).toHaveBeenCalledTimes(1);
       expect(ydocDestroySpy).toHaveBeenCalledTimes(1);
     });
 
@@ -847,7 +852,7 @@ describe('useProject - Connection Reference Counting', () => {
 
       // Mock cleanup
       entry.connectionManager = { destroy: vi.fn() };
-      entry.indexeddbProvider = { destroy: vi.fn() };
+      entry.dexieProvider = true; // Signal that dexieProvider exists
       const ydocDestroySpy = vi.spyOn(entry.ydoc, 'destroy');
 
       // Release all concurrently
@@ -863,7 +868,6 @@ describe('useProject - Connection Reference Counting', () => {
       expect(_connectionRegistry.has(projectId)).toBe(false);
       // Cleanup should only happen once
       expect(entry.connectionManager.destroy).toHaveBeenCalledTimes(1);
-      expect(entry.indexeddbProvider.destroy).toHaveBeenCalledTimes(1);
       expect(ydocDestroySpy).toHaveBeenCalledTimes(1);
     });
 
@@ -895,7 +899,7 @@ describe('useProject - Connection Reference Counting', () => {
       // Create initial connection
       const entry = _getOrCreateConnection(projectId);
       entry.connectionManager = { destroy: vi.fn() };
-      entry.indexeddbProvider = { destroy: vi.fn() };
+      entry.dexieProvider = true; // Signal that dexieProvider exists
       vi.spyOn(entry.ydoc, 'destroy');
 
       // Rapidly add and remove connections
@@ -1029,11 +1033,11 @@ describe('useProject - Connection Reference Counting', () => {
       _getOrCreateConnection(projectB); // connB now has refCount 2
 
       connA.connectionManager = { destroy: vi.fn() };
-      connA.indexeddbProvider = { destroy: vi.fn() };
+      connA.dexieProvider = true;
       vi.spyOn(connA.ydoc, 'destroy');
 
       connB.connectionManager = { destroy: vi.fn() };
-      connB.indexeddbProvider = { destroy: vi.fn() };
+      connB.dexieProvider = true;
       vi.spyOn(connB.ydoc, 'destroy');
 
       // Mixed concurrent operations
@@ -1092,7 +1096,7 @@ describe('useProject - Connection Reference Counting', () => {
       const entry = _getOrCreateConnection(projectId);
       // Only set connectionManager, leave others null
       entry.connectionManager = { destroy: vi.fn() };
-      // indexeddbProvider is null
+      // dexieProvider is null
       // ydoc exists from creation
 
       const ydocDestroySpy = vi.spyOn(entry.ydoc, 'destroy');

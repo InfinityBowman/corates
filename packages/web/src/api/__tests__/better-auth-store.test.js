@@ -6,6 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import 'fake-indexeddb/auto';
 
 // Mock dependencies before importing the store
 vi.mock('@api/auth-client.js', () => ({

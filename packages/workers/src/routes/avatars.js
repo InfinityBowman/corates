@@ -5,22 +5,64 @@
  * Avatars are stored with keys: avatars/{userId}/{filename}
  */
 
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { createDomainError, FILE_ERRORS, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  createValidationError,
+  FILE_ERRORS,
+  VALIDATION_ERRORS,
+  SYSTEM_ERRORS,
+} from '@corates/shared';
 import { FILE_SIZE_LIMITS } from '@/config/constants.js';
 import { createDb } from '@/db/client.js';
 import { projectMembers, projects } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
 import { getProjectDocStub } from '@/lib/project-doc-id.js';
 
-const avatarRoutes = new Hono();
+const avatarRoutes = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const message = firstIssue?.message || 'Validation failed';
+      const error = createValidationError(String(field), VALIDATION_ERRORS.INVALID_INPUT.code, null);
+      error.message = message;
+      return c.json(error, 400);
+    }
+  },
+});
 
 // Apply auth middleware to all routes
 avatarRoutes.use('*', requireAuth);
 
 // Allowed image types
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+// Response schemas
+const AvatarUploadSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    url: z.string().openapi({ example: '/api/users/avatar/user123?t=1705312800000' }),
+    key: z.string().openapi({ example: 'avatars/user123/1705312800000.jpg' }),
+  })
+  .openapi('AvatarUploadSuccess');
+
+const AvatarDeleteSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    message: z.string().openapi({ example: 'Avatar deleted' }),
+  })
+  .openapi('AvatarDeleteSuccess');
+
+const AvatarErrorSchema = z
+  .object({
+    code: z.string().openapi({ example: 'FILE_TOO_LARGE' }),
+    message: z.string().openapi({ example: 'Avatar size exceeds limit' }),
+    statusCode: z.number().openapi({ example: 400 }),
+    details: z.record(z.unknown()).optional(),
+  })
+  .openapi('AvatarError');
 
 /**
  * Sync avatar URL to all project memberships for a user
@@ -29,7 +71,6 @@ async function syncAvatarToProjects(env, userId, avatarUrl) {
   try {
     const db = createDb(env.DB);
 
-    // Get all projects the user is a member of (with orgId for DO addressing)
     const memberships = await db
       .select({
         projectId: projectMembers.projectId,
@@ -39,7 +80,6 @@ async function syncAvatarToProjects(env, userId, avatarUrl) {
       .innerJoin(projects, eq(projectMembers.projectId, projects.id))
       .where(eq(projectMembers.userId, userId));
 
-    // Update each project's Durable Object
     for (const { projectId } of memberships) {
       try {
         const projectDoc = getProjectDocStub(env, projectId);
@@ -66,11 +106,55 @@ async function syncAvatarToProjects(env, userId, avatarUrl) {
   }
 }
 
-/**
- * POST /api/users/avatar
- * Upload a new avatar image
- */
-avatarRoutes.post('/', async c => {
+// Upload avatar route
+const uploadAvatarRoute = createRoute({
+  method: 'post',
+  path: '/',
+  tags: ['Avatar'],
+  summary: 'Upload avatar',
+  description: 'Upload a new avatar image. Accepts JPEG, PNG, GIF, or WebP formats.',
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'multipart/form-data': {
+          schema: z.object({
+            avatar: z.any().openapi({ type: 'string', format: 'binary' }),
+          }),
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: AvatarUploadSuccessSchema,
+        },
+      },
+      description: 'Avatar uploaded successfully',
+    },
+    400: {
+      content: {
+        'application/json': {
+          schema: AvatarErrorSchema,
+        },
+      },
+      description: 'Invalid file type or size',
+    },
+    401: {
+      content: {
+        'application/json': {
+          schema: AvatarErrorSchema,
+        },
+      },
+      description: 'Unauthorized',
+    },
+  },
+});
+
+avatarRoutes.openapi(uploadAvatarRoute, async c => {
   const { user } = getAuth(c);
 
   // Check Content-Length header first for early rejection
@@ -87,7 +171,6 @@ avatarRoutes.post('/', async c => {
   try {
     const contentType = c.req.header('Content-Type') || '';
 
-    // Handle multipart form data
     if (contentType.includes('multipart/form-data')) {
       const formData = await c.req.formData();
       const file = formData.get('avatar');
@@ -101,7 +184,6 @@ avatarRoutes.post('/', async c => {
         return c.json(error, error.statusCode);
       }
 
-      // Validate file type
       if (!ALLOWED_TYPES.includes(file.type)) {
         const error = createDomainError(
           FILE_ERRORS.INVALID_TYPE,
@@ -111,7 +193,6 @@ avatarRoutes.post('/', async c => {
         return c.json(error, error.statusCode);
       }
 
-      // Validate file size (double-check after parsing)
       if (file.size > FILE_SIZE_LIMITS.AVATAR) {
         const error = createDomainError(
           FILE_ERRORS.TOO_LARGE,
@@ -121,7 +202,6 @@ avatarRoutes.post('/', async c => {
         return c.json(error, error.statusCode);
       }
 
-      // Generate unique filename with extension
       const ext = file.type.split('/')[1] || 'jpg';
       const timestamp = Date.now();
       const key = `avatars/${user.id}/${timestamp}.${ext}`;
@@ -141,7 +221,7 @@ avatarRoutes.post('/', async c => {
       await c.env.PDF_BUCKET.put(key, arrayBuffer, {
         httpMetadata: {
           contentType: file.type,
-          cacheControl: 'public, max-age=31536000', // 1 year cache
+          cacheControl: 'public, max-age=31536000',
         },
         customMetadata: {
           userId: user.id,
@@ -149,13 +229,7 @@ avatarRoutes.post('/', async c => {
         },
       });
 
-      // Generate the public URL - serve through our API
-      // Use a same-origin relative URL so service workers and the browser cache
-      // can treat the avatar as a first-class asset for offline usage.
-      // Add timestamp query parameter for cache-busting when avatar is updated
       const avatarUrl = `/api/users/avatar/${user.id}?t=${timestamp}`;
-
-      // Sync the new avatar URL to all project memberships
       await syncAvatarToProjects(c.env, user.id, avatarUrl);
 
       return c.json({
@@ -181,15 +255,52 @@ avatarRoutes.post('/', async c => {
   }
 });
 
-/**
- * GET /api/users/avatar/:userId
- * Get a user's avatar image
- */
-avatarRoutes.get('/:userId', async c => {
-  const userId = c.req.param('userId');
+// Get avatar route
+const getAvatarRoute = createRoute({
+  method: 'get',
+  path: '/{userId}',
+  tags: ['Avatar'],
+  summary: 'Get user avatar',
+  description: "Retrieves a user's avatar image",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: z.object({
+      userId: z.string().openapi({ example: 'user123' }),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'image/jpeg': {
+          schema: z.any().openapi({ type: 'string', format: 'binary' }),
+        },
+        'image/png': {
+          schema: z.any().openapi({ type: 'string', format: 'binary' }),
+        },
+        'image/gif': {
+          schema: z.any().openapi({ type: 'string', format: 'binary' }),
+        },
+        'image/webp': {
+          schema: z.any().openapi({ type: 'string', format: 'binary' }),
+        },
+      },
+      description: 'Avatar image',
+    },
+    404: {
+      content: {
+        'application/json': {
+          schema: AvatarErrorSchema,
+        },
+      },
+      description: 'Avatar not found',
+    },
+  },
+});
+
+avatarRoutes.openapi(getAvatarRoute, async c => {
+  const { userId } = c.req.valid('param');
 
   try {
-    // List avatars for this user (should only be one)
     const listed = await c.env.PDF_BUCKET.list({ prefix: `avatars/${userId}/` });
 
     if (listed.objects.length === 0) {
@@ -197,7 +308,6 @@ avatarRoutes.get('/:userId', async c => {
       return c.json(error, error.statusCode);
     }
 
-    // Get the most recent avatar
     const avatarKey = listed.objects[0].key;
     const object = await c.env.PDF_BUCKET.get(avatarKey);
 
@@ -206,7 +316,6 @@ avatarRoutes.get('/:userId', async c => {
       return c.json(error, error.statusCode);
     }
 
-    // Return the image with proper headers
     const headers = new Headers();
     headers.set('Content-Type', object.httpMetadata?.contentType || 'image/jpeg');
     headers.set('Cache-Control', 'public, max-age=31536000');
@@ -223,15 +332,38 @@ avatarRoutes.get('/:userId', async c => {
   }
 });
 
-/**
- * DELETE /api/users/avatar
- * Delete the current user's avatar
- */
-avatarRoutes.delete('/', async c => {
+// Delete avatar route
+const deleteAvatarRoute = createRoute({
+  method: 'delete',
+  path: '/',
+  tags: ['Avatar'],
+  summary: 'Delete avatar',
+  description: "Deletes the current user's avatar",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: AvatarDeleteSuccessSchema,
+        },
+      },
+      description: 'Avatar deleted successfully',
+    },
+    401: {
+      content: {
+        'application/json': {
+          schema: AvatarErrorSchema,
+        },
+      },
+      description: 'Unauthorized',
+    },
+  },
+});
+
+avatarRoutes.openapi(deleteAvatarRoute, async c => {
   const { user } = getAuth(c);
 
   try {
-    // Delete all avatars for this user
     const listed = await c.env.PDF_BUCKET.list({ prefix: `avatars/${user.id}/` });
 
     for (const obj of listed.objects) {
