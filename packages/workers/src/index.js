@@ -69,20 +69,23 @@ app.get('/docs', async c => {
 });
 
 // OpenAPI JSON spec (development only)
-app.doc31('/openapi.json', c => ({
-  openapi: '3.1.0',
-  info: {
-    title: 'Corates API',
-    version: '1.0.0',
-    description: 'API for Corates - Collaborative Research Appraisal Tool for Evidence Synthesis',
-  },
-  servers: [
-    {
-      url: c.env.ENVIRONMENT === 'production' ? 'https://corates.org' : 'http://localhost:8787',
-      description: c.env.ENVIRONMENT === 'production' ? 'Production' : 'Local development',
+app.doc31('/openapi.json', c => {
+  if (c.env.ENVIRONMENT === 'production') return c.text('Not Found', 404);
+  return c.json({
+    openapi: '3.1.0',
+    info: {
+      title: 'Corates API',
+      version: '1.0.0',
+      description: 'API for Corates - Collaborative Research Appraisal Tool for Evidence Synthesis',
     },
-  ],
-}));
+    servers: [
+      {
+        url: c.env.ENVIRONMENT === 'production' ? 'https://corates.org' : 'http://localhost:8787',
+        description: c.env.ENVIRONMENT === 'production' ? 'Production' : 'Local development',
+      },
+    ],
+  });
+});
 
 // Mount auth routes
 app.route('/api/auth', auth);
