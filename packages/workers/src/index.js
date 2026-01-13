@@ -4,7 +4,7 @@
  * This is the main Hono application that routes to specific handlers.
  */
 
-import { Hono } from 'hono';
+import { OpenAPIHono } from '@hono/zod-openapi';
 import { UserSession } from './durable-objects/UserSession.js';
 import { ProjectDoc } from './durable-objects/ProjectDoc.js';
 import { EmailQueue } from './durable-objects/EmailQueue.js';
@@ -31,8 +31,8 @@ import { contactRoutes } from './routes/contact.js';
 // Export Durable Objects
 export { UserSession, ProjectDoc, EmailQueue };
 
-// Create main Hono app
-const app = new Hono();
+// Create main Hono app with OpenAPI support
+const app = new OpenAPIHono();
 
 // Apply CORS middleware globally (needs env, so we do it per-request)
 app.use('*', async (c, next) => {
@@ -130,6 +130,22 @@ app.get('/docs', async c => {
   const { getDocsHtml } = await import('./docs.js');
   return c.html(await getDocsHtml(c.env));
 });
+
+// OpenAPI JSON spec (development only)
+app.doc31('/openapi.json', c => ({
+  openapi: '3.1.0',
+  info: {
+    title: 'Corates API',
+    version: '1.0.0',
+    description: 'API for Corates - Collaborative Research Appraisal Tool for Evidence Synthesis',
+  },
+  servers: [
+    {
+      url: c.env.ENVIRONMENT === 'production' ? 'https://corates.org' : 'http://localhost:8787',
+      description: c.env.ENVIRONMENT === 'production' ? 'Production' : 'Local development',
+    },
+  ],
+}));
 
 // Mount auth routes
 app.route('/api/auth', auth);

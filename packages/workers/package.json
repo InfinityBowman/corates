@@ -32,6 +32,7 @@
     "@better-auth/stripe": "^1.4.12",
     "@cloudflare/workers-types": "^4.20260113.0",
     "@corates/shared": "workspace:*",
+    "@hono/zod-openapi": "^1.2.0",
     "better-auth": "^1.4.12",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.11.4",
