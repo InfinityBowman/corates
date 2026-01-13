@@ -462,6 +462,7 @@ orgProjectRoutes.openapi(createProjectRoute, async c => {
         name,
         description,
         orgId,
+        createdBy: authUser.id,
         role: 'owner',
         createdAt: now,
         updatedAt: now,

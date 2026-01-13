@@ -84,7 +84,7 @@ export class EmailQueue {
         return true;
       } else {
         throw createDomainError(
-          SYSTEM_ERRORS.INTERNAL,
+          SYSTEM_ERRORS.INTERNAL_ERROR,
           { service: 'email' },
           result.error || 'Unknown email error',
         );

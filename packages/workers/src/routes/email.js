@@ -19,21 +19,27 @@ const emailRoutes = new OpenAPIHono({
       const field = firstIssue?.path?.[0] || 'input';
       const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
 
+      let errorCode = VALIDATION_ERRORS.INVALID_INPUT.code;
       let message = firstIssue?.message || 'Validation failed';
+
+      // Check for missing/required field using structured properties with message fallbacks
       const isMissing =
         firstIssue?.received === 'undefined' ||
-        message.includes('received undefined') ||
+        (firstIssue?.code === 'invalid_type' && message.includes('received undefined')) ||
         message.includes('Required');
 
       if (isMissing) {
+        errorCode = VALIDATION_ERRORS.FIELD_REQUIRED.code;
         message = `${fieldName} is required`;
+      } else if (firstIssue?.code === 'too_big') {
+        errorCode = VALIDATION_ERRORS.FIELD_TOO_LONG.code;
+      } else if (firstIssue?.code === 'too_small') {
+        errorCode = VALIDATION_ERRORS.FIELD_TOO_SHORT.code;
+      } else if (firstIssue?.code === 'invalid_string') {
+        errorCode = VALIDATION_ERRORS.FIELD_INVALID_FORMAT.code;
       }
 
-      const error = createValidationError(
-        String(field),
-        VALIDATION_ERRORS.FIELD_REQUIRED.code,
-        null,
-      );
+      const error = createValidationError(String(field), errorCode, null);
       error.message = message;
       return c.json(error, 400);
     }

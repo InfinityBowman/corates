@@ -27,6 +27,13 @@ devRoutes.use('*', async (c, next) => {
 // Middleware to set org context - required before requireProjectAccess
 devRoutes.use('*', requireOrgMembership());
 
+// Apply project access middleware to all dev routes
+devRoutes.use('/templates', requireProjectAccess());
+devRoutes.use('/apply-template', requireProjectAccess());
+devRoutes.use('/export', requireProjectAccess());
+devRoutes.use('/import', requireProjectAccess());
+devRoutes.use('/reset', requireProjectAccess());
+
 // Response schemas
 const DevErrorSchema = z
   .object({
@@ -257,7 +264,7 @@ const resetRoute = createRoute({
 });
 
 // GET /dev/templates
-devRoutes.openapi(getTemplatesRoute, requireProjectAccess(), async c => {
+devRoutes.openapi(getTemplatesRoute, async c => {
   const { projectId } = getProjectContext(c);
 
   try {
@@ -276,7 +283,7 @@ devRoutes.openapi(getTemplatesRoute, requireProjectAccess(), async c => {
 });
 
 // POST /dev/apply-template
-devRoutes.openapi(applyTemplateRoute, requireProjectAccess(), async c => {
+devRoutes.openapi(applyTemplateRoute, async c => {
   const { projectId } = getProjectContext(c);
   const query = c.req.valid('query');
   const template = query.template;
@@ -299,7 +306,7 @@ devRoutes.openapi(applyTemplateRoute, requireProjectAccess(), async c => {
 });
 
 // GET /dev/export
-devRoutes.openapi(exportRoute, requireProjectAccess(), async c => {
+devRoutes.openapi(exportRoute, async c => {
   const { projectId } = getProjectContext(c);
 
   try {
@@ -318,7 +325,7 @@ devRoutes.openapi(exportRoute, requireProjectAccess(), async c => {
 });
 
 // POST /dev/import
-devRoutes.openapi(importRoute, requireProjectAccess(), async c => {
+devRoutes.openapi(importRoute, async c => {
   const { projectId, orgId } = getProjectContext(c);
   const user = c.get('user');
 
@@ -354,7 +361,7 @@ devRoutes.openapi(importRoute, requireProjectAccess(), async c => {
 });
 
 // POST /dev/reset
-devRoutes.openapi(resetRoute, requireProjectAccess(), async c => {
+devRoutes.openapi(resetRoute, async c => {
   const { projectId } = getProjectContext(c);
 
   try {

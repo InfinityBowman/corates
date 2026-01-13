@@ -600,7 +600,8 @@ stripeToolsRoutes.openapi(portalLinkRoute, async c => {
 stripeToolsRoutes.openapi(invoicesRoute, async c => {
   const { customerId } = c.req.valid('param');
   const query = c.req.valid('query');
-  const limit = Math.min(parseInt(query.limit || '10', 10), 50);
+  const parsedLimit = parseInt(query.limit || '10', 10);
+  const limit = Math.min(Number.isNaN(parsedLimit) ? 10 : parsedLimit, 50);
 
   if (!c.env.STRIPE_SECRET_KEY) {
     const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {

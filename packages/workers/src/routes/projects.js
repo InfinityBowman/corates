@@ -358,8 +358,8 @@ projectRoutes.openapi(createProjectRoute, async c => {
 
     const newProject = {
       id: projectId,
-      name,
-      description,
+      name: name.trim(),
+      description: description?.trim() || null,
       role: 'owner',
       createdAt: now,
       updatedAt: now,

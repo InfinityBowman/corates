@@ -563,7 +563,7 @@ orgInvitationRoutes.openapi(createInvitationRoute, async c => {
       const authSecret = c.env.AUTH_SECRET || c.env.SECRET;
       if (!authSecret) {
         throw createDomainError(
-          SYSTEM_ERRORS.CONFIG_MISSING,
+          SYSTEM_ERRORS.INTERNAL_ERROR,
           { key: 'AUTH_SECRET' },
           'AUTH_SECRET must be configured',
         );
@@ -604,7 +604,7 @@ orgInvitationRoutes.openapi(createInvitationRoute, async c => {
 
       if (!capturedMagicLinkUrl) {
         throw createDomainError(
-          SYSTEM_ERRORS.INTERNAL,
+          SYSTEM_ERRORS.INTERNAL_ERROR,
           { service: 'magic-link' },
           'Failed to generate magic link URL',
         );

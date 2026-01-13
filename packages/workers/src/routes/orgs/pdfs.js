@@ -668,8 +668,19 @@ orgPdfRoutes.openapi(uploadPdfRoute, async c => {
         createdAt: new Date(),
       });
     } catch (dbError) {
-      // Log error but don't fail the request (R2 object exists, can be cleaned up later)
       console.error('Failed to insert mediaFiles record after R2 upload:', dbError);
+      // Clean up the R2 object since DB insert failed
+      try {
+        await c.env.PDF_BUCKET.delete(key);
+      } catch (cleanupError) {
+        console.error('Failed to cleanup R2 object after DB insert failure:', cleanupError);
+      }
+      const uploadError = createDomainError(
+        FILE_ERRORS.UPLOAD_FAILED,
+        { operation: 'upload_pdf_db_insert', originalError: dbError.message },
+        'Failed to save file metadata',
+      );
+      return c.json(uploadError, uploadError.statusCode);
     }
 
     return c.json({

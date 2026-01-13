@@ -118,6 +118,22 @@ const StorageErrorSchema = z
   })
   .openapi('StorageError');
 
+const R2_KEY_PATTERN = /^projects\/[^/]+\/studies\/[^/]+\/.+$/;
+
+const DeleteDocumentsRequestSchema = z
+  .object({
+    keys: z
+      .array(
+        z
+          .string()
+          .min(1)
+          .regex(R2_KEY_PATTERN, 'Invalid R2 key format'),
+      )
+      .min(1, 'At least one key is required')
+      .openapi({ description: 'Array of R2 keys to delete' }),
+  })
+  .openapi('DeleteDocumentsRequest');
+
 // Route definitions
 const listDocumentsRoute = createRoute({
   method: 'get',
@@ -186,14 +202,21 @@ const listDocumentsRoute = createRoute({
   },
 });
 
-const R2_KEY_PATTERN = /^projects\/[^/]+\/studies\/[^/]+\/.+$/;
-
 const deleteDocumentsRoute = createRoute({
   method: 'delete',
   path: '/storage/documents',
   tags: ['Admin - Storage'],
   summary: 'Bulk delete documents',
-  description: 'Delete multiple documents by key. Admin only. Body: { keys: string[] }',
+  description: 'Delete multiple documents by key. Admin only.',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: DeleteDocumentsRequestSchema,
+        },
+      },
+    },
+  },
   responses: {
     200: {
       description: 'Deletion results',
@@ -420,35 +443,7 @@ storageRoutes.openapi(listDocumentsRoute, async c => {
  */
 storageRoutes.openapi(deleteDocumentsRoute, async c => {
   try {
-    // Parse body manually since Content-Type header may be missing
-    const body = await c.req.json().catch(() => null);
-
-    if (!body || !body.keys) {
-      const error = createValidationError('keys', VALIDATION_ERRORS.FIELD_REQUIRED.code, null);
-      error.message = 'Keys is required';
-      return c.json(error, 400);
-    }
-
-    const { keys } = body;
-
-    // Validate keys
-    if (!Array.isArray(keys) || keys.length === 0) {
-      const error = createValidationError('keys', VALIDATION_ERRORS.FIELD_REQUIRED.code, null);
-      error.message = 'At least one key is required';
-      return c.json(error, 400);
-    }
-
-    for (const key of keys) {
-      if (typeof key !== 'string' || key.length === 0 || !R2_KEY_PATTERN.test(key)) {
-        const error = createValidationError(
-          'keys',
-          VALIDATION_ERRORS.FIELD_INVALID_FORMAT.code,
-          key,
-        );
-        error.message = 'Invalid R2 key format';
-        return c.json(error, 400);
-      }
-    }
+    const { keys } = c.req.valid('json');
 
     // Delete all keys in parallel
     const deleteResults = await Promise.allSettled(keys.map(key => c.env.PDF_BUCKET.delete(key)));
