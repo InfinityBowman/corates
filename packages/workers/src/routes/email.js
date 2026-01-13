@@ -29,7 +29,11 @@ const emailRoutes = new OpenAPIHono({
         message = `${fieldName} is required`;
       }
 
-      const error = createValidationError(String(field), VALIDATION_ERRORS.FIELD_REQUIRED.code, null);
+      const error = createValidationError(
+        String(field),
+        VALIDATION_ERRORS.FIELD_REQUIRED.code,
+        null,
+      );
       error.message = message;
       return c.json(error, 400);
     }
