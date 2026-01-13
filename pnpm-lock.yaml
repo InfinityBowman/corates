@@ -421,9 +421,6 @@ importers:
       wrangler:
         specifier: ^4.58.0
         version: 4.58.0(@cloudflare/workers-types@4.20260113.0)
-      yaml:
-        specifier: ^2.8.2
-        version: 2.8.2
 
 packages:
 

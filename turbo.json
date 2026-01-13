@@ -3,7 +3,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".output/**", ".vinxi/**"]
+      "outputs": ["dist/**", ".output/**", ".vinxi/**", ".vitepress/**"]
     },
     "@corates/workers#build": {
       "outputs": []
