@@ -26,7 +26,11 @@ const avatarRoutes = new OpenAPIHono({
       const firstIssue = result.error.issues[0];
       const field = firstIssue?.path?.[0] || 'input';
       const message = firstIssue?.message || 'Validation failed';
-      const error = createValidationError(String(field), VALIDATION_ERRORS.INVALID_INPUT.code, null);
+      const error = createValidationError(
+        String(field),
+        VALIDATION_ERRORS.INVALID_INPUT.code,
+        null,
+      );
       error.message = message;
       return c.json(error, 400);
     }

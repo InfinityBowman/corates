@@ -42,7 +42,8 @@ const healthRoute = createRoute({
   path: '/',
   tags: ['Health'],
   summary: 'Health check with dependency checks',
-  description: 'Returns the health status of the API and its dependencies (database, storage, durable objects)',
+  description:
+    'Returns the health status of the API and its dependencies (database, storage, durable objects)',
   responses: {
     200: {
       content: {
