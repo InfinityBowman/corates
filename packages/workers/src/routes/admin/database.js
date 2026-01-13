@@ -7,7 +7,12 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import { dbSchema, mediaFiles, organization, projects, user } from '@/db/schema.js';
 import { count, desc, asc, eq, and, sum } from 'drizzle-orm';
-import { createDomainError, createValidationError, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  createValidationError,
+  VALIDATION_ERRORS,
+  SYSTEM_ERRORS,
+} from '@corates/shared';
 
 const databaseRoutes = new OpenAPIHono({
   defaultHook: (result, c) => {
@@ -215,7 +220,8 @@ const getTableSchemaRoute = createRoute({
   path: '/database/tables/{tableName}/schema',
   tags: ['Admin - Database'],
   summary: 'Get table schema',
-  description: 'Get table schema including column names, types, and foreign key references. Admin only.',
+  description:
+    'Get table schema including column names, types, and foreign key references. Admin only.',
   request: {
     params: z.object({
       tableName: z.string().openapi({ description: 'Table name', example: 'user' }),
@@ -253,7 +259,10 @@ const getTableRowsRoute = createRoute({
     }),
     query: z.object({
       page: z.string().optional().openapi({ description: 'Page number', example: '1' }),
-      limit: z.string().optional().openapi({ description: 'Rows per page (max 100)', example: '50' }),
+      limit: z
+        .string()
+        .optional()
+        .openapi({ description: 'Rows per page (max 100)', example: '50' }),
       orderBy: z.string().optional().openapi({ description: 'Column to sort by' }),
       order: z.enum(['asc', 'desc']).optional().openapi({ description: 'Sort order' }),
       filterBy: z.string().optional().openapi({ description: 'Column name to filter by' }),
@@ -380,7 +389,10 @@ const recentUploadsRoute = createRoute({
   description: 'Get recent PDF uploads with user/org context. Admin only.',
   request: {
     query: z.object({
-      limit: z.string().optional().openapi({ description: 'Number of recent uploads (max 100)', example: '50' }),
+      limit: z
+        .string()
+        .optional()
+        .openapi({ description: 'Number of recent uploads (max 100)', example: '50' }),
     }),
   },
   responses: {

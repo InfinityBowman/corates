@@ -309,7 +309,10 @@ async function runMiddleware(middleware, c) {
 async function getProjectCount(c, _user) {
   const { orgId } = getOrgContext(c);
   const db = createDb(c.env.DB);
-  const [result] = await db.select({ count: count() }).from(projects).where(eq(projects.orgId, orgId));
+  const [result] = await db
+    .select({ count: count() })
+    .from(projects)
+    .where(eq(projects.orgId, orgId));
   return result?.count || 0;
 }
 

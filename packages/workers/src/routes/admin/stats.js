@@ -7,7 +7,12 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import { user, organization, stripeEventLedger, projects } from '@/db/schema.js';
 import { sql, count, gte } from 'drizzle-orm';
-import { createDomainError, createValidationError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  createValidationError,
+  SYSTEM_ERRORS,
+  VALIDATION_ERRORS,
+} from '@corates/shared';
 import Stripe from 'stripe';
 
 const statsRoutes = new OpenAPIHono({
@@ -136,7 +141,10 @@ const signupsRoute = createRoute({
   description: 'Returns daily signup counts for the specified number of days. Admin only.',
   request: {
     query: z.object({
-      days: z.string().optional().openapi({ description: 'Number of days to look back (max 90)', example: '30' }),
+      days: z
+        .string()
+        .optional()
+        .openapi({ description: 'Number of days to look back (max 90)', example: '30' }),
     }),
   },
   responses: {
@@ -167,7 +175,10 @@ const organizationsRoute = createRoute({
   description: 'Returns daily organization creation counts. Admin only.',
   request: {
     query: z.object({
-      days: z.string().optional().openapi({ description: 'Number of days to look back (max 90)', example: '30' }),
+      days: z
+        .string()
+        .optional()
+        .openapi({ description: 'Number of days to look back (max 90)', example: '30' }),
     }),
   },
   responses: {
@@ -198,7 +209,10 @@ const projectsRoute = createRoute({
   description: 'Returns daily project creation counts. Admin only.',
   request: {
     query: z.object({
-      days: z.string().optional().openapi({ description: 'Number of days to look back (max 90)', example: '30' }),
+      days: z
+        .string()
+        .optional()
+        .openapi({ description: 'Number of days to look back (max 90)', example: '30' }),
     }),
   },
   responses: {
@@ -229,7 +243,10 @@ const webhooksRoute = createRoute({
   description: 'Returns webhook event counts by day, grouped by success/failure. Admin only.',
   request: {
     query: z.object({
-      days: z.string().optional().openapi({ description: 'Number of days to look back (max 30)', example: '7' }),
+      days: z
+        .string()
+        .optional()
+        .openapi({ description: 'Number of days to look back (max 30)', example: '7' }),
     }),
   },
   responses: {
@@ -286,7 +303,10 @@ const revenueRoute = createRoute({
   description: 'Returns monthly revenue from Stripe. Admin only.',
   request: {
     query: z.object({
-      months: z.string().optional().openapi({ description: 'Number of months to look back (max 12)', example: '6' }),
+      months: z
+        .string()
+        .optional()
+        .openapi({ description: 'Number of months to look back (max 12)', example: '6' }),
     }),
   },
   responses: {

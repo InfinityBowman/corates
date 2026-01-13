@@ -242,15 +242,15 @@ billingSubscriptionRoutes.openapi(subscriptionRoute, async c => {
       .where(eq(projects.orgId, orgId));
 
     const effectivePlan =
-      orgBilling.source === 'grant'
-        ? getGrantPlan(orgBilling.effectivePlanId)
-        : getPlan(orgBilling.effectivePlanId);
+      orgBilling.source === 'grant' ?
+        getGrantPlan(orgBilling.effectivePlanId)
+      : getPlan(orgBilling.effectivePlanId);
     const currentPeriodEnd =
-      orgBilling.subscription?.periodEnd
-        ? orgBilling.subscription.periodEnd instanceof Date
-          ? Math.floor(orgBilling.subscription.periodEnd.getTime() / 1000)
-          : orgBilling.subscription.periodEnd
-        : null;
+      orgBilling.subscription?.periodEnd ?
+        orgBilling.subscription.periodEnd instanceof Date ?
+          Math.floor(orgBilling.subscription.periodEnd.getTime() / 1000)
+        : orgBilling.subscription.periodEnd
+      : null;
 
     return c.json({
       tier: orgBilling.effectivePlanId,

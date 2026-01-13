@@ -120,7 +120,10 @@ const applyTemplateRoute = createRoute({
   request: {
     query: z.object({
       template: z.string().optional().openapi({ description: 'Template ID to apply' }),
-      mode: z.enum(['replace', 'merge']).optional().openapi({ description: 'Apply mode', example: 'replace' }),
+      mode: z
+        .enum(['replace', 'merge'])
+        .optional()
+        .openapi({ description: 'Apply mode', example: 'replace' }),
     }),
   },
   responses: {

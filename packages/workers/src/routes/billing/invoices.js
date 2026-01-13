@@ -80,7 +80,8 @@ const getInvoicesRoute = createRoute({
   path: '/invoices',
   tags: ['Billing'],
   summary: 'Get invoices',
-  description: "Get invoices for the current org's subscription. Returns up to 10 most recent invoices.",
+  description:
+    "Get invoices for the current org's subscription. Returns up to 10 most recent invoices.",
   security: [{ cookieAuth: [] }],
   responses: {
     200: {

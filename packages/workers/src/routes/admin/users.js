@@ -261,7 +261,8 @@ const getUserDetailsRoute = createRoute({
   path: '/users/{userId}',
   tags: ['Admin - Users'],
   summary: 'Get user details',
-  description: 'Get detailed user info including projects, sessions, accounts, and org memberships.',
+  description:
+    'Get detailed user info including projects, sessions, accounts, and org memberships.',
   request: {
     params: z.object({
       userId: z.string().openapi({ description: 'User ID', example: 'user-123' }),

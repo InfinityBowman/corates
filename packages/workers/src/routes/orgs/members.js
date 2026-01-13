@@ -78,7 +78,11 @@ const ProjectMemberListSchema = z.array(ProjectMemberSchema).openapi('ProjectMem
 const AddMemberRequestSchema = z
   .object({
     userId: z.string().min(1, 'Invalid user ID').optional().openapi({ example: 'user-123' }),
-    email: z.string().email('Invalid email address').optional().openapi({ example: 'user@example.com' }),
+    email: z
+      .string()
+      .email('Invalid email address')
+      .optional()
+      .openapi({ example: 'user@example.com' }),
     role: z
       .enum(['owner', 'member'], { message: 'Role must be one of: owner, member' })
       .default('member')
@@ -517,9 +521,7 @@ orgProjectMemberRoutes.openapi(addMemberRoute, async c => {
     const existingMember = await db
       .select({ id: projectMembers.id })
       .from(projectMembers)
-      .where(
-        and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userToAdd.id)),
-      )
+      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userToAdd.id)))
       .get();
 
     if (existingMember) {
