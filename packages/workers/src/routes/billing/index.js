@@ -31,7 +31,7 @@
  * See: packages/docs/guides/billing.md for detailed architecture
  */
 
-import { Hono } from 'hono';
+import { OpenAPIHono } from '@hono/zod-openapi';
 import { billingSubscriptionRoutes } from './subscription.js';
 import { billingValidationRoutes } from './validation.js';
 import { billingPortalRoutes } from './portal.js';
@@ -40,7 +40,7 @@ import { billingCheckoutRoutes } from './checkout.js';
 import { billingWebhookRoutes } from './webhooks.js';
 import { billingInvoicesRoutes } from './invoices.js';
 
-const billingRoutes = new Hono();
+const billingRoutes = new OpenAPIHono();
 
 // Mount all routes at root level
 // Each sub-router handles its full path (e.g., /subscription, /members, /checkout, etc.)
