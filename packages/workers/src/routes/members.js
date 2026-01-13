@@ -3,15 +3,15 @@
  * Handles project membership management
  */
 
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import { projectMembers, user, projects, projectInvitations } from '@/db/schema.js';
 import { eq, and, count } from 'drizzle-orm';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { memberSchemas, validateRequest } from '@/config/validation.js';
 import { TIME_DURATIONS } from '@/config/constants.js';
 import {
   createDomainError,
+  createValidationError,
   PROJECT_ERRORS,
   AUTH_ERRORS,
   SYSTEM_ERRORS,
@@ -20,7 +20,33 @@ import {
 } from '@corates/shared';
 import { syncMemberToDO } from '@/lib/project-sync.js';
 
-const memberRoutes = new Hono();
+const memberRoutes = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
+
+      let message = firstIssue?.message || 'Validation failed';
+      const isMissing =
+        firstIssue?.received === 'undefined' ||
+        message.includes('received undefined') ||
+        message.includes('Required');
+
+      if (isMissing) {
+        message = `${fieldName} is required`;
+      }
+
+      const error = createValidationError(
+        String(field),
+        VALIDATION_ERRORS.FIELD_REQUIRED.code,
+        null,
+      );
+      error.message = message;
+      return c.json(error, 400);
+    }
+  },
+});
 
 // Apply auth middleware to all routes
 memberRoutes.use('*', requireAuth);
@@ -43,7 +69,6 @@ async function projectMembershipMiddleware(c, next) {
 
   const db = createDb(c.env.DB);
 
-  // Check if user has access to this project
   const membership = await db
     .select({ role: projectMembers.role })
     .from(projectMembers)
@@ -65,11 +90,221 @@ async function projectMembershipMiddleware(c, next) {
 // Apply project membership middleware to all routes
 memberRoutes.use('*', projectMembershipMiddleware);
 
-/**
- * GET /api/projects/:projectId/members
- * List all members of a project
- */
-memberRoutes.get('/', async c => {
+// Request schemas
+const AddMemberRequestSchema = z
+  .object({
+    userId: z.string().optional().openapi({ example: 'user-123' }),
+    email: z.email().optional().openapi({ example: 'user@example.com' }),
+    role: z
+      .enum(['owner', 'collaborator', 'viewer'])
+      .default('viewer')
+      .openapi({ example: 'collaborator' }),
+  })
+  .openapi('AddMemberRequest');
+
+const UpdateRoleRequestSchema = z
+  .object({
+    role: z.enum(['owner', 'collaborator', 'viewer']).openapi({ example: 'collaborator' }),
+  })
+  .openapi('UpdateRoleRequest');
+
+// Response schemas
+const MemberSchema = z
+  .object({
+    userId: z.string(),
+    role: z.string(),
+    joinedAt: z.string().or(z.date()),
+    name: z.string().nullable(),
+    email: z.string(),
+    username: z.string().nullable(),
+    displayName: z.string().nullable(),
+    image: z.string().nullable(),
+  })
+  .openapi('Member');
+
+const MemberListSchema = z.array(MemberSchema).openapi('MemberList');
+
+const AddMemberSuccessSchema = z
+  .object({
+    userId: z.string(),
+    name: z.string().nullable(),
+    email: z.string(),
+    username: z.string().nullable(),
+    displayName: z.string().nullable(),
+    image: z.string().nullable(),
+    role: z.string(),
+    joinedAt: z.string().or(z.date()),
+  })
+  .openapi('AddMemberSuccess');
+
+const InvitationSentSchema = z
+  .object({
+    success: z.literal(true),
+    invitation: z.literal(true),
+    message: z.string(),
+    email: z.string(),
+  })
+  .openapi('InvitationSent');
+
+const UpdateRoleSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    userId: z.string(),
+    role: z.string(),
+  })
+  .openapi('UpdateRoleSuccess');
+
+const RemoveMemberSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    removed: z.string(),
+  })
+  .openapi('RemoveMemberSuccess');
+
+const MemberErrorSchema = z
+  .object({
+    code: z.string(),
+    message: z.string(),
+    statusCode: z.number(),
+    details: z.record(z.unknown()).optional(),
+  })
+  .openapi('MemberError');
+
+// Route definitions
+const listMembersRoute = createRoute({
+  method: 'get',
+  path: '/',
+  tags: ['Project Members'],
+  summary: 'List project members',
+  description: 'List all members of a project',
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: { 'application/json': { schema: MemberListSchema } },
+      description: 'List of members',
+    },
+    403: {
+      content: { 'application/json': { schema: MemberErrorSchema } },
+      description: 'Access denied',
+    },
+    500: {
+      content: { 'application/json': { schema: MemberErrorSchema } },
+      description: 'Database error',
+    },
+  },
+});
+
+const addMemberRoute = createRoute({
+  method: 'post',
+  path: '/',
+  tags: ['Project Members'],
+  summary: 'Add project member',
+  description: 'Add a member to the project (owner only)',
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: AddMemberRequestSchema,
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    201: {
+      content: {
+        'application/json': {
+          schema: z.union([AddMemberSuccessSchema, InvitationSentSchema]),
+        },
+      },
+      description: 'Member added or invitation sent',
+    },
+    400: {
+      content: { 'application/json': { schema: MemberErrorSchema } },
+      description: 'Validation error',
+    },
+    403: {
+      content: { 'application/json': { schema: MemberErrorSchema } },
+      description: 'Not authorized',
+    },
+    404: {
+      content: { 'application/json': { schema: MemberErrorSchema } },
+      description: 'User not found',
+    },
+    409: {
+      content: { 'application/json': { schema: MemberErrorSchema } },
+      description: 'Member already exists',
+    },
+  },
+});
+
+const updateRoleRoute = createRoute({
+  method: 'put',
+  path: '/:userId',
+  tags: ['Project Members'],
+  summary: 'Update member role',
+  description: "Update a member's role (owner only)",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: z.object({
+      userId: z.string().openapi({ example: 'user-123' }),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: UpdateRoleRequestSchema,
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: UpdateRoleSuccessSchema } },
+      description: 'Role updated',
+    },
+    400: {
+      content: { 'application/json': { schema: MemberErrorSchema } },
+      description: 'Validation error',
+    },
+    403: {
+      content: { 'application/json': { schema: MemberErrorSchema } },
+      description: 'Not authorized or last owner',
+    },
+  },
+});
+
+const removeMemberRoute = createRoute({
+  method: 'delete',
+  path: '/:userId',
+  tags: ['Project Members'],
+  summary: 'Remove project member',
+  description: 'Remove a member from the project (owner only, or self-removal)',
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: z.object({
+      userId: z.string().openapi({ example: 'user-123' }),
+    }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: RemoveMemberSuccessSchema } },
+      description: 'Member removed',
+    },
+    403: {
+      content: { 'application/json': { schema: MemberErrorSchema } },
+      description: 'Not authorized or last owner',
+    },
+    404: {
+      content: { 'application/json': { schema: MemberErrorSchema } },
+      description: 'Member not found',
+    },
+  },
+});
+
+// Route handlers
+memberRoutes.openapi(listMembersRoute, async c => {
   const projectId = c.get('projectId');
   const db = createDb(c.env.DB);
 
@@ -101,11 +336,7 @@ memberRoutes.get('/', async c => {
   }
 });
 
-/**
- * POST /api/projects/:projectId/members
- * Add a member to the project (owner only)
- */
-memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
+memberRoutes.openapi(addMemberRoute, async c => {
   const isOwner = c.get('isOwner');
   const projectId = c.get('projectId');
 
@@ -119,11 +350,10 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
   }
 
   const db = createDb(c.env.DB);
-  const { userId, email, role } = c.get('validatedBody');
+  const { userId, email, role } = c.req.valid('json');
   const { user: authUser } = getAuth(c);
 
   try {
-    // Find user by userId or email
     let userToAdd;
     if (userId) {
       userToAdd = await db
@@ -138,7 +368,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         .from(user)
         .where(eq(user.id, userId))
         .get();
-    } else {
+    } else if (email) {
       userToAdd = await db
         .select({
           id: user.id,
@@ -153,9 +383,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         .get();
     }
 
-    // If user doesn't exist and email was provided, create or resend an invitation
     if (!userToAdd && email) {
-      // Check for existing pending invitation for this email/project
       const existingInvitation = await db
         .select({
           id: projectInvitations.id,
@@ -175,7 +403,6 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
       let invitationId;
 
       if (existingInvitation && !existingInvitation.acceptedAt) {
-        // Resend existing invitation - update role and extend expiration
         invitationId = existingInvitation.id;
         token = existingInvitation.token;
         const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
@@ -188,13 +415,11 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
           })
           .where(eq(projectInvitations.id, existingInvitation.id));
       } else if (existingInvitation && existingInvitation.acceptedAt) {
-        // Invitation was already accepted, can't resend
         const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
           invitationId: existingInvitation.id,
         });
         return c.json(error, error.statusCode);
       } else {
-        // Create new invitation
         invitationId = crypto.randomUUID();
         token = crypto.randomUUID();
         const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
@@ -211,7 +436,6 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         });
       }
 
-      // Get project name and inviter name
       const project = await db
         .select({ name: projects.name })
         .from(projects)
@@ -224,22 +448,17 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         .where(eq(user.id, authUser.id))
         .get();
 
-      // Generate magic link URL for invitation
       try {
         const appUrl = c.env.APP_URL || 'https://corates.org';
         const basepath = c.env.BASEPATH || '';
         const basepathNormalized = basepath ? basepath.replace(/\/$/, '') : '';
 
-        // Create callback URL with invitation token
         const callbackPath = `${basepathNormalized}/complete-profile?invitation=${token}`;
         const callbackURL = `${appUrl}${callbackPath}`;
 
-        // Generate magic link using Better Auth's API
-        // We'll use Better Auth's signInMagicLink but intercept sendMagicLink to capture the URL
         const authBaseUrl = c.env.AUTH_BASE_URL || c.env.APP_URL || 'https://corates.org';
         let capturedMagicLinkUrl = null;
 
-        // Import required modules
         const { betterAuth } = await import('better-auth');
         const { magicLink } = await import('better-auth/plugins');
         const { drizzleAdapter } = await import('better-auth/adapters/drizzle');
@@ -247,7 +466,6 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         const schema = await import('../db/schema.js');
         const { MAGIC_LINK_EXPIRY_MINUTES } = await import('../auth/emailTemplates.js');
 
-        // Get auth secret from environment (same logic as getAuthSecret)
         const authSecret = c.env.AUTH_SECRET || c.env.SECRET;
         if (!authSecret) {
           throw createDomainError(
@@ -257,8 +475,6 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
           );
         }
 
-        // Create a temporary auth instance with a custom sendMagicLink that captures the URL
-        // Dynamic import returns module namespace, exports are directly on the object
         const tempDb = drizzle(c.env.DB, { schema });
         const tempAuth = betterAuth({
           database: drizzleAdapter(tempDb, {
@@ -276,7 +492,6 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
           plugins: [
             magicLink({
               sendMagicLink: async ({ url }) => {
-                // Capture the URL instead of sending email
                 capturedMagicLinkUrl = url;
               },
               expiresIn: 60 * MAGIC_LINK_EXPIRY_MINUTES,
@@ -284,7 +499,6 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
           ],
         });
 
-        // Call Better Auth's signInMagicLink API
         await tempAuth.api.signInMagicLink({
           body: {
             email: email.toLowerCase(),
@@ -304,7 +518,6 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
 
         const magicLinkUrl = capturedMagicLinkUrl;
 
-        // Log magic link URL in development
         if (c.env.ENVIRONMENT !== 'production') {
           console.log('[Email] Project invitation magic link URL:', magicLinkUrl);
         }
@@ -319,7 +532,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         const emailHtml = getProjectInvitationEmailHtml({
           projectName,
           inviterName,
-          invitationUrl: magicLinkUrl, // Use magic link URL instead of signup link
+          invitationUrl: magicLinkUrl,
           role,
         });
         const emailText = getProjectInvitationEmailText({
@@ -329,10 +542,8 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
           role,
         });
 
-        // Escape projectName for email subject (plain text, but sanitize for safety)
         const safeProjectName = escapeHtml(projectName);
 
-        // Queue email via EMAIL_QUEUE DO
         const queueId = c.env.EMAIL_QUEUE.idFromName('default');
         const queue = c.env.EMAIL_QUEUE.get(queueId);
         await queue.fetch(
@@ -349,7 +560,6 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
         );
       } catch (err) {
         console.error('Failed to queue invitation email:', err);
-        // Continue anyway - invitation is created
       }
 
       return c.json(
@@ -368,7 +578,6 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
       return c.json(error, error.statusCode);
     }
 
-    // Check if already a member
     const existingMember = await db
       .select({ id: projectMembers.id })
       .from(projectMembers)
@@ -392,14 +601,12 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
       joinedAt: now,
     });
 
-    // Get project name for notification
     const project = await db
       .select({ name: projects.name })
       .from(projects)
       .where(eq(projects.id, projectId))
       .get();
 
-    // Send notification to the added user via their UserSession DO
     try {
       const userSessionId = c.env.USER_SESSION.idFromName(userToAdd.id);
       const userSession = c.env.USER_SESSION.get(userSessionId);
@@ -420,7 +627,6 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
       console.error('Failed to send project invite notification:', err);
     }
 
-    // Sync member to DO
     try {
       await syncMemberToDO(c.env, projectId, 'add', {
         userId: userToAdd.id,
@@ -458,11 +664,7 @@ memberRoutes.post('/', validateRequest(memberSchemas.add), async c => {
   }
 });
 
-/**
- * PUT /api/projects/:projectId/members/:userId
- * Update a member's role (owner only)
- */
-memberRoutes.put('/:userId', validateRequest(memberSchemas.updateRole), async c => {
+memberRoutes.openapi(updateRoleRoute, async c => {
   const isOwner = c.get('isOwner');
   const projectId = c.get('projectId');
   const memberId = c.req.param('userId');
@@ -477,10 +679,9 @@ memberRoutes.put('/:userId', validateRequest(memberSchemas.updateRole), async c 
   }
 
   const db = createDb(c.env.DB);
-  const { role } = c.get('validatedBody');
+  const { role } = c.req.valid('json');
 
   try {
-    // Prevent removing the last owner
     if (role !== 'owner') {
       const ownerCountResult = await db
         .select({ count: count() })
@@ -509,7 +710,6 @@ memberRoutes.put('/:userId', validateRequest(memberSchemas.updateRole), async c 
       .set({ role })
       .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
 
-    // Sync role update to DO
     try {
       await syncMemberToDO(c.env, projectId, 'update', {
         userId: memberId,
@@ -530,11 +730,7 @@ memberRoutes.put('/:userId', validateRequest(memberSchemas.updateRole), async c 
   }
 });
 
-/**
- * DELETE /api/projects/:projectId/members/:userId
- * Remove a member from the project (owner only, or self-removal)
- */
-memberRoutes.delete('/:userId', async c => {
+memberRoutes.openapi(removeMemberRoute, async c => {
   const { user: authUser } = getAuth(c);
   const isOwner = c.get('isOwner');
   const projectId = c.get('projectId');
@@ -554,7 +750,6 @@ memberRoutes.delete('/:userId', async c => {
   const db = createDb(c.env.DB);
 
   try {
-    // Check target member exists
     const targetMember = await db
       .select({ role: projectMembers.role })
       .from(projectMembers)
@@ -570,7 +765,6 @@ memberRoutes.delete('/:userId', async c => {
       return c.json(error, error.statusCode);
     }
 
-    // Prevent removing the last owner
     if (targetMember.role === 'owner') {
       const ownerCountResult = await db
         .select({ count: count() })
@@ -592,7 +786,6 @@ memberRoutes.delete('/:userId', async c => {
       .delete(projectMembers)
       .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
 
-    // Sync member removal to DO (this also forces disconnect)
     try {
       await syncMemberToDO(c.env, projectId, 'remove', {
         userId: memberId,
@@ -601,10 +794,8 @@ memberRoutes.delete('/:userId', async c => {
       console.error('Failed to sync member removal to DO:', err);
     }
 
-    // Send notification to removed user (if not self-removal)
     if (!isSelfRemoval) {
       try {
-        // Get project name for notification
         const project = await db
           .select({ name: projects.name })
           .from(projects)
