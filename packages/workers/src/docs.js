@@ -1,24 +1,4 @@
 export async function getDocsHtml(env) {
-  let openapiJson;
-  try {
-    openapiJson = await import('../openapi.json', { assert: { type: 'json' } });
-  } catch {
-    openapiJson = null;
-  }
-
-  // Test if openapiJson is valid
-  let hasOpenapi = true;
-  if (!openapiJson || typeof openapiJson !== 'object') {
-    hasOpenapi = false;
-  }
-
-  const defaultMessage = `Run \`pnpm openapi\` from root to generate /openapi.json.`;
-  const openapiMessage = env.OPENAPI_NOT_FOUND_MESSAGE || defaultMessage;
-  const escapeHtml = s =>
-    String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-  const jsonString = JSON.stringify(openapiJson).replace(/<\/script>/g, '<\\/script>');
-
   const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -69,12 +49,11 @@ export async function getDocsHtml(env) {
   </style>
 </head>
 <body>
-  <div id="openapi-missing" class="warning"><strong>OpenAPI spec not found.</strong> ${escapeHtml(openapiMessage)}<button class="close" aria-label="Close">&times;</button></div>
-  <div id="openapi-auth" class="warning"><strong>Not Authenticated.</strong> ${escapeHtml(env.OPENAPI_NOT_AUTHENTICATED_MESSAGE || `Run \`pnpm dev:front\` to start the frontend and log in`)}<button class="close" aria-label="Close">&times;</button></div>
+  <div id="openapi-auth" class="warning"><strong>Not Authenticated.</strong> ${env.OPENAPI_NOT_AUTHENTICATED_MESSAGE || `Run \`pnpm dev:front\` to start the frontend and log in`}<button class="close" aria-label="Close">&times;</button></div>
 
-  <script id="api-reference" type="application/json">${jsonString}</script>
+  <script id="api-reference" data-url="/openapi.json"></script>
   <script>
-    // Pass configuration to Scalar and include openapi messages in the configuration as well
+    // Pass configuration to Scalar
     document.getElementById('api-reference').dataset.configuration = JSON.stringify({
       theme: 'elysiajs',
       showDeveloperTools: 'never',
@@ -87,58 +66,39 @@ export async function getDocsHtml(env) {
       authentication: {
         preferredSecurityScheme: 'cookieAuth',
       },
-      // Scalar may ignore this, but it's present so custom messages are embedded in the HTML
-      openapiNotFoundMessage: ${JSON.stringify(openapiMessage)},
-      openapiNotAuthenticatedMessage: ${JSON.stringify(env.OPENAPI_NOT_AUTHENTICATED_MESSAGE || `Log in at http://localhost:5173`)}
     });
 
-    // Inline checks: try fetching the OpenAPI spec and the auth session
+    // Check authentication status
+    const AUTH_CHECK_INTERVAL = 5000;
     let intervalId;
-    (async function() {
-      // OpenAPI availability
-      if (!${hasOpenapi}) {
-        document.getElementById('openapi-missing').style.display = 'block';
-        return;
-      }
 
-      const AUTH_CHECK_INTERVAL = 5000; // 5 seconds
+    async function checkAuth() {
+      try {
+        const s = await fetch('/api/auth/session', {
+          cache: 'no-store',
+          credentials: 'include',
+        });
 
-      // Inline function to check auth
-      async function checkAuth() {
-        try {
-          const s = await fetch('/api/auth/session', {
-            cache: 'no-store',
-            credentials: 'include',
-          });
-
-          if (s.ok) {
-            const payload = await s.json().catch(() => null);
-            if (payload?.user) {
-              // Authenticated -> hide message and stop interval
-              document.getElementById('openapi-auth').style.display = 'none';
-              clearInterval(intervalId);
-            } else {
-              // Not authenticated -> show auth message
-              document.getElementById('openapi-auth').style.display = 'block';
-            }
+        if (s.ok) {
+          const payload = await s.json().catch(() => null);
+          if (payload?.user) {
+            document.getElementById('openapi-auth').style.display = 'none';
+            clearInterval(intervalId);
           } else {
-            // Non-200 -> assume not authenticated
             document.getElementById('openapi-auth').style.display = 'block';
           }
-        } catch (e) {
-          // Network/CORS error -> show auth message
+        } else {
           document.getElementById('openapi-auth').style.display = 'block';
         }
+      } catch (e) {
+        document.getElementById('openapi-auth').style.display = 'block';
       }
+    }
 
-      // Run immediately once
-      await checkAuth();
+    checkAuth();
+    intervalId = setInterval(checkAuth, AUTH_CHECK_INTERVAL);
 
-      // Retry every interval
-      intervalId = setInterval(checkAuth, AUTH_CHECK_INTERVAL);
-    })();
-
-    // Close button behavior for banners
+    // Close button behavior
     document.querySelectorAll('.warning .close').forEach(btn => {
       btn.addEventListener('click', () => {
         btn.parentElement.style.display = 'none';
@@ -147,11 +107,10 @@ export async function getDocsHtml(env) {
       btn.title = 'Dismiss this warning';
     });
 
-    // Improve sticky behavior: switch to fixed positioning while stuck to avoid repaint jank
+    // Improve sticky behavior
     (function() {
       const banners = Array.from(document.querySelectorAll('.warning'));
       banners.forEach(banner => {
-        // create a small sentinel element directly before the banner
         const sentinel = document.createElement('div');
         sentinel.className = 'warning-sentinel';
         sentinel.style.cssText = 'display:block; height:1px; width:1px; margin:0; padding:0;';
@@ -160,7 +119,6 @@ export async function getDocsHtml(env) {
         const obs = new IntersectionObserver(entries => {
           for (const entry of entries) {
             if (entry.isIntersecting) {
-              // sentinel visible -> banner in-flow
               banner.classList.remove('fixed');
               banner.style.position = '';
               banner.style.left = '';
@@ -168,7 +126,6 @@ export async function getDocsHtml(env) {
               banner.style.top = '';
               banner.style.margin = '';
             } else {
-              // sentinel not visible -> banner stuck to top -> make fixed
               const rect = banner.getBoundingClientRect();
               banner.classList.add('fixed');
               banner.style.position = 'fixed';
@@ -182,7 +139,6 @@ export async function getDocsHtml(env) {
 
         obs.observe(sentinel);
 
-        // If the banner gets hidden, disconnect observer to avoid work
         const mo = new MutationObserver(() => {
           if (getComputedStyle(banner).display === 'none') {
             obs.disconnect();

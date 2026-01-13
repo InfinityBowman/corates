@@ -34,8 +34,7 @@
     "loc": "node ./scripts/loc-report.mjs",
     "docs": "pnpm --filter @corates/docs dev",
     "docs:build": "pnpm --filter @corates/docs build",
-    "docs:preview": "pnpm --filter @corates/docs preview",
-    "openapi": "pnpm --filter @corates/workers run openapi:generate"
+    "docs:preview": "pnpm --filter @corates/docs preview"
   },
   "keywords": [
     "cloudflare",
