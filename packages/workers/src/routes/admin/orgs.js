@@ -7,7 +7,13 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import { organization, member, projects } from '@/db/schema.js';
 import { eq, count, desc, like, or, sql } from 'drizzle-orm';
-import { createDomainError, createValidationError, SYSTEM_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  createValidationError,
+  SYSTEM_ERRORS,
+  AUTH_ERRORS,
+  VALIDATION_ERRORS,
+} from '@corates/shared';
 import { resolveOrgAccess } from '@/lib/billingResolver.js';
 import { getPlan, getGrantPlan } from '@corates/shared/plans';
 
@@ -128,8 +134,14 @@ const listOrgsRoute = createRoute({
   request: {
     query: z.object({
       page: z.string().optional().openapi({ description: 'Page number', example: '1' }),
-      limit: z.string().optional().openapi({ description: 'Results per page (max 100)', example: '20' }),
-      search: z.string().optional().openapi({ description: 'Search by name or slug', example: 'acme' }),
+      limit: z
+        .string()
+        .optional()
+        .openapi({ description: 'Results per page (max 100)', example: '20' }),
+      search: z
+        .string()
+        .optional()
+        .openapi({ description: 'Search by name or slug', example: 'acme' }),
     }),
   },
   responses: {

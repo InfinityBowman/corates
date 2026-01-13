@@ -7,7 +7,12 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import { subscription, organization, stripeEventLedger } from '@/db/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
-import { createDomainError, createValidationError, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  createValidationError,
+  VALIDATION_ERRORS,
+  SYSTEM_ERRORS,
+} from '@corates/shared';
 import { getLedgerEntriesByOrgId, LedgerStatus } from '@/db/stripeEventLedger.js';
 import Stripe from 'stripe';
 
@@ -162,16 +167,29 @@ const reconcileRoute = createRoute({
   path: '/orgs/{orgId}/billing/reconcile',
   tags: ['Admin - Billing Observability'],
   summary: 'Reconcile billing state',
-  description: 'Detect stuck subscription states by comparing D1, ledger, and optionally Stripe. Admin only.',
+  description:
+    'Detect stuck subscription states by comparing D1, ledger, and optionally Stripe. Admin only.',
   request: {
     params: z.object({
       orgId: z.string().openapi({ description: 'Organization ID', example: 'org-123' }),
     }),
     query: z.object({
-      checkStripe: z.string().optional().openapi({ description: 'Compare with Stripe API', example: 'true' }),
-      incompleteThreshold: z.string().optional().openapi({ description: 'Minutes before incomplete is stuck', example: '30' }),
-      checkoutNoSubThreshold: z.string().optional().openapi({ description: 'Minutes before checkout without sub is stuck', example: '15' }),
-      processingLagThreshold: z.string().optional().openapi({ description: 'Minutes before webhook processing lag is flagged', example: '5' }),
+      checkStripe: z
+        .string()
+        .optional()
+        .openapi({ description: 'Compare with Stripe API', example: 'true' }),
+      incompleteThreshold: z
+        .string()
+        .optional()
+        .openapi({ description: 'Minutes before incomplete is stuck', example: '30' }),
+      checkoutNoSubThreshold: z
+        .string()
+        .optional()
+        .openapi({ description: 'Minutes before checkout without sub is stuck', example: '15' }),
+      processingLagThreshold: z
+        .string()
+        .optional()
+        .openapi({ description: 'Minutes before webhook processing lag is flagged', example: '5' }),
     }),
   },
   responses: {
@@ -210,7 +228,10 @@ const stuckStatesRoute = createRoute({
   description: 'Global endpoint to find all orgs with stuck billing states. Admin only.',
   request: {
     query: z.object({
-      incompleteThreshold: z.string().optional().openapi({ description: 'Minutes before incomplete is stuck', example: '30' }),
+      incompleteThreshold: z
+        .string()
+        .optional()
+        .openapi({ description: 'Minutes before incomplete is stuck', example: '30' }),
       limit: z.string().optional().openapi({ description: 'Max results', example: '50' }),
     }),
   },

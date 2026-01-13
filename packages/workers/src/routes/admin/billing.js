@@ -7,7 +7,12 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import { subscription, orgAccessGrants, organization } from '@/db/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
-import { createDomainError, createValidationError, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  createValidationError,
+  VALIDATION_ERRORS,
+  SYSTEM_ERRORS,
+} from '@corates/shared';
 import { resolveOrgAccess } from '@/lib/billingResolver.js';
 import {
   createGrant,
@@ -173,7 +178,9 @@ const BillingErrorSchema = z
 
 // Request schemas
 const CreateSubscriptionBodySchema = z.object({
-  plan: z.enum(['starter_team', 'team', 'unlimited_team']).openapi({ description: 'Subscription plan' }),
+  plan: z
+    .enum(['starter_team', 'team', 'unlimited_team'])
+    .openapi({ description: 'Subscription plan' }),
   status: z
     .enum(['active', 'trialing', 'past_due', 'paused', 'canceled', 'unpaid'])
     .openapi({ description: 'Subscription status' }),
@@ -181,11 +188,18 @@ const CreateSubscriptionBodySchema = z.object({
   periodEnd: z.coerce.date().optional().openapi({ description: 'Period end date' }),
   stripeCustomerId: z.string().optional().openapi({ description: 'Stripe customer ID' }),
   stripeSubscriptionId: z.string().optional().openapi({ description: 'Stripe subscription ID' }),
-  cancelAtPeriodEnd: z.boolean().optional().default(false).openapi({ description: 'Cancel at period end' }),
+  cancelAtPeriodEnd: z
+    .boolean()
+    .optional()
+    .default(false)
+    .openapi({ description: 'Cancel at period end' }),
 });
 
 const UpdateSubscriptionBodySchema = z.object({
-  plan: z.enum(['starter_team', 'team', 'unlimited_team']).optional().openapi({ description: 'Subscription plan' }),
+  plan: z
+    .enum(['starter_team', 'team', 'unlimited_team'])
+    .optional()
+    .openapi({ description: 'Subscription plan' }),
   status: z
     .enum(['active', 'trialing', 'past_due', 'paused', 'canceled', 'unpaid', 'incomplete'])
     .optional()
@@ -206,7 +220,11 @@ const CreateGrantBodySchema = z.object({
 
 const UpdateGrantBodySchema = z.object({
   expiresAt: z.coerce.date().optional().openapi({ description: 'New expiration date' }),
-  revokedAt: z.coerce.date().optional().nullable().openapi({ description: 'Revoke date (null to unrevoke)' }),
+  revokedAt: z.coerce
+    .date()
+    .optional()
+    .nullable()
+    .openapi({ description: 'Revoke date (null to unrevoke)' }),
 });
 
 // Route definitions
@@ -780,8 +798,7 @@ billingRoutes.openapi(updateSubscriptionRoute, async c => {
     if (body.status !== undefined) updateData.status = body.status;
     if (body.periodStart !== undefined) updateData.periodStart = body.periodStart;
     if (body.periodEnd !== undefined) updateData.periodEnd = body.periodEnd;
-    if (body.cancelAtPeriodEnd !== undefined)
-      updateData.cancelAtPeriodEnd = body.cancelAtPeriodEnd;
+    if (body.cancelAtPeriodEnd !== undefined) updateData.cancelAtPeriodEnd = body.cancelAtPeriodEnd;
     if (body.canceledAt !== undefined) updateData.canceledAt = body.canceledAt;
     if (body.endedAt !== undefined) updateData.endedAt = body.endedAt;
 

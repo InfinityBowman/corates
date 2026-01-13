@@ -263,12 +263,12 @@ googleDriveRoutes.openapi(pickerTokenRoute, async c => {
       (typeof error?.code === 'string' && error.code.includes('GOOGLE'))
     ) {
       const authError =
-        error.code
-          ? error
-          : createDomainError(AUTH_ERRORS.INVALID, {
-              context: 'google_token_expired',
-              originalError: typeof error?.message === 'string' ? error.message : String(error),
-            });
+        error.code ? error : (
+          createDomainError(AUTH_ERRORS.INVALID, {
+            context: 'google_token_expired',
+            originalError: typeof error?.message === 'string' ? error.message : String(error),
+          })
+        );
       return c.json(authError, authError.statusCode);
     }
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {

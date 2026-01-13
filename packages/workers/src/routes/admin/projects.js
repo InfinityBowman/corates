@@ -14,7 +14,13 @@ import {
   user,
 } from '@/db/schema.js';
 import { eq, count, desc, like, sql, and } from 'drizzle-orm';
-import { createDomainError, createValidationError, SYSTEM_ERRORS, PROJECT_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  createValidationError,
+  SYSTEM_ERRORS,
+  PROJECT_ERRORS,
+  VALIDATION_ERRORS,
+} from '@corates/shared';
 
 const projectRoutes = new OpenAPIHono({
   defaultHook: (result, c) => {
@@ -180,9 +186,18 @@ const listProjectsRoute = createRoute({
   request: {
     query: z.object({
       page: z.string().optional().openapi({ description: 'Page number', example: '1' }),
-      limit: z.string().optional().openapi({ description: 'Results per page (max 100)', example: '20' }),
-      search: z.string().optional().openapi({ description: 'Search by name', example: 'my project' }),
-      orgId: z.string().optional().openapi({ description: 'Filter by organization ID', example: 'org-123' }),
+      limit: z
+        .string()
+        .optional()
+        .openapi({ description: 'Results per page (max 100)', example: '20' }),
+      search: z
+        .string()
+        .optional()
+        .openapi({ description: 'Search by name', example: 'my project' }),
+      orgId: z
+        .string()
+        .optional()
+        .openapi({ description: 'Filter by organization ID', example: 'org-123' }),
     }),
   },
   responses: {

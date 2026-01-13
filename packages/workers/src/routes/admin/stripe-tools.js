@@ -7,7 +7,12 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import { user, organization, subscription } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
-import { createDomainError, createValidationError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  createValidationError,
+  SYSTEM_ERRORS,
+  VALIDATION_ERRORS,
+} from '@corates/shared';
 import Stripe from 'stripe';
 
 const stripeToolsRoutes = new OpenAPIHono({
@@ -257,7 +262,10 @@ const portalLinkRoute = createRoute({
         'application/json': {
           schema: z.object({
             customerId: z.string().openapi({ description: 'Stripe customer ID' }),
-            returnUrl: z.string().optional().openapi({ description: 'Return URL after portal session' }),
+            returnUrl: z
+              .string()
+              .optional()
+              .openapi({ description: 'Return URL after portal session' }),
           }),
         },
       },

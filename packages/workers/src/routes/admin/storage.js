@@ -6,7 +6,12 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import { mediaFiles } from '@/db/schema.js';
-import { createDomainError, createValidationError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  createValidationError,
+  SYSTEM_ERRORS,
+  VALIDATION_ERRORS,
+} from '@corates/shared';
 
 const storageRoutes = new OpenAPIHono({
   defaultHook: (result, c) => {
@@ -135,8 +140,14 @@ const listDocumentsRoute = createRoute({
           { message: 'Limit must be between 1 and 1000' },
         )
         .openapi({ description: 'Results per page (default 50, max 1000)', example: '50' }),
-      prefix: z.string().optional().openapi({ description: 'Filter by prefix (e.g., projects/{projectId}/)' }),
-      search: z.string().optional().openapi({ description: 'Filter by file name (case-insensitive)' }),
+      prefix: z
+        .string()
+        .optional()
+        .openapi({ description: 'Filter by prefix (e.g., projects/{projectId}/)' }),
+      search: z
+        .string()
+        .optional()
+        .openapi({ description: 'Filter by file name (case-insensitive)' }),
     }),
   },
   responses: {
@@ -429,7 +440,11 @@ storageRoutes.openapi(deleteDocumentsRoute, async c => {
 
     for (const key of keys) {
       if (typeof key !== 'string' || key.length === 0 || !R2_KEY_PATTERN.test(key)) {
-        const error = createValidationError('keys', VALIDATION_ERRORS.FIELD_INVALID_FORMAT.code, key);
+        const error = createValidationError(
+          'keys',
+          VALIDATION_ERRORS.FIELD_INVALID_FORMAT.code,
+          key,
+        );
         error.message = 'Invalid R2 key format';
         return c.json(error, 400);
       }
