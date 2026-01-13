@@ -44,12 +44,13 @@ const billingRoutes = new Hono();
 
 // Mount all routes at root level
 // Each sub-router handles its full path (e.g., /subscription, /members, /checkout, etc.)
+// Webhook routes mounted FIRST since they don't require auth middleware
+billingRoutes.route('/', billingWebhookRoutes);
 billingRoutes.route('/', billingSubscriptionRoutes);
 billingRoutes.route('/', billingValidationRoutes);
 billingRoutes.route('/', billingPortalRoutes);
 billingRoutes.route('/', billingCheckoutRoutes);
 billingRoutes.route('/', billingGrantRoutes);
-billingRoutes.route('/', billingWebhookRoutes);
 billingRoutes.route('/', billingInvoicesRoutes);
 
 export { billingRoutes };

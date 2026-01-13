@@ -776,7 +776,7 @@ describe('Billing Routes - GET /api/billing/validate-plan-change', () => {
     expect(res.status).toBe(400);
 
     const body = await json(res);
-    expect(body.code).toMatch(/VALIDATION_INVALID_INPUT/);
+    expect(body.code).toMatch(/VALIDATION_FIELD_REQUIRED/);
   });
 });
 

@@ -2,99 +2,278 @@
  * Billing checkout routes
  * Handles Stripe Checkout session creation for subscriptions and one-time purchases
  */
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { validatePlanChange } from '@/lib/billingResolver.js';
 import { DEFAULT_PLAN } from '@corates/shared/plans';
-import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  createValidationError,
+  SYSTEM_ERRORS,
+  VALIDATION_ERRORS,
+} from '@corates/shared';
 import Stripe from 'stripe';
 import { createLogger, truncateError, withTiming } from '@/lib/observability/logger.js';
 import { billingCheckoutRateLimit } from '@/middleware/rateLimit.js';
-import { billingSchemas, validateRequest } from '@/config/validation.js';
 import { resolveOrgIdWithRole } from './helpers/orgContext.js';
 import { requireOrgOwner } from './helpers/ownerGate.js';
 
-const billingCheckoutRoutes = new Hono();
+const billingCheckoutRoutes = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
 
-/**
- * POST /validate-coupon
- * Validate a promotion code and return discount details
- */
-billingCheckoutRoutes.post(
-  '/validate-coupon',
-  requireAuth,
-  validateRequest(billingSchemas.validateCoupon),
-  async c => {
-    const logger = createLogger({ c, service: 'billing', env: c.env });
+      let message = firstIssue?.message || 'Validation failed';
+      const isMissing =
+        firstIssue?.received === 'undefined' ||
+        message.includes('received undefined') ||
+        message.includes('Required');
 
-    try {
-      const { code } = c.get('validatedBody');
-
-      if (!c.env.STRIPE_SECRET_KEY) {
-        logger.error('validate_coupon_failed', { error: 'Stripe not configured' });
-        return c.json({ valid: false, error: 'Payment system not available' });
+      if (isMissing) {
+        message = `${fieldName} is required`;
       }
 
-      const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-        apiVersion: '2025-11-17.clover',
-      });
-
-      // Look up promotion code (user-facing codes)
-      const promoCodes = await stripe.promotionCodes.list({
-        code: code,
-        active: true,
-        limit: 1,
-      });
-
-      if (promoCodes.data.length === 0) {
-        logger.info('validate_coupon_invalid', { code: code.trim() });
-        return c.json({ valid: false, error: 'Invalid or expired promo code' });
-      }
-
-      const promo = promoCodes.data[0];
-      const coupon = promo.coupon;
-
-      // Check if expired
-      if (promo.expires_at && promo.expires_at < Math.floor(Date.now() / 1000)) {
-        return c.json({ valid: false, error: 'This promo code has expired' });
-      }
-
-      // Check if max redemptions reached
-      if (promo.max_redemptions && promo.times_redeemed >= promo.max_redemptions) {
-        return c.json({ valid: false, error: 'This promo code is no longer available' });
-      }
-
-      logger.info('validate_coupon_success', {
-        code: promo.code,
-        percentOff: coupon.percent_off,
-        amountOff: coupon.amount_off,
-      });
-
-      return c.json({
-        valid: true,
-        promoCodeId: promo.id,
-        code: promo.code,
-        percentOff: coupon.percent_off,
-        amountOff: coupon.amount_off,
-        currency: coupon.currency,
-        duration: coupon.duration,
-        durationMonths: coupon.duration_in_months,
-        name: coupon.name,
-      });
-    } catch (error) {
-      logger.error('validate_coupon_error', { error: truncateError(error) });
-      return c.json({ valid: false, error: 'Failed to validate promo code' });
+      const error = createValidationError(
+        String(field),
+        VALIDATION_ERRORS.FIELD_REQUIRED.code,
+        null,
+      );
+      error.message = message;
+      return c.json(error, 400);
     }
   },
-);
+});
 
-/**
- * POST /checkout
- * Create a Stripe Checkout session (delegates to Better Auth Stripe plugin)
- * This endpoint is deprecated - use Better Auth Stripe client plugin directly
- */
-billingCheckoutRoutes.post('/checkout', billingCheckoutRateLimit, requireAuth, async c => {
+// Request schemas
+const ValidateCouponRequestSchema = z
+  .object({
+    code: z.string().min(1).openapi({ example: 'PROMO50' }),
+  })
+  .openapi('ValidateCouponRequest');
+
+const CheckoutRequestSchema = z
+  .object({
+    tier: z.string().min(1).openapi({ example: 'pro' }),
+    interval: z.enum(['monthly', 'yearly']).default('monthly').openapi({ example: 'monthly' }),
+  })
+  .openapi('CheckoutRequest');
+
+// Response schemas
+const CouponValidResponseSchema = z
+  .object({
+    valid: z.literal(true),
+    promoCodeId: z.string(),
+    code: z.string(),
+    percentOff: z.number().nullable(),
+    amountOff: z.number().nullable(),
+    currency: z.string().nullable(),
+    duration: z.string(),
+    durationMonths: z.number().nullable(),
+    name: z.string().nullable(),
+  })
+  .openapi('CouponValidResponse');
+
+const CouponInvalidResponseSchema = z
+  .object({
+    valid: z.literal(false),
+    error: z.string(),
+  })
+  .openapi('CouponInvalidResponse');
+
+const CheckoutResponseSchema = z
+  .object({
+    url: z.string(),
+  })
+  .openapi('CheckoutResponse');
+
+const SingleProjectCheckoutResponseSchema = z
+  .object({
+    url: z.string(),
+    sessionId: z.string(),
+  })
+  .openapi('SingleProjectCheckoutResponse');
+
+const CheckoutErrorSchema = z
+  .object({
+    code: z.string(),
+    message: z.string(),
+    statusCode: z.number(),
+    details: z.record(z.unknown()).optional(),
+  })
+  .openapi('CheckoutError');
+
+// Route definitions
+const validateCouponRoute = createRoute({
+  method: 'post',
+  path: '/validate-coupon',
+  tags: ['Billing'],
+  summary: 'Validate promotion code',
+  description: 'Validate a promotion code and return discount details',
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: ValidateCouponRequestSchema,
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.union([CouponValidResponseSchema, CouponInvalidResponseSchema]),
+        },
+      },
+      description: 'Coupon validation result',
+    },
+  },
+});
+
+const checkoutRoute = createRoute({
+  method: 'post',
+  path: '/checkout',
+  tags: ['Billing'],
+  summary: 'Create checkout session',
+  description:
+    'Create a Stripe Checkout session (delegates to Better Auth Stripe plugin). This endpoint is deprecated - use Better Auth Stripe client plugin directly.',
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: CheckoutRequestSchema,
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: CheckoutResponseSchema } },
+      description: 'Checkout session created',
+    },
+    400: {
+      content: { 'application/json': { schema: CheckoutErrorSchema } },
+      description: 'Invalid tier or downgrade validation failed',
+    },
+    403: {
+      content: { 'application/json': { schema: CheckoutErrorSchema } },
+      description: 'Not org owner',
+    },
+    429: {
+      content: { 'application/json': { schema: CheckoutErrorSchema } },
+      description: 'Rate limit exceeded',
+    },
+    500: {
+      content: { 'application/json': { schema: CheckoutErrorSchema } },
+      description: 'Internal error',
+    },
+  },
+});
+
+const singleProjectCheckoutRoute = createRoute({
+  method: 'post',
+  path: '/single-project/checkout',
+  tags: ['Billing'],
+  summary: 'Create single project checkout',
+  description:
+    'Create a Stripe Checkout session for one-time Single Project purchase. Owner-gated: only org owners can purchase.',
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: { 'application/json': { schema: SingleProjectCheckoutResponseSchema } },
+      description: 'Checkout session created',
+    },
+    403: {
+      content: { 'application/json': { schema: CheckoutErrorSchema } },
+      description: 'Not org owner',
+    },
+    429: {
+      content: { 'application/json': { schema: CheckoutErrorSchema } },
+      description: 'Rate limit exceeded',
+    },
+    500: {
+      content: { 'application/json': { schema: CheckoutErrorSchema } },
+      description: 'Internal error or Stripe not configured',
+    },
+  },
+});
+
+// Route handlers
+billingCheckoutRoutes.use('/checkout', billingCheckoutRateLimit);
+billingCheckoutRoutes.use('/single-project/checkout', billingCheckoutRateLimit);
+billingCheckoutRoutes.use('*', requireAuth);
+
+billingCheckoutRoutes.openapi(validateCouponRoute, async c => {
+  const logger = createLogger({ c, service: 'billing', env: c.env });
+
+  try {
+    const { code } = c.req.valid('json');
+
+    if (!c.env.STRIPE_SECRET_KEY) {
+      logger.error('validate_coupon_failed', { error: 'Stripe not configured' });
+      return c.json({ valid: false, error: 'Payment system not available' });
+    }
+
+    const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-11-17.clover',
+    });
+
+    // Look up promotion code (user-facing codes)
+    const promoCodes = await stripe.promotionCodes.list({
+      code: code,
+      active: true,
+      limit: 1,
+    });
+
+    if (promoCodes.data.length === 0) {
+      logger.info('validate_coupon_invalid', { code: code.trim() });
+      return c.json({ valid: false, error: 'Invalid or expired promo code' });
+    }
+
+    const promo = promoCodes.data[0];
+    const coupon = promo.coupon;
+
+    // Check if expired
+    if (promo.expires_at && promo.expires_at < Math.floor(Date.now() / 1000)) {
+      return c.json({ valid: false, error: 'This promo code has expired' });
+    }
+
+    // Check if max redemptions reached
+    if (promo.max_redemptions && promo.times_redeemed >= promo.max_redemptions) {
+      return c.json({ valid: false, error: 'This promo code is no longer available' });
+    }
+
+    logger.info('validate_coupon_success', {
+      code: promo.code,
+      percentOff: coupon.percent_off,
+      amountOff: coupon.amount_off,
+    });
+
+    return c.json({
+      valid: true,
+      promoCodeId: promo.id,
+      code: promo.code,
+      percentOff: coupon.percent_off,
+      amountOff: coupon.amount_off,
+      currency: coupon.currency,
+      duration: coupon.duration,
+      durationMonths: coupon.duration_in_months,
+      name: coupon.name,
+    });
+  } catch (error) {
+    logger.error('validate_coupon_error', { error: truncateError(error) });
+    return c.json({ valid: false, error: 'Failed to validate promo code' });
+  }
+});
+
+billingCheckoutRoutes.openapi(checkoutRoute, async c => {
   const { user, session } = getAuth(c);
   const db = createDb(c.env.DB);
   const logger = createLogger({ c, service: 'billing', env: c.env });
@@ -105,8 +284,7 @@ billingCheckoutRoutes.post('/checkout', billingCheckoutRateLimit, requireAuth, a
     // Verify user is org owner
     requireOrgOwner({ orgId, role });
 
-    const body = await c.req.json();
-    const { tier, interval = 'monthly' } = body;
+    const { tier, interval } = c.req.valid('json');
 
     if (!tier || tier === DEFAULT_PLAN) {
       const error = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
@@ -192,155 +370,145 @@ billingCheckoutRoutes.post('/checkout', billingCheckoutRateLimit, requireAuth, a
   }
 });
 
-/**
- * POST /single-project/checkout
- * Create a Stripe Checkout session for one-time Single Project purchase
- * Owner-gated: only org owners can purchase
- */
-billingCheckoutRoutes.post(
-  '/single-project/checkout',
-  billingCheckoutRateLimit,
-  requireAuth,
-  async c => {
-    const { user, session } = getAuth(c);
-    const db = createDb(c.env.DB);
-    const logger = createLogger({ c, service: 'billing', env: c.env });
+billingCheckoutRoutes.openapi(singleProjectCheckoutRoute, async c => {
+  const { user, session } = getAuth(c);
+  const db = createDb(c.env.DB);
+  const logger = createLogger({ c, service: 'billing', env: c.env });
 
-    try {
-      const { orgId, role } = await resolveOrgIdWithRole({ db, session, userId: user.id });
+  try {
+    const { orgId, role } = await resolveOrgIdWithRole({ db, session, userId: user.id });
 
-      // Verify user is org owner
-      requireOrgOwner({ orgId, role });
+    // Verify user is org owner
+    requireOrgOwner({ orgId, role });
 
-      if (!c.env.STRIPE_SECRET_KEY) {
-        const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-          operation: 'stripe_not_configured',
-        });
-        return c.json(error, error.statusCode);
-      }
-
-      // Log checkout initiation
-      logger.stripe('single_project_checkout_initiated', {
-        orgId,
-        userId: user.id,
-        plan: 'single_project',
+    if (!c.env.STRIPE_SECRET_KEY) {
+      const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        operation: 'stripe_not_configured',
       });
+      return c.json(error, error.statusCode);
+    }
 
-      // Get user's Stripe customer ID (required by Better Auth Stripe plugin)
-      const { user: userTable } = await import('@/db/schema.js');
-      const { eq } = await import('drizzle-orm');
-      const userRecord = await db
-        .select({ stripeCustomerId: userTable.stripeCustomerId })
-        .from(userTable)
-        .where(eq(userTable.id, user.id))
-        .get();
+    // Log checkout initiation
+    logger.stripe('single_project_checkout_initiated', {
+      orgId,
+      userId: user.id,
+      plan: 'single_project',
+    });
 
-      if (!userRecord?.stripeCustomerId) {
-        logger.stripe('single_project_checkout_failed', {
-          outcome: 'failed',
-          orgId,
-          userId: user.id,
-          errorCode: 'stripe_customer_not_found',
-        });
+    // Get user's Stripe customer ID (required by Better Auth Stripe plugin)
+    const { user: userTable } = await import('@/db/schema.js');
+    const { eq } = await import('drizzle-orm');
+    const userRecord = await db
+      .select({ stripeCustomerId: userTable.stripeCustomerId })
+      .from(userTable)
+      .where(eq(userTable.id, user.id))
+      .get();
 
-        const error = createDomainError(
-          SYSTEM_ERRORS.INTERNAL_ERROR,
-          {
-            operation: 'stripe_customer_not_found',
-          },
-          'Stripe customer ID not found. Please sign out and sign in again, or contact support.',
-        );
-        return c.json(error, error.statusCode);
-      }
-
-      const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-        apiVersion: '2025-11-17.clover',
-      });
-
-      // Validate single project price ID is configured
-      const priceId = c.env.STRIPE_PRICE_ID_SINGLE_PROJECT;
-      if (!priceId) {
-        logger.stripe('single_project_checkout_failed', {
-          outcome: 'failed',
-          orgId,
-          userId: user.id,
-          errorCode: 'stripe_price_not_configured',
-        });
-
-        const error = createDomainError(
-          SYSTEM_ERRORS.INTERNAL_ERROR,
-          { operation: 'stripe_price_not_configured' },
-          'Single project pricing is not configured. Please contact support.',
-        );
-        return c.json(error, error.statusCode);
-      }
-
-      const baseUrl = c.env.APP_URL || 'https://corates.org';
-
-      // Generate idempotency key to prevent duplicate checkout sessions from rapid clicks
-      // Uses 1-minute time window granularity
-      const idempotencyKey = `sp_checkout_${orgId}_${user.id}_${Math.floor(Date.now() / 60000)}`;
-
-      const { result: checkoutSession, durationMs } = await withTiming(async () => {
-        return stripe.checkout.sessions.create(
-          {
-            mode: 'payment',
-            payment_method_types: ['card'],
-            customer: userRecord.stripeCustomerId,
-            line_items: [
-              {
-                price: priceId,
-                quantity: 1,
-              },
-            ],
-            metadata: {
-              orgId,
-              grantType: 'single_project',
-              purchaserUserId: user.id,
-            },
-            success_url: `${baseUrl}/settings/billing?success=true&purchase=single_project`,
-            cancel_url: `${baseUrl}/settings/billing?canceled=true`,
-          },
-          {
-            idempotencyKey,
-          },
-        );
-      });
-
-      logger.stripe('single_project_checkout_created', {
-        outcome: 'success',
-        orgId,
-        userId: user.id,
-        plan: 'single_project',
-        stripeCheckoutSessionId: checkoutSession.id,
-        stripeCustomerId: userRecord.stripeCustomerId,
-        durationMs,
-      });
-
-      return c.json({
-        url: checkoutSession.url,
-        sessionId: checkoutSession.id,
-      });
-    } catch (error) {
+    if (!userRecord?.stripeCustomerId) {
       logger.stripe('single_project_checkout_failed', {
         outcome: 'failed',
+        orgId,
         userId: user.id,
-        error: truncateError(error),
-        errorCode: error.code || 'unknown',
+        errorCode: 'stripe_customer_not_found',
       });
 
-      // If error is already a domain error, return it as-is
-      if (error.code && error.statusCode) {
-        return c.json(error, error.statusCode);
-      }
-
-      const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-        operation: 'create_single_project_checkout',
-        originalError: error.message,
-      });
-      return c.json(systemError, systemError.statusCode);
+      const error = createDomainError(
+        SYSTEM_ERRORS.INTERNAL_ERROR,
+        {
+          operation: 'stripe_customer_not_found',
+        },
+        'Stripe customer ID not found. Please sign out and sign in again, or contact support.',
+      );
+      return c.json(error, error.statusCode);
     }
-  },
-);
+
+    const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-11-17.clover',
+    });
+
+    // Validate single project price ID is configured
+    const priceId = c.env.STRIPE_PRICE_ID_SINGLE_PROJECT;
+    if (!priceId) {
+      logger.stripe('single_project_checkout_failed', {
+        outcome: 'failed',
+        orgId,
+        userId: user.id,
+        errorCode: 'stripe_price_not_configured',
+      });
+
+      const error = createDomainError(
+        SYSTEM_ERRORS.INTERNAL_ERROR,
+        { operation: 'stripe_price_not_configured' },
+        'Single project pricing is not configured. Please contact support.',
+      );
+      return c.json(error, error.statusCode);
+    }
+
+    const baseUrl = c.env.APP_URL || 'https://corates.org';
+
+    // Generate idempotency key to prevent duplicate checkout sessions from rapid clicks
+    // Uses 1-minute time window granularity
+    const idempotencyKey = `sp_checkout_${orgId}_${user.id}_${Math.floor(Date.now() / 60000)}`;
+
+    const { result: checkoutSession, durationMs } = await withTiming(async () => {
+      return stripe.checkout.sessions.create(
+        {
+          mode: 'payment',
+          payment_method_types: ['card'],
+          customer: userRecord.stripeCustomerId,
+          line_items: [
+            {
+              price: priceId,
+              quantity: 1,
+            },
+          ],
+          metadata: {
+            orgId,
+            grantType: 'single_project',
+            purchaserUserId: user.id,
+          },
+          success_url: `${baseUrl}/settings/billing?success=true&purchase=single_project`,
+          cancel_url: `${baseUrl}/settings/billing?canceled=true`,
+        },
+        {
+          idempotencyKey,
+        },
+      );
+    });
+
+    logger.stripe('single_project_checkout_created', {
+      outcome: 'success',
+      orgId,
+      userId: user.id,
+      plan: 'single_project',
+      stripeCheckoutSessionId: checkoutSession.id,
+      stripeCustomerId: userRecord.stripeCustomerId,
+      durationMs,
+    });
+
+    return c.json({
+      url: checkoutSession.url,
+      sessionId: checkoutSession.id,
+    });
+  } catch (error) {
+    logger.stripe('single_project_checkout_failed', {
+      outcome: 'failed',
+      userId: user.id,
+      error: truncateError(error),
+      errorCode: error.code || 'unknown',
+    });
+
+    // If error is already a domain error, return it as-is
+    if (error.code && error.statusCode) {
+      return c.json(error, error.statusCode);
+    }
+
+    const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+      operation: 'create_single_project_checkout',
+      originalError: error.message,
+    });
+    return c.json(systemError, systemError.statusCode);
+  }
+});
 
 export { billingCheckoutRoutes };
