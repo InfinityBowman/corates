@@ -1,9 +1,9 @@
 /**
- * Admin routes for Hono
+ * Admin routes with OpenAPI documentation
  * Provides admin dashboard API endpoints
  */
 
-import { Hono } from 'hono';
+import { OpenAPIHono } from '@hono/zod-openapi';
 import { requireAdmin } from '@/middleware/requireAdmin.js';
 import { requireTrustedOrigin } from '@/middleware/csrf.js';
 import { userRoutes } from './users.js';
@@ -16,7 +16,7 @@ import { projectRoutes } from './projects.js';
 import { stripeToolsRoutes } from './stripe-tools.js';
 import { statsRoutes } from './stats.js';
 
-const adminRoutes = new Hono();
+const adminRoutes = new OpenAPIHono();
 
 // Apply admin middleware to all routes
 adminRoutes.use('*', requireAdmin);

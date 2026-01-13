@@ -3,30 +3,284 @@
  * Handles Stripe event ledger viewing, stuck-state detection, and reconciliation
  */
 
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import { subscription, organization, stripeEventLedger } from '@/db/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
-import { createDomainError, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import { createDomainError, createValidationError, VALIDATION_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { getLedgerEntriesByOrgId, LedgerStatus } from '@/db/stripeEventLedger.js';
 import Stripe from 'stripe';
 
-const billingObservabilityRoutes = new Hono();
+const billingObservabilityRoutes = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
+
+      let message = firstIssue?.message || 'Validation failed';
+      const isMissing =
+        firstIssue?.received === 'undefined' ||
+        message.includes('received undefined') ||
+        message.includes('Required');
+
+      if (isMissing) {
+        message = `${fieldName} is required`;
+      }
+
+      const error = createValidationError(
+        String(field),
+        VALIDATION_ERRORS.FIELD_REQUIRED.code,
+        null,
+      );
+      error.message = message;
+      return c.json(error, 400);
+    }
+  },
+});
+
+// Response schemas
+const StuckStateSchema = z
+  .object({
+    type: z.string(),
+    severity: z.enum(['critical', 'high', 'medium', 'low']).optional(),
+    subscriptionId: z.string().optional(),
+    stripeSubscriptionId: z.string().nullable().optional(),
+    status: z.string().optional(),
+    ageMinutes: z.number().optional(),
+    threshold: z.number().optional(),
+    description: z.string().optional(),
+    ledgerId: z.string().optional(),
+    stripeEventId: z.string().nullable().optional(),
+    stripeCheckoutSessionId: z.string().nullable().optional(),
+    stripeCustomerId: z.string().nullable().optional(),
+    failedCount: z.number().optional(),
+    recentFailures: z.array(z.record(z.unknown())).optional(),
+    lagMinutes: z.number().optional(),
+    payloadHash: z.string().optional(),
+    periodEnd: z.number().optional(),
+    localStatus: z.string().optional(),
+    stripeStatus: z.string().optional(),
+  })
+  .openapi('StuckState');
+
+const ReconcileResponseSchema = z
+  .object({
+    orgId: z.string(),
+    orgName: z.string(),
+    reconcileAt: z.string(),
+    thresholds: z.object({
+      incompleteMinutes: z.number(),
+      checkoutNoSubMinutes: z.number(),
+      processingLagMinutes: z.number(),
+    }),
+    summary: z.object({
+      totalSubscriptions: z.number(),
+      totalLedgerEntries: z.number(),
+      failedWebhooks: z.number(),
+      ignoredWebhooks: z.number(),
+      stuckStateCount: z.number(),
+      hasCriticalIssues: z.boolean(),
+      hasHighIssues: z.boolean(),
+    }),
+    stuckStates: z.array(StuckStateSchema),
+    stripeComparison: z.record(z.unknown()).nullable(),
+  })
+  .openapi('ReconcileResponse');
+
+const GlobalStuckOrgSchema = z
+  .object({
+    type: z.string(),
+    orgId: z.string().optional(),
+    subscriptionId: z.string().optional(),
+    stripeSubscriptionId: z.string().nullable().optional(),
+    status: z.string().optional(),
+    ageMinutes: z.number().optional(),
+    ledgerId: z.string().optional(),
+    stripeEventId: z.string().nullable().optional(),
+    stripeCheckoutSessionId: z.string().nullable().optional(),
+    failedCount: z.number().optional(),
+  })
+  .openapi('GlobalStuckOrg');
+
+const StuckStatesResponseSchema = z
+  .object({
+    checkedAt: z.string(),
+    thresholds: z.object({
+      incompleteMinutes: z.number(),
+    }),
+    totalStuckOrgs: z.number(),
+    stuckOrgs: z.array(GlobalStuckOrgSchema),
+  })
+  .openapi('StuckStatesResponse');
+
+const LedgerEntrySchema = z
+  .object({
+    id: z.string(),
+    stripeEventId: z.string().nullable(),
+    type: z.string().nullable(),
+    status: z.string(),
+    httpStatus: z.number().nullable(),
+    error: z.string().nullable(),
+    orgId: z.string().nullable(),
+    stripeCustomerId: z.string().nullable(),
+    stripeSubscriptionId: z.string().nullable(),
+    stripeCheckoutSessionId: z.string().nullable(),
+    payloadHash: z.string(),
+    signaturePresent: z.union([z.boolean(), z.number()]),
+    livemode: z.union([z.boolean(), z.number()]).nullable(),
+    receivedAt: z.union([z.string(), z.date(), z.number()]),
+    processedAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+    requestId: z.string(),
+    route: z.string(),
+  })
+  .openapi('LedgerEntry');
+
+const LedgerResponseSchema = z
+  .object({
+    stats: z.object({
+      total: z.number(),
+      byStatus: z.record(z.number()),
+      byType: z.record(z.number()),
+    }),
+    entries: z.array(LedgerEntrySchema),
+  })
+  .openapi('LedgerResponse');
+
+const ObservabilityErrorSchema = z
+  .object({
+    code: z.string(),
+    message: z.string(),
+    statusCode: z.number(),
+    details: z.record(z.unknown()).optional(),
+  })
+  .openapi('ObservabilityError');
+
+// Route definitions
+const reconcileRoute = createRoute({
+  method: 'get',
+  path: '/orgs/{orgId}/billing/reconcile',
+  tags: ['Admin - Billing Observability'],
+  summary: 'Reconcile billing state',
+  description: 'Detect stuck subscription states by comparing D1, ledger, and optionally Stripe. Admin only.',
+  request: {
+    params: z.object({
+      orgId: z.string().openapi({ description: 'Organization ID', example: 'org-123' }),
+    }),
+    query: z.object({
+      checkStripe: z.string().optional().openapi({ description: 'Compare with Stripe API', example: 'true' }),
+      incompleteThreshold: z.string().optional().openapi({ description: 'Minutes before incomplete is stuck', example: '30' }),
+      checkoutNoSubThreshold: z.string().optional().openapi({ description: 'Minutes before checkout without sub is stuck', example: '15' }),
+      processingLagThreshold: z.string().optional().openapi({ description: 'Minutes before webhook processing lag is flagged', example: '5' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Reconciliation results',
+      content: {
+        'application/json': {
+          schema: ReconcileResponseSchema,
+        },
+      },
+    },
+    400: {
+      description: 'Invalid org ID',
+      content: {
+        'application/json': {
+          schema: ObservabilityErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: ObservabilityErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const stuckStatesRoute = createRoute({
+  method: 'get',
+  path: '/billing/stuck-states',
+  tags: ['Admin - Billing Observability'],
+  summary: 'Find all stuck billing states',
+  description: 'Global endpoint to find all orgs with stuck billing states. Admin only.',
+  request: {
+    query: z.object({
+      incompleteThreshold: z.string().optional().openapi({ description: 'Minutes before incomplete is stuck', example: '30' }),
+      limit: z.string().optional().openapi({ description: 'Max results', example: '50' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Stuck states across all orgs',
+      content: {
+        'application/json': {
+          schema: StuckStatesResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: ObservabilityErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const ledgerRoute = createRoute({
+  method: 'get',
+  path: '/billing/ledger',
+  tags: ['Admin - Billing Observability'],
+  summary: 'View event ledger',
+  description: 'View recent Stripe event ledger entries. Admin only.',
+  request: {
+    query: z.object({
+      limit: z.string().optional().openapi({ description: 'Max entries', example: '50' }),
+      status: z.string().optional().openapi({ description: 'Filter by status' }),
+      type: z.string().optional().openapi({ description: 'Filter by event type' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Ledger entries',
+      content: {
+        'application/json': {
+          schema: LedgerResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: ObservabilityErrorSchema,
+        },
+      },
+    },
+  },
+});
 
 /**
  * GET /api/admin/orgs/:orgId/billing/reconcile
  * Reconciliation endpoint to detect stuck subscription states
- * Compares D1 subscription rows, ledger, and optionally Stripe
  */
-billingObservabilityRoutes.get('/orgs/:orgId/billing/reconcile', async c => {
-  const orgId = c.req.param('orgId');
+billingObservabilityRoutes.openapi(reconcileRoute, async c => {
+  const { orgId } = c.req.valid('param');
+  const query = c.req.valid('query');
   const db = createDb(c.env.DB);
-  const checkStripe = c.req.query('checkStripe') === 'true';
+  const checkStripe = query.checkStripe === 'true';
 
   // Configurable thresholds (in minutes)
-  const incompleteThresholdMinutes = parseInt(c.req.query('incompleteThreshold') || '30', 10);
-  const checkoutNoSubThresholdMinutes = parseInt(c.req.query('checkoutNoSubThreshold') || '15', 10);
-  const processingLagThresholdMinutes = parseInt(c.req.query('processingLagThreshold') || '5', 10);
+  const incompleteThresholdMinutes = parseInt(query.incompleteThreshold || '30', 10);
+  const checkoutNoSubThresholdMinutes = parseInt(query.checkoutNoSubThreshold || '15', 10);
+  const processingLagThresholdMinutes = parseInt(query.processingLagThreshold || '5', 10);
 
   try {
     // Verify org exists
@@ -271,12 +525,12 @@ billingObservabilityRoutes.get('/orgs/:orgId/billing/reconcile', async c => {
 /**
  * GET /api/admin/billing/stuck-states
  * Global endpoint to find all orgs with stuck billing states
- * Useful for monitoring/alerting
  */
-billingObservabilityRoutes.get('/billing/stuck-states', async c => {
+billingObservabilityRoutes.openapi(stuckStatesRoute, async c => {
   const db = createDb(c.env.DB);
-  const incompleteThresholdMinutes = parseInt(c.req.query('incompleteThreshold') || '30', 10);
-  const limit = parseInt(c.req.query('limit') || '50', 10);
+  const query = c.req.valid('query');
+  const incompleteThresholdMinutes = parseInt(query.incompleteThreshold || '30', 10);
+  const limit = parseInt(query.limit || '50', 10);
 
   try {
     const now = new Date();
@@ -403,14 +657,15 @@ billingObservabilityRoutes.get('/billing/stuck-states', async c => {
  * GET /api/admin/billing/ledger
  * View recent Stripe event ledger entries (global)
  */
-billingObservabilityRoutes.get('/billing/ledger', async c => {
+billingObservabilityRoutes.openapi(ledgerRoute, async c => {
   const db = createDb(c.env.DB);
-  const limit = parseInt(c.req.query('limit') || '50', 10);
-  const status = c.req.query('status');
-  const eventType = c.req.query('type');
+  const query = c.req.valid('query');
+  const limit = parseInt(query.limit || '50', 10);
+  const status = query.status;
+  const eventType = query.type;
 
   try {
-    let query = db.select().from(stripeEventLedger).orderBy(desc(stripeEventLedger.receivedAt));
+    let dbQuery = db.select().from(stripeEventLedger).orderBy(desc(stripeEventLedger.receivedAt));
 
     // Apply filters if provided
     const conditions = [];
@@ -422,10 +677,10 @@ billingObservabilityRoutes.get('/billing/ledger', async c => {
     }
 
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      dbQuery = dbQuery.where(and(...conditions));
     }
 
-    const entries = await query.limit(limit).all();
+    const entries = await dbQuery.limit(limit).all();
 
     // Calculate summary stats
     const stats = {
