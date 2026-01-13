@@ -123,12 +123,7 @@ const R2_KEY_PATTERN = /^projects\/[^/]+\/studies\/[^/]+\/.+$/;
 const DeleteDocumentsRequestSchema = z
   .object({
     keys: z
-      .array(
-        z
-          .string()
-          .min(1)
-          .regex(R2_KEY_PATTERN, 'Invalid R2 key format'),
-      )
+      .array(z.string().min(1).regex(R2_KEY_PATTERN, 'Invalid R2 key format'))
       .min(1, 'At least one key is required')
       .openapi({ description: 'Array of R2 keys to delete' }),
   })
