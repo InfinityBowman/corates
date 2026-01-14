@@ -16,6 +16,12 @@ import {
   seedOrgMember,
   json,
 } from '@/__tests__/helpers.js';
+import {
+  buildProjectWithMembers,
+  buildProject,
+  buildSelfRemovalScenario,
+  resetCounter,
+} from '@/__tests__/factories';
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -81,6 +87,7 @@ beforeEach(async () => {
   // Clear ProjectDoc DOs to prevent invalidation errors between tests
   await clearProjectDOs(['project-1']);
   vi.clearAllMocks();
+  resetCounter();
 
   // Get the mocked functions
   const billingResolver = await import('@/lib/billingResolver.js');
@@ -1115,212 +1122,47 @@ describe('Org-Scoped Member Routes - PUT /api/orgs/:orgId/projects/:projectId/me
 
 describe('Org-Scoped Member Routes - DELETE /api/orgs/:orgId/projects/:projectId/members/:userId', () => {
   it('should allow owner to remove member', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    // Factory creates: owner user, member user, org, org memberships, project, project memberships
+    const { project, org, owner, members } = await buildProjectWithMembers({ memberCount: 1 });
+    const memberToRemove = members[1].user;
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'Member',
-      email: 'member@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-2',
-      organizationId: 'org-1',
-      userId: 'user-2',
-      role: 'member',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-2',
-      projectId: 'project-1',
-      userId: 'user-2',
-      role: 'member',
-      joinedAt: nowSec,
-    });
-
-    const res = await fetchMembers('org-1', 'project-1', '/user-2', {
+    const res = await fetchMembers(org.id, project.id, `/${memberToRemove.id}`, {
       method: 'DELETE',
+      headers: { 'x-test-user-id': owner.id },
     });
 
     expect(res.status).toBe(200);
     const body = await json(res);
     expect(body.success).toBe(true);
-    expect(body.removed).toBe('user-2');
+    expect(body.removed).toBe(memberToRemove.id);
 
-    // Verify member was removed (D1 returns null, not undefined)
+    // Verify member was removed
     const member = await env.DB.prepare(
       'SELECT * FROM project_members WHERE projectId = ?1 AND userId = ?2',
     )
-      .bind('project-1', 'user-2')
+      .bind(project.id, memberToRemove.id)
       .first();
     expect(member).toBeNull();
   });
 
   it('should allow member to remove themselves', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { project, org, selfRemover } = await buildSelfRemovalScenario();
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'Member',
-      email: 'member@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-2',
-      organizationId: 'org-1',
-      userId: 'user-2',
-      role: 'member',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-2',
-      projectId: 'project-1',
-      userId: 'user-2',
-      role: 'member',
-      joinedAt: nowSec,
-    });
-
-    const res = await fetchMembers('org-1', 'project-1', '/user-2', {
+    const res = await fetchMembers(org.id, project.id, `/${selfRemover.id}`, {
       method: 'DELETE',
-      headers: {
-        'x-test-user-id': 'user-2',
-      },
+      headers: { 'x-test-user-id': selfRemover.id },
     });
 
     expect(res.status).toBe(200);
   });
 
   it('should prevent removing the last owner', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    // buildProject creates a project with a single owner
+    const { project, org, owner } = await buildProject();
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    const res = await fetchMembers('org-1', 'project-1', '/user-1', {
+    const res = await fetchMembers(org.id, project.id, `/${owner.id}`, {
       method: 'DELETE',
+      headers: { 'x-test-user-id': owner.id },
     });
 
     expect(res.status).toBe(400);
