@@ -307,6 +307,23 @@ export default [
   {
     // Backend workers - enforce structured error handling
     files: ['packages/workers/src/**/*.{js,ts}'],
+    languageOptions: {
+      globals: {
+        // Cloudflare Workers globals
+        MessageEvent: 'readonly',
+        Cloudflare: 'readonly',
+        D1Database: 'readonly',
+        DurableObject: 'readonly',
+        DurableObjectState: 'readonly',
+        DurableObjectNamespace: 'readonly',
+        DurableObjectStub: 'readonly',
+        R2Bucket: 'readonly',
+        KVNamespace: 'readonly',
+        ExecutionContext: 'readonly',
+        ScheduledController: 'readonly',
+        Env: 'readonly',
+      },
+    },
     rules: {
       // Use createDomainError(), createTransportError(), or createValidationError()
       'corates/corates-error-helpers': 'warn',

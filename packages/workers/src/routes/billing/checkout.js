@@ -222,7 +222,7 @@ billingCheckoutRoutes.openapi(validateCouponRoute, async c => {
     }
 
     const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-11-17.clover',
+      apiVersion: '2025-12-15.clover',
     });
 
     // Look up promotion code (user-facing codes)
@@ -423,7 +423,7 @@ billingCheckoutRoutes.openapi(singleProjectCheckoutRoute, async c => {
     }
 
     const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-11-17.clover',
+      apiVersion: '2025-12-15.clover',
     });
 
     // Validate single project price ID is configured

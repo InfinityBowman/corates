@@ -25,6 +25,7 @@
     "user:create-orcid:local": "node ./scripts/create-test-orcid-user.mjs",
     "stripe:setup": "node ./scripts/setup-stripe-test.mjs",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "studio": "drizzle-kit studio",
     "localflare": "localflare"
   },
@@ -45,6 +46,7 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.11.1",
+    "typescript": "^5.7.3",
     "better-sqlite3": "^12.6.0",
     "dotenv": "^16.6.1",
     "drizzle-kit": "^0.31.8",

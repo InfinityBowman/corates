@@ -139,7 +139,7 @@ billingInvoicesRoutes.openapi(getInvoicesRoute, async c => {
 
     // Initialize Stripe client
     const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-11-17.clover',
+      apiVersion: '2025-12-15.clover',
     });
 
     // Fetch invoices from Stripe
