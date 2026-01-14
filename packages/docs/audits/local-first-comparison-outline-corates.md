@@ -447,7 +447,268 @@ presence.touch(documentId, currentUser.id, isEditing);
 
 ---
 
-## 8. Recommendations for CoRATES
+## 8. Additional Outline Features (Not in CoRATES)
+
+### 8.1 Revision History System
+
+Outline has a complete revision history system that CoRATES lacks:
+
+```typescript
+// server/models/Revision.ts - Revision model
+class Revision {
+  id: string;
+  documentId: string;
+  title: string;
+  content: ProsemirrorData; // JSON snapshot
+  text: string; // Markdown (deprecated)
+  editorVersion: string; // Editor version tracking
+  collaboratorIds: string[]; // Who contributed to this revision
+  userId: string; // Primary author
+  name: string | null; // Optional named revision
+  revisionCount: number; // Version number
+}
+
+// Automatic revision creation on document save
+// server/commands/revisionCreator.ts
+async function revisionCreator({ event, document, user }) {
+  const collaboratorIds = await Redis.defaultClient.smembers(Document.getCollaboratorKey(document.id));
+  await Revision.createFromDocument(ctx, document, collaboratorIds);
+}
+```
+
+**Features:**
+
+- Automatic revision snapshots on save
+- Named revisions (like git tags)
+- Restore document to any revision
+- Visual diff between revisions
+- Export revisions as HTML/Markdown/PDF
+- Tracks all collaborator IDs per revision
+
+**API Endpoints:**
+
+- `POST /api/revisions.list` - List all revisions for a document
+- `POST /api/revisions.info` - Get a specific revision
+- `POST /api/documents.restore` - Restore to a revision
+- `POST /api/revisions.delete` - Delete a revision
+
+### 8.2 Collaborator Attribution
+
+Outline tracks who contributed to each document in real-time:
+
+```typescript
+// server/commands/documentCollaborativeUpdater.ts
+export default async function documentCollaborativeUpdater({
+  documentId,
+  ydoc,
+  sessionCollaboratorIds, // IDs of users who edited since last save
+}) {
+  // Extract collaborators from Yjs PermanentUserData
+  const pud = new Y.PermanentUserData(ydoc);
+  const pudIds = Array.from(pud.clients.values());
+
+  const collaboratorIds = uniq([
+    ...document.collaboratorIds, // Existing collaborators
+    ...sessionCollaboratorIds, // Current session collaborators
+    ...pudIds, // From Yjs client data
+  ]);
+
+  await document.update({
+    collaboratorIds,
+    lastModifiedById,
+  });
+}
+```
+
+**Features:**
+
+- `document.collaboratorIds` - Array of all user IDs who edited
+- Uses Redis Set to track session collaborators
+- `Y.PermanentUserData` for CRDT-level attribution
+- UI shows collaborator avatars with presence status
+
+### 8.3 Editor Version Compatibility
+
+Outline checks client/server editor version compatibility:
+
+```typescript
+// app/scenes/Document/components/MultiplayerEditor.tsx
+const provider = new HocuspocusProvider({
+  parameters: {
+    editorVersion: EDITOR_VERSION, // Sent to server
+  },
+  // ...
+});
+
+// Server rejects outdated clients
+provider.on('close', event => {
+  if (event.code === EditorUpdateError.code) {
+    setEditorVersionBehind(true);
+    // Show "Please refresh to update editor" notice
+  }
+});
+```
+
+```typescript
+// server/commands/documentCollaborativeUpdater.ts
+const editorVersion =
+  document.editorVersion && clientVersion ?
+    semver.gt(clientVersion, document.editorVersion) ?
+      clientVersion
+    : document.editorVersion
+  : (clientVersion ?? document.editorVersion);
+```
+
+**Benefits:**
+
+- Prevents protocol mismatches
+- Forces client refresh on breaking changes
+- Tracks document's "last edited with" version
+
+### 8.4 State Backfill Scripts
+
+Outline has migration scripts to backfill/repair CRDT state:
+
+```typescript
+// server/scripts/20221008000000-backfill-crdt.ts
+// Convert Markdown text to CRDT state
+export default async function main() {
+  const documents = await Document.unscoped().findAll({
+    where: { state: null }, // Documents without CRDT state
+  });
+
+  for (const document of documents) {
+    const ydoc = new Y.Doc();
+    const type = ydoc.get('default', Y.XmlFragment);
+    const doc = parser.parse(document.text);
+
+    // Apply Prosemirror doc to Y.Doc
+    updateYFragment(type.doc, type, doc, { mapping: new Map() });
+
+    const state = Y.encodeStateAsUpdate(ydoc);
+    document.state = Buffer.from(state);
+    await document.save();
+  }
+}
+
+// server/scripts/20221029000000-crdt-to-text.ts
+// Regenerate Markdown from CRDT (opposite direction)
+// server/scripts/20231119000000-backfill-document-content.ts
+// Backfill JSON content from CRDT state
+// server/scripts/20231119000000-backfill-revision-content.ts
+// Backfill revision content
+```
+
+**Scripts Available:**
+
+- `backfill-crdt.ts` - Create CRDT state from Markdown
+- `crdt-to-text.ts` - Regenerate Markdown from CRDT
+- `backfill-document-content.ts` - Generate JSON content from state
+- `backfill-revision-content.ts` - Backfill revision JSON content
+
+### 8.5 Document Publish/Unpublish Workflow
+
+Outline has a draft -> published workflow:
+
+```typescript
+// server/models/Document.ts
+class Document {
+  publishedAt: Date | null; // null = draft
+
+  async publish(ctx, { collectionId, silent, event }) {
+    this.publishedAt = new Date();
+    // Add to collection structure
+    // Fire 'documents.publish' event
+  }
+
+  async unpublishWithCtx(ctx, { detach }) {
+    // Remove from collection
+    // Convert back to draft
+    this.publishedAt = null;
+    this.createdById = user.id; // Transfer ownership
+  }
+}
+```
+
+**Features:**
+
+- Documents can exist as private drafts
+- Publish to a collection makes visible to team
+- Unpublish returns to draft state
+- Fire events for integrations (Slack, webhooks)
+
+### 8.6 Real-time Event Broadcasting
+
+Outline broadcasts document events to all connected clients:
+
+```typescript
+// app/components/WebsocketProvider.tsx
+socket.on('documents.update', async event => {
+  // Reload document from server
+  const document = documents.get(event.documentId);
+  if (document) {
+    await document.fetch();
+  }
+});
+
+socket.on('collections.update.index', async event => {
+  // Refetch collection structure
+  for (const collectionDescriptor of event.collectionIds) {
+    const collection = collections.get(collectionDescriptor.id);
+    await collection?.fetchDocuments({ force: true });
+  }
+});
+```
+
+**Event Types:**
+
+- `documents.update` - Document content changed
+- `documents.publish` - Document published
+- `documents.delete` - Document deleted
+- `collections.update.index` - Collection structure changed
+- `users.update` - User profile changed
+
+### 8.7 Idle User Management
+
+```typescript
+// app/scenes/Document/components/MultiplayerEditor.tsx
+const isIdle = useIdle();
+const isVisible = usePageVisibility();
+
+useEffect(() => {
+  if (isIdle && !isVisible) {
+    // Close WebSocket connection
+    provider.disconnect();
+  } else if (!isIdle || isVisible) {
+    provider.connect();
+  }
+}, [isIdle, isVisible]);
+```
+
+**Features:**
+
+- Automatic disconnect after inactivity
+- Reconnect when tab becomes visible
+- Reduces server connections for idle users
+- Selection cursors fade after 10s inactivity
+
+### 8.8 PermanentUserData for Attribution
+
+```typescript
+// Uses Yjs PermanentUserData for CRDT-level user tracking
+const pud = new Y.PermanentUserData(ydoc);
+const pudIds = Array.from(pud.clients.values());
+```
+
+This allows tracking which user made each CRDT operation, enabling:
+
+- Fine-grained attribution
+- Audit trails
+- Blame functionality
+
+---
+
+## 9. Recommendations for CoRATES
 
 ### High Priority
 
@@ -467,6 +728,7 @@ presence.touch(documentId, currentUser.id, isEditing);
    **Benefit:** Reduce server load, save resources
 
 2. **Operation Queue for Offline Mutations**
+
    ```javascript
    // packages/web/src/primitives/db.js already has ops table
    // Implement queue processing:
@@ -482,16 +744,47 @@ presence.touch(documentId, currentUser.id, isEditing);
      }
    }
    ```
+
    **Benefit:** True offline-first for non-CRDT operations
+
+3. **Revision History System**
+
+   ```javascript
+   // Add revisions table to Dexie
+   db.version(N).stores({
+     revisions: '++id, projectId, createdAt, userId',
+   });
+
+   // Create revision on checklist save
+   async function createRevision(projectId, ydoc, userId) {
+     const state = Y.encodeStateAsUpdate(ydoc);
+     await db.revisions.add({
+       projectId,
+       state,
+       userId,
+       collaboratorIds: getCurrentCollaborators(),
+       createdAt: new Date(),
+     });
+   }
+   ```
+
+   **Benefit:** Undo mistakes, compliance, audit trails
 
 ### Medium Priority
 
-3. **Revision History** (from Outline)
-   - Store periodic snapshots of Y.Doc state
-   - Enable "restore to version X"
-   - Track collaborator attribution
+4. **Collaborator Attribution**
 
-4. **Version Compatibility Checks**
+   ```javascript
+   // Track collaborators using Yjs PermanentUserData
+   const pud = new Y.PermanentUserData(ydoc);
+   pud.setUserMapping(doc, doc.clientID, userId);
+
+   // On save, extract all collaborator IDs
+   const collaboratorIds = Array.from(pud.clients.values());
+   ```
+
+5. **Version Compatibility Checks**
+
    ```javascript
    // Ensure client/server protocol compatibility
    provider.on('close', ev => {
@@ -502,30 +795,64 @@ presence.touch(documentId, currentUser.id, isEditing);
    });
    ```
 
+6. **Event Broadcasting for Multi-Tab Sync**
+
+   ```javascript
+   // Broadcast channel for same-origin tabs
+   const channel = new BroadcastChannel('corates-sync');
+
+   channel.onmessage = event => {
+     if (event.data.type === 'project.updated') {
+       // Invalidate TanStack Query cache
+       queryClient.invalidateQueries(['project', event.data.projectId]);
+     }
+   };
+   ```
+
 ### Low Priority
 
-5. **Follow Mode** (from Outline)
+7. **Follow Mode** (from Outline)
    - Allow users to follow another user's scroll position
    - Useful for presentations/demos
 
-6. **Batch Persistence Optimization**
+8. **Batch Persistence Optimization**
    - Debounce Y.Doc saves to reduce DO storage writes
    - Already partially implemented in Outline
 
+9. **State Migration Tooling**
+   ```javascript
+   // Create scripts for data repair/migration
+   // scripts/backfill-crdt.js - Recreate CRDT from checklist data
+   // scripts/validate-state.js - Check for corrupted Y.Doc states
+   ```
+
 ---
 
-## 9. Summary
+## 10. Summary
 
-| Capability               | CoRATES              | Outline                | Winner  |
-| ------------------------ | -------------------- | ---------------------- | ------- |
-| **True Offline Editing** | Yes (local projects) | No                     | CoRATES |
-| **Rich Presence**        | Basic                | Advanced               | Outline |
-| **Self-Hostable**        | No (Cloudflare)      | Yes                    | Outline |
-| **Global Latency**       | Low (edge)           | Higher (single server) | CoRATES |
-| **Revision History**     | No                   | Yes                    | Outline |
-| **Unified Storage**      | Yes (Dexie)          | No (per-doc)           | CoRATES |
-| **Idle Disconnect**      | No                   | Yes                    | Outline |
+| Capability                   | CoRATES              | Outline                 | Winner  |
+| ---------------------------- | -------------------- | ----------------------- | ------- |
+| **True Offline Editing**     | Yes (local projects) | No                      | CoRATES |
+| **Rich Presence**            | Basic                | Advanced                | Outline |
+| **Self-Hostable**            | No (Cloudflare)      | Yes                     | Outline |
+| **Global Latency**           | Low (edge)           | Higher (single server)  | CoRATES |
+| **Revision History**         | No                   | Yes (full system)       | Outline |
+| **Unified Storage**          | Yes (Dexie)          | No (per-doc)            | CoRATES |
+| **Idle Disconnect**          | No                   | Yes                     | Outline |
+| **Collaborator Attribution** | No                   | Yes (PermanentUserData) | Outline |
+| **Editor Version Check**     | No                   | Yes                     | Outline |
+| **Publish/Unpublish**        | No                   | Yes                     | Outline |
+| **Event Broadcasting**       | No                   | Yes (WebSocket events)  | Outline |
+| **State Migration Scripts**  | No                   | Yes (backfill tools)    | Outline |
 
 ### Key Takeaway
 
-CoRATES has a more modern, edge-native architecture with better offline support, while Outline has more mature collaboration features (presence, history, idle management). The recommended path is to adopt Outline's presence and idle management patterns while keeping CoRATES's superior offline architecture.
+CoRATES has a more modern, edge-native architecture with better offline support, while Outline has more mature collaboration features (presence, history, idle management, attribution). The recommended path is to adopt Outline's presence and idle management patterns while keeping CoRATES's superior offline architecture.
+
+### Priority Implementation Order
+
+1. **Revision History** - Most impactful for users (undo mistakes, compliance)
+2. **Idle Disconnect** - Resource savings, improved scalability
+3. **Collaborator Attribution** - User trust, audit trails
+4. **Event Broadcasting** - Multi-tab sync, real-time notifications
+5. **Editor Version Compatibility** - Forward compatibility, safe upgrades
