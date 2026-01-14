@@ -9,14 +9,15 @@ import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:
 import {
   resetTestDatabase,
   clearProjectDOs,
-  seedUser,
-  seedProject,
-  seedProjectMember,
-  seedOrganization,
-  seedOrgMember,
   seedProjectInvitation,
   json,
 } from '@/__tests__/helpers.js';
+import {
+  buildProject,
+  buildProjectWithMembers,
+  buildUser,
+  resetCounter,
+} from '@/__tests__/factories';
 import { createDb } from '@/db/client.js';
 import { projectInvitations, projectMembers, member } from '@/db/schema.js';
 import { eq, and } from 'drizzle-orm';
@@ -89,6 +90,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await resetTestDatabase();
+  resetCounter();
   await clearProjectDOs(['project-1']);
   vi.clearAllMocks();
 
@@ -162,51 +164,11 @@ async function fetchInvitations(orgId, projectId, path = '', init = {}) {
 
 describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/invitations', () => {
   it('should create new invitation and return 201', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { project, org, owner } = await buildProject();
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    const res = await fetchInvitations('org-1', 'project-1', '', {
+    const res = await fetchInvitations(org.id, project.id, '', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-test-user-id': owner.id },
       body: JSON.stringify({ email: 'invitee@example.com', role: 'member' }),
     });
 
@@ -224,143 +186,63 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
       .get();
 
     expect(invitation).toBeDefined();
-    expect(invitation.orgId).toBe('org-1');
-    expect(invitation.projectId).toBe('project-1');
-    expect(invitation.invitedBy).toBe('user-1');
+    expect(invitation.orgId).toBe(org.id);
+    expect(invitation.projectId).toBe(project.id);
+    expect(invitation.invitedBy).toBe(owner.id);
     expect(invitation.acceptedAt).toBeNull();
     expect(invitation.role).toBe('member');
     expect(invitation.orgRole).toBe('member');
     expect(invitation.grantOrgMembership).toBe(true);
-
-    // Note: Email queueing happens inside a try-catch that swallows errors
-    // The magic link generation code uses dynamic imports that may fail in test env
-    // For now, we just verify the invitation was created successfully
   });
 
   it('should lowercase email when creating invitation', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { project, org, owner } = await buildProject();
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    const res = await fetchInvitations('org-1', 'project-1', '', {
+    const res = await fetchInvitations(org.id, project.id, '', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: 'INVITEE@EXAMPLE.COM', role: 'member' }),
+      headers: { 'content-type': 'application/json', 'x-test-user-id': owner.id },
+      body: JSON.stringify({ email: 'UPPERCASE@EXAMPLE.COM', role: 'member' }),
     });
 
     expect(res.status).toBe(201);
 
-    // Check invitation email was lowercased
+    // Verify email was lowercased in DB
     const db = createDb(env.DB);
     const invitation = await db
       .select()
       .from(projectInvitations)
-      .where(eq(projectInvitations.email, 'invitee@example.com'))
+      .where(eq(projectInvitations.projectId, project.id))
       .get();
 
-    expect(invitation).toBeDefined();
+    expect(invitation.email).toBe('uppercase@example.com');
   });
+});
 
+
+describe('Project Invitation Routes - POST resend/cancel', () => {
   it('should resend existing pending invitation', async () => {
+    const { project, org, owner } = await buildProject();
     const nowSec = Math.floor(Date.now() / 1000);
     const token = 'existing-token';
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
     await seedProjectInvitation({
       id: 'inv-1',
-      orgId: 'org-1',
-      projectId: 'project-1',
+      orgId: org.id,
+      projectId: project.id,
       email: 'invitee@example.com',
       role: 'member',
       orgRole: 'member',
       grantOrgMembership: 1,
       token,
-      invitedBy: 'user-1',
+      invitedBy: owner.id,
       expiresAt: nowSec + 7 * 24 * 60 * 60,
       acceptedAt: null,
       createdAt: nowSec,
     });
 
-    const res = await fetchInvitations('org-1', 'project-1', '', {
+    const res = await fetchInvitations(org.id, project.id, '', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-test-user-id': owner.id },
       body: JSON.stringify({ email: 'invitee@example.com', role: 'owner' }),
     });
 
@@ -381,66 +263,27 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
   });
 
   it('should return error when invitation already accepted', async () => {
+    const { project, org, owner } = await buildProject();
     const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
 
     await seedProjectInvitation({
       id: 'inv-1',
-      orgId: 'org-1',
-      projectId: 'project-1',
+      orgId: org.id,
+      projectId: project.id,
       email: 'invitee@example.com',
       role: 'member',
       orgRole: 'member',
       grantOrgMembership: 1,
       token: 'token-1',
-      invitedBy: 'user-1',
+      invitedBy: owner.id,
       expiresAt: nowSec + 7 * 24 * 60 * 60,
       acceptedAt: nowSec,
       createdAt: nowSec,
     });
 
-    const res = await fetchInvitations('org-1', 'project-1', '', {
+    const res = await fetchInvitations(org.id, project.id, '', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-test-user-id': owner.id },
       body: JSON.stringify({ email: 'invitee@example.com', role: 'member' }),
     });
 
@@ -452,58 +295,19 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
 
 describe('Project Invitation Routes - GET /api/orgs/:orgId/projects/:projectId/invitations', () => {
   it('should list only pending invitations', async () => {
+    const { project, org, owner } = await buildProject();
     const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
 
     await seedProjectInvitation({
       id: 'inv-1',
-      orgId: 'org-1',
-      projectId: 'project-1',
+      orgId: org.id,
+      projectId: project.id,
       email: 'pending@example.com',
       role: 'member',
       orgRole: 'member',
       grantOrgMembership: 1,
       token: 'token-1',
-      invitedBy: 'user-1',
+      invitedBy: owner.id,
       expiresAt: nowSec + 7 * 24 * 60 * 60,
       acceptedAt: null,
       createdAt: nowSec,
@@ -511,20 +315,22 @@ describe('Project Invitation Routes - GET /api/orgs/:orgId/projects/:projectId/i
 
     await seedProjectInvitation({
       id: 'inv-2',
-      orgId: 'org-1',
-      projectId: 'project-1',
+      orgId: org.id,
+      projectId: project.id,
       email: 'accepted@example.com',
       role: 'member',
       orgRole: 'member',
       grantOrgMembership: 1,
       token: 'token-2',
-      invitedBy: 'user-1',
+      invitedBy: owner.id,
       expiresAt: nowSec + 7 * 24 * 60 * 60,
       acceptedAt: nowSec,
       createdAt: nowSec,
     });
 
-    const res = await fetchInvitations('org-1', 'project-1');
+    const res = await fetchInvitations(org.id, project.id, '', {
+      headers: { 'x-test-user-id': owner.id },
+    });
 
     expect(res.status).toBe(200);
     const body = await json(res);
@@ -535,50 +341,11 @@ describe('Project Invitation Routes - GET /api/orgs/:orgId/projects/:projectId/i
 
 describe('Project Invitation Routes - DELETE /api/orgs/:orgId/projects/:projectId/invitations/:invitationId', () => {
   it('should return error for nonexistent invitation', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { project, org, owner } = await buildProject();
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    const res = await fetchInvitations('org-1', 'project-1', '/nonexistent', {
+    const res = await fetchInvitations(org.id, project.id, '/nonexistent', {
       method: 'DELETE',
+      headers: { 'x-test-user-id': owner.id },
     });
 
     expect(res.status).toBe(400);
@@ -587,65 +354,27 @@ describe('Project Invitation Routes - DELETE /api/orgs/:orgId/projects/:projectI
   });
 
   it('should return error when canceling accepted invitation', async () => {
+    const { project, org, owner } = await buildProject();
     const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
 
     await seedProjectInvitation({
       id: 'inv-1',
-      orgId: 'org-1',
-      projectId: 'project-1',
+      orgId: org.id,
+      projectId: project.id,
       email: 'accepted@example.com',
       role: 'member',
       orgRole: 'member',
       grantOrgMembership: 1,
       token: 'token-1',
-      invitedBy: 'user-1',
+      invitedBy: owner.id,
       expiresAt: nowSec + 7 * 24 * 60 * 60,
       acceptedAt: nowSec,
       createdAt: nowSec,
     });
 
-    const res = await fetchInvitations('org-1', 'project-1', '/inv-1', {
+    const res = await fetchInvitations(org.id, project.id, '/inv-1', {
       method: 'DELETE',
+      headers: { 'x-test-user-id': owner.id },
     });
 
     expect(res.status).toBe(400);
@@ -654,65 +383,27 @@ describe('Project Invitation Routes - DELETE /api/orgs/:orgId/projects/:projectI
   });
 
   it('should cancel pending invitation', async () => {
+    const { project, org, owner } = await buildProject();
     const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
 
     await seedProjectInvitation({
       id: 'inv-1',
-      orgId: 'org-1',
-      projectId: 'project-1',
+      orgId: org.id,
+      projectId: project.id,
       email: 'pending@example.com',
       role: 'member',
       orgRole: 'member',
       grantOrgMembership: 1,
       token: 'token-1',
-      invitedBy: 'user-1',
+      invitedBy: owner.id,
       expiresAt: nowSec + 7 * 24 * 60 * 60,
       acceptedAt: null,
       createdAt: nowSec,
     });
 
-    const res = await fetchInvitations('org-1', 'project-1', '/inv-1', {
+    const res = await fetchInvitations(org.id, project.id, '/inv-1', {
       method: 'DELETE',
+      headers: { 'x-test-user-id': owner.id },
     });
 
     expect(res.status).toBe(200);
@@ -734,79 +425,33 @@ describe('Project Invitation Routes - DELETE /api/orgs/:orgId/projects/:projectI
 
 describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/invitations/accept', () => {
   it('should accept invitation and add user to org and project', async () => {
+    const { project, org, owner } = await buildProject();
+    const invitee = await buildUser({ email: 'invitee@example.com' });
     const nowSec = Math.floor(Date.now() / 1000);
     const token = 'accept-token';
     const futureExpiresAt = nowSec + 7 * 24 * 60 * 60;
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Inviter',
-      email: 'inviter@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'Invitee',
-      email: 'invitee@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
     await seedProjectInvitation({
       id: 'inv-1',
-      orgId: 'org-1',
-      projectId: 'project-1',
-      email: 'invitee@example.com',
+      orgId: org.id,
+      projectId: project.id,
+      email: invitee.email,
       role: 'member',
       orgRole: 'member',
       grantOrgMembership: 1,
       token,
-      invitedBy: 'user-1',
+      invitedBy: owner.id,
       expiresAt: futureExpiresAt,
       acceptedAt: null,
       createdAt: nowSec,
     });
 
-    const res = await fetchInvitations('org-1', 'project-1', '/accept', {
+    const res = await fetchInvitations(org.id, project.id, '/accept', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-test-user-id': 'user-2',
-        'x-test-user-email': 'invitee@example.com',
+        'x-test-user-id': invitee.id,
+        'x-test-user-email': invitee.email,
       },
       body: JSON.stringify({ token }),
     });
@@ -814,8 +459,8 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
     expect(res.status).toBe(200);
     const body = await json(res);
     expect(body.success).toBe(true);
-    expect(body.orgId).toBe('org-1');
-    expect(body.projectId).toBe('project-1');
+    expect(body.orgId).toBe(org.id);
+    expect(body.projectId).toBe(project.id);
     expect(body.role).toBe('member');
 
     // Check org membership was created
@@ -823,7 +468,7 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
     const orgMember = await db
       .select()
       .from(member)
-      .where(and(eq(member.organizationId, 'org-1'), eq(member.userId, 'user-2')))
+      .where(and(eq(member.organizationId, org.id), eq(member.userId, invitee.id)))
       .get();
 
     expect(orgMember).toBeDefined();
@@ -833,7 +478,7 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
     const projectMember = await db
       .select()
       .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, 'project-1'), eq(projectMembers.userId, 'user-2')))
+      .where(and(eq(projectMembers.projectId, project.id), eq(projectMembers.userId, invitee.id)))
       .get();
 
     expect(projectMember).toBeDefined();
@@ -851,10 +496,10 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
     // Check syncMemberToDO was called
     expect(mockSyncMemberToDO).toHaveBeenCalledWith(
       expect.any(Object),
-      'project-1',
+      project.id,
       'add',
       expect.objectContaining({
-        userId: 'user-2',
+        userId: invitee.id,
         role: 'member',
       }),
     );
@@ -864,9 +509,11 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
   });
 
   it('should return error for invalid token', async () => {
-    const res = await fetchInvitations('org-1', 'project-1', '/accept', {
+    const { project, org, owner } = await buildProject();
+
+    const res = await fetchInvitations(org.id, project.id, '/accept', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-test-user-id': owner.id },
       body: JSON.stringify({ token: 'invalid-token' }),
     });
 
@@ -876,63 +523,33 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
   });
 
   it('should return error for expired invitation', async () => {
+    const { project, org, owner } = await buildProject();
+    const invitee = await buildUser({ email: 'invitee@example.com' });
     const nowSec = Math.floor(Date.now() / 1000);
     const token = 'expired-token';
     const pastExpiresAt = nowSec - 24 * 60 * 60;
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Inviter',
-      email: 'inviter@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'Invitee',
-      email: 'invitee@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
     await seedProjectInvitation({
       id: 'inv-1',
-      orgId: 'org-1',
-      projectId: 'project-1',
-      email: 'invitee@example.com',
+      orgId: org.id,
+      projectId: project.id,
+      email: invitee.email,
       role: 'member',
       orgRole: 'member',
       grantOrgMembership: 1,
       token,
-      invitedBy: 'user-1',
+      invitedBy: owner.id,
       expiresAt: pastExpiresAt,
       acceptedAt: null,
       createdAt: nowSec,
     });
 
-    const res = await fetchInvitations('org-1', 'project-1', '/accept', {
+    const res = await fetchInvitations(org.id, project.id, '/accept', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-test-user-id': 'user-2',
-        'x-test-user-email': 'invitee@example.com',
+        'x-test-user-id': invitee.id,
+        'x-test-user-email': invitee.email,
       },
       body: JSON.stringify({ token }),
     });
@@ -944,63 +561,33 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
   });
 
   it('should return error for email mismatch', async () => {
+    const { project, org, owner } = await buildProject();
+    const differentUser = await buildUser({ email: 'different@example.com' });
     const nowSec = Math.floor(Date.now() / 1000);
     const token = 'token-1';
     const futureExpiresAt = nowSec + 7 * 24 * 60 * 60;
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Inviter',
-      email: 'inviter@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'Different User',
-      email: 'different@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
     await seedProjectInvitation({
       id: 'inv-1',
-      orgId: 'org-1',
-      projectId: 'project-1',
+      orgId: org.id,
+      projectId: project.id,
       email: 'invitee@example.com',
       role: 'member',
       orgRole: 'member',
       grantOrgMembership: 1,
       token,
-      invitedBy: 'user-1',
+      invitedBy: owner.id,
       expiresAt: futureExpiresAt,
       acceptedAt: null,
       createdAt: nowSec,
     });
 
-    const res = await fetchInvitations('org-1', 'project-1', '/accept', {
+    const res = await fetchInvitations(org.id, project.id, '/accept', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-test-user-id': 'user-2',
-        'x-test-user-email': 'different@example.com',
+        'x-test-user-id': differentUser.id,
+        'x-test-user-email': differentUser.email,
       },
       body: JSON.stringify({ token }),
     });
@@ -1012,71 +599,33 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
   });
 
   it('should mark invitation as accepted if user is already project member', async () => {
+    const { project, org, owner, members } = await buildProjectWithMembers({ memberCount: 1 });
+    const existingMember = members[1].user;
     const nowSec = Math.floor(Date.now() / 1000);
     const token = 'token-1';
     const futureExpiresAt = nowSec + 7 * 24 * 60 * 60;
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Inviter',
-      email: 'inviter@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'Invitee',
-      email: 'invitee@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-2',
-      role: 'member',
-      joinedAt: nowSec,
-    });
-
     await seedProjectInvitation({
       id: 'inv-1',
-      orgId: 'org-1',
-      projectId: 'project-1',
-      email: 'invitee@example.com',
+      orgId: org.id,
+      projectId: project.id,
+      email: existingMember.email,
       role: 'member',
       orgRole: 'member',
       grantOrgMembership: 1,
       token,
-      invitedBy: 'user-1',
+      invitedBy: owner.id,
       expiresAt: futureExpiresAt,
       acceptedAt: null,
       createdAt: nowSec,
     });
 
-    const res = await fetchInvitations('org-1', 'project-1', '/accept', {
+    const res = await fetchInvitations(org.id, project.id, '/accept', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-test-user-id': 'user-2',
-        'x-test-user-email': 'invitee@example.com',
+        'x-test-user-id': existingMember.id,
+        'x-test-user-email': existingMember.email,
       },
       body: JSON.stringify({ token }),
     });
@@ -1100,68 +649,29 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
     const projectMembersList = await db
       .select()
       .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, 'project-1'), eq(projectMembers.userId, 'user-2')))
+      .where(and(eq(projectMembers.projectId, project.id), eq(projectMembers.userId, existingMember.id)))
       .all();
 
     expect(projectMembersList).toHaveLength(1);
   });
 
   it('should return error when quota exceeded', async () => {
+    const { project, org, owner } = await buildProject();
+    const invitee = await buildUser({ email: 'invitee@example.com' });
     const nowSec = Math.floor(Date.now() / 1000);
     const token = 'token-1';
     const futureExpiresAt = nowSec + 7 * 24 * 60 * 60;
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'Invitee',
-      email: 'invitee@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    // Owner counts as a collaborator
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
     await seedProjectInvitation({
       id: 'inv-1',
-      orgId: 'org-1',
-      projectId: 'project-1',
-      email: 'invitee@example.com',
+      orgId: org.id,
+      projectId: project.id,
+      email: invitee.email,
       role: 'member',
       orgRole: 'member',
       grantOrgMembership: 1,
       token,
-      invitedBy: 'user-1',
+      invitedBy: owner.id,
       expiresAt: futureExpiresAt,
       acceptedAt: null,
       createdAt: nowSec,
@@ -1176,12 +686,12 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
       entitlements: {},
     });
 
-    const res = await fetchInvitations('org-1', 'project-1', '/accept', {
+    const res = await fetchInvitations(org.id, project.id, '/accept', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-test-user-id': 'user-2',
-        'x-test-user-email': 'invitee@example.com',
+        'x-test-user-id': invitee.id,
+        'x-test-user-email': invitee.email,
       },
       body: JSON.stringify({ token }),
     });
@@ -1196,7 +706,7 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
     const orgMember = await db
       .select()
       .from(member)
-      .where(and(eq(member.organizationId, 'org-1'), eq(member.userId, 'user-2')))
+      .where(and(eq(member.organizationId, org.id), eq(member.userId, invitee.id)))
       .get();
 
     expect(orgMember).toBeUndefined();
@@ -1204,7 +714,7 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
     const projectMember = await db
       .select()
       .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, 'project-1'), eq(projectMembers.userId, 'user-2')))
+      .where(and(eq(projectMembers.projectId, project.id), eq(projectMembers.userId, invitee.id)))
       .get();
 
     expect(projectMember).toBeUndefined();
