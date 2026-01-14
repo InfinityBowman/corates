@@ -1,12 +1,9 @@
-/**
- * Mock Data Templates for Yjs State Inspector
- *
- * Provides pre-built templates for testing different workflow states.
- * Used by dev API endpoints to quickly populate projects with test data.
- */
+interface QuestionStructure {
+  parts: number[][];
+  critical: boolean;
+}
 
-// AMSTAR2 question answer structure definitions (from schema)
-const AMSTAR2_STRUCTURE = {
+const AMSTAR2_STRUCTURE: Record<string, QuestionStructure> = {
   q1: { parts: [[4], [1], [2]], critical: false },
   q2: { parts: [[4], [3], [3]], critical: true },
   q3: { parts: [[3], [1]], critical: false },
@@ -27,8 +24,7 @@ const AMSTAR2_STRUCTURE = {
   q16: { parts: [[2], [2]], critical: false },
 };
 
-// ROBINS-I domain question keys
-const ROBINS_I_DOMAINS = {
+const ROBINS_I_DOMAINS: Record<string, string[]> = {
   domain1a: ['d1a_1', 'd1a_2', 'd1a_3', 'd1a_4'],
   domain1b: ['d1b_1', 'd1b_2', 'd1b_3', 'd1b_4', 'd1b_5'],
   domain2: ['d2_1', 'd2_2', 'd2_3', 'd2_4', 'd2_5'],
@@ -46,22 +42,29 @@ const ROBINS_I_DIRECTIONS = [
   'Unpredictable',
 ];
 
-/**
- * Generate AMSTAR2 question answers
- * @param {Object} options - Generation options
- * @param {string} options.fill - 'empty' | 'random' | 'all-yes' | 'all-no' | 'mixed'
- * @param {number} [options.seed] - Random seed for reproducible generation
- * @returns {Object} AMSTAR2 answers object
- */
-export function generateAMSTAR2Answers(options = {}) {
+type RngFunction = () => number;
+
+interface AMSTAR2Options {
+  fill?: 'empty' | 'random' | 'all-yes' | 'all-no' | 'mixed';
+  seed?: number;
+}
+
+interface AMSTAR2Answers {
+  [questionKey: string]: {
+    answers: boolean[][][];
+    critical: boolean;
+  };
+}
+
+export function generateAMSTAR2Answers(options: AMSTAR2Options = {}): AMSTAR2Answers {
   const { fill = 'empty', seed = Date.now() } = options;
   const rng = seededRandom(seed);
-  const answers = {};
+  const answers: AMSTAR2Answers = {};
 
   for (const [questionKey, structure] of Object.entries(AMSTAR2_STRUCTURE)) {
     const questionAnswers = structure.parts.map(partSizes =>
       partSizes.map(size => {
-        const row = new Array(size).fill(false);
+        const row = new Array<boolean>(size).fill(false);
         if (fill === 'random') {
           for (let i = 0; i < size; i++) {
             row[i] = rng() > 0.5;
@@ -87,19 +90,54 @@ export function generateAMSTAR2Answers(options = {}) {
   return answers;
 }
 
-/**
- * Generate ROBINS-I checklist answers
- * @param {Object} options - Generation options
- * @param {string} options.fill - 'empty' | 'random' | 'complete' | 'partial'
- * @param {boolean} [options.isPerProtocol] - Whether this is a per-protocol analysis (uses domain1b)
- * @param {number} [options.seed] - Random seed for reproducible generation
- * @returns {Object} ROBINS-I answers object for import
- */
-export function generateROBINSIAnswers(options = {}) {
+interface ROBINSIOptions {
+  fill?: 'empty' | 'random' | 'complete' | 'partial';
+  isPerProtocol?: boolean;
+  seed?: number;
+}
+
+interface ROBINSIAnswers {
+  planning: {
+    confoundingFactors: string;
+  };
+  sectionA: {
+    numericalResult: string;
+    furtherDetails: string;
+    outcome: string;
+  };
+  sectionB: {
+    b1: { answer: string | null; comment: string };
+    b2: { answer: string | null; comment: string };
+    b3: { answer: string | null; comment: string };
+    stopAssessment: boolean;
+  };
+  sectionC: {
+    participants: string;
+    interventionStrategy: string;
+    comparatorStrategy: string;
+    isPerProtocol: boolean;
+  };
+  sectionD: {
+    sources: Record<string, boolean>;
+    otherSpecify: string;
+  };
+  confoundingEvaluation: {
+    predefined: string[];
+    additional: string[];
+  };
+  [domainKey: string]: unknown;
+  overall: {
+    judgement: string | null;
+    judgementSource: string;
+    direction: string | null;
+  };
+}
+
+export function generateROBINSIAnswers(options: ROBINSIOptions = {}): ROBINSIAnswers {
   const { fill = 'empty', isPerProtocol = false, seed = Date.now() } = options;
   const rng = seededRandom(seed);
 
-  const answers = {
+  const answers: ROBINSIAnswers = {
     planning: {
       confoundingFactors: fill !== 'empty' ? 'Age, comorbidities, baseline severity' : '',
     },
@@ -141,7 +179,8 @@ export function generateROBINSIAnswers(options = {}) {
         'Regulatory document (e.g. Clinical Study Report, Drug Approval Package)': false,
         'Individual participant data': false,
         'Research ethics application': false,
-        'Grant database summary (e.g. NIH RePORTER, Research Councils UK Gateway to Research)': false,
+        'Grant database summary (e.g. NIH RePORTER, Research Councils UK Gateway to Research)':
+          false,
         'Personal communication with investigator': false,
         'Personal communication with sponsor': false,
       },
@@ -151,25 +190,29 @@ export function generateROBINSIAnswers(options = {}) {
       predefined: fill !== 'empty' ? ['Age', 'Baseline severity'] : [],
       additional: [],
     },
+    overall: {
+      judgement: fill === 'complete' ? pickRandom(rng, ROBINS_I_JUDGEMENTS) : null,
+      judgementSource: 'auto',
+      direction: fill === 'complete' ? pickRandom(rng, ROBINS_I_DIRECTIONS) : null,
+    },
   };
 
-  // Generate domain answers
   const domainsToFill =
-    isPerProtocol ?
-      ['domain1b', 'domain2', 'domain3', 'domain4', 'domain5', 'domain6']
-    : ['domain1a', 'domain2', 'domain3', 'domain4', 'domain5', 'domain6'];
+    isPerProtocol
+      ? ['domain1b', 'domain2', 'domain3', 'domain4', 'domain5', 'domain6']
+      : ['domain1a', 'domain2', 'domain3', 'domain4', 'domain5', 'domain6'];
 
   for (const domainKey of domainsToFill) {
     const questionKeys = ROBINS_I_DOMAINS[domainKey];
     if (!questionKeys) continue;
 
-    const domainAnswers = {};
+    const domainAnswers: Record<string, { answer: string | null; comment: string }> = {};
     for (const qKey of questionKeys) {
       domainAnswers[qKey] = {
         answer:
-          fill === 'empty' || (fill === 'partial' && rng() > 0.7) ?
-            null
-          : pickRandom(rng, ROBINS_I_RESPONSES),
+          fill === 'empty' || (fill === 'partial' && rng() > 0.7)
+            ? null
+            : pickRandom(rng, ROBINS_I_RESPONSES),
         comment: '',
       };
     }
@@ -181,26 +224,16 @@ export function generateROBINSIAnswers(options = {}) {
       answers: domainAnswers,
       judgement: fill === 'complete' ? pickRandom(rng, ROBINS_I_JUDGEMENTS) : null,
       judgementSource: 'auto',
-      ...(hasDirection ?
-        { direction: fill === 'complete' ? pickRandom(rng, ROBINS_I_DIRECTIONS) : null }
-      : {}),
+      ...(hasDirection
+        ? { direction: fill === 'complete' ? pickRandom(rng, ROBINS_I_DIRECTIONS) : null }
+        : {}),
     };
   }
-
-  // Overall judgement
-  answers.overall = {
-    judgement: fill === 'complete' ? pickRandom(rng, ROBINS_I_JUDGEMENTS) : null,
-    judgementSource: 'auto',
-    direction: fill === 'complete' ? pickRandom(rng, ROBINS_I_DIRECTIONS) : null,
-  };
 
   return answers;
 }
 
-/**
- * Simple seeded random number generator
- */
-function seededRandom(seed) {
+function seededRandom(seed: number): RngFunction {
   let s = seed;
   return function () {
     s = (s * 1103515245 + 12345) & 0x7fffffff;
@@ -208,17 +241,11 @@ function seededRandom(seed) {
   };
 }
 
-/**
- * Pick a random element from an array
- */
-function pickRandom(rng, arr) {
+function pickRandom<T>(rng: RngFunction, arr: T[]): T {
   return arr[Math.floor(rng() * arr.length)];
 }
 
-/**
- * Generate a UUID-like string
- */
-function generateId(prefix = '') {
+function generateId(prefix: string = ''): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let id = '';
   for (let i = 0; i < 12; i++) {
@@ -227,22 +254,84 @@ function generateId(prefix = '') {
   return prefix ? `${prefix}_${id}` : id;
 }
 
-/**
- * Get current ISO date string
- */
-function nowISO() {
+function nowISO(): string {
   return new Date().toISOString();
 }
 
-/**
- * Mock Data Templates
- *
- * Each template returns a function that generates fresh data (with new IDs/timestamps).
- */
-export const MOCK_TEMPLATES = {
-  /**
-   * Empty project - just meta, no studies or members
-   */
+interface MockMember {
+  userId: string;
+  role: string;
+  joinedAt: string;
+  name: string;
+  email: string;
+  displayName: string;
+  image: string | null;
+}
+
+interface MockChecklist {
+  id: string;
+  type: string;
+  title: string;
+  assignedTo: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  answers: AMSTAR2Answers | ROBINSIAnswers;
+}
+
+interface MockPdf {
+  fileName: string;
+  key: string;
+  size: number;
+  uploadedBy: string;
+  uploadedAt: string;
+}
+
+interface MockReconciliation {
+  status: string;
+  completedAt: string;
+  completedBy: string;
+  notes: string;
+}
+
+interface MockStudy {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+  originalTitle: string;
+  firstAuthor: string;
+  publicationYear: number;
+  authors: string;
+  journal: string;
+  doi: string;
+  abstract: string;
+  pdfUrl: string | null;
+  pdfSource: string | null;
+  pdfAccessible: boolean;
+  reviewer1: string | null;
+  reviewer2: string | null;
+  checklists: MockChecklist[];
+  pdfs: MockPdf[];
+  reconciliation: MockReconciliation | null;
+}
+
+interface MockProjectData {
+  version: number;
+  meta: {
+    name: string;
+    description: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+  members: MockMember[];
+  studies: MockStudy[];
+}
+
+type TemplateFunction = () => MockProjectData;
+
+export const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
   empty: () => ({
     version: 1,
     meta: {
@@ -255,9 +344,6 @@ export const MOCK_TEMPLATES = {
     studies: [],
   }),
 
-  /**
-   * Studies only - has studies but no checklists
-   */
   'studies-only': () => {
     const now = nowISO();
     return {
@@ -330,9 +416,6 @@ export const MOCK_TEMPLATES = {
     };
   },
 
-  /**
-   * AMSTAR2 complete - single study with completed AMSTAR2 checklist
-   */
   'amstar2-complete': () => {
     const now = nowISO();
     const studyId = generateId('study');
@@ -396,9 +479,6 @@ export const MOCK_TEMPLATES = {
     };
   },
 
-  /**
-   * ROBINS-I in progress - study with partially completed ROBINS-I checklist
-   */
   'robins-i-progress': () => {
     const now = nowISO();
     const studyId = generateId('study');
@@ -462,9 +542,6 @@ export const MOCK_TEMPLATES = {
     };
   },
 
-  /**
-   * Reconciliation ready - study with 2 completed checklists from different reviewers
-   */
   'reconciliation-ready': () => {
     const now = nowISO();
     const studyId = generateId('study');
@@ -547,9 +624,6 @@ export const MOCK_TEMPLATES = {
     };
   },
 
-  /**
-   * Full workflow - multiple studies in various states
-   */
   'full-workflow': () => {
     const now = nowISO();
     const study1Id = generateId('study');
@@ -594,7 +668,6 @@ export const MOCK_TEMPLATES = {
         },
       ],
       studies: [
-        // Study 1: Not yet started
         {
           id: study1Id,
           name: 'Pending Review Study',
@@ -617,7 +690,6 @@ export const MOCK_TEMPLATES = {
           pdfs: [],
           reconciliation: null,
         },
-        // Study 2: In progress with both AMSTAR2 and ROBINS-I
         {
           id: study2Id,
           name: 'Mixed Assessment Study',
@@ -669,7 +741,6 @@ export const MOCK_TEMPLATES = {
           ],
           reconciliation: null,
         },
-        // Study 3: Completed with reconciliation
         {
           id: study3Id,
           name: 'Reconciled Study',
@@ -738,28 +809,17 @@ export const MOCK_TEMPLATES = {
   },
 };
 
-/**
- * Get available template names
- */
-export function getTemplateNames() {
+export function getTemplateNames(): string[] {
   return Object.keys(MOCK_TEMPLATES);
 }
 
-/**
- * Get a template by name
- * @param {string} name - Template name
- * @returns {Object|null} Generated template data or null if not found
- */
-export function getTemplate(name) {
+export function getTemplate(name: string): MockProjectData | null {
   const template = MOCK_TEMPLATES[name];
   if (!template) return null;
   return template();
 }
 
-/**
- * Get template descriptions for display
- */
-export function getTemplateDescriptions() {
+export function getTemplateDescriptions(): Record<string, string> {
   return {
     empty: 'Empty project with no studies or members',
     'studies-only': 'Project with studies but no checklists attached',

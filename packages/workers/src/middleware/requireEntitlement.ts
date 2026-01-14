@@ -26,7 +26,7 @@ export function requireEntitlement(entitlement: string): MiddlewareHandler {
     const db = createDb((c as AppContext).env.DB);
     const orgBilling = (await resolveOrgAccess(db, orgId)) as OrgBilling;
 
-    if (!orgBilling.entitlements[entitlement]) {
+    if (!(orgBilling.entitlements as unknown as Record<string, boolean>)[entitlement]) {
       const error = createDomainError(
         AUTH_ERRORS.FORBIDDEN,
         { reason: 'missing_entitlement', entitlement },

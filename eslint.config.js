@@ -315,6 +315,7 @@ export default [
         DurableObject: 'readonly',
         DurableObjectState: 'readonly',
         DurableObjectNamespace: 'readonly',
+        DurableObjectStub: 'readonly',
         R2Bucket: 'readonly',
         KVNamespace: 'readonly',
         ExecutionContext: 'readonly',

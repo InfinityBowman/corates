@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 import type { Env } from './env';
+import type { Entitlements, Quotas, GrantType } from '@corates/shared/plans';
 
 export interface AuthUser {
   id: string;
@@ -50,8 +51,8 @@ export interface OrgBilling {
   effectivePlanId: string;
   source: 'subscription' | 'grant' | 'free';
   accessMode: 'full' | 'readOnly' | 'free';
-  entitlements: Record<string, boolean>;
-  quotas: Record<string, number>;
+  entitlements: Entitlements;
+  quotas: Quotas;
   subscription: {
     id: string;
     status: string;
@@ -60,7 +61,7 @@ export interface OrgBilling {
   } | null;
   grant: {
     id: string;
-    type: string;
+    type: GrantType;
     expiresAt: Date | number | null;
   } | null;
 }
@@ -75,8 +76,8 @@ export interface AppVariables {
   projectRole?: string;
   project?: ProjectContext;
   orgBilling?: OrgBilling;
-  entitlements?: Record<string, boolean>;
-  quotas?: Record<string, number>;
+  entitlements?: Entitlements;
+  quotas?: Quotas;
   isAdmin?: boolean;
   subscription?: unknown;
   tier?: string;

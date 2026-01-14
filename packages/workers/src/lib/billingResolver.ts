@@ -1,67 +1,67 @@
-/**
- * BillingResolver - Single source of truth for org billing resolution
- * Centralizes subscription status evaluation and grant precedence logic
- */
-
 import { eq, and, desc, isNull, ne, count } from 'drizzle-orm';
-import { subscription, orgAccessGrants, projects, member } from '@/db/schema.js';
-import { getActiveGrantsByOrgId } from '@/db/orgAccessGrants.js';
+import { subscription, orgAccessGrants, projects, member } from '@/db/schema';
+import { getActiveGrantsByOrgId } from '@/db/orgAccessGrants';
 import { getPlan, DEFAULT_PLAN, getGrantPlan, isUnlimitedQuota } from '@corates/shared/plans';
+import type { GrantType, Quotas } from '@corates/shared/plans';
+import type { Database } from '../db/client';
+import type { OrgBilling } from '../types';
 
-/**
- * Check if a subscription is active based on status and period end
- * This is the ONLY place subscription status evaluation should happen
- * @param {Object} subscription - Subscription record from database
- * @param {Date|number} now - Current timestamp
- * @returns {boolean} True if subscription provides full access
- */
-export function isSubscriptionActive(subscription, now) {
-  if (!subscription) return false;
+interface SubscriptionRecord {
+  id: string;
+  referenceId: string;
+  status: string;
+  plan: string;
+  periodEnd: Date | number | null;
+  cancelAtPeriodEnd: boolean | null;
+}
+
+interface GrantRecord {
+  id: string;
+  type: GrantType;
+  expiresAt: Date | number | null;
+  orgId: string;
+  revokedAt: Date | null;
+}
+
+export function isSubscriptionActive(
+  sub: SubscriptionRecord | null,
+  now: Date | number,
+): boolean {
+  if (!sub) return false;
 
   const nowTimestamp = now instanceof Date ? Math.floor(now.getTime() / 1000) : now;
-  const status = subscription.status;
+  const status = sub.status;
   const periodEnd =
-    subscription.periodEnd ?
-      subscription.periodEnd instanceof Date ?
-        Math.floor(subscription.periodEnd.getTime() / 1000)
-      : subscription.periodEnd
-    : null;
+    sub.periodEnd
+      ? sub.periodEnd instanceof Date
+        ? Math.floor(sub.periodEnd.getTime() / 1000)
+        : sub.periodEnd
+      : null;
 
-  // trialing: Always active (subscription takes precedence over grants)
   if (status === 'trialing') {
     return true;
   }
 
-  // active: Full access, but check cancelAtPeriodEnd
   if (status === 'active') {
-    if (subscription.cancelAtPeriodEnd && periodEnd) {
-      // Scheduled cancel: Full access until periodEnd
+    if (sub.cancelAtPeriodEnd && periodEnd) {
       return nowTimestamp < periodEnd;
     }
-    // Normal active: Full access
     return true;
   }
 
-  // past_due: Full access until periodEnd (grace period)
   if (status === 'past_due') {
     if (!periodEnd) return false;
     return nowTimestamp < periodEnd;
   }
 
-  // Inactive statuses (subscription does not provide access)
-  // paused, canceled, unpaid, incomplete, incomplete_expired
   return false;
 }
 
-/**
- * Get the active subscription for an org (if any)
- * @param {DrizzleD1Database} db - Drizzle database instance
- * @param {string} orgId - Organization ID
- * @param {Date|number} now - Current timestamp
- * @returns {Promise<Object | null>}
- */
-async function getActiveSubscription(db, orgId, now) {
-  // Get all subscriptions for this org (referenceId = orgId)
+async function getActiveSubscription(
+  db: Database,
+  orgId: string,
+  now: number,
+): Promise<SubscriptionRecord | null> {
   const subscriptions = await db
     .select()
     .from(subscription)
@@ -73,43 +73,35 @@ async function getActiveSubscription(db, orgId, now) {
     return null;
   }
 
-  // Find all active subscriptions
-  const activeSubscriptions = subscriptions.filter(sub => isSubscriptionActive(sub, now));
+  const activeSubscriptions = subscriptions.filter(sub =>
+    isSubscriptionActive(sub as SubscriptionRecord, now),
+  );
 
   if (activeSubscriptions.length === 0) {
-    // No active subscriptions - return latest periodEnd (may be null if no subscriptions exist)
-    // Multiple ended subscriptions is normal and expected
-    return subscriptions[0] || null;
+    return (subscriptions[0] as SubscriptionRecord) || null;
   }
 
-  // If multiple active subscriptions exist (invariant violation), pick the one with latest periodEnd
   if (activeSubscriptions.length > 1) {
     console.warn(
       `[BillingResolver] Multiple active subscriptions found for org ${orgId}. Using latest periodEnd.`,
     );
-    // Already sorted by periodEnd desc, so first one is latest
-    return activeSubscriptions[0];
+    return activeSubscriptions[0] as SubscriptionRecord;
   }
 
-  return activeSubscriptions[0];
+  return activeSubscriptions[0] as SubscriptionRecord;
 }
 
-/**
- * Resolve effective access for an organization
- * @param {DrizzleD1Database} db - Drizzle database instance
- * @param {string} orgId - Organization ID
- * @param {Date|number} [now] - Current timestamp (defaults to now)
- * @returns {Promise<Object>} Resolved billing state
- */
-export async function resolveOrgAccess(db, orgId, now = new Date()) {
+export async function resolveOrgAccess(
+  db: Database,
+  orgId: string,
+  now: Date | number = new Date(),
+): Promise<OrgBilling> {
   const nowDate = now instanceof Date ? now : new Date(now * 1000);
   const nowTimestamp = Math.floor(nowDate.getTime() / 1000);
 
-  // 1. Check for active Stripe subscription
   const activeSubscription = await getActiveSubscription(db, orgId, nowTimestamp);
 
   if (activeSubscription && isSubscriptionActive(activeSubscription, nowTimestamp)) {
-    // Subscription takes precedence over grants
     const plan = getPlan(activeSubscription.plan);
     return {
       effectivePlanId: activeSubscription.plan,
@@ -127,53 +119,48 @@ export async function resolveOrgAccess(db, orgId, now = new Date()) {
     };
   }
 
-  // 2. Check for active grants (when no active subscription)
   const activeGrants = await getActiveGrantsByOrgId(db, orgId, nowDate);
 
   if (activeGrants.length > 0) {
-    // Precedence: trial > single_project
-    // Tie-breaker: latest expiresAt for same type
-    let selectedGrant = null;
-    let selectedType = null;
+    let selectedGrant: GrantRecord | null = null;
+    let selectedType: string | null = null;
 
     for (const grant of activeGrants) {
-      if (grant.type === 'trial') {
+      const grantRecord = grant as GrantRecord;
+      if (grantRecord.type === 'trial') {
         if (!selectedGrant || selectedType !== 'trial') {
-          selectedGrant = grant;
+          selectedGrant = grantRecord;
           selectedType = 'trial';
         } else {
-          // Both are trial, pick latest expiresAt
           const currentExpires =
-            selectedGrant.expiresAt instanceof Date ?
-              Math.floor(selectedGrant.expiresAt.getTime() / 1000)
-            : selectedGrant.expiresAt;
+            selectedGrant.expiresAt instanceof Date
+              ? Math.floor(selectedGrant.expiresAt.getTime() / 1000)
+              : (selectedGrant.expiresAt as number);
           const grantExpires =
-            grant.expiresAt instanceof Date ?
-              Math.floor(grant.expiresAt.getTime() / 1000)
-            : grant.expiresAt;
+            grantRecord.expiresAt instanceof Date
+              ? Math.floor(grantRecord.expiresAt.getTime() / 1000)
+              : (grantRecord.expiresAt as number);
           if (grantExpires > currentExpires) {
-            selectedGrant = grant;
+            selectedGrant = grantRecord;
           }
         }
-      } else if (grant.type === 'single_project') {
+      } else if (grantRecord.type === 'single_project') {
         if (!selectedGrant || selectedType === 'single_project') {
-          // Only select if no trial selected, or if this is a better single_project
           if (!selectedGrant || selectedType !== 'trial') {
             if (!selectedGrant) {
-              selectedGrant = grant;
+              selectedGrant = grantRecord;
               selectedType = 'single_project';
             } else {
-              // Both are single_project, pick latest expiresAt
               const currentExpires =
-                selectedGrant.expiresAt instanceof Date ?
-                  Math.floor(selectedGrant.expiresAt.getTime() / 1000)
-                : selectedGrant.expiresAt;
+                selectedGrant.expiresAt instanceof Date
+                  ? Math.floor(selectedGrant.expiresAt.getTime() / 1000)
+                  : (selectedGrant.expiresAt as number);
               const grantExpires =
-                grant.expiresAt instanceof Date ?
-                  Math.floor(grant.expiresAt.getTime() / 1000)
-                : grant.expiresAt;
+                grantRecord.expiresAt instanceof Date
+                  ? Math.floor(grantRecord.expiresAt.getTime() / 1000)
+                  : (grantRecord.expiresAt as number);
               if (grantExpires > currentExpires) {
-                selectedGrant = grant;
+                selectedGrant = grantRecord;
               }
             }
           }
@@ -184,7 +171,7 @@ export async function resolveOrgAccess(db, orgId, now = new Date()) {
     if (selectedGrant) {
       const grantPlan = getGrantPlan(selectedGrant.type);
       return {
-        effectivePlanId: selectedGrant.type, // Grant type, not a plan ID, but works for resolution
+        effectivePlanId: selectedGrant.type,
         source: 'grant',
         accessMode: 'full',
         entitlements: grantPlan.entitlements,
@@ -199,7 +186,6 @@ export async function resolveOrgAccess(db, orgId, now = new Date()) {
     }
   }
 
-  // 3. Check for expired grants (read-only access)
   const allGrants = await db
     .select()
     .from(orgAccessGrants)
@@ -208,16 +194,16 @@ export async function resolveOrgAccess(db, orgId, now = new Date()) {
     .all();
 
   const expiredGrants = allGrants.filter(grant => {
+    const grantRecord = grant as GrantRecord;
     const expiresAt =
-      grant.expiresAt instanceof Date ?
-        Math.floor(grant.expiresAt.getTime() / 1000)
-      : grant.expiresAt;
+      grantRecord.expiresAt instanceof Date
+        ? Math.floor(grantRecord.expiresAt.getTime() / 1000)
+        : (grantRecord.expiresAt as number);
     return expiresAt <= nowTimestamp;
   });
 
   if (expiredGrants.length > 0) {
-    // Expired grant provides read-only access
-    const expiredGrant = expiredGrants[0]; // Latest expired grant
+    const expiredGrant = expiredGrants[0] as GrantRecord;
     const grantPlan = getGrantPlan(expiredGrant.type);
     return {
       effectivePlanId: expiredGrant.type,
@@ -234,7 +220,6 @@ export async function resolveOrgAccess(db, orgId, now = new Date()) {
     };
   }
 
-  // 4. Default fallback: free tier (can write to projects they're members of, but cannot create projects)
   const freePlan = getPlan(DEFAULT_PLAN);
   return {
     effectivePlanId: DEFAULT_PLAN,
@@ -247,22 +232,17 @@ export async function resolveOrgAccess(db, orgId, now = new Date()) {
   };
 }
 
-/**
- * Get current resource usage for an organization
- * Used for downgrade validation
- *
- * @param {DrizzleD1Database} db - Drizzle database instance
- * @param {string} orgId - Organization ID
- * @returns {Promise<{projects: number, collaborators: number}>}
- */
-export async function getOrgResourceUsage(db, orgId) {
-  // Count projects in org
+interface OrgResourceUsage {
+  projects: number;
+  collaborators: number;
+}
+
+export async function getOrgResourceUsage(db: Database, orgId: string): Promise<OrgResourceUsage> {
   const [projectResult] = await db
     .select({ count: count() })
     .from(projects)
     .where(eq(projects.orgId, orgId));
 
-  // Count non-owner members (owner doesn't count toward collaborator limit)
   const [memberResult] = await db
     .select({ count: count() })
     .from(member)
@@ -274,22 +254,34 @@ export async function getOrgResourceUsage(db, orgId) {
   };
 }
 
-/**
- * Validate if an organization can downgrade/change to a target plan
- * Checks if current usage would exceed the target plan's quotas
- *
- * @param {DrizzleD1Database} db - Drizzle database instance
- * @param {string} orgId - Organization ID
- * @param {string} targetPlanId - Target plan ID to validate against
- * @returns {Promise<{valid: boolean, violations: Array<{quotaKey: string, used: number, limit: number, message: string}>}>}
- */
-export async function validatePlanChange(db, orgId, targetPlanId) {
+interface QuotaViolation {
+  quotaKey: string;
+  used: number;
+  limit: number;
+  message: string;
+}
+
+interface PlanChangeValidation {
+  valid: boolean;
+  violations: QuotaViolation[];
+  usage: OrgResourceUsage;
+  targetPlan: {
+    id: string;
+    name: string;
+    quotas: Quotas;
+  };
+}
+
+export async function validatePlanChange(
+  db: Database,
+  orgId: string,
+  targetPlanId: string,
+): Promise<PlanChangeValidation> {
   const targetPlan = getPlan(targetPlanId);
   const usage = await getOrgResourceUsage(db, orgId);
 
-  const violations = [];
+  const violations: QuotaViolation[] = [];
 
-  // Check projects quota
   const projectsLimit = targetPlan.quotas['projects.max'];
   if (!isUnlimitedQuota(projectsLimit) && usage.projects > projectsLimit) {
     violations.push({
@@ -300,7 +292,6 @@ export async function validatePlanChange(db, orgId, targetPlanId) {
     });
   }
 
-  // Check collaborators quota
   const collaboratorsLimit = targetPlan.quotas['collaborators.org.max'];
   if (!isUnlimitedQuota(collaboratorsLimit) && usage.collaborators > collaboratorsLimit) {
     violations.push({

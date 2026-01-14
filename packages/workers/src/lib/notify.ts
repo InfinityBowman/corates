@@ -1,19 +1,31 @@
-/**
- * Notification utilities for sending real-time events to users via UserSession DO
- */
+import type { Env } from '../types';
+import type { Database } from '../db/client';
 
-/**
- * Send a notification event to a user's UserSession Durable Object
- * The DO will broadcast to all connected WebSocket clients or queue for later delivery
- *
- * @param {Object} env - Worker environment with USER_SESSION binding
- * @param {string} userId - The user ID to notify
- * @param {Object} event - The event to send
- * @param {string} event.type - Event type (e.g., 'subscription:updated')
- * @param {Object} event.data - Event payload
- * @returns {Promise<{success: boolean, delivered: boolean}>}
- */
-export async function notifyUser(env, userId, event) {
+interface NotifyEvent {
+  type: string;
+  data?: Record<string, unknown>;
+  timestamp?: number;
+}
+
+interface NotifyResult {
+  success: boolean;
+  delivered: boolean;
+}
+
+interface NotifyOrgResult {
+  notified: number;
+  failed: number;
+}
+
+interface NotifyOrgOptions {
+  excludeUserIds?: string[];
+}
+
+export async function notifyUser(
+  env: Env,
+  userId: string,
+  event: NotifyEvent,
+): Promise<NotifyResult> {
   if (!env.USER_SESSION) {
     console.warn('[notify] USER_SESSION binding not available');
     return { success: false, delivered: false };
@@ -44,7 +56,7 @@ export async function notifyUser(env, userId, event) {
       return { success: false, delivered: false };
     }
 
-    const result = await response.json();
+    const result = (await response.json()) as NotifyResult;
     return result;
   } catch (error) {
     console.error('[notify] Error sending notification:', error);
@@ -52,23 +64,17 @@ export async function notifyUser(env, userId, event) {
   }
 }
 
-/**
- * Notify all members of an organization
- * Useful for org-level events like membership changes
- *
- * @param {Object} env - Worker environment
- * @param {Object} db - Drizzle database instance
- * @param {string} orgId - The organization ID
- * @param {Object} event - The event to send
- * @param {Object} options - Options
- * @param {string[]} [options.excludeUserIds] - User IDs to exclude from notification
- * @returns {Promise<{notified: number, failed: number}>}
- */
-export async function notifyOrgMembers(env, db, orgId, event, options = {}) {
+export async function notifyOrgMembers(
+  env: Env,
+  db: Database,
+  orgId: string,
+  event: NotifyEvent,
+  options: NotifyOrgOptions = {},
+): Promise<NotifyOrgResult> {
   const { excludeUserIds = [] } = options;
 
   try {
-    const { member } = await import('../db/schema.js');
+    const { member } = await import('../db/schema');
     const { eq } = await import('drizzle-orm');
 
     const members = await db
@@ -98,20 +104,12 @@ export async function notifyOrgMembers(env, db, orgId, event, options = {}) {
   }
 }
 
-/**
- * Event type constants for type safety
- */
 export const EventTypes = {
-  // Subscription events
   SUBSCRIPTION_UPDATED: 'subscription:updated',
   SUBSCRIPTION_CANCELED: 'subscription:canceled',
-
-  // Organization events
   ORG_MEMBER_ADDED: 'org:member-added',
   ORG_MEMBER_REMOVED: 'org:member-removed',
   ORG_ROLE_CHANGED: 'org:role-changed',
-
-  // Project events
   PROJECT_SHARED: 'project:shared',
   PROJECT_UNSHARED: 'project:unshared',
-};
+} as const;

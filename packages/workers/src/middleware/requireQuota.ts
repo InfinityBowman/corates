@@ -59,7 +59,7 @@ export function requireQuota(
 
     const used = await getUsage(c, user);
 
-    const limit = orgBilling.quotas[quotaKey];
+    const limit = (orgBilling.quotas as unknown as Record<string, number>)[quotaKey];
     if (!isUnlimitedQuota(limit) && used + requested > limit) {
       const error = createDomainError(
         AUTH_ERRORS.FORBIDDEN,
