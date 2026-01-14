@@ -1,13 +1,36 @@
-import { EMAIL_RETRY_CONFIG } from '../config/constants.js';
+import { EMAIL_RETRY_CONFIG } from '../config/constants';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import type { Env } from '../types';
 
-export class EmailQueue {
-  constructor(state, env) {
+interface EmailPayload {
+  to: string;
+  subject: string;
+  html?: string;
+  text?: string;
+}
+
+interface EmailRecord {
+  id: string;
+  payload: EmailPayload;
+  attempts: number;
+  nextRetryAt: number;
+  createdAt: number;
+  status: 'pending' | 'sent' | 'retry-pending' | 'failed';
+  lastAttemptAt?: number;
+  sentAt?: number;
+  error?: string;
+}
+
+export class EmailQueue implements DurableObject {
+  private state: DurableObjectState;
+  private env: Env;
+
+  constructor(state: DurableObjectState, env: Env) {
     this.state = state;
     this.env = env;
   }
 
-  async fetch(request) {
+  async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
     // Handle alarm-triggered retry processing
@@ -21,7 +44,7 @@ export class EmailQueue {
     }
 
     try {
-      const payload = await request.json();
+      const payload = (await request.json()) as EmailPayload | null;
       // Minimally validate
       if (!payload?.to || !payload?.subject || (!payload?.html && !payload?.text)) {
         return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400 });
@@ -40,9 +63,9 @@ export class EmailQueue {
   /**
    * Queue an email for sending with retry support
    */
-  async queueEmail(payload) {
+  async queueEmail(payload: EmailPayload): Promise<void> {
     const emailId = crypto.randomUUID();
-    const emailRecord = {
+    const emailRecord: EmailRecord = {
       id: emailId,
       payload,
       attempts: 0,
@@ -61,15 +84,15 @@ export class EmailQueue {
   /**
    * Attempt to send an email with exponential backoff
    */
-  async attemptSend(emailRecord) {
-    const { createEmailService } = await import('../auth/email.js');
+  async attemptSend(emailRecord: EmailRecord): Promise<boolean> {
+    const { createEmailService } = await import('../auth/email');
     const emailService = createEmailService(this.env);
 
     emailRecord.attempts++;
     emailRecord.lastAttemptAt = Date.now();
 
     try {
-      const result = await emailService.sendEmail(emailRecord.payload);
+      const result = await emailService.sendEmail(emailRecord.payload as Parameters<typeof emailService.sendEmail>[0]);
 
       if (result.success) {
         console.log(
@@ -90,15 +113,16 @@ export class EmailQueue {
         );
       }
     } catch (err) {
+      const error = err as Error;
       console.error(
         `EmailQueue: send failed for ${emailRecord.payload.to} (attempt ${emailRecord.attempts}):`,
-        err.message,
+        error.message,
       );
 
       if (emailRecord.attempts >= EMAIL_RETRY_CONFIG.MAX_RETRIES) {
         // Move to dead letter queue
         emailRecord.status = 'failed';
-        emailRecord.error = err.message;
+        emailRecord.error = error.message;
         await this.state.storage.put(`dead-letter:${emailRecord.id}`, emailRecord);
         await this.state.storage.delete(`email:${emailRecord.id}`);
         console.error(`EmailQueue: moved to dead letter queue: ${emailRecord.payload.to}`);
@@ -127,7 +151,7 @@ export class EmailQueue {
   /**
    * Schedule an alarm to process retry queue
    */
-  async scheduleRetryAlarm() {
+  async scheduleRetryAlarm(): Promise<void> {
     const currentAlarm = await this.state.storage.getAlarm();
     if (!currentAlarm) {
       // Schedule alarm for 1 second from now to batch process
@@ -138,11 +162,11 @@ export class EmailQueue {
   /**
    * Process retry queue (called by alarm)
    */
-  async processRetryQueue() {
+  async processRetryQueue(): Promise<Response> {
     const now = Date.now();
-    const emails = await this.state.storage.list({ prefix: 'email:' });
+    const emails = await this.state.storage.list<EmailRecord>({ prefix: 'email:' });
 
-    let nextRetryTime = null;
+    let nextRetryTime: number | null = null;
 
     for (const [_key, emailRecord] of emails) {
       if (emailRecord.status === 'retry-pending' && emailRecord.nextRetryAt <= now) {
@@ -166,27 +190,28 @@ export class EmailQueue {
   /**
    * Alarm handler for processing retries
    */
-  async alarm() {
+  async alarm(): Promise<void> {
     await this.processRetryQueue();
   }
 
   /**
    * Clean up successfully sent email record
    */
-  async cleanupSentEmail(emailId) {
+  async cleanupSentEmail(emailId: string): Promise<void> {
     try {
       await this.state.storage.delete(`email:${emailId}`);
     } catch (err) {
+      const error = err as Error;
       // Log but don't throw - cleanup is non-critical
-      console.debug('Email cleanup failed:', emailId, err.message);
+      console.debug('Email cleanup failed:', emailId, error.message);
     }
   }
 
   /**
    * Get dead letter queue for debugging/monitoring
    */
-  async getDeadLetterQueue() {
-    const deadLetters = await this.state.storage.list({ prefix: 'dead-letter:' });
+  async getDeadLetterQueue(): Promise<EmailRecord[]> {
+    const deadLetters = await this.state.storage.list<EmailRecord>({ prefix: 'dead-letter:' });
     return Array.from(deadLetters.values());
   }
 }

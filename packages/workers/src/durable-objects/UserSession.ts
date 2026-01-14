@@ -1,20 +1,35 @@
-import { verifyAuth } from '../auth/config.js';
-import { getAccessControlOrigin } from '../config/origins.js';
+import { verifyAuth } from '../auth/config';
+import { getAccessControlOrigin } from '../config/origins';
+import type { Env } from '../types';
 
-export class UserSession {
-  constructor(state, env) {
+interface Notification {
+  type: string;
+  timestamp?: number;
+  [key: string]: unknown;
+}
+
+interface WebSocketWithUser extends WebSocket {
+  user?: { id: string; [key: string]: unknown };
+}
+
+export class UserSession implements DurableObject {
+  private state: DurableObjectState;
+  private env: Env;
+  private connections: Set<WebSocketWithUser>;
+
+  constructor(state: DurableObjectState, env: Env) {
     this.state = state;
     this.env = env;
     this.connections = new Set();
   }
 
-  async fetch(request) {
+  async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
 
     // Dynamic CORS headers for credentialed requests using centralized config
     const requestOrigin = request.headers.get('Origin');
-    const corsHeaders = {
+    const corsHeaders: Record<string, string> = {
       'Access-Control-Allow-Origin': getAccessControlOrigin(requestOrigin, this.env),
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, User-Agent',
@@ -45,12 +60,12 @@ export class UserSession {
   /**
    * Handle WebSocket connections for real-time notifications
    */
-  async handleWebSocket(request) {
+  async handleWebSocket(request: Request): Promise<Response> {
     // Try to authenticate via cookies
-    let user = null;
+    let user: { id: string; [key: string]: unknown } | null = null;
     try {
       const authResult = await verifyAuth(request, this.env);
-      user = authResult.user;
+      user = authResult.user as { id: string; [key: string]: unknown } | null;
     } catch (err) {
       console.error('WebSocket auth error:', err);
     }
@@ -69,14 +84,14 @@ export class UserSession {
     }
 
     const webSocketPair = new WebSocketPair();
-    const [client, server] = Object.values(webSocketPair);
+    const [client, server] = Object.values(webSocketPair) as [WebSocket, WebSocketWithUser];
 
     server.accept();
     server.user = user;
     this.connections.add(server);
 
     // Send any pending notifications
-    const pending = (await this.state.storage.get('pendingNotifications')) || [];
+    const pending = ((await this.state.storage.get<Notification[]>('pendingNotifications')) || []);
     if (pending.length > 0) {
       for (const notification of pending) {
         server.send(JSON.stringify(notification));
@@ -84,9 +99,9 @@ export class UserSession {
       await this.state.storage.put('pendingNotifications', []);
     }
 
-    server.addEventListener('message', async event => {
+    server.addEventListener('message', async (event: MessageEvent) => {
       try {
-        const data = JSON.parse(event.data);
+        const data = JSON.parse(event.data as string) as { type?: string };
         // Handle ping/pong for keepalive
         if (data.type === 'ping') {
           server.send(JSON.stringify({ type: 'pong' }));
@@ -111,9 +126,9 @@ export class UserSession {
    * Handle notification requests from other workers/DOs
    * This is called internally when a user is added to a project
    */
-  async handleNotification(request, corsHeaders) {
+  async handleNotification(request: Request, corsHeaders: Record<string, string>): Promise<Response> {
     try {
-      const notification = await request.json();
+      const notification = (await request.json()) as Notification;
 
       // Add timestamp if not present
       if (!notification.timestamp) {
@@ -123,7 +138,7 @@ export class UserSession {
       // Broadcast to all connected clients
       let delivered = false;
       for (const conn of this.connections) {
-        if (conn.readyState === 1) {
+        if (conn.readyState === WebSocket.OPEN) {
           conn.send(JSON.stringify(notification));
           delivered = true;
         }
@@ -131,7 +146,7 @@ export class UserSession {
 
       // If no active connections, store for later delivery
       if (!delivered) {
-        const pending = (await this.state.storage.get('pendingNotifications')) || [];
+        const pending = ((await this.state.storage.get<Notification[]>('pendingNotifications')) || []);
         pending.push(notification);
         // Keep only last 50 notifications
         if (pending.length > 50) {
@@ -155,10 +170,8 @@ export class UserSession {
   /**
    * Extract user ID from the URL path
    * Expected pattern: /api/sessions/:userId/...
-   * @param {string} path - URL pathname
-   * @returns {string|null} - The user ID or null if not found
    */
-  extractUserIdFromPath(path) {
+  extractUserIdFromPath(path: string): string | null {
     const match = path.match(/\/api\/sessions\/([^/]+)/);
     return match ? match[1] : null;
   }

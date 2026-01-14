@@ -3,15 +3,147 @@
  * Dynamically imported only when DEV_MODE is enabled to keep production bundle small.
  */
 import * as Y from 'yjs';
-import { getTemplate, getTemplateNames, getTemplateDescriptions } from '../lib/mock-templates.js';
+import { getTemplate, getTemplateNames, getTemplateDescriptions } from '../lib/mock-templates';
+
+interface DevContext {
+  doc: Y.Doc;
+  stateId: string;
+  yMapToPlain: (map: Y.Map<unknown>) => Record<string, unknown>;
+}
+
+interface ExportData {
+  version: number;
+  exportedAt: string;
+  projectId: string;
+  meta: Record<string, unknown>;
+  members: Array<{ userId: string; [key: string]: unknown }>;
+  studies: Study[];
+}
+
+interface Study {
+  id: string;
+  name?: unknown;
+  description?: unknown;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+  originalTitle?: unknown;
+  firstAuthor?: unknown;
+  publicationYear?: unknown;
+  authors?: unknown;
+  journal?: unknown;
+  doi?: unknown;
+  abstract?: unknown;
+  pdfUrl?: unknown;
+  pdfSource?: unknown;
+  pdfAccessible?: unknown;
+  reviewer1?: unknown;
+  reviewer2?: unknown;
+  checklists: Checklist[];
+  pdfs: Pdf[];
+  reconciliation?: unknown;
+}
+
+interface Checklist {
+  id: string;
+  type?: unknown;
+  title?: unknown;
+  assignedTo?: unknown;
+  status?: unknown;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+  answers?: Record<string, unknown>;
+}
+
+interface Pdf {
+  fileName: string;
+  key?: unknown;
+  size?: unknown;
+  uploadedBy?: unknown;
+  uploadedAt?: unknown;
+}
+
+interface ImportData {
+  meta?: Record<string, unknown>;
+  members?: Array<{
+    userId: string;
+    role?: string;
+    joinedAt?: string;
+    name?: string | null;
+    email?: string | null;
+    displayName?: string | null;
+    image?: string | null;
+  }>;
+  studies?: Array<{
+    id: string;
+    name?: unknown;
+    description?: unknown;
+    createdAt?: unknown;
+    updatedAt?: unknown;
+    originalTitle?: unknown;
+    firstAuthor?: unknown;
+    publicationYear?: unknown;
+    authors?: unknown;
+    journal?: unknown;
+    doi?: unknown;
+    abstract?: unknown;
+    pdfUrl?: unknown;
+    pdfSource?: unknown;
+    pdfAccessible?: unknown;
+    reviewer1?: unknown;
+    reviewer2?: unknown;
+    reconciliation?: Record<string, unknown>;
+    checklists?: Array<{
+      id: string;
+      type?: string;
+      title?: string | null;
+      assignedTo?: string | null;
+      status?: string;
+      createdAt?: string;
+      updatedAt?: string;
+      answers?: Record<string, unknown>;
+    }>;
+    pdfs?: Array<{
+      fileName: string;
+      key?: string;
+      size?: number;
+      uploadedBy?: string;
+      uploadedAt?: string;
+    }>;
+  }>;
+}
+
+interface ImportRequest {
+  json(): Promise<{
+    data?: ImportData;
+    mode?: 'replace' | 'merge';
+    targetOrgId?: string;
+    importer?: {
+      userId?: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    };
+  }>;
+}
+
+interface PatchOperation {
+  path: string;
+  value: unknown;
+}
+
+interface PatchResult {
+  path: string;
+  success: boolean;
+  error?: string;
+}
 
 /**
  * Export the full Y.Doc state as JSON
  */
-export async function handleDevExport(ctx) {
+export async function handleDevExport(ctx: DevContext): Promise<Response> {
   const { doc, stateId, yMapToPlain } = ctx;
 
-  const exportData = {
+  const exportData: ExportData = {
     version: 1,
     exportedAt: new Date().toISOString(),
     projectId: stateId,
@@ -25,15 +157,16 @@ export async function handleDevExport(ctx) {
   for (const [userId, value] of membersMap.entries()) {
     exportData.members.push({
       userId,
-      ...yMapToPlain(value),
+      ...yMapToPlain(value as Y.Map<unknown>),
     });
   }
 
   // Export studies (reviews) with nested checklists and pdfs
   const reviewsMap = doc.getMap('reviews');
   for (const [studyId, studyValue] of reviewsMap.entries()) {
-    const studyData = yMapToPlain(studyValue);
-    const study = {
+    const studyYMap = studyValue as Y.Map<unknown>;
+    const studyData = yMapToPlain(studyYMap);
+    const study: Study = {
       id: studyId,
       name: studyData.name,
       description: studyData.description,
@@ -57,10 +190,10 @@ export async function handleDevExport(ctx) {
     };
 
     // Export checklists
-    const checklistsMap = studyValue.get('checklists');
+    const checklistsMap = studyYMap.get('checklists') as Y.Map<unknown> | undefined;
     if (checklistsMap && checklistsMap.entries) {
       for (const [checklistId, checklistValue] of checklistsMap.entries()) {
-        const checklistData = yMapToPlain(checklistValue);
+        const checklistData = yMapToPlain(checklistValue as Y.Map<unknown>);
         study.checklists.push({
           id: checklistId,
           type: checklistData.type,
@@ -69,16 +202,16 @@ export async function handleDevExport(ctx) {
           status: checklistData.status || 'pending',
           createdAt: checklistData.createdAt,
           updatedAt: checklistData.updatedAt,
-          answers: checklistData.answers || {},
+          answers: (checklistData.answers as Record<string, unknown>) || {},
         });
       }
     }
 
     // Export PDFs
-    const pdfsMap = studyValue.get('pdfs');
+    const pdfsMap = studyYMap.get('pdfs') as Y.Map<unknown> | undefined;
     if (pdfsMap && pdfsMap.entries) {
       for (const [fileName, pdfValue] of pdfsMap.entries()) {
-        const pdfData = yMapToPlain(pdfValue);
+        const pdfData = yMapToPlain(pdfValue as Y.Map<unknown>);
         study.pdfs.push({
           fileName,
           key: pdfData.key,
@@ -100,30 +233,32 @@ export async function handleDevExport(ctx) {
 /**
  * Helper to import checklist answers as Y.Maps
  */
-function importAnswers(answers, checklistType) {
-  const answersYMap = new Y.Map();
+function importAnswers(answers: Record<string, unknown>, checklistType: string): Y.Map<unknown> {
+  const answersYMap = new Y.Map<unknown>();
 
   for (const [questionKey, questionData] of Object.entries(answers)) {
-    const questionYMap = new Y.Map();
+    const questionYMap = new Y.Map<unknown>();
+    const qData = questionData as Record<string, unknown>;
 
     if (checklistType === 'AMSTAR2') {
       // AMSTAR2: answers is boolean[][], critical is boolean
-      if (questionData.answers) {
-        questionYMap.set('answers', questionData.answers);
+      if (qData.answers) {
+        questionYMap.set('answers', qData.answers);
       }
-      if (questionData.critical !== undefined) {
-        questionYMap.set('critical', questionData.critical);
+      if (qData.critical !== undefined) {
+        questionYMap.set('critical', qData.critical);
       }
     } else if (checklistType === 'ROBINS_I') {
       // ROBINS-I has nested structure with judgement, answers map, etc.
-      for (const [key, value] of Object.entries(questionData)) {
-        if (key === 'answers' && typeof value === 'object') {
+      for (const [key, value] of Object.entries(qData)) {
+        if (key === 'answers' && typeof value === 'object' && value !== null) {
           // Nested answers map for ROBINS-I questions
-          const nestedAnswersMap = new Y.Map();
-          for (const [ansKey, ansValue] of Object.entries(value)) {
-            const ansYMap = new Y.Map();
-            if (ansValue.answer !== undefined) {
-              ansYMap.set('answer', ansValue.answer);
+          const nestedAnswersMap = new Y.Map<unknown>();
+          for (const [ansKey, ansValue] of Object.entries(value as Record<string, unknown>)) {
+            const ansYMap = new Y.Map<unknown>();
+            const ans = ansValue as Record<string, unknown>;
+            if (ans.answer !== undefined) {
+              ansYMap.set('answer', ans.answer);
             }
             nestedAnswersMap.set(ansKey, ansYMap);
           }
@@ -146,7 +281,7 @@ function importAnswers(answers, checklistType) {
  * targetOrgId: if provided, overrides the orgId in imported data (prevents org mismatch)
  * importer: current user info - will be added as member if not already in the data
  */
-export async function handleDevImport(ctx, request) {
+export async function handleDevImport(ctx: DevContext, request: ImportRequest): Promise<Response> {
   const { doc } = ctx;
 
   try {
@@ -188,7 +323,7 @@ export async function handleDevImport(ctx, request) {
       // Import members
       if (data.members) {
         for (const member of data.members) {
-          const memberYMap = new Y.Map();
+          const memberYMap = new Y.Map<unknown>();
           memberYMap.set('role', member.role);
           memberYMap.set('joinedAt', member.joinedAt);
           memberYMap.set('name', member.name || null);
@@ -201,7 +336,7 @@ export async function handleDevImport(ctx, request) {
 
       // Add importer as member if not already present
       if (importer?.userId && !membersMap.has(importer.userId)) {
-        const importerYMap = new Y.Map();
+        const importerYMap = new Y.Map<unknown>();
         importerYMap.set('role', 'owner');
         importerYMap.set('joinedAt', new Date().toISOString());
         importerYMap.set('name', importer.name || null);
@@ -214,12 +349,12 @@ export async function handleDevImport(ctx, request) {
       // Import studies
       if (data.studies) {
         for (const study of data.studies) {
-          let studyYMap;
+          let studyYMap: Y.Map<unknown>;
 
           if (mode === 'merge' && reviewsMap.has(study.id)) {
-            studyYMap = reviewsMap.get(study.id);
+            studyYMap = reviewsMap.get(study.id) as Y.Map<unknown>;
           } else {
-            studyYMap = new Y.Map();
+            studyYMap = new Y.Map<unknown>();
             reviewsMap.set(study.id, studyYMap);
           }
 
@@ -241,17 +376,18 @@ export async function handleDevImport(ctx, request) {
             'pdfAccessible',
             'reviewer1',
             'reviewer2',
-          ];
+          ] as const;
 
           for (const field of studyFields) {
-            if (study[field] !== undefined) {
-              studyYMap.set(field, study[field]);
+            const value = study[field];
+            if (value !== undefined) {
+              studyYMap.set(field, value);
             }
           }
 
           // Import reconciliation if present
           if (study.reconciliation) {
-            const reconYMap = new Y.Map();
+            const reconYMap = new Y.Map<unknown>();
             for (const [key, value] of Object.entries(study.reconciliation)) {
               reconYMap.set(key, value);
             }
@@ -260,19 +396,19 @@ export async function handleDevImport(ctx, request) {
 
           // Import checklists
           if (study.checklists && study.checklists.length > 0) {
-            let checklistsMap = studyYMap.get('checklists');
+            let checklistsMap = studyYMap.get('checklists') as Y.Map<unknown> | undefined;
             if (!checklistsMap) {
-              checklistsMap = new Y.Map();
+              checklistsMap = new Y.Map<unknown>();
               studyYMap.set('checklists', checklistsMap);
             }
 
             for (const checklist of study.checklists) {
-              let checklistYMap;
+              let checklistYMap: Y.Map<unknown>;
 
               if (mode === 'merge' && checklistsMap.has(checklist.id)) {
-                checklistYMap = checklistsMap.get(checklist.id);
+                checklistYMap = checklistsMap.get(checklist.id) as Y.Map<unknown>;
               } else {
-                checklistYMap = new Y.Map();
+                checklistYMap = new Y.Map<unknown>();
                 checklistsMap.set(checklist.id, checklistYMap);
               }
 
@@ -285,7 +421,7 @@ export async function handleDevImport(ctx, request) {
 
               // Import answers
               if (checklist.answers) {
-                const answersYMap = importAnswers(checklist.answers, checklist.type);
+                const answersYMap = importAnswers(checklist.answers, checklist.type || '');
                 checklistYMap.set('answers', answersYMap);
               }
             }
@@ -293,14 +429,14 @@ export async function handleDevImport(ctx, request) {
 
           // Import PDFs
           if (study.pdfs && study.pdfs.length > 0) {
-            let pdfsMap = studyYMap.get('pdfs');
+            let pdfsMap = studyYMap.get('pdfs') as Y.Map<unknown> | undefined;
             if (!pdfsMap) {
-              pdfsMap = new Y.Map();
+              pdfsMap = new Y.Map<unknown>();
               studyYMap.set('pdfs', pdfsMap);
             }
 
             for (const pdf of study.pdfs) {
-              const pdfYMap = new Y.Map();
+              const pdfYMap = new Y.Map<unknown>();
               pdfYMap.set('key', pdf.key);
               pdfYMap.set('fileName', pdf.fileName);
               pdfYMap.set('size', pdf.size);
@@ -317,8 +453,9 @@ export async function handleDevImport(ctx, request) {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    const err = error as Error;
     console.error('handleDevImport error:', error);
-    return new Response(JSON.stringify({ error: 'Import failed', details: error.message }), {
+    return new Response(JSON.stringify({ error: 'Import failed', details: err.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -329,11 +466,11 @@ export async function handleDevImport(ctx, request) {
  * Apply surgical patches to specific paths in Y.Doc
  * Format: { operations: [{ path: "studies.id.name", value: "New Name" }] }
  */
-export async function handleDevPatch(ctx, request) {
+export async function handleDevPatch(ctx: DevContext, request: Request): Promise<Response> {
   const { doc } = ctx;
 
   try {
-    const { operations } = await request.json();
+    const { operations } = (await request.json()) as { operations?: PatchOperation[] };
 
     if (!operations || !Array.isArray(operations)) {
       return new Response(JSON.stringify({ error: 'Missing operations array' }), {
@@ -342,13 +479,13 @@ export async function handleDevPatch(ctx, request) {
       });
     }
 
-    const results = [];
+    const results: PatchResult[] = [];
 
     doc.transact(() => {
       for (const op of operations) {
         try {
           const pathParts = op.path.split('.');
-          let target = doc;
+          let target: Y.Doc | Y.Map<unknown> = doc;
 
           // Navigate to the parent of the target
           for (let i = 0; i < pathParts.length - 1; i++) {
@@ -366,23 +503,26 @@ export async function handleDevPatch(ctx, request) {
                 throw new Error(`Unknown root path: ${part}`);
               }
             } else {
-              target = target.get(part);
-              if (!target) {
+              const yMap = target as Y.Map<unknown>;
+              const next = yMap.get(part);
+              if (!next) {
                 throw new Error(`Path not found: ${pathParts.slice(0, i + 1).join('.')}`);
               }
+              target = next as Y.Map<unknown>;
             }
           }
 
           // Set the value at the final key
           const finalKey = pathParts[pathParts.length - 1];
-          if (target && typeof target.set === 'function') {
-            target.set(finalKey, op.value);
+          if (target && typeof (target as Y.Map<unknown>).set === 'function') {
+            (target as Y.Map<unknown>).set(finalKey, op.value);
             results.push({ path: op.path, success: true });
           } else {
             results.push({ path: op.path, success: false, error: 'Invalid target' });
           }
         } catch (err) {
-          results.push({ path: op.path, success: false, error: err.message });
+          const error = err as Error;
+          results.push({ path: op.path, success: false, error: error.message });
         }
       }
     });
@@ -391,8 +531,9 @@ export async function handleDevPatch(ctx, request) {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    const err = error as Error;
     console.error('handleDevPatch error:', error);
-    return new Response(JSON.stringify({ error: 'Patch failed', details: error.message }), {
+    return new Response(JSON.stringify({ error: 'Patch failed', details: err.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -402,7 +543,7 @@ export async function handleDevPatch(ctx, request) {
 /**
  * Reset Y.Doc to empty state
  */
-export async function handleDevReset(ctx) {
+export async function handleDevReset(ctx: DevContext): Promise<Response> {
   const { doc } = ctx;
 
   try {
@@ -416,8 +557,9 @@ export async function handleDevReset(ctx) {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    const err = error as Error;
     console.error('handleDevReset error:', error);
-    return new Response(JSON.stringify({ error: 'Reset failed', details: error.message }), {
+    return new Response(JSON.stringify({ error: 'Reset failed', details: err.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -427,7 +569,7 @@ export async function handleDevReset(ctx) {
 /**
  * Get raw Yjs binary state for low-level debugging
  */
-export async function handleDevRaw(ctx) {
+export async function handleDevRaw(ctx: DevContext): Promise<Response> {
   const { doc } = ctx;
 
   try {
@@ -443,8 +585,9 @@ export async function handleDevRaw(ctx) {
       { headers: { 'Content-Type': 'application/json' } },
     );
   } catch (error) {
+    const err = error as Error;
     console.error('handleDevRaw error:', error);
-    return new Response(JSON.stringify({ error: 'Raw export failed', details: error.message }), {
+    return new Response(JSON.stringify({ error: 'Raw export failed', details: err.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -454,7 +597,7 @@ export async function handleDevRaw(ctx) {
 /**
  * List available mock templates
  */
-export async function handleDevTemplates() {
+export async function handleDevTemplates(): Promise<Response> {
   return new Response(
     JSON.stringify({
       templates: getTemplateNames(),
@@ -469,10 +612,10 @@ export async function handleDevTemplates() {
  * URL param: ?template=template-name
  * Query param mode: 'replace' (default) or 'merge'
  */
-export async function handleDevApplyTemplate(ctx, request) {
+export async function handleDevApplyTemplate(ctx: DevContext, request: Request): Promise<Response> {
   const url = new URL(request.url);
   const templateName = url.searchParams.get('template');
-  const mode = url.searchParams.get('mode') || 'replace';
+  const mode = (url.searchParams.get('mode') || 'replace') as 'replace' | 'merge';
 
   if (!templateName) {
     return new Response(
@@ -496,8 +639,10 @@ export async function handleDevApplyTemplate(ctx, request) {
   }
 
   // Re-use the import handler with the template data
-  const fakeRequest = {
-    json: async () => ({ data: templateData, mode }),
+  // Cast through unknown because MockProjectData and ImportData have compatible structures
+  // but TypeScript can't verify all the nested types automatically
+  const fakeRequest: ImportRequest = {
+    json: async () => ({ data: templateData as unknown as ImportData, mode }),
   };
 
   return handleDevImport(ctx, fakeRequest);

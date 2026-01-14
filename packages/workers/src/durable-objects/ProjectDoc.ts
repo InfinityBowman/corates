@@ -3,14 +3,99 @@ import * as syncProtocol from 'y-protocols/sync';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
-import { verifyAuth } from '../auth/config.js';
-import { createDb } from '../db/client.js';
-import { projectMembers, projects } from '../db/schema.js';
+import { verifyAuth } from '../auth/config';
+import { createDb } from '../db/client';
+import { projectMembers, projects } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
+import type { Env } from '../types';
 
 // y-websocket message types
 const messageSync = 0;
 const messageAwareness = 1;
+
+interface SessionData {
+  user: { id: string; [key: string]: unknown };
+  awarenessClientId: number | null;
+}
+
+interface SyncRequestBody {
+  meta?: Record<string, unknown>;
+  members?: Array<{
+    userId: string;
+    role: string;
+    joinedAt: string | number;
+    name?: string | null;
+    email?: string | null;
+    displayName?: string | null;
+    image?: string | null;
+  }>;
+}
+
+interface SyncMemberRequestBody {
+  action: 'add' | 'update' | 'remove';
+  member: {
+    userId: string;
+    role?: string;
+    joinedAt?: string | number;
+    name?: string | null;
+    email?: string | null;
+    displayName?: string | null;
+    image?: string | null;
+  };
+}
+
+interface SyncPdfRequestBody {
+  action: 'add' | 'remove';
+  studyId: string;
+  studyName?: string;
+  pdf?: {
+    key: string;
+    fileName: string;
+    size: number;
+    uploadedBy: string;
+    uploadedAt: string;
+  };
+  fileName?: string;
+}
+
+interface ProjectInfo {
+  id: string;
+  meta: Record<string, unknown>;
+  members: Array<{ userId: string; [key: string]: unknown }>;
+  reviews: Review[];
+}
+
+interface Review {
+  id: string;
+  name?: unknown;
+  description?: unknown;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+  checklists: Checklist[];
+  pdfs: Pdf[];
+}
+
+interface Checklist {
+  id: string;
+  title?: unknown;
+  assignedTo?: unknown;
+  status: string;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+  answers: Record<string, unknown>;
+}
+
+interface Pdf {
+  fileName: string;
+  key?: unknown;
+  size?: unknown;
+  uploadedBy?: unknown;
+  uploadedAt?: unknown;
+}
+
+interface RequestWithUser extends Request {
+  user?: { id: string; [key: string]: unknown };
+}
 
 /**
  * ProjectDoc Durable Object
@@ -34,8 +119,6 @@ const messageAwareness = 1;
  *
  * See: packages/docs/guides/yjs-sync.md for architecture details
  *
- * ─────────────────────────────────────────────────────────────
- *
  * Holds the authoritative Y.Doc for a project with hierarchical structure:
  *
  * Project (this DO)
@@ -49,17 +132,23 @@ const messageAwareness = 1;
  *       })
  *     })
  */
-export class ProjectDoc {
-  constructor(state, env) {
+export class ProjectDoc implements DurableObject {
+  private state: DurableObjectState;
+  private env: Env;
+  // Map<WebSocket, { user, awarenessClientId }>
+  private sessions: Map<WebSocket, SessionData>;
+  private doc: Y.Doc | null;
+  private awareness: awarenessProtocol.Awareness | null;
+
+  constructor(state: DurableObjectState, env: Env) {
     this.state = state;
     this.env = env;
-    // Map<WebSocket, { user, awarenessClientId }>
     this.sessions = new Map();
     this.doc = null;
     this.awareness = null;
   }
 
-  async fetch(request) {
+  async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
     // Note: CORS headers are added by the main worker (index.js) when wrapping responses
@@ -83,16 +172,16 @@ export class ProjectDoc {
           return await this.handleSyncPdf(request);
         }
         if (url.pathname === '/disconnect-all') {
-          return await this.handleDisconnectAll(request);
+          return await this.handleDisconnectAll();
         }
 
         // Dev-only endpoints for Yjs state inspection (dynamically imported)
         if (this.env.DEV_MODE) {
           if (url.pathname.startsWith('/dev/')) {
-            const devHandlers = await import('./dev-handlers.js');
+            const devHandlers = await import('./dev-handlers');
             await this.initializeDoc();
             const ctx = {
-              doc: this.doc,
+              doc: this.doc!,
               stateId: this.state.id.toString(),
               yMapToPlain: this.yMapToPlain.bind(this),
             };
@@ -123,6 +212,7 @@ export class ProjectDoc {
       }
 
       // For HTTP requests verify auth (unless it's an upgrade to websocket)
+      const reqWithUser = request as RequestWithUser;
       if (upgradeHeader !== 'websocket') {
         const { user } = await verifyAuth(request, this.env);
         if (!user) {
@@ -131,7 +221,7 @@ export class ProjectDoc {
             headers: { 'Content-Type': 'application/json' },
           });
         }
-        request.user = user;
+        reqWithUser.user = user as { id: string; [key: string]: unknown };
       }
 
       // WebSocket upgrade / real-time sync
@@ -160,15 +250,15 @@ export class ProjectDoc {
   /**
    * Handle sync request from D1 routes (project metadata and initial members)
    */
-  async handleSync(request) {
+  async handleSync(request: Request): Promise<Response> {
     await this.initializeDoc();
 
     try {
-      const { meta, members } = await request.json();
+      const { meta, members } = (await request.json()) as SyncRequestBody;
 
       // Update meta if provided
       if (meta) {
-        const metaMap = this.doc.getMap('meta');
+        const metaMap = this.doc!.getMap('meta');
         for (const [key, value] of Object.entries(meta)) {
           if (value !== undefined) {
             metaMap.set(key, value);
@@ -178,13 +268,13 @@ export class ProjectDoc {
 
       // Update members if provided (full replacement for initial sync)
       if (members && Array.isArray(members)) {
-        const membersMap = this.doc.getMap('members');
+        const membersMap = this.doc!.getMap('members');
         // Clear existing members and set new ones
         for (const [userId] of membersMap.entries()) {
           membersMap.delete(userId);
         }
         for (const member of members) {
-          const memberYMap = new Y.Map();
+          const memberYMap = new Y.Map<unknown>();
           memberYMap.set('role', member.role);
           memberYMap.set('joinedAt', member.joinedAt);
           memberYMap.set('name', member.name || null);
@@ -212,15 +302,15 @@ export class ProjectDoc {
   /**
    * Handle member sync request from D1 routes (add/update/remove single member)
    */
-  async handleSyncMember(request) {
+  async handleSyncMember(request: Request): Promise<Response> {
     await this.initializeDoc();
 
     try {
-      const { action, member } = await request.json();
-      const membersMap = this.doc.getMap('members');
+      const { action, member } = (await request.json()) as SyncMemberRequestBody;
+      const membersMap = this.doc!.getMap('members');
 
       if (action === 'add') {
-        const memberYMap = new Y.Map();
+        const memberYMap = new Y.Map<unknown>();
         memberYMap.set('role', member.role);
         memberYMap.set('joinedAt', member.joinedAt);
         memberYMap.set('name', member.name || null);
@@ -229,7 +319,7 @@ export class ProjectDoc {
         memberYMap.set('image', member.image || null);
         membersMap.set(member.userId, memberYMap);
       } else if (action === 'update') {
-        const existingMember = membersMap.get(member.userId);
+        const existingMember = membersMap.get(member.userId) as Y.Map<unknown> | undefined;
         if (existingMember) {
           // Update role if provided
           if (member.role !== undefined) {
@@ -271,7 +361,7 @@ export class ProjectDoc {
   /**
    * Handle disconnect-all request (called when project is deleted)
    */
-  async handleDisconnectAll() {
+  async handleDisconnectAll(): Promise<Response> {
     this.disconnectAll('project-deleted');
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json' },
@@ -282,36 +372,36 @@ export class ProjectDoc {
    * Handle PDF sync request from routes (add/remove PDF metadata for a study)
    * Note: Y.js map key remains 'reviews' for backward compatibility
    */
-  async handleSyncPdf(request) {
+  async handleSyncPdf(request: Request): Promise<Response> {
     await this.initializeDoc();
 
     try {
-      const { action, studyId, studyName, pdf, fileName } = await request.json();
+      const { action, studyId, studyName, pdf, fileName } = (await request.json()) as SyncPdfRequestBody;
 
       // Note: Y.js map key remains 'reviews' for backward compatibility
-      const studiesMap = this.doc.getMap('reviews');
-      let studyYMap = studiesMap.get(studyId);
+      const studiesMap = this.doc!.getMap('reviews');
+      let studyYMap = studiesMap.get(studyId) as Y.Map<unknown> | undefined;
 
       // Create the study if it doesn't exist (handles race condition where
       // PDF upload arrives before Y.js sync creates the study)
       if (!studyYMap) {
-        studyYMap = new Y.Map();
+        studyYMap = new Y.Map<unknown>();
         studyYMap.set('name', studyName || 'Untitled Study');
         studyYMap.set('createdAt', Date.now());
         studyYMap.set('updatedAt', Date.now());
-        studyYMap.set('checklists', new Y.Map());
+        studyYMap.set('checklists', new Y.Map<unknown>());
         studiesMap.set(studyId, studyYMap);
       }
 
       // Get or create the pdfs Y.Map for this study
-      let pdfsMap = studyYMap.get('pdfs');
+      let pdfsMap = studyYMap.get('pdfs') as Y.Map<unknown> | undefined;
       if (!pdfsMap) {
-        pdfsMap = new Y.Map();
+        pdfsMap = new Y.Map<unknown>();
         studyYMap.set('pdfs', pdfsMap);
       }
 
       if (action === 'add' && pdf) {
-        const pdfYMap = new Y.Map();
+        const pdfYMap = new Y.Map<unknown>();
         pdfYMap.set('key', pdf.key);
         pdfYMap.set('fileName', pdf.fileName);
         pdfYMap.set('size', pdf.size);
@@ -339,22 +429,22 @@ export class ProjectDoc {
     }
   }
 
-  async initializeDoc() {
+  async initializeDoc(): Promise<void> {
     if (!this.doc) {
       this.doc = new Y.Doc();
       this.awareness = new awarenessProtocol.Awareness(this.doc);
 
       // Load persisted state if exists
-      const persistedState = await this.state.storage.get('yjs-state');
+      const persistedState = await this.state.storage.get<number[]>('yjs-state');
       if (persistedState) {
         Y.applyUpdate(this.doc, new Uint8Array(persistedState));
       }
 
       // Persist the FULL document state on every update
       // This ensures we don't lose data when the DO restarts
-      this.doc.on('update', async (update, origin) => {
+      this.doc.on('update', async (update: Uint8Array, origin: unknown) => {
         // Encode the full document state, not just the incremental update
-        const fullState = Y.encodeStateAsUpdate(this.doc);
+        const fullState = Y.encodeStateAsUpdate(this.doc!);
         await this.state.storage.put('yjs-state', Array.from(fullState));
 
         // Broadcast update to all connected clients (except origin)
@@ -362,33 +452,33 @@ export class ProjectDoc {
         encoding.writeVarUint(encoder, messageSync);
         syncProtocol.writeUpdate(encoder, update);
         const message = encoding.toUint8Array(encoder);
-        this.broadcastBinary(message, origin);
+        this.broadcastBinary(message, origin as WebSocket | null);
       });
 
       // Broadcast awareness updates to all clients
-      this.awareness.on('update', ({ added, updated, removed }, origin) => {
+      this.awareness.on('update', ({ added, updated, removed }: { added: number[]; updated: number[]; removed: number[] }, origin: unknown) => {
         const changedClients = added.concat(updated, removed);
         if (changedClients.length > 0) {
           const encoder = encoding.createEncoder();
           encoding.writeVarUint(encoder, messageAwareness);
           encoding.writeVarUint8Array(
             encoder,
-            awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients),
+            awarenessProtocol.encodeAwarenessUpdate(this.awareness!, changedClients),
           );
           const message = encoding.toUint8Array(encoder);
-          this.broadcastBinary(message, origin);
+          this.broadcastBinary(message, origin as WebSocket | null);
         }
       });
     }
   }
 
-  async handleWebSocket(request) {
-    let user = null;
+  async handleWebSocket(request: Request): Promise<Response> {
+    let user: { id: string; [key: string]: unknown } | null = null;
 
     // Authenticate via cookies (standard HTTP cookie auth)
     try {
       const authResult = await verifyAuth(request, this.env);
-      user = authResult.user;
+      user = authResult.user as { id: string; [key: string]: unknown } | null;
     } catch (err) {
       console.error('WebSocket auth error:', err);
     }
@@ -452,9 +542,9 @@ export class ProjectDoc {
 
     // Now that we've verified auth, sync member to Yjs if not present (for awareness)
     await this.initializeDoc();
-    const membersMap = this.doc.getMap('members');
+    const membersMap = this.doc!.getMap('members');
     if (!membersMap.has(user.id)) {
-      const memberYMap = new Y.Map();
+      const memberYMap = new Y.Map<unknown>();
       memberYMap.set('role', projectMembership.role);
       memberYMap.set('joinedAt', Date.now());
       membersMap.set(user.id, memberYMap);
@@ -471,10 +561,10 @@ export class ProjectDoc {
     // The y-websocket client will send sync step 1 on connect,
     // and we respond via the message handler below.
 
-    server.addEventListener('message', async event => {
+    server.addEventListener('message', async (event: MessageEvent) => {
       try {
         // Handle binary messages (y-websocket protocol)
-        let data;
+        let data: Uint8Array;
         if (event.data instanceof ArrayBuffer) {
           data = new Uint8Array(event.data);
         } else if (event.data instanceof Blob) {
@@ -492,7 +582,7 @@ export class ProjectDoc {
           case messageSync: {
             const encoder = encoding.createEncoder();
             encoding.writeVarUint(encoder, messageSync);
-            syncProtocol.readSyncMessage(decoder, encoder, this.doc, server);
+            syncProtocol.readSyncMessage(decoder, encoder, this.doc!, server);
             // If there's a response to send (sync step 2 or update acknowledgment)
             if (encoding.length(encoder) > 1) {
               server.send(encoding.toUint8Array(encoder));
@@ -501,7 +591,7 @@ export class ProjectDoc {
           }
           case messageAwareness: {
             const awarenessUpdate = decoding.readVarUint8Array(decoder);
-            awarenessProtocol.applyAwarenessUpdate(this.awareness, awarenessUpdate, server);
+            awarenessProtocol.applyAwarenessUpdate(this.awareness!, awarenessUpdate, server);
 
             // Extract and store the client's awareness ID from the update
             // The first client ID in the update is typically the sender's ID
@@ -529,7 +619,7 @@ export class ProjectDoc {
       const session = this.sessions.get(server);
       if (session && session.awarenessClientId != null) {
         awarenessProtocol.removeAwarenessStates(
-          this.awareness,
+          this.awareness!,
           [session.awarenessClientId],
           server,
         );
@@ -543,9 +633,9 @@ export class ProjectDoc {
   /**
    * Helper to convert Y.Map to plain object recursively
    */
-  yMapToPlain(yMap) {
+  yMapToPlain(yMap: Y.Map<unknown>): Record<string, unknown> {
     if (!yMap || typeof yMap.toJSON !== 'function') {
-      return yMap;
+      return {};
     }
     return yMap.toJSON();
   }
@@ -554,30 +644,31 @@ export class ProjectDoc {
    * Get comprehensive project info with hierarchical structure:
    * Project -> Reviews -> Checklists -> Answers
    */
-  async getProjectInfo() {
+  async getProjectInfo(): Promise<Response> {
     await this.initializeDoc();
 
-    const result = {
+    const result: ProjectInfo = {
       id: this.state.id.toString(),
-      meta: this.yMapToPlain(this.doc.getMap('meta')),
+      meta: this.yMapToPlain(this.doc!.getMap('meta')) as Record<string, unknown>,
       members: [],
       reviews: [],
     };
 
     // Get members
-    const membersMap = this.doc.getMap('members');
+    const membersMap = this.doc!.getMap('members');
     for (const [userId, value] of membersMap.entries()) {
       result.members.push({
         userId,
-        ...this.yMapToPlain(value),
+        ...(this.yMapToPlain(value as Y.Map<unknown>) as Record<string, unknown>),
       });
     }
 
     // Get reviews with nested checklists and pdfs
-    const reviewsMap = this.doc.getMap('reviews');
+    const reviewsMap = this.doc!.getMap('reviews');
     for (const [reviewId, reviewValue] of reviewsMap.entries()) {
-      const reviewData = this.yMapToPlain(reviewValue);
-      const review = {
+      const reviewYMap = reviewValue as Y.Map<unknown>;
+      const reviewData = this.yMapToPlain(reviewYMap) as Record<string, unknown>;
+      const review: Review = {
         id: reviewId,
         name: reviewData.name,
         description: reviewData.description,
@@ -588,27 +679,27 @@ export class ProjectDoc {
       };
 
       // Get checklists within this review
-      const checklistsMap = reviewValue.get('checklists');
+      const checklistsMap = reviewYMap.get('checklists') as Y.Map<unknown> | undefined;
       if (checklistsMap && checklistsMap.entries) {
         for (const [checklistId, checklistValue] of checklistsMap.entries()) {
-          const checklistData = this.yMapToPlain(checklistValue);
+          const checklistData = this.yMapToPlain(checklistValue as Y.Map<unknown>) as Record<string, unknown>;
           review.checklists.push({
             id: checklistId,
             title: checklistData.title,
             assignedTo: checklistData.assignedTo,
-            status: checklistData.status || 'pending',
+            status: (checklistData.status as string) || 'pending',
             createdAt: checklistData.createdAt,
             updatedAt: checklistData.updatedAt,
-            answers: checklistData.answers || {},
+            answers: (checklistData.answers as Record<string, unknown>) || {},
           });
         }
       }
 
       // Get PDFs within this review
-      const pdfsMap = reviewValue.get('pdfs');
+      const pdfsMap = reviewYMap.get('pdfs') as Y.Map<unknown> | undefined;
       if (pdfsMap && pdfsMap.entries) {
         for (const [fileName, pdfValue] of pdfsMap.entries()) {
-          const pdfData = this.yMapToPlain(pdfValue);
+          const pdfData = this.yMapToPlain(pdfValue as Y.Map<unknown>) as Record<string, unknown>;
           review.pdfs.push({
             fileName,
             key: pdfData.key,
@@ -630,9 +721,9 @@ export class ProjectDoc {
   /**
    * Broadcast binary message to all connected clients
    */
-  broadcastBinary(message, exclude = null) {
-    this.sessions.forEach((sessionData, ws) => {
-      if (ws !== exclude && ws.readyState === 1) {
+  broadcastBinary(message: Uint8Array, exclude: WebSocket | null = null): void {
+    this.sessions.forEach((_sessionData, ws) => {
+      if (ws !== exclude && ws.readyState === WebSocket.OPEN) {
         ws.send(message);
       }
     });
@@ -640,14 +731,12 @@ export class ProjectDoc {
 
   /**
    * Disconnect a specific user from the WebSocket
-   * @param {string} userId - The user ID to disconnect
-   * @param {string} reason - The close reason (e.g., 'membership-revoked', 'project-deleted')
    */
-  disconnectUser(userId, reason = 'membership-revoked') {
+  disconnectUser(userId: string, reason: string = 'membership-revoked'): void {
     const closeCode = 1008; // Policy Violation
-    const sessionsToClose = [];
+    const sessionsToClose: Array<{ ws: WebSocket; sessionData: SessionData }> = [];
     this.sessions.forEach((sessionData, ws) => {
-      if (sessionData.user?.id === userId && ws.readyState === 1) {
+      if (sessionData.user?.id === userId && ws.readyState === WebSocket.OPEN) {
         sessionsToClose.push({ ws, sessionData });
       }
     });
@@ -671,12 +760,11 @@ export class ProjectDoc {
 
   /**
    * Disconnect all users from the WebSocket (e.g., when project is deleted)
-   * @param {string} reason - The close reason
    */
-  disconnectAll(reason = 'project-deleted') {
+  disconnectAll(reason: string = 'project-deleted'): void {
     const closeCode = 1000; // Normal closure
-    this.sessions.forEach((sessionData, ws) => {
-      if (ws.readyState === 1) {
+    this.sessions.forEach((_sessionData, ws) => {
+      if (ws.readyState === WebSocket.OPEN) {
         ws.close(closeCode, reason);
       }
     });
