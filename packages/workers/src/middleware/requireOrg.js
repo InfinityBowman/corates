@@ -232,4 +232,3 @@ export function getProjectContext(c) {
     project: c.get('project') || null,
   };
 }
-
