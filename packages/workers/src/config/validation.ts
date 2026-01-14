@@ -1,15 +1,9 @@
-/**
- * Zod validation schemas for API requests
- * Centralized validation for all route handlers
- */
-
 import { z } from 'zod';
-import { PROJECT_ROLES } from './constants.js';
+import type { Context, MiddlewareHandler } from 'hono';
+import { PROJECT_ROLES } from './constants';
 import { createValidationError, createMultiFieldValidationError } from '@corates/shared';
+import type { DomainError } from '@corates/shared';
 
-/**
- * Common field validators
- */
 export const commonFields = {
   uuid: z.uuid('Invalid UUID format'),
   email: z.email('Invalid email address'),
@@ -17,9 +11,6 @@ export const commonFields = {
   optionalString: z.string().optional(),
 };
 
-/**
- * Project schemas
- */
 export const projectSchemas = {
   create: z.object({
     name: z
@@ -49,13 +40,9 @@ export const projectSchemas = {
   }),
 };
 
-/**
- * Member schemas
- */
 export const memberSchemas = {
   add: z
     .object({
-      // userId is a better-auth generated ID, not a UUID
       userId: z.string().min(1, 'Invalid user ID').optional(),
       email: z.string().email('Invalid email address').optional(),
       role: z
@@ -75,30 +62,19 @@ export const memberSchemas = {
   }),
 };
 
-/**
- * Invitation schemas
- *
- * Note: grantOrgMembership can only be set to true by org admins/owners.
- * When accepting an invitation, users always get project membership.
- * If grantOrgMembership is true, they also get org membership (for governance/billing).
- * This does not grant project access - projects are always invite-only.
- */
 export const invitationSchemas = {
   create: z.object({
     email: z.string().email('Invalid email address'),
     role: z.enum(PROJECT_ROLES, {
       error: `Role must be one of: ${PROJECT_ROLES.join(', ')}`,
     }),
-    grantOrgMembership: z.boolean().optional().default(false), // only org admins/owners can set to true
+    grantOrgMembership: z.boolean().optional().default(false),
   }),
   accept: z.object({
     token: z.string().min(1, 'Token is required'),
   }),
 };
 
-/**
- * User schemas
- */
 export const userSchemas = {
   search: z.object({
     q: z.string().min(2, 'Search query must be at least 2 characters'),
@@ -129,9 +105,6 @@ export const userSchemas = {
   }),
 };
 
-/**
- * Email schemas
- */
 export const emailSchemas = {
   queue: z
     .object({
@@ -145,9 +118,6 @@ export const emailSchemas = {
     }),
 };
 
-/**
- * Subscription schemas
- */
 export const subscriptionSchemas = {
   grant: z.object({
     tier: z.enum(['free', 'pro', 'unlimited'], {
@@ -170,9 +140,6 @@ export const subscriptionSchemas = {
   }),
 };
 
-/**
- * Storage management schemas
- */
 export const storageSchemas = {
   listDocuments: z.object({
     cursor: z
@@ -214,9 +181,6 @@ export const storageSchemas = {
   }),
 };
 
-/**
- * Stripe tools schemas
- */
 export const stripeSchemas = {
   portalLink: z.object({
     customerId: z.string().min(1, 'customerId is required'),
@@ -224,9 +188,6 @@ export const stripeSchemas = {
   }),
 };
 
-/**
- * Billing schemas for checkout operations
- */
 export const billingSchemas = {
   validateCoupon: z.object({
     code: z
@@ -236,33 +197,28 @@ export const billingSchemas = {
   }),
 };
 
-/**
- * Map Zod error to validation error code
- * @param {object} issue - Zod issue object from error.issues array
- * @param {string} [issue.kind] - Error kind (Zod v4)
- * @param {string} [issue.code] - Error code (Zod v3 fallback)
- * @param {string} [issue.type] - Expected type
- * @param {number} [issue.minimum] - Minimum value
- * @param {string} [issue.validation] - Validation type (email, uuid, etc.)
- * @returns {string} Validation error code
- */
-function mapZodErrorToValidationCode(issue) {
-  // Zod v4: Use issue.kind instead of issue.code (code is deprecated)
-  const kind = issue.kind || issue.code; // Fallback for compatibility
+type ValidationCode =
+  | 'VALIDATION_FIELD_REQUIRED'
+  | 'VALIDATION_FIELD_TOO_SHORT'
+  | 'VALIDATION_FIELD_TOO_LONG'
+  | 'VALIDATION_FIELD_INVALID_FORMAT'
+  | 'VALIDATION_FAILED';
+
+function mapZodErrorToValidationCode(issue: z.core.$ZodIssue): ValidationCode {
+  const kind = (issue as { kind?: string }).kind || (issue as { code?: string }).code;
 
   switch (kind) {
     case 'too_small':
-      // Check if it's a required field (minimum === 1 for strings)
-      if (issue.type === 'string' && issue.minimum === 1) {
+      if (
+        (issue as { type?: string }).type === 'string' &&
+        (issue as { minimum?: number }).minimum === 1
+      ) {
         return 'VALIDATION_FIELD_REQUIRED';
       }
       return 'VALIDATION_FIELD_TOO_SHORT';
     case 'too_big':
       return 'VALIDATION_FIELD_TOO_LONG';
     case 'invalid_string':
-      if (issue.validation === 'email' || issue.validation === 'uuid') {
-        return 'VALIDATION_FIELD_INVALID_FORMAT';
-      }
       return 'VALIDATION_FIELD_INVALID_FORMAT';
     case 'invalid_type':
       return 'VALIDATION_FIELD_INVALID_FORMAT';
@@ -271,29 +227,29 @@ function mapZodErrorToValidationCode(issue) {
   }
 }
 
-/**
- * Validate request body against a schema
- * @param {z.ZodSchema} schema - Zod schema to validate against
- * @param {Object} data - Data to validate
- * @returns {{ success: boolean, data?: any, error?: DomainError }}
- */
-export function validateBody(schema, data) {
+export interface ValidationResult<T> {
+  success: boolean;
+  data?: T;
+  error?: DomainError;
+}
+
+export function validateBody<T>(schema: z.ZodSchema<T>, data: unknown): ValidationResult<T> {
   const result = schema.safeParse(data);
 
   if (result.success) {
     return { success: true, data: result.data };
   }
 
-  // Map Zod errors to validation errors
   const validationErrors = result.error.issues.map(issue => {
-    const field = issue.path.join('.') || 'root';
+    const field = issue.path.map(String).join('.') || 'root';
     const validationCode = mapZodErrorToValidationCode(issue);
-    // Get the value from the data object using the path
     const value = issue.path.reduce(
-      (obj, key) => (obj && typeof obj === 'object' ? obj[key] : undefined),
+      (obj: unknown, key) =>
+        obj && typeof obj === 'object' ? (obj as Record<PropertyKey, unknown>)[key] : undefined,
       data,
     );
-    const zodKind = issue.kind || issue.code; // Use kind (v4) with fallback to code
+    const zodKind =
+      (issue as { kind?: string }).kind || (issue as { code?: string }).code || 'unknown';
     return {
       field,
       code: validationCode,
@@ -303,78 +259,66 @@ export function validateBody(schema, data) {
     };
   });
 
-  // If single field error, return single validation error
   if (validationErrors.length === 1) {
     const error = validationErrors[0];
     return {
       success: false,
-      error: createValidationError(error.field, error.code, error.value, error.zodCode),
+      error: createValidationError(
+        error.field,
+        error.code as Parameters<typeof createValidationError>[1],
+        error.value,
+        error.zodCode,
+      ),
     };
   }
 
-  // Multiple field errors - return multi-field validation error
   return {
     success: false,
-    error: createMultiFieldValidationError(validationErrors),
+    error: createMultiFieldValidationError(
+      validationErrors.map(e => ({
+        field: e.field,
+        code: e.code as Parameters<typeof createMultiFieldValidationError>[0][number]['code'],
+        message: e.message,
+      })),
+    ),
   };
 }
 
-/**
- * Validate query parameters against a schema
- * @param {z.ZodSchema} schema - Zod schema to validate against
- * @param {Object} query - Query parameters to validate
- * @returns {{ success: boolean, data?: any, error?: Object }}
- */
-export function validateQuery(schema, query) {
+export function validateQuery<T>(schema: z.ZodSchema<T>, query: unknown): ValidationResult<T> {
   return validateBody(schema, query);
 }
 
-/**
- * Hono middleware for request body validation
- * @param {z.ZodSchema} schema - Zod schema to validate against
- * @returns {Function} Hono middleware
- */
-export function validateRequest(schema) {
-  return async (c, next) => {
+export function validateRequest<T>(schema: z.ZodSchema<T>): MiddlewareHandler {
+  return async (c: Context, next) => {
     try {
       const body = await c.req.json();
       const result = validateBody(schema, body);
 
-      if (!result.success) {
-        // result.error is already a DomainError from createValidationError/createMultiFieldValidationError
-        return c.json(result.error, result.error.statusCode);
+      if (!result.success && result.error) {
+        return c.json(result.error, result.error.statusCode as 400 | 401 | 403 | 404 | 500);
       }
 
-      // Attach validated data to context
       c.set('validatedBody', result.data);
       await next();
-    } catch (error) {
-      console.warn('Body validation error:', error.message);
-      // Invalid JSON - create validation error
+    } catch {
       const invalidJsonError = createValidationError(
         'body',
         'VALIDATION_INVALID_INPUT',
         null,
         'invalid_json',
       );
-      return c.json(invalidJsonError, invalidJsonError.statusCode);
+      return c.json(invalidJsonError, invalidJsonError.statusCode as 400);
     }
   };
 }
 
-/**
- * Hono middleware for query parameter validation
- * @param {z.ZodSchema} schema - Zod schema to validate against
- * @returns {Function} Hono middleware
- */
-export function validateQueryParams(schema) {
-  return async (c, next) => {
+export function validateQueryParams<T>(schema: z.ZodSchema<T>): MiddlewareHandler {
+  return async (c: Context, next) => {
     const query = c.req.query();
     const result = validateQuery(schema, query);
 
-    if (!result.success) {
-      // result.error is already a DomainError from validateBody
-      return c.json(result.error, result.error.statusCode);
+    if (!result.success && result.error) {
+      return c.json(result.error, result.error.statusCode as 400 | 401 | 403 | 404 | 500);
     }
 
     c.set('validatedQuery', result.data);

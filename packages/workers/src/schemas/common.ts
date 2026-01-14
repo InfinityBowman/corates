@@ -21,7 +21,7 @@ export const ErrorResponseSchema = z
     code: z.string().openapi({ example: 'VALIDATION_ERROR' }),
     message: z.string().openapi({ example: 'Validation failed' }),
     statusCode: z.number().openapi({ example: 400 }),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('ErrorResponse');
 
@@ -32,8 +32,8 @@ export const ValidationErrorSchema = z
   .object({
     code: z.string().openapi({ example: 'VALIDATION_ERROR' }),
     message: z.string().openapi({ example: 'Field is required' }),
-    statusCode: z.literal(400),
+    statusCode: z.literal(400).openapi({ example: 400 }),
     field: z.string().optional().openapi({ example: 'email' }),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('ValidationError');
