@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "description": "Shared error definitions and utilities for CoRATES",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -37,7 +38,6 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
-  "license": "PolyForm-Noncommercial-1.0.0",
   "devDependencies": {
     "typescript": "^5.9.3",
     "vitest": "^4.0.17"

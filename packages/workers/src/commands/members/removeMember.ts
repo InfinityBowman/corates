@@ -1,27 +1,41 @@
 /**
  * Remove a member from a project
  *
- * @param {Object} env - Cloudflare environment bindings
- * @param {Object} actor - User performing the action
- * @param {Object} params - Remove parameters
- * @param {string} params.orgId - Organization ID
- * @param {string} params.projectId - Project ID
- * @param {string} params.userId - User ID to remove
- * @param {boolean} params.isSelfRemoval - Whether the user is removing themselves
- * @returns {Promise<{ removed: string }>}
- * @throws {DomainError} NOT_FOUND if member not found
- * @throws {DomainError} LAST_OWNER if removing the last owner
+ * @throws DomainError NOT_FOUND if member not found
+ * @throws DomainError LAST_OWNER if removing the last owner
  */
 
-import { createDb } from '@/db/client.js';
-import { projectMembers, projects } from '@/db/schema.js';
+import { createDb } from '@/db/client';
+import { projectMembers, projects } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
-import { syncMemberToDO } from '@/commands/lib/doSync.js';
-import { notifyUser, NotificationTypes } from '@/commands/lib/notifications.js';
+import { syncMemberToDO } from '@/commands/lib/doSync';
+import { notifyUser, NotificationTypes } from '@/commands/lib/notifications';
 import { getProjectMembership, requireSafeRemoval } from '@/policies';
+import type { Env } from '@/types';
 
-export async function removeMember(env, actor, { orgId, projectId, userId, isSelfRemoval }) {
+export interface RemoveMemberActor {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+}
+
+export interface RemoveMemberParams {
+  orgId: string;
+  projectId: string;
+  userId: string;
+  isSelfRemoval: boolean;
+}
+
+export interface RemoveMemberResult {
+  removed: string;
+}
+
+export async function removeMember(
+  env: Env,
+  actor: RemoveMemberActor,
+  { orgId, projectId, userId, isSelfRemoval }: RemoveMemberParams,
+): Promise<RemoveMemberResult> {
   const db = createDb(env.DB);
 
   // Check target member exists
@@ -61,7 +75,7 @@ export async function removeMember(env, actor, { orgId, projectId, userId, isSel
         orgId,
         projectId,
         projectName: project?.name || 'Unknown Project',
-        removedBy: actor.name || actor.email,
+        removedBy: actor.name || actor.email || 'Unknown',
       });
     } catch (err) {
       console.error('Failed to send removal notification:', err);

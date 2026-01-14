@@ -2,22 +2,19 @@
  * Durable Object sync utilities for commands
  *
  * Consolidates DO sync operations used across commands.
- * Re-exports from project-sync.js and adds additional helpers.
+ * Re-exports from project-sync.ts and adds additional helpers.
  */
 
-import { getProjectDocStub } from '@/lib/project-doc-id.js';
+import { getProjectDocStub } from '@/lib/project-doc-id';
+import type { Env } from '@/types';
 
 // Re-export existing sync functions
-export { syncProjectToDO, syncMemberToDO } from '@/lib/project-sync.js';
+export { syncProjectToDO, syncMemberToDO } from '@/lib/project-sync';
 
 /**
  * Disconnect all connected users from a ProjectDoc Durable Object
- *
- * @param {Object} env - Cloudflare environment bindings
- * @param {string} projectId - Project ID
- * @returns {Promise<void>}
  */
-export async function disconnectAllFromProject(env, projectId) {
+export async function disconnectAllFromProject(env: Env, projectId: string): Promise<void> {
   const projectDoc = getProjectDocStub(env, projectId);
 
   await projectDoc.fetch(
@@ -34,13 +31,11 @@ export async function disconnectAllFromProject(env, projectId) {
 /**
  * Clean up all files from R2 storage for a project
  *
- * @param {Object} env - Cloudflare environment bindings
- * @param {string} projectId - Project ID
- * @returns {Promise<number>} Number of deleted objects
+ * @returns Number of deleted objects
  */
-export async function cleanupProjectStorage(env, projectId) {
+export async function cleanupProjectStorage(env: Env, projectId: string): Promise<number> {
   const prefix = `projects/${projectId}/`;
-  let cursor = undefined;
+  let cursor: string | undefined = undefined;
   let deletedCount = 0;
 
   do {

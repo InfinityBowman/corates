@@ -1,25 +1,39 @@
 /**
  * Update a project member's role
  *
- * @param {Object} env - Cloudflare environment bindings
- * @param {Object} actor - User performing the action
- * @param {Object} params - Update parameters
- * @param {string} params.orgId - Organization ID
- * @param {string} params.projectId - Project ID
- * @param {string} params.userId - User ID to update
- * @param {string} params.role - New role (owner or member)
- * @returns {Promise<{ userId: string, role: string }>}
- * @throws {DomainError} LAST_OWNER if demoting the last owner
+ * @throws DomainError LAST_OWNER if demoting the last owner
  */
 
-import { createDb } from '@/db/client.js';
-import { projectMembers } from '@/db/schema.js';
+import { createDb } from '@/db/client';
+import { projectMembers } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { syncMemberToDO } from '@/commands/lib/doSync.js';
-import { notifyUser, NotificationTypes } from '@/commands/lib/notifications.js';
+import { syncMemberToDO } from '@/commands/lib/doSync';
+import { notifyUser, NotificationTypes } from '@/commands/lib/notifications';
 import { requireSafeRoleChange } from '@/policies';
+import type { Env } from '@/types';
+import type { ProjectRole } from '@/policies/lib/roles';
 
-export async function updateMemberRole(env, actor, { orgId, projectId, userId, role }) {
+export interface UpdateMemberRoleActor {
+  id: string;
+}
+
+export interface UpdateMemberRoleParams {
+  orgId: string;
+  projectId: string;
+  userId: string;
+  role: ProjectRole;
+}
+
+export interface UpdateMemberRoleResult {
+  userId: string;
+  role: ProjectRole;
+}
+
+export async function updateMemberRole(
+  env: Env,
+  _actor: UpdateMemberRoleActor,
+  { orgId, projectId, userId, role }: UpdateMemberRoleParams,
+): Promise<UpdateMemberRoleResult> {
   const db = createDb(env.DB);
 
   // Prevent demoting the last owner

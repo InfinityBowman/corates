@@ -3,6 +3,14 @@
   "version": "0.0.1",
   "private": true,
   "description": "Cloudflare Workers/Durable Objects web app",
+  "keywords": [
+    "cloudflare",
+    "durable-objects",
+    "solidjs",
+    "workers"
+  ],
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "author": "Jacob Maynard",
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter web dev",
@@ -33,16 +41,10 @@
     "loc": "node ./scripts/loc-report.mjs",
     "docs": "pnpm --filter @corates/docs dev",
     "docs:build": "pnpm --filter @corates/docs build",
-    "docs:preview": "pnpm --filter @corates/docs preview"
+    "docs:preview": "pnpm --filter @corates/docs preview",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
   },
-  "keywords": [
-    "cloudflare",
-    "workers",
-    "durable-objects",
-    "solidjs"
-  ],
-  "author": "Jacob Maynard",
-  "license": "PolyForm-Noncommercial-1.0.0",
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@typescript-eslint/parser": "^8.53.0",

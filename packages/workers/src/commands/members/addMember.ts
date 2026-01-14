@@ -1,27 +1,58 @@
 /**
  * Add an existing user as a project member
  *
- * @param {Object} env - Cloudflare environment bindings
- * @param {Object} actor - User performing the action
- * @param {Object} params - Add member parameters
- * @param {string} params.orgId - Organization ID
- * @param {string} params.projectId - Project ID
- * @param {Object} params.userToAdd - User to add (with id, name, email, etc.)
- * @param {string} params.role - Role to assign (owner or member)
- * @returns {Promise<{ member: Object }>}
- * @throws {DomainError} MEMBER_ALREADY_EXISTS if user is already a member
- * @throws {DomainError} AUTH_FORBIDDEN if quota exceeded
+ * @throws DomainError MEMBER_ALREADY_EXISTS if user is already a member
+ * @throws DomainError AUTH_FORBIDDEN if quota exceeded
  */
 
-import { createDb } from '@/db/client.js';
-import { projectMembers, projects, member } from '@/db/schema.js';
+import { createDb } from '@/db/client';
+import { projectMembers, projects, member } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
-import { syncMemberToDO } from '@/commands/lib/doSync.js';
-import { notifyUser, NotificationTypes } from '@/commands/lib/notifications.js';
-import { checkCollaboratorQuota } from '@/lib/quotaTransaction.js';
+import { syncMemberToDO } from '@/commands/lib/doSync';
+import { notifyUser, NotificationTypes } from '@/commands/lib/notifications';
+import { checkCollaboratorQuota } from '@/lib/quotaTransaction';
+import type { Env } from '@/types';
+import type { ProjectRole } from '@/policies/lib/roles';
 
-export async function addMember(env, actor, { orgId, projectId, userToAdd, role }) {
+export interface AddMemberActor {
+  id: string;
+}
+
+export interface UserToAdd {
+  id: string;
+  name: string | null;
+  email: string | null;
+  username?: string | null;
+  displayName?: string | null;
+  image?: string | null;
+}
+
+export interface AddMemberParams {
+  orgId: string;
+  projectId: string;
+  userToAdd: UserToAdd;
+  role: ProjectRole;
+}
+
+export interface AddMemberResult {
+  member: {
+    userId: string;
+    name: string | null;
+    email: string | null;
+    username?: string | null;
+    displayName?: string | null;
+    image?: string | null;
+    role: ProjectRole;
+    joinedAt: Date;
+  };
+}
+
+export async function addMember(
+  env: Env,
+  _actor: AddMemberActor,
+  { orgId, projectId, userToAdd, role }: AddMemberParams,
+): Promise<AddMemberResult> {
   const db = createDb(env.DB);
 
   // Check if already a project member
@@ -55,7 +86,7 @@ export async function addMember(env, actor, { orgId, projectId, userToAdd, role 
 
   // Build insert operations for atomic batch execution
   const now = new Date();
-  const insertOperations = [];
+  const insertOperations: unknown[] = [];
 
   // Add org membership insert if user is not already an org member
   if (!existingOrgMembership) {
@@ -82,7 +113,7 @@ export async function addMember(env, actor, { orgId, projectId, userToAdd, role 
   );
 
   // Execute all inserts atomically - both succeed or both fail
-  await db.batch(insertOperations);
+  await db.batch(insertOperations as unknown as Parameters<typeof db.batch>[0]);
 
   // Get project name for notification
   const project = await db

@@ -1,22 +1,37 @@
 /**
  * Delete a project and clean up associated resources
  *
- * @param {Object} env - Cloudflare environment bindings
- * @param {Object} actor - User performing the deletion
- * @param {Object} params - Delete parameters
- * @param {string} params.projectId - Project ID to delete
- * @returns {Promise<{ deleted: string, notifiedCount: number }>}
- * @throws {DomainError} DB_ERROR on database error
+ * @throws DomainError DB_ERROR on database error
  */
 
-import { createDb } from '@/db/client.js';
-import { projects, projectMembers } from '@/db/schema.js';
+import { createDb } from '@/db/client';
+import { projects, projectMembers } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { disconnectAllFromProject, cleanupProjectStorage } from '@/commands/lib/doSync.js';
-import { notifyUsers, NotificationTypes } from '@/commands/lib/notifications.js';
+import { disconnectAllFromProject, cleanupProjectStorage } from '@/commands/lib/doSync';
+import { notifyUsers, NotificationTypes } from '@/commands/lib/notifications';
+import type { Env } from '@/types';
 
-export async function deleteProject(env, actor, { projectId }) {
+export interface DeleteProjectActor {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+}
+
+export interface DeleteProjectParams {
+  projectId: string;
+}
+
+export interface DeleteProjectResult {
+  deleted: string;
+  notifiedCount: number;
+}
+
+export async function deleteProject(
+  env: Env,
+  actor: DeleteProjectActor,
+  { projectId }: DeleteProjectParams,
+): Promise<DeleteProjectResult> {
   const db = createDb(env.DB);
 
   const project = await db
@@ -50,7 +65,7 @@ export async function deleteProject(env, actor, { projectId }) {
   } catch (err) {
     throw createDomainError(
       SYSTEM_ERRORS.DB_ERROR,
-      { operation: 'delete_project', projectId, originalError: err.message },
+      { operation: 'delete_project', projectId, originalError: (err as Error).message },
       'Failed to delete project',
     );
   }
@@ -64,7 +79,7 @@ export async function deleteProject(env, actor, { projectId }) {
       type: NotificationTypes.PROJECT_DELETED,
       projectId,
       projectName: project?.name || 'Unknown Project',
-      deletedBy: actor.name || actor.email,
+      deletedBy: actor.name || actor.email || 'Unknown',
     },
     actor.id,
   );

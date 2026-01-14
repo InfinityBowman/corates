@@ -1069,8 +1069,14 @@ const createProjectRoute = createRoute({
   },
   responses: {
     201: { content: { 'application/json': { schema: ProjectSchema } }, description: 'Created' },
-    400: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Validation error' },
-    500: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Database error' },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Validation error',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Database error',
+    },
   },
 });
 
@@ -1193,7 +1199,10 @@ const deleteProjectRoute = createRoute({
     params: z.object({ id: z.string().min(1) }),
   },
   responses: {
-    200: { content: { 'application/json': { schema: DeleteSuccessSchema } }, description: 'Deleted' },
+    200: {
+      content: { 'application/json': { schema: DeleteSuccessSchema } },
+      description: 'Deleted',
+    },
     404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Not found' },
     403: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Access denied' },
   },

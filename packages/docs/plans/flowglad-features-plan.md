@@ -644,7 +644,9 @@ export async function get(kv, customerId) {
  */
 export async function set(kv, customerId, subscription) {
   try {
-    await kv.put(`${KEY_PREFIX}${customerId}`, JSON.stringify(subscription), { expirationTtl: CACHE_TTL_SECONDS });
+    await kv.put(`${KEY_PREFIX}${customerId}`, JSON.stringify(subscription), {
+      expirationTtl: CACHE_TTL_SECONDS,
+    });
   } catch (error) {
     // Log but don't throw - cache write failures are non-critical
     console.error('[SubscriptionCache] Set failed:', { customerId, error: error.message });
@@ -1105,7 +1107,9 @@ describe('SubscriptionCache (KV)', () => {
     const sub = { id: 'sub_123' };
     await cache.set(mockKV, 'cus_123', sub);
 
-    expect(mockKV.put).toHaveBeenCalledWith('sub:cus_123', JSON.stringify(sub), { expirationTtl: 60 });
+    expect(mockKV.put).toHaveBeenCalledWith('sub:cus_123', JSON.stringify(sub), {
+      expirationTtl: 60,
+    });
   });
 
   it('invalidates entry', async () => {
@@ -1173,8 +1177,16 @@ describe('resolveOrgPlan', () => {
   it('uses cache on second call', async () => {
     const stripeMock = mockStripeSubscriptions([{ id: 'sub_123', status: 'active' }]);
 
-    await resolveOrgPlan({ db: mockDb({ stripeCustomerId: 'cus_123' }), orgId: 'org_1', env: mockEnv });
-    await resolveOrgPlan({ db: mockDb({ stripeCustomerId: 'cus_123' }), orgId: 'org_1', env: mockEnv });
+    await resolveOrgPlan({
+      db: mockDb({ stripeCustomerId: 'cus_123' }),
+      orgId: 'org_1',
+      env: mockEnv,
+    });
+    await resolveOrgPlan({
+      db: mockDb({ stripeCustomerId: 'cus_123' }),
+      orgId: 'org_1',
+      env: mockEnv,
+    });
 
     expect(stripeMock.subscriptions.list).toHaveBeenCalledTimes(1);
   });

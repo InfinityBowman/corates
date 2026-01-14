@@ -9,8 +9,9 @@ interface MemberData {
 
 interface ProjectMeta {
   name?: string;
-  description?: string;
-  updatedAt?: string;
+  description?: string | null;
+  updatedAt?: number;
+  createdAt?: number;
   [key: string]: unknown;
 }
 

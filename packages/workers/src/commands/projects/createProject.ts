@@ -1,26 +1,48 @@
 /**
  * Create a new project within an organization
  *
- * @param {Object} env - Cloudflare environment bindings
- * @param {Object} actor - User creating the project
- * @param {Object} params - Creation parameters
- * @param {string} params.orgId - Organization ID
- * @param {string} params.name - Project name
- * @param {string} [params.description] - Project description
- * @returns {Promise<{ project: Object }>}
- * @throws {ValidationError} FIELD_REQUIRED if name is empty or whitespace-only
- * @throws {DomainError} QUOTA_EXCEEDED if org at project limit
- * @throws {DomainError} DB_TRANSACTION_FAILED on database error
+ * @throws ValidationError FIELD_REQUIRED if name is empty or whitespace-only
+ * @throws DomainError QUOTA_EXCEEDED if org at project limit
+ * @throws DomainError DB_TRANSACTION_FAILED on database error
  */
 
-import { createDb } from '@/db/client.js';
-import { projects, projectMembers, user } from '@/db/schema.js';
+import { createDb } from '@/db/client';
+import { projects, projectMembers, user } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { insertWithQuotaCheck } from '@/lib/quotaTransaction.js';
-import { syncProjectToDO } from '@/commands/lib/doSync.js';
+import { insertWithQuotaCheck } from '@/lib/quotaTransaction';
+import { syncProjectToDO } from '@/commands/lib/doSync';
 import { createValidationError, VALIDATION_ERRORS } from '@corates/shared';
+import type { Env } from '@/types';
+import type { ProjectRole } from '@/policies/lib/roles';
 
-export async function createProject(env, actor, { orgId, name, description }) {
+export interface CreateProjectActor {
+  id: string;
+}
+
+export interface CreateProjectParams {
+  orgId: string;
+  name: string;
+  description?: string;
+}
+
+export interface CreateProjectResult {
+  project: {
+    id: string;
+    name: string;
+    description: string | null;
+    orgId: string;
+    createdBy: string;
+    role: ProjectRole;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+}
+
+export async function createProject(
+  env: Env,
+  actor: CreateProjectActor,
+  { orgId, name, description }: CreateProjectParams,
+): Promise<CreateProjectResult> {
   const db = createDb(env.DB);
 
   const projectId = crypto.randomUUID();
