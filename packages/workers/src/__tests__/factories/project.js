@@ -38,8 +38,8 @@ export async function buildProject(options = {}) {
   if (options.org) {
     org = options.org;
     owner = options.owner || (await buildUser());
-    // Ensure owner is org member if not already
-    if (options.owner && !options.skipOrgMembership) {
+    // Ensure owner is org member if not already (skip only if explicitly requested)
+    if (!options.skipOrgMembership) {
       try {
         await buildOrgMember({ orgId: org.id, user: owner, role: 'owner' });
       } catch (e) {

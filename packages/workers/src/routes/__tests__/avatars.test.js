@@ -264,8 +264,12 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
   it('should sync avatar to project memberships', async () => {
     const { project, owner } = await buildProject();
 
-    const originalFetch = mockProjectDO.get({ toString: () => `do-${project.id}` }).fetch;
-    mockProjectDO.get({ toString: () => `do-${project.id}` }).fetch = async request => {
+    // Get the DO stub once and override its fetch
+    const projectDO = mockProjectDO.get({ toString: () => `do-${project.id}` });
+    const originalFetch = projectDO.fetch;
+    const originalGet = mockProjectDO.get;
+
+    projectDO.fetch = async request => {
       const url = new URL(request.url);
       if (url.pathname === '/sync-member') {
         const body = await request.json();
@@ -276,18 +280,27 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
       return originalFetch(request);
     };
 
-    const imageData = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]);
-    const file = new File([imageData], 'avatar.jpg', { type: 'image/jpeg' });
-    const formData = new FormData();
-    formData.append('avatar', file);
+    // Make get() return the same stub so the route handler uses our override
+    mockProjectDO.get = vi.fn(() => projectDO);
 
-    const res = await fetchAvatar('/api/users/avatar', {
-      method: 'POST',
-      headers: { 'x-test-user-id': owner.id, 'x-test-user-email': owner.email },
-      body: formData,
-    });
+    try {
+      const imageData = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]);
+      const file = new File([imageData], 'avatar.jpg', { type: 'image/jpeg' });
+      const formData = new FormData();
+      formData.append('avatar', file);
 
-    expect(res.status).toBe(200);
+      const res = await fetchAvatar('/api/users/avatar', {
+        method: 'POST',
+        headers: { 'x-test-user-id': owner.id, 'x-test-user-email': owner.email },
+        body: formData,
+      });
+
+      expect(res.status).toBe(200);
+    } finally {
+      // Restore original implementations
+      projectDO.fetch = originalFetch;
+      mockProjectDO.get = originalGet;
+    }
   });
 });
 
