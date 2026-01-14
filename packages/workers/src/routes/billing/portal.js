@@ -13,7 +13,7 @@ import {
 } from '@corates/shared';
 import { billingPortalRateLimit } from '@/middleware/rateLimit.js';
 import { resolveOrgIdWithRole } from './helpers/orgContext.js';
-import { requireOrgOwner } from './helpers/ownerGate.js';
+import { requireOrgOwner } from '@/policies';
 
 const billingPortalRoutes = new OpenAPIHono({
   defaultHook: (result, c) => {

@@ -13,7 +13,7 @@ import {
 } from '@corates/shared';
 import { GRANT_CONFIG } from '@/config/constants.js';
 import { resolveOrgIdWithRole } from './helpers/orgContext.js';
-import { requireOrgOwner } from './helpers/ownerGate.js';
+import { requireOrgOwner } from '@/policies';
 
 const billingGrantRoutes = new OpenAPIHono({
   defaultHook: (result, c) => {

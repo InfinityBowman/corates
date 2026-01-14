@@ -10,20 +10,27 @@
  * - manage: Manage members (add/remove/update roles)
  */
 
-import { projectMembers } from '@/db/schema.js';
+import { projectMembers } from '@/db/schema';
 import { eq, and, count } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS, AUTH_ERRORS } from '@corates/shared';
-import { isProjectOwner } from './lib/roles.js';
+import { isProjectOwner } from './lib/roles';
+import type { Database } from '@/db/client';
+import type { ProjectRole } from './lib/roles';
+
+// Return types for membership queries
+export interface ProjectMembership {
+  role: string | null;
+  joinedAt: Date | null;
+}
 
 /**
  * Get user's membership for a project
- *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} projectId - Project ID
- * @returns {Promise<{role: string, joinedAt: Date} | null>}
  */
-export async function getProjectMembership(db, userId, projectId) {
+export async function getProjectMembership(
+  db: Database,
+  userId: string,
+  projectId: string,
+): Promise<ProjectMembership | null> {
   const membership = await db
     .select({
       role: projectMembers.role,
@@ -38,67 +45,62 @@ export async function getProjectMembership(db, userId, projectId) {
 
 /**
  * Check if user can read project (is a member)
- *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} projectId - Project ID
- * @returns {Promise<boolean>}
  */
-export async function canReadProject(db, userId, projectId) {
+export async function canReadProject(
+  db: Database,
+  userId: string,
+  projectId: string,
+): Promise<boolean> {
   const membership = await getProjectMembership(db, userId, projectId);
   return !!membership;
 }
 
 /**
  * Check if user can edit project (any member can edit)
- *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} projectId - Project ID
- * @returns {Promise<boolean>}
  */
-export async function canEditProject(db, userId, projectId) {
+export async function canEditProject(
+  db: Database,
+  userId: string,
+  projectId: string,
+): Promise<boolean> {
   const membership = await getProjectMembership(db, userId, projectId);
   return !!membership;
 }
 
 /**
  * Check if user can delete project (owner only)
- *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} projectId - Project ID
- * @returns {Promise<boolean>}
  */
-export async function canDeleteProject(db, userId, projectId) {
+export async function canDeleteProject(
+  db: Database,
+  userId: string,
+  projectId: string,
+): Promise<boolean> {
   const membership = await getProjectMembership(db, userId, projectId);
-  return membership && isProjectOwner(membership.role);
+  return !!membership && !!membership.role && isProjectOwner(membership.role);
 }
 
 /**
  * Check if user can manage project members (owner only)
- *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} projectId - Project ID
- * @returns {Promise<boolean>}
  */
-export async function canManageMembers(db, userId, projectId) {
+export async function canManageMembers(
+  db: Database,
+  userId: string,
+  projectId: string,
+): Promise<boolean> {
   const membership = await getProjectMembership(db, userId, projectId);
-  return membership && isProjectOwner(membership.role);
+  return !!membership && !!membership.role && isProjectOwner(membership.role);
 }
 
 /**
  * Check if user can remove a specific member
  * Owners can remove anyone, non-owners can only remove themselves
- *
- * @param {Object} db - Database instance
- * @param {string} actorId - User performing the action
- * @param {string} projectId - Project ID
- * @param {string} targetUserId - User to be removed
- * @returns {Promise<boolean>}
  */
-export async function canRemoveMember(db, actorId, projectId, targetUserId) {
+export async function canRemoveMember(
+  db: Database,
+  actorId: string,
+  projectId: string,
+  targetUserId: string,
+): Promise<boolean> {
   // Self-removal is always allowed (if you're a member)
   if (actorId === targetUserId) {
     const membership = await getProjectMembership(db, actorId, projectId);
@@ -112,13 +114,14 @@ export async function canRemoveMember(db, actorId, projectId, targetUserId) {
 /**
  * Check if a role change would leave project without owners
  *
- * @param {Object} db - Database instance
- * @param {string} projectId - Project ID
- * @param {string} targetUserId - User whose role is changing
- * @param {string} newRole - New role to assign
- * @returns {Promise<boolean>} True if safe, false if would remove last owner
+ * @returns True if safe, false if would remove last owner
  */
-export async function canChangeRole(db, projectId, targetUserId, newRole) {
+export async function canChangeRole(
+  db: Database,
+  projectId: string,
+  targetUserId: string,
+  newRole: ProjectRole | string,
+): Promise<boolean> {
   // If promoting to owner, always safe
   if (newRole === 'owner') {
     return true;
@@ -143,12 +146,13 @@ export async function canChangeRole(db, projectId, targetUserId, newRole) {
 /**
  * Check if removing a member would leave project without owners
  *
- * @param {Object} db - Database instance
- * @param {string} projectId - Project ID
- * @param {string} targetUserId - User to be removed
- * @returns {Promise<boolean>} True if safe, false if would orphan project
+ * @returns True if safe, false if would orphan project
  */
-export async function canRemoveWithoutOrphaning(db, projectId, targetUserId) {
+export async function canRemoveWithoutOrphaning(
+  db: Database,
+  projectId: string,
+  targetUserId: string,
+): Promise<boolean> {
   const targetMembership = await getProjectMembership(db, targetUserId, projectId);
 
   // If not an owner, removal is safe
@@ -173,12 +177,13 @@ export async function canRemoveWithoutOrphaning(db, projectId, targetUserId) {
 /**
  * Require user can read project, throw if not
  *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} projectId - Project ID
  * @throws {DomainError} PROJECT_ACCESS_DENIED if not a member
  */
-export async function requireProjectRead(db, userId, projectId) {
+export async function requireProjectRead(
+  db: Database,
+  userId: string,
+  projectId: string,
+): Promise<void> {
   if (!(await canReadProject(db, userId, projectId))) {
     throw createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId });
   }
@@ -187,12 +192,13 @@ export async function requireProjectRead(db, userId, projectId) {
 /**
  * Require user can edit project, throw if not
  *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} projectId - Project ID
  * @throws {DomainError} PROJECT_ACCESS_DENIED if not a member
  */
-export async function requireProjectEdit(db, userId, projectId) {
+export async function requireProjectEdit(
+  db: Database,
+  userId: string,
+  projectId: string,
+): Promise<void> {
   if (!(await canEditProject(db, userId, projectId))) {
     throw createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId });
   }
@@ -201,20 +207,21 @@ export async function requireProjectEdit(db, userId, projectId) {
 /**
  * Require user can delete project, throw if not
  *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} projectId - Project ID
  * @throws {DomainError} PROJECT_ACCESS_DENIED if not a member
  * @throws {DomainError} AUTH_FORBIDDEN if not owner
  */
-export async function requireProjectDelete(db, userId, projectId) {
+export async function requireProjectDelete(
+  db: Database,
+  userId: string,
+  projectId: string,
+): Promise<void> {
   const membership = await getProjectMembership(db, userId, projectId);
 
   if (!membership) {
     throw createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId });
   }
 
-  if (!isProjectOwner(membership.role)) {
+  if (!membership.role || !isProjectOwner(membership.role)) {
     throw createDomainError(
       AUTH_ERRORS.FORBIDDEN,
       { reason: 'owner_required', action: 'delete_project' },
@@ -226,20 +233,21 @@ export async function requireProjectDelete(db, userId, projectId) {
 /**
  * Require user can manage members, throw if not
  *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} projectId - Project ID
  * @throws {DomainError} PROJECT_ACCESS_DENIED if not a member
  * @throws {DomainError} AUTH_FORBIDDEN if not owner
  */
-export async function requireMemberManagement(db, userId, projectId) {
+export async function requireMemberManagement(
+  db: Database,
+  userId: string,
+  projectId: string,
+): Promise<void> {
   const membership = await getProjectMembership(db, userId, projectId);
 
   if (!membership) {
     throw createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId });
   }
 
-  if (!isProjectOwner(membership.role)) {
+  if (!membership.role || !isProjectOwner(membership.role)) {
     throw createDomainError(
       AUTH_ERRORS.FORBIDDEN,
       { reason: 'owner_required', action: 'manage_members' },
@@ -251,14 +259,15 @@ export async function requireMemberManagement(db, userId, projectId) {
 /**
  * Require member removal is allowed (owner or self)
  *
- * @param {Object} db - Database instance
- * @param {string} actorId - User performing the action
- * @param {string} projectId - Project ID
- * @param {string} targetUserId - User to be removed
  * @throws {DomainError} PROJECT_ACCESS_DENIED if actor not a member
  * @throws {DomainError} AUTH_FORBIDDEN if not owner and not self
  */
-export async function requireMemberRemoval(db, actorId, projectId, targetUserId) {
+export async function requireMemberRemoval(
+  db: Database,
+  actorId: string,
+  projectId: string,
+  targetUserId: string,
+): Promise<void> {
   const actorMembership = await getProjectMembership(db, actorId, projectId);
 
   if (!actorMembership) {
@@ -266,7 +275,7 @@ export async function requireMemberRemoval(db, actorId, projectId, targetUserId)
   }
 
   const isSelf = actorId === targetUserId;
-  const isOwner = isProjectOwner(actorMembership.role);
+  const isOwner = !!actorMembership.role && isProjectOwner(actorMembership.role);
 
   if (!isOwner && !isSelf) {
     throw createDomainError(
@@ -280,13 +289,14 @@ export async function requireMemberRemoval(db, actorId, projectId, targetUserId)
 /**
  * Require role change won't orphan project
  *
- * @param {Object} db - Database instance
- * @param {string} projectId - Project ID
- * @param {string} targetUserId - User whose role is changing
- * @param {string} newRole - New role to assign
  * @throws {DomainError} PROJECT_LAST_OWNER if would remove last owner
  */
-export async function requireSafeRoleChange(db, projectId, targetUserId, newRole) {
+export async function requireSafeRoleChange(
+  db: Database,
+  projectId: string,
+  targetUserId: string,
+  newRole: ProjectRole | string,
+): Promise<void> {
   if (!(await canChangeRole(db, projectId, targetUserId, newRole))) {
     throw createDomainError(
       PROJECT_ERRORS.LAST_OWNER,
@@ -299,12 +309,13 @@ export async function requireSafeRoleChange(db, projectId, targetUserId, newRole
 /**
  * Require removal won't orphan project
  *
- * @param {Object} db - Database instance
- * @param {string} projectId - Project ID
- * @param {string} targetUserId - User to be removed
  * @throws {DomainError} PROJECT_LAST_OWNER if would remove last owner
  */
-export async function requireSafeRemoval(db, projectId, targetUserId) {
+export async function requireSafeRemoval(
+  db: Database,
+  projectId: string,
+  targetUserId: string,
+): Promise<void> {
   if (!(await canRemoveWithoutOrphaning(db, projectId, targetUserId))) {
     throw createDomainError(
       PROJECT_ERRORS.LAST_OWNER,

@@ -10,20 +10,27 @@
  * - manage_members: Add/remove/update member roles
  */
 
-import { member } from '@/db/schema.js';
+import { member } from '@/db/schema';
 import { eq, and, count } from 'drizzle-orm';
 import { createDomainError, AUTH_ERRORS } from '@corates/shared';
-import { hasOrgRole, isOrgOwner } from './lib/roles.js';
+import { hasOrgRole, isOrgOwner } from './lib/roles';
+import type { Database } from '@/db/client';
+import type { OrgRole } from './lib/roles';
+
+// Return types for membership queries
+export interface OrgMembership {
+  role: string | null;
+  createdAt: Date | null;
+}
 
 /**
  * Get user's membership for an organization
- *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} orgId - Organization ID
- * @returns {Promise<{role: string, createdAt: Date} | null>}
  */
-export async function getOrgMembership(db, userId, orgId) {
+export async function getOrgMembership(
+  db: Database,
+  userId: string,
+  orgId: string,
+): Promise<OrgMembership | null> {
   const membership = await db
     .select({
       role: member.role,
@@ -38,79 +45,57 @@ export async function getOrgMembership(db, userId, orgId) {
 
 /**
  * Check if user is an org member
- *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} orgId - Organization ID
- * @returns {Promise<boolean>}
  */
-export async function isOrgMember(db, userId, orgId) {
+export async function isOrgMember(db: Database, userId: string, orgId: string): Promise<boolean> {
   const membership = await getOrgMembership(db, userId, orgId);
   return !!membership;
 }
 
 /**
  * Check if user can read org (any member)
- *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} orgId - Organization ID
- * @returns {Promise<boolean>}
  */
-export async function canReadOrg(db, userId, orgId) {
+export async function canReadOrg(db: Database, userId: string, orgId: string): Promise<boolean> {
   return isOrgMember(db, userId, orgId);
 }
 
 /**
  * Check if user can update org (admin+)
- *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} orgId - Organization ID
- * @returns {Promise<boolean>}
  */
-export async function canUpdateOrg(db, userId, orgId) {
+export async function canUpdateOrg(db: Database, userId: string, orgId: string): Promise<boolean> {
   const membership = await getOrgMembership(db, userId, orgId);
-  return membership && hasOrgRole(membership.role, 'admin');
+  return !!membership && !!membership.role && hasOrgRole(membership.role, 'admin');
 }
 
 /**
  * Check if user can delete org (owner only)
- *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} orgId - Organization ID
- * @returns {Promise<boolean>}
  */
-export async function canDeleteOrg(db, userId, orgId) {
+export async function canDeleteOrg(db: Database, userId: string, orgId: string): Promise<boolean> {
   const membership = await getOrgMembership(db, userId, orgId);
-  return membership && isOrgOwner(membership.role);
+  return !!membership && !!membership.role && isOrgOwner(membership.role);
 }
 
 /**
  * Check if user can manage org members (admin+)
- *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} orgId - Organization ID
- * @returns {Promise<boolean>}
  */
-export async function canManageOrgMembers(db, userId, orgId) {
+export async function canManageOrgMembers(
+  db: Database,
+  userId: string,
+  orgId: string,
+): Promise<boolean> {
   const membership = await getOrgMembership(db, userId, orgId);
-  return membership && hasOrgRole(membership.role, 'admin');
+  return !!membership && !!membership.role && hasOrgRole(membership.role, 'admin');
 }
 
 /**
  * Check if user can remove a specific org member
  * Admins can remove anyone (except last owner), users can remove themselves
- *
- * @param {Object} db - Database instance
- * @param {string} actorId - User performing the action
- * @param {string} orgId - Organization ID
- * @param {string} targetUserId - User to be removed
- * @returns {Promise<boolean>}
  */
-export async function canRemoveOrgMember(db, actorId, orgId, targetUserId) {
+export async function canRemoveOrgMember(
+  db: Database,
+  actorId: string,
+  orgId: string,
+  targetUserId: string,
+): Promise<boolean> {
   if (actorId === targetUserId) {
     return isOrgMember(db, actorId, orgId);
   }
@@ -120,13 +105,14 @@ export async function canRemoveOrgMember(db, actorId, orgId, targetUserId) {
 /**
  * Check if role change would orphan org (remove last owner)
  *
- * @param {Object} db - Database instance
- * @param {string} orgId - Organization ID
- * @param {string} targetUserId - User whose role is changing
- * @param {string} newRole - New role to assign
- * @returns {Promise<boolean>} True if safe, false if would orphan
+ * @returns True if safe, false if would orphan
  */
-export async function canChangeOrgRole(db, orgId, targetUserId, newRole) {
+export async function canChangeOrgRole(
+  db: Database,
+  orgId: string,
+  targetUserId: string,
+  newRole: OrgRole | string,
+): Promise<boolean> {
   if (newRole === 'owner') {
     return true;
   }
@@ -148,12 +134,13 @@ export async function canChangeOrgRole(db, orgId, targetUserId, newRole) {
 /**
  * Check if removing a member would orphan org
  *
- * @param {Object} db - Database instance
- * @param {string} orgId - Organization ID
- * @param {string} targetUserId - User to be removed
- * @returns {Promise<boolean>} True if safe, false if would orphan
+ * @returns True if safe, false if would orphan
  */
-export async function canRemoveOrgMemberWithoutOrphaning(db, orgId, targetUserId) {
+export async function canRemoveOrgMemberWithoutOrphaning(
+  db: Database,
+  orgId: string,
+  targetUserId: string,
+): Promise<boolean> {
   const targetMembership = await getOrgMembership(db, targetUserId, orgId);
 
   if (!targetMembership || targetMembership.role !== 'owner') {
@@ -176,21 +163,22 @@ export async function canRemoveOrgMemberWithoutOrphaning(db, orgId, targetUserId
 /**
  * Require org membership at minimum role level
  *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} orgId - Organization ID
- * @param {string} [minRole='member'] - Minimum required role
- * @returns {Promise<{role: string, createdAt: Date}>} Membership if authorized
+ * @returns Membership if authorized
  * @throws {DomainError} AUTH_FORBIDDEN if not a member or insufficient role
  */
-export async function requireOrgAccess(db, userId, orgId, minRole = 'member') {
+export async function requireOrgAccess(
+  db: Database,
+  userId: string,
+  orgId: string,
+  minRole: OrgRole | string = 'member',
+): Promise<OrgMembership> {
   const membership = await getOrgMembership(db, userId, orgId);
 
   if (!membership) {
     throw createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'not_org_member', orgId });
   }
 
-  if (!hasOrgRole(membership.role, minRole)) {
+  if (!membership.role || !hasOrgRole(membership.role, minRole)) {
     throw createDomainError(
       AUTH_ERRORS.FORBIDDEN,
       { reason: 'insufficient_role', required: minRole, actual: membership.role },
@@ -204,39 +192,42 @@ export async function requireOrgAccess(db, userId, orgId, minRole = 'member') {
 /**
  * Require user can manage org members (admin+)
  *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} orgId - Organization ID
- * @returns {Promise<{role: string, createdAt: Date}>} Membership if authorized
+ * @returns Membership if authorized
  * @throws {DomainError} AUTH_FORBIDDEN if not admin+
  */
-export async function requireOrgMemberManagement(db, userId, orgId) {
+export async function requireOrgMemberManagement(
+  db: Database,
+  userId: string,
+  orgId: string,
+): Promise<OrgMembership> {
   return requireOrgAccess(db, userId, orgId, 'admin');
 }
 
 /**
  * Require user can delete org (owner only)
  *
- * @param {Object} db - Database instance
- * @param {string} userId - User ID
- * @param {string} orgId - Organization ID
- * @returns {Promise<{role: string, createdAt: Date}>} Membership if authorized
+ * @returns Membership if authorized
  * @throws {DomainError} AUTH_FORBIDDEN if not owner
  */
-export async function requireOrgDelete(db, userId, orgId) {
+export async function requireOrgDelete(
+  db: Database,
+  userId: string,
+  orgId: string,
+): Promise<OrgMembership> {
   return requireOrgAccess(db, userId, orgId, 'owner');
 }
 
 /**
  * Require org member removal is allowed (admin or self)
  *
- * @param {Object} db - Database instance
- * @param {string} actorId - User performing the action
- * @param {string} orgId - Organization ID
- * @param {string} targetUserId - User to be removed
  * @throws {DomainError} AUTH_FORBIDDEN if not authorized
  */
-export async function requireOrgMemberRemoval(db, actorId, orgId, targetUserId) {
+export async function requireOrgMemberRemoval(
+  db: Database,
+  actorId: string,
+  orgId: string,
+  targetUserId: string,
+): Promise<void> {
   const actorMembership = await getOrgMembership(db, actorId, orgId);
 
   if (!actorMembership) {
@@ -244,7 +235,7 @@ export async function requireOrgMemberRemoval(db, actorId, orgId, targetUserId) 
   }
 
   const isSelf = actorId === targetUserId;
-  const canManage = hasOrgRole(actorMembership.role, 'admin');
+  const canManage = !!actorMembership.role && hasOrgRole(actorMembership.role, 'admin');
 
   if (!canManage && !isSelf) {
     throw createDomainError(
@@ -258,13 +249,14 @@ export async function requireOrgMemberRemoval(db, actorId, orgId, targetUserId) 
 /**
  * Require safe role change in org (won't orphan)
  *
- * @param {Object} db - Database instance
- * @param {string} orgId - Organization ID
- * @param {string} targetUserId - User whose role is changing
- * @param {string} newRole - New role to assign
  * @throws {DomainError} AUTH_FORBIDDEN if would orphan org
  */
-export async function requireSafeOrgRoleChange(db, orgId, targetUserId, newRole) {
+export async function requireSafeOrgRoleChange(
+  db: Database,
+  orgId: string,
+  targetUserId: string,
+  newRole: OrgRole | string,
+): Promise<void> {
   if (!(await canChangeOrgRole(db, orgId, targetUserId, newRole))) {
     throw createDomainError(
       AUTH_ERRORS.FORBIDDEN,
@@ -277,12 +269,13 @@ export async function requireSafeOrgRoleChange(db, orgId, targetUserId, newRole)
 /**
  * Require safe member removal in org (won't orphan)
  *
- * @param {Object} db - Database instance
- * @param {string} orgId - Organization ID
- * @param {string} targetUserId - User to be removed
  * @throws {DomainError} AUTH_FORBIDDEN if would orphan org
  */
-export async function requireSafeOrgMemberRemoval(db, orgId, targetUserId) {
+export async function requireSafeOrgMemberRemoval(
+  db: Database,
+  orgId: string,
+  targetUserId: string,
+): Promise<void> {
   if (!(await canRemoveOrgMemberWithoutOrphaning(db, orgId, targetUserId))) {
     throw createDomainError(
       AUTH_ERRORS.FORBIDDEN,

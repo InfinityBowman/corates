@@ -32,7 +32,9 @@ export {
   isOrgAdmin,
   isProjectOwner,
   isTopRole,
-} from './lib/roles.js';
+} from './lib/roles';
+
+export type { OrgRole, ProjectRole } from './lib/roles';
 
 // Project policies
 export {
@@ -56,7 +58,9 @@ export {
   requireMemberRemoval,
   requireSafeRoleChange,
   requireSafeRemoval,
-} from './projects.js';
+} from './projects';
+
+export type { ProjectMembership } from './projects';
 
 // Organization policies
 export {
@@ -80,7 +84,9 @@ export {
   requireOrgMemberRemoval,
   requireSafeOrgRoleChange,
   requireSafeOrgMemberRemoval,
-} from './orgs.js';
+} from './orgs';
+
+export type { OrgMembership } from './orgs';
 
 // Billing policies
 export {

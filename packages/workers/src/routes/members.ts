@@ -96,13 +96,13 @@ async function projectMembershipMiddleware(
   const db = createDb(c.env.DB);
   const membership = await getProjectMembership(db, authUser.id, projectId);
 
-  if (!membership) {
+  if (!membership || !membership.role) {
     const error = createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId });
     return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   c.set('projectId', projectId);
-  c.set('membership', membership);
+  c.set('membership', { role: membership.role });
   c.set('isOwner', isProjectOwner(membership.role));
 
   await next();
