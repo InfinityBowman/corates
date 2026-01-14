@@ -17,7 +17,8 @@ import { createDb } from '@/db/client.js';
 import { projectMembers, projects } from '@/db/schema.js';
 import { eq, and, count } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
-import { syncMemberToDO } from '@/lib/project-sync.js';
+import { syncMemberToDO } from '@/commands/lib/doSync.js';
+import { notifyUser, NotificationTypes } from '@/commands/lib/notifications.js';
 
 export async function removeMember(env, actor, { orgId, projectId, userId, isSelfRemoval }) {
   const db = createDb(env.DB);
@@ -76,22 +77,13 @@ export async function removeMember(env, actor, { orgId, projectId, userId, isSel
         .where(eq(projects.id, projectId))
         .get();
 
-      const userSessionId = env.USER_SESSION.idFromName(userId);
-      const userSession = env.USER_SESSION.get(userSessionId);
-      await userSession.fetch(
-        new Request('https://internal/notify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'project-membership-removed',
-            orgId,
-            projectId,
-            projectName: project?.name || 'Unknown Project',
-            removedBy: actor.name || actor.email,
-            timestamp: Date.now(),
-          }),
-        }),
-      );
+      await notifyUser(env, userId, {
+        type: NotificationTypes.PROJECT_MEMBERSHIP_REMOVED,
+        orgId,
+        projectId,
+        projectName: project?.name || 'Unknown Project',
+        removedBy: actor.name || actor.email,
+      });
     } catch (err) {
       console.error('Failed to send removal notification:', err);
     }

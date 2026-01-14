@@ -16,7 +16,8 @@ import { createDb } from '@/db/client.js';
 import { projectMembers } from '@/db/schema.js';
 import { eq, and, count } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
-import { syncMemberToDO } from '@/lib/project-sync.js';
+import { syncMemberToDO } from '@/commands/lib/doSync.js';
+import { notifyUser, NotificationTypes } from '@/commands/lib/notifications.js';
 
 export async function updateMemberRole(env, actor, { orgId, projectId, userId, role }) {
   const db = createDb(env.DB);
@@ -61,21 +62,12 @@ export async function updateMemberRole(env, actor, { orgId, projectId, userId, r
 
   // Send notification to the user whose role was updated
   try {
-    const userSessionId = env.USER_SESSION.idFromName(userId);
-    const userSession = env.USER_SESSION.get(userSessionId);
-    await userSession.fetch(
-      new Request('https://internal/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'project-membership-updated',
-          orgId,
-          projectId,
-          role,
-          timestamp: Date.now(),
-        }),
-      }),
-    );
+    await notifyUser(env, userId, {
+      type: NotificationTypes.PROJECT_MEMBERSHIP_UPDATED,
+      orgId,
+      projectId,
+      role,
+    });
   } catch (err) {
     console.error('Failed to send role update notification:', err);
   }

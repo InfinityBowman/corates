@@ -16,7 +16,7 @@ import { createDb } from '@/db/client.js';
 import { projects, projectMembers, user } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
 import { insertWithQuotaCheck } from '@/lib/quotaTransaction.js';
-import { syncProjectToDO } from '@/lib/project-sync.js';
+import { syncProjectToDO } from '@/commands/lib/doSync.js';
 
 export async function createProject(env, actor, { orgId, name, description }) {
   const db = createDb(env.DB);

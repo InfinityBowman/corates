@@ -17,7 +17,8 @@ import { createDb } from '@/db/client.js';
 import { projectMembers, projects, member } from '@/db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
-import { syncMemberToDO } from '@/lib/project-sync.js';
+import { syncMemberToDO } from '@/commands/lib/doSync.js';
+import { notifyUser, NotificationTypes } from '@/commands/lib/notifications.js';
 import { checkCollaboratorQuota } from '@/lib/quotaTransaction.js';
 
 export async function addMember(env, actor, { orgId, projectId, userToAdd, role }) {
@@ -74,22 +75,13 @@ export async function addMember(env, actor, { orgId, projectId, userToAdd, role 
 
   // Send notification to the added user
   try {
-    const userSessionId = env.USER_SESSION.idFromName(userToAdd.id);
-    const userSession = env.USER_SESSION.get(userSessionId);
-    await userSession.fetch(
-      new Request('https://internal/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'project-membership-added',
-          orgId,
-          projectId,
-          projectName: project?.name || 'Unknown Project',
-          role,
-          timestamp: Date.now(),
-        }),
-      }),
-    );
+    await notifyUser(env, userToAdd.id, {
+      type: NotificationTypes.PROJECT_MEMBERSHIP_ADDED,
+      orgId,
+      projectId,
+      projectName: project?.name || 'Unknown Project',
+      role,
+    });
   } catch (err) {
     console.error('Failed to send project membership notification:', err);
   }

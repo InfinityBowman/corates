@@ -14,7 +14,7 @@
 import { createDb } from '@/db/client.js';
 import { projects } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
-import { syncProjectToDO } from '@/lib/project-sync.js';
+import { syncProjectToDO } from '@/commands/lib/doSync.js';
 
 export async function updateProject(env, actor, { projectId, name, description }) {
   const db = createDb(env.DB);
