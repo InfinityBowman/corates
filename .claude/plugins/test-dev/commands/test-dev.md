@@ -24,6 +24,7 @@ You are helping a developer write and improve tests. Follow a systematic approac
 Initial request: $ARGUMENTS
 
 **Actions**:
+
 1. Create todo list with all phases
 2. If request unclear, ask user for:
    - What code needs tests? (new feature, existing untested code, coverage gaps)
@@ -38,6 +39,7 @@ Initial request: $ARGUMENTS
 **Goal**: Understand existing test patterns and identify gaps
 
 **Actions**:
+
 1. Launch 2-3 test-explorer agents in parallel. Each agent should:
    - Focus on a different aspect (existing test patterns, untested code areas, test utilities)
    - Include a list of 5-10 key test files to read
@@ -59,6 +61,7 @@ Initial request: $ARGUMENTS
 **CRITICAL**: This is one of the most important phases. DO NOT SKIP.
 
 **Actions**:
+
 1. Review the test exploration findings and original request
 2. Identify underspecified aspects: edge cases to cover, mocking strategy preferences, test granularity (unit vs integration), error scenarios, async behavior handling
 3. **Present all questions to the user in a clear, organized list**
@@ -73,6 +76,7 @@ If the user says "whatever you think is best", provide your recommendation and g
 **Goal**: Design multiple testing approaches with different trade-offs
 
 **Actions**:
+
 1. Launch 2-3 test-architect agents in parallel with different focuses:
    - **Heavy isolation**: Maximum mocking, pure unit tests, fast execution
    - **Integration-focused**: Minimal mocking, test real interactions, higher confidence
@@ -91,6 +95,7 @@ If the user says "whatever you think is best", provide your recommendation and g
 **DO NOT START WITHOUT USER APPROVAL**
 
 **Actions**:
+
 1. Wait for explicit user approval
 2. Read all relevant files identified in previous phases
 3. Implement following chosen strategy
@@ -108,6 +113,7 @@ If the user says "whatever you think is best", provide your recommendation and g
 **Goal**: Ensure tests pass and meet quality standards
 
 **Actions**:
+
 1. Run `pnpm test` (or appropriate test command) to verify tests pass
 2. Launch 2-3 test-reviewer agents in parallel with different focuses:
    - Assertion quality and completeness
@@ -124,6 +130,7 @@ If the user says "whatever you think is best", provide your recommendation and g
 **Goal**: Document what was accomplished
 
 **Actions**:
+
 1. Mark all todos complete
 2. Summarize:
    - What was tested

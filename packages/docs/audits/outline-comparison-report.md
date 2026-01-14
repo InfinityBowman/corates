@@ -17,6 +17,7 @@
 ### Key Takeaways
 
 **Outline's Strengths**:
+
 - Mature, production-tested command pattern for complex operations
 - Comprehensive policy-based authorization system using cancan
 - Rich domain models with extensive business logic encapsulation
@@ -25,6 +26,7 @@
 - Comprehensive testing coverage with factory patterns
 
 **CoRATES's Strengths**:
+
 - Modern serverless-first architecture optimized for Cloudflare
 - Type-safe API layer with OpenAPI integration (Hono + Zod)
 - Centralized error domain system with structured error codes
@@ -33,14 +35,14 @@
 
 ### Critical Differences
 
-| Aspect | CoRATES | Outline |
-|--------|---------|---------|
-| **Architecture** | Serverless (Workers + DO) | Traditional Node.js server |
-| **State Management** | SolidJS createStore | MobX observables + decorators |
-| **ORM** | Drizzle (SQL-first) | Sequelize (model-first) |
-| **API Style** | OpenAPI/Hono REST | Koa custom RPC-style |
-| **Authorization** | Function-based checks | Policy objects (cancan) |
-| **Business Logic** | Route handlers + utils | Command pattern + model methods |
+| Aspect               | CoRATES                   | Outline                         |
+| -------------------- | ------------------------- | ------------------------------- |
+| **Architecture**     | Serverless (Workers + DO) | Traditional Node.js server      |
+| **State Management** | SolidJS createStore       | MobX observables + decorators   |
+| **ORM**              | Drizzle (SQL-first)       | Sequelize (model-first)         |
+| **API Style**        | OpenAPI/Hono REST         | Koa custom RPC-style            |
+| **Authorization**    | Function-based checks     | Policy objects (cancan)         |
+| **Business Logic**   | Route handlers + utils    | Command pattern + model methods |
 
 ---
 
@@ -51,6 +53,7 @@
 #### Outline's Approach: Layered Architecture with Commands
 
 **Structure**:
+
 ```
 server/
 ├── routes/          - API endpoints (thin controllers)
@@ -64,6 +67,7 @@ server/
 ```
 
 **Example - Document Creation Flow**:
+
 ```typescript
 // Route handler (thin)
 router.post("documents.create", auth(), validate(schema), async (ctx) => {
@@ -107,6 +111,7 @@ class Document extends ArchivableModel {
 ```
 
 **Benefits**:
+
 - Clear separation: routes handle HTTP, commands handle business logic
 - Reusable commands can be called from routes, queues, or tests
 - Rich models encapsulate domain behavior
@@ -114,6 +119,7 @@ class Document extends ArchivableModel {
 - Easy to test each layer independently
 
 **Drawbacks**:
+
 - More files and indirection (3+ files per feature)
 - Sequelize models can become very large
 - Decorator magic can obscure behavior
@@ -123,6 +129,7 @@ class Document extends ArchivableModel {
 #### CoRATES's Approach: Function-Based with Route Handlers
 
 **Structure**:
+
 ```
 packages/workers/src/
 ├── routes/          - API endpoints with business logic
@@ -133,6 +140,7 @@ packages/workers/src/
 ```
 
 **Example - Project Creation Flow**:
+
 ```javascript
 // Route handler (contains business logic)
 const createProjectRoute = createRoute({
@@ -165,6 +173,7 @@ projectRoutes.openapi(createProjectRoute, async (c) => {
 ```
 
 **Benefits**:
+
 - Fewer files, easier to follow the full flow
 - Explicit database queries (Drizzle)
 - OpenAPI schema co-located with routes
@@ -172,6 +181,7 @@ projectRoutes.openapi(createProjectRoute, async (c) => {
 - Type safety from request to response
 
 **Drawbacks**:
+
 - Business logic mixed with HTTP concerns
 - Harder to reuse logic across different contexts
 - No clear transaction boundary pattern
@@ -184,6 +194,7 @@ projectRoutes.openapi(createProjectRoute, async (c) => {
 **What to Adopt from Outline**:
 
 1. **Command Functions for Multi-Step Operations**
+
    ```javascript
    // packages/workers/src/commands/projectCreator.js
    /**
@@ -213,8 +224,9 @@ projectRoutes.openapi(createProjectRoute, async (c) => {
    ```
 
 2. **Keep Routes Thin**
+
    ```javascript
-   projectRoutes.openapi(createProjectRoute, async (c) => {
+   projectRoutes.openapi(createProjectRoute, async c => {
      const { user } = getAuth(c);
      const body = c.req.valid('json');
 
@@ -226,12 +238,14 @@ projectRoutes.openapi(createProjectRoute, async (c) => {
    ```
 
 **Benefits for CoRATES**:
+
 - Easier testing (test commands without HTTP layer)
 - Reusable from cron jobs, webhooks, admin scripts
 - Clearer transaction boundaries
 - Better separation of concerns
 
 **What to Keep from CoRATES**:
+
 - OpenAPI schema co-location
 - Drizzle's explicit query style
 - Simpler file structure (don't go overboard with layers)
@@ -243,6 +257,7 @@ projectRoutes.openapi(createProjectRoute, async (c) => {
 #### Outline's Approach: MobX with Rich Domain Models
 
 **Structure**:
+
 ```typescript
 // Store (collection management)
 class DocumentsStore extends Store<Document> {
@@ -274,9 +289,7 @@ class Document extends ArchivableModel {
 
   @computed
   get isStarred(): boolean {
-    return !!this.store.rootStore.stars.orderedData.find(
-      s => s.documentId === this.id
-    );
+    return !!this.store.rootStore.stars.orderedData.find(s => s.documentId === this.id);
   }
 
   @action
@@ -297,12 +310,14 @@ class Document extends ArchivableModel {
 ```
 
 **Benefits**:
+
 - Rich models with computed properties and methods
 - Automatic reactivity via decorators
 - Natural object-oriented patterns
 - Easy to traverse relationships (document.collection.team)
 
 **Drawbacks**:
+
 - Decorator overhead and magic
 - Tightly coupled to MobX
 - Can lead to large model files
@@ -313,6 +328,7 @@ class Document extends ArchivableModel {
 #### CoRATES's Approach: Lightweight Stores with Direct State
 
 **Structure**:
+
 ```javascript
 // Store (plain functions + createStore)
 function createProjectStore() {
@@ -323,16 +339,18 @@ function createProjectStore() {
   });
 
   function setProjectData(projectId, data) {
-    setStore(produce(s => {
-      if (!s.projects[projectId]) {
-        s.projects[projectId] = { meta: {}, members: [], studies: [] };
-      }
-      if (data.meta) s.projects[projectId].meta = data.meta;
-      if (data.studies) s.projects[projectId].studies = data.studies;
-    }));
+    setStore(
+      produce(s => {
+        if (!s.projects[projectId]) {
+          s.projects[projectId] = { meta: {}, members: [], studies: [] };
+        }
+        if (data.meta) s.projects[projectId].meta = data.meta;
+        if (data.studies) s.projects[projectId].studies = data.studies;
+      }),
+    );
   }
 
-  return { store, setProjectData, getProject, /* ... */ };
+  return { store, setProjectData, getProject /* ... */ };
 }
 
 // Usage in components (direct access)
@@ -346,6 +364,7 @@ function ProjectView() {
 ```
 
 **Benefits**:
+
 - Simple, functional patterns
 - Explicit state updates
 - Less magic, easier to debug
@@ -353,6 +372,7 @@ function ProjectView() {
 - SolidJS fine-grained reactivity
 
 **Drawbacks**:
+
 - Less structure, can become ad-hoc
 - No computed properties (use createMemo in components)
 - Repeated patterns across stores
@@ -364,6 +384,7 @@ function ProjectView() {
 **What to Adopt from Outline**:
 
 1. **Consistent Store API Pattern**
+
    ```javascript
    // Base store factory
    function createStoreFactory(name) {
@@ -373,24 +394,37 @@ function ProjectView() {
            data: {},
            loading: false,
            error: null,
-           ...initialData
+           ...initialData,
          });
 
          return {
            // Standard methods every store has
-           get(id) { return store.data[id]; },
-           getAll() { return Object.values(store.data); },
-           set(id, value) { setStore('data', id, value); },
-           remove(id) { setStore('data', id, undefined); },
-           setLoading(val) { setStore('loading', val); },
-           setError(err) { setStore('error', err); },
+           get(id) {
+             return store.data[id];
+           },
+           getAll() {
+             return Object.values(store.data);
+           },
+           set(id, value) {
+             setStore('data', id, value);
+           },
+           remove(id) {
+             setStore('data', id, undefined);
+           },
+           setLoading(val) {
+             setStore('loading', val);
+           },
+           setError(err) {
+             setStore('error', err);
+           },
          };
-       }
+       },
      };
    }
    ```
 
 2. **Computed Values as Functions**
+
    ```javascript
    function createProjectStore() {
      const [store, setStore] = createStore({...});
@@ -407,6 +441,7 @@ function ProjectView() {
    ```
 
 **What to Keep from CoRATES**:
+
 - Simple function-based stores (no classes)
 - Explicit setters (no decorator magic)
 - Direct imports in components (no context/injection overhead)
@@ -420,6 +455,7 @@ function ProjectView() {
 #### Outline's Approach: Policy-Based Authorization (cancan)
 
 **Structure**:
+
 ```typescript
 // Policy definition (server/policies/document.ts)
 import { allow, can, cannot } from './cancan';
@@ -428,15 +464,11 @@ allow(User, 'read', Document, (actor, document) =>
   and(
     isTeamModel(actor, document),
     or(
-      includesMembership(document, [
-        DocumentPermission.Read,
-        DocumentPermission.ReadWrite,
-        DocumentPermission.Admin,
-      ]),
+      includesMembership(document, [DocumentPermission.Read, DocumentPermission.ReadWrite, DocumentPermission.Admin]),
       and(!!document?.isDraft, actor.id === document?.createdById),
-      can(actor, 'readDocument', document?.collection)
-    )
-  )
+      can(actor, 'readDocument', document?.collection),
+    ),
+  ),
 );
 
 allow(User, 'update', Document, (actor, document) =>
@@ -446,15 +478,15 @@ allow(User, 'update', Document, (actor, document) =>
     can(actor, 'read', document),
     or(
       includesMembership(document, [DocumentPermission.ReadWrite]),
-      can(actor, 'updateDocument', document?.collection)
-    )
-  )
+      can(actor, 'updateDocument', document?.collection),
+    ),
+  ),
 );
 
 // Usage in routes
 import { authorize } from '@server/policies';
 
-router.post('documents.update', auth(), async (ctx) => {
+router.post('documents.update', auth(), async ctx => {
   const document = await Document.findByPk(ctx.input.body.id);
   authorize(ctx.state.auth.user, 'update', document);
 
@@ -469,6 +501,7 @@ ctx.body = {
 ```
 
 **Benefits**:
+
 - Declarative, centralized authorization logic
 - Complex nested conditions are readable
 - Reusable across routes, models, frontend
@@ -477,6 +510,7 @@ ctx.body = {
 - Frontend can show/hide UI based on policies
 
 **Drawbacks**:
+
 - Learning curve (cancan DSL)
 - Can become complex for deeply nested permissions
 - Requires policy computation on every request
@@ -486,11 +520,12 @@ ctx.body = {
 #### CoRATES's Approach: Inline Authorization Checks
 
 **Structure**:
+
 ```javascript
 // Inline checks in routes
 import { hasRole } from '@/lib/access';
 
-projectRoutes.openapi(updateProjectRoute, async (c) => {
+projectRoutes.openapi(updateProjectRoute, async c => {
   const db = createDb(c.env.DB);
   const { user } = getAuth(c);
   const { id } = c.req.param();
@@ -499,10 +534,7 @@ projectRoutes.openapi(updateProjectRoute, async (c) => {
   const [membership] = await db
     .select()
     .from(projectMembers)
-    .where(and(
-      eq(projectMembers.projectId, id),
-      eq(projectMembers.userId, user.id)
-    ))
+    .where(and(eq(projectMembers.projectId, id), eq(projectMembers.userId, user.id)))
     .limit(1);
 
   if (!membership) {
@@ -527,12 +559,14 @@ export function hasActiveAccess(subscription) {
 ```
 
 **Benefits**:
+
 - Simple, explicit (no magic)
 - Easy to understand flow
 - No additional framework to learn
 - Flexible (can do arbitrary checks)
 
 **Drawbacks**:
+
 - Duplicated authorization logic across routes
 - Hard to audit (scattered across files)
 - No frontend policy information
@@ -546,6 +580,7 @@ export function hasActiveAccess(subscription) {
 **Adopt from Outline**:
 
 1. **Policy Module Pattern** (lighter than cancan)
+
    ```javascript
    // packages/workers/src/policies/projects.js
 
@@ -556,10 +591,7 @@ export function hasActiveAccess(subscription) {
      const [membership] = await db
        .select()
        .from(projectMembers)
-       .where(and(
-         eq(projectMembers.projectId, projectId),
-         eq(projectMembers.userId, userId)
-       ))
+       .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId)))
        .limit(1);
 
      return !!membership;
@@ -572,10 +604,7 @@ export function hasActiveAccess(subscription) {
      const [membership] = await db
        .select()
        .from(projectMembers)
-       .where(and(
-         eq(projectMembers.projectId, projectId),
-         eq(projectMembers.userId, userId)
-       ))
+       .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId)))
        .limit(1);
 
      return membership && EDIT_ROLES.includes(membership.role);
@@ -585,25 +614,21 @@ export function hasActiveAccess(subscription) {
     * Assert user can perform action on project (throws on failure)
     */
    export async function requireProjectAccess(db, userId, projectId, action = 'read') {
-     const canAccess = action === 'edit'
-       ? await canEditProject(db, userId, projectId)
-       : await canReadProject(db, userId, projectId);
+     const canAccess =
+       action === 'edit' ? await canEditProject(db, userId, projectId) : await canReadProject(db, userId, projectId);
 
      if (!canAccess) {
-       throw createDomainError(
-         action === 'edit'
-           ? AUTH_ERRORS.INSUFFICIENT_PERMISSIONS
-           : PROJECT_ERRORS.NOT_FOUND
-       );
+       throw createDomainError(action === 'edit' ? AUTH_ERRORS.INSUFFICIENT_PERMISSIONS : PROJECT_ERRORS.NOT_FOUND);
      }
    }
    ```
 
 2. **Use in Routes**
+
    ```javascript
    import { requireProjectAccess } from '@/policies/projects';
 
-   projectRoutes.openapi(updateProjectRoute, async (c) => {
+   projectRoutes.openapi(updateProjectRoute, async c => {
      const db = createDb(c.env.DB);
      const { user } = getAuth(c);
      const { id } = c.req.param();
@@ -616,6 +641,7 @@ export function hasActiveAccess(subscription) {
    ```
 
 3. **Policy Middleware Pattern**
+
    ```javascript
    // middleware/requireProjectAccess.js
    export function requireProjectAccess(action = 'read') {
@@ -634,18 +660,15 @@ export function hasActiveAccess(subscription) {
    }
 
    // Usage
-   projectRoutes.openapi(
-     updateProjectRoute,
-     requireProjectAccess('edit'),
-     async (c) => {
-       // Authorization already done
-       const projectId = c.get('projectId');
-       // ...
-     }
-   );
+   projectRoutes.openapi(updateProjectRoute, requireProjectAccess('edit'), async c => {
+     // Authorization already done
+     const projectId = c.get('projectId');
+     // ...
+   });
    ```
 
 **Benefits**:
+
 - Centralized, reusable, auditable
 - Easy to update permission rules
 - Testable in isolation
@@ -659,6 +682,7 @@ export function hasActiveAccess(subscription) {
 #### Outline's Approach: Zod Schemas Co-located with Routes
 
 **Structure**:
+
 ```typescript
 // server/routes/api/documents/schema.ts
 import { z } from 'zod';
@@ -686,11 +710,12 @@ router.post(
     // ctx.input.body is typed and validated
     const { title, collectionId } = ctx.input.body;
     // ...
-  }
+  },
 );
 ```
 
 **Benefits**:
+
 - Type safety (Zod schema = TypeScript type)
 - Co-located with routes (easy to find)
 - Reusable schemas
@@ -701,6 +726,7 @@ router.post(
 #### CoRATES's Approach: Zod + OpenAPI Integration
 
 **Structure**:
+
 ```javascript
 // Inline schema with OpenAPI metadata
 const CreateProjectRequestSchema = z
@@ -725,24 +751,30 @@ const createProjectRoute = createRoute({
     },
   },
   responses: {
-    200: { /* ... */ },
-    400: { /* ... */ },
+    200: {
+      /* ... */
+    },
+    400: {
+      /* ... */
+    },
   },
 });
 
 // Handler gets validated input
-projectRoutes.openapi(createProjectRoute, async (c) => {
+projectRoutes.openapi(createProjectRoute, async c => {
   const body = c.req.valid('json'); // Typed and validated
   // ...
 });
 ```
 
 **Benefits**:
+
 - Automatic OpenAPI documentation
 - Type safety + API docs from same schema
 - Custom validation hook for user-friendly errors
 
 **Drawbacks**:
+
 - More verbose route definitions
 - Schema mixed with route config
 
@@ -751,12 +783,15 @@ projectRoutes.openapi(createProjectRoute, async (c) => {
 ### Recommendation: Keep OpenAPI Integration
 
 **What CoRATES Does Well**:
+
 - OpenAPI schema generation is invaluable for documentation
 - Custom validation error handler provides good UX
 - Inline schemas work well for simple routes
 
 **What to Adopt from Outline**:
+
 - Extract complex schemas to separate files when routes get large
+
   ```javascript
   // routes/projects/schemas.js
   export const CreateProjectSchema = z.object({...}).openapi('CreateProject');
@@ -775,6 +810,7 @@ projectRoutes.openapi(createProjectRoute, async (c) => {
 #### Outline's Approach: Error Transformation Pipeline
 
 **Structure**:
+
 ```typescript
 // Custom error classes with metadata
 export function ValidationError(message = 'Validation error') {
@@ -791,7 +827,7 @@ export function NotFoundError(message = 'Not found') {
 
 // Middleware transforms errors
 export default function apiErrorHandler() {
-  return async function(ctx, next) {
+  return async function (ctx, next) {
     try {
       await next();
     } catch (err) {
@@ -799,9 +835,7 @@ export default function apiErrorHandler() {
 
       // Transform Sequelize errors
       if (err instanceof SequelizeValidationError) {
-        transformedErr = ValidationError(
-          `${err.errors[0].message} (${err.errors[0].path})`
-        );
+        transformedErr = ValidationError(`${err.errors[0].message} (${err.errors[0].path})`);
       }
 
       if (err instanceof SequelizeEmptyResultError) {
@@ -815,11 +849,13 @@ export default function apiErrorHandler() {
 ```
 
 **Benefits**:
+
 - Consistent error responses
 - Hides implementation details (Sequelize errors become domain errors)
 - Error IDs for frontend to handle specific cases
 
 **Drawbacks**:
+
 - Error transformation can obscure root cause
 - Lost type information through transformations
 
@@ -828,6 +864,7 @@ export default function apiErrorHandler() {
 #### CoRATES's Approach: Structured Error Domains
 
 **Structure**:
+
 ```javascript
 // Centralized error codes (packages/shared/dist/errors/domains/domain.js)
 export const PROJECT_ERRORS = {
@@ -885,12 +922,14 @@ export function errorHandler(err, c) {
 ```
 
 **Benefits**:
+
 - Structured error codes shared between frontend and backend
 - Type-safe error handling (errors defined in one place)
 - Easy to add new error types
 - Frontend can handle specific error codes
 
 **Drawbacks**:
+
 - Requires maintaining error catalog
 - Can become large with many error types
 
@@ -915,6 +954,7 @@ export function errorHandler(err, c) {
    ```
 
 **What to Improve**:
+
 - Add error codes to OpenAPI schema responses
 - Document error codes in API documentation
 - Consider error tracking/monitoring integration (Sentry)
@@ -926,6 +966,7 @@ export function errorHandler(err, c) {
 #### Outline's Approach: Error Boundary + Logger
 
 **Structure**:
+
 ```typescript
 class ErrorBoundary extends React.Component {
   @observable error: Error | null;
@@ -952,10 +993,7 @@ class ErrorBoundary extends React.Component {
     // Track errors in localStorage to prevent infinite reload loops
     const errors = JSON.parse(Storage.get(ERROR_TRACKING_KEY) || '[]');
     const cutoff = Date.now() - ERROR_TRACKING_WINDOW_MS;
-    const updatedErrors = [
-      ...errors.filter(t => t > cutoff),
-      Date.now(),
-    ];
+    const updatedErrors = [...errors.filter(t => t > cutoff), Date.now()];
     Storage.set(ERROR_TRACKING_KEY, JSON.stringify(updatedErrors));
     this.isRepeatedError = updatedErrors.length > 1;
   };
@@ -963,6 +1001,7 @@ class ErrorBoundary extends React.Component {
 ```
 
 **Benefits**:
+
 - Graceful degradation (error UI instead of crash)
 - Smart auto-reload for chunk errors (common in SPAs)
 - Prevents infinite reload loops
@@ -973,6 +1012,7 @@ class ErrorBoundary extends React.Component {
 #### CoRATES's Approach: Error Boundary + Normalization
 
 **Structure**:
+
 ```javascript
 function ErrorDisplay(props) {
   const error = props.error;
@@ -982,12 +1022,13 @@ function ErrorDisplay(props) {
   const isProgrammerError = error?.code === 'UNKNOWN_PROGRAMMER_ERROR';
   const isTransportError = error?.code?.startsWith('TRANSPORT_');
 
-  const title = isProgrammerError ? 'Something went wrong'
+  const title =
+    isProgrammerError ? 'Something went wrong'
     : isTransportError ? 'Connection Error'
     : 'An error occurred';
 
   return (
-    <div class="error-container">
+    <div class='error-container'>
       <h2>{title}</h2>
       <p>{error?.message}</p>
       <button onClick={reset}>Try Again</button>
@@ -1012,6 +1053,7 @@ export default function ErrorBoundary(props) {
 ```
 
 **Benefits**:
+
 - Error normalization ensures consistent structure
 - Domain-aware error messages
 - Recovery options (retry or navigate home)
@@ -1021,7 +1063,9 @@ export default function ErrorBoundary(props) {
 ### Recommendation: Combine Both Approaches
 
 **Adopt from Outline**:
+
 1. **Chunk Error Auto-Reload** (very useful for SPAs)
+
    ```javascript
    function ErrorBoundary(props) {
      return (
@@ -1047,6 +1091,7 @@ export default function ErrorBoundary(props) {
    ```
 
 **Keep from CoRATES**:
+
 - Error normalization for consistent handling
 - Structured error display based on error codes
 
@@ -1086,11 +1131,13 @@ outline/
 ```
 
 **Benefits**:
+
 - Clear separation of concerns
 - Shared code is truly shared
 - Plugin system for extensibility
 
 **Drawbacks**:
+
 - Large top-level folders (app, server)
 - Can be hard to find related files
 
@@ -1123,12 +1170,14 @@ corates/
 ```
 
 **Benefits**:
+
 - True monorepo with independent packages
 - Clear package boundaries
 - Can version packages independently
 - Easy to extract packages to separate repos
 
 **Drawbacks**:
+
 - Some duplication between packages
 - Package interdependencies can be complex
 
@@ -1146,6 +1195,7 @@ corates/
 **What to Adopt from Outline**:
 
 1. **Feature-Based Folders in Large Packages**
+
    ```
    packages/workers/src/
    ├── features/
@@ -1169,16 +1219,16 @@ corates/
 #### Outline's Testing Approach
 
 **Structure**:
+
 - Tests co-located with source files (`.test.ts` next to `.ts`)
 - Factory functions for test data
 - Transactional test database
 
 **Example**:
+
 ```typescript
 // server/test/factories.ts
-export async function buildDocument(
-  overrides?: Partial<Document>
-): Promise<Document> {
+export async function buildDocument(overrides?: Partial<Document>): Promise<Document> {
   const team = await buildTeam();
   const user = await buildUser({ teamId: team.id });
   const collection = await buildCollection({ teamId: team.id });
@@ -1210,6 +1260,7 @@ describe('#delete', () => {
 ```
 
 **Benefits**:
+
 - Factory functions make test data creation easy
 - Tests are close to implementation
 - Comprehensive model testing
@@ -1219,11 +1270,13 @@ describe('#delete', () => {
 #### CoRATES's Testing Approach
 
 **Structure**:
+
 - Tests in `__tests__` folders
 - Test helpers in setup files
 - Direct database seeding
 
 **Example**:
+
 ```javascript
 // packages/workers/src/__tests__/projects.test.js
 describe('Projects API', () => {
@@ -1249,10 +1302,12 @@ describe('Projects API', () => {
 ```
 
 **Benefits**:
+
 - Integration tests cover full request/response cycle
 - Realistic testing with actual HTTP
 
 **Drawbacks**:
+
 - Slower than unit tests
 - Less coverage of edge cases
 
@@ -1263,49 +1318,56 @@ describe('Projects API', () => {
 **What to Adopt from Outline**:
 
 1. **Factory Functions for Test Data**
+
    ```javascript
    // packages/workers/src/__tests__/factories.js
 
    export async function buildProject(db, overrides = {}) {
-     const [project] = await db.insert(projects).values({
-       id: nanoid(),
-       name: 'Test Project',
-       description: 'Test description',
-       createdBy: await buildUser(db).then(u => u.id),
-       ...overrides,
-     }).returning();
+     const [project] = await db
+       .insert(projects)
+       .values({
+         id: nanoid(),
+         name: 'Test Project',
+         description: 'Test description',
+         createdBy: await buildUser(db).then(u => u.id),
+         ...overrides,
+       })
+       .returning();
      return project;
    }
 
    export async function buildUser(db, overrides = {}) {
-     const [user] = await db.insert(user).values({
-       id: nanoid(),
-       email: `test-${nanoid()}@example.com`,
-       name: 'Test User',
-       ...overrides,
-     }).returning();
+     const [user] = await db
+       .insert(user)
+       .values({
+         id: nanoid(),
+         email: `test-${nanoid()}@example.com`,
+         name: 'Test User',
+         ...overrides,
+       })
+       .returning();
      return user;
    }
 
    export async function buildProjectMember(db, overrides = {}) {
-     const project = overrides.projectId
-       ? { id: overrides.projectId }
-       : await buildProject(db);
-     const user = overrides.userId
-       ? { id: overrides.userId }
-       : await buildUser(db);
+     const project = overrides.projectId ? { id: overrides.projectId } : await buildProject(db);
+     const user = overrides.userId ? { id: overrides.userId } : await buildUser(db);
 
-     const [member] = await db.insert(projectMembers).values({
-       projectId: project.id,
-       userId: user.id,
-       role: 'editor',
-       ...overrides,
-     }).returning();
+     const [member] = await db
+       .insert(projectMembers)
+       .values({
+         projectId: project.id,
+         userId: user.id,
+         role: 'editor',
+         ...overrides,
+       })
+       .returning();
      return member;
    }
    ```
 
 2. **Use in Tests**
+
    ```javascript
    test('User can only update projects they are a member of', async () => {
      const user1 = await buildUser(db);
@@ -1324,6 +1386,7 @@ describe('Projects API', () => {
    ```
 
 **Benefits**:
+
 - Easy to create test data with specific configurations
 - Reduces test setup boilerplate
 - More comprehensive test coverage
@@ -1386,20 +1449,23 @@ describe('Projects API', () => {
 ### Example 1: Refactoring Project Creation with Command Pattern
 
 **Before (Current CoRATES)**:
+
 ```javascript
 // Route handler with all business logic
-projectRoutes.openapi(createProjectRoute, async (c) => {
+projectRoutes.openapi(createProjectRoute, async c => {
   const db = createDb(c.env.DB);
   const { user } = getAuth(c);
   const body = c.req.valid('json');
 
   // Check quota
-  const [org] = await db.select().from(orgs)
-    .where(eq(orgs.id, user.orgId)).limit(1);
+  const [org] = await db.select().from(orgs).where(eq(orgs.id, user.orgId)).limit(1);
 
-  const [{ count: projectCount }] = await db.select({
-    count: count()
-  }).from(projects).where(eq(projects.orgId, user.orgId));
+  const [{ count: projectCount }] = await db
+    .select({
+      count: count(),
+    })
+    .from(projects)
+    .where(eq(projects.orgId, user.orgId));
 
   const quota = await getQuota(db, user.orgId);
   if (projectCount >= quota.projects) {
@@ -1407,13 +1473,16 @@ projectRoutes.openapi(createProjectRoute, async (c) => {
   }
 
   // Create project
-  const [project] = await db.insert(projects).values({
-    id: nanoid(),
-    name: body.name,
-    description: body.description,
-    createdBy: user.id,
-    orgId: user.orgId,
-  }).returning();
+  const [project] = await db
+    .insert(projects)
+    .values({
+      id: nanoid(),
+      name: body.name,
+      description: body.description,
+      createdBy: user.id,
+      orgId: user.orgId,
+    })
+    .returning();
 
   // Add creator as owner
   await db.insert(projectMembers).values({
@@ -1432,6 +1501,7 @@ projectRoutes.openapi(createProjectRoute, async (c) => {
 ```
 
 **After (With Command Pattern)**:
+
 ```javascript
 // packages/workers/src/commands/projectCreator.js
 
@@ -1453,15 +1523,18 @@ export async function createProject(env, user, { name, description }) {
   await requireQuota(db, user.orgId, 'projects', 1);
 
   // Create project and membership in transaction
-  const project = await db.transaction(async (tx) => {
+  const project = await db.transaction(async tx => {
     // Create project
-    const [p] = await tx.insert(projects).values({
-      id: nanoid(),
-      name,
-      description,
-      createdBy: user.id,
-      orgId: user.orgId,
-    }).returning();
+    const [p] = await tx
+      .insert(projects)
+      .values({
+        id: nanoid(),
+        name,
+        description,
+        createdBy: user.id,
+        orgId: user.orgId,
+      })
+      .returning();
 
     // Add creator as owner
     await tx.insert(projectMembers).values({
@@ -1488,7 +1561,7 @@ export async function createProject(env, user, { name, description }) {
 }
 
 // Route handler (thin)
-projectRoutes.openapi(createProjectRoute, async (c) => {
+projectRoutes.openapi(createProjectRoute, async c => {
   const { user } = getAuth(c);
   const body = c.req.valid('json');
 
@@ -1499,6 +1572,7 @@ projectRoutes.openapi(createProjectRoute, async (c) => {
 ```
 
 **Benefits**:
+
 - Route handler is 5 lines instead of 40
 - `createProject` can be called from routes, tests, cron jobs, admin scripts
 - Transaction boundary is explicit
@@ -1510,20 +1584,19 @@ projectRoutes.openapi(createProjectRoute, async (c) => {
 ### Example 2: Centralized Authorization
 
 **Before (Current CoRATES)**:
+
 ```javascript
 // Duplicated in many route handlers
-projectRoutes.openapi(updateProjectRoute, async (c) => {
+projectRoutes.openapi(updateProjectRoute, async c => {
   const db = createDb(c.env.DB);
   const { user } = getAuth(c);
   const { id } = c.req.param();
 
   // Check membership and role (duplicated everywhere)
-  const [membership] = await db.select()
+  const [membership] = await db
+    .select()
     .from(projectMembers)
-    .where(and(
-      eq(projectMembers.projectId, id),
-      eq(projectMembers.userId, user.id)
-    ))
+    .where(and(eq(projectMembers.projectId, id), eq(projectMembers.userId, user.id)))
     .limit(1);
 
   if (!membership) {
@@ -1539,6 +1612,7 @@ projectRoutes.openapi(updateProjectRoute, async (c) => {
 ```
 
 **After (With Policies)**:
+
 ```javascript
 // packages/workers/src/policies/projects.js
 
@@ -1546,12 +1620,10 @@ projectRoutes.openapi(updateProjectRoute, async (c) => {
  * Get user's membership for a project
  */
 async function getProjectMembership(db, userId, projectId) {
-  const [membership] = await db.select()
+  const [membership] = await db
+    .select()
     .from(projectMembers)
-    .where(and(
-      eq(projectMembers.projectId, projectId),
-      eq(projectMembers.userId, userId)
-    ))
+    .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId)))
     .limit(1);
 
   return membership || null;
@@ -1613,7 +1685,7 @@ export async function requireProjectAccess(db, userId, projectId, action = 'read
 // Route handler (clean and simple)
 import { requireProjectAccess } from '@/policies/projects';
 
-projectRoutes.openapi(updateProjectRoute, async (c) => {
+projectRoutes.openapi(updateProjectRoute, async c => {
   const db = createDb(c.env.DB);
   const { user } = getAuth(c);
   const { id } = c.req.param();
@@ -1626,6 +1698,7 @@ projectRoutes.openapi(updateProjectRoute, async (c) => {
 ```
 
 **Benefits**:
+
 - Authorization logic in one place (easy to audit and update)
 - Consistent error responses
 - Testable in isolation
@@ -1655,6 +1728,7 @@ projectRoutes.openapi(updateProjectRoute, async (c) => {
 ### Final Recommendation
 
 CoRATES has a solid foundation, but can benefit significantly from Outline's patterns around:
+
 - **Business logic organization** (commands)
 - **Security** (policies)
 - **Testing** (factories)

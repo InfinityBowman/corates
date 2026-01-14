@@ -84,12 +84,14 @@ export async function commandName(env, actor, params) {
 **Extract from**: `packages/workers/src/routes/orgs/projects.js` lines 360-480
 
 **Responsibilities**:
+
 - Validate quota (via insertWithQuotaCheck)
 - Create project record
 - Create owner membership
 - Sync to Durable Object
 
 **Interface**:
+
 ```javascript
 export async function createProject(env, actor, { orgId, name, description }) {
   // Returns: { project, membership }
@@ -97,6 +99,7 @@ export async function createProject(env, actor, { orgId, name, description }) {
 ```
 
 **Route handler after**:
+
 ```javascript
 orgProjectRoutes.openapi(createProjectRoute, async c => {
   // Middleware unchanged
@@ -121,10 +124,12 @@ orgProjectRoutes.openapi(createProjectRoute, async c => {
 **Extract from**: `packages/workers/src/routes/orgs/projects.js` lines 528-575
 
 **Responsibilities**:
+
 - Update project record
 - Sync changes to Durable Object
 
 **Interface**:
+
 ```javascript
 export async function updateProject(env, actor, { projectId, name, description }) {
   // Returns: { projectId, updated: true }
@@ -138,12 +143,14 @@ export async function updateProject(env, actor, { projectId, name, description }
 **Extract from**: `packages/workers/src/routes/orgs/projects.js` lines 577-684
 
 **Responsibilities**:
+
 - Disconnect all users from ProjectDoc DO
 - Clean up R2 storage (PDFs)
 - Delete project record (cascades to members)
 - Send notifications to members
 
 **Interface**:
+
 ```javascript
 export async function deleteProject(env, actor, { projectId }) {
   // Returns: { deleted: projectId, notifiedCount: number }
@@ -164,6 +171,7 @@ export async function deleteProject(env, actor, { projectId }) {
 2. `inviteMember` - Send invitation to non-user
 
 **addMember Interface**:
+
 ```javascript
 export async function addMember(env, actor, { projectId, userId, role }) {
   // Returns: { member: { userId, role, joinedAt, ... } }
@@ -175,11 +183,13 @@ export async function addMember(env, actor, { projectId, userId, role }) {
 **File**: `packages/workers/src/commands/members/inviteMember.js`
 
 **Responsibilities**:
+
 - Create/update invitation record
 - Generate magic link
 - Queue invitation email
 
 **Interface**:
+
 ```javascript
 export async function inviteMember(env, actor, { projectId, email, role }) {
   // Returns: { invitation: true, email }
@@ -193,11 +203,13 @@ export async function inviteMember(env, actor, { projectId, email, role }) {
 **Extract from**: `packages/workers/src/routes/members.js` lines 667-731
 
 **Responsibilities**:
+
 - Validate not demoting last owner
 - Update role
 - Sync to DO
 
 **Interface**:
+
 ```javascript
 export async function updateMemberRole(env, actor, { projectId, userId, role }) {
   // Returns: { userId, role }
@@ -211,12 +223,14 @@ export async function updateMemberRole(env, actor, { projectId, userId, role }) 
 **Extract from**: `packages/workers/src/routes/members.js` lines 733-834
 
 **Responsibilities**:
+
 - Validate not removing last owner
 - Delete membership
 - Sync to DO
 - Send notification (if not self-removal)
 
 **Interface**:
+
 ```javascript
 export async function removeMember(env, actor, { projectId, userId, isSelfRemoval }) {
   // Returns: { removed: userId }
@@ -252,13 +266,13 @@ export async function notifyProjectMembers(env, projectId, notification, exclude
 
 Based on route complexity, these would also benefit from extraction:
 
-| Route File | Handler | Complexity | Priority |
-|------------|---------|------------|----------|
-| `billing/checkout.js` | createCheckoutSession | High | Medium |
-| `billing/grants.js` | createGrant | Medium | Low |
-| `orgs/invitations.js` | acceptInvitation | High | Medium |
-| `google-drive.js` | importFromDrive | High | Medium |
-| `account-merge.js` | mergeAccounts | High | High |
+| Route File            | Handler               | Complexity | Priority |
+| --------------------- | --------------------- | ---------- | -------- |
+| `billing/checkout.js` | createCheckoutSession | High       | Medium   |
+| `billing/grants.js`   | createGrant           | Medium     | Low      |
+| `orgs/invitations.js` | acceptInvitation      | High       | Medium   |
+| `google-drive.js`     | importFromDrive       | High       | Medium   |
+| `account-merge.js`    | mergeAccounts         | High       | High     |
 
 ## Testing Strategy
 
@@ -294,9 +308,7 @@ describe('createProject', () => {
     const user = await buildUser(env.DB);
     const org = await buildOrg(env.DB, { ownerId: user.id, projectQuota: 0 });
 
-    await expect(
-      createProject(env, user, { orgId: org.id, name: 'Test' })
-    ).rejects.toMatchObject({
+    await expect(createProject(env, user, { orgId: org.id, name: 'Test' })).rejects.toMatchObject({
       code: 'QUOTA_EXCEEDED',
     });
   });
@@ -368,30 +380,36 @@ packages/workers/src/
 ## Implementation Order
 
 ### Step 1: Create directory structure
+
 - Create `commands/` directory
 - Create subdirectories for `projects/`, `members/`, `lib/`
 
 ### Step 2: Extract `createProject` (pilot)
+
 - Implement command
 - Write tests
 - Refactor route handler
 - Verify no regressions
 
 ### Step 3: Extract remaining project commands
+
 - `updateProject`
 - `deleteProject`
 
 ### Step 4: Extract member commands
+
 - `addMember`
 - `inviteMember` (split from addMember)
 - `updateMemberRole`
 - `removeMember`
 
 ### Step 5: Consolidate shared utilities
+
 - `doSync.js`
 - `notifications.js`
 
 ### Step 6: Documentation
+
 - Update API development guide
 - Add command pattern section to docs
 
@@ -404,12 +422,12 @@ packages/workers/src/
 
 ## Risks and Mitigations
 
-| Risk | Mitigation |
-|------|------------|
+| Risk                             | Mitigation                                           |
+| -------------------------------- | ---------------------------------------------------- |
 | Breaking changes during refactor | Implement one command at a time, run full test suite |
-| Performance regression | Commands are pure functions, no additional overhead |
-| Team adoption | Document pattern, provide examples |
-| Over-engineering | Only extract complex handlers (50+ lines) |
+| Performance regression           | Commands are pure functions, no additional overhead  |
+| Team adoption                    | Document pattern, provide examples                   |
+| Over-engineering                 | Only extract complex handlers (50+ lines)            |
 
 ## Open Questions
 

@@ -5,16 +5,8 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import {
-  resetTestDatabase,
-  clearProjectDOs,
-  seedUser,
-  seedProject,
-  seedProjectMember,
-  seedOrganization,
-  seedOrgMember,
-  json,
-} from '@/__tests__/helpers.js';
+import { resetTestDatabase, clearProjectDOs, json } from '@/__tests__/helpers.js';
+import { buildUser, buildProject, buildProjectMember, resetCounter } from '@/__tests__/factories';
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -61,6 +53,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await resetTestDatabase();
+  resetCounter();
   // Clear ProjectDoc DOs to prevent invalidation errors between tests
   await clearProjectDOs(['project-1']);
 });
@@ -82,78 +75,48 @@ async function fetchUsers(path, init = {}) {
 
 describe('User Routes - GET /api/users/search', () => {
   it('should search users by email', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const currentUser = await buildUser({ email: 'user1@example.com' });
+    const user2 = await buildUser({ email: 'user2@example.com' });
+    await buildUser({ email: 'user3@example.com' });
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const res = await fetchUsers('/api/users/search?q=user2', {
+      headers: { 'x-test-user-id': currentUser.id, 'x-test-user-email': currentUser.email },
     });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-3',
-      name: 'User 3',
-      email: 'user3@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    const res = await fetchUsers('/api/users/search?q=user2');
     expect(res.status).toBe(200);
 
     const body = await json(res);
     expect(body).toHaveLength(1);
-    expect(body[0].id).toBe('user-2');
+    expect(body[0].id).toBe(user2.id);
   });
 
   it('should mask email when query does not include @', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const currentUser = await buildUser({ email: 'current@example.com' });
+    const user2 = await buildUser({ email: 'user2@example.com' });
 
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const res = await fetchUsers('/api/users/search?q=user', {
+      headers: { 'x-test-user-id': currentUser.id, 'x-test-user-email': currentUser.email },
     });
-
-    const res = await fetchUsers('/api/users/search?q=user');
     expect(res.status).toBe(200);
 
     const body = await json(res);
     expect(body.length).toBeGreaterThan(0);
-    const user = body.find(u => u.id === 'user-2');
+    const user = body.find(u => u.id === user2.id);
     expect(user).toBeDefined();
     expect(user.email).toMatch(/^us\*\*\*@example\.com$/);
   });
 
   it('should show full email when query includes @', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const currentUser = await buildUser({ email: 'current@example.com' });
+    const user2 = await buildUser({ email: 'user2@example.com' });
 
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const res = await fetchUsers('/api/users/search?q=user2@example.com', {
+      headers: { 'x-test-user-id': currentUser.id, 'x-test-user-email': currentUser.email },
     });
-
-    const res = await fetchUsers('/api/users/search?q=user2@example.com');
     expect(res.status).toBe(200);
 
     const body = await json(res);
     expect(body).toHaveLength(1);
-    expect(body[0].email).toBe('user2@example.com');
+    expect(body[0].email).toBe(user2.email);
   });
 
   it('should reject query shorter than 2 characters', async () => {
@@ -167,20 +130,16 @@ describe('User Routes - GET /api/users/search', () => {
   });
 
   it('should enforce limit cap at 20', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const currentUser = await buildUser({ email: 'current@example.com' });
 
     // Create 25 users
     for (let i = 0; i < 25; i++) {
-      await seedUser({
-        id: `user-${i}`,
-        name: `User ${i}`,
-        email: `user${i}@example.com`,
-        createdAt: nowSec,
-        updatedAt: nowSec,
-      });
+      await buildUser({ email: `searchuser${i}@example.com` });
     }
 
-    const res = await fetchUsers('/api/users/search?q=user&limit=100');
+    const res = await fetchUsers('/api/users/search?q=searchuser&limit=100', {
+      headers: { 'x-test-user-id': currentUser.id, 'x-test-user-email': currentUser.email },
+    });
     expect(res.status).toBe(200);
 
     const body = await json(res);
@@ -188,240 +147,101 @@ describe('User Routes - GET /api/users/search', () => {
   });
 
   it('should exclude current user from results', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const currentUser = await buildUser({ name: 'Current User', email: 'user1@example.com' });
+    const otherUser = await buildUser({ name: 'Other User', email: 'user2@example.com' });
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Current User',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const res = await fetchUsers('/api/users/search?q=user', {
+      headers: { 'x-test-user-id': currentUser.id, 'x-test-user-email': currentUser.email },
     });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'Other User',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    const res = await fetchUsers('/api/users/search?q=user');
     expect(res.status).toBe(200);
 
     const body = await json(res);
-    expect(body.find(u => u.id === 'user-1')).toBeUndefined();
-    expect(body.find(u => u.id === 'user-2')).toBeDefined();
+    expect(body.find(u => u.id === currentUser.id)).toBeUndefined();
+    expect(body.find(u => u.id === otherUser.id)).toBeDefined();
   });
 
   it('should exclude users already in project when projectId provided', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { project, owner } = await buildProject();
+    const projectMember = await buildProjectMember({ projectId: project.id, role: 'member' });
+    const nonProjectUser = await buildUser({ email: 'user3@example.com' });
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const res = await fetchUsers(`/api/users/search?q=user&projectId=${project.id}`, {
+      headers: { 'x-test-user-id': owner.id, 'x-test-user-email': owner.email },
     });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-3',
-      name: 'User 3',
-      email: 'user3@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-2',
-      role: 'member',
-      joinedAt: nowSec,
-    });
-
-    const res = await fetchUsers('/api/users/search?q=user&projectId=project-1');
     expect(res.status).toBe(200);
 
     const body = await json(res);
-    expect(body.find(u => u.id === 'user-2')).toBeUndefined();
-    expect(body.find(u => u.id === 'user-3')).toBeDefined();
+    expect(body.find(u => u.id === projectMember.user.id)).toBeUndefined();
+    expect(body.find(u => u.id === nonProjectUser.id)).toBeDefined();
   });
 
   it('should search by name', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const currentUser = await buildUser({ email: 'current@example.com' });
+    const john = await buildUser({ name: 'John Doe', email: 'john@example.com' });
 
-    await seedUser({
-      id: 'user-2',
-      name: 'John Doe',
-      email: 'john@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const res = await fetchUsers('/api/users/search?q=john', {
+      headers: { 'x-test-user-id': currentUser.id, 'x-test-user-email': currentUser.email },
     });
-
-    const res = await fetchUsers('/api/users/search?q=john');
     expect(res.status).toBe(200);
 
     const body = await json(res);
     expect(body).toHaveLength(1);
-    expect(body[0].name).toBe('John Doe');
+    expect(body[0].name).toBe(john.name);
   });
 
   it('should search by displayName', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const currentUser = await buildUser({ email: 'current@example.com' });
+    const johnny = await buildUser({ displayName: 'Johnny', email: 'user2@example.com' });
 
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      displayName: 'Johnny',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const res = await fetchUsers('/api/users/search?q=johnny', {
+      headers: { 'x-test-user-id': currentUser.id, 'x-test-user-email': currentUser.email },
     });
-
-    const res = await fetchUsers('/api/users/search?q=johnny');
     expect(res.status).toBe(200);
 
     const body = await json(res);
     expect(body).toHaveLength(1);
-    expect(body[0].displayName).toBe('Johnny');
+    expect(body[0].displayName).toBe(johnny.displayName);
   });
 
   it('should search by username', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const currentUser = await buildUser({ email: 'current@example.com' });
+    const johndoe = await buildUser({ username: 'johndoe', email: 'user2@example.com' });
 
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      username: 'johndoe',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const res = await fetchUsers('/api/users/search?q=johndoe', {
+      headers: { 'x-test-user-id': currentUser.id, 'x-test-user-email': currentUser.email },
     });
-
-    const res = await fetchUsers('/api/users/search?q=johndoe');
     expect(res.status).toBe(200);
 
     const body = await json(res);
     expect(body).toHaveLength(1);
-    expect(body[0].username).toBe('johndoe');
+    expect(body[0].username).toBe(johndoe.username);
   });
 
   it('should be case-insensitive', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const currentUser = await buildUser({ email: 'current@example.com' });
+    const john = await buildUser({ name: 'John Doe', email: 'john@example.com' });
 
-    await seedUser({
-      id: 'user-2',
-      name: 'John Doe',
-      email: 'john@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const res = await fetchUsers('/api/users/search?q=JOHN', {
+      headers: { 'x-test-user-id': currentUser.id, 'x-test-user-email': currentUser.email },
     });
-
-    const res = await fetchUsers('/api/users/search?q=JOHN');
     expect(res.status).toBe(200);
 
     const body = await json(res);
     expect(body).toHaveLength(1);
-    expect(body[0].name).toBe('John Doe');
+    expect(body[0].name).toBe(john.name);
   });
 });
 
 describe('User Routes - GET /api/users/:userId/projects', () => {
   it('should return user projects', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    // Create first project with owner
+    const { owner, org } = await buildProject();
+    // Create second project in same org with same owner as member
+    await buildProject({ org, owner });
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const res = await fetchUsers(`/api/users/${owner.id}/projects`, {
+      headers: { 'x-test-user-id': owner.id, 'x-test-user-email': owner.email },
     });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Project 1',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-2',
-      name: 'Project 2',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-2',
-      projectId: 'project-2',
-      userId: 'user-1',
-      role: 'member',
-      joinedAt: nowSec,
-    });
-
-    const res = await fetchUsers('/api/users/user-1/projects');
     expect(res.status).toBe(200);
 
     const body = await json(res);
@@ -432,25 +252,12 @@ describe('User Routes - GET /api/users/:userId/projects', () => {
   });
 
   it('should deny access to other users projects', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const currentUser = await buildUser({ email: 'user1@example.com' });
+    const otherUser = await buildUser({ email: 'user2@example.com' });
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const res = await fetchUsers(`/api/users/${otherUser.id}/projects`, {
+      headers: { 'x-test-user-id': currentUser.id, 'x-test-user-email': currentUser.email },
     });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    const res = await fetchUsers('/api/users/user-2/projects');
     expect(res.status).toBe(403);
 
     const body = await json(res);
@@ -462,50 +269,11 @@ describe('User Routes - GET /api/users/:userId/projects', () => {
 
 describe('User Routes - DELETE /api/users/me', () => {
   it('should delete user account and cascade data', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Project 1',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
+    const { owner } = await buildProject();
 
     const res = await fetchUsers('/api/users/me', {
       method: 'DELETE',
+      headers: { 'x-test-user-id': owner.id, 'x-test-user-email': owner.email },
     });
 
     expect(res.status).toBe(200);
@@ -513,61 +281,33 @@ describe('User Routes - DELETE /api/users/me', () => {
     expect(body.success).toBe(true);
 
     // Verify user was deleted (D1 returns null, not undefined)
-    const user = await env.DB.prepare('SELECT * FROM user WHERE id = ?1').bind('user-1').first();
+    const user = await env.DB.prepare('SELECT * FROM user WHERE id = ?1').bind(owner.id).first();
     expect(user).toBeNull();
 
     // Verify project members were cascade deleted
     const members = await env.DB.prepare('SELECT * FROM project_members WHERE userId = ?1')
-      .bind('user-1')
+      .bind(owner.id)
       .all();
     expect(members.results).toHaveLength(0);
   });
 
   it('should set mediaFiles.uploadedBy to null when deleting user', async () => {
+    // Create a project with a different owner so it doesn't get deleted
+    const { project, org } = await buildProject();
+    // Create the user who will be deleted
+    const userToDelete = await buildUser({ email: 'todelete@example.com' });
     const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    // Create project with a different user as creator so it doesn't get deleted
-    await seedProject({
-      id: 'project-1',
-      name: 'Project 1',
-      orgId: 'org-1',
-      createdBy: 'user-2',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
 
     // Create a media file owned by the user being deleted
     await env.DB.prepare(
       'INSERT INTO mediaFiles (id, filename, bucketKey, uploadedBy, orgId, projectId, createdAt) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)',
     )
-      .bind('media-1', 'test.pdf', 'bucket-key-1', 'user-1', 'org-1', 'project-1', nowSec)
+      .bind('media-1', 'test.pdf', 'bucket-key-1', userToDelete.id, org.id, project.id, nowSec)
       .run();
 
     const res = await fetchUsers('/api/users/me', {
       method: 'DELETE',
+      headers: { 'x-test-user-id': userToDelete.id, 'x-test-user-email': userToDelete.email },
     });
 
     expect(res.status).toBe(200);

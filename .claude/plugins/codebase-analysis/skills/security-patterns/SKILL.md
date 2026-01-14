@@ -13,18 +13,21 @@ Use this framework when analyzing a codebase for security concerns. Focus on ide
 ### 1. Input Validation and Sanitization
 
 **What to check:**
+
 - All user input is validated before use
 - Validation happens at system boundaries (API endpoints, form handlers)
 - Schema validation using libraries like Zod, Yup, or similar
 - Type coercion is handled safely
 
 **Common vulnerabilities:**
+
 - SQL Injection: User input in database queries without parameterization
 - XSS: User input rendered in HTML without escaping
 - Command Injection: User input in shell commands
 - Path Traversal: User input in file paths without validation
 
 **Look for:**
+
 ```
 // Dangerous patterns
 query(`SELECT * FROM users WHERE id = ${userId}`)
@@ -42,6 +45,7 @@ readFile(path.join(basePath, path.basename(userInput)))
 ### 2. Authentication
 
 **What to check:**
+
 - Password hashing uses modern algorithms (bcrypt, argon2, scrypt)
 - Session management is secure (httpOnly, secure, sameSite cookies)
 - Token expiration and refresh patterns
@@ -49,6 +53,7 @@ readFile(path.join(basePath, path.basename(userInput)))
 - Account lockout after failed attempts
 
 **Warning signs:**
+
 - Plain text password storage
 - MD5 or SHA1 for password hashing
 - Passwords in logs or error messages
@@ -58,12 +63,14 @@ readFile(path.join(basePath, path.basename(userInput)))
 ### 3. Authorization
 
 **What to check:**
+
 - Access control on every protected resource
 - Role-based or attribute-based access control
 - Authorization checked server-side, not just client-side
 - Principle of least privilege applied
 
 **Warning signs:**
+
 - Missing authorization checks on endpoints
 - Client-side only access control
 - Overly permissive default access
@@ -72,12 +79,14 @@ readFile(path.join(basePath, path.basename(userInput)))
 ### 4. Secrets Management
 
 **What to check:**
+
 - No hardcoded secrets, API keys, or credentials
 - Environment variables or secret managers for sensitive config
 - Secrets not logged or exposed in errors
 - .env files in .gitignore
 
 **Search for patterns:**
+
 ```
 // Dangerous
 const apiKey = "sk-1234567890abcdef"
@@ -92,12 +101,14 @@ password: config.get('db.password')
 ### 5. Data Exposure
 
 **What to check:**
+
 - Sensitive data not in logs
 - Error messages don't leak internal details
 - API responses don't include unnecessary sensitive fields
 - Database queries select only needed columns
 
 **Warning signs:**
+
 - Stack traces exposed to users
 - Internal IDs or paths in error messages
 - Returning full user objects including passwords
@@ -106,6 +117,7 @@ password: config.get('db.password')
 ### 6. HTTPS and Transport Security
 
 **What to check:**
+
 - All external communications use HTTPS
 - Certificate validation not disabled
 - Secure headers (HSTS, CSP, X-Frame-Options)
@@ -114,6 +126,7 @@ password: config.get('db.password')
 ### 7. Dependency Security
 
 **What to check:**
+
 - Dependencies are up to date
 - Known vulnerabilities in dependencies (npm audit, etc.)
 - Lock files committed
@@ -138,12 +151,15 @@ password: config.get('db.password')
 # Security Analysis Report
 
 ## Risk Summary
+
 [High/Medium/Low overall risk assessment]
 
 ## Critical Findings
+
 [Issues requiring immediate attention]
 
 ### Finding 1: [Title]
+
 - **Severity**: Critical/High/Medium/Low
 - **Location**: [file:line]
 - **Description**: [What the issue is]
@@ -151,20 +167,25 @@ password: config.get('db.password')
 - **Recommendation**: [How to fix]
 
 ## Security Strengths
+
 [Positive security patterns found]
 
 ## Recommendations by Priority
 
 ### Immediate Actions
+
 [Critical fixes needed now]
 
 ### Short-term Improvements
+
 [Important but less urgent]
 
 ### Long-term Hardening
+
 [Defense in depth improvements]
 
 ## OWASP Top 10 Assessment
+
 [Status for each category]
 ```
 

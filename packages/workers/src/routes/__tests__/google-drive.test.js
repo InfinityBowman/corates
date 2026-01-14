@@ -6,15 +6,8 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import {
-  resetTestDatabase,
-  seedUser,
-  seedProject,
-  seedProjectMember,
-  seedOrganization,
-  seedOrgMember,
-  json,
-} from '@/__tests__/helpers.js';
+import { resetTestDatabase, json } from '@/__tests__/helpers.js';
+import { buildUser, buildProject, resetCounter } from '@/__tests__/factories';
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -63,6 +56,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await resetTestDatabase();
+  resetCounter();
 
   // Reset R2 mocks
   const storedObjects = new Map();
@@ -153,18 +147,12 @@ async function seedGoogleAccount(userId, accessToken = 'token-123', refreshToken
 
 describe('Google Drive Routes - GET /api/google-drive/status', () => {
   it('should return connected status when Google account is linked', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const user = await buildUser({ email: 'user1@example.com' });
+    await seedGoogleAccount(user.id);
+
+    const res = await fetchGoogleDrive('/api/google-drive/status', {
+      headers: { 'x-test-user-id': user.id, 'x-test-user-email': user.email },
     });
-
-    await seedGoogleAccount('user-1');
-
-    const res = await fetchGoogleDrive('/api/google-drive/status');
 
     expect(res.status).toBe(200);
     const body = await json(res);
@@ -173,16 +161,11 @@ describe('Google Drive Routes - GET /api/google-drive/status', () => {
   });
 
   it('should return disconnected status when Google account is not linked', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user = await buildUser({ email: 'user1@example.com' });
 
-    const res = await fetchGoogleDrive('/api/google-drive/status');
+    const res = await fetchGoogleDrive('/api/google-drive/status', {
+      headers: { 'x-test-user-id': user.id, 'x-test-user-email': user.email },
+    });
 
     expect(res.status).toBe(200);
     const body = await json(res);
@@ -193,18 +176,12 @@ describe('Google Drive Routes - GET /api/google-drive/status', () => {
 
 describe('Google Drive Routes - GET /api/google-drive/picker-token', () => {
   it('should return access token when Google account is connected', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const user = await buildUser({ email: 'user1@example.com' });
+    await seedGoogleAccount(user.id, 'token-123', 'refresh-123');
+
+    const res = await fetchGoogleDrive('/api/google-drive/picker-token', {
+      headers: { 'x-test-user-id': user.id, 'x-test-user-email': user.email },
     });
-
-    await seedGoogleAccount('user-1', 'token-123', 'refresh-123');
-
-    const res = await fetchGoogleDrive('/api/google-drive/picker-token');
 
     expect(res.status).toBe(200);
     const body = await json(res);
@@ -213,16 +190,11 @@ describe('Google Drive Routes - GET /api/google-drive/picker-token', () => {
   });
 
   it('should return 401 when Google account is not connected', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user = await buildUser({ email: 'user1@example.com' });
 
-    const res = await fetchGoogleDrive('/api/google-drive/picker-token');
+    const res = await fetchGoogleDrive('/api/google-drive/picker-token', {
+      headers: { 'x-test-user-id': user.id, 'x-test-user-email': user.email },
+    });
 
     expect(res.status).toBe(401);
     const body = await json(res);
@@ -231,13 +203,7 @@ describe('Google Drive Routes - GET /api/google-drive/picker-token', () => {
 
   it('should refresh expired token', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user = await buildUser({ email: 'user1@example.com' });
 
     // Create account with expired token
     const expiredAt = new Date(Date.now() - 1000); // 1 second ago
@@ -246,9 +212,9 @@ describe('Google Drive Routes - GET /api/google-drive/picker-token', () => {
        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`,
     )
       .bind(
-        'acc-user-1',
-        'user-1',
-        'google-user-1',
+        `acc-${user.id}`,
+        user.id,
+        `google-${user.id}`,
         'google',
         'expired-token',
         'refresh-123',
@@ -267,7 +233,9 @@ describe('Google Drive Routes - GET /api/google-drive/picker-token', () => {
       }),
     });
 
-    const res = await fetchGoogleDrive('/api/google-drive/picker-token');
+    const res = await fetchGoogleDrive('/api/google-drive/picker-token', {
+      headers: { 'x-test-user-id': user.id, 'x-test-user-email': user.email },
+    });
 
     expect(res.status).toBe(200);
     const body = await json(res);
@@ -283,19 +251,12 @@ describe('Google Drive Routes - GET /api/google-drive/picker-token', () => {
 
 describe('Google Drive Routes - DELETE /api/google-drive/disconnect', () => {
   it('should disconnect Google account', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedGoogleAccount('user-1');
+    const user = await buildUser({ email: 'user1@example.com' });
+    await seedGoogleAccount(user.id);
 
     const res = await fetchGoogleDrive('/api/google-drive/disconnect', {
       method: 'DELETE',
+      headers: { 'x-test-user-id': user.id, 'x-test-user-email': user.email },
     });
 
     expect(res.status).toBe(200);
@@ -306,7 +267,7 @@ describe('Google Drive Routes - DELETE /api/google-drive/disconnect', () => {
     const account = await env.DB.prepare(
       'SELECT * FROM account WHERE userId = ?1 AND providerId = ?2',
     )
-      .bind('user-1', 'google')
+      .bind(user.id, 'google')
       .first();
     expect(account).toBeNull();
   });
@@ -314,48 +275,8 @@ describe('Google Drive Routes - DELETE /api/google-drive/disconnect', () => {
 
 describe('Google Drive Routes - POST /api/google-drive/import', () => {
   it('should import PDF from Google Drive', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    await seedGoogleAccount('user-1');
+    const { project, owner } = await buildProject();
+    await seedGoogleAccount(owner.id);
 
     // Mock Google Drive API calls
     const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]); // %PDF-
@@ -383,10 +304,12 @@ describe('Google Drive Routes - POST /api/google-drive/import', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-test-user-id': owner.id,
+        'x-test-user-email': owner.email,
       },
       body: JSON.stringify({
         fileId: 'file-123',
-        projectId: 'project-1',
+        projectId: project.id,
         studyId: 'study-1',
       }),
     });
@@ -399,48 +322,8 @@ describe('Google Drive Routes - POST /api/google-drive/import', () => {
   });
 
   it('should reject non-PDF files', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    await seedGoogleAccount('user-1');
+    const { project, owner } = await buildProject();
+    await seedGoogleAccount(owner.id);
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -456,10 +339,12 @@ describe('Google Drive Routes - POST /api/google-drive/import', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-test-user-id': owner.id,
+        'x-test-user-email': owner.email,
       },
       body: JSON.stringify({
         fileId: 'file-123',
-        projectId: 'project-1',
+        projectId: project.id,
         studyId: 'study-1',
       }),
     });
@@ -470,48 +355,8 @@ describe('Google Drive Routes - POST /api/google-drive/import', () => {
   });
 
   it('should reject files that are too large', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    await seedGoogleAccount('user-1');
+    const { project, owner } = await buildProject();
+    await seedGoogleAccount(owner.id);
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -527,10 +372,12 @@ describe('Google Drive Routes - POST /api/google-drive/import', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-test-user-id': owner.id,
+        'x-test-user-email': owner.email,
       },
       body: JSON.stringify({
         fileId: 'file-123',
-        projectId: 'project-1',
+        projectId: project.id,
         studyId: 'study-1',
       }),
     });
@@ -541,55 +388,19 @@ describe('Google Drive Routes - POST /api/google-drive/import', () => {
   });
 
   it('should return 401 when Google account is not connected', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
+    const { project, owner } = await buildProject();
+    // Note: No Google account seeded
 
     const res = await fetchGoogleDrive('/api/google-drive/import', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-test-user-id': owner.id,
+        'x-test-user-email': owner.email,
       },
       body: JSON.stringify({
         fileId: 'file-123',
-        projectId: 'project-1',
+        projectId: project.id,
         studyId: 'study-1',
       }),
     });
@@ -600,21 +411,15 @@ describe('Google Drive Routes - POST /api/google-drive/import', () => {
   });
 
   it('should validate required fields', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedGoogleAccount('user-1');
+    const user = await buildUser({ email: 'user1@example.com' });
+    await seedGoogleAccount(user.id);
 
     const res = await fetchGoogleDrive('/api/google-drive/import', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-test-user-id': user.id,
+        'x-test-user-email': user.email,
       },
       body: JSON.stringify({
         fileId: 'file-123',

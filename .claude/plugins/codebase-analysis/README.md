@@ -34,16 +34,17 @@ Analyze codebases against architecture patterns, security best practices, error 
 
 ## Analysis Topics
 
-| Topic | What It Checks |
-|-------|----------------|
-| `architecture` | Clean architecture, SOLID principles, layering, module organization |
-| `security` | Authentication, authorization, input validation, secrets, OWASP Top 10 |
-| `error-handling` | Error boundaries, recovery patterns, logging, user feedback |
-| `local-first` | Offline storage, sync mechanisms, conflict resolution, optimistic updates |
+| Topic            | What It Checks                                                            |
+| ---------------- | ------------------------------------------------------------------------- |
+| `architecture`   | Clean architecture, SOLID principles, layering, module organization       |
+| `security`       | Authentication, authorization, input validation, secrets, OWASP Top 10    |
+| `error-handling` | Error boundaries, recovery patterns, logging, user feedback               |
+| `local-first`    | Offline storage, sync mechanisms, conflict resolution, optimistic updates |
 
 ## Output
 
 Reports are saved to `packages/docs/audits/` with:
+
 - Summary of findings
 - Specific file:line references
 - Prioritized recommendations

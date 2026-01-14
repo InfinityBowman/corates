@@ -6,13 +6,8 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import {
-  resetTestDatabase,
-  seedUser,
-  seedOrganization,
-  seedOrgMember,
-  json,
-} from '@/__tests__/helpers.js';
+import { resetTestDatabase, json } from '@/__tests__/helpers.js';
+import { buildUser, buildOrg, buildOrgMember, resetCounter } from '@/__tests__/factories';
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -110,6 +105,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await resetTestDatabase();
+  resetCounter();
   vi.clearAllMocks();
 });
 
@@ -225,26 +221,12 @@ describe('Org Management API - POST /api/orgs', () => {
 
 describe('Org Management API - PUT /api/orgs/:orgId', () => {
   it('should return 403 when user is not org member', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const user = await buildUser();
+    const { org } = await buildOrg();
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    const res = await fetchOrgs('/api/orgs/org-1', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-test-user-id': user.id },
       body: JSON.stringify({ name: 'Updated Org' }),
     });
 
@@ -253,34 +235,12 @@ describe('Org Management API - PUT /api/orgs/:orgId', () => {
   });
 
   it('should return 403 when user is member but not admin', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { org } = await buildOrg();
+    const { user: member } = await buildOrgMember({ orgId: org.id, role: 'member' });
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'member',
-      createdAt: nowSec,
-    });
-
-    const res = await fetchOrgs('/api/orgs/org-1', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-test-user-id': member.id },
       body: JSON.stringify({ name: 'Updated Org' }),
     });
 
@@ -291,42 +251,20 @@ describe('Org Management API - PUT /api/orgs/:orgId', () => {
   });
 
   it('should update org when user is admin', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'admin',
-      createdAt: nowSec,
-    });
+    const { org } = await buildOrg();
+    const { user: admin } = await buildOrgMember({ orgId: org.id, role: 'admin' });
 
     mockUpdateOrganization.mockResolvedValueOnce({
       organization: {
-        id: 'org-1',
+        id: org.id,
         name: 'Updated Org',
         slug: 'test-org',
       },
     });
 
-    const res = await fetchOrgs('/api/orgs/org-1', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-test-user-id': admin.id },
       body: JSON.stringify({ name: 'Updated Org', slug: 'test-org' }),
     });
 
@@ -334,7 +272,7 @@ describe('Org Management API - PUT /api/orgs/:orgId', () => {
     expect(mockUpdateOrganization).toHaveBeenCalledWith({
       headers: expect.any(Headers),
       body: {
-        organizationId: 'org-1',
+        organizationId: org.id,
         data: {
           name: 'Updated Org',
           slug: 'test-org',
@@ -346,36 +284,14 @@ describe('Org Management API - PUT /api/orgs/:orgId', () => {
   });
 
   it('should return 403 when slug is taken on update', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'admin',
-      createdAt: nowSec,
-    });
+    const { org } = await buildOrg();
+    const { user: admin } = await buildOrgMember({ orgId: org.id, role: 'admin' });
 
     mockUpdateOrganization.mockRejectedValueOnce(new Error('Organization slug is already taken'));
 
-    const res = await fetchOrgs('/api/orgs/org-1', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-test-user-id': admin.id },
       body: JSON.stringify({ name: 'Updated Org', slug: 'taken-slug' }),
     });
 
@@ -388,33 +304,12 @@ describe('Org Management API - PUT /api/orgs/:orgId', () => {
 
 describe('Org Management API - DELETE /api/orgs/:orgId', () => {
   it('should return 403 when user is not owner', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { org } = await buildOrg();
+    const { user: admin } = await buildOrgMember({ orgId: org.id, role: 'admin' });
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'admin',
-      createdAt: nowSec,
-    });
-
-    const res = await fetchOrgs('/api/orgs/org-1', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}`, {
       method: 'DELETE',
+      headers: { 'x-test-user-id': admin.id },
     });
 
     expect(res.status).toBe(403);
@@ -422,118 +317,64 @@ describe('Org Management API - DELETE /api/orgs/:orgId', () => {
   });
 
   it('should delete org when user is owner', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
+    const { org, owner } = await buildOrg();
 
     mockDeleteOrganization.mockResolvedValueOnce({});
 
-    const res = await fetchOrgs('/api/orgs/org-1', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}`, {
       method: 'DELETE',
+      headers: { 'x-test-user-id': owner.id },
     });
 
     expect(res.status).toBe(200);
     expect(mockDeleteOrganization).toHaveBeenCalledWith({
       headers: expect.any(Headers),
       body: {
-        organizationId: 'org-1',
+        organizationId: org.id,
       },
     });
     const body = await json(res);
     expect(body.success).toBe(true);
-    expect(body.deleted).toBe('org-1');
+    expect(body.deleted).toBe(org.id);
   });
 });
 
 describe('Org Management API - GET /api/orgs/:orgId/members', () => {
   it('should return 403 when user is not org member', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const user = await buildUser();
+    const { org } = await buildOrg();
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const res = await fetchOrgs(`/api/orgs/${org.id}/members`, {
+      headers: { 'x-test-user-id': user.id },
     });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    const res = await fetchOrgs('/api/orgs/org-1/members');
 
     expect(res.status).toBe(403);
     expect(mockListMembers).not.toHaveBeenCalled();
   });
 
   it('should list members when user is org member', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'member',
-      createdAt: nowSec,
-    });
+    const { org } = await buildOrg();
+    const { user: member, membership } = await buildOrgMember({ orgId: org.id, role: 'member' });
 
     mockListMembers.mockResolvedValueOnce({
       members: [
         {
-          id: 'member-1',
-          userId: 'user-1',
+          id: membership.id,
+          userId: member.id,
           role: 'member',
         },
       ],
     });
 
-    const res = await fetchOrgs('/api/orgs/org-1/members');
+    const res = await fetchOrgs(`/api/orgs/${org.id}/members`, {
+      headers: { 'x-test-user-id': member.id },
+    });
 
     expect(res.status).toBe(200);
     expect(mockListMembers).toHaveBeenCalledWith({
       headers: expect.any(Headers),
       query: {
-        organizationId: 'org-1',
+        organizationId: org.id,
       },
     });
   });
@@ -541,34 +382,12 @@ describe('Org Management API - GET /api/orgs/:orgId/members', () => {
 
 describe('Org Management API - POST /api/orgs/:orgId/members', () => {
   it('should return 403 when user is not admin', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { org } = await buildOrg();
+    const { user: member } = await buildOrgMember({ orgId: org.id, role: 'member' });
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'member',
-      createdAt: nowSec,
-    });
-
-    const res = await fetchOrgs('/api/orgs/org-1/members', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}/members`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-test-user-id': member.id },
       body: JSON.stringify({ userId: 'user-2', role: 'member' }),
     });
 
@@ -577,34 +396,12 @@ describe('Org Management API - POST /api/orgs/:orgId/members', () => {
   });
 
   it('should return 400 when userId is missing', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { org } = await buildOrg();
+    const { user: admin } = await buildOrgMember({ orgId: org.id, role: 'admin' });
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'admin',
-      createdAt: nowSec,
-    });
-
-    const res = await fetchOrgs('/api/orgs/org-1/members', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}/members`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-test-user-id': admin.id },
       body: JSON.stringify({ role: 'member' }),
     });
 
@@ -615,50 +412,29 @@ describe('Org Management API - POST /api/orgs/:orgId/members', () => {
   });
 
   it('should add member when user is admin', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'admin',
-      createdAt: nowSec,
-    });
+    const { org } = await buildOrg();
+    const { user: admin } = await buildOrgMember({ orgId: org.id, role: 'admin' });
+    const userToAdd = await buildUser();
 
     mockAddMember.mockResolvedValueOnce({
       member: {
-        id: 'member-2',
-        userId: 'user-2',
+        id: 'member-new',
+        userId: userToAdd.id,
         role: 'member',
       },
     });
 
-    const res = await fetchOrgs('/api/orgs/org-1/members', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}/members`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ userId: 'user-2', role: 'member' }),
+      headers: { 'content-type': 'application/json', 'x-test-user-id': admin.id },
+      body: JSON.stringify({ userId: userToAdd.id, role: 'member' }),
     });
 
     expect(res.status).toBe(201);
     expect(mockAddMember).toHaveBeenCalledWith({
       body: {
-        organizationId: 'org-1',
-        userId: 'user-2',
+        organizationId: org.id,
+        userId: userToAdd.id,
         role: 'member',
       },
       headers: expect.any(Headers),
@@ -666,36 +442,14 @@ describe('Org Management API - POST /api/orgs/:orgId/members', () => {
   });
 
   it('should return 403 when user is already a member', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'admin',
-      createdAt: nowSec,
-    });
+    const { org } = await buildOrg();
+    const { user: admin } = await buildOrgMember({ orgId: org.id, role: 'admin' });
 
     mockAddMember.mockRejectedValueOnce(new Error('User is already a member'));
 
-    const res = await fetchOrgs('/api/orgs/org-1/members', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}/members`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-test-user-id': admin.id },
       body: JSON.stringify({ userId: 'user-2', role: 'member' }),
     });
 
@@ -708,34 +462,12 @@ describe('Org Management API - POST /api/orgs/:orgId/members', () => {
 
 describe('Org Management API - PUT /api/orgs/:orgId/members/:memberId', () => {
   it('should return 403 when user is not admin', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { org } = await buildOrg();
+    const { user: member } = await buildOrgMember({ orgId: org.id, role: 'member' });
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'member',
-      createdAt: nowSec,
-    });
-
-    const res = await fetchOrgs('/api/orgs/org-1/members/member-2', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}/members/member-2`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-test-user-id': member.id },
       body: JSON.stringify({ role: 'admin' }),
     });
 
@@ -744,34 +476,12 @@ describe('Org Management API - PUT /api/orgs/:orgId/members/:memberId', () => {
   });
 
   it('should return 400 when role is missing', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { org } = await buildOrg();
+    const { user: admin } = await buildOrgMember({ orgId: org.id, role: 'admin' });
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'admin',
-      createdAt: nowSec,
-    });
-
-    const res = await fetchOrgs('/api/orgs/org-1/members/member-2', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}/members/member-2`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-test-user-id': admin.id },
       body: JSON.stringify({}),
     });
 
@@ -782,36 +492,14 @@ describe('Org Management API - PUT /api/orgs/:orgId/members/:memberId', () => {
   });
 
   it('should update member role when user is admin', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'admin',
-      createdAt: nowSec,
-    });
+    const { org } = await buildOrg();
+    const { user: admin } = await buildOrgMember({ orgId: org.id, role: 'admin' });
 
     mockUpdateMemberRole.mockResolvedValueOnce({});
 
-    const res = await fetchOrgs('/api/orgs/org-1/members/member-2', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}/members/member-2`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-test-user-id': admin.id },
       body: JSON.stringify({ role: 'admin' }),
     });
 
@@ -819,7 +507,7 @@ describe('Org Management API - PUT /api/orgs/:orgId/members/:memberId', () => {
     expect(mockUpdateMemberRole).toHaveBeenCalledWith({
       headers: expect.any(Headers),
       body: {
-        organizationId: 'org-1',
+        organizationId: org.id,
         memberId: 'member-2',
         role: 'admin',
       },
@@ -827,36 +515,14 @@ describe('Org Management API - PUT /api/orgs/:orgId/members/:memberId', () => {
   });
 
   it('should return 403 when changing owner role requires owner', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'admin',
-      createdAt: nowSec,
-    });
+    const { org } = await buildOrg();
+    const { user: admin } = await buildOrgMember({ orgId: org.id, role: 'admin' });
 
     mockUpdateMemberRole.mockRejectedValueOnce(new Error('Only owners can change owner role'));
 
-    const res = await fetchOrgs('/api/orgs/org-1/members/member-2', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}/members/member-2`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-test-user-id': admin.id },
       body: JSON.stringify({ role: 'owner' }),
     });
 
@@ -869,33 +535,12 @@ describe('Org Management API - PUT /api/orgs/:orgId/members/:memberId', () => {
 
 describe('Org Management API - DELETE /api/orgs/:orgId/members/:memberId', () => {
   it('should return 403 when non-admin tries to remove someone else', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { org } = await buildOrg();
+    const { user: member } = await buildOrgMember({ orgId: org.id, role: 'member' });
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'member',
-      createdAt: nowSec,
-    });
-
-    const res = await fetchOrgs('/api/orgs/org-1/members/member-2', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}/members/member-2`, {
       method: 'DELETE',
+      headers: { 'x-test-user-id': member.id },
     });
 
     expect(res.status).toBe(403);
@@ -907,88 +552,46 @@ describe('Org Management API - DELETE /api/orgs/:orgId/members/:memberId', () =>
   });
 
   it('should use leaveOrganization for self-removal', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'member',
-      createdAt: nowSec,
-    });
+    const { org } = await buildOrg();
+    const { user: member } = await buildOrgMember({ orgId: org.id, role: 'member' });
 
     mockLeaveOrganization.mockResolvedValueOnce({});
 
-    const res = await fetchOrgs('/api/orgs/org-1/members/user-1', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}/members/${member.id}`, {
       method: 'DELETE',
+      headers: { 'x-test-user-id': member.id },
     });
 
     expect(res.status).toBe(200);
     expect(mockLeaveOrganization).toHaveBeenCalledWith({
       headers: expect.any(Headers),
       body: {
-        organizationId: 'org-1',
+        organizationId: org.id,
       },
     });
     expect(mockRemoveMember).not.toHaveBeenCalled();
     const body = await json(res);
     expect(body.success).toBe(true);
-    expect(body.removed).toBe('user-1');
+    expect(body.removed).toBe(member.id);
     expect(body.isSelf).toBe(true);
   });
 
   it('should use removeMember for admin removal', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'admin',
-      createdAt: nowSec,
-    });
+    const { org } = await buildOrg();
+    const { user: admin } = await buildOrgMember({ orgId: org.id, role: 'admin' });
 
     mockRemoveMember.mockResolvedValueOnce({});
 
-    const res = await fetchOrgs('/api/orgs/org-1/members/member-2', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}/members/member-2`, {
       method: 'DELETE',
+      headers: { 'x-test-user-id': admin.id },
     });
 
     expect(res.status).toBe(200);
     expect(mockRemoveMember).toHaveBeenCalledWith({
       headers: expect.any(Headers),
       body: {
-        organizationId: 'org-1',
+        organizationId: org.id,
         memberIdOrEmail: 'member-2',
       },
     });
@@ -1000,35 +603,13 @@ describe('Org Management API - DELETE /api/orgs/:orgId/members/:memberId', () =>
   });
 
   it('should return 403 when trying to remove last owner', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
+    const { org, owner } = await buildOrg();
 
     mockLeaveOrganization.mockRejectedValueOnce(new Error('Cannot remove last owner'));
 
-    const res = await fetchOrgs('/api/orgs/org-1/members/user-1', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}/members/${owner.id}`, {
       method: 'DELETE',
+      headers: { 'x-test-user-id': owner.id },
     });
 
     expect(res.status).toBe(403);
@@ -1040,25 +621,12 @@ describe('Org Management API - DELETE /api/orgs/:orgId/members/:memberId', () =>
 
 describe('Org Management API - POST /api/orgs/:orgId/set-active', () => {
   it('should return 403 when user is not org member', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const user = await buildUser();
+    const { org } = await buildOrg();
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    const res = await fetchOrgs('/api/orgs/org-1/set-active', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}/set-active`, {
       method: 'POST',
+      headers: { 'x-test-user-id': user.id },
     });
 
     expect(res.status).toBe(403);
@@ -1066,46 +634,25 @@ describe('Org Management API - POST /api/orgs/:orgId/set-active', () => {
   });
 
   it('should set active org when user is org member', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'member-1',
-      userId: 'user-1',
-      organizationId: 'org-1',
-      role: 'member',
-      createdAt: nowSec,
-    });
+    const { org } = await buildOrg();
+    const { user: member } = await buildOrgMember({ orgId: org.id, role: 'member' });
 
     mockSetActiveOrganization.mockResolvedValueOnce({});
 
-    const res = await fetchOrgs('/api/orgs/org-1/set-active', {
+    const res = await fetchOrgs(`/api/orgs/${org.id}/set-active`, {
       method: 'POST',
+      headers: { 'x-test-user-id': member.id },
     });
 
     expect(res.status).toBe(200);
     expect(mockSetActiveOrganization).toHaveBeenCalledWith({
       headers: expect.any(Headers),
       body: {
-        organizationId: 'org-1',
+        organizationId: org.id,
       },
     });
     const body = await json(res);
     expect(body.success).toBe(true);
-    expect(body.activeOrganizationId).toBe('org-1');
+    expect(body.activeOrganizationId).toBe(org.id);
   });
 });

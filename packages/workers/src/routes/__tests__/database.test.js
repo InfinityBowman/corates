@@ -5,7 +5,8 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import { resetTestDatabase, seedUser, json } from '@/__tests__/helpers.js';
+import { resetTestDatabase, json } from '@/__tests__/helpers.js';
+import { buildUser, resetCounter } from '@/__tests__/factories';
 
 // Mock postmark to avoid loading runtime code
 vi.mock('postmark', () => {
@@ -45,6 +46,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await resetTestDatabase();
+  resetCounter();
 });
 
 async function fetchDb(path, init = {}) {
@@ -63,25 +65,12 @@ async function fetchDb(path, init = {}) {
 
 describe('Database Routes - GET /api/db/users', () => {
   it('should list users', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const user1 = await buildUser();
+    await buildUser();
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const res = await fetchDb('/api/db/users', {
+      headers: { 'x-test-user-id': user1.id },
     });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec + 1,
-      updatedAt: nowSec + 1,
-    });
-
-    const res = await fetchDb('/api/db/users');
     expect(res.status).toBe(200);
 
     const body = await json(res);
