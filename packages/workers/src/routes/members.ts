@@ -116,10 +116,7 @@ const AddMemberRequestSchema = z
   .object({
     userId: z.string().optional().openapi({ example: 'user-123' }),
     email: z.string().email().optional().openapi({ example: 'user@example.com' }),
-    role: z
-      .enum(['owner', 'member'])
-      .default('member')
-      .openapi({ example: 'member' }),
+    role: z.enum(['owner', 'member']).default('member').openapi({ example: 'member' }),
   })
   .openapi('AddMemberRequest');
 
