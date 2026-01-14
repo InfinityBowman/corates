@@ -1,0 +1,7 @@
+{
+  "name": "test-dev",
+  "description": "Comprehensive test development workflow with specialized agents for test exploration, strategy design, and quality review",
+  "author": {
+    "name": "CoRATES Team"
+  }
+}
