@@ -1,4 +1,5 @@
 import { getPlan, DEFAULT_PLAN, isUnlimitedQuota } from '@corates/shared/plans';
+import { isSubscriptionActive } from './subscriptionStatus';
 import type { Entitlements, Quotas } from '@corates/shared/plans';
 
 interface Subscription {
@@ -7,25 +8,22 @@ interface Subscription {
   currentPeriodEnd?: Date | number | null;
 }
 
-export function isSubscriptionActive(subscription: Subscription | null): boolean {
-  if (!subscription) return false;
-  if (subscription.status !== 'active') return false;
-  if (!subscription.currentPeriodEnd) return true;
-
-  const now = Math.floor(Date.now() / 1000);
-  const periodEnd =
-    subscription.currentPeriodEnd instanceof Date ?
-      Math.floor(subscription.currentPeriodEnd.getTime() / 1000)
-    : subscription.currentPeriodEnd;
-
-  return periodEnd > now;
+/**
+ * Check if subscription is active for entitlement purposes.
+ * Only includes 'active' status - trialing users get free tier entitlements.
+ */
+function isSubscriptionActiveForEntitlements(subscription: Subscription | null): boolean {
+  return isSubscriptionActive(subscription, Date.now(), {
+    includeTrial: false,
+    includePastDue: false,
+  });
 }
 
 export function getEffectiveEntitlements(subscription: Subscription | null): Entitlements {
   const planId = subscription?.tier || DEFAULT_PLAN;
   const plan = getPlan(planId);
 
-  if (!isSubscriptionActive(subscription)) {
+  if (!isSubscriptionActiveForEntitlements(subscription)) {
     return getPlan(DEFAULT_PLAN).entitlements;
   }
 
@@ -36,7 +34,7 @@ export function getEffectiveQuotas(subscription: Subscription | null): Quotas {
   const planId = subscription?.tier || DEFAULT_PLAN;
   const plan = getPlan(planId);
 
-  if (!isSubscriptionActive(subscription)) {
+  if (!isSubscriptionActiveForEntitlements(subscription)) {
     return getPlan(DEFAULT_PLAN).quotas;
   }
 

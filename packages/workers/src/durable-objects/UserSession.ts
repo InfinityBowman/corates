@@ -84,7 +84,8 @@ export class UserSession implements DurableObject {
     }
 
     const webSocketPair = new WebSocketPair();
-    const [client, server] = Object.values(webSocketPair) as [WebSocket, WebSocketWithUser];
+    const client = webSocketPair[0];
+    const server = webSocketPair[1] as WebSocketWithUser;
 
     server.accept();
     server.user = user;

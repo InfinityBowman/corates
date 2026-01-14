@@ -17,10 +17,10 @@ import { createDb } from '@/db/client.js';
 import { createGrant } from '@/db/orgAccessGrants.js';
 import {
   resolveOrgAccess,
-  isSubscriptionActive,
   validatePlanChange,
   getOrgResourceUsage,
 } from '@/lib/billingResolver.js';
+import { isSubscriptionActive } from '@/lib/subscriptionStatus';
 
 beforeEach(async () => {
   await resetTestDatabase();
@@ -58,19 +58,21 @@ async function createTestOrg(orgId = 'org-1', userId = 'user-1') {
   return { nowSec, orgId, userId };
 }
 
+const billingOptions = { includeTrial: true, includePastDue: true };
+
 describe('isSubscriptionActive', () => {
   it('should return false for null subscription', () => {
-    expect(isSubscriptionActive(null, Date.now())).toBe(false);
+    expect(isSubscriptionActive(null, Date.now(), billingOptions)).toBe(false);
   });
 
   it('should return true for trialing subscription', () => {
     const sub = { status: 'trialing' };
-    expect(isSubscriptionActive(sub, Date.now())).toBe(true);
+    expect(isSubscriptionActive(sub, Date.now(), billingOptions)).toBe(true);
   });
 
   it('should return true for active subscription', () => {
     const sub = { status: 'active', cancelAtPeriodEnd: false };
-    expect(isSubscriptionActive(sub, Date.now())).toBe(true);
+    expect(isSubscriptionActive(sub, Date.now(), billingOptions)).toBe(true);
   });
 
   it('should return true for active subscription with scheduled cancel before period end', () => {
@@ -80,7 +82,7 @@ describe('isSubscriptionActive', () => {
       cancelAtPeriodEnd: true,
       periodEnd: new Date((nowSec + 86400) * 1000), // Tomorrow
     };
-    expect(isSubscriptionActive(sub, nowSec)).toBe(true);
+    expect(isSubscriptionActive(sub, nowSec, billingOptions)).toBe(true);
   });
 
   it('should return false for active subscription with scheduled cancel after period end', () => {
@@ -90,7 +92,7 @@ describe('isSubscriptionActive', () => {
       cancelAtPeriodEnd: true,
       periodEnd: new Date((nowSec - 86400) * 1000), // Yesterday
     };
-    expect(isSubscriptionActive(sub, nowSec)).toBe(false);
+    expect(isSubscriptionActive(sub, nowSec, billingOptions)).toBe(false);
   });
 
   it('should return true for past_due within grace period', () => {
@@ -99,7 +101,7 @@ describe('isSubscriptionActive', () => {
       status: 'past_due',
       periodEnd: new Date((nowSec + 86400) * 1000), // Tomorrow
     };
-    expect(isSubscriptionActive(sub, nowSec)).toBe(true);
+    expect(isSubscriptionActive(sub, nowSec, billingOptions)).toBe(true);
   });
 
   it('should return false for past_due after grace period', () => {
@@ -108,32 +110,32 @@ describe('isSubscriptionActive', () => {
       status: 'past_due',
       periodEnd: new Date((nowSec - 86400) * 1000), // Yesterday
     };
-    expect(isSubscriptionActive(sub, nowSec)).toBe(false);
+    expect(isSubscriptionActive(sub, nowSec, billingOptions)).toBe(false);
   });
 
   it('should return false for canceled subscription', () => {
     const sub = { status: 'canceled' };
-    expect(isSubscriptionActive(sub, Date.now())).toBe(false);
+    expect(isSubscriptionActive(sub, Date.now(), billingOptions)).toBe(false);
   });
 
   it('should return false for paused subscription', () => {
     const sub = { status: 'paused' };
-    expect(isSubscriptionActive(sub, Date.now())).toBe(false);
+    expect(isSubscriptionActive(sub, Date.now(), billingOptions)).toBe(false);
   });
 
   it('should return false for unpaid subscription', () => {
     const sub = { status: 'unpaid' };
-    expect(isSubscriptionActive(sub, Date.now())).toBe(false);
+    expect(isSubscriptionActive(sub, Date.now(), billingOptions)).toBe(false);
   });
 
   it('should return false for incomplete subscription', () => {
     const sub = { status: 'incomplete' };
-    expect(isSubscriptionActive(sub, Date.now())).toBe(false);
+    expect(isSubscriptionActive(sub, Date.now(), billingOptions)).toBe(false);
   });
 
   it('should return false for incomplete_expired subscription', () => {
     const sub = { status: 'incomplete_expired' };
-    expect(isSubscriptionActive(sub, Date.now())).toBe(false);
+    expect(isSubscriptionActive(sub, Date.now(), billingOptions)).toBe(false);
   });
 });
 

@@ -2,6 +2,7 @@ import { eq, and, desc, isNull, ne, count } from 'drizzle-orm';
 import { subscription, orgAccessGrants, projects, member } from '@/db/schema';
 import { getActiveGrantsByOrgId } from '@/db/orgAccessGrants';
 import { getPlan, DEFAULT_PLAN, getGrantPlan, isUnlimitedQuota } from '@corates/shared/plans';
+import { isSubscriptionActive } from './subscriptionStatus';
 import type { GrantType, Quotas } from '@corates/shared/plans';
 import type { Database } from '../db/client';
 import type { OrgBilling } from '../types';
@@ -23,35 +24,15 @@ interface GrantRecord {
   revokedAt: Date | null;
 }
 
-export function isSubscriptionActive(sub: SubscriptionRecord | null, now: Date | number): boolean {
-  if (!sub) return false;
-
-  const nowTimestamp = now instanceof Date ? Math.floor(now.getTime() / 1000) : now;
-  const status = sub.status;
-  const periodEnd =
-    sub.periodEnd ?
-      sub.periodEnd instanceof Date ?
-        Math.floor(sub.periodEnd.getTime() / 1000)
-      : sub.periodEnd
-    : null;
-
-  if (status === 'trialing') {
-    return true;
-  }
-
-  if (status === 'active') {
-    if (sub.cancelAtPeriodEnd && periodEnd) {
-      return nowTimestamp < periodEnd;
-    }
-    return true;
-  }
-
-  if (status === 'past_due') {
-    if (!periodEnd) return false;
-    return nowTimestamp < periodEnd;
-  }
-
-  return false;
+/**
+ * Check if subscription is active for billing purposes.
+ * Includes trialing and past_due statuses within their grace periods.
+ */
+function isSubscriptionActiveForBilling(
+  sub: SubscriptionRecord | null,
+  now: Date | number,
+): boolean {
+  return isSubscriptionActive(sub, now, { includeTrial: true, includePastDue: true });
 }
 
 async function getActiveSubscription(
@@ -71,7 +52,7 @@ async function getActiveSubscription(
   }
 
   const activeSubscriptions = subscriptions.filter(sub =>
-    isSubscriptionActive(sub as SubscriptionRecord, now),
+    isSubscriptionActiveForBilling(sub as SubscriptionRecord, now),
   );
 
   if (activeSubscriptions.length === 0) {
@@ -98,7 +79,7 @@ export async function resolveOrgAccess(
 
   const activeSubscription = await getActiveSubscription(db, orgId, nowTimestamp);
 
-  if (activeSubscription && isSubscriptionActive(activeSubscription, nowTimestamp)) {
+  if (activeSubscription && isSubscriptionActiveForBilling(activeSubscription, nowTimestamp)) {
     const plan = getPlan(activeSubscription.plan);
     return {
       effectivePlanId: activeSubscription.plan,

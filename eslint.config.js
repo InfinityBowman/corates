@@ -310,6 +310,7 @@ export default [
     languageOptions: {
       globals: {
         // Cloudflare Workers globals
+        MessageEvent: 'readonly',
         Cloudflare: 'readonly',
         D1Database: 'readonly',
         DurableObject: 'readonly',
