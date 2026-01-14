@@ -538,7 +538,7 @@ statsRoutes.openapi(webhooksRoute, async c => {
 statsRoutes.openapi(subscriptionsRoute, async c => {
   try {
     const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-11-17.clover',
+      apiVersion: '2025-12-15.clover',
     });
 
     // Use search to get actual counts
@@ -576,7 +576,7 @@ statsRoutes.openapi(revenueRoute, async c => {
 
   try {
     const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-11-17.clover',
+      apiVersion: '2025-12-15.clover',
     });
 
     // Calculate date range

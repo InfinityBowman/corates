@@ -419,7 +419,7 @@ stripeToolsRoutes.openapi(customerLookupRoute, async c => {
   }
 
   const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-11-17.clover',
+    apiVersion: '2025-12-15.clover',
   });
 
   try {
@@ -569,7 +569,7 @@ stripeToolsRoutes.openapi(portalLinkRoute, async c => {
   }
 
   const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-11-17.clover',
+    apiVersion: '2025-12-15.clover',
   });
 
   try {
@@ -611,7 +611,7 @@ stripeToolsRoutes.openapi(invoicesRoute, async c => {
   }
 
   const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-11-17.clover',
+    apiVersion: '2025-12-15.clover',
   });
 
   try {
@@ -668,7 +668,7 @@ stripeToolsRoutes.openapi(paymentMethodsRoute, async c => {
   }
 
   const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-11-17.clover',
+    apiVersion: '2025-12-15.clover',
   });
 
   try {
@@ -721,7 +721,7 @@ stripeToolsRoutes.openapi(subscriptionsRoute, async c => {
   }
 
   const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-11-17.clover',
+    apiVersion: '2025-12-15.clover',
   });
 
   try {

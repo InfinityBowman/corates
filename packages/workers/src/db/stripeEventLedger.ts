@@ -1,4 +1,4 @@
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and, isNull } from 'drizzle-orm';
 import { stripeEventLedger } from './schema';
 import type { Database } from './client';
 import type { InferSelectModel } from 'drizzle-orm';
@@ -272,10 +272,16 @@ export async function getProcessedCheckoutSessionsWithoutSubscription(
   const results = await db
     .select()
     .from(stripeEventLedger)
-    .where(eq(stripeEventLedger.type, 'checkout.session.completed'))
+    .where(
+      and(
+        eq(stripeEventLedger.type, 'checkout.session.completed'),
+        eq(stripeEventLedger.status, LedgerStatus.PROCESSED),
+        isNull(stripeEventLedger.stripeSubscriptionId),
+      ),
+    )
     .orderBy(stripeEventLedger.receivedAt)
     .limit(limit)
     .all();
 
-  return results.filter(entry => entry.status === LedgerStatus.PROCESSED);
+  return results;
 }
