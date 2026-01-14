@@ -160,6 +160,351 @@ orgProjectRoutes.post(
 );
 ```
 
+## Command Pattern
+
+For complex write operations, we use the **command pattern** to separate business logic from HTTP routing. Commands are pure functions that encapsulate domain operations, making them testable, reusable, and framework-agnostic.
+
+### When to Use Commands
+
+Use commands for operations that:
+- Modify state (create, update, delete)
+- Have complex business logic (validation, notifications, syncing)
+- Need to be reusable across multiple routes or contexts
+- Require multiple database operations or side effects
+
+Keep simple read operations (GET endpoints) in route handlers.
+
+### Command Function Signature
+
+All commands follow a consistent signature:
+
+```js
+/**
+ * @param {Object} env - Cloudflare environment bindings
+ * @param {Object} actor - User performing the action
+ * @param {Object} params - Operation parameters
+ * @returns {Promise<Object>} Result object
+ * @throws {DomainError} On business rule violations
+ */
+export async function commandName(env, actor, params) {
+  // Implementation
+}
+```
+
+- **env**: Cloudflare environment (DB, Durable Objects, R2, etc.)
+- **actor**: The authenticated user performing the action (from `getAuth(c).user`)
+- **params**: Operation-specific parameters (validated by route before calling)
+- **Returns**: Plain object with operation results
+- **Throws**: Domain errors for business rule violations (not HTTP errors)
+
+### Directory Structure
+
+Commands are organized by domain in `packages/workers/src/commands/`:
+
+```
+commands/
+  lib/                    # Shared utilities
+    doSync.js            # DO sync helpers
+    notifications.js     # User notification helpers
+    index.js
+  projects/
+    createProject.js
+    updateProject.js
+    deleteProject.js
+    index.js
+  members/
+    addMember.js
+    updateMemberRole.js
+    removeMember.js
+    index.js
+  index.js               # Re-exports all commands
+```
+
+### Creating a Command
+
+```js
+// commands/projects/createProject.js
+
+/**
+ * Create a new project within an organization
+ *
+ * @param {Object} env - Cloudflare environment bindings
+ * @param {Object} actor - User creating the project
+ * @param {Object} params - Creation parameters
+ * @param {string} params.orgId - Organization ID
+ * @param {string} params.name - Project name
+ * @param {string} [params.description] - Project description
+ * @returns {Promise<{ project: Object }>}
+ * @throws {DomainError} QUOTA_EXCEEDED if org at project limit
+ */
+
+import { createDb } from '@/db/client.js';
+import { projects, projectMembers } from '@/db/schema.js';
+import { insertWithQuotaCheck } from '@/lib/quotaTransaction.js';
+import { syncProjectToDO } from '@/commands/lib/doSync.js';
+
+export async function createProject(env, actor, { orgId, name, description }) {
+  const db = createDb(env.DB);
+
+  const projectId = crypto.randomUUID();
+  const now = new Date();
+  const trimmedName = name.trim();
+
+  // Business logic: quota check and atomic insert
+  const quotaResult = await insertWithQuotaCheck(db, {
+    orgId,
+    quotaKey: 'projects.max',
+    countTable: projects,
+    countColumn: projects.orgId,
+    insertStatements: [
+      db.insert(projects).values({
+        id: projectId,
+        name: trimmedName,
+        description: description?.trim() || null,
+        orgId,
+        createdBy: actor.id,
+        createdAt: now,
+        updatedAt: now,
+      }),
+      db.insert(projectMembers).values({
+        id: crypto.randomUUID(),
+        projectId,
+        userId: actor.id,
+        role: 'owner',
+        joinedAt: now,
+      }),
+    ],
+  });
+
+  if (!quotaResult.success) {
+    throw quotaResult.error; // DomainError
+  }
+
+  // Side effect: sync to Durable Object
+  try {
+    await syncProjectToDO(env, projectId, { name: trimmedName, orgId }, [
+      { userId: actor.id, role: 'owner', joinedAt: now.getTime() },
+    ]);
+  } catch (err) {
+    console.error('Failed to sync project to DO:', err);
+  }
+
+  return {
+    project: {
+      id: projectId,
+      name: trimmedName,
+      orgId,
+      createdBy: actor.id,
+      role: 'owner',
+      createdAt: now,
+    },
+  };
+}
+```
+
+### Using Commands in Routes
+
+Routes handle HTTP concerns (validation, auth, response formatting) and delegate to commands:
+
+```js
+import { createProject } from '@/commands/projects/index.js';
+import { isDomainError, createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+
+orgProjectRoutes.openapi(createProjectRoute, async c => {
+  // 1. Run middleware (auth, membership, entitlements)
+  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+  if (membershipResponse) return membershipResponse;
+
+  // 2. Get context from middleware
+  const { user: authUser } = getAuth(c);
+  const { orgId } = getOrgContext(c);
+  const body = c.req.valid('json'); // Already validated by OpenAPIHono
+
+  // 3. Call command
+  try {
+    const { project } = await createProject(c.env, authUser, {
+      orgId,
+      name: body.name,
+      description: body.description,
+    });
+
+    return c.json(project, 201);
+  } catch (error) {
+    // 4. Handle domain errors
+    if (isDomainError(error)) {
+      return c.json(error, error.statusCode);
+    }
+
+    // 5. Wrap unexpected errors
+    console.error('Error creating project:', error);
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_TRANSACTION_FAILED, {
+      operation: 'create_project',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
+  }
+});
+```
+
+### Shared Utilities
+
+Commands use shared utilities from `@/commands/lib/`:
+
+#### DO Sync (`doSync.js`)
+
+```js
+import {
+  syncProjectToDO,      // Sync project metadata and members
+  syncMemberToDO,       // Sync member changes (add/update/remove)
+  disconnectAllFromProject, // Disconnect all users from ProjectDoc DO
+  cleanupProjectStorage,    // Clean up R2 storage for a project
+} from '@/commands/lib/doSync.js';
+
+// Sync member addition
+await syncMemberToDO(env, projectId, 'add', {
+  userId: user.id,
+  role: 'member',
+  joinedAt: Date.now(),
+});
+
+// Sync member role update
+await syncMemberToDO(env, projectId, 'update', { userId, role: 'owner' });
+
+// Sync member removal
+await syncMemberToDO(env, projectId, 'remove', { userId });
+```
+
+#### Notifications (`notifications.js`)
+
+```js
+import {
+  notifyUser,           // Send notification to single user
+  notifyUsers,          // Send notification to multiple users
+  NotificationTypes,    // Type constants
+} from '@/commands/lib/notifications.js';
+
+// Notify single user
+await notifyUser(env, userId, {
+  type: NotificationTypes.PROJECT_MEMBERSHIP_ADDED,
+  projectId,
+  projectName: 'My Project',
+  role: 'member',
+});
+
+// Notify multiple users (with exclusion)
+const userIds = members.map(m => m.userId);
+await notifyUsers(
+  env,
+  userIds,
+  {
+    type: NotificationTypes.PROJECT_DELETED,
+    projectId,
+    projectName: 'Deleted Project',
+  },
+  excludeUserId, // Don't notify this user (e.g., the actor)
+);
+```
+
+#### Notification Types
+
+```js
+export const NotificationTypes = {
+  PROJECT_DELETED: 'project-deleted',
+  PROJECT_MEMBERSHIP_ADDED: 'project-membership-added',
+  PROJECT_MEMBERSHIP_UPDATED: 'project-membership-updated',
+  PROJECT_MEMBERSHIP_REMOVED: 'project-membership-removed',
+};
+```
+
+### Error Handling in Commands
+
+Commands throw domain errors for business rule violations:
+
+```js
+import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
+
+export async function removeMember(env, actor, { projectId, userId }) {
+  // Check if member exists
+  const member = await db.select()...;
+  if (!member) {
+    throw createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId, userId });
+  }
+
+  // Check last owner constraint
+  if (member.role === 'owner' && ownerCount <= 1) {
+    throw createDomainError(PROJECT_ERRORS.LAST_OWNER, { projectId });
+  }
+
+  // ... perform operation
+}
+```
+
+Routes catch these errors and convert to HTTP responses:
+
+```js
+try {
+  const result = await removeMember(c.env, authUser, params);
+  return c.json(result);
+} catch (error) {
+  if (isDomainError(error)) {
+    return c.json(error, error.statusCode);
+  }
+  // Handle unexpected errors...
+}
+```
+
+### Testing Commands
+
+Commands can be unit tested without HTTP context:
+
+```js
+import { describe, it, expect, vi } from 'vitest';
+import { createProject } from '../createProject.js';
+
+describe('createProject', () => {
+  it('should create project and return result', async () => {
+    const mockEnv = createMockEnv();
+    const actor = { id: 'user-1', name: 'Test User' };
+
+    const { project } = await createProject(mockEnv, actor, {
+      orgId: 'org-1',
+      name: 'Test Project',
+    });
+
+    expect(project.name).toBe('Test Project');
+    expect(project.createdBy).toBe('user-1');
+  });
+
+  it('should throw QUOTA_EXCEEDED when at limit', async () => {
+    const mockEnv = createMockEnvAtQuotaLimit();
+    const actor = { id: 'user-1' };
+
+    await expect(
+      createProject(mockEnv, actor, { orgId: 'org-1', name: 'Project' })
+    ).rejects.toMatchObject({
+      code: 'QUOTA_EXCEEDED',
+    });
+  });
+});
+```
+
+### Best Practices
+
+**DO:**
+- Keep commands focused on a single operation
+- Use JSDoc comments to document parameters and errors
+- Import shared utilities from `@/commands/lib/`
+- Throw domain errors for business rule violations
+- Wrap side effects (DO sync, notifications) in try-catch
+- Return plain objects (not HTTP responses)
+
+**DON'T:**
+- Access Hono context (`c`) in commands
+- Return HTTP status codes or Response objects
+- Catch and suppress errors silently
+- Put HTTP routing logic in commands
+- Skip documentation for public command functions
+
 ## Organization-Scoped Routes
 
 All project routes are now scoped under organizations. See the [Organizations Guide](/guides/organizations) for complete details.
@@ -1060,6 +1405,8 @@ Always use `createDomainError` with appropriate error codes from `@corates/share
 - Use try-catch for database operations
 - Return proper HTTP status codes
 - Include OpenAPI tags, summary, and description
+- Use the command pattern for complex write operations
+- Keep route handlers thin (delegate to commands)
 
 ### DON'T
 
@@ -1071,6 +1418,8 @@ Always use `createDomainError` with appropriate error codes from `@corates/share
 - Don't expose internal error details
 - Don't forget to check permissions/access
 - Don't skip batch operations for related database writes
+- Don't put business logic directly in route handlers (use commands)
+- Don't access Hono context in command functions
 
 ## Related Guides
 
