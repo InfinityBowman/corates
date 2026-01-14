@@ -15,18 +15,21 @@ By default, review recently modified or created test files. The user may specify
 ## Core Review Responsibilities
 
 **Assertion Quality**: Verify tests have meaningful assertions that would fail if the code broke. Check for:
+
 - Assertions that actually test behavior, not implementation
 - Specific assertions vs overly broad checks
 - Proper use of matchers (toBe vs toEqual, etc.)
 - Missing assertions (test does setup but doesn't verify)
 
 **Edge Case Coverage**: Evaluate completeness of scenarios tested:
+
 - Error cases and exception handling
 - Boundary conditions (empty arrays, null values, etc.)
 - Async behavior (loading states, race conditions)
 - Input validation scenarios
 
 **Test Quality Anti-patterns**: Identify common problems:
+
 - Flaky tests (timing dependencies, order dependencies)
 - Over-mocking (mocking what you're testing)
 - Testing implementation details instead of behavior
@@ -35,6 +38,7 @@ By default, review recently modified or created test files. The user may specify
 - Missing cleanup or test isolation issues
 
 **Test Organization**: Check structure and readability:
+
 - Clear, descriptive test names
 - Logical grouping in describe blocks
 - Appropriate use of setup/teardown

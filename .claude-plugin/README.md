@@ -9,6 +9,7 @@ The Test Development Plugin provides a systematic 7-phase approach to writing an
 ## Philosophy
 
 Writing good tests requires more than just adding assertions. You need to:
+
 - **Understand existing tests** before adding new ones
 - **Identify gaps** in coverage and edge cases
 - **Design strategically** before implementing
@@ -21,11 +22,13 @@ This plugin embeds these practices into a structured workflow that runs automati
 Launches a guided test development workflow with 7 distinct phases.
 
 **Usage:**
+
 ```bash
 /test-dev Add tests for the authentication module
 ```
 
 Or simply:
+
 ```bash
 /test-dev
 ```
@@ -39,6 +42,7 @@ The command will guide you through the entire process interactively.
 **Goal**: Understand what needs to be tested
 
 **What happens:**
+
 - Clarifies the testing request if unclear
 - Identifies whether this is new tests, improving existing tests, or coverage gaps
 - Determines scope (which package, which modules)
@@ -49,6 +53,7 @@ The command will guide you through the entire process interactively.
 **Goal**: Understand existing test patterns and identify gaps
 
 **What happens:**
+
 - Launches 2-3 `test-explorer` agents in parallel
 - Each agent explores different aspects (existing test patterns, untested code, test utilities)
 - Agents return analysis of test conventions and coverage gaps
@@ -59,6 +64,7 @@ The command will guide you through the entire process interactively.
 **Goal**: Fill in gaps and resolve ambiguities
 
 **What happens:**
+
 - Reviews findings and original request
 - Identifies underspecified aspects: edge cases, mocking needs, test granularity
 - Presents questions in an organized list
@@ -69,6 +75,7 @@ The command will guide you through the entire process interactively.
 **Goal**: Design multiple testing approaches with different trade-offs
 
 **What happens:**
+
 - Launches 2-3 `test-architect` agents with different focuses
 - Approaches might include: heavy mocking, integration-focused, balanced
 - Reviews all approaches and forms recommendation
@@ -80,6 +87,7 @@ The command will guide you through the entire process interactively.
 **Goal**: Write the tests
 
 **What happens:**
+
 - Waits for explicit approval
 - Implements following chosen strategy
 - Follows existing test conventions strictly
@@ -90,6 +98,7 @@ The command will guide you through the entire process interactively.
 **Goal**: Ensure tests pass and meet quality standards
 
 **What happens:**
+
 - Runs `pnpm test` to verify tests pass
 - Launches `test-reviewer` agents for static analysis
 - Reviews test quality, assertions, edge case handling
@@ -100,6 +109,7 @@ The command will guide you through the entire process interactively.
 **Goal**: Document what was accomplished
 
 **What happens:**
+
 - Marks all todos complete
 - Summarizes: what was tested, files created/modified, coverage improvements
 - Suggests next steps
@@ -111,6 +121,7 @@ The command will guide you through the entire process interactively.
 **Purpose**: Analyzes existing test patterns and identifies untested code
 
 **Focus areas:**
+
 - Existing test file structure and conventions
 - Testing utilities and helpers in use
 - Untested functions, components, or modules
@@ -118,6 +129,7 @@ The command will guide you through the entire process interactively.
 - Mocking patterns and test data approaches
 
 **When triggered:**
+
 - Automatically in Phase 2
 - Can be invoked manually when exploring tests
 
@@ -126,6 +138,7 @@ The command will guide you through the entire process interactively.
 **Purpose**: Designs test suites and testing strategies
 
 **Focus areas:**
+
 - Test structure and organization
 - Unit vs integration test decisions
 - Mocking strategy (what to mock, what to use real implementations)
@@ -133,6 +146,7 @@ The command will guide you through the entire process interactively.
 - Edge case identification
 
 **When triggered:**
+
 - Automatically in Phase 4
 - Can be invoked manually for test planning
 
@@ -141,6 +155,7 @@ The command will guide you through the entire process interactively.
 **Purpose**: Reviews tests for quality and best practices (static analysis)
 
 **Focus areas:**
+
 - Assertion quality and completeness
 - Edge case coverage
 - Test isolation and independence
@@ -148,12 +163,14 @@ The command will guide you through the entire process interactively.
 - Anti-patterns (flaky tests, over-mocking, testing implementation details)
 
 **When triggered:**
+
 - Automatically in Phase 6
 - Can be invoked manually after writing tests
 
 ## Usage Patterns
 
 ### Full workflow (recommended):
+
 ```bash
 /test-dev Add tests for the user service
 ```
@@ -161,16 +178,19 @@ The command will guide you through the entire process interactively.
 ### Manual agent invocation:
 
 **Explore existing tests:**
+
 ```
 "Launch test-explorer to analyze the authentication test patterns"
 ```
 
 **Design test strategy:**
+
 ```
 "Launch test-architect to plan tests for the API routes"
 ```
 
 **Review tests:**
+
 ```
 "Launch test-reviewer to check my recent test changes"
 ```
@@ -178,12 +198,14 @@ The command will guide you through the entire process interactively.
 ## When to Use This Plugin
 
 **Use for:**
+
 - Adding tests to untested code
 - Writing tests for new features
 - Improving existing test coverage
 - Understanding test patterns in unfamiliar codebases
 
 **Don't use for:**
+
 - Single simple test additions
 - Obvious test fixes
 - Quick debugging

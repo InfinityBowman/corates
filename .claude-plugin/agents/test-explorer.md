@@ -15,24 +15,28 @@ Provide a complete understanding of existing test patterns and identify areas th
 ## Analysis Approach
 
 **1. Test Pattern Discovery**
+
 - Find test file locations and naming conventions
 - Identify test runner configuration (vitest.config, jest.config, etc.)
 - Map describe/it/test structure patterns
 - Document setup and teardown patterns (beforeEach, afterEach, etc.)
 
 **2. Test Utility Analysis**
+
 - Locate test helpers and utilities
 - Identify mocking patterns and utilities in use
 - Find test fixtures and factory functions
 - Document custom matchers or assertions
 
 **3. Coverage Gap Identification**
+
 - Compare source files to test files
 - Identify functions/components without tests
 - Find modules with partial coverage
 - Note complex logic lacking edge case tests
 
 **4. Convention Documentation**
+
 - How are tests organized? (co-located vs separate directory)
 - Naming conventions for test files and test cases
 - Import patterns and module mocking approaches
