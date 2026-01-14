@@ -20,6 +20,9 @@ import {
   buildProjectWithMembers,
   buildProject,
   buildSelfRemovalScenario,
+  buildMultipleOwnersScenario,
+  buildUser,
+  buildOrgMember,
   resetCounter,
 } from '@/__tests__/factories';
 
@@ -136,152 +139,28 @@ async function fetchMembers(orgId, projectId, path = '', init = {}) {
 
 describe('Org-Scoped Member Routes - GET /api/orgs/:orgId/projects/:projectId/members', () => {
   it('should list all members of a project', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { project, org, owner, members } = await buildProjectWithMembers({ memberCount: 1 });
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner User',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const res = await fetchMembers(org.id, project.id, '', {
+      headers: { 'x-test-user-id': owner.id },
     });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'Test User 2',
-      email: 'collab@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-2',
-      organizationId: 'org-1',
-      userId: 'user-2',
-      role: 'member',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-2',
-      projectId: 'project-1',
-      userId: 'user-2',
-      role: 'member',
-      joinedAt: nowSec + 1,
-    });
-
-    const res = await fetchMembers('org-1', 'project-1');
     expect(res.status).toBe(200);
 
     const body = await json(res);
     expect(body).toHaveLength(2);
-    expect(body[0].userId).toBe('user-1');
+    expect(body[0].userId).toBe(owner.id);
     expect(body[0].role).toBe('owner');
-    expect(body[0].name).toBe('Owner User');
-    expect(body[1].userId).toBe('user-2');
+    expect(body[0].name).toBe(owner.name);
+    expect(body[1].userId).toBe(members[1].user.id);
     expect(body[1].role).toBe('member');
   });
 
   it('should order members by join date', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { project, org, owner } = await buildProjectWithMembers({ memberCount: 1 });
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    const res = await fetchMembers(org.id, project.id, '', {
+      headers: { 'x-test-user-id': owner.id },
     });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-2',
-      organizationId: 'org-1',
-      userId: 'user-2',
-      role: 'member',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-2',
-      projectId: 'project-1',
-      userId: 'user-2',
-      role: 'member',
-      joinedAt: nowSec + 10,
-    });
-
-    const res = await fetchMembers('org-1', 'project-1');
     const body = await json(res);
 
     // joinedAt is returned as Unix timestamp (number or string)
@@ -293,67 +172,15 @@ describe('Org-Scoped Member Routes - GET /api/orgs/:orgId/projects/:projectId/me
   });
 
   it('should require project membership to view members', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { project, org } = await buildProject();
 
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
+    // Create an org member who is NOT a project member
+    const { user: orgOnlyMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
+
+    // org member who is not a project member should get 403 ACCESS_DENIED
+    const res = await fetchMembers(org.id, project.id, '', {
+      headers: { 'x-test-user-id': orgOnlyMember.id },
     });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    // user-1 is an org member but NOT a project member
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'member',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-2',
-      organizationId: 'org-1',
-      userId: 'user-2',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-2',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-2',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    // user-1 is not a project member - should get 403 ACCESS_DENIED
-    const res = await fetchMembers('org-1', 'project-1');
     expect(res.status).toBe(403);
     const body = await json(res);
     expect(body.code).toBe('PROJECT_ACCESS_DENIED');
@@ -897,78 +724,13 @@ describe('Org-Scoped Member Routes - POST /api/orgs/:orgId/projects/:projectId/m
 
 describe('Org-Scoped Member Routes - PUT /api/orgs/:orgId/projects/:projectId/members/:userId', () => {
   it('should allow owner to update member role', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { project, org, owner, members } = await buildProjectWithMembers({ memberCount: 1 });
+    const memberToUpdate = members[1].user;
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'Member',
-      email: 'member@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-2',
-      organizationId: 'org-1',
-      userId: 'user-2',
-      role: 'member',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-2',
-      projectId: 'project-1',
-      userId: 'user-2',
-      role: 'member',
-      joinedAt: nowSec,
-    });
-
-    const res = await fetchMembers('org-1', 'project-1', '/user-2', {
+    const res = await fetchMembers(org.id, project.id, `/${memberToUpdate.id}`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        role: 'member',
-      }),
+      headers: { 'content-type': 'application/json', 'x-test-user-id': owner.id },
+      body: JSON.stringify({ role: 'member' }),
     });
 
     expect(res.status).toBe(200);
@@ -980,60 +742,19 @@ describe('Org-Scoped Member Routes - PUT /api/orgs/:orgId/projects/:projectId/me
     const member = await env.DB.prepare(
       'SELECT * FROM project_members WHERE projectId = ?1 AND userId = ?2',
     )
-      .bind('project-1', 'user-2')
+      .bind(project.id, memberToUpdate.id)
       .first();
     expect(member.role).toBe('member');
   });
 
   it('should prevent removing the last owner', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    // buildProject creates a project with a single owner
+    const { project, org, owner } = await buildProject();
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    const res = await fetchMembers('org-1', 'project-1', '/user-1', {
+    const res = await fetchMembers(org.id, project.id, `/${owner.id}`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        role: 'member',
-      }),
+      headers: { 'content-type': 'application/json', 'x-test-user-id': owner.id },
+      body: JSON.stringify({ role: 'member' }),
     });
 
     expect(res.status).toBe(400);
@@ -1042,78 +763,13 @@ describe('Org-Scoped Member Routes - PUT /api/orgs/:orgId/projects/:projectId/me
   });
 
   it('should allow demoting owner if multiple owners exist', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    // buildMultipleOwnersScenario creates a project with two owners
+    const { project, org, owner1, owner2 } = await buildMultipleOwnersScenario();
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner 1',
-      email: 'owner1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'Owner 2',
-      email: 'owner2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-2',
-      organizationId: 'org-1',
-      userId: 'user-2',
-      role: 'admin',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-2',
-      projectId: 'project-1',
-      userId: 'user-2',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    const res = await fetchMembers('org-1', 'project-1', '/user-1', {
+    const res = await fetchMembers(org.id, project.id, `/${owner1.id}`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        role: 'member',
-      }),
+      headers: { 'content-type': 'application/json', 'x-test-user-id': owner2.id },
+      body: JSON.stringify({ role: 'member' }),
     });
 
     expect(res.status).toBe(200);
@@ -1171,50 +827,11 @@ describe('Org-Scoped Member Routes - DELETE /api/orgs/:orgId/projects/:projectId
   });
 
   it('should return 404 if member not found', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { project, org, owner } = await buildProject();
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    const res = await fetchMembers('org-1', 'project-1', '/nonexistent-user', {
+    const res = await fetchMembers(org.id, project.id, '/nonexistent-user', {
       method: 'DELETE',
+      headers: { 'x-test-user-id': owner.id },
     });
 
     expect(res.status).toBe(404);
@@ -1223,55 +840,8 @@ describe('Org-Scoped Member Routes - DELETE /api/orgs/:orgId/projects/:projectId
 
 describe('Org-Scoped Member Routes - Collaborator Quota Enforcement', () => {
   it('should reject adding a new org member when at collaborator quota', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner User',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'New Member',
-      email: 'newmember@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
+    const { project, org, owner } = await buildProject();
+    const newUser = await buildUser();
 
     // Mock quota exceeded
     const { createDomainError, AUTH_ERRORS } = await import('@corates/shared');
@@ -1292,10 +862,10 @@ describe('Org-Scoped Member Routes - Collaborator Quota Enforcement', () => {
       ),
     });
 
-    const res = await fetchMembers('org-1', 'project-1', '', {
+    const res = await fetchMembers(org.id, project.id, '', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: 'user-2', role: 'member' }),
+      headers: { 'Content-Type': 'application/json', 'x-test-user-id': owner.id },
+      body: JSON.stringify({ userId: newUser.id, role: 'member' }),
     });
 
     expect(res.status).toBe(403);
@@ -1306,78 +876,20 @@ describe('Org-Scoped Member Routes - Collaborator Quota Enforcement', () => {
   });
 
   it('should allow adding existing org member without quota check', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
+    const { project, org, owner } = await buildProject();
 
-    await seedUser({
-      id: 'user-1',
-      name: 'Owner User',
-      email: 'owner@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    // Create user who is already an org member but not a project member
+    const { user: existingOrgMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
 
-    await seedUser({
-      id: 'user-2',
-      name: 'Existing Org Member',
-      email: 'existing@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    // user-2 is already an org member
-    await seedOrgMember({
-      id: 'om-2',
-      organizationId: 'org-1',
-      userId: 'user-2',
-      role: 'member',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    // The quota check won't be called because user is already org member
-    // Default mock returns allowed: true, which shouldn't be used anyway
-
-    const res = await fetchMembers('org-1', 'project-1', '', {
+    const res = await fetchMembers(org.id, project.id, '', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: 'user-2', role: 'member' }),
+      headers: { 'Content-Type': 'application/json', 'x-test-user-id': owner.id },
+      body: JSON.stringify({ userId: existingOrgMember.id, role: 'member' }),
     });
 
-    // Should succeed because user-2 is already an org member
-    // checkCollaboratorQuota should NOT have been called (existing org member)
+    // Should succeed because user is already an org member (no quota check needed)
     expect(res.status).toBe(201);
     const body = await json(res);
-    expect(body.userId).toBe('user-2');
+    expect(body.userId).toBe(existingOrgMember.id);
   });
 });
