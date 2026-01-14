@@ -20,12 +20,13 @@ import {
   createDomainError,
   createValidationError,
   isDomainError,
-  AUTH_ERRORS,
   SYSTEM_ERRORS,
   USER_ERRORS,
   VALIDATION_ERRORS,
+  PROJECT_ERRORS,
 } from '@corates/shared';
 import { addMember, updateMemberRole, removeMember } from '@/commands/members/index.js';
+import { requireMemberRemoval } from '@/policies';
 
 const orgProjectMemberRoutes = new OpenAPIHono({
   defaultHook: (result, c) => {
@@ -594,19 +595,19 @@ orgProjectMemberRoutes.openapi(removeMemberRoute, async c => {
 
   const { user: authUser } = getAuth(c);
   const { orgId } = getOrgContext(c);
-  const { projectId, projectRole } = getProjectContext(c);
+  const { projectId } = getProjectContext(c);
   const { userId: memberId } = c.req.valid('param');
+  const db = createDb(c.env.DB);
 
   const isSelf = memberId === authUser.id;
-  const isOwner = projectRole === 'owner';
 
-  if (!isOwner && !isSelf) {
-    const error = createDomainError(
-      AUTH_ERRORS.FORBIDDEN,
-      { reason: 'remove_member' },
-      'Only project owners can remove members',
-    );
-    return c.json(error, error.statusCode);
+  try {
+    await requireMemberRemoval(db, authUser.id, projectId, memberId);
+  } catch (error) {
+    if (isDomainError(error)) {
+      return c.json(error, error.statusCode);
+    }
+    throw error;
   }
 
   try {

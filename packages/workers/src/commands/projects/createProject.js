@@ -8,6 +8,7 @@
  * @param {string} params.name - Project name
  * @param {string} [params.description] - Project description
  * @returns {Promise<{ project: Object }>}
+ * @throws {ValidationError} FIELD_REQUIRED if name is empty or whitespace-only
  * @throws {DomainError} QUOTA_EXCEEDED if org at project limit
  * @throws {DomainError} DB_TRANSACTION_FAILED on database error
  */
@@ -17,6 +18,7 @@ import { projects, projectMembers, user } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
 import { insertWithQuotaCheck } from '@/lib/quotaTransaction.js';
 import { syncProjectToDO } from '@/commands/lib/doSync.js';
+import { createValidationError, VALIDATION_ERRORS } from '@corates/shared';
 
 export async function createProject(env, actor, { orgId, name, description }) {
   const db = createDb(env.DB);
@@ -24,8 +26,12 @@ export async function createProject(env, actor, { orgId, name, description }) {
   const projectId = crypto.randomUUID();
   const memberId = crypto.randomUUID();
   const now = new Date();
-  const trimmedName = name.trim();
+  const trimmedName = name?.trim() || '';
   const trimmedDescription = description?.trim() || null;
+
+  if (!trimmedName) {
+    throw createValidationError('name', VALIDATION_ERRORS.FIELD_REQUIRED.code, null);
+  }
 
   const insertStatements = [
     db.insert(projects).values({

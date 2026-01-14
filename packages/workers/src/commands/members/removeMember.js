@@ -15,41 +15,24 @@
 
 import { createDb } from '@/db/client.js';
 import { projectMembers, projects } from '@/db/schema.js';
-import { eq, and, count } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 import { syncMemberToDO } from '@/commands/lib/doSync.js';
 import { notifyUser, NotificationTypes } from '@/commands/lib/notifications.js';
+import { getProjectMembership, requireSafeRemoval } from '@/policies';
 
 export async function removeMember(env, actor, { orgId, projectId, userId, isSelfRemoval }) {
   const db = createDb(env.DB);
 
   // Check target member exists
-  const targetMember = await db
-    .select({ role: projectMembers.role })
-    .from(projectMembers)
-    .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId)))
-    .get();
+  const targetMember = await getProjectMembership(db, userId, projectId);
 
   if (!targetMember) {
     throw createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId, userId }, 'Member not found');
   }
 
   // Prevent removing the last owner
-  if (targetMember.role === 'owner') {
-    const ownerCountResult = await db
-      .select({ count: count() })
-      .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.role, 'owner')))
-      .get();
-
-    if (ownerCountResult?.count <= 1) {
-      throw createDomainError(
-        PROJECT_ERRORS.LAST_OWNER,
-        { projectId },
-        'Assign another owner first or delete the project',
-      );
-    }
-  }
+  await requireSafeRemoval(db, projectId, userId);
 
   await db
     .delete(projectMembers)

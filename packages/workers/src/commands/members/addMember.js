@@ -53,18 +53,36 @@ export async function addMember(env, actor, { orgId, projectId, userToAdd, role 
     }
   }
 
-  // Ensure org membership first
-  await ensureOrgMembership(db, orgId, userToAdd.id);
-
-  // Add project membership
+  // Build insert operations for atomic batch execution
   const now = new Date();
-  await db.insert(projectMembers).values({
-    id: crypto.randomUUID(),
-    projectId,
-    userId: userToAdd.id,
-    role,
-    joinedAt: now,
-  });
+  const insertOperations = [];
+
+  // Add org membership insert if user is not already an org member
+  if (!existingOrgMembership) {
+    insertOperations.push(
+      db.insert(member).values({
+        id: crypto.randomUUID(),
+        userId: userToAdd.id,
+        organizationId: orgId,
+        role: 'member',
+        createdAt: now,
+      }),
+    );
+  }
+
+  // Add project membership insert
+  insertOperations.push(
+    db.insert(projectMembers).values({
+      id: crypto.randomUUID(),
+      projectId,
+      userId: userToAdd.id,
+      role,
+      joinedAt: now,
+    }),
+  );
+
+  // Execute all inserts atomically - both succeed or both fail
+  await db.batch(insertOperations);
 
   // Get project name for notification
   const project = await db
@@ -113,32 +131,4 @@ export async function addMember(env, actor, { orgId, projectId, userToAdd, role 
       joinedAt: now,
     },
   };
-}
-
-/**
- * Ensure user is a member of the organization, adding them if not
- */
-async function ensureOrgMembership(db, orgId, userId, role = 'member') {
-  const existingMembership = await db
-    .select({ id: member.id })
-    .from(member)
-    .where(and(eq(member.organizationId, orgId), eq(member.userId, userId)))
-    .get();
-
-  if (existingMembership) {
-    return existingMembership;
-  }
-
-  const memberId = crypto.randomUUID();
-  const now = new Date();
-
-  await db.insert(member).values({
-    id: memberId,
-    userId,
-    organizationId: orgId,
-    role,
-    createdAt: now,
-  });
-
-  return { id: memberId, role };
 }

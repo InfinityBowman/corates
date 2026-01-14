@@ -14,36 +14,16 @@
 
 import { createDb } from '@/db/client.js';
 import { projectMembers } from '@/db/schema.js';
-import { eq, and, count } from 'drizzle-orm';
-import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
+import { eq, and } from 'drizzle-orm';
 import { syncMemberToDO } from '@/commands/lib/doSync.js';
 import { notifyUser, NotificationTypes } from '@/commands/lib/notifications.js';
+import { requireSafeRoleChange } from '@/policies';
 
 export async function updateMemberRole(env, actor, { orgId, projectId, userId, role }) {
   const db = createDb(env.DB);
 
-  // Prevent removing the last owner
-  if (role !== 'owner') {
-    const ownerCountResult = await db
-      .select({ count: count() })
-      .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.role, 'owner')))
-      .get();
-
-    const targetMember = await db
-      .select({ role: projectMembers.role })
-      .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId)))
-      .get();
-
-    if (targetMember?.role === 'owner' && ownerCountResult?.count <= 1) {
-      throw createDomainError(
-        PROJECT_ERRORS.LAST_OWNER,
-        { projectId },
-        'Assign another owner first',
-      );
-    }
-  }
+  // Prevent demoting the last owner
+  await requireSafeRoleChange(db, projectId, userId, role);
 
   await db
     .update(projectMembers)

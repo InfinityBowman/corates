@@ -12,6 +12,7 @@
 import { createDb } from '@/db/client.js';
 import { projects, projectMembers } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
+import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { disconnectAllFromProject, cleanupProjectStorage } from '@/commands/lib/doSync.js';
 import { notifyUsers, NotificationTypes } from '@/commands/lib/notifications.js';
 
@@ -44,7 +45,15 @@ export async function deleteProject(env, actor, { projectId }) {
     console.error('Failed to clean up R2 files for project:', projectId, err);
   }
 
-  await db.delete(projects).where(eq(projects.id, projectId));
+  try {
+    await db.delete(projects).where(eq(projects.id, projectId));
+  } catch (err) {
+    throw createDomainError(
+      SYSTEM_ERRORS.DB_ERROR,
+      { operation: 'delete_project', projectId, originalError: err.message },
+      'Failed to delete project',
+    );
+  }
 
   // Send notifications to all members (except the one who deleted)
   const userIds = members.map(m => m.userId);

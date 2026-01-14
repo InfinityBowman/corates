@@ -51,11 +51,8 @@ This is a pnpm monorepo with the following packages:
 4. **Start development servers:**
 
    ```sh
-   # Terminal 1: Start the frontend
-   pnpm dev:front
-
-   # Terminal 2: Start the Cloudflare Workers backend
-   pnpm dev:workers
+   # Run the dev server
+   turbo dev
    ```
 
 5. **Access the application:**
