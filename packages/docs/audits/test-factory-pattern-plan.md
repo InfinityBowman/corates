@@ -325,7 +325,7 @@ export async function buildOrg(options = {}) {
   const ts = nowSec();
 
   // Create or use provided owner
-  const owner = options.owner || await buildUser();
+  const owner = options.owner || (await buildUser());
 
   // Create organization
   const orgId = options.org?.id || generateId('org');
@@ -374,7 +374,7 @@ export async function buildOrgMember(options) {
   const { orgId, role = 'member' } = options;
   const ts = nowSec();
 
-  const user = options.user || await buildUser();
+  const user = options.user || (await buildUser());
 
   const membershipData = {
     id: generateId('om'),
@@ -462,7 +462,7 @@ export async function buildProject(options = {}) {
   let org, owner;
   if (options.org) {
     org = options.org;
-    owner = options.owner || await buildUser();
+    owner = options.owner || (await buildUser());
     // Ensure owner is org member if not already
     if (options.owner && !options.skipOrgMembership) {
       await buildOrgMember({ orgId: org.id, user: owner, role: 'owner' });
@@ -523,7 +523,7 @@ export async function buildProjectMember(options) {
   const { projectId, orgId, role = 'member' } = options;
   const ts = nowSec();
 
-  const user = options.user || await buildUser();
+  const user = options.user || (await buildUser());
 
   // Ensure user is org member
   if (orgId && !options.skipOrgMembership) {
@@ -868,34 +868,16 @@ export async function buildFreeOrg(options = {}) {
  */
 
 // Utilities
-export {
-  generateId,
-  nowSec,
-  nowDate,
-  resetCounter,
-} from './utils.js';
+export { generateId, nowSec, nowDate, resetCounter } from './utils.js';
 
 // User factories
-export {
-  buildUser,
-  buildAdminUser,
-  buildBannedUser,
-} from './user.js';
+export { buildUser, buildAdminUser, buildBannedUser } from './user.js';
 
 // Organization factories
-export {
-  buildOrg,
-  buildOrgMember,
-  buildOrgWithMembers,
-} from './org.js';
+export { buildOrg, buildOrgMember, buildOrgWithMembers } from './org.js';
 
 // Project factories
-export {
-  buildProject,
-  buildProjectWithOwner,
-  buildProjectMember,
-  buildProjectWithMembers,
-} from './project.js';
+export { buildProject, buildProjectWithOwner, buildProjectMember, buildProjectWithMembers } from './project.js';
 
 // Subscription factories
 export {
@@ -1023,40 +1005,50 @@ it('should allow owner to remove member', async () => {
 ## Implementation Order
 
 ### Step 1: Create factory utilities
+
 - Create `factories/utils.js`
 - Write unit tests for utilities
 
 ### Step 2: Create user factory
+
 - Create `factories/user.js`
 - Test with existing test file
 
 ### Step 3: Create org factory
+
 - Create `factories/org.js`
 - Depends on user factory
 
 ### Step 4: Create project factory
+
 - Create `factories/project.js`
 - Depends on org factory
 
 ### Step 5: Create subscription factory
+
 - Create `factories/subscription.js`
 
 ### Step 6: Create scenario factories
+
 - Create `factories/scenarios.js`
 - Combines other factories
 
 ### Step 7: Create index and exports
+
 - Create `factories/index.js`
 
 ### Step 8: Migrate one test file (pilot)
+
 - Convert `routes/__tests__/members.test.js`
 - Verify no test regressions
 
 ### Step 9: Migrate remaining test files
+
 - Convert other test files incrementally
 - Keep seed functions for edge cases
 
 ### Step 10: Update setup.js
+
 - Add `resetCounter()` to `beforeEach`
 
 ## Setup Integration
@@ -1090,22 +1082,18 @@ import {
 
 // After
 import { resetTestDatabase, json } from '@/__tests__/helpers.js';
-import {
-  buildProject,
-  buildProjectWithMembers,
-  buildMemberRemovalScenario,
-} from '@/__tests__/factories';
+import { buildProject, buildProjectWithMembers, buildMemberRemovalScenario } from '@/__tests__/factories';
 ```
 
 ## Success Metrics
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Lines per test setup | 30-50 | 3-5 |
-| Entity creation calls | 5-8 | 1 |
-| Hardcoded IDs | Many | None |
-| Timestamp handling | Manual | Automatic |
-| Dependency ordering | Manual | Automatic |
+| Metric                | Before | After     |
+| --------------------- | ------ | --------- |
+| Lines per test setup  | 30-50  | 3-5       |
+| Entity creation calls | 5-8    | 1         |
+| Hardcoded IDs         | Many   | None      |
+| Timestamp handling    | Manual | Automatic |
+| Dependency ordering   | Manual | Automatic |
 
 ## Benefits Summary
 

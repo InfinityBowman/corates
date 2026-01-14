@@ -15,6 +15,7 @@ Extract existing test patterns, conventions, and testing infrastructure. Identif
 
 **2. Test Strategy Design**
 Based on patterns found, design the complete test strategy. Consider:
+
 - Unit vs integration test balance
 - What to mock vs what to test with real implementations
 - Test data and fixture approaches

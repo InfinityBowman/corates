@@ -13,12 +13,14 @@ Use this framework when analyzing a codebase for local-first architecture qualit
 ### 1. Offline Data Storage
 
 **What to check:**
+
 - Local persistence mechanism (IndexedDB, SQLite, localStorage)
 - Data schema and structure for offline use
 - Storage capacity management
 - Data encryption at rest
 
 **Storage options to identify:**
+
 - IndexedDB: Complex data, large datasets
 - localStorage: Simple key-value, small data
 - SQLite (via libraries): Relational data
@@ -26,6 +28,7 @@ Use this framework when analyzing a codebase for local-first architecture qualit
 - Cache API: Request/response caching
 
 **Warning signs:**
+
 - Over-reliance on localStorage for complex data
 - No storage quota management
 - Missing data migration strategy
@@ -34,12 +37,14 @@ Use this framework when analyzing a codebase for local-first architecture qualit
 ### 2. Sync Architecture
 
 **What to check:**
+
 - Sync protocol and mechanism
 - Sync direction (one-way, two-way, multi-master)
 - Sync granularity (document, field, operation)
 - Sync frequency and triggers
 
 **Common patterns:**
+
 - **Last-write-wins**: Simple but can lose data
 - **Operational transforms**: Real-time collaboration
 - **CRDTs**: Conflict-free by design
@@ -47,6 +52,7 @@ Use this framework when analyzing a codebase for local-first architecture qualit
 - **Delta sync**: Only changed data
 
 **What to look for:**
+
 ```javascript
 // Sync trigger patterns
 - On reconnect
@@ -59,12 +65,14 @@ Use this framework when analyzing a codebase for local-first architecture qualit
 ### 3. Conflict Resolution
 
 **What to check:**
+
 - Conflict detection mechanism
 - Resolution strategy (automatic vs manual)
 - User notification of conflicts
 - Conflict history/audit trail
 
 **Resolution strategies:**
+
 - **Automatic merge**: Field-level, non-conflicting changes merge
 - **Last-write-wins**: Timestamp-based, may lose data
 - **First-write-wins**: Preserves original, may reject valid changes
@@ -73,6 +81,7 @@ Use this framework when analyzing a codebase for local-first architecture qualit
 - **CRDT-based**: Mathematically conflict-free
 
 **Warning signs:**
+
 - No conflict detection
 - Silent data loss on conflict
 - No way to recover from bad merge
@@ -81,12 +90,14 @@ Use this framework when analyzing a codebase for local-first architecture qualit
 ### 4. Optimistic Updates
 
 **What to check:**
+
 - UI updates before server confirmation
 - Rollback mechanism on failure
 - Pending state indication to users
 - Queue management for offline changes
 
 **Good patterns:**
+
 ```javascript
 // Optimistic update with rollback
 async function updateItem(item) {
@@ -103,6 +114,7 @@ async function updateItem(item) {
 ```
 
 **Warning signs:**
+
 - No rollback on failure
 - User not informed of pending state
 - Lost updates when offline
@@ -111,12 +123,14 @@ async function updateItem(item) {
 ### 5. Network State Management
 
 **What to check:**
+
 - Online/offline detection
 - Connection quality awareness
 - Graceful degradation
 - Reconnection handling
 
 **What to look for:**
+
 - `navigator.onLine` usage
 - Network event listeners
 - Connection quality indicators
@@ -125,6 +139,7 @@ async function updateItem(item) {
 ### 6. Data Versioning and Migrations
 
 **What to check:**
+
 - Schema version tracking
 - Migration strategy for local data
 - Backwards compatibility
@@ -133,6 +148,7 @@ async function updateItem(item) {
 ### 7. Sync Queue and Retry
 
 **What to check:**
+
 - Offline operation queue
 - Retry logic with backoff
 - Queue persistence across sessions
@@ -140,6 +156,7 @@ async function updateItem(item) {
 - Idempotency of queued operations
 
 **Good patterns:**
+
 ```javascript
 // Persistent queue with retry
 const syncQueue = {
@@ -161,19 +178,21 @@ const syncQueue = {
         if (!isRetryable(e)) this.markFailed(op.id);
       }
     }
-  }
+  },
 };
 ```
 
 ### 8. Real-Time Collaboration (if applicable)
 
 **What to check:**
+
 - Presence awareness
 - Cursor/selection sharing
 - Live updates propagation
 - Conflict handling during collaboration
 
 **Technologies to identify:**
+
 - WebSocket connections
 - Yjs, Automerge, or similar CRDTs
 - Operational transformation libraries
@@ -185,41 +204,49 @@ const syncQueue = {
 # Local-First Analysis Report
 
 ## Summary
+
 [Overall local-first maturity assessment]
 
 ## Capabilities Assessment
 
-| Capability | Status | Notes |
-|------------|--------|-------|
-| Offline Storage | Yes/Partial/No | [Details] |
-| Offline Mutations | Yes/Partial/No | [Details] |
-| Sync Mechanism | [Type] | [Details] |
-| Conflict Resolution | [Strategy] | [Details] |
-| Optimistic Updates | Yes/Partial/No | [Details] |
+| Capability          | Status         | Notes     |
+| ------------------- | -------------- | --------- |
+| Offline Storage     | Yes/Partial/No | [Details] |
+| Offline Mutations   | Yes/Partial/No | [Details] |
+| Sync Mechanism      | [Type]         | [Details] |
+| Conflict Resolution | [Strategy]     | [Details] |
+| Optimistic Updates  | Yes/Partial/No | [Details] |
 
 ## Architecture Overview
+
 [How data flows between local and remote]
 
 ## Strengths
+
 [Good local-first patterns found]
 
 ## Issues Found
 
 ### Critical
+
 [Issues causing data loss or corruption]
 
 ### Improvements Needed
+
 [Gaps in offline support]
 
 ## Recommendations
 
 ### Essential
+
 [Must-have improvements for reliable offline]
 
 ### Enhancements
+
 [Nice-to-have improvements]
 
 ## Sync Flow Diagram
+
 [Visual representation of sync architecture]
 ```
 

@@ -16,6 +16,7 @@ Consolidate scattered authorization logic into a centralized policy system. This
 ### Problems Identified
 
 1. **Inline authorization checks scattered across handlers**
+
    ```javascript
    // Duplicated in members.js, orgs/members.js
    const isOwner = c.get('isOwner');
@@ -26,6 +27,7 @@ Consolidate scattered authorization logic into a centralized policy system. This
    ```
 
 2. **Business rules mixed with authorization**
+
    ```javascript
    // "Last owner" check repeated in 4+ places
    if (targetMember?.role === 'owner' && ownerCountResult?.count <= 1) {
@@ -34,6 +36,7 @@ Consolidate scattered authorization logic into a centralized policy system. This
    ```
 
 3. **Self-removal logic duplicated**
+
    ```javascript
    // In both members.js and orgs/members.js
    const isSelfRemoval = memberId === authUser.id;
@@ -46,23 +49,23 @@ Consolidate scattered authorization logic into a centralized policy system. This
 
 ### Authorization Checks Inventory
 
-| Resource | Action | Current Location | Check Logic |
-|----------|--------|------------------|-------------|
-| Project | create | orgs/projects.js:360 | Org member + entitlement + quota |
-| Project | read | orgs/projects.js:482 | Project member |
-| Project | update | orgs/projects.js:528 | Project member (any role) |
-| Project | delete | orgs/projects.js:577 | Project owner |
-| Project Member | list | members.js:307 | Project member |
-| Project Member | add | members.js:339 | Project owner |
-| Project Member | update role | members.js:667 | Project owner + not last owner |
-| Project Member | remove | members.js:733 | Project owner OR self |
-| Org | read | orgs/index.js:589 | Org member |
-| Org | update | orgs/index.js:633 | Org admin |
-| Org | delete | orgs/index.js:678 | Org owner |
-| Org Member | list | orgs/index.js:709 | Org member |
-| Org Member | add | orgs/index.js:736 | Org admin |
-| Org Member | update role | orgs/index.js:796 | Org admin + not last owner |
-| Org Member | remove | orgs/index.js:856 | Org admin OR self |
+| Resource       | Action      | Current Location     | Check Logic                      |
+| -------------- | ----------- | -------------------- | -------------------------------- |
+| Project        | create      | orgs/projects.js:360 | Org member + entitlement + quota |
+| Project        | read        | orgs/projects.js:482 | Project member                   |
+| Project        | update      | orgs/projects.js:528 | Project member (any role)        |
+| Project        | delete      | orgs/projects.js:577 | Project owner                    |
+| Project Member | list        | members.js:307       | Project member                   |
+| Project Member | add         | members.js:339       | Project owner                    |
+| Project Member | update role | members.js:667       | Project owner + not last owner   |
+| Project Member | remove      | members.js:733       | Project owner OR self            |
+| Org            | read        | orgs/index.js:589    | Org member                       |
+| Org            | update      | orgs/index.js:633    | Org admin                        |
+| Org            | delete      | orgs/index.js:678    | Org owner                        |
+| Org Member     | list        | orgs/index.js:709    | Org member                       |
+| Org Member     | add         | orgs/index.js:736    | Org admin                        |
+| Org Member     | update role | orgs/index.js:796    | Org admin + not last owner       |
+| Org Member     | remove      | orgs/index.js:856    | Org admin OR self                |
 
 ## Target Architecture
 
@@ -224,10 +227,7 @@ export async function getProjectMembership(db, userId, projectId) {
       joinedAt: projectMembers.joinedAt,
     })
     .from(projectMembers)
-    .where(and(
-      eq(projectMembers.projectId, projectId),
-      eq(projectMembers.userId, userId)
-    ))
+    .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId)))
     .get();
 
   return membership || null;
@@ -300,10 +300,7 @@ export async function canChangeRole(db, projectId, targetUserId, newRole) {
   const [result] = await db
     .select({ count: count() })
     .from(projectMembers)
-    .where(and(
-      eq(projectMembers.projectId, projectId),
-      eq(projectMembers.role, 'owner')
-    ));
+    .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.role, 'owner')));
 
   return (result?.count || 0) > 1;
 }
@@ -323,10 +320,7 @@ export async function canRemoveWithoutOrphaning(db, projectId, targetUserId) {
   const [result] = await db
     .select({ count: count() })
     .from(projectMembers)
-    .where(and(
-      eq(projectMembers.projectId, projectId),
-      eq(projectMembers.role, 'owner')
-    ));
+    .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.role, 'owner')));
 
   return (result?.count || 0) > 1;
 }
@@ -339,7 +333,7 @@ export async function canRemoveWithoutOrphaning(db, projectId, targetUserId) {
  * Require user can read project, throw if not
  */
 export async function requireProjectRead(db, userId, projectId) {
-  if (!await canReadProject(db, userId, projectId)) {
+  if (!(await canReadProject(db, userId, projectId))) {
     throw createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId });
   }
 }
@@ -348,7 +342,7 @@ export async function requireProjectRead(db, userId, projectId) {
  * Require user can edit project, throw if not
  */
 export async function requireProjectEdit(db, userId, projectId) {
-  if (!await canEditProject(db, userId, projectId)) {
+  if (!(await canEditProject(db, userId, projectId))) {
     throw createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId });
   }
 }
@@ -367,7 +361,7 @@ export async function requireProjectDelete(db, userId, projectId) {
     throw createDomainError(
       AUTH_ERRORS.FORBIDDEN,
       { reason: 'owner_required', action: 'delete_project' },
-      'Only project owners can delete projects'
+      'Only project owners can delete projects',
     );
   }
 }
@@ -386,7 +380,7 @@ export async function requireMemberManagement(db, userId, projectId) {
     throw createDomainError(
       AUTH_ERRORS.FORBIDDEN,
       { reason: 'owner_required', action: 'manage_members' },
-      'Only project owners can manage members'
+      'Only project owners can manage members',
     );
   }
 }
@@ -408,7 +402,7 @@ export async function requireMemberRemoval(db, actorId, projectId, targetUserId)
     throw createDomainError(
       AUTH_ERRORS.FORBIDDEN,
       { reason: 'owner_or_self_required', action: 'remove_member' },
-      'Only project owners can remove other members'
+      'Only project owners can remove other members',
     );
   }
 }
@@ -417,11 +411,11 @@ export async function requireMemberRemoval(db, actorId, projectId, targetUserId)
  * Require role change won't orphan project
  */
 export async function requireSafeRoleChange(db, projectId, targetUserId, newRole) {
-  if (!await canChangeRole(db, projectId, targetUserId, newRole)) {
+  if (!(await canChangeRole(db, projectId, targetUserId, newRole))) {
     throw createDomainError(
       PROJECT_ERRORS.LAST_OWNER,
       { projectId },
-      'Cannot demote the last owner. Assign another owner first.'
+      'Cannot demote the last owner. Assign another owner first.',
     );
   }
 }
@@ -430,11 +424,11 @@ export async function requireSafeRoleChange(db, projectId, targetUserId, newRole
  * Require removal won't orphan project
  */
 export async function requireSafeRemoval(db, projectId, targetUserId) {
-  if (!await canRemoveWithoutOrphaning(db, projectId, targetUserId)) {
+  if (!(await canRemoveWithoutOrphaning(db, projectId, targetUserId))) {
     throw createDomainError(
       PROJECT_ERRORS.LAST_OWNER,
       { projectId },
-      'Cannot remove the last owner. Assign another owner first or delete the project.'
+      'Cannot remove the last owner. Assign another owner first or delete the project.',
     );
   }
 }
@@ -472,10 +466,7 @@ export async function getOrgMembership(db, userId, orgId) {
       createdAt: member.createdAt,
     })
     .from(member)
-    .where(and(
-      eq(member.organizationId, orgId),
-      eq(member.userId, userId)
-    ))
+    .where(and(eq(member.organizationId, orgId), eq(member.userId, userId)))
     .get();
 
   return membership || null;
@@ -547,10 +538,7 @@ export async function canChangeOrgRole(db, orgId, targetUserId, newRole) {
   const [result] = await db
     .select({ count: count() })
     .from(member)
-    .where(and(
-      eq(member.organizationId, orgId),
-      eq(member.role, 'owner')
-    ));
+    .where(and(eq(member.organizationId, orgId), eq(member.role, 'owner')));
 
   return (result?.count || 0) > 1;
 }
@@ -566,17 +554,14 @@ export async function requireOrgAccess(db, userId, orgId, minRole = 'member') {
   const membership = await getOrgMembership(db, userId, orgId);
 
   if (!membership) {
-    throw createDomainError(
-      AUTH_ERRORS.FORBIDDEN,
-      { reason: 'not_org_member', orgId }
-    );
+    throw createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'not_org_member', orgId });
   }
 
   if (!hasOrgRole(membership.role, minRole)) {
     throw createDomainError(
       AUTH_ERRORS.FORBIDDEN,
       { reason: 'insufficient_role', required: minRole, actual: membership.role },
-      `This action requires ${minRole} role or higher`
+      `This action requires ${minRole} role or higher`,
     );
   }
 
@@ -614,7 +599,7 @@ export async function requireOrgMemberRemoval(db, actorId, orgId, targetUserId) 
     throw createDomainError(
       AUTH_ERRORS.FORBIDDEN,
       { reason: 'admin_or_self_required', action: 'remove_member' },
-      'Only admins can remove other members'
+      'Only admins can remove other members',
     );
   }
 }
@@ -623,11 +608,11 @@ export async function requireOrgMemberRemoval(db, actorId, orgId, targetUserId) 
  * Require safe role change in org
  */
 export async function requireSafeOrgRoleChange(db, orgId, targetUserId, newRole) {
-  if (!await canChangeOrgRole(db, orgId, targetUserId, newRole)) {
+  if (!(await canChangeOrgRole(db, orgId, targetUserId, newRole))) {
     throw createDomainError(
       AUTH_ERRORS.FORBIDDEN,
       { reason: 'last_owner', orgId },
-      'Cannot demote the last owner. Assign another owner first.'
+      'Cannot demote the last owner. Assign another owner first.',
     );
   }
 }
@@ -724,6 +709,7 @@ export {
 #### 5.1 Refactor Project Member Routes
 
 **Before** (members.js:733-785):
+
 ```javascript
 memberRoutes.openapi(removeMemberRoute, async c => {
   const { user: authUser } = getAuth(c);
@@ -766,12 +752,9 @@ memberRoutes.openapi(removeMemberRoute, async c => {
 ```
 
 **After**:
+
 ```javascript
-import {
-  requireMemberRemoval,
-  requireSafeRemoval,
-  getProjectMembership
-} from '@/policies';
+import { requireMemberRemoval, requireSafeRemoval, getProjectMembership } from '@/policies';
 
 memberRoutes.openapi(removeMemberRoute, async c => {
   const { user: authUser } = getAuth(c);
@@ -793,7 +776,6 @@ memberRoutes.openapi(removeMemberRoute, async c => {
     }
 
     // ... rest of handler (delete, sync, notify)
-
   } catch (error) {
     if (isDomainError(error)) {
       return c.json(error, error.statusCode);
@@ -806,6 +788,7 @@ memberRoutes.openapi(removeMemberRoute, async c => {
 #### 5.2 Refactor Org Member Routes
 
 **Before** (orgs/index.js:796-830):
+
 ```javascript
 orgRoutes.openapi(updateMemberRoleRoute, async c => {
   // Run membership middleware (admin required)
@@ -820,6 +803,7 @@ orgRoutes.openapi(updateMemberRoleRoute, async c => {
 ```
 
 **After**:
+
 ```javascript
 import { requireOrgMemberManagement, requireSafeOrgRoleChange } from '@/policies';
 
@@ -1001,8 +985,9 @@ describe('Project Policies', () => {
       const user = await buildUser(db);
       const project = await buildProject(db);
 
-      await expect(requireProjectDelete(db, user.id, project.id))
-        .rejects.toMatchObject({ code: 'PROJECT_ACCESS_DENIED' });
+      await expect(requireProjectDelete(db, user.id, project.id)).rejects.toMatchObject({
+        code: 'PROJECT_ACCESS_DENIED',
+      });
     });
 
     test('throws FORBIDDEN for non-owner members', async () => {
@@ -1010,8 +995,7 @@ describe('Project Policies', () => {
       const project = await buildProject(db);
       await buildProjectMember(db, { projectId: project.id, userId: user.id, role: 'member' });
 
-      await expect(requireProjectDelete(db, user.id, project.id))
-        .rejects.toMatchObject({ code: 'AUTH_FORBIDDEN' });
+      await expect(requireProjectDelete(db, user.id, project.id)).rejects.toMatchObject({ code: 'AUTH_FORBIDDEN' });
     });
 
     test('succeeds for owners', async () => {
@@ -1051,37 +1035,45 @@ packages/workers/src/
 ## Implementation Order
 
 ### Step 1: Create role utilities
+
 - Create `policies/lib/roles.js`
 - Write tests for role hierarchy functions
 
 ### Step 2: Create project policies
+
 - Create `policies/projects.js`
 - Write comprehensive tests
 - Do NOT refactor routes yet
 
 ### Step 3: Create org policies
+
 - Create `policies/orgs.js`
 - Write comprehensive tests
 
 ### Step 4: Create index and exports
+
 - Create `policies/index.js`
 - Verify all exports work
 
 ### Step 5: Refactor one route file (pilot)
+
 - Start with `members.js` (has most inline checks)
 - Replace inline auth checks with policy calls
 - Run existing tests to verify no regressions
 
 ### Step 6: Refactor remaining routes
+
 - `orgs/members.js`
 - `orgs/index.js`
 - `orgs/projects.js`
 
 ### Step 7: Update middleware
+
 - Refactor `requireOrg.js` to use policies internally
 - Verify middleware still works correctly
 
 ### Step 8: Documentation
+
 - Add policies section to API development guide
 - Document policy naming conventions
 
@@ -1094,13 +1086,13 @@ packages/workers/src/
 
 ## Benefits Summary
 
-| Before | After |
-|--------|-------|
-| Auth checks in 15+ route files | Auth checks in 3 policy files |
+| Before                           | After                           |
+| -------------------------------- | ------------------------------- |
+| Auth checks in 15+ route files   | Auth checks in 3 policy files   |
 | "Last owner" check duplicated 4x | Single `canChangeRole` function |
-| Must search codebase to audit | Read `policies/` directory |
-| Inline DB queries for auth | Reusable `getProjectMembership` |
-| Inconsistent error messages | Standardized error responses |
+| Must search codebase to audit    | Read `policies/` directory      |
+| Inline DB queries for auth       | Reusable `getProjectMembership` |
+| Inconsistent error messages      | Standardized error responses    |
 
 ## Appendix: Quick Reference
 
@@ -1112,10 +1104,10 @@ import * as policies from '@/policies';
 
 // Or import specific functions
 import {
-  canReadProject,           // Boolean: can user read project?
-  requireProjectEdit,       // Throws: assert user can edit
-  getProjectMembership,     // Data: get user's membership
-  hasProjectRole,           // Utility: compare roles
+  canReadProject, // Boolean: can user read project?
+  requireProjectEdit, // Throws: assert user can edit
+  getProjectMembership, // Data: get user's membership
+  hasProjectRole, // Utility: compare roles
 } from '@/policies';
 
 // Usage patterns
