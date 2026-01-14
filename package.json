@@ -26,8 +26,8 @@
     "typecheck": "pnpm --recursive run typecheck",
     "logs": "pnpm --filter workers run logs",
     "deps:check": "pnpm -r outdated",
-    "deps:update": "pnpm -r up",
-    "deps:update:latest": "pnpm -r up --latest",
+    "deps:up": "pnpm -r up",
+    "deps:up:latest": "pnpm -r up --latest",
     "user:make-admin:prod": "pnpm --filter @corates/workers run user:make-admin:prod",
     "user:make-admin:local": "pnpm --filter @corates/workers run user:make-admin:local",
     "loc": "node ./scripts/loc-report.mjs",
@@ -57,7 +57,7 @@
     "prettier": "^3.7.4",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "turbo": "^2.7.4",
-    "wrangler": "^4.58.0"
+    "wrangler": "^4.59.1"
   },
   "engines": {
     "node": ">=24.0.0",

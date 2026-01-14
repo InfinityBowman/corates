@@ -47,6 +47,7 @@ yarn-error.log*
 packages/workers/.dev.vars
 .dev.vars
 *.vars
+.localflare
 
 # Sensitive configuration files
 config/secrets.json

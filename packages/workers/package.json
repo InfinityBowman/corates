@@ -25,11 +25,12 @@
     "user:create-orcid:local": "node ./scripts/create-test-orcid-user.mjs",
     "stripe:setup": "node ./scripts/setup-stripe-test.mjs",
     "lint": "eslint .",
-    "studio": "drizzle-kit studio"
+    "studio": "drizzle-kit studio",
+    "localflare": "localflare"
   },
   "dependencies": {
     "@better-auth/stripe": "^1.4.12",
-    "@cloudflare/workers-types": "^4.20260113.0",
+    "@cloudflare/workers-types": "^4.20260114.0",
     "@corates/shared": "workspace:*",
     "@hono/zod-openapi": "^1.2.0",
     "better-auth": "^1.4.12",
@@ -47,7 +48,8 @@
     "better-sqlite3": "^12.6.0",
     "dotenv": "^16.6.1",
     "drizzle-kit": "^0.31.8",
+    "localflare": "^0.3.1",
     "vitest": "3.2.0",
-    "wrangler": "^4.58.0"
+    "wrangler": "^4.59.1"
   }
 }
