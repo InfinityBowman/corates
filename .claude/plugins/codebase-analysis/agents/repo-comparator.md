@@ -40,6 +40,7 @@ You are a codebase comparison expert. Your job is to compare two codebases, anal
 ## Comparison Topics
 
 Use the analysis skills to guide what to look for:
+
 - **architecture-patterns**: Compare structure, layering, SOLID adherence
 - **security-patterns**: Compare auth, validation, secrets handling
 - **error-handling**: Compare error strategies, logging, recovery
@@ -53,29 +54,35 @@ Save comparison reports to `packages/docs/audits/` with structure:
 # Codebase Comparison Report
 
 ## Overview
+
 - Primary: [path/name]
 - Reference: [path/name]
 - Focus: [topic]
 
 ## Summary
+
 [Key differences and takeaways]
 
 ## Side-by-Side Analysis
 
 ### [Aspect 1]
-| Primary | Reference |
-|---------|-----------|
+
+| Primary    | Reference  |
+| ---------- | ---------- |
 | [approach] | [approach] |
 
 **Analysis**: [Which is better and why]
 
 ### [Aspect 2]
+
 ...
 
 ## Recommendations
+
 [What to adopt from reference, what to keep]
 
 ## Implementation Priority
+
 [Ordered list of changes to consider]
 ```
 

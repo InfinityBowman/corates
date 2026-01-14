@@ -1,7 +1,7 @@
 ---
 name: analyze
 description: Analyze the current codebase against specific patterns and best practices
-argument-hint: "[topic] - architecture, security, error-handling, local-first"
+argument-hint: '[topic] - architecture, security, error-handling, local-first'
 allowed-tools:
   - Task
   - Read

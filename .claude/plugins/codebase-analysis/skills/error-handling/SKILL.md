@@ -13,12 +13,14 @@ Use this framework when analyzing a codebase for error handling quality. Focus o
 ### 1. Error Capture and Propagation
 
 **What to check:**
+
 - Errors are caught at appropriate boundaries
 - Error context is preserved when re-throwing
 - Async errors are properly handled (try/catch with await, .catch())
 - Promise rejections don't go unhandled
 
 **Patterns to evaluate:**
+
 ```javascript
 // Poor: Swallowing errors
 try {
@@ -53,12 +55,14 @@ try {
 ### 2. Error Types and Classification
 
 **What to check:**
+
 - Custom error types for different failure categories
 - Distinction between operational errors and programmer errors
 - Error codes or types for programmatic handling
 - Consistent error structure across the codebase
 
 **Good patterns:**
+
 - Typed/custom error classes
 - Error codes for API responses
 - Distinction between user errors and system errors
@@ -67,12 +71,14 @@ try {
 ### 3. User-Facing Error Messages
 
 **What to check:**
+
 - User sees helpful, actionable messages
 - Technical details hidden from users
 - Consistent error message format
 - Localization support if needed
 
 **Warning signs:**
+
 - Stack traces shown to users
 - Generic "Something went wrong" everywhere
 - Technical jargon in user messages
@@ -81,12 +87,14 @@ try {
 ### 4. Error Boundaries (Frontend)
 
 **What to check:**
+
 - Component-level error boundaries
 - Graceful degradation when components fail
 - Error boundary placement strategy
 - Recovery mechanisms (retry, refresh)
 
 **Framework-specific patterns:**
+
 - React: ErrorBoundary components
 - SolidJS: ErrorBoundary components
 - Vue: errorCaptured hook
@@ -95,20 +103,20 @@ try {
 ### 5. API Error Responses
 
 **What to check:**
+
 - Consistent error response format
 - Appropriate HTTP status codes
 - Error codes for client handling
 - Helpful error messages for developers
 
 **Standard pattern:**
+
 ```json
 {
   "error": {
     "code": "VALIDATION_ERROR",
     "message": "Invalid input provided",
-    "details": [
-      { "field": "email", "message": "Invalid email format" }
-    ]
+    "details": [{ "field": "email", "message": "Invalid email format" }]
   }
 }
 ```
@@ -116,6 +124,7 @@ try {
 ### 6. Logging and Observability
 
 **What to check:**
+
 - Errors logged with sufficient context
 - Log levels used appropriately
 - Structured logging format
@@ -123,6 +132,7 @@ try {
 - No sensitive data in logs
 
 **Good logging includes:**
+
 - Timestamp
 - Error type/code
 - Stack trace (in logs, not to users)
@@ -132,6 +142,7 @@ try {
 ### 7. Retry and Recovery Patterns
 
 **What to check:**
+
 - Transient failures have retry logic
 - Exponential backoff for retries
 - Circuit breaker for failing services
@@ -141,6 +152,7 @@ try {
 ### 8. Validation Errors
 
 **What to check:**
+
 - Input validation happens early
 - Validation errors are specific and helpful
 - All invalid fields reported together
@@ -152,16 +164,19 @@ try {
 # Error Handling Analysis Report
 
 ## Summary
+
 [Overall assessment of error handling maturity]
 
 ## Coverage Assessment
 
 ### Error Boundaries
+
 - Frontend: [Present/Missing/Partial]
 - API Layer: [Present/Missing/Partial]
 - Background Jobs: [Present/Missing/Partial]
 
 ### Logging
+
 - Structure: [Structured/Unstructured]
 - Context: [Sufficient/Insufficient]
 - Levels: [Appropriate/Inconsistent]
@@ -169,23 +184,29 @@ try {
 ## Issues Found
 
 ### Critical
+
 [Errors that could cause crashes or data loss]
 
 ### Improvements Needed
+
 [Inconsistencies and gaps]
 
 ## Positive Patterns
+
 [Good error handling found]
 
 ## Recommendations
 
 ### Quick Wins
+
 [Easy improvements with high impact]
 
 ### Systematic Improvements
+
 [Larger refactoring suggestions]
 
 ## Error Flow Diagram
+
 [Key error paths through the system]
 ```
 
