@@ -28,11 +28,11 @@ export interface InsertLedgerEntryData {
 }
 
 export interface UpdateLedgerVerifiedFieldsData {
-  stripeEventId: string;
-  type: string;
-  livemode: boolean;
-  apiVersion: string;
-  created: Date;
+  stripeEventId: string | null;
+  type: string | null;
+  livemode: boolean | null;
+  apiVersion: string | null;
+  created: Date | null;
   status: LedgerStatusType;
   httpStatus?: number;
   error?: string | null;

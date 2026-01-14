@@ -13,14 +13,45 @@ import {
   getMagicLinkEmailText,
   getProjectInvitationEmailHtml,
   getProjectInvitationEmailText,
-} from './emailTemplates.js';
+} from './emailTemplates';
+import type { Env } from '../types';
+
+interface SendEmailParams {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}
+
+interface EmailResult {
+  success: boolean;
+  id?: string;
+  error?: string;
+}
+
+export interface EmailService {
+  sendEmail: (params: SendEmailParams) => Promise<EmailResult>;
+  sendEmailVerification: (
+    to: string,
+    verificationUrl: string,
+    userDisplayName?: string,
+  ) => Promise<EmailResult>;
+  sendPasswordReset: (to: string, resetUrl: string, userDisplayName?: string) => Promise<EmailResult>;
+  sendMagicLink: (to: string, magicLinkUrl: string) => Promise<EmailResult>;
+  sendProjectInvitation: (
+    to: string,
+    projectName: string,
+    inviterName: string,
+    invitationUrl: string,
+    role: string,
+  ) => Promise<EmailResult>;
+  isProduction: boolean;
+}
 
 /**
  * Create email service based on environment
- * @param {Object} env - Environment variables
- * @returns {Object} Email service functions
  */
-export function createEmailService(env) {
+export function createEmailService(env: Env): EmailService {
   const isProduction = env.ENVIRONMENT === 'production';
 
   // Initialize Postmark client if API key is available
@@ -29,7 +60,7 @@ export function createEmailService(env) {
   /**
    * Send email using Postmark
    */
-  async function sendEmail({ to, subject, html, text }) {
+  async function sendEmail({ to, subject, html, text }: SendEmailParams): Promise<EmailResult> {
     if (env.SEND_EMAILS_IN_DEV !== 'true' && !isProduction) {
       console.log('[Email] Development environment - email sending is DISABLED');
       return { success: true, id: 'dev-id' };
@@ -57,15 +88,20 @@ export function createEmailService(env) {
 
       return { success: true, id: response.MessageID };
     } catch (err) {
-      console.error('[Email] Exception during send:', err.message, err.stack);
-      return { success: false, error: err.message };
+      const error = err as Error;
+      console.error('[Email] Exception during send:', error.message, error.stack);
+      return { success: false, error: error.message };
     }
   }
 
   /**
    * Send email verification email
    */
-  async function sendEmailVerification(to, verificationUrl, userDisplayName = '') {
+  async function sendEmailVerification(
+    to: string,
+    verificationUrl: string,
+    userDisplayName: string = '',
+  ): Promise<EmailResult> {
     if (env.SEND_EMAILS_IN_DEV !== 'true' && !isProduction) {
       console.log('[Email] Development environment - email sending is DISABLED');
       return { success: true, id: 'dev-id' };
@@ -80,7 +116,11 @@ export function createEmailService(env) {
   /**
    * Send password reset email
    */
-  async function sendPasswordReset(to, resetUrl, userDisplayName = '') {
+  async function sendPasswordReset(
+    to: string,
+    resetUrl: string,
+    userDisplayName: string = '',
+  ): Promise<EmailResult> {
     const subject = 'Reset Your Password - CoRATES';
     const name = userDisplayName || 'there';
     const html = getPasswordResetEmailHtml({ name, subject, resetUrl });
@@ -91,7 +131,7 @@ export function createEmailService(env) {
   /**
    * Send magic link email for passwordless sign-in
    */
-  async function sendMagicLink(to, magicLinkUrl) {
+  async function sendMagicLink(to: string, magicLinkUrl: string): Promise<EmailResult> {
     if (env.SEND_EMAILS_IN_DEV !== 'true' && !isProduction) {
       console.log('[Email] Development environment - email sending is DISABLED');
       console.log('[Email] Magic link URL:', magicLinkUrl);
@@ -106,7 +146,13 @@ export function createEmailService(env) {
   /**
    * Send project invitation email
    */
-  async function sendProjectInvitation(to, projectName, inviterName, invitationUrl, role) {
+  async function sendProjectInvitation(
+    to: string,
+    projectName: string,
+    inviterName: string,
+    invitationUrl: string,
+    role: string,
+  ): Promise<EmailResult> {
     if (env.SEND_EMAILS_IN_DEV !== 'true' && !isProduction) {
       console.log('[Email] Development environment - email sending is DISABLED');
       console.log('[Email] Project invitation URL:', invitationUrl);
@@ -114,7 +160,7 @@ export function createEmailService(env) {
     }
     // Note: Email subjects are plain text, not HTML, so we don't need HTML escaping
     // However, we should still sanitize to prevent issues with email clients
-    const { escapeHtml } = await import('../lib/escapeHtml.js');
+    const { escapeHtml } = await import('../lib/escapeHtml');
     const safeProjectName = escapeHtml(projectName);
     const subject = `You're Invited to "${safeProjectName}" - CoRATES`;
     const html = getProjectInvitationEmailHtml({ projectName, inviterName, invitationUrl, role });

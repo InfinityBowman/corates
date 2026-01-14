@@ -6,15 +6,65 @@ import { stripe } from '@better-auth/stripe';
 import Stripe from 'stripe';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq, and } from 'drizzle-orm';
-import * as schema from '../db/schema.js';
-import { createEmailService } from './email.js';
-import { getAllowedOrigins } from '../config/origins.js';
-import { isAdminUser } from './admin.js';
-import { MAGIC_LINK_EXPIRY_MINUTES } from './emailTemplates.js';
-import { notifyOrgMembers, EventTypes } from '../lib/notify.js';
+import * as schema from '../db/schema';
+import { createEmailService } from './email';
+import { getAllowedOrigins } from '../config/origins';
+import { isAdminUser } from './admin';
+import { MAGIC_LINK_EXPIRY_MINUTES } from './emailTemplates';
+import { notifyOrgMembers, EventTypes } from '../lib/notify';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import type { Env } from '../types';
 
-export function createAuth(env, ctx) {
+interface ExecutionContext {
+  waitUntil: (promise: Promise<unknown>) => void;
+}
+
+interface BetterAuthUser {
+  id: string;
+  email: string;
+  name?: string;
+  displayName?: string;
+  username?: string;
+  role?: string;
+  [key: string]: unknown;
+}
+
+interface BetterAuthSession {
+  id: string;
+  userId: string;
+}
+
+interface NewSessionData {
+  user: BetterAuthUser;
+  session: BetterAuthSession;
+}
+
+interface SubscriptionData {
+  referenceId: string;
+  plan: string;
+  status: string;
+  periodEnd?: Date | number | null;
+  cancelAtPeriodEnd?: boolean | null;
+  cancelAt?: Date | number | null;
+  canceledAt?: Date | number | null;
+}
+
+interface AuthorizeReferenceParams {
+  user: BetterAuthUser;
+  session: BetterAuthSession;
+  referenceId: string;
+  action: string;
+}
+
+interface OrcidProfile {
+  sub: string;
+  name?: string;
+  given_name?: string;
+  family_name?: string;
+  email?: string;
+}
+
+export function createAuth(env: Env, ctx?: ExecutionContext) {
   // Initialize Drizzle with D1
   const db = drizzle(env.DB, { schema });
 
@@ -22,7 +72,7 @@ export function createAuth(env, ctx) {
   const emailService = createEmailService(env);
 
   // Build social providers config if credentials are present
-  const socialProviders = {};
+  const socialProviders: Record<string, unknown> = {};
 
   if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
     socialProviders.google = {
@@ -40,7 +90,8 @@ export function createAuth(env, ctx) {
   }
 
   // Build plugins array
-  const plugins = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const plugins: any[] = [];
 
   // ORCID OAuth provider for researcher authentication (using genericOAuth plugin)
   if (env.ORCID_CLIENT_ID && env.ORCID_CLIENT_SECRET) {
@@ -56,13 +107,14 @@ export function createAuth(env, ctx) {
             userInfoUrl: 'https://orcid.org/oauth/userinfo',
             scopes: ['openid'],
             // Map ORCID profile to user fields
-            getUserInfo: async ({ accessToken }) => {
+            getUserInfo: async (tokens: { accessToken?: string }) => {
+              if (!tokens.accessToken) return null;
               const response = await fetch('https://orcid.org/oauth/userinfo', {
                 headers: {
-                  Authorization: `Bearer ${accessToken}`,
+                  Authorization: `Bearer ${tokens.accessToken}`,
                 },
               });
-              const profile = await response.json();
+              const profile = (await response.json()) as OrcidProfile;
               return {
                 id: profile.sub,
                 name:
@@ -71,7 +123,7 @@ export function createAuth(env, ctx) {
                   profile.sub,
                 email: profile.email || `${profile.sub}@orcid.org`,
                 emailVerified: !!profile.email,
-                image: null,
+                image: undefined,
               };
             },
           },
@@ -87,7 +139,7 @@ export function createAuth(env, ctx) {
   // Magic Link plugin for passwordless authentication
   plugins.push(
     magicLink({
-      sendMagicLink: async ({ email, url }) => {
+      sendMagicLink: async ({ email, url }: { email: string; url: string }) => {
         console.log('[Auth] Queuing magic link email to:', email, 'URL:', url);
         if (ctx && ctx.waitUntil) {
           ctx.waitUntil(
@@ -120,7 +172,7 @@ export function createAuth(env, ctx) {
   // Admin plugin for user management and impersonation
   plugins.push(
     admin({
-      async isAdmin(user) {
+      async isAdmin(user: BetterAuthUser) {
         return isAdminUser(user);
       },
       defaultRole: 'user',
@@ -144,7 +196,7 @@ export function createAuth(env, ctx) {
   // - unlimited_team: $49/month, $490/year
   if (env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET_AUTH) {
     const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-11-17.clover',
+      apiVersion: '2025-12-15.clover',
     });
 
     plugins.push(
@@ -174,7 +226,7 @@ export function createAuth(env, ctx) {
             },
           ],
           // Real-time notifications for subscription changes
-          onSubscriptionComplete: async ({ subscription }) => {
+          onSubscriptionComplete: async ({ subscription }: { subscription: SubscriptionData }) => {
             // Notify all org members when subscription is created/upgraded
             console.log(
               '[Auth] Queuing subscription complete notification for org:',
@@ -198,16 +250,17 @@ export function createAuth(env, ctx) {
                       failed: result.failed,
                     });
                   } catch (err) {
+                    const error = err as Error;
                     console.error('[Auth:waitUntil] Subscription complete notification error:', {
                       orgId: subscription.referenceId,
-                      error: err.message,
+                      error: error.message,
                     });
                   }
                 })(),
               );
             }
           },
-          onSubscriptionUpdate: async ({ subscription }) => {
+          onSubscriptionUpdate: async ({ subscription }: { subscription: SubscriptionData }) => {
             // Notify all org members when subscription changes
             console.log(
               '[Auth] Queuing subscription update notification for org:',
@@ -232,16 +285,17 @@ export function createAuth(env, ctx) {
                       failed: result.failed,
                     });
                   } catch (err) {
+                    const error = err as Error;
                     console.error('[Auth:waitUntil] Subscription update notification error:', {
                       orgId: subscription.referenceId,
-                      error: err.message,
+                      error: error.message,
                     });
                   }
                 })(),
               );
             }
           },
-          onSubscriptionCancel: async ({ subscription }) => {
+          onSubscriptionCancel: async ({ subscription }: { subscription: SubscriptionData }) => {
             // Notify all org members when subscription is canceled
             console.log(
               '[Auth] Queuing subscription cancel notification for org:',
@@ -265,16 +319,22 @@ export function createAuth(env, ctx) {
                       failed: result.failed,
                     });
                   } catch (err) {
+                    const error = err as Error;
                     console.error('[Auth:waitUntil] Subscription cancel notification error:', {
                       orgId: subscription.referenceId,
-                      error: err.message,
+                      error: error.message,
                     });
                   }
                 })(),
               );
             }
           },
-          authorizeReference: async ({ user, session: _session, referenceId, action }) => {
+          authorizeReference: async ({
+            user,
+            session: _session,
+            referenceId,
+            action,
+          }: AuthorizeReferenceParams) => {
             // Check if user is org owner for subscription management actions
             if (
               action === 'upgrade-subscription' ||
@@ -349,7 +409,7 @@ export function createAuth(env, ctx) {
       requireEmailVerification: true,
       minPasswordLength: 8,
       // Password reset - sendResetPassword is required for requestPasswordReset to work
-      sendResetPassword: async ({ user, url }) => {
+      sendResetPassword: async ({ user, url }: { user: BetterAuthUser; url: string }) => {
         console.log('[Auth] Queuing reset email to:', user.email, 'URL:', url);
         if (ctx && ctx.waitUntil) {
           ctx.waitUntil(
@@ -382,7 +442,7 @@ export function createAuth(env, ctx) {
       autoSignInAfterVerification: true,
       // CRITICAL: Wrap the email sending in a function passed to waitUntil
       // This ensures NO email work happens during the request - it all runs after response
-      sendVerificationEmail: async ({ user, url }) => {
+      sendVerificationEmail: async ({ user, url }: { user: BetterAuthUser; url: string }) => {
         console.log('[Auth] Queuing verification email to:', user.email, 'URL:', url);
         if (ctx && ctx.waitUntil) {
           ctx.waitUntil(
@@ -410,19 +470,6 @@ export function createAuth(env, ctx) {
       cookieCache: {
         enabled: true,
         maxAge: 60 * 5, // 5 minutes
-      },
-    },
-
-    // Cookie security configuration
-    cookies: {
-      sessionToken: {
-        name: 'better-auth.session_token',
-        attributes: {
-          httpOnly: true,
-          secure: env.ENVIRONMENT === 'production',
-          sameSite: 'lax',
-          path: '/',
-        },
       },
     },
 
@@ -464,17 +511,13 @@ export function createAuth(env, ctx) {
     // Use centralized origin configuration
     trustedOrigins: getAllowedOrigins(env),
 
-    advanced: {
-      generateId: () => crypto.randomUUID(),
-    },
-
     secret: getAuthSecret(env),
 
     // Hooks for custom auth behavior
     hooks: {
       // After hook: bootstrap personal org on first successful authentication
-      after: createAuthMiddleware(async ctx => {
-        const newSession = ctx.context.newSession;
+      after: createAuthMiddleware(async (authCtx: { context: { newSession?: NewSessionData } }) => {
+        const newSession = authCtx.context.newSession;
         if (!newSession) return;
 
         const userId = newSession.user.id;
@@ -537,7 +580,7 @@ export function createAuth(env, ctx) {
  * Get AUTH_SECRET with proper validation
  * Throws in production if not configured
  */
-function getAuthSecret(env) {
+function getAuthSecret(env: Env): string {
   if (env.AUTH_SECRET) {
     return env.AUTH_SECRET;
   }
@@ -550,7 +593,10 @@ function getAuthSecret(env) {
 }
 
 // Auth middleware to verify sessions
-export async function verifyAuth(request, env) {
+export async function verifyAuth(
+  request: Request,
+  env: Env,
+): Promise<{ user: BetterAuthUser | null; session: BetterAuthSession | null }> {
   try {
     const auth = createAuth(env);
     const session = await auth.api.getSession({
@@ -561,7 +607,7 @@ export async function verifyAuth(request, env) {
       return { user: null, session: null };
     }
 
-    return { user: session.user, session: session.session };
+    return { user: session.user as BetterAuthUser, session: session.session as BetterAuthSession };
   } catch (error) {
     console.error('Auth verification error:', error);
     return { user: null, session: null };

@@ -4,24 +4,45 @@
  */
 
 import { Hono } from 'hono';
-import { createAuth } from './config.js';
+import { createAuth } from './config';
 import {
   getEmailVerificationSuccessPage,
   getEmailVerificationFailurePage,
   getEmailVerificationErrorPage,
-} from './templates.js';
-import { authRateLimit, sessionRateLimit } from '@/middleware/rateLimit.js';
-import { createLogger, sha256, truncateError } from '@/lib/observability/logger.js';
-import { createDb } from '@/db/client.js';
+} from './templates';
+import { authRateLimit, sessionRateLimit } from '@/middleware/rateLimit';
+import { createLogger, sha256, truncateError } from '@/lib/observability/logger';
+import { createDb } from '@/db/client';
 import {
   insertLedgerEntry,
   updateLedgerWithVerifiedFields,
   updateLedgerStatus,
   getLedgerByPayloadHash,
   LedgerStatus,
-} from '@/db/stripeEventLedger.js';
+} from '@/db/stripeEventLedger';
+import type { Env } from '../types';
 
-const auth = new Hono();
+interface StripeEvent {
+  id?: string;
+  type?: string;
+  livemode?: boolean;
+  api_version?: string;
+  created?: number;
+  data?: {
+    object?: {
+      metadata?: {
+        referenceId?: string;
+        orgId?: string;
+      };
+      customer?: string;
+      subscription?: string;
+      id?: string;
+      mode?: string;
+    };
+  };
+}
+
+const auth = new Hono<{ Bindings: Env }>();
 
 // Apply lenient rate limiting to session endpoints (called frequently)
 auth.use('/get-session', sessionRateLimit);
@@ -123,8 +144,8 @@ auth.post('/stripe/webhook', async c => {
   const db = createDb(c.env.DB);
   const route = '/api/auth/stripe/webhook';
 
-  let rawBody;
-  let ledgerId;
+  let rawBody: string | undefined;
+  let ledgerId: string | undefined;
 
   try {
     // Phase 1: Read request and store trust-minimal fields
@@ -146,14 +167,14 @@ auth.post('/stripe/webhook', async c => {
         route,
         requestId: logger.requestId,
         status: LedgerStatus.IGNORED_UNVERIFIED,
-        error: truncateError(bodyError),
+        error: truncateError(bodyError as Error),
         httpStatus: 400,
       });
 
       logger.stripe('webhook_rejected', {
         outcome: 'ignored_unverified',
         errorCode: 'body_unreadable',
-        error: bodyError,
+        error: bodyError as Error,
         signaturePresent: false,
       });
 
@@ -195,8 +216,8 @@ auth.post('/stripe/webhook', async c => {
       logger.stripe('webhook_dedupe', {
         outcome: 'skipped_duplicate',
         payloadHash,
-        existingLedgerId: existingEntry.id,
-        existingStatus: existingEntry.status,
+        stripeEventId: existingEntry.id,
+        status: existingEntry.status,
       });
 
       return c.json({ received: true, skipped: 'duplicate_payload' }, 200);
@@ -216,14 +237,13 @@ auth.post('/stripe/webhook', async c => {
     logger.stripe('webhook_received', {
       payloadHash,
       signaturePresent: true,
-      ledgerId,
     });
 
     // M5: Reject test events in production environment (pre-verification check)
     // Parse body minimally to check livemode before forwarding to Better Auth
     if (c.env.ENVIRONMENT === 'production') {
       try {
-        const preCheckEvent = JSON.parse(rawBody);
+        const preCheckEvent = JSON.parse(rawBody) as StripeEvent;
         if (preCheckEvent.livemode === false) {
           await updateLedgerWithVerifiedFields(db, ledgerId, {
             stripeEventId: preCheckEvent.id || null,
@@ -239,8 +259,6 @@ auth.post('/stripe/webhook', async c => {
             outcome: 'ignored_test_mode',
             stripeEventId: preCheckEvent.id,
             stripeEventType: preCheckEvent.type,
-            reason: 'test_event_in_production',
-            payloadHash,
           });
 
           return c.json({ received: true, skipped: 'test_event_in_production' }, 200);
@@ -270,18 +288,18 @@ auth.post('/stripe/webhook', async c => {
     // Handle response based on status
     if (httpStatus >= 200 && httpStatus < 300) {
       // Signature verified and processed - parse verified fields from raw body
-      let stripeEventId = null;
-      let eventType = null;
-      let livemode = null;
-      let apiVersion = null;
-      let created = null;
-      let orgId = null;
-      let stripeCustomerId = null;
-      let stripeSubscriptionId = null;
-      let stripeCheckoutSessionId = null;
+      let stripeEventId: string | null = null;
+      let eventType: string | null = null;
+      let livemode: boolean | null = null;
+      let apiVersion: string | null = null;
+      let created: Date | null = null;
+      let orgId: string | null = null;
+      let stripeCustomerId: string | null = null;
+      let stripeSubscriptionId: string | null = null;
+      let stripeCheckoutSessionId: string | null = null;
 
       try {
-        const event = JSON.parse(rawBody);
+        const event = JSON.parse(rawBody) as StripeEvent;
         stripeEventId = event.id || null;
         eventType = event.type || null;
         livemode = event.livemode ?? null;
@@ -324,13 +342,13 @@ auth.post('/stripe/webhook', async c => {
 
       logger.stripe('webhook_processed', {
         outcome: 'processed',
-        stripeEventId,
-        stripeEventType: eventType,
+        stripeEventId: stripeEventId ?? undefined,
+        stripeEventType: eventType ?? undefined,
         stripeMode: livemode ? 'live' : 'test',
-        orgId,
-        stripeCustomerId,
-        stripeSubscriptionId,
-        status: httpStatus,
+        orgId: orgId ?? undefined,
+        stripeCustomerId: stripeCustomerId ?? undefined,
+        stripeSubscriptionId: stripeSubscriptionId ?? undefined,
+        status: String(httpStatus),
       });
     } else if (httpStatus === 401 || httpStatus === 403) {
       // Signature verification failed
@@ -344,14 +362,14 @@ auth.post('/stripe/webhook', async c => {
         outcome: 'ignored_unverified',
         errorCode: 'invalid_signature',
         payloadHash,
-        status: httpStatus,
+        status: String(httpStatus),
       });
     } else {
       // Other error (4xx/5xx) - processing failed after verification
       let errorMessage = `HTTP ${httpStatus}`;
       try {
         const responseBody = await response.clone().text();
-        errorMessage = truncateError(responseBody);
+        errorMessage = truncateError(responseBody) || errorMessage;
       } catch {
         // Ignore response read errors
       }
@@ -366,7 +384,7 @@ auth.post('/stripe/webhook', async c => {
         outcome: 'failed',
         error: errorMessage,
         payloadHash,
-        status: httpStatus,
+        status: String(httpStatus),
       });
     }
 
@@ -374,7 +392,7 @@ auth.post('/stripe/webhook', async c => {
   } catch (error) {
     // Unexpected error
     logger.error('Stripe webhook handler error', {
-      error: truncateError(error),
+      error: truncateError(error as Error),
       ledgerId,
     });
 
@@ -383,7 +401,7 @@ auth.post('/stripe/webhook', async c => {
       try {
         await updateLedgerStatus(db, ledgerId, {
           status: LedgerStatus.FAILED,
-          error: truncateError(error),
+          error: truncateError(error as Error),
           httpStatus: 500,
         });
       } catch {
@@ -420,8 +438,9 @@ auth.all('/*', async c => {
     // Return the response (CORS is handled by global middleware)
     return response;
   } catch (error) {
+    const err = error as Error;
     console.error('Auth route error:', error);
-    return c.json({ error: 'Authentication error', details: error.message }, 500);
+    return c.json({ error: 'Authentication error', details: err.message }, 500);
   }
 });
 

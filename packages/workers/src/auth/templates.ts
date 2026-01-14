@@ -2,7 +2,7 @@
  * HTML templates for authentication pages
  */
 
-export function getEmailVerificationSuccessPage() {
+export function getEmailVerificationSuccessPage(): string {
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -103,7 +103,7 @@ export function getEmailVerificationSuccessPage() {
   `;
 }
 
-export function getEmailVerificationFailurePage() {
+export function getEmailVerificationFailurePage(): string {
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -193,7 +193,7 @@ export function getEmailVerificationFailurePage() {
   `;
 }
 
-export function getEmailVerificationErrorPage() {
+export function getEmailVerificationErrorPage(): string {
   return `
     <!DOCTYPE html>
     <html lang="en">

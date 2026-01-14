@@ -6,10 +6,9 @@
 /**
  * Check if a user is an admin.
  * Role-based only.
- * @param {Record<string, any> | null | undefined} user
- * @returns {boolean}
+ * Accepts any object with a role property.
  */
-export function isAdminUser(user) {
+export function isAdminUser(user: { role?: string | null } | null | undefined): boolean {
   if (!user) return false;
 
   return user.role === 'admin';

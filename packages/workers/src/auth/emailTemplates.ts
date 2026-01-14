@@ -1,8 +1,58 @@
 // Email HTML and text templates for BetterAuth
 
-import { escapeHtml } from '@/lib/escapeHtml.js';
+import { escapeHtml } from '@/lib/escapeHtml';
 
-export function getVerificationEmailHtml({ name, subject, verificationUrl }) {
+interface VerificationEmailParams {
+  name: string;
+  subject: string;
+  verificationUrl: string;
+}
+
+interface VerificationEmailTextParams {
+  name: string;
+  verificationUrl: string;
+}
+
+interface PasswordResetEmailParams {
+  name: string;
+  subject: string;
+  resetUrl: string;
+}
+
+interface PasswordResetEmailTextParams {
+  name: string;
+  resetUrl: string;
+}
+
+interface MagicLinkEmailParams {
+  subject: string;
+  magicLinkUrl: string;
+  expiryMinutes?: number;
+}
+
+interface MagicLinkEmailTextParams {
+  magicLinkUrl: string;
+  expiryMinutes?: number;
+}
+
+interface AccountMergeEmailParams {
+  code: string;
+  expiryMinutes?: number;
+}
+
+interface ProjectInvitationEmailParams {
+  projectName: string;
+  inviterName: string;
+  invitationUrl: string;
+  role: string;
+  expiryDays?: number;
+}
+
+export function getVerificationEmailHtml({
+  name,
+  subject,
+  verificationUrl,
+}: VerificationEmailParams): string {
   return `
     <!DOCTYPE html>
     <html>
@@ -32,7 +82,10 @@ export function getVerificationEmailHtml({ name, subject, verificationUrl }) {
   `;
 }
 
-export function getVerificationEmailText({ name, verificationUrl }) {
+export function getVerificationEmailText({
+  name,
+  verificationUrl,
+}: VerificationEmailTextParams): string {
   return `
     Hi ${name},
 
@@ -49,7 +102,11 @@ export function getVerificationEmailText({ name, verificationUrl }) {
   `;
 }
 
-export function getPasswordResetEmailHtml({ name, subject, resetUrl }) {
+export function getPasswordResetEmailHtml({
+  name,
+  subject,
+  resetUrl,
+}: PasswordResetEmailParams): string {
   return `
     <!DOCTYPE html>
     <html>
@@ -79,7 +136,10 @@ export function getPasswordResetEmailHtml({ name, subject, resetUrl }) {
   `;
 }
 
-export function getPasswordResetEmailText({ name, resetUrl }) {
+export function getPasswordResetEmailText({
+  name,
+  resetUrl,
+}: PasswordResetEmailTextParams): string {
   return `
     Hi ${name},
 
@@ -103,7 +163,7 @@ export function getMagicLinkEmailHtml({
   subject,
   magicLinkUrl,
   expiryMinutes = MAGIC_LINK_EXPIRY_MINUTES,
-}) {
+}: MagicLinkEmailParams): string {
   return `
     <!DOCTYPE html>
     <html>
@@ -133,7 +193,10 @@ export function getMagicLinkEmailHtml({
   `;
 }
 
-export function getMagicLinkEmailText({ magicLinkUrl, expiryMinutes = MAGIC_LINK_EXPIRY_MINUTES }) {
+export function getMagicLinkEmailText({
+  magicLinkUrl,
+  expiryMinutes = MAGIC_LINK_EXPIRY_MINUTES,
+}: MagicLinkEmailTextParams): string {
   return `
     Hi there,
 
@@ -150,7 +213,10 @@ export function getMagicLinkEmailText({ magicLinkUrl, expiryMinutes = MAGIC_LINK
   `;
 }
 
-export function getAccountMergeEmailHtml({ code, expiryMinutes = 15 }) {
+export function getAccountMergeEmailHtml({
+  code,
+  expiryMinutes = 15,
+}: AccountMergeEmailParams): string {
   return `
     <!DOCTYPE html>
     <html>
@@ -178,7 +244,10 @@ export function getAccountMergeEmailHtml({ code, expiryMinutes = 15 }) {
   `;
 }
 
-export function getAccountMergeEmailText({ code, expiryMinutes = 15 }) {
+export function getAccountMergeEmailText({
+  code,
+  expiryMinutes = 15,
+}: AccountMergeEmailParams): string {
   return `
     Hi there,
 
@@ -201,7 +270,7 @@ export function getProjectInvitationEmailHtml({
   invitationUrl,
   role,
   expiryDays = 7,
-}) {
+}: ProjectInvitationEmailParams): string {
   const roleText = role === 'owner' ? 'Owner' : 'Member';
 
   return `
@@ -245,7 +314,7 @@ export function getProjectInvitationEmailText({
   invitationUrl,
   role,
   expiryDays = 7,
-}) {
+}: ProjectInvitationEmailParams): string {
   const roleText = role === 'owner' ? 'Owner' : 'Member';
 
   return `
