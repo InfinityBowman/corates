@@ -218,7 +218,6 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
   });
 });
 
-
 describe('Project Invitation Routes - POST resend/cancel', () => {
   it('should resend existing pending invitation', async () => {
     const { project, org, owner } = await buildProject();
@@ -649,7 +648,9 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
     const projectMembersList = await db
       .select()
       .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, project.id), eq(projectMembers.userId, existingMember.id)))
+      .where(
+        and(eq(projectMembers.projectId, project.id), eq(projectMembers.userId, existingMember.id)),
+      )
       .all();
 
     expect(projectMembersList).toHaveLength(1);
