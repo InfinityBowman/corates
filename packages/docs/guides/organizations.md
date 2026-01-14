@@ -101,22 +101,25 @@ export const projectInvitations = sqliteTable('project_invitations', {
   id: text('id').primaryKey(),
   orgId: text('orgId')
     .notNull()
-    .references(() => organization.id),
+    .references(() => organization.id, { onDelete: 'cascade' }),
   projectId: text('projectId')
     .notNull()
-    .references(() => projects.id),
+    .references(() => projects.id, { onDelete: 'cascade' }),
   email: text('email').notNull(),
   role: text('role').default('member'), // project role to assign
-  orgRole: text('orgRole').default('member'), // org role if user isn't already a member
+  orgRole: text('orgRole').default('member'), // org role if grantOrgMembership is true
+  grantOrgMembership: integer('grantOrgMembership', { mode: 'boolean' }).default(false).notNull(),
   token: text('token').notNull().unique(),
   invitedBy: text('invitedBy')
     .notNull()
-    .references(() => user.id),
+    .references(() => user.id, { onDelete: 'cascade' }),
   expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
   acceptedAt: integer('acceptedAt', { mode: 'timestamp' }),
   createdAt: integer('createdAt', { mode: 'timestamp' }),
 });
 ```
+
+**Note:** Projects are always invite-only. By default, accepting an invitation grants project membership only. The `grantOrgMembership` field can be set to `true` by org admins/owners to also grant organization membership (for governance/billing purposes).
 
 ## Role Hierarchies
 
@@ -379,12 +382,16 @@ buildChecklistPath('my-lab', 'proj-123', 'study-456', 'check-789');
 
 ## Invitation Flow
 
-Project invitations use a **combined flow** that ensures org membership before project membership:
+Project invitations support optional organization membership granting:
 
 ### Creating an Invitation
 
 1. Project owner calls `POST /api/orgs/:orgId/projects/:projectId/invitations`
-2. Server creates invitation with `orgId`, `projectId`, `role` (project), `orgRole` (org)
+2. Server creates invitation with:
+   - `orgId`, `projectId`
+   - `role` (project role to assign)
+   - `orgRole` (org role if `grantOrgMembership` is true)
+   - `grantOrgMembership` (boolean, default false)
 3. Magic link email is sent to invitee
 
 ### Accepting an Invitation
@@ -393,9 +400,10 @@ Project invitations use a **combined flow** that ensures org membership before p
 2. Frontend calls `POST /api/invitations/accept` with token
 3. Server validates:
    - Token exists and hasn't expired
-   - Email matches authenticated user
+   - Email matches authenticated user (case-insensitive, trimmed)
    - Invitation hasn't been accepted
-4. Server ensures org membership (adds if needed with `orgRole`)
+4. If `grantOrgMembership` is true:
+   - Server adds org membership with `orgRole` (if not already a member)
 5. Server adds project membership with `role`
 6. User is redirected to the project
 
@@ -410,12 +418,20 @@ Inviter                    Server                    Invitee
    |                          |   <-- Click link --------|
    |                          |   <-- POST accept -------|
    |                          |                          |
-   |                          |-- Check org membership   |
-   |                          |-- Add org member if needed
+   |                          |-- Validate token         |
+   |                          |-- Check email match      |
+   |                          |-- Add org member (if grantOrgMembership)
    |                          |-- Add project member     |
    |                          |-- Return success ------> |
    |                          |                          |
 ```
+
+### Invitation Types
+
+| grantOrgMembership | Behavior                                                                                                                                                  |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `false` (default)  | Only grants project membership. User can access this project but is not an org member.                                                                    |
+| `true`             | Grants both org membership (with `orgRole`) and project membership. Use for team members who need org-level access (governance, billing, other projects). |
 
 ## Active Organization
 

@@ -4,32 +4,114 @@ This guide covers how to develop API routes in the CoRATES Workers backend, incl
 
 ## Overview
 
-API routes in CoRATES are built with Hono, use Zod for validation, Drizzle ORM for database operations, and follow consistent patterns for authentication, authorization, and error handling.
+API routes in CoRATES are built with **OpenAPIHono** (Hono with OpenAPI/Zod integration), using Zod for both validation and OpenAPI schema generation, Drizzle ORM for database operations, and consistent patterns for authentication, authorization, and error handling.
 
 ## Route Structure
 
-### Basic Route Pattern
+### OpenAPIHono Pattern
+
+All routes now use `OpenAPIHono` with `createRoute` for type-safe request/response schemas:
 
 ```js
-import { Hono } from 'hono';
-import { requireAuth, getAuth } from '../middleware/auth.js';
-import { validateRequest, projectSchemas } from '../config/validation.js';
-import { createDomainError, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import { createDb } from '../db/client.js';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { createDomainError, createValidationError, PROJECT_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import { createDb } from '@/db/client.js';
 
-const routes = new Hono();
+const routes = new OpenAPIHono({
+  // Default validation error handler
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
 
-// Apply middleware
+      let message = firstIssue?.message || 'Validation failed';
+      const isMissing =
+        firstIssue?.received === 'undefined' || message.includes('received undefined') || message.includes('Required');
+
+      if (isMissing) {
+        message = `${fieldName} is required`;
+      }
+
+      const error = createValidationError(String(field), VALIDATION_ERRORS.FIELD_REQUIRED.code, null);
+      error.message = message;
+      return c.json(error, 400);
+    }
+  },
+});
+
+// Apply auth middleware to all routes
 routes.use('*', requireAuth);
 
-// Route handler
-routes.post('/', validateRequest(projectSchemas.create), async c => {
+// Define request/response schemas
+const CreateProjectRequestSchema = z
+  .object({
+    name: z.string().min(1).max(100).openapi({ example: 'My Project' }),
+    description: z.string().max(500).optional().openapi({ example: 'Project description' }),
+  })
+  .openapi('CreateProjectRequest');
+
+const ProjectSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string().nullable(),
+    role: z.string(),
+    createdAt: z.string().or(z.date()),
+  })
+  .openapi('Project');
+
+const ErrorSchema = z
+  .object({
+    code: z.string(),
+    message: z.string(),
+    statusCode: z.number(),
+    details: z.record(z.unknown()).optional(),
+  })
+  .openapi('ProjectError');
+
+// Define route with OpenAPI spec
+const createProjectRoute = createRoute({
+  method: 'post',
+  path: '/',
+  tags: ['Projects'],
+  summary: 'Create project',
+  description: 'Create a new project',
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: CreateProjectRequestSchema,
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    201: {
+      content: { 'application/json': { schema: ProjectSchema } },
+      description: 'Project created',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Validation error',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Database error',
+    },
+  },
+});
+
+// Implement route handler
+routes.openapi(createProjectRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
-  const data = c.get('validatedBody');
+  const data = c.req.valid('json'); // Type-safe validated data
 
   try {
-    // Database operations
     const result = await db.insert(projects).values({
       id: crypto.randomUUID(),
       name: data.name,
@@ -37,9 +119,8 @@ routes.post('/', validateRequest(projectSchemas.create), async c => {
       createdBy: user.id,
     });
 
-    return c.json(result);
+    return c.json(result, 201);
   } catch (error) {
-    // Error handling
     console.error('Error creating project:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'create_project',
@@ -60,19 +141,21 @@ Order matters when applying middleware:
 2. **Organization membership** (`requireOrgMembership`) - Check org access and role
 3. **Project access** (`requireProjectAccess`) - Check project access and role
 4. **Authorization** (`requireEntitlement`, `requireQuota`) - Check subscription permissions
-5. **Validation** (`validateRequest`, `validateQueryParams`) - Validate input
-6. **Route handler** - Business logic
+5. **Route handler** - Business logic (validation handled by OpenAPIHono)
 
 ```js
-routes.post(
+// Note: Middleware applied via routes.use() or in route definition
+routes.use('*', requireAuth);
+
+// For org-scoped routes
+orgProjectRoutes.post(
   '/',
-  requireAuth,
-  requireOrgMembership(), // Check org membership
-  requireProjectAccess('member'), // Check project access with min role
+  requireOrgMembership(),
+  requireProjectAccess('member'),
   requireEntitlement('project.update'),
-  validateRequest(projectSchemas.update),
   async c => {
-    // Handler
+    // Handler - request body already validated by OpenAPIHono
+    const data = c.req.valid('json');
   },
 );
 ```
@@ -128,160 +211,196 @@ projectRoutes.delete('/:projectId', requireOrgMembership(), requireProjectAccess
 ### Org-Scoped Route Example
 
 ```js
-import { Hono } from 'hono';
-import { requireAuth, getAuth } from '../middleware/auth.js';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { requireAuth, getAuth } from '@/middleware/auth.js';
 import {
   requireOrgMembership,
   requireProjectAccess,
   getOrgContext,
   getProjectContext,
-} from '../middleware/requireOrg.js';
-import { validateRequest, projectSchemas } from '../config/validation.js';
-import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { createDb } from '../db/client.js';
+} from '@/middleware/requireOrg.js';
+import { requireEntitlement } from '@/middleware/requireEntitlement.js';
+import { createDomainError, createValidationError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import { createDb } from '@/db/client.js';
 
-const orgProjectRoutes = new Hono();
+const orgProjectRoutes = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const error = createValidationError(String(field), VALIDATION_ERRORS.FIELD_REQUIRED.code, null);
+      return c.json(error, 400);
+    }
+  },
+});
 
 // Auth middleware for all routes
 orgProjectRoutes.use('*', requireAuth);
 
-// Create project in org
-orgProjectRoutes.post(
-  '/',
-  requireOrgMembership(),
-  requireEntitlement('project.create'),
-  validateRequest(projectSchemas.create),
-  async c => {
-    const { user } = getAuth(c);
-    const { orgId } = getOrgContext(c);
-    const db = createDb(c.env.DB);
-    const { name, description } = c.get('validatedBody');
+// Request schema
+const CreateProjectRequestSchema = z
+  .object({
+    name: z.string().min(1).openapi({ example: 'My Project' }),
+    description: z.string().optional(),
+  })
+  .openapi('CreateProjectRequest');
 
-    try {
-      const projectId = crypto.randomUUID();
-      await db.batch([
-        db.insert(projects).values({
-          id: projectId,
-          name,
-          description,
-          orgId, // Project belongs to org
-          createdBy: user.id,
-        }),
-        db.insert(projectMembers).values({
-          id: crypto.randomUUID(),
-          projectId,
-          userId: user.id,
-          role: 'owner',
-        }),
-      ]);
-
-      return c.json({ id: projectId, name, orgId }, 201);
-    } catch (error) {
-      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'create_project',
-        originalError: error.message,
-      });
-      return c.json(dbError, dbError.statusCode);
-    }
+// Route definition
+const createProjectRoute = createRoute({
+  method: 'post',
+  path: '/',
+  tags: ['Projects'],
+  summary: 'Create project in org',
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: { 'application/json': { schema: CreateProjectRequestSchema } },
+      required: true,
+    },
   },
-);
+  responses: {
+    201: {
+      /* ... */
+    },
+    500: {
+      /* ... */
+    },
+  },
+});
+
+// Route implementation with middleware
+orgProjectRoutes.openapi(createProjectRoute, requireOrgMembership(), requireEntitlement('project.create'), async c => {
+  const { user } = getAuth(c);
+  const { orgId } = getOrgContext(c);
+  const db = createDb(c.env.DB);
+  const { name, description } = c.req.valid('json');
+
+  try {
+    const projectId = crypto.randomUUID();
+    await db.batch([
+      db.insert(projects).values({
+        id: projectId,
+        name,
+        description,
+        orgId,
+        createdBy: user.id,
+      }),
+      db.insert(projectMembers).values({
+        id: crypto.randomUUID(),
+        projectId,
+        userId: user.id,
+        role: 'owner',
+      }),
+    ]);
+
+    return c.json({ id: projectId, name, orgId }, 201);
+  } catch (error) {
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'create_project',
+      originalError: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
+  }
+});
 ```
 
 ## Request Validation
 
-### Using validateRequest Middleware
+### OpenAPIHono Validation
 
-**Always use `validateRequest` middleware for request body validation:**
-
-```js
-import { validateRequest, projectSchemas } from '../config/validation.js';
-
-// CORRECT
-routes.post('/', validateRequest(projectSchemas.create), async c => {
-  const data = c.get('validatedBody'); // Already validated
-  // Use validated data
-});
-
-// WRONG - Manual validation
-routes.post('/', async c => {
-  const body = await c.req.json();
-  // Don't manually validate - use middleware
-});
-```
-
-### Adding New Schemas
-
-Add schemas to `src/config/validation.js` and reuse `commonFields`:
+**Request validation is built into OpenAPIHono via Zod schemas.** The `defaultHook` handles validation errors automatically.
 
 ```js
-import { z } from 'zod/v4';
-import { commonFields } from '../config/validation.js';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 
-export const mySchemas = {
-  create: z.object({
-    name: commonFields.nonEmptyString,
-    email: commonFields.email,
-    // custom fields
-    age: z.number().int().positive(),
-  }),
+const routes = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      // Handle validation errors
+      const error = createValidationError(/* ... */);
+      return c.json(error, 400);
+    }
+  },
+});
 
-  update: z.object({
-    name: z.string().min(1).optional(),
-    email: commonFields.email.optional(),
-  }),
-};
+// Define schema with OpenAPI metadata
+const CreateProjectRequestSchema = z
+  .object({
+    name: z.string().min(1).max(100).openapi({ example: 'My Project' }),
+    email: z.string().email().openapi({ example: 'user@example.com' }),
+    age: z.number().int().positive().optional(),
+  })
+  .openapi('CreateProjectRequest');
+
+// Use in route definition
+const createRoute = createRoute({
+  method: 'post',
+  path: '/',
+  request: {
+    body: {
+      content: { 'application/json': { schema: CreateProjectRequestSchema } },
+      required: true,
+    },
+  },
+  responses: {
+    /* ... */
+  },
+});
+
+// Access validated data in handler
+routes.openapi(createRoute, async c => {
+  const data = c.req.valid('json'); // Type-safe validated data
+  // Use data.name, data.email, etc.
+});
 ```
 
 ### Query Parameter Validation
 
-Use `validateQueryParams` for query strings:
+Define query parameters in the route schema:
 
 ```js
-import { validateQueryParams } from '../config/validation.js';
-
-const querySchema = z.object({
-  page: z.coerce.number().int().positive().optional(),
-  limit: z.coerce.number().int().positive().max(100).optional(),
+const listProjectsRoute = createRoute({
+  method: 'get',
+  path: '/',
+  request: {
+    query: z.object({
+      page: z.coerce.number().int().positive().optional().default(1),
+      limit: z.coerce.number().int().positive().max(100).optional().default(20),
+      search: z.string().optional(),
+    }),
+  },
+  responses: {
+    /* ... */
+  },
 });
 
-routes.get('/', validateQueryParams(querySchema), async c => {
-  const { page, limit } = c.get('validatedQuery');
+routes.openapi(listProjectsRoute, async c => {
+  const { page, limit, search } = c.req.valid('query');
   // Use validated query params
 });
 ```
 
-### Validation Error Handling
+### Path Parameter Validation
 
-Validation middleware automatically creates validation errors using the shared error system:
+Define path parameters in the route:
 
-```290:316:packages/workers/src/config/validation.js
-export function validateRequest(schema) {
-  return async (c, next) => {
-    try {
-      const body = await c.req.json();
-      const result = validateBody(schema, body);
+```js
+const getProjectRoute = createRoute({
+  method: 'get',
+  path: '/{projectId}',
+  request: {
+    params: z.object({
+      projectId: z.string().min(1),
+    }),
+  },
+  responses: {
+    /* ... */
+  },
+});
 
-      if (!result.success) {
-        // result.error is already a DomainError from createValidationError/createMultiFieldValidationError
-        return c.json(result.error, result.error.statusCode);
-      }
-
-      // Attach validated data to context
-      c.set('validatedBody', result.data);
-      await next();
-    } catch (error) {
-      console.warn('Body validation error:', error.message);
-      // Invalid JSON - create validation error
-      const invalidJsonError = createValidationError(
-        'body',
-        'VALIDATION_INVALID_INPUT',
-        null,
-        'invalid_json',
-      );
-      return c.json(invalidJsonError, invalidJsonError.statusCode);
-    }
-  };
-}
+routes.openapi(getProjectRoute, async c => {
+  const { projectId } = c.req.valid('param');
+});
 ```
 
 ## Database Operations
@@ -431,47 +550,28 @@ throw new Error('Something went wrong');
 
 Use `requireAuth` to protect routes:
 
-```35:56:packages/workers/src/middleware/auth.js
-export async function requireAuth(c, next) {
-  try {
-    const auth = createAuth(c.env);
-    const session = await auth.api.getSession({
-      headers: c.req.raw.headers,
-    });
+```js
+import { requireAuth, getAuth } from '@/middleware/auth.js';
 
-    if (!session?.user) {
-      const error = createDomainError(AUTH_ERRORS.REQUIRED);
-      return c.json(error, error.statusCode);
-    }
+// In route file
+routes.use('*', requireAuth);
 
-    c.set('user', session.user);
-    c.set('session', session.session);
-
-    await next();
-  } catch (error) {
-    console.error('Auth verification error:', error);
-    const authError = createDomainError(AUTH_ERRORS.REQUIRED);
-    return c.json(authError, authError.statusCode);
-  }
-}
+// Or per-route
+routes.get('/protected', requireAuth, async c => {
+  const { user } = getAuth(c);
+  // User is authenticated
+});
 ```
 
 ### Getting Authenticated User
 
 Use `getAuth` helper after `requireAuth`:
 
-```63:68:packages/workers/src/middleware/auth.js
-export function getAuth(c) {
-  return {
-    user: c.get('user'),
-    session: c.get('session'),
-  };
-}
-```
-
 ```js
-routes.get('/me', requireAuth, async c => {
-  const { user } = getAuth(c);
+import { getAuth } from '@/middleware/auth.js';
+
+routes.get('/me', async c => {
+  const { user, session } = getAuth(c);
   return c.json({ user });
 });
 ```
@@ -480,24 +580,19 @@ routes.get('/me', requireAuth, async c => {
 
 Use `authMiddleware` (not `requireAuth`) for routes that work with or without auth:
 
-```13:29:packages/workers/src/middleware/auth.js
-export async function authMiddleware(c, next) {
-  try {
-    const auth = createAuth(c.env);
-    const session = await auth.api.getSession({
-      headers: c.req.raw.headers,
-    });
+```js
+import { authMiddleware } from '@/middleware/auth.js';
 
-    c.set('user', session?.user || null);
-    c.set('session', session?.session || null);
-  } catch (error) {
-    console.error('Auth middleware error:', error);
-    c.set('user', null);
-    c.set('session', null);
+routes.use('*', authMiddleware);
+
+routes.get('/public', async c => {
+  const { user } = getAuth(c);
+  if (user) {
+    // Authenticated user
+  } else {
+    // Anonymous user
   }
-
-  await next();
-}
+});
 ```
 
 ## Authorization
@@ -539,13 +634,47 @@ routes.post(
 
 ## Route Examples
 
-### GET Route
+### GET Route with OpenAPIHono
 
 ```js
-routes.get('/:id', requireAuth, async c => {
+// Response schema
+const ProjectSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string().nullable(),
+  })
+  .openapi('Project');
+
+// Route definition
+const getProjectRoute = createRoute({
+  method: 'get',
+  path: '/{id}',
+  tags: ['Projects'],
+  summary: 'Get project by ID',
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string().min(1),
+    }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: ProjectSchema } },
+      description: 'Project found',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Project not found',
+    },
+  },
+});
+
+// Handler
+routes.openapi(getProjectRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
-  const projectId = c.req.param('id');
+  const { id: projectId } = c.req.valid('param');
 
   const project = await db.select().from(projects).where(eq(projects.id, projectId)).get();
 
@@ -573,16 +702,42 @@ routes.get('/:id', requireAuth, async c => {
 ### POST Route with Validation
 
 ```js
-routes.post('/', requireAuth, validateRequest(projectSchemas.create), async c => {
+const CreateProjectRequestSchema = z
+  .object({
+    name: z.string().min(1).max(100).openapi({ example: 'My Project' }),
+    description: z.string().max(500).optional(),
+  })
+  .openapi('CreateProjectRequest');
+
+const createProjectRoute = createRoute({
+  method: 'post',
+  path: '/',
+  tags: ['Projects'],
+  summary: 'Create project',
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: { 'application/json': { schema: CreateProjectRequestSchema } },
+      required: true,
+    },
+  },
+  responses: {
+    201: { content: { 'application/json': { schema: ProjectSchema } }, description: 'Created' },
+    400: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Validation error' },
+    500: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Database error' },
+  },
+});
+
+routes.openapi(createProjectRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
-  const data = c.get('validatedBody');
+  const data = c.req.valid('json'); // Validated data
 
   const projectId = crypto.randomUUID();
 
   try {
     // Batch operations for atomicity
-    const batchOps = [
+    await db.batch([
       db.insert(projects).values({
         id: projectId,
         name: data.name,
@@ -595,12 +750,9 @@ routes.post('/', requireAuth, validateRequest(projectSchemas.create), async c =>
         userId: user.id,
         role: 'owner',
       }),
-    ];
-
-    await db.batch(batchOps);
+    ]);
 
     const project = await db.select().from(projects).where(eq(projects.id, projectId)).get();
-
     return c.json(project, 201);
   } catch (error) {
     console.error('Error creating project:', error);
@@ -616,11 +768,37 @@ routes.post('/', requireAuth, validateRequest(projectSchemas.create), async c =>
 ### PATCH Route
 
 ```js
-routes.patch('/:id', requireAuth, validateRequest(projectSchemas.update), async c => {
+const UpdateProjectRequestSchema = z
+  .object({
+    name: z.string().min(1).max(100).optional(),
+    description: z.string().max(500).optional(),
+  })
+  .openapi('UpdateProjectRequest');
+
+const updateProjectRoute = createRoute({
+  method: 'patch',
+  path: '/{id}',
+  tags: ['Projects'],
+  summary: 'Update project',
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: z.object({ id: z.string().min(1) }),
+    body: {
+      content: { 'application/json': { schema: UpdateProjectRequestSchema } },
+      required: true,
+    },
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: ProjectSchema } }, description: 'Updated' },
+    403: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Access denied' },
+  },
+});
+
+routes.openapi(updateProjectRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
-  const projectId = c.req.param('id');
-  const data = c.get('validatedBody');
+  const { id: projectId } = c.req.valid('param');
+  const data = c.req.valid('json');
 
   // Check access and ownership
   const member = await db
@@ -645,7 +823,6 @@ routes.patch('/:id', requireAuth, validateRequest(projectSchemas.update), async 
     .where(eq(projects.id, projectId));
 
   const updated = await db.select().from(projects).where(eq(projects.id, projectId)).get();
-
   return c.json(updated);
 });
 ```
@@ -653,12 +830,34 @@ routes.patch('/:id', requireAuth, validateRequest(projectSchemas.update), async 
 ### DELETE Route
 
 ```js
-routes.delete('/:id', requireAuth, async c => {
+const DeleteSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    deleted: z.string(),
+  })
+  .openapi('DeleteSuccess');
+
+const deleteProjectRoute = createRoute({
+  method: 'delete',
+  path: '/{id}',
+  tags: ['Projects'],
+  summary: 'Delete project',
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: z.object({ id: z.string().min(1) }),
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: DeleteSuccessSchema } }, description: 'Deleted' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Not found' },
+    403: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Access denied' },
+  },
+});
+
+routes.openapi(deleteProjectRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
-  const projectId = c.req.param('id');
+  const { id: projectId } = c.req.valid('param');
 
-  // Check ownership
   const project = await db.select().from(projects).where(eq(projects.id, projectId)).get();
 
   if (!project) {
@@ -671,10 +870,8 @@ routes.delete('/:id', requireAuth, async c => {
     return c.json(error, error.statusCode);
   }
 
-  // Delete (cascade will handle related records)
   await db.delete(projects).where(eq(projects.id, projectId));
-
-  return c.json({ success: true }, 204);
+  return c.json({ success: true, deleted: projectId });
 });
 ```
 
@@ -852,8 +1049,9 @@ Always use `createDomainError` with appropriate error codes from `@corates/share
 
 ### DO
 
-- Use `validateRequest` middleware for all request bodies
-- Use `validateQueryParams` for query parameters
+- Use `OpenAPIHono` with `createRoute` for all routes
+- Define Zod schemas with `.openapi()` for documentation
+- Use `c.req.valid('json')` for validated request bodies
 - Use `db.batch()` for atomic operations
 - Use Drizzle ORM queries (never raw SQL)
 - Use `createDomainError` for all errors
@@ -861,10 +1059,12 @@ Always use `createDomainError` with appropriate error codes from `@corates/share
 - Check access permissions before operations
 - Use try-catch for database operations
 - Return proper HTTP status codes
+- Include OpenAPI tags, summary, and description
 
 ### DON'T
 
-- Don't manually validate requests (use middleware)
+- Don't use plain `Hono` - use `OpenAPIHono` instead
+- Don't use `validateRequest` middleware - use OpenAPIHono schemas
 - Don't use raw SQL queries
 - Don't skip authentication on protected routes
 - Don't throw string literals

@@ -8,7 +8,7 @@ flowchart TB
         UI[UI Components]
         Stores[Stores<br/>projectStore, adminStore]
         YjsClient[Yjs Client]
-        IDB[(IndexedDB<br/>y-indexeddb)]
+        Dexie[(Dexie/y-dexie<br/>Unified IndexedDB)]
     end
 
     subgraph CF["Cloudflare Workers"]
@@ -46,7 +46,7 @@ flowchart TB
 
 - **UI Components**: Ark UI-based accessible components
 - **Stores**: Centralized state management (no prop drilling)
-- **Yjs Client**: CRDT sync with local IndexedDB persistence for project content
+- **Yjs Client**: CRDT sync with Dexie/y-dexie persistence for project content
 - **Notification WebSocket**: Real-time connection to UserSession for user-level notifications (project invites, etc.)
 
 ### Backend (Cloudflare Workers)

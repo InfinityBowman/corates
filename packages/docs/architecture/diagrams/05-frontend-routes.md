@@ -88,7 +88,7 @@ All project routes are scoped under organizations using `orgSlug` in the URL.
 
 ### Local Routes
 
-Routes for local-only checklists (no authentication required, stored in IndexedDB).
+Routes for local-only checklists (no authentication required, stored in Dexie/IndexedDB).
 
 | Route                     | Component          | Purpose                     |
 | ------------------------- | ------------------ | --------------------------- |

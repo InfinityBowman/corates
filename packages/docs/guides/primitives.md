@@ -133,59 +133,72 @@ export function useProjectData(projectId) {
 
 ### useProject - Complex Connection Management
 
-The `useProject` primitive manages Yjs connections, sync, and project operations:
+The `useProject` primitive manages Yjs connections, sync, and project operations using a connection registry pattern and y-dexie for persistence:
 
-```149:160:packages/web/src/primitives/useProject/index.js
+```js
+import { DexieYProvider } from 'y-dexie';
+import { db } from '../db.js';
+
+/**
+ * Global connection registry to prevent multiple connections to the same project.
+ * Each project ID maps to a connection instance with reference counting.
+ */
+const connectionRegistry = new Map();
+
 export function useProject(projectId) {
   const isOnline = useOnlineStatus();
+  const isLocalProject = () => projectId && projectId.startsWith('local-');
 
   // Get or create a shared connection for this project
-  const connection = getOrCreateConnection(projectId);
+  const connectionEntry = getOrCreateConnection(projectId);
 
-  // Initialize connection if not already initialized
-  if (!connection.initialized) {
-    connection.initialized = true;
+  function connect() {
+    const { ydoc } = connectionEntry;
 
-    // Set up IndexedDB persistence
-    connection.indexeddbProvider = new IndexeddbPersistence(
-      `${INDEXEDDB_PREFIX}${projectId}`,
-      connection.ydoc,
-    );
+    // Set up Dexie persistence using y-dexie
+    db.projects.get(projectId).then(async existingProject => {
+      if (!existingProject) {
+        await db.projects.put({ id: projectId, updatedAt: Date.now() });
+      }
+
+      const project = await db.projects.get(projectId);
+      connectionEntry.dexieProvider = DexieYProvider.load(project.ydoc);
+
+      connectionEntry.dexieProvider.whenLoaded.then(() => {
+        // Apply persisted state from Dexie
+        const persistedState = Y.encodeStateAsUpdate(project.ydoc);
+        Y.applyUpdate(ydoc, persistedState);
+      });
+    });
+  }
+}
 ```
 
 This primitive:
 
-- Manages WebSocket connections
-- Handles IndexedDB persistence
+- Uses a connection registry with reference counting
+- Manages WebSocket connections to Durable Objects
+- Handles y-dexie persistence for offline support
 - Coordinates sync between Yjs and the store
-- Provides operations for studies, checklists, PDFs
+- Provides operations for studies, checklists, PDFs, reconciliation
 - Handles cleanup on disconnect
 
 ### useSubscription - Resource-Based Primitive
 
 The `useSubscription` primitive uses `createResource` for async data:
 
-```55:75:packages/web/src/primitives/useSubscription.js
+```js
 export function useSubscription() {
   const { isLoggedIn } = useBetterAuth();
 
   // Only fetch subscription when user is logged in
-  // This prevents errors during signout when component is still mounted
-  const [subscription, { refetch, mutate }] = createResource(
-    () => (isLoggedIn() ? getSubscriptionSafe() : null),
-    {
-      initialValue: DEFAULT_SUBSCRIPTION,
-    },
-  );
+  const [subscription, { refetch, mutate }] = createResource(() => (isLoggedIn() ? getSubscriptionSafe() : null), {
+    initialValue: DEFAULT_SUBSCRIPTION,
+  });
 
-  /**
-   * Current subscription tier
-   */
   const tier = createMemo(() => subscription()?.tier ?? 'free');
-
-  /**
-   * Whether the subscription is active
-   */
+  // ... permission helpers
+}
 ```
 
 This primitive:
@@ -199,15 +212,13 @@ This primitive:
 
 The `useProjectData` primitive provides a lightweight way to read project data:
 
-```22:60:packages/web/src/primitives/useProjectData.js
+```js
 export function useProjectData(projectId, options = {}) {
   const { autoConnect = true } = options;
 
   // If autoConnect is enabled and we don't have a connection, establish one
-  // This ensures the store gets populated
   let projectHook = null;
   if (autoConnect) {
-    // Only create connection if we need one
     const connectionState = () => projectStore.getConnectionState(projectId);
     const needsConnection = () => !connectionState().connected && !connectionState().connecting;
 
@@ -218,25 +229,11 @@ export function useProjectData(projectId, options = {}) {
 
   // Return reactive getters that read from the store
   return {
-    // Data getters (reactive)
     studies: () => projectStore.getStudies(projectId),
     members: () => projectStore.getMembers(projectId),
     meta: () => projectStore.getMeta(projectId),
-
-    // Connection state (reactive)
     connected: () => projectStore.getConnectionState(projectId).connected,
-    connecting: () => projectStore.getConnectionState(projectId).connecting,
-    synced: () => projectStore.getConnectionState(projectId).synced,
-    error: () => projectStore.getConnectionState(projectId).error,
-
-    // Helpers
-    hasData: () => projectStore.hasProject(projectId),
-    getStudy: studyId => projectStore.getStudy(projectId, studyId),
-    getChecklist: (studyId, checklistId) =>
-      projectStore.getChecklist(projectId, studyId, checklistId),
-
-    // If we created a connection, expose disconnect
-    disconnect: projectHook?.disconnect,
+    // ... other helpers
   };
 }
 ```
@@ -251,17 +248,11 @@ This primitive:
 
 Simple primitives can just wrap browser APIs:
 
-```1:30:packages/web/src/primitives/useOnlineStatus.js
+```js
 import { createSignal, onMount, onCleanup } from 'solid-js';
 
-/**
- * Hook to track online/offline status
- * Returns a reactive signal that updates when network status changes
- */
 export function useOnlineStatus() {
-  const [isOnline, setIsOnline] = createSignal(
-    typeof navigator !== 'undefined' ? navigator.onLine : true,
-  );
+  const [isOnline, setIsOnline] = createSignal(typeof navigator !== 'undefined' ? navigator.onLine : true);
 
   onMount(() => {
     const handleOnline = () => setIsOnline(true);
@@ -278,8 +269,6 @@ export function useOnlineStatus() {
 
   return isOnline;
 }
-
-export default useOnlineStatus;
 ```
 
 This primitive:

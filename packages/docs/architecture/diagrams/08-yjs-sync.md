@@ -3,7 +3,7 @@ flowchart TB
     subgraph Client["Client (Local-First)"]
         UI[UI Components]
         YDoc[Y.Doc]
-        IDB[(IndexedDB<br/>y-indexeddb)]
+        Dexie[(Dexie/y-dexie<br/>Unified IndexedDB)]
         Cache[PDF Cache]
     end
 
@@ -13,9 +13,9 @@ flowchart TB
         R2[(R2<br/>PDFs)]
     end
 
-    YDoc <-->|"Local First"| IDB
+    YDoc <-->|"Local First"| Dexie
     YDoc <-->|"WebSocket Sync"| DO
     UI -->|"Read/Write"| YDoc
-    Cache -->|"Cache"| R2
+    Cache -->|"Cache"| Dexie
     DO -->|"Read"| D1
 ```
