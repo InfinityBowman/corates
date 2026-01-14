@@ -33,6 +33,7 @@ export const user = sqliteTable('user', {
   banned: integer('banned', { mode: 'boolean' }).default(false),
   banReason: text('banReason'),
   banExpires: integer('banExpires', { mode: 'timestamp' }),
+  stripeCustomerId: text('stripeCustomerId'), // Better Auth Stripe plugin
 });
 ```
 
@@ -128,7 +129,7 @@ export const projectMembers = sqliteTable('project_members', {
 
 #### Project Invitations
 
-Project invitations include org context for combined membership flow:
+Project invitations include optional org membership granting:
 
 ```js
 export const projectInvitations = sqliteTable('project_invitations', {
@@ -141,7 +142,8 @@ export const projectInvitations = sqliteTable('project_invitations', {
     .references(() => projects.id, { onDelete: 'cascade' }),
   email: text('email').notNull(),
   role: text('role').default('member'), // project role to assign
-  orgRole: text('orgRole').default('member'), // org role if user isn't already a member
+  orgRole: text('orgRole').default('member'), // org role if grantOrgMembership is true
+  grantOrgMembership: integer('grantOrgMembership', { mode: 'boolean' }).default(false).notNull(),
   token: text('token').notNull().unique(),
   invitedBy: text('invitedBy')
     .notNull()
@@ -152,14 +154,122 @@ export const projectInvitations = sqliteTable('project_invitations', {
 });
 ```
 
+**Note:** Projects are always invite-only. By default, accepting an invitation grants project membership only. The `grantOrgMembership` field can be set to `true` by org admins/owners to also grant organization membership (for governance/billing purposes).
+
+#### Subscriptions (Better Auth Stripe Plugin)
+
+Org-level subscriptions managed by Better Auth Stripe plugin:
+
+```js
+export const subscription = sqliteTable('subscription', {
+  id: text('id').primaryKey(),
+  plan: text('plan').notNull(), // Plan name (e.g., 'starter_team', 'team', 'unlimited_team')
+  referenceId: text('referenceId').notNull(), // Org ID (orgId) for org-scoped billing
+  stripeCustomerId: text('stripeCustomerId'),
+  stripeSubscriptionId: text('stripeSubscriptionId'),
+  status: text('status').notNull().default('incomplete'), // active, trialing, past_due, canceled, etc.
+  periodStart: integer('periodStart', { mode: 'timestamp' }),
+  periodEnd: integer('periodEnd', { mode: 'timestamp' }),
+  cancelAtPeriodEnd: integer('cancelAtPeriodEnd', { mode: 'boolean' }).default(false),
+  cancelAt: integer('cancelAt', { mode: 'timestamp' }),
+  canceledAt: integer('canceledAt', { mode: 'timestamp' }),
+  endedAt: integer('endedAt', { mode: 'timestamp' }),
+  seats: integer('seats'),
+  trialStart: integer('trialStart', { mode: 'timestamp' }),
+  trialEnd: integer('trialEnd', { mode: 'timestamp' }),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+});
+```
+
+#### Organization Access Grants
+
+For trial periods and one-time single-project purchases:
+
+```js
+export const orgAccessGrants = sqliteTable('org_access_grants', {
+  id: text('id').primaryKey(),
+  orgId: text('orgId')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(), // 'trial' | 'single_project'
+  startsAt: integer('startsAt', { mode: 'timestamp' }).notNull(),
+  expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+  revokedAt: integer('revokedAt', { mode: 'timestamp' }), // null if not revoked
+  stripeCheckoutSessionId: text('stripeCheckoutSessionId').unique(), // Idempotency for webhooks
+  metadata: text('metadata'), // JSON string for additional data
+});
+```
+
+**Grant types:**
+
+- `trial`: Time-limited trial access (e.g., 14 days)
+- `single_project`: One-time purchase granting access for a specific project
+
+#### Two-Factor Authentication
+
+```js
+export const twoFactor = sqliteTable('twoFactor', {
+  id: text('id').primaryKey(),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  secret: text('secret').notNull(),
+  backupCodes: text('backupCodes').notNull(), // JSON array of backup codes
+  createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+});
+```
+
+#### Stripe Event Ledger
+
+For webhook observability and auditing with a two-phase trust model:
+
+```js
+export const stripeEventLedger = sqliteTable('stripe_event_ledger', {
+  id: text('id').primaryKey(),
+  // Trust-minimal fields (populated on receipt, before verification)
+  payloadHash: text('payloadHash').notNull().unique(), // SHA-256 hash for dedupe
+  signaturePresent: integer('signaturePresent', { mode: 'boolean' }).notNull(),
+  receivedAt: integer('receivedAt', { mode: 'timestamp' }).notNull(),
+  route: text('route').notNull(), // e.g., '/api/auth/stripe/webhook'
+  requestId: text('requestId').notNull(),
+  status: text('status').notNull().default('received'), // received, processed, skipped_duplicate, failed, ignored_unverified
+  error: text('error'), // Truncated error message/JSON
+  httpStatus: integer('httpStatus'), // HTTP response status code
+  // Verified fields (populated only after signature verification succeeds)
+  stripeEventId: text('stripeEventId').unique(),
+  type: text('type'), // e.g., 'checkout.session.completed'
+  livemode: integer('livemode', { mode: 'boolean' }),
+  apiVersion: text('apiVersion'),
+  created: integer('created', { mode: 'timestamp' }), // Stripe event created timestamp
+  processedAt: integer('processedAt', { mode: 'timestamp' }),
+  // Optional linking fields
+  orgId: text('orgId'),
+  stripeCustomerId: text('stripeCustomerId'),
+  stripeSubscriptionId: text('stripeSubscriptionId'),
+  stripeCheckoutSessionId: text('stripeCheckoutSessionId'),
+});
+```
+
+**Two-phase trust model:**
+
+1. **Phase 1 (on receipt):** Store trust-minimal fields before signature verification
+2. **Phase 2 (after verification):** Populate verified fields only after signature verification succeeds
+
 ### Table Relationships
 
 - **organizations** ↔ **projects**: One-to-many (orgId)
 - **organizations** ↔ **member**: One-to-many (organizationId)
+- **organizations** ↔ **subscription**: One-to-many (referenceId stores orgId)
+- **organizations** ↔ **orgAccessGrants**: One-to-many (orgId)
 - **users** ↔ **member**: Many-to-many (through member table)
 - **users** ↔ **projects**: One-to-many (createdBy)
 - **users** ↔ **project_members**: Many-to-many (through projectMembers table)
+- **users** ↔ **twoFactor**: One-to-one (userId)
 - **projects** ↔ **project_members**: One-to-many
+- **projects** ↔ **project_invitations**: One-to-many
 
 See the [Organizations Guide](/guides/organizations) for details on how org and project membership interact.
 

@@ -8,6 +8,7 @@ import { member, organization, projects, projectMembers } from '../db/schema.js'
 import { eq, and } from 'drizzle-orm';
 import { getAuth } from './auth.js';
 import { createDomainError, AUTH_ERRORS, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import { hasOrgRole, hasProjectRole } from '@/policies';
 
 /**
  * Middleware that requires organization membership
@@ -56,7 +57,7 @@ export function requireOrgMembership(minRole) {
     }
 
     // Check minimum role if specified
-    if (minRole && !hasMinimumOrgRole(membership.role, minRole)) {
+    if (minRole && !hasOrgRole(membership.role, minRole)) {
       const error = createDomainError(
         AUTH_ERRORS.FORBIDDEN,
         { reason: 'insufficient_org_role', required: minRole, actual: membership.role },
@@ -181,7 +182,7 @@ export function requireProjectAccess(minRole) {
     };
 
     // Check minimum role if specified
-    if (minRole && !hasMinimumProjectRole(projectAccess.projectRole, minRole)) {
+    if (minRole && !hasProjectRole(projectAccess.projectRole, minRole)) {
       const error = createDomainError(
         AUTH_ERRORS.FORBIDDEN,
         {
@@ -230,34 +231,4 @@ export function getProjectContext(c) {
     projectRole: c.get('projectRole') || null,
     project: c.get('project') || null,
   };
-}
-
-// Org role hierarchy: owner > admin > member
-const ORG_ROLE_HIERARCHY = ['member', 'admin', 'owner'];
-
-// Project role hierarchy: member > owner
-const PROJECT_ROLE_HIERARCHY = ['member', 'owner'];
-
-/**
- * Check if a role meets or exceeds the minimum required org role
- */
-function hasMinimumOrgRole(actualRole, minRole) {
-  const actualIndex = ORG_ROLE_HIERARCHY.indexOf(actualRole);
-  const minIndex = ORG_ROLE_HIERARCHY.indexOf(minRole);
-  if (actualIndex === -1 || minIndex === -1) {
-    return false;
-  }
-  return actualIndex >= minIndex;
-}
-
-/**
- * Check if a role meets or exceeds the minimum required project role
- */
-function hasMinimumProjectRole(actualRole, minRole) {
-  const actualIndex = PROJECT_ROLE_HIERARCHY.indexOf(actualRole);
-  const minIndex = PROJECT_ROLE_HIERARCHY.indexOf(minRole);
-  if (actualIndex === -1 || minIndex === -1) {
-    return false;
-  }
-  return actualIndex >= minIndex;
 }

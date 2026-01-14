@@ -1,0 +1,118 @@
+/**
+ * Create a new project within an organization
+ *
+ * @param {Object} env - Cloudflare environment bindings
+ * @param {Object} actor - User creating the project
+ * @param {Object} params - Creation parameters
+ * @param {string} params.orgId - Organization ID
+ * @param {string} params.name - Project name
+ * @param {string} [params.description] - Project description
+ * @returns {Promise<{ project: Object }>}
+ * @throws {ValidationError} FIELD_REQUIRED if name is empty or whitespace-only
+ * @throws {DomainError} QUOTA_EXCEEDED if org at project limit
+ * @throws {DomainError} DB_TRANSACTION_FAILED on database error
+ */
+
+import { createDb } from '@/db/client.js';
+import { projects, projectMembers, user } from '@/db/schema.js';
+import { eq } from 'drizzle-orm';
+import { insertWithQuotaCheck } from '@/lib/quotaTransaction.js';
+import { syncProjectToDO } from '@/commands/lib/doSync.js';
+import { createValidationError, VALIDATION_ERRORS } from '@corates/shared';
+
+export async function createProject(env, actor, { orgId, name, description }) {
+  const db = createDb(env.DB);
+
+  const projectId = crypto.randomUUID();
+  const memberId = crypto.randomUUID();
+  const now = new Date();
+  const trimmedName = name?.trim() || '';
+  const trimmedDescription = description?.trim() || null;
+
+  if (!trimmedName) {
+    throw createValidationError('name', VALIDATION_ERRORS.FIELD_REQUIRED.code, null);
+  }
+
+  const insertStatements = [
+    db.insert(projects).values({
+      id: projectId,
+      name: trimmedName,
+      description: trimmedDescription,
+      orgId,
+      createdBy: actor.id,
+      createdAt: now,
+      updatedAt: now,
+    }),
+    db.insert(projectMembers).values({
+      id: memberId,
+      projectId,
+      userId: actor.id,
+      role: 'owner',
+      joinedAt: now,
+    }),
+  ];
+
+  const quotaResult = await insertWithQuotaCheck(db, {
+    orgId,
+    quotaKey: 'projects.max',
+    countTable: projects,
+    countColumn: projects.orgId,
+    insertStatements,
+  });
+
+  if (!quotaResult.success) {
+    throw quotaResult.error;
+  }
+
+  const creator = await db
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      displayName: user.displayName,
+      image: user.image,
+    })
+    .from(user)
+    .where(eq(user.id, actor.id))
+    .get();
+
+  try {
+    await syncProjectToDO(
+      env,
+      projectId,
+      {
+        name: trimmedName,
+        description: trimmedDescription,
+        orgId,
+        createdAt: now.getTime(),
+        updatedAt: now.getTime(),
+      },
+      [
+        {
+          userId: actor.id,
+          role: 'owner',
+          joinedAt: now.getTime(),
+          name: creator?.name || null,
+          email: creator?.email || null,
+          displayName: creator?.displayName || null,
+          image: creator?.image || null,
+        },
+      ],
+    );
+  } catch (err) {
+    console.error('Failed to sync project to DO:', err);
+  }
+
+  return {
+    project: {
+      id: projectId,
+      name: trimmedName,
+      description: trimmedDescription,
+      orgId,
+      createdBy: actor.id,
+      role: 'owner',
+      createdAt: now,
+      updatedAt: now,
+    },
+  };
+}

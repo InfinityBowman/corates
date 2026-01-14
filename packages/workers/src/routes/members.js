@@ -6,19 +6,27 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import { projectMembers, user, projects, projectInvitations } from '@/db/schema.js';
-import { eq, and, count } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { TIME_DURATIONS } from '@/config/constants.js';
 import {
   createDomainError,
   createValidationError,
+  isDomainError,
   PROJECT_ERRORS,
-  AUTH_ERRORS,
   SYSTEM_ERRORS,
   USER_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
 import { syncMemberToDO } from '@/lib/project-sync.js';
+import {
+  getProjectMembership,
+  requireMemberManagement,
+  requireMemberRemoval,
+  requireSafeRoleChange,
+  requireSafeRemoval,
+  isProjectOwner,
+} from '@/policies';
 
 const memberRoutes = new OpenAPIHono({
   defaultHook: (result, c) => {
@@ -68,12 +76,7 @@ async function projectMembershipMiddleware(c, next) {
   }
 
   const db = createDb(c.env.DB);
-
-  const membership = await db
-    .select({ role: projectMembers.role })
-    .from(projectMembers)
-    .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, authUser.id)))
-    .get();
+  const membership = await getProjectMembership(db, authUser.id, projectId);
 
   if (!membership) {
     const error = createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId });
@@ -82,7 +85,7 @@ async function projectMembershipMiddleware(c, next) {
 
   c.set('projectId', projectId);
   c.set('membership', membership);
-  c.set('isOwner', membership.role === 'owner');
+  c.set('isOwner', isProjectOwner(membership.role));
 
   await next();
 }
@@ -337,21 +340,19 @@ memberRoutes.openapi(listMembersRoute, async c => {
 });
 
 memberRoutes.openapi(addMemberRoute, async c => {
-  const isOwner = c.get('isOwner');
   const projectId = c.get('projectId');
-
-  if (!isOwner) {
-    const error = createDomainError(
-      AUTH_ERRORS.FORBIDDEN,
-      { reason: 'add_member' },
-      'Only project owners can add members',
-    );
-    return c.json(error, error.statusCode);
-  }
-
   const db = createDb(c.env.DB);
   const { userId, email, role } = c.req.valid('json');
   const { user: authUser } = getAuth(c);
+
+  try {
+    await requireMemberManagement(db, authUser.id, projectId);
+  } catch (error) {
+    if (isDomainError(error)) {
+      return c.json(error, error.statusCode);
+    }
+    throw error;
+  }
 
   try {
     let userToAdd;
@@ -665,46 +666,23 @@ memberRoutes.openapi(addMemberRoute, async c => {
 });
 
 memberRoutes.openapi(updateRoleRoute, async c => {
-  const isOwner = c.get('isOwner');
   const projectId = c.get('projectId');
   const memberId = c.req.param('userId');
-
-  if (!isOwner) {
-    const error = createDomainError(
-      AUTH_ERRORS.FORBIDDEN,
-      { reason: 'update_member_role' },
-      'Only project owners can update member roles',
-    );
-    return c.json(error, error.statusCode);
-  }
-
   const db = createDb(c.env.DB);
   const { role } = c.req.valid('json');
+  const { user: authUser } = getAuth(c);
 
   try {
-    if (role !== 'owner') {
-      const ownerCountResult = await db
-        .select({ count: count() })
-        .from(projectMembers)
-        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.role, 'owner')))
-        .get();
-
-      const targetMember = await db
-        .select({ role: projectMembers.role })
-        .from(projectMembers)
-        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)))
-        .get();
-
-      if (targetMember?.role === 'owner' && ownerCountResult?.count <= 1) {
-        const error = createDomainError(
-          PROJECT_ERRORS.LAST_OWNER,
-          { projectId },
-          'Assign another owner first',
-        );
-        return c.json(error, error.statusCode);
-      }
+    await requireMemberManagement(db, authUser.id, projectId);
+    await requireSafeRoleChange(db, projectId, memberId, role);
+  } catch (error) {
+    if (isDomainError(error)) {
+      return c.json(error, error.statusCode);
     }
+    throw error;
+  }
 
+  try {
     await db
       .update(projectMembers)
       .set({ role })
@@ -732,29 +710,24 @@ memberRoutes.openapi(updateRoleRoute, async c => {
 
 memberRoutes.openapi(removeMemberRoute, async c => {
   const { user: authUser } = getAuth(c);
-  const isOwner = c.get('isOwner');
   const projectId = c.get('projectId');
   const memberId = c.req.param('userId');
+  const db = createDb(c.env.DB);
 
   const isSelfRemoval = memberId === authUser.id;
 
-  if (!isOwner && !isSelfRemoval) {
-    const error = createDomainError(
-      AUTH_ERRORS.FORBIDDEN,
-      { reason: 'remove_member' },
-      'Only project owners can remove members',
-    );
-    return c.json(error, error.statusCode);
+  try {
+    await requireMemberRemoval(db, authUser.id, projectId, memberId);
+    await requireSafeRemoval(db, projectId, memberId);
+  } catch (error) {
+    if (isDomainError(error)) {
+      return c.json(error, error.statusCode);
+    }
+    throw error;
   }
 
-  const db = createDb(c.env.DB);
-
   try {
-    const targetMember = await db
-      .select({ role: projectMembers.role })
-      .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)))
-      .get();
+    const targetMember = await getProjectMembership(db, memberId, projectId);
 
     if (!targetMember) {
       const error = createDomainError(
@@ -763,23 +736,6 @@ memberRoutes.openapi(removeMemberRoute, async c => {
         'Member not found',
       );
       return c.json(error, error.statusCode);
-    }
-
-    if (targetMember.role === 'owner') {
-      const ownerCountResult = await db
-        .select({ count: count() })
-        .from(projectMembers)
-        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.role, 'owner')))
-        .get();
-
-      if (ownerCountResult?.count <= 1) {
-        const error = createDomainError(
-          PROJECT_ERRORS.LAST_OWNER,
-          { projectId },
-          'Assign another owner first or delete the project',
-        );
-        return c.json(error, error.statusCode);
-      }
     }
 
     await db

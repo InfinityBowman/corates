@@ -35,16 +35,12 @@ Project (Y.Doc)
 
 The ProjectDoc Durable Object holds the authoritative Yjs document:
 
-```1:39:packages/workers/src/durable-objects/ProjectDoc.js
+```js
 import * as Y from 'yjs';
 import * as syncProtocol from 'y-protocols/sync';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
-import { verifyAuth } from '../auth/config.js';
-import { createDb } from '../db/client.js';
-import { projectMembers } from '../db/schema.js';
-import { eq, and } from 'drizzle-orm';
 
 // y-websocket message types
 const messageSync = 0;
@@ -53,139 +49,158 @@ const messageAwareness = 1;
 /**
  * ProjectDoc Durable Object
  *
- * Holds the authoritative Y.Doc for a project with hierarchical structure:
- *
- * Project (this DO)
- *   - meta: Y.Map (project metadata: name, description, createdAt, etc.)
- *   - members: Y.Map (userId => { role, joinedAt })
- *   - reviews: Y.Map (reviewId => {
- *       id, name, description, createdAt, updatedAt,
- *       checklists: Y.Map (checklistId => {
- *         id, title, assignedTo (userId), status, createdAt, updatedAt,
- *         answers: Y.Map (questionKey => { value, notes, updatedAt, updatedBy })
- *       })
- *     })
+ * Holds the authoritative Y.Doc for a project with hierarchical structure.
  */
 export class ProjectDoc {
   constructor(state, env) {
     this.state = state;
     this.env = env;
-    // Map<WebSocket, { user, awarenessClientId }>
-    this.sessions = new Map();
+    this.sessions = new Map(); // Map<WebSocket, { user, awarenessClientId }>
     this.doc = null;
     this.awareness = null;
   }
+}
 ```
 
 ### Document Initialization and Persistence
 
-```286:327:packages/workers/src/durable-objects/ProjectDoc.js
-  async initializeDoc() {
-    if (!this.doc) {
-      this.doc = new Y.Doc();
-      this.awareness = new awarenessProtocol.Awareness(this.doc);
+The Durable Object loads persisted state on initialization and saves on every update:
 
-      // Load persisted state if exists
-      const persistedState = await this.state.storage.get('yjs-state');
-      if (persistedState) {
-        Y.applyUpdate(this.doc, new Uint8Array(persistedState));
-      }
+```js
+async initializeDoc() {
+  if (!this.doc) {
+    this.doc = new Y.Doc();
+    this.awareness = new awarenessProtocol.Awareness(this.doc);
 
-      // Persist the FULL document state on every update
-      // This ensures we don't lose data when the DO restarts
-      this.doc.on('update', async (update, origin) => {
-        // Encode the full document state, not just the incremental update
-        const fullState = Y.encodeStateAsUpdate(this.doc);
-        await this.state.storage.put('yjs-state', Array.from(fullState));
-
-        // Broadcast update to all connected clients (except origin)
-        const encoder = encoding.createEncoder();
-        encoding.writeVarUint(encoder, messageSync);
-        syncProtocol.writeUpdate(encoder, update);
-        const message = encoding.toUint8Array(encoder);
-        this.broadcastBinary(message, origin);
-      });
-
-      // Broadcast awareness updates to all clients
-      this.awareness.on('update', ({ added, updated, removed }, origin) => {
-        const changedClients = added.concat(updated, removed);
-        if (changedClients.length > 0) {
-          const encoder = encoding.createEncoder();
-          encoding.writeVarUint(encoder, messageAwareness);
-          encoding.writeVarUint8Array(
-            encoder,
-            awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients),
-          );
-          const message = encoding.toUint8Array(encoder);
-          this.broadcastBinary(message, origin);
-        }
-      });
+    // Load persisted state if exists
+    const persistedState = await this.state.storage.get('yjs-state');
+    if (persistedState) {
+      Y.applyUpdate(this.doc, new Uint8Array(persistedState));
     }
+
+    // Persist the FULL document state on every update
+    this.doc.on('update', async (update, origin) => {
+      const fullState = Y.encodeStateAsUpdate(this.doc);
+      await this.state.storage.put('yjs-state', Array.from(fullState));
+      // Broadcast update to all connected clients
+      this.broadcastBinary(message, origin);
+    });
   }
+}
 ```
 
 ## Client-Side Sync
 
+### Unified Dexie Database
+
+CoRATES uses a unified Dexie database with the `y-dexie` addon for client-side persistence. This provides:
+
+- Single IndexedDB database for all client data
+- Native Y.Doc persistence via y-dexie addon
+- PDF cache, operation queue, avatar cache, and more
+
+```js
+import Dexie from 'dexie';
+import yDexie from 'y-dexie';
+
+class CoratesDB extends Dexie {
+  constructor() {
+    super('corates', { addons: [yDexie] });
+
+    this.version(1).stores({
+      // Y.Doc stored as 'ydoc' property via y-dexie
+      projects: 'id, orgId, updatedAt, ydoc: Y.Doc',
+      pdfs: 'id, projectId, studyId, cachedAt',
+      ops: '++id, idempotencyKey, status, createdAt',
+      avatars: 'userId, cachedAt',
+      formStates: 'key, type, timestamp',
+      localChecklists: 'id, createdAt, updatedAt',
+      localChecklistPdfs: 'checklistId, updatedAt',
+      queryCache: 'key',
+    });
+  }
+}
+
+export const db = new CoratesDB();
+```
+
+### Connection Registry
+
+The `useProject` hook uses a connection registry to prevent multiple connections to the same project:
+
+```js
+const connectionRegistry = new Map();
+
+function getOrCreateConnection(projectId) {
+  if (!projectId) return null;
+
+  if (connectionRegistry.has(projectId)) {
+    const entry = connectionRegistry.get(projectId);
+    entry.refCount++;
+    return entry;
+  }
+
+  const entry = {
+    ydoc: new Y.Doc(),
+    dexieProvider: null,
+    connectionManager: null,
+    syncManager: null,
+    studyOps: null,
+    checklistOps: null,
+    pdfOps: null,
+    reconciliationOps: null,
+    refCount: 1,
+    initialized: false,
+  };
+
+  connectionRegistry.set(projectId, entry);
+  return entry;
+}
+```
+
 ### useProject Hook
 
-The `useProject` primitive manages client-side Yjs connection:
+The `useProject` primitive manages client-side Yjs connection with y-dexie persistence:
 
-```149:190:packages/web/src/primitives/useProject/index.js
-export function useProject(projectId) {
-  // Check if this is a local-only project
-  const isLocalProject = () => projectId && projectId.startsWith('local-');
+```js
+import { DexieYProvider } from 'y-dexie';
+import { db } from '../db.js';
 
-  // Get shared connection from registry
-  const connectionEntry = getOrCreateConnection(projectId);
+function connect() {
+  const { ydoc } = connectionEntry;
 
-  const isOnline = useOnlineStatus();
+  // Ensure the project row exists in Dexie, then load the Y.Doc
+  db.projects.get(projectId).then(async existingProject => {
+    if (!existingProject) {
+      await db.projects.put({ id: projectId, updatedAt: Date.now() });
+    }
 
-  // Reactive getters from store
-  const connectionState = createMemo(() => projectStore.getConnectionState(projectId));
-  const connected = () => connectionState().connected;
-  const connecting = () => connectionState().connecting;
-  const synced = () => connectionState().synced;
-  const error = () => connectionState().error;
+    const project = await db.projects.get(projectId);
 
-  const projectData = createMemo(() => projectStore.getProject(projectId));
-  const studies = () => projectData()?.studies || [];
-  const meta = () => projectData()?.meta || {};
-  const members = () => projectData()?.members || [];
+    // Load the Dexie Y.Doc and apply its state
+    connectionEntry.dexieProvider = DexieYProvider.load(project.ydoc);
 
-  // Helper to get the current Y.Doc from the shared connection
-  const getYDoc = () => connectionEntry?.ydoc || null;
+    connectionEntry.dexieProvider.whenLoaded.then(() => {
+      // Apply persisted state from Dexie to our Y.Doc
+      const persistedState = Y.encodeStateAsUpdate(project.ydoc);
+      Y.applyUpdate(ydoc, persistedState);
 
-  // Connect to the project's WebSocket (or just IndexedDB for local projects)
-  function connect() {
-    if (!projectId || !connectionEntry) return;
-
-    // If already initialized, just return - connection is shared
-    if (connectionEntry.initialized) return;
-
-    // Mark as initializing to prevent race conditions
-    connectionEntry.initialized = true;
-
-    // Set this as the active project
-    projectStore.setActiveProject(projectId);
-    projectStore.setConnectionState(projectId, { connecting: true, error: null });
-
-    const { ydoc } = connectionEntry;
-
-    // Initialize sync manager
-    connectionEntry.syncManager = createSyncManager(projectId, getYDoc);
-
-    // Initialize domain operation modules
-    connectionEntry.studyOps = createStudyOperations(projectId, getYDoc, synced);
-    connectionEntry.checklistOps = createChecklistOperations(projectId, getYDoc, synced);
-    connectionEntry.pdfOps = createPdfOperations(projectId, getYDoc, synced);
-    connectionEntry.reconciliationOps = createReconciliationOperations(projectId, getYDoc, synced);
+      // Subscribe to updates to persist them to Dexie
+      ydoc.on('update', (update, origin) => {
+        if (origin !== 'dexie-sync') {
+          Y.applyUpdate(project.ydoc, update, 'dexie-sync');
+        }
+      });
+    });
+  });
+}
 ```
 
 ### Sync Manager
 
 The sync manager handles bidirectional sync between Yjs and the store:
 
-```14:53:packages/web/src/primitives/useProject/sync.js
+```js
 export function createSyncManager(projectId, getYDoc) {
   /**
    * Sync from Y.Doc to store
@@ -195,48 +210,44 @@ export function createSyncManager(projectId, getYDoc) {
     const ydoc = getYDoc();
     if (!ydoc) return;
 
-    try {
-      const metaYMap = ydoc.getMap('meta');
-      const membersYMap = ydoc.getMap('members');
-      const reviewsYMap = ydoc.getMap('reviews');
+    const metaYMap = ydoc.getMap('meta');
+    const membersYMap = ydoc.getMap('members');
+    const reviewsYMap = ydoc.getMap('reviews');
 
-      // Convert Yjs structures to plain objects
-      const meta = yMapToPlain(metaYMap);
-      const members = Array.from(membersYMap.entries()).map(([userId, memberData]) => ({
-        userId,
-        ...yMapToPlain(memberData),
-      }));
+    // Convert Yjs structures to plain objects
+    const meta = yMapToPlain(metaYMap);
+    const members = Array.from(membersYMap.entries()).map(([userId, memberData]) => ({
+      userId,
+      ...yMapToPlain(memberData),
+    }));
 
-      const studies = Array.from(reviewsYMap.entries())
-        .map(([studyId, studyYMap]) => {
-          const studyData = yMapToPlain(studyYMap);
-          return buildStudyFromYMap(studyId, studyData, studyYMap);
-        })
-        .filter(Boolean);
+    const studies = Array.from(reviewsYMap.entries())
+      .map(([studyId, studyYMap]) => buildStudyFromYMap(studyId, studyData, studyYMap))
+      .filter(Boolean);
 
-      // Update store
-      projectStore.setProjectData(projectId, { meta, members, studies });
-      projectStore.setConnectionState(projectId, { synced: true });
-    } catch (error) {
-      console.error('Error syncing from Y.Doc:', error);
-      projectStore.setConnectionState(projectId, { error: error.message });
-    }
+    // Update store
+    projectStore.setProjectData(projectId, { meta, members, studies });
+    projectStore.setConnectionState(projectId, { synced: true });
   }
 
   return { syncFromYDoc };
 }
 ```
 
-### IndexedDB Persistence
+### y-dexie Persistence
 
-Client-side persistence uses y-indexeddb:
+Client-side persistence uses y-dexie, which stores Y.Doc directly in Dexie tables:
 
 ```js
-import { IndexeddbPersistence } from 'y-indexeddb';
+import { DexieYProvider } from 'y-dexie';
+import { db } from '../db.js';
 
-// Set up IndexedDB persistence for offline support
-connectionEntry.indexeddbProvider = new IndexeddbPersistence(`corates-project-${projectId}`, connectionEntry.ydoc);
+// The ydoc property on project rows is managed by y-dexie
+const project = await db.projects.get(projectId);
+connectionEntry.dexieProvider = DexieYProvider.load(project.ydoc);
 ```
+
+**Key difference from y-indexeddb:** y-dexie integrates directly with Dexie, allowing Y.Doc to be stored alongside other project data in a single database.
 
 ## WebSocket Connection
 
@@ -271,14 +282,32 @@ ws.onmessage = event => {
 
 ### Client-Side
 
-- **IndexedDB**: All Yjs updates persisted locally
-- **Queue**: Changes queued when offline
+- **Dexie/y-dexie**: All Yjs updates persisted locally in unified database
+- **Queue**: Changes queue when offline (in `ops` table)
 - **Sync**: Automatic sync when connection restored
 
 ### Server-Side
 
 - **Durable Object Storage**: Full document state persisted
 - **State Vector**: Efficient diff-based sync on reconnect
+
+### Local Projects
+
+Local projects (prefixed with `local-`) work entirely offline without WebSocket connection:
+
+```js
+const isLocalProject = () => projectId && projectId.startsWith('local-');
+
+// For local projects, don't connect to WebSocket
+if (isLocalProject()) {
+  projectStore.setConnectionState(projectId, {
+    connecting: false,
+    connected: true,
+    synced: true,
+  });
+  return;
+}
+```
 
 ## Data Operations
 

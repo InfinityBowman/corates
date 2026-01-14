@@ -10,17 +10,17 @@ import { eq, and, count } from 'drizzle-orm';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { requireEntitlement } from '@/middleware/requireEntitlement.js';
 import { requireQuota } from '@/middleware/requireQuota.js';
-import { EDIT_ROLES } from '@/config/constants.js';
 import {
   createDomainError,
   createValidationError,
+  isDomainError,
   PROJECT_ERRORS,
-  AUTH_ERRORS,
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
 import { syncProjectToDO } from '@/lib/project-sync.js';
 import { getProjectDocStub } from '@/lib/project-doc-id.js';
+import { requireProjectEdit, requireProjectDelete } from '@/policies';
 
 const projectRoutes = new OpenAPIHono({
   defaultHook: (result, c) => {
@@ -383,21 +383,15 @@ projectRoutes.openapi(updateProjectRoute, async c => {
   const { name, description } = c.req.valid('json');
 
   try {
-    const membership = await db
-      .select({ role: projectMembers.role })
-      .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, authUser.id)))
-      .get();
-
-    if (!membership || !EDIT_ROLES.includes(membership.role)) {
-      const error = createDomainError(
-        AUTH_ERRORS.FORBIDDEN,
-        { reason: 'update_project' },
-        'Only owners and collaborators can update projects',
-      );
+    await requireProjectEdit(db, authUser.id, projectId);
+  } catch (error) {
+    if (isDomainError(error)) {
       return c.json(error, error.statusCode);
     }
+    throw error;
+  }
 
+  try {
     const now = new Date();
 
     const updateData = { updatedAt: now };
@@ -433,21 +427,15 @@ projectRoutes.openapi(deleteProjectRoute, async c => {
   const db = createDb(c.env.DB);
 
   try {
-    const membership = await db
-      .select({ role: projectMembers.role })
-      .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, authUser.id)))
-      .get();
-
-    if (!membership || membership.role !== 'owner') {
-      const error = createDomainError(
-        AUTH_ERRORS.FORBIDDEN,
-        { reason: 'delete_project' },
-        'Only project owners can delete projects',
-      );
+    await requireProjectDelete(db, authUser.id, projectId);
+  } catch (error) {
+    if (isDomainError(error)) {
       return c.json(error, error.statusCode);
     }
+    throw error;
+  }
 
+  try {
     const project = await db
       .select({ name: projects.name })
       .from(projects)

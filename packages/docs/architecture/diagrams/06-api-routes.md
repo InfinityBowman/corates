@@ -4,7 +4,7 @@ Backend API structure with organization-scoped routes and middleware.
 
 ```mermaid
 flowchart LR
-    subgraph API["Hono API (/api)"]
+    subgraph API["OpenAPIHono API (/api)"]
         direction TB
         auth["/auth/*<br/>BetterAuth"]
         orgs["/orgs/*"]

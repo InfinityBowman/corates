@@ -5,7 +5,7 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
-import { projects, projectMembers, user } from '@/db/schema.js';
+import { projects, projectMembers } from '@/db/schema.js';
 import { eq, and, count, desc } from 'drizzle-orm';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import {
@@ -20,13 +20,12 @@ import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
 import {
   createDomainError,
   createValidationError,
+  isDomainError,
   PROJECT_ERRORS,
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
-import { insertWithQuotaCheck } from '@/lib/quotaTransaction.js';
-import { syncProjectToDO } from '@/lib/project-sync.js';
-import { getProjectDocStub } from '@/lib/project-doc-id.js';
+import { createProject, updateProject, deleteProject } from '@/commands/projects/index.js';
 import { orgProjectMemberRoutes } from './members.js';
 import { orgPdfRoutes } from './pdfs.js';
 import { orgInvitationRoutes } from './invitations.js';
@@ -358,118 +357,34 @@ orgProjectRoutes.openapi(listProjectsRoute, async c => {
 });
 
 orgProjectRoutes.openapi(createProjectRoute, async c => {
-  // Run membership middleware
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse;
 
-  // Run write access middleware
   const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
   if (writeAccessResponse) return writeAccessResponse;
 
-  // Run entitlement middleware
   const entitlementResponse = await runMiddleware(requireEntitlement('project.create'), c);
   if (entitlementResponse) return entitlementResponse;
 
-  // Run quota middleware
   const quotaResponse = await runMiddleware(requireQuota('projects.max', getProjectCount, 1), c);
   if (quotaResponse) return quotaResponse;
 
   const { user: authUser } = getAuth(c);
   const { orgId } = getOrgContext(c);
-  const db = createDb(c.env.DB);
   const body = c.req.valid('json');
-  const name = body.name.trim();
-  const description = body.description?.trim() || null;
-
-  const projectId = crypto.randomUUID();
-  const memberId = crypto.randomUUID();
-  const now = new Date();
 
   try {
-    const insertStatements = [
-      db.insert(projects).values({
-        id: projectId,
-        name,
-        description,
-        orgId,
-        createdBy: authUser.id,
-        createdAt: now,
-        updatedAt: now,
-      }),
-      db.insert(projectMembers).values({
-        id: memberId,
-        projectId,
-        userId: authUser.id,
-        role: 'owner',
-        joinedAt: now,
-      }),
-    ];
-
-    const quotaResult = await insertWithQuotaCheck(db, {
+    const { project } = await createProject(c.env, authUser, {
       orgId,
-      quotaKey: 'projects.max',
-      countTable: projects,
-      countColumn: projects.orgId,
-      insertStatements,
+      name: body.name,
+      description: body.description,
     });
 
-    if (!quotaResult.success) {
-      return c.json(quotaResult.error, quotaResult.error.statusCode);
-    }
-
-    const creator = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        displayName: user.displayName,
-        image: user.image,
-      })
-      .from(user)
-      .where(eq(user.id, authUser.id))
-      .get();
-
-    try {
-      await syncProjectToDO(
-        c.env,
-        projectId,
-        {
-          name,
-          description,
-          orgId,
-          createdAt: now.getTime(),
-          updatedAt: now.getTime(),
-        },
-        [
-          {
-            userId: authUser.id,
-            role: 'owner',
-            joinedAt: now.getTime(),
-            name: creator?.name || null,
-            email: creator?.email || null,
-            displayName: creator?.displayName || null,
-            image: creator?.image || null,
-          },
-        ],
-      );
-    } catch (err) {
-      console.error('Failed to sync project to DO:', err);
-    }
-
-    return c.json(
-      {
-        id: projectId,
-        name,
-        description,
-        orgId,
-        createdBy: authUser.id,
-        role: 'owner',
-        createdAt: now,
-        updatedAt: now,
-      },
-      201,
-    );
+    return c.json(project, 201);
   } catch (error) {
+    if (isDomainError(error)) {
+      return c.json(error, error.statusCode);
+    }
     console.error('Error creating project:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_TRANSACTION_FAILED, {
       operation: 'create_project',
@@ -526,45 +441,31 @@ orgProjectRoutes.openapi(getProjectRoute, async c => {
 });
 
 orgProjectRoutes.openapi(updateProjectRoute, async c => {
-  // Run membership middleware
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse;
 
-  // Run write access middleware
   const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
   if (writeAccessResponse) return writeAccessResponse;
 
-  // Run project access middleware (member role required)
   const projectAccessResponse = await runMiddleware(requireProjectAccess('member'), c);
   if (projectAccessResponse) return projectAccessResponse;
 
+  const { user: authUser } = getAuth(c);
   const { projectId } = getProjectContext(c);
-  const db = createDb(c.env.DB);
   const body = c.req.valid('json');
-  const name = body.name?.trim();
-  const description = body.description?.trim();
 
   try {
-    const now = new Date();
+    const result = await updateProject(c.env, authUser, {
+      projectId,
+      name: body.name,
+      description: body.description,
+    });
 
-    const updateData = { updatedAt: now };
-    if (name !== undefined) updateData.name = name;
-    if (description !== undefined) updateData.description = description || null;
-
-    await db.update(projects).set(updateData).where(eq(projects.id, projectId));
-
-    const metaUpdate = { updatedAt: now.getTime() };
-    if (name !== undefined) metaUpdate.name = name;
-    if (description !== undefined) metaUpdate.description = description || null;
-
-    try {
-      await syncProjectToDO(c.env, projectId, metaUpdate, null);
-    } catch (err) {
-      console.error('Failed to sync project update to DO:', err);
-    }
-
-    return c.json({ success: true, projectId });
+    return c.json({ success: true, projectId: result.projectId });
   } catch (error) {
+    if (isDomainError(error)) {
+      return c.json(error, error.statusCode);
+    }
     console.error('Error updating project:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'update_project',
@@ -575,105 +476,26 @@ orgProjectRoutes.openapi(updateProjectRoute, async c => {
 });
 
 orgProjectRoutes.openapi(deleteProjectRoute, async c => {
-  // Run membership middleware
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse;
 
-  // Run write access middleware
   const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
   if (writeAccessResponse) return writeAccessResponse;
 
-  // Run project access middleware (owner role required)
   const projectAccessResponse = await runMiddleware(requireProjectAccess('owner'), c);
   if (projectAccessResponse) return projectAccessResponse;
 
   const { user: authUser } = getAuth(c);
   const { projectId } = getProjectContext(c);
-  const db = createDb(c.env.DB);
 
   try {
-    const project = await db
-      .select({ name: projects.name })
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .get();
+    const result = await deleteProject(c.env, authUser, { projectId });
 
-    const members = await db
-      .select({ userId: projectMembers.userId })
-      .from(projectMembers)
-      .where(eq(projectMembers.projectId, projectId))
-      .all();
-
-    // Disconnect all connected users from the ProjectDoc DO
-    try {
-      const projectDoc = getProjectDocStub(c.env, projectId);
-      await projectDoc.fetch(
-        new Request('https://internal/disconnect-all', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Internal-Request': 'true',
-          },
-        }),
-      );
-    } catch (err) {
-      console.error('Failed to disconnect users from DO:', err);
-    }
-
-    // Clean up all PDFs from R2 storage
-    try {
-      const prefix = `projects/${projectId}/`;
-      let cursor = undefined;
-      let deletedCount = 0;
-
-      do {
-        const listed = await c.env.PDF_BUCKET.list({ prefix, cursor });
-
-        if (listed.objects.length > 0) {
-          const keysToDelete = listed.objects.map(obj => obj.key);
-          await Promise.all(keysToDelete.map(key => c.env.PDF_BUCKET.delete(key)));
-          deletedCount += keysToDelete.length;
-        }
-
-        cursor = listed.truncated ? listed.cursor : undefined;
-      } while (cursor);
-
-      if (deletedCount > 0) {
-        console.log(`Deleted ${deletedCount} R2 objects for project ${projectId}`);
-      }
-    } catch (err) {
-      console.error('Failed to clean up R2 files for project:', projectId, err);
-    }
-
-    await db.delete(projects).where(eq(projects.id, projectId));
-
-    // Send notifications to all members (except the one who deleted)
-    for (const member of members) {
-      if (member.userId !== authUser.id) {
-        try {
-          const userSessionId = c.env.USER_SESSION.idFromName(member.userId);
-          const userSession = c.env.USER_SESSION.get(userSessionId);
-          await userSession.fetch(
-            new Request('https://internal/notify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                type: 'project-deleted',
-                projectId,
-                projectName: project?.name || 'Unknown Project',
-                deletedBy: authUser.name || authUser.email,
-                timestamp: Date.now(),
-              }),
-            }),
-          );
-        } catch (err) {
-          console.error('Failed to send deletion notification to user:', member.userId, err);
-        }
-      }
-    }
-
-    return c.json({ success: true, deleted: projectId });
+    return c.json({ success: true, deleted: result.deleted });
   } catch (error) {
+    if (isDomainError(error)) {
+      return c.json(error, error.statusCode);
+    }
     console.error('Error deleting project:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'delete_project',

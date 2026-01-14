@@ -8,17 +8,19 @@ import { createDb } from '@/db/client.js';
 import { projects } from '@/db/schema.js';
 import { eq, count } from 'drizzle-orm';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { requireOrgMembership, getOrgContext } from '@/middleware/requireOrg.js';
+import { requireOrgMembership } from '@/middleware/requireOrg.js';
 import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
 import {
   createDomainError,
   createValidationError,
+  isDomainError,
   AUTH_ERRORS,
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
 import { createAuth } from '@/auth/config.js';
 import { orgProjectRoutes } from './projects.js';
+import { requireOrgMemberRemoval } from '@/policies';
 
 const orgRoutes = new OpenAPIHono({
   defaultHook: (result, c) => {
@@ -825,17 +827,18 @@ orgRoutes.openapi(removeMemberRoute, async c => {
   if (writeAccessResponse) return writeAccessResponse;
 
   const { user: authUser } = getAuth(c);
-  const { orgRole } = getOrgContext(c);
   const { orgId, memberId } = c.req.valid('param');
+  const db = createDb(c.env.DB);
 
   const isSelf = memberId === authUser.id;
-  const isAdminOrOwner = orgRole === 'admin' || orgRole === 'owner';
 
-  if (!isSelf && !isAdminOrOwner) {
-    const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-      reason: 'cannot_remove_member',
-    });
-    return c.json(error, error.statusCode);
+  try {
+    await requireOrgMemberRemoval(db, authUser.id, orgId, memberId);
+  } catch (error) {
+    if (isDomainError(error)) {
+      return c.json(error, error.statusCode);
+    }
+    throw error;
   }
 
   try {
