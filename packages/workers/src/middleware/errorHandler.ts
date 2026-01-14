@@ -80,8 +80,9 @@ export const errorHandler: ErrorHandler = (err, c) => {
     return c.json(error, 400);
   }
 
+  const isProduction = c.env.ENVIRONMENT === 'production';
   const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-    ...(process.env.ENVIRONMENT !== 'production' && {
+    ...(!isProduction && {
       originalError: err.message,
       stack: err.stack,
     }),

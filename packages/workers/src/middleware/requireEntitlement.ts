@@ -3,7 +3,7 @@ import { createDb } from '../db/client';
 import { getAuth } from './auth';
 import { getOrgContext } from './requireOrg';
 import { resolveOrgAccess } from '../lib/billingResolver';
-import { createDomainError, AUTH_ERRORS } from '@corates/shared';
+import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS, isDomainError } from '@corates/shared';
 import type { AppContext, OrgBilling } from '../types';
 
 export function requireEntitlement(entitlement: string): MiddlewareHandler {
@@ -24,7 +24,20 @@ export function requireEntitlement(entitlement: string): MiddlewareHandler {
     }
 
     const db = createDb((c as AppContext).env.DB);
-    const orgBilling = (await resolveOrgAccess(db, orgId)) as OrgBilling;
+
+    let orgBilling: OrgBilling;
+    try {
+      orgBilling = (await resolveOrgAccess(db, orgId)) as OrgBilling;
+    } catch (err) {
+      if (isDomainError(err)) {
+        return c.json(err, err.statusCode as 400 | 403 | 500);
+      }
+      const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'resolve_org_access',
+        originalError: err instanceof Error ? err.message : String(err),
+      });
+      return c.json(error, error.statusCode as 500);
+    }
 
     if (!(orgBilling.entitlements as unknown as Record<string, boolean>)[entitlement]) {
       const error = createDomainError(

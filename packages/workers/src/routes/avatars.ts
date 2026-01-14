@@ -13,7 +13,6 @@ import {
   createValidationError,
   FILE_ERRORS,
   VALIDATION_ERRORS,
-  AUTH_ERRORS,
   SYSTEM_ERRORS,
 } from '@corates/shared';
 import { FILE_SIZE_LIMITS } from '@/config/constants';
@@ -172,10 +171,8 @@ const uploadAvatarRoute = createRoute({
 // @ts-expect-error OpenAPIHono strict return types don't account for error responses
 avatarRoutes.openapi(uploadAvatarRoute, async c => {
   const { user } = getAuth(c);
-  if (!user) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
-  }
+  // requireAuth middleware guarantees user exists
+  const userId = user!.id;
 
   // Check Content-Length header first for early rejection
   const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
@@ -224,11 +221,11 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
 
       const ext = file.type.split('/')[1] || 'jpg';
       const timestamp = Date.now();
-      const key = `avatars/${user.id}/${timestamp}.${ext}`;
+      const key = `avatars/${userId}/${timestamp}.${ext}`;
 
       // Delete old avatar if exists
       try {
-        const oldAvatars = await c.env.PDF_BUCKET.list({ prefix: `avatars/${user.id}/` });
+        const oldAvatars = await c.env.PDF_BUCKET.list({ prefix: `avatars/${userId}/` });
         for (const obj of oldAvatars.objects) {
           await c.env.PDF_BUCKET.delete(obj.key);
         }
@@ -244,13 +241,13 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
           cacheControl: 'public, max-age=31536000',
         },
         customMetadata: {
-          userId: user.id,
+          userId,
           uploadedAt: new Date().toISOString(),
         },
       });
 
-      const avatarUrl = `/api/users/avatar/${user.id}?t=${timestamp}`;
-      await syncAvatarToProjects(c.env, user.id, avatarUrl);
+      const avatarUrl = `/api/users/avatar/${userId}?t=${timestamp}`;
+      await syncAvatarToProjects(c.env, userId, avatarUrl);
 
       return c.json({
         success: true as const,
@@ -401,13 +398,11 @@ const deleteAvatarRoute = createRoute({
 // @ts-expect-error OpenAPIHono strict return types don't account for error responses
 avatarRoutes.openapi(deleteAvatarRoute, async c => {
   const { user } = getAuth(c);
-  if (!user) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
-  }
+  // requireAuth middleware guarantees user exists
+  const userId = user!.id;
 
   try {
-    const listed = await c.env.PDF_BUCKET.list({ prefix: `avatars/${user.id}/` });
+    const listed = await c.env.PDF_BUCKET.list({ prefix: `avatars/${userId}/` });
 
     for (const obj of listed.objects) {
       await c.env.PDF_BUCKET.delete(obj.key);

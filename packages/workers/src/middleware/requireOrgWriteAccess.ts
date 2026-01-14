@@ -2,7 +2,7 @@ import type { MiddlewareHandler } from 'hono';
 import { getOrgContext } from './requireOrg';
 import { resolveOrgAccess } from '../lib/billingResolver';
 import { createDb } from '../db/client';
-import { createDomainError, AUTH_ERRORS } from '@corates/shared';
+import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS, isDomainError } from '@corates/shared';
 import type { AppContext, OrgBilling } from '../types';
 
 export function requireOrgWriteAccess(): MiddlewareHandler {
@@ -21,7 +21,20 @@ export function requireOrgWriteAccess(): MiddlewareHandler {
     }
 
     const db = createDb((c as AppContext).env.DB);
-    const orgBilling = (await resolveOrgAccess(db, orgId)) as OrgBilling;
+
+    let orgBilling: OrgBilling;
+    try {
+      orgBilling = (await resolveOrgAccess(db, orgId)) as OrgBilling;
+    } catch (err) {
+      if (isDomainError(err)) {
+        return c.json(err, err.statusCode as 400 | 403 | 500);
+      }
+      const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'resolve_org_access',
+        originalError: err instanceof Error ? err.message : String(err),
+      });
+      return c.json(error, error.statusCode as 500);
+    }
 
     if (orgBilling.accessMode === 'readOnly') {
       const error = createDomainError(
