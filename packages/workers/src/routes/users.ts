@@ -4,7 +4,8 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { createDb } from '@/db/client.js';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import { createDb } from '@/db/client';
 import {
   projects,
   projectMembers,
@@ -14,10 +15,10 @@ import {
   verification,
   twoFactor,
   mediaFiles,
-} from '@/db/schema.js';
+} from '@/db/schema';
 import { eq, desc, or, like, sql } from 'drizzle-orm';
-import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { searchRateLimit } from '@/middleware/rateLimit.js';
+import { requireAuth, getAuth } from '@/middleware/auth';
+import { searchRateLimit } from '@/middleware/rateLimit';
 import {
   createDomainError,
   createValidationError,
@@ -26,10 +27,11 @@ import {
   USER_ERRORS,
   SYSTEM_ERRORS,
 } from '@corates/shared';
-import { syncMemberToDO } from '@/lib/project-sync.js';
-import { getProjectDocStub } from '@/lib/project-doc-id.js';
+import { syncMemberToDO } from '@/lib/project-sync';
+import { getProjectDocStub } from '@/lib/project-doc-id';
+import type { Env } from '../types';
 
-const userRoutes = new OpenAPIHono({
+const userRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: (result, c) => {
     if (!result.success) {
       const firstIssue = result.error.issues[0];
@@ -81,7 +83,7 @@ const ErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('UserError');
 
@@ -103,7 +105,7 @@ const SyncResultSchema = z
 /**
  * Mask email for privacy (show first 2 chars and domain)
  */
-function maskEmail(email) {
+function maskEmail(email: string | null): string | null {
   if (!email) return null;
   const [local, domain] = email.split('@');
   if (!domain) return email;
@@ -146,8 +148,14 @@ const searchUsersRoute = createRoute({
   },
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(searchUsersRoute, async c => {
   const { user: currentUser } = getAuth(c);
+  if (!currentUser) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const { q: query, projectId, limit } = c.req.valid('query');
 
   const db = createDb(c.env.DB);
@@ -196,13 +204,14 @@ userRoutes.openapi(searchUsersRoute, async c => {
     }));
 
     return c.json(sanitizedResults);
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error searching users:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'search_users',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -226,8 +235,14 @@ const getMyProjectsRoute = createRoute({
   },
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(getMyProjectsRoute, async c => {
   const { user: authUser } = getAuth(c);
+  if (!authUser) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const db = createDb(c.env.DB);
 
   try {
@@ -247,13 +262,14 @@ userRoutes.openapi(getMyProjectsRoute, async c => {
       .orderBy(desc(projects.updatedAt));
 
     return c.json(results);
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching user projects:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_user_projects',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -286,15 +302,21 @@ const getUserProjectsRoute = createRoute({
   },
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(getUserProjectsRoute, async c => {
   const { user: authUser } = getAuth(c);
+  if (!authUser) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const { userId } = c.req.valid('param');
 
   if (authUser.id !== userId) {
     const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
       reason: 'view_other_user_projects',
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   const db = createDb(c.env.DB);
@@ -316,13 +338,14 @@ userRoutes.openapi(getUserProjectsRoute, async c => {
       .orderBy(desc(projects.updatedAt));
 
     return c.json(results);
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching user projects:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_user_projects',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -346,8 +369,14 @@ const deleteMyAccountRoute = createRoute({
   },
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(deleteMyAccountRoute, async c => {
   const { user: currentUser } = getAuth(c);
+  if (!currentUser) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const db = createDb(c.env.DB);
   const userId = currentUser.id;
 
@@ -378,14 +407,15 @@ userRoutes.openapi(deleteMyAccountRoute, async c => {
 
     console.log(`Account deleted successfully for user: ${userId}`);
 
-    return c.json({ success: true, message: 'Account deleted successfully' });
-  } catch (error) {
+    return c.json({ success: true as const, message: 'Account deleted successfully' });
+  } catch (err) {
+    const error = err as Error;
     console.error('Error deleting account:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'delete_account',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -413,8 +443,14 @@ const syncProfileRoute = createRoute({
   },
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(syncProfileRoute, async c => {
   const { user: currentUser } = getAuth(c);
+  if (!currentUser) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const db = createDb(c.env.DB);
 
   try {
@@ -430,7 +466,7 @@ userRoutes.openapi(syncProfileRoute, async c => {
 
     if (!userData) {
       const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId: currentUser.id });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const userProjects = await db
@@ -466,8 +502,9 @@ userRoutes.openapi(syncProfileRoute, async c => {
         );
         return { projectId, success: true };
       } catch (err) {
+        const error = err as Error;
         console.error(`Failed to sync profile to project ${projectId}:`, err);
-        return { projectId, success: false, error: err.message };
+        return { projectId, success: false, error: error.message };
       }
     });
 
@@ -475,17 +512,18 @@ userRoutes.openapi(syncProfileRoute, async c => {
     const successCount = results.filter(r => r.success).length;
 
     return c.json({
-      success: true,
+      success: true as const,
       synced: successCount,
       total: userProjects.length,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error syncing profile:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'sync_profile',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 

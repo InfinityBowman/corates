@@ -6,21 +6,24 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { requireAuth, getAuth } from '@/middleware/auth.js';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import { requireAuth, getAuth } from '@/middleware/auth';
 import {
   createDomainError,
   createValidationError,
   FILE_ERRORS,
   VALIDATION_ERRORS,
+  AUTH_ERRORS,
   SYSTEM_ERRORS,
 } from '@corates/shared';
-import { FILE_SIZE_LIMITS } from '@/config/constants.js';
-import { createDb } from '@/db/client.js';
-import { projectMembers, projects } from '@/db/schema.js';
+import { FILE_SIZE_LIMITS } from '@/config/constants';
+import { createDb } from '@/db/client';
+import { projectMembers, projects } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { getProjectDocStub } from '@/lib/project-doc-id.js';
+import { getProjectDocStub } from '@/lib/project-doc-id';
+import type { Env } from '../types';
 
-const avatarRoutes = new OpenAPIHono({
+const avatarRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: (result, c) => {
     if (!result.success) {
       const firstIssue = result.error.issues[0];
@@ -64,14 +67,14 @@ const AvatarErrorSchema = z
     code: z.string().openapi({ example: 'FILE_TOO_LARGE' }),
     message: z.string().openapi({ example: 'Avatar size exceeds limit' }),
     statusCode: z.number().openapi({ example: 400 }),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('AvatarError');
 
 /**
  * Sync avatar URL to all project memberships for a user
  */
-async function syncAvatarToProjects(env, userId, avatarUrl) {
+async function syncAvatarToProjects(env: Env, userId: string, avatarUrl: string): Promise<void> {
   try {
     const db = createDb(env.DB);
 
@@ -155,11 +158,24 @@ const uploadAvatarRoute = createRoute({
       },
       description: 'Unauthorized',
     },
+    500: {
+      content: {
+        'application/json': {
+          schema: AvatarErrorSchema,
+        },
+      },
+      description: 'Server error',
+    },
   },
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 avatarRoutes.openapi(uploadAvatarRoute, async c => {
   const { user } = getAuth(c);
+  if (!user) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
 
   // Check Content-Length header first for early rejection
   const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
@@ -169,7 +185,7 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
       { fileSize: contentLength, maxSize: FILE_SIZE_LIMITS.AVATAR },
       `Avatar size exceeds limit of ${FILE_SIZE_LIMITS.AVATAR / (1024 * 1024)}MB`,
     );
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   try {
@@ -185,7 +201,7 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
           { field: 'avatar' },
           'No avatar file provided',
         );
-        return c.json(error, error.statusCode);
+        return c.json(error, error.statusCode as ContentfulStatusCode);
       }
 
       if (!ALLOWED_TYPES.includes(file.type)) {
@@ -194,7 +210,7 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
           { fileType: file.type, allowedTypes: ALLOWED_TYPES },
           'Invalid file type. Allowed: JPEG, PNG, GIF, WebP',
         );
-        return c.json(error, error.statusCode);
+        return c.json(error, error.statusCode as ContentfulStatusCode);
       }
 
       if (file.size > FILE_SIZE_LIMITS.AVATAR) {
@@ -203,7 +219,7 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
           { fileSize: file.size, maxSize: FILE_SIZE_LIMITS.AVATAR },
           `Avatar size exceeds limit of ${FILE_SIZE_LIMITS.AVATAR / (1024 * 1024)}MB`,
         );
-        return c.json(error, error.statusCode);
+        return c.json(error, error.statusCode as ContentfulStatusCode);
       }
 
       const ext = file.type.split('/')[1] || 'jpg';
@@ -237,7 +253,7 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
       await syncAvatarToProjects(c.env, user.id, avatarUrl);
 
       return c.json({
-        success: true,
+        success: true as const,
         url: avatarUrl,
         key,
       });
@@ -248,14 +264,15 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
       { field: 'Content-Type' },
       'Invalid content type',
     );
-    return c.json(error, error.statusCode);
-  } catch (error) {
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  } catch (err) {
+    const error = err as Error;
     console.error('Avatar upload error:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'upload_avatar',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -298,6 +315,14 @@ const getAvatarRoute = createRoute({
       },
       description: 'Avatar not found',
     },
+    500: {
+      content: {
+        'application/json': {
+          schema: AvatarErrorSchema,
+        },
+      },
+      description: 'Server error',
+    },
   },
 });
 
@@ -309,7 +334,7 @@ avatarRoutes.openapi(getAvatarRoute, async c => {
 
     if (listed.objects.length === 0) {
       const error = createDomainError(FILE_ERRORS.NOT_FOUND, { fileName: 'avatar' });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const avatarKey = listed.objects[0].key;
@@ -317,7 +342,7 @@ avatarRoutes.openapi(getAvatarRoute, async c => {
 
     if (!object) {
       const error = createDomainError(FILE_ERRORS.NOT_FOUND, { fileName: 'avatar' });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const headers = new Headers();
@@ -326,13 +351,14 @@ avatarRoutes.openapi(getAvatarRoute, async c => {
     headers.set('ETag', object.etag);
 
     return new Response(object.body, { headers });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Avatar fetch error:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_avatar',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -361,11 +387,24 @@ const deleteAvatarRoute = createRoute({
       },
       description: 'Unauthorized',
     },
+    500: {
+      content: {
+        'application/json': {
+          schema: AvatarErrorSchema,
+        },
+      },
+      description: 'Server error',
+    },
   },
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 avatarRoutes.openapi(deleteAvatarRoute, async c => {
   const { user } = getAuth(c);
+  if (!user) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
 
   try {
     const listed = await c.env.PDF_BUCKET.list({ prefix: `avatars/${user.id}/` });
@@ -374,14 +413,15 @@ avatarRoutes.openapi(deleteAvatarRoute, async c => {
       await c.env.PDF_BUCKET.delete(obj.key);
     }
 
-    return c.json({ success: true, message: 'Avatar deleted' });
-  } catch (error) {
+    return c.json({ success: true as const, message: 'Avatar deleted' });
+  } catch (err) {
+    const error = err as Error;
     console.error('Avatar delete error:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'delete_avatar',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 

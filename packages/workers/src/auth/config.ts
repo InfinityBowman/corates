@@ -16,7 +16,7 @@ import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import type { Env } from '../types';
 
 interface ExecutionContext {
-  waitUntil: (promise: Promise<unknown>) => void;
+  waitUntil: (_promise: Promise<unknown>) => void;
 }
 
 interface BetterAuthUser {
@@ -90,7 +90,6 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
   }
 
   // Build plugins array
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const plugins: any[] = [];
 
   // ORCID OAuth provider for researcher authentication (using genericOAuth plugin)

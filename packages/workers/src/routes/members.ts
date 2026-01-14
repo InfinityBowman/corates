@@ -4,21 +4,23 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { createDb } from '@/db/client.js';
-import { projectMembers, user, projects, projectInvitations } from '@/db/schema.js';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import { createDb } from '@/db/client';
+import { projectMembers, user, projects, projectInvitations } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { TIME_DURATIONS } from '@/config/constants.js';
+import { requireAuth, getAuth } from '@/middleware/auth';
+import { TIME_DURATIONS } from '@/config/constants';
 import {
   createDomainError,
   createValidationError,
   isDomainError,
+  AUTH_ERRORS,
   PROJECT_ERRORS,
   SYSTEM_ERRORS,
   USER_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
-import { syncMemberToDO } from '@/lib/project-sync.js';
+import { syncMemberToDO } from '@/lib/project-sync';
 import {
   getProjectMembership,
   requireMemberManagement,
@@ -27,8 +29,16 @@ import {
   requireSafeRemoval,
   isProjectOwner,
 } from '@/policies';
+import type { Env } from '../types';
+import type { Context, Next } from 'hono';
 
-const memberRoutes = new OpenAPIHono({
+interface MemberContext {
+  projectId: string;
+  membership: { role: string };
+  isOwner: boolean;
+}
+
+const memberRoutes = new OpenAPIHono<{ Bindings: Env; Variables: MemberContext }>({
   defaultHook: (result, c) => {
     if (!result.success) {
       const firstIssue = result.error.issues[0];
@@ -37,7 +47,7 @@ const memberRoutes = new OpenAPIHono({
 
       let message = firstIssue?.message || 'Validation failed';
       const isMissing =
-        firstIssue?.received === 'undefined' ||
+        firstIssue?.code === 'invalid_type' ||
         message.includes('received undefined') ||
         message.includes('Required');
 
@@ -62,7 +72,10 @@ memberRoutes.use('*', requireAuth);
 /**
  * Middleware to verify project membership and set context
  */
-async function projectMembershipMiddleware(c, next) {
+async function projectMembershipMiddleware(
+  c: Context<{ Bindings: Env; Variables: MemberContext }>,
+  next: Next,
+): Promise<Response | void> {
   const { user: authUser } = getAuth(c);
   const projectId = c.req.param('projectId');
 
@@ -72,7 +85,12 @@ async function projectMembershipMiddleware(c, next) {
       { field: 'projectId' },
       'Project ID required',
     );
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
+  if (!authUser) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   const db = createDb(c.env.DB);
@@ -80,7 +98,7 @@ async function projectMembershipMiddleware(c, next) {
 
   if (!membership) {
     const error = createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   c.set('projectId', projectId);
@@ -97,7 +115,7 @@ memberRoutes.use('*', projectMembershipMiddleware);
 const AddMemberRequestSchema = z
   .object({
     userId: z.string().optional().openapi({ example: 'user-123' }),
-    email: z.email().optional().openapi({ example: 'user@example.com' }),
+    email: z.string().email().optional().openapi({ example: 'user@example.com' }),
     role: z
       .enum(['owner', 'collaborator', 'viewer'])
       .default('viewer')
@@ -169,7 +187,7 @@ const MemberErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('MemberError');
 
@@ -307,6 +325,7 @@ const removeMemberRoute = createRoute({
 });
 
 // Route handlers
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 memberRoutes.openapi(listMembersRoute, async c => {
   const projectId = c.get('projectId');
   const db = createDb(c.env.DB);
@@ -329,33 +348,48 @@ memberRoutes.openapi(listMembersRoute, async c => {
       .orderBy(projectMembers.joinedAt);
 
     return c.json(results);
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error listing members:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'list_members',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 memberRoutes.openapi(addMemberRoute, async c => {
   const projectId = c.get('projectId');
   const db = createDb(c.env.DB);
   const { userId, email, role } = c.req.valid('json');
   const { user: authUser } = getAuth(c);
 
-  try {
-    await requireMemberManagement(db, authUser.id, projectId);
-  } catch (error) {
-    if (isDomainError(error)) {
-      return c.json(error, error.statusCode);
-    }
-    throw error;
+  if (!authUser) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   try {
-    let userToAdd;
+    await requireMemberManagement(db, authUser.id, projectId);
+  } catch (err) {
+    if (isDomainError(err)) {
+      return c.json(err, err.statusCode as ContentfulStatusCode);
+    }
+    throw err;
+  }
+
+  try {
+    let userToAdd: {
+      id: string;
+      name: string | null;
+      email: string;
+      username: string | null;
+      displayName: string | null;
+      image: string | null;
+    } | undefined;
+
     if (userId) {
       userToAdd = await db
         .select({
@@ -400,8 +434,8 @@ memberRoutes.openapi(addMemberRoute, async c => {
         )
         .get();
 
-      let token;
-      let invitationId;
+      let token: string;
+      let invitationId: string;
 
       if (existingInvitation && !existingInvitation.acceptedAt) {
         invitationId = existingInvitation.id;
@@ -419,15 +453,28 @@ memberRoutes.openapi(addMemberRoute, async c => {
         const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
           invitationId: existingInvitation.id,
         });
-        return c.json(error, error.statusCode);
+        return c.json(error, error.statusCode as ContentfulStatusCode);
       } else {
         invitationId = crypto.randomUUID();
         token = crypto.randomUUID();
         const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
 
+        // Fetch project's orgId for the invitation
+        const projectForInvite = await db
+          .select({ orgId: projects.orgId })
+          .from(projects)
+          .where(eq(projects.id, projectId))
+          .get();
+
+        if (!projectForInvite) {
+          const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
+          return c.json(error, error.statusCode as ContentfulStatusCode);
+        }
+
         await db.insert(projectInvitations).values({
           id: invitationId,
           projectId,
+          orgId: projectForInvite.orgId,
           email: email.toLowerCase(),
           role,
           token,
@@ -451,23 +498,23 @@ memberRoutes.openapi(addMemberRoute, async c => {
 
       try {
         const appUrl = c.env.APP_URL || 'https://corates.org';
-        const basepath = c.env.BASEPATH || '';
+        const basepath = (c.env as unknown as Record<string, string | undefined>).BASEPATH ?? '';
         const basepathNormalized = basepath ? basepath.replace(/\/$/, '') : '';
 
         const callbackPath = `${basepathNormalized}/complete-profile?invitation=${token}`;
         const callbackURL = `${appUrl}${callbackPath}`;
 
         const authBaseUrl = c.env.AUTH_BASE_URL || c.env.APP_URL || 'https://corates.org';
-        let capturedMagicLinkUrl = null;
+        let capturedMagicLinkUrl: string | null = null;
 
         const { betterAuth } = await import('better-auth');
         const { magicLink } = await import('better-auth/plugins');
         const { drizzleAdapter } = await import('better-auth/adapters/drizzle');
         const { drizzle } = await import('drizzle-orm/d1');
-        const schema = await import('../db/schema.js');
-        const { MAGIC_LINK_EXPIRY_MINUTES } = await import('../auth/emailTemplates.js');
+        const schema = await import('../db/schema');
+        const { MAGIC_LINK_EXPIRY_MINUTES } = await import('../auth/emailTemplates');
 
-        const authSecret = c.env.AUTH_SECRET || c.env.SECRET;
+        const authSecret = c.env.AUTH_SECRET;
         if (!authSecret) {
           throw createDomainError(
             SYSTEM_ERRORS.INTERNAL_ERROR,
@@ -492,7 +539,7 @@ memberRoutes.openapi(addMemberRoute, async c => {
           secret: authSecret,
           plugins: [
             magicLink({
-              sendMagicLink: async ({ url }) => {
+              sendMagicLink: async ({ url }: { url: string }) => {
                 capturedMagicLinkUrl = url;
               },
               expiresIn: 60 * MAGIC_LINK_EXPIRY_MINUTES,
@@ -524,8 +571,8 @@ memberRoutes.openapi(addMemberRoute, async c => {
         }
 
         const { getProjectInvitationEmailHtml, getProjectInvitationEmailText } =
-          await import('../auth/emailTemplates.js');
-        const { escapeHtml } = await import('../lib/escapeHtml.js');
+          await import('../auth/emailTemplates');
+        const { escapeHtml } = await import('../lib/escapeHtml');
 
         const projectName = project?.name || 'Unknown Project';
         const inviterName = inviter?.displayName || inviter?.name || inviter?.email || 'Someone';
@@ -565,8 +612,8 @@ memberRoutes.openapi(addMemberRoute, async c => {
 
       return c.json(
         {
-          success: true,
-          invitation: true,
+          success: true as const,
+          invitation: true as const,
           message: 'Invitation sent successfully',
           email,
         },
@@ -576,7 +623,7 @@ memberRoutes.openapi(addMemberRoute, async c => {
 
     if (!userToAdd) {
       const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId, email });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const existingMember = await db
@@ -590,7 +637,7 @@ memberRoutes.openapi(addMemberRoute, async c => {
         projectId,
         userId: userToAdd.id,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const now = new Date();
@@ -655,16 +702,18 @@ memberRoutes.openapi(addMemberRoute, async c => {
       },
       201,
     );
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error adding member:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'add_member',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 memberRoutes.openapi(updateRoleRoute, async c => {
   const projectId = c.get('projectId');
   const memberId = c.req.param('userId');
@@ -672,62 +721,74 @@ memberRoutes.openapi(updateRoleRoute, async c => {
   const { role } = c.req.valid('json');
   const { user: authUser } = getAuth(c);
 
+  if (!authUser) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   try {
     await requireMemberManagement(db, authUser.id, projectId);
-    await requireSafeRoleChange(db, projectId, memberId, role);
-  } catch (error) {
-    if (isDomainError(error)) {
-      return c.json(error, error.statusCode);
+    await requireSafeRoleChange(db, projectId, memberId!, role);
+  } catch (err) {
+    if (isDomainError(err)) {
+      return c.json(err, err.statusCode as ContentfulStatusCode);
     }
-    throw error;
+    throw err;
   }
 
   try {
     await db
       .update(projectMembers)
       .set({ role })
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
+      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId!)));
 
     try {
       await syncMemberToDO(c.env, projectId, 'update', {
-        userId: memberId,
+        userId: memberId!,
         role,
       });
     } catch (err) {
       console.error('Failed to sync member update to DO:', err);
     }
 
-    return c.json({ success: true, userId: memberId, role });
-  } catch (error) {
+    return c.json({ success: true as const, userId: memberId!, role });
+  } catch (err) {
+    const error = err as Error;
     console.error('Error updating member role:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'update_member_role',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 memberRoutes.openapi(removeMemberRoute, async c => {
   const { user: authUser } = getAuth(c);
   const projectId = c.get('projectId');
   const memberId = c.req.param('userId');
   const db = createDb(c.env.DB);
 
+  if (!authUser) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const isSelfRemoval = memberId === authUser.id;
 
   try {
-    await requireMemberRemoval(db, authUser.id, projectId, memberId);
-    await requireSafeRemoval(db, projectId, memberId);
-  } catch (error) {
-    if (isDomainError(error)) {
-      return c.json(error, error.statusCode);
+    await requireMemberRemoval(db, authUser.id, projectId, memberId!);
+    await requireSafeRemoval(db, projectId, memberId!);
+  } catch (err) {
+    if (isDomainError(err)) {
+      return c.json(err, err.statusCode as ContentfulStatusCode);
     }
-    throw error;
+    throw err;
   }
 
   try {
-    const targetMember = await getProjectMembership(db, memberId, projectId);
+    const targetMember = await getProjectMembership(db, memberId!, projectId);
 
     if (!targetMember) {
       const error = createDomainError(
@@ -735,16 +796,16 @@ memberRoutes.openapi(removeMemberRoute, async c => {
         { projectId, userId: memberId },
         'Member not found',
       );
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     await db
       .delete(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId)));
+      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId!)));
 
     try {
       await syncMemberToDO(c.env, projectId, 'remove', {
-        userId: memberId,
+        userId: memberId!,
       });
     } catch (err) {
       console.error('Failed to sync member removal to DO:', err);
@@ -758,7 +819,7 @@ memberRoutes.openapi(removeMemberRoute, async c => {
           .where(eq(projects.id, projectId))
           .get();
 
-        const userSessionId = c.env.USER_SESSION.idFromName(memberId);
+        const userSessionId = c.env.USER_SESSION.idFromName(memberId!);
         const userSession = c.env.USER_SESSION.get(userSessionId);
         await userSession.fetch(
           new Request('https://internal/notify', {
@@ -778,14 +839,15 @@ memberRoutes.openapi(removeMemberRoute, async c => {
       }
     }
 
-    return c.json({ success: true, removed: memberId });
-  } catch (error) {
+    return c.json({ success: true as const, removed: memberId! });
+  } catch (err) {
+    const error = err as Error;
     console.error('Error removing member:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'remove_member',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 

@@ -4,28 +4,31 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { Client as PostmarkClient } from 'postmark';
-import { contactRateLimit } from '@/middleware/rateLimit.js';
+import { contactRateLimit } from '@/middleware/rateLimit';
 import {
   createDomainError,
   createValidationError,
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
-import { escapeHtml } from '@/lib/escapeHtml.js';
+import type { ValidationErrorCode } from '@corates/shared';
+import { escapeHtml } from '@/lib/escapeHtml';
+import type { Env } from '../types';
 
-const contact = new OpenAPIHono({
+const contact = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: (result, c) => {
     if (!result.success) {
       const firstIssue = result.error.issues[0];
       const field = firstIssue?.path?.[0] || 'input';
       const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
 
-      let errorCode = VALIDATION_ERRORS.INVALID_INPUT.code;
+      let errorCode: ValidationErrorCode = VALIDATION_ERRORS.INVALID_INPUT.code;
       let message = firstIssue?.message || 'Validation failed';
 
       const isMissing =
-        firstIssue?.received === 'undefined' ||
+        firstIssue?.code === 'invalid_type' ||
         message.includes('received undefined') ||
         message.includes('Required');
 
@@ -37,7 +40,7 @@ const contact = new OpenAPIHono({
       } else if (firstIssue?.code === 'too_small') {
         errorCode = VALIDATION_ERRORS.FIELD_TOO_SHORT.code;
         message = `${fieldName} is required`;
-      } else if (firstIssue?.code === 'invalid_string') {
+      } else if (firstIssue?.code === 'invalid_format') {
         errorCode = VALIDATION_ERRORS.FIELD_INVALID_FORMAT.code;
       }
 
@@ -107,7 +110,7 @@ const ContactErrorSchema = z
     message: z.string().openapi({ example: 'Name is required' }),
     statusCode: z.number().openapi({ example: 400 }),
     field: z.string().optional().openapi({ example: 'name' }),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('ContactError');
 
@@ -164,6 +167,7 @@ const submitContactRoute = createRoute({
   },
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 contact.openapi(submitContactRoute, async c => {
   const env = c.env;
   const { name, email, subject, message } = c.req.valid('json');
@@ -174,11 +178,11 @@ contact.openapi(submitContactRoute, async c => {
     const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
       service: 'email',
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   const postmark = new PostmarkClient(env.POSTMARK_SERVER_TOKEN);
-  const contactEmail = env.CONTACT_EMAIL || 'contact@corates.org';
+  const contactEmail = (env as unknown as Record<string, string | undefined>).CONTACT_EMAIL ?? 'contact@corates.org';
 
   try {
     const response = await postmark.sendEmail({
@@ -220,17 +224,18 @@ contact.openapi(submitContactRoute, async c => {
         service: 'postmark',
         errorCode: response.ErrorCode,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
-    return c.json({ success: true, messageId: response.MessageID });
+    return c.json({ success: true as const, messageId: response.MessageID });
   } catch (err) {
-    console.error('[Contact] Exception during send:', err.message, err.stack);
-    const error = createDomainError(SYSTEM_ERRORS.EMAIL_SEND_FAILED, {
+    const error = err as Error;
+    console.error('[Contact] Exception during send:', error.message, error.stack);
+    const domainError = createDomainError(SYSTEM_ERRORS.EMAIL_SEND_FAILED, {
       service: 'postmark',
-      originalError: err.message,
+      originalError: error.message,
     });
-    return c.json(error, error.statusCode);
+    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
   }
 });
 

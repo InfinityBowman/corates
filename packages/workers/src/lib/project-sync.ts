@@ -3,7 +3,7 @@ import type { Env } from '../types';
 
 interface MemberData {
   userId: string;
-  role: string;
+  role?: string;
   [key: string]: unknown;
 }
 

@@ -4,28 +4,30 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { emailRateLimit } from '@/middleware/rateLimit.js';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import { emailRateLimit } from '@/middleware/rateLimit';
 import {
   createDomainError,
   createValidationError,
   VALIDATION_ERRORS,
   SYSTEM_ERRORS,
 } from '@corates/shared';
+import type { ValidationErrorCode } from '@corates/shared';
+import type { Env } from '../types';
 
-const emailRoutes = new OpenAPIHono({
+const emailRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: (result, c) => {
     if (!result.success) {
       const firstIssue = result.error.issues[0];
       const field = firstIssue?.path?.[0] || 'input';
       const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
 
-      let errorCode = VALIDATION_ERRORS.INVALID_INPUT.code;
+      let errorCode: ValidationErrorCode = VALIDATION_ERRORS.INVALID_INPUT.code;
       let message = firstIssue?.message || 'Validation failed';
 
-      // Check for missing/required field using structured properties with message fallbacks
       const isMissing =
-        firstIssue?.received === 'undefined' ||
-        (firstIssue?.code === 'invalid_type' && message.includes('received undefined')) ||
+        firstIssue?.code === 'invalid_type' ||
+        message.includes('received undefined') ||
         message.includes('Required');
 
       if (isMissing) {
@@ -35,7 +37,7 @@ const emailRoutes = new OpenAPIHono({
         errorCode = VALIDATION_ERRORS.FIELD_TOO_LONG.code;
       } else if (firstIssue?.code === 'too_small') {
         errorCode = VALIDATION_ERRORS.FIELD_TOO_SHORT.code;
-      } else if (firstIssue?.code === 'invalid_string') {
+      } else if (firstIssue?.code === 'invalid_format') {
         errorCode = VALIDATION_ERRORS.FIELD_INVALID_FORMAT.code;
       }
 
@@ -56,7 +58,7 @@ const EmailQueueRequestSchema = z
     subject: z.string().optional().openapi({ example: 'Welcome to CoRATES' }),
     body: z.string().optional().openapi({ example: 'Email body content' }),
     template: z.string().optional().openapi({ example: 'welcome' }),
-    data: z.record(z.unknown()).optional(),
+    data: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('EmailQueueRequest');
 
@@ -74,7 +76,7 @@ const ErrorSchema = z
     message: z.string(),
     statusCode: z.number(),
     field: z.string().optional(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('EmailError');
 
@@ -119,6 +121,7 @@ const queueEmailRoute = createRoute({
   },
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 emailRoutes.openapi(queueEmailRoute, async c => {
   try {
     const payload = c.req.valid('json');
@@ -134,15 +137,16 @@ emailRoutes.openapi(queueEmailRoute, async c => {
       }),
     );
 
-    const data = await resp.json();
-    return c.json({ success: true, queued: data.success });
+    const data = (await resp.json()) as { success: boolean };
+    return c.json({ success: true as const, queued: data.success });
   } catch (err) {
-    console.error('Email queue handler error:', err);
-    const error = createDomainError(SYSTEM_ERRORS.EMAIL_SEND_FAILED, {
+    const error = err as Error;
+    console.error('Email queue handler error:', error);
+    const domainError = createDomainError(SYSTEM_ERRORS.EMAIL_SEND_FAILED, {
       operation: 'queue_email',
-      originalError: err.message,
+      originalError: error.message,
     });
-    return c.json(error, error.statusCode);
+    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
   }
 });
 

@@ -4,8 +4,9 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { Env } from '../types';
 
-const health = new OpenAPIHono();
+const health = new OpenAPIHono<{ Bindings: Env }>();
 
 // Service status schema
 const ServiceStatusSchema = z
@@ -36,6 +37,18 @@ const HealthResponseSchema = z
   })
   .openapi('HealthResponse');
 
+type ServiceStatus = z.infer<typeof ServiceStatusSchema>;
+
+interface HealthChecks {
+  status: 'healthy' | 'degraded';
+  timestamp: string;
+  services: {
+    database?: ServiceStatus;
+    storage?: ServiceStatus;
+    durableObjects?: ServiceStatus;
+  };
+}
+
 // Health check route
 const healthRoute = createRoute({
   method: 'get',
@@ -65,7 +78,7 @@ const healthRoute = createRoute({
 });
 
 health.openapi(healthRoute, async c => {
-  const checks = {
+  const checks: HealthChecks = {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     services: {},
@@ -73,16 +86,17 @@ health.openapi(healthRoute, async c => {
 
   // Check D1 database
   try {
-    const result = await c.env.DB.prepare('SELECT 1 as ok').first();
+    const result = await c.env.DB.prepare('SELECT 1 as ok').first<{ ok: number }>();
     checks.services.database = {
       status: result?.ok === 1 ? 'healthy' : 'unhealthy',
       type: 'D1',
     };
   } catch (error) {
+    const err = error as Error;
     checks.services.database = {
       status: 'unhealthy',
       type: 'D1',
-      error: error.message,
+      error: err.message,
     };
     checks.status = 'degraded';
   }
@@ -95,10 +109,11 @@ health.openapi(healthRoute, async c => {
       type: 'R2',
     };
   } catch (error) {
+    const err = error as Error;
     checks.services.storage = {
       status: 'unhealthy',
       type: 'R2',
-      error: error.message,
+      error: err.message,
     };
     checks.status = 'degraded';
   }
@@ -116,10 +131,11 @@ health.openapi(healthRoute, async c => {
       },
     };
   } catch (error) {
+    const err = error as Error;
     checks.services.durableObjects = {
       status: 'unhealthy',
       type: 'Durable Objects',
-      error: error.message,
+      error: err.message,
     };
     checks.status = 'degraded';
   }
