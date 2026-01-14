@@ -2,7 +2,7 @@
  * Project factory for tests
  */
 
-import { seedProject, seedProjectMember } from '../helpers.js';
+import { seedProject, seedProjectMember, seedProjectInvitation } from '../helpers.js';
 import { generateId, nowSec, withDefaults, nextCounter } from './utils.js';
 import { buildUser } from './user.js';
 import { buildOrg, buildOrgMember } from './org.js';
@@ -162,4 +162,96 @@ export async function buildProjectWithMembers(options = {}) {
   }
 
   return { project, owner, org, members };
+}
+
+/**
+ * Build a project invitation
+ *
+ * @param {Object} options
+ * @param {string} options.orgId - Organization ID
+ * @param {string} options.projectId - Project ID
+ * @param {string} options.invitedBy - User ID who sent the invitation
+ * @param {string} [options.email] - Email to invite (generated if not provided)
+ * @param {string} [options.role='member'] - Project role
+ * @param {string} [options.orgRole='member'] - Organization role
+ * @param {boolean} [options.grantOrgMembership=true] - Whether to grant org membership on accept
+ * @param {string} [options.token] - Invitation token (generated if not provided)
+ * @param {number} [options.expiresAt] - Expiration timestamp (7 days from now if not provided)
+ * @param {number|null} [options.acceptedAt=null] - When accepted (null = pending)
+ * @param {string} [options.status='pending'] - Shortcut for common states: 'pending', 'accepted', 'expired'
+ * @returns {Promise<Object>} The created invitation
+ *
+ * @example
+ * // Create pending invitation
+ * const invitation = await buildProjectInvitation({
+ *   orgId: org.id,
+ *   projectId: project.id,
+ *   invitedBy: owner.id,
+ * });
+ *
+ * // Create accepted invitation
+ * const invitation = await buildProjectInvitation({
+ *   orgId: org.id,
+ *   projectId: project.id,
+ *   invitedBy: owner.id,
+ *   status: 'accepted',
+ * });
+ *
+ * // Create expired invitation
+ * const invitation = await buildProjectInvitation({
+ *   orgId: org.id,
+ *   projectId: project.id,
+ *   invitedBy: owner.id,
+ *   status: 'expired',
+ * });
+ */
+export async function buildProjectInvitation(options) {
+  const n = nextCounter();
+  const ts = nowSec();
+
+  const {
+    orgId,
+    projectId,
+    invitedBy,
+    email = `invitee${n}@example.com`,
+    role = 'member',
+    orgRole = 'member',
+    grantOrgMembership = true,
+    token = `token-${generateId('inv')}`,
+    status = 'pending',
+  } = options;
+
+  let { expiresAt, acceptedAt } = options;
+
+  // Handle status shortcut
+  if (status === 'expired') {
+    expiresAt = expiresAt ?? ts - 24 * 60 * 60; // Expired 1 day ago
+    acceptedAt = acceptedAt ?? null;
+  } else if (status === 'accepted') {
+    expiresAt = expiresAt ?? ts + 7 * 24 * 60 * 60; // Valid for 7 days
+    acceptedAt = acceptedAt ?? ts; // Accepted now
+  } else {
+    // pending
+    expiresAt = expiresAt ?? ts + 7 * 24 * 60 * 60; // Valid for 7 days
+    acceptedAt = acceptedAt ?? null;
+  }
+
+  const invitationData = {
+    id: options.id || generateId('inv'),
+    orgId,
+    projectId,
+    email,
+    role,
+    orgRole,
+    grantOrgMembership: grantOrgMembership ? 1 : 0,
+    token,
+    invitedBy,
+    expiresAt,
+    acceptedAt,
+    createdAt: ts,
+  };
+
+  await seedProjectInvitation(invitationData);
+
+  return invitationData;
 }

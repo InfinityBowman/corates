@@ -23,6 +23,7 @@ export {
   buildProjectWithOwner,
   buildProjectMember,
   buildProjectWithMembers,
+  buildProjectInvitation,
 } from './project.js';
 
 // Scenario factories

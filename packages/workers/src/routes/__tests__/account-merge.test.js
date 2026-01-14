@@ -6,15 +6,15 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
+import { resetTestDatabase, json } from '@/__tests__/helpers.js';
 import {
-  resetTestDatabase,
-  seedUser,
-  seedProject,
-  seedProjectMember,
-  seedOrganization,
-  seedOrgMember,
-  json,
-} from '@/__tests__/helpers.js';
+  buildUser,
+  buildOrg,
+  buildOrgMember,
+  buildProject,
+  buildProjectMember,
+  resetCounter,
+} from '@/__tests__/factories';
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -70,6 +70,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await resetTestDatabase();
+  resetCounter();
 });
 
 async function fetchAccountMerge(path, init = {}) {
@@ -107,29 +108,16 @@ async function seedAccount(userId, providerId = 'google') {
 
 describe('Account Merge Routes - POST /api/accounts/merge/initiate', () => {
   it('should initiate merge request successfully', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user1 = await buildUser({ email: 'user1@example.com' });
+    const user2 = await buildUser({ email: 'user2@example.com' });
 
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedAccount('user-1', 'google');
+    await seedAccount(user1.id, 'google');
 
     const res = await fetchAccountMerge('/api/accounts/merge/initiate', {
       method: 'POST',
+      headers: { 'x-test-user-id': user1.id, 'x-test-user-email': user1.email },
       body: JSON.stringify({
-        targetEmail: 'user2@example.com',
+        targetEmail: user2.email,
       }),
     });
 
@@ -137,24 +125,18 @@ describe('Account Merge Routes - POST /api/accounts/merge/initiate', () => {
     const body = await json(res);
     expect(body.success).toBe(true);
     expect(body.mergeToken).toBeDefined();
-    expect(body.targetEmail).toBe('user2@example.com');
+    expect(body.targetEmail).toBe(user2.email);
     expect(body.preview.currentProviders).toContain('google');
   });
 
   it('should reject merging with self', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user1 = await buildUser({ email: 'user1@example.com' });
 
     const res = await fetchAccountMerge('/api/accounts/merge/initiate', {
       method: 'POST',
+      headers: { 'x-test-user-id': user1.id, 'x-test-user-email': user1.email },
       body: JSON.stringify({
-        targetEmail: 'user1@example.com',
+        targetEmail: user1.email,
       }),
     });
 
@@ -164,17 +146,11 @@ describe('Account Merge Routes - POST /api/accounts/merge/initiate', () => {
   });
 
   it('should return 404 when target user does not exist', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user1 = await buildUser({ email: 'user1@example.com' });
 
     const res = await fetchAccountMerge('/api/accounts/merge/initiate', {
       method: 'POST',
+      headers: { 'x-test-user-id': user1.id, 'x-test-user-email': user1.email },
       body: JSON.stringify({
         targetEmail: 'nonexistent@example.com',
       }),
@@ -202,22 +178,8 @@ describe('Account Merge Routes - POST /api/accounts/merge/initiate', () => {
       return;
     }
 
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user1 = await buildUser({ email: 'user1@example.com' });
+    const user2 = await buildUser({ email: 'user2@example.com' });
 
     // Mock rate limit KV to simulate rate limit exceeded for merge-initiate key
     const originalGet = env.RATE_LIMIT_KV.get;
@@ -231,8 +193,9 @@ describe('Account Merge Routes - POST /api/accounts/merge/initiate', () => {
     try {
       const res = await fetchAccountMerge('/api/accounts/merge/initiate', {
         method: 'POST',
+        headers: { 'x-test-user-id': user1.id, 'x-test-user-email': user1.email },
         body: JSON.stringify({
-          targetEmail: 'user2@example.com',
+          targetEmail: user2.email,
         }),
       });
 
@@ -249,21 +212,8 @@ describe('Account Merge Routes - POST /api/accounts/merge/initiate', () => {
 describe('Account Merge Routes - POST /api/accounts/merge/verify', () => {
   it('should verify code successfully', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user1 = await buildUser({ email: 'user1@example.com' });
+    const user2 = await buildUser({ email: 'user2@example.com' });
 
     // Create merge request
     const mergeToken = 'test-token-123';
@@ -272,10 +222,10 @@ describe('Account Merge Routes - POST /api/accounts/merge/verify', () => {
     const mergeData = {
       token: mergeToken,
       code: verificationCode,
-      initiatorId: 'user-1',
-      initiatorEmail: 'user1@example.com',
-      targetId: 'user-2',
-      targetEmail: 'user2@example.com',
+      initiatorId: user1.id,
+      initiatorEmail: user1.email,
+      targetId: user2.id,
+      targetEmail: user2.email,
       verified: false,
     };
 
@@ -285,7 +235,7 @@ describe('Account Merge Routes - POST /api/accounts/merge/verify', () => {
     )
       .bind(
         'verify-1',
-        'merge:user-1:user-2',
+        `merge:${user1.id}:${user2.id}`,
         JSON.stringify(mergeData),
         Math.floor(expiresAt.getTime() / 1000),
         nowSec,
@@ -295,6 +245,7 @@ describe('Account Merge Routes - POST /api/accounts/merge/verify', () => {
 
     const res = await fetchAccountMerge('/api/accounts/merge/verify', {
       method: 'POST',
+      headers: { 'x-test-user-id': user1.id, 'x-test-user-email': user1.email },
       body: JSON.stringify({
         mergeToken,
         code: verificationCode,
@@ -309,21 +260,8 @@ describe('Account Merge Routes - POST /api/accounts/merge/verify', () => {
 
   it('should reject invalid code', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user1 = await buildUser({ email: 'user1@example.com' });
+    const user2 = await buildUser({ email: 'user2@example.com' });
 
     const mergeToken = 'test-token-123';
     const verificationCode = '123456';
@@ -331,8 +269,8 @@ describe('Account Merge Routes - POST /api/accounts/merge/verify', () => {
     const mergeData = {
       token: mergeToken,
       code: verificationCode,
-      initiatorId: 'user-1',
-      targetId: 'user-2',
+      initiatorId: user1.id,
+      targetId: user2.id,
       verified: false,
     };
 
@@ -342,7 +280,7 @@ describe('Account Merge Routes - POST /api/accounts/merge/verify', () => {
     )
       .bind(
         'verify-1',
-        'merge:user-1:user-2',
+        `merge:${user1.id}:${user2.id}`,
         JSON.stringify(mergeData),
         Math.floor(expiresAt.getTime() / 1000),
         nowSec,
@@ -352,6 +290,7 @@ describe('Account Merge Routes - POST /api/accounts/merge/verify', () => {
 
     const res = await fetchAccountMerge('/api/accounts/merge/verify', {
       method: 'POST',
+      headers: { 'x-test-user-id': user1.id, 'x-test-user-email': user1.email },
       body: JSON.stringify({
         mergeToken,
         code: 'wrong-code',
@@ -365,21 +304,8 @@ describe('Account Merge Routes - POST /api/accounts/merge/verify', () => {
 
   it('should reject expired merge request', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user1 = await buildUser({ email: 'user1@example.com' });
+    const user2 = await buildUser({ email: 'user2@example.com' });
 
     const mergeToken = 'test-token-123';
     const verificationCode = '123456';
@@ -387,8 +313,8 @@ describe('Account Merge Routes - POST /api/accounts/merge/verify', () => {
     const mergeData = {
       token: mergeToken,
       code: verificationCode,
-      initiatorId: 'user-1',
-      targetId: 'user-2',
+      initiatorId: user1.id,
+      targetId: user2.id,
       verified: false,
     };
 
@@ -398,7 +324,7 @@ describe('Account Merge Routes - POST /api/accounts/merge/verify', () => {
     )
       .bind(
         'verify-1',
-        'merge:user-1:user-2',
+        `merge:${user1.id}:${user2.id}`,
         JSON.stringify(mergeData),
         Math.floor(expiresAt.getTime() / 1000),
         nowSec,
@@ -408,6 +334,7 @@ describe('Account Merge Routes - POST /api/accounts/merge/verify', () => {
 
     const res = await fetchAccountMerge('/api/accounts/merge/verify', {
       method: 'POST',
+      headers: { 'x-test-user-id': user1.id, 'x-test-user-email': user1.email },
       body: JSON.stringify({
         mergeToken,
         code: verificationCode,
@@ -423,72 +350,22 @@ describe('Account Merge Routes - POST /api/accounts/merge/verify', () => {
 describe('Account Merge Routes - POST /api/accounts/merge/complete', () => {
   it('should complete merge successfully', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    // Create user1 (initiator) and user2 (target to be merged)
+    const user1 = await buildUser({ email: 'user1@example.com' });
+    const user2 = await buildUser({ email: 'user2@example.com' });
 
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    await seedAccount(user1.id, 'google');
+    await seedAccount(user2.id, 'github');
 
-    await seedAccount('user-1', 'google');
-    await seedAccount('user-2', 'github');
+    // Create org with user2 as owner
+    const { org } = await buildOrg({ owner: user2 });
+    // Add user1 as member
+    await buildOrgMember({ orgId: org.id, user: user1, role: 'member' });
 
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'member',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-2',
-      organizationId: 'org-1',
-      userId: 'user-2',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Project 1',
-      orgId: 'org-1',
-      createdBy: 'user-2',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'member',
-      joinedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-2',
-      projectId: 'project-1',
-      userId: 'user-2',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
+    // Create project owned by user2
+    const { project } = await buildProject({ org, owner: user2 });
+    // Add user1 as project member
+    await buildProjectMember({ projectId: project.id, orgId: org.id, user: user1, role: 'member' });
 
     // Create verified merge request
     const mergeToken = 'test-token-123';
@@ -496,8 +373,8 @@ describe('Account Merge Routes - POST /api/accounts/merge/complete', () => {
     const mergeData = {
       token: mergeToken,
       code: '123456',
-      initiatorId: 'user-1',
-      targetId: 'user-2',
+      initiatorId: user1.id,
+      targetId: user2.id,
       verified: true,
       verifiedAt: Date.now(),
     };
@@ -508,7 +385,7 @@ describe('Account Merge Routes - POST /api/accounts/merge/complete', () => {
     )
       .bind(
         'verify-1',
-        'merge:user-1:user-2',
+        `merge:${user1.id}:${user2.id}`,
         JSON.stringify(mergeData),
         Math.floor(expiresAt.getTime() / 1000),
         nowSec,
@@ -518,6 +395,7 @@ describe('Account Merge Routes - POST /api/accounts/merge/complete', () => {
 
     const res = await fetchAccountMerge('/api/accounts/merge/complete', {
       method: 'POST',
+      headers: { 'x-test-user-id': user1.id, 'x-test-user-email': user1.email },
       body: JSON.stringify({
         mergeToken,
       }),
@@ -528,42 +406,31 @@ describe('Account Merge Routes - POST /api/accounts/merge/complete', () => {
     expect(body.success).toBe(true);
     expect(body.mergedProviders).toContain('github');
 
-    // Verify user-2 is deleted
-    const user2 = await env.DB.prepare('SELECT * FROM user WHERE id = ?1').bind('user-2').first();
-    expect(user2).toBeNull();
+    // Verify user2 is deleted
+    const deletedUser = await env.DB.prepare('SELECT * FROM user WHERE id = ?1')
+      .bind(user2.id)
+      .first();
+    expect(deletedUser).toBeNull();
 
     // Verify project ownership transferred
-    const project = await env.DB.prepare('SELECT createdBy FROM projects WHERE id = ?1')
-      .bind('project-1')
+    const updatedProject = await env.DB.prepare('SELECT createdBy FROM projects WHERE id = ?1')
+      .bind(project.id)
       .first();
-    expect(project.createdBy).toBe('user-1');
+    expect(updatedProject.createdBy).toBe(user1.id);
   });
 
   it('should reject unverified merge request', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user1 = await buildUser({ email: 'user1@example.com' });
+    const user2 = await buildUser({ email: 'user2@example.com' });
 
     const mergeToken = 'test-token-123';
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
     const mergeData = {
       token: mergeToken,
       code: '123456',
-      initiatorId: 'user-1',
-      targetId: 'user-2',
+      initiatorId: user1.id,
+      targetId: user2.id,
       verified: false, // Not verified
     };
 
@@ -573,7 +440,7 @@ describe('Account Merge Routes - POST /api/accounts/merge/complete', () => {
     )
       .bind(
         'verify-1',
-        'merge:user-1:user-2',
+        `merge:${user1.id}:${user2.id}`,
         JSON.stringify(mergeData),
         Math.floor(expiresAt.getTime() / 1000),
         nowSec,
@@ -583,6 +450,7 @@ describe('Account Merge Routes - POST /api/accounts/merge/complete', () => {
 
     const res = await fetchAccountMerge('/api/accounts/merge/complete', {
       method: 'POST',
+      headers: { 'x-test-user-id': user1.id, 'x-test-user-email': user1.email },
       body: JSON.stringify({
         mergeToken,
       }),
@@ -597,29 +465,16 @@ describe('Account Merge Routes - POST /api/accounts/merge/complete', () => {
 describe('Account Merge Routes - DELETE /api/accounts/merge/cancel', () => {
   it('should cancel merge request', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedUser({
-      id: 'user-2',
-      name: 'User 2',
-      email: 'user2@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user1 = await buildUser({ email: 'user1@example.com' });
+    const user2 = await buildUser({ email: 'user2@example.com' });
 
     const mergeToken = 'test-token-123';
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
     const mergeData = {
       token: mergeToken,
       code: '123456',
-      initiatorId: 'user-1',
-      targetId: 'user-2',
+      initiatorId: user1.id,
+      targetId: user2.id,
       verified: false,
     };
 
@@ -629,7 +484,7 @@ describe('Account Merge Routes - DELETE /api/accounts/merge/cancel', () => {
     )
       .bind(
         'verify-1',
-        'merge:user-1:user-2',
+        `merge:${user1.id}:${user2.id}`,
         JSON.stringify(mergeData),
         Math.floor(expiresAt.getTime() / 1000),
         nowSec,
@@ -639,6 +494,7 @@ describe('Account Merge Routes - DELETE /api/accounts/merge/cancel', () => {
 
     const res = await fetchAccountMerge('/api/accounts/merge/cancel', {
       method: 'DELETE',
+      headers: { 'x-test-user-id': user1.id, 'x-test-user-email': user1.email },
       body: JSON.stringify({
         mergeToken,
       }),
@@ -650,7 +506,7 @@ describe('Account Merge Routes - DELETE /api/accounts/merge/cancel', () => {
 
     // Verify merge request is deleted
     const verification = await env.DB.prepare('SELECT * FROM verification WHERE identifier = ?1')
-      .bind('merge:user-1:user-2')
+      .bind(`merge:${user1.id}:${user2.id}`)
       .first();
     expect(verification).toBeNull();
   });

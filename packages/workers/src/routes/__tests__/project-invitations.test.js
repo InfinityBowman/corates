@@ -6,15 +6,11 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import {
-  resetTestDatabase,
-  clearProjectDOs,
-  seedProjectInvitation,
-  json,
-} from '@/__tests__/helpers.js';
+import { resetTestDatabase, clearProjectDOs, json } from '@/__tests__/helpers.js';
 import {
   buildProject,
   buildProjectWithMembers,
+  buildProjectInvitation,
   buildUser,
   resetCounter,
 } from '@/__tests__/factories';
@@ -222,22 +218,15 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
 describe('Project Invitation Routes - POST resend/cancel', () => {
   it('should resend existing pending invitation', async () => {
     const { project, org, owner } = await buildProject();
-    const nowSec = Math.floor(Date.now() / 1000);
     const token = 'existing-token';
 
-    await seedProjectInvitation({
+    const invitation = await buildProjectInvitation({
       id: 'inv-1',
       orgId: org.id,
       projectId: project.id,
       email: 'invitee@example.com',
-      role: 'member',
-      orgRole: 'member',
-      grantOrgMembership: 1,
       token,
       invitedBy: owner.id,
-      expiresAt: nowSec + 7 * 24 * 60 * 60,
-      acceptedAt: null,
-      createdAt: nowSec,
     });
 
     const res = await fetchInvitations(org.id, project.id, '', {
@@ -257,28 +246,20 @@ describe('Project Invitation Routes - POST resend/cancel', () => {
       .all();
 
     expect(invitations).toHaveLength(1);
-    expect(invitations[0].id).toBe('inv-1');
+    expect(invitations[0].id).toBe(invitation.id);
     expect(invitations[0].token).toBe(token);
     expect(invitations[0].role).toBe('owner');
   });
 
   it('should return error when invitation already accepted', async () => {
     const { project, org, owner } = await buildProject();
-    const nowSec = Math.floor(Date.now() / 1000);
 
-    await seedProjectInvitation({
-      id: 'inv-1',
+    await buildProjectInvitation({
       orgId: org.id,
       projectId: project.id,
       email: 'invitee@example.com',
-      role: 'member',
-      orgRole: 'member',
-      grantOrgMembership: 1,
-      token: 'token-1',
       invitedBy: owner.id,
-      expiresAt: nowSec + 7 * 24 * 60 * 60,
-      acceptedAt: nowSec,
-      createdAt: nowSec,
+      status: 'accepted',
     });
 
     const res = await fetchInvitations(org.id, project.id, '', {
@@ -296,36 +277,21 @@ describe('Project Invitation Routes - POST resend/cancel', () => {
 describe('Project Invitation Routes - GET /api/orgs/:orgId/projects/:projectId/invitations', () => {
   it('should list only pending invitations', async () => {
     const { project, org, owner } = await buildProject();
-    const nowSec = Math.floor(Date.now() / 1000);
 
-    await seedProjectInvitation({
-      id: 'inv-1',
+    await buildProjectInvitation({
       orgId: org.id,
       projectId: project.id,
       email: 'pending@example.com',
-      role: 'member',
-      orgRole: 'member',
-      grantOrgMembership: 1,
-      token: 'token-1',
       invitedBy: owner.id,
-      expiresAt: nowSec + 7 * 24 * 60 * 60,
-      acceptedAt: null,
-      createdAt: nowSec,
+      status: 'pending',
     });
 
-    await seedProjectInvitation({
-      id: 'inv-2',
+    await buildProjectInvitation({
       orgId: org.id,
       projectId: project.id,
       email: 'accepted@example.com',
-      role: 'member',
-      orgRole: 'member',
-      grantOrgMembership: 1,
-      token: 'token-2',
       invitedBy: owner.id,
-      expiresAt: nowSec + 7 * 24 * 60 * 60,
-      acceptedAt: nowSec,
-      createdAt: nowSec,
+      status: 'accepted',
     });
 
     const res = await fetchInvitations(org.id, project.id, '', {
@@ -355,24 +321,16 @@ describe('Project Invitation Routes - DELETE /api/orgs/:orgId/projects/:projectI
 
   it('should return error when canceling accepted invitation', async () => {
     const { project, org, owner } = await buildProject();
-    const nowSec = Math.floor(Date.now() / 1000);
 
-    await seedProjectInvitation({
-      id: 'inv-1',
+    const invitation = await buildProjectInvitation({
       orgId: org.id,
       projectId: project.id,
       email: 'accepted@example.com',
-      role: 'member',
-      orgRole: 'member',
-      grantOrgMembership: 1,
-      token: 'token-1',
       invitedBy: owner.id,
-      expiresAt: nowSec + 7 * 24 * 60 * 60,
-      acceptedAt: nowSec,
-      createdAt: nowSec,
+      status: 'accepted',
     });
 
-    const res = await fetchInvitations(org.id, project.id, '/inv-1', {
+    const res = await fetchInvitations(org.id, project.id, `/${invitation.id}`, {
       method: 'DELETE',
       headers: { 'x-test-user-id': owner.id },
     });
@@ -384,24 +342,16 @@ describe('Project Invitation Routes - DELETE /api/orgs/:orgId/projects/:projectI
 
   it('should cancel pending invitation', async () => {
     const { project, org, owner } = await buildProject();
-    const nowSec = Math.floor(Date.now() / 1000);
 
-    await seedProjectInvitation({
-      id: 'inv-1',
+    const invitation = await buildProjectInvitation({
       orgId: org.id,
       projectId: project.id,
       email: 'pending@example.com',
-      role: 'member',
-      orgRole: 'member',
-      grantOrgMembership: 1,
-      token: 'token-1',
       invitedBy: owner.id,
-      expiresAt: nowSec + 7 * 24 * 60 * 60,
-      acceptedAt: null,
-      createdAt: nowSec,
+      status: 'pending',
     });
 
-    const res = await fetchInvitations(org.id, project.id, '/inv-1', {
+    const res = await fetchInvitations(org.id, project.id, `/${invitation.id}`, {
       method: 'DELETE',
       headers: { 'x-test-user-id': owner.id },
     });
@@ -409,17 +359,17 @@ describe('Project Invitation Routes - DELETE /api/orgs/:orgId/projects/:projectI
     expect(res.status).toBe(200);
     const body = await json(res);
     expect(body.success).toBe(true);
-    expect(body.cancelled).toBe('inv-1');
+    expect(body.cancelled).toBe(invitation.id);
 
     // Check invitation was deleted
     const db = createDb(env.DB);
-    const invitation = await db
+    const dbInvitation = await db
       .select()
       .from(projectInvitations)
-      .where(eq(projectInvitations.id, 'inv-1'))
+      .where(eq(projectInvitations.id, invitation.id))
       .get();
 
-    expect(invitation).toBeUndefined();
+    expect(dbInvitation).toBeUndefined();
   });
 });
 
@@ -427,23 +377,15 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
   it('should accept invitation and add user to org and project', async () => {
     const { project, org, owner } = await buildProject();
     const invitee = await buildUser({ email: 'invitee@example.com' });
-    const nowSec = Math.floor(Date.now() / 1000);
     const token = 'accept-token';
-    const futureExpiresAt = nowSec + 7 * 24 * 60 * 60;
 
-    await seedProjectInvitation({
-      id: 'inv-1',
+    const invitation = await buildProjectInvitation({
       orgId: org.id,
       projectId: project.id,
       email: invitee.email,
-      role: 'member',
-      orgRole: 'member',
-      grantOrgMembership: 1,
       token,
       invitedBy: owner.id,
-      expiresAt: futureExpiresAt,
-      acceptedAt: null,
-      createdAt: nowSec,
+      status: 'pending',
     });
 
     const res = await fetchInvitations(org.id, project.id, '/accept', {
@@ -485,13 +427,13 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
     expect(projectMember.role).toBe('member');
 
     // Check invitation was marked as accepted
-    const invitation = await db
+    const dbInvitation = await db
       .select()
       .from(projectInvitations)
-      .where(eq(projectInvitations.id, 'inv-1'))
+      .where(eq(projectInvitations.id, invitation.id))
       .get();
 
-    expect(invitation.acceptedAt).not.toBeNull();
+    expect(dbInvitation.acceptedAt).not.toBeNull();
 
     // Check syncMemberToDO was called
     expect(mockSyncMemberToDO).toHaveBeenCalledWith(
@@ -525,23 +467,15 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
   it('should return error for expired invitation', async () => {
     const { project, org, owner } = await buildProject();
     const invitee = await buildUser({ email: 'invitee@example.com' });
-    const nowSec = Math.floor(Date.now() / 1000);
     const token = 'expired-token';
-    const pastExpiresAt = nowSec - 24 * 60 * 60;
 
-    await seedProjectInvitation({
-      id: 'inv-1',
+    await buildProjectInvitation({
       orgId: org.id,
       projectId: project.id,
       email: invitee.email,
-      role: 'member',
-      orgRole: 'member',
-      grantOrgMembership: 1,
       token,
       invitedBy: owner.id,
-      expiresAt: pastExpiresAt,
-      acceptedAt: null,
-      createdAt: nowSec,
+      status: 'expired',
     });
 
     const res = await fetchInvitations(org.id, project.id, '/accept', {
@@ -563,23 +497,15 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
   it('should return error for email mismatch', async () => {
     const { project, org, owner } = await buildProject();
     const differentUser = await buildUser({ email: 'different@example.com' });
-    const nowSec = Math.floor(Date.now() / 1000);
     const token = 'token-1';
-    const futureExpiresAt = nowSec + 7 * 24 * 60 * 60;
 
-    await seedProjectInvitation({
-      id: 'inv-1',
+    await buildProjectInvitation({
       orgId: org.id,
       projectId: project.id,
       email: 'invitee@example.com',
-      role: 'member',
-      orgRole: 'member',
-      grantOrgMembership: 1,
       token,
       invitedBy: owner.id,
-      expiresAt: futureExpiresAt,
-      acceptedAt: null,
-      createdAt: nowSec,
+      status: 'pending',
     });
 
     const res = await fetchInvitations(org.id, project.id, '/accept', {
@@ -601,23 +527,15 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
   it('should mark invitation as accepted if user is already project member', async () => {
     const { project, org, owner, members } = await buildProjectWithMembers({ memberCount: 1 });
     const existingMember = members[1].user;
-    const nowSec = Math.floor(Date.now() / 1000);
     const token = 'token-1';
-    const futureExpiresAt = nowSec + 7 * 24 * 60 * 60;
 
-    await seedProjectInvitation({
-      id: 'inv-1',
+    const invitation = await buildProjectInvitation({
       orgId: org.id,
       projectId: project.id,
       email: existingMember.email,
-      role: 'member',
-      orgRole: 'member',
-      grantOrgMembership: 1,
       token,
       invitedBy: owner.id,
-      expiresAt: futureExpiresAt,
-      acceptedAt: null,
-      createdAt: nowSec,
+      status: 'pending',
     });
 
     const res = await fetchInvitations(org.id, project.id, '/accept', {
@@ -637,13 +555,13 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
 
     // Check invitation was marked as accepted
     const db = createDb(env.DB);
-    const invitation = await db
+    const dbInvitation = await db
       .select()
       .from(projectInvitations)
-      .where(eq(projectInvitations.id, 'inv-1'))
+      .where(eq(projectInvitations.id, invitation.id))
       .get();
 
-    expect(invitation.acceptedAt).not.toBeNull();
+    expect(dbInvitation.acceptedAt).not.toBeNull();
 
     // Check only one project member exists (not duplicated)
     const projectMembersList = await db
@@ -658,23 +576,15 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
   it('should return error when quota exceeded', async () => {
     const { project, org, owner } = await buildProject();
     const invitee = await buildUser({ email: 'invitee@example.com' });
-    const nowSec = Math.floor(Date.now() / 1000);
     const token = 'token-1';
-    const futureExpiresAt = nowSec + 7 * 24 * 60 * 60;
 
-    await seedProjectInvitation({
-      id: 'inv-1',
+    await buildProjectInvitation({
       orgId: org.id,
       projectId: project.id,
       email: invitee.email,
-      role: 'member',
-      orgRole: 'member',
-      grantOrgMembership: 1,
       token,
       invitedBy: owner.id,
-      expiresAt: futureExpiresAt,
-      acceptedAt: null,
-      createdAt: nowSec,
+      status: 'pending',
     });
 
     // Mock quota as 0 (no collaborators allowed)

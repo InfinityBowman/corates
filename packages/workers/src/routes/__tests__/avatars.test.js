@@ -6,15 +6,8 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import {
-  resetTestDatabase,
-  seedUser,
-  seedProject,
-  seedProjectMember,
-  seedOrganization,
-  seedOrgMember,
-  json,
-} from '@/__tests__/helpers.js';
+import { resetTestDatabase, json } from '@/__tests__/helpers.js';
+import { buildUser, buildProject, resetCounter } from '@/__tests__/factories';
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -63,6 +56,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await resetTestDatabase();
+  resetCounter();
 
   // Reset R2 mocks
   const storedObjects = new Map();
@@ -169,14 +163,7 @@ async function fetchAvatar(path, init = {}) {
 
 describe('Avatar Routes - POST /api/users/avatar', () => {
   it('should upload avatar successfully', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user = await buildUser();
 
     const imageData = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]); // JPEG header
     const file = new File([imageData], 'avatar.jpg', { type: 'image/jpeg' });
@@ -185,25 +172,19 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
 
     const res = await fetchAvatar('/api/users/avatar', {
       method: 'POST',
+      headers: { 'x-test-user-id': user.id, 'x-test-user-email': user.email },
       body: formData,
     });
 
     expect(res.status).toBe(200);
     const body = await json(res);
     expect(body.success).toBe(true);
-    expect(body.url).toMatch(/^\/api\/users\/avatar\/user-1\?t=\d+$/);
-    expect(body.key).toMatch(/^avatars\/user-1\/\d+\.(jpg|jpeg|png|gif|webp)$/);
+    expect(body.url).toMatch(new RegExp(`^/api/users/avatar/${user.id}\\?t=\\d+$`));
+    expect(body.key).toMatch(new RegExp(`^avatars/${user.id}/\\d+\\.(jpg|jpeg|png|gif|webp)$`));
   });
 
   it('should reject files that are too large', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user = await buildUser();
 
     const largeFile = new File([new ArrayBuffer(3 * 1024 * 1024)], 'large.jpg', {
       type: 'image/jpeg',
@@ -214,6 +195,8 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
     const res = await fetchAvatar('/api/users/avatar', {
       method: 'POST',
       headers: {
+        'x-test-user-id': user.id,
+        'x-test-user-email': user.email,
         'Content-Length': String(3 * 1024 * 1024),
       },
       body: formData,
@@ -225,14 +208,7 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
   });
 
   it('should reject invalid file types', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user = await buildUser();
 
     const file = new File(['not an image'], 'document.pdf', { type: 'application/pdf' });
     const formData = new FormData();
@@ -240,6 +216,7 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
 
     const res = await fetchAvatar('/api/users/avatar', {
       method: 'POST',
+      headers: { 'x-test-user-id': user.id, 'x-test-user-email': user.email },
       body: formData,
     });
 
@@ -249,14 +226,7 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
   });
 
   it('should delete old avatar when uploading new one', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user = await buildUser();
 
     // Upload first avatar
     const imageData1 = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]);
@@ -266,6 +236,7 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
 
     const res1 = await fetchAvatar('/api/users/avatar', {
       method: 'POST',
+      headers: { 'x-test-user-id': user.id, 'x-test-user-email': user.email },
       body: formData1,
     });
     expect(res1.status).toBe(200);
@@ -280,6 +251,7 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
 
     const res2 = await fetchAvatar('/api/users/avatar', {
       method: 'POST',
+      headers: { 'x-test-user-id': user.id, 'x-test-user-email': user.email },
       body: formData2,
     });
     expect(res2.status).toBe(200);
@@ -290,55 +262,16 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
   });
 
   it('should sync avatar to project memberships', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const { project, owner } = await buildProject();
 
-    await seedOrganization({
-      id: 'org-1',
-      name: 'Test Org',
-      slug: 'test-org',
-      createdAt: nowSec,
-    });
-
-    await seedOrgMember({
-      id: 'om-1',
-      organizationId: 'org-1',
-      userId: 'user-1',
-      role: 'owner',
-      createdAt: nowSec,
-    });
-
-    await seedProject({
-      id: 'project-1',
-      name: 'Test Project',
-      orgId: 'org-1',
-      createdBy: 'user-1',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
-
-    await seedProjectMember({
-      id: 'pm-1',
-      projectId: 'project-1',
-      userId: 'user-1',
-      role: 'owner',
-      joinedAt: nowSec,
-    });
-
-    const originalFetch = mockProjectDO.get({ toString: () => 'do-project-1' }).fetch;
-    mockProjectDO.get({ toString: () => 'do-project-1' }).fetch = async request => {
+    const originalFetch = mockProjectDO.get({ toString: () => `do-${project.id}` }).fetch;
+    mockProjectDO.get({ toString: () => `do-${project.id}` }).fetch = async request => {
       const url = new URL(request.url);
       if (url.pathname === '/sync-member') {
         const body = await request.json();
         expect(body.action).toBe('update');
-        expect(body.member.userId).toBe('user-1');
-        expect(body.member.image).toMatch(/^\/api\/users\/avatar\/user-1\?t=\d+$/);
+        expect(body.member.userId).toBe(owner.id);
+        expect(body.member.image).toMatch(new RegExp(`^/api/users/avatar/${owner.id}\\?t=\\d+$`));
       }
       return originalFetch(request);
     };
@@ -350,33 +283,27 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
 
     const res = await fetchAvatar('/api/users/avatar', {
       method: 'POST',
+      headers: { 'x-test-user-id': owner.id, 'x-test-user-email': owner.email },
       body: formData,
     });
 
     expect(res.status).toBe(200);
-    // Note: sync happens asynchronously, so we can't easily verify it in this test
-    // but the code path is exercised
   });
 });
 
 describe('Avatar Routes - GET /api/users/avatar/:userId', () => {
   it('should return avatar image', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user = await buildUser();
 
     // Upload avatar first
     const imageData = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]);
-    await mockR2Bucket.put('avatars/user-1/1234567890.jpg', imageData, {
+    await mockR2Bucket.put(`avatars/${user.id}/1234567890.jpg`, imageData, {
       httpMetadata: { contentType: 'image/jpeg' },
     });
 
-    const res = await fetchAvatar('/api/users/avatar/user-1');
+    const res = await fetchAvatar(`/api/users/avatar/${user.id}`, {
+      headers: { 'x-test-user-id': user.id, 'x-test-user-email': user.email },
+    });
 
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/jpeg');
@@ -386,16 +313,11 @@ describe('Avatar Routes - GET /api/users/avatar/:userId', () => {
   });
 
   it('should return 404 when avatar not found', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user = await buildUser();
 
-    const res = await fetchAvatar('/api/users/avatar/user-1');
+    const res = await fetchAvatar(`/api/users/avatar/${user.id}`, {
+      headers: { 'x-test-user-id': user.id, 'x-test-user-email': user.email },
+    });
 
     expect(res.status).toBe(404);
     const body = await json(res);
@@ -405,23 +327,17 @@ describe('Avatar Routes - GET /api/users/avatar/:userId', () => {
 
 describe('Avatar Routes - DELETE /api/users/avatar', () => {
   it('should delete user avatar', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user = await buildUser();
 
     // Upload avatar first
     const imageData = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]);
-    await mockR2Bucket.put('avatars/user-1/1234567890.jpg', imageData, {
+    await mockR2Bucket.put(`avatars/${user.id}/1234567890.jpg`, imageData, {
       httpMetadata: { contentType: 'image/jpeg' },
     });
 
     const res = await fetchAvatar('/api/users/avatar', {
       method: 'DELETE',
+      headers: { 'x-test-user-id': user.id, 'x-test-user-email': user.email },
     });
 
     expect(res.status).toBe(200);
@@ -429,22 +345,16 @@ describe('Avatar Routes - DELETE /api/users/avatar', () => {
     expect(body.success).toBe(true);
 
     // Verify avatar is deleted
-    const listed = await mockR2Bucket.list({ prefix: 'avatars/user-1/' });
+    const listed = await mockR2Bucket.list({ prefix: `avatars/${user.id}/` });
     expect(listed.objects.length).toBe(0);
   });
 
   it('should handle deletion when no avatar exists', async () => {
-    const nowSec = Math.floor(Date.now() / 1000);
-    await seedUser({
-      id: 'user-1',
-      name: 'User 1',
-      email: 'user1@example.com',
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    const user = await buildUser();
 
     const res = await fetchAvatar('/api/users/avatar', {
       method: 'DELETE',
+      headers: { 'x-test-user-id': user.id, 'x-test-user-email': user.email },
     });
 
     expect(res.status).toBe(200);
