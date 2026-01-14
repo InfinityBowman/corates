@@ -1,0 +1,9 @@
+{
+  "name": "codebase-analysis",
+  "version": "0.1.0",
+  "description": "Analyze codebases against architecture patterns, security, error handling, and other best practices",
+  "author": {
+    "name": "Jacob Maynard"
+  },
+  "keywords": ["analysis", "architecture", "security", "patterns", "audit"]
+}
