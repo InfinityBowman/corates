@@ -1,7 +1,7 @@
 import { count, eq } from 'drizzle-orm';
 import { resolveOrgAccess } from './billingResolver';
 import { isUnlimitedQuota } from '@corates/shared/plans';
-import { createDomainError, AUTH_ERRORS } from '@corates/shared';
+import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import type { Database } from '../db/client';
 import type { SQLiteTable, SQLiteColumn } from 'drizzle-orm/sqlite-core';
 import type { SQL } from 'drizzle-orm';
@@ -20,17 +20,59 @@ export async function checkQuotaForInsert(
   table: SQLiteTable,
   whereColumn: SQLiteColumn,
 ): Promise<QuotaCheckResult> {
-  const orgBilling = await resolveOrgAccess(db, orgId);
-  const limit = (orgBilling.quotas as unknown as Record<string, number>)[quotaKey];
+  let orgBilling;
+  try {
+    orgBilling = await resolveOrgAccess(db, orgId);
+  } catch (err) {
+    return {
+      allowed: false,
+      used: 0,
+      limit: 0,
+      error: createDomainError(
+        SYSTEM_ERRORS.DB_ERROR,
+        { reason: 'db_query_failed', quotaKey, orgId },
+        `DB query failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      ),
+    };
+  }
+
+  const limit = orgBilling.quotas[quotaKey];
+
+  if (limit === undefined) {
+    return {
+      allowed: false,
+      used: 0,
+      limit: 0,
+      error: createDomainError(
+        SYSTEM_ERRORS.INTERNAL_ERROR,
+        { reason: 'invalid_quota_key', quotaKey, orgId },
+        `Invalid quota key: ${quotaKey}`,
+      ),
+    };
+  }
 
   if (isUnlimitedQuota(limit)) {
     return { allowed: true, used: 0, limit: -1 };
   }
 
-  const [result] = await db
-    .select({ count: count() })
-    .from(table)
-    .where(eq(whereColumn, orgId) as SQL<unknown>);
+  let result;
+  try {
+    [result] = await db
+      .select({ count: count() })
+      .from(table)
+      .where(eq(whereColumn, orgId) as SQL<unknown>);
+  } catch (err) {
+    return {
+      allowed: false,
+      used: 0,
+      limit,
+      error: createDomainError(
+        SYSTEM_ERRORS.DB_ERROR,
+        { reason: 'db_query_failed', quotaKey, orgId },
+        `DB query failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      ),
+    };
+  }
 
   const used = result?.count || 0;
 
@@ -69,18 +111,65 @@ export async function insertWithQuotaCheck(
 ): Promise<InsertWithQuotaResult> {
   const { orgId, quotaKey, countTable, countColumn, insertStatements } = options;
 
-  const orgBilling = await resolveOrgAccess(db, orgId);
-  const limit = (orgBilling.quotas as unknown as Record<string, number>)[quotaKey];
+  let orgBilling;
+  try {
+    orgBilling = await resolveOrgAccess(db, orgId);
+  } catch (err) {
+    return {
+      success: false,
+      error: createDomainError(
+        SYSTEM_ERRORS.DB_ERROR,
+        { reason: 'db_query_failed', quotaKey, orgId },
+        `DB query failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      ),
+    };
+  }
+
+  const limit = orgBilling.quotas[quotaKey];
+
+  if (limit === undefined) {
+    return {
+      success: false,
+      error: createDomainError(
+        SYSTEM_ERRORS.INTERNAL_ERROR,
+        { reason: 'invalid_quota_key', quotaKey, orgId },
+        `Invalid quota key: ${quotaKey}`,
+      ),
+    };
+  }
 
   if (isUnlimitedQuota(limit)) {
-    await db.batch(insertStatements as unknown as Parameters<typeof db.batch>[0]);
+    try {
+      await db.batch(insertStatements as unknown as Parameters<typeof db.batch>[0]);
+    } catch (err) {
+      return {
+        success: false,
+        error: createDomainError(
+          SYSTEM_ERRORS.DB_ERROR,
+          { reason: 'db_query_failed', quotaKey, orgId },
+          `DB query failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        ),
+      };
+    }
     return { success: true };
   }
 
-  const [countResult] = await db
-    .select({ count: count() })
-    .from(countTable)
-    .where(eq(countColumn, orgId) as SQL<unknown>);
+  let countResult;
+  try {
+    [countResult] = await db
+      .select({ count: count() })
+      .from(countTable)
+      .where(eq(countColumn, orgId) as SQL<unknown>);
+  } catch (err) {
+    return {
+      success: false,
+      error: createDomainError(
+        SYSTEM_ERRORS.DB_ERROR,
+        { reason: 'db_query_failed', quotaKey, orgId },
+        `DB query failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      ),
+    };
+  }
 
   const used = countResult?.count || 0;
 
@@ -95,12 +184,35 @@ export async function insertWithQuotaCheck(
     };
   }
 
-  await db.batch(insertStatements as unknown as Parameters<typeof db.batch>[0]);
+  try {
+    await db.batch(insertStatements as unknown as Parameters<typeof db.batch>[0]);
+  } catch (err) {
+    return {
+      success: false,
+      error: createDomainError(
+        SYSTEM_ERRORS.DB_ERROR,
+        { reason: 'db_query_failed', quotaKey, orgId },
+        `DB query failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      ),
+    };
+  }
 
-  const [verifyResult] = await db
-    .select({ count: count() })
-    .from(countTable)
-    .where(eq(countColumn, orgId) as SQL<unknown>);
+  let verifyResult;
+  try {
+    [verifyResult] = await db
+      .select({ count: count() })
+      .from(countTable)
+      .where(eq(countColumn, orgId) as SQL<unknown>);
+  } catch (err) {
+    return {
+      success: false,
+      error: createDomainError(
+        SYSTEM_ERRORS.DB_ERROR,
+        { reason: 'db_query_failed', quotaKey, orgId },
+        `DB query failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      ),
+    };
+  }
 
   const newCount = verifyResult?.count || 0;
 
@@ -121,17 +233,46 @@ export async function checkCollaboratorQuota(
   const { member } = await import('../db/schema');
   const { and, ne } = await import('drizzle-orm');
 
-  const orgBilling = await resolveOrgAccess(db, orgId);
+  let orgBilling;
+  try {
+    orgBilling = await resolveOrgAccess(db, orgId);
+  } catch (err) {
+    return {
+      allowed: false,
+      used: 0,
+      limit: 0,
+      error: createDomainError(
+        SYSTEM_ERRORS.DB_ERROR,
+        { reason: 'db_query_failed', quotaKey: 'collaborators.org.max', orgId },
+        `DB query failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      ),
+    };
+  }
+
   const limit = orgBilling.quotas['collaborators.org.max'];
 
   if (isUnlimitedQuota(limit)) {
     return { allowed: true, used: 0, limit: -1 };
   }
 
-  const [result] = await db
-    .select({ count: count() })
-    .from(member)
-    .where(and(eq(member.organizationId, orgId), ne(member.role, 'owner')));
+  let result;
+  try {
+    [result] = await db
+      .select({ count: count() })
+      .from(member)
+      .where(and(eq(member.organizationId, orgId), ne(member.role, 'owner')));
+  } catch (err) {
+    return {
+      allowed: false,
+      used: 0,
+      limit,
+      error: createDomainError(
+        SYSTEM_ERRORS.DB_ERROR,
+        { reason: 'db_query_failed', quotaKey: 'collaborators.org.max', orgId },
+        `DB query failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      ),
+    };
+  }
 
   const used = result?.count || 0;
 

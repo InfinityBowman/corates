@@ -28,7 +28,7 @@ export async function syncMemberToDO(
 ): Promise<void> {
   const projectDoc = getProjectDocStub(env, projectId);
 
-  await projectDoc.fetch(
+  const response = await projectDoc.fetch(
     new Request('https://internal/sync-member', {
       method: 'POST',
       headers: {
@@ -38,6 +38,13 @@ export async function syncMemberToDO(
       body: JSON.stringify({ action, member: memberData }),
     }),
   );
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(
+      `[ProjectSync] sync-member failed for project ${projectId}: ${response.status} ${text}`,
+    );
+  }
 }
 
 export async function syncProjectToDO(
@@ -48,7 +55,7 @@ export async function syncProjectToDO(
 ): Promise<void> {
   const projectDoc = getProjectDocStub(env, projectId);
 
-  await projectDoc.fetch(
+  const response = await projectDoc.fetch(
     new Request('https://internal/sync', {
       method: 'POST',
       headers: {
@@ -58,4 +65,11 @@ export async function syncProjectToDO(
       body: JSON.stringify({ meta, members }),
     }),
   );
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(
+      `[ProjectSync] sync failed for project ${projectId}: ${response.status} ${text}`,
+    );
+  }
 }
