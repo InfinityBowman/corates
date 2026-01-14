@@ -81,3 +81,18 @@ export {
   requireSafeOrgRoleChange,
   requireSafeOrgMemberRemoval,
 } from './orgs.js';
+
+// Billing policies
+export {
+  // Data fetching
+  getOrgRole,
+
+  // Boolean checks
+  canManageBilling,
+  canViewBilling,
+
+  // Assertions (throw on failure)
+  requireOrgOwner,
+  requireBillingManagement,
+  requireBillingView,
+} from './billing';

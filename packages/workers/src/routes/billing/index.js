@@ -36,7 +36,7 @@ import { billingSubscriptionRoutes } from './subscription.js';
 import { billingValidationRoutes } from './validation.js';
 import { billingPortalRoutes } from './portal.js';
 import { billingGrantRoutes } from './grants.js';
-import { billingCheckoutRoutes } from './checkout.js';
+import { billingCheckoutRoutes } from './checkout';
 import { billingWebhookRoutes } from './webhooks.js';
 import { billingInvoicesRoutes } from './invoices.js';
 

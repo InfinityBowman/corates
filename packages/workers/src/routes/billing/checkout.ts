@@ -3,9 +3,12 @@
  * Handles Stripe Checkout session creation for subscriptions and one-time purchases
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { createDb } from '@/db/client.js';
-import { validatePlanChange } from '@/lib/billingResolver.js';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import { requireAuth, getAuth } from '@/middleware/auth';
+import { createDb } from '@/db/client';
+import { user as userTable } from '@/db/schema';
+import { eq } from 'drizzle-orm';
+import { validatePlanChange } from '@/lib/billingResolver';
 import { DEFAULT_PLAN } from '@corates/shared/plans';
 import {
   createDomainError,
@@ -14,12 +17,14 @@ import {
   VALIDATION_ERRORS,
 } from '@corates/shared';
 import Stripe from 'stripe';
-import { createLogger, truncateError, withTiming } from '@/lib/observability/logger.js';
-import { billingCheckoutRateLimit } from '@/middleware/rateLimit.js';
-import { resolveOrgIdWithRole } from './helpers/orgContext.js';
-import { requireOrgOwner } from './helpers/ownerGate.js';
+import { createLogger, truncateError, withTiming } from '@/lib/observability/logger';
+import { billingCheckoutRateLimit } from '@/middleware/rateLimit';
+import { resolveOrgIdWithRole } from './helpers/orgContext';
+import { requireOrgOwner } from '@/policies';
+import { createSingleProjectCheckout } from '@/commands';
+import type { Env } from '@/types';
 
-const billingCheckoutRoutes = new OpenAPIHono({
+const billingCheckoutRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: (result, c) => {
     if (!result.success) {
       const firstIssue = result.error.issues[0];
@@ -27,8 +32,10 @@ const billingCheckoutRoutes = new OpenAPIHono({
       const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
 
       let message = firstIssue?.message || 'Validation failed';
+      // Check for missing values using code and message inspection
+      const issueCode = 'code' in firstIssue ? firstIssue.code : '';
       const isMissing =
-        firstIssue?.received === 'undefined' ||
+        issueCode === 'invalid_type' ||
         message.includes('received undefined') ||
         message.includes('Required');
 
@@ -101,7 +108,7 @@ const CheckoutErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('CheckoutError');
 
@@ -218,7 +225,7 @@ billingCheckoutRoutes.openapi(validateCouponRoute, async c => {
 
     if (!c.env.STRIPE_SECRET_KEY) {
       logger.error('validate_coupon_failed', { error: 'Stripe not configured' });
-      return c.json({ valid: false, error: 'Payment system not available' });
+      return c.json({ valid: false as const, error: 'Payment system not available' });
     }
 
     const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
@@ -234,20 +241,21 @@ billingCheckoutRoutes.openapi(validateCouponRoute, async c => {
 
     if (promoCodes.data.length === 0) {
       logger.info('validate_coupon_invalid', { code: code.trim() });
-      return c.json({ valid: false, error: 'Invalid or expired promo code' });
+      return c.json({ valid: false as const, error: 'Invalid or expired promo code' });
     }
 
     const promo = promoCodes.data[0];
-    const coupon = promo.coupon;
+    // Access coupon through the expand or direct access
+    const coupon = (promo as unknown as { coupon: Stripe.Coupon }).coupon;
 
     // Check if expired
     if (promo.expires_at && promo.expires_at < Math.floor(Date.now() / 1000)) {
-      return c.json({ valid: false, error: 'This promo code has expired' });
+      return c.json({ valid: false as const, error: 'This promo code has expired' });
     }
 
     // Check if max redemptions reached
     if (promo.max_redemptions && promo.times_redeemed >= promo.max_redemptions) {
-      return c.json({ valid: false, error: 'This promo code is no longer available' });
+      return c.json({ valid: false as const, error: 'This promo code is no longer available' });
     }
 
     logger.info('validate_coupon_success', {
@@ -257,7 +265,7 @@ billingCheckoutRoutes.openapi(validateCouponRoute, async c => {
     });
 
     return c.json({
-      valid: true,
+      valid: true as const,
       promoCodeId: promo.id,
       code: promo.code,
       percentOff: coupon.percent_off,
@@ -268,20 +276,25 @@ billingCheckoutRoutes.openapi(validateCouponRoute, async c => {
       name: coupon.name,
     });
   } catch (error) {
-    logger.error('validate_coupon_error', { error: truncateError(error) });
-    return c.json({ valid: false, error: 'Failed to validate promo code' });
+    logger.error('validate_coupon_error', { error: truncateError(error as Error) });
+    return c.json({ valid: false as const, error: 'Failed to validate promo code' });
   }
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingCheckoutRoutes.openapi(checkoutRoute, async c => {
   const { user, session } = getAuth(c);
   const db = createDb(c.env.DB);
   const logger = createLogger({ c, service: 'billing', env: c.env });
 
   try {
-    const { orgId, role } = await resolveOrgIdWithRole({ db, session, userId: user.id });
+    const { orgId, role } = await resolveOrgIdWithRole({
+      db,
+      session: session as unknown as Record<string, unknown>,
+      userId: user!.id,
+    });
 
-    // Verify user is org owner
+    // Verify user is org owner using centralized policy
     requireOrgOwner({ orgId, role });
 
     const { tier, interval } = c.req.valid('json');
@@ -291,11 +304,11 @@ billingCheckoutRoutes.openapi(checkoutRoute, async c => {
         field: 'tier',
         value: tier,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Validate plan change to prevent downgrades that exceed quotas
-    const validationResult = await validatePlanChange(db, orgId, tier);
+    const validationResult = await validatePlanChange(db, orgId!, tier);
     if (!validationResult.valid) {
       const error = createDomainError(
         VALIDATION_ERRORS.INVALID_INPUT,
@@ -307,23 +320,24 @@ billingCheckoutRoutes.openapi(checkoutRoute, async c => {
         },
         validationResult.violations.map(v => v.message).join(' '),
       );
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Log checkout initiation
-    logger.stripe('checkout_initiated', {
-      orgId,
-      userId: user.id,
+    logger.info('checkout_initiated', {
+      orgId: orgId || undefined,
+      userId: user!.id,
       plan: tier,
       interval,
     });
 
     // Delegate to Better Auth Stripe plugin
-    const { createAuth } = await import('@/auth/config.js');
+    const { createAuth } = await import('@/auth/config');
     const auth = createAuth(c.env, c.executionCtx);
 
     const { result, durationMs } = await withTiming(async () => {
-      return auth.api.upgradeSubscription({
+      // Use the generic api call interface
+      return (auth.api as Record<string, CallableFunction>).upgradeSubscription({
         headers: c.req.raw.headers,
         body: {
           plan: tier,
@@ -337,177 +351,109 @@ billingCheckoutRoutes.openapi(checkoutRoute, async c => {
     });
 
     // Log checkout created
-    logger.stripe('checkout_created', {
+    logger.info('checkout_created', {
       outcome: 'success',
-      orgId,
-      userId: user.id,
+      orgId: orgId || undefined,
+      userId: user!.id,
       plan: tier,
       interval,
       durationMs,
-      // Extract any identifiers from the result if available
-      stripeCheckoutSessionId: result?.url?.includes('cs_') ? result.url.split('/').pop() : null,
+      stripeCheckoutSessionId:
+        result?.url?.includes('cs_') ? result.url.split('/').pop() : undefined,
     });
 
     return c.json(result);
   } catch (error) {
-    logger.stripe('checkout_failed', {
+    const err = error as Error & { code?: string; statusCode?: number };
+    logger.error('checkout_failed', {
       outcome: 'failed',
-      userId: user.id,
-      error: truncateError(error),
-      errorCode: error.code || 'unknown',
+      userId: user!.id,
+      error: truncateError(error as Error) || undefined,
+      errorCode: err.code || 'unknown',
     });
 
     // If error is already a domain error, return it as-is
-    if (error.code && error.statusCode) {
-      return c.json(error, error.statusCode);
+    if (err.code && err.statusCode) {
+      return c.json(error, err.statusCode as ContentfulStatusCode);
     }
 
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'create_checkout_session',
-      originalError: error.message,
+      originalError: err.message,
     });
-    return c.json(systemError, systemError.statusCode);
+    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
   }
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingCheckoutRoutes.openapi(singleProjectCheckoutRoute, async c => {
   const { user, session } = getAuth(c);
   const db = createDb(c.env.DB);
   const logger = createLogger({ c, service: 'billing', env: c.env });
 
   try {
-    const { orgId, role } = await resolveOrgIdWithRole({ db, session, userId: user.id });
+    const { orgId, role } = await resolveOrgIdWithRole({
+      db,
+      session: session as unknown as Record<string, unknown>,
+      userId: user!.id,
+    });
 
-    // Verify user is org owner
+    // Verify user is org owner using centralized policy
     requireOrgOwner({ orgId, role });
-
-    if (!c.env.STRIPE_SECRET_KEY) {
-      const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-        operation: 'stripe_not_configured',
-      });
-      return c.json(error, error.statusCode);
-    }
 
     // Log checkout initiation
     logger.stripe('single_project_checkout_initiated', {
-      orgId,
-      userId: user.id,
+      orgId: orgId || undefined,
+      userId: user!.id,
       plan: 'single_project',
     });
 
-    // Get user's Stripe customer ID (required by Better Auth Stripe plugin)
-    const { user: userTable } = await import('@/db/schema.js');
-    const { eq } = await import('drizzle-orm');
+    // Get user's Stripe customer ID
     const userRecord = await db
       .select({ stripeCustomerId: userTable.stripeCustomerId })
       .from(userTable)
-      .where(eq(userTable.id, user.id))
+      .where(eq(userTable.id, user!.id))
       .get();
 
-    if (!userRecord?.stripeCustomerId) {
-      logger.stripe('single_project_checkout_failed', {
-        outcome: 'failed',
-        orgId,
-        userId: user.id,
-        errorCode: 'stripe_customer_not_found',
-      });
-
-      const error = createDomainError(
-        SYSTEM_ERRORS.INTERNAL_ERROR,
-        {
-          operation: 'stripe_customer_not_found',
-        },
-        'Stripe customer ID not found. Please sign out and sign in again, or contact support.',
-      );
-      return c.json(error, error.statusCode);
-    }
-
-    const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-12-15.clover',
-    });
-
-    // Validate single project price ID is configured
-    const priceId = c.env.STRIPE_PRICE_ID_SINGLE_PROJECT;
-    if (!priceId) {
-      logger.stripe('single_project_checkout_failed', {
-        outcome: 'failed',
-        orgId,
-        userId: user.id,
-        errorCode: 'stripe_price_not_configured',
-      });
-
-      const error = createDomainError(
-        SYSTEM_ERRORS.INTERNAL_ERROR,
-        { operation: 'stripe_price_not_configured' },
-        'Single project pricing is not configured. Please contact support.',
-      );
-      return c.json(error, error.statusCode);
-    }
-
-    const baseUrl = c.env.APP_URL || 'https://corates.org';
-
-    // Generate idempotency key to prevent duplicate checkout sessions from rapid clicks
-    // Uses 1-minute time window granularity
-    const idempotencyKey = `sp_checkout_${orgId}_${user.id}_${Math.floor(Date.now() / 60000)}`;
-
-    const { result: checkoutSession, durationMs } = await withTiming(async () => {
-      return stripe.checkout.sessions.create(
-        {
-          mode: 'payment',
-          payment_method_types: ['card'],
-          customer: userRecord.stripeCustomerId,
-          line_items: [
-            {
-              price: priceId,
-              quantity: 1,
-            },
-          ],
-          metadata: {
-            orgId,
-            grantType: 'single_project',
-            purchaserUserId: user.id,
-          },
-          success_url: `${baseUrl}/settings/billing?success=true&purchase=single_project`,
-          cancel_url: `${baseUrl}/settings/billing?canceled=true`,
-        },
-        {
-          idempotencyKey,
-        },
-      );
-    });
+    // Use the command to create the checkout session
+    const result = await createSingleProjectCheckout(
+      c.env,
+      {
+        id: user!.id,
+        stripeCustomerId: userRecord?.stripeCustomerId || null,
+      },
+      { orgId: orgId! },
+    );
 
     logger.stripe('single_project_checkout_created', {
       outcome: 'success',
-      orgId,
-      userId: user.id,
+      orgId: orgId || undefined,
+      userId: user!.id,
       plan: 'single_project',
-      stripeCheckoutSessionId: checkoutSession.id,
-      stripeCustomerId: userRecord.stripeCustomerId,
-      durationMs,
+      stripeCheckoutSessionId: result.sessionId,
+      stripeCustomerId: userRecord?.stripeCustomerId || undefined,
     });
 
-    return c.json({
-      url: checkoutSession.url,
-      sessionId: checkoutSession.id,
-    });
+    return c.json(result);
   } catch (error) {
+    const err = error as Error & { code?: string; statusCode?: number };
     logger.stripe('single_project_checkout_failed', {
       outcome: 'failed',
-      userId: user.id,
-      error: truncateError(error),
-      errorCode: error.code || 'unknown',
+      userId: user!.id,
+      error: truncateError(error as Error) || undefined,
+      errorCode: err.code || 'unknown',
     });
 
     // If error is already a domain error, return it as-is
-    if (error.code && error.statusCode) {
-      return c.json(error, error.statusCode);
+    if (err.code && err.statusCode) {
+      return c.json(error, err.statusCode as ContentfulStatusCode);
     }
 
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'create_single_project_checkout',
-      originalError: error.message,
+      originalError: err.message,
     });
-    return c.json(systemError, systemError.statusCode);
+    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
   }
 });
 
