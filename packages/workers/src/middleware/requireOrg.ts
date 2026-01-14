@@ -1,41 +1,31 @@
-/**
- * Organization membership middleware for Hono
- * Requires user to be a member of the specified organization
- */
-
-import { createDb } from '../db/client.js';
-import { member, organization, projects, projectMembers } from '../db/schema.js';
+import type { Context, MiddlewareHandler } from 'hono';
+import { createDb } from '../db/client';
+import { member, organization, projects, projectMembers } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
-import { getAuth } from './auth.js';
+import { getAuth } from './auth';
 import { createDomainError, AUTH_ERRORS, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { hasOrgRole, hasProjectRole } from '@/policies';
+import type { AppContext, OrgContext, ProjectContext } from '../types';
 
-/**
- * Middleware that requires organization membership
- * Sets orgId, orgRole, and org on context
- * @param {string} [minRole] - Minimum required role (optional)
- * @returns {Function} Hono middleware
- */
-export function requireOrgMembership(minRole) {
+export function requireOrgMembership(minRole?: string): MiddlewareHandler {
   return async (c, next) => {
     const { user } = getAuth(c);
     const orgId = c.req.param('orgId');
 
     if (!user) {
       const error = createDomainError(AUTH_ERRORS.REQUIRED);
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as 401);
     }
 
     if (!orgId) {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'org_id_required',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as 403);
     }
 
-    const db = createDb(c.env.DB);
+    const db = createDb((c as AppContext).env.DB);
 
-    // Check if user is a member of the organization
     const membership = await db
       .select({
         id: member.id,
@@ -53,62 +43,57 @@ export function requireOrgMembership(minRole) {
         reason: 'not_org_member',
         orgId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as 403);
     }
 
-    // Check minimum role if specified
     if (minRole && !hasOrgRole(membership.role, minRole)) {
       const error = createDomainError(
         AUTH_ERRORS.FORBIDDEN,
         { reason: 'insufficient_org_role', required: minRole, actual: membership.role },
         `This action requires ${minRole} role or higher`,
       );
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as 403);
     }
 
-    // Attach org context to request
     c.set('orgId', orgId);
     c.set('orgRole', membership.role);
     c.set('org', {
       id: orgId,
       name: membership.orgName,
       slug: membership.orgSlug,
-    });
+    } as OrgContext);
 
     await next();
   };
 }
 
-/**
- * Middleware that requires project access within an org
- * Must be used after requireOrgMembership
- * Sets projectId, projectRole, and project on context
- * @param {string} [minRole] - Minimum required project role (optional)
- * @returns {Function} Hono middleware
- */
-export function requireProjectAccess(minRole) {
+export function requireProjectAccess(minRole?: string): MiddlewareHandler {
   return async (c, next) => {
     const { user } = getAuth(c);
-    const orgId = c.get('orgId');
+    const orgId = c.get('orgId') as string | undefined;
     const projectId = c.req.param('projectId');
 
     if (!orgId) {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'org_context_required',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as 403);
     }
 
     if (!projectId) {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'project_id_required',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as 403);
     }
 
-    const db = createDb(c.env.DB);
+    if (!user) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED);
+      return c.json(error, error.statusCode as 401);
+    }
 
-    // First check if project exists and get its org
+    const db = createDb((c as AppContext).env.DB);
+
     let projectData;
     try {
       projectData = await db
@@ -120,33 +105,31 @@ export function requireProjectAccess(minRole) {
         .from(projects)
         .where(eq(projects.id, projectId))
         .get();
-    } catch (error) {
+    } catch (err) {
       const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'fetch_project_for_access_check',
         projectId,
         orgId,
         userId: user.id,
-        originalError: error.message,
+        originalError: err instanceof Error ? err.message : String(err),
       });
-      return c.json(dbError, dbError.statusCode);
+      return c.json(dbError, dbError.statusCode as 500);
     }
 
     if (!projectData) {
       const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as 404);
     }
 
-    // Check if project belongs to the specified org
     if (projectData.orgId !== orgId) {
       const error = createDomainError(PROJECT_ERRORS.NOT_IN_ORG, {
         projectId,
         requestedOrgId: orgId,
         actualOrgId: projectData.orgId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as 403);
     }
 
-    // Check if user has project membership
     let projectMembership;
     try {
       projectMembership = await db
@@ -156,15 +139,15 @@ export function requireProjectAccess(minRole) {
         .from(projectMembers)
         .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, user.id)))
         .get();
-    } catch (error) {
+    } catch (err) {
       const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'check_project_membership',
         projectId,
         orgId,
         userId: user.id,
-        originalError: error.message,
+        originalError: err instanceof Error ? err.message : String(err),
       });
-      return c.json(dbError, dbError.statusCode);
+      return c.json(dbError, dbError.statusCode as 500);
     }
 
     if (!projectMembership) {
@@ -172,17 +155,17 @@ export function requireProjectAccess(minRole) {
         projectId,
         orgId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as 403);
     }
 
+    const projectRole = projectMembership.role as string;
     const projectAccess = {
       projectId: projectData.id,
       projectName: projectData.name,
-      projectRole: projectMembership.role,
+      projectRole,
     };
 
-    // Check minimum role if specified
-    if (minRole && !hasProjectRole(projectAccess.projectRole, minRole)) {
+    if (minRole && !hasProjectRole(projectRole, minRole)) {
       const error = createDomainError(
         AUTH_ERRORS.FORBIDDEN,
         {
@@ -192,43 +175,40 @@ export function requireProjectAccess(minRole) {
         },
         `This action requires ${minRole} role or higher`,
       );
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as 403);
     }
 
-    // Attach project context to request
     c.set('projectId', projectId);
     c.set('projectRole', projectAccess.projectRole);
     c.set('project', {
       id: projectId,
       name: projectAccess.projectName,
-    });
+    } as ProjectContext);
 
     await next();
   };
 }
 
-/**
- * Get the current org context from Hono context
- * @param {Object} c - Hono context
- * @returns {{ orgId: string|null, orgRole: string|null, org: object|null }}
- */
-export function getOrgContext(c) {
+export function getOrgContext(c: Context): {
+  orgId: string | null;
+  orgRole: string | null;
+  org: OrgContext | null;
+} {
   return {
-    orgId: c.get('orgId') || null,
-    orgRole: c.get('orgRole') || null,
-    org: c.get('org') || null,
+    orgId: (c.get('orgId') as string | undefined) || null,
+    orgRole: (c.get('orgRole') as string | undefined) || null,
+    org: (c.get('org') as OrgContext | undefined) || null,
   };
 }
 
-/**
- * Get the current project context from Hono context
- * @param {Object} c - Hono context
- * @returns {{ projectId: string|null, projectRole: string|null, project: object|null }}
- */
-export function getProjectContext(c) {
+export function getProjectContext(c: Context): {
+  projectId: string | null;
+  projectRole: string | null;
+  project: ProjectContext | null;
+} {
   return {
-    projectId: c.get('projectId') || null,
-    projectRole: c.get('projectRole') || null,
-    project: c.get('project') || null,
+    projectId: (c.get('projectId') as string | undefined) || null,
+    projectRole: (c.get('projectRole') as string | undefined) || null,
+    project: (c.get('project') as ProjectContext | undefined) || null,
   };
 }

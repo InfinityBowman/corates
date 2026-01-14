@@ -35,9 +35,51 @@ export interface AuthSession {
   activeOrganizationId?: string | null;
 }
 
+export interface OrgContext {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface ProjectContext {
+  id: string;
+  name: string;
+}
+
+export interface OrgBilling {
+  effectivePlanId: string;
+  source: 'subscription' | 'grant' | 'free';
+  accessMode: 'full' | 'readOnly' | 'free';
+  entitlements: Record<string, boolean>;
+  quotas: Record<string, number>;
+  subscription: {
+    id: string;
+    status: string;
+    periodEnd: Date | number | null;
+    cancelAtPeriodEnd: boolean | null;
+  } | null;
+  grant: {
+    id: string;
+    type: string;
+    expiresAt: Date | number | null;
+  } | null;
+}
+
 export interface AppVariables {
   user: AuthUser | null;
   session: AuthSession | null;
+  orgId?: string;
+  orgRole?: string;
+  org?: OrgContext;
+  projectId?: string;
+  projectRole?: string;
+  project?: ProjectContext;
+  orgBilling?: OrgBilling;
+  entitlements?: Record<string, boolean>;
+  quotas?: Record<string, number>;
+  isAdmin?: boolean;
+  subscription?: unknown;
+  tier?: string;
 }
 
 export type AppContext = Context<{ Bindings: Env; Variables: AppVariables }>;

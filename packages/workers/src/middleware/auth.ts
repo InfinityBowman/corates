@@ -1,16 +1,9 @@
-/**
- * Auth middleware for Hono
- * Provides authentication verification for protected routes
- */
-
+import type { Context, MiddlewareHandler } from 'hono';
 import { createAuth } from '../auth/config.js';
 import { createDomainError, AUTH_ERRORS } from '@corates/shared';
+import type { AuthUser, AuthSession } from '../types/context';
 
-/**
- * Auth middleware that attaches user and session to context
- * Does not block unauthenticated requests - use requireAuth for that
- */
-export async function authMiddleware(c, next) {
+export const authMiddleware: MiddlewareHandler = async (c, next) => {
   try {
     const auth = createAuth(c.env);
     const session = await auth.api.getSession({
@@ -26,13 +19,9 @@ export async function authMiddleware(c, next) {
   }
 
   await next();
-}
+};
 
-/**
- * Middleware that requires authentication
- * Returns 401 if not authenticated
- */
-export async function requireAuth(c, next) {
+export const requireAuth: MiddlewareHandler = async (c, next) => {
   try {
     const auth = createAuth(c.env);
     const session = await auth.api.getSession({
@@ -41,7 +30,7 @@ export async function requireAuth(c, next) {
 
     if (!session?.user) {
       const error = createDomainError(AUTH_ERRORS.REQUIRED);
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as 401);
     }
 
     c.set('user', session.user);
@@ -51,18 +40,13 @@ export async function requireAuth(c, next) {
   } catch (error) {
     console.error('Auth verification error:', error);
     const authError = createDomainError(AUTH_ERRORS.REQUIRED);
-    return c.json(authError, authError.statusCode);
+    return c.json(authError, authError.statusCode as 401);
   }
-}
+};
 
-/**
- * Get the authenticated user from context
- * @param {Object} c - Hono context
- * @returns {{ user: Object|null, session: Object|null }}
- */
-export function getAuth(c) {
+export function getAuth(c: Context): { user: AuthUser | null; session: AuthSession | null } {
   return {
-    user: c.get('user'),
-    session: c.get('session'),
+    user: c.get('user') as AuthUser | null,
+    session: c.get('session') as AuthSession | null,
   };
 }

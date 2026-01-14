@@ -1,22 +1,14 @@
-/**
- * Hono CORS middleware configuration
- */
-
+import type { MiddlewareHandler } from 'hono';
 import { cors } from 'hono/cors';
-import { isOriginAllowed, STATIC_ORIGINS } from '../config/origins.js';
+import { isOriginAllowed, STATIC_ORIGINS } from '../config/origins';
+import type { Env } from '../types/env';
 
-/**
- * Create CORS middleware for Hono
- * @param {Object} env - Environment object
- * @returns {Function} Hono middleware
- */
-export function createCorsMiddleware(env) {
+export function createCorsMiddleware(env: Env): MiddlewareHandler {
   const corsHandler = cors({
     origin: origin => {
       if (isOriginAllowed(origin, env)) {
         return origin;
       }
-      // Fallback to first static origin
       return STATIC_ORIGINS[0];
     },
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -31,13 +23,10 @@ export function createCorsMiddleware(env) {
       'User-Agent',
     ],
     credentials: true,
-    maxAge: 86400, // Cache preflight for 24 hours
+    maxAge: 86400,
   });
 
-  // Wrap CORS handler to skip WebSocket upgrade requests
   return async (c, next) => {
-    // Skip CORS for WebSocket upgrade requests - they need special handling
-    // Use raw headers to match how Durable Objects check for upgrades
     const upgradeHeader = c.req.raw.headers.get('Upgrade');
     if (upgradeHeader === 'websocket') {
       return next();

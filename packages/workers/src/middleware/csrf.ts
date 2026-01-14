@@ -1,21 +1,12 @@
-/**
- * CSRF guard for cookie-authenticated routes.
- *
- * We rely on Origin/Referer allow-listing to prevent cross-site requests
- * from being accepted when cookies are sent (SameSite=None scenarios).
- */
-
-import { isOriginAllowed } from '../config/origins.js';
+import type { MiddlewareHandler } from 'hono';
+import { isOriginAllowed } from '../config/origins';
 import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 
-/**
- * Middleware that blocks state-changing requests unless Origin/Referer is trusted.
- * Allows GET/HEAD/OPTIONS without checks.
- */
-export function requireTrustedOrigin(c, next) {
+export const requireTrustedOrigin: MiddlewareHandler = async (c, next) => {
   const method = c.req.method.toUpperCase();
   if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
-    return next();
+    await next();
+    return;
   }
 
   const origin = c.req.raw.headers.get('origin');
@@ -26,7 +17,7 @@ export function requireTrustedOrigin(c, next) {
     try {
       requestOrigin = new URL(referer).origin;
     } catch {
-      // Ignore parse errors; handled below.
+      // Ignore parse errors
     }
   }
 
@@ -38,7 +29,7 @@ export function requireTrustedOrigin(c, next) {
       });
     }
     const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'missing_origin' });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as 403);
   }
 
   if (!isOriginAllowed(requestOrigin, c.env)) {
@@ -53,8 +44,8 @@ export function requireTrustedOrigin(c, next) {
       reason: 'untrusted_origin',
       origin: requestOrigin,
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as 403);
   }
 
-  return next();
-}
+  await next();
+};
