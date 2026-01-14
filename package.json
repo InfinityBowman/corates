@@ -41,9 +41,7 @@
     "loc": "node ./scripts/loc-report.mjs",
     "docs": "pnpm --filter @corates/docs dev",
     "docs:build": "pnpm --filter @corates/docs build",
-    "docs:preview": "pnpm --filter @corates/docs preview",
-    "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check"
+    "docs:preview": "pnpm --filter @corates/docs preview"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
