@@ -90,9 +90,6 @@ export type { OrgMembership } from './orgs';
 
 // Billing policies
 export {
-  // Data fetching
-  getOrgRole,
-
   // Boolean checks
   canManageBilling,
   canViewBilling,

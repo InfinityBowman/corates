@@ -8,28 +8,10 @@
  * - viewBilling: View billing status and invoices
  */
 
-import { member } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
 import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 import { isOrgOwner } from './lib/roles';
+import { getOrgMembership } from './orgs';
 import type { Database } from '@/db/client';
-
-/**
- * Get user's role in an organization
- */
-export async function getOrgRole(
-  db: Database,
-  userId: string,
-  orgId: string,
-): Promise<string | null> {
-  const membership = await db
-    .select({ role: member.role })
-    .from(member)
-    .where(and(eq(member.organizationId, orgId), eq(member.userId, userId)))
-    .get();
-
-  return membership?.role || null;
-}
 
 /**
  * Check if user can manage billing (owner only)
@@ -39,8 +21,8 @@ export async function canManageBilling(
   userId: string,
   orgId: string,
 ): Promise<boolean> {
-  const role = await getOrgRole(db, userId, orgId);
-  return role !== null && isOrgOwner(role);
+  const membership = await getOrgMembership(db, userId, orgId);
+  return !!membership?.role && isOrgOwner(membership.role);
 }
 
 /**
@@ -51,8 +33,8 @@ export async function canViewBilling(
   userId: string,
   orgId: string,
 ): Promise<boolean> {
-  const role = await getOrgRole(db, userId, orgId);
-  return role !== null;
+  const membership = await getOrgMembership(db, userId, orgId);
+  return !!membership;
 }
 
 // ============================================

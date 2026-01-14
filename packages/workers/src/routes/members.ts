@@ -117,15 +117,15 @@ const AddMemberRequestSchema = z
     userId: z.string().optional().openapi({ example: 'user-123' }),
     email: z.string().email().optional().openapi({ example: 'user@example.com' }),
     role: z
-      .enum(['owner', 'collaborator', 'viewer'])
-      .default('viewer')
-      .openapi({ example: 'collaborator' }),
+      .enum(['owner', 'member'])
+      .default('member')
+      .openapi({ example: 'member' }),
   })
   .openapi('AddMemberRequest');
 
 const UpdateRoleRequestSchema = z
   .object({
-    role: z.enum(['owner', 'collaborator', 'viewer']).openapi({ example: 'collaborator' }),
+    role: z.enum(['owner', 'member']).openapi({ example: 'member' }),
   })
   .openapi('UpdateRoleRequest');
 

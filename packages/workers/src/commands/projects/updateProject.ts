@@ -7,6 +7,7 @@
 import { createDb } from '@/db/client';
 import { projects } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { syncProjectToDO } from '@/commands/lib/doSync';
 import type { Env } from '@/types';
 
@@ -42,7 +43,15 @@ export async function updateProject(
   if (trimmedName !== undefined) updateData.name = trimmedName;
   if (trimmedDescription !== undefined) updateData.description = trimmedDescription || null;
 
-  await db.update(projects).set(updateData).where(eq(projects.id, projectId));
+  try {
+    await db.update(projects).set(updateData).where(eq(projects.id, projectId));
+  } catch (err) {
+    throw createDomainError(
+      SYSTEM_ERRORS.DB_ERROR,
+      { operation: 'update_project', projectId, originalError: (err as Error).message },
+      'Failed to update project',
+    );
+  }
 
   const metaUpdate: { updatedAt: number; name?: string; description?: string | null } = {
     updatedAt: now.getTime(),

@@ -8,3 +8,9 @@ coverage
 .vinxi
 package-lock.json
 .vitepress
+public
+.cache
+.DS_Store
+.env
+pnpm-lock.yaml
+*.tsbuildinfo
