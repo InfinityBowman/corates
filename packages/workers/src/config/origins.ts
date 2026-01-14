@@ -39,7 +39,10 @@ export function getAllowedOrigins(env: EnvWithOrigins = {}): string[] {
   return origins;
 }
 
-export function isOriginAllowed(origin: string | null | undefined, env: EnvWithOrigins = {}): boolean {
+export function isOriginAllowed(
+  origin: string | null | undefined,
+  env: EnvWithOrigins = {},
+): boolean {
   if (!origin) return false;
 
   const allowedOrigins = getAllowedOrigins(env);

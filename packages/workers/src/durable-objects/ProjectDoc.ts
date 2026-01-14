@@ -376,7 +376,8 @@ export class ProjectDoc implements DurableObject {
     await this.initializeDoc();
 
     try {
-      const { action, studyId, studyName, pdf, fileName } = (await request.json()) as SyncPdfRequestBody;
+      const { action, studyId, studyName, pdf, fileName } =
+        (await request.json()) as SyncPdfRequestBody;
 
       // Note: Y.js map key remains 'reviews' for backward compatibility
       const studiesMap = this.doc!.getMap('reviews');
@@ -456,19 +457,25 @@ export class ProjectDoc implements DurableObject {
       });
 
       // Broadcast awareness updates to all clients
-      this.awareness.on('update', ({ added, updated, removed }: { added: number[]; updated: number[]; removed: number[] }, origin: unknown) => {
-        const changedClients = added.concat(updated, removed);
-        if (changedClients.length > 0) {
-          const encoder = encoding.createEncoder();
-          encoding.writeVarUint(encoder, messageAwareness);
-          encoding.writeVarUint8Array(
-            encoder,
-            awarenessProtocol.encodeAwarenessUpdate(this.awareness!, changedClients),
-          );
-          const message = encoding.toUint8Array(encoder);
-          this.broadcastBinary(message, origin as WebSocket | null);
-        }
-      });
+      this.awareness.on(
+        'update',
+        (
+          { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
+          origin: unknown,
+        ) => {
+          const changedClients = added.concat(updated, removed);
+          if (changedClients.length > 0) {
+            const encoder = encoding.createEncoder();
+            encoding.writeVarUint(encoder, messageAwareness);
+            encoding.writeVarUint8Array(
+              encoder,
+              awarenessProtocol.encodeAwarenessUpdate(this.awareness!, changedClients),
+            );
+            const message = encoding.toUint8Array(encoder);
+            this.broadcastBinary(message, origin as WebSocket | null);
+          }
+        },
+      );
     }
   }
 
@@ -682,7 +689,10 @@ export class ProjectDoc implements DurableObject {
       const checklistsMap = reviewYMap.get('checklists') as Y.Map<unknown> | undefined;
       if (checklistsMap && checklistsMap.entries) {
         for (const [checklistId, checklistValue] of checklistsMap.entries()) {
-          const checklistData = this.yMapToPlain(checklistValue as Y.Map<unknown>) as Record<string, unknown>;
+          const checklistData = this.yMapToPlain(checklistValue as Y.Map<unknown>) as Record<
+            string,
+            unknown
+          >;
           review.checklists.push({
             id: checklistId,
             title: checklistData.title,

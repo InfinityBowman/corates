@@ -182,7 +182,8 @@ contact.openapi(submitContactRoute, async c => {
   }
 
   const postmark = new PostmarkClient(env.POSTMARK_SERVER_TOKEN);
-  const contactEmail = (env as unknown as Record<string, string | undefined>).CONTACT_EMAIL ?? 'contact@corates.org';
+  const contactEmail =
+    (env as unknown as Record<string, string | undefined>).CONTACT_EMAIL ?? 'contact@corates.org';
 
   try {
     const response = await postmark.sendEmail({

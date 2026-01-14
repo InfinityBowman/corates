@@ -179,8 +179,7 @@ export function generateROBINSIAnswers(options: ROBINSIOptions = {}): ROBINSIAns
         'Regulatory document (e.g. Clinical Study Report, Drug Approval Package)': false,
         'Individual participant data': false,
         'Research ethics application': false,
-        'Grant database summary (e.g. NIH RePORTER, Research Councils UK Gateway to Research)':
-          false,
+        'Grant database summary (e.g. NIH RePORTER, Research Councils UK Gateway to Research)': false,
         'Personal communication with investigator': false,
         'Personal communication with sponsor': false,
       },
@@ -198,9 +197,9 @@ export function generateROBINSIAnswers(options: ROBINSIOptions = {}): ROBINSIAns
   };
 
   const domainsToFill =
-    isPerProtocol
-      ? ['domain1b', 'domain2', 'domain3', 'domain4', 'domain5', 'domain6']
-      : ['domain1a', 'domain2', 'domain3', 'domain4', 'domain5', 'domain6'];
+    isPerProtocol ?
+      ['domain1b', 'domain2', 'domain3', 'domain4', 'domain5', 'domain6']
+    : ['domain1a', 'domain2', 'domain3', 'domain4', 'domain5', 'domain6'];
 
   for (const domainKey of domainsToFill) {
     const questionKeys = ROBINS_I_DOMAINS[domainKey];
@@ -210,9 +209,9 @@ export function generateROBINSIAnswers(options: ROBINSIOptions = {}): ROBINSIAns
     for (const qKey of questionKeys) {
       domainAnswers[qKey] = {
         answer:
-          fill === 'empty' || (fill === 'partial' && rng() > 0.7)
-            ? null
-            : pickRandom(rng, ROBINS_I_RESPONSES),
+          fill === 'empty' || (fill === 'partial' && rng() > 0.7) ?
+            null
+          : pickRandom(rng, ROBINS_I_RESPONSES),
         comment: '',
       };
     }
@@ -224,9 +223,9 @@ export function generateROBINSIAnswers(options: ROBINSIOptions = {}): ROBINSIAns
       answers: domainAnswers,
       judgement: fill === 'complete' ? pickRandom(rng, ROBINS_I_JUDGEMENTS) : null,
       judgementSource: 'auto',
-      ...(hasDirection
-        ? { direction: fill === 'complete' ? pickRandom(rng, ROBINS_I_DIRECTIONS) : null }
-        : {}),
+      ...(hasDirection ?
+        { direction: fill === 'complete' ? pickRandom(rng, ROBINS_I_DIRECTIONS) : null }
+      : {}),
     };
   }
 

@@ -23,20 +23,17 @@ interface GrantRecord {
   revokedAt: Date | null;
 }
 
-export function isSubscriptionActive(
-  sub: SubscriptionRecord | null,
-  now: Date | number,
-): boolean {
+export function isSubscriptionActive(sub: SubscriptionRecord | null, now: Date | number): boolean {
   if (!sub) return false;
 
   const nowTimestamp = now instanceof Date ? Math.floor(now.getTime() / 1000) : now;
   const status = sub.status;
   const periodEnd =
-    sub.periodEnd
-      ? sub.periodEnd instanceof Date
-        ? Math.floor(sub.periodEnd.getTime() / 1000)
-        : sub.periodEnd
-      : null;
+    sub.periodEnd ?
+      sub.periodEnd instanceof Date ?
+        Math.floor(sub.periodEnd.getTime() / 1000)
+      : sub.periodEnd
+    : null;
 
   if (status === 'trialing') {
     return true;
@@ -133,13 +130,13 @@ export async function resolveOrgAccess(
           selectedType = 'trial';
         } else {
           const currentExpires =
-            selectedGrant.expiresAt instanceof Date
-              ? Math.floor(selectedGrant.expiresAt.getTime() / 1000)
-              : (selectedGrant.expiresAt as number);
+            selectedGrant.expiresAt instanceof Date ?
+              Math.floor(selectedGrant.expiresAt.getTime() / 1000)
+            : (selectedGrant.expiresAt as number);
           const grantExpires =
-            grantRecord.expiresAt instanceof Date
-              ? Math.floor(grantRecord.expiresAt.getTime() / 1000)
-              : (grantRecord.expiresAt as number);
+            grantRecord.expiresAt instanceof Date ?
+              Math.floor(grantRecord.expiresAt.getTime() / 1000)
+            : (grantRecord.expiresAt as number);
           if (grantExpires > currentExpires) {
             selectedGrant = grantRecord;
           }
@@ -152,13 +149,13 @@ export async function resolveOrgAccess(
               selectedType = 'single_project';
             } else {
               const currentExpires =
-                selectedGrant.expiresAt instanceof Date
-                  ? Math.floor(selectedGrant.expiresAt.getTime() / 1000)
-                  : (selectedGrant.expiresAt as number);
+                selectedGrant.expiresAt instanceof Date ?
+                  Math.floor(selectedGrant.expiresAt.getTime() / 1000)
+                : (selectedGrant.expiresAt as number);
               const grantExpires =
-                grantRecord.expiresAt instanceof Date
-                  ? Math.floor(grantRecord.expiresAt.getTime() / 1000)
-                  : (grantRecord.expiresAt as number);
+                grantRecord.expiresAt instanceof Date ?
+                  Math.floor(grantRecord.expiresAt.getTime() / 1000)
+                : (grantRecord.expiresAt as number);
               if (grantExpires > currentExpires) {
                 selectedGrant = grantRecord;
               }
@@ -196,9 +193,9 @@ export async function resolveOrgAccess(
   const expiredGrants = allGrants.filter(grant => {
     const grantRecord = grant as GrantRecord;
     const expiresAt =
-      grantRecord.expiresAt instanceof Date
-        ? Math.floor(grantRecord.expiresAt.getTime() / 1000)
-        : (grantRecord.expiresAt as number);
+      grantRecord.expiresAt instanceof Date ?
+        Math.floor(grantRecord.expiresAt.getTime() / 1000)
+      : (grantRecord.expiresAt as number);
     return expiresAt <= nowTimestamp;
   });
 

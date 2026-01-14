@@ -91,7 +91,7 @@ export class UserSession implements DurableObject {
     this.connections.add(server);
 
     // Send any pending notifications
-    const pending = ((await this.state.storage.get<Notification[]>('pendingNotifications')) || []);
+    const pending = (await this.state.storage.get<Notification[]>('pendingNotifications')) || [];
     if (pending.length > 0) {
       for (const notification of pending) {
         server.send(JSON.stringify(notification));
@@ -126,7 +126,10 @@ export class UserSession implements DurableObject {
    * Handle notification requests from other workers/DOs
    * This is called internally when a user is added to a project
    */
-  async handleNotification(request: Request, corsHeaders: Record<string, string>): Promise<Response> {
+  async handleNotification(
+    request: Request,
+    corsHeaders: Record<string, string>,
+  ): Promise<Response> {
     try {
       const notification = (await request.json()) as Notification;
 
@@ -146,7 +149,8 @@ export class UserSession implements DurableObject {
 
       // If no active connections, store for later delivery
       if (!delivered) {
-        const pending = ((await this.state.storage.get<Notification[]>('pendingNotifications')) || []);
+        const pending =
+          (await this.state.storage.get<Notification[]>('pendingNotifications')) || [];
         pending.push(notification);
         // Keep only last 50 notifications
         if (pending.length > 50) {

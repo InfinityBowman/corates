@@ -92,7 +92,9 @@ export class EmailQueue implements DurableObject {
     emailRecord.lastAttemptAt = Date.now();
 
     try {
-      const result = await emailService.sendEmail(emailRecord.payload as Parameters<typeof emailService.sendEmail>[0]);
+      const result = await emailService.sendEmail(
+        emailRecord.payload as Parameters<typeof emailService.sendEmail>[0],
+      );
 
       if (result.success) {
         console.log(

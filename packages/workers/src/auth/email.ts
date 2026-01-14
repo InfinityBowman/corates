@@ -36,7 +36,11 @@ export interface EmailService {
     verificationUrl: string,
     userDisplayName?: string,
   ) => Promise<EmailResult>;
-  sendPasswordReset: (to: string, resetUrl: string, userDisplayName?: string) => Promise<EmailResult>;
+  sendPasswordReset: (
+    to: string,
+    resetUrl: string,
+    userDisplayName?: string,
+  ) => Promise<EmailResult>;
   sendMagicLink: (to: string, magicLinkUrl: string) => Promise<EmailResult>;
   sendProjectInvitation: (
     to: string,

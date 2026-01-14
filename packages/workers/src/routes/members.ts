@@ -381,14 +381,16 @@ memberRoutes.openapi(addMemberRoute, async c => {
   }
 
   try {
-    let userToAdd: {
-      id: string;
-      name: string | null;
-      email: string;
-      username: string | null;
-      displayName: string | null;
-      image: string | null;
-    } | undefined;
+    let userToAdd:
+      | {
+          id: string;
+          name: string | null;
+          email: string;
+          username: string | null;
+          displayName: string | null;
+          image: string | null;
+        }
+      | undefined;
 
     if (userId) {
       userToAdd = await db

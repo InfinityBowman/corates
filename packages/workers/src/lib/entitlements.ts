@@ -14,9 +14,9 @@ export function isSubscriptionActive(subscription: Subscription | null): boolean
 
   const now = Math.floor(Date.now() / 1000);
   const periodEnd =
-    subscription.currentPeriodEnd instanceof Date
-      ? Math.floor(subscription.currentPeriodEnd.getTime() / 1000)
-      : subscription.currentPeriodEnd;
+    subscription.currentPeriodEnd instanceof Date ?
+      Math.floor(subscription.currentPeriodEnd.getTime() / 1000)
+    : subscription.currentPeriodEnd;
 
   return periodEnd > now;
 }

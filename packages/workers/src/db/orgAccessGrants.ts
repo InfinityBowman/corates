@@ -43,9 +43,9 @@ export async function getActiveGrantsByOrgId(
     const startsAt =
       grant.startsAt instanceof Date ? Math.floor(grant.startsAt.getTime() / 1000) : grant.startsAt;
     const expiresAt =
-      grant.expiresAt instanceof Date
-        ? Math.floor(grant.expiresAt.getTime() / 1000)
-        : grant.expiresAt;
+      grant.expiresAt instanceof Date ?
+        Math.floor(grant.expiresAt.getTime() / 1000)
+      : grant.expiresAt;
     return startsAt <= nowTimestamp && nowTimestamp < expiresAt;
   });
 }
