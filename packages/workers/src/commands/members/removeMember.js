@@ -31,11 +31,7 @@ export async function removeMember(env, actor, { orgId, projectId, userId, isSel
     .get();
 
   if (!targetMember) {
-    throw createDomainError(
-      PROJECT_ERRORS.NOT_FOUND,
-      { projectId, userId },
-      'Member not found',
-    );
+    throw createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId, userId }, 'Member not found');
   }
 
   // Prevent removing the last owner

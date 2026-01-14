@@ -12,10 +12,7 @@
 import { createDb } from '@/db/client.js';
 import { projects, projectMembers } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
-import {
-  disconnectAllFromProject,
-  cleanupProjectStorage,
-} from '@/commands/lib/doSync.js';
+import { disconnectAllFromProject, cleanupProjectStorage } from '@/commands/lib/doSync.js';
 import { notifyUsers, NotificationTypes } from '@/commands/lib/notifications.js';
 
 export async function deleteProject(env, actor, { projectId }) {

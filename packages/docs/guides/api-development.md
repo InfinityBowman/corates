@@ -167,6 +167,7 @@ For complex write operations, we use the **command pattern** to separate busines
 ### When to Use Commands
 
 Use commands for operations that:
+
 - Modify state (create, update, delete)
 - Have complex business logic (validation, notifications, syncing)
 - Need to be reusable across multiple routes or contexts
@@ -354,10 +355,10 @@ Commands use shared utilities from `@/commands/lib/`:
 
 ```js
 import {
-  syncProjectToDO,      // Sync project metadata and members
-  syncMemberToDO,       // Sync member changes (add/update/remove)
+  syncProjectToDO, // Sync project metadata and members
+  syncMemberToDO, // Sync member changes (add/update/remove)
   disconnectAllFromProject, // Disconnect all users from ProjectDoc DO
-  cleanupProjectStorage,    // Clean up R2 storage for a project
+  cleanupProjectStorage, // Clean up R2 storage for a project
 } from '@/commands/lib/doSync.js';
 
 // Sync member addition
@@ -378,9 +379,9 @@ await syncMemberToDO(env, projectId, 'remove', { userId });
 
 ```js
 import {
-  notifyUser,           // Send notification to single user
-  notifyUsers,          // Send notification to multiple users
-  NotificationTypes,    // Type constants
+  notifyUser, // Send notification to single user
+  notifyUsers, // Send notification to multiple users
+  NotificationTypes, // Type constants
 } from '@/commands/lib/notifications.js';
 
 // Notify single user
@@ -479,9 +480,7 @@ describe('createProject', () => {
     const mockEnv = createMockEnvAtQuotaLimit();
     const actor = { id: 'user-1' };
 
-    await expect(
-      createProject(mockEnv, actor, { orgId: 'org-1', name: 'Project' })
-    ).rejects.toMatchObject({
+    await expect(createProject(mockEnv, actor, { orgId: 'org-1', name: 'Project' })).rejects.toMatchObject({
       code: 'QUOTA_EXCEEDED',
     });
   });
@@ -491,6 +490,7 @@ describe('createProject', () => {
 ### Best Practices
 
 **DO:**
+
 - Keep commands focused on a single operation
 - Use JSDoc comments to document parameters and errors
 - Import shared utilities from `@/commands/lib/`
@@ -499,6 +499,7 @@ describe('createProject', () => {
 - Return plain objects (not HTTP responses)
 
 **DON'T:**
+
 - Access Hono context (`c`) in commands
 - Return HTTP status codes or Response objects
 - Catch and suppress errors silently
