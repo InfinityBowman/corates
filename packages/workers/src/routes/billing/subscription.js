@@ -2,21 +2,181 @@
  * Billing subscription routes
  * Handles org-scoped billing status and member info (read-only endpoints)
  */
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { resolveOrgAccess } from '@/lib/billingResolver.js';
 import { getPlan, getGrantPlan } from '@corates/shared/plans';
-import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  createValidationError,
+  SYSTEM_ERRORS,
+  AUTH_ERRORS,
+  VALIDATION_ERRORS,
+} from '@corates/shared';
 import { resolveOrgId } from './helpers/orgContext.js';
 
-const billingSubscriptionRoutes = new Hono();
+const billingSubscriptionRoutes = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
 
-/**
- * GET /usage
- * Get the current org's resource usage (projects, collaborators)
- */
-billingSubscriptionRoutes.get('/usage', requireAuth, async c => {
+      let message = firstIssue?.message || 'Validation failed';
+      const isMissing =
+        firstIssue?.received === 'undefined' ||
+        message.includes('received undefined') ||
+        message.includes('Required');
+
+      if (isMissing) {
+        message = `${fieldName} is required`;
+      }
+
+      const error = createValidationError(
+        String(field),
+        VALIDATION_ERRORS.FIELD_REQUIRED.code,
+        null,
+      );
+      error.message = message;
+      return c.json(error, 400);
+    }
+  },
+});
+
+// Response schemas
+const UsageResponseSchema = z
+  .object({
+    projects: z.number(),
+    collaborators: z.number(),
+  })
+  .openapi('UsageResponse');
+
+const SubscriptionResponseSchema = z
+  .object({
+    tier: z.string(),
+    status: z.string(),
+    tierInfo: z.object({
+      name: z.string(),
+      description: z.string(),
+    }),
+    stripeSubscriptionId: z.string().nullable(),
+    currentPeriodEnd: z.number().nullable(),
+    cancelAtPeriodEnd: z.boolean(),
+    accessMode: z.string(),
+    source: z.string(),
+    projectCount: z.number(),
+  })
+  .openapi('SubscriptionResponse');
+
+const MemberSchema = z
+  .object({
+    id: z.string(),
+    userId: z.string(),
+    organizationId: z.string(),
+    role: z.string(),
+    createdAt: z.string(),
+    user: z
+      .object({
+        id: z.string(),
+        name: z.string().nullable(),
+        email: z.string(),
+        image: z.string().nullable(),
+      })
+      .optional(),
+  })
+  .openapi('OrgMember');
+
+const MembersResponseSchema = z
+  .object({
+    members: z.array(MemberSchema),
+    count: z.number(),
+  })
+  .openapi('MembersResponse');
+
+const BillingErrorSchema = z
+  .object({
+    code: z.string(),
+    message: z.string(),
+    statusCode: z.number(),
+    details: z.record(z.unknown()).optional(),
+  })
+  .openapi('BillingError');
+
+// Route definitions
+const usageRoute = createRoute({
+  method: 'get',
+  path: '/usage',
+  tags: ['Billing'],
+  summary: 'Get org usage',
+  description: "Get the current org's resource usage (projects, collaborators)",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: { 'application/json': { schema: UsageResponseSchema } },
+      description: 'Usage data',
+    },
+    403: {
+      content: { 'application/json': { schema: BillingErrorSchema } },
+      description: 'No org found',
+    },
+    500: {
+      content: { 'application/json': { schema: BillingErrorSchema } },
+      description: 'Database error',
+    },
+  },
+});
+
+const subscriptionRoute = createRoute({
+  method: 'get',
+  path: '/subscription',
+  tags: ['Billing'],
+  summary: 'Get subscription status',
+  description: "Get the current org's billing status",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: { 'application/json': { schema: SubscriptionResponseSchema } },
+      description: 'Subscription data',
+    },
+    403: {
+      content: { 'application/json': { schema: BillingErrorSchema } },
+      description: 'No org found',
+    },
+    500: {
+      content: { 'application/json': { schema: BillingErrorSchema } },
+      description: 'Database error',
+    },
+  },
+});
+
+const membersRoute = createRoute({
+  method: 'get',
+  path: '/members',
+  tags: ['Billing'],
+  summary: 'Get org members',
+  description: "Get the current org's members",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: { 'application/json': { schema: MembersResponseSchema } },
+      description: 'Members list',
+    },
+    403: {
+      content: { 'application/json': { schema: BillingErrorSchema } },
+      description: 'No org found',
+    },
+    500: {
+      content: { 'application/json': { schema: BillingErrorSchema } },
+      description: 'Database error',
+    },
+  },
+});
+
+// Route handlers
+billingSubscriptionRoutes.use('*', requireAuth);
+
+billingSubscriptionRoutes.openapi(usageRoute, async c => {
   const { user, session } = getAuth(c);
   const db = createDb(c.env.DB);
 
@@ -33,14 +193,11 @@ billingSubscriptionRoutes.get('/usage', requireAuth, async c => {
     const { projects, projectMembers } = await import('@/db/schema.js');
     const { eq, count, countDistinct } = await import('drizzle-orm');
 
-    // Count projects for this org
     const [projectCountResult] = await db
       .select({ count: count() })
       .from(projects)
       .where(eq(projects.orgId, orgId));
 
-    // Count unique collaborators across all org projects
-    // This counts distinct users who are members of any project in this org
     const [collaboratorCountResult] = await db
       .select({ count: countDistinct(projectMembers.userId) })
       .from(projectMembers)
@@ -61,13 +218,7 @@ billingSubscriptionRoutes.get('/usage', requireAuth, async c => {
   }
 });
 
-/**
- * GET /subscription
- * Get the current org's billing status (adapter for frontend compatibility)
- * Returns org-scoped billing resolution
- * Uses session's activeOrganizationId to determine the org
- */
-billingSubscriptionRoutes.get('/subscription', requireAuth, async c => {
+billingSubscriptionRoutes.openapi(subscriptionRoute, async c => {
   const { user, session } = getAuth(c);
   const db = createDb(c.env.DB);
 
@@ -83,7 +234,6 @@ billingSubscriptionRoutes.get('/subscription', requireAuth, async c => {
 
     const orgBilling = await resolveOrgAccess(db, orgId);
 
-    // Get project count for usage display
     const { projects } = await import('@/db/schema.js');
     const { eq, count } = await import('drizzle-orm');
     const [projectCountResult] = await db
@@ -91,8 +241,6 @@ billingSubscriptionRoutes.get('/subscription', requireAuth, async c => {
       .from(projects)
       .where(eq(projects.orgId, orgId));
 
-    // Convert to frontend-compatible format
-    // Use getGrantPlan for grants, getPlan for subscriptions/free
     const effectivePlan =
       orgBilling.source === 'grant' ?
         getGrantPlan(orgBilling.effectivePlanId)
@@ -129,12 +277,7 @@ billingSubscriptionRoutes.get('/subscription', requireAuth, async c => {
   }
 });
 
-/**
- * GET /members
- * Get the current org's members (uses session's activeOrganizationId)
- * Returns list of members with count
- */
-billingSubscriptionRoutes.get('/members', requireAuth, async c => {
+billingSubscriptionRoutes.openapi(membersRoute, async c => {
   const { user, session } = getAuth(c);
   const db = createDb(c.env.DB);
 
@@ -148,7 +291,6 @@ billingSubscriptionRoutes.get('/members', requireAuth, async c => {
       return c.json(error, error.statusCode);
     }
 
-    // Use Better Auth API to list members (consistent with orgs endpoint)
     const { createAuth } = await import('@/auth/config.js');
     const auth = createAuth(c.env, c.executionCtx);
     const result = await auth.api.listMembers({

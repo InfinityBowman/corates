@@ -3,24 +3,406 @@
  * Provides direct Stripe customer lookup, portal link generation, and invoice viewing
  */
 
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import { user, organization, subscription } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
-import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
-import { validateRequest, stripeSchemas } from '@/config/validation.js';
+import {
+  createDomainError,
+  createValidationError,
+  SYSTEM_ERRORS,
+  VALIDATION_ERRORS,
+} from '@corates/shared';
 import Stripe from 'stripe';
 
-const stripeToolsRoutes = new Hono();
+const stripeToolsRoutes = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
+
+      let message = firstIssue?.message || 'Validation failed';
+      const isMissing =
+        firstIssue?.received === 'undefined' ||
+        message.includes('received undefined') ||
+        message.includes('Required');
+
+      if (isMissing) {
+        message = `${fieldName} is required`;
+      }
+
+      const error = createValidationError(
+        String(field),
+        VALIDATION_ERRORS.FIELD_REQUIRED.code,
+        null,
+      );
+      error.message = message;
+      return c.json(error, 400);
+    }
+  },
+});
+
+// Response schemas
+const StripeCustomerSchema = z
+  .object({
+    id: z.string(),
+    email: z.string().nullable(),
+    name: z.string().nullable(),
+    phone: z.string().nullable(),
+    created: z.number(),
+    currency: z.string().nullable(),
+    defaultSource: z.string().nullable(),
+    invoicePrefix: z.string().nullable(),
+    balance: z.number(),
+    delinquent: z.boolean(),
+    metadata: z.record(z.string()),
+    livemode: z.boolean(),
+  })
+  .openapi('StripeCustomer');
+
+const LinkedUserSchema = z
+  .object({
+    id: z.string(),
+    email: z.string(),
+    name: z.string(),
+    displayName: z.string().nullable(),
+    stripeCustomerId: z.string().optional(),
+  })
+  .nullable()
+  .openapi('LinkedUser');
+
+const LinkedOrgSchema = z
+  .object({
+    id: z.string(),
+    name: z.string().nullable(),
+    slug: z.string().nullable(),
+  })
+  .nullable()
+  .openapi('LinkedOrg');
+
+const CustomerLookupResponseSchema = z
+  .object({
+    found: z.boolean(),
+    message: z.string().optional(),
+    email: z.string().optional(),
+    customerId: z.string().optional(),
+    customer: StripeCustomerSchema.optional(),
+    linkedUser: LinkedUserSchema.optional(),
+    linkedOrg: LinkedOrgSchema.optional(),
+    stripeDashboardUrl: z.string().optional(),
+  })
+  .openapi('CustomerLookupResponse');
+
+const PortalLinkResponseSchema = z
+  .object({
+    success: z.boolean(),
+    url: z.string(),
+    expiresAt: z.number(),
+  })
+  .openapi('PortalLinkResponse');
+
+const InvoiceSchema = z
+  .object({
+    id: z.string(),
+    number: z.string().nullable(),
+    status: z.string().nullable(),
+    currency: z.string(),
+    amountDue: z.number(),
+    amountPaid: z.number(),
+    amountRemaining: z.number(),
+    total: z.number(),
+    subtotal: z.number(),
+    created: z.number(),
+    dueDate: z.number().nullable(),
+    paidAt: z.number().nullable(),
+    hostedInvoiceUrl: z.string().nullable(),
+    invoicePdf: z.string().nullable(),
+    subscriptionId: z.string().nullable(),
+    periodStart: z.number().nullable(),
+    periodEnd: z.number().nullable(),
+  })
+  .openapi('StripeInvoice');
+
+const InvoicesResponseSchema = z
+  .object({
+    customerId: z.string(),
+    invoices: z.array(InvoiceSchema),
+    hasMore: z.boolean(),
+  })
+  .openapi('InvoicesResponse');
+
+const PaymentMethodCardSchema = z
+  .object({
+    brand: z.string(),
+    last4: z.string(),
+    expMonth: z.number(),
+    expYear: z.number(),
+    funding: z.string(),
+    country: z.string().nullable(),
+  })
+  .nullable()
+  .openapi('PaymentMethodCard');
+
+const PaymentMethodSchema = z
+  .object({
+    id: z.string(),
+    type: z.string(),
+    card: PaymentMethodCardSchema,
+    created: z.number(),
+  })
+  .openapi('PaymentMethod');
+
+const PaymentMethodsResponseSchema = z
+  .object({
+    customerId: z.string(),
+    paymentMethods: z.array(PaymentMethodSchema),
+  })
+  .openapi('PaymentMethodsResponse');
+
+const SubscriptionItemSchema = z
+  .object({
+    id: z.string(),
+    priceId: z.string(),
+    productId: z.union([z.string(), z.record(z.unknown())]),
+    unitAmount: z.number().nullable(),
+    interval: z.string().nullable(),
+    quantity: z.number().nullable(),
+  })
+  .openapi('SubscriptionItem');
+
+const StripeSubscriptionSchema = z
+  .object({
+    id: z.string(),
+    status: z.string(),
+    currency: z.string(),
+    currentPeriodStart: z.number(),
+    currentPeriodEnd: z.number(),
+    cancelAtPeriodEnd: z.boolean(),
+    cancelAt: z.number().nullable(),
+    canceledAt: z.number().nullable(),
+    endedAt: z.number().nullable(),
+    trialStart: z.number().nullable(),
+    trialEnd: z.number().nullable(),
+    created: z.number(),
+    items: z.array(SubscriptionItemSchema),
+    defaultPaymentMethod: z.string().nullable(),
+    latestInvoice: z.string().nullable(),
+    metadata: z.record(z.string()),
+  })
+  .openapi('StripeSubscription');
+
+const SubscriptionsResponseSchema = z
+  .object({
+    customerId: z.string(),
+    subscriptions: z.array(StripeSubscriptionSchema),
+    hasMore: z.boolean(),
+  })
+  .openapi('SubscriptionsResponse');
+
+const StripeErrorSchema = z
+  .object({
+    code: z.string(),
+    message: z.string(),
+    statusCode: z.number(),
+    details: z.record(z.unknown()).optional(),
+  })
+  .openapi('StripeToolsError');
+
+// Route definitions
+const customerLookupRoute = createRoute({
+  method: 'get',
+  path: '/stripe/customer',
+  tags: ['Admin - Stripe Tools'],
+  summary: 'Look up Stripe customer',
+  description: 'Look up a Stripe customer by email or customer ID. Admin only.',
+  request: {
+    query: z.object({
+      email: z.string().optional().openapi({ description: 'Customer email' }),
+      customerId: z.string().optional().openapi({ description: 'Stripe customer ID' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Customer details',
+      content: {
+        'application/json': {
+          schema: CustomerLookupResponseSchema,
+        },
+      },
+    },
+    400: {
+      description: 'Missing required parameter',
+      content: {
+        'application/json': {
+          schema: StripeErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Stripe API error',
+      content: {
+        'application/json': {
+          schema: StripeErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const portalLinkRoute = createRoute({
+  method: 'post',
+  path: '/stripe/portal-link',
+  tags: ['Admin - Stripe Tools'],
+  summary: 'Generate portal link',
+  description: 'Generate a customer portal link for a Stripe customer. Admin only.',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            customerId: z.string().openapi({ description: 'Stripe customer ID' }),
+            returnUrl: z
+              .string()
+              .optional()
+              .openapi({ description: 'Return URL after portal session' }),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Portal link generated',
+      content: {
+        'application/json': {
+          schema: PortalLinkResponseSchema,
+        },
+      },
+    },
+    400: {
+      description: 'Validation error',
+      content: {
+        'application/json': {
+          schema: StripeErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Stripe API error',
+      content: {
+        'application/json': {
+          schema: StripeErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const invoicesRoute = createRoute({
+  method: 'get',
+  path: '/stripe/customer/{customerId}/invoices',
+  tags: ['Admin - Stripe Tools'],
+  summary: 'Get customer invoices',
+  description: 'Get recent invoices for a Stripe customer. Admin only.',
+  request: {
+    params: z.object({
+      customerId: z.string().openapi({ description: 'Stripe customer ID' }),
+    }),
+    query: z.object({
+      limit: z.string().optional().openapi({ description: 'Max invoices (max 50)', example: '10' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Customer invoices',
+      content: {
+        'application/json': {
+          schema: InvoicesResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Stripe API error',
+      content: {
+        'application/json': {
+          schema: StripeErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const paymentMethodsRoute = createRoute({
+  method: 'get',
+  path: '/stripe/customer/{customerId}/payment-methods',
+  tags: ['Admin - Stripe Tools'],
+  summary: 'Get payment methods',
+  description: 'Get payment methods for a Stripe customer. Admin only.',
+  request: {
+    params: z.object({
+      customerId: z.string().openapi({ description: 'Stripe customer ID' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Payment methods',
+      content: {
+        'application/json': {
+          schema: PaymentMethodsResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Stripe API error',
+      content: {
+        'application/json': {
+          schema: StripeErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const subscriptionsRoute = createRoute({
+  method: 'get',
+  path: '/stripe/customer/{customerId}/subscriptions',
+  tags: ['Admin - Stripe Tools'],
+  summary: 'Get Stripe subscriptions',
+  description: 'Get subscriptions for a Stripe customer directly from Stripe. Admin only.',
+  request: {
+    params: z.object({
+      customerId: z.string().openapi({ description: 'Stripe customer ID' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Customer subscriptions',
+      content: {
+        'application/json': {
+          schema: SubscriptionsResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Stripe API error',
+      content: {
+        'application/json': {
+          schema: StripeErrorSchema,
+        },
+      },
+    },
+  },
+});
 
 /**
  * GET /api/admin/stripe/customer
  * Look up a Stripe customer by email or customer ID
- * Query params: email, customerId (one required)
  */
-stripeToolsRoutes.get('/stripe/customer', async c => {
-  const email = c.req.query('email');
-  const customerId = c.req.query('customerId');
+stripeToolsRoutes.openapi(customerLookupRoute, async c => {
+  const query = c.req.valid('query');
+  const email = query.email;
+  const customerId = query.customerId;
 
   if (!email && !customerId) {
     const error = createDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, {
@@ -174,55 +556,52 @@ stripeToolsRoutes.get('/stripe/customer', async c => {
 /**
  * POST /api/admin/stripe/portal-link
  * Generate a customer portal link for a Stripe customer
- * Body: { customerId, returnUrl? }
  */
-stripeToolsRoutes.post(
-  '/stripe/portal-link',
-  validateRequest(stripeSchemas.portalLink),
-  async c => {
-    const body = c.get('validatedBody');
-    const { customerId, returnUrl } = body;
+stripeToolsRoutes.openapi(portalLinkRoute, async c => {
+  const body = c.req.valid('json');
+  const { customerId, returnUrl } = body;
 
-    if (!c.env.STRIPE_SECRET_KEY) {
-      const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
-        message: 'Stripe is not configured',
-      });
-      return c.json(error, error.statusCode);
-    }
+  if (!c.env.STRIPE_SECRET_KEY) {
+    const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
+      message: 'Stripe is not configured',
+    });
+    return c.json(error, error.statusCode);
+  }
 
-    const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-11-17.clover',
+  const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-11-17.clover',
+  });
+
+  try {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: returnUrl || c.env.APP_URL || 'https://corates.com',
     });
 
-    try {
-      const session = await stripe.billingPortal.sessions.create({
-        customer: customerId,
-        return_url: returnUrl || c.env.APP_URL || 'https://corates.com',
-      });
-
-      return c.json({
-        success: true,
-        url: session.url,
-        expiresAt: session.created + 300, // Portal links typically expire in 5 minutes
-      });
-    } catch (error) {
-      console.error('Error creating portal link:', error);
-      const dbError = createDomainError(SYSTEM_ERRORS.EXTERNAL_SERVICE_ERROR, {
-        service: 'Stripe',
-        message: error.message,
-      });
-      return c.json(dbError, dbError.statusCode);
-    }
-  },
-);
+    return c.json({
+      success: true,
+      url: session.url,
+      expiresAt: session.created + 300, // Portal links typically expire in 5 minutes
+    });
+  } catch (error) {
+    console.error('Error creating portal link:', error);
+    const dbError = createDomainError(SYSTEM_ERRORS.EXTERNAL_SERVICE_ERROR, {
+      service: 'Stripe',
+      message: error.message,
+    });
+    return c.json(dbError, dbError.statusCode);
+  }
+});
 
 /**
  * GET /api/admin/stripe/customer/:customerId/invoices
  * Get recent invoices for a Stripe customer
  */
-stripeToolsRoutes.get('/stripe/customer/:customerId/invoices', async c => {
-  const customerId = c.req.param('customerId');
-  const limit = Math.min(parseInt(c.req.query('limit') || '10', 10), 50);
+stripeToolsRoutes.openapi(invoicesRoute, async c => {
+  const { customerId } = c.req.valid('param');
+  const query = c.req.valid('query');
+  const parsedLimit = parseInt(query.limit || '10', 10);
+  const limit = Math.min(Number.isNaN(parsedLimit) ? 10 : parsedLimit, 50);
 
   if (!c.env.STRIPE_SECRET_KEY) {
     const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
@@ -278,8 +657,8 @@ stripeToolsRoutes.get('/stripe/customer/:customerId/invoices', async c => {
  * GET /api/admin/stripe/customer/:customerId/payment-methods
  * Get payment methods for a Stripe customer
  */
-stripeToolsRoutes.get('/stripe/customer/:customerId/payment-methods', async c => {
-  const customerId = c.req.param('customerId');
+stripeToolsRoutes.openapi(paymentMethodsRoute, async c => {
+  const { customerId } = c.req.valid('param');
 
   if (!c.env.STRIPE_SECRET_KEY) {
     const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
@@ -331,8 +710,8 @@ stripeToolsRoutes.get('/stripe/customer/:customerId/payment-methods', async c =>
  * GET /api/admin/stripe/customer/:customerId/subscriptions
  * Get subscriptions for a Stripe customer directly from Stripe
  */
-stripeToolsRoutes.get('/stripe/customer/:customerId/subscriptions', async c => {
-  const customerId = c.req.param('customerId');
+stripeToolsRoutes.openapi(subscriptionsRoute, async c => {
+  const { customerId } = c.req.valid('param');
 
   if (!c.env.STRIPE_SECRET_KEY) {
     const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {

@@ -4,7 +4,7 @@
  * This is the main Hono application that routes to specific handlers.
  */
 
-import { Hono } from 'hono';
+import { OpenAPIHono } from '@hono/zod-openapi';
 import { UserSession } from './durable-objects/UserSession.js';
 import { ProjectDoc } from './durable-objects/ProjectDoc.js';
 import { EmailQueue } from './durable-objects/EmailQueue.js';
@@ -17,6 +17,7 @@ import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 
 // Route imports
 import { auth } from './auth/routes.js';
+import { healthRoutes } from './routes/health.js';
 import { orgRoutes } from './routes/orgs/index.js';
 import { userRoutes } from './routes/users.js';
 import { dbRoutes } from './routes/database.js';
@@ -31,8 +32,8 @@ import { contactRoutes } from './routes/contact.js';
 // Export Durable Objects
 export { UserSession, ProjectDoc, EmailQueue };
 
-// Create main Hono app
-const app = new Hono();
+// Create main Hono app with OpenAPI support
+const app = new OpenAPIHono();
 
 // Apply CORS middleware globally (needs env, so we do it per-request)
 app.use('*', async (c, next) => {
@@ -43,74 +44,10 @@ app.use('*', async (c, next) => {
 // Apply security headers to all responses
 app.use('*', securityHeaders());
 
-// Health check with dependency checks
-app.get('/health', async c => {
-  const checks = {
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    services: {},
-  };
+// Mount health routes
+app.route('/health', healthRoutes);
 
-  // Check D1 database
-  try {
-    const result = await c.env.DB.prepare('SELECT 1 as ok').first();
-    checks.services.database = {
-      status: result?.ok === 1 ? 'healthy' : 'unhealthy',
-      type: 'D1',
-    };
-  } catch (error) {
-    checks.services.database = {
-      status: 'unhealthy',
-      type: 'D1',
-      error: error.message,
-    };
-    checks.status = 'degraded';
-  }
-
-  // Check R2 bucket
-  try {
-    // List with limit 1 is a lightweight way to check connectivity
-    await c.env.PDF_BUCKET.list({ limit: 1 });
-    checks.services.storage = {
-      status: 'healthy',
-      type: 'R2',
-    };
-  } catch (error) {
-    checks.services.storage = {
-      status: 'unhealthy',
-      type: 'R2',
-      error: error.message,
-    };
-    checks.status = 'degraded';
-  }
-
-  // Check Durable Objects are available
-  try {
-    // Just verify bindings exist
-    checks.services.durableObjects = {
-      status:
-        c.env.USER_SESSION && c.env.PROJECT_DOC && c.env.EMAIL_QUEUE ? 'healthy' : 'unhealthy',
-      type: 'Durable Objects',
-      bindings: {
-        USER_SESSION: !!c.env.USER_SESSION,
-        PROJECT_DOC: !!c.env.PROJECT_DOC,
-        EMAIL_QUEUE: !!c.env.EMAIL_QUEUE,
-      },
-    };
-  } catch (error) {
-    checks.services.durableObjects = {
-      status: 'unhealthy',
-      type: 'Durable Objects',
-      error: error.message,
-    };
-    checks.status = 'degraded';
-  }
-
-  const httpStatus = checks.status === 'healthy' ? 200 : 503;
-  return c.json(checks, httpStatus);
-});
-
-// Simple liveness probe (for load balancers)
+// Simple liveness probe (for load balancers) - keep at root for backwards compatibility
 app.get('/healthz', c => c.text('OK'));
 
 // Root endpoint - redirect browsers to frontend, return text for API clients
@@ -129,6 +66,25 @@ app.get('/docs', async c => {
   if (c.env.ENVIRONMENT === 'production') return c.text('Not Found', 404);
   const { getDocsHtml } = await import('./docs.js');
   return c.html(await getDocsHtml(c.env));
+});
+
+// OpenAPI JSON spec (development only)
+app.doc31('/openapi.json', c => {
+  if (c.env.ENVIRONMENT === 'production') return c.text('Not Found', 404);
+  return c.json({
+    openapi: '3.1.0',
+    info: {
+      title: 'Corates API',
+      version: '1.0.0',
+      description: 'API for Corates - Collaborative Research Appraisal Tool for Evidence Synthesis',
+    },
+    servers: [
+      {
+        url: c.env.ENVIRONMENT === 'production' ? 'https://corates.org' : 'http://localhost:8787',
+        description: c.env.ENVIRONMENT === 'production' ? 'Production' : 'Local development',
+      },
+    ],
+  });
 });
 
 // Mount auth routes

@@ -24,7 +24,7 @@ const ReactivePropsDemo = lazy(() => import('./ReactivePropsDemo.jsx'));
  */
 export default function MockRoutes() {
   return (
-    <>
+    <Route path='/mocks'>
       <Route path='/' component={MockIndex} />
       <Route path='/project-view-editorial' component={ProjectViewEditorial} />
       <Route path='/project-view-dashboard' component={ProjectViewDashboard} />
@@ -38,6 +38,6 @@ export default function MockRoutes() {
       <Route path='/settings-combined' component={SettingsMockCombined} />
       <Route path='/dashboard' component={DashboardMock} />
       <Route path='/reactivity-example' component={ReactivePropsDemo} />
-    </>
+    </Route>
   );
 }

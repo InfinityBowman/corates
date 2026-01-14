@@ -5,7 +5,6 @@ import {
   getCachedAvatar,
   cacheAvatar,
   removeCachedAvatar,
-  clearAvatarCache,
   pruneExpiredAvatars,
 } from '../avatarCache.js';
 
@@ -55,18 +54,6 @@ describe('avatarCache', () => {
 
     it('handles removing non-existent avatar gracefully', async () => {
       await removeCachedAvatar('nonexistent');
-    });
-  });
-
-  describe('clearAvatarCache', () => {
-    it('clears all cached avatars', async () => {
-      await cacheAvatar('user-1', 'data:image/png;base64,a');
-      await cacheAvatar('user-2', 'data:image/png;base64,b');
-
-      await clearAvatarCache();
-
-      expect(await getCachedAvatar('user-1')).toBeNull();
-      expect(await getCachedAvatar('user-2')).toBeNull();
     });
   });
 

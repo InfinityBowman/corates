@@ -3,7 +3,7 @@
  * Handles user CRUD operations, bans, impersonation, subscriptions, and stats
  */
 
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import {
   user,
@@ -30,15 +30,528 @@ import {
 } from '@corates/shared';
 import { TIME_DURATIONS } from '@/config/constants.js';
 import { syncMemberToDO } from '@/lib/project-sync.js';
-import { userSchemas, validateRequest } from '@/config/validation.js';
 
-const userRoutes = new Hono();
+const userRoutes = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
+
+      let message = firstIssue?.message || 'Validation failed';
+      const isMissing =
+        firstIssue?.received === 'undefined' ||
+        message.includes('received undefined') ||
+        message.includes('Required');
+
+      if (isMissing) {
+        message = `${fieldName} is required`;
+      }
+
+      const error = createValidationError(
+        String(field),
+        VALIDATION_ERRORS.FIELD_REQUIRED.code,
+        null,
+      );
+      error.message = message;
+      return c.json(error, 400);
+    }
+  },
+});
+
+// Response schemas
+const StatsResponseSchema = z
+  .object({
+    users: z.number(),
+    projects: z.number(),
+    activeSessions: z.number(),
+    recentSignups: z.number(),
+  })
+  .openapi('AdminStatsResponse');
+
+const UserSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string(),
+    displayName: z.string().nullable(),
+    username: z.string().nullable(),
+    image: z.string().nullable(),
+    avatarUrl: z.string().nullable(),
+    role: z.string().nullable(),
+    emailVerified: z.boolean().nullable(),
+    banned: z.boolean().nullable(),
+    banReason: z.string().nullable(),
+    banExpires: z.union([z.string(), z.date(), z.number()]).nullable(),
+    stripeCustomerId: z.string().nullable(),
+    createdAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+    updatedAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+    providers: z.array(z.string()).optional(),
+  })
+  .openapi('AdminUser');
+
+const UserListResponseSchema = z
+  .object({
+    users: z.array(UserSchema),
+    pagination: z.object({
+      page: z.number(),
+      limit: z.number(),
+      total: z.number(),
+      totalPages: z.number(),
+    }),
+  })
+  .openapi('AdminUserListResponse');
+
+const UserProjectSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    role: z.string().nullable(),
+    joinedAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+  })
+  .openapi('UserProject');
+
+const UserSessionSchema = z
+  .object({
+    id: z.string(),
+    createdAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+    expiresAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+    ipAddress: z.string().nullable(),
+    userAgent: z.string().nullable(),
+  })
+  .openapi('UserSession');
+
+const LinkedAccountSchema = z
+  .object({
+    id: z.string(),
+    providerId: z.string(),
+    accountId: z.string(),
+    createdAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+  })
+  .openapi('LinkedAccount');
+
+const OrgMembershipSchema = z
+  .object({
+    orgId: z.string(),
+    orgName: z.string(),
+    orgSlug: z.string().nullable(),
+    role: z.string(),
+    membershipCreatedAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+    billing: z.object({
+      effectivePlanId: z.string(),
+      source: z.string(),
+      accessMode: z.string(),
+      planName: z.string(),
+    }),
+  })
+  .openapi('OrgMembership');
+
+const UserDetailsResponseSchema = z
+  .object({
+    user: z.record(z.unknown()),
+    projects: z.array(UserProjectSchema),
+    sessions: z.array(UserSessionSchema),
+    accounts: z.array(LinkedAccountSchema),
+    orgs: z.array(OrgMembershipSchema),
+  })
+  .openapi('AdminUserDetailsResponse');
+
+const BanUserRequestSchema = z
+  .object({
+    reason: z.string().optional().openapi({ example: 'Violation of terms of service' }),
+    expiresAt: z
+      .string()
+      .datetime()
+      .optional()
+      .nullable()
+      .openapi({ example: '2025-12-31T23:59:59Z' }),
+  })
+  .openapi('BanUserRequest');
+
+const ImpersonateUserRequestSchema = z
+  .object({
+    userId: z.string().min(1, 'userId is required').openapi({ example: 'user-123' }),
+  })
+  .openapi('ImpersonateUserRequest');
+
+const SuccessResponseSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string(),
+  })
+  .openapi('SuccessResponse');
+
+const AdminErrorSchema = z
+  .object({
+    code: z.string(),
+    message: z.string(),
+    statusCode: z.number(),
+    details: z.record(z.unknown()).optional(),
+  })
+  .openapi('AdminUserError');
+
+// Route definitions
+const getStatsRoute = createRoute({
+  method: 'get',
+  path: '/stats',
+  tags: ['Admin - Users'],
+  summary: 'Get dashboard statistics',
+  description: 'Get admin dashboard statistics including user, project, and session counts.',
+  responses: {
+    200: {
+      description: 'Dashboard statistics',
+      content: {
+        'application/json': {
+          schema: StatsResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const listUsersRoute = createRoute({
+  method: 'get',
+  path: '/users',
+  tags: ['Admin - Users'],
+  summary: 'List all users',
+  description: 'List all users with pagination and search.',
+  request: {
+    query: z.object({
+      page: z.string().optional().openapi({ description: 'Page number', example: '1' }),
+      limit: z
+        .string()
+        .optional()
+        .openapi({ description: 'Results per page (max 100)', example: '20' }),
+      search: z
+        .string()
+        .optional()
+        .openapi({ description: 'Search by email, name, displayName, or username' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'List of users',
+      content: {
+        'application/json': {
+          schema: UserListResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const getUserDetailsRoute = createRoute({
+  method: 'get',
+  path: '/users/{userId}',
+  tags: ['Admin - Users'],
+  summary: 'Get user details',
+  description:
+    'Get detailed user info including projects, sessions, accounts, and org memberships.',
+  request: {
+    params: z.object({
+      userId: z.string().openapi({ description: 'User ID', example: 'user-123' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'User details',
+      content: {
+        'application/json': {
+          schema: UserDetailsResponseSchema,
+        },
+      },
+    },
+    404: {
+      description: 'User not found',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const banUserRoute = createRoute({
+  method: 'post',
+  path: '/users/{userId}/ban',
+  tags: ['Admin - Users'],
+  summary: 'Ban a user',
+  description: 'Ban a user and invalidate all their sessions.',
+  request: {
+    params: z.object({
+      userId: z.string().openapi({ description: 'User ID to ban', example: 'user-123' }),
+    }),
+    body: {
+      required: false,
+      content: {
+        'application/json': {
+          schema: BanUserRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'User banned successfully',
+      content: {
+        'application/json': {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    400: {
+      description: 'Cannot ban yourself',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const unbanUserRoute = createRoute({
+  method: 'post',
+  path: '/users/{userId}/unban',
+  tags: ['Admin - Users'],
+  summary: 'Unban a user',
+  description: 'Remove ban from a user.',
+  request: {
+    params: z.object({
+      userId: z.string().openapi({ description: 'User ID to unban', example: 'user-123' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'User unbanned successfully',
+      content: {
+        'application/json': {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const impersonateUserRoute = createRoute({
+  method: 'post',
+  path: '/users/{userId}/impersonate',
+  tags: ['Admin - Users'],
+  summary: 'Impersonate a user',
+  description: 'Start impersonating a user (creates a new session).',
+  request: {
+    params: z.object({
+      userId: z.string().openapi({ description: 'User ID to impersonate', example: 'user-123' }),
+    }),
+    body: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: ImpersonateUserRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Impersonation started',
+      content: {
+        'application/json': {
+          schema: z.record(z.unknown()),
+        },
+      },
+    },
+    400: {
+      description: 'Cannot impersonate yourself',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+    403: {
+      description: 'Forbidden',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const revokeAllSessionsRoute = createRoute({
+  method: 'delete',
+  path: '/users/{userId}/sessions',
+  tags: ['Admin - Users'],
+  summary: 'Revoke all sessions',
+  description: 'Revoke all sessions for a user.',
+  request: {
+    params: z.object({
+      userId: z.string().openapi({ description: 'User ID', example: 'user-123' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'All sessions revoked',
+      content: {
+        'application/json': {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const revokeSessionRoute = createRoute({
+  method: 'delete',
+  path: '/users/{userId}/sessions/{sessionId}',
+  tags: ['Admin - Users'],
+  summary: 'Revoke a session',
+  description: 'Revoke a specific session for a user.',
+  request: {
+    params: z.object({
+      userId: z.string().openapi({ description: 'User ID', example: 'user-123' }),
+      sessionId: z.string().openapi({ description: 'Session ID', example: 'session-123' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Session revoked',
+      content: {
+        'application/json': {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    404: {
+      description: 'Session not found',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const deleteUserRoute = createRoute({
+  method: 'delete',
+  path: '/users/{userId}',
+  tags: ['Admin - Users'],
+  summary: 'Delete a user',
+  description: 'Delete a user and all their data.',
+  request: {
+    params: z.object({
+      userId: z.string().openapi({ description: 'User ID to delete', example: 'user-123' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'User deleted successfully',
+      content: {
+        'application/json': {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    400: {
+      description: 'Cannot delete yourself',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+    404: {
+      description: 'User not found',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+  },
+});
 
 /**
  * GET /api/admin/stats
  * Get dashboard statistics
  */
-userRoutes.get('/stats', async c => {
+userRoutes.openapi(getStatsRoute, async c => {
   const db = createDb(c.env.DB);
 
   try {
@@ -75,23 +588,18 @@ userRoutes.get('/stats', async c => {
 /**
  * GET /api/admin/users
  * List all users with pagination and search
- * Query params:
- *   - page: page number (default 1)
- *   - limit: results per page (default 20, max 100)
- *   - search: search by email or name
- *   - sort: field to sort by (default createdAt)
- *   - order: asc or desc (default desc)
  */
-userRoutes.get('/users', async c => {
+userRoutes.openapi(listUsersRoute, async c => {
   const db = createDb(c.env.DB);
+  const query = c.req.valid('query');
 
-  const page = Math.max(1, parseInt(c.req.query('page') || '1', 10));
-  const limit = Math.min(100, Math.max(1, parseInt(c.req.query('limit') || '20', 10)));
-  const search = c.req.query('search')?.trim();
+  const page = Math.max(1, parseInt(query.page || '1', 10));
+  const limit = Math.min(100, Math.max(1, parseInt(query.limit || '20', 10)));
+  const search = query.search?.trim();
   const offset = (page - 1) * limit;
 
   try {
-    let query = db
+    let dbQuery = db
       .select({
         id: user.id,
         name: user.name,
@@ -114,7 +622,7 @@ userRoutes.get('/users', async c => {
     // Apply search filter
     if (search) {
       const searchPattern = `%${search.toLowerCase()}%`;
-      query = query.where(
+      dbQuery = dbQuery.where(
         or(
           like(sql`lower(${user.email})`, searchPattern),
           like(sql`lower(${user.name})`, searchPattern),
@@ -138,7 +646,7 @@ userRoutes.get('/users', async c => {
       );
 
     // Get paginated results
-    const users = await query.orderBy(desc(user.createdAt)).limit(limit).offset(offset);
+    const users = await dbQuery.orderBy(desc(user.createdAt)).limit(limit).offset(offset);
 
     // Fetch linked accounts for all users in the result set
     const userIds = users.map(u => u.id);
@@ -167,7 +675,6 @@ userRoutes.get('/users', async c => {
     }
 
     // Merge providers into user objects
-    // Note: Billing is now org-scoped, not user-scoped. Check org memberships for billing info.
     const usersWithProviders = users.map(u => ({
       ...u,
       providers: accountsMap[u.id] || [],
@@ -196,8 +703,8 @@ userRoutes.get('/users', async c => {
  * GET /api/admin/users/:userId
  * Get detailed user info
  */
-userRoutes.get('/users/:userId', async c => {
-  const userId = c.req.param('userId');
+userRoutes.openapi(getUserDetailsRoute, async c => {
+  const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
   try {
@@ -305,10 +812,19 @@ userRoutes.get('/users/:userId', async c => {
  * POST /api/admin/users/:userId/ban
  * Ban a user
  */
-userRoutes.post('/users/:userId/ban', validateRequest(userSchemas.ban), async c => {
-  const userId = c.req.param('userId');
-  const { reason, expiresAt } = c.get('validatedBody');
+userRoutes.openapi(banUserRoute, async c => {
+  const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
+
+  // Get body if provided (it's optional)
+  let reason, expiresAt;
+  try {
+    const body = await c.req.json();
+    reason = body?.reason;
+    expiresAt = body?.expiresAt ? new Date(body.expiresAt) : null;
+  } catch {
+    // No body provided, use defaults
+  }
 
   try {
     // Don't allow banning yourself
@@ -352,8 +868,8 @@ userRoutes.post('/users/:userId/ban', validateRequest(userSchemas.ban), async c 
  * POST /api/admin/users/:userId/unban
  * Unban a user
  */
-userRoutes.post('/users/:userId/unban', validateRequest(userSchemas.unban), async c => {
-  const userId = c.req.param('userId');
+userRoutes.openapi(unbanUserRoute, async c => {
+  const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
   try {
@@ -381,12 +897,11 @@ userRoutes.post('/users/:userId/unban', validateRequest(userSchemas.unban), asyn
 /**
  * POST /api/admin/users/:userId/impersonate
  * Start impersonating a user (creates a new session)
- * Requires user to have 'admin' role in database
  */
-userRoutes.post('/users/:userId/impersonate', validateRequest(userSchemas.impersonate), async c => {
-  const userId = c.req.param('userId');
+userRoutes.openapi(impersonateUserRoute, async c => {
+  const { userId } = c.req.valid('param');
   const adminUser = c.get('user');
-  const body = c.get('validatedBody');
+  const body = c.req.valid('json');
 
   try {
     // Don't allow impersonating yourself
@@ -426,8 +941,8 @@ userRoutes.post('/users/:userId/impersonate', validateRequest(userSchemas.impers
 
     if (response.status === 403 && c.env.ENVIRONMENT !== 'production') {
       try {
-        const body = await response.clone().text();
-        console.log('[Admin] Impersonation forbidden:', body);
+        const respBody = await response.clone().text();
+        console.log('[Admin] Impersonation forbidden:', respBody);
       } catch {
         // ignore
       }
@@ -448,8 +963,8 @@ userRoutes.post('/users/:userId/impersonate', validateRequest(userSchemas.impers
  * DELETE /api/admin/users/:userId/sessions
  * Revoke all sessions for a user
  */
-userRoutes.delete('/users/:userId/sessions', async c => {
-  const userId = c.req.param('userId');
+userRoutes.openapi(revokeAllSessionsRoute, async c => {
+  const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
   try {
@@ -470,9 +985,8 @@ userRoutes.delete('/users/:userId/sessions', async c => {
  * DELETE /api/admin/users/:userId/sessions/:sessionId
  * Revoke a specific session for a user
  */
-userRoutes.delete('/users/:userId/sessions/:sessionId', async c => {
-  const userId = c.req.param('userId');
-  const sessionId = c.req.param('sessionId');
+userRoutes.openapi(revokeSessionRoute, async c => {
+  const { userId, sessionId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
   try {
@@ -511,8 +1025,8 @@ userRoutes.delete('/users/:userId/sessions/:sessionId', async c => {
  * DELETE /api/admin/users/:userId
  * Delete a user and all their data
  */
-userRoutes.delete('/users/:userId', async c => {
-  const userId = c.req.param('userId');
+userRoutes.openapi(deleteUserRoute, async c => {
+  const { userId } = c.req.valid('param');
   const adminUser = c.get('user');
   const db = createDb(c.env.DB);
 
@@ -555,8 +1069,6 @@ userRoutes.delete('/users/:userId', async c => {
 
     // Only proceed with database deletions if all DO syncs succeeded
     // Delete all user data atomically using batch transaction
-    // Order matters for foreign key constraints
-    // Update mediaFiles.uploadedBy to null before deleting user (following account-merge pattern)
     await db.batch([
       db.update(mediaFiles).set({ uploadedBy: null }).where(eq(mediaFiles.uploadedBy, userId)),
       db.delete(projectMembers).where(eq(projectMembers.userId, userId)),

@@ -62,7 +62,7 @@ export default function AppRoutes() {
             <Route path='/general' component={GeneralSettings} />
           </Route>
           {/* Admin routes - fully code-split, only loads on /admin/* */}
-          <Route path='/admin/*' component={AdminRoutes} />
+          <AdminRoutes />
           {/* Organization creation */}
           <Route path='/orgs/new' component={CreateOrgPage} />
           {/* Project-scoped routes - checklist and reconcile are children sharing YDoc connection */}
@@ -83,7 +83,7 @@ export default function AppRoutes() {
         <Route path='/checklist' component={LocalChecklistView} />
         <Route path='/checklist/:checklistId' component={LocalChecklistView} />
         {/* Mock routes - fully code-split, only loads on /mocks/* */}
-        <Route path='/mocks/*' component={MockRoutes} />
+        <MockRoutes />
       </Route>
       <Route path='*' component={NotFoundPage} />
     </Router>

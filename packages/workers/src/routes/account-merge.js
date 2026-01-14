@@ -13,7 +13,7 @@
  * 6. Backend performs the merge
  */
 
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import { user, account, projects, projectMembers, mediaFiles, verification } from '@/db/schema.js';
 import { eq, sql, like, and } from 'drizzle-orm';
@@ -29,77 +29,295 @@ import {
   SYSTEM_ERRORS,
 } from '@corates/shared';
 
-const accountMergeRoutes = new Hono();
+const accountMergeRoutes = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
+
+      let message = firstIssue?.message || 'Validation failed';
+      const isMissing =
+        firstIssue?.received === 'undefined' ||
+        message.includes('received undefined') ||
+        message.includes('Required');
+
+      if (isMissing) {
+        message = `${fieldName} is required`;
+      }
+
+      const error = createValidationError(
+        String(field),
+        VALIDATION_ERRORS.FIELD_REQUIRED.code,
+        null,
+      );
+      error.message = message;
+      return c.json(error, 400);
+    }
+  },
+});
 
 // All routes require authentication
 accountMergeRoutes.use('*', requireAuth);
 
-// Rate limiter for merge initiate (3 attempts per 15 minutes per user+email)
+// Rate limiters
 const mergeInitiateRateLimiter = rateLimit({
   limit: 3,
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   keyPrefix: 'merge-initiate',
   keyGenerator: c => c.get('mergeInitiateKey') || 'unknown',
 });
 
-/**
- * Generate a 6-digit verification code
- */
-// function generateCode() {
-//   return Math.floor(100000 + Math.random() * 900000).toString();
-// }
+const mergeVerifyRateLimiter = rateLimit({
+  limit: 5,
+  windowMs: 15 * 60 * 1000,
+  keyPrefix: 'merge-verify',
+  keyGenerator: c => c.get('mergeTokenKey') || 'unknown',
+});
 
+// Helper functions
 function generateCode() {
   const array = new Uint32Array(1);
   crypto.getRandomValues(array);
   return (100000 + (array[0] % 900000)).toString();
 }
 
-/**
- * Normalize ORCID ID for lookup
- * Removes hyphens and @orcid.org suffix, converts to lowercase
- * @param {string} orcidId - ORCID ID (e.g., "0000-0001-2345-6789" or "0000-0001-2345-6789@orcid.org")
- * @returns {string} Normalized ORCID ID (e.g., "0000000123456789")
- */
 function normalizeOrcidId(orcidId) {
   if (!orcidId || typeof orcidId !== 'string') return '';
-  // Remove @orcid.org suffix if present
   let normalized = orcidId.replace(/@orcid\.org$/i, '');
-  // Remove hyphens
   normalized = normalized.replace(/-/g, '');
-  // Convert to lowercase
   return normalized.toLowerCase();
 }
 
-/**
- * Format ORCID ID for display (add hyphens)
- * @param {string} orcidId - Normalized ORCID ID (e.g., "0000000123456789")
- * @returns {string} Formatted ORCID ID (e.g., "0000-0001-2345-6789")
- */
 function formatOrcidId(orcidId) {
   if (!orcidId || typeof orcidId !== 'string') return '';
-  // Remove any existing hyphens
   const cleaned = orcidId.replace(/-/g, '');
-  // Format as XXXX-XXXX-XXXX-XXXX (last char can be X for checksum)
   if (cleaned.length === 16) {
     return cleaned.replace(/(\d{4})(\d{4})(\d{4})(\d{3}[\dXx])/, '$1-$2-$3-$4');
   }
   return cleaned;
 }
 
-/**
- * POST /api/accounts/merge/initiate
- *
- * Start a merge request. Sends a verification code to the target email.
- *
- * Body: { targetEmail?: string, targetOrcidId?: string }
- * Either targetEmail or targetOrcidId must be provided, but not both.
- */
-accountMergeRoutes.post('/initiate', async c => {
-  const { user: currentUser } = getAuth(c);
-  const { targetEmail, targetOrcidId } = await c.req.json();
+// Request schemas
+const InitiateRequestSchema = z
+  .object({
+    targetEmail: z.email().optional().openapi({ example: 'other@example.com' }),
+    targetOrcidId: z.string().optional().openapi({ example: '0000-0001-2345-6789' }),
+  })
+  .openapi('MergeInitiateRequest');
 
-  // Validate that exactly one identifier is provided
+const VerifyRequestSchema = z
+  .object({
+    mergeToken: z.string().min(1).openapi({ example: 'abc123-token' }),
+    code: z.string().min(1).openapi({ example: '123456' }),
+  })
+  .openapi('MergeVerifyRequest');
+
+const CompleteRequestSchema = z
+  .object({
+    mergeToken: z.string().min(1).openapi({ example: 'abc123-token' }),
+  })
+  .openapi('MergeCompleteRequest');
+
+const CancelRequestSchema = z
+  .object({
+    mergeToken: z.string().min(1).openapi({ example: 'abc123-token' }),
+  })
+  .openapi('MergeCancelRequest');
+
+// Response schemas
+const InitiateSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    mergeToken: z.string(),
+    targetEmail: z.string(),
+    targetOrcidId: z.string().nullable(),
+    preview: z.object({
+      currentProviders: z.array(z.string()),
+    }),
+  })
+  .openapi('MergeInitiateSuccess');
+
+const VerifySuccessSchema = z
+  .object({
+    success: z.literal(true),
+    message: z.string(),
+    preview: z.object({
+      currentProviders: z.array(z.string()),
+      targetProviders: z.array(z.string()),
+    }),
+  })
+  .openapi('MergeVerifySuccess');
+
+const CompleteSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    message: z.string(),
+    mergedProviders: z.array(z.string()),
+  })
+  .openapi('MergeCompleteSuccess');
+
+const CancelSuccessSchema = z
+  .object({
+    success: z.literal(true),
+  })
+  .openapi('MergeCancelSuccess');
+
+const MergeErrorSchema = z
+  .object({
+    code: z.string(),
+    message: z.string(),
+    statusCode: z.number(),
+    details: z.record(z.unknown()).optional(),
+  })
+  .openapi('MergeError');
+
+// Route definitions
+const initiateRoute = createRoute({
+  method: 'post',
+  path: '/initiate',
+  tags: ['Account Merge'],
+  summary: 'Initiate account merge',
+  description: 'Start a merge request. Sends a verification code to the target email.',
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: InitiateRequestSchema,
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: InitiateSuccessSchema } },
+      description: 'Merge initiated, verification code sent',
+    },
+    400: {
+      content: { 'application/json': { schema: MergeErrorSchema } },
+      description: 'Validation error',
+    },
+    404: {
+      content: { 'application/json': { schema: MergeErrorSchema } },
+      description: 'Target user not found',
+    },
+    429: {
+      content: { 'application/json': { schema: MergeErrorSchema } },
+      description: 'Rate limit exceeded',
+    },
+  },
+});
+
+const verifyRoute = createRoute({
+  method: 'post',
+  path: '/verify',
+  tags: ['Account Merge'],
+  summary: 'Verify merge code',
+  description: 'Verify the code sent to the target email',
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: VerifyRequestSchema,
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: VerifySuccessSchema } },
+      description: 'Code verified successfully',
+    },
+    400: {
+      content: { 'application/json': { schema: MergeErrorSchema } },
+      description: 'Invalid or expired code',
+    },
+    404: {
+      content: { 'application/json': { schema: MergeErrorSchema } },
+      description: 'Merge request not found',
+    },
+    429: {
+      content: { 'application/json': { schema: MergeErrorSchema } },
+      description: 'Rate limit exceeded',
+    },
+  },
+});
+
+const completeRoute = createRoute({
+  method: 'post',
+  path: '/complete',
+  tags: ['Account Merge'],
+  summary: 'Complete account merge',
+  description: 'Complete the merge after verification',
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: CompleteRequestSchema,
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: CompleteSuccessSchema } },
+      description: 'Accounts merged successfully',
+    },
+    400: {
+      content: { 'application/json': { schema: MergeErrorSchema } },
+      description: 'Validation error or not verified',
+    },
+    404: {
+      content: { 'application/json': { schema: MergeErrorSchema } },
+      description: 'Merge request not found',
+    },
+    500: {
+      content: { 'application/json': { schema: MergeErrorSchema } },
+      description: 'Database error',
+    },
+  },
+});
+
+const cancelRoute = createRoute({
+  method: 'delete',
+  path: '/cancel',
+  tags: ['Account Merge'],
+  summary: 'Cancel merge request',
+  description: 'Cancel a pending merge request',
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: CancelRequestSchema,
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: CancelSuccessSchema } },
+      description: 'Merge request cancelled',
+    },
+    400: {
+      content: { 'application/json': { schema: MergeErrorSchema } },
+      description: 'Invalid token',
+    },
+  },
+});
+
+// Route handlers
+accountMergeRoutes.openapi(initiateRoute, async c => {
+  const { user: currentUser } = getAuth(c);
+  const { targetEmail, targetOrcidId } = c.req.valid('json');
+
   const hasEmail = targetEmail && typeof targetEmail === 'string' && targetEmail.trim();
   const hasOrcidId = targetOrcidId && typeof targetOrcidId === 'string' && targetOrcidId.trim();
 
@@ -141,14 +359,12 @@ accountMergeRoutes.post('/initiate', async c => {
       return c.json(error, error.statusCode);
     }
 
-    // Apply rate limiting keyed by user ID + target email
     c.set('mergeInitiateKey', `${currentUser.id}:${normalizedEmail}`);
     const rateLimitResult = await mergeInitiateRateLimiter(c, async () => {});
     if (rateLimitResult) {
       return rateLimitResult;
     }
 
-    // Find the target user by email
     targetUser = await db
       .select({ id: user.id, email: user.email, name: user.name })
       .from(user)
@@ -156,7 +372,6 @@ accountMergeRoutes.post('/initiate', async c => {
       .limit(1)
       .then(rows => rows[0]);
   } else {
-    // Lookup by ORCID ID
     const normalizedOrcidId = normalizeOrcidId(targetOrcidId);
 
     if (!normalizedOrcidId || normalizedOrcidId.length !== 16) {
@@ -169,15 +384,12 @@ accountMergeRoutes.post('/initiate', async c => {
       return c.json(error, error.statusCode);
     }
 
-    // Apply rate limiting keyed by user ID + ORCID ID
     c.set('mergeInitiateKey', `${currentUser.id}:${normalizedOrcidId}`);
     const rateLimitResult = await mergeInitiateRateLimiter(c, async () => {});
     if (rateLimitResult) {
       return rateLimitResult;
     }
 
-    // Find the ORCID account
-    // Normalize both stored accountId and input for comparison (remove hyphens)
     targetOrcidAccount = await db
       .select({
         accountId: account.accountId,
@@ -194,7 +406,6 @@ accountMergeRoutes.post('/initiate', async c => {
       .then(rows => rows[0]);
 
     if (targetOrcidAccount) {
-      // Find the user associated with this ORCID account
       targetUser = await db
         .select({ id: user.id, email: user.email, name: user.name })
         .from(user)
@@ -214,7 +425,6 @@ accountMergeRoutes.post('/initiate', async c => {
     return c.json(error, error.statusCode);
   }
 
-  // Prevent merging with self
   if (targetUser.id === currentUser.id) {
     const error = createValidationError(
       hasEmail ? 'targetEmail' : 'targetOrcidId',
@@ -225,7 +435,6 @@ accountMergeRoutes.post('/initiate', async c => {
     return c.json(error, error.statusCode);
   }
 
-  // Get linked accounts for both users to show what will be merged
   const [currentAccounts, _targetAccounts] = await Promise.all([
     db
       .select({ providerId: account.providerId })
@@ -237,15 +446,12 @@ accountMergeRoutes.post('/initiate', async c => {
       .where(eq(account.userId, targetUser.id)),
   ]);
 
-  // Delete any existing merge requests for this user
   await db.delete(verification).where(like(verification.identifier, `merge:${currentUser.id}:%`));
 
-  // Generate verification code and token
   const verificationCode = generateCode();
   const mergeToken = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-  // Store merge request data
   await db.insert(verification).values({
     id: crypto.randomUUID(),
     identifier: `merge:${currentUser.id}:${targetUser.id}`,
@@ -263,7 +469,6 @@ accountMergeRoutes.post('/initiate', async c => {
     updatedAt: new Date(),
   });
 
-  // Send verification code email
   const emailService = createEmailService(c.env);
   const emailResult = await emailService.sendEmail({
     to: targetUser.email,
@@ -275,7 +480,6 @@ accountMergeRoutes.post('/initiate', async c => {
   if (!emailResult.success) {
     console.error('[AccountMerge] Failed to send verification email:', emailResult.error);
 
-    // Roll back: delete the merge token that was just created
     await db
       .delete(verification)
       .where(eq(verification.identifier, `merge:${currentUser.id}:${targetUser.id}`));
@@ -287,17 +491,14 @@ accountMergeRoutes.post('/initiate', async c => {
     return c.json(error, error.statusCode);
   }
 
-  // In dev, log the code for testing
   if (c.env.ENVIRONMENT !== 'production') {
     console.log('[AccountMerge] DEV MODE - Verification code:', verificationCode);
   }
 
-  // Get ORCID ID if the target account has one (for response)
   let formattedOrcidId = null;
   if (lookupMethod === 'orcid' && targetOrcidAccount) {
     formattedOrcidId = formatOrcidId(targetOrcidAccount.accountId);
   } else {
-    // Check if target user has an ORCID account
     const orcidAccount = await db
       .select({ accountId: account.accountId })
       .from(account)
@@ -317,62 +518,16 @@ accountMergeRoutes.post('/initiate', async c => {
     targetOrcidId: formattedOrcidId,
     preview: {
       currentProviders: currentAccounts.map(a => a.providerId),
-      // targetProviders deferred until after code verification for security
     },
   });
 });
 
-// Rate limiter for merge verification attempts (5 attempts per 15 minutes per token)
-const mergeVerifyRateLimiter = rateLimit({
-  limit: 5,
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  keyPrefix: 'merge-verify',
-  keyGenerator: c => c.get('mergeTokenKey') || 'unknown',
-});
-
-/**
- * POST /api/accounts/merge/verify
- *
- * Verify the code sent to the target email
- *
- * Body: { mergeToken: string, code: string }
- */
-accountMergeRoutes.post('/verify', async c => {
+accountMergeRoutes.openapi(verifyRoute, async c => {
   const { user: currentUser } = getAuth(c);
-  const { mergeToken, code } = await c.req.json();
-
-  if (!mergeToken || !code) {
-    const error = createValidationError(
-      'mergeToken/code',
-      VALIDATION_ERRORS.FIELD_REQUIRED.code,
-      null,
-      'required',
-    );
-    return c.json(error, error.statusCode);
-  }
-
-  if (typeof mergeToken !== 'string' || typeof code !== 'string') {
-    const error = createValidationError(
-      'mergeToken/code',
-      VALIDATION_ERRORS.FIELD_INVALID_FORMAT.code,
-      { mergeToken: typeof mergeToken, code: typeof code },
-      'invalid_type',
-    );
-    return c.json(error, error.statusCode);
-  }
+  const { mergeToken, code } = c.req.valid('json');
 
   const trimmedCode = code.trim();
-  if (!trimmedCode) {
-    const error = createValidationError(
-      'code',
-      VALIDATION_ERRORS.FIELD_REQUIRED.code,
-      null,
-      'empty',
-    );
-    return c.json(error, error.statusCode);
-  }
 
-  // Apply rate limiting keyed by mergeToken
   c.set('mergeTokenKey', mergeToken);
   const rateLimitResult = await mergeVerifyRateLimiter(c, async () => {});
   if (rateLimitResult) {
@@ -381,7 +536,6 @@ accountMergeRoutes.post('/verify', async c => {
 
   const db = createDb(c.env.DB);
 
-  // Find the merge request
   const mergeRequests = await db
     .select()
     .from(verification)
@@ -398,7 +552,6 @@ accountMergeRoutes.post('/verify', async c => {
   const mergeRequest = mergeRequests[0];
   const mergeData = JSON.parse(mergeRequest.value);
 
-  // Verify token matches
   if (mergeData.token !== mergeToken) {
     const error = createValidationError(
       'mergeToken',
@@ -409,7 +562,6 @@ accountMergeRoutes.post('/verify', async c => {
     return c.json(error, error.statusCode);
   }
 
-  // Check expiry
   if (mergeRequest.expiresAt < new Date()) {
     await db.delete(verification).where(eq(verification.id, mergeRequest.id));
     const error = createValidationError(
@@ -421,7 +573,6 @@ accountMergeRoutes.post('/verify', async c => {
     return c.json(error, error.statusCode);
   }
 
-  // Verify code
   if (mergeData.code !== trimmedCode) {
     const error = createValidationError(
       'code',
@@ -432,7 +583,6 @@ accountMergeRoutes.post('/verify', async c => {
     return c.json(error, error.statusCode);
   }
 
-  // Mark as verified
   const verifiedData = {
     ...mergeData,
     verified: true,
@@ -447,7 +597,6 @@ accountMergeRoutes.post('/verify', async c => {
     })
     .where(eq(verification.id, mergeRequest.id));
 
-  // Now that email ownership is verified, fetch and return provider info
   const [currentAccounts, targetAccounts] = await Promise.all([
     db
       .select({ providerId: account.providerId })
@@ -469,30 +618,12 @@ accountMergeRoutes.post('/verify', async c => {
   });
 });
 
-/**
- * POST /api/accounts/merge/complete
- *
- * Complete the merge after verification
- *
- * Body: { mergeToken: string }
- */
-accountMergeRoutes.post('/complete', async c => {
+accountMergeRoutes.openapi(completeRoute, async c => {
   const { user: currentUser } = getAuth(c);
-  const { mergeToken } = await c.req.json();
-
-  if (typeof mergeToken !== 'string' || !mergeToken.trim()) {
-    const error = createValidationError(
-      'mergeToken',
-      VALIDATION_ERRORS.FIELD_REQUIRED.code,
-      null,
-      'required',
-    );
-    return c.json(error, error.statusCode);
-  }
+  const { mergeToken } = c.req.valid('json');
 
   const db = createDb(c.env.DB);
 
-  // Find the merge request
   const mergeRequests = await db
     .select()
     .from(verification)
@@ -509,7 +640,6 @@ accountMergeRoutes.post('/complete', async c => {
   const mergeRequest = mergeRequests[0];
   const mergeData = JSON.parse(mergeRequest.value);
 
-  // Verify token matches
   if (mergeData.token !== mergeToken) {
     const error = createValidationError(
       'mergeToken',
@@ -520,7 +650,6 @@ accountMergeRoutes.post('/complete', async c => {
     return c.json(error, error.statusCode);
   }
 
-  // Ensure it's verified
   if (!mergeData.verified) {
     const error = createValidationError(
       'code',
@@ -531,7 +660,6 @@ accountMergeRoutes.post('/complete', async c => {
     return c.json(error, error.statusCode);
   }
 
-  // Check expiry
   if (mergeRequest.expiresAt < new Date()) {
     await db.delete(verification).where(eq(verification.id, mergeRequest.id));
     const error = createValidationError(
@@ -547,7 +675,6 @@ accountMergeRoutes.post('/complete', async c => {
   const secondaryUserId = mergeData.targetId;
 
   try {
-    // Gather all data needed to build the batch
     const [primaryAccounts, secondaryAccounts, primaryMemberships, secondaryMemberships] =
       await Promise.all([
         db
@@ -562,13 +689,11 @@ accountMergeRoutes.post('/complete', async c => {
         db.select().from(projectMembers).where(eq(projectMembers.userId, secondaryUserId)),
       ]);
 
-    // Prepare account operations
     const primaryProviders = new Set(primaryAccounts.map(a => a.providerId));
     const accountsToMove = secondaryAccounts.filter(a => !primaryProviders.has(a.providerId));
     const duplicateAccounts = secondaryAccounts.filter(a => primaryProviders.has(a.providerId));
     const mergedProviders = accountsToMove.map(a => a.providerId);
 
-    // Prepare membership operations
     const primaryMemberProjects = new Set(primaryMemberships.map(m => m.projectId));
     const membershipsToDelete = secondaryMemberships.filter(m =>
       primaryMemberProjects.has(m.projectId),
@@ -577,11 +702,9 @@ accountMergeRoutes.post('/complete', async c => {
       m => !primaryMemberProjects.has(m.projectId),
     );
 
-    // Build batch of all operations - executed as a transaction (all-or-nothing)
     const batchOps = [];
     const now = new Date();
 
-    // 1. Move non-duplicate OAuth accounts to primary user
     for (const acc of accountsToMove) {
       batchOps.push(
         db
@@ -591,12 +714,10 @@ accountMergeRoutes.post('/complete', async c => {
       );
     }
 
-    // 2. Delete duplicate provider accounts from secondary
     for (const acc of duplicateAccounts) {
       batchOps.push(db.delete(account).where(eq(account.id, acc.id)));
     }
 
-    // 3. Update project ownership
     batchOps.push(
       db
         .update(projects)
@@ -604,7 +725,6 @@ accountMergeRoutes.post('/complete', async c => {
         .where(eq(projects.createdBy, secondaryUserId)),
     );
 
-    // 4. Handle project memberships
     for (const mem of membershipsToDelete) {
       batchOps.push(db.delete(projectMembers).where(eq(projectMembers.id, mem.id)));
     }
@@ -617,7 +737,6 @@ accountMergeRoutes.post('/complete', async c => {
       );
     }
 
-    // 5. Update media files ownership
     batchOps.push(
       db
         .update(mediaFiles)
@@ -625,13 +744,10 @@ accountMergeRoutes.post('/complete', async c => {
         .where(eq(mediaFiles.uploadedBy, secondaryUserId)),
     );
 
-    // 6. Delete secondary user (sessions, etc. will cascade)
     batchOps.push(db.delete(user).where(eq(user.id, secondaryUserId)));
 
-    // 7. Clean up merge request
     batchOps.push(db.delete(verification).where(eq(verification.id, mergeRequest.id)));
 
-    // Execute all operations as a single atomic batch transaction
     await db.batch(batchOps);
 
     return c.json({
@@ -649,20 +765,12 @@ accountMergeRoutes.post('/complete', async c => {
   }
 });
 
-/**
- * DELETE /api/accounts/merge/cancel
- *
- * Cancel a pending merge request
- *
- * Body: { mergeToken: string }
- */
-accountMergeRoutes.delete('/cancel', async c => {
+accountMergeRoutes.openapi(cancelRoute, async c => {
   const { user: currentUser } = getAuth(c);
-  const { mergeToken } = await c.req.json();
+  const { mergeToken } = c.req.valid('json');
 
   const db = createDb(c.env.DB);
 
-  // Find and delete the merge request
   const mergeRequests = await db
     .select()
     .from(verification)
@@ -674,17 +782,6 @@ accountMergeRoutes.delete('/cancel', async c => {
 
   const mergeRequest = mergeRequests[0];
   const mergeData = JSON.parse(mergeRequest.value);
-
-  // Require valid token to cancel - prevents unauthorized cancellation
-  if (!mergeToken || typeof mergeToken !== 'string') {
-    const error = createValidationError(
-      'mergeToken',
-      VALIDATION_ERRORS.FIELD_REQUIRED.code,
-      null,
-      'required',
-    );
-    return c.json(error, error.statusCode);
-  }
 
   if (mergeData.token !== mergeToken) {
     const error = createValidationError(

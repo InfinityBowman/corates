@@ -3,6 +3,7 @@ packages:
 
 onlyBuiltDependencies:
   - '@parcel/watcher'
+  - agent-browser
   - better-sqlite3
   - esbuild
   - puppeteer

@@ -8,7 +8,6 @@
     "dev": "pnpm --filter web dev",
     "dev:landing": "pnpm --filter landing dev",
     "dev:workers": "pnpm --filter workers dev",
-    "dev:front": "concurrently -k -n landing,web -c yellow,blue \"pnpm --filter landing dev\" \"pnpm --filter web dev\"",
     "build": "pnpm --recursive run build",
     "build:web": "pnpm --filter web run build",
     "build:landing": "pnpm --filter landing run build",
@@ -34,8 +33,7 @@
     "loc": "node ./scripts/loc-report.mjs",
     "docs": "pnpm --filter @corates/docs dev",
     "docs:build": "pnpm --filter @corates/docs build",
-    "docs:preview": "pnpm --filter @corates/docs preview",
-    "openapi": "pnpm --filter @corates/workers run openapi:generate"
+    "docs:preview": "pnpm --filter @corates/docs preview"
   },
   "keywords": [
     "cloudflare",
@@ -48,6 +46,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@typescript-eslint/parser": "^8.53.0",
+    "agent-browser": "^0.4.4",
     "concurrently": "^9.2.1",
     "dotenv": "^17.2.3",
     "eslint": "^9.39.2",

@@ -543,7 +543,7 @@ function getAuthSecret(env) {
   }
 
   throw createDomainError(
-    SYSTEM_ERRORS.CONFIG_MISSING,
+    SYSTEM_ERRORS.INTERNAL_ERROR,
     { key: 'AUTH_SECRET' },
     'AUTH_SECRET must be configured',
   );

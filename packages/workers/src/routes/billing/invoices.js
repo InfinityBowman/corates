@@ -2,23 +2,107 @@
  * Billing invoices routes
  * Fetches invoices from Stripe for the current org's subscription
  */
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { subscription } from '@/db/schema.js';
-import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  createValidationError,
+  SYSTEM_ERRORS,
+  AUTH_ERRORS,
+  VALIDATION_ERRORS,
+} from '@corates/shared';
 import { resolveOrgId } from './helpers/orgContext.js';
 import { eq, desc, and, or } from 'drizzle-orm';
 import Stripe from 'stripe';
 
-const billingInvoicesRoutes = new Hono();
+const billingInvoicesRoutes = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
 
-/**
- * GET /invoices
- * Get invoices for the current org's subscription
- * Returns up to 10 most recent invoices
- */
-billingInvoicesRoutes.get('/invoices', requireAuth, async c => {
+      let message = firstIssue?.message || 'Validation failed';
+      const isMissing =
+        firstIssue?.received === 'undefined' ||
+        message.includes('received undefined') ||
+        message.includes('Required');
+
+      if (isMissing) {
+        message = `${fieldName} is required`;
+      }
+
+      const error = createValidationError(
+        String(field),
+        VALIDATION_ERRORS.FIELD_REQUIRED.code,
+        null,
+      );
+      error.message = message;
+      return c.json(error, 400);
+    }
+  },
+});
+
+// Response schemas
+const InvoiceSchema = z.object({
+  id: z.string(),
+  number: z.string().nullable(),
+  amount: z.number(),
+  currency: z.string(),
+  status: z.string().nullable(),
+  created: z.number(),
+  periodStart: z.number(),
+  periodEnd: z.number(),
+  pdfUrl: z.string().nullable(),
+  hostedUrl: z.string().nullable(),
+});
+
+const InvoicesResponseSchema = z
+  .object({
+    invoices: z.array(InvoiceSchema),
+  })
+  .openapi('InvoicesResponse');
+
+const InvoicesErrorSchema = z
+  .object({
+    code: z.string(),
+    message: z.string(),
+    statusCode: z.number(),
+    details: z.record(z.unknown()).optional(),
+  })
+  .openapi('InvoicesError');
+
+// Route definitions
+const getInvoicesRoute = createRoute({
+  method: 'get',
+  path: '/invoices',
+  tags: ['Billing'],
+  summary: 'Get invoices',
+  description:
+    "Get invoices for the current org's subscription. Returns up to 10 most recent invoices.",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: { 'application/json': { schema: InvoicesResponseSchema } },
+      description: 'Invoices list',
+    },
+    403: {
+      content: { 'application/json': { schema: InvoicesErrorSchema } },
+      description: 'No org found',
+    },
+    500: {
+      content: { 'application/json': { schema: InvoicesErrorSchema } },
+      description: 'Internal error',
+    },
+  },
+});
+
+// Route handlers
+billingInvoicesRoutes.use('*', requireAuth);
+
+billingInvoicesRoutes.openapi(getInvoicesRoute, async c => {
   const { user, session } = getAuth(c);
   const db = createDb(c.env.DB);
 

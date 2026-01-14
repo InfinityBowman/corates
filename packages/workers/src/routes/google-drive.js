@@ -3,7 +3,7 @@
  * Allows users to list and import PDFs from their connected Google Drive
  */
 
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { account, projects, mediaFiles } from '@/db/schema.js';
@@ -21,14 +21,84 @@ import {
   PDF_MAGIC_BYTES,
 } from '@corates/shared';
 
-const googleDriveRoutes = new Hono();
+const googleDriveRoutes = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
+
+      let message = firstIssue?.message || 'Validation failed';
+      const isMissing =
+        firstIssue?.received === 'undefined' ||
+        message.includes('received undefined') ||
+        message.includes('Required');
+
+      if (isMissing) {
+        message = `${fieldName} is required`;
+      }
+
+      const error = createValidationError(
+        String(field),
+        VALIDATION_ERRORS.FIELD_REQUIRED.code,
+        null,
+      );
+      error.message = message;
+      return c.json(error, 400);
+    }
+  },
+});
 
 // Apply auth middleware to all routes
 googleDriveRoutes.use('*', requireAuth);
 
+// Response schemas
+const DriveStatusSchema = z
+  .object({
+    connected: z.boolean(),
+    hasRefreshToken: z.boolean(),
+  })
+  .openapi('DriveStatus');
+
+const PickerTokenSchema = z
+  .object({
+    accessToken: z.string(),
+    expiresAt: z.string().nullable(),
+  })
+  .openapi('PickerToken');
+
+const DisconnectSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    message: z.string(),
+  })
+  .openapi('DisconnectSuccess');
+
+const ImportSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    id: z.string(),
+    file: z.object({
+      key: z.string(),
+      fileName: z.string(),
+      originalFileName: z.string().optional(),
+      size: z.number(),
+      source: z.literal('google-drive'),
+    }),
+  })
+  .openapi('ImportSuccess');
+
+const DriveErrorSchema = z
+  .object({
+    code: z.string(),
+    message: z.string(),
+    statusCode: z.number(),
+    details: z.record(z.unknown()).optional(),
+  })
+  .openapi('DriveError');
+
 /**
  * Get Google OAuth tokens for the current user
- * Returns null if not connected
  */
 async function getGoogleTokens(db, userId) {
   const googleAccount = await db
@@ -81,25 +151,18 @@ async function refreshGoogleToken(env, refreshToken) {
  * Get a valid access token, refreshing if necessary
  */
 async function getValidAccessToken(env, db, userId, tokens) {
-  // Check if token is expired or will expire in the next minute
   const now = new Date();
   const expiresAt = tokens.accessTokenExpiresAt;
-  const bufferTime = 60 * 1000; // 1 minute buffer
+  const bufferTime = 60 * 1000;
 
   if (expiresAt && new Date(expiresAt).getTime() - now.getTime() > bufferTime) {
-    // Token is still valid
     return tokens.accessToken;
   }
 
-  // If we don't have an expiry timestamp, we can't reliably determine whether the access token
-  // is still valid. In that case, return the stored access token rather than forcing a refresh.
-  // This avoids breaking Google Picker for older/partial account links that don't have refresh
-  // tokens or expiry information.
   if (!expiresAt || Number.isNaN(new Date(expiresAt).getTime())) {
     if (tokens.accessToken) return tokens.accessToken;
   }
 
-  // Token is expired or about to expire, refresh it
   if (!tokens.refreshToken) {
     const error = createDomainError(AUTH_ERRORS.INVALID, {
       context: 'google_no_refresh_token',
@@ -110,7 +173,6 @@ async function getValidAccessToken(env, db, userId, tokens) {
 
   const newTokens = await refreshGoogleToken(env, tokens.refreshToken);
 
-  // Update the token in the database
   const newExpiresAt = new Date(Date.now() + newTokens.expiresIn * 1000);
   await db
     .update(account)
@@ -124,11 +186,23 @@ async function getValidAccessToken(env, db, userId, tokens) {
   return newTokens.accessToken;
 }
 
-/**
- * GET /api/google-drive/status
- * Check if user has connected their Google account
- */
-googleDriveRoutes.get('/status', async c => {
+// Status route
+const statusRoute = createRoute({
+  method: 'get',
+  path: '/status',
+  tags: ['Google Drive'],
+  summary: 'Check Google connection status',
+  description: 'Check if user has connected their Google account',
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: { 'application/json': { schema: DriveStatusSchema } },
+      description: 'Connection status',
+    },
+  },
+});
+
+googleDriveRoutes.openapi(statusRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
 
@@ -140,12 +214,27 @@ googleDriveRoutes.get('/status', async c => {
   });
 });
 
-/**
- * GET /api/google-drive/picker-token
- * Returns a short-lived access token suitable for the Google Picker API.
- * Note: This does NOT return refresh tokens.
- */
-googleDriveRoutes.get('/picker-token', async c => {
+// Picker token route
+const pickerTokenRoute = createRoute({
+  method: 'get',
+  path: '/picker-token',
+  tags: ['Google Drive'],
+  summary: 'Get Google Picker token',
+  description: 'Returns a short-lived access token for the Google Picker API',
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: { 'application/json': { schema: PickerTokenSchema } },
+      description: 'Picker token',
+    },
+    401: {
+      content: { 'application/json': { schema: DriveErrorSchema } },
+      description: 'Google not connected',
+    },
+  },
+});
+
+googleDriveRoutes.openapi(pickerTokenRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
 
@@ -160,7 +249,6 @@ googleDriveRoutes.get('/picker-token', async c => {
 
   try {
     const accessToken = await getValidAccessToken(c.env, db, user.id, tokens);
-    // Re-fetch to pick up any refreshed expiry.
     const updatedTokens = await getGoogleTokens(db, user.id);
     const expiresAt = updatedTokens?.accessTokenExpiresAt;
 
@@ -191,16 +279,27 @@ googleDriveRoutes.get('/picker-token', async c => {
   }
 });
 
-/**
- * DELETE /api/google-drive/disconnect
- * Disconnect Google account (remove OAuth tokens)
- */
-googleDriveRoutes.delete('/disconnect', async c => {
+// Disconnect route
+const disconnectRoute = createRoute({
+  method: 'delete',
+  path: '/disconnect',
+  tags: ['Google Drive'],
+  summary: 'Disconnect Google account',
+  description: 'Remove OAuth tokens and disconnect Google account',
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: { 'application/json': { schema: DisconnectSuccessSchema } },
+      description: 'Disconnected successfully',
+    },
+  },
+});
+
+googleDriveRoutes.openapi(disconnectRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
 
   try {
-    // Delete the Google account link
     await db
       .delete(account)
       .where(and(eq(account.userId, user.id), eq(account.providerId, 'google')));
@@ -216,48 +315,54 @@ googleDriveRoutes.delete('/disconnect', async c => {
   }
 });
 
-/**
- * (Legacy endpoints removed)
- *
- * Previously included:
- * - GET /api/google-drive/files
- * - GET /api/google-drive/files/:fileId
- * - POST /api/google-drive/files/:fileId/download
- */
+// Import route
+const importRoute = createRoute({
+  method: 'post',
+  path: '/import',
+  tags: ['Google Drive'],
+  summary: 'Import PDF from Google Drive',
+  description: 'Import a PDF file from Google Drive to a project study',
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z
+            .object({
+              fileId: z.string().min(1).openapi({ example: '1abc123def456' }),
+              projectId: z.string().min(1).openapi({ example: 'proj-123' }),
+              studyId: z.string().min(1).openapi({ example: 'study-456' }),
+            })
+            .openapi('ImportRequest'),
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: ImportSuccessSchema } },
+      description: 'File imported successfully',
+    },
+    400: {
+      content: { 'application/json': { schema: DriveErrorSchema } },
+      description: 'Validation error or invalid file type',
+    },
+    401: {
+      content: { 'application/json': { schema: DriveErrorSchema } },
+      description: 'Google not connected',
+    },
+    404: {
+      content: { 'application/json': { schema: DriveErrorSchema } },
+      description: 'File not found',
+    },
+  },
+});
 
-/**
- * POST /api/google-drive/import
- * Import a PDF from Google Drive to a project study
- * Body: { fileId, projectId, studyId }
- */
-googleDriveRoutes.post('/import', async c => {
+googleDriveRoutes.openapi(importRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
-
-  let body;
-  try {
-    body = await c.req.json();
-  } catch {
-    const error = createValidationError(
-      'body',
-      VALIDATION_ERRORS.INVALID_INPUT.code,
-      null,
-      'invalid_json',
-    );
-    return c.json(error, error.statusCode);
-  }
-
-  const { fileId, projectId, studyId } = body;
-
-  if (!fileId || !projectId || !studyId) {
-    const error = createValidationError(
-      'fileId/projectId/studyId',
-      VALIDATION_ERRORS.FIELD_REQUIRED.code,
-      null,
-      'required',
-    );
-    return c.json(error, error.statusCode);
-  }
+  const { fileId, projectId, studyId } = c.req.valid('json');
 
   const tokens = await getGoogleTokens(db, user.id);
 
@@ -336,11 +441,9 @@ googleDriveRoutes.post('/import', async c => {
       return c.json(systemError, systemError.statusCode);
     }
 
-    // Read the file content into an ArrayBuffer
-    // This is necessary because R2 requires a stream with a known length
     const fileContent = await downloadResponse.arrayBuffer();
 
-    // Verify PDF magic bytes - don't trust MIME type alone
+    // Verify PDF magic bytes
     const header = new Uint8Array(fileContent.slice(0, PDF_MAGIC_BYTES.length));
     if (!isPdfSignature(header)) {
       const error = createDomainError(FILE_ERRORS.INVALID_TYPE, {
@@ -367,12 +470,12 @@ googleDriveRoutes.post('/import', async c => {
       return c.json(error, error.statusCode);
     }
 
-    // Generate unique filename (auto-rename if duplicate exists)
+    // Generate unique filename
     const originalFileName = fileMeta.name;
     const uniqueFileName = await generateUniqueFileName(fileMeta.name, projectId, studyId, db);
     const r2Key = `projects/${projectId}/studies/${studyId}/${uniqueFileName}`;
 
-    // Upload to R2 bucket
+    // Upload to R2
     const fileSize = fileContent.byteLength;
 
     await c.env.PDF_BUCKET.put(r2Key, fileContent, {
@@ -405,7 +508,6 @@ googleDriveRoutes.post('/import', async c => {
         createdAt: new Date(),
       });
     } catch (dbError) {
-      // Log error but don't fail the request (R2 object exists, can be cleaned up later)
       console.error('Failed to insert mediaFiles record after Google Drive import:', dbError);
     }
 
@@ -422,7 +524,6 @@ googleDriveRoutes.post('/import', async c => {
     });
   } catch (error) {
     console.error('Google Drive import error:', error);
-    // If it's already a domain error, return it directly
     if (isDomainError(error)) {
       return c.json(error, error.statusCode);
     }

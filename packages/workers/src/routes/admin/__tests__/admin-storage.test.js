@@ -331,6 +331,7 @@ describe('Admin storage routes - DELETE /api/admin/storage/documents', () => {
       '/api/admin/storage/documents',
       {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           keys: ['invalid-key'],
         }),
@@ -357,6 +358,7 @@ describe('Admin storage routes - DELETE /api/admin/storage/documents', () => {
       '/api/admin/storage/documents',
       {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           keys: [
             'projects/p1/studies/s1/file1.pdf',
@@ -389,6 +391,7 @@ describe('Admin storage routes - DELETE /api/admin/storage/documents', () => {
       '/api/admin/storage/documents',
       {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           keys: [],
         }),

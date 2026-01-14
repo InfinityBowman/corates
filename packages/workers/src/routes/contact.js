@@ -3,113 +3,170 @@
  * Handles contact form submissions and sends emails via Postmark
  */
 
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { Client as PostmarkClient } from 'postmark';
-import { z } from 'zod';
 import { contactRateLimit } from '@/middleware/rateLimit.js';
 import {
   createDomainError,
   createValidationError,
-  VALIDATION_ERRORS,
   SYSTEM_ERRORS,
+  VALIDATION_ERRORS,
 } from '@corates/shared';
+import { escapeHtml } from '@/lib/escapeHtml.js';
 
-const contact = new Hono();
+const contact = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
+
+      let errorCode = VALIDATION_ERRORS.INVALID_INPUT.code;
+      let message = firstIssue?.message || 'Validation failed';
+
+      const isMissing =
+        firstIssue?.received === 'undefined' ||
+        message.includes('received undefined') ||
+        message.includes('Required');
+
+      if (isMissing) {
+        errorCode = VALIDATION_ERRORS.FIELD_REQUIRED.code;
+        message = `${fieldName} is required`;
+      } else if (firstIssue?.code === 'too_big') {
+        errorCode = VALIDATION_ERRORS.FIELD_TOO_LONG.code;
+      } else if (firstIssue?.code === 'too_small') {
+        errorCode = VALIDATION_ERRORS.FIELD_TOO_SHORT.code;
+        message = `${fieldName} is required`;
+      } else if (firstIssue?.code === 'invalid_string') {
+        errorCode = VALIDATION_ERRORS.FIELD_INVALID_FORMAT.code;
+      }
+
+      const error = createValidationError(String(field), errorCode, null);
+      error.message = message;
+      return c.json(error, 400);
+    }
+  },
+});
+
+// Handle JSON parse errors
+contact.onError((err, c) => {
+  if (err.message?.includes('JSON')) {
+    const error = createValidationError('body', VALIDATION_ERRORS.INVALID_INPUT.code, null);
+    error.message = 'Invalid JSON input';
+    return c.json(error, 400);
+  }
+  throw err;
+});
 
 // Apply rate limiting to contact endpoints
 contact.use('*', contactRateLimit);
 
-// Contact form validation schema
-const contactSchema = z.object({
-  name: z
-    .string({ required_error: 'Name is required', invalid_type_error: 'Name must be a string' })
-    .trim()
-    .min(1, 'Name is required')
-    .max(100, 'Name must be 100 characters or less'),
-  email: z
-    .string({ required_error: 'Email is required', invalid_type_error: 'Email must be a string' })
-    .trim()
-    .min(1, 'Email is required')
-    .max(254, 'Email must be 254 characters or less')
-    .email('Invalid email address'),
-  subject: z
-    .string()
-    .trim()
-    .max(150, 'Subject must be 150 characters or less')
-    .optional()
-    .default(''),
-  message: z
-    .string({
-      required_error: 'Message is required',
-      invalid_type_error: 'Message must be a string',
-    })
-    .trim()
-    .min(1, 'Message is required')
-    .max(2000, 'Message must be 2000 characters or less'),
+// Request schema
+const ContactRequestSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(1, 'Name is required')
+      .max(100, 'Name must be 100 characters or less')
+      .openapi({ example: 'Jane Doe' }),
+    email: z
+      .string()
+      .trim()
+      .min(1, 'Email is required')
+      .max(254, 'Email must be 254 characters or less')
+      .email('Invalid email address')
+      .openapi({ example: 'jane@example.com' }),
+    subject: z
+      .string()
+      .trim()
+      .max(150, 'Subject must be 150 characters or less')
+      .optional()
+      .default('')
+      .openapi({ example: 'Question about CoRATES' }),
+    message: z
+      .string()
+      .trim()
+      .min(1, 'Message is required')
+      .max(2000, 'Message must be 2000 characters or less')
+      .openapi({ example: 'I have a question about...' }),
+  })
+  .openapi('ContactRequest');
+
+// Response schemas
+const ContactSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    messageId: z.string().openapi({ example: 'b7bc2f4a-e38e-4336-af7d-e6c392c2f817' }),
+  })
+  .openapi('ContactSuccess');
+
+const ContactErrorSchema = z
+  .object({
+    code: z.string().openapi({ example: 'VALIDATION_ERROR' }),
+    message: z.string().openapi({ example: 'Name is required' }),
+    statusCode: z.number().openapi({ example: 400 }),
+    field: z.string().optional().openapi({ example: 'name' }),
+    details: z.record(z.unknown()).optional(),
+  })
+  .openapi('ContactError');
+
+// Route definition
+const submitContactRoute = createRoute({
+  method: 'post',
+  path: '/',
+  tags: ['Contact'],
+  summary: 'Submit contact form',
+  description: 'Receives contact form data and sends an email to the team',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: ContactRequestSchema,
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: ContactSuccessSchema,
+        },
+      },
+      description: 'Contact form submitted successfully',
+    },
+    400: {
+      content: {
+        'application/json': {
+          schema: ContactErrorSchema,
+        },
+      },
+      description: 'Validation error',
+    },
+    429: {
+      content: {
+        'application/json': {
+          schema: ContactErrorSchema,
+        },
+      },
+      description: 'Rate limit exceeded',
+    },
+    503: {
+      content: {
+        'application/json': {
+          schema: ContactErrorSchema,
+        },
+      },
+      description: 'Email service unavailable',
+    },
+  },
 });
 
-/**
- * POST /contact
- * Receives contact form data and sends an email to the team
- */
-contact.post('/', async c => {
+contact.openapi(submitContactRoute, async c => {
   const env = c.env;
-
-  // Parse request body
-  let body;
-  try {
-    body = await c.req.json();
-  } catch {
-    const error = createValidationError(
-      'body',
-      VALIDATION_ERRORS.INVALID_INPUT.code,
-      null,
-      'invalid_json',
-    );
-    return c.json(error, error.statusCode);
-  }
-
-  // Validate with Zod
-  const result = contactSchema.safeParse(body);
-  if (!result.success) {
-    // Get the first error message, prioritizing custom messages
-    const firstIssue = result.error.issues[0];
-    let fieldName = 'input';
-    let errorMessage = firstIssue?.message || 'Invalid input';
-
-    // Extract field name from path
-    if (firstIssue?.path?.length > 0) {
-      fieldName = firstIssue.path[0];
-    }
-
-    // If it's a type error or required error, create a user-friendly message
-    if (errorMessage.includes('expected') || errorMessage.includes('required')) {
-      errorMessage = `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`;
-    }
-
-    // Determine the appropriate validation error code
-    let errorCode = VALIDATION_ERRORS.INVALID_INPUT.code;
-    if (errorMessage.includes('required')) {
-      errorCode = VALIDATION_ERRORS.FIELD_REQUIRED.code;
-    } else if (
-      errorMessage.includes('too long') ||
-      errorMessage.includes('100') ||
-      errorMessage.includes('2000')
-    ) {
-      errorCode = VALIDATION_ERRORS.FIELD_TOO_LONG.code;
-    } else if (errorMessage.includes('too short')) {
-      errorCode = VALIDATION_ERRORS.FIELD_TOO_SHORT.code;
-    } else if (errorMessage.includes('email') || errorMessage.includes('Invalid email')) {
-      errorCode = VALIDATION_ERRORS.FIELD_INVALID_FORMAT.code;
-    }
-
-    const error = createValidationError(fieldName, errorCode, null);
-    // Override the message to include the field name
-    error.message = errorMessage;
-    return c.json(error, error.statusCode);
-  }
-
-  const { name, email, subject, message } = result.data;
+  const { name, email, subject, message } = c.req.valid('json');
 
   // Check for Postmark token
   if (!env.POSTMARK_SERVER_TOKEN) {
@@ -124,7 +181,6 @@ contact.post('/', async c => {
   const contactEmail = env.CONTACT_EMAIL || 'contact@corates.org';
 
   try {
-    // Send email to the team
     const response = await postmark.sendEmail({
       From: `CoRATES Contact Form <${env.EMAIL_FROM || 'contact@corates.org'}>`,
       To: contactEmail,
@@ -177,7 +233,5 @@ contact.post('/', async c => {
     return c.json(error, error.statusCode);
   }
 });
-
-import { escapeHtml } from '@/lib/escapeHtml.js';
 
 export { contact as contactRoutes };

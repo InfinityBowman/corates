@@ -180,17 +180,16 @@ describe('Org Management API - POST /api/orgs', () => {
     });
   });
 
-  it('should return 403 when name is missing', async () => {
+  it('should return 400 when name is missing', async () => {
     const res = await fetchOrgs('/api/orgs', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ slug: 'test-org' }),
     });
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(400);
     const body = await json(res);
-    expect(body.code).toBe('AUTH_FORBIDDEN');
-    expect(body.details?.reason).toBe('name_required');
+    expect(body.code).toBe('VALIDATION_FIELD_REQUIRED');
     expect(mockCreateOrganization).not.toHaveBeenCalled();
   });
 
@@ -577,7 +576,7 @@ describe('Org Management API - POST /api/orgs/:orgId/members', () => {
     expect(mockAddMember).not.toHaveBeenCalled();
   });
 
-  it('should return 403 when userId is missing', async () => {
+  it('should return 400 when userId is missing', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
 
     await seedUser({
@@ -609,10 +608,9 @@ describe('Org Management API - POST /api/orgs/:orgId/members', () => {
       body: JSON.stringify({ role: 'member' }),
     });
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(400);
     const body = await json(res);
-    expect(body.code).toBe('AUTH_FORBIDDEN');
-    expect(body.details?.reason).toBe('user_id_required');
+    expect(body.code).toBe('VALIDATION_FIELD_REQUIRED');
     expect(mockAddMember).not.toHaveBeenCalled();
   });
 
@@ -745,7 +743,7 @@ describe('Org Management API - PUT /api/orgs/:orgId/members/:memberId', () => {
     expect(mockUpdateMemberRole).not.toHaveBeenCalled();
   });
 
-  it('should return 403 when role is missing', async () => {
+  it('should return 400 when role is missing', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
 
     await seedUser({
@@ -777,10 +775,9 @@ describe('Org Management API - PUT /api/orgs/:orgId/members/:memberId', () => {
       body: JSON.stringify({}),
     });
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(400);
     const body = await json(res);
-    expect(body.code).toBe('AUTH_FORBIDDEN');
-    expect(body.details?.reason).toBe('role_required');
+    expect(body.code).toBe('VALIDATION_FIELD_REQUIRED');
     expect(mockUpdateMemberRole).not.toHaveBeenCalled();
   });
 

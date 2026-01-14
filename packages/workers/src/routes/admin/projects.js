@@ -3,7 +3,7 @@
  * Handles project listing, search, and details
  */
 
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import {
   projects,
@@ -14,27 +14,359 @@ import {
   user,
 } from '@/db/schema.js';
 import { eq, count, desc, like, sql, and } from 'drizzle-orm';
-import { createDomainError, SYSTEM_ERRORS, PROJECT_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  createValidationError,
+  SYSTEM_ERRORS,
+  PROJECT_ERRORS,
+  VALIDATION_ERRORS,
+} from '@corates/shared';
 
-const projectRoutes = new Hono();
+const projectRoutes = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
+      const field = firstIssue?.path?.[0] || 'input';
+      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
+
+      let message = firstIssue?.message || 'Validation failed';
+      const isMissing =
+        firstIssue?.received === 'undefined' ||
+        message.includes('received undefined') ||
+        message.includes('Required');
+
+      if (isMissing) {
+        message = `${fieldName} is required`;
+      }
+
+      const error = createValidationError(
+        String(field),
+        VALIDATION_ERRORS.FIELD_REQUIRED.code,
+        null,
+      );
+      error.message = message;
+      return c.json(error, 400);
+    }
+  },
+});
+
+// Response schemas
+const PaginationSchema = z
+  .object({
+    page: z.number(),
+    limit: z.number(),
+    total: z.number(),
+    totalPages: z.number(),
+  })
+  .openapi('AdminProjectPagination');
+
+const ProjectWithStatsSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string().nullable(),
+    orgId: z.string(),
+    orgName: z.string().nullable(),
+    orgSlug: z.string().nullable(),
+    createdBy: z.string(),
+    creatorName: z.string().nullable(),
+    creatorDisplayName: z.string().nullable(),
+    creatorEmail: z.string().nullable(),
+    createdAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+    updatedAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+    memberCount: z.number(),
+    fileCount: z.number(),
+  })
+  .openapi('AdminProjectWithStats');
+
+const ProjectListResponseSchema = z
+  .object({
+    projects: z.array(ProjectWithStatsSchema),
+    pagination: PaginationSchema,
+  })
+  .openapi('AdminProjectListResponse');
+
+const ProjectMemberSchema = z
+  .object({
+    id: z.string(),
+    userId: z.string(),
+    userName: z.string().nullable(),
+    userDisplayName: z.string().nullable(),
+    userEmail: z.string().nullable(),
+    userAvatar: z.string().nullable(),
+    role: z.string().nullable(),
+    joinedAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+  })
+  .openapi('AdminProjectMember');
+
+const ProjectFileSchema = z
+  .object({
+    id: z.string(),
+    filename: z.string(),
+    originalName: z.string().nullable(),
+    fileType: z.string().nullable(),
+    fileSize: z.number().nullable(),
+    uploadedBy: z.string().nullable(),
+    uploaderName: z.string().nullable(),
+    uploaderDisplayName: z.string().nullable(),
+    studyId: z.string().nullable(),
+    createdAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+  })
+  .openapi('AdminProjectFile');
+
+const ProjectInvitationSchema = z
+  .object({
+    id: z.string(),
+    email: z.string(),
+    role: z.string().nullable(),
+    invitedBy: z.string(),
+    inviterName: z.string().nullable(),
+    inviterDisplayName: z.string().nullable(),
+    expiresAt: z.union([z.string(), z.date(), z.number()]),
+    acceptedAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+    createdAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+    grantOrgMembership: z.union([z.boolean(), z.number()]),
+  })
+  .openapi('AdminProjectInvitation');
+
+const ProjectStatsSchema = z
+  .object({
+    memberCount: z.number(),
+    fileCount: z.number(),
+    totalStorageBytes: z.number(),
+  })
+  .openapi('AdminProjectStats');
+
+const ProjectDetailsResponseSchema = z
+  .object({
+    project: z.object({
+      id: z.string(),
+      name: z.string(),
+      description: z.string().nullable(),
+      orgId: z.string(),
+      orgName: z.string().nullable(),
+      orgSlug: z.string().nullable(),
+      createdBy: z.string(),
+      creatorName: z.string().nullable(),
+      creatorDisplayName: z.string().nullable(),
+      creatorEmail: z.string().nullable(),
+      createdAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+      updatedAt: z.union([z.string(), z.date(), z.number()]).nullable(),
+    }),
+    members: z.array(ProjectMemberSchema),
+    files: z.array(ProjectFileSchema),
+    invitations: z.array(ProjectInvitationSchema),
+    stats: ProjectStatsSchema,
+  })
+  .openapi('AdminProjectDetailsResponse');
+
+const SuccessResponseSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string(),
+  })
+  .openapi('AdminProjectSuccessResponse');
+
+const AdminErrorSchema = z
+  .object({
+    code: z.string(),
+    message: z.string(),
+    statusCode: z.number(),
+    details: z.record(z.unknown()).optional(),
+  })
+  .openapi('AdminProjectError');
+
+// Route definitions
+const listProjectsRoute = createRoute({
+  method: 'get',
+  path: '/projects',
+  tags: ['Admin - Projects'],
+  summary: 'List all projects',
+  description: 'List all projects with pagination and search. Admin only.',
+  request: {
+    query: z.object({
+      page: z.string().optional().openapi({ description: 'Page number', example: '1' }),
+      limit: z
+        .string()
+        .optional()
+        .openapi({ description: 'Results per page (max 100)', example: '20' }),
+      search: z
+        .string()
+        .optional()
+        .openapi({ description: 'Search by name', example: 'my project' }),
+      orgId: z
+        .string()
+        .optional()
+        .openapi({ description: 'Filter by organization ID', example: 'org-123' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'List of projects with stats',
+      content: {
+        'application/json': {
+          schema: ProjectListResponseSchema,
+        },
+      },
+    },
+    401: {
+      description: 'Unauthorized - not logged in',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+    403: {
+      description: 'Forbidden - not an admin',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const getProjectDetailsRoute = createRoute({
+  method: 'get',
+  path: '/projects/{projectId}',
+  tags: ['Admin - Projects'],
+  summary: 'Get project details',
+  description: 'Get full project details including members, files, and invitations. Admin only.',
+  request: {
+    params: z.object({
+      projectId: z.string().openapi({ description: 'Project ID', example: 'proj-123' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Project details',
+      content: {
+        'application/json': {
+          schema: ProjectDetailsResponseSchema,
+        },
+      },
+    },
+    404: {
+      description: 'Project not found',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const removeProjectMemberRoute = createRoute({
+  method: 'delete',
+  path: '/projects/{projectId}/members/{memberId}',
+  tags: ['Admin - Projects'],
+  summary: 'Remove project member',
+  description: 'Remove a member from a project. Admin only.',
+  request: {
+    params: z.object({
+      projectId: z.string().openapi({ description: 'Project ID', example: 'proj-123' }),
+      memberId: z.string().openapi({ description: 'Member ID', example: 'member-123' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Member removed',
+      content: {
+        'application/json': {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    404: {
+      description: 'Member not found',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+  },
+});
+
+const deleteProjectRoute = createRoute({
+  method: 'delete',
+  path: '/projects/{projectId}',
+  tags: ['Admin - Projects'],
+  summary: 'Delete project',
+  description: 'Delete a project and all associated data. Admin only.',
+  request: {
+    params: z.object({
+      projectId: z.string().openapi({ description: 'Project ID', example: 'proj-123' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Project deleted',
+      content: {
+        'application/json': {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    404: {
+      description: 'Project not found',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Database error',
+      content: {
+        'application/json': {
+          schema: AdminErrorSchema,
+        },
+      },
+    },
+  },
+});
 
 /**
  * GET /api/admin/projects
  * List all projects with pagination and search
- * Query params:
- *   - page: page number (default 1)
- *   - limit: results per page (default 20, max 100)
- *   - search: search by name
- *   - orgId: filter by organization
  */
-projectRoutes.get('/projects', async c => {
+projectRoutes.openapi(listProjectsRoute, async c => {
   const db = createDb(c.env.DB);
 
   try {
-    const page = parseInt(c.req.query('page') || '1', 10);
-    const limit = Math.min(parseInt(c.req.query('limit') || '20', 10), 100);
-    const search = c.req.query('search');
-    const orgId = c.req.query('orgId');
+    const query = c.req.valid('query');
+    const page = parseInt(query.page || '1', 10);
+    const limit = Math.min(parseInt(query.limit || '20', 10), 100);
+    const search = query.search;
+    const orgId = query.orgId;
 
     const offset = (page - 1) * limit;
 
@@ -163,8 +495,8 @@ projectRoutes.get('/projects', async c => {
  * GET /api/admin/projects/:projectId
  * Get full project details including members, files, and invitations
  */
-projectRoutes.get('/projects/:projectId', async c => {
-  const projectId = c.req.param('projectId');
+projectRoutes.openapi(getProjectDetailsRoute, async c => {
+  const { projectId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
   try {
@@ -281,9 +613,8 @@ projectRoutes.get('/projects/:projectId', async c => {
  * DELETE /api/admin/projects/:projectId/members/:memberId
  * Remove a member from a project
  */
-projectRoutes.delete('/projects/:projectId/members/:memberId', async c => {
-  const projectId = c.req.param('projectId');
-  const memberId = c.req.param('memberId');
+projectRoutes.openapi(removeProjectMemberRoute, async c => {
+  const { projectId, memberId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
   try {
@@ -315,8 +646,8 @@ projectRoutes.delete('/projects/:projectId/members/:memberId', async c => {
  * DELETE /api/admin/projects/:projectId
  * Delete a project and all associated data
  */
-projectRoutes.delete('/projects/:projectId', async c => {
-  const projectId = c.req.param('projectId');
+projectRoutes.openapi(deleteProjectRoute, async c => {
+  const { projectId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
   try {

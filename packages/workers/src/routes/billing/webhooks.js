@@ -19,6 +19,10 @@
  * - Webhook ledger prevents duplicate processing (payloadHash + stripeEventId)
  * - orgAccessGrants has unique constraint on checkoutSessionId
  * - Grant extension rule: expiresAt = max(now, currentExpiresAt) + 6 months
+ *
+ * NOTE: This file uses regular Hono instead of OpenAPIHono because webhook
+ * endpoints receive raw payloads from Stripe that we verify via signature,
+ * not through request body validation.
  */
 import { Hono } from 'hono';
 import { createDb } from '@/db/client.js';
