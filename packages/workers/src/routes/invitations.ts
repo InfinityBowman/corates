@@ -4,6 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createDb } from '@/db/client.js';
 import {
   projectInvitations,
@@ -24,8 +25,9 @@ import {
 } from '@corates/shared';
 import { syncMemberToDO } from '@/lib/project-sync.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env } from '../types';
 
-const invitationRoutes = new OpenAPIHono({
+const invitationRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -57,7 +59,7 @@ const InvitationErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('InvitationError');
 
@@ -99,8 +101,13 @@ const acceptInvitationRoute = createRoute({
   },
 });
 
-invitationRoutes.openapi(acceptInvitationRoute, async c => {
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
+invitationRoutes.openapi(acceptInvitationRoute, async (c) => {
   const { user: authUser } = getAuth(c);
+  if (!authUser) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
   const db = createDb(c.env.DB);
   const { token } = c.req.valid('json');
 
@@ -126,7 +133,7 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
         field: 'token',
         value: token,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Check if invitation has expired
@@ -137,7 +144,7 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
         field: 'token',
         value: 'expired',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Check if invitation already accepted
@@ -145,7 +152,7 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
       const error = createDomainError(PROJECT_ERRORS.MEMBER_ALREADY_EXISTS, {
         projectId: invitation.projectId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Verify user email matches invitation email
@@ -164,7 +171,7 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'user_not_found',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const normalizedUserEmail = (currentUser.email || '').trim().toLowerCase();
@@ -179,7 +186,7 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
         userEmail: currentUser.email,
         invitationEmail: invitation.email,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Check if user is already a member
@@ -207,7 +214,7 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
         .get();
 
       return c.json({
-        success: true,
+        success: true as const,
         projectId: invitation.projectId,
         projectName: project?.name || 'Unknown Project',
         alreadyMember: true,
@@ -255,7 +262,8 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
         .where(eq(projectInvitations.id, invitation.id)),
     );
 
-    await db.batch(batchOps);
+    // Type assertion needed because TypeScript can't infer the array always has elements
+    await db.batch(batchOps as [typeof batchOps[0], ...typeof batchOps]);
 
     const project = await db
       .select({ name: projects.name })
@@ -263,14 +271,14 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
       .where(eq(projects.id, invitation.projectId))
       .get();
 
-    let orgSlug = null;
+    let orgSlug: string | null = null;
     if (invitation.orgId) {
       const org = await db
         .select({ slug: organization.slug })
         .from(organization)
         .where(eq(organization.id, invitation.orgId))
         .get();
-      orgSlug = org?.slug;
+      orgSlug = org?.slug || null;
     }
 
     // Send notification
@@ -298,7 +306,7 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
     try {
       await syncMemberToDO(c.env, invitation.projectId, 'add', {
         userId: authUser.id,
-        role: invitation.role,
+        role: invitation.role ?? undefined,
         joinedAt: nowDate.getTime(),
         name: currentUser.name,
         email: currentUser.email,
@@ -310,20 +318,21 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
     }
 
     return c.json({
-      success: true,
+      success: true as const,
       orgId: invitation.orgId,
-      orgSlug,
+      orgSlug: orgSlug ?? undefined,
       projectId: invitation.projectId,
       projectName: project?.name || 'Unknown Project',
       role: invitation.role,
     });
   } catch (error) {
     console.error('Error accepting invitation:', error);
+    const err = error as Error;
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'accept_invitation',
-      originalError: error.message,
+      originalError: err.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 

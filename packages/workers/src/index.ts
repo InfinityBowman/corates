@@ -51,10 +51,10 @@ app.use('*', securityHeaders());
 app.route('/health', healthRoutes);
 
 // Simple liveness probe (for load balancers) - keep at root for backwards compatibility
-app.get('/healthz', (c) => c.text('OK'));
+app.get('/healthz', c => c.text('OK'));
 
 // Root endpoint - redirect browsers to frontend, return text for API clients
-app.get('/', (c) => {
+app.get('/', c => {
   const accept = c.req.header('Accept') || '';
   // If browser request (accepts HTML), redirect to frontend
   if (accept.includes('text/html')) {
@@ -65,14 +65,14 @@ app.get('/', (c) => {
 });
 
 // API Documentation (development only)
-app.get('/docs', async (c) => {
+app.get('/docs', async c => {
   if (c.env.ENVIRONMENT === 'production') return c.text('Not Found', 404);
   const { getDocsHtml } = await import('./docs');
   return c.html(await getDocsHtml(c.env));
 });
 
 // OpenAPI JSON spec (development only)
-app.doc31('/openapi.json', (c) => ({
+app.doc31('/openapi.json', c => ({
   openapi: '3.1.0',
   info: {
     title: 'Corates API',
@@ -95,7 +95,7 @@ app.use('/api/admin/stop-impersonation', requireTrustedOrigin);
 
 // Stop impersonation route - separate from admin routes as it doesn't require admin role
 // (the impersonated user won't have admin role)
-app.post('/api/admin/stop-impersonation', async (c) => {
+app.post('/api/admin/stop-impersonation', async c => {
   try {
     const { createAuth } = await import('./auth/config');
     const authInstance = createAuth(c.env, c.executionCtx);
@@ -157,7 +157,7 @@ app.route('/api/google-drive', googleDriveRoutes);
 
 // PDF proxy endpoint - fetches external PDFs to avoid CORS issues
 // Only requires authentication, not project membership
-app.post('/api/pdf-proxy', requireAuth, async (c) => {
+app.post('/api/pdf-proxy', requireAuth, async c => {
   try {
     const body = await c.req.json<{ url?: string }>();
     const { url } = body;
@@ -352,7 +352,7 @@ app.all('/api/sessions/:sessionId', handleUserSession);
 app.all('/api/sessions/:sessionId/*', handleUserSession);
 
 // 404 handler
-app.notFound((c) => {
+app.notFound(c => {
   const error = createDomainError(SYSTEM_ERRORS.ROUTE_NOT_FOUND, { path: c.req.path });
   return c.json(error, error.statusCode as ContentfulStatusCode);
 });

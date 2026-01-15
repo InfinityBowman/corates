@@ -4,6 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createDb } from '@/db/client.js';
 import { user } from '@/db/schema.js';
 import { desc } from 'drizzle-orm';
@@ -14,8 +15,9 @@ import {
   VALIDATION_ERRORS,
   SYSTEM_ERRORS,
 } from '@corates/shared';
+import type { Env } from '../types';
 
-const dbRoutes = new OpenAPIHono();
+const dbRoutes = new OpenAPIHono<{ Bindings: Env }>();
 
 // Apply auth middleware to users endpoint
 dbRoutes.use('/users', requireAuth);
@@ -50,7 +52,7 @@ const ErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('DbError');
 
@@ -78,6 +80,7 @@ const listUsersRoute = createRoute({
   },
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 dbRoutes.openapi(listUsersRoute, async c => {
   const db = createDb(c.env.DB);
 
@@ -100,9 +103,9 @@ dbRoutes.openapi(listUsersRoute, async c => {
     console.error('Error fetching users:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_users',
-      originalError: error.message,
+      originalError: error instanceof Error ? error.message : String(error),
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -121,6 +124,7 @@ const createUserRoute = createRoute({
   },
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 dbRoutes.openapi(createUserRoute, c => {
   const error = createValidationError(
     'endpoint',
@@ -128,7 +132,7 @@ dbRoutes.openapi(createUserRoute, c => {
     null,
     'use_auth_register',
   );
-  return c.json(error, error.statusCode);
+  return c.json(error, error.statusCode as ContentfulStatusCode);
 });
 
 // Check migration status route
@@ -154,6 +158,7 @@ const checkMigrationRoute = createRoute({
   },
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 dbRoutes.openapi(checkMigrationRoute, async c => {
   try {
     const tableCheck = await c.env.DB.prepare(
@@ -172,9 +177,9 @@ dbRoutes.openapi(checkMigrationRoute, async c => {
     console.error('Migration error:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'check_migration',
-      originalError: error.message,
+      originalError: error instanceof Error ? error.message : String(error),
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 

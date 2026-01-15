@@ -4,6 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { account, projects, mediaFiles } from '@/db/schema.js';
@@ -19,8 +20,9 @@ import {
   PDF_MAGIC_BYTES,
 } from '@corates/shared';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env } from '../types';
 
-const googleDriveRoutes = new OpenAPIHono({
+const googleDriveRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -68,14 +70,23 @@ const DriveErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('DriveError');
+
+interface GoogleTokens {
+  accessToken: string | null;
+  refreshToken: string | null;
+  accessTokenExpiresAt: Date | null;
+}
 
 /**
  * Get Google OAuth tokens for the current user
  */
-async function getGoogleTokens(db, userId) {
+async function getGoogleTokens(
+  db: ReturnType<typeof createDb>,
+  userId: string,
+): Promise<GoogleTokens | undefined> {
   const googleAccount = await db
     .select({
       accessToken: account.accessToken,
@@ -92,7 +103,10 @@ async function getGoogleTokens(db, userId) {
 /**
  * Refresh Google access token using refresh token
  */
-async function refreshGoogleToken(env, refreshToken) {
+async function refreshGoogleToken(
+  env: Env,
+  refreshToken: string,
+): Promise<{ accessToken: string; expiresIn: number }> {
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: {
@@ -115,7 +129,7 @@ async function refreshGoogleToken(env, refreshToken) {
     throw error;
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as { access_token: string; expires_in: number };
   return {
     accessToken: data.access_token,
     expiresIn: data.expires_in,
@@ -125,13 +139,18 @@ async function refreshGoogleToken(env, refreshToken) {
 /**
  * Get a valid access token, refreshing if necessary
  */
-async function getValidAccessToken(env, db, userId, tokens) {
+async function getValidAccessToken(
+  env: Env,
+  db: ReturnType<typeof createDb>,
+  userId: string,
+  tokens: GoogleTokens,
+): Promise<string> {
   const now = new Date();
   const expiresAt = tokens.accessTokenExpiresAt;
   const bufferTime = 60 * 1000;
 
   if (expiresAt && new Date(expiresAt).getTime() - now.getTime() > bufferTime) {
-    return tokens.accessToken;
+    return tokens.accessToken!;
   }
 
   if (!expiresAt || Number.isNaN(new Date(expiresAt).getTime())) {
@@ -181,7 +200,7 @@ googleDriveRoutes.openapi(statusRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
 
-  const tokens = await getGoogleTokens(db, user.id);
+  const tokens = await getGoogleTokens(db, user!.id);
 
   return c.json({
     connected: !!tokens?.accessToken,
@@ -209,48 +228,50 @@ const pickerTokenRoute = createRoute({
   },
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 googleDriveRoutes.openapi(pickerTokenRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
 
-  const tokens = await getGoogleTokens(db, user.id);
+  const tokens = await getGoogleTokens(db, user!.id);
   if (!tokens?.accessToken) {
     const error = createDomainError(AUTH_ERRORS.INVALID, {
       context: 'google_not_connected',
       code: 'GOOGLE_NOT_CONNECTED',
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   try {
-    const accessToken = await getValidAccessToken(c.env, db, user.id, tokens);
-    const updatedTokens = await getGoogleTokens(db, user.id);
+    const accessToken = await getValidAccessToken(c.env, db, user!.id, tokens);
+    const updatedTokens = await getGoogleTokens(db, user!.id);
     const expiresAt = updatedTokens?.accessTokenExpiresAt;
 
     return c.json({
       accessToken,
-      expiresAt: expiresAt?.toISOString ? expiresAt.toISOString() : expiresAt || null,
+      expiresAt: expiresAt instanceof Date ? expiresAt.toISOString() : expiresAt || null,
     });
   } catch (error) {
     console.error('Google Drive picker-token error:', error);
+    const err = error as { message?: string; code?: string };
     if (
-      (typeof error?.message === 'string' && error.message.includes('reconnect')) ||
-      (typeof error?.code === 'string' && error.code.includes('GOOGLE'))
+      (typeof err?.message === 'string' && err.message.includes('reconnect')) ||
+      (typeof err?.code === 'string' && err.code.includes('GOOGLE'))
     ) {
       const authError =
-        error.code ? error : (
+        isDomainError(error) ? error : (
           createDomainError(AUTH_ERRORS.INVALID, {
             context: 'google_token_expired',
-            originalError: typeof error?.message === 'string' ? error.message : String(error),
+            originalError: typeof err?.message === 'string' ? err.message : String(error),
           })
         );
-      return c.json(authError, authError.statusCode);
+      return c.json(authError, authError.statusCode as ContentfulStatusCode);
     }
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'get_google_picker_token',
-      originalError: typeof error?.message === 'string' ? error.message : String(error),
+      originalError: typeof err?.message === 'string' ? err.message : String(error),
     });
-    return c.json(systemError, systemError.statusCode);
+    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -270,6 +291,7 @@ const disconnectRoute = createRoute({
   },
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 googleDriveRoutes.openapi(disconnectRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
@@ -277,16 +299,17 @@ googleDriveRoutes.openapi(disconnectRoute, async c => {
   try {
     await db
       .delete(account)
-      .where(and(eq(account.userId, user.id), eq(account.providerId, 'google')));
+      .where(and(eq(account.userId, user!.id), eq(account.providerId, 'google')));
 
-    return c.json({ success: true, message: 'Google account disconnected' });
+    return c.json({ success: true as const, message: 'Google account disconnected' });
   } catch (error) {
     console.error('Google disconnect error:', error);
+    const err = error as Error;
     const systemError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'disconnect_google_account',
-      originalError: error?.message || String(error),
+      originalError: err?.message || String(error),
     });
-    return c.json(systemError, systemError.statusCode);
+    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -334,23 +357,24 @@ const importRoute = createRoute({
   },
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 googleDriveRoutes.openapi(importRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
   const { fileId, projectId, studyId } = c.req.valid('json');
 
-  const tokens = await getGoogleTokens(db, user.id);
+  const tokens = await getGoogleTokens(db, user!.id);
 
   if (!tokens?.accessToken) {
     const error = createDomainError(AUTH_ERRORS.INVALID, {
       context: 'google_not_connected',
       code: 'GOOGLE_NOT_CONNECTED',
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   try {
-    const accessToken = await getValidAccessToken(c.env, db, user.id, tokens);
+    const accessToken = await getValidAccessToken(c.env, db, user!.id, tokens);
 
     // Get file metadata
     const metaResponse = await fetch(
@@ -368,16 +392,21 @@ googleDriveRoutes.openapi(importRoute, async c => {
           fileName: fileId,
           source: 'google-drive',
         });
-        return c.json(error, error.statusCode);
+        return c.json(error, error.statusCode as ContentfulStatusCode);
       }
       const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
         operation: 'fetch_google_drive_file',
         originalError: `HTTP ${metaResponse.status}`,
       });
-      return c.json(systemError, systemError.statusCode);
+      return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
     }
 
-    const fileMeta = await metaResponse.json();
+    const fileMeta = (await metaResponse.json()) as {
+      id: string;
+      name: string;
+      mimeType: string;
+      size?: string;
+    };
 
     // Verify it's a PDF
     if (fileMeta.mimeType !== 'application/pdf') {
@@ -385,7 +414,7 @@ googleDriveRoutes.openapi(importRoute, async c => {
         expectedType: 'application/pdf',
         receivedType: fileMeta.mimeType,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Check file size (limit to 50MB)
@@ -395,7 +424,7 @@ googleDriveRoutes.openapi(importRoute, async c => {
         maxSize: maxSize,
         fileSize: parseInt(fileMeta.size, 10),
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Download the file content
@@ -413,7 +442,7 @@ googleDriveRoutes.openapi(importRoute, async c => {
         operation: 'download_google_drive_file',
         originalError: `HTTP ${downloadResponse.status}`,
       });
-      return c.json(systemError, systemError.statusCode);
+      return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
     }
 
     const fileContent = await downloadResponse.arrayBuffer();
@@ -426,7 +455,7 @@ googleDriveRoutes.openapi(importRoute, async c => {
         receivedType: 'unknown (invalid PDF signature)',
         source: 'google-drive',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Get project to retrieve orgId
@@ -442,7 +471,7 @@ googleDriveRoutes.openapi(importRoute, async c => {
         projectId,
         message: 'Project not found',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Generate unique filename
@@ -461,7 +490,7 @@ googleDriveRoutes.openapi(importRoute, async c => {
         originalName: originalFileName,
         importedFrom: 'google-drive',
         googleDriveFileId: fileId,
-        uploadedBy: user.id,
+        uploadedBy: user!.id,
         uploadedAt: new Date().toISOString(),
       },
     });
@@ -475,7 +504,7 @@ googleDriveRoutes.openapi(importRoute, async c => {
         originalName: originalFileName,
         fileType: 'application/pdf',
         fileSize: fileSize,
-        uploadedBy: user.id,
+        uploadedBy: user!.id,
         bucketKey: r2Key,
         orgId: project.orgId,
         projectId,
@@ -487,26 +516,27 @@ googleDriveRoutes.openapi(importRoute, async c => {
     }
 
     return c.json({
-      success: true,
+      success: true as const,
       id: mediaFileId,
       file: {
         key: r2Key,
         fileName: uniqueFileName,
         originalFileName: originalFileName !== uniqueFileName ? originalFileName : undefined,
         size: fileSize,
-        source: 'google-drive',
+        source: 'google-drive' as const,
       },
     });
   } catch (error) {
     console.error('Google Drive import error:', error);
     if (isDomainError(error)) {
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
+    const err = error as Error;
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'import_google_drive_file',
-      originalError: typeof error?.message === 'string' ? error.message : String(error),
+      originalError: typeof err?.message === 'string' ? err.message : String(error),
     });
-    return c.json(systemError, systemError.statusCode);
+    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
   }
 });
 
