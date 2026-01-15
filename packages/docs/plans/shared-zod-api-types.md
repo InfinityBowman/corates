@@ -119,7 +119,7 @@ export const OrgMemberSchema = z.object({
   id: IdSchema,
   userId: IdSchema,
   orgId: IdSchema,
-  role: z.enum(['owner', 'admin', 'member']),
+  role: z.enum(['owner', 'member']),
   ...TimestampSchema.shape,
 });
 ```
@@ -147,7 +147,7 @@ export const ProjectMemberSchema = z.object({
   id: IdSchema,
   projectId: IdSchema,
   userId: IdSchema,
-  role: z.enum(['lead', 'reviewer', 'viewer']),
+  role: z.enum(['owner', 'member']),
   ...TimestampSchema.shape,
 });
 ```

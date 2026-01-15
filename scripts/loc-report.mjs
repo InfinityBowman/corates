@@ -1,196 +1,324 @@
 #!/usr/bin/env node
 /* global console, process */
 /**
- * LOC (Lines of Code) report script
+ * LOC (Lines of Code) report script using tokei
  *
  * Usage:
- *   node scripts/loc-report.mjs           # total + per package in packages/
+ *   node scripts/loc-report.mjs           # total + per package summary
  *   node scripts/loc-report.mjs packages  # only packages/* breakdown
- *   node scripts/loc-report.mjs web       # only the "web" top-level dir
- *   node scripts/loc-report.mjs --code-only  # only count code files (js, jsx, ts, tsx, css, sql)
- *   node scripts/loc-report.mjs packages --code-only  # code-only for packages
+ *   node scripts/loc-report.mjs web       # only packages/web
+ *   node scripts/loc-report.mjs --json    # output raw JSON
+ *   node scripts/loc-report.mjs --top=10  # show top N languages
+ *   node scripts/loc-report.mjs --no-tests # exclude test files
  */
 
 import { spawnSync } from 'node:child_process';
-import { writeFileSync, unlinkSync, mkdtempSync } from 'fs';
-import { join } from 'path';
-import { tmpdir } from 'os';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { dirname, join } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-// const ROOT = '/Users/jacobmaynard/Documents/Repos/Courses/DOSSP/';
+
+// ANSI color codes
+const colors = {
+  reset: '\x1b[0m',
+  bold: '\x1b[1m',
+  dim: '\x1b[2m',
+  cyan: '\x1b[36m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  white: '\x1b[37m',
+  gray: '\x1b[90m',
+};
+
+const c = (color, text) => `${colors[color]}${text}${colors.reset}`;
 
 function checkCommand(command) {
   const result = spawnSync('which', [command], { encoding: 'utf8' });
   if (result.status !== 0) {
-    if (command === 'cloc') {
-      console.error(`cloc not found in PATH. Install it: https://github.com/AlDanial/cloc`);
-    } else {
-      console.error(`${command} not found in PATH`);
-    }
+    console.error(c('yellow', `${command} not found. Install: brew install ${command}`));
     process.exit(2);
   }
 }
 
-function runCommand(command, args, options = {}) {
-  const result = spawnSync(command, args, {
+function runTokei(path, { excludeTests = false } = {}) {
+  const args = [
+    path,
+    '-o',
+    'json',
+    '--exclude',
+    'pnpm-lock.yaml',
+    '--exclude',
+    '*.snap',
+    '--exclude',
+    '*.d.ts',
+  ];
+
+  if (excludeTests) {
+    args.push('--exclude', '**/__tests__/**');
+    args.push('--exclude', '**/*.test.*');
+    args.push('--exclude', '**/*.spec.*');
+  }
+
+  const result = spawnSync('tokei', args, {
     encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
     cwd: ROOT,
-    ...options,
   });
 
-  if (result.status !== 0 && !options.allowFailure) {
-    const stderr = (result.stderr || '').trim();
-    const stdout = (result.stdout || '').trim();
-    const message = stderr || stdout || `${command} exited with code ${result.status}`;
-    throw new Error(message);
+  if (result.status !== 0) {
+    throw new Error(result.stderr || 'tokei failed');
   }
 
-  return {
-    stdout: (result.stdout || '').trim(),
-    stderr: (result.stderr || '').trim(),
-    status: result.status,
-  };
+  return JSON.parse(result.stdout);
 }
 
-// Code file extensions to include when --code-only is used
-const CODE_EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx', '.css', '.sql']);
-
-function isCodeFile(file) {
-  const ext = file.substring(file.lastIndexOf('.'));
-  return CODE_EXTENSIONS.has(ext.toLowerCase());
+function formatNumber(n) {
+  return n.toLocaleString();
 }
 
-function getTrackedFiles(codeOnly = false) {
-  // Get tracked files, excluding lock files
-  const result = runCommand('git', ['ls-files', '-z']);
-  let files = result.stdout
-    .split('\0')
-    .filter(file => {
-      // Exclude lock files
-      return !/^(.+\/)?(pnpm-lock\.yaml|package-lock\.json|yarn\.lock)$/.test(file);
-    })
-    .filter(Boolean);
-
-  // Filter to code files only if requested
-  if (codeOnly) {
-    files = files.filter(isCodeFile);
-  }
-
-  return files;
+function bar(value, max, width = 30) {
+  const filled = Math.round((value / max) * width);
+  const empty = width - filled;
+  return c('green', '\u2588'.repeat(filled)) + c('gray', '\u2591'.repeat(empty));
 }
 
 function printHeader(title) {
   console.log('');
-  console.log('===========================================');
-  console.log(title);
-  console.log('===========================================');
+  console.log(c('cyan', c('bold', `  ${title}`)));
+  console.log(c('gray', '  ' + '\u2500'.repeat(60)));
 }
 
-function runCloc(fileList) {
-  if (fileList.length === 0) {
-    return;
+function printLanguageTable(data, topN = null) {
+  // Convert to array and sort by code
+  const languages = Object.entries(data)
+    .filter(([lang]) => lang !== 'Total')
+    .map(([lang, stats]) => ({
+      lang,
+      code: stats.code,
+      comments: stats.comments,
+      blanks: stats.blanks,
+      files: stats.reports?.length || 0,
+    }))
+    .sort((a, b) => b.code - a.code);
+
+  if (languages.length === 0) {
+    console.log(c('gray', '  No code files found'));
+    return { totalCode: 0, totalComments: 0, totalBlanks: 0, totalFiles: 0 };
   }
 
-  // Create temporary file with file list
-  const tmpDir = mkdtempSync(join(tmpdir(), 'loc-report-'));
-  const tmpFile = join(tmpDir, 'filelist.txt');
-  writeFileSync(tmpFile, fileList.join('\n'));
+  const maxCode = languages[0].code;
+  const displayLangs = topN ? languages.slice(0, topN) : languages;
 
-  try {
-    const result = runCommand('cloc', ['--list-file=' + tmpFile, '--quiet'], {
-      allowFailure: true,
-    });
-    if (result.status === 0) {
-      console.log(result.stdout);
-    }
-  } finally {
-    try {
-      unlinkSync(tmpFile);
-    } catch {
-      // Ignore cleanup errors
-    }
+  // Header
+  console.log(
+    c('dim', '  ') +
+      c('white', 'Language'.padEnd(20)) +
+      c('white', 'Files'.padStart(8)) +
+      c('white', 'Code'.padStart(10)) +
+      c('white', 'Comments'.padStart(10)) +
+      '  ' +
+      c('white', 'Distribution'),
+  );
+  console.log(c('gray', '  ' + '\u2500'.repeat(80)));
+
+  // eslint-disable-next-line no-unused-vars
+  for (const { lang, code, comments, blanks, files } of displayLangs) {
+    const langColor = getLangColor(lang);
+    console.log(
+      '  ' +
+        c(langColor, lang.padEnd(20)) +
+        c('dim', formatNumber(files).padStart(8)) +
+        c('green', formatNumber(code).padStart(10)) +
+        c('blue', formatNumber(comments).padStart(10)) +
+        '  ' +
+        bar(code, maxCode, 25),
+    );
   }
+
+  if (topN && languages.length > topN) {
+    const others = languages.slice(topN);
+    const otherCode = others.reduce((sum, l) => sum + l.code, 0);
+    const otherComments = others.reduce((sum, l) => sum + l.comments, 0);
+    const otherFiles = others.reduce((sum, l) => sum + l.files, 0);
+    console.log(
+      '  ' +
+        c('gray', `(+${others.length} more)`.padEnd(20)) +
+        c('dim', formatNumber(otherFiles).padStart(8)) +
+        c('dim', formatNumber(otherCode).padStart(10)) +
+        c('dim', formatNumber(otherComments).padStart(10)),
+    );
+  }
+
+  // Totals
+  const totalCode = languages.reduce((sum, l) => sum + l.code, 0);
+  const totalComments = languages.reduce((sum, l) => sum + l.comments, 0);
+  const totalBlanks = languages.reduce((sum, l) => sum + l.blanks, 0);
+  const totalFiles = languages.reduce((sum, l) => sum + l.files, 0);
+
+  console.log(c('gray', '  ' + '\u2500'.repeat(80)));
+  console.log(
+    '  ' +
+      c('bold', 'Total'.padEnd(20)) +
+      c('bold', formatNumber(totalFiles).padStart(8)) +
+      c('bold', c('green', formatNumber(totalCode).padStart(10))) +
+      c('bold', c('blue', formatNumber(totalComments).padStart(10))),
+  );
+
+  return { totalCode, totalComments, totalBlanks, totalFiles };
 }
 
-function runSubset(label, fileList) {
-  if (fileList.length === 0) {
-    return;
+function getLangColor(lang) {
+  const colorMap = {
+    JavaScript: 'yellow',
+    TypeScript: 'blue',
+    JSX: 'yellow',
+    TSX: 'blue',
+    CSS: 'magenta',
+    JSON: 'green',
+    Markdown: 'white',
+    SQL: 'cyan',
+    HTML: 'yellow',
+    'Plain Text': 'gray',
+  };
+  return colorMap[lang] || 'white';
+}
+
+function printPackageSummary(packages) {
+  printHeader('Package Summary');
+
+  const sorted = packages.sort((a, b) => b.code - a.code);
+  const maxCode = sorted[0]?.code || 1;
+
+  console.log(
+    c('dim', '  ') +
+      c('white', 'Package'.padEnd(16)) +
+      c('white', 'Files'.padStart(8)) +
+      c('white', 'Code'.padStart(10)) +
+      c('white', 'Comments'.padStart(10)) +
+      '  ' +
+      c('white', 'Size'),
+  );
+  console.log(c('gray', '  ' + '\u2500'.repeat(70)));
+
+  for (const pkg of sorted) {
+    console.log(
+      '  ' +
+        c('cyan', pkg.name.padEnd(16)) +
+        c('dim', formatNumber(pkg.files).padStart(8)) +
+        c('green', formatNumber(pkg.code).padStart(10)) +
+        c('blue', formatNumber(pkg.comments).padStart(10)) +
+        '  ' +
+        bar(pkg.code, maxCode, 20),
+    );
   }
-  console.log(`\n--- ${label} (${fileList.length} files) ---`);
-  runCloc(fileList);
+
+  const total = {
+    files: sorted.reduce((sum, p) => sum + p.files, 0),
+    code: sorted.reduce((sum, p) => sum + p.code, 0),
+    comments: sorted.reduce((sum, p) => sum + p.comments, 0),
+  };
+
+  console.log(c('gray', '  ' + '\u2500'.repeat(70)));
+  console.log(
+    '  ' +
+      c('bold', 'Total'.padEnd(16)) +
+      c('bold', formatNumber(total.files).padStart(8)) +
+      c('bold', c('green', formatNumber(total.code).padStart(10))) +
+      c('bold', c('blue', formatNumber(total.comments).padStart(10))),
+  );
+}
+
+function printQuickStats(data) {
+  const languages = Object.entries(data).filter(([lang]) => lang !== 'Total');
+  const totalCode = languages.reduce((sum, [, stats]) => sum + stats.code, 0);
+  const totalComments = languages.reduce((sum, [, stats]) => sum + stats.comments, 0);
+  const totalFiles = languages.reduce((sum, [, stats]) => sum + (stats.reports?.length || 0), 0);
+  const ratio = totalComments > 0 ? (totalCode / totalComments).toFixed(1) : 'N/A';
+
+  console.log('');
+  console.log(
+    c('dim', '  ') +
+      c('white', 'Quick Stats: ') +
+      c('green', `${formatNumber(totalCode)} lines`) +
+      c('dim', ' | ') +
+      c('blue', `${formatNumber(totalComments)} comments`) +
+      c('dim', ' | ') +
+      c('yellow', `${formatNumber(totalFiles)} files`) +
+      c('dim', ' | ') +
+      c('magenta', `${ratio}:1 code/comment ratio`),
+  );
 }
 
 function main() {
-  // Check required commands
-  checkCommand('git');
-  checkCommand('cloc');
+  checkCommand('tokei');
 
   const args = process.argv.slice(2);
-  const codeOnly = args.includes('--code-only') || args.includes('-c');
-  const filter = args.find(arg => arg !== '--code-only' && arg !== '-c'); // Optional filter: 'packages' or specific dir
+  const jsonOutput = args.includes('--json');
+  const excludeTests = args.includes('--no-tests');
+  const topMatch = args.find(a => a.startsWith('--top='));
+  const topN = topMatch ? parseInt(topMatch.split('=')[1], 10) : null;
+  const filter = args.find(arg => !arg.startsWith('--'));
 
-  // Get tracked files
-  let trackedFiles = getTrackedFiles(codeOnly);
-
-  if (trackedFiles.length === 0) {
-    console.error('No tracked files found.');
-    process.exit(1);
+  // Determine target path
+  let targetPath = 'packages';
+  if (filter && filter !== 'packages') {
+    targetPath = `packages/${filter}`;
   }
 
-  // Apply filter if specified
-  if (filter) {
-    if (filter === 'packages') {
-      trackedFiles = trackedFiles.filter(file => file.startsWith('packages/'));
-    } else {
-      trackedFiles = trackedFiles.filter(file => file.startsWith(`${filter}/`));
-    }
+  // Run tokei
+  const data = runTokei(targetPath, { excludeTests });
+
+  if (jsonOutput) {
+    console.log(JSON.stringify(data, null, 2));
+    return;
   }
 
-  // Per-package breakdown (packages/*)
-  const packageFiles = trackedFiles.filter(file => file.startsWith('packages/'));
-  if (packageFiles.length > 0) {
-    const header =
-      codeOnly ? 'Per package (packages/*) - Code files only' : 'Per package (packages/*)';
-    printHeader(header);
+  // Print header
+  console.log('');
+  console.log(c('bold', c('cyan', '  CoRATES Lines of Code Report')));
+  console.log(c('gray', `  Target: ${targetPath}${excludeTests ? ' (excluding tests)' : ''}`));
 
-    // Group files by package
-    const packages = new Map();
-    for (const file of packageFiles) {
-      const parts = file.split('/');
-      if (parts.length >= 2 && parts[0] === 'packages') {
-        const pkg = parts[1];
-        if (!packages.has(pkg)) {
-          packages.set(pkg, []);
+  // Quick stats
+  printQuickStats(data);
+
+  // Per-package breakdown
+  if (!filter || filter === 'packages') {
+    const packageDirs = ['docs', 'landing', 'mcp', 'shared', 'ui', 'web', 'workers'];
+    const packageStats = [];
+
+    for (const pkg of packageDirs) {
+      try {
+        const pkgData = runTokei(`packages/${pkg}`, { excludeTests });
+        const languages = Object.entries(pkgData).filter(([lang]) => lang !== 'Total');
+        const code = languages.reduce((sum, [, stats]) => sum + stats.code, 0);
+        const comments = languages.reduce((sum, [, stats]) => sum + stats.comments, 0);
+        const files = languages.reduce((sum, [, stats]) => sum + (stats.reports?.length || 0), 0);
+
+        if (code > 0) {
+          packageStats.push({ name: pkg, code, comments, files });
         }
-        packages.get(pkg).push(file);
+      } catch {
+        // Package doesn't exist or no code
       }
     }
 
-    // Sort packages and run cloc for each
-    const sortedPackages = Array.from(packages.keys()).sort();
-    for (const pkg of sortedPackages) {
-      const pkgFiles = packages.get(pkg);
-      runSubset(`packages/${pkg}`, pkgFiles);
+    if (packageStats.length > 0) {
+      printPackageSummary(packageStats);
     }
-  } else {
-    console.log('');
-    console.log('No packages/ directory detected or no tracked files under packages/.');
   }
 
-  // Total (tracked files)
-  const totalHeader =
-    codeOnly ? 'Total (Git-tracked files - Code files only)' : 'Total (Git-tracked files)';
-  printHeader(totalHeader);
-  runCloc(trackedFiles);
+  // Language breakdown
+  printHeader('Languages');
+  printLanguageTable(data, topN);
+
+  console.log('');
 }
 
 try {
   main();
 } catch (err) {
-  console.error('Error:', err.message || err);
+  console.error(c('yellow', 'Error: ') + err.message);
   process.exit(1);
 }
