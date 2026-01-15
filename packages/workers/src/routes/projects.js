@@ -10,44 +10,14 @@ import { eq, and, count } from 'drizzle-orm';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { requireEntitlement } from '@/middleware/requireEntitlement.js';
 import { requireQuota } from '@/middleware/requireQuota.js';
-import {
-  createDomainError,
-  createValidationError,
-  isDomainError,
-  PROJECT_ERRORS,
-  SYSTEM_ERRORS,
-  VALIDATION_ERRORS,
-} from '@corates/shared';
+import { createDomainError, isDomainError, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { syncProjectToDO } from '@/lib/project-sync.js';
 import { getProjectDocStub } from '@/lib/project-doc-id.js';
 import { requireProjectEdit, requireProjectDelete } from '@/policies';
+import { validationHook } from '@/lib/honoValidationHook.js';
 
 const projectRoutes = new OpenAPIHono({
-  defaultHook: (result, c) => {
-    if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      const field = firstIssue?.path?.[0] || 'input';
-      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
-
-      let message = firstIssue?.message || 'Validation failed';
-      const isMissing =
-        firstIssue?.received === 'undefined' ||
-        message.includes('received undefined') ||
-        message.includes('Required');
-
-      if (isMissing) {
-        message = `${fieldName} is required`;
-      }
-
-      const error = createValidationError(
-        String(field),
-        VALIDATION_ERRORS.FIELD_REQUIRED.code,
-        null,
-      );
-      error.message = message;
-      return c.json(error, 400);
-    }
-  },
+  defaultHook: validationHook,
 });
 
 // Apply auth middleware to all routes
