@@ -23,10 +23,7 @@ interface ValidationResult {
  * });
  * ```
  */
-export function validationHook(
-  result: ValidationResult,
-  c: Context,
-): Response | undefined {
+export function validationHook(result: ValidationResult, c: Context): Response | undefined {
   if (!result.success && result.error) {
     const firstIssue = result.error.issues[0];
     const field = firstIssue?.path?.[0] || 'input';
