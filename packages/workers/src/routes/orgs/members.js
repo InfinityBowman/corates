@@ -18,42 +18,17 @@ import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
 import { TIME_DURATIONS } from '@/config/constants.js';
 import {
   createDomainError,
-  createValidationError,
   isDomainError,
   SYSTEM_ERRORS,
   USER_ERRORS,
-  VALIDATION_ERRORS,
   PROJECT_ERRORS,
 } from '@corates/shared';
+import { validationHook } from '@/lib/honoValidationHook.js';
 import { addMember, updateMemberRole, removeMember } from '@/commands/members/index.js';
 import { requireMemberRemoval } from '@/policies';
 
 const orgProjectMemberRoutes = new OpenAPIHono({
-  defaultHook: (result, c) => {
-    if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      const field = firstIssue?.path?.[0] || 'input';
-      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
-
-      let message = firstIssue?.message || 'Validation failed';
-      const isMissing =
-        firstIssue?.received === 'undefined' ||
-        message.includes('received undefined') ||
-        message.includes('Required');
-
-      if (isMissing) {
-        message = `${fieldName} is required`;
-      }
-
-      const error = createValidationError(
-        String(field),
-        VALIDATION_ERRORS.FIELD_REQUIRED.code,
-        null,
-      );
-      error.message = message;
-      return c.json(error, 400);
-    }
-  },
+  defaultHook: validationHook,
 });
 
 // Apply auth middleware to all routes

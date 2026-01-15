@@ -12,7 +12,6 @@ import { requireAuth, getAuth } from '@/middleware/auth';
 import { TIME_DURATIONS } from '@/config/constants';
 import {
   createDomainError,
-  createValidationError,
   isDomainError,
   AUTH_ERRORS,
   PROJECT_ERRORS,
@@ -21,6 +20,7 @@ import {
   VALIDATION_ERRORS,
 } from '@corates/shared';
 import { syncMemberToDO } from '@/lib/project-sync';
+import { validationHook } from '@/lib/honoValidationHook';
 import {
   getProjectMembership,
   requireMemberManagement,
@@ -39,31 +39,7 @@ interface MemberContext {
 }
 
 const memberRoutes = new OpenAPIHono<{ Bindings: Env; Variables: MemberContext }>({
-  defaultHook: (result, c) => {
-    if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      const field = firstIssue?.path?.[0] || 'input';
-      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
-
-      let message = firstIssue?.message || 'Validation failed';
-      const isMissing =
-        firstIssue?.code === 'invalid_type' ||
-        message.includes('received undefined') ||
-        message.includes('Required');
-
-      if (isMissing) {
-        message = `${fieldName} is required`;
-      }
-
-      const error = createValidationError(
-        String(field),
-        VALIDATION_ERRORS.FIELD_REQUIRED.code,
-        null,
-      );
-      error.message = message;
-      return c.json(error, 400);
-    }
-  },
+  defaultHook: validationHook,
 });
 
 // Apply auth middleware to all routes
