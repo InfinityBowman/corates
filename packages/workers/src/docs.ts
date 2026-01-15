@@ -1,4 +1,6 @@
-export async function getDocsHtml(env) {
+import type { Env } from './types';
+
+export async function getDocsHtml(env: Env): Promise<string> {
   const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -49,7 +51,7 @@ export async function getDocsHtml(env) {
   </style>
 </head>
 <body>
-  <div id="openapi-auth" class="warning"><strong>Not Authenticated.</strong> ${env.OPENAPI_NOT_AUTHENTICATED_MESSAGE || `Run \`pnpm dev:front\` to start the frontend and log in`}<button class="close" aria-label="Close">&times;</button></div>
+  <div id="openapi-auth" class="warning"><strong>Not Authenticated.</strong> ${(env as unknown as Record<string, string | undefined>).OPENAPI_NOT_AUTHENTICATED_MESSAGE || `Run \`pnpm dev:front\` to start the frontend and log in`}<button class="close" aria-label="Close">&times;</button></div>
 
   <script id="api-reference" data-url="/openapi.json"></script>
   <script>

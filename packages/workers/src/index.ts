@@ -5,35 +5,38 @@
  */
 
 import { OpenAPIHono } from '@hono/zod-openapi';
-import { UserSession } from './durable-objects/UserSession.js';
-import { ProjectDoc } from './durable-objects/ProjectDoc.js';
-import { EmailQueue } from './durable-objects/EmailQueue.js';
-import { createCorsMiddleware } from './middleware/cors.js';
-import { securityHeaders } from './middleware/securityHeaders.js';
-import { requireAuth } from './middleware/auth.js';
-import { requireTrustedOrigin } from './middleware/csrf.js';
-import { errorHandler } from './middleware/errorHandler.js';
+import type { Context } from 'hono';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import { UserSession } from './durable-objects/UserSession';
+import { ProjectDoc } from './durable-objects/ProjectDoc';
+import { EmailQueue } from './durable-objects/EmailQueue';
+import { createCorsMiddleware } from './middleware/cors';
+import { securityHeaders } from './middleware/securityHeaders';
+import { requireAuth } from './middleware/auth';
+import { requireTrustedOrigin } from './middleware/csrf';
+import { errorHandler } from './middleware/errorHandler';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import type { Env } from './types';
 
 // Route imports
-import { auth } from './auth/routes.js';
-import { healthRoutes } from './routes/health.js';
-import { orgRoutes } from './routes/orgs/index.js';
-import { userRoutes } from './routes/users.js';
-import { dbRoutes } from './routes/database.js';
-import { emailRoutes } from './routes/email.js';
-import { billingRoutes } from './routes/billing/index.js';
-import { googleDriveRoutes } from './routes/google-drive.js';
-import { avatarRoutes } from './routes/avatars.js';
-import { adminRoutes } from './routes/admin/index.js';
-import { accountMergeRoutes } from './routes/account-merge.js';
-import { contactRoutes } from './routes/contact.js';
+import { auth } from './auth/routes';
+import { healthRoutes } from './routes/health';
+import { orgRoutes } from './routes/orgs/index';
+import { userRoutes } from './routes/users';
+import { dbRoutes } from './routes/database';
+import { emailRoutes } from './routes/email';
+import { billingRoutes } from './routes/billing/index';
+import { googleDriveRoutes } from './routes/google-drive';
+import { avatarRoutes } from './routes/avatars';
+import { adminRoutes } from './routes/admin/index';
+import { accountMergeRoutes } from './routes/account-merge';
+import { contactRoutes } from './routes/contact';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc, EmailQueue };
 
 // Create main Hono app with OpenAPI support
-const app = new OpenAPIHono();
+const app = new OpenAPIHono<{ Bindings: Env }>();
 
 // Apply CORS middleware globally (needs env, so we do it per-request)
 app.use('*', async (c, next) => {
@@ -48,10 +51,10 @@ app.use('*', securityHeaders());
 app.route('/health', healthRoutes);
 
 // Simple liveness probe (for load balancers) - keep at root for backwards compatibility
-app.get('/healthz', c => c.text('OK'));
+app.get('/healthz', (c) => c.text('OK'));
 
 // Root endpoint - redirect browsers to frontend, return text for API clients
-app.get('/', c => {
+app.get('/', (c) => {
   const accept = c.req.header('Accept') || '';
   // If browser request (accepts HTML), redirect to frontend
   if (accept.includes('text/html')) {
@@ -62,30 +65,27 @@ app.get('/', c => {
 });
 
 // API Documentation (development only)
-app.get('/docs', async c => {
+app.get('/docs', async (c) => {
   if (c.env.ENVIRONMENT === 'production') return c.text('Not Found', 404);
-  const { getDocsHtml } = await import('./docs.js');
+  const { getDocsHtml } = await import('./docs');
   return c.html(await getDocsHtml(c.env));
 });
 
 // OpenAPI JSON spec (development only)
-app.doc31('/openapi.json', c => {
-  if (c.env.ENVIRONMENT === 'production') return c.text('Not Found', 404);
-  return c.json({
-    openapi: '3.1.0',
-    info: {
-      title: 'Corates API',
-      version: '1.0.0',
-      description: 'API for Corates - Collaborative Research Appraisal Tool for Evidence Synthesis',
+app.doc31('/openapi.json', (c) => ({
+  openapi: '3.1.0',
+  info: {
+    title: 'Corates API',
+    version: '1.0.0',
+    description: 'API for Corates - Collaborative Research Appraisal Tool for Evidence Synthesis',
+  },
+  servers: [
+    {
+      url: c.env.ENVIRONMENT === 'production' ? 'https://corates.org' : 'http://localhost:8787',
+      description: c.env.ENVIRONMENT === 'production' ? 'Production' : 'Local development',
     },
-    servers: [
-      {
-        url: c.env.ENVIRONMENT === 'production' ? 'https://corates.org' : 'http://localhost:8787',
-        description: c.env.ENVIRONMENT === 'production' ? 'Production' : 'Local development',
-      },
-    ],
-  });
-});
+  ],
+}));
 
 // Mount auth routes
 app.route('/api/auth', auth);
@@ -95,9 +95,9 @@ app.use('/api/admin/stop-impersonation', requireTrustedOrigin);
 
 // Stop impersonation route - separate from admin routes as it doesn't require admin role
 // (the impersonated user won't have admin role)
-app.post('/api/admin/stop-impersonation', async c => {
+app.post('/api/admin/stop-impersonation', async (c) => {
   try {
-    const { createAuth } = await import('./auth/config.js');
+    const { createAuth } = await import('./auth/config');
     const authInstance = createAuth(c.env, c.executionCtx);
     const url = new URL(c.req.url);
 
@@ -157,15 +157,16 @@ app.route('/api/google-drive', googleDriveRoutes);
 
 // PDF proxy endpoint - fetches external PDFs to avoid CORS issues
 // Only requires authentication, not project membership
-app.post('/api/pdf-proxy', requireAuth, async c => {
+app.post('/api/pdf-proxy', requireAuth, async (c) => {
   try {
-    const { url } = await c.req.json();
+    const body = await c.req.json<{ url?: string }>();
+    const { url } = body;
 
     if (!url) {
       return c.json({ error: 'URL is required' }, 400);
     }
 
-    const { validatePdfProxyUrl } = await import('./lib/ssrf-protection.js');
+    const { validatePdfProxyUrl } = await import('./lib/ssrf-protection');
 
     // SSRF protection - validate URL against allowlist
     const validation = validatePdfProxyUrl(url);
@@ -174,7 +175,7 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
     }
 
     // Fetch the PDF with manual redirect handling to detect auth loops
-    let response;
+    let response: Response | undefined;
     let redirectCount = 0;
     const maxRedirects = 5;
     let currentUrl = url;
@@ -234,10 +235,10 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
       return c.json({ error: 'Too many redirects - PDF may require authentication' }, 502);
     }
 
-    if (!response.ok) {
+    if (!response || !response.ok) {
       return c.json(
-        { error: `Failed to fetch PDF: ${response.status} ${response.statusText}` },
-        response.status,
+        { error: `Failed to fetch PDF: ${response?.status} ${response?.statusText}` },
+        (response?.status || 500) as ContentfulStatusCode,
       );
     }
 
@@ -267,13 +268,14 @@ app.post('/api/pdf-proxy', requireAuth, async c => {
     });
   } catch (error) {
     console.error('PDF proxy error:', error);
-    return c.json({ error: error.message || 'Failed to fetch PDF' }, 500);
+    const message = error instanceof Error ? error.message : 'Failed to fetch PDF';
+    return c.json({ error: message }, 500);
   }
 });
 
 // Project-scoped Project Document Durable Object routes
 // DO instance is project-scoped (project:${projectId})
-const handleProjectDoc = async c => {
+const handleProjectDoc = async (c: Context<{ Bindings: Env }>) => {
   const projectId = c.req.param('projectId');
 
   if (!projectId) {
@@ -281,7 +283,7 @@ const handleProjectDoc = async c => {
   }
 
   // Compute project-scoped DO instance name
-  const { getProjectDocStub } = await import('./lib/project-doc-id.js');
+  const { getProjectDocStub } = await import('./lib/project-doc-id');
   const projectDoc = getProjectDocStub(c.env, projectId);
   const response = await projectDoc.fetch(c.req.raw);
 
@@ -298,7 +300,7 @@ app.all('/api/project-doc/:projectId', handleProjectDoc);
 app.all('/api/project-doc/:projectId/*', handleProjectDoc);
 
 // Legacy org-scoped routes - return 410 Gone
-const legacyOrgProjectDocHandler = c =>
+const legacyOrgProjectDocHandler = (c: Context<{ Bindings: Env }>) =>
   c.json(
     {
       error: 'ENDPOINT_MOVED',
@@ -311,7 +313,7 @@ app.all('/api/orgs/:orgId/project-doc/:projectId', legacyOrgProjectDocHandler);
 app.all('/api/orgs/:orgId/project-doc/:projectId/*', legacyOrgProjectDocHandler);
 
 // Legacy project WebSocket endpoint - return 410 Gone
-const legacyProjectDocHandler = c =>
+const legacyProjectDocHandler = (c: Context<{ Bindings: Env }>) =>
   c.json(
     {
       error: 'ENDPOINT_MOVED',
@@ -325,7 +327,7 @@ app.all('/api/project/:projectId/*', legacyProjectDocHandler);
 
 // User Session Durable Object routes
 // Handler function shared between both route patterns
-const handleUserSession = async c => {
+const handleUserSession = async (c: Context<{ Bindings: Env }>) => {
   const sessionId = c.req.param('sessionId');
 
   if (!sessionId) {
@@ -350,9 +352,9 @@ app.all('/api/sessions/:sessionId', handleUserSession);
 app.all('/api/sessions/:sessionId/*', handleUserSession);
 
 // 404 handler
-app.notFound(c => {
+app.notFound((c) => {
   const error = createDomainError(SYSTEM_ERRORS.ROUTE_NOT_FOUND, { path: c.req.path });
-  return c.json(error, error.statusCode);
+  return c.json(error, error.statusCode as ContentfulStatusCode);
 });
 
 // Global error handler - catches all uncaught errors in routes
