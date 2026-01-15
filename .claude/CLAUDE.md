@@ -1,12 +1,20 @@
----
-alwaysApply: true
----
-
 # Agent Instructions
 
 This file contains critical instructions for Agents. For detailed patterns, see specialized rule files in this directory.
 
 This project is CoRATES (Collaborative Research Appraisal Tool for Evidence Synthesis), a SolidJS-based web application deployed on Cloudflare Workers.
+
+## Reading Order
+
+Before making changes, read these documents in order:
+
+1. **This file** - Core coding standards and critical rules
+2. **STATUS.md** (packages/docs/STATUS.md) - Current implementation state and known gaps
+3. **AGENTS.md** (root) - Quick orientation and success criteria
+4. **Relevant guide** from `packages/docs/guides/` for your task
+5. **Specialized rules** - `.cursor/rules/*.mdc` (Cursor) or `.github/instructions/*.instructions.md` (VS Code)
+
+**Source of Truth Policy**: Documentation is authoritative. If code conflicts with documentation, either fix the code or update the documentation - never leave them out of sync.
 
 ## Package Structure
 
@@ -15,7 +23,6 @@ The project is split into multiple packages under the `packages/` directory:
 - `/web`: Frontend application built with SolidJS
 - `/workers`: Backend services, API endpoints, and database migrations
 - `/landing`: Marketing and landing site
-- `/ui`: Shared UI component library built with Ark UI
 - `/shared`: Shared TypeScript utilities and error definitions
 - `/mcp`: MCP server for development tools and documentation
 - `/docs`: Vitepress docs site containing internal documentation
@@ -81,7 +88,7 @@ pnpm logs             # View production worker logs
 - **Zod**: Schema and input validation (backend)
 - **Drizzle ORM**: ALL database interactions and migrations
 - **Better-Auth**: Authentication and user management
-- **Ark UI**: UI components from `@corates/ui` package
+- **Ark UI**: UI components (`@ark-ui/solid`)
 - **solid-icons**: Icon library (e.g., `solid-icons/bi`, `solid-icons/fi`)
 
 ### Code Comments
@@ -112,20 +119,6 @@ retries += 1;
 - Don't leave stale comments that contradict the code
 - Don't reference removed or obsolete code paths (e.g. "No longer uses X format")
 
-### UI Components
-
-**Ark UI components are in `@corates/ui` package, NOT in local components.**
-
-```js
-// CORRECT
-import { Dialog, Select, Toast } from '@corates/ui';
-
-// WRONG
-import { Dialog } from '@/components/ark/Dialog.jsx';
-```
-
-See `ui-components.mdc` for detailed component usage patterns.
-
 ### Database Migrations
 
 - Use DrizzleKit to generate new migrations when necessary
@@ -148,18 +141,18 @@ See `solidjs.mdc` for detailed reactivity patterns and examples.
 
 - **Primary source**: Comprehensive guides are in the docs site (`packages/docs/`) - run `pnpm docs` to view
 - **ALWAYS use Corates MCP tools or other MCP** for Better-Auth, Drizzle, Icons, linting, and Ark UI documentation
-- **For comprehensive documentation**, see the docs site guides:
-  - [Testing Guide](/guides/testing) - Frontend and backend testing patterns, setup, and best practices
-  - [Authentication Guide](/guides/authentication) - Setup, configuration, API endpoints, and usage patterns
-  - [Database Guide](/guides/database) - Schema management, Drizzle ORM patterns, migrations, and test helpers
-  - [State Management](/guides/state-management) - SolidJS store patterns
-  - [Primitives](/guides/primitives) - Reusable hooks and primitives
-  - [Components](/guides/components) - Component development patterns
-  - [API Development](/guides/api-development) - Backend API route patterns
-  - [Error Handling](/guides/error-handling) - Error handling patterns
-  - [Style Guide](/guides/style-guide) - UI styling guidelines
-  - [Configuration](/guides/configuration) - Configuration files and environment variables
-  - [Development Workflow](/guides/development-workflow) - Getting started and common tasks
+- **For comprehensive documentation**, see the docs site guides in `packages/docs/guides/`:
+  - testing.md - Frontend and backend testing patterns, setup, and best practices
+  - authentication.md - Setup, configuration, API endpoints, and usage patterns
+  - database.md - Schema management, Drizzle ORM patterns, migrations, and test helpers
+  - state-management.md - SolidJS store patterns
+  - primitives.md - Reusable hooks and primitives
+  - components.md - Component development patterns
+  - api-development.md - Backend API route patterns
+  - error-handling.md - Error handling patterns
+  - style-guide.md - UI styling guidelines
+  - configuration.md - Configuration files and environment variables
+  - development-workflow.md - Getting started and common tasks
 
 ## Specialized Rule Files
 
@@ -168,7 +161,6 @@ For detailed patterns, see:
 - `solidjs.mdc` - Reactivity patterns, props, stores, primitives
 - `api-routes.mdc` - API route patterns, validation, database operations
 - `error-handling.mdc` - Error handling patterns (frontend + backend)
-- `ui-components.mdc` - UI component imports and usage
 - `workers.mdc` - Workers package specific patterns
 
 ### Complex Area Rules
@@ -188,6 +180,31 @@ For specific complex areas, see:
 - Packages are under `packages/` directory with their own dependencies
 - Path aliases are defined in `packages/web/jsconfig.json`
 - Adjust documentation if your changes would affect any existing documentation
+
+## Anti-Patterns (Never Do These)
+
+1. **Never use emojis or unicode symbols** - Not in code, comments, docs, or commits
+2. **Never bypass Drizzle** for database access
+3. **Never manually create migration files** - Use DrizzleKit only
+4. **Never destructure SolidJS props** - Breaks reactivity
+5. **Never prop-drill shared state** - Import stores directly
+6. **Never leave code that conflicts with documentation** - Update docs or fix code
+
+## Agent TODO Convention
+
+When you need to leave incomplete work or flag something for future attention:
+
+```js
+// TODO(agent): Brief description of what needs to be done
+// Reference relevant doc section if applicable
+```
+
+Use this pattern for:
+
+- Incomplete implementations that need follow-up
+- Areas that need human review or decision
+- Known limitations in your implementation
+- References to documentation sections
 
 ## Browser Automation
 
