@@ -102,7 +102,7 @@ const acceptInvitationRoute = createRoute({
 });
 
 // @ts-expect-error OpenAPIHono strict return types don't account for error responses
-invitationRoutes.openapi(acceptInvitationRoute, async (c) => {
+invitationRoutes.openapi(acceptInvitationRoute, async c => {
   const { user: authUser } = getAuth(c);
   if (!authUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
@@ -263,7 +263,7 @@ invitationRoutes.openapi(acceptInvitationRoute, async (c) => {
     );
 
     // Type assertion needed because TypeScript can't infer the array always has elements
-    await db.batch(batchOps as [typeof batchOps[0], ...typeof batchOps]);
+    await db.batch(batchOps as [(typeof batchOps)[0], ...typeof batchOps]);
 
     const project = await db
       .select({ name: projects.name })
