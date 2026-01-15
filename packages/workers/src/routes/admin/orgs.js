@@ -7,42 +7,13 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import { organization, member, projects } from '@/db/schema.js';
 import { eq, count, desc, like, or, sql } from 'drizzle-orm';
-import {
-  createDomainError,
-  createValidationError,
-  SYSTEM_ERRORS,
-  AUTH_ERRORS,
-  VALIDATION_ERRORS,
-} from '@corates/shared';
+import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { resolveOrgAccess } from '@/lib/billingResolver.js';
 import { getPlan, getGrantPlan } from '@corates/shared/plans';
+import { validationHook } from '@/lib/honoValidationHook.js';
 
 const orgRoutes = new OpenAPIHono({
-  defaultHook: (result, c) => {
-    if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      const field = firstIssue?.path?.[0] || 'input';
-      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
-
-      let message = firstIssue?.message || 'Validation failed';
-      const isMissing =
-        firstIssue?.received === 'undefined' ||
-        message.includes('received undefined') ||
-        message.includes('Required');
-
-      if (isMissing) {
-        message = `${fieldName} is required`;
-      }
-
-      const error = createValidationError(
-        String(field),
-        VALIDATION_ERRORS.FIELD_REQUIRED.code,
-        null,
-      );
-      error.message = message;
-      return c.json(error, 400);
-    }
-  },
+  defaultHook: validationHook,
 });
 
 // Response schemas

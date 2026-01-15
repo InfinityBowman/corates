@@ -8,35 +8,17 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { requireAuth, getAuth } from '@/middleware/auth';
-import {
-  createDomainError,
-  createValidationError,
-  FILE_ERRORS,
-  VALIDATION_ERRORS,
-  SYSTEM_ERRORS,
-} from '@corates/shared';
+import { createDomainError, FILE_ERRORS, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { FILE_SIZE_LIMITS } from '@/config/constants';
 import { createDb } from '@/db/client';
 import { projectMembers, projects } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getProjectDocStub } from '@/lib/project-doc-id';
+import { validationHook } from '@/lib/honoValidationHook';
 import type { Env } from '../types';
 
 const avatarRoutes = new OpenAPIHono<{ Bindings: Env }>({
-  defaultHook: (result, c) => {
-    if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      const field = firstIssue?.path?.[0] || 'input';
-      const message = firstIssue?.message || 'Validation failed';
-      const error = createValidationError(
-        String(field),
-        VALIDATION_ERRORS.INVALID_INPUT.code,
-        null,
-      );
-      error.message = message;
-      return c.json(error, 400);
-    }
-  },
+  defaultHook: validationHook,
 });
 
 // Apply auth middleware to all routes

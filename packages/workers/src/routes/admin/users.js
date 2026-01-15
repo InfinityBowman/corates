@@ -21,42 +21,13 @@ import { eq, desc, sql, like, or, count } from 'drizzle-orm';
 import { resolveOrgAccess } from '@/lib/billingResolver.js';
 import { getPlan, getGrantPlan } from '@corates/shared/plans';
 import { createAuth } from '@/auth/config.js';
-import {
-  createDomainError,
-  createValidationError,
-  VALIDATION_ERRORS,
-  USER_ERRORS,
-  SYSTEM_ERRORS,
-} from '@corates/shared';
+import { createDomainError, createValidationError, USER_ERRORS, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { TIME_DURATIONS } from '@/config/constants.js';
 import { syncMemberToDO } from '@/lib/project-sync.js';
+import { validationHook } from '@/lib/honoValidationHook.js';
 
 const userRoutes = new OpenAPIHono({
-  defaultHook: (result, c) => {
-    if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      const field = firstIssue?.path?.[0] || 'input';
-      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
-
-      let message = firstIssue?.message || 'Validation failed';
-      const isMissing =
-        firstIssue?.received === 'undefined' ||
-        message.includes('received undefined') ||
-        message.includes('Required');
-
-      if (isMissing) {
-        message = `${fieldName} is required`;
-      }
-
-      const error = createValidationError(
-        String(field),
-        VALIDATION_ERRORS.FIELD_REQUIRED.code,
-        null,
-      );
-      error.message = message;
-      return c.json(error, 400);
-    }
-  },
+  defaultHook: validationHook,
 });
 
 // Response schemas

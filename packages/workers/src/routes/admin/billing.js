@@ -7,12 +7,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@/db/client.js';
 import { subscription, orgAccessGrants, organization } from '@/db/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
-import {
-  createDomainError,
-  createValidationError,
-  VALIDATION_ERRORS,
-  SYSTEM_ERRORS,
-} from '@corates/shared';
+import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { resolveOrgAccess } from '@/lib/billingResolver.js';
 import {
   createGrant,
@@ -24,33 +19,10 @@ import {
 } from '@/db/orgAccessGrants.js';
 import { getPlan, getGrantPlan } from '@corates/shared/plans';
 import { notifyOrgMembers, EventTypes } from '@/lib/notify.js';
+import { validationHook } from '@/lib/honoValidationHook.js';
 
 const billingRoutes = new OpenAPIHono({
-  defaultHook: (result, c) => {
-    if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      const field = firstIssue?.path?.[0] || 'input';
-      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
-
-      let message = firstIssue?.message || 'Validation failed';
-      const isMissing =
-        firstIssue?.received === 'undefined' ||
-        message.includes('received undefined') ||
-        message.includes('Required');
-
-      if (isMissing) {
-        message = `${fieldName} is required`;
-      }
-
-      const error = createValidationError(
-        String(field),
-        VALIDATION_ERRORS.FIELD_REQUIRED.code,
-        null,
-      );
-      error.message = message;
-      return c.json(error, 400);
-    }
-  },
+  defaultHook: validationHook,
 });
 
 /**

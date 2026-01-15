@@ -10,48 +10,18 @@ import { user as userTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { validatePlanChange } from '@/lib/billingResolver';
 import { DEFAULT_PLAN } from '@corates/shared/plans';
-import {
-  createDomainError,
-  createValidationError,
-  SYSTEM_ERRORS,
-  VALIDATION_ERRORS,
-} from '@corates/shared';
+import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import Stripe from 'stripe';
 import { createLogger, truncateError, withTiming } from '@/lib/observability/logger';
 import { billingCheckoutRateLimit } from '@/middleware/rateLimit';
 import { resolveOrgIdWithRole } from './helpers/orgContext';
 import { requireOrgOwner } from '@/policies';
 import { createSingleProjectCheckout } from '@/commands';
+import { validationHook } from '@/lib/honoValidationHook';
 import type { Env } from '@/types';
 
 const billingCheckoutRoutes = new OpenAPIHono<{ Bindings: Env }>({
-  defaultHook: (result, c) => {
-    if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      const field = firstIssue?.path?.[0] || 'input';
-      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
-
-      let message = firstIssue?.message || 'Validation failed';
-      // Check for missing values using code and message inspection
-      const issueCode = 'code' in firstIssue ? firstIssue.code : '';
-      const isMissing =
-        issueCode === 'invalid_type' ||
-        message.includes('received undefined') ||
-        message.includes('Required');
-
-      if (isMissing) {
-        message = `${fieldName} is required`;
-      }
-
-      const error = createValidationError(
-        String(field),
-        VALIDATION_ERRORS.FIELD_REQUIRED.code,
-        null,
-      );
-      error.message = message;
-      return c.json(error, 400);
-    }
-  },
+  defaultHook: validationHook,
 });
 
 // Request schemas

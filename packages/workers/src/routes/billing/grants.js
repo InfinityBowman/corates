@@ -5,42 +5,14 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
-import {
-  createDomainError,
-  createValidationError,
-  SYSTEM_ERRORS,
-  VALIDATION_ERRORS,
-} from '@corates/shared';
+import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { GRANT_CONFIG } from '@/config/constants.js';
 import { resolveOrgIdWithRole } from './helpers/orgContext.js';
 import { requireOrgOwner } from '@/policies';
+import { validationHook } from '@/lib/honoValidationHook.js';
 
 const billingGrantRoutes = new OpenAPIHono({
-  defaultHook: (result, c) => {
-    if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      const field = firstIssue?.path?.[0] || 'input';
-      const fieldName = String(field).charAt(0).toUpperCase() + String(field).slice(1);
-
-      let message = firstIssue?.message || 'Validation failed';
-      const isMissing =
-        firstIssue?.received === 'undefined' ||
-        message.includes('received undefined') ||
-        message.includes('Required');
-
-      if (isMissing) {
-        message = `${fieldName} is required`;
-      }
-
-      const error = createValidationError(
-        String(field),
-        VALIDATION_ERRORS.FIELD_REQUIRED.code,
-        null,
-      );
-      error.message = message;
-      return c.json(error, 400);
-    }
-  },
+  defaultHook: validationHook,
 });
 
 // Response schemas
