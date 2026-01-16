@@ -498,41 +498,39 @@ databaseRoutes.openapi(getTableSchemaRoute, async c => {
     };
   }
 
-  const columns: ColumnInfo[] = Object.entries(table as unknown as Record<string, DrizzleColumn>).map(
-    ([name, column]) => {
-      const columnInfo: ColumnInfo = {
-        name,
-        type: column.dataType || 'unknown',
-        notNull: column.notNull ?? false,
-        primaryKey: column.primary ?? false,
-        unique: column.isUnique ?? false,
-        hasDefault: column.hasDefault ?? false,
-      };
+  const columns: ColumnInfo[] = Object.entries(
+    table as unknown as Record<string, DrizzleColumn>,
+  ).map(([name, column]) => {
+    const columnInfo: ColumnInfo = {
+      name,
+      type: column.dataType || 'unknown',
+      notNull: column.notNull ?? false,
+      primaryKey: column.primary ?? false,
+      unique: column.isUnique ?? false,
+      hasDefault: column.hasDefault ?? false,
+    };
 
-      // Check for foreign key reference
-      if (column.config?.references) {
-        const refFn = column.config.references;
-        try {
-          const refColumn = refFn();
-          if (refColumn?.table) {
-            const refTableName = Object.entries(dbSchema).find(
-              ([, t]) => t === refColumn.table,
-            )?.[0];
-            if (refTableName && ALLOWED_TABLES.includes(refTableName as AllowedTableName)) {
-              columnInfo.foreignKey = {
-                table: refTableName,
-                column: refColumn.name || '',
-              };
-            }
+    // Check for foreign key reference
+    if (column.config?.references) {
+      const refFn = column.config.references;
+      try {
+        const refColumn = refFn();
+        if (refColumn?.table) {
+          const refTableName = Object.entries(dbSchema).find(([, t]) => t === refColumn.table)?.[0];
+          if (refTableName && ALLOWED_TABLES.includes(refTableName as AllowedTableName)) {
+            columnInfo.foreignKey = {
+              table: refTableName,
+              column: refColumn.name || '',
+            };
           }
-        } catch {
-          // Reference function failed, skip FK info
         }
+      } catch {
+        // Reference function failed, skip FK info
       }
+    }
 
-      return columnInfo;
-    },
-  );
+    return columnInfo;
+  });
 
   return c.json({ tableName, columns });
 });
@@ -762,9 +760,7 @@ async function handleMediaFilesQuery(
       .offset(offset);
 
     const rows =
-      whereConditions.length > 0 ?
-        await baseQuery.where(and(...whereConditions))
-      : await baseQuery;
+      whereConditions.length > 0 ? await baseQuery.where(and(...whereConditions)) : await baseQuery;
 
     return c.json({
       tableName: 'mediaFiles',

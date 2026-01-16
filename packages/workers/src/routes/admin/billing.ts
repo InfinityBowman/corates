@@ -210,7 +210,10 @@ const CreateGrantBodySchema = z.object({
   type: z.enum(['trial', 'single_project']).openapi({ description: 'Grant type' }),
   startsAt: z.coerce.date().openapi({ description: 'Grant start date' }),
   expiresAt: z.coerce.date().openapi({ description: 'Grant expiration date' }),
-  metadata: z.record(z.string(), z.unknown()).optional().openapi({ description: 'Optional metadata' }),
+  metadata: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .openapi({ description: 'Optional metadata' }),
 });
 
 const UpdateGrantBodySchema = z.object({

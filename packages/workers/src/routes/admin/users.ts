@@ -593,10 +593,7 @@ userRoutes.openapi(listUsersRoute, async c => {
       : undefined;
 
     // Get total count for pagination
-    const [totalResult] = await db
-      .select({ count: count() })
-      .from(user)
-      .where(searchCondition);
+    const [totalResult] = await db.select({ count: count() }).from(user).where(searchCondition);
 
     // Get paginated results with or without search
     const selectFields = {
