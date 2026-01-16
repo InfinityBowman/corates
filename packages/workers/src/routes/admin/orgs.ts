@@ -217,16 +217,18 @@ orgRoutes.openapi(listOrgsRoute, async c => {
     const offset = (page - 1) * limit;
 
     // Build search condition if provided
-    const searchCondition = search
-      ? or(
+    const searchCondition =
+      search ?
+        or(
           like(sql`LOWER(${organization.name})`, `%${search.toLowerCase()}%`),
           like(sql`LOWER(${organization.slug})`, `%${search.toLowerCase()}%`),
         )
       : undefined;
 
     // Get total count for pagination
-    const totalCountQuery = searchCondition
-      ? db.select({ count: count() }).from(organization).where(searchCondition)
+    const totalCountQuery =
+      searchCondition ?
+        db.select({ count: count() }).from(organization).where(searchCondition)
       : db.select({ count: count() }).from(organization);
 
     const [totalResult] = await totalCountQuery.all();
@@ -357,9 +359,9 @@ orgRoutes.openapi(getOrgDetailsRoute, async c => {
     // Get billing summary
     const orgBilling = await resolveOrgAccess(db, orgId);
     const effectivePlan =
-      orgBilling.source === 'grant'
-        ? getGrantPlan(orgBilling.effectivePlanId as GrantType)
-        : getPlan(orgBilling.effectivePlanId);
+      orgBilling.source === 'grant' ?
+        getGrantPlan(orgBilling.effectivePlanId as GrantType)
+      : getPlan(orgBilling.effectivePlanId);
 
     return c.json({
       org,

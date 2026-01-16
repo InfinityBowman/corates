@@ -540,8 +540,7 @@ stripeToolsRoutes.openapi(customerLookupRoute, async c => {
         phone: customer.phone,
         created: customer.created,
         currency: customer.currency,
-        defaultSource:
-          typeof customer.default_source === 'string' ? customer.default_source : null,
+        defaultSource: typeof customer.default_source === 'string' ? customer.default_source : null,
         invoicePrefix: customer.invoice_prefix,
         balance: customer.balance,
         delinquent: customer.delinquent ?? false,
@@ -653,9 +652,9 @@ stripeToolsRoutes.openapi(invoicesRoute, async c => {
           hostedInvoiceUrl: inv.hosted_invoice_url,
           invoicePdf: inv.invoice_pdf,
           subscriptionId:
-            typeof invWithSub.subscription === 'string'
-              ? invWithSub.subscription
-              : (invWithSub.subscription as Stripe.Subscription)?.id ?? null,
+            typeof invWithSub.subscription === 'string' ?
+              invWithSub.subscription
+            : ((invWithSub.subscription as Stripe.Subscription)?.id ?? null),
           periodStart: inv.period_start,
           periodEnd: inv.period_end,
         };
@@ -703,8 +702,9 @@ stripeToolsRoutes.openapi(paymentMethodsRoute, async c => {
       paymentMethods: paymentMethods.data.map(pm => ({
         id: pm.id,
         type: pm.type,
-        card: pm.card
-          ? {
+        card:
+          pm.card ?
+            {
               brand: pm.card.brand,
               last4: pm.card.last4,
               expMonth: pm.card.exp_month,
@@ -779,13 +779,13 @@ stripeToolsRoutes.openapi(subscriptionsRoute, async c => {
             quantity: item.quantity,
           })),
           defaultPaymentMethod:
-            typeof sub.default_payment_method === 'string'
-              ? sub.default_payment_method
-              : (sub.default_payment_method as Stripe.PaymentMethod)?.id ?? null,
+            typeof sub.default_payment_method === 'string' ?
+              sub.default_payment_method
+            : ((sub.default_payment_method as Stripe.PaymentMethod)?.id ?? null),
           latestInvoice:
-            typeof sub.latest_invoice === 'string'
-              ? sub.latest_invoice
-              : (sub.latest_invoice as Stripe.Invoice)?.id ?? null,
+            typeof sub.latest_invoice === 'string' ?
+              sub.latest_invoice
+            : ((sub.latest_invoice as Stripe.Invoice)?.id ?? null),
           metadata: sub.metadata as Record<string, string>,
         };
       }),

@@ -168,13 +168,13 @@ function buildDunningEmailHtml({
   const color = urgencyColors[urgency] || urgencyColors.medium;
 
   const finalNotice =
-    attemptCount >= 3
-      ? `
+    attemptCount >= 3 ?
+      `
   <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 20px 0;">
     <p style="margin: 0; color: #991b1b;"><strong>Final Notice:</strong> Your subscription will be canceled if payment is not received.</p>
   </div>
   `
-      : '';
+    : '';
 
   return `
 <!DOCTYPE html>
@@ -230,9 +230,9 @@ function buildDunningEmailText({
   attemptCount,
 }: DunningEmailTextParams): string {
   const finalNotice =
-    attemptCount >= 3
-      ? 'FINAL NOTICE: Your subscription will be canceled if payment is not received.\n\n'
-      : '';
+    attemptCount >= 3 ?
+      'FINAL NOTICE: Your subscription will be canceled if payment is not received.\n\n'
+    : '';
 
   return `
 Payment Failed (Attempt ${attemptCount} of 3)

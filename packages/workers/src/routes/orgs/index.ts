@@ -43,7 +43,10 @@ interface OrgApiMethods {
 }
 
 // Helper to get typed organization API
-function getOrgApi(env: Env, ctx?: { waitUntil: (promise: Promise<unknown>) => void }): OrgApiMethods {
+function getOrgApi(
+  env: Env,
+  ctx?: { waitUntil: (promise: Promise<unknown>) => void },
+): OrgApiMethods {
   const auth = createAuth(env, ctx);
   return auth.api as unknown as OrgApiMethods;
 }

@@ -23,7 +23,11 @@ interface OrgIdWithRole {
 /**
  * Get orgId from session's activeOrganizationId or user's first org
  */
-export async function resolveOrgId({ db, session, userId }: ResolveOrgParams): Promise<string | null> {
+export async function resolveOrgId({
+  db,
+  session,
+  userId,
+}: ResolveOrgParams): Promise<string | null> {
   let orgId = session?.activeOrganizationId;
 
   // If no active org in session, get user's first org
@@ -45,7 +49,11 @@ export async function resolveOrgId({ db, session, userId }: ResolveOrgParams): P
 /**
  * Get orgId and membership role from session or user's first membership
  */
-export async function resolveOrgIdWithRole({ db, session, userId }: ResolveOrgParams): Promise<OrgIdWithRole> {
+export async function resolveOrgIdWithRole({
+  db,
+  session,
+  userId,
+}: ResolveOrgParams): Promise<OrgIdWithRole> {
   let orgId = session?.activeOrganizationId;
   let role: string | null = null;
 

@@ -834,9 +834,8 @@ async function handleInvitation(
       console.log('[Email] Project invitation magic link URL:', capturedMagicLinkUrl);
     }
 
-    const { getProjectInvitationEmailHtml, getProjectInvitationEmailText } = await import(
-      '@/auth/emailTemplates.js'
-    );
+    const { getProjectInvitationEmailHtml, getProjectInvitationEmailText } =
+      await import('@/auth/emailTemplates.js');
     const { escapeHtml } = await import('@/lib/escapeHtml.js');
 
     const projectName = project?.name || 'Unknown Project';

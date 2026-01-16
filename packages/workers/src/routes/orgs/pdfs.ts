@@ -488,8 +488,9 @@ orgPdfRoutes.openapi(listPdfsRoute, async c => {
       size: row.fileSize,
       fileType: row.fileType,
       createdAt: row.createdAt,
-      uploadedBy: row.uploadedBy
-        ? {
+      uploadedBy:
+        row.uploadedBy ?
+          {
             id: row.uploadedBy,
             name: row.uploadedByName,
             email: row.uploadedByEmail,

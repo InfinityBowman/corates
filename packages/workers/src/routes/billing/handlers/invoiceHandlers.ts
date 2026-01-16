@@ -48,7 +48,9 @@ export async function handleInvoicePaymentSucceeded(
 
   const invoiceSubscription1 = (invoice as InvoiceWithSubscription).subscription;
   const stripeSubscriptionId =
-    typeof invoiceSubscription1 === 'string' ? invoiceSubscription1 : (invoiceSubscription1 as Stripe.Subscription)?.id;
+    typeof invoiceSubscription1 === 'string' ? invoiceSubscription1 : (
+      (invoiceSubscription1 as Stripe.Subscription)?.id
+    );
 
   // Find and update subscription
   const existing = await db
@@ -129,7 +131,9 @@ export async function handleInvoicePaymentFailed(
 
   const invoiceSubscription2 = (invoice as InvoiceWithSubscription).subscription;
   const stripeSubscriptionId =
-    typeof invoiceSubscription2 === 'string' ? invoiceSubscription2 : (invoiceSubscription2 as Stripe.Subscription)?.id;
+    typeof invoiceSubscription2 === 'string' ? invoiceSubscription2 : (
+      (invoiceSubscription2 as Stripe.Subscription)?.id
+    );
 
   // Find subscription
   const existing = await db
@@ -165,7 +169,9 @@ export async function handleInvoicePaymentFailed(
   // Extract failure details
   const failureReason =
     invoice.last_finalization_error?.message ||
-    (invoice.status_transitions?.finalized_at ? String(invoice.status_transitions.finalized_at) : null) ||
+    (invoice.status_transitions?.finalized_at ?
+      String(invoice.status_transitions.finalized_at)
+    : null) ||
     'unknown';
 
   logger.stripe('invoice_payment_failed', {
@@ -252,7 +258,9 @@ export async function handleInvoiceFinalized(
     result: 'finalized_logged',
     ledgerContext: {
       stripeSubscriptionId:
-        typeof invoiceSubscription3 === 'string' ? invoiceSubscription3 : (invoiceSubscription3 as Stripe.Subscription | undefined)?.id,
+        typeof invoiceSubscription3 === 'string' ? invoiceSubscription3 : (
+          (invoiceSubscription3 as Stripe.Subscription | undefined)?.id
+        ),
       stripeCustomerId:
         typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id,
     },

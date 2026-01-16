@@ -190,12 +190,15 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
         httpStatus: 403,
       });
 
-      (logger.stripe as (event: string, data: Record<string, unknown>) => void)('webhook_rejected', {
-        outcome: 'ignored_unverified',
-        errorCode: 'invalid_signature',
-        payloadHash,
-        error: truncateError(err as Error),
-      });
+      (logger.stripe as (event: string, data: Record<string, unknown>) => void)(
+        'webhook_rejected',
+        {
+          outcome: 'ignored_unverified',
+          errorCode: 'invalid_signature',
+          payloadHash,
+          error: truncateError(err as Error),
+        },
+      );
 
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'invalid_signature',
@@ -219,14 +222,17 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
         httpStatus: 200,
       });
 
-      (logger.stripe as (event: string, data: Record<string, unknown>) => void)('webhook_dedupe_event_id', {
-        outcome: 'skipped_duplicate',
-        stripeEventId,
-        stripeEventType: eventType,
-        existingLedgerId: existingByEventId.id,
-        existingStatus: existingByEventId.status,
-        payloadHash,
-      });
+      (logger.stripe as (event: string, data: Record<string, unknown>) => void)(
+        'webhook_dedupe_event_id',
+        {
+          outcome: 'skipped_duplicate',
+          stripeEventId,
+          stripeEventType: eventType,
+          existingLedgerId: existingByEventId.id,
+          existingStatus: existingByEventId.status,
+          payloadHash,
+        },
+      );
 
       return c.json({ received: true, skipped: 'duplicate_event_id' }, 200);
     }
@@ -243,13 +249,16 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
         httpStatus: 200,
       });
 
-      (logger.stripe as (event: string, data: Record<string, unknown>) => void)('webhook_rejected', {
-        outcome: 'ignored_test_mode',
-        stripeEventId,
-        stripeEventType: eventType,
-        reason: 'test_event_in_production',
-        payloadHash,
-      });
+      (logger.stripe as (event: string, data: Record<string, unknown>) => void)(
+        'webhook_rejected',
+        {
+          outcome: 'ignored_test_mode',
+          stripeEventId,
+          stripeEventType: eventType,
+          reason: 'test_event_in_production',
+          payloadHash,
+        },
+      );
 
       return c.json({ received: true, skipped: 'test_event_in_production' }, 200);
     }
@@ -269,7 +278,12 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
     let ledgerStatus: (typeof LedgerStatus)[keyof typeof LedgerStatus] = LedgerStatus.PROCESSED;
     let httpStatus = 200;
 
-    const handlerResultWithError = handlerResult as { handled: boolean; result: string; error?: string; ledgerContext?: { grantId?: string } };
+    const handlerResultWithError = handlerResult as {
+      handled: boolean;
+      result: string;
+      error?: string;
+      ledgerContext?: { grantId?: string };
+    };
 
     if (!handlerResult.handled) {
       ledgerStatus = LedgerStatus.PROCESSED;

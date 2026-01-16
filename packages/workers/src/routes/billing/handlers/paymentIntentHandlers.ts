@@ -37,9 +37,9 @@ export async function handlePaymentIntentProcessing(
     result: 'processing_logged',
     ledgerContext: {
       stripeCustomerId:
-        typeof paymentIntent.customer === 'string'
-          ? paymentIntent.customer
-          : paymentIntent.customer?.id,
+        typeof paymentIntent.customer === 'string' ?
+          paymentIntent.customer
+        : paymentIntent.customer?.id,
       stripePaymentIntentId: paymentIntent.id,
     },
   };
@@ -71,9 +71,9 @@ export async function handlePaymentIntentSucceeded(
     result: 'succeeded_logged',
     ledgerContext: {
       stripeCustomerId:
-        typeof paymentIntent.customer === 'string'
-          ? paymentIntent.customer
-          : paymentIntent.customer?.id,
+        typeof paymentIntent.customer === 'string' ?
+          paymentIntent.customer
+        : paymentIntent.customer?.id,
       stripePaymentIntentId: paymentIntent.id,
     },
   };
@@ -111,9 +111,9 @@ export async function handlePaymentIntentFailed(
     result: 'failure_logged',
     ledgerContext: {
       stripeCustomerId:
-        typeof paymentIntent.customer === 'string'
-          ? paymentIntent.customer
-          : paymentIntent.customer?.id,
+        typeof paymentIntent.customer === 'string' ?
+          paymentIntent.customer
+        : paymentIntent.customer?.id,
       stripePaymentIntentId: paymentIntent.id,
     },
   };

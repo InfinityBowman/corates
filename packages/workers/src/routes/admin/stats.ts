@@ -311,7 +311,10 @@ interface DailyCount {
 /**
  * Helper function to fill missing days in time series data
  */
-function fillMissingDays(results: DailyCount[], days: number): Array<{ date: string; count: number }> {
+function fillMissingDays(
+  results: DailyCount[],
+  days: number,
+): Array<{ date: string; count: number }> {
   const dateMap = new Map(results.map(r => [r.date, r.count]));
   const filledData: Array<{ date: string; count: number }> = [];
 

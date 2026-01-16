@@ -116,15 +116,13 @@ export function extractLedgerContext(event: Stripe.Event): LedgerContext {
   // Extract IDs based on event type
   if (obj.customer) {
     context.stripeCustomerId =
-      typeof obj.customer === 'string'
-        ? obj.customer
-        : (obj.customer as { id: string })?.id;
+      typeof obj.customer === 'string' ? obj.customer : (obj.customer as { id: string })?.id;
   }
   if (obj.subscription) {
     context.stripeSubscriptionId =
-      typeof obj.subscription === 'string'
-        ? obj.subscription
-        : (obj.subscription as { id: string })?.id;
+      typeof obj.subscription === 'string' ?
+        obj.subscription
+      : (obj.subscription as { id: string })?.id;
   }
   if (obj.id && event.type.startsWith('checkout.session')) {
     context.stripeCheckoutSessionId = obj.id as string;

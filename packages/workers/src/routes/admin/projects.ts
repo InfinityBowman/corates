@@ -362,8 +362,9 @@ projectRoutes.openapi(listProjectsRoute, async c => {
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     // Get total count for pagination
-    const totalCountQuery = whereClause
-      ? db.select({ count: count() }).from(projects).where(whereClause)
+    const totalCountQuery =
+      whereClause ?
+        db.select({ count: count() }).from(projects).where(whereClause)
       : db.select({ count: count() }).from(projects);
 
     const [totalResult] = await totalCountQuery.all();

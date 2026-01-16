@@ -78,8 +78,14 @@ export async function handleSubscriptionCreated(
     stripeCustomerId: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id,
     stripeSubscriptionId: sub.id,
     status: sub.status,
-    periodStart: (sub as SubscriptionWithPeriods).current_period_start ? new Date((sub as SubscriptionWithPeriods).current_period_start! * 1000) : null,
-    periodEnd: (sub as SubscriptionWithPeriods).current_period_end ? new Date((sub as SubscriptionWithPeriods).current_period_end! * 1000) : null,
+    periodStart:
+      (sub as SubscriptionWithPeriods).current_period_start ?
+        new Date((sub as SubscriptionWithPeriods).current_period_start! * 1000)
+      : null,
+    periodEnd:
+      (sub as SubscriptionWithPeriods).current_period_end ?
+        new Date((sub as SubscriptionWithPeriods).current_period_end! * 1000)
+      : null,
     cancelAtPeriodEnd: sub.cancel_at_period_end,
     cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
     trialStart: sub.trial_start ? new Date(sub.trial_start * 1000) : null,
@@ -150,8 +156,14 @@ export async function handleSubscriptionUpdated(
     .update(subscription)
     .set({
       status: sub.status,
-      periodStart: (sub as SubscriptionWithPeriods).current_period_start ? new Date((sub as SubscriptionWithPeriods).current_period_start! * 1000) : null,
-      periodEnd: (sub as SubscriptionWithPeriods).current_period_end ? new Date((sub as SubscriptionWithPeriods).current_period_end! * 1000) : null,
+      periodStart:
+        (sub as SubscriptionWithPeriods).current_period_start ?
+          new Date((sub as SubscriptionWithPeriods).current_period_start! * 1000)
+        : null,
+      periodEnd:
+        (sub as SubscriptionWithPeriods).current_period_end ?
+          new Date((sub as SubscriptionWithPeriods).current_period_end! * 1000)
+        : null,
       cancelAtPeriodEnd: sub.cancel_at_period_end,
       cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
       canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
@@ -315,8 +327,14 @@ export async function handleSubscriptionResumed(
     .update(subscription)
     .set({
       status: sub.status || 'active',
-      periodStart: (sub as SubscriptionWithPeriods).current_period_start ? new Date((sub as SubscriptionWithPeriods).current_period_start! * 1000) : null,
-      periodEnd: (sub as SubscriptionWithPeriods).current_period_end ? new Date((sub as SubscriptionWithPeriods).current_period_end! * 1000) : null,
+      periodStart:
+        (sub as SubscriptionWithPeriods).current_period_start ?
+          new Date((sub as SubscriptionWithPeriods).current_period_start! * 1000)
+        : null,
+      periodEnd:
+        (sub as SubscriptionWithPeriods).current_period_end ?
+          new Date((sub as SubscriptionWithPeriods).current_period_end! * 1000)
+        : null,
       updatedAt: new Date(),
     })
     .where(eq(subscription.id, existing.id));
