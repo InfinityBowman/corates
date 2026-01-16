@@ -4,6 +4,8 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import type { Context, MiddlewareHandler } from 'hono';
 import { createDb } from '@/db/client.js';
 import { projectMembers, user, projects, projectInvitations } from '@/db/schema.js';
 import { eq, and } from 'drizzle-orm';
@@ -26,8 +28,9 @@ import {
 import { validationHook } from '@/lib/honoValidationHook.js';
 import { addMember, updateMemberRole, removeMember } from '@/commands/members/index.js';
 import { requireMemberRemoval } from '@/policies';
+import type { Env } from '../../types';
 
-const orgProjectMemberRoutes = new OpenAPIHono({
+const orgProjectMemberRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -81,7 +84,7 @@ const MemberErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('MemberError');
 
@@ -371,7 +374,7 @@ const removeMemberRoute = createRoute({
 /**
  * Helper to run middleware manually and check for early response
  */
-async function runMiddleware(middleware, c) {
+async function runMiddleware(middleware: MiddlewareHandler, c: Context): Promise<Response | null> {
   let nextCalled = false;
 
   const result = await middleware(c, async () => {
@@ -393,6 +396,7 @@ async function runMiddleware(middleware, c) {
  * GET /api/orgs/:orgId/projects/:projectId/members
  * List all members of a project
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgProjectMemberRoutes.openapi(listMembersRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse;
@@ -401,6 +405,14 @@ orgProjectMemberRoutes.openapi(listMembersRoute, async c => {
   if (projectAccessResponse) return projectAccessResponse;
 
   const { projectId } = getProjectContext(c);
+  if (!projectId) {
+    const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'list_project_members',
+      originalError: 'Missing project context',
+    });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const db = createDb(c.env.DB);
 
   try {
@@ -421,13 +433,14 @@ orgProjectMemberRoutes.openapi(listMembersRoute, async c => {
       .orderBy(projectMembers.joinedAt);
 
     return c.json(results);
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error listing project members:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'list_project_members',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -435,6 +448,7 @@ orgProjectMemberRoutes.openapi(listMembersRoute, async c => {
  * POST /api/orgs/:orgId/projects/:projectId/members
  * Add a member to the project (project owner only)
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgProjectMemberRoutes.openapi(addMemberRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse;
@@ -447,6 +461,14 @@ orgProjectMemberRoutes.openapi(addMemberRoute, async c => {
 
   const { orgId } = getOrgContext(c);
   const { projectId } = getProjectContext(c);
+  if (!orgId || !projectId) {
+    const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'add_project_member',
+      originalError: 'Missing org or project context',
+    });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const db = createDb(c.env.DB);
   const body = c.req.valid('json');
   const { userId, email, role } = body;
@@ -467,7 +489,7 @@ orgProjectMemberRoutes.openapi(addMemberRoute, async c => {
         .from(user)
         .where(eq(user.id, userId))
         .get();
-    } else {
+    } else if (email) {
       userToAdd = await db
         .select({
           id: user.id,
@@ -489,10 +511,19 @@ orgProjectMemberRoutes.openapi(addMemberRoute, async c => {
 
     if (!userToAdd) {
       const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId, email });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
-    const { member: addedMember } = await addMember(c.env, getAuth(c).user, {
+    const { user: authUser } = getAuth(c);
+    if (!authUser) {
+      const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'add_project_member',
+        originalError: 'Missing auth user',
+      });
+      return c.json(error, error.statusCode as ContentfulStatusCode);
+    }
+
+    const { member: addedMember } = await addMember(c.env, authUser, {
       orgId,
       projectId,
       userToAdd,
@@ -500,16 +531,17 @@ orgProjectMemberRoutes.openapi(addMemberRoute, async c => {
     });
 
     return c.json(addedMember, 201);
-  } catch (error) {
-    if (isDomainError(error)) {
-      return c.json(error, error.statusCode);
+  } catch (err) {
+    if (isDomainError(err)) {
+      return c.json(err, err.statusCode as ContentfulStatusCode);
     }
+    const error = err as Error;
     console.error('Error adding project member:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'add_project_member',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -517,6 +549,7 @@ orgProjectMemberRoutes.openapi(addMemberRoute, async c => {
  * PUT /api/orgs/:orgId/projects/:projectId/members/:userId
  * Update a member's role (project owner only)
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgProjectMemberRoutes.openapi(updateMemberRoleRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse;
@@ -529,11 +562,28 @@ orgProjectMemberRoutes.openapi(updateMemberRoleRoute, async c => {
 
   const { orgId } = getOrgContext(c);
   const { projectId } = getProjectContext(c);
+  if (!orgId || !projectId) {
+    const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'update_project_member_role',
+      originalError: 'Missing org or project context',
+    });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
+  const { user: authUser } = getAuth(c);
+  if (!authUser) {
+    const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'update_project_member_role',
+      originalError: 'Missing auth user',
+    });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const { userId: memberId } = c.req.valid('param');
   const { role } = c.req.valid('json');
 
   try {
-    const result = await updateMemberRole(c.env, getAuth(c).user, {
+    const result = await updateMemberRole(c.env, authUser, {
       orgId,
       projectId,
       userId: memberId,
@@ -541,16 +591,17 @@ orgProjectMemberRoutes.openapi(updateMemberRoleRoute, async c => {
     });
 
     return c.json({ success: true, userId: result.userId, role: result.role });
-  } catch (error) {
-    if (isDomainError(error)) {
-      return c.json(error, error.statusCode);
+  } catch (err) {
+    if (isDomainError(err)) {
+      return c.json(err, err.statusCode as ContentfulStatusCode);
     }
+    const error = err as Error;
     console.error('Error updating project member role:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'update_project_member_role',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -558,6 +609,7 @@ orgProjectMemberRoutes.openapi(updateMemberRoleRoute, async c => {
  * DELETE /api/orgs/:orgId/projects/:projectId/members/:userId
  * Remove a member from the project (project owner only, or self-removal)
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgProjectMemberRoutes.openapi(removeMemberRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse;
@@ -571,6 +623,15 @@ orgProjectMemberRoutes.openapi(removeMemberRoute, async c => {
   const { user: authUser } = getAuth(c);
   const { orgId } = getOrgContext(c);
   const { projectId } = getProjectContext(c);
+
+  if (!authUser || !orgId || !projectId) {
+    const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'remove_project_member',
+      originalError: 'Missing context',
+    });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const { userId: memberId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -578,11 +639,11 @@ orgProjectMemberRoutes.openapi(removeMemberRoute, async c => {
 
   try {
     await requireMemberRemoval(db, authUser.id, projectId, memberId);
-  } catch (error) {
-    if (isDomainError(error)) {
-      return c.json(error, error.statusCode);
+  } catch (err) {
+    if (isDomainError(err)) {
+      return c.json(err, err.statusCode as ContentfulStatusCode);
     }
-    throw error;
+    throw err;
   }
 
   try {
@@ -594,24 +655,43 @@ orgProjectMemberRoutes.openapi(removeMemberRoute, async c => {
     });
 
     return c.json({ success: true, removed: result.removed });
-  } catch (error) {
-    if (isDomainError(error)) {
-      return c.json(error, error.statusCode);
+  } catch (err) {
+    if (isDomainError(err)) {
+      return c.json(err, err.statusCode as ContentfulStatusCode);
     }
+    const error = err as Error;
     console.error('Error removing project member:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'remove_project_member',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
+
+interface InvitationParams {
+  orgId: string;
+  projectId: string;
+  email: string;
+  role: string;
+}
 
 /**
  * Handle invitation for users who don't have accounts yet
  */
-async function handleInvitation(c, { orgId, projectId, email, role }) {
+async function handleInvitation(
+  c: Context<{ Bindings: Env }>,
+  { orgId, projectId, email, role }: InvitationParams,
+): Promise<Response> {
   const { user: authUser } = getAuth(c);
+  if (!authUser) {
+    const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'handle_invitation',
+      originalError: 'Missing auth user',
+    });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const db = createDb(c.env.DB);
 
   // Check for existing pending invitation
@@ -630,8 +710,8 @@ async function handleInvitation(c, { orgId, projectId, email, role }) {
     )
     .get();
 
-  let token;
-  let invitationId;
+  let token: string;
+  let invitationId: string;
 
   if (existingInvitation && !existingInvitation.acceptedAt) {
     // Resend existing invitation
@@ -647,7 +727,7 @@ async function handleInvitation(c, { orgId, projectId, email, role }) {
     const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
       invitationId: existingInvitation.id,
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   } else {
     // Create new invitation with orgId
     invitationId = crypto.randomUUID();
@@ -684,13 +764,14 @@ async function handleInvitation(c, { orgId, projectId, email, role }) {
   // Send invitation email
   try {
     const appUrl = c.env.APP_URL || 'http://localhost:8787';
-    const basepath = c.env.BASEPATH || '';
+    const envRecord = c.env as unknown as Record<string, unknown>;
+    const basepath = envRecord.BASEPATH as string | undefined;
     const basepathNormalized = basepath ? basepath.replace(/\/$/, '') : '';
     const callbackPath = `${basepathNormalized}/complete-profile?invitation=${token}`;
     const callbackURL = `${appUrl}${callbackPath}`;
 
     const authBaseUrl = c.env.AUTH_BASE_URL || appUrl;
-    let capturedMagicLinkUrl = null;
+    let capturedMagicLinkUrl: string | null = null;
 
     const { betterAuth } = await import('better-auth');
     const { magicLink } = await import('better-auth/plugins');
@@ -699,7 +780,7 @@ async function handleInvitation(c, { orgId, projectId, email, role }) {
     const schema = await import('@/db/schema.js');
     const { MAGIC_LINK_EXPIRY_MINUTES } = await import('@/auth/emailTemplates.js');
 
-    const authSecret = c.env.AUTH_SECRET || c.env.SECRET;
+    const authSecret = c.env.AUTH_SECRET || (envRecord.SECRET as string | undefined);
     if (!authSecret) {
       throw createDomainError(
         SYSTEM_ERRORS.INTERNAL_ERROR,
@@ -753,8 +834,9 @@ async function handleInvitation(c, { orgId, projectId, email, role }) {
       console.log('[Email] Project invitation magic link URL:', capturedMagicLinkUrl);
     }
 
-    const { getProjectInvitationEmailHtml, getProjectInvitationEmailText } =
-      await import('@/auth/emailTemplates.js');
+    const { getProjectInvitationEmailHtml, getProjectInvitationEmailText } = await import(
+      '@/auth/emailTemplates.js'
+    );
     const { escapeHtml } = await import('@/lib/escapeHtml.js');
 
     const projectName = project?.name || 'Unknown Project';

@@ -6,6 +6,8 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import type { Context, MiddlewareHandler } from 'hono';
 import { createDb } from '@/db/client.js';
 import {
   projectInvitations,
@@ -35,8 +37,9 @@ import { syncMemberToDO } from '@/lib/project-sync.js';
 import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
 import { checkCollaboratorQuota } from '@/lib/quotaTransaction.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env } from '../../types';
 
-const orgInvitationRoutes = new OpenAPIHono({
+const orgInvitationRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -108,7 +111,7 @@ const InvitationErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('InvitationError');
 
@@ -358,7 +361,7 @@ const acceptInvitationRoute = createRoute({
 /**
  * Helper to run middleware manually and check for early response
  */
-async function runMiddleware(middleware, c) {
+async function runMiddleware(middleware: MiddlewareHandler, c: Context): Promise<Response | null> {
   let nextCalled = false;
 
   const result = await middleware(c, async () => {
@@ -380,6 +383,7 @@ async function runMiddleware(middleware, c) {
  * GET /api/orgs/:orgId/projects/:projectId/invitations
  * List pending invitations for a project
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgInvitationRoutes.openapi(listInvitationsRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse;
@@ -388,6 +392,11 @@ orgInvitationRoutes.openapi(listInvitationsRoute, async c => {
   if (projectAccessResponse) return projectAccessResponse;
 
   const { projectId } = getProjectContext(c);
+  if (!projectId) {
+    const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'project_id_required' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const db = createDb(c.env.DB);
 
   try {
@@ -409,13 +418,14 @@ orgInvitationRoutes.openapi(listInvitationsRoute, async c => {
       .orderBy(desc(projectInvitations.createdAt));
 
     return c.json(invitations);
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error listing invitations:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'list_invitations',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -423,6 +433,7 @@ orgInvitationRoutes.openapi(listInvitationsRoute, async c => {
  * POST /api/orgs/:orgId/projects/:projectId/invitations
  * Create a new invitation (project owner only)
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgInvitationRoutes.openapi(createInvitationRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse;
@@ -434,8 +445,23 @@ orgInvitationRoutes.openapi(createInvitationRoute, async c => {
   if (projectAccessResponse) return projectAccessResponse;
 
   const { user: authUser } = getAuth(c);
+  if (!authUser) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const { orgId } = getOrgContext(c);
+  if (!orgId) {
+    const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'org_id_required' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const { projectId } = getProjectContext(c);
+  if (!projectId) {
+    const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'project_id_required' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const db = createDb(c.env.DB);
 
   try {
@@ -483,7 +509,7 @@ orgInvitationRoutes.openapi(createInvitationRoute, async c => {
       const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
         invitationId: existingInvitation.id,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     } else {
       // Create new invitation with orgId
       invitationId = crypto.randomUUID();
@@ -520,14 +546,15 @@ orgInvitationRoutes.openapi(createInvitationRoute, async c => {
 
     // Send invitation email
     try {
-      const appUrl = c.env.APP_URL || 'https://corates.org';
-      const basepath = c.env.BASEPATH || '';
+      const envRecord = c.env as unknown as Record<string, unknown>;
+      const appUrl = (c.env.APP_URL || 'https://corates.org') as string;
+      const basepath = (envRecord.BASEPATH as string | undefined) || '';
       const basepathNormalized = basepath ? basepath.replace(/\/$/, '') : '';
       const callbackPath = `${basepathNormalized}/complete-profile?invitation=${token}`;
       const callbackURL = `${appUrl}${callbackPath}`;
 
-      const authBaseUrl = c.env.AUTH_BASE_URL || c.env.APP_URL || 'https://corates.org';
-      let capturedMagicLinkUrl = null;
+      const authBaseUrl = (c.env.AUTH_BASE_URL || c.env.APP_URL || 'https://corates.org') as string;
+      let capturedMagicLinkUrl: string | null = null;
 
       const { betterAuth } = await import('better-auth');
       const { magicLink } = await import('better-auth/plugins');
@@ -536,7 +563,7 @@ orgInvitationRoutes.openapi(createInvitationRoute, async c => {
       const schema = await import('@/db/schema.js');
       const { MAGIC_LINK_EXPIRY_MINUTES } = await import('@/auth/emailTemplates.js');
 
-      const authSecret = c.env.AUTH_SECRET || c.env.SECRET;
+      const authSecret = c.env.AUTH_SECRET || (envRecord.SECRET as string | undefined);
       if (!authSecret) {
         throw createDomainError(
           SYSTEM_ERRORS.INTERNAL_ERROR,
@@ -639,13 +666,14 @@ orgInvitationRoutes.openapi(createInvitationRoute, async c => {
       },
       201,
     );
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error creating invitation:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'create_invitation',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -653,6 +681,7 @@ orgInvitationRoutes.openapi(createInvitationRoute, async c => {
  * DELETE /api/orgs/:orgId/projects/:projectId/invitations/:invitationId
  * Cancel a pending invitation (project owner only)
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgInvitationRoutes.openapi(cancelInvitationRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse;
@@ -664,6 +693,11 @@ orgInvitationRoutes.openapi(cancelInvitationRoute, async c => {
   if (projectAccessResponse) return projectAccessResponse;
 
   const { projectId } = getProjectContext(c);
+  if (!projectId) {
+    const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'project_id_required' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const { invitationId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -681,26 +715,27 @@ orgInvitationRoutes.openapi(cancelInvitationRoute, async c => {
         field: 'invitationId',
         value: invitationId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     if (invitation.acceptedAt) {
       const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
         invitationId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     await db.delete(projectInvitations).where(eq(projectInvitations.id, invitationId));
 
     return c.json({ success: true, cancelled: invitationId });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error cancelling invitation:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'cancel_invitation',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -708,8 +743,14 @@ orgInvitationRoutes.openapi(cancelInvitationRoute, async c => {
  * POST /api/orgs/:orgId/projects/:projectId/invitations/accept
  * Accept a project invitation by token
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
   const { user: authUser } = getAuth(c);
+  if (!authUser) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const db = createDb(c.env.DB);
   const { token } = c.req.valid('json');
 
@@ -736,7 +777,7 @@ orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
         field: 'token',
         value: token,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Check if invitation has expired
@@ -747,7 +788,7 @@ orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
         field: 'token',
         value: 'expired',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Check if invitation already accepted
@@ -755,7 +796,7 @@ orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
       const error = createDomainError(PROJECT_ERRORS.MEMBER_ALREADY_EXISTS, {
         projectId: invitation.projectId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Verify user email matches invitation email
@@ -774,7 +815,7 @@ orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'user_not_found',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Normalize both emails for comparison
@@ -790,7 +831,7 @@ orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
         userEmail: currentUser.email,
         invitationEmail: invitation.email,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Check if user is already a project member
@@ -839,15 +880,15 @@ orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
       // Only enforce quota if user is not already an org member
       if (!existingOrgMembership) {
         const quotaResult = await checkCollaboratorQuota(db, invitation.orgId);
-        if (!quotaResult.allowed) {
-          return c.json(quotaResult.error, quotaResult.error.statusCode);
+        if (!quotaResult.allowed && quotaResult.error) {
+          return c.json(quotaResult.error, quotaResult.error.statusCode as ContentfulStatusCode);
         }
       }
     }
 
     // Always grant org membership and add project membership
     const nowDate = new Date();
-    const batchOps = [];
+    const batchOps: Promise<unknown>[] = [];
 
     // Always add user to org with role 'member' (if not already a member)
     if (invitation.orgId) {
@@ -890,7 +931,7 @@ orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
     );
 
     // Execute atomically
-    await db.batch(batchOps);
+    await db.batch(batchOps as unknown as Parameters<typeof db.batch>[0]);
 
     // Post-insert verification for collaborator quota race conditions
     if (invitation.orgId) {
@@ -916,14 +957,14 @@ orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
       .get();
 
     // Get org slug for navigation
-    let orgSlug = null;
+    let orgSlug: string | null = null;
     if (invitation.orgId) {
       const org = await db
         .select({ slug: organization.slug })
         .from(organization)
         .where(eq(organization.id, invitation.orgId))
         .get();
-      orgSlug = org?.slug;
+      orgSlug = org?.slug ?? null;
     }
 
     // Send notification to the added user via their UserSession DO
@@ -951,7 +992,7 @@ orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
     try {
       await syncMemberToDO(c.env, invitation.projectId, 'add', {
         userId: authUser.id,
-        role: invitation.role,
+        role: invitation.role ?? undefined,
         joinedAt: nowDate.getTime(),
         name: currentUser.name,
         email: currentUser.email,
@@ -970,13 +1011,14 @@ orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
       projectName: project?.name || 'Unknown Project',
       role: invitation.role,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error accepting invitation:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'accept_invitation',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 

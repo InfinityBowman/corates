@@ -7,14 +7,18 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import {
   requireOrgMembership,
   requireProjectAccess,
   getProjectContext,
+  getOrgContext,
 } from '@/middleware/requireOrg.js';
+import { getAuth } from '@/middleware/auth.js';
 import { getProjectDocStub } from '@/lib/project-doc-id.js';
+import type { Env } from '../../types';
 
-const devRoutes = new OpenAPIHono();
+const devRoutes = new OpenAPIHono<{ Bindings: Env }>();
 
 // Middleware to check DEV_MODE for all dev routes
 devRoutes.use('*', async (c, next) => {
@@ -64,7 +68,7 @@ const ApplyTemplateResponseSchema = z
 
 const ExportResponseSchema = z
   .object({
-    state: z.record(z.unknown()),
+    state: z.record(z.string(), z.unknown()),
     version: z.string().optional(),
   })
   .openapi('DevExportResponse');
@@ -264,8 +268,12 @@ const resetRoute = createRoute({
 });
 
 // GET /dev/templates
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 devRoutes.openapi(getTemplatesRoute, async c => {
   const { projectId } = getProjectContext(c);
+  if (!projectId) {
+    return c.json({ error: 'Project ID required' }, 403);
+  }
 
   try {
     const projectDoc = getProjectDocStub(c.env, projectId);
@@ -275,16 +283,21 @@ devRoutes.openapi(getTemplatesRoute, async c => {
       }),
     );
     const data = await response.json();
-    return c.json(data, response.status);
-  } catch (error) {
+    return c.json(data, response.status as ContentfulStatusCode);
+  } catch (err) {
+    const error = err as Error;
     console.error('[Dev] Failed to fetch templates:', error);
     return c.json({ error: error.message }, 500);
   }
 });
 
 // POST /dev/apply-template
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 devRoutes.openapi(applyTemplateRoute, async c => {
   const { projectId } = getProjectContext(c);
+  if (!projectId) {
+    return c.json({ error: 'Project ID required' }, 403);
+  }
   const query = c.req.valid('query');
   const template = query.template;
   const mode = query.mode || 'replace';
@@ -298,16 +311,21 @@ devRoutes.openapi(applyTemplateRoute, async c => {
       }),
     );
     const data = await response.json();
-    return c.json(data, response.status);
-  } catch (error) {
+    return c.json(data, response.status as ContentfulStatusCode);
+  } catch (err) {
+    const error = err as Error;
     console.error('[Dev] Failed to apply template:', error);
     return c.json({ error: error.message }, 500);
   }
 });
 
 // GET /dev/export
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 devRoutes.openapi(exportRoute, async c => {
   const { projectId } = getProjectContext(c);
+  if (!projectId) {
+    return c.json({ error: 'Project ID required' }, 403);
+  }
 
   try {
     const projectDoc = getProjectDocStub(c.env, projectId);
@@ -317,17 +335,24 @@ devRoutes.openapi(exportRoute, async c => {
       }),
     );
     const data = await response.json();
-    return c.json(data, response.status);
-  } catch (error) {
+    return c.json(data, response.status as ContentfulStatusCode);
+  } catch (err) {
+    const error = err as Error;
     console.error('[Dev] Failed to export state:', error);
     return c.json({ error: error.message }, 500);
   }
 });
 
 // POST /dev/import
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 devRoutes.openapi(importRoute, async c => {
-  const { projectId, orgId } = getProjectContext(c);
-  const user = c.get('user');
+  const { projectId } = getProjectContext(c);
+  const { orgId } = getOrgContext(c);
+  const { user } = getAuth(c);
+
+  if (!projectId) {
+    return c.json({ error: 'Project ID required' }, 403);
+  }
 
   try {
     const body = await c.req.json();
@@ -344,25 +369,30 @@ devRoutes.openapi(importRoute, async c => {
           ...body,
           targetOrgId: orgId,
           importer: {
-            userId: user.id,
-            email: user.email,
-            name: user.name,
-            image: user.image,
+            userId: user?.id,
+            email: user?.email,
+            name: user?.name,
+            image: user?.image,
           },
         }),
       }),
     );
     const data = await response.json();
-    return c.json(data, response.status);
-  } catch (error) {
+    return c.json(data, response.status as ContentfulStatusCode);
+  } catch (err) {
+    const error = err as Error;
     console.error('[Dev] Failed to import state:', error);
     return c.json({ error: error.message }, 500);
   }
 });
 
 // POST /dev/reset
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 devRoutes.openapi(resetRoute, async c => {
   const { projectId } = getProjectContext(c);
+  if (!projectId) {
+    return c.json({ error: 'Project ID required' }, 403);
+  }
 
   try {
     const projectDoc = getProjectDocStub(c.env, projectId);
@@ -373,8 +403,9 @@ devRoutes.openapi(resetRoute, async c => {
       }),
     );
     const data = await response.json();
-    return c.json(data, response.status);
-  } catch (error) {
+    return c.json(data, response.status as ContentfulStatusCode);
+  } catch (err) {
+    const error = err as Error;
     console.error('[Dev] Failed to reset state:', error);
     return c.json({ error: error.message }, 500);
   }
