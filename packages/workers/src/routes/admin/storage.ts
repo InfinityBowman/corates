@@ -4,19 +4,27 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createDb } from '@/db/client.js';
 import { mediaFiles } from '@/db/schema.js';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env } from '../../types';
 
-const storageRoutes = new OpenAPIHono({
+const storageRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
+
+interface ParsedKey {
+  projectId: string;
+  studyId: string;
+  fileName: string;
+}
 
 /**
  * Parse project/study IDs from R2 key pattern: projects/{projectId}/studies/{studyId}/{fileName}
  */
-function parseKey(key) {
+function parseKey(key: string): ParsedKey | null {
   const match = key.match(/^projects\/([^/]+)\/studies\/([^/]+)\/(.+)$/);
   if (!match) {
     return null;
@@ -86,7 +94,7 @@ const StorageErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('StorageError');
 
@@ -254,10 +262,28 @@ const getStorageStatsRoute = createRoute({
   },
 });
 
+interface StorageDoc {
+  key: string;
+  fileName: string;
+  projectId: string;
+  studyId: string;
+  size: number;
+  uploaded: Date;
+  etag: string;
+}
+
+interface ListResponse {
+  documents: Array<StorageDoc & { orphaned: boolean }>;
+  limit: number;
+  nextCursor?: string;
+  truncated?: boolean;
+}
+
 /**
  * GET /api/admin/storage/documents
  * List documents with cursor-based pagination
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 storageRoutes.openapi(listDocumentsRoute, async c => {
   try {
     const query = c.req.valid('query');
@@ -267,11 +293,11 @@ storageRoutes.openapi(listDocumentsRoute, async c => {
     const search = query.search?.trim().toLowerCase() || '';
 
     // Decode composite cursor: {r2Cursor: string | undefined, skipCount: number}
-    let r2Cursor = undefined;
+    let r2Cursor: string | undefined = undefined;
     let skipCount = 0;
     if (requestCursor) {
       try {
-        const decoded = JSON.parse(requestCursor);
+        const decoded = JSON.parse(requestCursor) as { r2Cursor?: string; skipCount?: number };
         r2Cursor = decoded.r2Cursor;
         skipCount = Math.max(0, decoded.skipCount || 0);
         // If r2Cursor is undefined, we're starting from beginning of R2, so reset skipCount
@@ -286,7 +312,7 @@ storageRoutes.openapi(listDocumentsRoute, async c => {
     }
 
     const PROCESSING_CAP = 10000;
-    const matchingObjects = [];
+    const matchingObjects: StorageDoc[] = [];
     let currentCursor = r2Cursor;
     let objectsProcessed = 0;
     let truncated = false;
@@ -294,7 +320,7 @@ storageRoutes.openapi(listDocumentsRoute, async c => {
 
     // Process batches until we have enough matching results (skipCount + limit) or hit the cap
     while (matchingObjects.length < skipCount + limit && objectsProcessed < PROCESSING_CAP) {
-      const listOptions = {
+      const listOptions: { limit: number; prefix?: string; cursor?: string } = {
         limit: 1000,
         prefix: prefix || undefined,
       };
@@ -369,7 +395,7 @@ storageRoutes.openapi(listDocumentsRoute, async c => {
       orphaned: !trackedKeysSet.has(doc.key),
     }));
 
-    const response = {
+    const response: ListResponse = {
       documents: documentsWithOrphanStatus,
       limit,
     };
@@ -394,13 +420,14 @@ storageRoutes.openapi(listDocumentsRoute, async c => {
     }
 
     return c.json(response);
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error listing storage documents:', error);
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'list_storage_documents',
       originalError: error.message,
     });
-    return c.json(systemError, systemError.statusCode);
+    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -408,6 +435,7 @@ storageRoutes.openapi(listDocumentsRoute, async c => {
  * DELETE /api/admin/storage/documents
  * Bulk delete documents
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 storageRoutes.openapi(deleteDocumentsRoute, async c => {
   try {
     const { keys } = c.req.valid('json');
@@ -418,14 +446,14 @@ storageRoutes.openapi(deleteDocumentsRoute, async c => {
     const deleted = deleteResults.filter(r => r.status === 'fulfilled').length;
     const failed = deleteResults.filter(r => r.status === 'rejected').length;
 
-    let errors;
+    let errors: Array<{ key: string; error: string }> | undefined;
     if (failed > 0) {
       errors = [];
       deleteResults.forEach((result, i) => {
         if (result.status === 'rejected') {
-          errors.push({
+          errors!.push({
             key: keys[i],
-            error: result.reason?.message || 'Unknown error',
+            error: (result.reason as Error)?.message || 'Unknown error',
           });
         }
       });
@@ -436,13 +464,14 @@ storageRoutes.openapi(deleteDocumentsRoute, async c => {
       failed,
       errors,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error deleting storage documents:', error);
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'delete_storage_documents',
       originalError: error.message,
     });
-    return c.json(systemError, systemError.statusCode);
+    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -450,12 +479,13 @@ storageRoutes.openapi(deleteDocumentsRoute, async c => {
  * GET /api/admin/storage/stats
  * Get storage statistics
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 storageRoutes.openapi(getStorageStatsRoute, async c => {
   try {
-    let cursor = undefined;
+    let cursor: string | undefined = undefined;
     let totalFiles = 0;
     let totalSize = 0;
-    const filesByProject = {};
+    const filesByProject: Record<string, number> = {};
 
     // Iterate through all objects to calculate stats
     do {
@@ -485,13 +515,14 @@ storageRoutes.openapi(getStorageStatsRoute, async c => {
         count,
       })),
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching storage stats:', error);
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'fetch_storage_stats',
       originalError: error.message,
     });
-    return c.json(systemError, systemError.statusCode);
+    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
   }
 });
 

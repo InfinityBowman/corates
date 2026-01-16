@@ -25,6 +25,7 @@
  * not through request body validation.
  */
 import { Hono } from 'hono';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createDb } from '@/db/client.js';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import Stripe from 'stripe';
@@ -38,8 +39,18 @@ import {
   LedgerStatus,
 } from '@/db/stripeEventLedger.js';
 import { routeStripeEvent, extractLedgerContext } from './webhookRouter.js';
+import type { Env } from '../../types';
 
-const billingWebhookRoutes = new Hono();
+interface WebhookResponse {
+  received: boolean;
+  handled?: boolean;
+  result?: string;
+  skipped?: string;
+  action?: string;
+  grantId?: string;
+}
+
+const billingWebhookRoutes = new Hono<{ Bindings: Env }>();
 
 /**
  * POST /purchases/webhook
@@ -52,16 +63,16 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
   const db = createDb(c.env.DB);
   const route = '/api/billing/purchases/webhook';
 
-  let rawBody;
-  let ledgerId;
-  let payloadHash;
+  let rawBody: string | undefined;
+  let ledgerId: string | undefined;
+  let payloadHash: string | undefined;
 
   try {
     if (!c.env.STRIPE_SECRET_KEY || !c.env.STRIPE_WEBHOOK_SECRET_PURCHASES) {
       const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
         operation: 'stripe_not_configured',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
@@ -85,20 +96,20 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
         route,
         requestId: logger.requestId,
         status: LedgerStatus.IGNORED_UNVERIFIED,
-        error: truncateError(bodyError),
+        error: truncateError(bodyError as Error),
         httpStatus: 400,
       });
 
       logger.stripe('webhook_rejected', {
         outcome: 'ignored_unverified',
         errorCode: 'body_unreadable',
-        error: bodyError,
+        error: bodyError as Error,
       });
 
       const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
         operation: 'body_unreadable',
       });
-      return c.json(error, 400);
+      return c.json(error, 400 as ContentfulStatusCode);
     }
 
     // If signature header is missing, insert ledger and return 403
@@ -127,7 +138,7 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'missing_signature',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Compute payload hash for dedupe
@@ -136,7 +147,7 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
     // Check for duplicate by payload hash
     const existingEntry = await getLedgerByPayloadHash(db, payloadHash);
     if (existingEntry) {
-      logger.stripe('webhook_dedupe', {
+      (logger.stripe as (event: string, data: Record<string, unknown>) => void)('webhook_dedupe', {
         outcome: 'skipped_duplicate',
         payloadHash,
         existingLedgerId: existingEntry.id,
@@ -157,18 +168,18 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
       status: LedgerStatus.RECEIVED,
     });
 
-    logger.stripe('webhook_received', {
+    (logger.stripe as (event: string, data: Record<string, unknown>) => void)('webhook_received', {
       payloadHash,
       signaturePresent: true,
       ledgerId,
     });
 
     // Phase 2: Verify signature and process
-    let event;
+    let event: Stripe.Event;
     try {
       event = await stripe.webhooks.constructEventAsync(
         rawBody,
-        signature,
+        signature!,
         c.env.STRIPE_WEBHOOK_SECRET_PURCHASES,
       );
     } catch (err) {
@@ -179,17 +190,17 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
         httpStatus: 403,
       });
 
-      logger.stripe('webhook_rejected', {
+      (logger.stripe as (event: string, data: Record<string, unknown>) => void)('webhook_rejected', {
         outcome: 'ignored_unverified',
         errorCode: 'invalid_signature',
         payloadHash,
-        error: truncateError(err),
+        error: truncateError(err as Error),
       });
 
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'invalid_signature',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Signature verified - now we can trust the parsed event
@@ -208,7 +219,7 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
         httpStatus: 200,
       });
 
-      logger.stripe('webhook_dedupe_event_id', {
+      (logger.stripe as (event: string, data: Record<string, unknown>) => void)('webhook_dedupe_event_id', {
         outcome: 'skipped_duplicate',
         stripeEventId,
         stripeEventType: eventType,
@@ -232,7 +243,7 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
         httpStatus: 200,
       });
 
-      logger.stripe('webhook_rejected', {
+      (logger.stripe as (event: string, data: Record<string, unknown>) => void)('webhook_rejected', {
         outcome: 'ignored_test_mode',
         stripeEventId,
         stripeEventType: eventType,
@@ -251,16 +262,18 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
     // Merge handler-specific context with base context
     const ledgerContext = {
       ...baseLedgerContext,
-      ...(handlerResult.ledgerContext || {}),
+      ...((handlerResult.ledgerContext as Record<string, unknown>) || {}),
     };
 
     // Determine ledger status based on handler result
-    let ledgerStatus = LedgerStatus.PROCESSED;
+    let ledgerStatus: (typeof LedgerStatus)[keyof typeof LedgerStatus] = LedgerStatus.PROCESSED;
     let httpStatus = 200;
+
+    const handlerResultWithError = handlerResult as { handled: boolean; result: string; error?: string; ledgerContext?: { grantId?: string } };
 
     if (!handlerResult.handled) {
       ledgerStatus = LedgerStatus.PROCESSED;
-    } else if (handlerResult.error) {
+    } else if (handlerResultWithError.error) {
       ledgerStatus = LedgerStatus.FAILED;
       httpStatus = 400;
     } else if (handlerResult.result === 'already_processed') {
@@ -276,32 +289,32 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
       created,
       status: ledgerStatus,
       httpStatus,
-      error: handlerResult.error || null,
+      error: handlerResultWithError.error || null,
       ...ledgerContext,
     });
 
-    logger.stripe('webhook_processed', {
+    (logger.stripe as (event: string, data: Record<string, unknown>) => void)('webhook_processed', {
       outcome: handlerResult.handled ? 'processed' : 'unhandled',
       stripeEventId,
       stripeEventType: eventType,
       result: handlerResult.result,
       payloadHash,
-      ...(handlerResult.ledgerContext || {}),
+      ...((handlerResult.ledgerContext as Record<string, unknown>) || {}),
     });
 
     // Return error response if handler indicated failure
-    if (handlerResult.error) {
+    if (handlerResultWithError.error) {
       // Map handler errors to domain errors for consistent API responses
       const errorDetails = {
         field: handlerResult.result,
-        value: handlerResult.error,
+        value: handlerResultWithError.error,
       };
       const domainError = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, errorDetails);
-      return c.json(domainError, domainError.statusCode);
+      return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
     }
 
     // Build response with backwards-compatible fields for existing tests
-    const response = {
+    const response: WebhookResponse = {
       received: true,
       handled: handlerResult.handled,
       result: handlerResult.result,
@@ -310,10 +323,10 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
     // Map result strings to expected action/skipped fields for backwards compatibility
     if (handlerResult.result === 'grant_created') {
       response.action = 'created';
-      response.grantId = handlerResult.ledgerContext?.grantId;
+      response.grantId = handlerResultWithError.ledgerContext?.grantId;
     } else if (handlerResult.result === 'grant_extended') {
       response.action = 'extended';
-      response.grantId = handlerResult.ledgerContext?.grantId;
+      response.grantId = handlerResultWithError.ledgerContext?.grantId;
     } else if (handlerResult.result === 'already_processed') {
       response.skipped = 'already_processed';
     } else if (handlerResult.result === 'not_payment_mode') {
@@ -323,7 +336,8 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
     }
 
     return c.json(response);
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     logger.error('Purchase webhook handler error', {
       error: truncateError(error),
       ledgerId,
@@ -347,7 +361,7 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
       operation: 'process_purchase_webhook',
       originalError: error.message,
     });
-    return c.json(systemError, systemError.statusCode);
+    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -366,7 +380,7 @@ billingWebhookRoutes.post('/webhook', async c => {
     },
     'Webhooks are handled by Better Auth at /api/auth/stripe/webhook',
   );
-  return c.json(error, error.statusCode);
+  return c.json(error, error.statusCode as ContentfulStatusCode);
 });
 
 export { billingWebhookRoutes };

@@ -3,14 +3,22 @@
  * Handles payment_intent.* events from Stripe
  * Important for ACH payments and tracking payment lifecycle
  */
+import type Stripe from 'stripe';
+import type { WebhookContext, WebhookResult } from './types.js';
+
+// Extended type for PaymentIntent with invoice field
+interface PaymentIntentWithInvoice extends Stripe.PaymentIntent {
+  invoice?: string | Stripe.Invoice | null;
+}
 
 /**
  * Handle payment_intent.processing
  * ACH payments take 3-5 business days to process
- * @param {Stripe.PaymentIntent} paymentIntent - Stripe payment intent object
- * @param {object} ctx - Context with db, logger, env
  */
-export async function handlePaymentIntentProcessing(paymentIntent, ctx) {
+export async function handlePaymentIntentProcessing(
+  paymentIntent: Stripe.PaymentIntent,
+  ctx: WebhookContext,
+): Promise<WebhookResult> {
   const { logger } = ctx;
 
   // Log for visibility - ACH payments in processing state
@@ -29,9 +37,9 @@ export async function handlePaymentIntentProcessing(paymentIntent, ctx) {
     result: 'processing_logged',
     ledgerContext: {
       stripeCustomerId:
-        typeof paymentIntent.customer === 'string' ?
-          paymentIntent.customer
-        : paymentIntent.customer?.id,
+        typeof paymentIntent.customer === 'string'
+          ? paymentIntent.customer
+          : paymentIntent.customer?.id,
       stripePaymentIntentId: paymentIntent.id,
     },
   };
@@ -41,10 +49,11 @@ export async function handlePaymentIntentProcessing(paymentIntent, ctx) {
  * Handle payment_intent.succeeded
  * Final confirmation that payment is complete
  * Most processing happens in invoice.payment_succeeded for subscriptions
- * @param {Stripe.PaymentIntent} paymentIntent - Stripe payment intent object
- * @param {object} ctx - Context with db, logger, env
  */
-export async function handlePaymentIntentSucceeded(paymentIntent, ctx) {
+export async function handlePaymentIntentSucceeded(
+  paymentIntent: Stripe.PaymentIntent,
+  ctx: WebhookContext,
+): Promise<WebhookResult> {
   const { logger } = ctx;
 
   logger.stripe('payment_intent_succeeded', {
@@ -54,7 +63,7 @@ export async function handlePaymentIntentSucceeded(paymentIntent, ctx) {
     paymentMethodTypes: paymentIntent.payment_method_types,
     metadata: paymentIntent.metadata,
     // Invoice info if available
-    invoice: paymentIntent.invoice,
+    invoice: (paymentIntent as PaymentIntentWithInvoice).invoice,
   });
 
   return {
@@ -62,9 +71,9 @@ export async function handlePaymentIntentSucceeded(paymentIntent, ctx) {
     result: 'succeeded_logged',
     ledgerContext: {
       stripeCustomerId:
-        typeof paymentIntent.customer === 'string' ?
-          paymentIntent.customer
-        : paymentIntent.customer?.id,
+        typeof paymentIntent.customer === 'string'
+          ? paymentIntent.customer
+          : paymentIntent.customer?.id,
       stripePaymentIntentId: paymentIntent.id,
     },
   };
@@ -73,10 +82,11 @@ export async function handlePaymentIntentSucceeded(paymentIntent, ctx) {
 /**
  * Handle payment_intent.payment_failed
  * Log failure details for debugging and alerting
- * @param {Stripe.PaymentIntent} paymentIntent - Stripe payment intent object
- * @param {object} ctx - Context with db, logger, env
  */
-export async function handlePaymentIntentFailed(paymentIntent, ctx) {
+export async function handlePaymentIntentFailed(
+  paymentIntent: Stripe.PaymentIntent,
+  ctx: WebhookContext,
+): Promise<WebhookResult> {
   const { logger } = ctx;
 
   const error = paymentIntent.last_payment_error;
@@ -101,9 +111,9 @@ export async function handlePaymentIntentFailed(paymentIntent, ctx) {
     result: 'failure_logged',
     ledgerContext: {
       stripeCustomerId:
-        typeof paymentIntent.customer === 'string' ?
-          paymentIntent.customer
-        : paymentIntent.customer?.id,
+        typeof paymentIntent.customer === 'string'
+          ? paymentIntent.customer
+          : paymentIntent.customer?.id,
       stripePaymentIntentId: paymentIntent.id,
     },
   };

@@ -4,23 +4,32 @@
  * Sends payment failure notifications to users via the EmailQueue DO.
  * Uses escalating urgency based on payment attempt count.
  */
+import type { WebhookContext } from './types.js';
+import type { Env } from '../../../types';
+
+interface DunningParams {
+  subscriptionId: string;
+  orgId: string | null;
+  userEmail: string;
+  userName: string | null;
+  invoiceUrl: string | null;
+  amountDue: number;
+  currency: string;
+  attemptCount: number;
+}
+
+interface EmailTemplate {
+  subject: string;
+  urgency: 'low' | 'medium' | 'high';
+}
 
 /**
  * Queue dunning email using existing EmailQueue DO
- *
- * @param {object} params - Dunning parameters
- * @param {string} params.subscriptionId - Stripe subscription ID
- * @param {string} params.orgId - Organization ID
- * @param {string} params.userEmail - User email to notify
- * @param {string} params.userName - User display name
- * @param {string} params.invoiceUrl - Stripe hosted invoice URL for payment
- * @param {number} params.amountDue - Amount due in cents
- * @param {string} params.currency - Currency code (e.g., 'usd')
- * @param {number} params.attemptCount - Current payment attempt number
- * @param {object} ctx - Context with env and logger
- * @returns {Promise<boolean>} - Whether email was queued successfully
  */
-export async function queueDunningEmail(params, ctx) {
+export async function queueDunningEmail(
+  params: DunningParams,
+  ctx: WebhookContext,
+): Promise<boolean> {
   const {
     subscriptionId,
     orgId,
@@ -31,7 +40,8 @@ export async function queueDunningEmail(params, ctx) {
     currency,
     attemptCount,
   } = params;
-  const { env, logger } = ctx;
+  const env = ctx.env as Env;
+  const { logger } = ctx;
 
   if (!userEmail) {
     logger.stripe('dunning_email_skipped_no_email', {
@@ -43,7 +53,7 @@ export async function queueDunningEmail(params, ctx) {
   }
 
   // Different messaging based on attempt count
-  const templates = {
+  const templates: Record<number, EmailTemplate> = {
     1: {
       subject: 'Payment failed - please update your payment method',
       urgency: 'low',
@@ -98,7 +108,7 @@ export async function queueDunningEmail(params, ctx) {
       }),
     );
 
-    const result = await response.json();
+    const result = (await response.json()) as { success: boolean };
 
     logger.stripe('dunning_email_queued', {
       subscriptionId,
@@ -110,20 +120,45 @@ export async function queueDunningEmail(params, ctx) {
 
     return result.success;
   } catch (error) {
-    logger.error('dunning_email_queue_failed', {
-      subscriptionId,
-      orgId,
-      attemptCount,
-      error: error.message,
-    });
+    const err = error as Error;
+    // Use stripe logger if error logger is not available
+    if (logger.error) {
+      logger.error('dunning_email_queue_failed', {
+        subscriptionId,
+        orgId,
+        attemptCount,
+        error: err.message,
+      });
+    } else {
+      logger.stripe('dunning_email_queue_failed', {
+        subscriptionId,
+        orgId,
+        attemptCount,
+        error: err.message,
+      });
+    }
     return false;
   }
+}
+
+interface DunningEmailHtmlParams {
+  userName: string | null;
+  amount: string;
+  invoiceUrl: string | null;
+  attemptCount: number;
+  urgency: 'low' | 'medium' | 'high';
 }
 
 /**
  * Build HTML email for dunning notification
  */
-function buildDunningEmailHtml({ userName, amount, invoiceUrl, attemptCount, urgency }) {
+function buildDunningEmailHtml({
+  userName,
+  amount,
+  invoiceUrl,
+  attemptCount,
+  urgency,
+}: DunningEmailHtmlParams): string {
   const urgencyColors = {
     low: '#f59e0b', // amber
     medium: '#f97316', // orange
@@ -133,13 +168,13 @@ function buildDunningEmailHtml({ userName, amount, invoiceUrl, attemptCount, urg
   const color = urgencyColors[urgency] || urgencyColors.medium;
 
   const finalNotice =
-    attemptCount >= 3 ?
-      `
+    attemptCount >= 3
+      ? `
   <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 20px 0;">
     <p style="margin: 0; color: #991b1b;"><strong>Final Notice:</strong> Your subscription will be canceled if payment is not received.</p>
   </div>
   `
-    : '';
+      : '';
 
   return `
 <!DOCTYPE html>
@@ -153,23 +188,23 @@ function buildDunningEmailHtml({ userName, amount, invoiceUrl, attemptCount, urg
     <h1 style="color: ${color}; margin: 0 0 8px 0; font-size: 20px;">Payment Failed</h1>
     <p style="margin: 0; color: #6b7280;">Attempt ${attemptCount} of 3</p>
   </div>
-  
+
   <p>Hi ${userName || 'there'},</p>
-  
+
   <p>We were unable to process your payment of <strong>${amount}</strong> for your CoRATES subscription.</p>
-  
+
   ${finalNotice}
-  
+
   <p>Please update your payment method to continue your subscription:</p>
-  
+
   <a href="${invoiceUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; margin: 16px 0;">Update Payment Method</a>
-  
+
   <p style="color: #6b7280; font-size: 14px; margin-top: 32px;">
     If you have any questions, please contact our support team.
   </p>
-  
+
   <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
-  
+
   <p style="color: #9ca3af; font-size: 12px;">
     CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis
   </p>
@@ -178,14 +213,26 @@ function buildDunningEmailHtml({ userName, amount, invoiceUrl, attemptCount, urg
   `.trim();
 }
 
+interface DunningEmailTextParams {
+  userName: string | null;
+  amount: string;
+  invoiceUrl: string | null;
+  attemptCount: number;
+}
+
 /**
  * Build plain text email for dunning notification
  */
-function buildDunningEmailText({ userName, amount, invoiceUrl, attemptCount }) {
+function buildDunningEmailText({
+  userName,
+  amount,
+  invoiceUrl,
+  attemptCount,
+}: DunningEmailTextParams): string {
   const finalNotice =
-    attemptCount >= 3 ?
-      'FINAL NOTICE: Your subscription will be canceled if payment is not received.\n\n'
-    : '';
+    attemptCount >= 3
+      ? 'FINAL NOTICE: Your subscription will be canceled if payment is not received.\n\n'
+      : '';
 
   return `
 Payment Failed (Attempt ${attemptCount} of 3)

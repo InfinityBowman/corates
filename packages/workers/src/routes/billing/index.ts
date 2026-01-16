@@ -39,8 +39,9 @@ import { billingGrantRoutes } from './grants.js';
 import { billingCheckoutRoutes } from './checkout';
 import { billingWebhookRoutes } from './webhooks.js';
 import { billingInvoicesRoutes } from './invoices.js';
+import type { Env } from '../../types';
 
-const billingRoutes = new OpenAPIHono();
+const billingRoutes = new OpenAPIHono<{ Bindings: Env }>();
 
 // Mount all routes at root level
 // Each sub-router handles its full path (e.g., /subscription, /members, /checkout, etc.)

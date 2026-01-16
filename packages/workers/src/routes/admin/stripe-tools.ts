@@ -4,16 +4,28 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createDb } from '@/db/client.js';
 import { user, organization, subscription } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import Stripe from 'stripe';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env } from '../../types';
 
-const stripeToolsRoutes = new OpenAPIHono({
+const stripeToolsRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
+
+// Extended types for Stripe API version properties
+interface SubscriptionWithPeriods extends Stripe.Subscription {
+  current_period_start?: number;
+  current_period_end?: number;
+}
+
+interface InvoiceWithSubscription extends Stripe.Invoice {
+  subscription?: string | Stripe.Subscription | null;
+}
 
 // Response schemas
 const StripeCustomerSchema = z
@@ -28,7 +40,7 @@ const StripeCustomerSchema = z
     invoicePrefix: z.string().nullable(),
     balance: z.number(),
     delinquent: z.boolean(),
-    metadata: z.record(z.string()),
+    metadata: z.record(z.string(), z.string()),
     livemode: z.boolean(),
   })
   .openapi('StripeCustomer');
@@ -136,7 +148,7 @@ const SubscriptionItemSchema = z
   .object({
     id: z.string(),
     priceId: z.string(),
-    productId: z.union([z.string(), z.record(z.unknown())]),
+    productId: z.union([z.string(), z.record(z.string(), z.unknown())]),
     unitAmount: z.number().nullable(),
     interval: z.string().nullable(),
     quantity: z.number().nullable(),
@@ -160,7 +172,7 @@ const StripeSubscriptionSchema = z
     items: z.array(SubscriptionItemSchema),
     defaultPaymentMethod: z.string().nullable(),
     latestInvoice: z.string().nullable(),
-    metadata: z.record(z.string()),
+    metadata: z.record(z.string(), z.string()),
   })
   .openapi('StripeSubscription');
 
@@ -177,7 +189,7 @@ const StripeErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('StripeToolsError');
 
@@ -367,10 +379,25 @@ const subscriptionsRoute = createRoute({
   },
 });
 
+interface LinkedUser {
+  id: string;
+  email: string;
+  name: string;
+  displayName: string | null;
+  stripeCustomerId?: string | null;
+}
+
+interface LinkedOrg {
+  id: string;
+  name: string | null;
+  slug: string | null;
+}
+
 /**
  * GET /api/admin/stripe/customer
  * Look up a Stripe customer by email or customer ID
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 stripeToolsRoutes.openapi(customerLookupRoute, async c => {
   const query = c.req.valid('query');
   const email = query.email;
@@ -380,14 +407,14 @@ stripeToolsRoutes.openapi(customerLookupRoute, async c => {
     const error = createDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, {
       field: 'email or customerId',
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   if (!c.env.STRIPE_SECRET_KEY) {
     const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
       message: 'Stripe is not configured',
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
@@ -395,21 +422,23 @@ stripeToolsRoutes.openapi(customerLookupRoute, async c => {
   });
 
   try {
-    let customer = null;
+    let customer: Stripe.Customer | null = null;
 
     if (customerId) {
       // Direct lookup by ID
       try {
-        customer = await stripe.customers.retrieve(customerId);
-        if (customer.deleted) {
+        const retrieved = await stripe.customers.retrieve(customerId);
+        if ((retrieved as Stripe.DeletedCustomer).deleted) {
           return c.json({
             found: false,
             message: 'Customer has been deleted in Stripe',
             customerId,
           });
         }
+        customer = retrieved as Stripe.Customer;
       } catch (err) {
-        if (err.code === 'resource_missing') {
+        const stripeErr = err as Stripe.errors.StripeError;
+        if (stripeErr.code === 'resource_missing') {
           return c.json({
             found: false,
             message: 'Customer not found in Stripe',
@@ -436,11 +465,18 @@ stripeToolsRoutes.openapi(customerLookupRoute, async c => {
       customer = customers.data[0];
     }
 
+    if (!customer) {
+      return c.json({
+        found: false,
+        message: 'Customer not found',
+      });
+    }
+
     // Look up associated user and org in our database
     const db = createDb(c.env.DB);
 
-    let linkedUser = null;
-    let linkedOrg = null;
+    let linkedUser: LinkedUser | null = null;
+    let linkedOrg: LinkedOrg | null = null;
 
     // Find user by stripeCustomerId
     const [userByStripe] = await db
@@ -504,24 +540,26 @@ stripeToolsRoutes.openapi(customerLookupRoute, async c => {
         phone: customer.phone,
         created: customer.created,
         currency: customer.currency,
-        defaultSource: customer.default_source,
+        defaultSource:
+          typeof customer.default_source === 'string' ? customer.default_source : null,
         invoicePrefix: customer.invoice_prefix,
         balance: customer.balance,
-        delinquent: customer.delinquent,
-        metadata: customer.metadata,
+        delinquent: customer.delinquent ?? false,
+        metadata: customer.metadata as Record<string, string>,
         livemode: customer.livemode,
       },
       linkedUser,
       linkedOrg,
       stripeDashboardUrl: `https://dashboard.stripe.com/customers/${customer.id}`,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error looking up Stripe customer:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.EXTERNAL_SERVICE_ERROR, {
+    const dbError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       service: 'Stripe',
-      message: error.message,
+      originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -529,6 +567,7 @@ stripeToolsRoutes.openapi(customerLookupRoute, async c => {
  * POST /api/admin/stripe/portal-link
  * Generate a customer portal link for a Stripe customer
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 stripeToolsRoutes.openapi(portalLinkRoute, async c => {
   const body = c.req.valid('json');
   const { customerId, returnUrl } = body;
@@ -537,7 +576,7 @@ stripeToolsRoutes.openapi(portalLinkRoute, async c => {
     const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
       message: 'Stripe is not configured',
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
@@ -555,13 +594,14 @@ stripeToolsRoutes.openapi(portalLinkRoute, async c => {
       url: session.url,
       expiresAt: session.created + 300, // Portal links typically expire in 5 minutes
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error creating portal link:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.EXTERNAL_SERVICE_ERROR, {
+    const dbError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       service: 'Stripe',
-      message: error.message,
+      originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -569,6 +609,7 @@ stripeToolsRoutes.openapi(portalLinkRoute, async c => {
  * GET /api/admin/stripe/customer/:customerId/invoices
  * Get recent invoices for a Stripe customer
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 stripeToolsRoutes.openapi(invoicesRoute, async c => {
   const { customerId } = c.req.valid('param');
   const query = c.req.valid('query');
@@ -579,7 +620,7 @@ stripeToolsRoutes.openapi(invoicesRoute, async c => {
     const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
       message: 'Stripe is not configured',
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
@@ -594,34 +635,41 @@ stripeToolsRoutes.openapi(invoicesRoute, async c => {
 
     return c.json({
       customerId,
-      invoices: invoices.data.map(inv => ({
-        id: inv.id,
-        number: inv.number,
-        status: inv.status,
-        currency: inv.currency,
-        amountDue: inv.amount_due,
-        amountPaid: inv.amount_paid,
-        amountRemaining: inv.amount_remaining,
-        total: inv.total,
-        subtotal: inv.subtotal,
-        created: inv.created,
-        dueDate: inv.due_date,
-        paidAt: inv.status_transitions?.paid_at,
-        hostedInvoiceUrl: inv.hosted_invoice_url,
-        invoicePdf: inv.invoice_pdf,
-        subscriptionId: inv.subscription,
-        periodStart: inv.period_start,
-        periodEnd: inv.period_end,
-      })),
+      invoices: invoices.data.map(inv => {
+        const invWithSub = inv as InvoiceWithSubscription;
+        return {
+          id: inv.id,
+          number: inv.number,
+          status: inv.status,
+          currency: inv.currency,
+          amountDue: inv.amount_due,
+          amountPaid: inv.amount_paid,
+          amountRemaining: inv.amount_remaining,
+          total: inv.total,
+          subtotal: inv.subtotal,
+          created: inv.created,
+          dueDate: inv.due_date,
+          paidAt: inv.status_transitions?.paid_at ?? null,
+          hostedInvoiceUrl: inv.hosted_invoice_url,
+          invoicePdf: inv.invoice_pdf,
+          subscriptionId:
+            typeof invWithSub.subscription === 'string'
+              ? invWithSub.subscription
+              : (invWithSub.subscription as Stripe.Subscription)?.id ?? null,
+          periodStart: inv.period_start,
+          periodEnd: inv.period_end,
+        };
+      }),
       hasMore: invoices.has_more,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching invoices:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.EXTERNAL_SERVICE_ERROR, {
+    const dbError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       service: 'Stripe',
-      message: error.message,
+      originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -629,6 +677,7 @@ stripeToolsRoutes.openapi(invoicesRoute, async c => {
  * GET /api/admin/stripe/customer/:customerId/payment-methods
  * Get payment methods for a Stripe customer
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 stripeToolsRoutes.openapi(paymentMethodsRoute, async c => {
   const { customerId } = c.req.valid('param');
 
@@ -636,7 +685,7 @@ stripeToolsRoutes.openapi(paymentMethodsRoute, async c => {
     const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
       message: 'Stripe is not configured',
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
@@ -654,9 +703,8 @@ stripeToolsRoutes.openapi(paymentMethodsRoute, async c => {
       paymentMethods: paymentMethods.data.map(pm => ({
         id: pm.id,
         type: pm.type,
-        card:
-          pm.card ?
-            {
+        card: pm.card
+          ? {
               brand: pm.card.brand,
               last4: pm.card.last4,
               expMonth: pm.card.exp_month,
@@ -668,13 +716,14 @@ stripeToolsRoutes.openapi(paymentMethodsRoute, async c => {
         created: pm.created,
       })),
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching payment methods:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.EXTERNAL_SERVICE_ERROR, {
+    const dbError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       service: 'Stripe',
-      message: error.message,
+      originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -682,6 +731,7 @@ stripeToolsRoutes.openapi(paymentMethodsRoute, async c => {
  * GET /api/admin/stripe/customer/:customerId/subscriptions
  * Get subscriptions for a Stripe customer directly from Stripe
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 stripeToolsRoutes.openapi(subscriptionsRoute, async c => {
   const { customerId } = c.req.valid('param');
 
@@ -689,7 +739,7 @@ stripeToolsRoutes.openapi(subscriptionsRoute, async c => {
     const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
       message: 'Stripe is not configured',
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
@@ -705,40 +755,50 @@ stripeToolsRoutes.openapi(subscriptionsRoute, async c => {
 
     return c.json({
       customerId,
-      subscriptions: subscriptions.data.map(sub => ({
-        id: sub.id,
-        status: sub.status,
-        currency: sub.currency,
-        currentPeriodStart: sub.current_period_start,
-        currentPeriodEnd: sub.current_period_end,
-        cancelAtPeriodEnd: sub.cancel_at_period_end,
-        cancelAt: sub.cancel_at,
-        canceledAt: sub.canceled_at,
-        endedAt: sub.ended_at,
-        trialStart: sub.trial_start,
-        trialEnd: sub.trial_end,
-        created: sub.created,
-        items: sub.items.data.map(item => ({
-          id: item.id,
-          priceId: item.price.id,
-          productId: item.price.product,
-          unitAmount: item.price.unit_amount,
-          interval: item.price.recurring?.interval,
-          quantity: item.quantity,
-        })),
-        defaultPaymentMethod: sub.default_payment_method,
-        latestInvoice: sub.latest_invoice,
-        metadata: sub.metadata,
-      })),
+      subscriptions: subscriptions.data.map(sub => {
+        const subWithPeriods = sub as SubscriptionWithPeriods;
+        return {
+          id: sub.id,
+          status: sub.status,
+          currency: sub.currency,
+          currentPeriodStart: subWithPeriods.current_period_start ?? 0,
+          currentPeriodEnd: subWithPeriods.current_period_end ?? 0,
+          cancelAtPeriodEnd: sub.cancel_at_period_end,
+          cancelAt: sub.cancel_at,
+          canceledAt: sub.canceled_at,
+          endedAt: sub.ended_at,
+          trialStart: sub.trial_start,
+          trialEnd: sub.trial_end,
+          created: sub.created,
+          items: sub.items.data.map(item => ({
+            id: item.id,
+            priceId: item.price.id,
+            productId: item.price.product,
+            unitAmount: item.price.unit_amount,
+            interval: item.price.recurring?.interval ?? null,
+            quantity: item.quantity,
+          })),
+          defaultPaymentMethod:
+            typeof sub.default_payment_method === 'string'
+              ? sub.default_payment_method
+              : (sub.default_payment_method as Stripe.PaymentMethod)?.id ?? null,
+          latestInvoice:
+            typeof sub.latest_invoice === 'string'
+              ? sub.latest_invoice
+              : (sub.latest_invoice as Stripe.Invoice)?.id ?? null,
+          metadata: sub.metadata as Record<string, string>,
+        };
+      }),
       hasMore: subscriptions.has_more,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching subscriptions:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.EXTERNAL_SERVICE_ERROR, {
+    const dbError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       service: 'Stripe',
-      message: error.message,
+      originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 

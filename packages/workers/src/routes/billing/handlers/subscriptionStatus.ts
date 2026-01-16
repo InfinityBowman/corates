@@ -3,11 +3,26 @@
  * Maps Stripe subscription statuses to CoRATES access levels
  */
 
+interface StatusMapping {
+  hasAccess: boolean;
+  accessLevel: 'full' | 'limited' | 'none';
+  description: string;
+  gracePeriodDays?: number;
+}
+
+interface AccessResult {
+  hasAccess: boolean;
+  accessLevel: string;
+  reason?: string;
+  description?: string;
+  gracePeriodExpiredAt?: Date;
+}
+
 /**
  * Stripe subscription status to CoRATES access mapping
  * @see https://stripe.com/docs/api/subscriptions/object#subscription_object-status
  */
-export const SUBSCRIPTION_STATUS_MAP = {
+export const SUBSCRIPTION_STATUS_MAP: Record<string, StatusMapping> = {
   // Full access statuses
   active: {
     hasAccess: true,
@@ -59,11 +74,11 @@ export const SUBSCRIPTION_STATUS_MAP = {
 
 /**
  * Resolve subscription access based on status and period end
- * @param {string} status - Stripe subscription status
- * @param {Date|number} currentPeriodEnd - End of current billing period
- * @returns {{ hasAccess: boolean, accessLevel: string, reason?: string }}
  */
-export function resolveSubscriptionAccess(status, currentPeriodEnd) {
+export function resolveSubscriptionAccess(
+  status: string,
+  currentPeriodEnd: Date | number | null,
+): AccessResult {
   const mapping = SUBSCRIPTION_STATUS_MAP[status];
 
   if (!mapping) {
@@ -101,29 +116,23 @@ export function resolveSubscriptionAccess(status, currentPeriodEnd) {
 
 /**
  * Check if a subscription status indicates active billing
- * @param {string} status - Stripe subscription status
- * @returns {boolean}
  */
-export function isActiveSubscription(status) {
+export function isActiveSubscription(status: string): boolean {
   return ['active', 'trialing', 'past_due'].includes(status);
 }
 
 /**
  * Check if a subscription status indicates it needs attention
- * @param {string} status - Stripe subscription status
- * @returns {boolean}
  */
-export function needsAttention(status) {
+export function needsAttention(status: string): boolean {
   return ['past_due', 'unpaid', 'incomplete'].includes(status);
 }
 
 /**
  * Get user-friendly status message
- * @param {string} status - Stripe subscription status
- * @returns {string}
  */
-export function getStatusMessage(status) {
-  const messages = {
+export function getStatusMessage(status: string): string {
+  const messages: Record<string, string> = {
     active: 'Your subscription is active',
     trialing: 'Your trial is active',
     past_due: 'Payment failed - please update your payment method',

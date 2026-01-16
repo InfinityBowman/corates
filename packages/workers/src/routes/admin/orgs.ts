@@ -4,15 +4,17 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createDb } from '@/db/client.js';
 import { organization, member, projects } from '@/db/schema.js';
 import { eq, count, desc, like, or, sql } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { resolveOrgAccess } from '@/lib/billingResolver.js';
-import { getPlan, getGrantPlan } from '@corates/shared/plans';
+import { getPlan, getGrantPlan, type GrantType } from '@corates/shared/plans';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env } from '../../types';
 
-const orgRoutes = new OpenAPIHono({
+const orgRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -55,8 +57,8 @@ const OrgListResponseSchema = z
 const PlanDetailsSchema = z
   .object({
     name: z.string(),
-    entitlements: z.record(z.boolean()).optional(),
-    quotas: z.record(z.number()).optional(),
+    entitlements: z.record(z.string(), z.boolean()).optional(),
+    quotas: z.record(z.string(), z.number()).optional(),
   })
   .openapi('PlanDetails');
 
@@ -66,8 +68,8 @@ const BillingInfoSchema = z
     source: z.string(),
     accessMode: z.string(),
     plan: PlanDetailsSchema,
-    subscription: z.record(z.unknown()).nullable(),
-    grant: z.record(z.unknown()).nullable(),
+    subscription: z.record(z.string(), z.unknown()).nullable(),
+    grant: z.record(z.string(), z.unknown()).nullable(),
   })
   .openapi('BillingInfo');
 
@@ -91,7 +93,7 @@ const AdminErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('AdminError');
 
@@ -202,6 +204,7 @@ const getOrgDetailsRoute = createRoute({
  * GET /api/admin/orgs
  * List all orgs with pagination and search
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgRoutes.openapi(listOrgsRoute, async c => {
   const db = createDb(c.env.DB);
 
@@ -213,41 +216,25 @@ orgRoutes.openapi(listOrgsRoute, async c => {
 
     const offset = (page - 1) * limit;
 
-    let dbQuery = db.select().from(organization);
-
-    // Apply search filter if provided
-    if (search) {
-      const searchLower = search.toLowerCase();
-      dbQuery = db
-        .select()
-        .from(organization)
-        .where(
-          or(
-            like(sql`LOWER(${organization.name})`, `%${searchLower}%`),
-            like(sql`LOWER(${organization.slug})`, `%${searchLower}%`),
-          ),
-        );
-    }
+    // Build search condition if provided
+    const searchCondition = search
+      ? or(
+          like(sql`LOWER(${organization.name})`, `%${search.toLowerCase()}%`),
+          like(sql`LOWER(${organization.slug})`, `%${search.toLowerCase()}%`),
+        )
+      : undefined;
 
     // Get total count for pagination
-    const totalCountQuery =
-      search ?
-        db
-          .select({ count: count() })
-          .from(organization)
-          .where(
-            or(
-              like(sql`LOWER(${organization.name})`, `%${search.toLowerCase()}%`),
-              like(sql`LOWER(${organization.slug})`, `%${search.toLowerCase()}%`),
-            ),
-          )
+    const totalCountQuery = searchCondition
+      ? db.select({ count: count() }).from(organization).where(searchCondition)
       : db.select({ count: count() }).from(organization);
 
     const [totalResult] = await totalCountQuery.all();
     const total = totalResult?.count || 0;
 
     // Get paginated results
-    const orgs = await dbQuery
+    const baseQuery = db.select().from(organization);
+    const orgs = await (searchCondition ? baseQuery.where(searchCondition) : baseQuery)
       .orderBy(desc(organization.createdAt))
       .limit(limit)
       .offset(offset)
@@ -255,7 +242,7 @@ orgRoutes.openapi(listOrgsRoute, async c => {
 
     // Get stats for all orgs in parallel
     const orgIds = orgs.map(org => org.id);
-    const statsMap = {};
+    const statsMap: Record<string, { memberCount?: number; projectCount?: number }> = {};
 
     if (orgIds.length > 0) {
       // Get member counts
@@ -320,13 +307,14 @@ orgRoutes.openapi(listOrgsRoute, async c => {
         totalPages: Math.ceil(total / limit),
       },
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching orgs:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_orgs',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -334,6 +322,7 @@ orgRoutes.openapi(listOrgsRoute, async c => {
  * GET /api/admin/orgs/:orgId
  * Get org details with billing summary
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgRoutes.openapi(getOrgDetailsRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -346,7 +335,7 @@ orgRoutes.openapi(getOrgDetailsRoute, async c => {
         reason: 'org_not_found',
         orgId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Get member count
@@ -368,9 +357,9 @@ orgRoutes.openapi(getOrgDetailsRoute, async c => {
     // Get billing summary
     const orgBilling = await resolveOrgAccess(db, orgId);
     const effectivePlan =
-      orgBilling.source === 'grant' ?
-        getGrantPlan(orgBilling.effectivePlanId)
-      : getPlan(orgBilling.effectivePlanId);
+      orgBilling.source === 'grant'
+        ? getGrantPlan(orgBilling.effectivePlanId as GrantType)
+        : getPlan(orgBilling.effectivePlanId);
 
     return c.json({
       org,
@@ -391,13 +380,14 @@ orgRoutes.openapi(getOrgDetailsRoute, async c => {
         grant: orgBilling.grant,
       },
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching org details:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_org_details',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 

@@ -3,15 +3,17 @@
  * Handles org-scoped billing status and member info (read-only endpoints)
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { resolveOrgAccess } from '@/lib/billingResolver.js';
-import { getPlan, getGrantPlan } from '@corates/shared/plans';
+import { getPlan, getGrantPlan, type GrantType } from '@corates/shared/plans';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { resolveOrgId } from './helpers/orgContext.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env } from '../../types';
 
-const billingSubscriptionRoutes = new OpenAPIHono({
+const billingSubscriptionRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -70,7 +72,7 @@ const BillingErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('BillingError');
 
@@ -147,8 +149,15 @@ const membersRoute = createRoute({
 // Route handlers
 billingSubscriptionRoutes.use('*', requireAuth);
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingSubscriptionRoutes.openapi(usageRoute, async c => {
   const { user, session } = getAuth(c);
+
+  if (!user || !session) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const db = createDb(c.env.DB);
 
   try {
@@ -158,7 +167,7 @@ billingSubscriptionRoutes.openapi(usageRoute, async c => {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'no_org_found',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const { projects, projectMembers } = await import('@/db/schema.js');
@@ -179,18 +188,26 @@ billingSubscriptionRoutes.openapi(usageRoute, async c => {
       projects: Number(projectCountResult?.count ?? 0),
       collaborators: Number(collaboratorCountResult?.count ?? 0),
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching org usage:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_org_usage',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingSubscriptionRoutes.openapi(subscriptionRoute, async c => {
   const { user, session } = getAuth(c);
+
+  if (!user || !session) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const db = createDb(c.env.DB);
 
   try {
@@ -200,7 +217,7 @@ billingSubscriptionRoutes.openapi(subscriptionRoute, async c => {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'no_org_found',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const orgBilling = await resolveOrgAccess(db, orgId);
@@ -213,15 +230,15 @@ billingSubscriptionRoutes.openapi(subscriptionRoute, async c => {
       .where(eq(projects.orgId, orgId));
 
     const effectivePlan =
-      orgBilling.source === 'grant' ?
-        getGrantPlan(orgBilling.effectivePlanId)
-      : getPlan(orgBilling.effectivePlanId);
+      orgBilling.source === 'grant'
+        ? getGrantPlan(orgBilling.effectivePlanId as GrantType)
+        : getPlan(orgBilling.effectivePlanId);
     const currentPeriodEnd =
-      orgBilling.subscription?.periodEnd ?
-        orgBilling.subscription.periodEnd instanceof Date ?
-          Math.floor(orgBilling.subscription.periodEnd.getTime() / 1000)
-        : orgBilling.subscription.periodEnd
-      : null;
+      orgBilling.subscription?.periodEnd
+        ? orgBilling.subscription.periodEnd instanceof Date
+          ? Math.floor(orgBilling.subscription.periodEnd.getTime() / 1000)
+          : orgBilling.subscription.periodEnd
+        : null;
 
     return c.json({
       tier: orgBilling.effectivePlanId,
@@ -238,18 +255,26 @@ billingSubscriptionRoutes.openapi(subscriptionRoute, async c => {
       source: orgBilling.source,
       projectCount: projectCountResult?.count || 0,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching org billing:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_org_billing',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingSubscriptionRoutes.openapi(membersRoute, async c => {
   const { user, session } = getAuth(c);
+
+  if (!user || !session) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const db = createDb(c.env.DB);
 
   try {
@@ -259,12 +284,18 @@ billingSubscriptionRoutes.openapi(membersRoute, async c => {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'no_org_found',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const { createAuth } = await import('@/auth/config.js');
     const auth = createAuth(c.env, c.executionCtx);
-    const result = await auth.api.listMembers({
+    const listMembersApi = auth.api as unknown as {
+      listMembers: (req: {
+        headers: Headers;
+        query: { organizationId: string };
+      }) => Promise<{ members?: Array<Record<string, unknown>> }>;
+    };
+    const result = await listMembersApi.listMembers({
       headers: c.req.raw.headers,
       query: {
         organizationId: orgId,
@@ -275,13 +306,14 @@ billingSubscriptionRoutes.openapi(membersRoute, async c => {
       members: result.members || [],
       count: result.members?.length || 0,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching org members:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_org_members',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 

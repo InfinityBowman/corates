@@ -3,22 +3,38 @@
  * Handles invoice.* events from Stripe
  * Critical for payment failure recovery and dunning
  */
-
+import type Stripe from 'stripe';
 import { eq } from 'drizzle-orm';
 import { subscription, user } from '@/db/schema.js';
 import { queueDunningEmail } from './dunning.js';
+import type { WebhookContext, WebhookResult } from './types.js';
+import { createDb } from '@/db/client.js';
+import type { Env } from '../../../types';
+
+// Helper to get typed db from context
+function getDb(ctx: WebhookContext) {
+  return ctx.db as ReturnType<typeof createDb>;
+}
+
+// The Stripe API version used (2025-12-15.clover) has (invoice as InvoiceWithSubscription).subscription
+// that might not be in the standard types
+interface InvoiceWithSubscription extends Stripe.Invoice {
+  subscription?: string | Stripe.Subscription | null;
+}
 
 /**
  * Handle invoice.payment_succeeded
  * Update subscription status back to active after successful payment
- * @param {Stripe.Invoice} invoice - Stripe invoice object
- * @param {object} ctx - Context with db, logger, env
  */
-export async function handleInvoicePaymentSucceeded(invoice, ctx) {
-  const { db, logger } = ctx;
+export async function handleInvoicePaymentSucceeded(
+  invoice: Stripe.Invoice,
+  ctx: WebhookContext,
+): Promise<WebhookResult> {
+  const db = getDb(ctx);
+  const { logger } = ctx;
 
   // Only process subscription invoices
-  if (!invoice.subscription) {
+  if (!(invoice as InvoiceWithSubscription).subscription) {
     logger.stripe('invoice_not_subscription', {
       stripeInvoiceId: invoice.id,
       billingReason: invoice.billing_reason,
@@ -30,8 +46,9 @@ export async function handleInvoicePaymentSucceeded(invoice, ctx) {
     };
   }
 
+  const invoiceSubscription1 = (invoice as InvoiceWithSubscription).subscription;
   const stripeSubscriptionId =
-    typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription.id;
+    typeof invoiceSubscription1 === 'string' ? invoiceSubscription1 : (invoiceSubscription1 as Stripe.Subscription)?.id;
 
   // Find and update subscription
   const existing = await db
@@ -89,14 +106,17 @@ export async function handleInvoicePaymentSucceeded(invoice, ctx) {
 /**
  * Handle invoice.payment_failed
  * Update subscription status and trigger dunning flow
- * @param {Stripe.Invoice} invoice - Stripe invoice object
- * @param {object} ctx - Context with db, logger, env
  */
-export async function handleInvoicePaymentFailed(invoice, ctx) {
-  const { db, logger, env } = ctx;
+export async function handleInvoicePaymentFailed(
+  invoice: Stripe.Invoice,
+  ctx: WebhookContext,
+): Promise<WebhookResult> {
+  const db = getDb(ctx);
+  const { logger } = ctx;
+  const env = ctx.env as Env;
 
   // Only process subscription invoices
-  if (!invoice.subscription) {
+  if (!(invoice as InvoiceWithSubscription).subscription) {
     logger.stripe('invoice_payment_failed_not_subscription', {
       stripeInvoiceId: invoice.id,
     });
@@ -107,8 +127,9 @@ export async function handleInvoicePaymentFailed(invoice, ctx) {
     };
   }
 
+  const invoiceSubscription2 = (invoice as InvoiceWithSubscription).subscription;
   const stripeSubscriptionId =
-    typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription.id;
+    typeof invoiceSubscription2 === 'string' ? invoiceSubscription2 : (invoiceSubscription2 as Stripe.Subscription)?.id;
 
   // Find subscription
   const existing = await db
@@ -144,7 +165,7 @@ export async function handleInvoicePaymentFailed(invoice, ctx) {
   // Extract failure details
   const failureReason =
     invoice.last_finalization_error?.message ||
-    invoice.status_transitions?.finalized_at ||
+    (invoice.status_transitions?.finalized_at ? String(invoice.status_transitions.finalized_at) : null) ||
     'unknown';
 
   logger.stripe('invoice_payment_failed', {
@@ -178,8 +199,8 @@ export async function handleInvoicePaymentFailed(invoice, ctx) {
           subscriptionId: existing.id,
           orgId: existing.referenceId,
           userEmail: billingUser.email,
-          userName: billingUser.displayName || billingUser.name,
-          invoiceUrl: invoice.hosted_invoice_url,
+          userName: billingUser.displayName || billingUser.name || null,
+          invoiceUrl: invoice.hosted_invoice_url ?? null,
           amountDue: invoice.amount_due,
           currency: invoice.currency,
           attemptCount: invoice.attempt_count || 1,
@@ -208,15 +229,16 @@ export async function handleInvoicePaymentFailed(invoice, ctx) {
 /**
  * Handle invoice.finalized
  * Log invoice finalization for audit trail
- * @param {Stripe.Invoice} invoice - Stripe invoice object
- * @param {object} ctx - Context with db, logger, env
  */
-export async function handleInvoiceFinalized(invoice, ctx) {
+export async function handleInvoiceFinalized(
+  invoice: Stripe.Invoice,
+  ctx: WebhookContext,
+): Promise<WebhookResult> {
   const { logger } = ctx;
 
   logger.stripe('invoice_finalized', {
     stripeInvoiceId: invoice.id,
-    stripeSubscriptionId: invoice.subscription,
+    stripeSubscriptionId: (invoice as InvoiceWithSubscription).subscription,
     stripeCustomerId: invoice.customer,
     amount: invoice.amount_due,
     currency: invoice.currency,
@@ -224,12 +246,13 @@ export async function handleInvoiceFinalized(invoice, ctx) {
     hostedInvoiceUrl: invoice.hosted_invoice_url,
   });
 
+  const invoiceSubscription3 = (invoice as InvoiceWithSubscription).subscription;
   return {
     handled: true,
     result: 'finalized_logged',
     ledgerContext: {
       stripeSubscriptionId:
-        typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id,
+        typeof invoiceSubscription3 === 'string' ? invoiceSubscription3 : (invoiceSubscription3 as Stripe.Subscription | undefined)?.id,
       stripeCustomerId:
         typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id,
     },

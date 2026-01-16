@@ -4,6 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createDb } from '@/db/client.js';
 import {
   projects,
@@ -16,8 +17,9 @@ import {
 import { eq, count, desc, like, sql, and } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, PROJECT_ERRORS } from '@corates/shared';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env } from '../../types';
 
-const projectRoutes = new OpenAPIHono({
+const projectRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -143,7 +145,7 @@ const AdminErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('AdminProjectError');
 
@@ -325,10 +327,16 @@ const deleteProjectRoute = createRoute({
   },
 });
 
+interface ProjectStats {
+  memberCount: number;
+  fileCount: number;
+}
+
 /**
  * GET /api/admin/projects
  * List all projects with pagination and search
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 projectRoutes.openapi(listProjectsRoute, async c => {
   const db = createDb(c.env.DB);
 
@@ -354,16 +362,15 @@ projectRoutes.openapi(listProjectsRoute, async c => {
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     // Get total count for pagination
-    const totalCountQuery =
-      whereClause ?
-        db.select({ count: count() }).from(projects).where(whereClause)
+    const totalCountQuery = whereClause
+      ? db.select({ count: count() }).from(projects).where(whereClause)
       : db.select({ count: count() }).from(projects);
 
     const [totalResult] = await totalCountQuery.all();
     const total = totalResult?.count || 0;
 
     // Get paginated results with org and creator info
-    const projectList = await db
+    const baseQuery = db
       .select({
         id: projects.id,
         name: projects.name,
@@ -380,8 +387,9 @@ projectRoutes.openapi(listProjectsRoute, async c => {
       })
       .from(projects)
       .leftJoin(organization, eq(projects.orgId, organization.id))
-      .leftJoin(user, eq(projects.createdBy, user.id))
-      .where(whereClause)
+      .leftJoin(user, eq(projects.createdBy, user.id));
+
+    const projectList = await (whereClause ? baseQuery.where(whereClause) : baseQuery)
       .orderBy(desc(projects.createdAt))
       .limit(limit)
       .offset(offset)
@@ -389,7 +397,7 @@ projectRoutes.openapi(listProjectsRoute, async c => {
 
     // Get member counts and file counts for all projects
     const projectIds = projectList.map(p => p.id);
-    const statsMap = {};
+    const statsMap: Record<string, ProjectStats> = {};
 
     if (projectIds.length > 0) {
       // Get member counts
@@ -453,12 +461,13 @@ projectRoutes.openapi(listProjectsRoute, async c => {
         totalPages: Math.ceil(total / limit),
       },
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching admin projects:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       message: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -466,6 +475,7 @@ projectRoutes.openapi(listProjectsRoute, async c => {
  * GET /api/admin/projects/:projectId
  * Get full project details including members, files, and invitations
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 projectRoutes.openapi(getProjectDetailsRoute, async c => {
   const { projectId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -495,7 +505,7 @@ projectRoutes.openapi(getProjectDetailsRoute, async c => {
 
     if (!project) {
       const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Get project members with user details
@@ -571,12 +581,13 @@ projectRoutes.openapi(getProjectDetailsRoute, async c => {
         totalStorageBytes,
       },
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching admin project detail:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       message: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -584,6 +595,7 @@ projectRoutes.openapi(getProjectDetailsRoute, async c => {
  * DELETE /api/admin/projects/:projectId/members/:memberId
  * Remove a member from a project
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 projectRoutes.openapi(removeProjectMemberRoute, async c => {
   const { projectId, memberId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -598,18 +610,19 @@ projectRoutes.openapi(removeProjectMemberRoute, async c => {
 
     if (!existingMember) {
       const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { memberId });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     await db.delete(projectMembers).where(eq(projectMembers.id, memberId));
 
     return c.json({ success: true, message: 'Member removed from project' });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error removing project member:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       message: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -617,6 +630,7 @@ projectRoutes.openapi(removeProjectMemberRoute, async c => {
  * DELETE /api/admin/projects/:projectId
  * Delete a project and all associated data
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 projectRoutes.openapi(deleteProjectRoute, async c => {
   const { projectId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -631,19 +645,20 @@ projectRoutes.openapi(deleteProjectRoute, async c => {
 
     if (!existingProject) {
       const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Delete project (cascade will handle members, invitations, files)
     await db.delete(projects).where(eq(projects.id, projectId));
 
     return c.json({ success: true, message: 'Project deleted' });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error deleting project:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       message: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 

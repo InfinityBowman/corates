@@ -4,14 +4,16 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createDb } from '@/db/client.js';
 import { user, organization, stripeEventLedger, projects } from '@/db/schema.js';
 import { sql, count, gte } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import Stripe from 'stripe';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env } from '../../types';
 
-const statsRoutes = new OpenAPIHono({
+const statsRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -100,7 +102,7 @@ const StatsErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('StatsError');
 
@@ -301,10 +303,36 @@ const revenueRoute = createRoute({
   },
 });
 
+interface DailyCount {
+  date: string | null;
+  count: number;
+}
+
+/**
+ * Helper function to fill missing days in time series data
+ */
+function fillMissingDays(results: DailyCount[], days: number): Array<{ date: string; count: number }> {
+  const dateMap = new Map(results.map(r => [r.date, r.count]));
+  const filledData: Array<{ date: string; count: number }> = [];
+
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    filledData.push({
+      date: dateStr,
+      count: dateMap.get(dateStr) || 0,
+    });
+  }
+
+  return filledData;
+}
+
 /**
  * GET /api/admin/stats/signups
  * Returns daily signup counts for the specified number of days
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 statsRoutes.openapi(signupsRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
@@ -319,7 +347,7 @@ statsRoutes.openapi(signupsRoute, async c => {
     // Pass Date object to gte() since createdAt uses mode: 'timestamp'
     const results = await db
       .select({
-        date: sql`date(${user.createdAt}, 'unixepoch')`.as('date'),
+        date: sql<string>`date(${user.createdAt}, 'unixepoch')`.as('date'),
         count: count(),
       })
       .from(user)
@@ -335,13 +363,14 @@ statsRoutes.openapi(signupsRoute, async c => {
       total: filledData.reduce((sum, d) => sum + d.count, 0),
       days,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching signup stats:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_signup_stats',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -349,6 +378,7 @@ statsRoutes.openapi(signupsRoute, async c => {
  * GET /api/admin/stats/organizations
  * Returns daily organization creation counts
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 statsRoutes.openapi(organizationsRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
@@ -362,7 +392,7 @@ statsRoutes.openapi(organizationsRoute, async c => {
     // Pass Date object to gte() since createdAt uses mode: 'timestamp'
     const results = await db
       .select({
-        date: sql`date(${organization.createdAt}, 'unixepoch')`.as('date'),
+        date: sql<string>`date(${organization.createdAt}, 'unixepoch')`.as('date'),
         count: count(),
       })
       .from(organization)
@@ -377,13 +407,14 @@ statsRoutes.openapi(organizationsRoute, async c => {
       total: filledData.reduce((sum, d) => sum + d.count, 0),
       days,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching organization stats:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_org_stats',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -391,6 +422,7 @@ statsRoutes.openapi(organizationsRoute, async c => {
  * GET /api/admin/stats/projects
  * Returns daily project creation counts
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 statsRoutes.openapi(projectsRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
@@ -404,7 +436,7 @@ statsRoutes.openapi(projectsRoute, async c => {
     // Pass Date object to gte() since createdAt uses mode: 'timestamp'
     const results = await db
       .select({
-        date: sql`date(${projects.createdAt}, 'unixepoch')`.as('date'),
+        date: sql<string>`date(${projects.createdAt}, 'unixepoch')`.as('date'),
         count: count(),
       })
       .from(projects)
@@ -419,20 +451,35 @@ statsRoutes.openapi(projectsRoute, async c => {
       total: filledData.reduce((sum, d) => sum + d.count, 0),
       days,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching project stats:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_project_stats',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
+
+interface WebhookRow {
+  date: string | null;
+  status: string | null;
+  count: number;
+}
+
+interface WebhookDayData {
+  date: string;
+  success: number;
+  failed: number;
+  pending: number;
+}
 
 /**
  * GET /api/admin/stats/webhooks
  * Returns webhook event counts by day, grouped by success/failure
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 statsRoutes.openapi(webhooksRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
@@ -448,7 +495,7 @@ statsRoutes.openapi(webhooksRoute, async c => {
     // processedAt is stored as unix timestamp
     const results = await db
       .select({
-        date: sql`date(${stripeEventLedger.processedAt}, 'unixepoch')`.as('date'),
+        date: sql<string>`date(${stripeEventLedger.processedAt}, 'unixepoch')`.as('date'),
         status: stripeEventLedger.status,
         count: count(),
       })
@@ -458,12 +505,13 @@ statsRoutes.openapi(webhooksRoute, async c => {
       .orderBy(sql`date(${stripeEventLedger.processedAt}, 'unixepoch')`);
 
     // Transform into { date, success, failed, pending } format
-    const dateMap = new Map();
-    for (const row of results) {
+    const dateMap = new Map<string, WebhookDayData>();
+    for (const row of results as WebhookRow[]) {
+      if (!row.date) continue;
       if (!dateMap.has(row.date)) {
         dateMap.set(row.date, { date: row.date, success: 0, failed: 0, pending: 0 });
       }
-      const entry = dateMap.get(row.date);
+      const entry = dateMap.get(row.date)!;
       // Map status values: processed -> success, failed -> failed, received -> pending
       if (row.status === 'processed') {
         entry.success = row.count;
@@ -475,7 +523,7 @@ statsRoutes.openapi(webhooksRoute, async c => {
     }
 
     // Fill missing days
-    const filledData = [];
+    const filledData: WebhookDayData[] = [];
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
@@ -493,13 +541,14 @@ statsRoutes.openapi(webhooksRoute, async c => {
       },
       days,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching webhook stats:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_webhook_stats',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -507,6 +556,7 @@ statsRoutes.openapi(webhooksRoute, async c => {
  * GET /api/admin/stats/subscriptions
  * Returns subscription status breakdown from Stripe
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 statsRoutes.openapi(subscriptionsRoute, async c => {
   try {
     const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
@@ -528,13 +578,14 @@ statsRoutes.openapi(subscriptionsRoute, async c => {
       canceled: statusCounts[3].data.length,
       hasMore: statusCounts.some(r => r.has_more),
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching subscription stats:', error);
-    const stripeError = createDomainError(SYSTEM_ERRORS.EXTERNAL_SERVICE_ERROR, {
+    const stripeError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       service: 'Stripe',
       message: error.message,
     });
-    return c.json(stripeError, stripeError.statusCode);
+    return c.json(stripeError, stripeError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -542,6 +593,7 @@ statsRoutes.openapi(subscriptionsRoute, async c => {
  * GET /api/admin/stats/revenue
  * Returns monthly revenue from Stripe
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 statsRoutes.openapi(revenueRoute, async c => {
   const query = c.req.valid('query');
   const months = Math.min(parseInt(query.months || '6', 10) || 6, 12);
@@ -567,7 +619,7 @@ statsRoutes.openapi(revenueRoute, async c => {
     });
 
     // Aggregate by month
-    const monthlyRevenue = new Map();
+    const monthlyRevenue = new Map<string, number>();
     for (const invoice of invoices.data) {
       const date = new Date(invoice.created * 1000);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -576,7 +628,7 @@ statsRoutes.openapi(revenueRoute, async c => {
     }
 
     // Fill missing months with zero
-    const data = [];
+    const data: Array<{ month: string; label: string; revenue: number }> = [];
     for (let i = months - 1; i >= 0; i--) {
       const d = new Date();
       d.setMonth(d.getMonth() - i);
@@ -595,34 +647,15 @@ statsRoutes.openapi(revenueRoute, async c => {
       currency: 'usd',
       months,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching revenue stats:', error);
-    const stripeError = createDomainError(SYSTEM_ERRORS.EXTERNAL_SERVICE_ERROR, {
+    const stripeError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       service: 'Stripe',
       message: error.message,
     });
-    return c.json(stripeError, stripeError.statusCode);
+    return c.json(stripeError, stripeError.statusCode as ContentfulStatusCode);
   }
 });
-
-/**
- * Helper function to fill missing days in time series data
- */
-function fillMissingDays(results, days) {
-  const dateMap = new Map(results.map(r => [r.date, r.count]));
-  const filledData = [];
-
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    filledData.push({
-      date: dateStr,
-      count: dateMap.get(dateStr) || 0,
-    });
-  }
-
-  return filledData;
-}
 
 export { statsRoutes };

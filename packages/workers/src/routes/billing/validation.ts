@@ -3,14 +3,16 @@
  * Handles plan change validation logic
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { validatePlanChange } from '@/lib/billingResolver.js';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { resolveOrgId } from './helpers/orgContext.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env } from '../../types';
 
-const billingValidationRoutes = new OpenAPIHono({
+const billingValidationRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -49,7 +51,7 @@ const ValidationErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('ValidationError');
 
@@ -90,8 +92,15 @@ const validatePlanChangeRoute = createRoute({
 // Route handlers
 billingValidationRoutes.use('*', requireAuth);
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingValidationRoutes.openapi(validatePlanChangeRoute, async c => {
   const { user, session } = getAuth(c);
+
+  if (!user || !session) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const db = createDb(c.env.DB);
 
   try {
@@ -103,19 +112,20 @@ billingValidationRoutes.openapi(validatePlanChangeRoute, async c => {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'no_org_found',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const validationResult = await validatePlanChange(db, orgId, targetPlan);
 
     return c.json(validationResult);
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error validating plan change:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'validate_plan_change',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 

@@ -2,19 +2,36 @@
  * Subscription webhook event handlers
  * Handles customer.subscription.* events from Stripe
  */
-
+import type Stripe from 'stripe';
 import { eq } from 'drizzle-orm';
 import { subscription } from '@/db/schema.js';
+import type { WebhookContext, WebhookResult } from './types.js';
+import { createDb } from '@/db/client.js';
+import type { Env } from '../../../types';
+
+// Helper to get typed db from context
+function getDb(ctx: WebhookContext) {
+  return ctx.db as ReturnType<typeof createDb>;
+}
+
+// The Stripe API version used (2025-12-15.clover) uses different field names
+// These interfaces extend the Stripe types with the fields we need
+interface SubscriptionWithPeriods extends Stripe.Subscription {
+  current_period_start?: number;
+  current_period_end?: number;
+}
 
 /**
  * Handle customer.subscription.created
  * Note: Better Auth Stripe plugin typically handles initial creation
  * This handler ensures we catch any subscriptions created outside that flow
- * @param {Stripe.Subscription} sub - Stripe subscription object
- * @param {object} ctx - Context with db, logger, env
  */
-export async function handleSubscriptionCreated(sub, ctx) {
-  const { db, logger } = ctx;
+export async function handleSubscriptionCreated(
+  sub: Stripe.Subscription,
+  ctx: WebhookContext,
+): Promise<WebhookResult> {
+  const db = getDb(ctx);
+  const { logger } = ctx;
 
   // Check if subscription already exists (created by Better Auth)
   const existing = await db
@@ -61,8 +78,8 @@ export async function handleSubscriptionCreated(sub, ctx) {
     stripeCustomerId: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id,
     stripeSubscriptionId: sub.id,
     status: sub.status,
-    periodStart: sub.current_period_start ? new Date(sub.current_period_start * 1000) : null,
-    periodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
+    periodStart: (sub as SubscriptionWithPeriods).current_period_start ? new Date((sub as SubscriptionWithPeriods).current_period_start! * 1000) : null,
+    periodEnd: (sub as SubscriptionWithPeriods).current_period_end ? new Date((sub as SubscriptionWithPeriods).current_period_end! * 1000) : null,
     cancelAtPeriodEnd: sub.cancel_at_period_end,
     cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
     trialStart: sub.trial_start ? new Date(sub.trial_start * 1000) : null,
@@ -92,11 +109,13 @@ export async function handleSubscriptionCreated(sub, ctx) {
 /**
  * Handle customer.subscription.updated
  * Syncs subscription status, period dates, and cancellation state
- * @param {Stripe.Subscription} sub - Stripe subscription object
- * @param {object} ctx - Context with db, logger, env
  */
-export async function handleSubscriptionUpdated(sub, ctx) {
-  const { db, logger } = ctx;
+export async function handleSubscriptionUpdated(
+  sub: Stripe.Subscription,
+  ctx: WebhookContext,
+): Promise<WebhookResult> {
+  const db = getDb(ctx);
+  const { logger } = ctx;
 
   // Find subscription by Stripe ID
   const existing = await db
@@ -118,7 +137,7 @@ export async function handleSubscriptionUpdated(sub, ctx) {
   }
 
   // Track what changed for logging
-  const changes = [];
+  const changes: string[] = [];
   if (existing.status !== sub.status) {
     changes.push(`status: ${existing.status} -> ${sub.status}`);
   }
@@ -131,8 +150,8 @@ export async function handleSubscriptionUpdated(sub, ctx) {
     .update(subscription)
     .set({
       status: sub.status,
-      periodStart: sub.current_period_start ? new Date(sub.current_period_start * 1000) : null,
-      periodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
+      periodStart: (sub as SubscriptionWithPeriods).current_period_start ? new Date((sub as SubscriptionWithPeriods).current_period_start! * 1000) : null,
+      periodEnd: (sub as SubscriptionWithPeriods).current_period_end ? new Date((sub as SubscriptionWithPeriods).current_period_end! * 1000) : null,
       cancelAtPeriodEnd: sub.cancel_at_period_end,
       cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
       canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
@@ -165,11 +184,13 @@ export async function handleSubscriptionUpdated(sub, ctx) {
 /**
  * Handle customer.subscription.deleted
  * Mark subscription as canceled in database
- * @param {Stripe.Subscription} sub - Stripe subscription object
- * @param {object} ctx - Context with db, logger, env
  */
-export async function handleSubscriptionDeleted(sub, ctx) {
-  const { db, logger } = ctx;
+export async function handleSubscriptionDeleted(
+  sub: Stripe.Subscription,
+  ctx: WebhookContext,
+): Promise<WebhookResult> {
+  const db = getDb(ctx);
+  const { logger } = ctx;
 
   const existing = await db
     .select()
@@ -219,11 +240,13 @@ export async function handleSubscriptionDeleted(sub, ctx) {
 /**
  * Handle customer.subscription.paused
  * Mark subscription as paused
- * @param {Stripe.Subscription} sub - Stripe subscription object
- * @param {object} ctx - Context with db, logger, env
  */
-export async function handleSubscriptionPaused(sub, ctx) {
-  const { db, logger } = ctx;
+export async function handleSubscriptionPaused(
+  sub: Stripe.Subscription,
+  ctx: WebhookContext,
+): Promise<WebhookResult> {
+  const db = getDb(ctx);
+  const { logger } = ctx;
 
   const existing = await db
     .select()
@@ -266,11 +289,13 @@ export async function handleSubscriptionPaused(sub, ctx) {
 /**
  * Handle customer.subscription.resumed
  * Mark subscription as active again
- * @param {Stripe.Subscription} sub - Stripe subscription object
- * @param {object} ctx - Context with db, logger, env
  */
-export async function handleSubscriptionResumed(sub, ctx) {
-  const { db, logger } = ctx;
+export async function handleSubscriptionResumed(
+  sub: Stripe.Subscription,
+  ctx: WebhookContext,
+): Promise<WebhookResult> {
+  const db = getDb(ctx);
+  const { logger } = ctx;
 
   const existing = await db
     .select()
@@ -290,8 +315,8 @@ export async function handleSubscriptionResumed(sub, ctx) {
     .update(subscription)
     .set({
       status: sub.status || 'active',
-      periodStart: sub.current_period_start ? new Date(sub.current_period_start * 1000) : null,
-      periodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
+      periodStart: (sub as SubscriptionWithPeriods).current_period_start ? new Date((sub as SubscriptionWithPeriods).current_period_start! * 1000) : null,
+      periodEnd: (sub as SubscriptionWithPeriods).current_period_end ? new Date((sub as SubscriptionWithPeriods).current_period_end! * 1000) : null,
       updatedAt: new Date(),
     })
     .where(eq(subscription.id, existing.id));

@@ -3,6 +3,7 @@
  * Fetches invoices from Stripe for the current org's subscription
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { subscription } from '@/db/schema.js';
@@ -11,8 +12,9 @@ import { resolveOrgId } from './helpers/orgContext.js';
 import { eq, desc, and, or } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env } from '../../types';
 
-const billingInvoicesRoutes = new OpenAPIHono({
+const billingInvoicesRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -41,7 +43,7 @@ const InvoicesErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('InvoicesError');
 
@@ -73,8 +75,15 @@ const getInvoicesRoute = createRoute({
 // Route handlers
 billingInvoicesRoutes.use('*', requireAuth);
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingInvoicesRoutes.openapi(getInvoicesRoute, async c => {
   const { user, session } = getAuth(c);
+
+  if (!user || !session) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const db = createDb(c.env.DB);
 
   try {
@@ -84,7 +93,7 @@ billingInvoicesRoutes.openapi(getInvoicesRoute, async c => {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'no_org_found',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Get the subscription for this org to find the Stripe customer ID
@@ -134,19 +143,20 @@ billingInvoicesRoutes.openapi(getInvoicesRoute, async c => {
     }));
 
     return c.json({ invoices });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error & { code?: string; statusCode?: number };
     console.error('Error fetching invoices:', error);
 
     // If error is already a domain error, return it as-is
     if (error.code && error.statusCode) {
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'fetch_invoices',
       originalError: error.message,
     });
-    return c.json(systemError, systemError.statusCode);
+    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
   }
 });
 

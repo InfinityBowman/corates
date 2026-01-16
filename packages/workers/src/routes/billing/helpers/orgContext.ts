@@ -2,16 +2,28 @@
  * Helper to resolve the org context from session or user's first membership
  * Extracts repeated pattern used across billing endpoints
  */
+import type { DrizzleD1Database } from 'drizzle-orm/d1';
+import type * as schema from '@/db/schema.js';
+
+interface Session {
+  activeOrganizationId?: string | null;
+}
+
+interface ResolveOrgParams {
+  db: DrizzleD1Database<typeof schema>;
+  session: Session | null;
+  userId: string;
+}
+
+interface OrgIdWithRole {
+  orgId: string | null;
+  role: string | null;
+}
 
 /**
  * Get orgId from session's activeOrganizationId or user's first org
- * @param {Object} params
- * @param {Object} params.db - Database client
- * @param {Object} params.session - User session (from getAuth)
- * @param {string} params.userId - User ID (from getAuth)
- * @returns {Promise<string|null>} orgId or null if not found
  */
-export async function resolveOrgId({ db, session, userId }) {
+export async function resolveOrgId({ db, session, userId }: ResolveOrgParams): Promise<string | null> {
   let orgId = session?.activeOrganizationId;
 
   // If no active org in session, get user's first org
@@ -32,15 +44,10 @@ export async function resolveOrgId({ db, session, userId }) {
 
 /**
  * Get orgId and membership role from session or user's first membership
- * @param {Object} params
- * @param {Object} params.db - Database client
- * @param {Object} params.session - User session (from getAuth)
- * @param {string} params.userId - User ID (from getAuth)
- * @returns {Promise<{orgId: string|null, role: string|null}>}
  */
-export async function resolveOrgIdWithRole({ db, session, userId }) {
+export async function resolveOrgIdWithRole({ db, session, userId }: ResolveOrgParams): Promise<OrgIdWithRole> {
   let orgId = session?.activeOrganizationId;
-  let role = null;
+  let role: string | null = null;
 
   if (!orgId) {
     const { member } = await import('@/db/schema.js');

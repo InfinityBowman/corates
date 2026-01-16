@@ -3,15 +3,17 @@
  * Handles trial and access grant management
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
-import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { GRANT_CONFIG } from '@/config/constants.js';
 import { resolveOrgIdWithRole } from './helpers/orgContext.js';
 import { requireOrgOwner } from '@/policies';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env } from '../../types';
 
-const billingGrantRoutes = new OpenAPIHono({
+const billingGrantRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -29,7 +31,7 @@ const GrantErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('GrantError');
 
@@ -65,12 +67,24 @@ const startTrialRoute = createRoute({
 // Route handlers
 billingGrantRoutes.use('*', requireAuth);
 
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingGrantRoutes.openapi(startTrialRoute, async c => {
   const { user, session } = getAuth(c);
+
+  if (!user || !session) {
+    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  }
+
   const db = createDb(c.env.DB);
 
   try {
     const { orgId, role } = await resolveOrgIdWithRole({ db, session, userId: user.id });
+
+    if (!orgId) {
+      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
+      return c.json(error, error.statusCode as ContentfulStatusCode);
+    }
 
     // Verify user is org owner
     requireOrgOwner({ orgId, role });
@@ -88,7 +102,7 @@ billingGrantRoutes.openapi(startTrialRoute, async c => {
         },
         'Trial grant already exists for this organization. Each organization can only have one trial grant.',
       );
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Create trial grant (configured trial days from now)
@@ -106,23 +120,24 @@ billingGrantRoutes.openapi(startTrialRoute, async c => {
     });
 
     return c.json({
-      success: true,
+      success: true as const,
       grantId,
       expiresAt: Math.floor(expiresAt.getTime() / 1000),
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error & { code?: string; statusCode?: number };
     console.error('Error starting trial:', error);
 
     // If error is already a domain error, return it as-is
     if (error.code && error.statusCode) {
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'start_trial',
       originalError: error.message,
     });
-    return c.json(systemError, systemError.statusCode);
+    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
   }
 });
 

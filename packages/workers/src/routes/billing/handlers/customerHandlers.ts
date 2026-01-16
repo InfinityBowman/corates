@@ -4,22 +4,29 @@
  * Handles Stripe customer lifecycle events for data synchronization.
  * These events ensure local customer data stays in sync with Stripe.
  */
-
+import type Stripe from 'stripe';
 import { eq } from 'drizzle-orm';
 import { user } from '@/db/schema.js';
+import type { WebhookContext, WebhookResult } from './types.js';
+import { createDb } from '@/db/client.js';
+
+// Helper to get typed db from context
+function getDb(ctx: WebhookContext) {
+  return ctx.db as ReturnType<typeof createDb>;
+}
 
 /**
  * Handle customer.updated events
  *
  * Syncs customer metadata changes from Stripe to local records.
  * Important for keeping email, name, and metadata in sync.
- *
- * @param {import('stripe').Stripe.Customer} customer - The updated customer object
- * @param {object} ctx - Request context with db and logger
- * @returns {Promise<{handled: boolean, result: string, ledgerContext?: object}>}
  */
-export async function handleCustomerUpdated(customer, ctx) {
-  const { db, logger } = ctx;
+export async function handleCustomerUpdated(
+  customer: Stripe.Customer,
+  ctx: WebhookContext,
+): Promise<WebhookResult> {
+  const db = getDb(ctx);
+  const { logger } = ctx;
 
   const stripeCustomerId = customer.id;
 
@@ -45,7 +52,7 @@ export async function handleCustomerUpdated(customer, ctx) {
   }
 
   // Extract syncable fields from Stripe customer
-  const updates = {};
+  const updates: { name?: string } = {};
   let hasChanges = false;
 
   // Only sync email if it changed and Stripe is the source of truth
@@ -98,13 +105,13 @@ export async function handleCustomerUpdated(customer, ctx) {
  * Handles customer deletion from Stripe. This is a rare event that
  * typically only happens via Stripe Dashboard or API deletion.
  * We don't delete the user, just clear their Stripe association.
- *
- * @param {import('stripe').Stripe.Customer} customer - The deleted customer object
- * @param {object} ctx - Request context with db and logger
- * @returns {Promise<{handled: boolean, result: string, ledgerContext?: object}>}
  */
-export async function handleCustomerDeleted(customer, ctx) {
-  const { db, logger } = ctx;
+export async function handleCustomerDeleted(
+  customer: Stripe.Customer,
+  ctx: WebhookContext,
+): Promise<WebhookResult> {
+  const db = getDb(ctx);
+  const { logger } = ctx;
 
   const stripeCustomerId = customer.id;
 
