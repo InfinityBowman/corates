@@ -4,6 +4,8 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { Context } from 'hono';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createDb } from '@/db/client.js';
 import { subscription, orgAccessGrants, organization } from '@/db/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
@@ -17,18 +19,38 @@ import {
   revokeGrant,
   getGrantsByOrgId,
 } from '@/db/orgAccessGrants.js';
-import { getPlan, getGrantPlan } from '@corates/shared/plans';
+import { getPlan, getGrantPlan, type GrantType } from '@corates/shared/plans';
 import { notifyOrgMembers, EventTypes } from '@/lib/notify.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env, AppVariables } from '../../types';
+import type { DrizzleD1Database } from 'drizzle-orm/d1';
+import type * as schema from '@/db/schema.js';
 
-const billingRoutes = new OpenAPIHono({
+type Database = DrizzleD1Database<typeof schema>;
+
+const billingRoutes = new OpenAPIHono<{ Bindings: Env; Variables: AppVariables }>({
   defaultHook: validationHook,
 });
+
+interface SubscriptionNotificationData {
+  subscriptionId?: string;
+  tier?: string;
+  status?: string;
+  periodEnd?: Date | number | null;
+  cancelAtPeriodEnd?: boolean | number | null;
+  endedAt?: Date | number | null;
+}
 
 /**
  * Helper to send subscription notifications asynchronously
  */
-function notifySubscriptionChange(c, db, orgId, subscriptionData, action) {
+function notifySubscriptionChange(
+  c: Context<{ Bindings: Env; Variables: AppVariables }>,
+  db: Database,
+  orgId: string,
+  subscriptionData: SubscriptionNotificationData,
+  action: string,
+) {
   if (!c.executionCtx?.waitUntil) return;
 
   c.executionCtx.waitUntil(
@@ -36,7 +58,7 @@ function notifySubscriptionChange(c, db, orgId, subscriptionData, action) {
       try {
         const result = await notifyOrgMembers(c.env, db, orgId, {
           type: EventTypes.SUBSCRIPTION_UPDATED,
-          data: subscriptionData,
+          data: subscriptionData as Record<string, unknown>,
         });
         console.log(`[Admin] Subscription ${action} notification sent:`, {
           orgId,
@@ -45,9 +67,10 @@ function notifySubscriptionChange(c, db, orgId, subscriptionData, action) {
           failed: result.failed,
         });
       } catch (err) {
+        const error = err as Error;
         console.error(`[Admin] Subscription ${action} notification error:`, {
           orgId,
-          error: err.message,
+          error: error.message,
         });
       }
     })(),
@@ -58,8 +81,8 @@ function notifySubscriptionChange(c, db, orgId, subscriptionData, action) {
 const PlanDetailsSchema = z
   .object({
     name: z.string(),
-    entitlements: z.record(z.boolean()).optional(),
-    quotas: z.record(z.number()).optional(),
+    entitlements: z.record(z.string(), z.boolean()).optional(),
+    quotas: z.record(z.string(), z.number()).optional(),
   })
   .openapi('AdminBillingPlanDetails');
 
@@ -69,8 +92,8 @@ const BillingInfoSchema = z
     source: z.string(),
     accessMode: z.string(),
     plan: PlanDetailsSchema,
-    subscription: z.record(z.unknown()).nullable(),
-    grant: z.record(z.unknown()).nullable(),
+    subscription: z.record(z.string(), z.unknown()).nullable(),
+    grant: z.record(z.string(), z.unknown()).nullable(),
   })
   .openapi('AdminBillingInfo');
 
@@ -144,7 +167,7 @@ const BillingErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('AdminBillingError');
 
@@ -187,7 +210,7 @@ const CreateGrantBodySchema = z.object({
   type: z.enum(['trial', 'single_project']).openapi({ description: 'Grant type' }),
   startsAt: z.coerce.date().openapi({ description: 'Grant start date' }),
   expiresAt: z.coerce.date().openapi({ description: 'Grant expiration date' }),
-  metadata: z.record(z.any()).optional().openapi({ description: 'Optional metadata' }),
+  metadata: z.record(z.string(), z.unknown()).optional().openapi({ description: 'Optional metadata' }),
 });
 
 const UpdateGrantBodySchema = z.object({
@@ -595,6 +618,7 @@ const grantSingleProjectRoute = createRoute({
  * GET /api/admin/orgs/:orgId/billing
  * Get org billing resolution and details
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(getBillingRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -607,7 +631,7 @@ billingRoutes.openapi(getBillingRoute, async c => {
         field: 'orgId',
         value: orgId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Get billing resolution
@@ -627,7 +651,7 @@ billingRoutes.openapi(getBillingRoute, async c => {
     // Format response
     const effectivePlan =
       orgBilling.source === 'grant' ?
-        getGrantPlan(orgBilling.effectivePlanId)
+        getGrantPlan(orgBilling.effectivePlanId as GrantType)
       : getPlan(orgBilling.effectivePlanId);
 
     return c.json({
@@ -649,13 +673,14 @@ billingRoutes.openapi(getBillingRoute, async c => {
       subscriptions: allSubscriptions,
       grants: allGrants,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching org billing:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_org_billing',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -663,6 +688,7 @@ billingRoutes.openapi(getBillingRoute, async c => {
  * POST /api/admin/orgs/:orgId/subscriptions
  * Manually create a subscription for an org
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(createSubscriptionRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -676,7 +702,7 @@ billingRoutes.openapi(createSubscriptionRoute, async c => {
         field: 'orgId',
         value: orgId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Validate plan
@@ -686,7 +712,7 @@ billingRoutes.openapi(createSubscriptionRoute, async c => {
         field: 'plan',
         value: body.plan,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const subscriptionId = crypto.randomUUID();
@@ -727,13 +753,14 @@ billingRoutes.openapi(createSubscriptionRoute, async c => {
     );
 
     return c.json({ success: true, subscription: createdSubscription }, 201);
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error creating subscription:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'create_subscription',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -741,6 +768,7 @@ billingRoutes.openapi(createSubscriptionRoute, async c => {
  * PUT /api/admin/orgs/:orgId/subscriptions/:subscriptionId
  * Update a subscription
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(updateSubscriptionRoute, async c => {
   const { orgId, subscriptionId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -759,10 +787,10 @@ billingRoutes.openapi(updateSubscriptionRoute, async c => {
         field: 'subscriptionId',
         value: subscriptionId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
-    const updateData = {
+    const updateData: Record<string, unknown> = {
       updatedAt: new Date(),
     };
 
@@ -797,13 +825,14 @@ billingRoutes.openapi(updateSubscriptionRoute, async c => {
     );
 
     return c.json({ success: true, subscription: updatedSubscription });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error updating subscription:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'update_subscription',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -811,6 +840,7 @@ billingRoutes.openapi(updateSubscriptionRoute, async c => {
  * DELETE /api/admin/orgs/:orgId/subscriptions/:subscriptionId
  * Cancel/delete a subscription
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(deleteSubscriptionRoute, async c => {
   const { orgId, subscriptionId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -828,7 +858,7 @@ billingRoutes.openapi(deleteSubscriptionRoute, async c => {
         field: 'subscriptionId',
         value: subscriptionId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Cancel subscription (set status to canceled and endedAt)
@@ -860,13 +890,14 @@ billingRoutes.openapi(deleteSubscriptionRoute, async c => {
     );
 
     return c.json({ success: true, message: 'Subscription canceled' });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error canceling subscription:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'cancel_subscription',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -874,6 +905,7 @@ billingRoutes.openapi(deleteSubscriptionRoute, async c => {
  * POST /api/admin/orgs/:orgId/grants
  * Create a grant manually
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(createGrantRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -887,7 +919,7 @@ billingRoutes.openapi(createGrantRoute, async c => {
         field: 'orgId',
         value: orgId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Validate grant type
@@ -896,7 +928,7 @@ billingRoutes.openapi(createGrantRoute, async c => {
         field: 'type',
         value: body.type,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Enforce trial uniqueness
@@ -911,7 +943,7 @@ billingRoutes.openapi(createGrantRoute, async c => {
           },
           'Trial grant already exists for this organization. Each organization can only have one trial grant.',
         );
-        return c.json(error, error.statusCode);
+        return c.json(error, error.statusCode as ContentfulStatusCode);
       }
     }
 
@@ -921,7 +953,7 @@ billingRoutes.openapi(createGrantRoute, async c => {
         field: 'expiresAt',
         value: 'expiresAt must be after startsAt',
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const grantId = crypto.randomUUID();
@@ -935,13 +967,14 @@ billingRoutes.openapi(createGrantRoute, async c => {
     });
 
     return c.json({ success: true, grant: createdGrant }, 201);
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error creating grant:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'create_grant',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -949,6 +982,7 @@ billingRoutes.openapi(createGrantRoute, async c => {
  * PUT /api/admin/orgs/:orgId/grants/:grantId
  * Update a grant
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(updateGrantRoute, async c => {
   const { orgId, grantId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -962,7 +996,7 @@ billingRoutes.openapi(updateGrantRoute, async c => {
         field: 'grantId',
         value: grantId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Update grant
@@ -993,14 +1027,15 @@ billingRoutes.openapi(updateGrantRoute, async c => {
       field: 'body',
       value: 'At least one field (expiresAt or revokedAt) must be provided',
     });
-    return c.json(error, error.statusCode);
-  } catch (error) {
+    return c.json(error, error.statusCode as ContentfulStatusCode);
+  } catch (err) {
+    const error = err as Error;
     console.error('Error updating grant:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'update_grant',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -1008,6 +1043,7 @@ billingRoutes.openapi(updateGrantRoute, async c => {
  * DELETE /api/admin/orgs/:orgId/grants/:grantId
  * Revoke a grant
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(deleteGrantRoute, async c => {
   const { orgId, grantId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -1020,20 +1056,21 @@ billingRoutes.openapi(deleteGrantRoute, async c => {
         field: 'grantId',
         value: grantId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Revoke grant
     await revokeGrant(db, grantId);
 
     return c.json({ success: true, message: 'Grant revoked' });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error revoking grant:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'revoke_grant',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -1041,6 +1078,7 @@ billingRoutes.openapi(deleteGrantRoute, async c => {
  * POST /api/admin/orgs/:orgId/grant-trial
  * Convenience endpoint to create a trial grant (14 days from now)
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(grantTrialRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -1053,7 +1091,7 @@ billingRoutes.openapi(grantTrialRoute, async c => {
         field: 'orgId',
         value: orgId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Check for existing trial
@@ -1067,7 +1105,7 @@ billingRoutes.openapi(grantTrialRoute, async c => {
         },
         'Trial grant already exists for this organization.',
       );
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     const now = new Date();
@@ -1085,13 +1123,14 @@ billingRoutes.openapi(grantTrialRoute, async c => {
     });
 
     return c.json({ success: true, grant: createdGrant }, 201);
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error creating trial grant:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'create_trial_grant',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -1099,6 +1138,7 @@ billingRoutes.openapi(grantTrialRoute, async c => {
  * POST /api/admin/orgs/:orgId/grant-single-project
  * Convenience endpoint to create a single_project grant (6 months from now)
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(grantSingleProjectRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -1111,7 +1151,7 @@ billingRoutes.openapi(grantSingleProjectRoute, async c => {
         field: 'orgId',
         value: orgId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Check for existing single_project grant (extend if exists)
@@ -1123,14 +1163,14 @@ billingRoutes.openapi(grantSingleProjectRoute, async c => {
       const existingExpiresAtTimestamp =
         existingGrant.expiresAt instanceof Date ?
           Math.floor(existingGrant.expiresAt.getTime() / 1000)
-        : existingGrant.expiresAt;
+        : (existingGrant.expiresAt as number);
       const nowTimestamp = Math.floor(now.getTime() / 1000);
       const baseExpiresAt = Math.max(nowTimestamp, existingExpiresAtTimestamp);
       const newExpiresAt = new Date(baseExpiresAt * 1000);
       newExpiresAt.setMonth(newExpiresAt.getMonth() + 6);
 
       const updatedGrant = await updateGrantExpiresAt(db, existingGrant.id, newExpiresAt);
-      return c.json({ success: true, grant: updatedGrant, action: 'extended' });
+      return c.json({ success: true, grant: updatedGrant, action: 'extended' as const });
     }
 
     // Create new grant (6 months from now)
@@ -1147,14 +1187,15 @@ billingRoutes.openapi(grantSingleProjectRoute, async c => {
       metadata: { createdBy: 'admin' },
     });
 
-    return c.json({ success: true, grant: createdGrant, action: 'created' }, 201);
-  } catch (error) {
+    return c.json({ success: true, grant: createdGrant, action: 'created' as const }, 201);
+  } catch (err) {
+    const error = err as Error;
     console.error('Error creating single_project grant:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'create_single_project_grant',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 

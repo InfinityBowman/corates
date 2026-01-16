@@ -4,6 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createDb } from '@/db/client.js';
 import { subscription, organization, stripeEventLedger } from '@/db/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
@@ -11,8 +12,9 @@ import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/sh
 import { getLedgerEntriesByOrgId, LedgerStatus } from '@/db/stripeEventLedger.js';
 import Stripe from 'stripe';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env } from '../../types';
 
-const billingObservabilityRoutes = new OpenAPIHono({
+const billingObservabilityRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -32,7 +34,7 @@ const StuckStateSchema = z
     stripeCheckoutSessionId: z.string().nullable().optional(),
     stripeCustomerId: z.string().nullable().optional(),
     failedCount: z.number().optional(),
-    recentFailures: z.array(z.record(z.unknown())).optional(),
+    recentFailures: z.array(z.record(z.string(), z.unknown())).optional(),
     lagMinutes: z.number().optional(),
     payloadHash: z.string().optional(),
     periodEnd: z.number().optional(),
@@ -61,7 +63,7 @@ const ReconcileResponseSchema = z
       hasHighIssues: z.boolean(),
     }),
     stuckStates: z.array(StuckStateSchema),
-    stripeComparison: z.record(z.unknown()).nullable(),
+    stripeComparison: z.record(z.string(), z.unknown()).nullable(),
   })
   .openapi('ReconcileResponse');
 
@@ -117,8 +119,8 @@ const LedgerResponseSchema = z
   .object({
     stats: z.object({
       total: z.number(),
-      byStatus: z.record(z.number()),
-      byType: z.record(z.number()),
+      byStatus: z.record(z.string(), z.number()),
+      byType: z.record(z.string(), z.number()),
     }),
     entries: z.array(LedgerEntrySchema),
   })
@@ -129,7 +131,7 @@ const ObservabilityErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('ObservabilityError');
 
@@ -260,10 +262,46 @@ const ledgerRoute = createRoute({
   },
 });
 
+interface StuckState {
+  type: string;
+  severity?: 'critical' | 'high' | 'medium' | 'low';
+  subscriptionId?: string;
+  stripeSubscriptionId?: string | null;
+  status?: string;
+  ageMinutes?: number;
+  threshold?: number;
+  description?: string;
+  ledgerId?: string;
+  stripeEventId?: string | null;
+  stripeCheckoutSessionId?: string | null;
+  stripeCustomerId?: string | null;
+  failedCount?: number;
+  recentFailures?: Record<string, unknown>[];
+  lagMinutes?: number;
+  payloadHash?: string;
+  periodEnd?: number;
+  localStatus?: string;
+  stripeStatus?: string;
+}
+
+interface StuckOrg {
+  type: string;
+  orgId?: string;
+  subscriptionId?: string;
+  stripeSubscriptionId?: string | null;
+  status?: string;
+  ageMinutes?: number;
+  ledgerId?: string;
+  stripeEventId?: string | null;
+  stripeCheckoutSessionId?: string | null;
+  failedCount?: number;
+}
+
 /**
  * GET /api/admin/orgs/:orgId/billing/reconcile
  * Reconciliation endpoint to detect stuck subscription states
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingObservabilityRoutes.openapi(reconcileRoute, async c => {
   const { orgId } = c.req.valid('param');
   const query = c.req.valid('query');
@@ -283,10 +321,10 @@ billingObservabilityRoutes.openapi(reconcileRoute, async c => {
         field: 'orgId',
         value: orgId,
       });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
-    const stuckStates = [];
+    const stuckStates: StuckState[] = [];
     const now = new Date();
     const nowTimestamp = Math.floor(now.getTime() / 1000);
 
@@ -300,6 +338,7 @@ billingObservabilityRoutes.openapi(reconcileRoute, async c => {
 
     for (const sub of allSubscriptions) {
       if (sub.status === 'incomplete' || sub.status === 'incomplete_expired') {
+        if (!sub.createdAt) continue;
         const createdAtTimestamp =
           sub.createdAt instanceof Date ?
             Math.floor(sub.createdAt.getTime() / 1000)
@@ -324,7 +363,7 @@ billingObservabilityRoutes.openapi(reconcileRoute, async c => {
         const periodEnd =
           sub.periodEnd instanceof Date ?
             Math.floor(sub.periodEnd.getTime() / 1000)
-          : sub.periodEnd;
+          : (sub.periodEnd as number | null);
         if (periodEnd && nowTimestamp > periodEnd) {
           stuckStates.push({
             type: 'past_due_expired',
@@ -351,7 +390,8 @@ billingObservabilityRoutes.openapi(reconcileRoute, async c => {
       const processedAtTimestamp =
         event.processedAt instanceof Date ?
           Math.floor(event.processedAt.getTime() / 1000)
-        : event.processedAt;
+        : (event.processedAt as number | null);
+      if (!processedAtTimestamp) continue;
       const ageMinutes = (nowTimestamp - processedAtTimestamp) / 60;
 
       if (ageMinutes > checkoutNoSubThresholdMinutes) {
@@ -405,7 +445,7 @@ billingObservabilityRoutes.openapi(reconcileRoute, async c => {
       const receivedAtTimestamp =
         event.receivedAt instanceof Date ?
           Math.floor(event.receivedAt.getTime() / 1000)
-        : event.receivedAt;
+        : (event.receivedAt as number);
       const lagMinutes = (nowTimestamp - receivedAtTimestamp) / 60;
 
       if (lagMinutes > processingLagThresholdMinutes) {
@@ -428,7 +468,7 @@ billingObservabilityRoutes.openapi(reconcileRoute, async c => {
     const ignoredCount = ignoredEvents.length;
 
     // 6. Optional: Compare with Stripe API
-    let stripeComparison = null;
+    let stripeComparison: Record<string, unknown> | null = null;
     if (checkStripe && c.env.STRIPE_SECRET_KEY) {
       try {
         const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
@@ -473,7 +513,8 @@ billingObservabilityRoutes.openapi(reconcileRoute, async c => {
             noActiveSubscription: true,
           };
         }
-      } catch (stripeError) {
+      } catch (stripeErr) {
+        const stripeError = stripeErr as Error;
         stripeComparison = {
           checked: true,
           error: stripeError.message,
@@ -505,13 +546,14 @@ billingObservabilityRoutes.openapi(reconcileRoute, async c => {
     };
 
     return c.json(response);
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error in billing reconcile:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'billing_reconcile',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -519,6 +561,7 @@ billingObservabilityRoutes.openapi(reconcileRoute, async c => {
  * GET /api/admin/billing/stuck-states
  * Global endpoint to find all orgs with stuck billing states
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingObservabilityRoutes.openapi(stuckStatesRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
@@ -530,7 +573,7 @@ billingObservabilityRoutes.openapi(stuckStatesRoute, async c => {
     const nowTimestamp = Math.floor(now.getTime() / 1000);
     const thresholdTimestamp = nowTimestamp - incompleteThresholdMinutes * 60;
 
-    const stuckOrgs = [];
+    const stuckOrgs: StuckOrg[] = [];
 
     // Find incomplete subscriptions older than threshold
     const incompleteSubscriptions = await db
@@ -548,8 +591,11 @@ billingObservabilityRoutes.openapi(stuckStatesRoute, async c => {
       .all();
 
     for (const sub of incompleteSubscriptions) {
+      if (!sub.createdAt) continue;
       const createdAtTimestamp =
-        sub.createdAt instanceof Date ? Math.floor(sub.createdAt.getTime() / 1000) : sub.createdAt;
+        sub.createdAt instanceof Date ?
+          Math.floor(sub.createdAt.getTime() / 1000)
+        : sub.createdAt;
 
       if (createdAtTimestamp < thresholdTimestamp) {
         stuckOrgs.push({
@@ -578,7 +624,7 @@ billingObservabilityRoutes.openapi(stuckStatesRoute, async c => {
       const processedAtTimestamp =
         event.processedAt instanceof Date ?
           Math.floor(event.processedAt.getTime() / 1000)
-        : event.processedAt;
+        : (event.processedAt as number | null);
 
       if (!processedAtTimestamp || nowTimestamp - processedAtTimestamp < 15 * 60) continue;
 
@@ -611,12 +657,15 @@ billingObservabilityRoutes.openapi(stuckStatesRoute, async c => {
       .where(eq(stripeEventLedger.status, LedgerStatus.FAILED))
       .all();
 
-    const failureCounts = failedWebhooks.reduce((acc, w) => {
-      if (w.orgId) {
-        acc[w.orgId] = (acc[w.orgId] || 0) + 1;
-      }
-      return acc;
-    }, /** @type {Record<string, number>} */ ({}));
+    const failureCounts: Record<string, number> = failedWebhooks.reduce(
+      (acc, w) => {
+        if (w.orgId) {
+          acc[w.orgId] = (acc[w.orgId] || 0) + 1;
+        }
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     for (const [orgId, count] of Object.entries(failureCounts)) {
       if (count >= 3) {
@@ -636,13 +685,14 @@ billingObservabilityRoutes.openapi(stuckStatesRoute, async c => {
       totalStuckOrgs: stuckOrgs.length,
       stuckOrgs,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error finding stuck states:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'find_stuck_states',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -650,6 +700,7 @@ billingObservabilityRoutes.openapi(stuckStatesRoute, async c => {
  * GET /api/admin/billing/ledger
  * View recent Stripe event ledger entries (global)
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingObservabilityRoutes.openapi(ledgerRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
@@ -658,9 +709,7 @@ billingObservabilityRoutes.openapi(ledgerRoute, async c => {
   const eventType = query.type;
 
   try {
-    let dbQuery = db.select().from(stripeEventLedger).orderBy(desc(stripeEventLedger.receivedAt));
-
-    // Apply filters if provided
+    // Build where conditions
     const conditions = [];
     if (status) {
       conditions.push(eq(stripeEventLedger.status, status));
@@ -669,27 +718,44 @@ billingObservabilityRoutes.openapi(ledgerRoute, async c => {
       conditions.push(eq(stripeEventLedger.type, eventType));
     }
 
-    if (conditions.length > 0) {
-      dbQuery = dbQuery.where(and(...conditions));
-    }
-
-    const entries = await dbQuery.limit(limit).all();
+    // Execute query with or without conditions
+    const entries =
+      conditions.length > 0 ?
+        await db
+          .select()
+          .from(stripeEventLedger)
+          .where(and(...conditions))
+          .orderBy(desc(stripeEventLedger.receivedAt))
+          .limit(limit)
+          .all()
+      : await db
+          .select()
+          .from(stripeEventLedger)
+          .orderBy(desc(stripeEventLedger.receivedAt))
+          .limit(limit)
+          .all();
 
     // Calculate summary stats
     const stats = {
       total: entries.length,
-      byStatus: entries.reduce((acc, e) => {
-        acc[e.status] = (acc[e.status] || 0) + 1;
-        return acc;
-      }, /** @type {Record<string, number>} */ ({})),
+      byStatus: entries.reduce(
+        (acc, e) => {
+          acc[e.status] = (acc[e.status] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      ),
       byType: entries
         .filter(e => e.type)
-        .reduce((acc, e) => {
-          if (e.type) {
-            acc[e.type] = (acc[e.type] || 0) + 1;
-          }
-          return acc;
-        }, /** @type {Record<string, number>} */ ({})),
+        .reduce(
+          (acc, e) => {
+            if (e.type) {
+              acc[e.type] = (acc[e.type] || 0) + 1;
+            }
+            return acc;
+          },
+          {} as Record<string, number>,
+        ),
     };
 
     return c.json({
@@ -714,13 +780,14 @@ billingObservabilityRoutes.openapi(ledgerRoute, async c => {
         route: e.route,
       })),
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching ledger:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_ledger',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 

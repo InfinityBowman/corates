@@ -4,6 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createDb } from '@/db/client.js';
 import {
   user,
@@ -19,7 +20,7 @@ import {
 } from '@/db/schema.js';
 import { eq, desc, sql, like, or, count } from 'drizzle-orm';
 import { resolveOrgAccess } from '@/lib/billingResolver.js';
-import { getPlan, getGrantPlan } from '@corates/shared/plans';
+import { getPlan, getGrantPlan, type GrantType } from '@corates/shared/plans';
 import { createAuth } from '@/auth/config.js';
 import {
   createDomainError,
@@ -31,8 +32,9 @@ import {
 import { TIME_DURATIONS } from '@/config/constants.js';
 import { syncMemberToDO } from '@/lib/project-sync.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env, AuthUser, AppVariables } from '../../types';
 
-const userRoutes = new OpenAPIHono({
+const userRoutes = new OpenAPIHono<{ Bindings: Env; Variables: AppVariables }>({
   defaultHook: validationHook,
 });
 
@@ -125,7 +127,7 @@ const OrgMembershipSchema = z
 
 const UserDetailsResponseSchema = z
   .object({
-    user: z.record(z.unknown()),
+    user: z.record(z.string(), z.unknown()),
     projects: z.array(UserProjectSchema),
     sessions: z.array(UserSessionSchema),
     accounts: z.array(LinkedAccountSchema),
@@ -163,7 +165,7 @@ const AdminErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('AdminUserError');
 
@@ -375,7 +377,7 @@ const impersonateUserRoute = createRoute({
       description: 'Impersonation started',
       content: {
         'application/json': {
-          schema: z.record(z.unknown()),
+          schema: z.record(z.string(), z.unknown()),
         },
       },
     },
@@ -528,6 +530,7 @@ const deleteUserRoute = createRoute({
  * GET /api/admin/stats
  * Get dashboard statistics
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(getStatsRoute, async c => {
   const db = createDb(c.env.DB);
 
@@ -552,13 +555,14 @@ userRoutes.openapi(getStatsRoute, async c => {
       activeSessions: sessionCount[0]?.count || 0,
       recentSignups: recentSignups?.count || 0,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching admin stats:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_admin_stats',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -566,6 +570,7 @@ userRoutes.openapi(getStatsRoute, async c => {
  * GET /api/admin/users
  * List all users with pagination and search
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(listUsersRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
@@ -576,58 +581,61 @@ userRoutes.openapi(listUsersRoute, async c => {
   const offset = (page - 1) * limit;
 
   try {
-    let dbQuery = db
-      .select({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        displayName: user.displayName,
-        username: user.username,
-        image: user.image,
-        avatarUrl: user.avatarUrl,
-        role: user.role,
-        emailVerified: user.emailVerified,
-        banned: user.banned,
-        banReason: user.banReason,
-        banExpires: user.banExpires,
-        stripeCustomerId: user.stripeCustomerId,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      })
-      .from(user);
-
-    // Apply search filter
-    if (search) {
-      const searchPattern = `%${search.toLowerCase()}%`;
-      dbQuery = dbQuery.where(
+    // Build search condition
+    const searchCondition =
+      search ?
         or(
-          like(sql`lower(${user.email})`, searchPattern),
-          like(sql`lower(${user.name})`, searchPattern),
-          like(sql`lower(${user.displayName})`, searchPattern),
-          like(sql`lower(${user.username})`, searchPattern),
-        ),
-      );
-    }
+          like(sql`lower(${user.email})`, `%${search.toLowerCase()}%`),
+          like(sql`lower(${user.name})`, `%${search.toLowerCase()}%`),
+          like(sql`lower(${user.displayName})`, `%${search.toLowerCase()}%`),
+          like(sql`lower(${user.username})`, `%${search.toLowerCase()}%`),
+        )
+      : undefined;
 
     // Get total count for pagination
     const [totalResult] = await db
       .select({ count: count() })
       .from(user)
-      .where(
-        search ?
-          or(
-            like(sql`lower(${user.email})`, `%${search.toLowerCase()}%`),
-            like(sql`lower(${user.name})`, `%${search.toLowerCase()}%`),
-          )
-        : undefined,
-      );
+      .where(searchCondition);
 
-    // Get paginated results
-    const users = await dbQuery.orderBy(desc(user.createdAt)).limit(limit).offset(offset);
+    // Get paginated results with or without search
+    const selectFields = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      displayName: user.displayName,
+      username: user.username,
+      image: user.image,
+      avatarUrl: user.avatarUrl,
+      role: user.role,
+      emailVerified: user.emailVerified,
+      banned: user.banned,
+      banReason: user.banReason,
+      banExpires: user.banExpires,
+      stripeCustomerId: user.stripeCustomerId,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+
+    const users =
+      searchCondition ?
+        await db
+          .select(selectFields)
+          .from(user)
+          .where(searchCondition)
+          .orderBy(desc(user.createdAt))
+          .limit(limit)
+          .offset(offset)
+      : await db
+          .select(selectFields)
+          .from(user)
+          .orderBy(desc(user.createdAt))
+          .limit(limit)
+          .offset(offset);
 
     // Fetch linked accounts for all users in the result set
     const userIds = users.map(u => u.id);
-    let accountsMap = {};
+    let accountsMap: Record<string, string[]> = {};
 
     if (userIds.length > 0) {
       const accounts = await db
@@ -644,11 +652,14 @@ userRoutes.openapi(listUsersRoute, async c => {
         );
 
       // Group accounts by userId
-      accountsMap = accounts.reduce((acc, a) => {
-        if (!acc[a.userId]) acc[a.userId] = [];
-        acc[a.userId].push(a.providerId);
-        return acc;
-      }, {});
+      accountsMap = accounts.reduce(
+        (acc, a) => {
+          if (!acc[a.userId]) acc[a.userId] = [];
+          acc[a.userId].push(a.providerId);
+          return acc;
+        },
+        {} as Record<string, string[]>,
+      );
     }
 
     // Merge providers into user objects
@@ -666,13 +677,14 @@ userRoutes.openapi(listUsersRoute, async c => {
         totalPages: Math.ceil((totalResult?.count || 0) / limit),
       },
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching users:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_users',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -680,6 +692,7 @@ userRoutes.openapi(listUsersRoute, async c => {
  * GET /api/admin/users/:userId
  * Get detailed user info
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(getUserDetailsRoute, async c => {
   const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -689,7 +702,7 @@ userRoutes.openapi(getUserDetailsRoute, async c => {
 
     if (!userData) {
       const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Get user's projects
@@ -749,7 +762,7 @@ userRoutes.openapi(getUserDetailsRoute, async c => {
         const orgBilling = await resolveOrgAccess(db, membership.orgId);
         const effectivePlan =
           orgBilling.source === 'grant' ?
-            getGrantPlan(orgBilling.effectivePlanId)
+            getGrantPlan(orgBilling.effectivePlanId as GrantType)
           : getPlan(orgBilling.effectivePlanId);
 
         return {
@@ -775,13 +788,14 @@ userRoutes.openapi(getUserDetailsRoute, async c => {
       accounts: linkedAccounts,
       orgs: orgsWithBilling,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error fetching user details:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_user_details',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -789,12 +803,14 @@ userRoutes.openapi(getUserDetailsRoute, async c => {
  * POST /api/admin/users/:userId/ban
  * Ban a user
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(banUserRoute, async c => {
   const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
   // Get body if provided (it's optional)
-  let reason, expiresAt;
+  let reason: string | undefined;
+  let expiresAt: Date | null = null;
   try {
     const body = await c.req.json();
     reason = body?.reason;
@@ -805,7 +821,7 @@ userRoutes.openapi(banUserRoute, async c => {
 
   try {
     // Don't allow banning yourself
-    const adminUser = c.get('user');
+    const adminUser = c.get('user') as AuthUser;
     if (adminUser.id === userId) {
       const error = createValidationError(
         'userId',
@@ -813,7 +829,7 @@ userRoutes.openapi(banUserRoute, async c => {
         userId,
         'cannot_ban_self',
       );
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Ban user and invalidate sessions atomically
@@ -831,13 +847,14 @@ userRoutes.openapi(banUserRoute, async c => {
     ]);
 
     return c.json({ success: true, message: 'User banned successfully' });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error banning user:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'ban_user',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -845,6 +862,7 @@ userRoutes.openapi(banUserRoute, async c => {
  * POST /api/admin/users/:userId/unban
  * Unban a user
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(unbanUserRoute, async c => {
   const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -861,13 +879,14 @@ userRoutes.openapi(unbanUserRoute, async c => {
       .where(eq(user.id, userId));
 
     return c.json({ success: true, message: 'User unbanned successfully' });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error unbanning user:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'unban_user',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -875,9 +894,10 @@ userRoutes.openapi(unbanUserRoute, async c => {
  * POST /api/admin/users/:userId/impersonate
  * Start impersonating a user (creates a new session)
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(impersonateUserRoute, async c => {
   const { userId } = c.req.valid('param');
-  const adminUser = c.get('user');
+  const adminUser = c.get('user') as AuthUser;
   const body = c.req.valid('json');
 
   try {
@@ -889,7 +909,7 @@ userRoutes.openapi(impersonateUserRoute, async c => {
         userId,
         'cannot_impersonate_self',
       );
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Use Better Auth's handler for impersonation to properly handle cookies
@@ -926,13 +946,14 @@ userRoutes.openapi(impersonateUserRoute, async c => {
     }
 
     return response;
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error impersonating user:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'impersonate_user',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -940,6 +961,7 @@ userRoutes.openapi(impersonateUserRoute, async c => {
  * DELETE /api/admin/users/:userId/sessions
  * Revoke all sessions for a user
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(revokeAllSessionsRoute, async c => {
   const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -948,13 +970,14 @@ userRoutes.openapi(revokeAllSessionsRoute, async c => {
     await db.delete(session).where(eq(session.userId, userId));
 
     return c.json({ success: true, message: 'All sessions revoked' });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error revoking sessions:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'revoke_sessions',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -962,6 +985,7 @@ userRoutes.openapi(revokeAllSessionsRoute, async c => {
  * DELETE /api/admin/users/:userId/sessions/:sessionId
  * Revoke a specific session for a user
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(revokeSessionRoute, async c => {
   const { userId, sessionId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -976,25 +1000,26 @@ userRoutes.openapi(revokeSessionRoute, async c => {
 
     if (!existingSession) {
       const error = createDomainError(USER_ERRORS.NOT_FOUND, { sessionId });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Verify session belongs to the specified user
     if (existingSession.userId !== userId) {
       const error = createDomainError(USER_ERRORS.NOT_FOUND, { sessionId });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     await db.delete(session).where(eq(session.id, sessionId));
 
     return c.json({ success: true, message: 'Session revoked' });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error revoking session:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'revoke_session',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -1002,9 +1027,10 @@ userRoutes.openapi(revokeSessionRoute, async c => {
  * DELETE /api/admin/users/:userId
  * Delete a user and all their data
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(deleteUserRoute, async c => {
   const { userId } = c.req.valid('param');
-  const adminUser = c.get('user');
+  const adminUser = c.get('user') as AuthUser;
   const db = createDb(c.env.DB);
 
   try {
@@ -1016,7 +1042,7 @@ userRoutes.openapi(deleteUserRoute, async c => {
         userId,
         'cannot_delete_self',
       );
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Fetch user to get email for verification cleanup
@@ -1026,7 +1052,7 @@ userRoutes.openapi(deleteUserRoute, async c => {
       .where(eq(user.id, userId));
     if (!userToDelete) {
       const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId });
-      return c.json(error, error.statusCode);
+      return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
     // Fetch all projects the user is a member of before any deletions (with orgId)
@@ -1058,13 +1084,14 @@ userRoutes.openapi(deleteUserRoute, async c => {
     ]);
 
     return c.json({ success: true, message: 'User deleted successfully' });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Error deleting user:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'delete_user',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode);
+    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
   }
 });
 

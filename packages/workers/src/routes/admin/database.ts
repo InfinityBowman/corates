@@ -4,13 +4,16 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { Context } from 'hono';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createDb } from '@/db/client.js';
 import { dbSchema, mediaFiles, organization, projects, user } from '@/db/schema.js';
 import { count, desc, asc, eq, and, sum } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import type { Env } from '../../types';
 
-const databaseRoutes = new OpenAPIHono({
+const databaseRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -31,7 +34,9 @@ const ALLOWED_TABLES = [
   'orgAccessGrants',
   'stripeEventLedger',
   'projectInvitations',
-];
+] as const;
+
+type AllowedTableName = (typeof ALLOWED_TABLES)[number];
 
 // Response schemas
 const TableInfoSchema = z
@@ -86,7 +91,7 @@ const PaginationInfoSchema = z
 const TableRowsResponseSchema = z
   .object({
     tableName: z.string(),
-    rows: z.array(z.record(z.unknown())),
+    rows: z.array(z.record(z.string(), z.unknown())),
     pagination: PaginationInfoSchema,
   })
   .openapi('TableRowsResponse');
@@ -156,7 +161,7 @@ const DatabaseErrorSchema = z
     code: z.string(),
     message: z.string(),
     statusCode: z.number(),
-    details: z.record(z.unknown()).optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('DatabaseError');
 
@@ -389,10 +394,20 @@ const recentUploadsRoute = createRoute({
   },
 });
 
+interface MediaFilesQueryOptions {
+  page: number;
+  limit: number;
+  orderBy: string;
+  order: 'asc' | 'desc';
+  filterBy?: string;
+  filterValue?: string;
+}
+
 /**
  * GET /api/admin/database/tables
  * List all available tables with row counts
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 databaseRoutes.openapi(listTablesRoute, async c => {
   try {
     const db = createDb(c.env.DB);
@@ -421,12 +436,13 @@ databaseRoutes.openapi(listTablesRoute, async c => {
     return c.json({
       tables: tables.filter(Boolean),
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Database tables list error:', error);
     const domainError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       message: 'Failed to list database tables',
     });
-    return c.json(domainError, domainError.statusCode);
+    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -434,60 +450,89 @@ databaseRoutes.openapi(listTablesRoute, async c => {
  * GET /api/admin/database/tables/:tableName/schema
  * Get table schema (column names, types, and foreign key references)
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 databaseRoutes.openapi(getTableSchemaRoute, async c => {
   const { tableName } = c.req.valid('param');
 
-  if (!ALLOWED_TABLES.includes(tableName)) {
+  if (!ALLOWED_TABLES.includes(tableName as AllowedTableName)) {
     const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
       field: 'tableName',
       value: tableName,
       message: `Table '${tableName}' is not available for viewing`,
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
-  const table = dbSchema[tableName];
+  const table = dbSchema[tableName as AllowedTableName];
   if (!table) {
     const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
       field: 'tableName',
       value: tableName,
       message: `Table '${tableName}' not found in schema`,
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   // Extract column info from Drizzle schema including foreign key references
-  const columns = Object.entries(table).map(([name, column]) => {
-    const columnInfo = {
-      name,
-      type: column.dataType || 'unknown',
-      notNull: column.notNull ?? false,
-      primaryKey: column.primary ?? false,
-      unique: column.isUnique ?? false,
-      hasDefault: column.hasDefault ?? false,
+  interface ColumnInfo {
+    name: string;
+    type: string;
+    notNull: boolean;
+    primaryKey: boolean;
+    unique: boolean;
+    hasDefault: boolean;
+    foreignKey?: {
+      table: string;
+      column: string;
     };
+  }
 
-    // Check for foreign key reference
-    if (column.config?.references) {
-      const refFn = column.config.references;
-      try {
-        const refColumn = refFn();
-        if (refColumn?.table) {
-          const refTableName = Object.entries(dbSchema).find(([, t]) => t === refColumn.table)?.[0];
-          if (refTableName && ALLOWED_TABLES.includes(refTableName)) {
-            columnInfo.foreignKey = {
-              table: refTableName,
-              column: refColumn.name,
-            };
+  interface DrizzleColumn {
+    dataType?: string;
+    notNull?: boolean;
+    primary?: boolean;
+    isUnique?: boolean;
+    hasDefault?: boolean;
+    config?: {
+      references?: () => { table?: unknown; name?: string };
+    };
+  }
+
+  const columns: ColumnInfo[] = Object.entries(table as unknown as Record<string, DrizzleColumn>).map(
+    ([name, column]) => {
+      const columnInfo: ColumnInfo = {
+        name,
+        type: column.dataType || 'unknown',
+        notNull: column.notNull ?? false,
+        primaryKey: column.primary ?? false,
+        unique: column.isUnique ?? false,
+        hasDefault: column.hasDefault ?? false,
+      };
+
+      // Check for foreign key reference
+      if (column.config?.references) {
+        const refFn = column.config.references;
+        try {
+          const refColumn = refFn();
+          if (refColumn?.table) {
+            const refTableName = Object.entries(dbSchema).find(
+              ([, t]) => t === refColumn.table,
+            )?.[0];
+            if (refTableName && ALLOWED_TABLES.includes(refTableName as AllowedTableName)) {
+              columnInfo.foreignKey = {
+                table: refTableName,
+                column: refColumn.name || '',
+              };
+            }
           }
+        } catch {
+          // Reference function failed, skip FK info
         }
-      } catch {
-        // Reference function failed, skip FK info
       }
-    }
 
-    return columnInfo;
-  });
+      return columnInfo;
+    },
+  );
 
   return c.json({ tableName, columns });
 });
@@ -496,6 +541,7 @@ databaseRoutes.openapi(getTableSchemaRoute, async c => {
  * GET /api/admin/database/tables/:tableName/rows
  * Get rows from a table with pagination and filtering
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 databaseRoutes.openapi(getTableRowsRoute, async c => {
   const { tableName } = c.req.valid('param');
   const query = c.req.valid('query');
@@ -507,23 +553,23 @@ databaseRoutes.openapi(getTableRowsRoute, async c => {
   const filterBy = query.filterBy?.trim();
   const filterValue = query.filterValue?.trim();
 
-  if (!ALLOWED_TABLES.includes(tableName)) {
+  if (!ALLOWED_TABLES.includes(tableName as AllowedTableName)) {
     const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
       field: 'tableName',
       value: tableName,
       message: `Table '${tableName}' is not available for viewing`,
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
-  const table = dbSchema[tableName];
+  const table = dbSchema[tableName as AllowedTableName];
   if (!table) {
     const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
       field: 'tableName',
       value: tableName,
       message: `Table '${tableName}' not found in schema`,
     });
-    return c.json(error, error.statusCode);
+    return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
   // Special handling for mediaFiles with joins
@@ -543,39 +589,48 @@ databaseRoutes.openapi(getTableRowsRoute, async c => {
     const offset = (page - 1) * limit;
 
     // Build where clause for filtering
-    let whereConditions = [];
-    if (filterBy && filterValue && table[filterBy]) {
-      whereConditions.push(eq(table[filterBy], filterValue));
+    const whereConditions = [];
+    const tableRecord = table as unknown as Record<string, unknown>;
+    if (filterBy && filterValue && tableRecord[filterBy]) {
+      whereConditions.push(eq(tableRecord[filterBy] as never, filterValue));
     }
 
     // Get total count with filtering
-    let countQuery = db.select({ count: count() }).from(table);
-    if (whereConditions.length > 0) {
-      countQuery = countQuery.where(and(...whereConditions));
-    }
+    const countQuery =
+      whereConditions.length > 0 ?
+        db
+          .select({ count: count() })
+          .from(table)
+          .where(and(...whereConditions))
+      : db.select({ count: count() }).from(table);
     const countResult = await countQuery;
     const totalRows = countResult[0]?.count ?? 0;
 
     // Determine order column (use provided column, fall back to 'id', then first column)
     const columnNames = Object.keys(table);
     let orderColumnName = orderByParam;
-    if (!orderColumnName || !table[orderColumnName]) {
-      orderColumnName = table.id ? 'id' : columnNames[0];
+    if (!orderColumnName || !tableRecord[orderColumnName]) {
+      orderColumnName = tableRecord['id'] ? 'id' : columnNames[0];
     }
-    const orderColumn = table[orderColumnName];
+    const orderColumn = tableRecord[orderColumnName];
     const orderFn = order === 'asc' ? asc : desc;
 
     // Get rows with ordering and filtering
-    let rowsQuery = db
-      .select()
-      .from(table)
-      .orderBy(orderFn(orderColumn))
-      .limit(limit)
-      .offset(offset);
-    if (whereConditions.length > 0) {
-      rowsQuery = rowsQuery.where(and(...whereConditions));
-    }
-    const rows = await rowsQuery;
+    const rows =
+      whereConditions.length > 0 ?
+        await db
+          .select()
+          .from(table)
+          .where(and(...whereConditions))
+          .orderBy(orderFn(orderColumn as never))
+          .limit(limit)
+          .offset(offset)
+      : await db
+          .select()
+          .from(table)
+          .orderBy(orderFn(orderColumn as never))
+          .limit(limit)
+          .offset(offset);
 
     return c.json({
       tableName,
@@ -589,14 +644,15 @@ databaseRoutes.openapi(getTableRowsRoute, async c => {
         order,
       },
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Database rows fetch error:', error);
     const domainError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_table_rows',
       tableName,
       originalError: error.message,
     });
-    return c.json(domainError, domainError.statusCode);
+    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -604,15 +660,15 @@ databaseRoutes.openapi(getTableRowsRoute, async c => {
  * Handle mediaFiles query with joins for better readability
  */
 async function handleMediaFilesQuery(
-  c,
-  { page, limit, orderBy: orderByParam, order, filterBy, filterValue },
+  c: Context<{ Bindings: Env }>,
+  { page, limit, orderBy: orderByParam, order, filterBy, filterValue }: MediaFilesQueryOptions,
 ) {
   try {
     const db = createDb(c.env.DB);
     const offset = (page - 1) * limit;
 
     // Build where conditions
-    let whereConditions = [];
+    const whereConditions = [];
 
     // Handle filtering
     if (filterBy && filterValue) {
@@ -654,16 +710,20 @@ async function handleMediaFilesQuery(
     }
 
     // Get total count with filtering
-    let countQuery = db.select({ count: count() }).from(mediaFiles);
-    if (whereConditions.length > 0) {
-      countQuery = countQuery.where(and(...whereConditions));
-    }
+    const countQuery =
+      whereConditions.length > 0 ?
+        db
+          .select({ count: count() })
+          .from(mediaFiles)
+          .where(and(...whereConditions))
+      : db.select({ count: count() }).from(mediaFiles);
     const countResult = await countQuery;
     const totalRows = countResult[0]?.count ?? 0;
 
     // Determine order column
     let orderColumnName = orderByParam || 'createdAt';
-    let orderColumn = mediaFiles[orderColumnName];
+    const mediaFilesRecord = mediaFiles as unknown as Record<string, unknown>;
+    let orderColumn = mediaFilesRecord[orderColumnName];
     if (!orderColumn) {
       orderColumnName = 'createdAt';
       orderColumn = mediaFiles.createdAt;
@@ -671,7 +731,7 @@ async function handleMediaFilesQuery(
     const orderFn = order === 'asc' ? asc : desc;
 
     // Get rows with joins
-    let rowsQuery = db
+    const baseQuery = db
       .select({
         // mediaFiles fields
         id: mediaFiles.id,
@@ -697,15 +757,14 @@ async function handleMediaFilesQuery(
       .leftJoin(organization, eq(mediaFiles.orgId, organization.id))
       .leftJoin(projects, eq(mediaFiles.projectId, projects.id))
       .leftJoin(user, eq(mediaFiles.uploadedBy, user.id))
-      .orderBy(orderFn(orderColumn))
+      .orderBy(orderFn(orderColumn as never))
       .limit(limit)
       .offset(offset);
 
-    if (whereConditions.length > 0) {
-      rowsQuery = rowsQuery.where(and(...whereConditions));
-    }
-
-    const rows = await rowsQuery;
+    const rows =
+      whereConditions.length > 0 ?
+        await baseQuery.where(and(...whereConditions))
+      : await baseQuery;
 
     return c.json({
       tableName: 'mediaFiles',
@@ -719,13 +778,14 @@ async function handleMediaFilesQuery(
         order,
       },
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('MediaFiles query error:', error);
     const domainError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_mediafiles_rows',
       originalError: error.message,
     });
-    return c.json(domainError, domainError.statusCode);
+    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
   }
 }
 
@@ -733,6 +793,7 @@ async function handleMediaFilesQuery(
  * GET /api/admin/database/analytics/pdfs-by-org
  * Get PDF count and total storage per organization
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 databaseRoutes.openapi(pdfsByOrgRoute, async c => {
   try {
     const db = createDb(c.env.DB);
@@ -759,13 +820,14 @@ databaseRoutes.openapi(pdfsByOrgRoute, async c => {
     }));
 
     return c.json({ analytics });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('PDFs by org analytics error:', error);
     const domainError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'analytics_pdfs_by_org',
       originalError: error.message,
     });
-    return c.json(domainError, domainError.statusCode);
+    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -773,6 +835,7 @@ databaseRoutes.openapi(pdfsByOrgRoute, async c => {
  * GET /api/admin/database/analytics/pdfs-by-user
  * Get uploads by user
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 databaseRoutes.openapi(pdfsByUserRoute, async c => {
   try {
     const db = createDb(c.env.DB);
@@ -794,7 +857,7 @@ databaseRoutes.openapi(pdfsByUserRoute, async c => {
     const analytics = results
       .filter(row => row.userId) // Only include rows with a user
       .map(row => ({
-        userId: row.userId,
+        userId: row.userId as string,
         userName: row.userName,
         userEmail: row.userEmail,
         userDisplayName: row.userDisplayName,
@@ -803,13 +866,14 @@ databaseRoutes.openapi(pdfsByUserRoute, async c => {
       }));
 
     return c.json({ analytics });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('PDFs by user analytics error:', error);
     const domainError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'analytics_pdfs_by_user',
       originalError: error.message,
     });
-    return c.json(domainError, domainError.statusCode);
+    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -817,6 +881,7 @@ databaseRoutes.openapi(pdfsByUserRoute, async c => {
  * GET /api/admin/database/analytics/pdfs-by-project
  * Get PDFs per project
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 databaseRoutes.openapi(pdfsByProjectRoute, async c => {
   try {
     const db = createDb(c.env.DB);
@@ -854,13 +919,14 @@ databaseRoutes.openapi(pdfsByProjectRoute, async c => {
     }));
 
     return c.json({ analytics });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('PDFs by project analytics error:', error);
     const domainError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'analytics_pdfs_by_project',
       originalError: error.message,
     });
-    return c.json(domainError, domainError.statusCode);
+    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
   }
 });
 
@@ -868,6 +934,7 @@ databaseRoutes.openapi(pdfsByProjectRoute, async c => {
  * GET /api/admin/database/analytics/recent-uploads
  * Get recent PDF uploads with user/org context
  */
+// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 databaseRoutes.openapi(recentUploadsRoute, async c => {
   try {
     const query = c.req.valid('query');
@@ -925,13 +992,14 @@ databaseRoutes.openapi(recentUploadsRoute, async c => {
     }));
 
     return c.json({ uploads });
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Recent uploads analytics error:', error);
     const domainError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'analytics_recent_uploads',
       originalError: error.message,
     });
-    return c.json(domainError, domainError.statusCode);
+    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
   }
 });
 
