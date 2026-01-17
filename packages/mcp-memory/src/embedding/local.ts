@@ -14,7 +14,10 @@ export class LocalEmbeddingService implements EmbeddingService {
     if (this.extractor) return;
     if (this.initPromise) return this.initPromise;
 
-    this.initPromise = this.loadModel();
+    this.initPromise = this.loadModel().catch(err => {
+      this.initPromise = null;
+      throw err;
+    });
     return this.initPromise;
   }
 
