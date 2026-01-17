@@ -16,3 +16,6 @@ export * from './create.js';
 
 // Answer manipulation
 export * from './answers.js';
+
+// Comparison utilities
+export * from './compare.js';

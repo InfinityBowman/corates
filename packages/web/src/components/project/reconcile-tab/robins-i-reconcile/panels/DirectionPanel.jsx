@@ -4,24 +4,13 @@ import { BIAS_DIRECTIONS } from '@/components/checklist/ROBINSIChecklist/checkli
 /**
  * Get button style for direction options
  * @param {boolean} isSelected - Whether this option is selected
- * @param {string} panelType - 'reviewer1', 'reviewer2', or 'final'
  * @returns {string} Tailwind CSS classes
  */
-function getDirectionButtonStyle(isSelected, panelType) {
+function getDirectionButtonStyle(isSelected) {
   if (!isSelected) {
     return 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50';
   }
-
-  switch (panelType) {
-    case 'reviewer1':
-      return 'border-blue-400 bg-blue-50 text-blue-800';
-    case 'reviewer2':
-      return 'border-purple-400 bg-purple-50 text-purple-800';
-    case 'final':
-      return 'border-green-400 bg-green-50 text-green-800';
-    default:
-      return 'border-gray-400 bg-gray-50 text-gray-800';
-  }
+  return 'border-blue-400 bg-blue-50 text-blue-800';
 }
 
 /**
@@ -40,12 +29,11 @@ function getDirectionButtonStyle(isSelected, panelType) {
  * @returns {JSX.Element}
  */
 export default function DirectionPanel(props) {
-  const panelType = () => props.panelType || 'reviewer1';
-  const isFinal = () => panelType() === 'final';
+  const isFinal = () => props.panelType === 'final';
   const options = () => props.directionOptions || BIAS_DIRECTIONS;
 
   return (
-    <div class={`p-4 ${isFinal() ? 'bg-green-50/30' : ''}`}>
+    <div class='p-4'>
       {/* Panel Header */}
       <div class='mb-4 flex items-center justify-between'>
         <h3 class='font-semibold text-gray-900'>{props.title}</h3>
@@ -88,9 +76,7 @@ export default function DirectionPanel(props) {
               <Show
                 when={!props.readOnly}
                 fallback={
-                  <div
-                    class={`${baseClasses} ${getDirectionButtonStyle(isSelected(), panelType())}`}
-                  >
+                  <div class={`${baseClasses} ${getDirectionButtonStyle(isSelected())}`}>
                     {option}
                   </div>
                 }
@@ -98,7 +84,7 @@ export default function DirectionPanel(props) {
                 <button
                   type='button'
                   onClick={() => props.onDirectionChange?.(option)}
-                  class={`${baseClasses} cursor-pointer hover:border-green-300 ${getDirectionButtonStyle(isSelected(), panelType())}`}
+                  class={`${baseClasses} cursor-pointer hover:border-blue-300 ${getDirectionButtonStyle(isSelected())}`}
                 >
                   {option}
                 </button>

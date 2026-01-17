@@ -6,17 +6,16 @@ import {
   hasNavItemAnswer,
   isNavItemAgreement,
   getNavItemPillStyle,
-  getNavItemTooltip,
   NAV_ITEM_TYPES,
 } from './navbar-utils.js';
 
 /**
  * Domain pill that expands inline to show question pills
- * When collapsed: shows label + progress (e.g., "B 2/5")
- * When expanded: shows label + question pills inline (e.g., "B [1][2][3][4][5]")
+ * When collapsed: shows label + progress (e.g., "D1 2/5")
+ * When expanded: shows label + question pills inline (e.g., "D1 [1][2][3][4][5]")
  *
  * @param {Object} props
- * @param {string} props.sectionKey - Section key (e.g., 'domain3', 'sectionB')
+ * @param {string} props.sectionKey - Section key (e.g., 'domain1', 'preliminary', 'overall')
  * @param {Object} props.progress - Progress object with answered, total, hasDisagreements, isComplete, items
  * @param {boolean} props.isExpanded - Whether this domain is currently expanded
  * @param {boolean} props.isCurrentDomain - Whether current page is in this domain
@@ -127,31 +126,48 @@ function QuestionPill(props) {
     getNavItemPillStyle(isCurrentPage(), hasAnswer(), isAgreement()),
   );
 
-  const tooltip = createMemo(() => getNavItemTooltip(props.item, hasAnswer(), isAgreement()));
+  const tooltip = createMemo(() => {
+    const item = props.item;
+    const answered = hasAnswer();
+    const agreement = isAgreement();
+
+    let status = '';
+    if (answered) {
+      status = 'Reconciled';
+    } else if (agreement) {
+      status = 'Agreement (not yet confirmed)';
+    } else {
+      status = 'Needs reconciliation';
+    }
+
+    return `${item.label}: ${status}`;
+  });
 
   const displayLabel = () => {
     const item = props.item;
-    if (item.type === NAV_ITEM_TYPES.SECTION_B) {
-      return item.key.replace('b', '');
+    if (item.type === NAV_ITEM_TYPES.PRELIMINARY) {
+      // Show first 2 chars of key (e.g., "St" for studyDesign, "Ai" for aim)
+      return item.key?.substring(0, 2) || '?';
     }
     if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) {
-      const parts = item.label.split('.');
+      // Extract question number like "1.1" -> "1"
+      const parts = item.label?.split('.') || [];
       return parts.length > 1 ? parts[1] : item.label;
     }
-    if (item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT) {
-      return 'J';
+    if (
+      item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION ||
+      item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION
+    ) {
+      return 'D';
     }
-    if (item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT) {
-      return 'J';
-    }
-    return item.label;
+    return item.label || '?';
   };
 
-  const isJudgement = () =>
-    props.item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT ||
-    props.item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT;
+  const isDirection = () =>
+    props.item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION ||
+    props.item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION;
 
-  const pillSizeClass = () => (isJudgement() ? 'h-6 px-2 text-2xs' : 'h-6 w-6 text-2xs');
+  const pillSizeClass = () => (isDirection() ? 'h-6 px-2 text-2xs' : 'h-6 w-6 text-2xs');
 
   const pillSpacingClass = () => {
     let spacing = '';

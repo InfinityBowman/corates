@@ -1,28 +1,26 @@
 import { Show, For } from 'solid-js';
-import { RESPONSE_LABELS } from '@/components/checklist/ROBINSIChecklist/checklist-map.js';
+import { RESPONSE_LABELS } from '@corates/shared/checklists/rob2';
 import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
 
 /**
- * Get badge color for Robins-I answer type
- * @param {string} answer - The answer code (Y, PY, PN, N, NI, etc.)
+ * Get badge color for ROB-2 answer type
+ * @param {string} answer - The answer code (Y, PY, PN, N, NI, NA)
  * @returns {string} Tailwind CSS classes for badge styling
  */
 function getAnswerBadgeStyle(answer) {
   switch (answer) {
     case 'Y':
-    case 'SY':
       return 'bg-green-100 text-green-800 border-green-200';
     case 'PY':
-    case 'WY':
       return 'bg-lime-100 text-lime-800 border-lime-200';
     case 'PN':
-    case 'WN':
       return 'bg-amber-100 text-amber-800 border-amber-200';
     case 'N':
-    case 'SN':
       return 'bg-red-100 text-red-800 border-red-200';
     case 'NI':
       return 'bg-gray-100 text-gray-600 border-gray-200';
+    case 'NA':
+      return 'bg-slate-100 text-slate-600 border-slate-200';
     default:
       return 'bg-gray-100 text-gray-600 border-gray-200';
   }
@@ -37,16 +35,15 @@ function getSelectedAnswerStyle() {
 }
 
 /**
- * Panel showing one version of answers (reviewer or final) for Robins-I
- * Simpler than AMSTAR2 - single radio group with response codes + comment
+ * Panel showing one version of answers (reviewer or final) for ROB-2
  *
  * @param {Object} props
  * @param {string} props.title - Panel title (e.g., "Reviewer 1", "Final Answer")
  * @param {string} props.panelType - 'reviewer1', 'reviewer2', or 'final'
- * @param {string} props.answer - The selected answer code (Y, PY, PN, N, etc.)
+ * @param {string} props.answer - The selected answer code (Y, PY, PN, N, NI, NA)
  * @param {string} props.comment - The comment text (for reviewer panels, read-only display)
  * @param {Y.Text} props.commentYText - Y.Text instance for the final panel's comment (collaborative editing)
- * @param {Array} props.responseOptions - Array of response codes ['Y', 'PY', 'PN', 'N']
+ * @param {Array} props.responseOptions - Array of response codes ['Y', 'PY', 'PN', 'N', 'NI']
  * @param {boolean} props.readOnly - If true, inputs are disabled
  * @param {boolean} props.hideUseThis - Hide the "Use This" button
  * @param {boolean} props.isSelected - If true, this panel is the selected source
@@ -54,7 +51,7 @@ function getSelectedAnswerStyle() {
  * @param {Function} props.onUseThis - Callback when "Use This" is clicked
  * @returns {JSX.Element}
  */
-export default function RobinsAnswerPanel(props) {
+export default function ROB2AnswerPanel(props) {
   const isFinal = () => props.panelType === 'final';
 
   return (
