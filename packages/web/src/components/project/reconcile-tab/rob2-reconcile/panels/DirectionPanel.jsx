@@ -2,39 +2,11 @@ import { Show, For } from 'solid-js';
 import { BIAS_DIRECTIONS } from '@corates/shared/checklists/rob2';
 
 /**
- * Get highlighted background color for selected direction based on panel type
- * @param {string} panelType - 'reviewer1', 'reviewer2', or 'final'
+ * Get highlighted background color for selected direction
  * @returns {string} Tailwind CSS classes
  */
-function getSelectedStyle(panelType) {
-  switch (panelType) {
-    case 'reviewer1':
-      return 'border-blue-400 bg-blue-50 text-blue-800';
-    case 'reviewer2':
-      return 'border-purple-400 bg-purple-50 text-purple-800';
-    case 'final':
-      return 'border-green-400 bg-green-50 text-green-800';
-    default:
-      return 'border-gray-400 bg-gray-50 text-gray-800';
-  }
-}
-
-/**
- * Get panel background based on type
- * @param {string} panelType - 'reviewer1', 'reviewer2', or 'final'
- * @returns {string} Tailwind CSS classes
- */
-function getPanelBackground(panelType) {
-  switch (panelType) {
-    case 'reviewer1':
-      return 'bg-blue-50/30';
-    case 'reviewer2':
-      return 'bg-purple-50/30';
-    case 'final':
-      return 'bg-green-50/30';
-    default:
-      return '';
-  }
+function getSelectedStyle() {
+  return 'border-blue-400 bg-blue-50 text-blue-800';
 }
 
 /**
@@ -52,11 +24,10 @@ function getPanelBackground(panelType) {
  * @returns {JSX.Element}
  */
 export default function DirectionPanel(props) {
-  const panelType = () => props.panelType || 'reviewer1';
-  const isFinal = () => panelType() === 'final';
+  const isFinal = () => props.panelType === 'final';
 
   return (
-    <div class={`p-4 ${getPanelBackground(panelType())}`}>
+    <div class='p-4'>
       {/* Panel Header */}
       <div class='mb-4 flex items-center justify-between'>
         <h3 class='font-semibold text-gray-900'>{props.title}</h3>
@@ -89,7 +60,7 @@ export default function DirectionPanel(props) {
                   <div
                     class={`${baseClasses} ${
                       isSelected()
-                        ? getSelectedStyle(panelType())
+                        ? getSelectedStyle()
                         : 'border-gray-200 bg-white text-gray-700'
                     }`}
                   >
@@ -98,10 +69,10 @@ export default function DirectionPanel(props) {
                 }
               >
                 <label
-                  class={`${baseClasses} cursor-pointer focus-within:ring-2 focus-within:ring-green-400 focus-within:ring-offset-1 focus-within:outline-none hover:border-green-300 ${
+                  class={`${baseClasses} cursor-pointer focus-within:ring-2 focus-within:ring-blue-400 focus-within:ring-offset-1 focus-within:outline-none hover:border-blue-300 ${
                     isSelected()
-                      ? getSelectedStyle(panelType())
-                      : 'border-gray-200 bg-white text-gray-700 hover:bg-green-50'
+                      ? getSelectedStyle()
+                      : 'border-gray-200 bg-white text-gray-700 hover:bg-blue-50'
                   }`}
                 >
                   <input
@@ -125,7 +96,7 @@ export default function DirectionPanel(props) {
         <div class='mt-4 flex items-center gap-2'>
           <span class='text-xs text-gray-500'>Selected:</span>
           <span
-            class={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getSelectedStyle(panelType())}`}
+            class={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getSelectedStyle()}`}
           >
             {props.direction}
           </span>

@@ -29,21 +29,11 @@ function getAnswerBadgeStyle(answer) {
 }
 
 /**
- * Get highlighted background color for selected answer based on panel type
- * @param {string} panelType - 'reviewer1', 'reviewer2', or 'final'
+ * Get highlighted background color for selected answer
  * @returns {string} Tailwind CSS classes
  */
-function getSelectedAnswerStyle(panelType) {
-  switch (panelType) {
-    case 'reviewer1':
-      return 'border-blue-400 bg-blue-50 text-blue-800';
-    case 'reviewer2':
-      return 'border-purple-400 bg-purple-50 text-purple-800';
-    case 'final':
-      return 'border-green-400 bg-green-50 text-green-800';
-    default:
-      return 'border-gray-400 bg-gray-50 text-gray-800';
-  }
+function getSelectedAnswerStyle() {
+  return 'border-blue-400 bg-blue-50 text-blue-800';
 }
 
 /**
@@ -65,11 +55,10 @@ function getSelectedAnswerStyle(panelType) {
  * @returns {JSX.Element}
  */
 export default function RobinsAnswerPanel(props) {
-  const panelType = () => props.panelType || 'reviewer1';
-  const isFinal = () => panelType() === 'final';
+  const isFinal = () => props.panelType === 'final';
 
   return (
-    <div class={`p-4 ${isFinal() ? 'bg-green-50/30' : ''}`}>
+    <div class='p-4'>
       {/* Panel Header */}
       <div class='mb-4 flex items-center justify-between'>
         <h3 class='font-semibold text-gray-900'>{props.title}</h3>
@@ -102,7 +91,7 @@ export default function RobinsAnswerPanel(props) {
                   <div
                     class={`${baseClasses} ${
                       isSelected() ?
-                        getSelectedAnswerStyle(panelType())
+                        getSelectedAnswerStyle()
                       : 'border-gray-200 bg-white text-gray-700'
                     }`}
                   >
@@ -112,10 +101,10 @@ export default function RobinsAnswerPanel(props) {
                 }
               >
                 <label
-                  class={`${baseClasses} cursor-pointer focus-within:ring-2 focus-within:ring-green-400 focus-within:ring-offset-1 focus-within:outline-none hover:border-green-300 ${
+                  class={`${baseClasses} cursor-pointer focus-within:ring-2 focus-within:ring-blue-400 focus-within:ring-offset-1 focus-within:outline-none hover:border-blue-300 ${
                     isSelected() ?
-                      getSelectedAnswerStyle(panelType())
-                    : 'border-gray-200 bg-white text-gray-700 hover:bg-green-50'
+                      getSelectedAnswerStyle()
+                    : 'border-gray-200 bg-white text-gray-700 hover:bg-blue-50'
                   }`}
                 >
                   <input
@@ -168,7 +157,7 @@ export default function RobinsAnswerPanel(props) {
             placeholder='Add the final reconciled comment...'
             readOnly={false}
             inline={true}
-            focusRingColor='green-400'
+            focusRingColor='blue-400'
           />
         </Show>
       </div>

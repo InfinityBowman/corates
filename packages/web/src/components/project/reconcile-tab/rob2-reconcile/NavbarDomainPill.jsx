@@ -31,7 +31,7 @@ export default function NavbarDomainPill(props) {
 
   // Container style - wraps everything in one connected pill
   const containerStyle = createMemo(() => {
-    let base = 'flex items-center rounded-md transition-all bg-gray-100 ';
+    let base = 'flex items-center rounded-md transition-all bg-gray-100 overflow-visible ';
 
     // Subtle ring for current domain only (when collapsed)
     if (!props.isExpanded && props.isCurrentDomain) {
@@ -88,7 +88,7 @@ export default function NavbarDomainPill(props) {
       </Tooltip>
 
       {/* Animated expanded question pills */}
-      <Collapsible.Content class='collapsible-horizontal flex items-center'>
+      <Collapsible.Content class='collapsible-horizontal flex items-center overflow-visible py-1'>
         <For each={props.progress?.items || []}>
           {(item, idx) => {
             const globalIndex = () => props.allNavItems?.indexOf(item) ?? -1;
@@ -181,7 +181,7 @@ function QuestionPill(props) {
       <button
         type='button'
         onClick={() => props.goToPage?.(props.globalIndex)}
-        class={`relative flex items-center justify-center rounded-full font-medium transition-all ${pillSizeClass()} ${pillSpacingClass()} ${pillStyle()}`}
+        class={`relative flex items-center justify-center overflow-visible rounded-full font-medium transition-all ${pillSizeClass()} ${pillSpacingClass()} ${pillStyle()}`}
         aria-label={tooltip()}
         aria-current={isCurrentPage() ? 'page' : undefined}
       >

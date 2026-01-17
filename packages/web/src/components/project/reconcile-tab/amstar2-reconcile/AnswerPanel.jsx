@@ -114,7 +114,7 @@ export default function AnswerPanel(props) {
         </div>
       }
     >
-      <div class={`p-4 ${props.isFinal ? 'bg-green-50/30' : ''}`}>
+      <div class='p-4'>
         {/* Panel Header */}
         <div class={`${props.isFinal ? 'mb-0' : 'mb-4'} flex items-center justify-between`}>
           <div>

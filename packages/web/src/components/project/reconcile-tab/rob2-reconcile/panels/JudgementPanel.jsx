@@ -23,24 +23,6 @@ function getJudgementBadgeStyle(judgement) {
 }
 
 /**
- * Get panel background based on type
- * @param {string} panelType - 'reviewer1', 'reviewer2', or 'final'
- * @returns {string} Tailwind CSS classes
- */
-function getPanelBackground(panelType) {
-  switch (panelType) {
-    case 'reviewer1':
-      return 'bg-blue-50/30';
-    case 'reviewer2':
-      return 'bg-purple-50/30';
-    case 'final':
-      return 'bg-green-50/30';
-    default:
-      return '';
-  }
-}
-
-/**
  * Panel for displaying auto-calculated ROB-2 judgement
  * This is read-only - judgements are computed from signalling questions
  *
@@ -54,10 +36,8 @@ function getPanelBackground(panelType) {
  * @returns {JSX.Element}
  */
 export default function JudgementPanel(props) {
-  const panelType = () => props.panelType || 'reviewer1';
-
   return (
-    <div class={`p-4 ${getPanelBackground(panelType())}`}>
+    <div class='p-4'>
       {/* Panel Header */}
       <div class='mb-4'>
         <h3 class='font-semibold text-gray-900'>{props.title}</h3>

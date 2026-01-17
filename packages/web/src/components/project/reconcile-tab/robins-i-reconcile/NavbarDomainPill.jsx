@@ -1,5 +1,5 @@
 import { For, createMemo, Show } from 'solid-js';
-import { FiChevronDown, FiChevronRight, FiAlertCircle, FiCheck } from 'solid-icons/fi';
+import { FiChevronDown, FiChevronRight, FiCheck } from 'solid-icons/fi';
 import { Tooltip, CollapsiblePrimitive as Collapsible } from '@corates/ui';
 import {
   getSectionLabel,
@@ -30,31 +30,13 @@ import {
 export default function NavbarDomainPill(props) {
   const label = () => getSectionLabel(props.sectionKey);
 
-  const isComplete = () => props.progress?.isComplete;
-  const hasProgress = () => (props.progress?.answered || 0) > 0;
-
   // Container style - wraps everything in one connected pill
   const containerStyle = createMemo(() => {
-    let base = 'flex items-center rounded-md transition-all ';
+    let base = 'flex items-center rounded-md transition-all bg-gray-100 overflow-visible ';
 
-    // Background color based on state
-    if (props.isExpanded) {
-      base += 'bg-gray-100 ';
-    } else if (isComplete()) {
-      base += 'bg-green-500 ';
-    } else if (hasProgress()) {
-      base += 'bg-blue-500 ';
-    } else {
-      base += 'bg-gray-100 ';
-    }
-
-    // Ring for current domain or disagreements (only when collapsed)
-    if (!props.isExpanded) {
-      if (props.isCurrentDomain) {
-        base += 'ring-2 ring-blue-300 ';
-      } else if (props.progress?.hasDisagreements && !isComplete()) {
-        base += 'ring-2 ring-yellow-400 ';
-      }
+    // Subtle ring for current domain only (when collapsed)
+    if (!props.isExpanded && props.isCurrentDomain) {
+      base += 'ring-2 ring-blue-300 ';
     }
 
     return base;
@@ -63,17 +45,13 @@ export default function NavbarDomainPill(props) {
   // Label button style
   const labelStyle = createMemo(() => {
     let base =
-      'flex items-center gap-1 rounded-md px-2 py-2 text-xs font-medium cursor-pointer select-none transition-all ';
+      'flex items-center gap-1 rounded-md px-2 py-2 text-xs font-medium cursor-pointer select-none transition-all text-gray-700 ';
 
     if (props.isExpanded) {
-      // When expanded, label is darker to stand out
-      base += 'bg-gray-200 text-gray-700 hover:bg-gray-300 ';
-    } else if (isComplete()) {
-      base += 'text-white ';
-    } else if (hasProgress()) {
-      base += 'text-white ';
+      // When expanded, label is slightly darker to stand out
+      base += 'bg-gray-200 hover:bg-gray-300 ';
     } else {
-      base += 'text-gray-700 hover:bg-gray-200 ';
+      base += 'hover:bg-gray-200 ';
     }
 
     return base;
@@ -84,11 +62,8 @@ export default function NavbarDomainPill(props) {
     const answered = props.progress?.answered || 0;
     const total = props.progress?.total || 0;
 
-    if (isComplete()) {
+    if (answered === total && total > 0) {
       return `${section}: Complete (${total}/${total})`;
-    }
-    if (props.progress?.hasDisagreements) {
-      return `${section}: ${answered}/${total} - Has disagreements`;
     }
     return `${section}: ${answered}/${total}`;
   });
@@ -104,9 +79,6 @@ export default function NavbarDomainPill(props) {
             <span class='text-2xs opacity-80'>
               {props.progress?.answered || 0}/{props.progress?.total || 0}
             </span>
-            <Show when={props.progress?.hasDisagreements && !isComplete()}>
-              <FiAlertCircle class='h-3 w-3 text-yellow-200' />
-            </Show>
           </Show>
           <Show when={props.sectionKey !== 'overall'}>
             {props.isExpanded ?
@@ -117,7 +89,7 @@ export default function NavbarDomainPill(props) {
       </Tooltip>
 
       {/* Animated expanded question pills */}
-      <Collapsible.Content class='collapsible-horizontal flex items-center'>
+      <Collapsible.Content class='collapsible-horizontal flex items-center overflow-visible py-1'>
         <For each={props.progress?.items || []}>
           {(item, idx) => {
             const globalIndex = () => props.allNavItems?.indexOf(item) ?? -1;
@@ -196,7 +168,7 @@ function QuestionPill(props) {
       <button
         type='button'
         onClick={() => props.goToPage?.(props.globalIndex)}
-        class={`relative flex items-center justify-center rounded-full font-medium transition-all ${pillSizeClass()} ${pillSpacingClass()} ${pillStyle()}`}
+        class={`relative flex items-center justify-center overflow-visible rounded-full font-medium transition-all ${pillSizeClass()} ${pillSpacingClass()} ${pillStyle()}`}
         aria-label={tooltip()}
         aria-current={isCurrentPage() ? 'page' : undefined}
       >
