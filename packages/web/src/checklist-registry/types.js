@@ -28,7 +28,7 @@ export const CHECKLIST_METADATA = {
     shortName: 'AMSTAR 2',
     description: 'Quality assessment of systematic reviews',
     version: '2017',
-    url: `${LANDING_URL}/resources`,
+    url: `${LANDING_URL}/resources/amstar2`,
     scoreLevels: ['High', 'Moderate', 'Low', 'Critically Low'],
     scoreColors: {
       High: { bg: 'bg-green-100', text: 'text-green-800' },
@@ -42,7 +42,7 @@ export const CHECKLIST_METADATA = {
     shortName: 'ROBINS-I',
     description: 'Risk of bias in non-randomized studies of interventions',
     version: 'V2',
-    url: `${LANDING_URL}/resources`,
+    url: `${LANDING_URL}/resources/robins-i`,
     scoreLevels: ['Low', 'Moderate', 'Serious', 'Critical', 'Incomplete'],
     scoreColors: {
       Low: { bg: 'bg-green-100', text: 'text-green-800' },
@@ -57,7 +57,7 @@ export const CHECKLIST_METADATA = {
     shortName: 'RoB 2',
     description: 'Risk of bias in randomized trials',
     version: '2.0',
-    url: 'https://www.riskofbias.info/welcome/rob-2-0-tool',
+    url: `${LANDING_URL}/resources/rob2`,
     scoreLevels: ['Low', 'Some concerns', 'High', 'Incomplete'],
     scoreColors: {
       Low: { bg: 'bg-green-100', text: 'text-green-800' },

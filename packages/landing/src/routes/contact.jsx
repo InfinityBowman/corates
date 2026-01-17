@@ -60,7 +60,7 @@ export default function Contact() {
       <Meta name='twitter:description' content={description} />
       <div class='min-h-screen bg-linear-to-b from-blue-50 to-white'>
         <Navbar />
-        <main class='py-16 sm:py-24'>
+        <main class='flex-1 py-12'>
           <div class='mx-auto max-w-6xl px-6'>
             {/* Hero Section */}
             <div class='mb-16 text-center'>
