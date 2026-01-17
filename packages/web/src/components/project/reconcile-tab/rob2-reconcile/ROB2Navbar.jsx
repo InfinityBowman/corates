@@ -1,21 +1,22 @@
 /**
  * ROB2Navbar - Domain-grouped, expandable navbar for ROB-2 reconciliation
+ * Uses animated collapsible pills similar to ROBINS-I
  */
 
-import { Show, For, createMemo } from 'solid-js';
-import { FiCheck, FiAlertTriangle, FiRotateCcw, FiFileText } from 'solid-icons/fi';
+import { For, createMemo, Show } from 'solid-js';
+import { FaSolidArrowRotateLeft } from 'solid-icons/fa';
+import { FiAlertTriangle } from 'solid-icons/fi';
+import { Tooltip } from '@corates/ui';
+import NavbarDomainPill from './NavbarDomainPill.jsx';
 import {
-  hasNavItemAnswer,
-  isNavItemAgreement,
   getDomainProgress,
+  getSectionKeyForPage,
   getFirstUnansweredInSection,
-  getSectionLabel,
-  getNavItemPillStyle,
-  NAV_ITEM_TYPES,
 } from './navbar-utils.js';
 
 /**
  * ROB2Navbar - Navigation bar for ROB-2 reconciliation
+ * Uses expandable domain pills with accordion behavior (only one expanded at a time)
  *
  * @param {Object} props
  * @param {Object} props.store - Navbar store with:
@@ -33,199 +34,145 @@ import {
  * @returns {JSX.Element}
  */
 export default function ROB2Navbar(props) {
-  // Calculate progress for each section/domain
-  const progress = createMemo(() =>
+  // Calculate progress for all domains/sections
+  const domainProgress = createMemo(() =>
     getDomainProgress(props.store.navItems || [], props.store.finalAnswers, props.store.comparison),
   );
 
-  // Get unique section keys in order
-  const sectionKeys = createMemo(() => {
-    const keys = [];
-    const seen = new Set();
-    const navItems = props.store.navItems || [];
+  // Get ordered section keys from progress
+  const sectionKeys = createMemo(() => Object.keys(domainProgress()));
 
-    for (const item of navItems) {
-      let key;
-      if (item.type === NAV_ITEM_TYPES.PRELIMINARY) {
-        key = 'preliminary';
-      } else if (item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION) {
-        key = 'overall';
-      } else if (item.domainKey) {
-        key = item.domainKey;
-      }
+  // Current page's section
+  const currentSectionKey = createMemo(() =>
+    getSectionKeyForPage(props.store.navItems || [], props.store.currentPage),
+  );
 
-      if (key && !seen.has(key)) {
-        seen.add(key);
-        keys.push(key);
+  // Handle domain pill click - toggle expand or navigate
+  function handleDomainClick(sectionKey) {
+    const progress = domainProgress()[sectionKey];
+    const isCurrentlyExpanded = props.store.expandedDomain === sectionKey;
+
+    // If already expanded, do nothing (don't re-trigger animation)
+    if (isCurrentlyExpanded) {
+      return;
+    }
+
+    // Expand and navigate to first unanswered (or first item if all complete)
+    props.store.setExpandedDomain?.(sectionKey);
+
+    // Navigate to first unanswered item in this section
+    if (progress && props.store.navItems) {
+      const targetIndex = getFirstUnansweredInSection(
+        progress,
+        props.store.navItems,
+        props.store.finalAnswers,
+      );
+      if (targetIndex >= 0) {
+        props.store.goToPage?.(targetIndex);
       }
     }
-    return keys;
-  });
+  }
 
-  // Handle section click - expand and navigate to first unanswered
-  const handleSectionClick = sectionKey => {
-    if (props.store.expandedDomain === sectionKey) {
-      // Click on already expanded - collapse
-      props.store.setExpandedDomain?.(null);
-    } else {
-      // Expand and navigate to first unanswered
+  // Handle navigation to a specific page - auto-expand its domain
+  function handleGoToPage(pageIndex) {
+    const sectionKey = getSectionKeyForPage(props.store.navItems || [], pageIndex);
+    if (sectionKey && sectionKey !== props.store.expandedDomain) {
       props.store.setExpandedDomain?.(sectionKey);
-      const sectionProgress = progress()[sectionKey];
-      if (sectionProgress) {
-        const index = getFirstUnansweredInSection(
-          sectionProgress,
-          props.store.navItems || [],
-          props.store.finalAnswers,
-        );
-        props.store.goToPage?.(index);
-      }
     }
-  };
-
-  // Handle item click
-  const handleItemClick = item => {
-    const navItems = props.store.navItems || [];
-    const index = navItems.indexOf(item);
-    if (index >= 0) {
-      props.store.goToPage?.(index);
-    }
-  };
+    props.store.goToPage?.(pageIndex);
+  }
 
   return (
-    <div class='sticky top-0 z-10 flex items-center gap-2 overflow-x-auto bg-white p-3 shadow'>
+    <nav class='flex items-center gap-1 px-1 py-1.5' aria-label='Question navigation'>
       {/* Aim Mismatch Warning */}
       <Show when={props.store.aimMismatch}>
-        <div
-          class='flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600'
-          title='Aim mismatch detected'
-        >
-          <FiAlertTriangle class='h-4 w-4' />
-        </div>
+        <Tooltip content='Aim mismatch - reconcile the aim field first' placement='bottom' openDelay={200}>
+          <div class='mr-1 flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700'>
+            <FiAlertTriangle class='h-3 w-3' />
+            Aim
+          </div>
+        </Tooltip>
       </Show>
 
-      {/* Section Pills */}
+      {/* Domain pills with expandable groups */}
       <For each={sectionKeys()}>
         {sectionKey => {
-          const sectionProgress = () => progress()[sectionKey];
+          const progress = () => domainProgress()[sectionKey];
           const isExpanded = () => props.store.expandedDomain === sectionKey;
-          const label = () => getSectionLabel(sectionKey);
-
-          // Section status colors
-          const getSectionStyle = () => {
-            const sp = sectionProgress();
-            if (!sp) return 'bg-gray-100 text-gray-600';
-            const navItems = props.store.navItems || [];
-
-            const isCurrentSection = sp.items.some(
-              (_, i) => navItems.indexOf(sp.items[i]) === props.store.currentPage,
-            );
-
-            if (isCurrentSection) {
-              return 'bg-blue-600 text-white ring-2 ring-blue-300';
-            }
-            if (sp.isComplete) {
-              return 'bg-green-100 text-green-700';
-            }
-            if (sp.hasDisagreements) {
-              return 'bg-amber-100 text-amber-700';
-            }
-            return 'bg-gray-100 text-gray-600';
-          };
+          const isCurrentDomain = () => currentSectionKey() === sectionKey;
 
           return (
-            <div class='flex items-center gap-1'>
-              {/* Section Pill */}
-              <button
-                onClick={() => handleSectionClick(sectionKey)}
-                class={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${getSectionStyle()}`}
-                title={sectionProgress()?.section}
-              >
-                <span>{label()}</span>
-                <span class='text-xs opacity-70'>
-                  {sectionProgress()?.answered}/{sectionProgress()?.total}
-                </span>
-                <Show when={sectionProgress()?.isComplete}>
-                  <FiCheck class='h-3.5 w-3.5' />
-                </Show>
-              </button>
-
-              {/* Expanded Items */}
-              <Show when={isExpanded()}>
-                <div class='flex items-center gap-1 ml-1'>
-                  <For each={sectionProgress()?.items || []}>
-                    {item => {
-                      const navItems = props.store.navItems || [];
-                      const itemIndex = navItems.indexOf(item);
-                      const isCurrent = () => itemIndex === props.store.currentPage;
-                      const hasAnswer = () => hasNavItemAnswer(item, props.store.finalAnswers);
-                      const isAgreement = () => isNavItemAgreement(item, props.store.comparison);
-
-                      // Get short label for item
-                      const shortLabel = () => {
-                        if (item.type === NAV_ITEM_TYPES.PRELIMINARY) {
-                          return item.label?.substring(0, 2) || '?';
-                        }
-                        if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) {
-                          // Extract question number like "1.1" -> "1"
-                          const num = item.label?.split('.')?.[1] || item.label;
-                          return num;
-                        }
-                        if (
-                          item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION ||
-                          item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION
-                        ) {
-                          return 'D'; // Direction
-                        }
-                        return '?';
-                      };
-
-                      return (
-                        <button
-                          onClick={() => handleItemClick(item)}
-                          class={`relative flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium transition-all ${getNavItemPillStyle(isCurrent(), hasAnswer(), isAgreement())}`}
-                          title={item.label}
-                        >
-                          {shortLabel()}
-                          <Show when={hasAnswer()}>
-                            <div class='absolute -right-0.5 -top-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-green-500 text-white'>
-                              <FiCheck class='h-2 w-2' />
-                            </div>
-                          </Show>
-                        </button>
-                      );
-                    }}
-                  </For>
-                </div>
-              </Show>
+            <div class='shrink-0'>
+              <NavbarDomainPill
+                sectionKey={sectionKey}
+                progress={progress()}
+                isExpanded={isExpanded()}
+                isCurrentDomain={isCurrentDomain()}
+                onClick={() => handleDomainClick(sectionKey)}
+                allNavItems={props.store.navItems}
+                currentPage={props.store.currentPage}
+                goToPage={handleGoToPage}
+                comparison={props.store.comparison}
+                finalAnswers={props.store.finalAnswers}
+              />
             </div>
           );
         }}
       </For>
 
-      {/* Spacer */}
-      <div class='flex-1' />
+      {/* Separator before summary/reset */}
+      <span class='mx-1 shrink-0 text-gray-300'>|</span>
 
-      {/* Summary Button */}
+      <div class='flex shrink-0 items-center gap-1'>
+        <SummaryButton store={props.store} />
+        <ResetButton onClick={() => props.store.onReset?.()} />
+      </div>
+    </nav>
+  );
+}
+
+/**
+ * Summary view button
+ */
+function SummaryButton(props) {
+  const isActive = () => props.store.viewMode === 'summary';
+
+  const buttonStyle = createMemo(() =>
+    isActive() ?
+      'bg-blue-600 text-white ring-2 ring-blue-300'
+    : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+  );
+
+  return (
+    <Tooltip content='View summary of all items' placement='bottom' openDelay={200}>
       <button
+        type='button'
         onClick={() => props.store.setViewMode?.('summary')}
-        class={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-          props.store.viewMode === 'summary'
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-        }`}
+        class={`h-7 rounded-full px-3 text-xs font-medium transition-all ${buttonStyle()}`}
+        aria-label='View summary'
+        aria-current={isActive() ? 'page' : undefined}
       >
-        <FiFileText class='h-4 w-4' />
         Summary
       </button>
+    </Tooltip>
+  );
+}
 
-      {/* Reset Button */}
+/**
+ * Reset button to clear all reconciliation answers
+ */
+function ResetButton(props) {
+  return (
+    <Tooltip content='Reset all final answers' placement='bottom' openDelay={200}>
       <button
-        onClick={() => props.store.onReset?.()}
-        class='flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-red-100 hover:text-red-700'
-        title='Reset all reconciliation'
+        type='button'
+        onClick={() => props.onClick?.()}
+        class='flex h-7 items-center gap-1 rounded-full bg-red-100 px-2 text-xs font-medium text-red-700 transition-all hover:bg-red-200'
+        aria-label='Reset reconciliation'
       >
-        <FiRotateCcw class='h-4 w-4' />
+        <FaSolidArrowRotateLeft size={10} />
+        Reset
       </button>
-    </div>
+    </Tooltip>
   );
 }
