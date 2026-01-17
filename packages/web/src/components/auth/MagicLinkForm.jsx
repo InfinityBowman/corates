@@ -100,7 +100,7 @@ export default function MagicLinkForm(props) {
             Click the link in the email to sign in. The link expires in 10 minutes.
           </p>
 
-          <ErrorMessage displayError={error} />
+          <ErrorMessage displayError={displayError} />
 
           <Show when={resent()}>
             <div class='mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-600 sm:text-sm'>

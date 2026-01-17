@@ -8,6 +8,7 @@
  */
 
 import { createSignal, Show, createEffect, onCleanup, createMemo } from 'solid-js';
+import { createStore } from 'solid-js/store';
 import { Portal } from 'solid-js/web';
 import { useParams, useNavigate } from '@solidjs/router';
 import { FiX, FiChevronDown, FiChevronUp, FiLayout } from 'solid-icons/fi';
@@ -43,11 +44,15 @@ export default function DevPanel() {
   const [isOpen, setIsOpen] = createSignal(false);
   const [activeTab, setActiveTab] = createSignal(null);
   const [isMinimized, setIsMinimized] = createSignal(false);
-  const [position, setPosition] = createSignal({ x: 20, y: 20 });
-  const [size, setSize] = createSignal({ width: 420, height: 500 });
   const [isDragging, setIsDragging] = createSignal(false);
   const [isResizing, setIsResizing] = createSignal(false);
-  const [dragOffset, setDragOffset] = createSignal({ x: 0, y: 0 });
+
+  // Panel geometry state (using store for fine-grained reactivity)
+  const [panel, setPanel] = createStore({
+    position: { x: 20, y: 20 },
+    size: { width: 420, height: 500 },
+    dragOffset: { x: 0, y: 0 },
+  });
 
   // Set default tab based on context
   createEffect(() => {
@@ -82,7 +87,7 @@ export default function DevPanel() {
     if (e.target.closest('[data-drag-handle]')) {
       setIsDragging(true);
       const rect = e.currentTarget.getBoundingClientRect();
-      setDragOffset({
+      setPanel('dragOffset', {
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
       });
@@ -91,15 +96,15 @@ export default function DevPanel() {
 
   const handleMouseMove = e => {
     if (isDragging()) {
-      setPosition({
-        x: e.clientX - dragOffset().x,
-        y: e.clientY - dragOffset().y,
+      setPanel('position', {
+        x: e.clientX - panel.dragOffset.x,
+        y: e.clientY - panel.dragOffset.y,
       });
     }
     if (isResizing()) {
-      const newWidth = Math.max(300, e.clientX - position().x);
-      const newHeight = Math.max(200, e.clientY - position().y);
-      setSize({ width: newWidth, height: newHeight });
+      const newWidth = Math.max(300, e.clientX - panel.position.x);
+      const newHeight = Math.max(200, e.clientY - panel.position.y);
+      setPanel('size', { width: newWidth, height: newHeight });
     }
   };
 
@@ -150,10 +155,10 @@ export default function DevPanel() {
         <div
           class='fixed z-9999 flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white font-mono text-xs shadow-xl'
           style={{
-            left: `${position().x}px`,
-            top: `${position().y}px`,
-            width: `${size().width}px`,
-            height: isMinimized() ? 'auto' : `${size().height}px`,
+            left: `${panel.position.x}px`,
+            top: `${panel.position.y}px`,
+            width: `${panel.size.width}px`,
+            height: isMinimized() ? 'auto' : `${panel.size.height}px`,
           }}
           onMouseDown={handleMouseDown}
         >

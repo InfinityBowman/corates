@@ -130,15 +130,18 @@ export function createFormErrorState() {
  * Returns reactive signals for field errors and global error
  * Note: This function must be called inside a SolidJS component context
  * @param {Function} createSignal - SolidJS createSignal function (imported from 'solid-js')
- * @returns {Object} Object with fieldErrors signal, globalError signal, and helper functions
+ * @param {Function} createStore - SolidJS createStore function (imported from 'solid-js/store')
+ * @returns {Object} Object with fieldErrors store, globalError signal, and helper functions
  */
-export function createFormErrorSignals(createSignal) {
-  const [fieldErrors, setFieldErrors] = createSignal({});
+export function createFormErrorSignals(createSignal, createStore) {
+  // Use store for field errors for fine-grained reactivity per field
+  const [fieldErrors, setFieldErrors] = createStore({});
   const [globalError, _setGlobalErrorSignal] = createSignal('');
 
   return {
     /**
-     * Reactive signal for field errors: { [fieldName]: errorMessage }
+     * Reactive store for field errors: { [fieldName]: errorMessage }
+     * Access individual fields directly: fieldErrors.email, fieldErrors.password
      */
     fieldErrors,
 
@@ -148,13 +151,22 @@ export function createFormErrorSignals(createSignal) {
     globalError,
 
     /**
+     * Get error for a specific field (for compatibility with signal-style access)
+     * @param {string} field - Field name
+     * @returns {string|undefined} Error message
+     */
+    getFieldError(field) {
+      return fieldErrors[field];
+    },
+
+    /**
      * Set error for a specific field
      * @param {string} field - Field name
      * @param {string} message - Error message
      */
     setFieldError(field, message) {
       if (field && message) {
-        setFieldErrors(prev => ({ ...prev, [field]: message }));
+        setFieldErrors(field, message);
       }
     },
 
@@ -163,18 +175,17 @@ export function createFormErrorSignals(createSignal) {
      * @param {string} field - Field name
      */
     clearFieldError(field) {
-      setFieldErrors(prev => {
-        const next = { ...prev };
-        delete next[field];
-        return next;
-      });
+      setFieldErrors(field, undefined);
     },
 
     /**
      * Clear all field errors
      */
     clearFieldErrors() {
-      setFieldErrors({});
+      // Get all current keys and set them to undefined
+      Object.keys(fieldErrors).forEach(key => {
+        setFieldErrors(key, undefined);
+      });
     },
 
     /**
@@ -196,7 +207,9 @@ export function createFormErrorSignals(createSignal) {
      * Clear all errors (both field and global)
      */
     clearAll() {
-      setFieldErrors({});
+      Object.keys(fieldErrors).forEach(key => {
+        setFieldErrors(key, undefined);
+      });
       _setGlobalErrorSignal('');
     },
 

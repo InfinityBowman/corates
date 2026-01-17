@@ -1,4 +1,5 @@
 import { Show, For, createSignal, createEffect, onCleanup } from 'solid-js';
+import { createStore } from 'solid-js/store';
 import { useNavigate, useLocation } from '@solidjs/router';
 import { Portal } from 'solid-js/web';
 import { useBetterAuth } from '@api/better-auth-store.js';
@@ -33,9 +34,9 @@ export default function Sidebar(props) {
 
   const currentUserId = () => user()?.id;
 
-  // Track expanded projects and studies
-  const [expandedProjects, setExpandedProjects] = createSignal({});
-  const [expandedStudies, setExpandedStudies] = createSignal({});
+  // Track expanded projects and studies (using stores for fine-grained reactivity)
+  const [expandedProjects, setExpandedProjects] = createStore({});
+  const [expandedStudies, setExpandedStudies] = createStore({});
 
   // Resize state
   const [isResizing, setIsResizing] = createSignal(false);
@@ -92,20 +93,14 @@ export default function Sidebar(props) {
   };
 
   const toggleProject = projectId => {
-    setExpandedProjects(prev => ({
-      ...prev,
-      [projectId]: !prev[projectId],
-    }));
+    setExpandedProjects(projectId, expanded => !expanded);
   };
 
   const toggleStudy = studyId => {
-    setExpandedStudies(prev => ({
-      ...prev,
-      [studyId]: !prev[studyId],
-    }));
+    setExpandedStudies(studyId, expanded => !expanded);
   };
 
-  const isStudyExpanded = studyId => expandedStudies()[studyId] || false;
+  const isStudyExpanded = studyId => expandedStudies[studyId] || false;
 
   const isCurrentPath = path => location.pathname === path;
 
@@ -327,7 +322,7 @@ export default function Sidebar(props) {
                       {project => (
                         <ProjectTreeItem
                           project={project}
-                          isExpanded={expandedProjects()[project.id]}
+                          isExpanded={expandedProjects[project.id]}
                           onToggle={() => toggleProject(project.id)}
                           userId={currentUserId()}
                           currentPath={location.pathname}
@@ -572,7 +567,7 @@ export default function Sidebar(props) {
                         {project => (
                           <ProjectTreeItem
                             project={project}
-                            isExpanded={expandedProjects()[project.id]}
+                            isExpanded={expandedProjects[project.id]}
                             onToggle={() => toggleProject(project.id)}
                             userId={currentUserId()}
                             currentPath={location.pathname}

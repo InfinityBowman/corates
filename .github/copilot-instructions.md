@@ -122,6 +122,97 @@ See `solidjs.mdc` for detailed reactivity patterns and examples.
   - configuration.md - Configuration files and environment variables
   - development-workflow.md - Getting started and common tasks
 
+## Agent Memory System
+
+This repository has a persistent memory system (`@corates/mcp-memory`) that stores durable knowledge across sessions.
+
+### When to Search Memory
+
+**Always search memory before:**
+
+- Starting complex or multi-step tasks
+- Making architectural decisions
+- Working in unfamiliar areas of the codebase
+- Implementing patterns that might already exist
+
+**Example searches:**
+
+- "authentication patterns" before working on auth
+- "error handling" before adding try/catch blocks
+- "database migrations" before schema changes
+- "SolidJS props" before creating components
+
+### When to Write Memory
+
+**Propose memory writes when you discover:**
+
+- A non-obvious fact about the codebase
+- The rationale behind an architectural decision
+- A multi-step procedure that will be repeated
+- A pattern that should be followed consistently
+
+**Do NOT write:**
+
+- Task-specific context (what you're currently working on)
+- Temporary workarounds or debugging notes
+- Information already in documentation
+- Opinions without decisions
+
+### When to Update Memory
+
+**Use `propose_memory_update` when:**
+
+- Existing knowledge is outdated or incorrect
+- You have additional context to add
+- A decision has changed with new rationale
+- A procedure needs correction
+
+**Update Actions:**
+
+- `refine` - Update in-place, keeps same ID, increments version
+- `supersede` - Create new entry, mark old as replaced (use for major changes)
+
+### Knowledge Types
+
+| Type        | When to Use                          |
+| ----------- | ------------------------------------ |
+| `fact`      | Objective, verifiable information    |
+| `decision`  | Choice with rationale (why X over Y) |
+| `procedure` | Step-by-step instructions            |
+| `pattern`   | Repeated structure to follow         |
+
+### Memory Tool Usage
+
+```
+# Before starting work
+search_memory({ query: "relevant topic" })
+
+# After discovering durable knowledge
+propose_memory_write({
+  type: "decision",
+  title: "Concise title",
+  content: "Detailed explanation with rationale",
+  tags: ["relevant", "tags"]
+})
+
+# To update existing knowledge
+propose_memory_update({
+  target_id: "uuid-from-search",
+  action: "refine",
+  content: "Updated content with corrections",
+  justification: "Why this update is needed"
+})
+
+# To replace outdated knowledge
+propose_memory_update({
+  target_id: "uuid-from-search",
+  action: "supersede",
+  title: "New title for replacement",
+  content: "Completely revised content",
+  justification: "Original was incorrect because..."
+})
+```
+
 ## Specialized Rule Files
 
 For detailed patterns, see:

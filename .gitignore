@@ -27,6 +27,7 @@ packages/landing/app.config.timestamp_*.js
 
 # production
 /build
+dist/
 
 # misc
 .DS_Store

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "corates-memory": {
+      "command": "node",
+      "args": ["packages/mcp-memory/dist/server.js"],
+      "env": {
+        "MCP_MEMORY_REPO_ROOT": "/Users/jacobmaynard/Documents/Repos/corates"
+      }
+    }
+  }
+}

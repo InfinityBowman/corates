@@ -23,7 +23,10 @@ export default function SignUp() {
   const [orcidLoading, setOrcidLoading] = createSignal(false);
 
   const navigate = useNavigate();
-  const { signinWithGoogle, signinWithOrcid, clearAuthError } = useBetterAuth();
+  const { signinWithGoogle, signinWithOrcid, clearAuthError, authError } = useBetterAuth();
+
+  // Combine local error with auth error for consistent display
+  const displayError = () => error() || authError();
 
   // Number of social providers (update as you add more)
   const socialProviderCount = 2;
@@ -135,7 +138,7 @@ export default function SignUp() {
 
         <AuthDivider />
 
-        <ErrorMessage displayError={error} />
+        <ErrorMessage displayError={displayError} />
 
         {/* Magic Link Form - simple email signup */}
         <MagicLinkForm
