@@ -154,7 +154,10 @@ function QuestionPill(props) {
       const parts = item.label?.split('.') || [];
       return parts.length > 1 ? parts[1] : item.label;
     }
-    if (item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION || item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION) {
+    if (
+      item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION ||
+      item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION
+    ) {
       return 'D';
     }
     return item.label || '?';

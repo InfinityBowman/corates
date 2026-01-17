@@ -76,9 +76,7 @@ export default function DirectionPanel(props) {
               <Show
                 when={!props.readOnly}
                 fallback={
-                  <div
-                    class={`${baseClasses} ${getDirectionButtonStyle(isSelected())}`}
-                  >
+                  <div class={`${baseClasses} ${getDirectionButtonStyle(isSelected())}`}>
                     {option}
                   </div>
                 }

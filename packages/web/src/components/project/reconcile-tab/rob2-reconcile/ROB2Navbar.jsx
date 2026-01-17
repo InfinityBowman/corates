@@ -86,7 +86,11 @@ export default function ROB2Navbar(props) {
     <nav class='flex items-center gap-1 px-1 py-1.5' aria-label='Question navigation'>
       {/* Aim Mismatch Warning */}
       <Show when={props.store.aimMismatch}>
-        <Tooltip content='Aim mismatch - reconcile the aim field first' placement='bottom' openDelay={200}>
+        <Tooltip
+          content='Aim mismatch - reconcile the aim field first'
+          placement='bottom'
+          openDelay={200}
+        >
           <div class='mr-1 flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700'>
             <FiAlertTriangle class='h-3 w-3' />
             Aim

@@ -90,9 +90,9 @@ export default function RobinsAnswerPanel(props) {
                 fallback={
                   <div
                     class={`${baseClasses} ${
-                      isSelected() ?
-                        getSelectedAnswerStyle()
-                      : 'border-gray-200 bg-white text-gray-700'
+                      isSelected() ? getSelectedAnswerStyle() : (
+                        'border-gray-200 bg-white text-gray-700'
+                      )
                     }`}
                   >
                     <span class='mr-1'>{option}</span>
@@ -102,9 +102,9 @@ export default function RobinsAnswerPanel(props) {
               >
                 <label
                   class={`${baseClasses} cursor-pointer focus-within:ring-2 focus-within:ring-blue-400 focus-within:ring-offset-1 focus-within:outline-none hover:border-blue-300 ${
-                    isSelected() ?
-                      getSelectedAnswerStyle()
-                    : 'border-gray-200 bg-white text-gray-700 hover:bg-blue-50'
+                    isSelected() ? getSelectedAnswerStyle() : (
+                      'border-gray-200 bg-white text-gray-700 hover:bg-blue-50'
+                    )
                   }`}
                 >
                   <input

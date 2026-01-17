@@ -38,9 +38,9 @@ export default function OverallDirectionPage(props) {
       {/* Header */}
       <div
         class={`rounded-t-xl border-b p-4 ${
-          props.directionMatch && judgementMatch()
-            ? 'border-green-200 bg-green-50'
-            : 'border-amber-200 bg-amber-50'
+          props.directionMatch && judgementMatch() ?
+            'border-green-200 bg-green-50'
+          : 'border-amber-200 bg-amber-50'
         }`}
       >
         <div class='flex items-start gap-3'>
@@ -57,7 +57,9 @@ export default function OverallDirectionPage(props) {
             </div>
           </Show>
           <div>
-            <h2 class='font-semibold text-gray-900'>Overall Risk of Bias - Judgement &amp; Direction</h2>
+            <h2 class='font-semibold text-gray-900'>
+              Overall Risk of Bias - Judgement &amp; Direction
+            </h2>
             <p class='mt-1 text-sm text-gray-600'>
               Review the overall calculated judgement and select the overall bias direction
             </p>
@@ -75,9 +77,16 @@ export default function OverallDirectionPage(props) {
               judgements:
             </p>
             <ul class='mt-1 ml-4 list-disc'>
-              <li>If any domain is <strong>High</strong>, overall is High</li>
-              <li>Otherwise, if any domain has <strong>Some concerns</strong>, overall is Some concerns</li>
-              <li>Otherwise, overall is <strong>Low</strong></li>
+              <li>
+                If any domain is <strong>High</strong>, overall is High
+              </li>
+              <li>
+                Otherwise, if any domain has <strong>Some concerns</strong>, overall is Some
+                concerns
+              </li>
+              <li>
+                Otherwise, overall is <strong>Low</strong>
+              </li>
             </ul>
           </div>
         </div>

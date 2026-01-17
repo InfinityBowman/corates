@@ -99,9 +99,7 @@ export default function JudgementPanel(props) {
               <Show
                 when={!props.readOnly}
                 fallback={
-                  <div
-                    class={`${baseClasses} ${getJudgementButtonStyle(isSelected())}`}
-                  >
+                  <div class={`${baseClasses} ${getJudgementButtonStyle(isSelected())}`}>
                     {option}
                   </div>
                 }

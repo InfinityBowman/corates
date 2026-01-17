@@ -151,16 +151,14 @@ function comparePreliminary(
       // Compare arrays
       const arr1 = (value1 as string[] | undefined) || [];
       const arr2 = (value2 as string[] | undefined) || [];
-      isAgreement =
-        arr1.length === arr2.length && arr1.every((v, i) => v === arr2[i]);
+      isAgreement = arr1.length === arr2.length && arr1.every((v, i) => v === arr2[i]);
     } else if (key === 'sources') {
       // Compare objects
       const obj1 = (value1 as Record<string, boolean> | undefined) || {};
       const obj2 = (value2 as Record<string, boolean> | undefined) || {};
       const keys1 = Object.keys(obj1).filter(k => obj1[k]);
       const keys2 = Object.keys(obj2).filter(k => obj2[k]);
-      isAgreement =
-        keys1.length === keys2.length && keys1.every(k => keys2.includes(k));
+      isAgreement = keys1.length === keys2.length && keys1.every(k => keys2.includes(k));
     } else {
       // Compare primitives (strings)
       isAgreement = value1 === value2;
@@ -310,10 +308,7 @@ export function compareChecklists(
   }
 
   // Compare preliminary section
-  const preliminary = comparePreliminary(
-    checklist1.preliminary,
-    checklist2.preliminary,
-  );
+  const preliminary = comparePreliminary(checklist1.preliminary, checklist2.preliminary);
 
   // Determine active domains based on reconciled aim (use checklist1's aim as reference)
   const isAdhering = checklist1.preliminary?.aim === 'ADHERING';
@@ -338,8 +333,7 @@ export function compareChecklists(
 
   for (const domainKey of activeDomains) {
     const domain = domains[domainKey];
-    totalItems +=
-      domain.questions.agreements.length + domain.questions.disagreements.length;
+    totalItems += domain.questions.agreements.length + domain.questions.disagreements.length;
     agreedItems += domain.questions.agreements.length;
 
     // Count direction as an item
@@ -400,9 +394,7 @@ export function getReconciliationSummary(comparison: ComparisonResult): {
 } {
   const { preliminary, domains, overall, stats } = comparison;
 
-  const preliminaryDisagreements = preliminary.fields.filter(
-    f => !f.isAgreement,
-  ).length;
+  const preliminaryDisagreements = preliminary.fields.filter(f => !f.isAgreement).length;
 
   const domainDisagreements: Array<{
     domain: string;
@@ -445,9 +437,7 @@ export function getReconciliationSummary(comparison: ComparisonResult): {
  * Get the domain definition from the schema
  */
 export function getDomainDef(domainKey: string): ROB2Domain | undefined {
-  return ROB2_CHECKLIST[domainKey as keyof typeof ROB2_CHECKLIST] as
-    | ROB2Domain
-    | undefined;
+  return ROB2_CHECKLIST[domainKey as keyof typeof ROB2_CHECKLIST] as ROB2Domain | undefined;
 }
 
 /**

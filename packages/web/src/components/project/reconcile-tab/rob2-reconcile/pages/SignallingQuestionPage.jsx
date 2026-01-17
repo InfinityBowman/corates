@@ -1,6 +1,10 @@
 import { Show, createMemo } from 'solid-js';
 import { FiCheck, FiX, FiInfo } from 'solid-icons/fi';
-import { ROB2_CHECKLIST, RESPONSE_TYPES, getDomainQuestions } from '@corates/shared/checklists/rob2';
+import {
+  ROB2_CHECKLIST,
+  RESPONSE_TYPES,
+  getDomainQuestions,
+} from '@corates/shared/checklists/rob2';
 import ROB2AnswerPanel from '../panels/ROB2AnswerPanel.jsx';
 
 /**
@@ -38,9 +42,7 @@ export default function SignallingQuestionPage(props) {
       {/* Header */}
       <div
         class={`rounded-t-xl border-b p-4 ${
-          props.isAgreement
-            ? 'border-green-200 bg-green-50'
-            : 'border-amber-200 bg-amber-50'
+          props.isAgreement ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'
         }`}
       >
         <div class='flex items-start gap-3'>
