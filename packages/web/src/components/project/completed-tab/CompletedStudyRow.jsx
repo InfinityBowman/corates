@@ -7,7 +7,7 @@
 
 import { For, Show, createMemo, createSignal } from 'solid-js';
 import { BiRegularChevronRight } from 'solid-icons/bi';
-import { Collapsible } from '@corates/ui';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { PdfListItem } from '@pdf';
 import { getCompletedChecklists } from '@/lib/checklist-domain.js';
@@ -63,115 +63,117 @@ export default function CompletedStudyRow(props) {
     );
   };
 
+  // Handle row click - toggle unless clicking on interactive elements or selectable text
+  const handleRowClick = e => {
+    if (!hasPdfs()) return;
+    const target = e.target;
+    const interactive = target.closest('button, [role="button"], [data-selectable]');
+    if (interactive) return;
+    setExpanded(!expanded());
+  };
+
   return (
     <>
       <div class='overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors hover:border-gray-300'>
-        <Collapsible
-          open={expanded()}
-          onOpenChange={({ open }) => {
-            // Only toggle if there are PDFs to show
-            if (hasPdfs()) {
-              setExpanded(open);
-            }
-          }}
-          trigger={
-            <div
-              class={`flex items-center gap-3 px-4 py-3 select-none ${hasPdfs() ? 'cursor-pointer' : ''}`}
-            >
-              {/* Chevron indicator (only if has PDFs) */}
-              <Show when={hasPdfs()}>
-                <div class='-ml-1 shrink-0 p-1'>
-                  <BiRegularChevronRight
-                    class={`h-5 w-5 text-gray-400 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
-                  />
-                </div>
-              </Show>
-
-              {/* Study info */}
-              <div class='min-w-0 flex-1'>
-                <div class='flex items-center gap-2'>
-                  <span class='truncate font-medium text-gray-900'>{study().name}</span>
-                </div>
-                {/* Citation line - selectable */}
-                <Show when={citationLine()}>
-                  <p
-                    class='w-fit cursor-text truncate text-xs text-gray-500 select-text'
-                    data-selectable
-                  >
-                    {citationLine()}
-                    <Show when={hasPdfs()}>
-                      <span class='text-gray-400'> · {pdfCount()} PDFs</span>
-                    </Show>
-                  </p>
-                </Show>
-                <Show when={!citationLine() && hasPdfs()}>
-                  <p class='text-xs text-gray-400'>{pdfCount()} PDFs</p>
-                </Show>
+        <Collapsible open={expanded()}>
+          <div
+            class={`flex items-center gap-3 px-4 py-3 select-none ${hasPdfs() ? 'cursor-pointer' : ''}`}
+            onClick={handleRowClick}
+          >
+            {/* Chevron indicator (only if has PDFs) */}
+            <Show when={hasPdfs()}>
+              <div class='-ml-1 shrink-0 p-1'>
+                <BiRegularChevronRight
+                  class={`h-5 w-5 text-gray-400 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
+                />
               </div>
+            </Show>
 
-              {/* Checklist type badge - selectable */}
-              <Show when={completedChecklists().length > 0}>
-                <span
-                  class='inline-flex shrink-0 cursor-text items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 select-text'
+            {/* Study info */}
+            <div class='min-w-0 flex-1'>
+              <div class='flex items-center gap-2'>
+                <span class='truncate font-medium text-gray-900'>{study().name}</span>
+              </div>
+              {/* Citation line - selectable */}
+              <Show when={citationLine()}>
+                <p
+                  class='w-fit cursor-text truncate text-xs text-gray-500 select-text'
                   data-selectable
                 >
-                  {getChecklistMetadata(completedChecklists()[0]?.type)?.name || 'Checklist'}
-                </span>
+                  {citationLine()}
+                  <Show when={hasPdfs()}>
+                    <span class='text-gray-400'> · {pdfCount()} PDFs</span>
+                  </Show>
+                </p>
               </Show>
-
-              {/* Checklist status badge */}
-              <Show when={completedChecklists().length > 0}>
-                <span
-                  class={`inline-flex shrink-0 cursor-text items-center rounded-full px-2.5 py-1 text-xs font-medium select-text ${getStatusStyle(completedChecklists()[0]?.status)}`}
-                  data-selectable
-                >
-                  {getStatusLabel(completedChecklists()[0]?.status)}
-                </span>
-              </Show>
-
-              {/* View Previous Reviewers button (only for dual-reviewer studies) */}
-              <Show when={hasPreviousReviewers()}>
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    setShowPreviousReviewers(true);
-                  }}
-                  class='shrink-0 rounded-lg bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
-                >
-                  View Previous
-                </button>
-              </Show>
-
-              {/* Open checklist button */}
-              <Show when={completedChecklists().length > 0}>
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    props.onOpenChecklist?.(completedChecklists()[0].id);
-                  }}
-                  class='shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                >
-                  Open
-                </button>
+              <Show when={!citationLine() && hasPdfs()}>
+                <p class='text-xs text-gray-400'>{pdfCount()} PDFs</p>
               </Show>
             </div>
-          }
-        >
-          {/* Expanded PDF Section */}
-          <Show when={hasPdfs()}>
-            <div class='space-y-2 border-t border-gray-100 px-4 py-3'>
-              <For each={sortedPdfs()}>
-                {pdf => (
-                  <PdfListItem
-                    pdf={pdf}
-                    onView={() => props.onViewPdf?.(pdf)}
-                    onDownload={() => props.onDownloadPdf?.(pdf)}
-                    readOnly={true}
-                  />
-                )}
-              </For>
-            </div>
-          </Show>
+
+            {/* Checklist type badge - selectable */}
+            <Show when={completedChecklists().length > 0}>
+              <span
+                class='inline-flex shrink-0 cursor-text items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 select-text'
+                data-selectable
+              >
+                {getChecklistMetadata(completedChecklists()[0]?.type)?.name || 'Checklist'}
+              </span>
+            </Show>
+
+            {/* Checklist status badge */}
+            <Show when={completedChecklists().length > 0}>
+              <span
+                class={`inline-flex shrink-0 cursor-text items-center rounded-full px-2.5 py-1 text-xs font-medium select-text ${getStatusStyle(completedChecklists()[0]?.status)}`}
+                data-selectable
+              >
+                {getStatusLabel(completedChecklists()[0]?.status)}
+              </span>
+            </Show>
+
+            {/* View Previous Reviewers button (only for dual-reviewer studies) */}
+            <Show when={hasPreviousReviewers()}>
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  setShowPreviousReviewers(true);
+                }}
+                class='shrink-0 rounded-lg bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
+              >
+                View Previous
+              </button>
+            </Show>
+
+            {/* Open checklist button */}
+            <Show when={completedChecklists().length > 0}>
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  props.onOpenChecklist?.(completedChecklists()[0].id);
+                }}
+                class='shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              >
+                Open
+              </button>
+            </Show>
+          </div>
+          <CollapsibleContent>
+            {/* Expanded PDF Section */}
+            <Show when={hasPdfs()}>
+              <div class='space-y-2 border-t border-gray-100 px-4 py-3'>
+                <For each={sortedPdfs()}>
+                  {pdf => (
+                    <PdfListItem
+                      pdf={pdf}
+                      onView={() => props.onViewPdf?.(pdf)}
+                      onDownload={() => props.onDownloadPdf?.(pdf)}
+                      readOnly={true}
+                    />
+                  )}
+                </For>
+              </div>
+            </Show>
+          </CollapsibleContent>
         </Collapsible>
       </div>
 

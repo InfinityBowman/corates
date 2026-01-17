@@ -1,6 +1,7 @@
 import { For, createMemo, Show } from 'solid-js';
 import { FiChevronDown, FiChevronRight, FiCheck } from 'solid-icons/fi';
-import { Tooltip, CollapsiblePrimitive as Collapsible } from '@corates/ui';
+import { Tooltip } from '@corates/ui';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   getSectionLabel,
   hasNavItemAnswer,
@@ -69,7 +70,7 @@ export default function NavbarDomainPill(props) {
   });
 
   return (
-    <Collapsible.Root open={props.isExpanded} collapsedWidth={0} class={containerStyle()}>
+    <Collapsible open={props.isExpanded} collapsedWidth={0} class={containerStyle()}>
       {/* Label/collapse button */}
       <Tooltip content={tooltipContent()} placement='bottom' openDelay={300}>
         <button type='button' onClick={() => props.onClick?.()} class={labelStyle()}>
@@ -89,7 +90,7 @@ export default function NavbarDomainPill(props) {
       </Tooltip>
 
       {/* Animated expanded question pills */}
-      <Collapsible.Content class='collapsible-horizontal flex items-center overflow-visible py-1'>
+      <CollapsibleContent horizontal class='flex items-center overflow-visible py-1'>
         <For each={props.progress?.items || []}>
           {(item, idx) => {
             const globalIndex = () => props.allNavItems?.indexOf(item) ?? -1;
@@ -110,8 +111,8 @@ export default function NavbarDomainPill(props) {
             );
           }}
         </For>
-      </Collapsible.Content>
-    </Collapsible.Root>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 

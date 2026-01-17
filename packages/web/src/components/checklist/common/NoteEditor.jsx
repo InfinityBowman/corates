@@ -7,7 +7,11 @@
 import { createSignal, createEffect, onCleanup, Show } from 'solid-js';
 import { BiRegularChevronRight } from 'solid-icons/bi';
 import { BsJournalText } from 'solid-icons/bs';
-import { Collapsible } from '@corates/ui';
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from '@/components/ui/collapsible';
 
 const MAX_HEIGHT = 300;
 
@@ -132,24 +136,19 @@ export default function NoteEditor(props) {
       when={props.inline}
       fallback={
         <div class='mt-3 border-t border-gray-100 pt-2'>
-          <Collapsible
-            open={expanded()}
-            onOpenChange={({ open }) => {
-              setExpanded(open);
-            }}
-            trigger={
-              <div
-                class={`flex cursor-pointer items-center gap-1.5 py-1 text-xs select-none ${hasContent() ? 'text-blue-600 hover:text-blue-700' : 'text-gray-500 hover:text-gray-700'} `}
-              >
-                <BiRegularChevronRight
-                  class={`h-4 w-4 shrink-0 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
-                />
-                <BsJournalText class='h-3 w-3 shrink-0' />
-                <span class='font-medium'>{props.label || 'Notes'}</span>
-              </div>
-            }
-          >
-            <div class='px-0.5 pt-2 pb-0.5'>{textareaContent}</div>
+          <Collapsible open={expanded()} onOpenChange={setExpanded}>
+            <CollapsibleTrigger
+              class={`flex cursor-pointer items-center gap-1.5 py-1 text-xs select-none ${hasContent() ? 'text-blue-600 hover:text-blue-700' : 'text-gray-500 hover:text-gray-700'} `}
+            >
+              <BiRegularChevronRight
+                class={`h-4 w-4 shrink-0 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
+              />
+              <BsJournalText class='h-3 w-3 shrink-0' />
+              <span class='font-medium'>{props.label || 'Notes'}</span>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div class='px-0.5 pt-2 pb-0.5'>{textareaContent}</div>
+            </CollapsibleContent>
           </Collapsible>
         </div>
       }

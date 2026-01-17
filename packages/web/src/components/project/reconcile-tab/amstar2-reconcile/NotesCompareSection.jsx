@@ -7,7 +7,11 @@
 import { createSignal, createEffect, onCleanup, Show } from 'solid-js';
 import { BiRegularChevronRight } from 'solid-icons/bi';
 import { BsJournalText, BsClipboard2 } from 'solid-icons/bs';
-import { Collapsible } from '@corates/ui';
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from '@/components/ui/collapsible';
 import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
 
 const MAX_LENGTH = 2000;
@@ -88,31 +92,27 @@ export default function NotesCompareSection(props) {
 
   return (
     <div class='mt-4 border-t border-gray-200 pt-3'>
-      <Collapsible
-        open={expanded()}
-        onOpenChange={({ open }) => setExpanded(open)}
-        trigger={
-          <div
-            class={`flex cursor-pointer items-center gap-1.5 py-1 text-sm select-none ${hasAnyNote() ? 'text-blue-600 hover:text-blue-700' : 'text-gray-500 hover:text-gray-700'} `}
-          >
-            <BiRegularChevronRight
-              class={`h-4 w-4 shrink-0 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
-            />
-            <BsJournalText class='h-4 w-4 shrink-0' />
-            <span class='font-medium'>Question Notes</span>
-            <Show when={hasAnyNote()}>
-              <span class='ml-1 text-xs text-gray-400'>
-                (
-                {[hasReviewer1Note() && 'R1', hasReviewer2Note() && 'R2', hasFinalNote() && 'Final']
-                  .filter(Boolean)
-                  .join(', ')}
-                )
-              </span>
-            </Show>
-          </div>
-        }
-      >
-        <div class='pt-3'>
+      <Collapsible open={expanded()} onOpenChange={setExpanded}>
+        <CollapsibleTrigger
+          class={`flex cursor-pointer items-center gap-1.5 py-1 text-sm select-none ${hasAnyNote() ? 'text-blue-600 hover:text-blue-700' : 'text-gray-500 hover:text-gray-700'} `}
+        >
+          <BiRegularChevronRight
+            class={`h-4 w-4 shrink-0 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
+          />
+          <BsJournalText class='h-4 w-4 shrink-0' />
+          <span class='font-medium'>Question Notes</span>
+          <Show when={hasAnyNote()}>
+            <span class='ml-1 text-xs text-gray-400'>
+              (
+              {[hasReviewer1Note() && 'R1', hasReviewer2Note() && 'R2', hasFinalNote() && 'Final']
+                .filter(Boolean)
+                .join(', ')}
+              )
+            </span>
+          </Show>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div class='pt-3'>
           {/* Three column layout for notes */}
           <div class='grid grid-cols-3 gap-4'>
             {/* Reviewer 1 Note (read-only) */}
@@ -198,6 +198,7 @@ export default function NotesCompareSection(props) {
             </div>
           </div>
         </div>
+        </CollapsibleContent>
       </Collapsible>
     </div>
   );

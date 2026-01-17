@@ -5,7 +5,12 @@
 
 import { createSignal, createMemo, For, Show } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { showToast, Collapsible } from '@corates/ui';
+import { showToast } from '@corates/ui';
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from '@/components/ui/collapsible';
 import {
   BiRegularShuffle,
   BiRegularCheck,
@@ -426,24 +431,20 @@ export default function ReviewerAssignment(props) {
 
   return (
     <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
-      <Collapsible
-        open={isExpanded()}
-        onOpenChange={({ open }) => setIsExpanded(open)}
-        trigger={
-          <div class='flex w-full cursor-pointer items-center gap-3 px-4 py-3 select-none'>
-            {/* Chevron indicator */}
-            <div class='shrink-0'>
-              <BiRegularChevronRight
-                class={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isExpanded() ? 'rotate-90' : ''}`}
-              />
-            </div>
-            <div class='flex items-center gap-2'>
-              <FiUsers class='h-4 w-4 text-blue-600' />
-              <span class='text-sm font-medium text-gray-900'>Assign Reviewers to Studies</span>
-            </div>
+      <Collapsible open={isExpanded()} onOpenChange={setIsExpanded}>
+        <CollapsibleTrigger class='flex w-full cursor-pointer items-center gap-3 px-4 py-3 select-none'>
+          {/* Chevron indicator */}
+          <div class='shrink-0'>
+            <BiRegularChevronRight
+              class={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isExpanded() ? 'rotate-90' : ''}`}
+            />
           </div>
-        }
-      >
+          <div class='flex items-center gap-2'>
+            <FiUsers class='h-4 w-4 text-blue-600' />
+            <span class='text-sm font-medium text-gray-900'>Assign Reviewers to Studies</span>
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
         <div class='border-t border-gray-200 px-4 pb-4'>
           <Show
             when={members().length >= 2}
@@ -586,6 +587,7 @@ export default function ReviewerAssignment(props) {
             </Show>
           </Show>
         </div>
+        </CollapsibleContent>
       </Collapsible>
     </div>
   );
