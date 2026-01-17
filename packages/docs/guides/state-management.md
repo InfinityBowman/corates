@@ -530,6 +530,7 @@ createEffect(() => {
 ```
 
 Problems with this approach:
+
 - Hidden dependency relationship
 - Extra signal that needs to be managed
 - Potential race conditions
@@ -544,6 +545,7 @@ const filtered = createMemo(() => items().filter(i => i.active));
 ```
 
 Benefits:
+
 - Declarative relationship between values
 - Automatic re-computation when dependencies change
 - No race conditions
@@ -551,10 +553,10 @@ Benefits:
 
 ### When to Use Each Pattern
 
-| Pattern | Use Case |
-|---------|----------|
-| `createMemo` | Derived values from other reactive sources |
-| `createEffect` | Side effects (DOM, localStorage, external APIs) |
+| Pattern          | Use Case                                                    |
+| ---------------- | ----------------------------------------------------------- |
+| `createMemo`     | Derived values from other reactive sources                  |
+| `createEffect`   | Side effects (DOM, localStorage, external APIs)             |
 | Function wrapper | Lightweight derivation: `const doubled = () => count() * 2` |
 
 ### Function Wrappers vs createMemo
@@ -570,11 +572,13 @@ const doubled = createMemo(() => count() * 2);
 ```
 
 Use `createMemo` when:
+
 - The computation is expensive
 - The value is accessed multiple times per render cycle
 - You need referential stability (same object identity)
 
 Use function wrappers when:
+
 - The computation is trivial
 - The value is only accessed once per render
 - You want to avoid the memo overhead

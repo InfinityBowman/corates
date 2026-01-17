@@ -10,15 +10,15 @@
 
 The CoRATES codebase demonstrates **excellent adherence** to SolidJS best practices. The team has done strong work on prop handling, control-flow components, store usage, and effect patterns. One minor signal passing issue was fixed. Remaining items are low-priority optimizations.
 
-| Category | Status | Priority |
-|----------|--------|----------|
-| Props (no destructuring) | Excellent | N/A |
-| Control-flow (Show/For) | Excellent | N/A |
-| Stores for complex objects | Good | Low |
-| createEffect usage | Good | N/A |
-| Derived state patterns | Good | N/A |
-| Signal passing in JSX | Fixed | N/A |
-| Documentation | Good, gaps identified | Low |
+| Category                   | Status                | Priority |
+| -------------------------- | --------------------- | -------- |
+| Props (no destructuring)   | Excellent             | N/A      |
+| Control-flow (Show/For)    | Excellent             | N/A      |
+| Stores for complex objects | Good                  | Low      |
+| createEffect usage         | Good                  | N/A      |
+| Derived state patterns     | Good                  | N/A      |
+| Signal passing in JSX      | Fixed                 | N/A      |
+| Documentation              | Good, gaps identified | Low      |
 
 ---
 
@@ -43,6 +43,7 @@ export default function ScoreTag(props) {
 **Status:** No violations found
 
 The codebase consistently uses:
+
 - `<Show when={condition}>` instead of `{condition && <Component />}`
 - `<Show when={condition} fallback={<Fallback />}>` instead of ternary operators
 - `<For each={array}>` instead of `.map()` in JSX
@@ -57,14 +58,15 @@ None - all identified issues were determined to be legitimate patterns on closer
 
 #### Medium Priority
 
-| File | Line | Issue | Fix |
-|------|------|-------|-----|
-| `SplitScreenLayout.jsx` | 24-26 | Simple prop sync | Use prop directly |
+| File                       | Line  | Issue                     | Fix                        |
+| -------------------------- | ----- | ------------------------- | -------------------------- |
+| `SplitScreenLayout.jsx`    | 24-26 | Simple prop sync          | Use prop directly          |
 | `EditPdfMetadataModal.jsx` | 31-40 | Form reset on prop change | Consider dedicated handler |
 
 #### Legitimate Uses (No changes needed)
 
 Most createEffect instances are legitimate:
+
 - DOM manipulation and event listeners (Sidebar, DevPanel)
 - Browser API integration (localStorage, online status)
 - Third-party library integration (PDF loading, blob URLs)
@@ -78,11 +80,11 @@ Most createEffect instances are legitimate:
 
 #### Should Convert to createStore
 
-| File | Lines | Current Pattern | Benefit |
-|------|-------|-----------------|---------|
-| `Sidebar.jsx` | 37-38, 95-105 | `createSignal({})` for expandedProjects | Fine-grained reactivity per project ID |
-| `DevPanel.jsx` | 46-50 | Separate position/size/dragOffset signals | Eliminate cross-property re-renders |
-| `form-errors.js` | 136, 157-170 | `createSignal({})` for fieldErrors | Only affected fields re-render |
+| File             | Lines         | Current Pattern                           | Benefit                                |
+| ---------------- | ------------- | ----------------------------------------- | -------------------------------------- |
+| `Sidebar.jsx`    | 37-38, 95-105 | `createSignal({})` for expandedProjects   | Fine-grained reactivity per project ID |
+| `DevPanel.jsx`   | 46-50         | Separate position/size/dragOffset signals | Eliminate cross-property re-renders    |
+| `form-errors.js` | 136, 157-170  | `createSignal({})` for fieldErrors        | Only affected fields re-render         |
 
 ### 5. Derived State Patterns - NEEDS ATTENTION
 
@@ -91,6 +93,7 @@ Most createEffect instances are legitimate:
 #### Anti-Patterns Found
 
 **RobinsIReconciliation.jsx** (Lines 89-98):
+
 ```js
 // ANTI-PATTERN: Using effect to set derived state
 createEffect(() => {
@@ -121,10 +124,10 @@ const expandedDomain = createMemo(() => {
 
 **Status:** 2 instances found
 
-| File | Line | Issue | Fix |
-|------|------|-------|-----|
-| `MagicLinkForm.jsx` | 103 | Passes `error` instead of `displayError` accessor | Change to `displayError={displayError}` |
-| `SignUp.jsx` | 138 | Passes raw `error` signal, inconsistent with other auth components | Create `displayError` accessor with authError fallback |
+| File                | Line | Issue                                                              | Fix                                                    |
+| ------------------- | ---- | ------------------------------------------------------------------ | ------------------------------------------------------ |
+| `MagicLinkForm.jsx` | 103  | Passes `error` instead of `displayError` accessor                  | Change to `displayError={displayError}`                |
+| `SignUp.jsx`        | 138  | Passes raw `error` signal, inconsistent with other auth components | Create `displayError` accessor with authError fallback |
 
 ---
 
@@ -139,23 +142,24 @@ const expandedDomain = createMemo(() => {
 
 ### Documentation Gaps
 
-| Topic | Current State | Recommendation |
-|-------|---------------|----------------|
-| Derive vs Sync | Implicit in examples | Add dedicated section with anti-pattern comparison |
-| Function wrappers vs createMemo | Both shown, no guidance on when | Explain performance tradeoffs |
-| Effects anti-patterns | Says "use sparingly" | Add common mistakes section |
-| Signal props pattern | Minimal coverage | Add examples of receiving signals as props |
+| Topic                           | Current State                   | Recommendation                                     |
+| ------------------------------- | ------------------------------- | -------------------------------------------------- |
+| Derive vs Sync                  | Implicit in examples            | Add dedicated section with anti-pattern comparison |
+| Function wrappers vs createMemo | Both shown, no guidance on when | Explain performance tradeoffs                      |
+| Effects anti-patterns           | Says "use sparingly"            | Add common mistakes section                        |
+| Signal props pattern            | Minimal coverage                | Add examples of receiving signals as props         |
 
 ### Recommended Documentation Additions
 
 #### 1. Add to state-management.md: "Derive Instead of Sync"
 
-```md
+````md
 ## Derive Instead of Sync
 
 Prefer deriving values over synchronizing signals with effects.
 
 ### Anti-Pattern (DON'T DO THIS)
+
 ```js
 const [items, setItems] = createSignal([]);
 const [filtered, setFiltered] = createSignal([]);
@@ -165,8 +169,10 @@ createEffect(() => {
   setFiltered(items().filter(i => i.active));
 });
 ```
+````
 
 ### Correct Pattern
+
 ```js
 const [items, setItems] = createSignal([]);
 
@@ -175,7 +181,8 @@ const filtered = createMemo(() => items().filter(i => i.active));
 ```
 
 **Why:** Derivation is declarative, has no race conditions, and automatically re-computes when dependencies change.
-```
+
+````
 
 #### 2. Add to components.md: "Function Wrappers vs createMemo"
 
@@ -189,7 +196,7 @@ Use createMemo when:
 - The computation is expensive
 - The value is accessed multiple times per render
 - You need memoization for referential stability
-```
+````
 
 ---
 
