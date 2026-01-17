@@ -5,7 +5,9 @@
  * <Collapsible>
  *   <CollapsibleTrigger>
  *     <span>Show more</span>
- *     <FiChevronDown />
+ *     <CollapsibleIndicator>
+ *       <FiChevronDown />
+ *     </CollapsibleIndicator>
  *   </CollapsibleTrigger>
  *   <CollapsibleContent>
  *     Hidden content that expands when trigger is clicked.
@@ -15,7 +17,7 @@
  * @example
  * // Controlled
  * const [open, setOpen] = createSignal(false);
- * <Collapsible open={open()} onOpenChange={details => setOpen(details.open)}>
+ * <Collapsible open={open()} onOpenChange={setOpen}>
  *   <CollapsibleTrigger>Toggle</CollapsibleTrigger>
  *   <CollapsibleContent>Content</CollapsibleContent>
  * </Collapsible>
@@ -33,18 +35,24 @@ import type {
   CollapsibleRootProps as ArkCollapsibleRootProps,
   CollapsibleTriggerProps as ArkCollapsibleTriggerProps,
   CollapsibleContentProps as ArkCollapsibleContentProps,
+  CollapsibleIndicatorProps as ArkCollapsibleIndicatorProps,
 } from '@ark-ui/solid/collapsible';
 import { cn } from './cn';
 
-type CollapsibleProps = ArkCollapsibleRootProps & {
+type CollapsibleProps = Omit<ArkCollapsibleRootProps, 'onOpenChange'> & {
   class?: string;
   children?: JSX.Element;
+  onOpenChange?: (_open: boolean) => void;
 };
 
 const Collapsible: Component<CollapsibleProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+  const [local, others] = splitProps(props, ['class', 'children', 'onOpenChange']);
   return (
-    <CollapsiblePrimitive.Root class={local.class} {...others}>
+    <CollapsiblePrimitive.Root
+      class={local.class}
+      onOpenChange={details => local.onOpenChange?.(details.open)}
+      {...others}
+    >
       {local.children}
     </CollapsiblePrimitive.Root>
   );
@@ -85,4 +93,21 @@ const CollapsibleContent: Component<CollapsibleContentProps> = props => {
   );
 };
 
-export { Collapsible, CollapsibleTrigger, CollapsibleContent };
+type CollapsibleIndicatorProps = ArkCollapsibleIndicatorProps & {
+  class?: string;
+  children?: JSX.Element;
+};
+
+const CollapsibleIndicator: Component<CollapsibleIndicatorProps> = props => {
+  const [local, others] = splitProps(props, ['class', 'children']);
+  return (
+    <CollapsiblePrimitive.Indicator
+      class={cn('transition-transform duration-200 data-[state=open]:rotate-180', local.class)}
+      {...others}
+    >
+      {local.children}
+    </CollapsiblePrimitive.Indicator>
+  );
+};
+
+export { Collapsible, CollapsibleTrigger, CollapsibleContent, CollapsibleIndicator };

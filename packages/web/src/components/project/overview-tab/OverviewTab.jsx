@@ -1,6 +1,6 @@
 import { For, Show, createSignal, createMemo } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { FiPlus, FiTrash2 } from 'solid-icons/fi';
+import { FiPlus, FiTrash2, FiChevronDown } from 'solid-icons/fi';
 import { AiOutlineBook } from 'solid-icons/ai';
 import { BiRegularCheckCircle } from 'solid-icons/bi';
 import { CgArrowsExchange } from 'solid-icons/cg';
@@ -12,7 +12,13 @@ import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
-import { Avatar, showToast, Progress, Collapsible } from '@corates/ui';
+import { Avatar, showToast, Progress } from '@corates/ui';
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+  CollapsibleIndicator,
+} from '@/components/ui/collapsible';
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -414,40 +420,40 @@ export default function OverviewTab() {
 
         {/* Figures Section - Collapsible */}
         <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
-          <Collapsible
-            open={chartsExpanded()}
-            onOpenChange={({ open }) => setChartsExpanded(open)}
-            trigger={
-              <div class='flex w-full cursor-pointer items-center justify-between px-6 py-4 transition-colors select-none hover:bg-gray-50'>
-                <h2 class='text-lg font-semibold text-gray-900'>Figures</h2>
-                <div class='text-sm text-gray-500'>
-                  {chartsExpanded() ? 'Click to collapse' : 'Click to expand charts'}
-                </div>
+          <Collapsible open={chartsExpanded()} onOpenChange={setChartsExpanded}>
+            <CollapsibleTrigger class='cursor-pointer px-6 py-4 transition-colors select-none hover:bg-gray-50'>
+              <h2 class='text-lg font-semibold text-gray-900'>Figures</h2>
+              <div class='flex items-center gap-2 text-sm text-gray-500'>
+                {chartsExpanded() ? 'Click to collapse' : 'Click to expand charts'}
+                <CollapsibleIndicator>
+                  <FiChevronDown class='h-5 w-5' />
+                </CollapsibleIndicator>
               </div>
-            }
-          >
-            <div class='border-t border-gray-200 px-6 py-6'>
-              <ChartSection studies={studies} members={members} />
-            </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div class='border-t border-gray-200 px-6 py-6'>
+                <ChartSection studies={studies} members={members} />
+              </div>
+            </CollapsibleContent>
           </Collapsible>
         </div>
         {/* Tables Section - Collapsible */}
         <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
-          <Collapsible
-            open={tablesExpanded()}
-            onOpenChange={({ open }) => setTablesExpanded(open)}
-            trigger={
-              <div class='flex w-full cursor-pointer items-center justify-between px-6 py-4 transition-colors select-none hover:bg-gray-50'>
-                <h2 class='text-lg font-semibold text-gray-900'>Tables</h2>
-                <div class='text-sm text-gray-500'>
-                  {tablesExpanded() ? 'Click to collapse' : 'Click to expand tables'}
-                </div>
+          <Collapsible open={tablesExpanded()} onOpenChange={setTablesExpanded}>
+            <CollapsibleTrigger class='cursor-pointer px-6 py-4 transition-colors select-none hover:bg-gray-50'>
+              <h2 class='text-lg font-semibold text-gray-900'>Tables</h2>
+              <div class='flex items-center gap-2 text-sm text-gray-500'>
+                {tablesExpanded() ? 'Click to collapse' : 'Click to expand tables'}
+                <CollapsibleIndicator>
+                  <FiChevronDown class='h-5 w-5' />
+                </CollapsibleIndicator>
               </div>
-            }
-          >
-            <div class='border-t border-gray-200 px-6 py-6'>
-              <AMSTAR2ResultsTable studies={studies} />
-            </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div class='border-t border-gray-200 px-6 py-6'>
+                <AMSTAR2ResultsTable studies={studies} />
+              </div>
+            </CollapsibleContent>
           </Collapsible>
         </div>
       </div>

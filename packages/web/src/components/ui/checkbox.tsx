@@ -13,7 +13,7 @@
  * const [checked, setChecked] = createSignal(false);
  * <CheckboxRoot
  *   checked={checked()}
- *   onCheckedChange={details => setChecked(details.checked)}
+ *   onCheckedChange={setChecked}
  * >
  *   <CheckboxControl />
  *   <CheckboxLabel>Remember me</CheckboxLabel>
@@ -40,15 +40,22 @@ import { cn } from './cn';
 const Checkbox = CheckboxPrimitive.Root;
 const CheckboxHiddenInput = CheckboxPrimitive.HiddenInput;
 
-type CheckboxRootProps = ArkCheckboxRootProps & {
+type CheckedState = boolean | 'indeterminate';
+
+type CheckboxRootProps = Omit<ArkCheckboxRootProps, 'onCheckedChange'> & {
   class?: string;
   children?: JSX.Element;
+  onCheckedChange?: (_checked: CheckedState) => void;
 };
 
 const CheckboxRoot: Component<CheckboxRootProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+  const [local, others] = splitProps(props, ['class', 'children', 'onCheckedChange']);
   return (
-    <CheckboxPrimitive.Root class={cn('flex items-center gap-2', local.class)} {...others}>
+    <CheckboxPrimitive.Root
+      class={cn('flex items-center gap-2', local.class)}
+      onCheckedChange={details => local.onCheckedChange?.(details.checked)}
+      {...others}
+    >
       {local.children}
     </CheckboxPrimitive.Root>
   );

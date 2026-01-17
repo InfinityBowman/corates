@@ -18,7 +18,7 @@
  * @example
  * // Controlled tabs
  * const [tab, setTab] = createSignal('account');
- * <Tabs value={tab()} onValueChange={details => setTab(details.value)}>
+ * <Tabs value={tab()} onValueChange={setTab}>
  *   ...
  * </Tabs>
  */
@@ -34,15 +34,20 @@ import type {
 } from '@ark-ui/solid/tabs';
 import { cn } from './cn';
 
-type TabsProps = ArkTabsRootProps & {
+type TabsProps = Omit<ArkTabsRootProps, 'onValueChange'> & {
   class?: string;
   children?: JSX.Element;
+  onValueChange?: (_value: string) => void;
 };
 
 const Tabs: Component<TabsProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+  const [local, others] = splitProps(props, ['class', 'children', 'onValueChange']);
   return (
-    <TabsPrimitive.Root class={local.class} {...others}>
+    <TabsPrimitive.Root
+      class={local.class}
+      onValueChange={details => local.onValueChange?.(details.value)}
+      {...others}
+    >
       {local.children}
     </TabsPrimitive.Root>
   );

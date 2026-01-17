@@ -42,6 +42,7 @@ import type { Component, JSX } from 'solid-js';
 import { Show, splitProps } from 'solid-js';
 import { Select as SelectPrimitive, createListCollection } from '@ark-ui/solid/select';
 import type {
+  SelectRootProps as ArkSelectRootProps,
   SelectLabelProps as ArkSelectLabelProps,
   SelectTriggerProps as ArkSelectTriggerProps,
   SelectContentProps as ArkSelectContentProps,
@@ -54,7 +55,25 @@ import { BiRegularChevronDown, BiRegularCheck } from 'solid-icons/bi';
 import { cn } from './cn';
 import { Z_INDEX } from './z-index';
 
-const Select = SelectPrimitive.Root;
+type SelectProps<T> = Omit<ArkSelectRootProps<T>, 'onValueChange' | 'onOpenChange'> & {
+  children?: JSX.Element;
+  onValueChange?: (_value: string[]) => void;
+  onOpenChange?: (_open: boolean) => void;
+};
+
+const Select = <T,>(props: SelectProps<T>) => {
+  const [local, others] = splitProps(props, ['children', 'onValueChange', 'onOpenChange']);
+  return (
+    <SelectPrimitive.Root
+      onValueChange={details => local.onValueChange?.(details.value)}
+      onOpenChange={details => local.onOpenChange?.(details.open)}
+      {...others}
+    >
+      {local.children}
+    </SelectPrimitive.Root>
+  );
+};
+
 const SelectControl = SelectPrimitive.Control;
 const SelectValueText = SelectPrimitive.ValueText;
 const SelectItemText = SelectPrimitive.ItemText;

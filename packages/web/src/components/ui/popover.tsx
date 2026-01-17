@@ -36,6 +36,7 @@ import type { Component, JSX } from 'solid-js';
 import { Show, splitProps } from 'solid-js';
 import { Popover as PopoverPrimitive } from '@ark-ui/solid/popover';
 import type {
+  PopoverRootProps as ArkPopoverRootProps,
   PopoverContentProps as ArkPopoverContentProps,
   PopoverTriggerProps as ArkPopoverTriggerProps,
   PopoverTitleProps as ArkPopoverTitleProps,
@@ -48,7 +49,20 @@ import { Portal } from 'solid-js/web';
 import { cn } from './cn';
 import { Z_INDEX } from './z-index';
 
-const Popover = PopoverPrimitive.Root;
+type PopoverProps = Omit<ArkPopoverRootProps, 'onOpenChange'> & {
+  children?: JSX.Element;
+  onOpenChange?: (_open: boolean) => void;
+};
+
+const Popover: Component<PopoverProps> = props => {
+  const [local, others] = splitProps(props, ['children', 'onOpenChange']);
+  return (
+    <PopoverPrimitive.Root onOpenChange={details => local.onOpenChange?.(details.open)} {...others}>
+      {local.children}
+    </PopoverPrimitive.Root>
+  );
+};
+
 const PopoverAnchor = PopoverPrimitive.Anchor;
 
 type PopoverTriggerProps = ArkPopoverTriggerProps & {

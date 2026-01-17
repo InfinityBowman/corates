@@ -15,7 +15,7 @@
  * const [enabled, setEnabled] = createSignal(false);
  * <SwitchRoot
  *   checked={enabled()}
- *   onCheckedChange={details => setEnabled(details.checked)}
+ *   onCheckedChange={setEnabled}
  * >
  *   <SwitchControl>
  *     <SwitchThumb />
@@ -37,15 +37,20 @@ import { cn } from './cn';
 const Switch = SwitchPrimitive.Root;
 const SwitchHiddenInput = SwitchPrimitive.HiddenInput;
 
-type SwitchRootProps = ArkSwitchRootProps & {
+type SwitchRootProps = Omit<ArkSwitchRootProps, 'onCheckedChange'> & {
   class?: string;
   children?: JSX.Element;
+  onCheckedChange?: (_checked: boolean) => void;
 };
 
 const SwitchRoot: Component<SwitchRootProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+  const [local, others] = splitProps(props, ['class', 'children', 'onCheckedChange']);
   return (
-    <SwitchPrimitive.Root class={cn('flex items-center gap-2', local.class)} {...others}>
+    <SwitchPrimitive.Root
+      class={cn('flex items-center gap-2', local.class)}
+      onCheckedChange={details => local.onCheckedChange?.(details.checked)}
+      {...others}
+    >
       {local.children}
     </SwitchPrimitive.Root>
   );

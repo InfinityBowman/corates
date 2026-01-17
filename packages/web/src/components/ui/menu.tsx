@@ -46,6 +46,7 @@ import type { Component, JSX } from 'solid-js';
 import { Show, splitProps } from 'solid-js';
 import { Menu as MenuPrimitive } from '@ark-ui/solid/menu';
 import type {
+  MenuRootProps as ArkMenuRootProps,
   MenuContentProps as ArkMenuContentProps,
   MenuTriggerProps as ArkMenuTriggerProps,
   MenuItemProps as ArkMenuItemProps,
@@ -57,7 +58,20 @@ import { Portal } from 'solid-js/web';
 import { cn } from './cn';
 import { Z_INDEX } from './z-index';
 
-const Menu = MenuPrimitive.Root;
+type MenuProps = Omit<ArkMenuRootProps, 'onOpenChange'> & {
+  children?: JSX.Element;
+  onOpenChange?: (_open: boolean) => void;
+};
+
+const Menu: Component<MenuProps> = props => {
+  const [local, others] = splitProps(props, ['children', 'onOpenChange']);
+  return (
+    <MenuPrimitive.Root onOpenChange={details => local.onOpenChange?.(details.open)} {...others}>
+      {local.children}
+    </MenuPrimitive.Root>
+  );
+};
+
 const MenuContextTrigger = MenuPrimitive.ContextTrigger;
 
 type MenuTriggerProps = ArkMenuTriggerProps & {
