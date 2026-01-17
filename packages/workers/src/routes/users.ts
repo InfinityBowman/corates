@@ -19,33 +19,14 @@ import {
 import { eq, desc, or, like, sql } from 'drizzle-orm';
 import { requireAuth, getAuth } from '@/middleware/auth';
 import { searchRateLimit } from '@/middleware/rateLimit';
-import {
-  createDomainError,
-  createValidationError,
-  VALIDATION_ERRORS,
-  AUTH_ERRORS,
-  USER_ERRORS,
-  SYSTEM_ERRORS,
-} from '@corates/shared';
+import { createDomainError, AUTH_ERRORS, USER_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { syncMemberToDO } from '@/lib/project-sync';
 import { getProjectDocStub } from '@/lib/project-doc-id';
+import { validationHook } from '@/lib/honoValidationHook';
 import type { Env } from '../types';
 
 const userRoutes = new OpenAPIHono<{ Bindings: Env }>({
-  defaultHook: (result, c) => {
-    if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      const field = firstIssue?.path?.[0] || 'input';
-      const message = firstIssue?.message || 'Validation failed';
-      const error = createValidationError(
-        String(field),
-        VALIDATION_ERRORS.INVALID_INPUT.code,
-        null,
-      );
-      error.message = message;
-      return c.json(error, 400);
-    }
-  },
+  defaultHook: validationHook,
 });
 
 // Apply auth middleware to all routes

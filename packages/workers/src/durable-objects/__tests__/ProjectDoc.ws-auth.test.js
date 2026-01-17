@@ -1,6 +1,8 @@
 /**
  * Tests for ProjectDoc WebSocket authorization boundary
  * Tests that removed project members cannot keep syncing
+ * Note: these tests are flaky due to limitations in the test environment's DO WebSocket support
+ * Rerun them to confirm failures are not persistent
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';

@@ -22,13 +22,13 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 
 ### Frontend
 
-- **Framework**: SolidJS with @solidjs/router for client-side routing
+- **Framework**: SolidJS with @solidjs/router for client-side routing and SolidStart for landing page
 - **Build**: Vite with vite-plugin-solid (web package) / SolidStart with Vinxi (landing package)
 - **Styling**: Tailwind CSS v4 with @tailwindcss/vite
 - **UI Components**: Ark UI (via @corates/ui package) + solid-icons
 - **Data Fetching**: TanStack SolidQuery (reactive server state management)
 - **Tables**: TanStack Solid Table
-- **Charts**: Chart.js + solid-chartjs
+- **Charts**: D3 for most user charts and Chart.js + solid-chartjs for admin
 - **PDF Viewer**: EmbedPDF with plugin ecosystem
 - **Local Storage**: Dexie (IndexedDB wrapper) with y-dexie for Yjs persistence
 - **Forms & Validation**: Zod (schema validation)
@@ -38,11 +38,11 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 
 - **Runtime**: Cloudflare Workers (serverless edge compute)
 - **Real-time**: Durable Objects (stateful computing for WebSocket connections)
-- **Framework**: Hono (lightweight web framework for Workers)
+- **Framework**: Hono (lightweight web framework for Workers) with OpenAPI
 - **Database**: Cloudflare D1 (serverless SQLite)
 - **ORM**: Drizzle ORM with automatic migration generation (drizzle-kit)
 - **Storage**: Cloudflare R2 (S3-compatible object storage for PDFs)
-- **Auth**: Better Auth with Stripe integration for payments
+- **Auth**: Better Auth with org, admin, and Stripe integration for payments
 - **Email**: Postmark for transactional emails
 - **Validation**: Zod
 - **Testing**: Vitest with @cloudflare/vitest-pool-workers
@@ -53,7 +53,9 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 - **Build Orchestration**: Turbo
 - **Linting**: ESLint with custom CoRATES rules
 - **Code Format**: Prettier
-- **Type Safety**: TypeScript with jsconfig.json path aliases
+- **CoRATES MCP**: Custom MCP server for CoRATES specific AI tooling
+- **AI Compatible**: Claude plugins and skills, Cursor rules, and VS Code instructions
+- **Type Safety**: TypeScript with tsconfig.json path aliases
 
 ### Sync & Collaboration
 
@@ -71,6 +73,7 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 - `packages/shared` - Shared TypeScript utilities, types, and error definitions
 - `packages/docs` - Vitepress documentation and guides
 - `packages/mcp` - MCP server for development tools and documentation
+- `packages/stripe-dev` - Stripe setup for Turbo
 
 ## License
 

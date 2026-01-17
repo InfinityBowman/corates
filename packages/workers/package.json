@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "description": "Cloudflare Workers with Durable Objects",
-  "main": "src/index.js",
   "license": "PolyForm-Noncommercial-1.0.0",
+  "main": "src/index.js",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "pnpm --filter shared build && wrangler deploy --env production",
@@ -46,11 +46,11 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.11.1",
-    "typescript": "^5.7.3",
     "better-sqlite3": "^12.6.0",
     "dotenv": "^16.6.1",
     "drizzle-kit": "^0.31.8",
     "localflare": "^0.3.1",
+    "typescript": "^5.7.3",
     "vitest": "3.2.0",
     "wrangler": "^4.59.1"
   }
