@@ -28,8 +28,12 @@ export default function DomainDirectionPage(props) {
   const domain = createMemo(() => ROB2_CHECKLIST[props.domainKey]);
 
   // Calculate auto-judgements
-  const reviewer1Scoring = createMemo(() => scoreRob2Domain(props.domainKey, props.reviewer1Answers));
-  const reviewer2Scoring = createMemo(() => scoreRob2Domain(props.domainKey, props.reviewer2Answers));
+  const reviewer1Scoring = createMemo(() =>
+    scoreRob2Domain(props.domainKey, props.reviewer1Answers),
+  );
+  const reviewer2Scoring = createMemo(() =>
+    scoreRob2Domain(props.domainKey, props.reviewer2Answers),
+  );
   const finalScoring = createMemo(() => scoreRob2Domain(props.domainKey, props.finalAnswers));
 
   // Check if judgements match
@@ -42,9 +46,9 @@ export default function DomainDirectionPage(props) {
       {/* Header */}
       <div
         class={`rounded-t-xl border-b p-4 ${
-          props.directionMatch && judgementMatch()
-            ? 'border-green-200 bg-green-50'
-            : 'border-amber-200 bg-amber-50'
+          props.directionMatch && judgementMatch() ?
+            'border-green-200 bg-green-50'
+          : 'border-amber-200 bg-amber-50'
         }`}
       >
         <div class='flex items-start gap-3'>
@@ -64,7 +68,9 @@ export default function DomainDirectionPage(props) {
             <h2 class='font-semibold text-gray-900'>
               {domain()?.name} - Judgement &amp; Direction
             </h2>
-            <p class='mt-1 text-sm text-gray-600'>Review the calculated judgement and select the bias direction</p>
+            <p class='mt-1 text-sm text-gray-600'>
+              Review the calculated judgement and select the bias direction
+            </p>
           </div>
         </div>
       </div>

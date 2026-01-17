@@ -6,7 +6,11 @@
 import { createSignal, createMemo, createEffect, Show, Switch, Match } from 'solid-js';
 import { FiArrowLeft, FiArrowRight, FiAlertTriangle } from 'solid-icons/fi';
 import { showToast, useConfirmDialog } from '@corates/ui';
-import { compareChecklists, hasAimMismatch, getActiveDomainKeys } from '@corates/shared/checklists/rob2';
+import {
+  compareChecklists,
+  hasAimMismatch,
+  getActiveDomainKeys,
+} from '@corates/shared/checklists/rob2';
 import {
   buildNavigationItems,
   hasNavItemAnswer,
@@ -571,9 +575,9 @@ export default function ROB2Reconciliation(props) {
                 onClick={goToPrevious}
                 disabled={currentPage() === 0}
                 class={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
-                  currentPage() === 0
-                    ? 'cursor-not-allowed bg-gray-100 text-gray-400'
-                    : 'bg-white text-gray-700 shadow hover:bg-gray-100'
+                  currentPage() === 0 ?
+                    'cursor-not-allowed bg-gray-100 text-gray-400'
+                  : 'bg-white text-gray-700 shadow hover:bg-gray-100'
                 }`}
               >
                 <FiArrowLeft class='h-4 w-4' />

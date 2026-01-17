@@ -231,8 +231,8 @@ export function getNavItemPillStyle(isCurrentPage, hasAnswer, isAgreement) {
     return 'bg-blue-600 text-white ring-2 ring-inset ring-blue-300';
   }
   // Use lighter colors - checkmark icon indicates if answered
-  return isAgreement
-    ? 'bg-green-100 text-green-700 hover:bg-green-200'
+  return isAgreement ?
+      'bg-green-100 text-green-700 hover:bg-green-200'
     : 'bg-amber-100 text-amber-700 hover:bg-amber-200';
 }
 

@@ -145,9 +145,9 @@ export default function ROB2SummaryView(props) {
                         {/* Status Icon */}
                         <div
                           class={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
-                            isAgreement()
-                              ? 'bg-green-100 text-green-600'
-                              : 'bg-amber-100 text-amber-600'
+                            isAgreement() ?
+                              'bg-green-100 text-green-600'
+                            : 'bg-amber-100 text-amber-600'
                           }`}
                         >
                           <Show when={isAgreement()} fallback={<FiX class='h-3.5 w-3.5' />}>
@@ -156,7 +156,7 @@ export default function ROB2SummaryView(props) {
                         </div>
 
                         {/* Item Label */}
-                        <div class='flex-1 min-w-0'>
+                        <div class='min-w-0 flex-1'>
                           <div class='flex items-center gap-2'>
                             <span class='text-sm font-medium text-gray-900'>{item.label}</span>
                             <Show when={item.isDirection}>
@@ -165,7 +165,11 @@ export default function ROB2SummaryView(props) {
                               </span>
                             </Show>
                           </div>
-                          <Show when={item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.questionDef?.text}>
+                          <Show
+                            when={
+                              item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.questionDef?.text
+                            }
+                          >
                             <p class='mt-0.5 truncate text-xs text-gray-500'>
                               {item.questionDef.text}
                             </p>
@@ -184,17 +188,13 @@ export default function ROB2SummaryView(props) {
                           >
                             <span
                               class={`rounded-full px-2 py-1 text-xs font-medium ${
-                                item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION
-                                  ? displayValue() === 'Y'
-                                    ? 'bg-green-100 text-green-700'
-                                    : displayValue() === 'PY'
-                                      ? 'bg-lime-100 text-lime-700'
-                                      : displayValue() === 'PN'
-                                        ? 'bg-amber-100 text-amber-700'
-                                        : displayValue() === 'N'
-                                          ? 'bg-red-100 text-red-700'
-                                          : 'bg-gray-100 text-gray-700'
-                                  : 'bg-blue-100 text-blue-700'
+                                item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION ?
+                                  displayValue() === 'Y' ? 'bg-green-100 text-green-700'
+                                  : displayValue() === 'PY' ? 'bg-lime-100 text-lime-700'
+                                  : displayValue() === 'PN' ? 'bg-amber-100 text-amber-700'
+                                  : displayValue() === 'N' ? 'bg-red-100 text-red-700'
+                                  : 'bg-gray-100 text-gray-700'
+                                : 'bg-blue-100 text-blue-700'
                               }`}
                             >
                               {displayValue()}
@@ -238,9 +238,9 @@ export default function ROB2SummaryView(props) {
             onClick={() => props.onSave?.()}
             disabled={!props.allAnswered || props.saving}
             class={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors ${
-              props.allAnswered && !props.saving
-                ? 'bg-green-600 text-white shadow hover:bg-green-700'
-                : 'cursor-not-allowed bg-gray-200 text-gray-400'
+              props.allAnswered && !props.saving ?
+                'bg-green-600 text-white shadow hover:bg-green-700'
+              : 'cursor-not-allowed bg-gray-200 text-gray-400'
             }`}
           >
             <FiSave class='h-4 w-4' />

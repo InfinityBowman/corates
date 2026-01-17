@@ -95,9 +95,9 @@ function AimField(props) {
               fallback={
                 <div
                   class={`rounded-lg border-2 p-3 text-sm ${
-                    isSelected()
-                      ? 'border-blue-400 bg-blue-50 text-blue-800'
-                      : 'border-gray-200 bg-gray-50 text-gray-500'
+                    isSelected() ?
+                      'border-blue-400 bg-blue-50 text-blue-800'
+                    : 'border-gray-200 bg-gray-50 text-gray-500'
                   }`}
                 >
                   <div class='flex items-center gap-2'>
@@ -111,9 +111,9 @@ function AimField(props) {
             >
               <label
                 class={`cursor-pointer rounded-lg border-2 p-3 text-sm transition-all hover:border-green-300 ${
-                  isSelected()
-                    ? 'border-green-400 bg-green-50 text-green-800'
-                    : 'border-gray-200 bg-white text-gray-700'
+                  isSelected() ?
+                    'border-green-400 bg-green-50 text-green-800'
+                  : 'border-gray-200 bg-white text-gray-700'
                 }`}
               >
                 <input
@@ -166,15 +166,14 @@ function MultiSelectField(props) {
     } else {
       // For deviations (array)
       const current = selected();
-      const newValue = isSelected(option)
-        ? current.filter(v => v !== option)
-        : [...current, option];
+      const newValue =
+        isSelected(option) ? current.filter(v => v !== option) : [...current, option];
       props.onChange?.(newValue);
     }
   };
 
   return (
-    <div class='flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-2'>
+    <div class='flex max-h-48 flex-col gap-1.5 overflow-y-auto pr-2'>
       <For each={props.options}>
         {option => (
           <Show
@@ -182,9 +181,9 @@ function MultiSelectField(props) {
             fallback={
               <div
                 class={`rounded border px-2 py-1.5 text-xs ${
-                  isSelected(option)
-                    ? 'border-blue-200 bg-blue-50 text-blue-700'
-                    : 'border-gray-100 bg-gray-50 text-gray-400'
+                  isSelected(option) ?
+                    'border-blue-200 bg-blue-50 text-blue-700'
+                  : 'border-gray-100 bg-gray-50 text-gray-400'
                 }`}
               >
                 <div class='flex items-center gap-1.5'>
@@ -198,9 +197,9 @@ function MultiSelectField(props) {
           >
             <label
               class={`cursor-pointer rounded border px-2 py-1.5 text-xs transition-all hover:border-green-300 ${
-                isSelected(option)
-                  ? 'border-green-300 bg-green-50 text-green-700'
-                  : 'border-gray-200 bg-white text-gray-700'
+                isSelected(option) ?
+                  'border-green-300 bg-green-50 text-green-700'
+                : 'border-gray-200 bg-white text-gray-700'
               }`}
             >
               <input
@@ -268,7 +267,9 @@ export default function PreliminaryPage(props) {
 
     switch (type) {
       case 'select':
-        return <SelectField value={value} options={options} readOnly={readOnly} onChange={onChange} />;
+        return (
+          <SelectField value={value} options={options} readOnly={readOnly} onChange={onChange} />
+        );
       case 'aim':
         return <AimField value={value} readOnly={readOnly} onChange={onChange} name={name} />;
       case 'multiselect':
@@ -308,9 +309,7 @@ export default function PreliminaryPage(props) {
       {/* Header */}
       <div
         class={`rounded-t-xl border-b p-4 ${
-          props.isAgreement
-            ? 'border-green-200 bg-green-50'
-            : 'border-amber-200 bg-amber-50'
+          props.isAgreement ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'
         }`}
       >
         <div class='flex items-center gap-2'>

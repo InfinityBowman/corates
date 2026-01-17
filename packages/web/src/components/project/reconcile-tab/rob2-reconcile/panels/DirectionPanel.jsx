@@ -64,9 +64,9 @@ export default function DirectionPanel(props) {
           <button
             onClick={() => props.onUseThis?.()}
             class={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              props.isSelected
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+              props.isSelected ? 'bg-blue-600 text-white' : (
+                'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+              )
             }`}
           >
             {props.isSelected ? 'Selected' : 'Use This'}
@@ -88,9 +88,9 @@ export default function DirectionPanel(props) {
                 fallback={
                   <div
                     class={`${baseClasses} ${
-                      isSelected()
-                        ? getSelectedStyle(panelType())
-                        : 'border-gray-200 bg-white text-gray-700'
+                      isSelected() ?
+                        getSelectedStyle(panelType())
+                      : 'border-gray-200 bg-white text-gray-700'
                     }`}
                   >
                     <span>{option}</span>
@@ -99,9 +99,9 @@ export default function DirectionPanel(props) {
               >
                 <label
                   class={`${baseClasses} cursor-pointer focus-within:ring-2 focus-within:ring-green-400 focus-within:ring-offset-1 focus-within:outline-none hover:border-green-300 ${
-                    isSelected()
-                      ? getSelectedStyle(panelType())
-                      : 'border-gray-200 bg-white text-gray-700 hover:bg-green-50'
+                    isSelected() ?
+                      getSelectedStyle(panelType())
+                    : 'border-gray-200 bg-white text-gray-700 hover:bg-green-50'
                   }`}
                 >
                   <input
