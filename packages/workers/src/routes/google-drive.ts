@@ -20,6 +20,7 @@ import {
   PDF_MAGIC_BYTES,
 } from '@corates/shared';
 import { validationHook } from '@/lib/honoValidationHook.js';
+import { requireProjectEdit } from '@/policies/projects.js';
 import type { Env } from '../types';
 
 const googleDriveRoutes = new OpenAPIHono<{ Bindings: Env }>({
@@ -362,6 +363,16 @@ googleDriveRoutes.openapi(importRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
   const { fileId, projectId, studyId } = c.req.valid('json');
+
+  // Check project access before proceeding with import
+  try {
+    await requireProjectEdit(db, user!.id, projectId);
+  } catch (err) {
+    if (isDomainError(err)) {
+      return c.json(err, err.statusCode as ContentfulStatusCode);
+    }
+    throw err;
+  }
 
   const tokens = await getGoogleTokens(db, user!.id);
 

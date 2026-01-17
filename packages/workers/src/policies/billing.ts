@@ -59,7 +59,7 @@ export function requireOrgOwner({
     });
   }
 
-  if (role !== 'owner') {
+  if (!role || !isOrgOwner(role)) {
     throw createDomainError(AUTH_ERRORS.FORBIDDEN, {
       reason: 'org_owner_required',
     });

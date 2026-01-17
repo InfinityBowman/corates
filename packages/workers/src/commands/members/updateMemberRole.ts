@@ -10,6 +10,7 @@ import { eq, and } from 'drizzle-orm';
 import { syncMemberToDO } from '@/commands/lib/doSync';
 import { notifyUser, NotificationTypes } from '@/commands/lib/notifications';
 import { requireSafeRoleChange } from '@/policies';
+import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import type { Env } from '@/types';
 import type { ProjectRole } from '@/policies/lib/roles';
 
@@ -39,10 +40,17 @@ export async function updateMemberRole(
   // Prevent demoting the last owner
   await requireSafeRoleChange(db, projectId, userId, role);
 
-  await db
-    .update(projectMembers)
-    .set({ role })
-    .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId)));
+  try {
+    await db
+      .update(projectMembers)
+      .set({ role })
+      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId)));
+  } catch (err) {
+    throw createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'update_member_role',
+      cause: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   // Sync role update to DO
   try {
