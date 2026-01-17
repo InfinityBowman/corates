@@ -11,7 +11,19 @@ export default defineConfig({
   server: {
     preset: 'static',
     prerender: {
-      routes: ['/', '/about', '/contact', '/privacy', '/resources', '/security', '/terms'],
+      routes: [
+        '/',
+        '/about',
+        '/contact',
+        '/pricing',
+        '/privacy',
+        '/resources',
+        '/resources/amstar2',
+        '/resources/robins-i',
+        '/resources/rob2',
+        '/security',
+        '/terms',
+      ],
       crawlLinks: true,
     },
   },

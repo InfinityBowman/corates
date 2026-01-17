@@ -23,7 +23,7 @@ export default function TermsOfService() {
       <div class='flex min-h-screen flex-col'>
         <Navbar />
 
-        <main class='flex-1 py-16'>
+        <main class='flex-1 py-12'>
           <div class='mx-auto max-w-3xl px-6'>
             <h1 class='mb-2 text-4xl font-bold text-gray-900'>Terms of Service</h1>
             <p class='mb-12 text-gray-500'>Effective date: January 7, 2026</p>

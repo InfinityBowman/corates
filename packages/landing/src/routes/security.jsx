@@ -24,7 +24,7 @@ export default function Security() {
       <div class='flex min-h-screen flex-col'>
         <Navbar />
 
-        <main class='flex-1 py-16'>
+        <main class='flex-1 py-12'>
           <div class='mx-auto max-w-3xl px-6'>
             <h1 class='mb-2 text-4xl font-bold text-gray-900'>Security</h1>
             <p class='mb-8 text-gray-500'>How we protect your research data</p>
