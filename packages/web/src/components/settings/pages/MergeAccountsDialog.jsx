@@ -14,8 +14,18 @@
  */
 
 import { createSignal, createEffect, Show, createMemo } from 'solid-js';
-import { FiAlertTriangle, FiCheck, FiLoader, FiUserPlus, FiMail } from 'solid-icons/fi';
-import { Dialog, PinInput, showToast } from '@corates/ui';
+import { FiAlertTriangle, FiCheck, FiLoader, FiUserPlus, FiMail, FiX } from 'solid-icons/fi';
+import { PinInput, showToast } from '@corates/ui';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPositioner,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+  DialogCloseTrigger,
+} from '@/components/ui/dialog';
 import { initiateMerge, verifyMergeCode, completeMerge, cancelMerge } from '@api/account-merge.js';
 
 // Merge flow steps
@@ -220,9 +230,20 @@ export default function MergeAccountsDialog(props) {
           handleCancel();
         }
       }}
-      title={step() === STEPS.SUCCESS ? 'Accounts Merged' : 'Merge Accounts'}
     >
-      <div class='space-y-4'>
+      <DialogBackdrop />
+      <DialogPositioner>
+        <DialogContent class='max-w-md'>
+          <DialogHeader>
+            <DialogTitle>
+              {step() === STEPS.SUCCESS ? 'Accounts Merged' : 'Merge Accounts'}
+            </DialogTitle>
+            <DialogCloseTrigger>
+              <FiX class='h-5 w-5' />
+            </DialogCloseTrigger>
+          </DialogHeader>
+          <DialogBody>
+            <div class='space-y-4'>
         {/* Step: Prompt */}
         <Show when={step() === STEPS.PROMPT}>
           <div class='flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
@@ -463,8 +484,11 @@ export default function MergeAccountsDialog(props) {
               Done
             </button>
           </div>
-        </Show>
-      </div>
-    </Dialog>
+            </Show>
+          </div>
+        </DialogBody>
+      </DialogContent>
+    </DialogPositioner>
+  </Dialog>
   );
 }

@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "strict": false,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "checkJs": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@auth/*": ["src/components/auth/*"],
+      "@checklist/*": ["src/components/checklist/*"],
+      "@pdf/*": ["src/components/pdf/*"],
+      "@project/*": ["src/components/project/*"],
+      "@routes/*": ["src/routes/*"],
+      "@primitives/*": ["src/primitives/*"],
+      "@offline/*": ["src/offline/*"],
+      "@api/*": ["src/api/*"],
+      "@config/*": ["src/config/*"],
+      "@lib/*": ["src/lib/*"]
+    },
+    "types": ["vite/client"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],
+  "exclude": ["node_modules", "dist", "**/preact/**", "**/preact-2/**"]
+}

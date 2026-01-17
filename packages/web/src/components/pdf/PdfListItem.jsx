@@ -10,9 +10,19 @@
  */
 
 import { Show, createSignal } from 'solid-js';
-import { FiTrash2, FiEye, FiDownload, FiEdit2 } from 'solid-icons/fi';
+import { FiTrash2, FiEye, FiDownload, FiEdit2, FiX } from 'solid-icons/fi';
 import { CgFileDocument } from 'solid-icons/cg';
-import { Menu, Dialog } from '@corates/ui';
+import { Menu } from '@corates/ui';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPositioner,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+  DialogCloseTrigger,
+} from '@/components/ui/dialog';
 import PdfTagBadge from './PdfTagBadge.jsx';
 
 export default function PdfListItem(props) {
@@ -169,29 +179,40 @@ export default function PdfListItem(props) {
       </div>
 
       {/* Delete confirmation dialog */}
-      <Dialog open={showDeleteConfirm()} onOpenChange={setShowDeleteConfirm} title='Delete PDF'>
-        <div class='p-4'>
-          <p class='mb-4 text-gray-600'>
-            Are you sure you want to delete <strong>{props.pdf.fileName}</strong>? This action
-            cannot be undone.
-          </p>
-          <div class='flex justify-end gap-3'>
-            <button
-              type='button'
-              onClick={() => setShowDeleteConfirm(false)}
-              class='rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
-            >
-              Cancel
-            </button>
-            <button
-              type='button'
-              onClick={handleDelete}
-              class='rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-            >
-              Delete
-            </button>
-          </div>
-        </div>
+      <Dialog open={showDeleteConfirm()} onOpenChange={setShowDeleteConfirm}>
+        <DialogBackdrop />
+        <DialogPositioner>
+          <DialogContent class='max-w-md'>
+            <DialogHeader>
+              <DialogTitle>Delete PDF</DialogTitle>
+              <DialogCloseTrigger>
+                <FiX class='h-5 w-5' />
+              </DialogCloseTrigger>
+            </DialogHeader>
+            <DialogBody>
+              <p class='mb-4 text-gray-600'>
+                Are you sure you want to delete <strong>{props.pdf.fileName}</strong>? This action
+                cannot be undone.
+              </p>
+              <div class='flex justify-end gap-3'>
+                <button
+                  type='button'
+                  onClick={() => setShowDeleteConfirm(false)}
+                  class='rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                >
+                  Cancel
+                </button>
+                <button
+                  type='button'
+                  onClick={handleDelete}
+                  class='rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                >
+                  Delete
+                </button>
+              </div>
+            </DialogBody>
+          </DialogContent>
+        </DialogPositioner>
       </Dialog>
     </>
   );

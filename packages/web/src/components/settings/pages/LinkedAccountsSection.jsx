@@ -11,11 +11,21 @@
  */
 
 import { createSignal, createMemo, For, Show, onMount } from 'solid-js';
-import { FiLink, FiMail, FiInfo, FiAlertCircle } from 'solid-icons/fi';
+import { FiLink, FiMail, FiInfo, FiAlertCircle, FiX } from 'solid-icons/fi';
 import { authClient } from '@api/auth-client.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useLinkedAccounts } from '@/primitives/useLinkedAccounts.js';
-import { showToast, Dialog } from '@corates/ui';
+import { showToast } from '@corates/ui';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPositioner,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+  DialogCloseTrigger,
+} from '@/components/ui/dialog';
 import AccountProviderCard from './AccountProviderCard.jsx';
 import MergeAccountsDialog from './MergeAccountsDialog.jsx';
 import { parseOAuthError, getLinkErrorMessage } from '@lib/account-linking-errors.js';
@@ -359,42 +369,54 @@ export default function LinkedAccountsSection() {
             setUnlinkError(null);
           }
         }}
-        title={`Unlink ${unlinkProviderName()}?`}
       >
-        <div class='space-y-4'>
-          <p class='text-gray-600'>
-            You won't be able to sign in with <strong>{unlinkProviderName()}</strong> anymore. Your
-            CoRATES data will not be affected.
-          </p>
+        <DialogBackdrop />
+        <DialogPositioner>
+          <DialogContent class='max-w-md'>
+            <DialogHeader>
+              <DialogTitle>Unlink {unlinkProviderName()}?</DialogTitle>
+              <DialogCloseTrigger>
+                <FiX class='h-5 w-5' />
+              </DialogCloseTrigger>
+            </DialogHeader>
+            <DialogBody>
+              <div class='space-y-4'>
+                <p class='text-gray-600'>
+                  You won't be able to sign in with <strong>{unlinkProviderName()}</strong> anymore.
+                  Your CoRATES data will not be affected.
+                </p>
 
-          <p class='text-sm text-gray-500'>
-            <strong>Note:</strong> If you sign in with {unlinkProviderName()} later without linking
-            first, a new separate account will be created.
-          </p>
+                <p class='text-sm text-gray-500'>
+                  <strong>Note:</strong> If you sign in with {unlinkProviderName()} later without
+                  linking first, a new separate account will be created.
+                </p>
 
-          {/* Error message */}
-          <Show when={unlinkError()}>
-            <div class='rounded-md border border-red-200 bg-red-50 p-3'>
-              <p class='text-sm text-red-700'>{unlinkError()}</p>
-            </div>
-          </Show>
+                {/* Error message */}
+                <Show when={unlinkError()}>
+                  <div class='rounded-md border border-red-200 bg-red-50 p-3'>
+                    <p class='text-sm text-red-700'>{unlinkError()}</p>
+                  </div>
+                </Show>
 
-          <div class='flex justify-end gap-3 pt-2'>
-            <button
-              onClick={() => setShowUnlinkConfirm(false)}
-              class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
-            >
-              Cancel
-            </button>
-            <button
-              onClick={confirmUnlink}
-              disabled={unlinkingId() !== null}
-              class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
-            >
-              {unlinkingId() ? 'Unlinking...' : 'Unlink'}
-            </button>
-          </div>
-        </div>
+                <div class='flex justify-end gap-3 pt-2'>
+                  <button
+                    onClick={() => setShowUnlinkConfirm(false)}
+                    class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmUnlink}
+                    disabled={unlinkingId() !== null}
+                    class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
+                  >
+                    {unlinkingId() ? 'Unlinking...' : 'Unlink'}
+                  </button>
+                </div>
+              </div>
+            </DialogBody>
+          </DialogContent>
+        </DialogPositioner>
       </Dialog>
 
       {/* Merge accounts dialog - shown when linking conflicts with another user */}

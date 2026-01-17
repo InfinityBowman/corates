@@ -5,10 +5,23 @@
  * handles create form, empty states, and loading states.
  */
 
-import { Show, For, useContext } from 'solid-js';
+import { Show, For, useContext, createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useQueryClient } from '@tanstack/solid-query';
-import { useConfirmDialog, showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogPositioner,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogIcon,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { FiPlus, FiFolder } from 'solid-icons/fi';
 
 import { AnimationContext } from './Dashboard.jsx';
@@ -61,8 +74,12 @@ function EmptyProjectsState(props) {
 export function ProjectsSection(props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const confirmDialog = useConfirmDialog();
   const { isOnline } = useBetterAuth();
+
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = createSignal(false);
+  const [pendingDeleteId, setPendingDeleteId] = createSignal(null);
+  const [deleteLoading, setDeleteLoading] = createSignal(false);
 
   // Projects data
   const projectListQuery = useMyProjectsList();
@@ -113,22 +130,23 @@ export function ProjectsSection(props) {
     navigate(`/projects/${projectId}`);
   };
 
-  const handleDeleteProject = async targetProjectId => {
-    const confirmed = await confirmDialog.open({
-      title: 'Delete Project',
-      description:
-        'Are you sure you want to delete this entire project? This action cannot be undone.',
-      confirmText: 'Delete Project',
-      variant: 'danger',
-    });
-    if (!confirmed) return;
+  // Opens delete confirmation dialog
+  const handleDeleteProject = targetProjectId => {
+    setPendingDeleteId(targetProjectId);
+    setDeleteDialogOpen(true);
+  };
 
+  // Executes delete after confirmation
+  const confirmDeleteProject = async () => {
+    const targetProjectId = pendingDeleteId();
     const project = projects()?.find(p => p.id === targetProjectId);
     if (!project?.orgId) {
       showToast.error('Error', 'Unable to find project organization');
+      setDeleteDialogOpen(false);
       return;
     }
 
+    setDeleteLoading(true);
     try {
       const { apiFetch } = await import('@/lib/apiFetch.js');
       await apiFetch(`/api/orgs/${project.orgId}/projects/${targetProjectId}`, {
@@ -138,9 +156,12 @@ export function ProjectsSection(props) {
 
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
       showToast.success('Project Deleted', 'The project has been deleted successfully');
+      setDeleteDialogOpen(false);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils.js');
       await handleError(err, { toastTitle: 'Delete Failed', showToast: false });
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -225,7 +246,33 @@ export function ProjectsSection(props) {
         </For>
       </div>
 
-      <confirmDialog.ConfirmDialogComponent />
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen()} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogBackdrop />
+        <AlertDialogPositioner>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogIcon variant="danger" />
+              <div>
+                <AlertDialogTitle>Delete Project</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this entire project? This action cannot be undone.
+                </AlertDialogDescription>
+              </div>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteLoading()}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                variant="danger"
+                disabled={deleteLoading()}
+                onClick={confirmDeleteProject}
+              >
+                {deleteLoading() ? 'Deleting...' : 'Delete Project'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogPositioner>
+      </AlertDialog>
     </section>
   );
 }

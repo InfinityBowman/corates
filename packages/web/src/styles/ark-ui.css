@@ -1,0 +1,131 @@
+/* Component-specific scoped styles for Ark UI components */
+
+/* Collapsible animations using CSS variables from Ark UI */
+@keyframes slideDown {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--height);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    height: var(--height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+/* Horizontal collapsible animations */
+@keyframes expandWidth {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--width);
+  }
+}
+
+@keyframes collapseWidth {
+  from {
+    width: var(--width);
+  }
+  to {
+    width: 0;
+  }
+}
+
+/* Default vertical animation */
+[data-scope='collapsible'][data-part='content'][data-state='open']:not(.collapsible-horizontal) {
+  animation: slideDown 250ms ease-out;
+}
+
+[data-scope='collapsible'][data-part='content'][data-state='closed']:not(.collapsible-horizontal) {
+  animation: slideUp 200ms ease-out;
+}
+
+/* Horizontal collapsible variant */
+[data-scope='collapsible'][data-part='content'].collapsible-horizontal {
+  overflow: hidden;
+}
+
+[data-scope='collapsible'][data-part='content'].collapsible-horizontal[data-state='open'] {
+  animation: expandWidth 200ms ease-out;
+}
+
+[data-scope='collapsible'][data-part='content'].collapsible-horizontal[data-state='closed'] {
+  animation: collapseWidth 150ms ease-out;
+}
+
+/* Collapsible trigger takes full width */
+[data-scope='collapsible'][data-part='trigger'] {
+  width: 100%;
+  text-align: left;
+}
+
+/* Tabs - Selected tab styling */
+[data-scope='tabs'][data-part='trigger'][data-selected] {
+  border-bottom-color: rgb(37 99 235); /* blue-600 */
+  background-color: rgb(239 246 255 / 0.5); /* blue-50/50 */
+  color: rgb(37 99 235); /* blue-600 */
+}
+
+/* Tabs - Selected tab badge/count styling (badge inside selected trigger) */
+[data-scope='tabs'][data-part='trigger'][data-selected] span.rounded-full {
+  background-color: rgb(219 234 254) !important; /* blue-100 */
+  color: rgb(29 78 216) !important; /* blue-700 */
+}
+
+/* Select - Positioner gap */
+[data-scope='select'][data-part='positioner'] {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* Select - Chevron rotation when open */
+[data-scope='select'][data-part='indicator'][data-state='open'] svg {
+  transform: rotate(180deg);
+}
+
+/* Select - Dropdown animations */
+@keyframes selectFadeSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes selectFadeSlideUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+[data-scope='select'][data-part='content'][data-state='open'] {
+  animation: selectFadeSlideDown 200ms ease-out;
+  transform-origin: var(--transform-origin, top);
+}
+
+[data-scope='select'][data-part='content'][data-state='closed'] {
+  animation: selectFadeSlideUp 150ms ease-in forwards;
+  transform-origin: var(--transform-origin, top);
+}
+
+/* Respect prefers-reduced-motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  [data-scope='select'][data-part='content'] {
+    animation: none;
+  }
+}

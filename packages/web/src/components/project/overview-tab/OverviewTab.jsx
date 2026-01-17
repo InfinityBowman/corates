@@ -12,7 +12,20 @@ import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
-import { Avatar, useConfirmDialog, showToast, Progress, Collapsible } from '@corates/ui';
+import { Avatar, showToast, Progress, Collapsible } from '@corates/ui';
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogPositioner,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogIcon,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { API_BASE } from '@config/api.js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 import { shouldShowInTab, isReconciledChecklist } from '@/lib/checklist-domain.js';
@@ -35,8 +48,11 @@ export default function OverviewTab() {
 
   const { user } = useBetterAuth();
   const { projectId, orgId, isOwner } = useProjectContext();
-  const confirmDialog = useConfirmDialog();
   const navigate = useNavigate();
+
+  // Remove member confirmation dialog state
+  const [removeDialogOpen, setRemoveDialogOpen] = createSignal(false);
+  const [pendingRemoveMember, setPendingRemoveMember] = createSignal(null);
 
   // Subscription/quota checks for member addition
   const { hasQuota, quotas } = useSubscription();
@@ -140,29 +156,28 @@ export default function OverviewTab() {
     projectActionsStore.study.update(studyId, updates);
   };
 
-  const handleRemoveMember = async (memberId, memberName) => {
+  // Opens remove member confirmation dialog
+  const handleRemoveMember = (memberId, memberName) => {
     const currentUser = user();
     const isSelf = currentUser?.id === memberId;
+    setPendingRemoveMember({ memberId, memberName, isSelf });
+    setRemoveDialogOpen(true);
+  };
 
-    const confirmed = await confirmDialog.open({
-      title: isSelf ? 'Leave Project' : 'Remove Member',
-      description:
-        isSelf ?
-          'Are you sure you want to leave this project? You will need to be re-invited to rejoin.'
-        : `Are you sure you want to remove ${memberName} from this project?`,
-      confirmText: isSelf ? 'Leave Project' : 'Remove',
-      variant: 'danger',
-    });
-    if (!confirmed) return;
+  // Executes remove after confirmation
+  const confirmRemoveMember = async () => {
+    const pending = pendingRemoveMember();
+    if (!pending) return;
 
     try {
-      const result = await projectActionsStore.member.remove(memberId);
+      const result = await projectActionsStore.member.remove(pending.memberId);
       if (result.isSelf) {
         navigate('/dashboard', { replace: true });
         showToast.success('Left Project', 'You have left the project');
       } else {
-        showToast.success('Member Removed', `${memberName} has been removed from the project`);
+        showToast.success('Member Removed', `${pending.memberName} has been removed from the project`);
       }
+      setRemoveDialogOpen(false);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils.js');
       await handleError(err, {
@@ -440,7 +455,33 @@ export default function OverviewTab() {
         orgId={orgId()}
         quotaInfo={collaboratorQuotaInfo()}
       />
-      <confirmDialog.ConfirmDialogComponent />
+      {/* Remove member confirmation dialog */}
+      <AlertDialog open={removeDialogOpen()} onOpenChange={setRemoveDialogOpen}>
+        <AlertDialogBackdrop />
+        <AlertDialogPositioner>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogIcon variant="danger" />
+              <div>
+                <AlertDialogTitle>
+                  {pendingRemoveMember()?.isSelf ? 'Leave Project' : 'Remove Member'}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {pendingRemoveMember()?.isSelf
+                    ? 'Are you sure you want to leave this project? You will need to be re-invited to rejoin.'
+                    : `Are you sure you want to remove ${pendingRemoveMember()?.memberName} from this project?`}
+                </AlertDialogDescription>
+              </div>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction variant="danger" onClick={confirmRemoveMember}>
+                {pendingRemoveMember()?.isSelf ? 'Leave Project' : 'Remove'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogPositioner>
+      </AlertDialog>
     </>
   );
 }

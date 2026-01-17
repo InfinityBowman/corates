@@ -1,6 +1,18 @@
 import { For } from 'solid-js';
 import { FiUser, FiBook, FiBookOpen, FiUsers } from 'solid-icons/fi';
 
+export const TITLE_OPTIONS = [
+  { value: '', label: 'None' },
+  { value: 'Dr.', label: 'Dr.' },
+  { value: 'Prof.', label: 'Prof.' },
+  { value: 'other', label: 'Other' },
+];
+
+export function getTitleLabel(titleValue) {
+  if (!titleValue) return null;
+  return TITLE_OPTIONS.find(t => t.value === titleValue)?.label || titleValue;
+}
+
 export const ROLES = [
   {
     id: 'researcher',

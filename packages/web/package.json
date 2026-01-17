@@ -17,6 +17,7 @@
     "analyze": "vite build --mode analyze && source-map-explorer dist/assets/index-*.js --no-border-checks"
   },
   "dependencies": {
+    "@ark-ui/solid": "^5.30.0",
     "@corates/shared": "workspace:*",
     "@corates/ui": "workspace:*",
     "@embedpdf/core": "^2.2.0",
@@ -53,6 +54,8 @@
     "@tanstack/solid-table": "^8.21.3",
     "better-auth": "^1.4.12",
     "chart.js": "^4.5.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "d3": "^7.9.0",
     "dexie": "^4.2.1",
     "preact": "^10.28.2",
@@ -78,6 +81,7 @@
     "source-map-explorer": "^2.5.3",
     "tailwindcss": "^4.1.18",
     "terser": "^5.44.1",
+    "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vite-plugin-solid": "^2.11.10",
     "vitest": "^4.0.17"

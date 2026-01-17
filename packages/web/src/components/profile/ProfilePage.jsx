@@ -1,10 +1,29 @@
-import { createSignal, Show, For } from 'solid-js';
+import { createSignal, createMemo, Show, For } from 'solid-js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { FiCamera } from 'solid-icons/fi';
 import { showToast } from '@corates/ui';
 import { LANDING_URL, API_BASE } from '@config/api.js';
-import { ROLES, getRoleLabel } from '@/components/auth/RoleSelector.jsx';
+import { ROLES, getRoleLabel, TITLE_OPTIONS } from '@/components/auth/RoleSelector.jsx';
 import { compressImageFile } from '@lib/imageUtils.js';
+import {
+  Select,
+  SelectControl,
+  SelectTrigger,
+  SelectValueText,
+  SelectIndicator,
+  SelectPositioner,
+  SelectContent,
+  SelectItem,
+  SelectItemText,
+  SelectItemIndicator,
+  createListCollection,
+} from '@/components/ui/select';
+
+const titleCollection = createListCollection({
+  items: TITLE_OPTIONS,
+  itemToString: item => item.label,
+  itemToValue: item => item.value,
+});
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
@@ -38,7 +57,23 @@ export default function ProfilePage() {
   const [editFirstName, setEditFirstName] = createSignal('');
   const [editLastName, setEditLastName] = createSignal('');
   const [editRole, setEditRole] = createSignal('');
+  const [isEditingAcademic, setIsEditingAcademic] = createSignal(false);
+  const [editTitleSelection, setEditTitleSelection] = createSignal([]);
+  const [editCustomTitle, setEditCustomTitle] = createSignal('');
+  const [editInstitution, setEditInstitution] = createSignal('');
+  const [editDepartment, setEditDepartment] = createSignal('');
   const [saving, setSaving] = createSignal(false);
+
+  // Compute the actual title value for editing
+  const editTitle = createMemo(() => {
+    const selected = editTitleSelection()[0];
+    if (selected === 'other') {
+      return editCustomTitle().trim();
+    }
+    return selected || '';
+  });
+
+  const isEditingCustomTitle = createMemo(() => editTitleSelection()[0] === 'other');
 
   // Delete account state
   const [showDeleteConfirm, setShowDeleteConfirm] = createSignal(false);
@@ -97,6 +132,29 @@ export default function ProfilePage() {
     setEditRole('');
   };
 
+  const startEditingAcademic = () => {
+    const currentTitle = user()?.title || '';
+    const isStandardTitle = TITLE_OPTIONS.some(opt => opt.value === currentTitle && opt.value !== 'other');
+    if (currentTitle && !isStandardTitle) {
+      setEditTitleSelection(['other']);
+      setEditCustomTitle(currentTitle);
+    } else {
+      setEditTitleSelection(currentTitle ? [currentTitle] : []);
+      setEditCustomTitle('');
+    }
+    setEditInstitution(user()?.institution || '');
+    setEditDepartment(user()?.department || '');
+    setIsEditingAcademic(true);
+  };
+
+  const cancelEditingAcademic = () => {
+    setIsEditingAcademic(false);
+    setEditTitleSelection([]);
+    setEditCustomTitle('');
+    setEditInstitution('');
+    setEditDepartment('');
+  };
+
   const saveName = async () => {
     setSaving(true);
 
@@ -129,6 +187,25 @@ export default function ProfilePage() {
     } catch (err) {
       console.warn('Failed to update profile persona:', err.message);
       showToast.error('Update Failed', 'Failed to update persona. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveAcademic = async () => {
+    setSaving(true);
+
+    try {
+      await auth.updateProfile({
+        title: editTitle() || null,
+        institution: editInstitution()?.trim() || null,
+        department: editDepartment()?.trim() || null,
+      });
+      showToast.success('Profile Updated', 'Your academic information has been updated.');
+      setIsEditingAcademic(false);
+    } catch (err) {
+      console.warn('Failed to update academic info:', err.message);
+      showToast.error('Update Failed', 'Failed to update academic information. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -433,6 +510,131 @@ export default function ProfilePage() {
                   </button>
                   <button
                     onClick={cancelEditingRole}
+                    disabled={saving()}
+                    class='px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 disabled:opacity-50'
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </Show>
+            </div>
+
+            {/* Academic Information Field */}
+            <div class='flex items-start justify-between border-t border-gray-100 pt-4'>
+              <div class='flex-1'>
+                <label class='block text-xs font-medium tracking-wide text-gray-500 uppercase'>
+                  Academic Information
+                </label>
+                <Show
+                  when={isEditingAcademic()}
+                  fallback={
+                    <div class='mt-1 space-y-1'>
+                      <div>
+                        <span class='text-xs text-gray-500'>Title: </span>
+                        <span class='text-gray-900'>{user()?.title || 'Not set'}</span>
+                      </div>
+                      <div>
+                        <span class='text-xs text-gray-500'>Institution: </span>
+                        <span class='text-gray-900'>{user()?.institution || 'Not set'}</span>
+                      </div>
+                      <div>
+                        <span class='text-xs text-gray-500'>Department: </span>
+                        <span class='text-gray-900'>{user()?.department || 'Not set'}</span>
+                      </div>
+                    </div>
+                  }
+                >
+                  <div class='mt-2 space-y-3'>
+                    <div>
+                      <label class='mb-1 block text-xs font-medium tracking-wide text-gray-500 uppercase'>
+                        Title
+                      </label>
+                      <Select
+                        collection={titleCollection}
+                        value={editTitleSelection()}
+                        onValueChange={details => setEditTitleSelection(details.value)}
+                        class='max-w-xs'
+                      >
+                        <SelectControl>
+                          <SelectTrigger>
+                            <SelectValueText placeholder='Select a title (optional)' />
+                            <SelectIndicator />
+                          </SelectTrigger>
+                        </SelectControl>
+                        <SelectPositioner>
+                          <SelectContent>
+                            <For each={TITLE_OPTIONS}>
+                              {option => (
+                                <SelectItem item={option}>
+                                  <SelectItemText>{option.label}</SelectItemText>
+                                  <SelectItemIndicator />
+                                </SelectItem>
+                              )}
+                            </For>
+                          </SelectContent>
+                        </SelectPositioner>
+                      </Select>
+                      <Show when={isEditingCustomTitle()}>
+                        <input
+                          type='text'
+                          value={editCustomTitle()}
+                          onInput={e => setEditCustomTitle(e.target.value)}
+                          class='mt-2 block w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                          placeholder='Enter your title'
+                          maxLength={50}
+                        />
+                      </Show>
+                    </div>
+                    <div>
+                      <label class='mb-1 block text-xs font-medium tracking-wide text-gray-500 uppercase'>
+                        Institution
+                      </label>
+                      <input
+                        type='text'
+                        value={editInstitution()}
+                        onInput={e => setEditInstitution(e.target.value)}
+                        class='block w-full max-w-md rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-400 focus:outline-none'
+                        placeholder='University or organization'
+                        maxLength={200}
+                      />
+                    </div>
+                    <div>
+                      <label class='mb-1 block text-xs font-medium tracking-wide text-gray-500 uppercase'>
+                        Department
+                      </label>
+                      <input
+                        type='text'
+                        value={editDepartment()}
+                        onInput={e => setEditDepartment(e.target.value)}
+                        class='block w-full max-w-md rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-400 focus:outline-none'
+                        placeholder='Department or faculty'
+                        maxLength={200}
+                      />
+                    </div>
+                  </div>
+                </Show>
+              </div>
+              <Show
+                when={isEditingAcademic()}
+                fallback={
+                  <button
+                    onClick={startEditingAcademic}
+                    class='ml-4 text-sm font-medium text-blue-600 hover:text-blue-700'
+                  >
+                    Edit
+                  </button>
+                }
+              >
+                <div class='ml-4 flex space-x-2'>
+                  <button
+                    onClick={saveAcademic}
+                    disabled={saving()}
+                    class='rounded-lg bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={cancelEditingAcademic}
                     disabled={saving()}
                     class='px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 disabled:opacity-50'
                   >

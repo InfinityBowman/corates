@@ -5,7 +5,20 @@
 
 import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { FiArrowLeft, FiArrowRight } from 'solid-icons/fi';
-import { showToast, useConfirmDialog } from '@corates/ui';
+import { showToast } from '@corates/ui';
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogPositioner,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogIcon,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import {
   compareChecklists,
   getReconciliationSummary,
@@ -39,7 +52,8 @@ export default function ChecklistReconciliation(props) {
   const [reconciledName, setReconciledName] = createSignal('Reconciled Checklist');
   const [saving, setSaving] = createSignal(false);
 
-  const confirmDialog = useConfirmDialog();
+  // Finish confirmation dialog state
+  const [finishDialogOpen, setFinishDialogOpen] = createSignal(false);
 
   // Navigation state in localStorage (not synced across clients)
   const getStorageKey = () => {
@@ -357,28 +371,22 @@ export default function ChecklistReconciliation(props) {
     return count;
   });
 
-  // Handle save
-  async function handleSave() {
+  // Handle save - opens confirmation dialog
+  function handleSave() {
     if (!allAnswered()) {
       showToast.error('Incomplete Review', 'Please review all questions before saving.');
       return;
     }
+    setFinishDialogOpen(true);
+  }
 
-    const confirmed = await confirmDialog.open({
-      title: 'Finish reconciliation?',
-      description:
-        'This will mark the reconciled checklist as completed and end this reconciliation. You will no longer be able to edit these reconciliation answers afterwards.',
-      confirmText: 'Finish',
-      cancelText: 'Cancel',
-      variant: 'warning',
-    });
-
-    if (!confirmed) return;
-
+  // Execute save after confirmation
+  async function confirmSave() {
     setSaving(true);
     try {
       // Just pass the name - the checklist already exists and has all the answers
       await props.onSaveReconciled?.(reconciledName());
+      setFinishDialogOpen(false);
     } catch (err) {
       console.error('Error saving reconciled checklist:', err);
       showToast.error('Save Failed', 'Failed to save reconciled checklist. Please try again.');
@@ -390,7 +398,29 @@ export default function ChecklistReconciliation(props) {
   return (
     <div class='bg-blue-50'>
       <div class='mx-auto max-w-7xl px-4 py-4'>
-        <confirmDialog.ConfirmDialogComponent />
+        {/* Finish confirmation dialog */}
+        <AlertDialog open={finishDialogOpen()} onOpenChange={setFinishDialogOpen}>
+          <AlertDialogBackdrop />
+          <AlertDialogPositioner>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogIcon variant="warning" />
+                <div>
+                  <AlertDialogTitle>Finish reconciliation?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will mark the reconciled checklist as completed and end this reconciliation. You will no longer be able to edit these reconciliation answers afterwards.
+                  </AlertDialogDescription>
+                </div>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={saving()}>Cancel</AlertDialogCancel>
+                <AlertDialogAction variant="warning" disabled={saving()} onClick={confirmSave}>
+                  {saving() ? 'Saving...' : 'Finish'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialogPositioner>
+        </AlertDialog>
         {/* Main Content */}
         <Show when={viewMode() === 'questions'}>
           <Show
