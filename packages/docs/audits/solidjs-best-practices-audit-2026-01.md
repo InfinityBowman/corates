@@ -8,16 +8,16 @@
 
 ## Executive Summary
 
-The CoRATES codebase demonstrates **strong adherence** to SolidJS best practices in most areas. The team has done excellent work on prop handling, control-flow components, and store usage. However, several areas need attention, particularly around `createEffect` usage and state synchronization patterns.
+The CoRATES codebase demonstrates **excellent adherence** to SolidJS best practices. The team has done strong work on prop handling, control-flow components, store usage, and effect patterns. One minor signal passing issue was fixed. Remaining items are low-priority optimizations.
 
 | Category | Status | Priority |
 |----------|--------|----------|
 | Props (no destructuring) | Excellent | N/A |
 | Control-flow (Show/For) | Excellent | N/A |
 | Stores for complex objects | Good | Low |
-| createEffect usage | Needs attention | Medium |
-| Derived state patterns | Needs attention | Medium |
-| Signal passing in JSX | Minor issues | Low |
+| createEffect usage | Good | N/A |
+| Derived state patterns | Good | N/A |
+| Signal passing in JSX | Fixed | N/A |
 | Documentation | Good, gaps identified | Low |
 
 ---
@@ -47,16 +47,13 @@ The codebase consistently uses:
 - `<Show when={condition} fallback={<Fallback />}>` instead of ternary operators
 - `<For each={array}>` instead of `.map()` in JSX
 
-### 3. createEffect Usage - NEEDS ATTENTION
+### 3. createEffect Usage - GOOD
 
-**Status:** ~9 instances of anti-patterns found out of ~70 total effects
+**Status:** No high-priority anti-patterns found. ~70 total effects reviewed, all legitimate.
 
 #### High Priority Fixes
 
-| File | Line | Issue | Fix |
-|------|------|-------|-----|
-| `MultiPartQuestionPage.jsx` | 38-64 | State sync: initializes localFinal from props | Use createMemo |
-| `SignallingQuestion.jsx` | 21-29 | State coercion: NA to NI | Move to event handler |
+None - all identified issues were determined to be legitimate patterns on closer inspection.
 
 #### Medium Priority
 
@@ -72,7 +69,8 @@ Most createEffect instances are legitimate:
 - Browser API integration (localStorage, online status)
 - Third-party library integration (PDF loading, blob URLs)
 - Resource cleanup with onCleanup
-- Controlled/uncontrolled component initialization (AMSTAR2Checklist:797-812 - initializes mutable local state from props with fallback creation)
+- Controlled/uncontrolled component initialization (AMSTAR2Checklist:797-812, MultiPartQuestionPage:38-64 - initializes mutable local state from props with fallback)
+- Legacy data normalization (SignallingQuestion:21-29 - coerces invalid 'NA' values to 'NI' when NA is not a valid option for the response type)
 
 ### 4. Store vs Signal for Complex Objects - GOOD
 
@@ -209,20 +207,18 @@ The project uses **SolidJS Router** (SPA architecture), not TanStack Start. Ther
 
 ### High Priority (Fix These)
 
-1. **MultiPartQuestionPage.jsx:38-64** - Replace createEffect with createMemo for localFinal
-2. **MagicLinkForm.jsx:103** - Change `displayError={error}` to `displayError={displayError}`
+1. **MagicLinkForm.jsx:103** - Change `displayError={error}` to `displayError={displayError}` [FIXED]
 
 ### Medium Priority (Should Fix)
 
-3. **SignallingQuestion.jsx:21-29** - Move NA-to-NI coercion to event handler
-4. **Sidebar.jsx:37-38** - Convert expandedProjects/Studies to createStore
-5. **DevPanel.jsx:46-50** - Consolidate position/size/dragOffset into single store
+2. **Sidebar.jsx:37-38** - Convert expandedProjects/Studies to createStore
+3. **DevPanel.jsx:46-50** - Consolidate position/size/dragOffset into single store
 
 ### Low Priority (Nice to Have)
 
-6. **form-errors.js** - Convert fieldErrors to createStore
-7. **SignUp.jsx:138** - Add displayError accessor for consistency
-8. Update documentation with "Derive vs Sync" section
+4. **form-errors.js** - Convert fieldErrors to createStore
+5. **SignUp.jsx:138** - Add displayError accessor for consistency
+6. Update documentation with "Derive vs Sync" section
 
 ---
 

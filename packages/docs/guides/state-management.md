@@ -513,6 +513,100 @@ Stores should validate cached data when appropriate:
   }
 ```
 
+## Derive Instead of Sync
+
+One of the most important SolidJS patterns is **deriving values instead of synchronizing state**. When you need a value that depends on other reactive values, derive it rather than syncing it with effects.
+
+### Anti-Pattern: Syncing with Effects
+
+```js
+// WRONG - Using effect to keep signals in sync
+const [items, setItems] = createSignal([]);
+const [filtered, setFiltered] = createSignal([]);
+
+createEffect(() => {
+  setFiltered(items().filter(i => i.active));
+});
+```
+
+Problems with this approach:
+- Hidden dependency relationship
+- Extra signal that needs to be managed
+- Potential race conditions
+- Effect runs after render, causing unnecessary updates
+
+### Correct Pattern: Derive with createMemo
+
+```js
+// CORRECT - Derive the value
+const [items, setItems] = createSignal([]);
+const filtered = createMemo(() => items().filter(i => i.active));
+```
+
+Benefits:
+- Declarative relationship between values
+- Automatic re-computation when dependencies change
+- No race conditions
+- Single source of truth
+
+### When to Use Each Pattern
+
+| Pattern | Use Case |
+|---------|----------|
+| `createMemo` | Derived values from other reactive sources |
+| `createEffect` | Side effects (DOM, localStorage, external APIs) |
+| Function wrapper | Lightweight derivation: `const doubled = () => count() * 2` |
+
+### Function Wrappers vs createMemo
+
+Both work for derived values, but have different performance characteristics:
+
+```js
+// Function wrapper - re-evaluates on every access
+const doubled = () => count() * 2;
+
+// createMemo - caches result, only re-evaluates when count changes
+const doubled = createMemo(() => count() * 2);
+```
+
+Use `createMemo` when:
+- The computation is expensive
+- The value is accessed multiple times per render cycle
+- You need referential stability (same object identity)
+
+Use function wrappers when:
+- The computation is trivial
+- The value is only accessed once per render
+- You want to avoid the memo overhead
+
+### Legitimate Uses of createEffect
+
+Effects should be reserved for actual side effects:
+
+```js
+// DOM manipulation
+createEffect(() => {
+  document.title = `${count()} items`;
+});
+
+// localStorage persistence
+createEffect(() => {
+  localStorage.setItem('count', count().toString());
+});
+
+// External library integration
+createEffect(() => {
+  chart.update(data());
+});
+
+// Controlled component initialization (mutable local state from props)
+createEffect(() => {
+  if (props.initialValue !== undefined) {
+    setLocalValue(props.initialValue);
+  }
+});
+```
+
 ## Best Practices
 
 ### DO

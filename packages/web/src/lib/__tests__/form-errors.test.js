@@ -4,6 +4,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { createSignal } from 'solid-js';
+import { createStore } from 'solid-js/store';
 import { handleFormError, createFormErrorState, createFormErrorSignals } from '../form-errors.js';
 import {
   createDomainError,
@@ -145,7 +146,7 @@ describe('createFormErrorState', () => {
 
 describe('createFormErrorSignals', () => {
   it('should create reactive form error signals', () => {
-    const signals = createFormErrorSignals(createSignal);
+    const signals = createFormErrorSignals(createSignal, createStore);
 
     expect(signals.fieldErrors).toBeDefined();
     expect(signals.globalError).toBeDefined();
@@ -156,47 +157,49 @@ describe('createFormErrorSignals', () => {
     expect(signals.clearGlobalError).toBeDefined();
     expect(signals.clearAll).toBeDefined();
     expect(signals.handleError).toBeDefined();
+    expect(signals.getFieldError).toBeDefined();
   });
 
   it('should set and get field errors reactively', () => {
-    const signals = createFormErrorSignals(createSignal);
+    const signals = createFormErrorSignals(createSignal, createStore);
 
     signals.setFieldError('email', 'Email is required');
-    expect(signals.fieldErrors()).toEqual({ email: 'Email is required' });
+    expect(signals.fieldErrors.email).toBe('Email is required');
+    expect(signals.getFieldError('email')).toBe('Email is required');
   });
 
   it('should set global error reactively', () => {
-    const signals = createFormErrorSignals(createSignal);
+    const signals = createFormErrorSignals(createSignal, createStore);
 
     signals.setGlobalError('Something went wrong');
     expect(signals.globalError()).toBe('Something went wrong');
   });
 
   it('should clear field errors', () => {
-    const signals = createFormErrorSignals(createSignal);
+    const signals = createFormErrorSignals(createSignal, createStore);
 
     signals.setFieldError('email', 'Email is required');
     signals.clearFieldError('email');
-    expect(signals.fieldErrors()).toEqual({});
+    expect(signals.fieldErrors.email).toBeUndefined();
   });
 
   it('should handle errors using handleFormError', () => {
-    const signals = createFormErrorSignals(createSignal);
+    const signals = createFormErrorSignals(createSignal, createStore);
     const error = createValidationError('email', 'VALIDATION_FIELD_REQUIRED', '');
 
     signals.handleError(error);
 
-    expect(signals.fieldErrors()).toEqual({ email: 'This field is required' });
+    expect(signals.fieldErrors.email).toBe('This field is required');
   });
 
   it('should clear all errors', () => {
-    const signals = createFormErrorSignals(createSignal);
+    const signals = createFormErrorSignals(createSignal, createStore);
 
     signals.setFieldError('email', 'Email is required');
     signals.setGlobalError('Global error');
     signals.clearAll();
 
-    expect(signals.fieldErrors()).toEqual({});
+    expect(signals.fieldErrors.email).toBeUndefined();
     expect(signals.globalError()).toBe('');
   });
 });
