@@ -3,17 +3,18 @@
     "corates": {
       "type": "stdio",
       "command": "node",
-      "args": ["${workspaceFolder}/packages/mcp/dist/server.js"]
+      "args": ["packages/mcp/dist/server.js"]
     },
     "corates-memory": {
       "type": "stdio",
       "command": "node",
-      "args": ["${workspaceFolder}/packages/mcp-memory/dist/server.js"],
+      "args": ["packages/mcp-memory/dist/server.js"],
       "env": {
-        "MCP_MEMORY_REPO_ROOT": "${workspaceFolder}"
+        "MCP_MEMORY_REPO_ROOT": "."
       }
     },
     "ark-ui": {
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "@ark-ui/mcp"]
     }
