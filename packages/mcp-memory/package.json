@@ -13,7 +13,6 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
     "start": "node dist/server.js",
-    "seed": "tsx scripts/seed.ts",
     "list": "tsx scripts/list.ts",
     "lint": "eslint .",
     "test": "vitest run",

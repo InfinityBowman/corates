@@ -29,7 +29,7 @@ const server = new McpServer({
   description: `Persistent memory for repository knowledge. 
 Search before tasks to retrieve facts, decisions, procedures, and patterns.
 Propose writes after tasks to preserve durable knowledge.
-Server validates all writes - duplicates and low-quality entries are rejected.`,
+Server validates all writes - duplicates and low-quality entries are rejected. When making changes to the CoRATES codebase, record decisions and learnings for future reference.`,
 });
 
 // Initialize services
