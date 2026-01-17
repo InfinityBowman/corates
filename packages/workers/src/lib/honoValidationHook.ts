@@ -5,7 +5,11 @@
 
 import type { Context } from 'hono';
 import type { z } from 'zod';
-import { createValidationError, VALIDATION_ERRORS, type ValidationErrorCode } from '@corates/shared';
+import {
+  createValidationError,
+  VALIDATION_ERRORS,
+  type ValidationErrorCode,
+} from '@corates/shared';
 
 interface ValidationResult {
   success: boolean;
@@ -47,7 +51,8 @@ export function validationHook(result: ValidationResult, c: Context): Response |
     // - invalid_enum_value with undefined received (missing required enum field)
     // - message contains 'received undefined' or 'Required'
     const isMissing =
-      ((issueCode === 'invalid_type' || issueCode === 'invalid_enum_value') && receivedIsUndefined) ||
+      ((issueCode === 'invalid_type' || issueCode === 'invalid_enum_value') &&
+        receivedIsUndefined) ||
       message.includes('received undefined') ||
       message.includes('Required');
 
