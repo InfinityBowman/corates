@@ -40,20 +40,35 @@ const embedding = new LocalEmbeddingService();
 registerMemoryTools(server, { storage, embedding });
 
 // Cleanup on exit
-function cleanup(): void {
-  storage.close().catch(err => {
-    console.error('Error closing storage:', err);
-  });
+async function cleanup(): Promise<void> {
+  await storage.close();
+}
+
+// Graceful shutdown with timeout
+async function shutdown(signal: string): Promise<void> {
+  console.error(`Received ${signal}, shutting down...`);
+
+  const SHUTDOWN_TIMEOUT = 5000;
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Cleanup timed out')), SHUTDOWN_TIMEOUT),
+  );
+
+  try {
+    await Promise.race([cleanup(), timeoutPromise]);
+    console.error('Cleanup completed successfully');
+    process.exit(0);
+  } catch (err) {
+    console.error('Error during cleanup:', err);
+    process.exit(1);
+  }
 }
 
 process.on('SIGINT', () => {
-  cleanup();
-  process.exit(0);
+  void shutdown('SIGINT');
 });
 
 process.on('SIGTERM', () => {
-  cleanup();
-  process.exit(0);
+  void shutdown('SIGTERM');
 });
 
 // Start the server

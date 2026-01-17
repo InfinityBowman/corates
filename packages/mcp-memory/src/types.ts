@@ -60,14 +60,7 @@ export interface SearchResponse {
 }
 
 // Write types
-export interface CreateEntryInput {
-  type: KnowledgeType;
-  title: string;
-  content: string;
-  tags?: string[];
-  source?: KnowledgeSource;
-  confidenceHint?: number;
-}
+// NOTE: CreateEntryInput is defined in validation.ts via Zod schema (uses snake_case: confidence_hint)
 
 export interface CreateEntryResult {
   status: 'accepted' | 'rejected';
@@ -81,14 +74,7 @@ export interface CreateEntryResult {
 // Update types
 export type UpdateAction = 'supersede' | 'refine';
 
-export interface UpdateEntryInput {
-  targetId: string;
-  action: UpdateAction;
-  title?: string;
-  content: string;
-  justification: string;
-  tags?: string[];
-}
+// NOTE: UpdateEntryInput is defined in validation.ts via Zod schema (uses snake_case: target_id)
 
 export interface UpdateEntryResult {
   status: 'accepted' | 'rejected';

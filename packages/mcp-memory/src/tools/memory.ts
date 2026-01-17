@@ -264,13 +264,20 @@ Confidence: ${(confidence * 100).toFixed(0)}%`;
           };
         }
 
-        // Check if content is actually different
-        if (existing.content === parsed.content && !parsed.title) {
+        // Check if content, title, and tags are actually different
+        const tagsEqual =
+          parsed.tags === undefined ||
+          (existing.tags.length === parsed.tags.length &&
+            [...existing.tags].sort().every((t, i) => t === [...parsed.tags!].sort()[i]));
+        const contentEqual = existing.content === parsed.content;
+        const titleUnchanged = !parsed.title;
+
+        if (contentEqual && titleUnchanged && tagsEqual) {
           return {
             content: [
               {
                 type: 'text',
-                text: 'REJECTED: Content is identical to existing entry. No update needed.',
+                text: 'REJECTED: Content, title, and tags are identical to existing entry. No update needed.',
               },
             ],
           };
