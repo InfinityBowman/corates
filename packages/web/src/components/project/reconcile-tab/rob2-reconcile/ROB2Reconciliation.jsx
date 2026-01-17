@@ -120,6 +120,26 @@ export default function ROB2Reconciliation(props) {
   const navItems = createMemo(() => buildNavigationItems(isAdhering()));
   const totalPages = () => navItems().length;
 
+  // Clamp currentPage when navItems change (e.g., after aim change) to prevent out-of-bounds index
+  createEffect(() => {
+    const items = navItems();
+    const total = items.length;
+    if (total === 0) return;
+
+    const page = currentPage();
+    const clampedPage = Math.max(0, Math.min(page, total - 1));
+
+    if (clampedPage !== page) {
+      setCurrentPage(clampedPage);
+    }
+
+    // Resync expanded domain to the (potentially clamped) page
+    const sectionKey = getSectionKeyForPage(items, clampedPage);
+    if (sectionKey && sectionKey !== expandedDomain()) {
+      setExpandedDomain(sectionKey);
+    }
+  });
+
   // Compare the two checklists
   const comparison = createMemo(() => {
     if (!props.checklist1 || !props.checklist2) return null;
