@@ -45,7 +45,7 @@ const AlertDialog: Component<AlertDialogProps> = props => {
   const [local, others] = splitProps(props, ['children', 'onOpenChange']);
   return (
     <DialogPrimitive.Root
-      role="alertdialog"
+      role='alertdialog'
       onOpenChange={details => local.onOpenChange?.(details.open)}
       {...others}
     >
@@ -62,11 +62,7 @@ const AlertDialogBackdrop: Component<AlertDialogBackdropProps> = props => {
   return (
     <Portal>
       <DialogPrimitive.Backdrop
-        class={cn(
-          'fixed inset-0 bg-black/50 transition-opacity',
-          Z_INDEX.BACKDROP,
-          props.class,
-        )}
+        class={cn('fixed inset-0 bg-black/50 transition-opacity', Z_INDEX.BACKDROP, props.class)}
       />
     </Portal>
   );
@@ -101,10 +97,7 @@ type AlertDialogContentProps = {
 const AlertDialogContent: Component<AlertDialogContentProps> = props => {
   return (
     <DialogPrimitive.Content
-      class={cn(
-        'w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl',
-        props.class,
-      )}
+      class={cn('w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl', props.class)}
     >
       {props.children}
     </DialogPrimitive.Content>
@@ -117,11 +110,7 @@ type AlertDialogHeaderProps = {
 };
 
 const AlertDialogHeader: Component<AlertDialogHeaderProps> = props => {
-  return (
-    <div class={cn('flex items-start gap-4 p-6', props.class)}>
-      {props.children}
-    </div>
-  );
+  return <div class={cn('flex items-start gap-4 p-6', props.class)}>{props.children}</div>;
 };
 
 type AlertDialogIconProps = {
@@ -145,7 +134,7 @@ const AlertDialogIcon: Component<AlertDialogIconProps> = props => {
 
   return (
     <div class={cn('shrink-0 rounded-full p-2', variantStyles(), props.class)}>
-      <FiAlertTriangle class="h-6 w-6" />
+      <FiAlertTriangle class='h-6 w-6' />
     </div>
   );
 };
@@ -157,9 +146,7 @@ type AlertDialogTitleProps = {
 
 const AlertDialogTitle: Component<AlertDialogTitleProps> = props => {
   return (
-    <DialogPrimitive.Title
-      class={cn('text-lg font-semibold text-gray-900', props.class)}
-    >
+    <DialogPrimitive.Title class={cn('text-lg font-semibold text-gray-900', props.class)}>
       {props.children}
     </DialogPrimitive.Title>
   );
@@ -172,9 +159,7 @@ type AlertDialogDescriptionProps = {
 
 const AlertDialogDescription: Component<AlertDialogDescriptionProps> = props => {
   return (
-    <DialogPrimitive.Description
-      class={cn('mt-2 text-sm text-gray-600', props.class)}
-    >
+    <DialogPrimitive.Description class={cn('mt-2 text-sm text-gray-600', props.class)}>
       {props.children}
     </DialogPrimitive.Description>
   );
@@ -242,7 +227,7 @@ const AlertDialogAction: Component<AlertDialogActionProps> = props => {
 
   return (
     <button
-      type="button"
+      type='button'
       disabled={props.disabled}
       onClick={props.onClick}
       class={cn(
@@ -274,7 +259,7 @@ const AlertDialogCloseTrigger: Component<AlertDialogCloseTriggerProps> = props =
         props.class,
       )}
     >
-      <FiX class="h-5 w-5" />
+      <FiX class='h-5 w-5' />
     </DialogPrimitive.CloseTrigger>
   );
 };

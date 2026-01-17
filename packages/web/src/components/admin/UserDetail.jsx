@@ -705,13 +705,14 @@ export default function UserDetail() {
                 <div class='space-y-4'>
                   <Show when={confirmDialog()?.type === 'delete'}>
                     <p class='text-sm text-gray-600'>
-                      This will permanently delete the user and all their data. This action cannot be
-                      undone.
+                      This will permanently delete the user and all their data. This action cannot
+                      be undone.
                     </p>
                   </Show>
                   <Show when={confirmDialog()?.type === 'revoke-all'}>
                     <p class='text-sm text-gray-600'>
-                      This will revoke all active sessions for this user. They will need to sign in again.
+                      This will revoke all active sessions for this user. They will need to sign in
+                      again.
                     </p>
                   </Show>
                   <div class='flex justify-end space-x-3'>

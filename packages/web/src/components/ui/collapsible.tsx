@@ -77,11 +77,7 @@ const CollapsibleContent: Component<CollapsibleContentProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children', 'horizontal']);
   return (
     <CollapsiblePrimitive.Content
-      class={cn(
-        'overflow-hidden',
-        local.horizontal && 'collapsible-horizontal',
-        local.class,
-      )}
+      class={cn('overflow-hidden', local.horizontal && 'collapsible-horizontal', local.class)}
       {...others}
     >
       {local.children}

@@ -45,10 +45,7 @@ type SwitchRootProps = ArkSwitchRootProps & {
 const SwitchRoot: Component<SwitchRootProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
-    <SwitchPrimitive.Root
-      class={cn('flex items-center gap-2', local.class)}
-      {...others}
-    >
+    <SwitchPrimitive.Root class={cn('flex items-center gap-2', local.class)} {...others}>
       {local.children}
     </SwitchPrimitive.Root>
   );
@@ -66,7 +63,7 @@ const SwitchControl: Component<SwitchControlProps> = props => {
       class={cn(
         'inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent',
         'transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
+        'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none',
         'disabled:cursor-not-allowed disabled:opacity-50',
         'bg-gray-200 data-[state=checked]:bg-blue-600',
         local.class,
@@ -104,7 +101,7 @@ const SwitchLabel: Component<SwitchLabelProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <SwitchPrimitive.Label
-      class={cn('text-sm font-medium leading-none text-gray-900', local.class)}
+      class={cn('text-sm leading-none font-medium text-gray-900', local.class)}
       {...others}
     />
   );

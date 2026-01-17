@@ -252,7 +252,7 @@ export default function ProjectsPanel() {
         <AlertDialogPositioner>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogIcon variant="danger" />
+              <AlertDialogIcon variant='danger' />
               <div>
                 <AlertDialogTitle>Delete Project</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -263,7 +263,7 @@ export default function ProjectsPanel() {
             <AlertDialogFooter>
               <AlertDialogCancel disabled={deleteLoading()}>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                variant="danger"
+                variant='danger'
                 disabled={deleteLoading()}
                 onClick={confirmDeleteProject}
               >

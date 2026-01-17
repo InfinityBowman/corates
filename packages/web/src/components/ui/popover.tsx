@@ -146,7 +146,7 @@ const PopoverCloseTrigger: Component<PopoverCloseTriggerProps> = props => {
   return (
     <PopoverPrimitive.CloseTrigger
       class={cn(
-        'absolute right-2 top-2 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500',
+        'absolute top-2 right-2 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500',
         local.class,
       )}
       {...others}

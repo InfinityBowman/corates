@@ -430,17 +430,18 @@ export default function ROB2Reconciliation(props) {
           <AlertDialogPositioner>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogIcon variant="warning" />
+                <AlertDialogIcon variant='warning' />
                 <div>
                   <AlertDialogTitle>Finish reconciliation?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will mark the reconciled checklist as completed. You will no longer be able to edit these reconciliation answers afterwards.
+                    This will mark the reconciled checklist as completed. You will no longer be able
+                    to edit these reconciliation answers afterwards.
                   </AlertDialogDescription>
                 </div>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={saving()}>Cancel</AlertDialogCancel>
-                <AlertDialogAction variant="warning" disabled={saving()} onClick={confirmSave}>
+                <AlertDialogAction variant='warning' disabled={saving()} onClick={confirmSave}>
                   {saving() ? 'Saving...' : 'Finish'}
                 </AlertDialogAction>
               </AlertDialogFooter>

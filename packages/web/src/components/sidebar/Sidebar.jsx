@@ -457,7 +457,7 @@ export default function Sidebar(props) {
           <AlertDialogPositioner>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogIcon variant="danger" />
+                <AlertDialogIcon variant='danger' />
                 <div>
                   <AlertDialogTitle>Delete Checklist</AlertDialogTitle>
                   <AlertDialogDescription>
@@ -467,7 +467,7 @@ export default function Sidebar(props) {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction variant="danger" onClick={confirmDeleteChecklist}>
+                <AlertDialogAction variant='danger' onClick={confirmDeleteChecklist}>
                   Delete
                 </AlertDialogAction>
               </AlertDialogFooter>

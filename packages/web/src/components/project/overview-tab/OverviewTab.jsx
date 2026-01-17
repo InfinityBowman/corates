@@ -175,7 +175,10 @@ export default function OverviewTab() {
         navigate('/dashboard', { replace: true });
         showToast.success('Left Project', 'You have left the project');
       } else {
-        showToast.success('Member Removed', `${pending.memberName} has been removed from the project`);
+        showToast.success(
+          'Member Removed',
+          `${pending.memberName} has been removed from the project`,
+        );
       }
       setRemoveDialogOpen(false);
     } catch (err) {
@@ -461,21 +464,22 @@ export default function OverviewTab() {
         <AlertDialogPositioner>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogIcon variant="danger" />
+              <AlertDialogIcon variant='danger' />
               <div>
                 <AlertDialogTitle>
                   {pendingRemoveMember()?.isSelf ? 'Leave Project' : 'Remove Member'}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  {pendingRemoveMember()?.isSelf
-                    ? 'Are you sure you want to leave this project? You will need to be re-invited to rejoin.'
-                    : `Are you sure you want to remove ${pendingRemoveMember()?.memberName} from this project?`}
+                  {pendingRemoveMember()?.isSelf ?
+                    'Are you sure you want to leave this project? You will need to be re-invited to rejoin.'
+                  : `Are you sure you want to remove ${pendingRemoveMember()?.memberName} from this project?`
+                  }
                 </AlertDialogDescription>
               </div>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction variant="danger" onClick={confirmRemoveMember}>
+              <AlertDialogAction variant='danger' onClick={confirmRemoveMember}>
                 {pendingRemoveMember()?.isSelf ? 'Leave Project' : 'Remove'}
               </AlertDialogAction>
             </AlertDialogFooter>

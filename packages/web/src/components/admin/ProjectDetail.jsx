@@ -524,7 +524,8 @@ export default function ProjectDetail() {
             <DialogContent class='max-w-md'>
               <DialogHeader>
                 <DialogTitle>
-                  {confirmDialog()?.type === 'delete-project' ? 'Delete Project'
+                  {confirmDialog()?.type === 'delete-project' ?
+                    'Delete Project'
                   : confirmDialog()?.type === 'remove-member' ?
                     'Remove Member'
                   : 'Confirm'}
@@ -537,8 +538,8 @@ export default function ProjectDetail() {
                 <div class='space-y-4'>
                   <Show when={confirmDialog()?.type === 'delete-project'}>
                     <p class='text-sm text-gray-600'>
-                      This will permanently delete the project and all associated data including files,
-                      members, and invitations. This action cannot be undone.
+                      This will permanently delete the project and all associated data including
+                      files, members, and invitations. This action cannot be undone.
                     </p>
                   </Show>
                   <Show when={confirmDialog()?.type === 'remove-member'}>

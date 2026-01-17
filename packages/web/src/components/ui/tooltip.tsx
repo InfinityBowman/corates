@@ -109,8 +109,18 @@ type TooltipArrowTipProps = ArkTooltipArrowTipProps & {
 const TooltipArrowTip: Component<TooltipArrowTipProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
-    <TooltipPrimitive.ArrowTip class={cn('border-t border-l border-gray-900', local.class)} {...others} />
+    <TooltipPrimitive.ArrowTip
+      class={cn('border-t border-l border-gray-900', local.class)}
+      {...others}
+    />
   );
 };
 
-export { Tooltip, TooltipTrigger, TooltipPositioner, TooltipContent, TooltipArrow, TooltipArrowTip };
+export {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+  TooltipArrow,
+  TooltipArrowTip,
+};

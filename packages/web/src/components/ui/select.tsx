@@ -68,7 +68,7 @@ const SelectLabel: Component<SelectLabelProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <SelectPrimitive.Label
-      class={cn('mb-1.5 block text-sm font-medium leading-none text-gray-900', local.class)}
+      class={cn('mb-1.5 block text-sm leading-none font-medium text-gray-900', local.class)}
       {...others}
     />
   );
@@ -86,7 +86,7 @@ const SelectTrigger: Component<SelectTriggerProps> = props => {
       class={cn(
         'flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm',
         'text-gray-900 ring-offset-white placeholder:text-gray-500',
-        'hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+        'hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none',
         'disabled:cursor-not-allowed disabled:opacity-50',
         'data-[invalid]:border-red-500 data-[invalid]:focus:ring-red-500',
         local.class,
@@ -106,10 +106,13 @@ type SelectIndicatorProps = {
 const SelectIndicator: Component<SelectIndicatorProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
-    <SelectPrimitive.Indicator class={cn('transition-transform duration-200', local.class)} {...others}>
+    <SelectPrimitive.Indicator
+      class={cn('transition-transform duration-200', local.class)}
+      {...others}
+    >
       <Show
         when={local.children}
-        fallback={<BiRegularChevronDown class="h-4 w-4 text-gray-500 opacity-50" />}
+        fallback={<BiRegularChevronDown class='h-4 w-4 text-gray-500 opacity-50' />}
       >
         {local.children}
       </Show>
@@ -237,7 +240,7 @@ const SelectItemIndicator: Component<SelectItemIndicatorProps> = props => {
       class={cn('absolute right-2 flex h-3.5 w-3.5 items-center justify-center', local.class)}
       {...others}
     >
-      <Show when={local.children} fallback={<BiRegularCheck class="h-4 w-4 text-blue-600" />}>
+      <Show when={local.children} fallback={<BiRegularCheck class='h-4 w-4 text-blue-600' />}>
         {local.children}
       </Show>
     </SelectPrimitive.ItemIndicator>

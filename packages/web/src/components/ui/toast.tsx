@@ -85,10 +85,7 @@ type ToastDescriptionProps = ArkToastDescriptionProps & {
 const ToastDescription: Component<ToastDescriptionProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
-    <ToastPrimitive.Description
-      class={cn('mt-1 text-sm text-gray-600', local.class)}
-      {...others}
-    />
+    <ToastPrimitive.Description class={cn('mt-1 text-sm text-gray-600', local.class)} {...others} />
   );
 };
 
@@ -102,12 +99,12 @@ const ToastCloseTrigger: Component<ToastCloseTriggerProps> = props => {
   return (
     <ToastPrimitive.CloseTrigger
       class={cn(
-        'absolute right-2 top-2 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500',
+        'absolute top-2 right-2 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500',
         local.class,
       )}
       {...others}
     >
-      {local.children ?? <FiX class="h-4 w-4" />}
+      {local.children ?? <FiX class='h-4 w-4' />}
     </ToastPrimitive.CloseTrigger>
   );
 };
@@ -121,10 +118,7 @@ const ToastActionTrigger: Component<ToastActionTriggerProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
     <ToastPrimitive.ActionTrigger
-      class={cn(
-        'mt-2 text-sm font-medium text-blue-600 hover:text-blue-700',
-        local.class,
-      )}
+      class={cn('mt-2 text-sm font-medium text-blue-600 hover:text-blue-700', local.class)}
       {...others}
     >
       {local.children}
@@ -137,28 +131,22 @@ const ToasterContainer: Component = () => {
     <Portal>
       <Toaster
         toaster={toaster}
-        class={cn('fixed right-4 top-4 flex flex-col gap-3', Z_INDEX.TOAST)}
+        class={cn('fixed top-4 right-4 flex flex-col gap-3', Z_INDEX.TOAST)}
       >
         {toast => (
           <ToastRoot>
-            <div class="flex gap-3">
+            <div class='flex gap-3'>
               {toast().type === 'success' && (
-                <FiCheckCircle class="h-5 w-5 shrink-0 text-green-500" />
+                <FiCheckCircle class='h-5 w-5 shrink-0 text-green-500' />
               )}
-              {toast().type === 'error' && (
-                <FiAlertCircle class="h-5 w-5 shrink-0 text-red-500" />
-              )}
+              {toast().type === 'error' && <FiAlertCircle class='h-5 w-5 shrink-0 text-red-500' />}
               {toast().type === 'warning' && (
-                <FiAlertTriangle class="h-5 w-5 shrink-0 text-amber-500" />
+                <FiAlertTriangle class='h-5 w-5 shrink-0 text-amber-500' />
               )}
-              {toast().type === 'info' && (
-                <FiInfo class="h-5 w-5 shrink-0 text-blue-500" />
-              )}
-              <div class="flex-1">
+              {toast().type === 'info' && <FiInfo class='h-5 w-5 shrink-0 text-blue-500' />}
+              <div class='flex-1'>
                 <ToastTitle>{toast().title}</ToastTitle>
-                {toast().description && (
-                  <ToastDescription>{toast().description}</ToastDescription>
-                )}
+                {toast().description && <ToastDescription>{toast().description}</ToastDescription>}
               </div>
             </div>
             <ToastCloseTrigger />

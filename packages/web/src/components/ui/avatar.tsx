@@ -39,10 +39,7 @@ const Avatar: Component<AvatarProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
     <AvatarPrimitive.Root
-      class={cn(
-        'relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full',
-        local.class,
-      )}
+      class={cn('relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full', local.class)}
       {...others}
     >
       {local.children}

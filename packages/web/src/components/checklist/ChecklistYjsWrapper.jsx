@@ -355,7 +355,7 @@ export default function ChecklistYjsWrapper() {
       `This appraisal has been marked as ${statusLabel} and is now locked.`,
     );
     setCompleteDialogOpen(false);
-  }
+  };
 
   // Get the checklist type from metadata or detect from state
   const checklistType = createMemo(() => {
@@ -425,17 +425,18 @@ export default function ChecklistYjsWrapper() {
         <AlertDialogPositioner>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogIcon variant="warning" />
+              <AlertDialogIcon variant='warning' />
               <div>
                 <AlertDialogTitle>Mark Appraisal as Complete?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Once marked complete, this appraisal will be locked and cannot be edited. Are you sure you want to proceed?
+                  Once marked complete, this appraisal will be locked and cannot be edited. Are you
+                  sure you want to proceed?
                 </AlertDialogDescription>
               </div>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction variant="warning" onClick={confirmMarkComplete}>
+              <AlertDialogAction variant='warning' onClick={confirmMarkComplete}>
                 Mark Complete
               </AlertDialogAction>
             </AlertDialogFooter>

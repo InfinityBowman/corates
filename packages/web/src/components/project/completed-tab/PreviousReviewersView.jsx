@@ -180,7 +180,9 @@ export default function PreviousReviewersView(props) {
                 fallback={
                   <div class='flex flex-1 items-center justify-center py-16'>
                     <div class='text-center text-gray-500'>
-                      {loading() ? 'Loading appraisals...' : 'No previous reviewer appraisals found.'}
+                      {loading() ?
+                        'Loading appraisals...'
+                      : 'No previous reviewer appraisals found.'}
                     </div>
                   </div>
                 }

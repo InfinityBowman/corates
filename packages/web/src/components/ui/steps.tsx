@@ -78,10 +78,7 @@ type StepsListProps = ArkStepsListProps & {
 const StepsList: Component<StepsListProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
-    <StepsPrimitive.List
-      class={cn('flex items-center gap-2', local.class)}
-      {...others}
-    >
+    <StepsPrimitive.List class={cn('flex items-center gap-2', local.class)} {...others}>
       {local.children}
     </StepsPrimitive.List>
   );
@@ -95,10 +92,7 @@ type StepsItemProps = ArkStepsItemProps & {
 const StepsItem: Component<StepsItemProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
-    <StepsPrimitive.Item
-      class={cn('flex items-center gap-2', local.class)}
-      {...others}
-    >
+    <StepsPrimitive.Item class={cn('flex items-center gap-2', local.class)} {...others}>
       {local.children}
     </StepsPrimitive.Item>
   );
@@ -149,11 +143,7 @@ const StepsSeparator: Component<StepsSeparatorProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <StepsPrimitive.Separator
-      class={cn(
-        'h-0.5 flex-1 bg-gray-200',
-        'data-[complete]:bg-blue-600',
-        local.class,
-      )}
+      class={cn('h-0.5 flex-1 bg-gray-200', 'data-[complete]:bg-blue-600', local.class)}
       {...others}
     />
   );

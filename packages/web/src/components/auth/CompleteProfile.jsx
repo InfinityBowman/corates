@@ -279,12 +279,7 @@ export default function CompleteProfile() {
             <img src='/logo.svg' alt='CoRATES' class='h-6 w-auto sm:h-7' />
           </a>
 
-          <Steps
-            count={STEPS.length}
-            step={currentStep()}
-            onStepChange={handleStepChange}
-            linear
-          >
+          <Steps count={STEPS.length} step={currentStep()} onStepChange={handleStepChange} linear>
             {/* Step Indicator */}
             <StepsList class='mb-6 flex items-center justify-center pt-4'>
               <For each={STEPS}>
@@ -294,13 +289,7 @@ export default function CompleteProfile() {
                       class='group flex flex-col items-center focus:outline-none'
                       disabled={index() > currentStep() + 1}
                     >
-                      <StepsIndicator
-                        class='flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors
-                          data-[current]:bg-blue-600 data-[current]:text-white
-                          data-[complete]:bg-blue-600 data-[complete]:text-white
-                          data-[incomplete]:bg-gray-200 data-[incomplete]:text-gray-500
-                          group-hover:data-[incomplete]:bg-gray-300'
-                      >
+                      <StepsIndicator class='flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors data-[complete]:bg-blue-600 data-[complete]:text-white data-[current]:bg-blue-600 data-[current]:text-white data-[incomplete]:bg-gray-200 data-[incomplete]:text-gray-500 group-hover:data-[incomplete]:bg-gray-300'>
                         <Show when={index() < currentStep()} fallback={index() + 1}>
                           <FiCheck class='h-4 w-4' />
                         </Show>
@@ -310,12 +299,7 @@ export default function CompleteProfile() {
                       </span>
                     </StepsTrigger>
                     <Show when={index() < STEPS.length - 1}>
-                      <StepsSeparator
-                        class='mx-2 h-0.5 w-8 transition-colors sm:w-12
-                          data-[complete]:bg-blue-600
-                          data-[current]:bg-gray-200
-                          data-[incomplete]:bg-gray-200'
-                      />
+                      <StepsSeparator class='mx-2 h-0.5 w-8 transition-colors data-[complete]:bg-blue-600 data-[current]:bg-gray-200 data-[incomplete]:bg-gray-200 sm:w-12' />
                     </Show>
                   </StepsItem>
                 )}
@@ -328,7 +312,9 @@ export default function CompleteProfile() {
                 <h2 class='mb-1 text-xl font-bold text-gray-900 sm:text-2xl'>
                   Complete Your Profile
                 </h2>
-                <p class='text-xs text-gray-500 sm:text-sm'>Just a few details to get you started</p>
+                <p class='text-xs text-gray-500 sm:text-sm'>
+                  Just a few details to get you started
+                </p>
               </div>
 
               <form onSubmit={handleStep1Next} class='space-y-4' autocomplete='off'>
@@ -528,7 +514,11 @@ export default function CompleteProfile() {
                   >
                     Back
                   </StepsPrevTrigger>
-                  <PrimaryButton loading={loading()} loadingText='Finishing...' disabled={!persona()}>
+                  <PrimaryButton
+                    loading={loading()}
+                    loadingText='Finishing...'
+                    disabled={!persona()}
+                  >
                     Finish Setup
                   </PrimaryButton>
                 </div>

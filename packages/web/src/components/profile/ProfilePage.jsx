@@ -134,7 +134,9 @@ export default function ProfilePage() {
 
   const startEditingAcademic = () => {
     const currentTitle = user()?.title || '';
-    const isStandardTitle = TITLE_OPTIONS.some(opt => opt.value === currentTitle && opt.value !== 'other');
+    const isStandardTitle = TITLE_OPTIONS.some(
+      opt => opt.value === currentTitle && opt.value !== 'other',
+    );
     if (currentTitle && !isStandardTitle) {
       setEditTitleSelection(['other']);
       setEditCustomTitle(currentTitle);

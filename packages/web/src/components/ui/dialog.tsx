@@ -52,7 +52,7 @@ import { Z_INDEX } from './z-index';
 
 type DialogProps = Omit<ArkDialogRootProps, 'onOpenChange'> & {
   children?: JSX.Element;
-  onOpenChange?: (open: boolean) => void;
+  onOpenChange?: (_open: boolean) => void;
 };
 
 const Dialog: Component<DialogProps> = props => {
@@ -164,7 +164,7 @@ const DialogCloseTrigger: Component<DialogCloseTriggerProps> = props => {
     <DialogPrimitive.CloseTrigger
       class={cn(
         'rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500',
-        'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+        'focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none',
         local.class,
       )}
       {...others}
@@ -191,12 +191,7 @@ const DialogBody: Component<ComponentProps<'div'>> = props => {
 
 const DialogFooter: Component<ComponentProps<'div'>> = props => {
   const [local, others] = splitProps(props, ['class']);
-  return (
-    <div
-      class={cn('flex justify-end gap-3 bg-gray-50 px-4 py-3', local.class)}
-      {...others}
-    />
-  );
+  return <div class={cn('flex justify-end gap-3 bg-gray-50 px-4 py-3', local.class)} {...others} />;
 };
 
 export {

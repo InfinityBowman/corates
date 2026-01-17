@@ -169,7 +169,7 @@ export default function LocalAppraisalsPanel(props) {
         <AlertDialogPositioner>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogIcon variant="danger" />
+              <AlertDialogIcon variant='danger' />
               <div>
                 <AlertDialogTitle>Delete Appraisal</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -179,7 +179,7 @@ export default function LocalAppraisalsPanel(props) {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction variant="danger" onClick={confirmDelete}>
+              <AlertDialogAction variant='danger' onClick={confirmDelete}>
                 Delete
               </AlertDialogAction>
             </AlertDialogFooter>

@@ -48,10 +48,7 @@ type CheckboxRootProps = ArkCheckboxRootProps & {
 const CheckboxRoot: Component<CheckboxRootProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
-    <CheckboxPrimitive.Root
-      class={cn('flex items-center gap-2', local.class)}
-      {...others}
-    >
+    <CheckboxPrimitive.Root class={cn('flex items-center gap-2', local.class)} {...others}>
       {local.children}
     </CheckboxPrimitive.Root>
   );
@@ -68,7 +65,7 @@ const CheckboxControl: Component<CheckboxControlProps> = props => {
       class={cn(
         'flex h-4 w-4 shrink-0 items-center justify-center rounded border border-gray-300',
         'ring-offset-white transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
+        'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none',
         'disabled:cursor-not-allowed disabled:opacity-50',
         'data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white',
         'data-[state=indeterminate]:border-blue-600 data-[state=indeterminate]:bg-blue-600 data-[state=indeterminate]:text-white',
@@ -77,10 +74,10 @@ const CheckboxControl: Component<CheckboxControlProps> = props => {
       {...others}
     >
       <CheckboxPrimitive.Indicator>
-        <BiRegularCheck class="h-3.5 w-3.5" />
+        <BiRegularCheck class='h-3.5 w-3.5' />
       </CheckboxPrimitive.Indicator>
       <CheckboxPrimitive.Indicator indeterminate>
-        <BiRegularMinus class="h-3.5 w-3.5" />
+        <BiRegularMinus class='h-3.5 w-3.5' />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Control>
   );
@@ -95,7 +92,7 @@ const CheckboxLabel: Component<CheckboxLabelProps> = props => {
   return (
     <CheckboxPrimitive.Label
       class={cn(
-        'text-sm font-medium leading-none text-gray-900',
+        'text-sm leading-none font-medium text-gray-900',
         'peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
         local.class,
       )}
