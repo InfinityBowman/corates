@@ -206,9 +206,12 @@ function compareDomain(
     const ans1 = domain1?.answers?.[qKey]?.answer ?? null;
     const ans2 = domain2?.answers?.[qKey]?.answer ?? null;
 
+    // Only count as agreement when both answers are present and equal
+    const isAgreement = ans1 != null && ans2 != null && ans1 === ans2;
+
     const comparison: QuestionComparison = {
       key: qKey,
-      isAgreement: ans1 === ans2,
+      isAgreement,
       reviewer1: {
         answer: ans1,
         comment: domain1?.answers?.[qKey]?.comment || '',
