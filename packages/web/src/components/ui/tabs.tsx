@@ -120,10 +120,16 @@ type TabsIndicatorProps = ArkTabsIndicatorProps & {
 };
 
 const TabsIndicator: Component<TabsIndicatorProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
+  const [local, others] = splitProps(props, ['class', 'style']);
   return (
     <TabsPrimitive.Indicator
-      class={cn('absolute bottom-0 h-0.5 bg-blue-600 transition-all', local.class)}
+      class={cn('absolute bottom-0 bg-blue-600', local.class)}
+      style={{
+        width: 'var(--width)',
+        left: 'var(--left)',
+        transition: 'left 200ms ease-out, width 200ms ease-out',
+        ...(typeof local.style === 'object' ? local.style : {}),
+      }}
       {...others}
     />
   );

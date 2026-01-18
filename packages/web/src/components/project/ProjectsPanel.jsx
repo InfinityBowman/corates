@@ -28,9 +28,8 @@ import {
 import { API_BASE } from '@config/api.js';
 import { queryKeys } from '@lib/queryKeys.js';
 import ProjectCard from '@/components/project/ProjectCard.jsx';
-import CreateProjectForm from '@/components/project/CreateProjectForm.jsx';
+import CreateProjectModal from '@/components/project/CreateProjectModal.jsx';
 import ContactPrompt from '@/components/project/ContactPrompt.jsx';
-import projectStore from '@/stores/projectStore.js';
 
 export default function ProjectsPanel() {
   const navigate = useNavigate();
@@ -57,7 +56,7 @@ export default function ProjectsPanel() {
     refetch: refetchSubscription,
   } = useSubscription();
 
-  const [showCreateForm, setShowCreateForm] = createSignal(false);
+  const [createModalOpen, setCreateModalOpen] = createSignal(false);
 
   // Check both entitlement and quota
   const canCreateProject = () => {
@@ -71,25 +70,6 @@ export default function ProjectsPanel() {
   const restrictionType = () => {
     if (subscriptionLoading()) return null;
     return !hasEntitlement('project.create') ? 'entitlement' : 'quota';
-  };
-
-  // Handle project creation
-  const handleProjectCreated = (
-    newProject,
-    pendingPdfs = [],
-    pendingRefs = [],
-    driveFiles = [],
-  ) => {
-    // Invalidate project list
-    queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
-
-    // Store pending data for the project view
-    if (pendingPdfs.length > 0 || pendingRefs.length > 0 || driveFiles.length > 0) {
-      projectStore.setPendingProjectData(newProject.id, { pendingPdfs, pendingRefs, driveFiles });
-    }
-
-    setShowCreateForm(false);
-    navigate(`/projects/${newProject.id}`);
   };
 
   // Open a project
@@ -164,7 +144,7 @@ export default function ProjectsPanel() {
         <Show when={canCreateProject()}>
           <button
             class='inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
-            onClick={() => setShowCreateForm(!showCreateForm())}
+            onClick={() => setCreateModalOpen(true)}
             disabled={!isOnline()}
             title={!isOnline() ? 'Cannot create projects while offline' : ''}
           >
@@ -173,6 +153,9 @@ export default function ProjectsPanel() {
           </button>
         </Show>
       </div>
+
+      {/* Create Project Modal */}
+      <CreateProjectModal open={createModalOpen()} onOpenChange={setCreateModalOpen} />
 
       {/* Subscription fetch error banner */}
       <Show when={subscriptionFetchFailed()}>
@@ -200,15 +183,6 @@ export default function ProjectsPanel() {
         </div>
       </Show>
 
-      {/* Create Project Form */}
-      <Show when={showCreateForm()}>
-        <CreateProjectForm
-          apiBase={API_BASE}
-          onProjectCreated={handleProjectCreated}
-          onCancel={() => setShowCreateForm(false)}
-        />
-      </Show>
-
       {/* Projects Grid */}
       <div class='grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
         <Show
@@ -220,7 +194,7 @@ export default function ProjectsPanel() {
                 <Show when={canCreateProject()}>
                   <div class='flex justify-center'>
                     <button
-                      onClick={() => setShowCreateForm(true)}
+                      onClick={() => setCreateModalOpen(true)}
                       class='mt-4 font-medium text-blue-600 hover:text-blue-700'
                     >
                       Create your first project

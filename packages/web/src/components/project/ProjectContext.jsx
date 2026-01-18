@@ -7,6 +7,7 @@
  * - userRole: The current user's role in the project
  * - isOwner: Whether the current user is the project owner
  * - getAssigneeName: Helper to get a member's display name
+ * - getMember: Helper to get full member object (for avatar display)
  * - getChecklistPath: Helper to build project-scoped checklist path
  * - getReconcilePath: Helper to build project-scoped reconciliation path
  * - projectOps: Y.js operations for child routes (checklist, reconciliation)
@@ -45,6 +46,11 @@ export function ProjectProvider(props) {
     return member?.displayName || member?.name || member?.email || 'Unknown';
   };
 
+  const getMember = userId => {
+    if (!userId) return null;
+    return members().find(m => m.userId === userId) || null;
+  };
+
   // Path builders for project-scoped routes
   const getChecklistPath = (studyId, checklistId, tab = 'overview') => {
     return `/projects/${props.projectId}/studies/${studyId}/checklists/${checklistId}?tab=${tab}`;
@@ -62,6 +68,7 @@ export function ProjectProvider(props) {
     userRole,
     isOwner,
     getAssigneeName,
+    getMember,
     getChecklistPath,
     getReconcilePath,
     // Y.js operations passed from ProjectView for child routes

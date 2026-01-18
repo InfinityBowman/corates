@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm';
 import { subscription } from '@/db/schema.js';
 import type { WebhookContext, WebhookResult } from './types.js';
 import { createDb } from '@/db/client.js';
-import type { Env } from '../../../types';
+import type { Env as _Env } from '../../../types';
 
 // Helper to get typed db from context
 function getDb(ctx: WebhookContext) {

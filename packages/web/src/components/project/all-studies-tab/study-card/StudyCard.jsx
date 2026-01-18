@@ -17,20 +17,20 @@ export default function StudyCard(props) {
   // props.study: Study object
   // props.expanded: boolean - controlled expanded state
   // props.onToggleExpanded: () => void - toggle callback
-  // props.getAssigneeName: (userId) => string
+  // props.getMember: (userId) => member object (for avatar display)
   // props.onAssignReviewers: (study) => void - opens modal (needs parent state)
   // props.onOpenGoogleDrive: (studyId) => void - opens picker (needs parent state)
   // props.readOnly: boolean
 
   return (
-    <div class='rounded-lg border border-gray-200 bg-white shadow-sm transition-colors hover:border-gray-300'>
+    <div class='rounded-lg border border-slate-200 bg-white transition-colors hover:border-slate-300'>
       <Collapsible open={props.expanded}>
         <StudyCardHeader
           study={props.study}
           expanded={props.expanded}
           onToggle={() => props.onToggleExpanded?.()}
           onAssignReviewers={() => props.onAssignReviewers?.(props.study)}
-          getAssigneeName={props.getAssigneeName}
+          getMember={props.getMember}
         />
         <CollapsibleContent>
           <div class='border-t border-gray-100'>

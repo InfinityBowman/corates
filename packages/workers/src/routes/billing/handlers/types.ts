@@ -6,8 +6,8 @@
  */
 
 export interface WebhookLogger {
-  stripe: (event: string, data: Record<string, unknown>) => void;
-  error?: (message: string, data: Record<string, unknown>) => void;
+  stripe: (_event: string, _data: Record<string, unknown>) => void;
+  error?: (_message: string, _data: Record<string, unknown>) => void;
 }
 
 export interface WebhookContext {

@@ -11,16 +11,16 @@ import Layout from '@/Layout.jsx';
 import LocalChecklistView from '@/components/checklist/LocalChecklistView.jsx';
 import ChecklistYjsWrapper from '@/components/checklist/ChecklistYjsWrapper.jsx';
 import ReconciliationWrapper from '@/components/project/reconcile-tab/ReconciliationWrapper.jsx';
-import ProfilePage from '@/components/profile/ProfilePage.jsx';
 import NotFoundPage from '@components/NotFoundPage.jsx';
 import {
   SettingsLayout,
   SettingsIndex,
+  ProfileSettings,
+  IntegrationsSettings,
   BillingSettings,
   PlansSettings,
   SecuritySettings,
   NotificationsSettings,
-  GeneralSettings,
 } from '@/components/settings/index.js';
 import { BASEPATH } from '@config/api.js';
 import ProtectedGuard from '@/components/auth/ProtectedGuard.jsx';
@@ -50,16 +50,15 @@ export default function AppRoutes() {
         <Route path='/dashboard' component={Dashboard} />
         {/* Protected routes - requires login */}
         <Route path='/' component={ProtectedGuard}>
-          {/* Global user routes (no sidebar) */}
-          <Route path='/profile' component={ProfilePage} />
           {/* Settings routes with settings sidebar */}
           <Route path='/settings' component={SettingsLayout}>
             <Route path='/' component={SettingsIndex} />
+            <Route path='/profile' component={ProfileSettings} />
+            <Route path='/integrations' component={IntegrationsSettings} />
             <Route path='/billing' component={BillingSettings} />
             <Route path='/plans' component={PlansSettings} />
             <Route path='/security' component={SecuritySettings} />
             <Route path='/notifications' component={NotificationsSettings} />
-            <Route path='/general' component={GeneralSettings} />
           </Route>
           {/* Admin routes - fully code-split, only loads on /admin/* */}
           <AdminRoutes />

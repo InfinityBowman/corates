@@ -547,14 +547,33 @@ export class ProjectDoc implements DurableObject {
       });
     }
 
-    // Now that we've verified auth, sync member to Yjs if not present (for awareness)
+    // Now that we've verified auth, sync member to Yjs if not present or update missing fields
     await this.initializeDoc();
     const membersMap = this.doc!.getMap('members');
-    if (!membersMap.has(user.id)) {
+    const existingMember = membersMap.get(user.id) as Y.Map<unknown> | undefined;
+    if (!existingMember) {
       const memberYMap = new Y.Map<unknown>();
       memberYMap.set('role', projectMembership.role);
       memberYMap.set('joinedAt', Date.now());
+      memberYMap.set('name', (user.name as string) || null);
+      memberYMap.set('email', (user.email as string) || null);
+      memberYMap.set('displayName', (user.displayName as string) || null);
+      memberYMap.set('image', (user.image as string) || null);
       membersMap.set(user.id, memberYMap);
+    } else {
+      // Update image if it differs from stored (handles OAuth image sync and avatar removal)
+      const storedImage = existingMember.get('image') as string | null;
+      const userImage = (user.image as string) || null;
+      if (userImage !== storedImage) {
+        existingMember.set('image', userImage);
+      }
+      // Also update name/displayName if missing
+      if (!existingMember.get('name') && user.name) {
+        existingMember.set('name', user.name as string);
+      }
+      if (!existingMember.get('displayName') && user.displayName) {
+        existingMember.set('displayName', user.displayName as string);
+      }
     }
 
     const webSocketPair = new WebSocketPair();

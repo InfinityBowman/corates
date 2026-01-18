@@ -15,7 +15,8 @@ import {
   FiZap,
   FiShield,
   FiBell,
-  FiSettings,
+  FiLink,
+  FiUser,
   FiArrowLeft,
 } from 'solid-icons/fi';
 
@@ -23,7 +24,8 @@ import {
  * Settings navigation items
  */
 const SETTINGS_NAV_ITEMS = [
-  { id: 'general', label: 'General', icon: FiSettings, path: '/settings/general' },
+  { id: 'profile', label: 'Profile', icon: FiUser, path: '/settings/profile' },
+  { id: 'integrations', label: 'Integrations', icon: FiLink, path: '/settings/integrations' },
   { id: 'billing', label: 'Billing', icon: FiCreditCard, path: '/settings/billing' },
   { id: 'plans', label: 'Plans', icon: FiZap, path: '/settings/plans' },
   { id: 'security', label: 'Security', icon: FiShield, path: '/settings/security' },

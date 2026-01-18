@@ -135,12 +135,27 @@ export default function Navbar(props) {
               onClick={() => setShowUserMenu(!showUserMenu())}
               class='flex h-9 items-center space-x-2 rounded px-2 font-medium transition hover:bg-blue-600'
             >
-              <Avatar class='h-6 w-6'>
-                <AvatarImage src={user()?.image} alt={user()?.name || storedName || 'User'} />
-                <AvatarFallback class='bg-white/20 text-xs text-white'>
-                  {getInitials(user()?.name || storedName)}
-                </AvatarFallback>
-              </Avatar>
+              {/* Key avatar on image URL to force remount when user data loads */}
+              <Show
+                when={user()?.image}
+                keyed
+                fallback={
+                  <Avatar class='h-6 w-6'>
+                    <AvatarFallback class='bg-white/20 text-xs text-white'>
+                      {getInitials(user()?.name || storedName)}
+                    </AvatarFallback>
+                  </Avatar>
+                }
+              >
+                {imageSrc => (
+                  <Avatar class='h-6 w-6'>
+                    <AvatarImage src={imageSrc} alt={user()?.name || storedName || 'User'} />
+                    <AvatarFallback class='bg-white/20 text-xs text-white'>
+                      {getInitials(user()?.name || storedName)}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+              </Show>
               <span class='hidden sm:block'>{user()?.name || storedName || 'Loading...'}</span>
               <FiChevronDown
                 class={`h-3 w-3 transition-transform ${showUserMenu() ? 'rotate-180' : ''}`}
@@ -155,7 +170,7 @@ export default function Navbar(props) {
                   <div class='truncate text-xs text-gray-500'>{user()?.email}</div>
                 </div>
                 <A
-                  href='/profile'
+                  href='/settings/profile'
                   class='block px-4 py-2 text-sm hover:bg-gray-100'
                   onClick={() => setShowUserMenu(false)}
                 >

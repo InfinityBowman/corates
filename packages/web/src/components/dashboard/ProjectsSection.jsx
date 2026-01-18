@@ -29,12 +29,10 @@ import { AnimationContext } from './Dashboard.jsx';
 import { useMyProjectsList } from '@primitives/useMyProjectsList.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useSubscription } from '@primitives/useSubscription.js';
-import { API_BASE } from '@config/api.js';
 import { queryKeys } from '@lib/queryKeys.js';
-import projectStore from '@/stores/projectStore.js';
 
 import { ProjectCard } from './ProjectCard.jsx';
-import CreateProjectForm from '@/components/project/CreateProjectForm.jsx';
+import CreateProjectModal from '@/components/project/CreateProjectModal.jsx';
 import ContactPrompt from '@/components/project/ContactPrompt.jsx';
 
 /**
@@ -89,8 +87,8 @@ export function ProjectsSection(props) {
   // Subscription checks
   const { hasEntitlement, hasQuota, quotas, loading: subscriptionLoading } = useSubscription();
 
-  const showCreateForm = () => props.showCreateForm();
-  const setShowCreateForm = val => props.setShowCreateForm(val);
+  const createModalOpen = () => props.createModalOpen();
+  const setCreateModalOpen = val => props.setCreateModalOpen(val);
 
   // Local-first: assume user can create unless we definitively know they can't
   // Don't block UI on subscription loading - optimistically allow action
@@ -107,23 +105,6 @@ export function ProjectsSection(props) {
     // Don't show restriction prompts while loading
     if (subscriptionLoading()) return null;
     return !hasEntitlement('project.create') ? 'entitlement' : 'quota';
-  };
-
-  // Handlers
-  const handleProjectCreated = (
-    newProject,
-    pendingPdfs = [],
-    pendingRefs = [],
-    driveFiles = [],
-  ) => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
-
-    if (pendingPdfs.length > 0 || pendingRefs.length > 0 || driveFiles.length > 0) {
-      projectStore.setPendingProjectData(newProject.id, { pendingPdfs, pendingRefs, driveFiles });
-    }
-
-    setShowCreateForm(false);
-    navigate(`/projects/${newProject.id}`);
   };
 
   const openProject = projectId => {
@@ -171,7 +152,7 @@ export function ProjectsSection(props) {
     if (props.onCreateClick) {
       props.onCreateClick();
     } else {
-      setShowCreateForm(true);
+      setCreateModalOpen(true);
     }
   };
 
@@ -210,16 +191,8 @@ export function ProjectsSection(props) {
         </div>
       </Show>
 
-      {/* Create form */}
-      <Show when={showCreateForm()}>
-        <div class='mb-6'>
-          <CreateProjectForm
-            apiBase={API_BASE}
-            onProjectCreated={handleProjectCreated}
-            onCancel={() => setShowCreateForm(false)}
-          />
-        </div>
-      </Show>
+      {/* Create Project Modal */}
+      <CreateProjectModal open={createModalOpen()} onOpenChange={setCreateModalOpen} />
 
       {/* Projects grid */}
       <div class='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>

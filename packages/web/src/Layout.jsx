@@ -33,7 +33,7 @@ export default function Layout(props) {
   // Routes that should NOT show the sidebar
   const shouldHideSidebar = createMemo(() => {
     const path = location.pathname;
-    return path.startsWith('/admin') || path.startsWith('/settings') || path === '/profile';
+    return path.startsWith('/admin') || path.startsWith('/settings');
   });
 
   // Desktop sidebar mode: 'expanded' or 'collapsed' (rail)

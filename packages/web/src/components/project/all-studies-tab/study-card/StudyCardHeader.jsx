@@ -5,7 +5,7 @@
  * - Expand/collapse toggle (chevron)
  * - Study name (editable)
  * - Citation info (author, year, journal from primary PDF)
- * - Reviewer badges
+ * - Reviewer avatars with hover tooltips
  * - Actions menu
  *
  * Clicking anywhere on the header (except interactive elements) toggles expand/collapse.
@@ -24,14 +24,36 @@ import {
   MenuItem,
   MenuSeparator,
 } from '@/components/ui/menu';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+} from '@/components/ui/tooltip';
+import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import projectActionsStore from '@/stores/projectActionsStore';
+import { API_BASE } from '@config/api.js';
+
+// Avatar color palette for reviewer identification
+const AVATAR_COLORS = [
+  { bg: 'bg-blue-100', text: 'text-blue-700' },
+  { bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  { bg: 'bg-amber-100', text: 'text-amber-700' },
+  { bg: 'bg-pink-100', text: 'text-pink-700' },
+  { bg: 'bg-indigo-100', text: 'text-indigo-700' },
+];
+
+const getAvatarColorClasses = name => {
+  const index = name ? name.charCodeAt(0) % AVATAR_COLORS.length : 0;
+  return AVATAR_COLORS[index];
+};
 
 export default function StudyCardHeader(props) {
   // props.study: Study object with pdfs array
   // props.expanded: boolean
   // props.onToggle: () => void
   // props.onAssignReviewers: () => void - needs to open modal at parent level
-  // props.getAssigneeName: (userId) => string
+  // props.getMember: (userId) => member object (for avatar display)
 
   const study = () => props.study;
 
@@ -41,12 +63,31 @@ export default function StudyCardHeader(props) {
     return pdfs.find(p => p.tag === 'primary') || pdfs[0];
   };
 
-  // Get assigned reviewers
+  // Get assigned reviewers as full member objects for avatar display
   const assignedReviewers = () => {
     const reviewers = [];
-    if (study().reviewer1) reviewers.push(props.getAssigneeName(study().reviewer1));
-    if (study().reviewer2) reviewers.push(props.getAssigneeName(study().reviewer2));
+    if (study().reviewer1) {
+      const member = props.getMember?.(study().reviewer1);
+      // Use member if found, otherwise create minimal fallback object
+      reviewers.push(member || { userId: study().reviewer1 });
+    }
+    if (study().reviewer2) {
+      const member = props.getMember?.(study().reviewer2);
+      reviewers.push(member || { userId: study().reviewer2 });
+    }
     return reviewers;
+  };
+
+  // Get member display name
+  const getMemberDisplayName = member =>
+    member?.displayName || member?.name || member?.email || 'Unknown';
+
+  // Get avatar image source - only return URL if image exists, otherwise undefined for fallback
+  const getAvatarSrc = member => {
+    if (member?.image) {
+      return member.image.startsWith('/') ? `${API_BASE}${member.image}` : member.image;
+    }
+    return undefined;
   };
 
   const hasReviewers = () => study().reviewer1 || study().reviewer2;
@@ -111,7 +152,7 @@ export default function StudyCardHeader(props) {
       {/* Expand/collapse chevron */}
       <div class='-ml-1 shrink-0 p-1'>
         <BiRegularChevronRight
-          class={`h-5 w-5 text-gray-400 transition-transform duration-200 ${props.expanded ? 'rotate-90' : ''}`}
+          class={`h-5 w-5 text-slate-400 transition-transform duration-200 ${props.expanded ? 'rotate-90' : ''}`}
         />
       </div>
 
@@ -122,33 +163,47 @@ export default function StudyCardHeader(props) {
           value={studyName()}
           onSubmit={handleNameChange}
           showEditIcon={true}
-          class='-ml-2 font-medium text-gray-900'
+          class='-ml-2 font-medium text-slate-900'
         />
         <Show when={citationLine()}>
-          <p class='w-fit cursor-text truncate text-xs text-gray-500 select-text' data-selectable>
+          <p class='w-fit cursor-text truncate text-xs text-slate-500 select-text' data-selectable>
             {citationLine()}
           </p>
         </Show>
       </div>
-      {/* Reviewer badges */}
+      {/* Reviewer avatars with tooltips */}
       <Show when={hasReviewers()}>
-        <div class='flex shrink-0 cursor-default flex-wrap gap-1' data-selectable>
+        <div class='flex shrink-0 -space-x-1.5' data-selectable>
           <For each={assignedReviewers()}>
-            {name => (
-              <span class='inline-flex cursor-text items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 select-text'>
-                {name}
-              </span>
-            )}
+            {member => {
+              const displayName = getMemberDisplayName(member);
+              const colorClasses = getAvatarColorClasses(displayName);
+              return (
+                <Tooltip openDelay={200}>
+                  <TooltipTrigger>
+                    <Avatar class='h-7 w-7 border-2 border-white text-xs'>
+                      <AvatarImage src={getAvatarSrc(member)} alt={displayName} />
+                      <AvatarFallback class={`${colorClasses.bg} ${colorClasses.text}`}>
+                        {getInitials(displayName)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipPositioner>
+                    <TooltipContent>{displayName}</TooltipContent>
+                  </TooltipPositioner>
+                </Tooltip>
+              );
+            }}
           </For>
         </div>
       </Show>
       <Show when={!hasReviewers()}>
-        <span class='shrink-0 text-xs text-gray-400 italic'>No reviewers</span>
+        <span class='shrink-0 text-xs text-slate-400 italic'>No reviewers</span>
       </Show>
 
       {/* Actions menu */}
       <Menu onSelect={handleMenuSelect} positioning={{ placement: 'bottom-end' }}>
-        <MenuTrigger class='rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'>
+        <MenuTrigger class='rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600'>
           <FiMoreVertical class='h-4 w-4' />
         </MenuTrigger>
         <MenuPositioner>
