@@ -9,10 +9,10 @@
  * - Delete button (if editable)
  */
 
-import { Show, createSignal } from 'solid-js';
+import { Show, createSignal, For } from 'solid-js';
 import { FiTrash2, FiEye, FiDownload, FiEdit2, FiX } from 'solid-icons/fi';
 import { CgFileDocument } from 'solid-icons/cg';
-import { Menu } from '@corates/ui';
+import { Menu, MenuTrigger, MenuPositioner, MenuContent, MenuItem } from '@/components/ui/menu';
 import {
   Dialog,
   DialogBackdrop,
@@ -155,13 +155,18 @@ export default function PdfListItem(props) {
 
           {/* Tag change menu (if not read-only) */}
           <Show when={!props.readOnly && tagMenuItems().length > 0}>
-            <Menu
-              trigger={<span class='text-xs'>Tag</span>}
-              items={tagMenuItems()}
-              onSelect={handleTagMenuSelect}
-              placement='bottom-end'
-              hideIndicator
-            />
+            <Menu onSelect={handleTagMenuSelect} positioning={{ placement: 'bottom-end' }}>
+              <MenuTrigger class='rounded-md px-2 py-1 text-xs text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600'>
+                Tag
+              </MenuTrigger>
+              <MenuPositioner>
+                <MenuContent>
+                  <For each={tagMenuItems()}>
+                    {item => <MenuItem value={item.value}>{item.label}</MenuItem>}
+                  </For>
+                </MenuContent>
+              </MenuPositioner>
+            </Menu>
           </Show>
 
           {/* Delete button (if not read-only) */}

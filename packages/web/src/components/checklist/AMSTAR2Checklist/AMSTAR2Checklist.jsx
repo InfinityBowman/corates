@@ -2,7 +2,12 @@ import { createSignal, createEffect, Show, For } from 'solid-js';
 import { AMSTAR_CHECKLIST } from './checklist-map.js';
 import { createChecklist as createAMSTAR2Checklist } from './checklist.js';
 import { FaSolidCircleInfo } from 'solid-icons/fa';
-import { Tooltip } from '@corates/ui';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
 
 export function Question1(props) {
@@ -339,7 +344,10 @@ export function Question9(props) {
   let containerRef;
 
   return (
-    <div class='relative rounded-lg bg-white p-8 text-sm shadow-md' ref={el => (containerRef = el)}>
+    <div
+      class='relative rounded-lg bg-white p-7 pb-3 text-sm shadow-md'
+      ref={el => (containerRef = el)}
+    >
       <QuestionInfo question={question} containerRef={containerRef} />
       <div class='flex'>
         <h3 class='font-semibold text-gray-900'>{question.text}</h3>
@@ -466,7 +474,10 @@ export function Question11(props) {
   let containerRef;
 
   return (
-    <div class='relative rounded-lg bg-white p-8 text-sm shadow-md' ref={el => (containerRef = el)}>
+    <div
+      class='relative rounded-lg bg-white p-7 pb-3 text-sm shadow-md'
+      ref={el => (containerRef = el)}
+    >
       <QuestionInfo question={question} containerRef={containerRef} />
       <div class='flex'>
         <h3 class='font-semibold text-gray-900'>{question.text}</h3>
@@ -698,10 +709,15 @@ function QuestionInfo(props) {
   return (
     <>
       <div class='absolute top-1.5 right-1.5'>
-        <Tooltip content={props.question.info} placement='top' openDelay={200}>
-          <div class='inline-flex items-center justify-center rounded-full p-1.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'>
-            <FaSolidCircleInfo size={12} />
-          </div>
+        <Tooltip openDelay={200} positioning={{ placement: 'top' }}>
+          <TooltipTrigger>
+            <div class='inline-flex items-center justify-center rounded-full p-1.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'>
+              <FaSolidCircleInfo size={12} />
+            </div>
+          </TooltipTrigger>
+          <TooltipPositioner>
+            <TooltipContent>{props.question.info}</TooltipContent>
+          </TooltipPositioner>
         </Tooltip>
       </div>
     </>

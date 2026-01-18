@@ -1,7 +1,12 @@
 import { For, createMemo, Show } from 'solid-js';
 import { FaSolidArrowRotateLeft } from 'solid-icons/fa';
 import { FiCheck } from 'solid-icons/fi';
-import { Tooltip } from '@corates/ui';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import { hasQuestionAnswer, getQuestionPillStyle, getQuestionTooltip } from './navbar-utils.js';
 
 /**
@@ -54,23 +59,28 @@ function QuestionPill(props) {
   );
 
   return (
-    <Tooltip content={tooltip()} placement='bottom' openDelay={200}>
-      <button
-        onClick={() => props.store.goToQuestion?.(props.questionIndex)}
-        class={`relative h-8 w-8 rounded-full text-xs font-medium transition-all ${pillStyle()}`}
-        aria-label={tooltip()}
-        aria-current={isCurrentPage() ? 'page' : undefined}
-      >
-        {props.questionIndex + 1}
-        <Show when={hasAnswer()}>
-          <span
-            class='absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border-[0.5px] bg-white shadow-sm'
-            aria-hidden='true'
-          >
-            <FiCheck class='h-2.5 w-2.5 text-green-600' />
-          </span>
-        </Show>
-      </button>
+    <Tooltip openDelay={200} positioning={{ placement: 'bottom' }}>
+      <TooltipTrigger>
+        <button
+          onClick={() => props.store.goToQuestion?.(props.questionIndex)}
+          class={`relative h-8 w-8 rounded-full text-xs font-medium transition-all ${pillStyle()}`}
+          aria-label={tooltip()}
+          aria-current={isCurrentPage() ? 'page' : undefined}
+        >
+          {props.questionIndex + 1}
+          <Show when={hasAnswer()}>
+            <span
+              class='absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border-[0.5px] bg-white shadow-sm'
+              aria-hidden='true'
+            >
+              <FiCheck class='h-2.5 w-2.5 text-green-600' />
+            </span>
+          </Show>
+        </button>
+      </TooltipTrigger>
+      <TooltipPositioner>
+        <TooltipContent>{tooltip()}</TooltipContent>
+      </TooltipPositioner>
     </Tooltip>
   );
 }
@@ -88,15 +98,20 @@ function SummaryButton(props) {
   );
 
   return (
-    <Tooltip content='View summary of all questions' placement='bottom' openDelay={200}>
-      <button
-        onClick={() => props.store.setViewMode?.('summary')}
-        class={`h-8 rounded-full px-3 text-xs font-medium transition-all ${buttonStyle()}`}
-        aria-label='View summary'
-        aria-current={isActive() ? 'page' : undefined}
-      >
-        Summary
-      </button>
+    <Tooltip openDelay={200} positioning={{ placement: 'bottom' }}>
+      <TooltipTrigger>
+        <button
+          onClick={() => props.store.setViewMode?.('summary')}
+          class={`h-8 rounded-full px-3 text-xs font-medium transition-all ${buttonStyle()}`}
+          aria-label='View summary'
+          aria-current={isActive() ? 'page' : undefined}
+        >
+          Summary
+        </button>
+      </TooltipTrigger>
+      <TooltipPositioner>
+        <TooltipContent>View summary of all questions</TooltipContent>
+      </TooltipPositioner>
     </Tooltip>
   );
 }
@@ -106,15 +121,20 @@ function SummaryButton(props) {
  */
 function ResetButton(props) {
   return (
-    <Tooltip content='Reset final answers to unresolved' placement='bottom' openDelay={200}>
-      <button
-        onClick={() => props.onClick?.()}
-        class='flex h-8 items-center gap-1 rounded-full bg-red-100 px-3 text-xs font-medium text-red-700 transition-all hover:bg-red-200'
-        aria-label='Reset reconciliation'
-      >
-        <FaSolidArrowRotateLeft size={12} />
-        Reset
-      </button>
+    <Tooltip openDelay={200} positioning={{ placement: 'bottom' }}>
+      <TooltipTrigger>
+        <button
+          onClick={() => props.onClick?.()}
+          class='flex h-8 items-center gap-1 rounded-full bg-red-100 px-3 text-xs font-medium text-red-700 transition-all hover:bg-red-200'
+          aria-label='Reset reconciliation'
+        >
+          <FaSolidArrowRotateLeft size={12} />
+          Reset
+        </button>
+      </TooltipTrigger>
+      <TooltipPositioner>
+        <TooltipContent>Reset final answers to unresolved</TooltipContent>
+      </TooltipPositioner>
     </Tooltip>
   );
 }

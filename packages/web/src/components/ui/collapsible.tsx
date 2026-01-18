@@ -67,7 +67,7 @@ const CollapsibleTrigger: Component<CollapsibleTriggerProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
     <CollapsiblePrimitive.Trigger
-      class={cn('flex w-full items-center justify-between text-left', local.class)}
+      class={cn('flex items-center text-left', local.class)}
       {...others}
     >
       {local.children}

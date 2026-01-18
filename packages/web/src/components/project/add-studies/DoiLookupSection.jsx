@@ -13,7 +13,14 @@ import {
   BiRegularUpload,
 } from 'solid-icons/bi';
 import { FiFile, FiFileText, FiAlertCircle, FiCheck, FiDownload } from 'solid-icons/fi';
-import { Checkbox, Tooltip, showToast } from '@corates/ui';
+import { showToast } from '@corates/ui';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+} from '@/components/ui/tooltip';
+import { CheckboxRoot, CheckboxControl, CheckboxLabel } from '@/components/ui/checkbox';
 import { getRefDisplayName } from '@/lib/referenceParser.js';
 import { validatePdfFile } from '@/lib/pdfValidation.js';
 
@@ -104,15 +111,22 @@ export default function DoiLookupSection(props) {
 
           <Show when={refsWithPdf().length > 0}>
             <div class='flex items-center gap-2 border-b border-gray-200 pb-2'>
-              <Checkbox
-                checked={studies().selectedLookupIds().size === refsWithPdf().length}
-                indeterminate={
-                  studies().selectedLookupIds().size > 0 &&
-                  studies().selectedLookupIds().size < refsWithPdf().length
+              <CheckboxRoot
+                checked={
+                  (
+                    studies().selectedLookupIds().size > 0 &&
+                    studies().selectedLookupIds().size < refsWithPdf().length
+                  ) ?
+                    'indeterminate'
+                  : studies().selectedLookupIds().size === refsWithPdf().length
                 }
-                onChange={studies().toggleSelectAllLookup}
-                label={`Select all with PDF (${studies().selectedLookupIds().size}/${refsWithPdf().length})`}
-              />
+                onCheckedChange={studies().toggleSelectAllLookup}
+              >
+                <CheckboxControl />
+                <CheckboxLabel>
+                  Select all with PDF ({studies().selectedLookupIds().size}/{refsWithPdf().length})
+                </CheckboxLabel>
+              </CheckboxRoot>
             </div>
           </Show>
 
@@ -164,11 +178,13 @@ export default function DoiLookupSection(props) {
                       class='hidden'
                       onChange={handleManualPdfSelect}
                     />
-                    <Checkbox
+                    <CheckboxRoot
                       checked={studies().selectedLookupIds().has(ref._id)}
-                      onChange={() => studies().toggleLookupSelection(ref._id)}
+                      onCheckedChange={() => studies().toggleLookupSelection(ref._id)}
                       class='mt-0.5'
-                    />
+                    >
+                      <CheckboxControl />
+                    </CheckboxRoot>
                     <div class='min-w-0 flex-1'>
                       <div class='flex items-start gap-2'>
                         <p class='line-clamp-2 flex-1 text-sm font-medium text-gray-900'>
@@ -182,64 +198,97 @@ export default function DoiLookupSection(props) {
                                 when={ref.pdfAccessible}
                                 fallback={
                                   <>
-                                    <Tooltip content='Click to manually upload PDF after downloading from publisher'>
-                                      <button
-                                        type='button'
-                                        onClick={e => {
-                                          e.stopPropagation();
-                                          fileInputRef?.click();
-                                        }}
-                                        class='inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-200'
-                                      >
-                                        <BiRegularUpload class='h-3 w-3' />
-                                        Upload PDF
-                                      </button>
+                                    <Tooltip>
+                                      <TooltipTrigger>
+                                        <button
+                                          type='button'
+                                          onClick={e => {
+                                            e.stopPropagation();
+                                            fileInputRef?.click();
+                                          }}
+                                          class='inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-200'
+                                        >
+                                          <BiRegularUpload class='h-3 w-3' />
+                                          Upload PDF
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipPositioner>
+                                        <TooltipContent>
+                                          Click to manually upload PDF after downloading from
+                                          publisher
+                                        </TooltipContent>
+                                      </TooltipPositioner>
                                     </Tooltip>
                                     <Show when={ref.pdfUrl}>
-                                      <Tooltip content='Download PDF from publisher (then upload)'>
-                                        <a
-                                          href={ref.pdfUrl}
-                                          target='_blank'
-                                          rel='noopener noreferrer'
-                                          onClick={e => e.stopPropagation()}
-                                          class='inline-flex h-6 w-6 items-center justify-center rounded text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700'
-                                        >
-                                          <FiDownload class='h-4 w-4' />
-                                        </a>
+                                      <Tooltip>
+                                        <TooltipTrigger>
+                                          <a
+                                            href={ref.pdfUrl}
+                                            target='_blank'
+                                            rel='noopener noreferrer'
+                                            onClick={e => e.stopPropagation()}
+                                            class='inline-flex h-6 w-6 items-center justify-center rounded text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700'
+                                          >
+                                            <FiDownload class='h-4 w-4' />
+                                          </a>
+                                        </TooltipTrigger>
+                                        <TooltipPositioner>
+                                          <TooltipContent>
+                                            Download PDF from publisher (then upload)
+                                          </TooltipContent>
+                                        </TooltipPositioner>
                                       </Tooltip>
                                     </Show>
                                   </>
                                 }
                               >
-                                <Tooltip
-                                  content={`PDF available via ${ref.pdfSource || 'repository'} - will auto-download`}
-                                >
-                                  <span class='inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700'>
-                                    <FiFileText class='h-3 w-3' />
-                                    PDF
-                                  </span>
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <span class='inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700'>
+                                      <FiFileText class='h-3 w-3' />
+                                      PDF
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipPositioner>
+                                    <TooltipContent>
+                                      PDF available via {ref.pdfSource || 'repository'} - will
+                                      auto-download
+                                    </TooltipContent>
+                                  </TooltipPositioner>
                                 </Tooltip>
                               </Show>
                             }
                           >
-                            <Tooltip content={`PDF uploaded: ${ref.manualPdfFileName}`}>
-                              <span class='inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700'>
-                                <FiCheck class='h-3 w-3' />
-                                PDF Ready
-                              </span>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <span class='inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700'>
+                                  <FiCheck class='h-3 w-3' />
+                                  PDF Ready
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipPositioner>
+                                <TooltipContent>
+                                  PDF uploaded: {ref.manualPdfFileName}
+                                </TooltipContent>
+                              </TooltipPositioner>
                             </Tooltip>
                           </Show>
                           <Show when={ref.pdfUrl && ref.pdfAccessible}>
-                            <Tooltip content='View PDF'>
-                              <a
-                                href={ref.pdfUrl}
-                                target='_blank'
-                                rel='noopener noreferrer'
-                                onClick={e => e.stopPropagation()}
-                                class='inline-flex h-6 w-6 items-center justify-center rounded text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700'
-                              >
-                                <BiRegularLinkExternal class='h-4 w-4' />
-                              </a>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <a
+                                  href={ref.pdfUrl}
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  onClick={e => e.stopPropagation()}
+                                  class='inline-flex h-6 w-6 items-center justify-center rounded text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700'
+                                >
+                                  <BiRegularLinkExternal class='h-4 w-4' />
+                                </a>
+                              </TooltipTrigger>
+                              <TooltipPositioner>
+                                <TooltipContent>View PDF</TooltipContent>
+                              </TooltipPositioner>
                             </Tooltip>
                           </Show>
                         </div>

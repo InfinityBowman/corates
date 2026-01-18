@@ -106,16 +106,7 @@ type StepsTriggerProps = ArkStepsTriggerProps & {
 const StepsTrigger: Component<StepsTriggerProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
-    <StepsPrimitive.Trigger
-      class={cn(
-        'flex h-8 w-8 items-center justify-center rounded-full border-2',
-        'border-gray-300 text-gray-500',
-        'data-[current]:border-blue-600 data-[current]:text-blue-600',
-        'data-[complete]:border-blue-600 data-[complete]:bg-blue-600 data-[complete]:text-white',
-        local.class,
-      )}
-      {...others}
-    >
+    <StepsPrimitive.Trigger class={local.class} {...others}>
       {local.children}
     </StepsPrimitive.Trigger>
   );

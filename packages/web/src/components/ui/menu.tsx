@@ -120,7 +120,7 @@ const MenuContent: Component<MenuContentProps> = props => {
   return (
     <MenuPrimitive.Content
       class={cn(
-        'min-w-48 rounded-md border border-gray-200 bg-white p-1 shadow-md outline-none',
+        'min-w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg outline-none',
         Z_INDEX.MENU,
         local.class,
       )}
@@ -142,12 +142,12 @@ const MenuItem: Component<MenuItemProps> = props => {
   return (
     <MenuPrimitive.Item
       class={cn(
-        'flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none',
-        'data-[highlighted]:bg-gray-100',
-        'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+        'mx-1 flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors outline-none select-none',
+        'hover:bg-gray-100 data-[highlighted]:bg-gray-100',
+        'data-[disabled]:pointer-events-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50',
         local.destructive ?
-          'text-red-600 data-[highlighted]:bg-red-50 data-[highlighted]:text-red-700'
-        : 'text-gray-900',
+          'text-red-600 hover:bg-red-50 data-[highlighted]:bg-red-50'
+        : 'text-gray-700',
         local.class,
       )}
       {...others}
@@ -187,7 +187,7 @@ type MenuSeparatorProps = ArkMenuSeparatorProps & {
 const MenuSeparator: Component<MenuSeparatorProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
-    <MenuPrimitive.Separator class={cn('-mx-1 my-1 h-px bg-gray-200', local.class)} {...others} />
+    <MenuPrimitive.Separator class={cn('my-1 border-t border-gray-100', local.class)} {...others} />
   );
 };
 

@@ -8,7 +8,8 @@ import { For, Show } from 'solid-js';
 import { AiOutlineFileText } from 'solid-icons/ai';
 import { CgFileDocument } from 'solid-icons/cg';
 import { BiRegularLinkAlt } from 'solid-icons/bi';
-import { FileUpload, Checkbox } from '@corates/ui';
+import { FileUpload } from '@corates/ui';
+import { CheckboxRoot, CheckboxControl, CheckboxLabel } from '@/components/ui/checkbox';
 import {
   getRefDisplayName,
   SUPPORTED_FORMATS,
@@ -79,15 +80,22 @@ export default function ReferenceImportSection(props) {
             </Show>
 
             <div class='flex items-center gap-2 border-b border-gray-200 pb-2'>
-              <Checkbox
-                checked={studies().selectedRefIds().size === studies().importedRefs().length}
-                indeterminate={
-                  studies().selectedRefIds().size > 0 &&
-                  studies().selectedRefIds().size < studies().importedRefs().length
+              <CheckboxRoot
+                checked={
+                  (
+                    studies().selectedRefIds().size > 0 &&
+                    studies().selectedRefIds().size < studies().importedRefs().length
+                  ) ?
+                    'indeterminate'
+                  : studies().selectedRefIds().size === studies().importedRefs().length
                 }
-                onChange={studies().toggleSelectAllRefs}
-                label={`Select all (${studies().selectedRefIds().size}/${studies().importedRefs().length})`}
-              />
+                onCheckedChange={studies().toggleSelectAllRefs}
+              >
+                <CheckboxControl />
+                <CheckboxLabel>
+                  Select all ({studies().selectedRefIds().size}/{studies().importedRefs().length})
+                </CheckboxLabel>
+              </CheckboxRoot>
             </div>
 
             <div class='max-h-48 space-y-1 overflow-y-auto pr-1'>
@@ -101,11 +109,13 @@ export default function ReferenceImportSection(props) {
                     }`}
                     onClick={() => studies().toggleRefSelection(ref._id)}
                   >
-                    <Checkbox
+                    <CheckboxRoot
                       checked={studies().selectedRefIds().has(ref._id)}
-                      onChange={() => studies().toggleRefSelection(ref._id)}
+                      onCheckedChange={() => studies().toggleRefSelection(ref._id)}
                       class='mt-0.5'
-                    />
+                    >
+                      <CheckboxControl />
+                    </CheckboxRoot>
                     <div class='min-w-0 flex-1'>
                       <div class='flex items-center gap-2'>
                         <p class='line-clamp-2 flex-1 text-sm font-medium text-gray-900'>

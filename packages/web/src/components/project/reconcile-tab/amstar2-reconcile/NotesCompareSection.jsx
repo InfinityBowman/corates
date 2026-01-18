@@ -7,11 +7,7 @@
 import { createSignal, createEffect, onCleanup, Show } from 'solid-js';
 import { BiRegularChevronRight } from 'solid-icons/bi';
 import { BsJournalText, BsClipboard2 } from 'solid-icons/bs';
-import {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
 
 const MAX_LENGTH = 2000;
@@ -113,91 +109,91 @@ export default function NotesCompareSection(props) {
         </CollapsibleTrigger>
         <CollapsibleContent>
           <div class='pt-3'>
-          {/* Three column layout for notes */}
-          <div class='grid grid-cols-3 gap-4'>
-            {/* Reviewer 1 Note (read-only) */}
-            <div class='rounded-lg bg-gray-50 p-3'>
-              <div class='mb-2 flex items-center justify-between'>
-                <h4 class='text-xs font-semibold text-gray-700'>
-                  {props.reviewer1Name || 'Reviewer 1'}
-                </h4>
-                <Show when={hasReviewer1Note()}>
-                  <button
-                    onClick={() => copyToFinal(props.reviewer1Note)}
-                    class='flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800'
-                    title='Copy to final note'
-                  >
-                    <BsClipboard2 class='h-3 w-3' />
-                    Use
-                  </button>
+            {/* Three column layout for notes */}
+            <div class='grid grid-cols-3 gap-4'>
+              {/* Reviewer 1 Note (read-only) */}
+              <div class='rounded-lg bg-gray-50 p-3'>
+                <div class='mb-2 flex items-center justify-between'>
+                  <h4 class='text-xs font-semibold text-gray-700'>
+                    {props.reviewer1Name || 'Reviewer 1'}
+                  </h4>
+                  <Show when={hasReviewer1Note()}>
+                    <button
+                      onClick={() => copyToFinal(props.reviewer1Note)}
+                      class='flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800'
+                      title='Copy to final note'
+                    >
+                      <BsClipboard2 class='h-3 w-3' />
+                      Use
+                    </button>
+                  </Show>
+                </div>
+                <Show
+                  when={hasReviewer1Note()}
+                  fallback={<p class='text-xs text-gray-400 italic'>No note added</p>}
+                >
+                  <p class='wrap-break-words text-sm whitespace-pre-wrap text-gray-700'>
+                    {props.reviewer1Note}
+                  </p>
                 </Show>
               </div>
-              <Show
-                when={hasReviewer1Note()}
-                fallback={<p class='text-xs text-gray-400 italic'>No note added</p>}
-              >
-                <p class='wrap-break-words text-sm whitespace-pre-wrap text-gray-700'>
-                  {props.reviewer1Note}
-                </p>
-              </Show>
-            </div>
 
-            {/* Reviewer 2 Note (read-only) */}
-            <div class='rounded-lg bg-gray-50 p-3'>
-              <div class='mb-2 flex items-center justify-between'>
-                <h4 class='text-xs font-semibold text-gray-700'>
-                  {props.reviewer2Name || 'Reviewer 2'}
-                </h4>
-                <Show when={hasReviewer2Note()}>
-                  <button
-                    onClick={() => copyToFinal(props.reviewer2Note)}
-                    class='flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800'
-                    title='Copy to final note'
-                  >
-                    <BsClipboard2 class='h-3 w-3' />
-                    Use
-                  </button>
+              {/* Reviewer 2 Note (read-only) */}
+              <div class='rounded-lg bg-gray-50 p-3'>
+                <div class='mb-2 flex items-center justify-between'>
+                  <h4 class='text-xs font-semibold text-gray-700'>
+                    {props.reviewer2Name || 'Reviewer 2'}
+                  </h4>
+                  <Show when={hasReviewer2Note()}>
+                    <button
+                      onClick={() => copyToFinal(props.reviewer2Note)}
+                      class='flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800'
+                      title='Copy to final note'
+                    >
+                      <BsClipboard2 class='h-3 w-3' />
+                      Use
+                    </button>
+                  </Show>
+                </div>
+                <Show
+                  when={hasReviewer2Note()}
+                  fallback={<p class='text-xs text-gray-400 italic'>No note added</p>}
+                >
+                  <p class='wrap-break-words text-sm whitespace-pre-wrap text-gray-700'>
+                    {props.reviewer2Note}
+                  </p>
                 </Show>
               </div>
-              <Show
-                when={hasReviewer2Note()}
-                fallback={<p class='text-xs text-gray-400 italic'>No note added</p>}
-              >
-                <p class='wrap-break-words text-sm whitespace-pre-wrap text-gray-700'>
-                  {props.reviewer2Note}
-                </p>
-              </Show>
-            </div>
 
-            {/* Final Note (editable) */}
-            <div class='rounded-lg bg-green-50/50 p-3'>
-              <div class='mb-2 flex items-center justify-between'>
-                <h4 class='text-xs font-semibold text-gray-700'>Final Note</h4>
-                <Show when={hasReviewer1Note() && hasReviewer2Note()}>
-                  <button
-                    onClick={mergeToFinal}
-                    class='text-xs text-green-600 hover:text-green-800'
-                    title='Merge both notes'
-                  >
-                    Merge Both
-                  </button>
+              {/* Final Note (editable) */}
+              <div class='rounded-lg bg-green-50/50 p-3'>
+                <div class='mb-2 flex items-center justify-between'>
+                  <h4 class='text-xs font-semibold text-gray-700'>Final Note</h4>
+                  <Show when={hasReviewer1Note() && hasReviewer2Note()}>
+                    <button
+                      onClick={mergeToFinal}
+                      class='text-xs text-green-600 hover:text-green-800'
+                      title='Merge both notes'
+                    >
+                      Merge Both
+                    </button>
+                  </Show>
+                </div>
+                <Show
+                  when={props.finalNoteYText}
+                  fallback={<p class='text-xs text-gray-400 italic'>Loading...</p>}
+                >
+                  <NoteEditor
+                    yText={props.finalNoteYText}
+                    inline={true}
+                    placeholder='Add the final reconciled note...'
+                    maxLength={MAX_LENGTH}
+                    focusRingColor='green-500'
+                  />
                 </Show>
               </div>
-              <Show
-                when={props.finalNoteYText}
-                fallback={<p class='text-xs text-gray-400 italic'>Loading...</p>}
-              >
-                <NoteEditor
-                  yText={props.finalNoteYText}
-                  inline={true}
-                  placeholder='Add the final reconciled note...'
-                  maxLength={MAX_LENGTH}
-                  focusRingColor='green-500'
-                />
-              </Show>
             </div>
           </div>
-        </div>
         </CollapsibleContent>
       </Collapsible>
     </div>

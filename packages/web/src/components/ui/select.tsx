@@ -160,13 +160,14 @@ type SelectPositionerProps = {
   class?: string;
   children?: JSX.Element;
   inDialog?: boolean;
+  sameWidth?: boolean;
 };
 
 const SelectPositioner: Component<SelectPositionerProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children', 'inDialog']);
+  const [local, others] = splitProps(props, ['class', 'children', 'inDialog', 'sameWidth']);
 
   const positioner = (
-    <SelectPrimitive.Positioner class={local.class} {...others}>
+    <SelectPrimitive.Positioner class={local.class} sameWidth={local.sameWidth ?? true} {...others}>
       {local.children}
     </SelectPrimitive.Positioner>
   );

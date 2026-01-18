@@ -1,5 +1,6 @@
 /**
  * Tooltip component for contextual information on hover.
+ * Arrow is shown by default. Use showArrow={false} to hide it.
  *
  * @example
  * <Tooltip>
@@ -14,15 +15,12 @@
  * </Tooltip>
  *
  * @example
- * // With arrow
+ * // Without arrow
  * <Tooltip>
  *   <TooltipTrigger>Hover me</TooltipTrigger>
  *   <TooltipPositioner>
- *     <TooltipContent>
- *       <TooltipArrow>
- *         <TooltipArrowTip />
- *       </TooltipArrow>
- *       Tooltip with arrow
+ *     <TooltipContent showArrow={false}>
+ *       Tooltip without arrow
  *     </TooltipContent>
  *   </TooltipPositioner>
  * </Tooltip>
@@ -75,19 +73,27 @@ const TooltipPositioner: Component<TooltipPositionerProps> = props => {
 type TooltipContentProps = ArkTooltipContentProps & {
   class?: string;
   children?: JSX.Element;
+  showArrow?: boolean;
 };
 
 const TooltipContent: Component<TooltipContentProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+  const [local, others] = splitProps(props, ['class', 'children', 'showArrow']);
+  const showArrow = () => local.showArrow !== false;
   return (
     <TooltipPrimitive.Content
       class={cn(
-        'rounded-md bg-gray-900 px-3 py-1.5 text-sm text-white shadow-md',
+        'max-w-xs rounded-md bg-gray-900 px-3 py-1.5 text-sm text-white shadow-md',
         Z_INDEX.TOOLTIP,
         local.class,
       )}
+      style={{ '--arrow-size': '8px', '--arrow-background': '#111827' }}
       {...others}
     >
+      {showArrow() && (
+        <TooltipPrimitive.Arrow>
+          <TooltipPrimitive.ArrowTip class='bg-gray-900' />
+        </TooltipPrimitive.Arrow>
+      )}
       {local.children}
     </TooltipPrimitive.Content>
   );

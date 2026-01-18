@@ -1,6 +1,11 @@
 import { For, createMemo, Show } from 'solid-js';
 import { FiChevronDown, FiChevronRight, FiCheck } from 'solid-icons/fi';
-import { Tooltip } from '@corates/ui';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   getSectionLabel,
@@ -71,21 +76,26 @@ export default function NavbarDomainPill(props) {
   return (
     <Collapsible open={props.isExpanded} collapsedWidth={0} class={containerStyle()}>
       {/* Label/collapse button */}
-      <Tooltip content={tooltipContent()} placement='bottom' openDelay={300}>
-        <button type='button' onClick={() => props.onClick?.()} class={labelStyle()}>
-          <span class='font-semibold'>{label()}</span>
-          {/* Only show progress count when collapsed */}
-          <Show when={!props.isExpanded}>
-            <span class='text-2xs opacity-80'>
-              {props.progress?.answered || 0}/{props.progress?.total || 0}
-            </span>
-          </Show>
-          <Show when={props.sectionKey !== 'overall'}>
-            {props.isExpanded ?
-              <FiChevronDown class='h-3 w-3 opacity-60' />
-            : <FiChevronRight class='h-3 w-3 opacity-60' />}
-          </Show>
-        </button>
+      <Tooltip openDelay={300} positioning={{ placement: 'bottom' }}>
+        <TooltipTrigger>
+          <button type='button' onClick={() => props.onClick?.()} class={labelStyle()}>
+            <span class='font-semibold'>{label()}</span>
+            {/* Only show progress count when collapsed */}
+            <Show when={!props.isExpanded}>
+              <span class='text-2xs opacity-80'>
+                {props.progress?.answered || 0}/{props.progress?.total || 0}
+              </span>
+            </Show>
+            <Show when={props.sectionKey !== 'overall'}>
+              {props.isExpanded ?
+                <FiChevronDown class='h-3 w-3 opacity-60' />
+              : <FiChevronRight class='h-3 w-3 opacity-60' />}
+            </Show>
+          </button>
+        </TooltipTrigger>
+        <TooltipPositioner>
+          <TooltipContent>{tooltipContent()}</TooltipContent>
+        </TooltipPositioner>
       </Tooltip>
 
       {/* Animated expanded question pills */}
@@ -181,24 +191,29 @@ function QuestionPill(props) {
   };
 
   return (
-    <Tooltip content={tooltip()} placement='bottom' openDelay={200}>
-      <button
-        type='button'
-        onClick={() => props.goToPage?.(props.globalIndex)}
-        class={`relative flex items-center justify-center overflow-visible rounded-full font-medium transition-all ${pillSizeClass()} ${pillSpacingClass()} ${pillStyle()}`}
-        aria-label={tooltip()}
-        aria-current={isCurrentPage() ? 'page' : undefined}
-      >
-        {displayLabel()}
-        <Show when={hasAnswer()}>
-          <span
-            class='absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-[0.5px] bg-white shadow-sm'
-            aria-hidden='true'
-          >
-            <FiCheck class='h-1.5 w-1.5 text-green-600' />
-          </span>
-        </Show>
-      </button>
+    <Tooltip openDelay={200} positioning={{ placement: 'bottom' }}>
+      <TooltipTrigger>
+        <button
+          type='button'
+          onClick={() => props.goToPage?.(props.globalIndex)}
+          class={`relative flex items-center justify-center overflow-visible rounded-full font-medium transition-all ${pillSizeClass()} ${pillSpacingClass()} ${pillStyle()}`}
+          aria-label={tooltip()}
+          aria-current={isCurrentPage() ? 'page' : undefined}
+        >
+          {displayLabel()}
+          <Show when={hasAnswer()}>
+            <span
+              class='absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-[0.5px] bg-white shadow-sm'
+              aria-hidden='true'
+            >
+              <FiCheck class='h-1.5 w-1.5 text-green-600' />
+            </span>
+          </Show>
+        </button>
+      </TooltipTrigger>
+      <TooltipPositioner>
+        <TooltipContent>{tooltip()}</TooltipContent>
+      </TooltipPositioner>
     </Tooltip>
   );
 }

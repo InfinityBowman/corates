@@ -1,7 +1,13 @@
 import { createSignal, Show, onMount, For } from 'solid-js';
 import { FiShield, FiX, FiCopy, FiSmartphone, FiLock, FiInfo, FiHelpCircle } from 'solid-icons/fi';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { Tooltip, PasswordInput, showToast, QRCode } from '@corates/ui';
+import { PasswordInput, showToast, QRCode } from '@corates/ui';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 
 export default function TwoFactorSetup() {
   const { user, enableTwoFactor, verifyTwoFactorSetup, disableTwoFactor, getTwoFactorStatus } =
@@ -213,8 +219,17 @@ export default function TwoFactorSetup() {
                 </span>
               </Show>
               <Show when={!isEnabled()}>
-                <Tooltip content="Requires a password. Add one above if you don't have one.">
-                  <FiHelpCircle class='h-4 w-4 cursor-help text-gray-400' />
+                <Tooltip>
+                  <TooltipTrigger>
+                    <span class='inline-flex cursor-help'>
+                      <FiHelpCircle class='h-4 w-4 text-gray-400' />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipPositioner>
+                    <TooltipContent>
+                      Requires a password. Add one above if you don't have one.
+                    </TooltipContent>
+                  </TooltipPositioner>
                 </Tooltip>
               </Show>
             </div>
@@ -251,8 +266,17 @@ export default function TwoFactorSetup() {
           <div class='flex items-center justify-between'>
             <div class='flex items-center space-x-2'>
               <h3 class='font-medium text-gray-900'>Set Up Two-Factor Authentication</h3>
-              <Tooltip content="Requires a password. Add one above if you don't have one.">
-                <FiHelpCircle class='h-4 w-4 cursor-help text-gray-400' />
+              <Tooltip>
+                <TooltipTrigger>
+                  <span class='inline-flex cursor-help'>
+                    <FiHelpCircle class='h-4 w-4 text-gray-400' />
+                  </span>
+                </TooltipTrigger>
+                <TooltipPositioner>
+                  <TooltipContent>
+                    Requires a password. Add one above if you don't have one.
+                  </TooltipContent>
+                </TooltipPositioner>
               </Tooltip>
             </div>
             <button onClick={handleCancel} class='text-gray-400 hover:text-gray-600'>

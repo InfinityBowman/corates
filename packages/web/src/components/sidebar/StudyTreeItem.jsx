@@ -1,11 +1,7 @@
 import { createMemo, For, Show } from 'solid-js';
 import { VsBook } from 'solid-icons/vs';
 import { FiChevronRight } from 'solid-icons/fi';
-import {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import ChecklistTreeItem from './ChecklistTreeItem.jsx';
 
 /**

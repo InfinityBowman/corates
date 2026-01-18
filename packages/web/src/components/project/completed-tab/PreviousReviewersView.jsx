@@ -5,8 +5,8 @@
  * Displays checklists in readonly mode with tabs to switch between reviewers.
  */
 
-import { Show, createMemo, createSignal, createEffect } from 'solid-js';
-import { Tabs } from '@corates/ui';
+import { Show, For, createMemo, createSignal, createEffect } from 'solid-js';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogBackdrop,
@@ -189,7 +189,20 @@ export default function PreviousReviewersView(props) {
               >
                 <Show when={reviewerTabs().length > 1}>
                   <div class='mb-4'>
-                    <Tabs tabs={reviewerTabs()} value={activeTab()} onValueChange={setActiveTab} />
+                    <Tabs value={activeTab()} onValueChange={setActiveTab}>
+                      <TabsList class='flex overflow-x-auto rounded-t-lg border border-gray-200 bg-white'>
+                        <For each={reviewerTabs()}>
+                          {tab => (
+                            <TabsTrigger
+                              value={tab.value}
+                              class='flex items-center gap-2 rounded-none border-b-2 border-transparent bg-transparent px-4 py-3 text-sm font-medium text-gray-600 shadow-none transition-colors hover:bg-gray-50 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:bg-transparent data-[selected]:text-gray-900 data-[selected]:shadow-none'
+                            >
+                              {tab.label}
+                            </TabsTrigger>
+                          )}
+                        </For>
+                      </TabsList>
+                    </Tabs>
                   </div>
                 </Show>
 

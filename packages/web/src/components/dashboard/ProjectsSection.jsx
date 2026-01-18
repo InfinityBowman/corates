@@ -179,25 +179,24 @@ export function ProjectsSection(props) {
 
   return (
     <section style={animation.fadeUp(200)}>
+      {/* Contact prompt for users who can't create projects */}
+      <Show when={!canCreateProject() && canCreateProject() !== null}>
+        <div class='mb-4'>
+          <ContactPrompt
+            restrictionType={restrictionType()}
+            projectCount={projectCount()}
+            quotaLimit={quotas()?.['projects.max']}
+          />
+        </div>
+      </Show>
+
       {/* Header */}
       <Show when={props.showHeader !== false}>
         <div class='mb-4 flex items-center justify-between'>
           <h2 class='text-sm font-semibold tracking-wide text-stone-500 uppercase'>
             Your Projects
           </h2>
-          <Show
-            when={canCreateProject() && hasProjects()}
-            fallback={
-              <Show when={!canCreateProject() && canCreateProject() !== null}>
-                <ContactPrompt
-                  restrictionType={restrictionType()}
-                  projectCount={projectCount()}
-                  quotaLimit={quotas()?.['projects.max']}
-                  compact
-                />
-              </Show>
-            }
-          >
+          <Show when={canCreateProject() && hasProjects()}>
             <button
               type='button'
               onClick={handleCreateClick}

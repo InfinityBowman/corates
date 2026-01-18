@@ -144,6 +144,15 @@ export default function ProjectsPanel() {
 
   return (
     <div class='space-y-6'>
+      {/* Contact prompt for users who can't create projects */}
+      <Show when={!canCreateProject() && canCreateProject() !== null}>
+        <ContactPrompt
+          restrictionType={restrictionType()}
+          projectCount={projectCount()}
+          quotaLimit={quotas()?.['projects.max']}
+        />
+      </Show>
+
       {/* Header */}
       <div class='flex flex-wrap items-center justify-between gap-4'>
         <div>
@@ -151,17 +160,8 @@ export default function ProjectsPanel() {
           <p class='mt-1 text-gray-500'>Manage your research projects</p>
         </div>
 
-        {/* Create button or quota prompt */}
-        <Show
-          when={canCreateProject()}
-          fallback={
-            <ContactPrompt
-              restrictionType={restrictionType()}
-              projectCount={projectCount()}
-              quotaLimit={quotas()?.['projects.max']}
-            />
-          }
-        >
+        {/* Create button */}
+        <Show when={canCreateProject()}>
           <button
             class='inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
             onClick={() => setShowCreateForm(!showCreateForm())}

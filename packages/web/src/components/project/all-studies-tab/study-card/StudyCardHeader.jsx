@@ -15,7 +15,15 @@
 import { Show, For } from 'solid-js';
 import { BiRegularChevronRight } from 'solid-icons/bi';
 import { FiUsers, FiTrash2, FiMoreVertical } from 'solid-icons/fi';
-import { Menu, Editable } from '@corates/ui';
+import { Editable } from '@corates/ui';
+import {
+  Menu,
+  MenuTrigger,
+  MenuPositioner,
+  MenuContent,
+  MenuItem,
+  MenuSeparator,
+} from '@/components/ui/menu';
 import projectActionsStore from '@/stores/projectActionsStore';
 
 export default function StudyCardHeader(props) {
@@ -71,21 +79,6 @@ export default function StudyCardHeader(props) {
     if (journal) parts.push(`- ${journal}`);
     return parts.join(' ');
   };
-
-  const menuItems = [
-    {
-      value: 'assign-reviewers',
-      label: 'Assign Reviewers',
-      icon: <FiUsers class='h-4 w-4' />,
-    },
-    { separator: true },
-    {
-      value: 'delete',
-      label: 'Delete Study',
-      icon: <FiTrash2 class='h-4 w-4' />,
-      destructive: true,
-    },
-  ];
 
   const handleMenuSelect = details => {
     switch (details.value) {
@@ -153,14 +146,25 @@ export default function StudyCardHeader(props) {
         <span class='shrink-0 text-xs text-gray-400 italic'>No reviewers</span>
       </Show>
 
-      {/* Actions menu - using Menu component with custom trigger (no indicator) */}
-      <Menu
-        trigger={<FiMoreVertical class='h-4 w-4' />}
-        items={menuItems}
-        onSelect={handleMenuSelect}
-        placement='bottom-end'
-        hideIndicator
-      />
+      {/* Actions menu */}
+      <Menu onSelect={handleMenuSelect} positioning={{ placement: 'bottom-end' }}>
+        <MenuTrigger class='rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'>
+          <FiMoreVertical class='h-4 w-4' />
+        </MenuTrigger>
+        <MenuPositioner>
+          <MenuContent>
+            <MenuItem value='assign-reviewers'>
+              <FiUsers class='h-4 w-4' />
+              Assign Reviewers
+            </MenuItem>
+            <MenuSeparator />
+            <MenuItem value='delete' destructive>
+              <FiTrash2 class='h-4 w-4' />
+              Delete Study
+            </MenuItem>
+          </MenuContent>
+        </MenuPositioner>
+      </Menu>
     </div>
   );
 }

@@ -289,7 +289,7 @@ export default function CompleteProfile() {
                       class='group flex flex-col items-center focus:outline-none'
                       disabled={index() > currentStep() + 1}
                     >
-                      <StepsIndicator class='flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors data-[complete]:bg-blue-600 data-[complete]:text-white data-[current]:bg-blue-600 data-[current]:text-white data-[incomplete]:bg-gray-200 data-[incomplete]:text-gray-500 group-hover:data-[incomplete]:bg-gray-300'>
+                      <StepsIndicator class='flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors data-complete:bg-blue-600 data-complete:text-white data-current:bg-blue-600 data-current:text-white data-incomplete:bg-gray-200 data-incomplete:text-gray-500 group-hover:data-incomplete:bg-gray-300'>
                         <Show when={index() < currentStep()} fallback={index() + 1}>
                           <FiCheck class='h-4 w-4' />
                         </Show>
@@ -299,7 +299,7 @@ export default function CompleteProfile() {
                       </span>
                     </StepsTrigger>
                     <Show when={index() < STEPS.length - 1}>
-                      <StepsSeparator class='mx-2 h-0.5 w-8 transition-colors data-[complete]:bg-blue-600 data-[current]:bg-gray-200 data-[incomplete]:bg-gray-200 sm:w-12' />
+                      <StepsSeparator class='mx-2 h-0.5 w-8 transition-colors data-complete:bg-blue-600 data-current:bg-gray-200 data-incomplete:bg-gray-200 sm:w-12' />
                     </Show>
                   </StepsItem>
                 )}

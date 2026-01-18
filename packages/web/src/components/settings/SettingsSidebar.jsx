@@ -1,7 +1,12 @@
 import { Show, For, createSignal, createEffect, onCleanup } from 'solid-js';
 import { useNavigate, useLocation } from '@solidjs/router';
 import { Portal } from 'solid-js/web';
-import { Tooltip } from '@corates/ui';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import {
   FiChevronsLeft,
   FiChevronsRight,
@@ -152,18 +157,23 @@ export default function SettingsSidebar(props) {
         {item => {
           const Icon = item.icon;
           return (
-            <Tooltip content={item.label} positioning={{ placement: 'right' }}>
-              <button
-                onClick={() => navigate(item.path)}
-                class={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
-                  isCurrentPath(item.path) ?
-                    'bg-blue-100 text-blue-700'
-                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                }`}
-                aria-label={item.label}
-              >
-                <Icon class='h-4 w-4' />
-              </button>
+            <Tooltip positioning={{ placement: 'right' }}>
+              <TooltipTrigger>
+                <button
+                  onClick={() => navigate(item.path)}
+                  class={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+                    isCurrentPath(item.path) ?
+                      'bg-blue-100 text-blue-700'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                  }`}
+                  aria-label={item.label}
+                >
+                  <Icon class='h-4 w-4' />
+                </button>
+              </TooltipTrigger>
+              <TooltipPositioner>
+                <TooltipContent>{item.label}</TooltipContent>
+              </TooltipPositioner>
             </Tooltip>
           );
         }}
@@ -184,14 +194,19 @@ export default function SettingsSidebar(props) {
           <div class='flex shrink-0 items-center border-b border-gray-100 p-2'>
             {/* Collapsed: expand button */}
             <Show when={!isExpanded()}>
-              <Tooltip content='Expand sidebar' positioning={{ placement: 'right' }}>
-                <button
-                  onClick={() => props.onToggleDesktop?.()}
-                  class='hidden h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 md:flex'
-                  aria-label='Expand sidebar'
-                >
-                  <FiChevronsRight class='h-4 w-4' />
-                </button>
+              <Tooltip positioning={{ placement: 'right' }}>
+                <TooltipTrigger>
+                  <button
+                    onClick={() => props.onToggleDesktop?.()}
+                    class='hidden h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 md:flex'
+                    aria-label='Expand sidebar'
+                  >
+                    <FiChevronsRight class='h-4 w-4' />
+                  </button>
+                </TooltipTrigger>
+                <TooltipPositioner>
+                  <TooltipContent>Expand sidebar</TooltipContent>
+                </TooltipPositioner>
               </Tooltip>
             </Show>
 
@@ -209,14 +224,19 @@ export default function SettingsSidebar(props) {
             {/* Expanded: collapse button */}
             <Show when={isExpanded()}>
               <div class='flex-1' />
-              <Tooltip content='Collapse sidebar' positioning={{ placement: 'right' }}>
-                <button
-                  onClick={() => props.onToggleDesktop?.()}
-                  class='hidden h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 md:flex'
-                  aria-label='Collapse sidebar'
-                >
-                  <FiChevronsLeft class='h-4 w-4' />
-                </button>
+              <Tooltip positioning={{ placement: 'right' }}>
+                <TooltipTrigger>
+                  <button
+                    onClick={() => props.onToggleDesktop?.()}
+                    class='hidden h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 md:flex'
+                    aria-label='Collapse sidebar'
+                  >
+                    <FiChevronsLeft class='h-4 w-4' />
+                  </button>
+                </TooltipTrigger>
+                <TooltipPositioner>
+                  <TooltipContent>Collapse sidebar</TooltipContent>
+                </TooltipPositioner>
               </Tooltip>
             </Show>
 
