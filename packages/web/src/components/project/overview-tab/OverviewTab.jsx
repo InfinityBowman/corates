@@ -405,7 +405,8 @@ export default function OverviewTab() {
                               <ProgressRange
                                 class={
                                   userProgress().percentage === 100 ? 'bg-green-500'
-                                  : userProgress().percentage >= 50 ? 'bg-blue-600'
+                                  : userProgress().percentage >= 50 ?
+                                    'bg-blue-600'
                                   : 'bg-amber-500'
                                 }
                               />

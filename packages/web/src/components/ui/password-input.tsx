@@ -79,7 +79,10 @@ type PasswordInputControlProps = ArkPasswordInputControlProps & {
 const PasswordInputControl: Component<PasswordInputControlProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
-    <PasswordInputPrimitive.Control class={cn('relative', local.class)} {...others}>
+    <PasswordInputPrimitive.Control
+      class={cn('relative flex items-center', local.class)}
+      {...others}
+    >
       {local.children}
     </PasswordInputPrimitive.Control>
   );
@@ -114,7 +117,7 @@ const PasswordInputVisibilityTrigger: Component<PasswordInputVisibilityTriggerPr
   return (
     <PasswordInputPrimitive.VisibilityTrigger
       class={cn(
-        'absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 transition-colors',
+        'absolute right-3 flex items-center text-gray-400 transition-colors',
         'hover:text-gray-600 focus:outline-none',
         'disabled:cursor-not-allowed disabled:opacity-50',
         local.class,
@@ -122,8 +125,8 @@ const PasswordInputVisibilityTrigger: Component<PasswordInputVisibilityTriggerPr
       {...others}
     >
       {local.children ?? (
-        <PasswordInputPrimitive.Indicator fallback={<FiEyeOff class='h-5 w-5' />}>
-          <FiEye class='h-5 w-5' />
+        <PasswordInputPrimitive.Indicator fallback={<FiEyeOff class='h-4 w-4' />}>
+          <FiEye class='h-4 w-4' />
         </PasswordInputPrimitive.Indicator>
       )}
     </PasswordInputPrimitive.VisibilityTrigger>

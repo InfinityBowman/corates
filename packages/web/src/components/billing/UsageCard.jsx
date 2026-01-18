@@ -51,7 +51,8 @@ function UsageMetric(props) {
             <ProgressRange
               class={
                 variant() === 'error' ? 'bg-red-500'
-                : variant() === 'warning' ? 'bg-amber-500'
+                : variant() === 'warning' ?
+                  'bg-amber-500'
                 : 'bg-blue-600'
               }
             />
