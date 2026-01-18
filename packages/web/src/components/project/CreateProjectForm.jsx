@@ -1,6 +1,7 @@
 import { createSignal, Show, onMount, createMemo, createEffect } from 'solid-js';
 import AddStudiesForm from './add-studies/AddStudiesForm.jsx';
-import { showToast, Select } from '@corates/ui';
+import { showToast } from '@corates/ui';
+import { SimpleSelect } from '@/components/ui/select';
 import { AUTH_ERRORS } from '@corates/shared';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import {
@@ -28,7 +29,7 @@ export default function CreateProjectForm(props) {
   const [projectDescription, setProjectDescription] = createSignal('');
   const [isCreating, setIsCreating] = createSignal(false);
   const [restoredState, setRestoredState] = createSignal(null);
-  const [selectedOrgId, setSelectedOrgId] = createSignal(null);
+  const [selectedOrgId, setSimpleSelectedOrgId] = createSignal(null);
 
   // Get orgs list
   const { orgs, isLoading: orgsLoading } = useOrgs();
@@ -37,7 +38,7 @@ export default function CreateProjectForm(props) {
   createEffect(() => {
     const orgsList = orgs();
     if (orgsList.length > 1 && !selectedOrgId()) {
-      setSelectedOrgId(orgsList[0].id);
+      setSimpleSelectedOrgId(orgsList[0].id);
     }
   });
 
@@ -197,11 +198,11 @@ export default function CreateProjectForm(props) {
         <Show when={!orgsLoading() && orgs().length > 1}>
           <div>
             <label class='mb-2 block text-sm font-semibold text-gray-700'>Organization</label>
-            <Select
+            <SimpleSelect
               items={orgs().map(org => ({ value: org.id, label: org.name }))}
               value={selectedOrgId()}
-              onChange={value => setSelectedOrgId(value)}
-              placeholder='Select an organization'
+              onChange={value => setSimpleSelectedOrgId(value)}
+              placeholder='SimpleSelect an organization'
             />
           </div>
         </Show>

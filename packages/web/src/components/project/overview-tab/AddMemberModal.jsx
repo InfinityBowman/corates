@@ -2,7 +2,8 @@ import { createSignal, For, Show, createEffect, onCleanup } from 'solid-js';
 import { debounce } from '@solid-primitives/scheduled';
 import { A } from '@solidjs/router';
 import { FiX, FiAlertTriangle } from 'solid-icons/fi';
-import { Select, showToast } from '@corates/ui';
+import { showToast } from '@corates/ui';
+import { SimpleSelect } from '@/components/ui/select';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import { apiFetch } from '@lib/apiFetch.js';
 import { isUnlimitedQuota } from '@corates/shared/plans';
@@ -21,8 +22,8 @@ export default function AddMemberModal(props) {
   const [searchQuery, setSearchQuery] = createSignal('');
   const [searchResults, setSearchResults] = createSignal([]);
   const [searching, setSearching] = createSignal(false);
-  const [selectedUser, setSelectedUser] = createSignal(null);
-  const [selectedRole, setSelectedRole] = createSignal('member');
+  const [selectedUser, setSimpleSelectedUser] = createSignal(null);
+  const [selectedRole, setSimpleSelectedRole] = createSignal('member');
   const [adding, setAdding] = createSignal(false);
   const [error, setError] = createSignal(null);
 
@@ -80,8 +81,8 @@ export default function AddMemberModal(props) {
     debouncedSearchUsers(value);
   };
 
-  const handleSelectUser = user => {
-    setSelectedUser(user);
+  const handleSimpleSelectUser = user => {
+    setSimpleSelectedUser(user);
     setSearchQuery(user.displayName || user.name || user.email);
     setSearchResults([]);
   };
@@ -142,8 +143,8 @@ export default function AddMemberModal(props) {
   const handleClose = () => {
     setSearchQuery('');
     setSearchResults([]);
-    setSelectedUser(null);
-    setSelectedRole('member');
+    setSimpleSelectedUser(null);
+    setSimpleSelectedRole('member');
     setError(null);
     props.onClose();
   };
@@ -218,12 +219,15 @@ export default function AddMemberModal(props) {
                     {user => (
                       <button
                         type='button'
-                        onClick={() => handleSelectUser(user)}
+                        onClick={() => handleSimpleSelectUser(user)}
                         class='flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-blue-50'
                       >
                         <Avatar class='h-8 w-8 shrink-0'>
-                          <AvatarImage src={user.image} alt={user.displayName || user.name || user.email} />
-                          <AvatarFallback class='bg-blue-600 text-white text-sm'>
+                          <AvatarImage
+                            src={user.image}
+                            alt={user.displayName || user.name || user.email}
+                          />
+                          <AvatarFallback class='bg-blue-600 text-sm text-white'>
                             {getInitials(user.displayName || user.name || user.email)}
                           </AvatarFallback>
                         </Avatar>
@@ -270,14 +274,21 @@ export default function AddMemberModal(props) {
               </div>
             </Show>
 
-            {/* Selected User Display */}
+            {/* SimpleSelected User Display */}
             <Show when={selectedUser()}>
               <div class='flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3'>
                 <div class='flex items-center gap-3'>
                   <Avatar class='h-10 w-10'>
-                    <AvatarImage src={selectedUser().image} alt={selectedUser().displayName || selectedUser().name || selectedUser().email} />
+                    <AvatarImage
+                      src={selectedUser().image}
+                      alt={
+                        selectedUser().displayName || selectedUser().name || selectedUser().email
+                      }
+                    />
                     <AvatarFallback class='bg-blue-600 text-white'>
-                      {getInitials(selectedUser().displayName || selectedUser().name || selectedUser().email)}
+                      {getInitials(
+                        selectedUser().displayName || selectedUser().name || selectedUser().email,
+                      )}
                     </AvatarFallback>
                   </Avatar>
                   <div>
@@ -289,7 +300,7 @@ export default function AddMemberModal(props) {
                 </div>
                 <button
                   onClick={() => {
-                    setSelectedUser(null);
+                    setSimpleSelectedUser(null);
                     setSearchQuery('');
                   }}
                   class='text-gray-400 hover:text-gray-600'
@@ -299,17 +310,17 @@ export default function AddMemberModal(props) {
               </div>
             </Show>
 
-            {/* Role Selection */}
+            {/* Role SimpleSelection */}
             <Show when={selectedUser() || canAddByEmail()}>
-              <Select
+              <SimpleSelect
                 label='Role'
                 items={[
                   { label: 'Member - Can edit project content', value: 'member' },
                   { label: 'Owner - Full access and member management', value: 'owner' },
                 ]}
                 value={selectedRole()}
-                onChange={setSelectedRole}
-                placeholder='Select a role'
+                onChange={setSimpleSelectedRole}
+                placeholder='SimpleSelect a role'
                 inDialog={true}
               />
             </Show>

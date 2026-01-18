@@ -39,7 +39,7 @@
  * </SelectPositioner>
  */
 import type { Component, JSX } from 'solid-js';
-import { Show, splitProps } from 'solid-js';
+import { For, Show, splitProps } from 'solid-js';
 import { Select as SelectPrimitive, createListCollection } from '@ark-ui/solid/select';
 import type {
   SelectRootProps as ArkSelectRootProps,
@@ -49,6 +49,7 @@ import type {
   SelectItemProps as ArkSelectItemProps,
   SelectItemGroupProps as ArkSelectItemGroupProps,
   SelectItemGroupLabelProps as ArkSelectItemGroupLabelProps,
+  SelectPositionerProps as ArkSelectPositionerProps,
 } from '@ark-ui/solid/select';
 import { Portal } from 'solid-js/web';
 import { BiRegularChevronDown, BiRegularCheck } from 'solid-icons/bi';
@@ -65,6 +66,7 @@ const Select = <T,>(props: SelectProps<T>) => {
   const [local, others] = splitProps(props, ['children', 'onValueChange', 'onOpenChange']);
   return (
     <SelectPrimitive.Root
+      positioning={{ sameWidth: true, ...props.positioning }}
       onValueChange={details => local.onValueChange?.(details.value)}
       onOpenChange={details => local.onOpenChange?.(details.open)}
       {...others}
@@ -107,7 +109,7 @@ const SelectTrigger: Component<SelectTriggerProps> = props => {
         'text-gray-900 ring-offset-white placeholder:text-gray-500',
         'hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none',
         'disabled:cursor-not-allowed disabled:opacity-50',
-        'data-[invalid]:border-red-500 data-[invalid]:focus:ring-red-500',
+        'data-invalid:border-red-500 data-invalid:focus:ring-red-500',
         local.class,
       )}
       {...others}
@@ -156,18 +158,18 @@ const SelectClearTrigger: Component<SelectClearTriggerProps> = props => {
   );
 };
 
-type SelectPositionerProps = {
+type SelectPositionerProps = ArkSelectPositionerProps & {
   class?: string;
   children?: JSX.Element;
+  /** Set to true when used inside a Dialog to prevent z-index issues */
   inDialog?: boolean;
-  sameWidth?: boolean;
 };
 
 const SelectPositioner: Component<SelectPositionerProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children', 'inDialog', 'sameWidth']);
+  const [local, others] = splitProps(props, ['class', 'children', 'inDialog']);
 
   const positioner = (
-    <SelectPrimitive.Positioner class={local.class} sameWidth={local.sameWidth ?? true} {...others}>
+    <SelectPrimitive.Positioner class={local.class} {...others}>
       {local.children}
     </SelectPrimitive.Positioner>
   );
@@ -237,8 +239,8 @@ const SelectItem: Component<SelectItemProps> = props => {
         'relative flex w-full cursor-default items-center rounded-sm px-2 py-1.5 pr-8 text-sm',
         'text-gray-900 outline-none select-none',
         'hover:bg-gray-100 focus:bg-gray-100',
-        'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
-        'data-[highlighted]:bg-gray-100',
+        'data-disabled:pointer-events-none data-disabled:opacity-50',
+        'data-highlighted:bg-gray-100',
         local.class,
       )}
       {...others}
@@ -267,6 +269,95 @@ const SelectItemIndicator: Component<SelectItemIndicatorProps> = props => {
   );
 };
 
+// --- SimpleSelect: Convenience wrapper matching old @corates/ui API ---
+
+type SelectOption = {
+  label: string;
+  value: string;
+  disabled?: boolean;
+};
+
+type SimpleSelectProps = {
+  /** Options to display */
+  items: SelectOption[];
+  /** The selected value (controlled) */
+  value?: string;
+  /** Callback when value changes */
+  onChange?: (_value: string) => void;
+  /** Label text for the select */
+  label?: string;
+  /** Placeholder text when no value selected */
+  placeholder?: string;
+  /** Whether the select is disabled */
+  disabled?: boolean;
+  /** Array of values that should be disabled */
+  disabledValues?: string[];
+  /** Set to true when used inside a Dialog */
+  inDialog?: boolean;
+  /** Additional class for the root element */
+  class?: string;
+};
+
+const SimpleSelect: Component<SimpleSelectProps> = props => {
+  const [local, others] = splitProps(props, [
+    'items',
+    'value',
+    'onChange',
+    'label',
+    'placeholder',
+    'disabledValues',
+    'inDialog',
+    'class',
+  ]);
+
+  const disabledSet = () => new Set(local.disabledValues || []);
+
+  const collection = () =>
+    createListCollection({
+      items: (local.items || []).map(item => ({
+        ...item,
+        disabled: item.disabled || disabledSet().has(item.value),
+      })),
+      itemToString: item => item.label,
+      itemToValue: item => item.value,
+    });
+
+  const selectValue = () => (local.value != null ? [local.value] : []);
+
+  return (
+    <Select
+      collection={collection()}
+      value={selectValue()}
+      onValueChange={values => local.onChange?.(values[0] || '')}
+      class={local.class}
+      {...others}
+    >
+      <Show when={local.label}>
+        <SelectLabel>{local.label}</SelectLabel>
+      </Show>
+      <SelectControl>
+        <SelectTrigger>
+          <SelectValueText placeholder={local.placeholder || 'Select option'} />
+          <SelectIndicator />
+        </SelectTrigger>
+      </SelectControl>
+      <SelectPositioner inDialog={local.inDialog}>
+        <SelectContent>
+          <For each={collection().items}>
+            {item => (
+              <SelectItem item={item}>
+                <SelectItemText>{item.label}</SelectItemText>
+                <SelectItemIndicator />
+              </SelectItem>
+            )}
+          </For>
+        </SelectContent>
+      </SelectPositioner>
+      <SelectHiddenSelect />
+    </Select>
+  );
+};
+
 export {
   Select,
   SelectLabel,
@@ -284,4 +375,5 @@ export {
   SelectItemIndicator,
   SelectHiddenSelect,
   createListCollection,
+  SimpleSelect,
 };

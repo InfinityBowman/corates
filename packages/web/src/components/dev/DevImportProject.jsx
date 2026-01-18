@@ -12,7 +12,7 @@ import { useQueryClient } from '@tanstack/solid-query';
 import { API_BASE } from '@config/api.js';
 import { useOrgs } from '@primitives/useOrgs.js';
 import { queryKeys } from '@lib/queryKeys.js';
-import { Select } from '@corates/ui';
+import { SimpleSelect } from '@/components/ui/select';
 
 export default function DevImportProject() {
   const navigate = useNavigate();
@@ -133,10 +133,10 @@ export default function DevImportProject() {
       <Show when={!orgsLoading() && orgs().length > 1}>
         <div>
           <label class='mb-1 block text-xs text-gray-500'>Organization</label>
-          <Select
+          <SimpleSelect
             value={selectedOrgId()}
             onChange={setSelectedOrgId}
-            options={orgs().map(org => ({ value: org.id, label: org.name }))}
+            items={orgs().map(org => ({ value: org.id, label: org.name }))}
             placeholder='Select organization'
           />
         </div>

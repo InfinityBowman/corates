@@ -137,7 +137,7 @@ export default function Navbar(props) {
             >
               <Avatar class='h-6 w-6'>
                 <AvatarImage src={user()?.image} alt={user()?.name || storedName || 'User'} />
-                <AvatarFallback class='bg-white/20 text-white text-xs'>
+                <AvatarFallback class='bg-white/20 text-xs text-white'>
                   {getInitials(user()?.name || storedName)}
                 </AvatarFallback>
               </Avatar>

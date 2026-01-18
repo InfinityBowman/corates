@@ -7,7 +7,7 @@
  */
 
 import { createSignal, createEffect, createMemo, Show } from 'solid-js';
-import { Select } from '@corates/ui';
+import { SimpleSelect } from '@/components/ui/select';
 import {
   Dialog,
   DialogBackdrop,
@@ -32,7 +32,7 @@ export default function AssignReviewersModal(props) {
   const [reviewer1, setReviewer1] = createSignal('');
   const [reviewer2, setReviewer2] = createSignal('');
   const [saving, setSaving] = createSignal(false);
-  const [selectsReady, setSelectsReady] = createSignal(false);
+  const [selectsReady, setSimpleSelectsReady] = createSignal(false);
 
   const members = () => projectStore.getMembers(props.projectId) || [];
 
@@ -48,7 +48,7 @@ export default function AssignReviewersModal(props) {
     return allStudies.find(s => s.id === studyId) || null;
   });
 
-  // Convert members to Select items format
+  // Convert members to SimpleSelect items format
   const memberItems = createMemo(() => {
     const getMemberName = member =>
       member?.displayName || member?.name || member?.email || 'Unknown';
@@ -78,13 +78,13 @@ export default function AssignReviewersModal(props) {
       setReviewer1(study.reviewer1 || '');
       setReviewer2(study.reviewer2 || '');
 
-      // Small delay to ensure Select components are ready before rendering
-      setSelectsReady(true);
+      // Small delay to ensure SimpleSelect components are ready before rendering
+      setSimpleSelectsReady(true);
     } else if (!isOpen) {
       // Reset when modal closes
       setReviewer1('');
       setReviewer2('');
-      setSelectsReady(false);
+      setSimpleSelectsReady(false);
     }
   });
 
@@ -138,7 +138,7 @@ export default function AssignReviewersModal(props) {
 
                 <Show when={selectsReady()} fallback={<div class='grid h-20 grid-cols-2 gap-4' />}>
                   <div class='grid grid-cols-2 gap-4'>
-                    <Select
+                    <SimpleSelect
                       label='Reviewer 1'
                       items={memberItems()}
                       value={reviewer1()}
@@ -147,7 +147,7 @@ export default function AssignReviewersModal(props) {
                       disabledValues={reviewer1DisabledValues()}
                       inDialog={true}
                     />
-                    <Select
+                    <SimpleSelect
                       label='Reviewer 2'
                       items={memberItems()}
                       value={reviewer2()}
