@@ -12,7 +12,7 @@ import { useNavigate } from '@solidjs/router';
 import localChecklistsStore from '@/stores/localChecklistsStore';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { FiTrash2 } from 'solid-icons/fi';
-import { Editable } from '@corates/ui';
+import { SimpleEditable } from '@/components/ui/editable';
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -124,7 +124,7 @@ export default function LocalAppraisalsPanel(props) {
                   </span>
                 </div>
                 <div class='mb-4'>
-                  <Editable
+                  <SimpleEditable
                     activationMode='click'
                     variant='heading'
                     class='text-lg font-semibold text-gray-900'

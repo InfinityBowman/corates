@@ -15,7 +15,7 @@
 import { Show, For } from 'solid-js';
 import { BiRegularChevronRight } from 'solid-icons/bi';
 import { FiUsers, FiTrash2, FiMoreVertical } from 'solid-icons/fi';
-import { Editable } from '@corates/ui';
+import { SimpleEditable } from '@/components/ui/editable';
 import {
   Menu,
   MenuTrigger,
@@ -117,7 +117,7 @@ export default function StudyCardHeader(props) {
 
       {/* Study info - editable name */}
       <div class='min-w-0 flex-1'>
-        <Editable
+        <SimpleEditable
           activationMode='click'
           value={studyName()}
           onSubmit={handleNameChange}

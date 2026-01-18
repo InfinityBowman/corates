@@ -1,7 +1,7 @@
 import { Show, createMemo, createSignal } from 'solid-js';
 import { FiChevronLeft, FiEdit2, FiCheck, FiX } from 'solid-icons/fi';
 import { useProjectContext } from './ProjectContext.jsx';
-import { Editable } from '@corates/ui';
+import { SimpleEditable } from '@/components/ui/editable';
 import { handleError } from '@/lib/error-utils.js';
 
 export default function ProjectHeader(props) {
@@ -72,7 +72,7 @@ export default function ProjectHeader(props) {
           <FiChevronLeft class='h-6 w-6' />
         </button>
         <div class='flex min-w-0 flex-1 items-center gap-2'>
-          <Editable
+          <SimpleEditable
             activationMode='click'
             value={name()}
             onSubmit={handleNameChange}

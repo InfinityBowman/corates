@@ -19,7 +19,7 @@
  * />
  */
 
-import type { Component, JSX } from 'solid-js';
+import type { Component } from 'solid-js';
 import { Show, splitProps, mergeProps } from 'solid-js';
 import { Editable as EditablePrimitive } from '@ark-ui/solid/editable';
 import { FiCheck, FiX, FiEdit2 } from 'solid-icons/fi';
@@ -136,12 +136,16 @@ const SimpleEditable: Component<SimpleEditableProps> = props => {
   ]);
 
   const variantStyles = () => variants[local.variant] || variants.default;
-  const editableValue = () => local.value ?? local.defaultValue ?? '';
+  const initialValue = () => local.value ?? local.defaultValue ?? '';
+
+  // Use controlled mode only when onChange is provided (parent manages state)
+  // Otherwise use uncontrolled mode with defaultValue (component manages state, calls onSubmit)
+  const isControlled = () => local.onChange !== undefined;
 
   return (
     <EditablePrimitive.Root
-      value={local.value !== undefined ? local.value : undefined}
-      defaultValue={local.value === undefined ? editableValue() : undefined}
+      value={isControlled() ? local.value : undefined}
+      defaultValue={!isControlled() ? initialValue() : undefined}
       placeholder={local.placeholder}
       disabled={local.disabled}
       readOnly={local.readOnly}

@@ -11,7 +11,7 @@
 
 import { Show, createMemo } from 'solid-js';
 import { FiFileText, FiChevronRight, FiTrash2 } from 'solid-icons/fi';
-import { Editable } from '@corates/ui';
+import { SimpleEditable } from '@/components/ui/editable';
 import { getChecklistMetadata } from '@/checklist-registry';
 
 /**
@@ -73,7 +73,7 @@ export function LocalAppraisalCard(props) {
             <h4 class='truncate text-sm font-medium text-stone-800'>{props.checklist?.name}</h4>
           }
         >
-          <Editable
+          <SimpleEditable
             activationMode='click'
             variant='inline'
             class='truncate text-sm font-medium text-stone-800'
