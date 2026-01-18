@@ -8,7 +8,8 @@ import { For, Show } from 'solid-js';
 import { AiOutlineFileText } from 'solid-icons/ai';
 import { CgFileDocument } from 'solid-icons/cg';
 import { BiRegularLinkAlt } from 'solid-icons/bi';
-import { FileUpload } from '@corates/ui';
+import { FiUploadCloud } from 'solid-icons/fi';
+import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 import { CheckboxRoot, CheckboxControl, CheckboxLabel } from '@/components/ui/checkbox';
 import {
   getRefDisplayName,
@@ -176,13 +177,19 @@ export default function ReferenceImportSection(props) {
         </p>
 
         <FileUpload
-          accept={MIXED_IMPORT_ACCEPT}
-          multiple={true}
-          onFilesChange={studies().handleRefFileSelect}
-          showFileList={false}
-          helpText='RIS, EndNote, BibTeX, or PDF files'
-          compact
-        />
+          accept={MIXED_IMPORT_ACCEPT.split(',').map(t => t.trim())}
+          maxFiles={Infinity}
+          onFileAccept={details => studies().handleRefFileSelect(details.files)}
+        >
+          <FileUploadDropzone class='min-h-24 p-4'>
+            <FiUploadCloud class='h-6 w-6 text-gray-400' />
+            <p class='mt-2 text-center text-xs text-gray-600'>
+              <span class='font-medium text-blue-600'>Click to upload</span> or drag and drop
+            </p>
+            <p class='mt-1 text-xs text-gray-400'>RIS, EndNote, BibTeX, or PDF files</p>
+          </FileUploadDropzone>
+          <FileUploadHiddenInput />
+        </FileUpload>
 
         <div class='text-xs text-gray-500'>
           <p class='mb-1 font-medium'>Supported formats:</p>
