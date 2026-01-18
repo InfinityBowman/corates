@@ -422,7 +422,7 @@ export default function StorageManagement() {
           <DialogContent class='max-w-md'>
             <DialogHeader>
               <DialogTitle>Delete Documents</DialogTitle>
-              <DialogCloseTrigger aria-label="Close">
+              <DialogCloseTrigger aria-label='Close'>
                 <FiX class='h-5 w-5' />
               </DialogCloseTrigger>
             </DialogHeader>
