@@ -246,12 +246,14 @@ const AlertDialogAction: Component<AlertDialogActionProps> = props => {
 type AlertDialogCloseTriggerProps = {
   class?: string;
   disabled?: boolean;
+  ariaLabel?: string;
 };
 
 const AlertDialogCloseTrigger: Component<AlertDialogCloseTriggerProps> = props => {
   return (
     <DialogPrimitive.CloseTrigger
       disabled={props.disabled}
+      aria-label={props.ariaLabel ?? 'Close'}
       class={cn(
         'shrink-0 rounded-md p-1 text-gray-400',
         'transition-colors hover:bg-gray-100 hover:text-gray-500',

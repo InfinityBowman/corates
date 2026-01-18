@@ -9,7 +9,7 @@ export const TITLE_OPTIONS = [
 ];
 
 export function getTitleLabel(titleValue) {
-  if (!titleValue) return null;
+  if (titleValue == null) return null;
   return TITLE_OPTIONS.find(t => t.value === titleValue)?.label || titleValue;
 }
 

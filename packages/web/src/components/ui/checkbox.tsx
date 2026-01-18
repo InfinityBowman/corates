@@ -100,7 +100,7 @@ const CheckboxLabel: Component<CheckboxLabelProps> = props => {
     <CheckboxPrimitive.Label
       class={cn(
         'text-sm leading-none font-medium text-gray-900',
-        'peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+        'data-disabled:cursor-not-allowed data-disabled:opacity-70',
         local.class,
       )}
       {...others}

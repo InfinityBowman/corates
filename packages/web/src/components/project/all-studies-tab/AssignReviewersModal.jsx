@@ -118,7 +118,7 @@ export default function AssignReviewersModal(props) {
         <DialogContent class='max-w-md'>
           <DialogHeader>
             <DialogTitle>Assign Reviewers</DialogTitle>
-            <DialogCloseTrigger>
+            <DialogCloseTrigger aria-label='Close'>
               <FiX class='h-5 w-5' />
             </DialogCloseTrigger>
           </DialogHeader>

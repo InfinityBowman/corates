@@ -83,7 +83,7 @@ export function ScoreTooltip(props) {
         <a
           href={infoUrl()}
           target='_blank'
-          rel='noreferrer'
+          rel='noreferrer noopener'
           class='mt-0.5 inline-flex items-center justify-center rounded-full p-0.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'
           aria-label={`Open ${getChecklistMetadata(props.checklistType).name} guidance in a new tab`}
         >

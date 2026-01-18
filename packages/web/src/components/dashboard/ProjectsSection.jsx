@@ -180,7 +180,7 @@ export function ProjectsSection(props) {
   return (
     <section style={animation.fadeUp(200)}>
       {/* Contact prompt for users who can't create projects */}
-      <Show when={!canCreateProject() && canCreateProject() !== null}>
+      <Show when={!subscriptionLoading() && !canCreateProject()}>
         <div class='mb-4'>
           <ContactPrompt
             restrictionType={restrictionType()}

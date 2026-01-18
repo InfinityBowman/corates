@@ -5,6 +5,7 @@ import { Portal } from 'solid-js/web';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import localChecklistsStore from '@/stores/localChecklistsStore';
 import { useMyProjectsList } from '@primitives/useMyProjectsList.js';
+import { showToast } from '@corates/ui';
 // import useRecentsNav from './useRecentsNav.js';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import {
@@ -154,11 +155,20 @@ export default function Sidebar(props) {
   // Executes delete after confirmation
   const confirmDeleteChecklist = async () => {
     const checklistId = pendingDeleteId();
-    if (checklistId) {
-      await deleteChecklist(checklistId);
+    if (!checklistId) {
+      setDeleteDialogOpen(false);
+      setPendingDeleteId(null);
+      return;
     }
-    setDeleteDialogOpen(false);
-    setPendingDeleteId(null);
+    try {
+      await deleteChecklist(checklistId);
+    } catch (err) {
+      console.error('Failed to delete checklist:', err);
+      showToast.error('Delete Failed', 'Could not delete the checklist. Please try again.');
+    } finally {
+      setDeleteDialogOpen(false);
+      setPendingDeleteId(null);
+    }
   };
 
   // Close mobile sidebar on escape key

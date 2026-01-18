@@ -58,6 +58,7 @@ const Button: Component<ButtonProps> = props => {
 
   return (
     <button
+      type='button'
       class={cn(buttonVariants({ variant: local.variant, size: local.size }), local.class)}
       {...others}
     />

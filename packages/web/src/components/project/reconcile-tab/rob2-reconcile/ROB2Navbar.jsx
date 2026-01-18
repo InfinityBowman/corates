@@ -93,10 +93,13 @@ export default function ROB2Navbar(props) {
       <Show when={props.store.aimMismatch}>
         <Tooltip openDelay={200} positioning={{ placement: 'bottom' }}>
           <TooltipTrigger>
-            <div class='mr-1 flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700'>
+            <button
+              type='button'
+              class='mr-1 flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700'
+            >
               <FiAlertTriangle class='h-3 w-3' />
               Aim
-            </div>
+            </button>
           </TooltipTrigger>
           <TooltipPositioner>
             <TooltipContent>Aim mismatch - reconcile the aim field first</TooltipContent>
