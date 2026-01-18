@@ -109,77 +109,75 @@ export default function SignUp() {
 
   return (
     <div class='relative w-full max-w-md rounded-xl border border-gray-100 bg-white p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
-        {/* Logo */}
-        <a href='/' class='absolute top-4 left-4 sm:top-6 sm:left-6'>
-          <img src='/logo.svg' alt='CoRATES' class='h-6 w-auto sm:h-7' />
-        </a>
+      {/* Logo */}
+      <a href='/' class='absolute top-4 left-4 sm:top-6 sm:left-6'>
+        <img src='/logo.svg' alt='CoRATES' class='h-6 w-auto sm:h-7' />
+      </a>
 
-        <div class='mb-4 text-center sm:mb-6'>
-          <h2 class='mb-1 text-xl font-bold text-gray-900 sm:mb-2 sm:text-2xl'>
-            Create an Account
-          </h2>
-          <p class='text-xs text-gray-500 sm:text-sm'>Get started with CoRATES</p>
-        </div>
+      <div class='mb-4 text-center sm:mb-6'>
+        <h2 class='mb-1 text-xl font-bold text-gray-900 sm:mb-2 sm:text-2xl'>Create an Account</h2>
+        <p class='text-xs text-gray-500 sm:text-sm'>Get started with CoRATES</p>
+      </div>
 
-        {/* Social providers */}
-        <SocialAuthContainer buttonCount={socialProviderCount}>
-          <GoogleButton
-            loading={googleLoading()}
-            onClick={handleGoogleSignUp}
-            iconOnly={socialProviderCount > 1}
-          />
-          <OrcidButton
-            loading={orcidLoading()}
-            onClick={handleOrcidSignUp}
-            iconOnly={socialProviderCount > 1}
-          />
-        </SocialAuthContainer>
-
-        <AuthDivider />
-
-        <ErrorMessage displayError={displayError} id='signup-error' />
-
-        {/* Magic Link Form - simple email signup */}
-        <MagicLinkForm
-          callbackPath='/complete-profile'
-          buttonText='Continue with Email'
-          description="We'll send you a link to create your account - no password needed."
+      {/* Social providers */}
+      <SocialAuthContainer buttonCount={socialProviderCount}>
+        <GoogleButton
+          loading={googleLoading()}
+          onClick={handleGoogleSignUp}
+          iconOnly={socialProviderCount > 1}
         />
+        <OrcidButton
+          loading={orcidLoading()}
+          onClick={handleOrcidSignUp}
+          iconOnly={socialProviderCount > 1}
+        />
+      </SocialAuthContainer>
 
-        <p class='mt-6 text-center text-xs text-gray-400'>
-          By continuing, you agree to our{' '}
-          <a
-            href={`${LANDING_URL}/terms`}
-            target='_blank'
-            class='text-blue-500 hover:underline'
-            rel='noopener noreferrer'
-          >
-            Terms of Service
-          </a>{' '}
-          and{' '}
-          <a
-            href={`${LANDING_URL}/privacy`}
-            target='_blank'
-            rel='noopener noreferrer'
-            class='text-blue-500 hover:underline'
-          >
-            Privacy Policy
-          </a>
-          .
-        </p>
+      <AuthDivider />
 
-        <div class='mt-4 border-t border-gray-100 pt-4 text-center text-xs text-gray-500 sm:text-sm'>
-          Already have an account?{' '}
-          <AuthLink
-            href='/signin'
-            onClick={e => {
-              e.preventDefault();
-              navigate('/signin');
-            }}
-          >
-            Sign In
-          </AuthLink>
-        </div>
+      <ErrorMessage displayError={displayError} id='signup-error' />
+
+      {/* Magic Link Form - simple email signup */}
+      <MagicLinkForm
+        callbackPath='/complete-profile'
+        buttonText='Continue with Email'
+        description="We'll send you a link to create your account - no password needed."
+      />
+
+      <p class='mt-6 text-center text-xs text-gray-400'>
+        By continuing, you agree to our{' '}
+        <a
+          href={`${LANDING_URL}/terms`}
+          target='_blank'
+          class='text-blue-500 hover:underline'
+          rel='noopener noreferrer'
+        >
+          Terms of Service
+        </a>{' '}
+        and{' '}
+        <a
+          href={`${LANDING_URL}/privacy`}
+          target='_blank'
+          rel='noopener noreferrer'
+          class='text-blue-500 hover:underline'
+        >
+          Privacy Policy
+        </a>
+        .
+      </p>
+
+      <div class='mt-4 border-t border-gray-100 pt-4 text-center text-xs text-gray-500 sm:text-sm'>
+        Already have an account?{' '}
+        <AuthLink
+          href='/signin'
+          onClick={e => {
+            e.preventDefault();
+            navigate('/signin');
+          }}
+        >
+          Sign In
+        </AuthLink>
+      </div>
     </div>
   );
 }
